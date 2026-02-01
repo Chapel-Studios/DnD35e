@@ -1,0 +1,14 @@
+# Ignore build artifacts and dependencies
+node_modules/
+dist/
+build/
+out/
+
+# Ignore Foundry-generated files if needed
+packs/
+lang/
+templates/
+
+# Allow source files
+!src/
+!scripts/

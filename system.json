@@ -1,0 +1,40 @@
+{
+  "id": "dnd35e",
+  "title": "Dungeons & Dragons 3.5 Edition SRD",
+  "description": "Implementation of 3.5 edition System Reference Document for Foundry VTT. Aiming to provide 100% SRD coverage.",
+  "version": "13.0.0-dev.1",
+  "compatibility": {
+    "minimum": "13.334",
+    "verified": "13.334"
+  },
+  "authors": [
+      {
+        "name": "Antoni 'Rughalt' Sobkowicz"
+      },
+      {
+        "name": "'Rev' Jake Blackwell"
+      }
+  ],
+  "esmodules": [
+      "dist/main.mjs"
+  ],
+  "styles": [
+      "dist/main.css"
+  ],
+  "languages": [
+      {
+          "lang": "en",
+          "path": "dist/lang/en.json",
+          "name": "English"
+      }
+  ],
+  "flags": {
+    
+  },
+  "documentTypes": {
+    "Item": {
+      "weapon": {},
+      "material": {}
+    }
+  }
+}

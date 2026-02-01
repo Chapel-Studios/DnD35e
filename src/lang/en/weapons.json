@@ -1,0 +1,30 @@
+{
+    "D35E.WeaponType": "Weapon Type",
+    "D35E.WeaponTypeSimple": "Simple",
+    "D35E.WeaponTypeMartial": "Martial",
+    "D35E.WeaponTypeExotic": "Exotic",
+    "D35E.WeaponTypeSplash": "Splash",
+
+    "D35E.WeaponPropBlocking": "Blocking",
+    "D35E.WeaponPropBrace": "Brace",
+    "D35E.WeaponPropDouble": "Double",
+    "D35E.WeaponPropDisarm": "Disarm",
+    "D35E.WeaponPropFinesse": "Finesse",
+    "D35E.WeaponPropFragile": "Fragile",
+    "D35E.WeaponPropGrapple": "Grapple",
+    "D35E.WeaponPropImprovised": "Improvised",
+    "D35E.WeaponPropMonk": "Monk",
+    "D35E.WeaponPropNonLethal": "Non-lethal",
+    "D35E.WeaponPropNonLethalNoPenalty": "No Penalty Non-lethal Attacks",
+    "D35E.WeaponPropPerformance": "Performance",
+    "D35E.WeaponPropReach": "Reach",
+    "D35E.WeaponPropSunder": "Sunder",
+    "D35E.WeaponPropThrown": "Thrown",
+    "D35E.WeaponPropTrip": "Trip",
+
+    "D35E.WeaponSubtype": "Weapon Subtype",
+    "D35E.WeaponPropLight": "Light",
+    "D35E.WeaponPropOneHanded": "One-handed",
+    "D35E.WeaponPropTwoHanded": "Two-handed",
+    "D35E.WeaponSubtypeRanged": "Ranged"
+}

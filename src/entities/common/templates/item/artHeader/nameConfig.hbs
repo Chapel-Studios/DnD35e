@@ -1,0 +1,31 @@
+{{!-- nameProp, isFormula, nameFormula --}}
+<section
+    class="tab namesetup {{tab.cssClass}}"
+    data-group="primary"
+    data-tab="namesetup"
+>
+    {{#with document}}
+        <div>
+            {{formGroup
+                @root.fields.name
+                value=name
+                disabled=system.isNameFromFormula
+                label=(localize "D35E.ItemName")
+            }}
+            {{formGroup
+                system.schema.fields.isNameFromFormula
+                value=system.isNameFromFormula
+                label=(localize "D35E.UseNameFromFormula")
+            }}
+            {{formGroup
+                system.schema.fields.nameFormula
+                value=system.nameFormula
+                label=(localize "D35E.CustomNameFormula")
+                disabled=(not system.isNameFromFormula)
+            }}
+            {{#if system.isNameFromFormula}}
+                <p class="notes">{{localize "D35E.UsesNameFromFormula"}}</p>
+            {{/if}}
+        </div>
+    {{/with}}
+</section>

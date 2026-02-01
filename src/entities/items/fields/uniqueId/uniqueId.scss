@@ -1,0 +1,7 @@
+.form-container .unique-id-container {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-column-gap: 1.5rem;
+    align-items: center;
+}

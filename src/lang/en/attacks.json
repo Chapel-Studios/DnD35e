@@ -1,0 +1,16 @@
+{
+    "D35E.DR": "DR",
+    "D35E.DRDamageType": "Damage Type",
+    "D35E.DRValue": "Value",
+    "D35E.DROr": "Or Damage Reduction",
+    "D35E.DROrDesc": "All Damage Resistances that have this checkbox checked will be evaluated at the same time, and if attacker can bypass either one of them, all will be bypasses.",
+    "D35E.DRNonPenetrable": "- (Non Penetrable)",
+    "D35E.DRMagic": "Magic",
+    "D35E.DRSlashing": "Slashing",
+    "D35E.DRPiercing": "Piercing",
+    "D35E.DRBludgeoning": "Bludgeoning",
+    "D35E.DREpic": "Epic",
+    "D35E.DRAdamantine": "Adamantine (or equivalent)",
+    "D35E.DRColdIron": "Cold Iron (or equivalent)",
+    "D35E.DRSilver": "Alchemical Silver (or quivalent)"
+}

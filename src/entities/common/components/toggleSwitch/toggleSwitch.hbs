@@ -1,0 +1,22 @@
+<label class="toggle-switch">
+  {{#if label}}
+    <span class="switch-label">{{localize label}}</span>
+  {{/if}}
+  <div class="switch-container">
+    {{#if falseLabel}}
+      <span class="false-label">{{localize falseLabel}}</span>
+    {{/if}}
+    <div class="switch-box">
+      <input 
+          type="checkbox" 
+          name="{{name}}" 
+          {{#if checked}}checked{{/if}} 
+          {{#if disabled}}disabled{{/if}}
+      >
+      <span class="slider"></span>
+    </div>
+    {{#if trueLabel}}
+      <span class="true-label">{{localize trueLabel}}</span>
+    {{/if}}
+  </div>
+</label>

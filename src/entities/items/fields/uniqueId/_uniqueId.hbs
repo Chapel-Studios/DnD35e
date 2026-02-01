@@ -1,0 +1,10 @@
+<div class="unique-id-container">
+  {{formGroup
+    system.schema.fields.uniqueId
+    value=system.uniqueId
+    label="UID"
+  }}
+  <button class="btn generate-uid" data-action="createUniqueId" href="#">
+    <i class="fas fa-wand"></i> {{localize "D35E.Generate"}}
+  </button>
+</div>

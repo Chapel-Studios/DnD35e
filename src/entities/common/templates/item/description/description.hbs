@@ -1,0 +1,13 @@
+<section class="tab {{tab.cssClass}}" data-group="primary" data-tab="description">
+    {{#with document}}
+        <div class="flexcol">
+            {{formGroup
+                system.schema.fields.description.fields.value
+                value=system.description.value
+                enriched=system.description.value
+                label=(localize "D35E.Description")
+                toggled=true
+            }}
+        </div>
+    {{/with}}
+</section>

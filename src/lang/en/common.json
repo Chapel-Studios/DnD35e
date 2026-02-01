@@ -1,0 +1,18 @@
+{
+  "D35E.Misc": "Miscellaneous",
+  "D35E.MiscShort": "Misc",
+  "D35E.Yes": "Yes",
+  "D35E.No": "No",
+  "D35E.YesShort": "Y",
+  "D35E.NoShort": "N",
+  "D35E.IdentifiedShort": "Id.",
+  "D35E.Other": "Other",
+  "D35E.Generate": "Generate",
+  
+  "D35E.Name": "Name",
+  "D35E.Description": "Description",
+  "D35E.DescriptionPlaceholder": "Enter a description here...",
+  "D35E.Details": "Details",
+
+  "D35E.SystemProperties": "System Properties"
+}

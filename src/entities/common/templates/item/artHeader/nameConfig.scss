@@ -1,0 +1,28 @@
+.dnd35e.item-sheet {
+    .form-container {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 1rem 3rem;
+        align-items: center;
+
+        label {
+            justify-self: start;
+            align-self: center;
+        }
+
+        .notes {
+            margin: -0.75rem 0 0.125rem;
+            grid-column: span 2;
+        }
+
+        .form-header {
+            grid-column: span 2;
+            margin: 1rem 0 0.25rem;
+            text-decoration: underline;
+        }
+    }
+
+    .form-group {
+        display: contents;
+    }
+}

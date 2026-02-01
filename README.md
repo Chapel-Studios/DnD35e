@@ -1,2 +1,3 @@
-# DnD35e
-Revival of the 3.5e SRD system for Foundry VTT
+# d35e
+
+* the Foundry Types were originally created by the PFE2 team. original credit to them.
