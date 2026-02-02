@@ -24,4 +24,4 @@ export {
 export type {
   ItemType,
   ItemTypeLocalizationValues
-}
+};
