@@ -2,6 +2,27 @@
 
 * the Foundry Types were originally created by the PFE2 team. original credit to them.
 
+## Build & Release Process
+
+### Local build
+
+- Install dependencies: `npm ci`
+- Production build: `npm run build`
+- Development watch build: `npm run watch`
+
+Build output is written to `dist/`.
+
+### CI (GitHub Actions)
+
+This repo ships a GitHub Actions workflow at `.github/workflows/build.yml`.
+
+- Trigger: pushing a SemVer tag matching `v*.*.*` (example: `v0.1.0`)
+- Steps: `npm ci` then `npm run build`
+- Artifact: `dnd35e-dist-<tag>.zip` (example: `dnd35e-dist-v0.1.0.zip`) containing a top-level `dist/` folder (source maps excluded)
+- Delivery: the zip is uploaded to the corresponding GitHub Release
+
+Node is pinned via `.nvmrc` and used by CI.
+
 ## License
 
 This system is licensed under **CC BY-NC-ND 4.0**.
