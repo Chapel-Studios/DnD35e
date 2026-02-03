@@ -26,6 +26,18 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Check version.yaml freshness (non-blocking)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm run update:version
+          if git diff --quiet -- version.yaml; then
+            echo "version.yaml is up to date."
+          else
+            echo "WARNING: version.yaml is out of date with GitHub milestones."
+            git checkout -- version.yaml
+          fi
+
       - name: Build
         run: npm run build
 
