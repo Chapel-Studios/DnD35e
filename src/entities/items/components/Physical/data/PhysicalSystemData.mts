@@ -1,5 +1,4 @@
 import { Size } from '@constants/sizes.mjs';
-import { DamagableItemSystemData } from '@items/components/Damagable/index.mjs';
 import { IdentifiableItemSystemData } from '@items/components/Identifiable/index.mjs';
 
 interface PhysicalItemSystemSource {
@@ -9,6 +8,11 @@ interface PhysicalItemSystemSource {
   isWeightlessWhenCarried: boolean;
   isCarried: boolean;
   size: Size;
+  hp: {
+      value: number;
+      max: number;
+  };
+  hardness: number;
   // Price
   price: number;
   resalePrice: number | null;
@@ -18,9 +22,7 @@ interface PhysicalItemSystemSource {
   containerId: string | null;
 };
 
-interface PhysicalItemSystemData extends PhysicalItemSystemSource,
-  IdentifiableItemSystemData,
-  DamagableItemSystemData {};
+interface PhysicalItemSystemData extends PhysicalItemSystemSource, IdentifiableItemSystemData {};
 
 export type {
   PhysicalItemSystemSource,

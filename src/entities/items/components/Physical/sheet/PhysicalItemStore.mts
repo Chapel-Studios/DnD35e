@@ -1,23 +1,24 @@
 import { ItemSheetStore } from "@items/baseItem/index.mjs";
 import type { PhysicalItemSheetRenderContext } from "./index.mjs";
 import { useIdentifiableStore } from "@items/components/Identifiable/index.mjs";
-import { useDamagableItemStore } from "@items/components/Damagable/sheet/DamagableItemStore.mjs";
+import { computed, type Ref } from "vue";
+import { PhysicalItemLike } from "../PhysicalItemDnd35e.mjs";
 
 const usePhysicalItemStore = (context: PhysicalItemSheetRenderContext, baseStore: ItemSheetStore) => {
+  const document = baseStore._document as unknown as Ref<PhysicalItemLike>;
   baseStore.setItemType('D35E.PhysicalItem');
   const identifiableStore = useIdentifiableStore(context, baseStore);
-  const damagableItemStore = useDamagableItemStore(context, baseStore);
-  // const state = reactive({
-  //   document: context.document as PhysicalItemDnd35e,
-  // });
-  // const document = computed(() => state.document);
+
+  const physicalItemGetters = {
+    maxHp: computed(() =>  document.value.system.hp.max),
+    currentHp: computed(() => document.value.system.hp.value),
+  };
 
   return  {
     ...identifiableStore,
-    ...damagableItemStore,
-    //document,
+    physicalItemGetters,
   };
 };
 
 export { usePhysicalItemStore };
-export type PhysicalItemSheetStore = ReturnType<typeof usePhysicalItemStore>;
+export type PhysicalItemSheetStore = ReturnType<typeof usePhysicalItemStore> & ItemSheetStore;
