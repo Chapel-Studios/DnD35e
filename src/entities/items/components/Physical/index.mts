@@ -5,6 +5,8 @@ import {
 import {
   PhysicalItemSheet,
   usePhysicalItemStore,
+  ItemHP,
+  ItemHardness,
 } from './sheet/index.mjs';
 import {
   applyPhysicalSchema,
@@ -34,6 +36,8 @@ export {
   applyPhysicalSchema,
   PHYSICAL_ITEM_TYPES,
   usePhysicalItemStore,
+  ItemHP,
+  ItemHardness,
 };
 
 export type {
