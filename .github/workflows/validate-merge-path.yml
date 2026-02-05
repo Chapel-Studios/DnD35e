@@ -1,0 +1,54 @@
+name: Validate Merge Path
+
+on:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine source and target
+        id: vars
+        run: |
+          echo "source=${GITHUB_HEAD_REF}" >> $GITHUB_OUTPUT
+          echo "target=${GITHUB_BASE_REF}" >> $GITHUB_OUTPUT
+
+      - name: Validate merge rules
+        run: |
+          source="${{ steps.vars.outputs.source }}"
+          target="${{ steps.vars.outputs.target }}"
+
+          echo "Source: $source"
+          echo "Target: $target"
+
+          allowed=false
+
+          # dev rules
+          if [[ "$target" == "dev" ]]; then
+            if [[ "$source" == feature/* || "$source" == hotfix/* ]]; then
+              allowed=true
+            fi
+          fi
+
+          # rc rules
+          if [[ "$target" == rc/* ]]; then
+            if [[ "$source" == "dev" || "$source" == hotfix/* ]]; then
+              allowed=true
+            fi
+          fi
+
+          # main rules
+          if [[ "$target" == "main" ]]; then
+            if [[ "$source" == rc/* || "$source" == hotfix/* ]]; then
+              allowed=true
+            fi
+          fi
+
+          if [[ "$allowed" == "true" ]]; then
+            echo "Merge path allowed."
+            exit 0
+          else
+            echo "❌ Merge path NOT allowed: $source → $target"
+            exit 1
+          fi

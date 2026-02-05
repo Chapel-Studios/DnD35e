@@ -1,0 +1,15 @@
+name: Build (CI)
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - rc/*
+      - main
+      - hotfix/*
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-core.yml
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
