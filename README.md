@@ -2,6 +2,51 @@
 
 * the Foundry Types were originally created by the PFE2 team. original credit to them.
 
+## Build & Release Process
+
+### Local build
+
+- Install dependencies: `npm ci`
+- Production build: `npm run build`
+- Development watch build: `npm run watch`
+
+Build output is written to `dist/`.
+
+### CI (GitHub Actions)
+
+This repo ships a GitHub Actions workflow at `.github/workflows/build.yml`.
+
+- Trigger: pushing a SemVer tag matching `v*.*.*` (example: `v0.1.0`)
+- Steps: `npm ci` then `npm run build`
+- Artifact: `dnd35e-dist-<tag>.zip` (example: `dnd35e-dist-v0.1.0.zip`) containing a top-level `dist/` folder (source maps excluded)
+- Delivery: the zip is uploaded to the corresponding GitHub Release
+
+Node is pinned via `.nvmrc` and used by CI.
+
+## Version metadata automation
+
+This repo maintains a `version.yaml` file that tracks the current system version and GitHub milestone mapping.
+
+### Local update
+
+Run the updater script to refresh `version.yaml` from GitHub milestones:
+
+- `npm run update:version`
+
+Optional environment variables:
+
+- `GITHUB_TOKEN` (recommended to avoid API rate limits)
+- `GITHUB_REPOSITORY` or `--repo=owner/name` (override the default repo)
+
+### CI updater
+
+There is an automatic workflow in `.github/workflows/update-version.yml` that:
+
+- Runs daily on a schedule (06:00 UTC) and via manual dispatch
+- Uses `.nvmrc` + `npm ci`
+- Runs `npm run update:version`
+- Commits and pushes changes to `version.yaml` if it changed
+
 ## License
 
 This system is licensed under **CC BY-NC-ND 4.0**.

@@ -121,6 +121,13 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: true,
     sourcemap: true,
     minify: mode === 'production',
+    ...(mode === 'development'
+      ? {
+        watch: {
+          clearScreen: false,
+        },
+      }
+      : {}),
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'src/main.mts'),
@@ -150,9 +157,6 @@ export default defineConfig(({ mode }) => ({
           return '[name][extname]';
         }
       }
-    },
-    watch: {
-      clearScreen: false,
     },
   },
   css: {
