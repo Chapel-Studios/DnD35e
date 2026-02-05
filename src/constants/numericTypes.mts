@@ -1,17 +1,23 @@
-/** Literal numeric types */
+/** Literal numeric types - simplified to reduce type depth */
+
+// Base ranges
 type ZeroToTwo = 0 | 1 | 2;
-type ZeroToThree = ZeroToTwo | 3; // +1!
-type OneToThree = Exclude<ZeroToThree, 0>;
-type TwoToThree = Exclude<OneToThree, 1>;
-type ZeroToFour = ZeroToThree | 4;
-type OneToFour = Exclude<ZeroToFour, 0>;
-type ZeroToFive = ZeroToFour | 5;
-type OneToFive = OneToFour | Extract<ZeroToFive, 5>;
-type ZeroToSix = ZeroToFive | 6;
-type OneToSix = Exclude<ZeroToSix, 0>;
-type ZeroToTen = ZeroToFive | 6 | 7 | 8 | 9 | 10;
-type OneToTen = Exclude<ZeroToTen, 0>;
-type ZeroToEleven = ZeroToTen | 11;
+type ZeroToThree = 0 | 1 | 2 | 3;
+type ZeroToFour = 0 | 1 | 2 | 3 | 4;
+type ZeroToFive = 0 | 1 | 2 | 3 | 4 | 5;
+type ZeroToSix = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+type ZeroToTen = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+type ZeroToEleven = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
+
+// Exclude zero variants
+type OneToThree = 1 | 2 | 3;
+type OneToFour = 1 | 2 | 3 | 4;
+type OneToFive = 1 | 2 | 3 | 4 | 5;
+type OneToSix = 1 | 2 | 3 | 4 | 5 | 6;
+type OneToTen = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+// Exclude first two variants
+type TwoToThree = 2 | 3;
 
 export type {
   ZeroToTwo,
