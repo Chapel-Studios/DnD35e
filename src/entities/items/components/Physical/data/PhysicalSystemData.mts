@@ -4,8 +4,8 @@ import { IdentifiableItemSystemData } from '@items/components/Identifiable/index
 interface PhysicalItemSystemSource {
   quantity: number;
   weight: number | null;
-  isWeightlessInContainer: boolean;
-  isWeightlessWhenCarried: boolean;
+  // isWeightlessInContainer: boolean;
+  // isWeightlessWhenCarried: boolean;
   isCarried: boolean;
   size: Size;
   hp: {
@@ -17,7 +17,7 @@ interface PhysicalItemSystemSource {
   price: number;
   resalePrice: number | null;
   brokenResalePrice: number | null;
-  isFullResalePrice: boolean;
+  isBroken: boolean;
   // Container
   containerId: string | null;
 };

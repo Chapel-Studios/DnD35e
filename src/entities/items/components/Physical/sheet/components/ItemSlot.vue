@@ -1,26 +1,28 @@
 <template>
   <FormGroup
     :editable="isEditable"
-    label="Hardness"
-    :value="hardness"
-    @update="updateCurrentHp"
-    type="number"
+    label="Price"
+    :value="currentContainerId"
+    @update="updater"
+    type="multiselect"
+    :options="EQUIP_SLOT_SELECT_OPTIONS"
   />
 </template>
 <script setup lang="ts">
   import { FormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
   import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
+  import { EQUIP_SLOT_SELECT_OPTIONS } from '@constants/equipmentSlots.mjs';
 
   const {
     isEditable,
     physicalItemGetters: {
-      hardness,
+      currentContainerId,
     },
     documentActions: {
       getFieldUpdater,
     },
   } = inject('itemSheetStore') as PhysicalItemSheetStore;
 
-  const updateCurrentHp = getFieldUpdater('system.hardness');
+  const updater = getFieldUpdater('system.containerId');
 </script> 

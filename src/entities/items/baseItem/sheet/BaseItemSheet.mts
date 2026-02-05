@@ -38,7 +38,6 @@ abstract class ItemSheetDnd35e<
 
   /**
    * Title shown in the window header.
-   * Uses the document's displayName (AppV2-safe).
    */
   override get title(): string {
     return this.document.displayName;

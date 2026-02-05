@@ -42,6 +42,7 @@ const useIdentifiableStore = <TDocument extends IdentifiableItemLike> (context: 
     unidentifiedName: computed(() => document.value.system.unidentifiedInfo?.unidentifiedName || ""),
     isUnidentifiedNameFromFormula: computed(() => document.value.system.unidentifiedInfo?.isUnidentifiedNameFromFormula || false),
     unidentifiedNameFormula: computed(() => document.value.system.unidentifiedInfo?.unidentifiedNameFormula || ""),
+    unidentifiedPrice: computed(() => document.value.system.unidentifiedInfo?.unidentifiedPrice),
   };
 
   return {

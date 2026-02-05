@@ -1,7 +1,6 @@
 import { ItemSystemData } from "@items/baseItem/index.mjs";
 import { WeaponBaseType, WeaponSubtype } from "./index.mjs";
-import { PhysicalItemSystemData } from "@items/components/Physical/index.mjs";
-import { HasMaterialsSystemData } from "@items/components/HasMaterial/index.mjs";
+import { EquippableItemSystemData } from "@items/components/Equippable/index.mjs";
 
 type WeaponDamage = {
   damageRoll: string;
@@ -25,9 +24,7 @@ interface WeaponSystemSource {
 
 type WeaponSystemData = WeaponSystemSource
   & ItemSystemData
-  & PhysicalItemSystemData
-  & HasMaterialsSystemData
-  //& EquippableItem;
+  & EquippableItemSystemData;
 
 export type {
   WeaponDamage,

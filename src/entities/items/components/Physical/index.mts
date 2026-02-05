@@ -5,8 +5,13 @@ import {
 import {
   PhysicalItemSheet,
   usePhysicalItemStore,
+  ItemQuantity,
+  ItemWeight,
+  ItemPrice,
   ItemHP,
   ItemHardness,
+  ItemSheetIsCarriedCheckbox,
+  ItemSheetContainerSelector,
 } from './sheet/index.mjs';
 import {
   applyPhysicalSchema,
@@ -36,8 +41,13 @@ export {
   applyPhysicalSchema,
   PHYSICAL_ITEM_TYPES,
   usePhysicalItemStore,
+  ItemQuantity,
+  ItemWeight,
+  ItemPrice,
   ItemHP,
   ItemHardness,
+  ItemSheetContainerSelector,
+  ItemSheetIsCarriedCheckbox,
 };
 
 export type {

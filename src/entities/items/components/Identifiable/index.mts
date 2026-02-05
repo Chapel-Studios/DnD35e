@@ -6,6 +6,7 @@ import {
   IdentifiableItemName,
   IdentifiableItemSheetVue,
   IdentifiableConfig,
+  IdentifiableItemPrice,
 } from './sheet/index.mjs';
 import {
   applyIdentifiableSchema,
@@ -55,4 +56,5 @@ export {
   IdentifiableItemName,
   IdentifiableItemSheetVue,
   IdentifiableConfig,
+  IdentifiableItemPrice,
 };

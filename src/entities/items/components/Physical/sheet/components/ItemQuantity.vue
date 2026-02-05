@@ -1,9 +1,9 @@
 <template>
   <FormGroup
     :editable="isEditable"
-    label="Hardness"
-    :value="hardness"
-    @update="updateCurrentHp"
+    label="Quantity"
+    :value="quantity"
+    @update="updater"
     type="number"
   />
 </template>
@@ -15,12 +15,12 @@
   const {
     isEditable,
     physicalItemGetters: {
-      hardness,
+      quantity,
     },
     documentActions: {
       getFieldUpdater,
     },
   } = inject('itemSheetStore') as PhysicalItemSheetStore;
 
-  const updateCurrentHp = getFieldUpdater('system.hardness');
+  const updater = getFieldUpdater('system.quantity');
 </script> 

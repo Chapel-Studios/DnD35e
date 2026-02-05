@@ -28,7 +28,7 @@ const applyPhysicalSchema = (schema: Record<string, any>) => {
   schema.price = requiredNumberField(0);
   schema.resalePrice = optionalNumberField();
   schema.brokenResalePrice = optionalNumberField();
-  schema.isFullResalePrice = requiredBooleanField(true);
+  schema.isBroken = requiredBooleanField(false);
 
   // Container
   schema.containerId = optionalStringField();

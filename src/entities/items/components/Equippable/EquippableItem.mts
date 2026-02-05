@@ -1,28 +1,43 @@
-import { Size, SIZES } from '@constants/sizes.mjs';
-import { requiredBooleanField, requiredStringField } from '@helpers/fieldBuilders.mjs';
-import type { fields as fieldsType } from '@common/data/_module.mjs';
+import type { EquippableItemSystemData, EquippableItemSystemSource } from './index.mjs';
+import type { ItemType } from '@items/index.mjs';
+import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
+import { applyPhysicalPrototype, physicalOverrides } from '@items/components/Physical/index.mjs';
+import type { PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
 
-const { fields } = foundry.data;
+type EquippableItemSourceProps = {
+  system: EquippableItemSystemSource;
+}
 
-type EquippableItem = {
-    isEquipped: boolean;
-    slot: string;
-    isMelded: boolean;
-    designedForSize: Size;
+type EquippableItemSource<TItemType extends ItemType = ItemType> = 
+  Omit<ItemSourceDnd35e<TItemType>, "system">
+    & PhysicalItemSourceProps
+    & EquippableItemSourceProps;
+
+interface EquippableItem {
+  system: EquippableItemSystemData;
 };
 
-type EquippableItemSchema = {
-    isEquipped: fieldsType.BooleanField<boolean, boolean, true, false, true>;
-    slot: fieldsType.StringField<string, string, true, false, true>;
-    isMelded: fieldsType.BooleanField<boolean, boolean, true, false, true>;
-    designedForSize: fieldsType.StringField<Size, Size, true, false, true>;
+type EquippableItemLike = ItemDnd35e<ItemType>
+  & EquippableItem;
+
+const applyEquippablePrototype = <T extends typeof ItemDnd35e<ItemType>> (item: T) => {
+  applyPhysicalPrototype(item);
+  // applyDamagableRuntime(item);
+
 };
 
-const defineEquippableItemSchema = (): EquippableItemSchema => ({
-  isEquipped: requiredBooleanField(false),
-  slot: requiredStringField(''),
-  isMelded: requiredBooleanField(false),
-  designedForSize: new fields.StringField<Size, Size, true, false, true>({ choices: SIZES, initial: 'medium', required: true }),
-});
+const equippableOverrides = {
+  displayName: physicalOverrides.displayName,
+};
 
-export { defineEquippableItemSchema, type EquippableItem, type EquippableItemSchema };
+export {
+  applyEquippablePrototype,
+  equippableOverrides,
+};
+
+export type {
+  EquippableItemSourceProps,
+  EquippableItem,
+  EquippableItemLike,
+  EquippableItemSource,
+};

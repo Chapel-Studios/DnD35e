@@ -86,9 +86,6 @@
     tabs: {
       tabGetters: { getIsTabOpen },
     },
-    identifableGetters: {
-      isIdentifiable,
-    },
     materialGetters: {
       bonusHardness,
       bonusHpPerInch,

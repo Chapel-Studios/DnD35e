@@ -1,10 +1,10 @@
 <template>
   <FormGroup
     :editable="isEditable"
-    label="Hardness"
-    :value="hardness"
-    @update="updateCurrentHp"
-    type="number"
+    label="Is Carried"
+    :value="isCarried"
+    @update="updater"
+    type="checkbox"
   />
 </template>
 <script setup lang="ts">
@@ -15,12 +15,12 @@
   const {
     isEditable,
     physicalItemGetters: {
-      hardness,
+      isCarried,
     },
     documentActions: {
       getFieldUpdater,
     },
   } = inject('itemSheetStore') as PhysicalItemSheetStore;
 
-  const updateCurrentHp = getFieldUpdater('system.hardness');
+  const updater = getFieldUpdater('system.isCarried');
 </script> 

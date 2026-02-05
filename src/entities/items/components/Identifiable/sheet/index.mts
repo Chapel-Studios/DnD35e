@@ -3,7 +3,7 @@ import IdentifiableNameConfig from "./tabs/IdentifiableNameConfig.vue";
 import IdentifiableItemName from "./components/IdentifiableItemName.vue";
 import IdentifiableConfig from "./components/IdentifiableConfig.vue";
 import IdentifiableItemSheetVue from "./IdentifiableItemSheet.vue";
-
+import IdentifiableItemPrice from "./components/IdentifiableItemPrice.vue";
 import { useIdentifiableStore } from "./IdentifiableItemStore.mjs";
 
 import type { IdentifiableItemSheetRenderContext } from "./IdentifiableItemSheet.mjs";
@@ -17,6 +17,7 @@ export {
   IdentifiableItemName,
   IdentifiableItemSheetVue,
   IdentifiableConfig,
+  IdentifiableItemPrice,
 };
 export type {
   IdentifiableItemSheetRenderContext,
