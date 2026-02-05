@@ -143,6 +143,35 @@ interface WallDoorAnimationConfig {
     duration: number;
 }
 
+/**
+ * Helper interface to reduce Config generic parameter depth.
+ * Groups related document types together for better type organization.
+ */
+export interface ConfigDocumentTypes {
+    AmbientLightDocument: documents.AmbientLightDocument<any>;
+    ActiveEffect: documents.ActiveEffect<any>;
+    Actor: documents.Actor<any>;
+    ActorDelta: documents.ActorDelta<any>;
+    ChatLog: sidebar.tabs.ChatLog;
+    ChatMessage: documents.ChatMessage;
+    Combat: documents.Combat;
+    Combatant: documents.Combatant<any, any>;
+    CombatTracker: sidebar.tabs.CombatTracker<any>;
+    CompendiumDirectory: CompendiumDirectory;
+    Hotbar: Hotbar<any>;
+    Item: documents.Item<any>;
+    Macro: documents.Macro;
+    MeasuredTemplateDocument: documents.MeasuredTemplateDocument<any>;
+    RegionDocument: documents.RegionDocument<any>;
+    RegionBehavior: documents.RegionBehavior<any>;
+    TileDocument: documents.TileDocument<any>;
+    TokenDocument: documents.TokenDocument<any>;
+    WallDocument: documents.WallDocument<any>;
+    Scene: documents.Scene;
+    User: documents.User;
+    EffectsCanvasGroup: EffectsCanvasGroup;
+}
+
 export default interface Config<
     TAmbientLightDocument extends documents.AmbientLightDocument<TScene | null>,
     TActiveEffect extends documents.ActiveEffect<TActor | TItem | null>,

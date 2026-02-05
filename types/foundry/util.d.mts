@@ -1,27 +1,12 @@
 import { DataSchema, DatabaseUpdateOperation } from "@common/abstract/_module.mjs";
 import Collection from "@common/utils/collection.mjs";
 import type DataModel from "./common/abstract/data.mjs";
+import type { DeepReadonly, DeepPartial, Maybe, ValueOf } from "./common/_shared-types.mjs";
 
 declare global {
-    type Maybe<T> = T | null | undefined;
-
-    type DeepPartial<T> = T extends Date | FileList | File | NestedValue
-        ? T
-        : T extends (infer U)[]
-          ? DeepPartial<U>[]
-          : { [K in keyof T]?: ExtractObjects<T[K]> extends never ? T[K] : DeepPartial<T[K]> };
-
-    type DeepReadonly<T> = {
-        readonly [K in keyof T]: T[K] extends undefined | null | boolean | number | string | symbol | bigint | Function
-            ? T[K]
-            : T[K] extends Array<infer V>
-              ? ReadonlyArray<DeepReadonly<V>>
-              : T[K] extends Map<infer K_1, infer V>
-                ? ReadonlyMap<DeepReadonly<K_1>, DeepReadonly<V>>
-                : T[K] extends Set<infer V_1>
-                  ? ReadonlySet<DeepReadonly<V_1>>
-                  : DeepReadonly<T[K]>;
-    };
+    type DeepReadonly<T> = import("./common/_shared-types.mjs").DeepReadonly<T>;
+    type DeepPartial<T> = import("./common/_shared-types.mjs").DeepPartial<T>;
+    type Maybe<T> = import("./common/_shared-types.mjs").Maybe<T>;
 
     type CollectionValue<T> = T extends Collection<string, infer U> ? U : never;
 
@@ -45,7 +30,7 @@ declare global {
 
     type DropFirst<T extends unknown[]> = T extends [unknown, ...infer U] ? U : never;
 
-    type ValueOf<T extends object> = T[keyof T];
+    type ValueOf<T extends object> = import("./common/_shared-types.mjs").ValueOf<T>;
 
     /** A JSON-compatible value, plus `undefined` */
     type JSONValue = string | number | boolean | object | null | undefined;

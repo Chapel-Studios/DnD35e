@@ -8,6 +8,7 @@ import * as CONST from "./constants.mjs";
 import { DataField } from "./data/fields.mjs";
 import { GridOffset2D } from "./grid/_types.mjs";
 import Color from "./utils/color.mjs";
+import type { DeepReadonly, DeepPartial, Maybe } from "./_shared-types.mjs";
 
 /* ----------------------------------------- */
 /*  Data Model                               */
@@ -26,19 +27,9 @@ type Builtin = Date | Function | Uint8Array | string | number | boolean | symbol
 /* ----------------------------------------- */
 
 /**
- * Make all properties in T recursively readonly.
+ * Re-export shared types from the dedicated shared-types module
  */
-type DeepReadonly<T> = {
-    readonly [K in keyof T]: T[K] extends undefined | null | boolean | number | string | symbol | bigint | Function
-        ? T[K]
-        : T[K] extends Array<infer V>
-          ? ReadonlyArray<DeepReadonly<V>>
-          : T[K] extends Map<infer K, infer V>
-            ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
-            : T[K] extends Set<infer V>
-              ? ReadonlySet<DeepReadonly<V>>
-              : DeepReadonly<T[K]>;
-};
+export type { DeepReadonly, DeepPartial, Maybe } from "./_shared-types.mjs";
 
 /**
  * A 2D point, expressed as an array [x, y].
