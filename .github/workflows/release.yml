@@ -21,14 +21,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Determine prerelease 
+        id: tag 
+        run: |
+          ref="${GITHUB_REF#refs/tags/}"
+          echo "tag=$ref" >> "$GITHUB_OUTPUT"
+
+          if [[ "$ref" == *"-alpha."* || "$ref" == *"-beta."* || "$ref" == *"-rc."* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download artifact (rebuild zip name)
+        run: echo "ZIP_NAME=dnd35e-dist-${{ steps.tag.outputs.tag }}.zip" >> "$GITHUB_ENV"
+      
+      - name: Rebuild dist zip (idempotent)
+        uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: 'package-lock.json'
-
-      - name: Install
+      
+      - name: Install Dependencies
         run: npm ci
 
       - name: Check version.yaml freshness (non-blocking)

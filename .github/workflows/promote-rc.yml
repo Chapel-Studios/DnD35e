@@ -1,0 +1,63 @@
+name: Promote dev to RC
+
+on:
+  workflow_dispatch:
+    inputs:
+      rc_version:
+        description: "Version to release (e.g., 14.0.0-alpha.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Create RC branch
+        run: |
+          git checkout -b "rc/${{ inputs.rc_version }}"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update version.yaml
+        run: |
+          echo "version: ${{ inputs.rc_version }}" > version.yaml
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version.yaml
+          git commit -m "chore: bump version to ${{ inputs.rc_version }}"
+
+      - name: Push RC branch
+        run: |
+          git push origin "rc/${{ inputs.rc_version }}"
+
+      - name: Tag RC
+        run: |
+          git tag "v${{ inputs.rc_version }}"
+          git push origin "v${{ inputs.rc_version }}"
+
+      - name: Create GitHub prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ inputs.rc_version }}"
+          prerelease: true
+          generate_release_notes: true

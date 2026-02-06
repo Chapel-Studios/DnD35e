@@ -31,14 +31,14 @@ jobs:
             fi
           fi
 
-          # rc rules
+          # rc rules (hotfixes only)
           if [[ "$target" == rc/* ]]; then
-            if [[ "$source" == "dev" || "$source" == hotfix/* ]]; then
+            if [[ "$source" == hotfix/* ]]; then
               allowed=true
             fi
           fi
 
-          # main rules
+          # main rules (RC or hotfix only)
           if [[ "$target" == "main" ]]; then
             if [[ "$source" == rc/* || "$source" == hotfix/* ]]; then
               allowed=true
