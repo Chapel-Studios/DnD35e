@@ -2,11 +2,11 @@ name: Lint (ts-standardx)
 
 on:
   pull_request:
-    branches:
-      - dev
-      - rc/*
-      - main
-      - hotfix/*
+    # branches:
+    #   - dev
+    #   - rc/*
+    #   - main
+    #   - hotfix/*
 
 jobs:
   lint:
