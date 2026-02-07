@@ -1,0 +1,4 @@
+# You must approve all PRs to dev, rc/*, and main
+dev/ @ChapelStudios @chapel-studios/d-d-3-5e-architects
+rc/* @chapel-studios/d-d-3-5e-architects
+main @chapel-studios/d-d-3-5e-architects
