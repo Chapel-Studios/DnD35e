@@ -44,9 +44,9 @@
 </template>
 
 <script setup lang="ts">
-  import FormGroup from "@vc/Fields/FormGroup.vue";
-  import { inject } from "vue";
-  import { ItemSheetStore } from "../index.mjs";
+  import FormGroup from '@vc/Fields/FormGroup.vue';
+  import { inject } from 'vue';
+  import { ItemSheetStore } from '../index.mjs';
 
   const {
     documentGetters: {
@@ -65,7 +65,7 @@
 
   const isActive = getIsTabOpen('name-config');
 
-  function t(key: string) {
+  function t (key: string) {
     return game.i18n.localize(key);
   }
 </script>

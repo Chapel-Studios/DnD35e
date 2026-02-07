@@ -77,10 +77,10 @@
 </template>
 
 <script setup lang="ts">
-  import { FormGroup, UniqueId } from "@vc/Fields/index.mjs";
+  import { FormGroup, UniqueId } from '@vc/Fields/index.mjs';
   import { IdentifiableConfig } from '@items/components/Identifiable/index.mjs';
-  import type { MaterialStore } from "./index.mjs";
-  import { inject } from "vue";
+  import type { MaterialStore } from './index.mjs';
+  import { inject } from 'vue';
 
   const {
     tabs: {
@@ -104,13 +104,9 @@
   const isActiveTab = getIsTabOpen(tabName);
   const userIsGM = game.user.isGM;
 
-  function t(key: string) {
+  function t (key: string) {
     return game.i18n.localize(key);
   }
-
-  const test = (value:boolean) => {
-    getFieldUpdater('system.isIdentifiable')(value);
-  };
 </script>
 
 <style scoped>

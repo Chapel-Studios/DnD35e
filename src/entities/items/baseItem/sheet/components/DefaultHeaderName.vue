@@ -7,11 +7,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ItemSheetStore } from '../ItemSheetStore.mjs';
-import ItemName from './ItemName.vue';
-import { inject } from 'vue';
+  import { ItemSheetStore } from '../ItemSheetStore.mjs';
+  import ItemName from './ItemName.vue';
+  import { inject } from 'vue';
 
-const {
-  documentGetters: { displayName }
-} = inject('itemSheetStore') as ItemSheetStore;
+  const {
+    documentGetters: { displayName },
+  } = inject('itemSheetStore') as ItemSheetStore;
 </script>

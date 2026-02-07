@@ -22,28 +22,27 @@
 </template>
 
 <script setup lang="ts">
-  import FormGroup from "@vc/Fields/FormGroup.vue";
-  import { inject } from "vue";
+  import { ItemSheetStore } from '@items/baseItem/index.mjs';
+  import FormGroup from '@vc/Fields/FormGroup.vue';
+  import { inject } from 'vue';
 
-  const _field = "system.uniqueId";
+  const _field = 'system.uniqueId';
   const {
     documentGetters: {
-      getProperty,
       uniqueId,
-      displayName,
     },
     documentActions: {
       getFieldUpdater,
     },
     isEditable,
-  } = inject<ItemSheetStore>('itemSheetStore');
+  } = inject('itemSheetStore') as ItemSheetStore;
   const updateUUID = getFieldUpdater(_field);
 
-  function t(key: string) {
+  function t (key: string) {
     return game.i18n.localize(key);
   }
 
-  async function generate() {
+  async function generate () {
     const uid = crypto.randomUUID();
     await updateUUID(uid);
   }

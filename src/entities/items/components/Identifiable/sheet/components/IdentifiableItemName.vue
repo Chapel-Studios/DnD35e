@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, inject } from "vue";
-  import { ItemName } from "@items/baseItem/index.mjs";
-  import type { IdentifiableItemStore, IdentifiableItemLike } from "@items/components/Identifiable/index.mjs";
+  import { computed, inject } from 'vue';
+  import { ItemName } from '@items/baseItem/index.mjs';
+  import type { IdentifiableItemStore, IdentifiableItemLike } from '@items/components/Identifiable/index.mjs';
 
   const {
     unidentifiedInfoMode: {
@@ -42,11 +42,11 @@
 
   const identifiedValue = computed(() => showBoth
     ? identifiedDisplayName
-    : displayName
+    : displayName,
   );
   const identifiedLabelKey = computed(() => isIdentifiable && showBoth
-    ? "D35E.IdentifiedName"
-    : "D35E.ItemName"
+    ? 'D35E.IdentifiedName'
+    : 'D35E.ItemName',
   );
 </script>
 
@@ -55,7 +55,7 @@
     display: flex;
     flex-direction: column;
     margin-top: 0.5rem;
-    
+
     h4 {
         text-decoration: underline;
     }

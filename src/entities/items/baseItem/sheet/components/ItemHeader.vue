@@ -13,17 +13,16 @@
 </template>
 
 <script lang="ts" setup>
-import { ItemSheetStore, DefaultNameHeader } from '@items/baseItem/index.mjs';
-import { inject } from 'vue';
+  import { ItemSheetStore, DefaultNameHeader } from '@items/baseItem/index.mjs';
+  import { inject } from 'vue';
 
-const { getItemTypeDisplay } = inject('itemSheetStore') as ItemSheetStore;
+  const { getItemTypeDisplay } = inject('itemSheetStore') as ItemSheetStore;
 
-const itemType = getItemTypeDisplay();
+  const itemType = getItemTypeDisplay();
 </script>
 
-
 <style scoped lang="scss">
-  .item-header {    
+  .item-header {
     display: grid;
     grid-template: auto / 3fr minmax(80px, 1fr);
   }

@@ -26,9 +26,8 @@
   </section>
 </template>
 <script setup lang="ts">
-  import { FormGroup, UniqueId } from "@vc/Fields/index.mjs";
-  import { inject } from "vue";
-  import { WeaponStore } from "./WeaponStore.mjs";
+  import { inject } from 'vue';
+  import { WeaponStore } from './WeaponStore.mjs';
   import {
     ItemQuantity,
     ItemWeight,
@@ -37,17 +36,13 @@
     ItemHardness,
     ItemSheetContainerSelector,
     ItemSheetIsCarriedCheckbox,
-  } from "@items/components/Physical/index.mjs";
-  import { IdentifiableItemPrice } from "@items/components/Identifiable/index.mjs";
+  } from '@items/components/Physical/index.mjs';
+  import { IdentifiableItemPrice } from '@items/components/Identifiable/index.mjs';
 
   const {
     tabs: {
       tabGetters: { getIsTabOpen },
     },
-    documentActions: {
-      getFieldUpdater,
-    },
-    isEditable,
   } = inject('itemSheetStore') as WeaponStore;
 
   const tabName = 'weapon-details';

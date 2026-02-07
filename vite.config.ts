@@ -3,14 +3,14 @@ import tsconfigPaths, { PluginOptions } from 'vite-tsconfig-paths';
 import path from 'path';
 import fg from 'fast-glob';
 import fs from 'fs-extra';
-import vue from "@vitejs/plugin-vue";
+import vue from '@vitejs/plugin-vue';
 
 // Copy Foundry system + static files
-function copyStaticFiles(opts?: PluginOptions | undefined): Plugin {
+function copyStaticFiles (_opts?: PluginOptions | undefined): Plugin {
   return {
     name: 'copy-static-files',
     apply: 'build',
-    async closeBundle() {
+    async closeBundle () {
       const staticFiles = [
         'system.json',
         'README.md',
@@ -18,16 +18,16 @@ function copyStaticFiles(opts?: PluginOptions | undefined): Plugin {
       for (const file of staticFiles) {
         await fs.copy(file, `dist/${file}`);
       }
-    }
+    },
   };
 }
 
 // Copy .hbs templates into dist/hbsTemplates
-function copyHbsFiles(opts?: PluginOptions | undefined): Plugin {
+function copyHbsFiles (_opts?: PluginOptions | undefined): Plugin {
   return {
     name: 'copy-hbs-files',
     apply: 'build',
-    async closeBundle() {
+    async closeBundle () {
       const files = await fg('src/**/*.hbs');
       for (const file of files) {
         const rel = path.relative('src', file);
@@ -35,16 +35,16 @@ function copyHbsFiles(opts?: PluginOptions | undefined): Plugin {
         await fs.ensureDir(path.dirname(dest));
         await fs.copy(file, dest);
       }
-    }
+    },
   };
 }
 
-function logBuildTimestamp(opts?: PluginOptions | undefined): Plugin {
+function logBuildTimestamp (_opts?: PluginOptions | undefined): Plugin {
   return {
     name: 'log-build-timestamp',
     apply: 'build',
     enforce: 'post',
-    closeBundle() {
+    closeBundle () {
       console.log(`Finished at ${new Date().toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
@@ -56,10 +56,10 @@ function logBuildTimestamp(opts?: PluginOptions | undefined): Plugin {
 }
 
 // Glob lang files
-function bundleLangFiles() {
+function bundleLangFiles () {
   return {
     name: 'bundle-lang-files',
-    async closeBundle() {
+    async closeBundle () {
       const srcRoot = path.resolve(__dirname, 'src/lang');
       const distRoot = path.resolve(__dirname, 'dist/lang');
 
@@ -97,15 +97,15 @@ function bundleLangFiles() {
 export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
-      "@vc": path.resolve(__dirname, "src/vue"),
-      "@canvas": path.resolve(__dirname, "src/canvas"),
-      "@constants": path.resolve(__dirname, "src/constants"),
-      "@helpers": path.resolve(__dirname, "src/helpers"),
-      "@items": path.resolve(__dirname, "src/entities/items"),
-      "@actors": path.resolve(__dirname, "src/entities/actors"),
-      "@entities": path.resolve(__dirname, "src/entities"),
-      "@scene": path.resolve(__dirname, "src/scene"),
-      "@source": path.resolve(__dirname, "src"),
+      '@vc': path.resolve(__dirname, 'src/vue'),
+      '@canvas': path.resolve(__dirname, 'src/canvas'),
+      '@constants': path.resolve(__dirname, 'src/constants'),
+      '@helpers': path.resolve(__dirname, 'src/helpers'),
+      '@items': path.resolve(__dirname, 'src/entities/items'),
+      '@actors': path.resolve(__dirname, 'src/entities/actors'),
+      '@entities': path.resolve(__dirname, 'src/entities'),
+      '@scene': path.resolve(__dirname, 'src/scene'),
+      '@source': path.resolve(__dirname, 'src'),
     },
   },
   plugins: [
@@ -155,8 +155,8 @@ export default defineConfig(({ mode }) => ({
           }
 
           return '[name][extname]';
-        }
-      }
+        },
+      },
     },
   },
   css: {
@@ -168,7 +168,7 @@ export default defineConfig(({ mode }) => ({
         //   const files = fg.sync('src/**/*.scss');
         //   return files.map(f => `@import "${f.replace(/\\/g, '/')}";`).join('\n');
         // }
-      }
-    }
-  }
+      },
+    },
+  },
 }));

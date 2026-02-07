@@ -1,5 +1,5 @@
 <template>
-  <img 
+  <img
     class="item-art"
     :class="props.class"
     :src="currentImg"
@@ -11,9 +11,9 @@
 <script lang="ts" setup>
   import { ItemSheetStore } from '@items/baseItem/sheet/ItemSheetStore.mjs';
   import { inject } from 'vue';
-  
+
   const props = defineProps<{
-    field: string;       // e.g. "system.description"
+    field: string; // e.g. "system.description"
     title?: string;
     class?: string;
   }>();
@@ -25,22 +25,22 @@
     documentActions: {
       getFieldUpdater,
     },
-    isEditable,
   } = inject('itemSheetStore') as ItemSheetStore;
   const updateField = getFieldUpdater(props.field);
   const currentImg = getProperty<string>(props.field);
 
-  async function editImage(event: MouseEvent) {
+  async function editImage (event: MouseEvent) {
     event.preventDefault();
     event.stopPropagation();
     const current = currentImg.value as string;
+    // eslint-disable-next-line new-cap
     const fp = new foundry.applications.apps.FilePicker.implementation({
-      type: "image",
+      type: 'image',
       current,
       callback: async (path: string) => {
         await updateField(path);
       },
-    });
+    } as any);
 
     fp.render();
   }
