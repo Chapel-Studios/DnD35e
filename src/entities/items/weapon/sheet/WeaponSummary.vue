@@ -7,18 +7,18 @@
 </template>
 
 <script setup lang="ts">
-  import { inject } from "vue";
-  import type { WeaponStore } from "./WeaponStore.mjs";
+  import { inject } from 'vue';
+  import type { WeaponStore } from './WeaponStore.mjs';
 
   const {
     documentGetters: {
-      localizedType
+      localizedType,
     },
     weaponGetters: {
       weaponType,
       weaponSubtype,
     },
-  } = inject("itemSheetStore") as WeaponStore;
+  } = inject('itemSheetStore') as WeaponStore;
 </script>
 
 <style scoped lang="scss">

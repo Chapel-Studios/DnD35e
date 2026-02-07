@@ -14,10 +14,10 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, inject } from "vue";
-  import { RichTextEditor } from "@vc/Fields/index.mjs";
-  import type { IdentifiableItemStore } from "./index.mjs";
-import { IdentifiableItemLike } from "../index.mjs";
+  import { computed, inject } from 'vue';
+  import { RichTextEditor } from '@vc/Fields/index.mjs';
+  import type { IdentifiableItemStore } from './index.mjs';
+  import { IdentifiableItemLike } from '../index.mjs';
 
   const {
     tabs: {
@@ -32,8 +32,8 @@ import { IdentifiableItemLike } from "../index.mjs";
   const isActiveTab = getIsTabOpen('description');
 
   const identifiedLabel = computed(() => showBoth
-    ? game.i18n.localize("D35E.IdentifiedDescription")
-    : game.i18n.localize("D35E.Description")
+    ? game.i18n.localize('D35E.IdentifiedDescription')
+    : game.i18n.localize('D35E.Description'),
   );
 </script>
 

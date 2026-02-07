@@ -25,28 +25,37 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-  name?: string;
-  label?: string;
-  trueLabel?: string;
-  falseLabel?: string;
-  checked: boolean;
-  disabled?: boolean;
-  editable?: boolean;
-}>();
+  const {
+    name,
+    label,
+    trueLabel,
+    falseLabel,
+    checked,
+    disabled = false,
+    editable = true,
+  } = defineProps<{
+    name?: string;
+    label?: string;
+    trueLabel?: string;
+    falseLabel?: string;
+    checked: boolean;
+    disabled?: boolean;
+    editable?: boolean;
+  }>();
 
-const emit = defineEmits<{
-  (e: "update", value: boolean): void;
-}>();
+  const emit = defineEmits<{
+    (e: 'update', value: boolean): void;
+  }>();
 
-function t(key: string) {
-  return game.i18n.localize(key);
-}
+  // eslint-disable-next-line func-call-spacing
+  function t (key: string) {
+    return game.i18n.localize(key);
+  }
 
-function onToggle(event: Event) {
-  const target = event.target as HTMLInputElement
-  emit("update", target.checked);
-}
+  function onToggle (event: Event) {
+    const target = event.target as HTMLInputElement;
+    emit('update', target.checked);
+  }
 </script>
 
 <style scoped lang="scss">

@@ -25,13 +25,13 @@
     context?: any;
   }>();
 
-  if (!!props.context) {
+  if (props.context) {
     const baseStore = useItemSheetStore(props.context);
     const physicalItemStore = usePhysicalItemStore(props.context, baseStore);
-    
+
     provide('itemSheetStore', {
       ...baseStore,
-      ...physicalItemStore
+      ...physicalItemStore,
     });
   }
 </script>

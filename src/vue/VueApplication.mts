@@ -71,39 +71,39 @@ abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.appl
     return `dnd35e-${this.document.type}-sheet-${this.document.id}`;
   }
 
-  static get DEFAULT_OPTIONS(): DeepPartial<VueApplicationConfiguration<ItemDnd35e>> {
-    return {
-      classes: ["dnd35e", "sheet"],
-      tag: "form",
-      viewPermission: foundry.CONST.DOCUMENT_OWNERSHIP_LEVELS.LIMITED,
-      editPermission: foundry.CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER,
-      canCreate: false,
-      sheetConfig: true,
-      actions: {
-        configureSheet: (event: PointerEvent) => this.prototype._onConfigureSheet(event),
-        copyUuid: {
-          handler: (event: PointerEvent) => this.prototype._onCopyUuid(event),
-          buttons: [0, 2]
-        },
-        // editImage: (event: PointerEvent) => this.prototype._onEditImage(event),
-        importDocument: (event: PointerEvent) => this.prototype._onImportDocument(event)
-      },
-      position: {
-        width: 560,
-        height: 650
-      },
-      window: {
-        controls: [
-          {
-            icon: "fa-solid fa-gear",
-            label: "SHEETS.ConfigureSheet",
-            action: "configureSheet",
-            visible: this.prototype.canConfigureSheet
-          },
-        ]
-      },
-    };
-  }
+  // static get DEFAULT_OPTIONS(): DeepPartial<VueApplicationConfiguration<ItemDnd35e>> {
+  //   return {
+  //     classes: ["dnd35e", "sheet"],
+  //     tag: "form",
+  //     viewPermission: foundry.CONST.DOCUMENT_OWNERSHIP_LEVELS.LIMITED,
+  //     editPermission: foundry.CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER,
+  //     canCreate: false,
+  //     sheetConfig: true,
+  //     actions: {
+  //       configureSheet: (event: PointerEvent) => this.prototype._onConfigureSheet(event),
+  //       copyUuid: {
+  //         handler: (event: PointerEvent) => this.prototype._onCopyUuid(event),
+  //         buttons: [0, 2]
+  //       },
+  //       // editImage: (event: PointerEvent) => this.prototype._onEditImage(event),
+  //       // importDocument: (event: PointerEvent) => this.prototype._onImportDocument(event)
+  //     },
+  //     position: {
+  //       width: 560,
+  //       height: 650
+  //     },
+  //     // window: {
+  //     //   controls: [
+  //     //     {
+  //     //       icon: "fa-solid fa-gear",
+  //     //       label: "SHEETS.ConfigureSheet",
+  //     //       action: "configureSheet",
+  //     //       visible: this.prototype.canConfigureSheet
+  //     //     },
+  //     //   ]
+  //     // },
+  //   };
+  // }
 
   get canConfigureSheet() {
     if ( !this.options?.sheetConfig || !this.isEditable ) return false;
@@ -138,7 +138,7 @@ abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.appl
         top: this.position.top + 40,
         left: this.position.left + ((positionWidth - docSheetConfigWidth) / 2)
       }
-    } as Partial<DocumentSheetConfiguration>).render({ force: true });
+    } as any).render({ force: true } as VueRenderOptions);
   }
 
   protected _onCopyUuid(event: PointerEvent): void {
@@ -293,4 +293,5 @@ export {
 export type {
   VueApplicationConfiguration,
   VueSheetContext,
+  VueRenderOptions,
 }

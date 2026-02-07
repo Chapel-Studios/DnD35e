@@ -13,7 +13,7 @@
       :disabled="disabled || !editable"
       @change="onChange(($event.target as HTMLInputElement).value)"
     />
-    
+
     <!-- Number input -->
     <input
       v-else-if="type === 'number'"
@@ -48,7 +48,7 @@
         {{ t(opt.label) }}
       </option>
     </select>
-    
+
     <!-- Multi-select -->
     <select
       v-else-if="type === 'multiselect'"
@@ -70,29 +70,29 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-  label?: string;              // localization key
-  value: any;                  // current value
-  type?: "text" | "number" | "checkbox" | "select" | "multiselect";
-  disabled?: boolean;
-  editable?: boolean;
-  onUpdate: (value: any) => void;
-  isDmOnly?: boolean;
+  const props = defineProps<{
+    label?: string; // localization key
+    value: any; // current value
+    type?: 'text' | 'number' | 'checkbox' | 'select' | 'multiselect';
+    disabled?: boolean;
+    editable?: boolean;
+    onUpdate:(value: any) => void;
+    isDmOnly?: boolean;
 
-  // Used when type === "select" | "multiselect"
-  options?: Array<{ label: string; value: any }>;
-}>();
+    // Used when type === "select" | "multiselect"
+    options?: Array<{ label: string; value: any }>;
+  }>();
 
-function t(key: string) {
-  return game.i18n.localize(key);
-}
+  function t (key: string) {
+    return game.i18n.localize(key);
+  }
 
-function onChange(val: any) {
-  props.onUpdate(val);
-}
+  function onChange (val: any) {
+    props.onUpdate(val);
+  }
 
-const hasLabel = !!props.label;
-const isHidden = props.isDmOnly && !game.user.isGM;
+  const hasLabel = !!props.label;
+  const isHidden = props.isDmOnly && !game.user.isGM;
 </script>
 
 <style scoped>

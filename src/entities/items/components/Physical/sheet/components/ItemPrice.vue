@@ -23,4 +23,4 @@
   } = inject('itemSheetStore') as PhysicalItemSheetStore;
 
   const updater = getFieldUpdater('system.price');
-</script> 
+</script>

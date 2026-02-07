@@ -9,7 +9,7 @@
 <script setup lang="ts">
   import { FormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-import { IdentifiableItemStore } from '../IdentifiableItemStore.mjs';
+  import { IdentifiableItemStore } from '../IdentifiableItemStore.mjs';
 
   const {
     isEditable,
@@ -22,4 +22,4 @@ import { IdentifiableItemStore } from '../IdentifiableItemStore.mjs';
   } = inject('itemSheetStore') as IdentifiableItemStore;
 
   const updater = getFieldUpdater('system.unidentifiedInfo.unidentifiedPrice');
-</script> 
+</script>

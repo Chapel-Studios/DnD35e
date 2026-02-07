@@ -10,9 +10,9 @@
 </template>
 
 <script setup lang="ts">
-  import { RichTextEditor } from "@vc/Fields/index.mjs";
-  import { ItemSheetStore } from "../index.mjs";
-  import { inject } from "vue";
+  import { RichTextEditor } from '@vc/Fields/index.mjs';
+  import { ItemSheetStore } from '../index.mjs';
+  import { inject } from 'vue';
 
   const {
     tabs: {
@@ -22,7 +22,7 @@
 
   const isActiveTab = getIsTabOpen('description');
 
-  const label = game.i18n.localize("D35E.Description");
+  const label = game.i18n.localize('D35E.Description');
 </script>
 
 <style scoped>

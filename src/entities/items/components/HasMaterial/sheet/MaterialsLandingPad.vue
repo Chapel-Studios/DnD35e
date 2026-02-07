@@ -9,32 +9,32 @@
 </template>
 
 <script setup lang="ts">
-import LandingPad from '@vc/LandingPad.vue';
-import { inject } from 'vue';
-import type { ItemWithMaterialsStore } from './ItemWithMaterialsStore.mjs';
-import type { ItemSheetStore } from '@items/baseItem/index.mjs';
+  import LandingPad from '@vc/LandingPad.vue';
+  import { inject } from 'vue';
+  import type { ItemWithMaterialsStore } from './ItemWithMaterialsStore.mjs';
+  import type { ItemSheetStore } from '@items/baseItem/index.mjs';
 
-const {
-  itemWithMaterialsGetters: {
-    materials,
-  },
-  documentActions: {
-    getFieldUpdater,
-  },
-  isEditable,
-} = inject('itemSheetStore') as ItemWithMaterialsStore & ItemSheetStore;
-const updater = getFieldUpdater('system.materials');
+  const {
+    itemWithMaterialsGetters: {
+      materials,
+    },
+    documentActions: {
+      getFieldUpdater,
+    },
+    isEditable,
+  } = inject('itemSheetStore') as ItemWithMaterialsStore & ItemSheetStore;
+  const updater = getFieldUpdater('system.materials');
 
-const onDrop = async (newUuid: string) => {
-  updater([
-    ...materials.value,
-    newUuid,
-  ]);
-};
+  const onDrop = async (newUuid: string) => {
+    updater([
+      ...materials.value,
+      newUuid,
+    ]);
+  };
 
-const removeMaterial = async (uuid: string) => {
-  await updater([
-    ...materials.value.filter(m => m !== uuid),
-  ]);
-}
+  const removeMaterial = async (uuid: string) => {
+    await updater([
+      ...materials.value.filter(m => m !== uuid),
+    ]);
+  };
 </script>

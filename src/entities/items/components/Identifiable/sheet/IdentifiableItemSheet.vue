@@ -25,7 +25,7 @@
     context?: any;
   }>();
 
-  if (!!props.context) {
+  if (props.context) {
     const baseStore = useItemSheetStore(props.context);
     const physicalItemStore = useItemSheetStore(props.context);
     provide('itemSheetStore', {

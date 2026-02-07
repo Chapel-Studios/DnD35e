@@ -11,8 +11,8 @@
 </template>
 
 <script setup lang="ts">
-  import { inject } from "vue";
-  import { IdentifiableItemStore } from "@items/components/Identifiable/index.mjs";
+  import { inject } from 'vue';
+  import { IdentifiableItemStore } from '@items/components/Identifiable/index.mjs';
   import { ToggleSwitch } from '@vc/Fields/index.mjs';
 
   const {
