@@ -31,4 +31,4 @@
 
   const updateCurrentHp = getFieldUpdater('system.hp.value');
   const updateMaxHp = getFieldUpdater('system.hp.max');
-</script> 
+</script>

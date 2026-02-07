@@ -35,8 +35,9 @@
 </template>
 
 <script setup lang="ts">
-  import { ItemDnd35e } from "@items/baseItem/index.mjs";
-  import { ref, watch, onMounted } from "vue";
+  import { ItemDnd35e } from '@items/baseItem/index.mjs';
+  import { ref, watch, onMounted } from 'vue';
+  import { VueRenderOptions } from './VueApplication.mjs';
 
   interface Props {
     /** List of UUIDs already attached to the document */
@@ -67,21 +68,21 @@
   /*  Load referenced items                       */
   /* -------------------------------------------- */
 
-  async function loadItems() {
+  async function loadItems () {
     const resolved: itemData[] = [];
 
     for (const uuid of props.uuids) {
-      const item = (await fromUuid(uuid)) as ItemDnd35e;
+      const item = (await foundry.utils.fromUuid(uuid)) as ItemDnd35e;
       if (item instanceof Item) {
         resolved.push({
           name: item.displayName,
-          uuid: uuid,
+          uuid,
           renderSheet: () => {
             item.sheet?.render({
               force: true,
               isEditable: false,
-            });
-          }
+            } as VueRenderOptions);
+          },
         });
       }
     }
@@ -96,20 +97,20 @@
   /*  Drag + Drop                                 */
   /* -------------------------------------------- */
 
-  function handleDragOver(event: DragEvent) {
+  function handleDragOver (event: DragEvent) {
     event.preventDefault();
     isOver.value = true;
   }
 
-  function handleDragLeave() {
+  function handleDragLeave () {
     isOver.value = false;
   }
 
-  async function handleDrop(event: DragEvent) {
+  async function handleDrop (event: DragEvent) {
     event.preventDefault();
     isOver.value = false;
 
-    const raw = event.dataTransfer?.getData("text/plain");
+    const raw = event.dataTransfer?.getData('text/plain');
     if (!raw) return;
 
     let data: any;
@@ -119,7 +120,7 @@
       return;
     }
 
-    if (data.type !== "Item" || !data.uuid) return;
+    if (data.type !== 'Item' || !data.uuid) return;
 
     if (props.acceptedTypes && !props.acceptedTypes.includes(data.itemType)) {
       return;

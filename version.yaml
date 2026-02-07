@@ -1,0 +1,44 @@
+# Project version metadata
+#
+# Auto-generated from GitHub milestones.
+# Keep VERSION in sync with system.json when preparing a release.
+
+version:
+  current: "13.0.0-dev.1"
+  current_milestone: "14.0.0-alpha.1 - Item PoC"
+
+milestones:
+  - id: 14683174
+    name: "14.0.0-alpha.1 - Item PoC"
+    url: "https://github.com/Chapel-Studios/DnD35e/milestone/1"
+    status: "open"
+
+  - id: 14683201
+    name: "14.0.0-alpha.2 - Actor<'PlayerCharacter'>"
+    url: "https://github.com/Chapel-Studios/DnD35e/milestone/3"
+    status: "open"
+
+  - id: 14683247
+    name: "14.0.0-alpha.x Changes PoC"
+    url: "https://github.com/Chapel-Studios/DnD35e/milestone/4"
+    status: "open"
+
+  - id: 14683256
+    name: "14.0.0-alpha.3 Token PoC"
+    url: "https://github.com/Chapel-Studios/DnD35e/milestone/5"
+    status: "open"
+
+  - id: 14683263
+    name: "14.0.0-alpha.x Vision PoC"
+    url: "https://github.com/Chapel-Studios/DnD35e/milestone/6"
+    status: "open"
+
+  - id: 14683272
+    name: "14.0.0-alpha.x - Combat PoC"
+    url: "https://github.com/Chapel-Studios/DnD35e/milestone/7"
+    status: "open"
+
+  - id: 14683392
+    name: "14.0.0-alpha.x - Compendium PoC"
+    url: "https://github.com/Chapel-Studios/DnD35e/milestone/8"
+    status: "open"

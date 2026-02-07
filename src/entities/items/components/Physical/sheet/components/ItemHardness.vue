@@ -23,4 +23,4 @@
   } = inject('itemSheetStore') as PhysicalItemSheetStore;
 
   const updateCurrentHp = getFieldUpdater('system.hardness');
-</script> 
+</script>

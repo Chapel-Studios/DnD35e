@@ -91,9 +91,9 @@
 </template>
 
 <script setup lang="ts">
-  import { inject } from "vue";
-  import { FormGroup } from "@vc/Fields/index.mjs";
-  import { IdentifiableItemStore } from "./index.mjs";
+  import { inject } from 'vue';
+  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { IdentifiableItemStore } from './index.mjs';
 
   const {
     tabs: {
@@ -116,12 +116,12 @@
       showBoth,
     },
     isEditable,
-  } = inject("itemSheetStore") as IdentifiableItemStore;
+  } = inject('itemSheetStore') as IdentifiableItemStore;
 
   const isActiveTab = getIsTabOpen('name-config');
 
   // --- Localization helper ---
-  function t(key: string) {
+  function t (key: string) {
     return game.i18n.localize(key);
   }
 </script>
