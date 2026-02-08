@@ -3,9 +3,10 @@
  * @internal
  * @ignore
  */
+import RegionShader from './base.mjs';
 export default class HighlightRegionShader extends RegionShader {
-    /** @inheritDoc */
-    static defaultUniforms: {
+  /** @inheritDoc */
+  static defaultUniforms: {
         resolution: number;
         hatchEnabled: boolean;
         hatchThickness: number;
@@ -15,4 +16,3 @@ export default class HighlightRegionShader extends RegionShader {
         tintAlpha: number[];
     };
 }
-import RegionShader from "./base.mjs";

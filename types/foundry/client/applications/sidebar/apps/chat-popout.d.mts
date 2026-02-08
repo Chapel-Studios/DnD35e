@@ -1,11 +1,11 @@
 import {
-    ApplicationClosingOptions,
-    ApplicationConfiguration,
-    ApplicationRenderContext,
-    ApplicationRenderOptions,
-} from "@client/applications/_module.mjs";
-import ChatMessage from "@client/documents/chat-message.mjs";
-import ApplicationV2 from "../../api/application.mjs";
+  ApplicationClosingOptions,
+  ApplicationConfiguration,
+  ApplicationRenderContext,
+  ApplicationRenderOptions,
+} from '@client/applications/_module.mjs';
+import ChatMessage from '@client/documents/chat-message.mjs';
+import ApplicationV2 from '../../api/application.mjs';
 
 interface ChatPopoutConfiguration extends ApplicationConfiguration {
     /** The message being rendered. */
@@ -17,42 +17,42 @@ interface ChatPopoutConfiguration extends ApplicationConfiguration {
  * @extends {ApplicationV2<ChatPopoutConfiguration, ApplicationRenderOptions>}
  */
 export default class ChatPopout extends ApplicationV2<ChatPopoutConfiguration> {
-    constructor(options: ApplicationConfiguration & { message: ChatMessage });
+  constructor(options: ApplicationConfiguration & { message: ChatMessage });
 
-    static override DEFAULT_OPTIONS: DeepPartial<ChatPopoutConfiguration>;
+  static override DEFAULT_OPTIONS: DeepPartial<ChatPopoutConfiguration>;
 
-    /* -------------------------------------------- */
-    /*  Properties                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Properties                                  */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * The message being rendered.
      */
-    get message(): ChatMessage;
+  get message(): ChatMessage;
 
-    get title(): string;
+  get title(): string;
 
-    /* -------------------------------------------- */
-    /*  Methods                                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Methods                                     */
+  /* -------------------------------------------- */
 
-    protected override _initializeApplicationOptions(
+  protected override _initializeApplicationOptions(
         options: DeepPartial<ChatPopoutConfiguration>,
     ): ChatPopoutConfiguration;
 
-    protected _onClose(options: ApplicationClosingOptions): void;
+  protected _onClose(options: ApplicationClosingOptions): void;
 
-    protected override _onFirstRender(
+  protected override _onFirstRender(
         context: ApplicationRenderContext,
         options: ApplicationRenderOptions,
     ): Promise<void>;
 
-    protected override _renderHTML(
+  protected override _renderHTML(
         context: ApplicationRenderContext,
         options: ApplicationRenderOptions,
     ): Promise<HTMLElement>;
 
-    protected override _replaceHTML(result: HTMLElement, content: HTMLElement, options: ApplicationRenderOptions): void;
+  protected override _replaceHTML(result: HTMLElement, content: HTMLElement, options: ApplicationRenderOptions): void;
 }
 
 export {};

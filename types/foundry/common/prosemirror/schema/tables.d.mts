@@ -1,4 +1,4 @@
-import { Node } from "prosemirror-model";
+import { Node } from 'prosemirror-model';
 
 interface CELL_ATTRS {
     colspan: { default: 1 };
@@ -7,155 +7,155 @@ interface CELL_ATTRS {
 }
 
 interface MANAGED_CELL_ATTRS {
-    attributes: ["colspan", "rowspan", "data-colwidth"];
+    attributes: ['colspan', 'rowspan', 'data-colwidth'];
 }
 
 // If any of these elements are part of a table, consider it a 'complex' table and do not attempt to make it editable.
-type COMPLEX_TABLE_ELEMENTS = Set<["CAPTION", "COLGROUP", "THEAD", "TFOOT"]>;
+type COMPLEX_TABLE_ELEMENTS = Set<['CAPTION', 'COLGROUP', 'THEAD', 'TFOOT']>;
 
 /* -------------------------------------------- */
 /*  'Complex' Tables                            */
 /* -------------------------------------------- */
 
 export const tableComplex: {
-    content: "(caption | caption_block)? colgroup? thead? tbody tfoot?";
+    content: '(caption | caption_block)? colgroup? thead? tbody tfoot?';
     isolating: true;
-    group: "block";
+    group: 'block';
     parseDOM: [
         {
-            tag: "table";
+            tag: 'table';
             getAttrs: (el: HTMLElement) => boolean | void;
         },
     ];
-    toDOM: () => ["table", 0];
+    toDOM: () => ['table', 0];
 };
 
 export const colgroup: {
-    content: "col*";
+    content: 'col*';
     isolating: true;
-    parseDOM: [{ tag: "colgroup" }];
-    toDOM: () => ["colgroup", 0];
+    parseDOM: [{ tag: 'colgroup' }];
+    toDOM: () => ['colgroup', 0];
 };
 
 export const col: {
-    tableRole: "col";
-    parseDOM: [{ tag: "col" }];
-    toDOM: () => ["col"];
+    tableRole: 'col';
+    parseDOM: [{ tag: 'col' }];
+    toDOM: () => ['col'];
 };
 
 export const thead: {
-    content: "table_row_complex+";
+    content: 'table_row_complex+';
     isolating: true;
-    parseDOM: [{ tag: "thead" }];
-    toDOM: () => ["thead", 0];
+    parseDOM: [{ tag: 'thead' }];
+    toDOM: () => ['thead', 0];
 };
 
 export const tbody: {
-    content: "table_row_complex+";
+    content: 'table_row_complex+';
     isolating: true;
     parseDOM: [
         {
-            tag: "tbody";
+            tag: 'tbody';
             getAttrs: (el: HTMLElement) => boolean | void;
         },
     ];
-    toDOM: () => ["tbody", 0];
+    toDOM: () => ['tbody', 0];
 };
 
 export const tfoot: {
-    content: "table_row_complex+";
+    content: 'table_row_complex+';
     isolating: true;
-    parseDOM: [{ tag: "tfoot" }];
-    toDOM: () => ["tfoot", 0];
+    parseDOM: [{ tag: 'tfoot' }];
+    toDOM: () => ['tfoot', 0];
 };
 
 export const caption: {
-    content: "text*";
+    content: 'text*';
     isolating: true;
     parseDOM: [
         {
-            tag: "caption";
+            tag: 'caption';
             getAttrs: (el: HTMLElement) => boolean | void;
         },
     ];
-    toDOM: () => ["caption", 0];
+    toDOM: () => ['caption', 0];
 };
 
 export const captionBlock: {
-    content: "block*";
+    content: 'block*';
     isolating: true;
     parseDOM: [
         {
-            tag: "caption";
+            tag: 'caption';
             getAttrs: (el: HTMLElement) => boolean | void;
         },
     ];
-    toDOM: () => ["caption", 0];
+    toDOM: () => ['caption', 0];
 };
 
 export const tableRowComplex: {
-    content: "(table_cell_complex | table_header_complex | table_cell_complex_block | table_header_complex_block)*";
+    content: '(table_cell_complex | table_header_complex | table_cell_complex_block | table_header_complex_block)*';
     parseDOM: [
         {
-            tag: "tr";
+            tag: 'tr';
             getAttrs: (el: HTMLElement) => boolean | void;
         },
     ];
-    toDOM: () => ["tr", 0];
+    toDOM: () => ['tr', 0];
 };
 
 export const tableCellComplex: {
-    content: "text*";
+    content: 'text*';
     attrs: CELL_ATTRS;
     managed: MANAGED_CELL_ATTRS;
     isolating: true;
     parseDOM: [
         {
-            tag: "td";
+            tag: 'td';
             getAttrs: (el: HTMLElement) => boolean | { colspan: number; rowspan: number };
         },
     ];
-    toDOM: (node: Node) => ["td", object, 0];
+    toDOM: (node: Node) => ['td', object, 0];
 };
 
 export const tableCellComplexBlock: {
-    content: "block*";
+    content: 'block*';
     attrs: CELL_ATTRS;
     managed: MANAGED_CELL_ATTRS;
     isolating: true;
     parseDOM: [
         {
-            tag: "td";
+            tag: 'td';
             getAttrs: (el: HTMLElement) => boolean | object;
         },
     ];
-    toDOM: (node: Node) => ["td", object, 0];
+    toDOM: (node: Node) => ['td', object, 0];
 };
 
 export const tableHeaderComplex: {
-    content: "text*";
+    content: 'text*';
     attrs: CELL_ATTRS;
     managed: MANAGED_CELL_ATTRS;
     isolating: true;
     parseDOM: [
         {
-            tag: "th";
+            tag: 'th';
             getAttrs: (el: HTMLElement) => boolean | object;
         },
     ];
-    toDOM: (node: Node) => ["th", object, 0];
+    toDOM: (node: Node) => ['th', object, 0];
 };
 
 export const tableHeaderComplexBlock: {
-    content: "block*";
+    content: 'block*';
     attrs: CELL_ATTRS;
     managed: MANAGED_CELL_ATTRS;
     isolating: true;
     parseDOM: [
         {
-            tag: "th";
+            tag: 'th';
             getAttrs: (el: HTMLElement) => boolean | object;
         },
     ];
-    toDOM: (node: Node) => ["th", object, 0];
+    toDOM: (node: Node) => ['th', object, 0];
 };

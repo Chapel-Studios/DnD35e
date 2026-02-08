@@ -1,15 +1,15 @@
-import Token from "@client/canvas/placeables/token.mjs";
-import TokenDocument from "@client/documents/token.mjs";
-import { DataSchema } from "@common/abstract/_types.mjs";
-import DataModel from "@common/abstract/data.mjs";
-import * as fields from "@common/data/fields.mjs";
-import { TokenMeasureMovementPathOptions, TokenMovementCostFunction } from "../_types.mjs";
+import Token from '@client/canvas/placeables/token.mjs';
+import TokenDocument from '@client/documents/token.mjs';
+import { DataSchema } from '@common/abstract/_types.mjs';
+import DataModel from '@common/abstract/data.mjs';
+import * as fields from '@common/data/fields.mjs';
+import { TokenMeasureMovementPathOptions, TokenMovementCostFunction } from '../_types.mjs';
 
 /**
  * The base TerrainData.
  */
 export abstract class BaseTerrainData<TSchema extends DataSchema = DataSchema> extends DataModel<null, TSchema> {
-    /**
+  /**
      * Create the terrain data from the given array of terrain effects.
      * The type of the terrain effects and data is system-defined.
      * The terrain effects are not passed in any particular order.
@@ -18,9 +18,9 @@ export abstract class BaseTerrainData<TSchema extends DataSchema = DataSchema> e
      * @param effects An array of terrain effects
      * @returns The terrain data or null
      */
-    static resolveTerrainEffects(effects: object[]): BaseTerrainData;
+  static resolveTerrainEffects(effects: object[]): BaseTerrainData;
 
-    /**
+  /**
      * Create the terrain movement cost function for the given token.
      * Only movement cost that is caused by the terrain should be calculated by this function,
      * which includes the base movement cost.
@@ -34,7 +34,7 @@ export abstract class BaseTerrainData<TSchema extends DataSchema = DataSchema> e
      * @param token   The Token that moves
      * @param options Additional options that affect cost calculations
      */
-    static getMovementCostFunction(
+  static getMovementCostFunction(
         token: TokenDocument,
         options?: TokenMeasureMovementPathOptions,
     ): TokenMovementCostFunction | void;
@@ -51,15 +51,15 @@ export abstract class BaseTerrainData<TSchema extends DataSchema = DataSchema> e
  * The core TerrainData implementation.
  */
 export class TerrainData extends BaseTerrainData {
-    static override defineSchema(): TerrainDataSchema;
+  static override defineSchema(): TerrainDataSchema;
 
-    static override resolveTerrainEffects(effects: Partial<TerrainDataSource>[]): TerrainData;
+  static override resolveTerrainEffects(effects: Partial<TerrainDataSource>[]): TerrainData;
 
-    static override getMovementCostFunction(token: TokenDocument): TokenMovementCostFunction;
+  static override getMovementCostFunction(token: TokenDocument): TokenMovementCostFunction;
 
-    prepareBaseData(): void;
+  prepareBaseData(): void;
 
-    override equals(other: BaseTerrainData): boolean;
+  override equals(other: BaseTerrainData): boolean;
 }
 
 type TerrainDataSchema = {

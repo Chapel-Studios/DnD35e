@@ -1,18 +1,18 @@
-import { AudioFilePath, DocumentOwnershipLevel, DocumentOwnershipString } from "@common/constants.mjs";
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import { BasePlaylist, BaseUser } from "./_module.mjs";
+import { AudioFilePath, DocumentOwnershipLevel, DocumentOwnershipString } from '@common/constants.mjs';
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import { BasePlaylist, BaseUser } from './_module.mjs';
 
 /** The PlaylistSound document model. */
 export default class BasePlaylistSound<TParent extends BasePlaylist | null = BasePlaylist | null> extends Document<
     TParent,
     PlaylistSoundSchema
 > {
-    static override get metadata(): PlaylistSoundMetadata;
+  static override get metadata(): PlaylistSoundMetadata;
 
-    static override defineSchema(): PlaylistSoundSchema;
+  static override defineSchema(): PlaylistSoundSchema;
 
-    testUserPermission(
+  testUserPermission(
         user: BaseUser,
         permission: DocumentOwnershipString | DocumentOwnershipLevel,
         { exact }?: { exact?: boolean },
@@ -22,15 +22,15 @@ export default class BasePlaylistSound<TParent extends BasePlaylist | null = Bas
 export default interface BasePlaylistSound<TParent extends BasePlaylist | null = BasePlaylist | null>
     extends Document<TParent, PlaylistSoundSchema>,
         fields.ModelPropsFromSchema<PlaylistSoundSchema> {
-    getDocumentName: PlaylistSoundMetadata["name"];
+    getDocumentName: PlaylistSoundMetadata['name'];
 }
 
 interface PlaylistSoundMetadata extends DocumentMetadata {
-    name: "PlaylistSound";
-    collection: "sounds";
+    name: 'PlaylistSound';
+    collection: 'sounds';
     indexed: true;
-    label: "DOCUMENT.PlaylistSound";
-    labelPlural: "DOCUMENT.PlaylistSounds";
+    label: 'DOCUMENT.PlaylistSound';
+    labelPlural: 'DOCUMENT.PlaylistSounds';
 }
 
 type PlaylistSoundSchema = {

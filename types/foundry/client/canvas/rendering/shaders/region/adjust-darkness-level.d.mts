@@ -4,9 +4,10 @@
  * @internal
  * @ignore
  */
+import RegionShader from './base.mjs';
 export class AbstractDarknessLevelRegionShader extends RegionShader {
-    /** @inheritDoc */
-    static defaultUniforms: {
+  /** @inheritDoc */
+  static defaultUniforms: {
         bottom: number;
         top: number;
         depthTexture: null;
@@ -15,21 +16,22 @@ export class AbstractDarknessLevelRegionShader extends RegionShader {
         screenDimensions: number[];
         tintAlpha: number[];
     };
-    /**
+
+  /**
      * The darkness level adjustment mode.
      * @type {number}
      */
-    mode: number;
-    /**
+  mode: number;
+  /**
      * The darkness level modifier.
      * @type {number}
      */
-    modifier: number;
-    /**
+  modifier: number;
+  /**
      * Current darkness level of this mesh.
      * @type {number}
      */
-    get darknessLevel(): number;
+  get darknessLevel(): number;
 }
 /**
  * Render the RegionMesh with darkness level adjustments.
@@ -37,8 +39,8 @@ export class AbstractDarknessLevelRegionShader extends RegionShader {
  * @ignore
  */
 export class AdjustDarknessLevelRegionShader extends AbstractDarknessLevelRegionShader {
-    /** @inheritDoc */
-    static defaultUniforms: {
+  /** @inheritDoc */
+  static defaultUniforms: {
         darknessLevel: number;
         bottom: number;
         top: number;
@@ -56,4 +58,3 @@ export class AdjustDarknessLevelRegionShader extends AbstractDarknessLevelRegion
  */
 export class IlluminationDarknessLevelRegionShader extends AbstractDarknessLevelRegionShader {
 }
-import RegionShader from "./base.mjs";

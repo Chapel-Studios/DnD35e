@@ -1,14 +1,14 @@
 import {
-    DocumentOwnershipLevel,
-    ImageFilePath,
-    UserAction,
-    UserPermission,
-    UserRole,
-    UserRoleName,
-} from "@common/constants.mjs";
-import Document, { DocumentMetadata } from "../abstract/document.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseActor } from "./_module.mjs";
+  DocumentOwnershipLevel,
+  ImageFilePath,
+  UserAction,
+  UserPermission,
+  UserRole,
+  UserRoleName,
+} from '@common/constants.mjs';
+import Document, { DocumentMetadata } from '../abstract/document.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseActor } from './_module.mjs';
 
 /**
  * The base User document, which is extended by both the server and client.
@@ -22,18 +22,18 @@ export default class BaseUser<TCharacter extends BaseActor<null> = BaseActor<nul
     null,
     UserSchema<TCharacter>
 > {
-    static override get metadata(): UserMetadata;
+  static override get metadata(): UserMetadata;
 
-    static override defineSchema(): UserSchema<BaseActor<null>>;
+  static override defineSchema(): UserSchema<BaseActor<null>>;
 
-    /* ---------------------------------------- */
-    /*  Permissions                             */
-    /* ---------------------------------------- */
+  /* ---------------------------------------- */
+  /*  Permissions                             */
+  /* ---------------------------------------- */
 
-    /** Test whether the User has a GAMEMASTER or ASSISTANT role in this World? */
-    get isGM(): boolean;
+  /** Test whether the User has a GAMEMASTER or ASSISTANT role in this World? */
+  get isGM(): boolean;
 
-    /**
+  /**
      * Test whether the User is able to perform a certain permission action.
      * The provided permission string may pertain to an explicit permission setting or a named user role.
      * Alternatively, Gamemaster users are assumed to be allowed to take all actions.
@@ -41,37 +41,37 @@ export default class BaseUser<TCharacter extends BaseActor<null> = BaseActor<nul
      * @param action The action to test
      * @return Does the user have the ability to perform this action?
      */
-    can(action: UserAction): boolean;
+  can(action: UserAction): boolean;
 
-    getUserLevel(user: this): DocumentOwnershipLevel;
+  getUserLevel(user: this): DocumentOwnershipLevel;
 
-    /**
+  /**
      * Test whether the User has at least a specific permission
      * @param permission The permission name from USER_PERMISSIONS to test
      * @return Does the user have at least this permission
      */
-    hasPermission(permission: UserPermission): boolean;
+  hasPermission(permission: UserPermission): boolean;
 
-    /**
+  /**
      * Test whether the User has at least the permission level of a certain role
      * @param role The role name from USER_ROLES to test
      * @param [exact] Require the role match to be exact
      * @return Does the user have at this role level (or greater)?
      */
-    hasRole(role: UserRole | UserRoleName, { exact }?: { exact: boolean }): boolean;
+  hasRole(role: UserRole | UserRoleName, { exact }?: { exact: boolean }): boolean;
 }
 
 export default interface BaseUser<TCharacter extends BaseActor<null> = BaseActor<null>>
     extends Document<null, UserSchema<TCharacter>>,
         fields.ModelPropsFromSchema<UserSchema<TCharacter>> {
-    get documentName(): UserMetadata["name"];
+    get documentName(): UserMetadata['name'];
 }
 
 interface UserMetadata extends DocumentMetadata {
-    name: "User";
-    collection: "users";
-    label: "DOCUMENT.User";
-    labelPlural: "DOCUMENT.Users";
+    name: 'User';
+    collection: 'users';
+    label: 'DOCUMENT.User';
+    labelPlural: 'DOCUMENT.Users';
 }
 
 type UserSchema<TActor extends BaseActor<null>> = {

@@ -1,19 +1,19 @@
-import { Node } from "prosemirror-model";
+import { Node } from 'prosemirror-model';
 
 export const ol: {
-    content: "(list_item | list_item_text)+";
-    managed: { attributes: ["start"] };
-    group: "block";
+    content: '(list_item | list_item_text)+';
+    managed: { attributes: ['start'] };
+    group: 'block';
     attrs: { order: { default: 1 } };
-    parseDOM: [{ tag: "ol"; getAttrs: (el: HTMLElement) => { order: number } }];
-    toDOM: (node: Node) => ["ol", 0] | ["ol", { start: number }, 0];
+    parseDOM: [{ tag: 'ol'; getAttrs: (el: HTMLElement) => { order: number } }];
+    toDOM: (node: Node) => ['ol', 0] | ['ol', { start: number }, 0];
 };
 
 export const ul: {
-    content: "(list_item | list_item_text)+";
-    group: "block";
-    parseDOM: [{ tag: "ul" }];
-    toDOM: () => ["ul", 0];
+    content: '(list_item | list_item_text)+';
+    group: 'block';
+    parseDOM: [{ tag: 'ul' }];
+    toDOM: () => ['ul', 0];
 };
 
 /**
@@ -47,25 +47,25 @@ export const ul: {
 // contains text content. We default to block content if the element is empty, in order to make integration with the
 // wrapping and lifting helpers simpler.
 export const li: {
-    content: "paragraph block*";
+    content: 'paragraph block*';
     defining: true;
     parseDOM: [
         {
-            tag: "li";
+            tag: 'li';
             getAttrs: (el: HTMLElement) => boolean | void;
         },
     ];
-    toDOM: () => ["li", 0];
+    toDOM: () => ['li', 0];
 };
 
 export const liText: {
-    content: "text*";
+    content: 'text*';
     defining: true;
     parseDOM: [
         {
-            tag: "li";
+            tag: 'li';
             getAttrs: (el: HTMLElement) => boolean | void;
         },
     ];
-    toDOM: () => ["li", 0];
+    toDOM: () => ['li', 0];
 };

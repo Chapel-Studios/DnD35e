@@ -1,6 +1,8 @@
 /**
  * Vortex animation coloration shader
  */
+import AdaptiveColorationShader from '../coloration-lighting.mjs';
+import AdaptiveIlluminationShader from '../illumination-lighting.mjs';
 export class VortexColorationShader extends AdaptiveColorationShader {
 }
 /**
@@ -8,5 +10,3 @@ export class VortexColorationShader extends AdaptiveColorationShader {
  */
 export class VortexIlluminationShader extends AdaptiveIlluminationShader {
 }
-import AdaptiveColorationShader from "../coloration-lighting.mjs";
-import AdaptiveIlluminationShader from "../illumination-lighting.mjs";

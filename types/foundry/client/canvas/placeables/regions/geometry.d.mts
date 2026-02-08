@@ -1,4 +1,4 @@
-import Region from "../region.mjs";
+import Region from '../region.mjs';
 
 /**
  * The geometry of a {@link Region}.
@@ -6,14 +6,14 @@ import Region from "../region.mjs";
  * - Draw Mode: `PIXI.DRAW_MODES.TRIANGLES`
  */
 export default class RegionGeometry extends PIXI.Geometry {
-    /**
+  /**
      * Create a RegionGeometry.
      * @param region The Region to create the RegionGeometry from.
      * @internal
      */
-    constructor(region: Region);
-    /**
+  constructor(region: Region);
+  /**
      * The Region this geometry belongs to.
      */
-    get region(): Region;
+  get region(): Region;
 }

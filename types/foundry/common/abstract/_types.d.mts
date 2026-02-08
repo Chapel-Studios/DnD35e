@@ -1,6 +1,6 @@
-import { DocumentUUID } from "@client/utils/helpers.mjs";
-import { DataField } from "@common/data/fields.mjs";
-import { DataModel, Document } from "./_module.mjs";
+import { DocumentUUID } from '@client/utils/helpers.mjs';
+import { DataField } from '@common/data/fields.mjs';
+import { DataModel, Document } from './_module.mjs';
 
 export type DataSchema = { [K in string]: DataField<JSONValue, unknown> };
 
@@ -34,7 +34,7 @@ export interface DataModelValidationOptions {
 }
 
 interface DataModelConstructionContext<TParent extends DataModel | null>
-    extends Pick<DataModelValidationOptions, "strict" | "fallback" | "dropInvalidEmbedded"> {
+    extends Pick<DataModelValidationOptions, 'strict' | 'fallback' | 'dropInvalidEmbedded'> {
     /** A parent DataModel instance to which this DataModel belongs */
     parent?: TParent;
     /** Allow partial source data, ignoring absent fields? */
@@ -56,7 +56,7 @@ export interface DataModelUpdateOptions {
 }
 
 export interface DatabaseGetOperation<TParent extends Document | null> {
-    action: "get";
+    action: 'get';
     /** A query object which identifies the set of Documents retrieved */
     query: Record<string, unknown>;
     /** Get requests are never broadcast */
@@ -74,7 +74,7 @@ export interface DatabaseGetOperation<TParent extends Document | null> {
 }
 
 export interface DatabaseCreateOperation<TParent extends Document | null> {
-    action: "create";
+    action: 'create';
     /** Whether the database operation is broadcast to other connected clients */
     broadcast: boolean;
     /** An array of data objects from which to create Documents */
@@ -100,10 +100,10 @@ export interface DatabaseCreateOperation<TParent extends Document | null> {
 }
 
 export interface DatabaseCreateCallbackOptions
-    extends Omit<Partial<DatabaseCreateOperation<null>>, "action" | "data" | "pack" | "parent" | "noHook"> {}
+    extends Omit<Partial<DatabaseCreateOperation<null>>, 'action' | 'data' | 'pack' | 'parent' | 'noHook'> {}
 
 export interface DatabaseUpdateOperation<TParent extends Document | null> {
-    action: "update";
+    action: 'update';
     /** Whether the database operation is broadcast to other connected clients */
     broadcast: boolean;
     /**
@@ -135,11 +135,11 @@ export interface DatabaseUpdateOperation<TParent extends Document | null> {
 export interface DatabaseUpdateCallbackOptions
     extends Omit<
         Partial<DatabaseUpdateOperation<null>>,
-        "action" | "pack" | "parent" | "restoreDelta" | "noHook" | "updates"
+        'action' | 'pack' | 'parent' | 'restoreDelta' | 'noHook' | 'updates'
     > {}
 
 export interface DatabaseDeleteOperation<TParent extends Document | null> {
-    action: "delete";
+    action: 'delete';
     /** Whether the database operation is broadcast to other connected clients */
     broadcast: boolean;
     /** An array of Document ids which should be deleted */
@@ -163,10 +163,10 @@ export interface DatabaseDeleteOperation<TParent extends Document | null> {
 export interface DatabaseDeleteCallbackOptions
     extends Omit<
         Partial<DatabaseDeleteOperation<null>>,
-        "action" | "deleteAll" | "ids" | "pack" | "parent" | "noHook"
+        'action' | 'deleteAll' | 'ids' | 'pack' | 'parent' | 'noHook'
     > {}
 
-export type DatabaseAction = "get" | "create" | "update" | "delete";
+export type DatabaseAction = 'get' | 'create' | 'update' | 'delete';
 
 export type DatabaseOperation<TParent extends Document | null> =
     | DatabaseGetOperation<TParent>

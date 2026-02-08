@@ -1,9 +1,9 @@
-import { DatabaseOperation } from "@common/abstract/_types.mjs";
-import { GridType, ImageFilePath, VideoFilePath } from "@common/constants.mjs";
-import { Document, DocumentMetadata, EmbeddedCollection } from "../abstract/_module.mjs";
-import * as data from "../data/data.mjs";
-import * as fields from "../data/fields.mjs";
-import * as documents from "./_module.mjs";
+import { DatabaseOperation } from '@common/abstract/_types.mjs';
+import { GridType, ImageFilePath, VideoFilePath } from '@common/constants.mjs';
+import { Document, DocumentMetadata, EmbeddedCollection } from '../abstract/_module.mjs';
+import * as data from '../data/data.mjs';
+import * as fields from '../data/fields.mjs';
+import * as documents from './_module.mjs';
 
 /**
  * The Scene document model.
@@ -11,13 +11,13 @@ import * as documents from "./_module.mjs";
  * @property data The constructed data object for the document.
  */
 export default class BaseScene extends Document<null, SceneSchema> {
-    static override get metadata(): SceneMetadata;
+  static override get metadata(): SceneMetadata;
 
-    static override defineSchema(): SceneSchema;
+  static override defineSchema(): SceneSchema;
 }
 
 export default interface BaseScene extends Document<null, SceneSchema>, fields.ModelPropsFromSchema<SceneSchema> {
-    get documentName(): SceneMetadata["name"];
+    get documentName(): SceneMetadata['name'];
 
     readonly drawings: EmbeddedCollection<documents.BaseDrawing<this>>;
     readonly lights: EmbeddedCollection<documents.BaseAmbientLight<this>>;
@@ -31,23 +31,23 @@ export default interface BaseScene extends Document<null, SceneSchema>, fields.M
 }
 
 export interface SceneMetadata extends DocumentMetadata {
-    name: "Scene";
-    collection: "scenes";
+    name: 'Scene';
+    collection: 'scenes';
     indexed: true;
-    compendiumIndexFields: ["_id", "name", "thumb", "sort", "folder"];
+    compendiumIndexFields: ['_id', 'name', 'thumb', 'sort', 'folder'];
     embedded: {
-        AmbientLight: "lights";
-        AmbientSound: "sounds";
-        Drawing: "drawings";
-        MeasuredTemplate: "templates";
-        Region: "regions";
-        Note: "notes";
-        Tile: "tiles";
-        Token: "tokens";
-        Wall: "walls";
+        AmbientLight: 'lights';
+        AmbientSound: 'sounds';
+        Drawing: 'drawings';
+        MeasuredTemplate: 'templates';
+        Region: 'regions';
+        Note: 'notes';
+        Tile: 'tiles';
+        Token: 'tokens';
+        Wall: 'walls';
     };
-    label: "DOCUMENT.Scene";
-    labelPlural: "DOCUMENT.Scenes";
+    label: 'DOCUMENT.Scene';
+    labelPlural: 'DOCUMENT.Scenes';
     preserveOnImport: string[];
 }
 
@@ -192,15 +192,15 @@ type EnvironmentSchema = {
     /** Is a global source of illumination present which provides dim light to all areas of the Scene? */
     globalLight: fields.SchemaField<{
         enabled: fields.BooleanField;
-        alpha: data.LightDataSchema["alpha"];
+        alpha: data.LightDataSchema['alpha'];
         bright: fields.BooleanField;
-        color: data.LightDataSchema["color"];
-        coloration: data.LightDataSchema["coloration"];
-        luminosity: data.LightDataSchema["luminosity"];
-        saturation: data.LightDataSchema["saturation"];
-        contrast: data.LightDataSchema["contrast"];
-        shadows: data.LightDataSchema["shadows"];
-        darkness: data.LightDataSchema["darkness"];
+        color: data.LightDataSchema['color'];
+        coloration: data.LightDataSchema['coloration'];
+        luminosity: data.LightDataSchema['luminosity'];
+        saturation: data.LightDataSchema['saturation'];
+        contrast: data.LightDataSchema['contrast'];
+        shadows: data.LightDataSchema['shadows'];
+        darkness: data.LightDataSchema['darkness'];
     }>;
     cycle: fields.BooleanField;
     base: fields.SchemaField<EnvironmentDataSchema>;

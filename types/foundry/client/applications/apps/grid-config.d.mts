@@ -1,14 +1,14 @@
-import Scene from "@client/documents/scene.mjs";
-import { FormFooterButton } from "../_types.mjs";
+import Scene from '@client/documents/scene.mjs';
+import { FormFooterButton } from '../_types.mjs';
 import {
-    DocumentSheetConfiguration,
-    DocumentSheetRenderContext,
-    DocumentSheetV2,
-    HandlebarsApplicationMixin,
-    HandlebarsRenderOptions,
-    HandlebarsTemplatePart,
-} from "../api/_module.mjs";
-import SceneConfig from "../sheets/scene-config.mjs";
+  DocumentSheetConfiguration,
+  DocumentSheetRenderContext,
+  DocumentSheetV2,
+  HandlebarsApplicationMixin,
+  HandlebarsRenderOptions,
+  HandlebarsTemplatePart,
+} from '../api/_module.mjs';
+import SceneConfig from '../sheets/scene-config.mjs';
 
 interface GridConfigContext<TScene extends Scene = Scene> extends DocumentSheetRenderContext {
     scene: TScene;
@@ -20,14 +20,14 @@ interface GridConfigContext<TScene extends Scene = Scene> extends DocumentSheetR
 
 /** A tool for fine-tuning the grid in a Scene */
 export default class GridConfig<TScene extends Scene = Scene> extends HandlebarsApplicationMixin(DocumentSheetV2) {
-    constructor(options: DocumentSheetConfiguration);
+  constructor(options: DocumentSheetConfiguration);
 
-    static override DEFAULT_OPTIONS: DeepPartial<DocumentSheetConfiguration>;
+  static override DEFAULT_OPTIONS: DeepPartial<DocumentSheetConfiguration>;
 
-    static override PARTS: Record<string, HandlebarsTemplatePart>;
+  static override PARTS: Record<string, HandlebarsTemplatePart>;
 
-    /** Track the Scene Configuration sheet reference. */
-    sheet: SceneConfig<TScene>;
+  /** Track the Scene Configuration sheet reference. */
+  sheet: SceneConfig<TScene>;
 
-    override _prepareContext(options: HandlebarsRenderOptions): Promise<GridConfigContext<TScene>>;
+  override _prepareContext(options: HandlebarsRenderOptions): Promise<GridConfigContext<TScene>>;
 }

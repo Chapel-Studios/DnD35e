@@ -1,6 +1,6 @@
-import DocumentCollection from "@client/documents/abstract/document-collection.mjs";
-import { Point } from "@common/_types.mjs";
-import Document from "@common/abstract/document.mjs";
+import DocumentCollection from '@client/documents/abstract/document-collection.mjs';
+import { Point } from '@common/_types.mjs';
+import Document from '@common/abstract/document.mjs';
 
 interface LineIntersection {
     /** The x-coordinate of intersection */

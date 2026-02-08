@@ -1,37 +1,37 @@
-import { RollOptions } from "../_types.mjs";
-import { RollTermData } from "./_types.mjs";
+import { RollOptions } from '../_types.mjs';
+import { RollTermData } from './_types.mjs';
 
 /**
  * An abstract class which represents a single token that can be used as part of a Roll formula.
  * Every portion of a Roll formula is parsed into a subclass of RollTerm in order for the Roll to be fully evaluated.
  */
 export default abstract class RollTerm<TTermData extends RollTermData = RollTermData> {
-    constructor(termData?: TTermData);
+  constructor(termData?: TTermData);
 
-    /** An object of additional options which describes and modifies the term. */
-    options: RollOptions;
+  /** An object of additional options which describes and modifies the term. */
+  options: RollOptions;
 
-    /** An internal flag for whether the term has been evaluated */
-    _evaluated: boolean;
+  /** An internal flag for whether the term has been evaluated */
+  _evaluated: boolean;
 
-    /** Is this term intermediate, and should be evaluated first as part of the simplification process? */
-    isIntermediate?: boolean;
+  /** Is this term intermediate, and should be evaluated first as part of the simplification process? */
+  isIntermediate?: boolean;
 
-    /** A regular expression pattern which identifies optional term-level flavor text */
-    static FLAVOR_REGEXP_STRING?: string;
+  /** A regular expression pattern which identifies optional term-level flavor text */
+  static FLAVOR_REGEXP_STRING?: string;
 
-    /** A regular expression which identifies term-level flavor text */
-    static FLAVOR_REGEXP: RegExp;
+  /** A regular expression which identifies term-level flavor text */
+  static FLAVOR_REGEXP: RegExp;
 
-    /** A regular expression used to match a term of this type */
-    static REGEXP: RegExp;
+  /** A regular expression used to match a term of this type */
+  static REGEXP: RegExp;
 
-    /** An array of additional attributes which should be retained when the term is serialized */
-    static SERIALIZE_ATTRIBUTES: string[];
+  /** An array of additional attributes which should be retained when the term is serialized */
+  static SERIALIZE_ATTRIBUTES: string[];
 
-    /* -------------------------------------------- */
-    /*  RollTerm Attributes                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  RollTerm Attributes                         */
+  /* -------------------------------------------- */
 
     /** A string representation of the formula expression for this RollTerm, prior to evaluation. */
     abstract get expression(): string;
@@ -107,7 +107,7 @@ export default abstract class RollTerm<TTermData extends RollTermData = RollTerm
 
 export type Evaluated<T extends RollTerm> = T & {
     _evaluated: true;
-    total: NonNullable<T["total"]>;
+    total: NonNullable<T['total']>;
 };
 
 export type TermDataOf<TTerm extends RollTerm> = TTerm extends RollTerm<infer TData> ? TData : never;

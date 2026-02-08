@@ -1,8 +1,8 @@
-import { DocumentOwnershipLevel, DocumentOwnershipString, DrawingFillType, ImageFilePath } from "@common/constants.mjs";
-import * as abstract from "../abstract/_module.mjs";
-import * as data from "../data/data.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseScene, BaseUser } from "./_module.mjs";
+import { DocumentOwnershipLevel, DocumentOwnershipString, DrawingFillType, ImageFilePath } from '@common/constants.mjs';
+import * as abstract from '../abstract/_module.mjs';
+import * as data from '../data/data.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseScene, BaseUser } from './_module.mjs';
 
 /**
  * The Document definition for a Drawing.
@@ -13,21 +13,21 @@ import { BaseScene, BaseUser } from "./_module.mjs";
  * @param context Construction context options
  */
 export default class BaseDrawing<TParent extends BaseScene | null> extends abstract.Document<TParent, DrawingSchema> {
-    /* ---------------------------------------- */
-    /*  Model Configuration                     */
-    /* ---------------------------------------- */
+  /* ---------------------------------------- */
+  /*  Model Configuration                     */
+  /* ---------------------------------------- */
 
-    static override get metadata(): DrawingMetadata;
+  static override get metadata(): DrawingMetadata;
 
-    static override defineSchema(): DrawingSchema;
+  static override defineSchema(): DrawingSchema;
 
-    static override validateJoint(data: DrawingSource): void;
+  static override validateJoint(data: DrawingSource): void;
 
-    /* ---------------------------------------- */
-    /*  Model Methods                           */
-    /* ---------------------------------------- */
+  /* ---------------------------------------- */
+  /*  Model Methods                           */
+  /* ---------------------------------------- */
 
-    override testUserPermission(
+  override testUserPermission(
         user: BaseUser,
         permission: DocumentOwnershipString | DocumentOwnershipLevel,
         { exact }?: { exact?: boolean },
@@ -37,18 +37,18 @@ export default class BaseDrawing<TParent extends BaseScene | null> extends abstr
 export default interface BaseDrawing<TParent extends BaseScene | null>
     extends abstract.Document<TParent, DrawingSchema>,
         fields.ModelPropsFromSchema<DrawingSchema> {
-    get documentName(): DrawingMetadata["name"];
+    get documentName(): DrawingMetadata['name'];
 }
 
 interface DrawingMetadata extends abstract.DocumentMetadata {
-    name: "Drawing";
-    collection: "drawings";
-    label: "DOCUMENT.Drawing";
-    labelPlural: "DOCUMENT.Drawings";
+    name: 'Drawing';
+    collection: 'drawings';
+    label: 'DOCUMENT.Drawing';
+    labelPlural: 'DOCUMENT.Drawings';
     isEmbedded: true;
     permissions: {
         view: abstract.MetadataPermission;
-        create: "DRAWING_CREATE";
+        create: 'DRAWING_CREATE';
         update: abstract.MetadataPermission;
         delete: abstract.MetadataPermission;
     };

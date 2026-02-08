@@ -1,6 +1,6 @@
-import * as io from "socket.io";
-import WorldCollection from "../abstract/world-collection.mjs";
-import JournalEntry from "../journal-entry.mjs";
+import * as io from 'socket.io';
+import WorldCollection from '../abstract/world-collection.mjs';
+import JournalEntry from '../journal-entry.mjs';
 
 /**
  * The Collection of JournalEntry documents which exist within the active World.
@@ -9,16 +9,16 @@ import JournalEntry from "../journal-entry.mjs";
  * @see {@link JournalDirectory} The JournalDirectory sidebar directory
  */
 export default class Journal extends WorldCollection<JournalEntry> {
-    static override documentName: "JournalEntry";
+  static override documentName: 'JournalEntry';
 
-    /** Open Socket listeners which transact JournalEntry data */
-    protected static _activateSocketListeners(socket: io.Socket): void;
+  /** Open Socket listeners which transact JournalEntry data */
+  protected static _activateSocketListeners(socket: io.Socket): void;
 
-    /**
+  /**
      * Handle a received request to show a JournalEntry to the current client
      * @param entryId The ID of the journal entry to display for other players
      * @param mode    The JournalEntry mode to display
      * @param force   Display the entry to all players regardless of normal permissions
      */
-    static _showEntry(entryId: string, mode?: string, force?: boolean): Promise<void>;
+  static _showEntry(entryId: string, mode?: string, force?: boolean): Promise<void>;
 }

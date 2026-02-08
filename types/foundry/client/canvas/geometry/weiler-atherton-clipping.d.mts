@@ -14,27 +14,27 @@
  * https://h-educate.in/weiler-atherton-polygon-clipping-algorithm/
  */
 export default class WeilerAthertonClipper {
-    /**
+  /**
      * Construct a WeilerAthertonClipper instance used to perform the calculation.
      * @param polygon    Polygon to clip
      * @param clipObject Object used to clip the polygon
      * @param clipType   Type of clip to use
      * @param clipOpts   Object passed to the clippingObject methods toPolygon and pointsBetween
      */
-    constructor(polygon: PIXI.Polygon, clipObject: PIXI.Rectangle | PIXI.Circle, clipType: number, clipOpts: object);
+  constructor(polygon: PIXI.Polygon, clipObject: PIXI.Rectangle | PIXI.Circle, clipType: number, clipOpts: object);
 
-    /**
+  /**
      * The supported clip types.
      * Values are equivalent to those in ClipperLib.ClipType.
      */
-    static CLIP_TYPES: Readonly<{ INTERSECT: 0; UNION: 1 }>;
+  static CLIP_TYPES: Readonly<{ INTERSECT: 0; UNION: 1 }>;
 
-    /**
+  /**
      * The supported intersection types.
      */
-    static INTERSECTION_TYPES: Readonly<{ OUT_IN: -1; IN_OUT: 1; TANGENT: 0 }>;
+  static INTERSECTION_TYPES: Readonly<{ OUT_IN: -1; IN_OUT: 1; TANGENT: 0 }>;
 
-    /**
+  /**
      * Test if one shape envelops the other. Assumes the shapes do not intersect.
      *  1. Polygon is contained within the clip object. Union: clip object; Intersect: polygon
      *  2. Clip object is contained with polygon. Union: polygon; Intersect: clip object
@@ -45,7 +45,7 @@ export default class WeilerAthertonClipper {
      * @param clipOpts   Clip options which are forwarded to toPolygon methods
      * @returns Returns the polygon, the clipObject.toPolygon(), both, or neither.
      */
-    static testForEnvelopment(
+  static testForEnvelopment(
         polygon: PIXI.Polygon,
         clipObject: PIXI.Rectangle | PIXI.Circle,
         clipType: Readonly<{
@@ -55,41 +55,41 @@ export default class WeilerAthertonClipper {
         clipOpts: object,
     ): PIXI.Polygon[];
 
-    polygon: PIXI.Polygon;
+  polygon: PIXI.Polygon;
 
-    clipObject: PIXI.Rectangle | PIXI.Circle;
+  clipObject: PIXI.Rectangle | PIXI.Circle;
 
-    /**
+  /**
      * Configuration settings
      */
-    config?: {
+  config?: {
         /** One of CLIP_TYPES */
         clipType?: WAClipperType;
         /** Object passed to the clippingObject methods toPolygon and pointsBetween */
         clipOpts?: object;
     };
 
-    /**
+  /**
      * Union a polygon and clipObject using the Weiler Atherton algorithm.
      * @param polygon    Polygon to clip
      * @param clipObject Object to clip against the polygon
      * @param clipOpts   Options passed to the clipping object methods toPolygon and pointsBetween
      */
-    static union(polygon: PIXI.Polygon, clipObject: PIXI.Rectangle | PIXI.Circle, clipOpts?: object): PIXI.Polygon[];
+  static union(polygon: PIXI.Polygon, clipObject: PIXI.Rectangle | PIXI.Circle, clipOpts?: object): PIXI.Polygon[];
 
-    /**
+  /**
      * Intersect a polygon and clipObject using the Weiler Atherton algorithm.
      * @param polygon    Polygon to clip
      * @param clipObject Object to clip against the polygon
      * @param clipOpts   Options passed to the clipping object methods toPolygon and pointsBetween
      */
-    static intersect(
+  static intersect(
         polygon: PIXI.Polygon,
         clipObject: PIXI.Rectangle | PIXI.Circle,
         clipOpts?: object,
     ): PIXI.Polygon[];
 
-    /**
+  /**
      * Clip a given clipObject using the Weiler-Atherton algorithm.
      *
      * At the moment, this will return a single PIXI.Polygon in the array unless clipType is a union and the polygon
@@ -107,14 +107,15 @@ export default class WeilerAthertonClipper {
      *
      * @returns Array of polygons and clipObjects
      */
-    static combine(
+  static combine(
         polygon: PIXI.Polygon,
         clipObject: PIXI.Rectangle | PIXI.Circle,
         {
-            clipType,
-            canMutate,
-            ...clipOpts
-        }?: {
+          clipType,
+          canMutate,
+          ...clipOpts
+        }
+        ?: {
             clipType: number;
             canMutate?: boolean;
         },

@@ -1,58 +1,58 @@
-import { MovementDirection } from "@common/constants.mjs";
-import { Point, Rectangle } from "../_types.mjs";
-import { BaseGrid } from "./base.mjs";
+import { MovementDirection } from '@common/constants.mjs';
+import { Point, Rectangle } from '../_types.mjs';
+import { BaseGrid } from './base.mjs';
 
 /** The square grid class. */
 export class SquareGrid extends BaseGrid {
-    override type: typeof CONST.GRID_TYPES.SQUARE;
+  override type: typeof CONST.GRID_TYPES.SQUARE;
 
-    /** The rule for diagonal measurement (see {@link CONST.GRID_DIAGONALS}). */
-    diagonals: number;
+  /** The rule for diagonal measurement (see {@link CONST.GRID_DIAGONALS}). */
+  diagonals: number;
 
-    /** The square grid constructor. */
-    constructor(config: SquareGridConfiguration);
+  /** The square grid constructor. */
+  constructor(config: SquareGridConfiguration);
 
-    override getOffset(coords: SquareGridCoordinates): GridOffset;
+  override getOffset(coords: SquareGridCoordinates): GridOffset;
 
-    override getOffsetRange(bounds: Rectangle): [number, number, number, number];
+  override getOffsetRange(bounds: Rectangle): [number, number, number, number];
 
-    override getAdjacentOffsets(coords: SquareGridCoordinates): GridOffset[];
+  override getAdjacentOffsets(coords: SquareGridCoordinates): GridOffset[];
 
-    override testAdjacency(coords1: SquareGridCoordinates, coords2: SquareGridCoordinates): boolean;
+  override testAdjacency(coords1: SquareGridCoordinates, coords2: SquareGridCoordinates): boolean;
 
-    override getShiftedOffset(coords: SquareGridCoordinates, direction: MovementDirection): GridOffset;
+  override getShiftedOffset(coords: SquareGridCoordinates, direction: MovementDirection): GridOffset;
 
-    override getShiftedPoint(point: Point, direction: MovementDirection): Point;
+  override getShiftedPoint(point: Point, direction: MovementDirection): Point;
 
-    override getTopLeftPoint(coords: SquareGridCoordinates): Point;
+  override getTopLeftPoint(coords: SquareGridCoordinates): Point;
 
-    override getCenterPoint(coords: SquareGridCoordinates): Point;
+  override getCenterPoint(coords: SquareGridCoordinates): Point;
 
-    override getShape(): Point[];
+  override getShape(): Point[];
 
-    override getVertices(coords: SquareGridCoordinates): Point[];
+  override getVertices(coords: SquareGridCoordinates): Point[];
 
-    override getSnappedPoint(point: Point, behavior: GridSnappingBehavior): Point;
+  override getSnappedPoint(point: Point, behavior: GridSnappingBehavior): Point;
 
-    override measurePath(
+  override measurePath(
         waypoints: GridMeasurePathWaypoint[],
         options?: { cost?: GridMeasurePathCostFunction },
     ): SquareGridMeasurePathResult;
 
-    protected override _measurePath(
+  protected override _measurePath(
         waypoints: GridMeasurePathWaypoint[],
         options: { cost?: GridMeasurePathCostFunction },
         result: GridMeasurePathResult,
     ): void;
 
-    /** @see {@link https://en.wikipedia.org/wiki/Bresenham's_line_algorithm} */
-    override getDirectPath(waypoints: GridMeasurePathWaypoint[]): GridOffset[];
+  /** @see {@link https://en.wikipedia.org/wiki/Bresenham's_line_algorithm} */
+  override getDirectPath(waypoints: GridMeasurePathWaypoint[]): GridOffset[];
 
-    override getTranslatedPoint(point: Point, direction: number, distance: number): Point;
+  override getTranslatedPoint(point: Point, direction: number, distance: number): Point;
 
-    override getCircle(center: Point, radius: number): Point[];
+  override getCircle(center: Point, radius: number): Point[];
 
-    override calculateDimensions(
+  override calculateDimensions(
         sceneWidth: number,
         sceneHeight: number,
         padding: number,

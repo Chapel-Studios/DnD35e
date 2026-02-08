@@ -1,15 +1,15 @@
-import User from "@client/documents/user.mjs";
+import User from '@client/documents/user.mjs';
 import {
-    ApplicationClosingOptions,
-    ApplicationConfiguration,
-    ApplicationTab,
-    ApplicationTabsConfiguration,
-    FormFooterButton,
-} from "../_types.mjs";
-import { HandlebarsApplicationMixin, HandlebarsRenderOptions, HandlebarsTemplatePart } from "../api/_module.mjs";
-import ApplicationV2 from "../api/application.mjs";
+  ApplicationClosingOptions,
+  ApplicationConfiguration,
+  ApplicationTab,
+  ApplicationTabsConfiguration,
+  FormFooterButton,
+} from '../_types.mjs';
+import { HandlebarsApplicationMixin, HandlebarsRenderOptions, HandlebarsTemplatePart } from '../api/_module.mjs';
+import ApplicationV2 from '../api/application.mjs';
 
-export type FilePickerSource = "data" | "public" | "s3";
+export type FilePickerSource = 'data' | 'public' | 's3';
 
 export type FilePickerFileType = (typeof FilePicker.FILE_TYPES)[number];
 
@@ -62,7 +62,7 @@ interface FilePickerManageFilesResult {
 interface FilePickerUploadResponse {
     message: string;
     path: string;
-    status: "success" | "error";
+    status: 'success' | 'error';
     error?: string;
 }
 
@@ -82,7 +82,7 @@ interface FilePickerContext {
     noResults: boolean;
     selected: string;
     source: { target: string; bucket?: string; buckets?: string[] };
-    sources: FilePicker["sources"];
+    sources: FilePicker['sources'];
     target: string;
     tileSize: number | null;
     user: User;
@@ -95,95 +95,95 @@ interface FilePickerContext {
  * This app allows for navigating and uploading files to the public path.
  */
 export default class FilePicker extends HandlebarsApplicationMixin(ApplicationV2<FilePickerConfiguration>) {
-    static override DEFAULT_OPTIONS: DeepPartial<ApplicationConfiguration>;
+  static override DEFAULT_OPTIONS: DeepPartial<ApplicationConfiguration>;
 
-    static override PARTS: Record<string, HandlebarsTemplatePart>;
+  static override PARTS: Record<string, HandlebarsTemplatePart>;
 
-    static override TABS: Record<string, ApplicationTabsConfiguration>;
+  static override TABS: Record<string, ApplicationTabsConfiguration>;
 
-    /** The allowed values for the type of this FilePicker instance. */
-    static FILE_TYPES: ["any", "audio", "folder", "font", "graphics", "image", "imagevideo", "text", "video"];
+  /** The allowed values for the type of this FilePicker instance. */
+  static FILE_TYPES: ['any', 'audio', 'folder', 'font', 'graphics', 'image', 'imagevideo', 'text', 'video'];
 
-    /** Record the last-browsed directory path so that re-opening a different FilePicker instance uses the same target */
-    static LAST_BROWSED_DIRECTORY: string;
+  /** Record the last-browsed directory path so that re-opening a different FilePicker instance uses the same target */
+  static LAST_BROWSED_DIRECTORY: string;
 
-    /** Record the last-configured tile size which can automatically be applied to new FilePicker instances */
-    static LAST_TILE_SIZE: number | null;
+  /** Record the last-configured tile size which can automatically be applied to new FilePicker instances */
+  static LAST_TILE_SIZE: number | null;
 
-    /** Record the last-configured display mode so that re-opening a different FilePicker instance uses the same mode. */
-    static LAST_DISPLAY_MODE: FilerPickerDisplayMode;
+  /** Record the last-configured display mode so that re-opening a different FilePicker instance uses the same mode. */
+  static LAST_DISPLAY_MODE: FilerPickerDisplayMode;
 
-    /** Enumerate the allowed FilePicker display modes */
-    static DISPLAY_MODES: ["list", "thumbs", "tiles", "images"];
+  /** Enumerate the allowed FilePicker display modes */
+  static DISPLAY_MODES: ['list', 'thumbs', 'tiles', 'images'];
 
-    /** Cache the names of S3 buckets which can be used */
-    static S3_BUCKETS: string[] | null;
+  /** Cache the names of S3 buckets which can be used */
+  static S3_BUCKETS: string[] | null;
 
-    /** Return the upload URL to which the FilePicker should post uploaded files */
-    static get uploadURL(): string;
+  /** Return the upload URL to which the FilePicker should post uploaded files */
+  static get uploadURL(): string;
 
-    /** Retrieve the configured FilePicker implementation. */
-    static get implementation(): typeof FilePicker;
+  /** Retrieve the configured FilePicker implementation. */
+  static get implementation(): typeof FilePicker;
 
-    /**
+  /**
      *  @param [options={}] Options that configure the behavior of the FilePicker
      */
-    constructor(options: DeepPartial<ApplicationConfiguration & FilePickerConfiguration>);
+  constructor(options: DeepPartial<ApplicationConfiguration & FilePickerConfiguration>);
 
-    /** The full requested path given by the user */
-    request: string;
+  /** The full requested path given by the user */
+  request: string;
 
-    /**  A callback function to trigger once a file has been selected */
-    callback: Function | null;
+  /**  A callback function to trigger once a file has been selected */
+  callback: Function | null;
 
-    /** The general file type which controls the set of extensions which will be accepted */
-    type: FilePickerFileType;
+  /** The general file type which controls the set of extensions which will be accepted */
+  type: FilePickerFileType;
 
-    /** The target HTML element this file picker is bound to */
-    field: HTMLElement | null;
+  /** The target HTML element this file picker is bound to */
+  field: HTMLElement | null;
 
-    /** A button controlling the display of the picker UI */
-    button: HTMLButtonElement | null;
+  /** A button controlling the display of the picker UI */
+  button: HTMLButtonElement | null;
 
-    /** The display mode of the FilePicker UI */
-    displayMode: FilerPickerDisplayMode;
+  /** The display mode of the FilePicker UI */
+  displayMode: FilerPickerDisplayMode;
 
-    /** The file sources available for browsing */
-    sources: Partial<Record<FilePickerSource, { target: string; bucket?: string; buckets?: string[] }>>;
+  /** The file sources available for browsing */
+  sources: Partial<Record<FilePickerSource, { target: string; bucket?: string; buckets?: string[] }>>;
 
-    activeSource: FilePickerSource;
+  activeSource: FilePickerSource;
 
-    /** The latest set of results browsed from the server */
-    results: Record<string, unknown>;
+  /** The latest set of results browsed from the server */
+  results: Record<string, unknown>;
 
-    /** The current set of file extensions which are being filtered upon */
-    extensions: string[];
+  /** The current set of file extensions which are being filtered upon */
+  extensions: string[];
 
-    /** Get favorite folders for quick access */
-    get favorites(): Record<string, FavoriteFolder>;
+  /** Get favorite folders for quick access */
+  get favorites(): Record<string, FavoriteFolder>;
 
-    override get title(): string;
+  override get title(): string;
 
-    /** Return the source object for the currently active source */
-    get source(): { target: string; bucket?: string; buckets?: string[] };
+  /** Return the source object for the currently active source */
+  get source(): { target: string; bucket?: string; buckets?: string[] };
 
-    /** Return the target directory for the currently active source */
-    get target(): string;
+  /** Return the target directory for the currently active source */
+  get target(): string;
 
-    /** Whether the current user is able to create folders. */
-    get canCreateFolder(): boolean;
+  /** Whether the current user is able to create folders. */
+  get canCreateFolder(): boolean;
 
-    /** Whether the current use is able to upload file content. */
-    get canUpload(): boolean;
+  /** Whether the current use is able to upload file content. */
+  get canUpload(): boolean;
 
-    /**
+  /**
      * Test a URL to see if it matches a well known s3 key pattern
      * @param url  An input URL to test
      * @returns    A regular expression match
      */
-    static matchS3URL(url: string): RegExpMatchArray | null;
+  static matchS3URL(url: string): RegExpMatchArray | null;
 
-    /**
+  /**
      * Browse files for a certain directory location
      * @param source                The source location in which to browse: see FilePicker#sources for details.
      * @param target                The target within the source location
@@ -194,37 +194,37 @@ export default class FilePicker extends HandlebarsApplicationMixin(ApplicationV2
      *
      * @returns A Promise that resolves to the directories and files contained in the location
      */
-    static browse(
+  static browse(
         source: FilePickerSource,
         target: string,
         options?: { bucket?: string; extensions?: string[]; wildcard?: boolean },
     ): Promise<FilePickerManageFilesResult>;
 
-    /**
+  /**
      * Configure metadata settings regarding a certain file system path
      * @param source   The source location in which to browse: see FilePicker#sources for details.
      * @param target   The target within the source location
      * @param options  Optional arguments modifying the request
      */
-    static configurePath(
+  static configurePath(
         source: FilePickerSource,
         target: string,
         options?: object,
     ): Promise<FilePickerManageFilesResult>;
 
-    /**
+  /**
      * Create a subdirectory within a given source. The requested subdirectory path must not already exist.
      * @param source   The source location in which to browse. See FilePicker#sources for details
      * @param target   The target within the source location
      * @param options  Optional arguments which modify the request
      */
-    static createDirectory(
+  static createDirectory(
         source: FilePickerSource,
         target: string,
         options?: object,
     ): Promise<FilePickerManageFilesResult>;
 
-    /**
+  /**
      * Dispatch a POST request to the server containing a directory path and a file to upload
      * @param source                 The data source to which the file should be uploaded
      * @param path                   The destination path
@@ -234,7 +234,7 @@ export default class FilePicker extends HandlebarsApplicationMixin(ApplicationV2
      * @param [options.notify=true]  Display a UI notification when the upload is processed
      * @returns  The response object
      */
-    static upload(
+  static upload(
         source: FilePickerSource,
         path: string,
         file: File,
@@ -242,7 +242,7 @@ export default class FilePicker extends HandlebarsApplicationMixin(ApplicationV2
         options?: { notify?: boolean },
     ): Promise<FilePickerUploadResponse | false | void>;
 
-    /**
+  /**
      * A convenience function that uploads a file to a given package's persistent /storage/ directory
      * @param packageId              The id of the package to which the file should be uploaded. Only supports Systems and Modules.
      * @param path                   The relative destination path in the package's storage directory
@@ -252,7 +252,7 @@ export default class FilePicker extends HandlebarsApplicationMixin(ApplicationV2
      * @param [options.notify=true]  Display a UI notification when the upload is processed
      * @returns  The response object
      */
-    static uploadPersistent(
+  static uploadPersistent(
         packageId: string,
         path: string,
         file: File,
@@ -260,16 +260,16 @@ export default class FilePicker extends HandlebarsApplicationMixin(ApplicationV2
         options?: { notify?: boolean },
     ): Promise<FilePickerUploadResponse | false | void>;
 
-    /* -------------------------------------------- */
-    /*  Rendering                                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering                                   */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Browse to a specific location for this FilePicker instance
      * @param [target]   The target within the currently active source location.
      * @param [options]  Browsing options
      */
-    browse(
+  browse(
         target?: string,
         options?: {
             type?: FilePickerFileType;
@@ -279,46 +279,46 @@ export default class FilePicker extends HandlebarsApplicationMixin(ApplicationV2
         },
     ): Promise<this>;
 
-    override render(options?: Partial<HandlebarsRenderOptions>): Promise<this>;
+  override render(options?: Partial<HandlebarsRenderOptions>): Promise<this>;
 
-    override _prepareContext(options: HandlebarsRenderOptions): Promise<FilePickerContext>;
+  override _prepareContext(options: HandlebarsRenderOptions): Promise<FilePickerContext>;
 
-    protected override _prepareTabs(group: string): Record<string, ApplicationTab>;
+  protected override _prepareTabs(group: string): Record<string, ApplicationTab>;
 
-    override changeTab(
+  override changeTab(
         tab: string,
         group: string,
         options?: { event?: Event; navElement?: HTMLElement; force?: boolean; updatePosition?: boolean },
     ): void;
 
-    protected override _tearDown(options: ApplicationClosingOptions): void;
+  protected override _tearDown(options: ApplicationClosingOptions): void;
 
-    protected override _onRender(context: FilePickerContext, options: HandlebarsRenderOptions): Promise<void>;
+  protected override _onRender(context: FilePickerContext, options: HandlebarsRenderOptions): Promise<void>;
 
-    /* -------------------------------------------- */
-    /*  Event Listeners and Handlers                */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Listeners and Handlers                */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Handle changes to the tile size.
      * @param event  The triggering event.
      */
-    protected _onChangeTileSize(event: Event): void;
+  protected _onChangeTileSize(event: Event): void;
 
-    /**
+  /**
      * Search among shown directories and files.
      * @param event The triggering event
      * @param query The search input value
      * @param rgx
      * @param html
      */
-    protected _onSearchFilter(event: KeyboardEvent, query: string, rgx: RegExp, html: HTMLElement): void;
+  protected _onSearchFilter(event: KeyboardEvent, query: string, rgx: RegExp, html: HTMLElement): void;
 
-    /* -------------------------------------------- */
-    /*  Factory Methods                             */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Factory Methods                             */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Bind the file picker to a new target field.
      * Assumes the user will provide a HTMLButtonElement which has the data-target and data-type attributes
      * The data-target attribute should provide the name of the input field which should receive the selected file
@@ -326,7 +326,7 @@ export default class FilePicker extends HandlebarsApplicationMixin(ApplicationV2
      *
      * @param button The button element
      */
-    static fromButton(button: HTMLButtonElement): FilePicker;
+  static fromButton(button: HTMLButtonElement): FilePicker;
 }
 
 export {};

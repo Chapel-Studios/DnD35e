@@ -1,12 +1,12 @@
-import { Document, DocumentMetadata, EmbeddedCollection } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseFolder, BaseJournalEntryPage } from "./_module.mjs";
+import { Document, DocumentMetadata, EmbeddedCollection } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseFolder, BaseJournalEntryPage } from './_module.mjs';
 
 /** The JournalEntry document model. */
 export default class BaseJournalEntry extends Document<null, JournalEntrySchema> {
-    static override get metadata(): JournalEntryMetadata;
+  static override get metadata(): JournalEntryMetadata;
 
-    static override defineSchema(): JournalEntrySchema;
+  static override defineSchema(): JournalEntrySchema;
 }
 
 export default interface BaseJournalEntry
@@ -14,22 +14,22 @@ export default interface BaseJournalEntry
         fields.ModelPropsFromSchema<JournalEntrySchema> {
     readonly pages: EmbeddedCollection<BaseJournalEntryPage<this>>;
 
-    get documentName(): JournalEntryMetadata["name"];
+    get documentName(): JournalEntryMetadata['name'];
 }
 
 interface JournalEntryMetadata extends DocumentMetadata {
-    name: "JournalEntry";
-    collection: "journal";
+    name: 'JournalEntry';
+    collection: 'journal';
     indexed: true;
-    compendiumIndexFields: ["_id", "name", "sort"];
+    compendiumIndexFields: ['_id', 'name', 'sort'];
     embedded: {
-        JournalEntryPage: "pages";
+        JournalEntryPage: 'pages';
     };
-    label: "DOCUMENT.JournalEntry";
-    labelPlural: "DOCUMENT.JournalEntries";
+    label: 'DOCUMENT.JournalEntry';
+    labelPlural: 'DOCUMENT.JournalEntries';
     isPrimary: true;
-    permissions: Omit<DocumentMetadata["permissions"], "create"> & {
-        create: "JOURNAL_CREATE";
+    permissions: Omit<DocumentMetadata['permissions'], 'create'> & {
+        create: 'JOURNAL_CREATE';
     };
 }
 

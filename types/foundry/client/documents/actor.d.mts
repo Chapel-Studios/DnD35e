@@ -1,20 +1,20 @@
-import Token from "@client/canvas/placeables/token.mjs";
-import { DocumentConstructionContext } from "@common/_types.mjs";
+import Token from '@client/canvas/placeables/token.mjs';
+import { DocumentConstructionContext } from '@common/_types.mjs';
 import {
-    DatabaseCreateOperation,
-    DatabaseDeleteOperation,
-    DatabaseUpdateCallbackOptions,
-    DatabaseUpdateOperation,
-} from "@common/abstract/_types.mjs";
-import Document from "@common/abstract/document.mjs";
-import { ImageFilePath, VideoFilePath } from "@common/constants.mjs";
-import { IterableWeakMap, IterableWeakSet } from "@common/utils/_module.mjs";
-import ActorSheet from "../appv1/sheets/actor-sheet.mjs";
-import { ActiveEffect, ActorUUID, BaseActor, Combat, Item, Scene, TokenDocument } from "./_module.mjs";
-import { ClientDocument, ClientDocumentStatic } from "./abstract/client-document.mjs";
-import Actors from "./collections/actors.mjs";
+  DatabaseCreateOperation,
+  DatabaseDeleteOperation,
+  DatabaseUpdateCallbackOptions,
+  DatabaseUpdateOperation,
+} from '@common/abstract/_types.mjs';
+import Document from '@common/abstract/document.mjs';
+import { ImageFilePath, VideoFilePath } from '@common/constants.mjs';
+import { IterableWeakMap, IterableWeakSet } from '@common/utils/_module.mjs';
+import ActorSheet from '../appv1/sheets/actor-sheet.mjs';
+import { ActiveEffect, ActorUUID, BaseActor, Combat, Item, Scene, TokenDocument } from './_module.mjs';
+import { ClientDocument, ClientDocumentStatic } from './abstract/client-document.mjs';
+import Actors from './collections/actors.mjs';
 
-interface ClientBaseActorStatic extends Omit<typeof BaseActor, "new">, ClientDocumentStatic {}
+interface ClientBaseActorStatic extends Omit<typeof BaseActor, 'new'>, ClientDocumentStatic {}
 
 declare const ClientBaseActor: {
     new <TParent extends TokenDocument | null>(...args: any): BaseActor<TParent> & ClientDocument<TParent>;
@@ -46,55 +46,55 @@ declare interface ClientBaseActor<TParent extends TokenDocument | null>
  * ```
  */
 declare class Actor<TParent extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TParent> {
-    protected override _configure(options?: object): void;
+  protected override _configure(options?: object): void;
 
-    protected override _initializeSource(source: Record<string, unknown>, options?: object): this["_source"];
+  protected override _initializeSource(source: Record<string, unknown>, options?: object): this['_source'];
 
-    /** An object that tracks which tracks the changes to the data model which were applied by active effects */
-    overrides: Omit<DeepPartial<this["_source"]>, "prototypeToken">;
+  /** An object that tracks which tracks the changes to the data model which were applied by active effects */
+  overrides: Omit<DeepPartial<this['_source']>, 'prototypeToken'>;
 
-    /** The statuses that are applied to this actor by active effects */
-    statuses: Set<string>;
+  /** The statuses that are applied to this actor by active effects */
+  statuses: Set<string>;
 
-    /* -------------------------------------------- */
-    /*  Properties                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Properties                                  */
+  /* -------------------------------------------- */
 
-    /** Provide a thumbnail image path used to represent this document. */
-    get thumbnail(): this["img"];
+  /** Provide a thumbnail image path used to represent this document. */
+  get thumbnail(): this['img'];
 
-    /** Provide an object which organizes all embedded Item instances by their type */
-    get itemTypes(): object;
+  /** Provide an object which organizes all embedded Item instances by their type */
+  get itemTypes(): object;
 
-    /** Test whether an Actor is a synthetic representation of a Token (if true) or a full Document (if false) */
-    get isToken(): boolean;
+  /** Test whether an Actor is a synthetic representation of a Token (if true) or a full Document (if false) */
+  get isToken(): boolean;
 
-    /** Retrieve the list of ActiveEffects that are currently applied to this Actor. */
-    get appliedEffects(): ActiveEffect<Actor | Item>[];
+  /** Retrieve the list of ActiveEffects that are currently applied to this Actor. */
+  get appliedEffects(): ActiveEffect<Actor | Item>[];
 
-    /** An array of ActiveEffect instances which are present on the Actor which have a limited duration. */
-    get temporaryEffects(): ActiveEffect<Actor | Item>[];
+  /** An array of ActiveEffect instances which are present on the Actor which have a limited duration. */
+  get temporaryEffects(): ActiveEffect<Actor | Item>[];
 
-    /** Return a reference to the TokenDocument which owns this Actor as a synthetic override */
-    get token(): TParent;
+  /** Return a reference to the TokenDocument which owns this Actor as a synthetic override */
+  get token(): TParent;
 
-    /** Whether the Actor has at least one Combatant in the active Combat that represents it. */
-    get inCombat(): boolean;
+  /** Whether the Actor has at least one Combatant in the active Combat that represents it. */
+  get inCombat(): boolean;
 
-    /**
+  /**
      * Maintain a list of Token Documents that represent this Actor, stored by Scene.
      * @internal
      */
-    readonly _dependentTokens: IterableWeakMap<Scene, IterableWeakSet<TokenDocument>>;
+  readonly _dependentTokens: IterableWeakMap<Scene, IterableWeakSet<TokenDocument>>;
 
-    /* -------------------------------------------- */
-    /*  Methods                                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Methods                                     */
+  /* -------------------------------------------- */
 
-    /** Apply any transformations to the Actor data which are caused by ActiveEffects. */
-    applyActiveEffects(): void;
+  /** Apply any transformations to the Actor data which are caused by ActiveEffects. */
+  applyActiveEffects(): void;
 
-    /**
+  /**
          * Retrieve an Array of active tokens which represent this Actor in the current canvas Scene.
          * If the canvas is not currently active, or there are no linked actors, the returned Array will be empty.
          * If the Actor is a synthetic token actor, only the exact Token which it represents will be returned.
@@ -104,36 +104,36 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
          * @param [document=false] Return the Document instance rather than the PlaceableObject
          * @return An array of Token instances in the current Scene which reference this Actor.
          */
-    getActiveTokens(linked: boolean | undefined, document: true): TokenDocument<Scene>[];
-    getActiveTokens(linked?: boolean | undefined, document?: false): Token<TokenDocument<Scene>>[];
-    getActiveTokens(linked?: boolean, document?: boolean): TokenDocument<Scene>[] | Token<TokenDocument<Scene>>[];
+  getActiveTokens(linked: boolean | undefined, document: true): TokenDocument<Scene>[];
+  getActiveTokens(linked?: boolean | undefined, document?: false): Token<TokenDocument<Scene>>[];
+  getActiveTokens(linked?: boolean, document?: boolean): TokenDocument<Scene>[] | Token<TokenDocument<Scene>>[];
 
-    /**
+  /**
      * Get all ActiveEffects that may apply to this Actor.
      * If CONFIG.ActiveEffect.legacyTransferral is true, this is equivalent to actor.effects.contents.
      * If CONFIG.ActiveEffect.legacyTransferral is false, this will also return all the transferred ActiveEffects on any
      * of the Actor's owned Items.
      */
-    allApplicableEffects(): Generator<ActiveEffect<this>, void, void>;
+  allApplicableEffects(): Generator<ActiveEffect<this>, void, void>;
 
-    /** Prepare a data object which defines the data schema used by dice roll commands against this Actor */
-    getRollData(): Record<string, unknown>;
+  /** Prepare a data object which defines the data schema used by dice roll commands against this Actor */
+  getRollData(): Record<string, unknown>;
 
-    /**
+  /**
      * Create a new Token document, not yet saved to the database, which represents the Actor.
      * @param data Additional data, such as x, y, rotation, etc. for the created token data
      * @param options The options passed to the TokenDocument constructor
      * @returns The created TokenDocument instance
      */
-    getTokenDocument(
+  getTokenDocument(
         data?: DeepPartial<foundry.documents.TokenSource>,
         options?: Partial<DocumentConstructionContext<this>>,
     ): Promise<NonNullable<TParent>>;
 
-    /** Get an Array of Token images which could represent this Actor */
-    getTokenImages(): Promise<(ImageFilePath | VideoFilePath)[]>;
+  /** Get an Array of Token images which could represent this Actor */
+  getTokenImages(): Promise<(ImageFilePath | VideoFilePath)[]>;
 
-    /**
+  /**
      * Handle how changes to a Token attribute bar are applied to the Actor.
      * This allows for game systems to override this behavior and deploy special logic.
      * @param attribute The attribute path
@@ -142,11 +142,11 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
      * @param isBar     Whether the new value is part of an attribute bar, or just a direct value
      * @return The updated Actor document
      */
-    modifyTokenAttribute(attribute: string, value: number, isDelta?: boolean, isBar?: boolean): Promise<this>;
+  modifyTokenAttribute(attribute: string, value: number, isDelta?: boolean, isBar?: boolean): Promise<this>;
 
-    override prepareEmbeddedDocuments(): void;
+  override prepareEmbeddedDocuments(): void;
 
-    /**
+  /**
      * Roll initiative for all Combatants in the currently active Combat encounter which are associated with this Actor.
      * If viewing a full Actor entity, all Tokens which map to that actor will be targeted for initiative rolls.
      * If viewing a synthetic Token actor, only that particular Token will be targeted for an initiative roll.
@@ -157,13 +157,13 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
      * @param [options.initiativeOptions={}]   Additional options passed to the Combat#rollInitiative method.
      * @return A promise which resolves to the Combat entity once rolls are complete.
      */
-    rollInitiative(options?: {
+  rollInitiative(options?: {
         createCombatants?: boolean;
         rerollInitiative?: boolean;
         initiativeOptions?: object;
     }): Promise<Combat | null>;
 
-    /**
+  /**
      * Toggle a configured status effect for the Actor.
      * @param   statusId                A status effect ID defined in CONFIG.statusEffects
      * @param   [options={}]            Additional options which modify how the effect is created
@@ -175,70 +175,70 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
      *                                 - false if an existing effect needed to be removed
      *                                 - undefined if no changes need to be made
      */
-    toggleStatusEffect(
+  toggleStatusEffect(
         statusId: string,
         options?: { active?: boolean; overlay?: boolean },
     ): Promise<ActiveEffect<this> | boolean | void>;
 
-    /**
+  /**
      * Request wildcard token images from the server and return them.
      * @param actorId   The actor whose prototype token contains the wildcard image path.
      * @param [options]
      * @param [options.pack] The name of the compendium the actor is in.
      */
-    protected static _requestTokenImages(
+  protected static _requestTokenImages(
         actorId: string,
         options?: { pack?: string },
     ): Promise<(ImageFilePath | VideoFilePath)[]>;
 
-    /* -------------------------------------------- */
-    /*  Tokens                                      */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Tokens                                      */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Get this actor's dependent tokens.
      * If the actor is a synthetic token actor, only the exact Token which it represents will be returned.
      * @param [options]
      * @param [options.scenes] A single Scene, or list of Scenes to filter by.
      * @param [options.linked] Limit the results to tokens that are linked to the actor.
      */
-    getDependentTokens(options?: {
-        scenes?: NonNullable<NonNullable<TParent>["parent"]> | NonNullable<NonNullable<TParent>["parent"]>[];
+  getDependentTokens(options?: {
+        scenes?: NonNullable<NonNullable<TParent>['parent']> | NonNullable<NonNullable<TParent>['parent']>[];
         linked?: boolean;
     }): NonNullable<TParent>[];
 
-    /**
+  /**
      * Register a token as a dependent of this actor.
      * @param token  The token.
      * @internal
      */
-    _registerDependentToken(token: NonNullable<TParent>): void;
+  _registerDependentToken(token: NonNullable<TParent>): void;
 
-    /**
+  /**
      * Remove a token from this actor's dependents.
      * @param token The token.
      * @internal
      */
-    _unregisterDependentToken(token: NonNullable<TParent>): void;
+  _unregisterDependentToken(token: NonNullable<TParent>): void;
 
-    /**
+  /**
      * Prune a whole scene from this actor's dependent tokens.
      * @param scene The scene.
      * @internal
      */
-    _unregisterDependentScene(scene: NonNullable<NonNullable<TParent>["parent"]>): void;
+  _unregisterDependentScene(scene: NonNullable<NonNullable<TParent>['parent']>): void;
 
-    /* -------------------------------------------- */
-    /*  Event Handlers                              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Handlers                              */
+  /* -------------------------------------------- */
 
-    protected override _onUpdate(
-        changed: DeepPartial<this["_source"]>,
+  protected override _onUpdate(
+        changed: DeepPartial<this['_source']>,
         options: DatabaseUpdateCallbackOptions,
         userId: string,
     ): void;
 
-    protected _onCreateDescendantDocuments<P extends Document>(
+  protected _onCreateDescendantDocuments<P extends Document>(
         parent: P,
         collection: string,
         documents: Document<P>[],
@@ -247,7 +247,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
         userId: string,
     ): void;
 
-    protected _onUpdateDescendantDocuments<P extends Document>(
+  protected _onUpdateDescendantDocuments<P extends Document>(
         parent: P,
         collection: string,
         documents: Document<P>[],
@@ -256,7 +256,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
         userId: string,
     ): void;
 
-    protected override _onDeleteDescendantDocuments<P extends Document>(
+  protected override _onDeleteDescendantDocuments<P extends Document>(
         parent: P,
         collection: string,
         documents: Document<P>[],
@@ -265,15 +265,15 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
         userId: string,
     ): void;
 
-    /** Additional workflows to perform when any descendant document within this Actor changes. */
-    protected _onEmbeddedDocumentChange(): void;
+  /** Additional workflows to perform when any descendant document within this Actor changes. */
+  protected _onEmbeddedDocumentChange(): void;
 
-    /**
+  /**
      * Update the active TokenDocument instances which represent this Actor.
      * @param [update]  The update delta.
      * @param [options] The update context.
      */
-    protected _updateDependentTokens(
+  protected _updateDependentTokens(
         update?: Record<string, unknown>,
         options?: DatabaseUpdateOperation<TParent>,
     ): void;

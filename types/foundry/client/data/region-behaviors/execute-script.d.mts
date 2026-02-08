@@ -1,5 +1,5 @@
-import * as fields from "@common/data/fields.mjs";
-import { EventsField, RegionBehaviorType } from "./base.mjs";
+import * as fields from '@common/data/fields.mjs';
+import { EventsField, RegionBehaviorType } from './base.mjs';
 
 /** The data model for a behavior that executes a script. */
 export class ExecuteScriptRegionBehaviorType extends RegionBehaviorType<ExecuteScriptRegionBehaviorTypeSchema> {}

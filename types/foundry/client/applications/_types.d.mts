@@ -1,5 +1,5 @@
-import { DataField } from "../../common/data/fields.mjs";
-import FormDataExtended from "./ux/form-data-extended.mjs";
+import { DataField } from '../../common/data/fields.mjs';
+import FormDataExtended from './ux/form-data-extended.mjs';
 
 export interface ApplicationConfiguration {
     /** An HTML element identifier used for this Application instance */
@@ -26,9 +26,9 @@ export interface ApplicationPosition {
     /** Window offset pixels from left */
     left: number;
     /** Un-scaled pixels in width or "auto" */
-    width: number | "auto";
+    width: number | 'auto';
     /** Un-scaled pixels in height or "auto" */
-    height: number | "auto";
+    height: number | 'auto';
     /** A numeric scaling factor applied to application dimensions */
     scale: number;
     /** A z-index of the application relative to siblings */

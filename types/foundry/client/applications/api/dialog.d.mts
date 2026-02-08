@@ -1,48 +1,48 @@
-import { ApplicationConfiguration, ApplicationRenderOptions } from "../_types.mjs";
-import ApplicationV2 from "./application.mjs";
+import { ApplicationConfiguration, ApplicationRenderOptions } from '../_types.mjs';
+import ApplicationV2 from './application.mjs';
 
 export default class DialogV2<
     TConfig extends DialogV2Configuration = DialogV2Configuration,
     TRenderOptions extends ApplicationRenderOptions = ApplicationRenderOptions,
 > extends ApplicationV2<TConfig, TRenderOptions> {
-    static override DEFAULT_OPTIONS: DeepPartial<DialogV2Configuration>;
+  static override DEFAULT_OPTIONS: DeepPartial<DialogV2Configuration>;
 
-    override _initializeApplicationOptions(options: DeepPartial<TConfig>): TConfig;
+  override _initializeApplicationOptions(options: DeepPartial<TConfig>): TConfig;
 
-    protected override _renderHTML(): Promise<HTMLFormElement>;
+  protected override _renderHTML(): Promise<HTMLFormElement>;
 
-    /**
+  /**
      * Render configured buttons
      * @returns
      */
-    protected _renderButtons(): string;
+  protected _renderButtons(): string;
 
-    /**
+  /**
      * Handle submitting the dialog
      * @param target The button that was clicked or the default button
      * @param event The triggering event
      */
-    protected _onSubmit(target: HTMLButtonElement, event: PointerEvent | SubmitEvent): Promise<DialogV2>;
+  protected _onSubmit(target: HTMLButtonElement, event: PointerEvent | SubmitEvent): Promise<DialogV2>;
 
-    protected override _onFirstRender(): Promise<void>;
+  protected override _onFirstRender(): Promise<void>;
 
-    protected override _attachFrameListeners(): void;
+  protected override _attachFrameListeners(): void;
 
-    protected override _replaceHTML(result: unknown, content: HTMLFormElement): void;
+  protected override _replaceHTML(result: unknown, content: HTMLFormElement): void;
 
-    /**
+  /**
      * Handle keypresses within the dialog
      * @param event The triggering event
      */
-    protected _onKeyDown(event: KeyboardEvent): void;
+  protected _onKeyDown(event: KeyboardEvent): void;
 
-    /**
+  /**
      * @param event The originating click event.
      * @param target The button element that was clicked
      */
-    protected static _onClickButton(event: PointerEvent, target: HTMLButtonElement): void;
+  protected static _onClickButton(event: PointerEvent, target: HTMLButtonElement): void;
 
-    /**
+  /**
      * A utility helper to generate a dialog with yes and no buttons.
      * @param [yes] Options to overwrite the default yes button configuration.
      * @param [no]  Options to overwrite the default no button configuration.
@@ -52,30 +52,30 @@ export default class DialogV2<
      *              returned by its callback. If the dialog was dismissed, and rejectClose is
      *              false, the Promise resolves to null.
      */
-    static confirm({
-        yes,
-        no,
-        ...options
-    }: {
+  static confirm({
+    yes,
+    no,
+    ...options
+  }: {
         yes?: Partial<DialogV2Button>;
         no?: Partial<DialogV2Button>;
     } & DeepPartial<DialogV2Configuration & DialogV2WaitOptions>): Promise<boolean>;
 
-    /**
+  /**
      * A utility helper to generate a dialog with a single confirmation button.
      * @param [ok] Options to overwrite the default confirmation button configuration.
      * @returns    Resolves to the identifier of the button used to submit the dialog,
      *             or the value returned by that button's callback. If the dialog was
      *             dismissed, and rejectClose is false, the Promise resolves to null.
      */
-    static prompt({
-        ok,
-        ...options
-    }: {
+  static prompt({
+    ok,
+    ...options
+  }: {
         ok: Partial<DialogV2Button>;
     } & Partial<DialogV2Configuration & DialogV2WaitOptions>): Promise<unknown>;
 
-    /**
+  /**
      * Spawn a dialog and wait for it to be dismissed or submitted.
      * @param [render]            A function to invoke whenever the dialog is rendered.
      * @param [close]             A function to invoke when the dialog is closed under any
@@ -86,12 +86,12 @@ export default class DialogV2<
      *                           callback. If the dialog was dismissed, and rejectClose is false, the
      *                           Promise resolves to null.
      */
-    static wait({
-        rejectClose,
-        close,
-        render,
-        ...options
-    }: {
+  static wait({
+    rejectClose,
+    close,
+    render,
+    ...options
+  }: {
         rejectClose: boolean;
         close: DialogV2CloseCallback;
         render: DialogV2RenderCallback;

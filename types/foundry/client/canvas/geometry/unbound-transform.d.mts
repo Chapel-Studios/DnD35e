@@ -3,7 +3,7 @@
  * localTransform are working as usual.
  */
 export default class UnboundTransform extends PIXI.Transform {
-    static override IDENTITY: UnboundTransform;
+  static override IDENTITY: UnboundTransform;
 
-    override updateTransform(parentTransform: PIXI.Transform): void;
+  override updateTransform(parentTransform: PIXI.Transform): void;
 }

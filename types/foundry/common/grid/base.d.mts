@@ -1,53 +1,53 @@
-import { GridType, MovementDirection } from "@common/constants.mjs";
-import { Color, ColorSource } from "pixi.js";
-import { Point, Rectangle } from "../_types.mjs";
+import { GridType, MovementDirection } from '@common/constants.mjs';
+import { Color, ColorSource } from 'pixi.js';
+import { Point, Rectangle } from '../_types.mjs';
 
 /** The base grid class. */
 export abstract class BaseGrid {
-    /** The size of a grid space in pixels. */
-    size: number;
+  /** The size of a grid space in pixels. */
+  size: number;
 
-    /** The width of a grid space in pixels. */
-    sizeX: number;
+  /** The width of a grid space in pixels. */
+  sizeX: number;
 
-    /** The height of a grid space in pixels. */
-    sizeY: number;
+  /** The height of a grid space in pixels. */
+  sizeY: number;
 
-    /** The distance of a grid space in units. */
-    distance: number;
+  /** The distance of a grid space in units. */
+  distance: number;
 
-    /** The distance units used in this grid. */
-    units: string;
+  /** The distance units used in this grid. */
+  units: string;
 
-    /** The style of the grid. */
-    style: string;
+  /** The style of the grid. */
+  style: string;
 
-    /** The thickness of the grid. */
-    thickness: number;
+  /** The thickness of the grid. */
+  thickness: number;
 
-    /** The color of the grid. */
-    color: Color;
+  /** The color of the grid. */
+  color: Color;
 
-    /** The opacity of the grid. */
-    alpha: number;
+  /** The opacity of the grid. */
+  alpha: number;
 
-    /**
+  /**
      * The base grid constructor.
      * @param {GridConfiguration} config        The grid configuration
      */
-    constructor(config: GridConfiguration);
+  constructor(config: GridConfiguration);
 
-    /** The grid type (see {@link CONST.GRID_TYPES}). */
-    type: GridType;
+  /** The grid type (see {@link CONST.GRID_TYPES}). */
+  type: GridType;
 
-    /** Is this a gridless grid? */
-    get isGridless(): boolean;
+  /** Is this a gridless grid? */
+  get isGridless(): boolean;
 
-    /** Is this a square grid? */
-    get isSquare(): boolean;
+  /** Is this a square grid? */
+  get isSquare(): boolean;
 
-    /** Is this a hexagonal grid? */
-    get isHexagonal(): boolean;
+  /** Is this a hexagonal grid? */
+  get isHexagonal(): boolean;
 
     /**
      * Calculate the total size of the canvas with padding applied, as well as the top-left coordinates of the inner

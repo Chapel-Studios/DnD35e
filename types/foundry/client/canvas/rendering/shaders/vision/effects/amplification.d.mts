@@ -1,10 +1,10 @@
-import BackgroundVisionShader from "../background-vision.mjs";
+import BackgroundVisionShader from '../background-vision.mjs';
 
 /**
  * Shader specialized in light amplification
  */
 export class AmplificationBackgroundVisionShader extends BackgroundVisionShader {
-    static override defaultUniforms: {
+  static override defaultUniforms: {
         colorTint: number[];
         brightness: number;
         technique: number;

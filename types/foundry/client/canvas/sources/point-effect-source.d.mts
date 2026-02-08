@@ -1,8 +1,8 @@
-import { ElevatedPoint } from "@common/_types.mjs";
-import { PointSourcePolygonConfig } from "../geometry/_module.mjs";
-import Edge from "../geometry/edges/edge.mjs";
-import { PlaceableObject } from "../placeables/_module.mjs";
-import BaseEffectSource, { BaseEffectSourceData, BaseEffectSourceOptions } from "./base-effect-source.mjs";
+import { ElevatedPoint } from '@common/_types.mjs';
+import { PointSourcePolygonConfig } from '../geometry/_module.mjs';
+import Edge from '../geometry/edges/edge.mjs';
+import { PlaceableObject } from '../placeables/_module.mjs';
+import BaseEffectSource, { BaseEffectSourceData, BaseEffectSourceOptions } from './base-effect-source.mjs';
 
 export interface PointEffectSourceData {
     /** The radius of the source */
@@ -36,73 +36,73 @@ export default function PointEffectSourceMixin<
 } & TBase;
 
 export class PointEffectSource {
-    static defaultData: BaseEffectSourceData;
+  static defaultData: BaseEffectSourceData;
 
-    /**
+  /**
      * The Edge instances added by this source.
      */
-    edges: Edge[];
+  edges: Edge[];
 
-    /**
+  /**
      * Whether this Point Effect source can create edges or not.
      * Overriding classes can define dynamic behavior if needed.
      * Default to false so that typical point sources do not create edges.
      */
-    get requiresEdges(): boolean;
+  get requiresEdges(): boolean;
 
-    /**
+  /**
      * A convenience reference to the radius of the source.
      */
-    get radius(): number;
+  get radius(): number;
 
-    /**
+  /**
      * The priority of this point effect source.
      */
-    get priority(): number;
+  get priority(): number;
 
-    /**
+  /**
      * The (elevated) origin of this point effect source.
      */
-    get origin(): ElevatedPoint;
+  get origin(): ElevatedPoint;
 
-    protected _configure(changes: Record<string, unknown>): void;
+  protected _configure(changes: Record<string, unknown>): void;
 
-    protected _initialize(data: Record<string, unknown>): void;
+  protected _initialize(data: Record<string, unknown>): void;
 
-    /* -------------------------------------------- */
-    /*  Point Source Geometry Methods               */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Point Source Geometry Methods               */
+  /* -------------------------------------------- */
 
-    protected _initializeSoftEdges(): void;
+  protected _initializeSoftEdges(): void;
 
-    /**
+  /**
      * Configure the parameters of the polygon that is generated for this source.
      */
-    protected _getPolygonConfiguration(): PointSourcePolygonConfig;
+  protected _getPolygonConfiguration(): PointSourcePolygonConfig;
 
-    protected _createShapes(): void;
+  protected _createShapes(): void;
 
-    protected _destroy(): void;
+  protected _destroy(): void;
 
-    /* -------------------------------------------- */
-    /*  Rendering methods                           */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering methods                           */
+  /* -------------------------------------------- */
 
-    protected _drawMesh(layerId: string): PIXI.Mesh;
+  protected _drawMesh(layerId: string): PIXI.Mesh;
 
-    protected _updateGeometry(): void;
+  protected _updateGeometry(): void;
 
-    /* -------------------------------------------- */
-    /*  Edge Management                             */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Edge Management                             */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Create the Edge instances that correspond to this source.
      */
-    protected _createEdges(): void;
+  protected _createEdges(): void;
 
-    /**
+  /**
      * Remove edges from the active Edges collection.
      */
-    protected _deleteEdges(): void;
+  protected _deleteEdges(): void;
 }

@@ -1,10 +1,10 @@
-import { ApplicationConfiguration, ApplicationRenderContext } from "@client/applications/_module.mjs";
+import { ApplicationConfiguration, ApplicationRenderContext } from '@client/applications/_module.mjs';
 import {
-    ApplicationV2,
-    HandlebarsApplicationMixin,
-    HandlebarsRenderOptions,
-    HandlebarsTemplatePart,
-} from "../../api/_module.mjs";
+  ApplicationV2,
+  HandlebarsApplicationMixin,
+  HandlebarsRenderOptions,
+  HandlebarsTemplatePart,
+} from '../../api/_module.mjs';
 
 /**
  * A bundle of metrics for Support
@@ -41,37 +41,37 @@ interface SupportReportData {
 }
 
 export default class SupportDetails extends HandlebarsApplicationMixin(ApplicationV2) {
-    static DEFAULT_OPTIONS: DeepPartial<ApplicationConfiguration>;
+  static DEFAULT_OPTIONS: DeepPartial<ApplicationConfiguration>;
 
-    static override PARTS: Record<string, HandlebarsTemplatePart>;
+  static override PARTS: Record<string, HandlebarsTemplatePart>;
 
-    protected override _preparePartContext(
+  protected override _preparePartContext(
         partId: string,
         context: ApplicationRenderContext,
         options: HandlebarsRenderOptions,
     ): Promise<ApplicationRenderContext>;
 
-    /**
+  /**
      * Marshal information on Documents that failed validation and format it for display.
      */
-    protected _getDocumentValidationErrors(): object[];
+  protected _getDocumentValidationErrors(): object[];
 
-    /**
+  /**
      * Marshal package-related warnings and errors and format it for display.
      */
-    protected _getModuleIssues(): object[];
+  protected _getModuleIssues(): object[];
 
-    /**
+  /**
      * Collects a number of metrics that is useful for Support
      */
-    static generateSupportReport(): Promise<SupportReportData>;
+  static generateSupportReport(): Promise<SupportReportData>;
 
-    /**
+  /**
      * Get a WebGL renderer information string
      * @param gl The rendering context
      * @returns The unmasked renderer string
      */
-    static getWebGLRendererInfo(gl: WebGLRenderingContext): string;
+  static getWebGLRendererInfo(gl: WebGLRenderingContext): string;
 }
 
 export {};

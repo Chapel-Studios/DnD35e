@@ -1,21 +1,22 @@
 /**
  * The default illumination shader used for vision sources
  */
+import AdaptiveVisionShader from './base-vision.mjs';
 export default class IlluminationVisionShader extends AdaptiveVisionShader {
-    /**
+  /**
      * Transition between bright and dim colors, if requested
      * @type {string}
      */
-    static VISION_COLOR: string;
-    /**
+  static VISION_COLOR: string;
+  /**
      * Memory allocations for the Adaptive Illumination Shader
      * @type {string}
      */
-    static SHADER_HEADER: string;
-    /** @inheritdoc */
-    static fragmentShader: string;
-    /** @inheritdoc */
-    static defaultUniforms: {
+  static SHADER_HEADER: string;
+  /** @inheritdoc */
+  static fragmentShader: string;
+  /** @inheritdoc */
+  static defaultUniforms: {
         technique: any;
         attenuation: number;
         exposure: number;
@@ -42,4 +43,3 @@ export default class IlluminationVisionShader extends AdaptiveVisionShader {
         globalLightThresholds: number[];
     };
 }
-import AdaptiveVisionShader from "./base-vision.mjs";

@@ -1,4 +1,4 @@
-import Sound from "./sound.mjs";
+import Sound from './sound.mjs';
 
 interface AudioBufferCacheEntry {
     src: string;
@@ -105,12 +105,12 @@ interface AnalysisData {
     analysisLoopActive: boolean;
 }
 
-type ContextName = "music" | "environment" | "interface";
+type ContextName = 'music' | 'environment' | 'interface';
 
-type BandName = "bass" | "mid" | "treble" | "all";
+type BandName = 'bass' | 'mid' | 'treble' | 'all';
 
 interface AnalysisNodes {
-    /** The AnalyserNode for music, or null if not active.*/
+    /** The AnalyserNode for music, or null if not active. */
     music: AnalyserNode | null;
 
     /** The AnalyserNode for ambient, or null if not active. */

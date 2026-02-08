@@ -1,4 +1,4 @@
-import { KeybindingAction, KeybindingActionBinding, KeybindingActionConfig } from "@common/_types.mjs";
+import { KeybindingAction, KeybindingActionBinding, KeybindingActionConfig } from '@common/_types.mjs';
 
 /**
  * A class responsible for managing defined game keybinding.
@@ -11,48 +11,48 @@ import { KeybindingAction, KeybindingActionBinding, KeybindingActionConfig } fro
  * @see {@link ControlsConfig}
  */
 export default class ClientKeybindings {
-    constructor();
+  constructor();
 
-    /**
+  /**
      * Registered Keybinding actions
      */
-    actions: Map<string, KeybindingActionConfig>;
+  actions: Map<string, KeybindingActionConfig>;
 
-    /**
+  /**
      * A mapping of a string key to possible Actions that might execute off it
      */
-    activeKeys: Map<string, KeybindingAction[]>;
+  activeKeys: Map<string, KeybindingAction[]>;
 
-    /**
+  /**
      * A stored cache of Keybind Actions Ids to Bindings
      */
-    bindings: Map<string, KeybindingActionBinding[]>;
+  bindings: Map<string, KeybindingActionBinding[]>;
 
-    static MOVEMENT_DIRECTIONS: {
-        UP: "up";
-        LEFT: "left";
-        DOWN: "down";
-        RIGHT: "right";
-        DESCEND: "descend";
-        ASCEND: "ascend";
+  static MOVEMENT_DIRECTIONS: {
+        UP: 'up';
+        LEFT: 'left';
+        DOWN: 'down';
+        RIGHT: 'right';
+        DESCEND: 'descend';
+        ASCEND: 'ascend';
     };
 
-    static ZOOM_DIRECTIONS: {
-        IN: "in";
-        OUT: "out";
+  static ZOOM_DIRECTIONS: {
+        IN: 'in';
+        OUT: 'out';
     };
 
-    /**
+  /**
      * An alias of the movement key set tracked by the keyboard
      */
-    get moveKeys(): Set<string>;
+  get moveKeys(): Set<string>;
 
-    /**
+  /**
      * Initializes the keybinding values for all registered actions
      */
-    initialize(): void;
+  initialize(): void;
 
-    /**
+  /**
      * Register a new keybinding
      *
      * @param namespace The namespace the Keybinding Action belongs to
@@ -83,9 +83,9 @@ export default class ClientKeybindings {
      * });
      * ```
      */
-    register(namespace: string, action: string, data: KeybindingActionConfig): void;
+  register(namespace: string, action: string, data: KeybindingActionConfig): void;
 
-    /**
+  /**
      * Get the current Bindings of a given namespace's Keybinding Action
      *
      * @param namespace The namespace under which the setting is registered
@@ -96,9 +96,9 @@ export default class ClientKeybindings {
      * game.keybindings.get("myModule", "showNotification");
      * ```
      */
-    get(namespace: string, action: string): KeybindingActionBinding[];
+  get(namespace: string, action: string): KeybindingActionBinding[];
 
-    /**
+  /**
      * Set the editable Bindings of a Keybinding Action for a certain namespace and Action
      *
      * @param namespace The namespace under which the Keybinding is registered
@@ -115,32 +115,32 @@ export default class ClientKeybindings {
      * ]);
      * ```
      */
-    set(namespace: string, action: string, bindings: KeybindingActionBinding[]): Promise<void>;
+  set(namespace: string, action: string, bindings: KeybindingActionBinding[]): Promise<void>;
 
-    /**
+  /**
      * Reset all client keybindings back to their default configuration.
      */
-    resetDefaults(): Promise<void>;
+  resetDefaults(): Promise<void>;
 
-    /**
+  /**
      * Compares two Keybinding Actions based on their Order
      * @param a The first Keybinding Action
      * @param b the second Keybinding Action
      * @internal
      */
-    static _compareActions(
-        a: Pick<KeybindingAction, "precedence" | "order">,
-        b: Pick<KeybindingAction, "precedence" | "order">,
+  static _compareActions(
+        a: Pick<KeybindingAction, 'precedence' | 'order'>,
+        b: Pick<KeybindingAction, 'precedence' | 'order'>,
     ): number;
 
-    /* ---------------------------------------- */
-    /*  Core Keybinding Actions                 */
-    /* ---------------------------------------- */
+  /* ---------------------------------------- */
+  /*  Core Keybinding Actions                 */
+  /* ---------------------------------------- */
 
-    /**
+  /**
      * Register core keybindings.
      * @param view The active game view
      * @internal
      */
-    _registerCoreKeybindings(view: string): void;
+  _registerCoreKeybindings(view: string): void;
 }

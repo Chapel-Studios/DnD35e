@@ -1,7 +1,7 @@
-import { ImageFilePath } from "@common/constants.mjs";
-import Document, { DocumentMetadata } from "../abstract/document.mjs";
-import * as fields from "../data/fields.mjs";
-import BaseCombat from "./combat.mjs";
+import { ImageFilePath } from '@common/constants.mjs';
+import Document, { DocumentMetadata } from '../abstract/document.mjs';
+import * as fields from '../data/fields.mjs';
+import BaseCombat from './combat.mjs';
 
 /**
  * A Document that represents a grouping of individual Combatants in a Combat.
@@ -11,13 +11,13 @@ export default class BaseCombatantGroup<TParent extends BaseCombat | null = Base
     TParent,
     CombatantGroupSchema
 > {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override metadata: Readonly<CombatantGroupMetadata>;
+  static override metadata: Readonly<CombatantGroupMetadata>;
 
-    static override defineSchema(): CombatantGroupSchema;
+  static override defineSchema(): CombatantGroupSchema;
 }
 
 export default interface BaseCombatantGroup<TParent extends BaseCombat | null = BaseCombat | null>
@@ -25,18 +25,18 @@ export default interface BaseCombatantGroup<TParent extends BaseCombat | null = 
         fields.ModelPropsFromSchema<CombatantGroupSchema> {}
 
 declare interface CombatantGroupMetadata extends DocumentMetadata {
-    name: "CombatantGroup";
-    collection: "groups";
-    label: "DOCUMENT.CombatantGroup";
-    labelPlural: "DOCUMENT.CombatantGroups";
+    name: 'CombatantGroup';
+    collection: 'groups';
+    label: 'DOCUMENT.CombatantGroup';
+    labelPlural: 'DOCUMENT.CombatantGroups';
     isEmbedded: true;
     hasTypeData: true;
-    schemaVersion: "13.337";
+    schemaVersion: '13.337';
 }
 
 export type CombatantGroupSchema = {
     _id: fields.DocumentIdField;
-    type: fields.DocumentTypeField<"base">;
+    type: fields.DocumentTypeField<'base'>;
     system: fields.TypeDataField;
     name: fields.StringField;
     img: fields.FilePathField<ImageFilePath>;

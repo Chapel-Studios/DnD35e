@@ -1,16 +1,16 @@
-import { EventEmitter } from "@common/utils/event-emitter.mjs";
+import { EventEmitter } from '@common/utils/event-emitter.mjs';
 import {
-    ApplicationClosingOptions,
-    ApplicationConfiguration,
-    ApplicationFormConfiguration,
-    ApplicationHeaderControlsEntry,
-    ApplicationPosition,
-    ApplicationRenderContext,
-    ApplicationRenderOptions,
-    ApplicationTab,
-    ApplicationTabsConfiguration,
-} from "../_types.mjs";
-import ContextMenu, { ContextMenuEntry } from "../ux/context-menu.mjs";
+  ApplicationClosingOptions,
+  ApplicationConfiguration,
+  ApplicationFormConfiguration,
+  ApplicationHeaderControlsEntry,
+  ApplicationPosition,
+  ApplicationRenderContext,
+  ApplicationRenderOptions,
+  ApplicationTab,
+  ApplicationTabsConfiguration,
+} from '../_types.mjs';
+import ContextMenu, { ContextMenuEntry } from '../ux/context-menu.mjs';
 
 /** The Application class is responsible for rendering an HTMLElement into the Foundry Virtual Tabletop user interface. */
 export default abstract class ApplicationV2<
@@ -18,29 +18,29 @@ export default abstract class ApplicationV2<
     TRenderOptions extends ApplicationRenderOptions = ApplicationRenderOptions,
     TRenderContext extends object = object,
 > extends EventEmitter {
-    constructor(options?: DeepPartial<TConfig>);
+  constructor(options?: DeepPartial<TConfig>);
 
-    /**
+  /**
      * Designates which upstream Application class in this class' inheritance chain is the base application.
      * Any DEFAULT_OPTIONS of super-classes further upstream of the BASE_APPLICATION are ignored.
      * Hook events for super-classes further upstream of the BASE_APPLICATION are not dispatched.
      */
-    static BASE_APPLICATION: AbstractConstructorOf<ApplicationV2>;
+  static BASE_APPLICATION: AbstractConstructorOf<ApplicationV2>;
 
-    /**
+  /**
      * The default configuration options which are assigned to every instance of this Application class.
      */
-    static DEFAULT_OPTIONS: DeepPartial<ApplicationConfiguration>;
+  static DEFAULT_OPTIONS: DeepPartial<ApplicationConfiguration>;
 
-    /**
+  /**
      * Configuration of application tabs, with an entry per tab group.
      */
-    static TABS: Record<string, ApplicationTabsConfiguration>;
+  static TABS: Record<string, ApplicationTabsConfiguration>;
 
-    /**
+  /**
      * The sequence of rendering states that describe the Application life-cycle.
      */
-    static RENDER_STATES: {
+  static RENDER_STATES: {
         ERROR: -3;
         CLOSING: -2;
         CLOSED: -1;
@@ -49,12 +49,12 @@ export default abstract class ApplicationV2<
         RENDERED: 2;
     };
 
-    static emittedEvents: readonly string[];
+  static emittedEvents: readonly string[];
 
-    options: TConfig;
+  options: TConfig;
 
-    /** Convenience references to window header elements. */
-    get window(): {
+  /** Convenience references to window header elements. */
+  get window(): {
         header: HTMLElement;
         title: HTMLHeadingElement;
         icon: HTMLElement;
@@ -67,61 +67,61 @@ export default abstract class ApplicationV2<
         pointerMoveThrottle: boolean;
     };
 
-    /**
+  /**
      * If this Application uses tabbed navigation groups, this mapping is updated whenever the changeTab method is called.
      * Reports the active tab for each group.
      * Subclasses may override this property to define default tabs for each group.
      */
-    tabGroups: Record<string, string>;
+  tabGroups: Record<string, string>;
 
-    /* -------------------------------------------- */
-    /*  Application Properties                      */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Application Properties                      */
+  /* -------------------------------------------- */
 
-    /** The CSS class list of this Application instance */
-    get classList(): DOMTokenList;
+  /** The CSS class list of this Application instance */
+  get classList(): DOMTokenList;
 
-    /** The HTML element ID of this Application instance. */
-    get id(): string;
+  /** The HTML element ID of this Application instance. */
+  get id(): string;
 
-    /** A convenience reference to the title of the Application window. */
-    get title(): string;
+  /** A convenience reference to the title of the Application window. */
+  get title(): string;
 
-    /** The HTMLElement which renders this Application into the DOM. */
-    get element(): HTMLElement;
+  /** The HTMLElement which renders this Application into the DOM. */
+  get element(): HTMLElement;
 
-    /**
+  /**
      * Does this Application have a top-level form element?
      */
-    get form(): HTMLFormElement | null;
+  get form(): HTMLFormElement | null;
 
-    /** Is this Application instance currently minimized? */
-    get minimized(): boolean;
+  /** Is this Application instance currently minimized? */
+  get minimized(): boolean;
 
-    /** The current position of the application with respect to the window.document.body. */
-    position: ApplicationPosition;
+  /** The current position of the application with respect to the window.document.body. */
+  position: ApplicationPosition;
 
-    /** Is this Application instance currently rendered? */
-    get rendered(): boolean;
+  /** Is this Application instance currently rendered? */
+  get rendered(): boolean;
 
-    /** The current render state of the Application. */
-    get state(): number;
+  /** The current render state of the Application. */
+  get state(): number;
 
-    /** Does this Application instance render within an outer window frame? */
-    get hasFrame(): boolean;
+  /** Does this Application instance render within an outer window frame? */
+  get hasFrame(): boolean;
 
-    /* -------------------------------------------- */
-    /*  Initialization                              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Initialization                              */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Iterate over the inheritance chain of this Application.
      * The chain includes this Application itself and all parents until the base application is encountered.
      * @see ApplicationV2.BASE_APPLICATION
      */
-    static inheritanceChain(): Generator<ApplicationV2>;
+  static inheritanceChain(): Generator<ApplicationV2>;
 
-    /**
+  /**
      * Initialize configuration options for the Application instance.
      * The default behavior of this method is to intelligently merge options for each class with those of their parents.
      * - Array-based options are concatenated
@@ -130,13 +130,13 @@ export default abstract class ApplicationV2<
      * @param options      Options provided directly to the constructor
      * @returns Configured options for the application instance
      */
-    protected _initializeApplicationOptions(options: DeepPartial<TConfig>): TConfig;
+  protected _initializeApplicationOptions(options: DeepPartial<TConfig>): TConfig;
 
-    /* -------------------------------------------- */
-    /*  Rendering                                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering                                   */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Render the Application, creating its HTMLElement and replacing its innerHTML.
      * Add it to the DOM if it is not currently rendered and rendering is forced. Otherwise, re-render its contents.
      * @param options       Options which configure application rendering behavior.
@@ -145,42 +145,42 @@ export default abstract class ApplicationV2<
      *                      ApplicationV1#render signature.
      * @returns A Promise which resolves to the rendered Application instance
      */
-    render(options?: boolean | DeepPartial<TRenderOptions>): Promise<this>;
+  render(options?: boolean | DeepPartial<TRenderOptions>): Promise<this>;
 
-    /**
+  /**
      * Modify the provided options passed to a render request.
      * @param options                 Options which configure application rendering behavior
      */
-    protected _configureRenderOptions(options: DeepPartial<TRenderOptions>): void;
+  protected _configureRenderOptions(options: DeepPartial<TRenderOptions>): void;
 
-    /**
+  /**
      * Prepare application rendering context data for a given render request.
      * @param options  Options which configure application rendering behavior
      * @returns Context data for the render operation
      */
-    protected _prepareContext(options: TRenderOptions): Promise<TRenderContext>;
+  protected _prepareContext(options: TRenderOptions): Promise<TRenderContext>;
 
-    /**
+  /**
      * Prepare application tab data for a single tab group.
      * @param group The ID of the tab group to prepare
      */
-    protected _prepareTabs(group: string): Record<string, ApplicationTab>;
+  protected _prepareTabs(group: string): Record<string, ApplicationTab>;
 
-    /**
+  /**
      * Get the configuration for a tabs group.
      * @param group The ID of a tabs group
      */
-    protected _getTabsConfig(group: string): ApplicationTabsConfiguration | null;
+  protected _getTabsConfig(group: string): ApplicationTabsConfiguration | null;
 
-    /**
+  /**
      * Configure the array of header control menu options
      */
-    protected _getHeaderControls(): ApplicationHeaderControlsEntry[];
+  protected _getHeaderControls(): ApplicationHeaderControlsEntry[];
 
-    /**
+  /**
      * Iterate over header control buttons, filtering for controls which are visible for the current client.
      */
-    protected _headerControlButtons(): Generator<ApplicationHeaderControlsEntry>;
+  protected _headerControlButtons(): Generator<ApplicationHeaderControlsEntry>;
 
     /**
      * Render an HTMLElement for the Application.

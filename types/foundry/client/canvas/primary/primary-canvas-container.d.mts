@@ -1,4 +1,4 @@
-import { CanvasTransformMixin } from "./primary-canvas-object.mjs";
+import { CanvasTransformMixin } from './primary-canvas-object.mjs';
 
 /**
  * Primary canvas container are reserved for advanced usage.
@@ -6,35 +6,35 @@ import { CanvasTransformMixin } from "./primary-canvas-object.mjs";
  * The container elevation is replacing individual sprite elevation.
  */
 export default class PrimaryCanvasContainer extends CanvasTransformMixin(PIXI.Container) {
-    /* -------------------------------------------- */
-    /*  Properties                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Properties                                  */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * A key which resolves ties amongst objects at the same elevation within the same layer.
      */
-    get sort(): number;
+  get sort(): number;
 
-    set sort(value);
+  set sort(value);
 
-    /**
+  /**
      * The elevation of this container.
      */
-    get elevation(): number;
+  get elevation(): number;
 
-    set elevation(value);
-    /**
+  set elevation(value);
+  /**
      * To know if this container has at least one children that should render its depth.
      */
-    get shouldRenderDepth(): boolean;
+  get shouldRenderDepth(): boolean;
 
-    /* -------------------------------------------- */
-    /*  Methods                                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Methods                                     */
+  /* -------------------------------------------- */
 
-    sortChildren(): void;
+  sortChildren(): void;
 
-    override updateCanvasTransform(): void;
+  override updateCanvasTransform(): void;
 
-    renderDepthData(renderer: PIXI.Renderer): void;
+  renderDepthData(renderer: PIXI.Renderer): void;
 }

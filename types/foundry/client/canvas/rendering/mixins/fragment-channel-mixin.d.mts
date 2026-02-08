@@ -15,7 +15,7 @@ export default function AdaptiveFragmentChannelMixin(ShaderClass: typeof PIXI.Sh
      * @param options.uniforms Initial uniforms provided to the filter/shader
      * @param options.channel The color channel to target for masking
      */
-    create(options?: { uniforms?: object; channel?: "r" | "g" | "b" } | undefined): PIXI.Shader | PIXI.Filter;
+    create(options?: { uniforms?: object; channel?: 'r' | 'g' | 'b' } | undefined): PIXI.Shader | PIXI.Filter;
 
     fragmentShader: string | (() => string);
 };

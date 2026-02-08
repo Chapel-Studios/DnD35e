@@ -1,16 +1,16 @@
-import { PointEffectSource } from "../sources/point-effect-source.mjs";
-import { Ray } from "./_module.mjs";
-import { CollisionResult } from "./edges/collision.mjs";
-import Edge from "./edges/edge.mjs";
-import PolygonVertex from "./edges/vertex.mjs";
-import Quadtree from "./quad-tree.mjs";
+import { PointEffectSource } from '../sources/point-effect-source.mjs';
+import { Ray } from './_module.mjs';
+import { CollisionResult } from './edges/collision.mjs';
+import Edge from './edges/edge.mjs';
+import PolygonVertex from './edges/vertex.mjs';
+import Quadtree from './quad-tree.mjs';
 
 export interface ClipperPoint {
     X: number;
     Y: number;
 }
 
-export type PointSourcePolygonType = "light" | "darkness" | "sight" | "sound" | "move" | "universal";
+export type PointSourcePolygonType = 'light' | 'darkness' | 'sight' | 'sound' | 'move' | 'universal';
 
 export interface PointSourcePolygonConfig {
     /** The type of polygon being computed */
@@ -41,7 +41,7 @@ export interface PointSourcePolygonConfig {
     boundingBox?: PIXI.Rectangle;
 }
 
-type EdgeType = "wall" | "darkness" | "light" | "innerBounds" | "outerBounds";
+type EdgeType = 'wall' | 'darkness' | 'light' | 'innerBounds' | 'outerBounds';
 
 /**
  * @example

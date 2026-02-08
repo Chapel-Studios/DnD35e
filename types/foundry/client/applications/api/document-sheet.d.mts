@@ -1,16 +1,16 @@
-import User from "@client/documents/user.mjs";
-import { DatabaseCreateOperation, DatabaseUpdateOperation, DataSchema } from "@common/abstract/_types.mjs";
-import Document from "@common/abstract/document.mjs";
+import User from '@client/documents/user.mjs';
+import { DatabaseCreateOperation, DatabaseUpdateOperation, DataSchema } from '@common/abstract/_types.mjs';
+import Document from '@common/abstract/document.mjs';
 import {
-    ApplicationClosingOptions,
-    ApplicationConfiguration,
-    ApplicationFormConfiguration,
-    ApplicationHeaderControlsEntry,
-    ApplicationRenderContext,
-    ApplicationRenderOptions,
-} from "../_types.mjs";
-import FormDataExtended from "../ux/form-data-extended.mjs";
-import ApplicationV2 from "./application.mjs";
+  ApplicationClosingOptions,
+  ApplicationConfiguration,
+  ApplicationFormConfiguration,
+  ApplicationHeaderControlsEntry,
+  ApplicationRenderContext,
+  ApplicationRenderOptions,
+} from '../_types.mjs';
+import FormDataExtended from '../ux/form-data-extended.mjs';
+import ApplicationV2 from './application.mjs';
 
 export interface DocumentSheetRenderContext<TDocument extends Document = Document> extends ApplicationRenderContext {
     document: TDocument;
@@ -25,71 +25,71 @@ export default abstract class DocumentSheetV2<
     TConfig extends DocumentSheetConfiguration = DocumentSheetConfiguration,
     TRenderOptions extends DocumentSheetRenderOptions = DocumentSheetRenderOptions,
 > extends ApplicationV2<TConfig, TRenderOptions> {
-    constructor(options?: DeepPartial<TConfig>);
+  constructor(options?: DeepPartial<TConfig>);
 
-    static override DEFAULT_OPTIONS: DeepPartial<DocumentSheetConfiguration>;
+  static override DEFAULT_OPTIONS: DeepPartial<DocumentSheetConfiguration>;
 
-    get document(): TConfig["document"];
+  get document(): TConfig['document'];
 
-    override get title(): string;
+  override get title(): string;
 
-    /**
+  /**
      * Is this Document sheet visible to the current User?
      * This is governed by the viewPermission threshold configured for the class.
      */
-    get isVisible(): boolean;
+  get isVisible(): boolean;
 
-    /**
+  /**
      * Is this Document sheet editable by the current User?
      * This is governed by the editPermission threshold configured for the class.
      */
-    get isEditable(): boolean;
+  get isEditable(): boolean;
 
-    protected override _initializeApplicationOptions(options: DeepPartial<TConfig>): TConfig;
+  protected override _initializeApplicationOptions(options: DeepPartial<TConfig>): TConfig;
 
-    protected override _headerControlButtons(): Generator<ApplicationHeaderControlsEntry>;
+  protected override _headerControlButtons(): Generator<ApplicationHeaderControlsEntry>;
 
-    protected override _configureRenderOptions(options: DeepPartial<TRenderOptions>): TRenderOptions;
+  protected override _configureRenderOptions(options: DeepPartial<TRenderOptions>): TRenderOptions;
 
-    protected override _prepareContext(options: TRenderOptions): Promise<DocumentSheetRenderContext>;
+  protected override _prepareContext(options: TRenderOptions): Promise<DocumentSheetRenderContext>;
 
-    protected override _renderFrame(options: TRenderOptions): Promise<HTMLElement>;
+  protected override _renderFrame(options: TRenderOptions): Promise<HTMLElement>;
 
-    /**
+  /**
      * Disable or reenable all form fields in this application.
      * @param disabled Should the fields be disabled?
      */
-    protected _toggleDisabled(disabled: boolean): void;
+  protected _toggleDisabled(disabled: boolean): void;
 
-    /* -------------------------------------------- */
-    /*  Application Life-Cycle Events               */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Application Life-Cycle Events               */
+  /* -------------------------------------------- */
 
-    protected override _canRender(): void;
+  protected override _canRender(): void;
 
-    protected override _onFirstRender(context: object, options: TRenderOptions): Promise<void>;
+  protected override _onFirstRender(context: object, options: TRenderOptions): Promise<void>;
 
-    protected override _onRender(context: object, options: TRenderOptions): Promise<void>;
+  protected override _onRender(context: object, options: TRenderOptions): Promise<void>;
 
-    protected override _onClose(options: ApplicationClosingOptions): void;
+  protected override _onClose(options: ApplicationClosingOptions): void;
 
-    /* -------------------------------------------- */
-    /*  Event Listeners and Handlers                */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Listeners and Handlers                */
+  /* -------------------------------------------- */
 
-    /* -------------------------------------------- */
-    /*  Form Submission                             */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Form Submission                             */
+  /* -------------------------------------------- */
 
-    protected override _onChangeForm(formConfig: ApplicationFormConfiguration, event: Event): void;
+  protected override _onChangeForm(formConfig: ApplicationFormConfiguration, event: Event): void;
 
-    /**
+  /**
      * Handle toggling the revealed state of a secret embedded in some content.
      * @param event The triggering event.
      */
-    protected _onRevealSecret(event: Event): void;
+  protected _onRevealSecret(event: Event): void;
 
-    /**
+  /**
      * Prepare data used to update the Item upon form submission.
      * This data is cleaned and validated before being returned for further processing.
      * @param event      The originating form submission event
@@ -100,14 +100,14 @@ export default abstract class DocumentSheetV2<
      * @throws {Error} Subclasses may throw validation errors here to prevent form submission
      * @returns Prepared submission data as an object
      */
-    protected _prepareSubmitData(
+  protected _prepareSubmitData(
         event: SubmitEvent,
         form: HTMLFormElement,
         formData: FormDataExtended,
         updateData?: object,
     ): object;
 
-    /**
+  /**
      * Customize how form data is extracted into an expanded object.
      * @param event    The originating form submission event
      * @param form     The form element that was submitted
@@ -115,26 +115,26 @@ export default abstract class DocumentSheetV2<
      * @returns An expanded object of processed form data
      * @throws {Error} Subclasses may throw validation errors here to prevent form submission
      */
-    protected _processFormData(
+  protected _processFormData(
         event: SubmitEvent | null,
         form: HTMLFormElement,
         formData: FormDataExtended,
     ): Record<string, unknown>;
 
-    /**
+  /**
      * Submit a document update or creation request based on the processed form data.
      * @param event      The originating form submission event
      * @param form       The form element that was submitted
      * @param submitData Processed and validated form data to be used for a document update
      * @param options Additional options altering the request
      */
-    protected _processSubmitData(
+  protected _processSubmitData(
         event: SubmitEvent,
         form: HTMLFormElement,
         submitData: Record<string, unknown>,
         options?:
-            | Partial<DatabaseCreateOperation<TConfig["document"]["parent"]>>
-            | Partial<DatabaseUpdateOperation<TConfig["document"]["parent"]>>,
+            | Partial<DatabaseCreateOperation<TConfig['document']['parent']>>
+            | Partial<DatabaseUpdateOperation<TConfig['document']['parent']>>,
     ): Promise<void>;
 }
 

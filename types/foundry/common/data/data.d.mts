@@ -1,17 +1,17 @@
-import { DatabaseUpdateOperation, DataModelConstructionContext } from "@common/abstract/_types.mjs";
+import { DatabaseUpdateOperation, DataModelConstructionContext } from '@common/abstract/_types.mjs';
 import {
-    DocumentOwnershipLevel,
-    DocumentOwnershipString,
-    ImageFilePath,
-    ShapeDataType,
-    TileOcclusionMode,
-    VideoFilePath,
-} from "@common/constants.mjs";
-import DataModel from "../abstract/data.mjs";
-import * as documents from "../documents/_module.mjs";
-import { TokenSchema } from "../documents/token.mjs";
-import { DataFieldOptions } from "./_types.mjs";
-import * as fields from "./fields.mjs";
+  DocumentOwnershipLevel,
+  DocumentOwnershipString,
+  ImageFilePath,
+  ShapeDataType,
+  TileOcclusionMode,
+  VideoFilePath,
+} from '@common/constants.mjs';
+import DataModel from '../abstract/data.mjs';
+import * as documents from '../documents/_module.mjs';
+import { TokenSchema } from '../documents/token.mjs';
+import { DataFieldOptions } from './_types.mjs';
+import * as fields from './fields.mjs';
 
 /**
  * An embedded data object which defines the properties of a light source animation
@@ -40,9 +40,9 @@ export interface DarknessActivation {
  * This is re-used by both the AmbientLightData and TokenData classes.
  */
 export class LightData<TParent extends DataModel | null> extends DataModel<TParent, LightDataSchema> {
-    static override defineSchema(): LightDataSchema;
+  static override defineSchema(): LightDataSchema;
 
-    static override migrateData<TSource extends Record<string, JSONValue>>(source: TSource): TSource;
+  static override migrateData<TSource extends Record<string, JSONValue>>(source: TSource): TSource;
 }
 
 export interface LightData<TParent extends DataModel | null>
@@ -91,14 +91,14 @@ type LightDataSchema = {
 
 /** A data model intended to be used as an inner EmbeddedDataField which defines a geometric shape. */
 export class ShapeData<TParent extends DataModel | null> extends DataModel<TParent, ShapeDataSchema> {
-    static override defineSchema(): ShapeDataSchema;
+  static override defineSchema(): ShapeDataSchema;
 
-    /** The primitive shape types which are supported */
-    static TYPES: {
-        RECTANGLE: "r";
-        CIRCLE: "c";
-        ELLIPSE: "e";
-        POLYGON: "p";
+  /** The primitive shape types which are supported */
+  static TYPES: {
+        RECTANGLE: 'r';
+        CIRCLE: 'c';
+        ELLIPSE: 'e';
+        POLYGON: 'p';
     };
 }
 
@@ -126,21 +126,21 @@ type ShapeDataSchema = {
 
 /** A data model intended to be used as an inner EmbeddedDataField which defines a geometric shape. */
 export class BaseShapeData<TSchema extends BaseShapeDataSchema> extends DataModel<DataModel | null, TSchema> {
-    static override defineSchema(): BaseShapeDataSchema;
+  static override defineSchema(): BaseShapeDataSchema;
 
-    /** The type of this shape. */
-    static TYPE: keyof typeof BaseShapeData.TYPES;
+  /** The type of this shape. */
+  static TYPE: keyof typeof BaseShapeData.TYPES;
 
-    /** The possible shape types. */
-    static get TYPES(): {
+  /** The possible shape types. */
+  static get TYPES(): {
         rectangle: typeof RectangleShapeData;
         circle: typeof CircleShapeData;
         ellipse: typeof EllipseShapeData;
         polygon: typeof PolygonShapeData;
     };
 
-    /** The bottom and top elevation of the shape. A value of null means -/+Infinity. */
-    elevation?: { bottom: number | null; top: number | null };
+  /** The bottom and top elevation of the shape. A value of null means -/+Infinity. */
+  elevation?: { bottom: number | null; top: number | null };
 }
 
 interface BaseShapeData<TSchema extends BaseShapeDataSchema = BaseShapeDataSchema>
@@ -156,16 +156,16 @@ type BaseShapeDataSchema = {
 
 /** The data model for a rectangular shape. */
 export class RectangleShapeData extends BaseShapeData<RectangleShapeDataSchema> {
-    static override defineSchema(): RectangleShapeDataSchema;
+  static override defineSchema(): RectangleShapeDataSchema;
 
-    static override TYPE: "rectangle";
+  static override TYPE: 'rectangle';
 }
 
 interface RectangleShapeData
     extends BaseShapeData<RectangleShapeDataSchema>,
         fields.ModelPropsFromSchema<RectangleShapeDataSchema> {
-    readonly _source: Omit<fields.SourceFromSchema<RectangleShapeDataSchema>, "type"> & { type: "rectangle" };
-    type: "rectangle";
+    readonly _source: Omit<fields.SourceFromSchema<RectangleShapeDataSchema>, 'type'> & { type: 'rectangle' };
+    type: 'rectangle';
 }
 
 type RectangleShapeDataSchema = BaseShapeDataSchema & {
@@ -183,16 +183,16 @@ type RectangleShapeDataSchema = BaseShapeDataSchema & {
 
 /** The data model for a circle shape. */
 export class CircleShapeData extends BaseShapeData<CircleShapeDataSchema> {
-    static override defineSchema(): CircleShapeDataSchema;
+  static override defineSchema(): CircleShapeDataSchema;
 
-    static override TYPE: "circle";
+  static override TYPE: 'circle';
 }
 
 interface CircleShapeData
     extends BaseShapeData<CircleShapeDataSchema>,
         fields.ModelPropsFromSchema<CircleShapeDataSchema> {
-    readonly _source: Omit<fields.SourceFromSchema<CircleShapeDataSchema>, "type"> & { type: "circle" };
-    type: "circle";
+    readonly _source: Omit<fields.SourceFromSchema<CircleShapeDataSchema>, 'type'> & { type: 'circle' };
+    type: 'circle';
 }
 
 type CircleShapeDataSchema = BaseShapeDataSchema & {
@@ -206,16 +206,16 @@ type CircleShapeDataSchema = BaseShapeDataSchema & {
 
 /** The data model for an ellipse shape. */
 export class EllipseShapeData extends BaseShapeData<EllipseShapeDataSchema> {
-    static defineSchema(): EllipseShapeDataSchema;
+  static defineSchema(): EllipseShapeDataSchema;
 
-    static override TYPE: "ellipse";
+  static override TYPE: 'ellipse';
 }
 
 interface EllipseShapeData
     extends BaseShapeData<EllipseShapeDataSchema>,
         fields.ModelPropsFromSchema<EllipseShapeDataSchema> {
-    readonly _source: Omit<fields.SourceFromSchema<EllipseShapeDataSchema>, "type"> & { type: "ellipse" };
-    type: "ellipse";
+    readonly _source: Omit<fields.SourceFromSchema<EllipseShapeDataSchema>, 'type'> & { type: 'ellipse' };
+    type: 'ellipse';
 }
 
 type EllipseShapeDataSchema = BaseShapeDataSchema & {
@@ -233,16 +233,16 @@ type EllipseShapeDataSchema = BaseShapeDataSchema & {
 
 /** The data model for a polygon shape. */
 export class PolygonShapeData extends BaseShapeData<PolygonShapeDataSchema> {
-    static defineSchema(): PolygonShapeDataSchema;
+  static defineSchema(): PolygonShapeDataSchema;
 
-    static override TYPE: "polygon";
+  static override TYPE: 'polygon';
 }
 
 interface PolygonShapeData
     extends BaseShapeData<PolygonShapeDataSchema>,
         fields.ModelPropsFromSchema<PolygonShapeDataSchema> {
-    readonly _source: Omit<fields.SourceFromSchema<PolygonShapeDataSchema>, "type"> & { type: "polygon" };
-    type: "polygon";
+    readonly _source: Omit<fields.SourceFromSchema<PolygonShapeDataSchema>, 'type'> & { type: 'polygon' };
+    type: 'polygon';
 }
 
 type PolygonShapeDataSchema = BaseShapeDataSchema & {
@@ -252,15 +252,15 @@ type PolygonShapeDataSchema = BaseShapeDataSchema & {
 
 /** A {@link fields.SchemaField} subclass used to represent texture data. */
 export class TextureData extends fields.SchemaField<TextureDataSchema> {
-    /**
+  /**
      * @param options    Options which are forwarded to the SchemaField constructor
      * @param srcOptions Additional options for the src field
      */
-    constructor(
+  constructor(
         options?: DataFieldOptions<fields.SourceFromSchema<TextureDataSchema>, true, false, true>,
         srcOptions?: {
-            categories?: ("IMAGE" | "VIDEO")[];
-            initial?: "IMAGE" | "VIDEO" | null;
+            categories?: ('IMAGE' | 'VIDEO')[];
+            initial?: 'IMAGE' | 'VIDEO' | null;
             wildcard?: boolean;
             label?: string;
         },
@@ -297,62 +297,62 @@ export class PrototypeToken<TParent extends documents.BaseActor | null> extends 
     TParent,
     PrototypeTokenSchema
 > {
-    constructor(data: DeepPartial<PrototypeTokenSource>, options?: DataModelConstructionContext<TParent>);
+  constructor(data: DeepPartial<PrototypeTokenSource>, options?: DataModelConstructionContext<TParent>);
 
-    static override defineSchema(): PrototypeTokenSchema;
+  static override defineSchema(): PrototypeTokenSchema;
 
-    get actor(): TParent;
+  get actor(): TParent;
 
-    protected override _initialize(): void;
+  protected override _initialize(): void;
 
-    override toJSON(): this["_source"];
+  override toJSON(): this['_source'];
 
-    /* -------------------------------------------- */
-    /*  Document Compatibility Methods              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Document Compatibility Methods              */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * @see {@link foundry.abstract.Document#update}
      * @ignore
      */
-    update(
+  update(
         data: Record<string, unknown>,
-        operation?: Partial<Omit<DatabaseUpdateOperation<null>, "parent" | "pack">>,
+        operation?: Partial<Omit<DatabaseUpdateOperation<null>, 'parent' | 'pack'>>,
     ): Promise<this | undefined>;
 
-    /**
+  /**
      * @see {@link foundry.abstract.Document#getFlag}
      * @ignore
      */
-    getFlag(scope: string, key: string): unknown;
+  getFlag(scope: string, key: string): unknown;
 
-    /**
+  /**
      * @see {@link foundry.abstract.Document#getFlag}
      * @ignore
      */
-    setFlag(scope: string, key: string, value: unknown): Promise<this>;
+  setFlag(scope: string, key: string, value: unknown): Promise<this>;
 
-    /**
+  /**
      * @see {@link foundry.abstract.Document#unsetFlag}
      * @ignore
      */
-    unsetFlag(scope: string, key: string): Promise<this | undefined>;
+  unsetFlag(scope: string, key: string): Promise<this | undefined>;
 
-    /**
+  /**
      * @see {@link foundry.abstract.Document#testUserPermission}
      * @ignore
      */
-    testUserPermission(
+  testUserPermission(
         user: documents.BaseUser,
         permission: DocumentOwnershipString | DocumentOwnershipLevel,
         { exact }?: { exact?: boolean },
     ): boolean;
 
-    /**
+  /**
      * @see {@link foundry.documents.BaseActor#isOwner}
      * @ignore
      */
-    get isOwner(): boolean;
+  get isOwner(): boolean;
 }
 
 export interface PrototypeToken<TParent extends documents.BaseActor | null>
@@ -361,7 +361,7 @@ export interface PrototypeToken<TParent extends documents.BaseActor | null>
 
 type PrototypeTokenSchema = Omit<
     TokenSchema,
-    "_id" | "name" | "actorId" | "delta" | "x" | "y" | "elevation" | "effects" | "overlayEffect" | "hidden"
+    '_id' | 'name' | 'actorId' | 'delta' | 'x' | 'y' | 'elevation' | 'effects' | 'overlayEffect' | 'hidden'
 > & {
     name: fields.StringField<string, string, true, false, true>;
     randomImg: fields.BooleanField;
@@ -380,7 +380,7 @@ export type PrototypeTokenSource = fields.SourceFromSchema<PrototypeTokenSchema>
 export class TombstoneData<
     TParent extends documents.BaseActorDelta<documents.BaseToken<documents.BaseScene | null> | null> | null,
 > extends DataModel<TParent, TombstoneDataSchema> {
-    static override defineSchema(): TombstoneDataSchema;
+  static override defineSchema(): TombstoneDataSchema;
 }
 
 export interface TombstoneData<
@@ -392,7 +392,7 @@ export interface TombstoneData<
 
 export type TombstoneSource<TDocumentId extends string | null = string | null> = Omit<
     fields.SourceFromSchema<TombstoneDataSchema>,
-    "_id"
+    '_id'
 > & {
     _id: TDocumentId;
 };

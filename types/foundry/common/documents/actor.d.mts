@@ -1,15 +1,15 @@
-import { ImageFilePath, VideoFilePath } from "@common/constants.mjs";
-import { DocumentConstructionContext } from "../_types.mjs";
+import { ImageFilePath, VideoFilePath } from '@common/constants.mjs';
+import { DocumentConstructionContext } from '../_types.mjs';
 import {
-    DatabaseCreateCallbackOptions,
-    DatabaseUpdateCallbackOptions,
-    Document,
-    DocumentMetadata,
-    EmbeddedCollection,
-} from "../abstract/_module.mjs";
-import * as data from "../data/data.mjs";
-import * as fields from "../data/fields.mjs";
-import { ActorUUID, BaseActiveEffect, BaseFolder, BaseItem, BaseToken, BaseUser, ItemSource } from "./_module.mjs";
+  DatabaseCreateCallbackOptions,
+  DatabaseUpdateCallbackOptions,
+  Document,
+  DocumentMetadata,
+  EmbeddedCollection,
+} from '../abstract/_module.mjs';
+import * as data from '../data/data.mjs';
+import * as fields from '../data/fields.mjs';
+import { ActorUUID, BaseActiveEffect, BaseFolder, BaseItem, BaseToken, BaseUser, ItemSource } from './_module.mjs';
 
 /**
  * The Document definition for an Actor.
@@ -23,45 +23,45 @@ export default class BaseActor<TParent extends BaseToken | null = BaseToken | nu
     TParent,
     ActorSchema
 > {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): ActorMetadata;
+  static override get metadata(): ActorMetadata;
 
-    static override defineSchema(): ActorSchema;
+  static override defineSchema(): ActorSchema;
 
-    /** The default icon used for newly created Actor documents */
-    static DEFAULT_ICON: ImageFilePath;
+  /** The default icon used for newly created Actor documents */
+  static DEFAULT_ICON: ImageFilePath;
 
-    /**
+  /**
      * Determine default artwork based on the provided actor data.
      * @param actorData The source actor data.
      * @returns Candidate actor image and prototype token artwork.
      */
-    static getDefaultArtwork(actorData: ActorSource): {
+  static getDefaultArtwork(actorData: ActorSource): {
         img: ImageFilePath;
         texture: { src: ImageFilePath | VideoFilePath };
     };
 
-    /** The allowed set of Actor types which may exist. */
-    static get TYPES(): string[];
+  /** The allowed set of Actor types which may exist. */
+  static get TYPES(): string[];
 
-    protected override _initializeSource(
+  protected override _initializeSource(
         data: Record<string, unknown>,
         options?: DocumentConstructionContext<TParent>,
-    ): this["_source"];
+    ): this['_source'];
 
-    static override canUserCreate(user: BaseUser): boolean;
+  static override canUserCreate(user: BaseUser): boolean;
 
-    protected override _preCreate(
-        data: this["_source"],
+  protected override _preCreate(
+        data: this['_source'],
         options: DatabaseCreateCallbackOptions,
         user: BaseUser,
     ): Promise<boolean | void>;
 
-    protected override _preUpdate(
-        changed: DeepPartial<this["_source"]>,
+  protected override _preUpdate(
+        changed: DeepPartial<this['_source']>,
         options: DatabaseUpdateCallbackOptions,
         user: BaseUser,
     ): Promise<boolean | void>;
@@ -75,19 +75,19 @@ export default interface BaseActor<TParent extends BaseToken | null = BaseToken 
 
     prototypeToken: data.PrototypeToken<this>;
 
-    get documentName(): ActorMetadata["name"];
+    get documentName(): ActorMetadata['name'];
 
     get folder(): BaseFolder | null;
 }
 
 export interface ActorMetadata extends DocumentMetadata {
-    name: "Actor";
-    collection: "actors";
+    name: 'Actor';
+    collection: 'actors';
     indexed: true;
-    compendiumIndexFields: ["_id", "name", "img", "type", "sort", "folder"];
-    embedded: { ActiveEffect: "effects"; Item: "items" };
-    label: "DOCUMENT.Actor";
-    labelPlural: "DOCUMENT.Actors";
+    compendiumIndexFields: ['_id', 'name', 'img', 'type', 'sort', 'folder'];
+    embedded: { ActiveEffect: 'effects'; Item: 'items' };
+    label: 'DOCUMENT.Actor';
+    labelPlural: 'DOCUMENT.Actors';
 }
 
 type ActorSchema<

@@ -1,4 +1,4 @@
-import Scene from "@client/documents/scene.mjs";
+import Scene from '@client/documents/scene.mjs';
 
 /**
  * A framework for imbuing special scripted behaviors into a single specific Scene.
@@ -45,57 +45,57 @@ import Scene from "@client/documents/scene.mjs";
  * ```
  */
 export default class SceneManager {
-    /** The SceneManager is constructed by passing a reference to the active Scene document. */
-    constructor(scene: Scene);
+  /** The SceneManager is constructed by passing a reference to the active Scene document. */
+  constructor(scene: Scene);
 
-    /** The managed Scene. */
-    get scene(): Scene;
+  /** The managed Scene. */
+  get scene(): Scene;
 
-    /* -------------------------------------------- */
-    /*  Scene Life-Cycle Methods                    */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Scene Life-Cycle Methods                    */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Additional behaviors to perform when the Canvas is first initialized for the Scene.
      * @internal
      */
-    _onInit(): Promise<void>;
+  _onInit(): Promise<void>;
 
-    /**
+  /**
      * Additional behaviors to perform after core groups and layers are drawn to the canvas.
      * @internal
      */
-    _onDraw(): Promise<void>;
+  _onDraw(): Promise<void>;
 
-    /**
+  /**
      * Additional behaviors to perform after the Canvas is fully initialized for the Scene.
      * @internal
      */
-    _onReady(): Promise<void>;
+  _onReady(): Promise<void>;
 
-    /**
+  /**
      * Additional behaviors to perform when the Scene is deactivated.
      * @internal
      */
-    _onTearDown(): Promise<void>;
+  _onTearDown(): Promise<void>;
 
-    /* -------------------------------------------- */
-    /*  Scene Hooks                                 */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Scene Hooks                                 */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Register additional hook functions are only used while this Scene is active and is automatically deactivated.
      * Hooks should be registered in this function by calling this._registerHook(hookName, handler)
      * @internal
      */
-    _registerHooks(): void;
+  _registerHooks(): void;
 
-    /** Register additional hook functions are only used while this Scene is active and is automatically deactivated. */
-    registerHook(hookName: string, handler: (...args: unknown[]) => number | void): void;
+  /** Register additional hook functions are only used while this Scene is active and is automatically deactivated. */
+  registerHook(hookName: string, handler: (...args: unknown[]) => number | void): void;
 
-    /**
+  /**
      * Deactivate Hook functions that were added specifically for this Scene.
      * @internal
      */
-    _deactivateHooks(): void;
+  _deactivateHooks(): void;
 }

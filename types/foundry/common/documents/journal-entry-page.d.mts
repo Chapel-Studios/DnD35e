@@ -1,33 +1,33 @@
-import { DocumentOwnershipLevel, JournalEntryPageFormat } from "@common/constants.mjs";
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseJournalEntry, BaseUser } from "./_module.mjs";
+import { DocumentOwnershipLevel, JournalEntryPageFormat } from '@common/constants.mjs';
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseJournalEntry, BaseUser } from './_module.mjs';
 
 /** The JournalEntryPage document model. */
 export default class BaseJournalEntryPage<TParent extends BaseJournalEntry | null> extends Document<
     TParent,
     JournalEntryPageSchema
 > {
-    static override get metadata(): JournalEntryPageMetadata;
+  static override get metadata(): JournalEntryPageMetadata;
 
-    static override defineSchema(): JournalEntryPageSchema;
+  static override defineSchema(): JournalEntryPageSchema;
 
-    override getUserLevel(user: BaseUser): DocumentOwnershipLevel;
+  override getUserLevel(user: BaseUser): DocumentOwnershipLevel;
 }
 
 export default interface BaseJournalEntryPage<TParent extends BaseJournalEntry | null>
     extends Document<TParent, JournalEntryPageSchema>,
         fields.ModelPropsFromSchema<JournalEntryPageSchema> {
-    get documentName(): JournalEntryPageMetadata["name"];
+    get documentName(): JournalEntryPageMetadata['name'];
 }
 
 interface JournalEntryPageMetadata extends DocumentMetadata {
-    name: "JournalEntryPage";
-    collection: "pages";
+    name: 'JournalEntryPage';
+    collection: 'pages';
     indexed: true;
-    label: "DOCUMENT.JournalEntryPage";
-    labelPlural: "DOCUMENT.JournalEntryPages";
-    coreTypes: ["image", "pdf", "text", "video"];
+    label: 'DOCUMENT.JournalEntryPage';
+    labelPlural: 'DOCUMENT.JournalEntryPages';
+    coreTypes: ['image', 'pdf', 'text', 'video'];
 }
 
 type JournalEntryPageSchema<
@@ -81,4 +81,4 @@ type JournalEntryPageSchema<
 
 export type JournalEntryPageSource = fields.SourceFromSchema<JournalEntryPageSchema>;
 
-export type CorePageType = "image" | "pdf" | "text" | "video";
+export type CorePageType = 'image' | 'pdf' | 'text' | 'video';

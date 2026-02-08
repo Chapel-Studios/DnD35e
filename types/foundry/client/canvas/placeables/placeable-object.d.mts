@@ -1,16 +1,16 @@
-import { CanvasDocument } from "@client/documents/abstract/canvas-document.mjs";
-import User from "@client/documents/user.mjs";
-import { Point } from "@common/_types.mjs";
+import { CanvasDocument } from '@client/documents/abstract/canvas-document.mjs';
+import User from '@client/documents/user.mjs';
+import { Point } from '@common/_types.mjs';
 import {
-    DatabaseCreateCallbackOptions,
-    DatabaseDeleteCallbackOptions,
-    DatabaseUpdateCallbackOptions,
-} from "@common/abstract/_types.mjs";
-import { UserAction } from "@common/constants.mjs";
-import { ControlIcon } from "../containers/_module.mjs";
-import { MouseInteractionManager, RenderFlag, RenderFlags } from "../interaction/_module.mjs";
-import { PlaceablesLayer } from "../layers/_module.mjs";
-import { PlaceablesLayerPointerEvent } from "../layers/base/placeables-layer.mjs";
+  DatabaseCreateCallbackOptions,
+  DatabaseDeleteCallbackOptions,
+  DatabaseUpdateCallbackOptions,
+} from '@common/abstract/_types.mjs';
+import { UserAction } from '@common/constants.mjs';
+import { ControlIcon } from '../containers/_module.mjs';
+import { MouseInteractionManager, RenderFlag, RenderFlags } from '../interaction/_module.mjs';
+import { PlaceablesLayer } from '../layers/_module.mjs';
+import { PlaceablesLayerPointerEvent } from '../layers/base/placeables-layer.mjs';
 
 /**
  * An Abstract Base Class which defines a Placeable Object which represents an Entity placed on the Canvas
@@ -19,133 +19,133 @@ import { PlaceablesLayerPointerEvent } from "../layers/base/placeables-layer.mjs
 export default abstract class PlaceableObject<
     TDocument extends CanvasDocument = CanvasDocument,
 > extends RenderFlagsContainer<TDocument> {
-    constructor(document: TDocument);
+  constructor(document: TDocument);
 
-    static override RENDER_FLAGS: Record<string, { propagate?: string[]; alias?: boolean }>;
+  static override RENDER_FLAGS: Record<string, { propagate?: string[]; alias?: boolean }>;
 
-    /** The object that this object is a preview of if this object is a preview. */
-    get _original(): this | undefined;
+  /** The object that this object is a preview of if this object is a preview. */
+  get _original(): this | undefined;
 
-    /** Retain a reference to the Scene within which this Placeable Object resides */
-    scene: TDocument["parent"];
+  /** Retain a reference to the Scene within which this Placeable Object resides */
+  scene: TDocument['parent'];
 
-    /** A reference to the Scene embedded Document instance which this object represents */
-    document: TDocument;
+  /** A reference to the Scene embedded Document instance which this object represents */
+  document: TDocument;
 
-    /** A control icon for interacting with the object */
-    controlIcon: ControlIcon | null;
+  /** A control icon for interacting with the object */
+  controlIcon: ControlIcon | null;
 
-    /** A mouse interaction manager instance which handles mouse workflows related to this object. */
-    mouseInteractionManager: MouseInteractionManager;
+  /** A mouse interaction manager instance which handles mouse workflows related to this object. */
+  mouseInteractionManager: MouseInteractionManager;
 
-    /* -------------------------------------------- */
-    /* Properties                                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /* Properties                                   */
+  /* -------------------------------------------- */
 
-    /** Identify the official EmbeddedEntity name for this PlaceableObject class */
-    static embeddedName: string;
+  /** Identify the official EmbeddedEntity name for this PlaceableObject class */
+  static embeddedName: string;
 
-    /** Passthrough certain drag operations on locked objects. */
-    protected _dragPassthrough: boolean;
+  /** Passthrough certain drag operations on locked objects. */
+  protected _dragPassthrough: boolean;
 
-    /** Know if a placeable is in the hover-in state.  */
-    protected _isHoverIn: boolean;
+  /** Know if a placeable is in the hover-in state.  */
+  protected _isHoverIn: boolean;
 
-    /** A convenient reference for whether the current User has full control over the document. */
-    get isOwner(): boolean;
+  /** A convenient reference for whether the current User has full control over the document. */
+  get isOwner(): boolean;
 
-    /* The mouse interaction state of this placeable. */
-    get interactionState(): number | undefined;
+  /* The mouse interaction state of this placeable. */
+  get interactionState(): number | undefined;
 
-    /**
+  /**
      * The bounding box for this PlaceableObject.
      * This is required if the layer uses a Quadtree, otherwise it is optional
      */
-    get bounds(): PIXI.Rectangle;
+  get bounds(): PIXI.Rectangle;
 
-    /** The central coordinate pair of the placeable object based on it's own width and height */
-    get center(): PIXI.Point;
+  /** The central coordinate pair of the placeable object based on it's own width and height */
+  get center(): PIXI.Point;
 
-    /** The id of the corresponding Document which this PlaceableObject represents. */
-    get id(): string;
+  /** The id of the corresponding Document which this PlaceableObject represents. */
+  get id(): string;
 
-    /** A unique identifier which is used to uniquely identify elements on the canvas related to this object. */
-    get objectId(): string;
+  /** A unique identifier which is used to uniquely identify elements on the canvas related to this object. */
+  get objectId(): string;
 
-    /**
+  /**
      * The named identified for the source object associated with this PlaceableObject.
      * This differs from the objectId because the sourceId is the same for preview objects as for the original.
      */
-    get sourceId(): string;
+  get sourceId(): string;
 
-    /** Is this placeable object a temporary preview? */
-    get isPreview(): boolean;
+  /** Is this placeable object a temporary preview? */
+  get isPreview(): boolean;
 
-    /** Does there exist a temporary preview of this placeable object? */
-    get hasPreview(): boolean;
+  /** Does there exist a temporary preview of this placeable object? */
+  get hasPreview(): boolean;
 
-    /** Provide a reference to the CanvasLayer which contains this PlaceableObject. */
-    get layer(): PlaceablesLayer<this>;
+  /** Provide a reference to the CanvasLayer which contains this PlaceableObject. */
+  get layer(): PlaceablesLayer<this>;
 
-    /**
+  /**
      * A Form Application which is used to configure the properties of this Placeable Object or the EmbeddedEntity
      * it represents.
      */
-    get sheet(): TDocument["sheet"];
+  get sheet(): TDocument['sheet'];
 
-    /** An indicator for whether the object is currently controlled */
-    get controlled(): boolean;
+  /** An indicator for whether the object is currently controlled */
+  get controlled(): boolean;
 
-    /** An indicator for whether the object is currently a hover target */
-    get hover(): boolean;
+  /** An indicator for whether the object is currently a hover target */
+  get hover(): boolean;
 
-    set hover(state: Maybe<boolean>);
+  set hover(state: Maybe<boolean>);
 
-    /** Is the HUD display active for this Placeable? */
-    get hasActiveHUD(): boolean;
+  /** Is the HUD display active for this Placeable? */
+  get hasActiveHUD(): boolean;
 
-    /**
+  /**
      * Get the snapped position for a given position or the current position.
      * @param [position] The position to be used instead of the current position
      * @returns The snapped position
      */
-    getSnappedPosition(position?: Point): Point;
+  getSnappedPosition(position?: Point): Point;
 
-    /* -------------------------------------------- */
-    /*  Rendering                                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering                                   */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Apply any current render flags, clearing the renderFlags set.
      * Subclasses should override this method to define behavior.
      */
-    applyRenderFlags(): void;
+  applyRenderFlags(): void;
 
-    /**
+  /**
      * Apply render flags before a render occurs.
      * @param flags  The render flags which must be applied
      */
-    protected _applyRenderFlags(flags: Record<string, boolean>): void;
+  protected _applyRenderFlags(flags: Record<string, boolean>): void;
 
-    /**
+  /**
      * Clear the display of the existing object
      * @return The cleared object
      */
-    clear(): this;
+  clear(): this;
 
-    override destroy(options?: boolean | PIXI.IDestroyOptions): void;
+  override destroy(options?: boolean | PIXI.IDestroyOptions): void;
 
-    /**
+  /**
      * The inner _destroy method which may optionally be defined by each PlaceableObject subclass.
      * @param options Options passed to the initial destroy call
      */
-    protected _destroy(options?: boolean | PIXI.IDestroyOptions): void;
+  protected _destroy(options?: boolean | PIXI.IDestroyOptions): void;
 
-    /**
+  /**
      * Draw the placeable object into its parent container
      * @param options Options which may modify the draw and refresh workflow
      */
-    draw(options?: object): Promise<this>;
+  draw(options?: object): Promise<this>;
 
     /**
      * The inner _draw method which must be defined by each PlaceableObject subclass.
@@ -180,12 +180,12 @@ export default abstract class PlaceableObject<
     protected _getTargetAlpha(): number;
 
     /** Register pending canvas operations which should occur after a new PlaceableObject of this type is created */
-    protected _onCreate(data: TDocument["_source"], options: DatabaseCreateCallbackOptions, userId: string): void;
+    protected _onCreate(data: TDocument['_source'], options: DatabaseCreateCallbackOptions, userId: string): void;
 
     /** Define additional steps taken when an existing placeable object of this type is updated with new data */
 
     protected _onUpdate(
-        changed: DeepPartial<TDocument["_source"]>,
+        changed: DeepPartial<TDocument['_source']>,
         options: DatabaseUpdateCallbackOptions,
         userId: string,
     ): void;
@@ -403,26 +403,26 @@ export default interface PlaceableObject<TDocument extends CanvasDocument = Canv
 export type PlaceableShape = PIXI.Circle | PIXI.Ellipse | PIXI.Polygon | PIXI.Rectangle | PIXI.RoundedRectangle;
 
 export class RenderFlagsContainer<TDocument extends CanvasDocument> extends PIXI.Container {
-    constructor(document: TDocument);
+  constructor(document: TDocument);
 
-    /** Configure the render flags used for this class. */
-    static RENDER_FLAGS: Record<string, Partial<RenderFlag>>;
+  /** Configure the render flags used for this class. */
+  static RENDER_FLAGS: Record<string, Partial<RenderFlag>>;
 
-    /**
+  /**
      * The ticker priority when RenderFlags of this class are handled.
      * Valid values are OBJECTS or PERCEPTION.
      */
-    static RENDER_FLAG_PRIORITY: "OBJECTS";
+  static RENDER_FLAG_PRIORITY: 'OBJECTS';
 
-    /**
+  /**
      * Status flags which are applied at render-time to update the PlaceableObject.
      * If an object defines RenderFlags, it should at least include flags for "redraw" and "refresh".
      */
-    renderFlags: RenderFlags;
+  renderFlags: RenderFlags;
 
-    /**
+  /**
      * Apply any current render flags, clearing the renderFlags set.
      * Subclasses should override this method to define behavior.
      */
-    applyRenderFlags(): void;
+  applyRenderFlags(): void;
 }

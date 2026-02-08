@@ -1,22 +1,22 @@
-import { DocumentOwnershipLevel, DocumentOwnershipString, ImageFilePath, TableResultType } from "@common/constants.mjs";
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import * as documents from "./_module.mjs";
+import { DocumentOwnershipLevel, DocumentOwnershipString, ImageFilePath, TableResultType } from '@common/constants.mjs';
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import * as documents from './_module.mjs';
 
 /** The TableResult document model. */
 export default class BaseTableResult<TParent extends documents.BaseRollTable | null> extends Document<
     TParent,
     TableResultSchema
 > {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): TableResultMetadata;
+  static override get metadata(): TableResultMetadata;
 
-    static override defineSchema(): TableResultSchema;
+  static override defineSchema(): TableResultSchema;
 
-    override testUserPermission(
+  override testUserPermission(
         user: documents.BaseUser,
         permission: DocumentOwnershipString | DocumentOwnershipLevel,
         { exact }?: { exact?: boolean },
@@ -25,14 +25,14 @@ export default class BaseTableResult<TParent extends documents.BaseRollTable | n
 
 export default interface BaseTableResult<TParent extends documents.BaseRollTable | null>
     extends Document<TParent, TableResultSchema> {
-    get documentName(): TableResultMetadata["name"];
+    get documentName(): TableResultMetadata['name'];
 }
 
 interface TableResultMetadata extends DocumentMetadata {
-    name: "TableResult";
-    collection: "results";
-    label: "DOCUMENT.TableResult";
-    labelPlural: "DOCUMENT.TableResults";
+    name: 'TableResult';
+    collection: 'results';
+    label: 'DOCUMENT.TableResult';
+    labelPlural: 'DOCUMENT.TableResults';
     coreTypes: TableResultType[];
 }
 

@@ -2,23 +2,23 @@
  * An abstract pattern for primary layers of the game canvas to implement
  */
 export default abstract class CanvasLayer extends PIXI.Container {
-    /** Options for this layer instance. */
-    options: CanvasLayerOptions;
+  /** Options for this layer instance. */
+  options: CanvasLayerOptions;
 
-    /** Default interactivity */
-    interactiveChildren: boolean;
+  /** Default interactivity */
+  interactiveChildren: boolean;
 
-    /* -------------------------------------------- */
-    /*  Layer Attributes                            */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Layer Attributes                            */
+  /* -------------------------------------------- */
 
-    /** Customize behaviors of this CanvasLayer by modifying some behaviors at a class level. */
-    static get layerOptions(): CanvasLayerOptions;
+  /** Customize behaviors of this CanvasLayer by modifying some behaviors at a class level. */
+  static get layerOptions(): CanvasLayerOptions;
 
-    /** Return a reference to the active instance of this canvas layer */
-    static get instance(): CanvasLayer;
+  /** Return a reference to the active instance of this canvas layer */
+  static get instance(): CanvasLayer;
 
-    /**
+  /**
      * The canonical name of the CanvasLayer is the name of the constructor that is the immediate child of the
      * defined baseClass for the layer type.
      *
@@ -26,24 +26,24 @@ export default abstract class CanvasLayer extends PIXI.Container {
      * canvas.lighting.name -> "LightingLayer"
      * canvas.grid.name -> "GridLayer"
      */
-    get name(): string;
+  get name(): string;
 
-    /**
+  /**
      * The name used by hooks to construct their hook string.
      * Note: You should override this getter if hookName should not return the class constructor name.
      */
-    get hookName(): string;
+  get hookName(): string;
 
-    /* -------------------------------------------- */
-    /*  Rendering                                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering                                   */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Draw the canvas layer, rendering its internal components and returning a Promise.
      * The Promise resolves to the drawn layer once its contents are successfully rendered.
      * @param options Options which configure how the layer is drawn
      */
-    draw(options?: object): Promise<this>;
+  draw(options?: object): Promise<this>;
 
     /**
      * The inner _draw method which must be defined by each CanvasLayer subclass.

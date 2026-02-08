@@ -1,6 +1,6 @@
-import * as abstract from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import BaseRegion from "./region.mjs";
+import * as abstract from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import BaseRegion from './region.mjs';
 
 /**
  * The RegionBehavior Document.
@@ -9,30 +9,30 @@ import BaseRegion from "./region.mjs";
 export default class BaseRegionBehavior<
     TParent extends BaseRegion | null = BaseRegion | null,
 > extends abstract.Document<TParent, RegionBehaviorSchema> {
-    static override get metadata(): RegionBehaviorMetadata;
+  static override get metadata(): RegionBehaviorMetadata;
 
-    static override defineSchema(): RegionBehaviorSchema;
+  static override defineSchema(): RegionBehaviorSchema;
 }
 
 export default interface BaseRegionBehavior<TParent extends BaseRegion | null = BaseRegion | null>
     extends abstract.Document<TParent, RegionBehaviorSchema>,
         fields.ModelPropsFromSchema<RegionBehaviorSchema> {
-    get documentName(): RegionBehaviorMetadata["name"];
+    get documentName(): RegionBehaviorMetadata['name'];
 }
 
 interface RegionBehaviorMetadata extends abstract.DocumentMetadata {
-    name: "RegionBehavior";
-    collection: "behaviors";
-    label: "DOCUMENT.RegionBehavior";
-    labelPlural: "DOCUMENT.RegionBehaviors";
+    name: 'RegionBehavior';
+    collection: 'behaviors';
+    label: 'DOCUMENT.RegionBehavior';
+    labelPlural: 'DOCUMENT.RegionBehaviors';
     coreTypes: [
-        "adjustDarknessLevel",
-        "executeMacro",
-        "executeScript",
-        "pauseGame",
-        "suppressWeather",
-        "teleportToken",
-        "toggleBehavior",
+        'adjustDarknessLevel',
+        'executeMacro',
+        'executeScript',
+        'pauseGame',
+        'suppressWeather',
+        'teleportToken',
+        'toggleBehavior',
     ];
     hasTypeData: true;
     isEmbedded: true;

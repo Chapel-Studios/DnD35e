@@ -1,23 +1,23 @@
-import { ImageFilePath } from "@common/constants.mjs";
-import { Document, DocumentMetadata, EmbeddedCollection } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseFolder, BaseTableResult } from "./_module.mjs";
+import { ImageFilePath } from '@common/constants.mjs';
+import { Document, DocumentMetadata, EmbeddedCollection } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseFolder, BaseTableResult } from './_module.mjs';
 
 /**
  * The Document definition for a RollTable.
  * Defines the DataSchema and common behaviors for a RollTable which are shared between both client and server.
  */
 export default class BaseRollTable extends Document<null, RollTableSchema> {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): RollTableMetadata;
+  static override get metadata(): RollTableMetadata;
 
-    static override defineSchema(): RollTableSchema;
+  static override defineSchema(): RollTableSchema;
 
-    /** The default icon used for newly created Macro documents */
-    static DEFAULT_ICON: ImageFilePath;
+  /** The default icon used for newly created Macro documents */
+  static DEFAULT_ICON: ImageFilePath;
 }
 
 export default interface BaseRollTable
@@ -26,17 +26,17 @@ export default interface BaseRollTable
     /** A reference to the Collection of TableResult instances in this document, indexed by _id. */
     readonly results: EmbeddedCollection<BaseTableResult<this>>;
 
-    get documentName(): (typeof BaseRollTable)["metadata"]["name"];
+    get documentName(): (typeof BaseRollTable)['metadata']['name'];
 }
 
 interface RollTableMetadata extends DocumentMetadata {
-    name: "RollTable";
-    collection: "tables";
+    name: 'RollTable';
+    collection: 'tables';
     indexed: true;
-    compendiumIndexFields: ["_id", "name", "description", "img", "sort", "folder"];
-    embedded: { TableResult: "results" };
-    label: "DOCUMENT.RollTable";
-    labelPlural: "DOCUMENT.RollTables";
+    compendiumIndexFields: ['_id', 'name', 'description', 'img', 'sort', 'folder'];
+    embedded: { TableResult: 'results' };
+    label: 'DOCUMENT.RollTable';
+    labelPlural: 'DOCUMENT.RollTables';
 }
 
 type RollTableSchema = {

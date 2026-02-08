@@ -1,14 +1,16 @@
 /**
  * Pulse animation illumination shader
  */
+import AdaptiveIlluminationShader from '../illumination-lighting.mjs';
+import AdaptiveColorationShader from '../coloration-lighting.mjs';
 export class PulseIlluminationShader extends AdaptiveIlluminationShader {
 }
 /**
  * Pulse animation coloration shader
  */
 export class PulseColorationShader extends AdaptiveColorationShader {
-    /** @inheritdoc */
-    static defaultUniforms: {
+  /** @inheritdoc */
+  static defaultUniforms: {
         pulse: number;
         technique: number;
         shadows: number;
@@ -38,5 +40,3 @@ export class PulseColorationShader extends AdaptiveColorationShader {
         globalLightThresholds: number[];
     };
 }
-import AdaptiveIlluminationShader from "../illumination-lighting.mjs";
-import AdaptiveColorationShader from "../coloration-lighting.mjs";

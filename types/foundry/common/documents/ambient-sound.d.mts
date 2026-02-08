@@ -1,7 +1,7 @@
-import { AudioFilePath } from "@common/constants.mjs";
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import BaseScene from "./scene.mjs";
+import { AudioFilePath } from '@common/constants.mjs';
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import BaseScene from './scene.mjs';
 
 /**
  * The Document definition for an AmbientSound.
@@ -12,22 +12,22 @@ import BaseScene from "./scene.mjs";
  * @param context Construction context options
  */
 export default class BaseAmbientSound<TParent extends BaseScene | null> extends Document<TParent, AmbientSoundSchema> {
-    static override get metadata(): AmbientSoundMetadata;
+  static override get metadata(): AmbientSoundMetadata;
 
-    static defineSchema(): AmbientSoundSchema;
+  static defineSchema(): AmbientSoundSchema;
 }
 
 export default interface BaseAmbientSound<TParent extends BaseScene | null>
     extends Document<TParent, AmbientSoundSchema>,
         fields.ModelPropsFromSchema<AmbientSoundSchema> {
-    get documentName(): AmbientSoundMetadata["name"];
+    get documentName(): AmbientSoundMetadata['name'];
 }
 
 interface AmbientSoundMetadata extends DocumentMetadata {
-    name: "AmbientSound";
-    collection: "sounds";
-    label: "DOCUMENT.AmbientSound";
-    labelPlural: "DOCUMENT.AmbientSounds";
+    name: 'AmbientSound';
+    collection: 'sounds';
+    label: 'DOCUMENT.AmbientSound';
+    labelPlural: 'DOCUMENT.AmbientSounds';
     isEmbedded: true;
 }
 

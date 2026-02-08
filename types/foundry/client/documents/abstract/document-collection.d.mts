@@ -1,40 +1,40 @@
-import { ApplicationRenderOptions } from "@client/applications/_types.mjs";
-import ApplicationV2 from "@client/applications/api/application.mjs";
-import Application, { AppV1RenderOptions } from "@client/appv1/api/application-v1.mjs";
+import { ApplicationRenderOptions } from '@client/applications/_types.mjs';
+import ApplicationV2 from '@client/applications/api/application.mjs';
+import Application, { AppV1RenderOptions } from '@client/appv1/api/application-v1.mjs';
 import {
-    DatabaseAction,
-    DatabaseCreateOperation,
-    DatabaseOperation,
-    DatabaseUpdateOperation,
-    Document,
-} from "@common/abstract/_module.mjs";
-import Collection from "@common/utils/collection.mjs";
-import User from "../user.mjs";
+  DatabaseAction,
+  DatabaseCreateOperation,
+  DatabaseOperation,
+  DatabaseUpdateOperation,
+  Document,
+} from '@common/abstract/_module.mjs';
+import Collection from '@common/utils/collection.mjs';
+import User from '../user.mjs';
 
 /**
  * A Collection of Document objects within the Foundry Virtual Tabletop framework.
  */
 export default abstract class DocumentCollection<TDocument extends Document> extends Collection<string, TDocument> {
-    /**
+  /**
      * @param data An array of data objects from which to create document instances
      */
-    constructor(data: TDocument["_source"]);
+  constructor(data: TDocument['_source']);
 
-    /** An Array of application references which will be automatically updated when the collection content changes */
-    apps: (ApplicationV2 | Application)[];
+  /** An Array of application references which will be automatically updated when the collection content changes */
+  apps: (ApplicationV2 | Application)[];
 
-    /* -------------------------------------------- */
-    /*  Collection Properties                       */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Collection Properties                       */
+  /* -------------------------------------------- */
 
-    /** The Collection class name */
-    get name(): string;
+  /** The Collection class name */
+  get name(): string;
 
-    /** A reference to the Document class definition which is contained within this DocumentCollection. */
-    get documentClass(): DocumentConstructorOf<TDocument>;
+  /** A reference to the Document class definition which is contained within this DocumentCollection. */
+  get documentClass(): DocumentConstructorOf<TDocument>;
 
     /** A reference to the named Document class which is contained within this DocumentCollection. */
-    abstract get documentName(): TDocument["documentName"] | null;
+    abstract get documentName(): TDocument['documentName'] | null;
 
     /** The base Document type which is contained within this DocumentCollection */
     static documentName: string;
@@ -73,7 +73,7 @@ export default abstract class DocumentCollection<TDocument extends Document> ext
      * @param userId  The ID of the User who triggered the operation
      */
     protected _preCreateDocuments(
-        result: TDocument["_source"][],
+        result: TDocument['_source'][],
         options: DatabaseCreateOperation<null>,
         userId: string,
     ): void;
@@ -87,7 +87,7 @@ export default abstract class DocumentCollection<TDocument extends Document> ext
      */
     protected _onCreateDocuments(
         documents: TDocument[],
-        result: TDocument["_source"][],
+        result: TDocument['_source'][],
         options: DatabaseCreateOperation<null>,
         userId: string,
     ): void;
@@ -99,7 +99,7 @@ export default abstract class DocumentCollection<TDocument extends Document> ext
      * @param userId  The ID of the User who triggered the operation
      */
     protected _preUpdateDocuments(
-        result: TDocument["_source"][],
+        result: TDocument['_source'][],
         options: DatabaseUpdateOperation<null>,
         userId: string,
     ): void;
@@ -113,7 +113,7 @@ export default abstract class DocumentCollection<TDocument extends Document> ext
      */
     protected _onUpdateDocuments(
         documents: TDocument[],
-        result: TDocument["_source"][],
+        result: TDocument['_source'][],
         options: DatabaseUpdateOperation<null>,
         userId: string,
     ): void;
@@ -125,7 +125,7 @@ export default abstract class DocumentCollection<TDocument extends Document> ext
      * @param userId  The ID of the User who triggered the operation
      */
     protected _preDeleteDocuments(
-        result: TDocument["_source"][],
+        result: TDocument['_source'][],
         options: DatabaseCreateOperation<null>,
         userId: string,
     ): void;

@@ -1,7 +1,7 @@
-import AmbientSound from "@client/canvas/placeables/sound.mjs";
-import { BaseAmbientSound } from "./_module.mjs";
-import { CanvasDocument } from "./abstract/canvas-document.mjs";
-import Scene from "./scene.mjs";
+import AmbientSound from '@client/canvas/placeables/sound.mjs';
+import { BaseAmbientSound } from './_module.mjs';
+import { CanvasDocument } from './abstract/canvas-document.mjs';
+import Scene from './scene.mjs';
 
 declare const CanvasBaseAmbientSound: new <TParent extends Scene | null>(
     ...args: any

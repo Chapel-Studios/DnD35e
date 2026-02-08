@@ -1,5 +1,5 @@
-import { FormGroupConfig, FormInputConfig } from "@common/data/_types.mjs";
-import { HTMLMultiSelectElement } from "../elements/multi-select.mjs";
+import { FormGroupConfig, FormInputConfig } from '@common/data/_types.mjs';
+import { HTMLMultiSelectElement } from '../elements/multi-select.mjs';
 
 /** Create a standardized form field group. */
 export function createFormGroup(config: FormGroupConfig): HTMLDivElement;
@@ -67,7 +67,7 @@ export function setInputAttributes<TValue extends string | boolean = string | bo
  */
 export function createFontAwesomeIcon(
     glyph: string,
-    options?: { style?: "solid" | "regular" | "duotone"; fixedWidth?: boolean; classes?: string[] },
+    options?: { style?: 'solid' | 'regular' | 'duotone'; fixedWidth?: boolean; classes?: string[] },
 ): HTMLElement;
 
 export type CustomFormGroup = (field: foundry.data.fields.DataField, groupConfig: FormGroupConfig) => HTMLDivElement;
@@ -122,9 +122,9 @@ export interface SelectInputConfig {
     sort?: boolean;
 }
 
-export type MultiSelectInputConfig = Omit<SelectInputConfig, "blank"> & {
+export type MultiSelectInputConfig = Omit<SelectInputConfig, 'blank'> & {
     /** Creates a multi-checkbox element instead */
-    type?: "checkboxes";
+    type?: 'checkboxes';
     /** The currently selected values */
     value?: string[];
 };
@@ -132,7 +132,7 @@ export type MultiSelectInputConfig = Omit<SelectInputConfig, "blank"> & {
 export interface NumberInputConfig extends FormInputConfig<number> {
     min: number;
     max: number;
-    step: number | "any";
+    step: number | 'any';
 }
 
 export interface TextAreaInputConfig extends FormInputConfig<string> {

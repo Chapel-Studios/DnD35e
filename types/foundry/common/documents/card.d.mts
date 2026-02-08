@@ -1,7 +1,7 @@
-import { DocumentOwnershipLevel, DocumentOwnershipString, ImageFilePath, VideoFilePath } from "@common/constants.mjs";
-import Document, { DocumentMetadata } from "../abstract/document.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseCards, BaseUser } from "./_module.mjs";
+import { DocumentOwnershipLevel, DocumentOwnershipString, ImageFilePath, VideoFilePath } from '@common/constants.mjs';
+import Document, { DocumentMetadata } from '../abstract/document.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseCards, BaseUser } from './_module.mjs';
 
 /**
  * The Document definition for a Card.
@@ -12,25 +12,25 @@ import { BaseCards, BaseUser } from "./_module.mjs";
  * @param context Construction context options
  */
 export default class BaseCard<TParent extends BaseCards | null> extends Document<TParent, CardSchema> {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): CardMetadata;
+  static override get metadata(): CardMetadata;
 
-    static override defineSchema(): CardSchema;
+  static override defineSchema(): CardSchema;
 
-    /** The default icon used for a Card face that does not have a custom image set */
-    static DEFAULT_ICON: ImageFilePath | VideoFilePath;
+  /** The default icon used for a Card face that does not have a custom image set */
+  static DEFAULT_ICON: ImageFilePath | VideoFilePath;
 
-    /** The allowed set of Card types which may exist */
-    static get TYPES(): string[];
+  /** The allowed set of Card types which may exist */
+  static get TYPES(): string[];
 
-    /* -------------------------------------------- */
-    /*  Model Methods                               */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Methods                               */
+  /* -------------------------------------------- */
 
-    override testUserPermission(
+  override testUserPermission(
         user: BaseUser,
         permission: DocumentOwnershipString | DocumentOwnershipLevel,
         { exact }?: { exact?: boolean | undefined },
@@ -40,15 +40,15 @@ export default class BaseCard<TParent extends BaseCards | null> extends Document
 export default interface BaseCard<TParent extends BaseCards | null>
     extends Document<TParent, CardSchema>,
         fields.ModelPropsFromSchema<CardSchema> {
-    get documentName(): CardMetadata["name"];
+    get documentName(): CardMetadata['name'];
 }
 
 interface CardMetadata extends DocumentMetadata {
-    name: "Card";
-    collection: "cards";
+    name: 'Card';
+    collection: 'cards';
     indexed: true;
-    label: "DOCUMENT.Card";
-    labelPlural: "DOCUMENT.Cards";
+    label: 'DOCUMENT.Card';
+    labelPlural: 'DOCUMENT.Cards';
 }
 
 type CardSchema = {

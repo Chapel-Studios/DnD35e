@@ -1,5 +1,5 @@
-import { ModelPropsFromSchema } from "@common/data/fields.mjs";
-import CalendarData, { CalendarDataSchema } from "./calendar.mjs";
+import { ModelPropsFromSchema } from '@common/data/fields.mjs';
+import CalendarData, { CalendarDataSchema } from './calendar.mjs';
 
 /**
  * Default combat tracker settings used in Foundry VTT.
@@ -23,19 +23,19 @@ export interface CombatConfigurationData {
 export interface CalendarConfig extends ModelPropsFromSchema<CalendarDataSchema> {}
 
 /** A definition of a year within a calendar. */
-export type CalendarConfigYears = CalendarConfig["years"];
+export type CalendarConfigYears = CalendarConfig['years'];
 
 /** A definition of how leap years work within a calendar. */
-export type CalendarConfigLeapYear = CalendarConfigYears["leapYear"];
+export type CalendarConfigLeapYear = CalendarConfigYears['leapYear'];
 
 /** Month related configuration for a calendar. */
-export type CalendarConfigMonths = NonNullable<CalendarConfig["months"]>;
+export type CalendarConfigMonths = NonNullable<CalendarConfig['months']>;
 
 /** A definition of a month within a calendar year. */
-export type CalendarConfigMonth = CalendarConfigMonths["values"][number];
+export type CalendarConfigMonth = CalendarConfigMonths['values'][number];
 
 /** Day related configuration for a calendar. */
-export type CalendarConfigDays = CalendarConfig["years"];
+export type CalendarConfigDays = CalendarConfig['years'];
 
 /** A definition of the days of the week within a calendar. */
 export interface CalendarConfigDay {
@@ -53,10 +53,10 @@ export interface CalendarConfigDay {
 }
 
 /** Season related configuration for a calendar. */
-export type CalendarConfigSeasons = NonNullable<CalendarConfig["seasons"]>;
+export type CalendarConfigSeasons = NonNullable<CalendarConfig['seasons']>;
 
 /** A definition of a season within a calendar year. */
-export type CalendarConfigSeason = CalendarConfigSeasons["values"][number];
+export type CalendarConfigSeason = CalendarConfigSeasons['values'][number];
 
 /**
  * A decomposition of the integer world time in seconds into component parts.

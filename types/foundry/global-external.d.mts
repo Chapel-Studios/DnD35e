@@ -1,5 +1,5 @@
-import "./client/global.mjs";
-import "./util.mjs";
+import './client/global.mjs';
+import './util.mjs';
 
 // Globals available for community development but not in the core client codebase
 

@@ -1,6 +1,6 @@
-import Drawing from "../canvas/placeables/drawing.mjs";
-import { BaseDrawing, Scene } from "./_module.mjs";
-import { CanvasDocument } from "./abstract/canvas-document.mjs";
+import Drawing from '../canvas/placeables/drawing.mjs';
+import { BaseDrawing, Scene } from './_module.mjs';
+import { CanvasDocument } from './abstract/canvas-document.mjs';
 
 declare const CanvasBaseDrawing: new <TParent extends Scene | null>(
     ...args: any

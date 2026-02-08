@@ -1,7 +1,7 @@
-import Document from "@common/abstract/document.mjs";
-import { DOMOutputSpec, Mark, MarkType, Node, NodeType } from "prosemirror-model";
-import { EditorState } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
+import Document from '@common/abstract/document.mjs';
+import { DOMOutputSpec, Mark, MarkType, Node, NodeType } from 'prosemirror-model';
+import { EditorState } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 
 interface ProseMirrorContentLinkOptions {
     /** The parent document housing this editor. */

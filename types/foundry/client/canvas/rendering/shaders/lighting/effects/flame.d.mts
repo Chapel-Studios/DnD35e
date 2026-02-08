@@ -1,9 +1,11 @@
 /**
  * Alternative torch illumination shader
  */
+import AdaptiveIlluminationShader from '../illumination-lighting.mjs';
+import AdaptiveColorationShader from '../coloration-lighting.mjs';
 export class FlameIlluminationShader extends AdaptiveIlluminationShader {
-    /** @inheritdoc */
-    static defaultUniforms: {
+  /** @inheritdoc */
+  static defaultUniforms: {
         brightnessPulse: number;
         technique: number;
         shadows: number;
@@ -40,8 +42,8 @@ export class FlameIlluminationShader extends AdaptiveIlluminationShader {
  * Alternative torch coloration shader
  */
 export class FlameColorationShader extends AdaptiveColorationShader {
-    /** @inheritdoc */
-    static defaultUniforms: {
+  /** @inheritdoc */
+  static defaultUniforms: {
         brightnessPulse: number;
         technique: number;
         shadows: number;
@@ -71,5 +73,3 @@ export class FlameColorationShader extends AdaptiveColorationShader {
         globalLightThresholds: number[];
     };
 }
-import AdaptiveIlluminationShader from "../illumination-lighting.mjs";
-import AdaptiveColorationShader from "../coloration-lighting.mjs";

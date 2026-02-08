@@ -1,15 +1,15 @@
-import { CustomFormGroup, CustomFormInput, FormSelectOption } from "@client/applications/forms/fields.mjs";
-import { DocumentUUID } from "@client/utils/_module.mjs";
-import { DocumentType, FileCategory, FilePath } from "@common/constants.mjs";
+import { CustomFormGroup, CustomFormInput, FormSelectOption } from '@client/applications/forms/fields.mjs';
+import { DocumentUUID } from '@client/utils/_module.mjs';
+import { DocumentType, FileCategory, FilePath } from '@common/constants.mjs';
 import {
-    DataField,
-    DocumentFlagsField,
-    DocumentStatsData,
-    MaybeSchemaProp,
-    ModelPropFromDataField,
-    SourceFromDataField,
-} from "./fields.mjs";
-import { DataModelValidationFailure } from "./validation-failure.mjs";
+  DataField,
+  DocumentFlagsField,
+  DocumentStatsData,
+  MaybeSchemaProp,
+  ModelPropFromDataField,
+  SourceFromDataField,
+} from './fields.mjs';
+import { DataModelValidationFailure } from './validation-failure.mjs';
 
 /**
  * A Custom DataField validator function.
@@ -131,7 +131,7 @@ export interface FormGroupConfig {
     /**
      * The value of the form group's hidden attribute
      */
-    hidden?: boolean | "until-found";
+    hidden?: boolean | 'until-found';
     /**
      * A custom form group widget function which replaces the default
      *              group HTML generation
@@ -194,10 +194,10 @@ interface FormInputConfig<TValue = unknown> {
 interface StringFieldInputConfig {
     /** The element to create for this form field
      */
-    elementType?: "input" | "textarea" | "prose-mirror" | "code-mirror";
+    elementType?: 'input' | 'textarea' | 'prose-mirror' | 'code-mirror';
 }
 
-type CodeMirrorLanguage = "javascript" | "json" | "html" | "markdown" | "" | "plain";
+type CodeMirrorLanguage = 'javascript' | 'json' | 'html' | 'markdown' | '' | 'plain';
 
 interface CodeMirrorInputConfig {
     /** The value's language */
@@ -217,7 +217,7 @@ interface LightAnimationData {
     /** The intensity of the animation, a number between 1 and 10 */
     intensity: number;
 
-    /** Reverse the direction of animation.*/
+    /** Reverse the direction of animation. */
     reverse: boolean;
 }
 

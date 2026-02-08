@@ -4,17 +4,17 @@
  * Created with the precious advices of dev7355608.
  */
 export default class FramebufferSnapshot {
-    constructor();
+  constructor();
 
-    /**
+  /**
      * The RenderTexture that is the render destination for the framebuffer snapshot.
      */
-    framebufferTexture: PIXI.RenderTexture;
+  framebufferTexture: PIXI.RenderTexture;
 
-    /**
+  /**
      * Get the framebuffer texture snapshot.
      * @param renderer The renderer for this context.
      * @returns The framebuffer snapshot.
      */
-    getFramebufferTexture(renderer: PIXI.Renderer): PIXI.RenderTexture;
+  getFramebufferTexture(renderer: PIXI.Renderer): PIXI.RenderTexture;
 }

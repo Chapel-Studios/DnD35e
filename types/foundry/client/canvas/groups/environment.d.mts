@@ -1,16 +1,16 @@
-import Color from "@common/utils/color.mjs";
-import CanvasGroupMixin from "./canvas-group-mixin.mjs";
+import Color from '@common/utils/color.mjs';
+import CanvasGroupMixin from './canvas-group-mixin.mjs';
 
 /**
  * A container group which contains the primary canvas group and the effects canvas group.
  */
 export default class EnvironmentCanvasGroup extends CanvasGroupMixin(PIXI.Container) {
-    static override groupName: "environment";
+  static override groupName: 'environment';
 
-    /**
+  /**
      * Colors exposed by the manager.
      */
-    colors: {
+  colors: {
         darkness: Color;
         halfdark: Color;
         background: Color;
@@ -24,35 +24,35 @@ export default class EnvironmentCanvasGroup extends CanvasGroupMixin(PIXI.Contai
         fogUnexplored: Color;
     };
 
-    /**
+  /**
      * Weights used by the manager to compute colors.
      * @enum {number}
      */
-    weights: {
+  weights: {
         dark: number;
         halfdark: number;
         dim: number;
         bright: number;
     };
 
-    /* -------------------------------------------- */
-    /*  Properties                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Properties                                  */
+  /* -------------------------------------------- */
 
-    /** Get the darkness level of this scene. */
-    get darknessLevel(): number;
+  /** Get the darkness level of this scene. */
+  get darknessLevel(): number;
 
-    /* -------------------------------------------- */
-    /*  Rendering                                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering                                   */
+  /* -------------------------------------------- */
 
-    override _draw(options: object): Promise<void>;
+  override _draw(options: object): Promise<void>;
 
-    /* -------------------------------------------- */
-    /*  Ambience Methods                            */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Ambience Methods                            */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Initialize the scene environment options.
      * @param [config={}]
      * @param [config.backgroundColor]              The background canvas color
@@ -64,7 +64,7 @@ export default class EnvironmentCanvasGroup extends CanvasGroupMixin(PIXI.Contai
      * @param [config.environment]                  The scene environment data
      * @fires PIXI.FederatedEvent type: "darknessChange" - event: {environmentData: {darknessLevel, priorDarknessLevel}}
      */
-    initialize(config?: EnvironmentInitializeConfig): void;
+  initialize(config?: EnvironmentInitializeConfig): void;
 }
 
 type ColorSource = string | number | [number, number, number];

@@ -1,26 +1,26 @@
-import DataModel from "@common/abstract/data.mjs";
-import { FilePath } from "@common/constants.mjs";
-import { DataFieldOptions } from "@common/data/_module.mjs";
-import * as fields from "@common/data/fields.mjs";
+import DataModel from '@common/abstract/data.mjs';
+import { FilePath } from '@common/constants.mjs';
+import { DataFieldOptions } from '@common/data/_module.mjs';
+import * as fields from '@common/data/fields.mjs';
 
 /**
  * A special subclass of DataField used to reference a class definition.
  */
 declare class ClassReferenceField extends fields.DataField {
-    constructor(options: DataFieldOptions<object, true, false, boolean>);
+  constructor(options: DataFieldOptions<object, true, false, boolean>);
 
-    static override get _defaults(): DataFieldOptions<object, true, false, boolean>;
+  static override get _defaults(): DataFieldOptions<object, true, false, boolean>;
 
-    protected override _validateType(value: unknown): void;
+  protected override _validateType(value: unknown): void;
 
-    getInitialValue(data?: object): fields.MaybeSchemaProp<object, true, false, boolean>;
+  getInitialValue(data?: object): fields.MaybeSchemaProp<object, true, false, boolean>;
 }
 
 /**
  * Dynamic Ring configuration data model.
  */
 export default class DynamicRingData extends DataModel<null, DynamicRingSchema> {
-    static override defineSchema(): DynamicRingSchema;
+  static override defineSchema(): DynamicRingSchema;
 }
 
 export default interface DynamicRingData

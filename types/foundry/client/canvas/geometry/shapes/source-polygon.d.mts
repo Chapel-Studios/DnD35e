@@ -1,7 +1,7 @@
-import { ElevatedPoint, Point } from "@common/_types.mjs";
-import { PointSourcePolygonConfig } from "../_types.mjs";
-import PolygonVertex from "../edges/vertex.mjs";
-import Ray from "./ray.mjs";
+import { ElevatedPoint, Point } from '@common/_types.mjs';
+import { PointSourcePolygonConfig } from '../_types.mjs';
+import PolygonVertex from '../edges/vertex.mjs';
+import Ray from './ray.mjs';
 
 /**
  * An extension of Polygon which is used to represent the line of sight for a point source.
@@ -9,72 +9,72 @@ import Ray from "./ray.mjs";
 export default abstract class PointSourcePolygon<
     TConfig extends PointSourcePolygonConfig = PointSourcePolygonConfig,
 > extends PIXI.Polygon {
-    /**
+  /**
      * Customize how wall direction of one-way walls is applied
      */
-    static WALL_DIRECTION_MODES: Readonly<{
+  static WALL_DIRECTION_MODES: Readonly<{
         NORMAL: 0;
         REVERSED: 1;
         BOTH: 2;
     }>;
 
-    /**
+  /**
      * The rectangular bounds of this polygon
      */
-    bounds: PIXI.Rectangle;
+  bounds: PIXI.Rectangle;
 
-    /**
+  /**
      * The origin point of the source polygon.
      */
-    origin: ElevatedPoint;
+  origin: ElevatedPoint;
 
-    /**
+  /**
      * The configuration of this polygon.
      */
-    config: TConfig;
+  config: TConfig;
 
-    /**
+  /**
      * An indicator for whether this polygon is constrained by some boundary shape?
      */
-    get isConstrained(): boolean;
+  get isConstrained(): boolean;
 
-    /**
+  /**
      * Benchmark the performance of polygon computation for this source
      * @param iterations The number of test iterations to perform
      * @param origin The origin point to benchmark
      * @param config The polygon configuration to benchmark
      */
-    static benchmark(iterations: number, origin: Point, config: PointSourcePolygonConfig): void;
+  static benchmark(iterations: number, origin: Point, config: PointSourcePolygonConfig): void;
 
-    /**
+  /**
      * Compute the polygon given a point origin and radius
      * @param origin The origin source point. The elevation defaults to
      *                                                the elevation of config.source if passed and otherwise 0.
      * @param config Configuration options which customize the polygon computation
      * @returns The computed polygon instance
      */
-    static create<C extends PointSourcePolygonConfig, T extends PointSourcePolygon<C>>(
+  static create<C extends PointSourcePolygonConfig, T extends PointSourcePolygon<C>>(
         this: ConstructorOf<T>,
         origin: Point,
         config?: C,
     ): T;
 
-    /**
+  /**
      * Create a clone of this polygon.
      * This overrides the default PIXI.Polygon#clone behavior.
      * @returns A cloned instance
      */
-    override clone(): this;
+  override clone(): this;
 
-    /* -------------------------------------------- */
-    /*  Polygon Computation                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Polygon Computation                         */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Compute the polygon using the origin and configuration options.
      * @returns The computed polygon
      */
-    compute(): this;
+  compute(): this;
 
     /**
      * Perform the implementation-specific computation
@@ -127,22 +127,25 @@ export default abstract class PointSourcePolygon<
     static testCollision(
         origin: Point,
         destination: Point,
-        config?: PointSourcePolygonConfig & { mode: "closest" },
+        config?: PointSourcePolygonConfig & { mode: 'closest' },
     ): PolygonVertex | null;
+
     static testCollision(
         origin: Point,
         destination: Point,
-        config?: PointSourcePolygonConfig & { mode: "any" },
+        config?: PointSourcePolygonConfig & { mode: 'any' },
     ): boolean;
+
     static testCollision(
         origin: Point,
         destination: Point,
-        config?: PointSourcePolygonConfig & { mode: "all" },
+        config?: PointSourcePolygonConfig & { mode: 'all' },
     ): PolygonVertex[];
+
     static testCollision(
         origin: Point,
         destination: Point,
-        config?: PointSourcePolygonConfig & { mode?: "any" | "all" | "closest" },
+        config?: PointSourcePolygonConfig & { mode?: 'any' | 'all' | 'closest' },
     ): boolean | PolygonVertex | PolygonVertex[] | null;
 
     /**

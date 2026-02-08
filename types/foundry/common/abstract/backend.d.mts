@@ -1,48 +1,48 @@
-import { CompendiumIndexData } from "@client/documents/collections/compendium-collection.mjs";
-import BaseUser from "@common/documents/user.mjs";
+import { CompendiumIndexData } from '@client/documents/collections/compendium-collection.mjs';
+import BaseUser from '@common/documents/user.mjs';
 import {
-    DatabaseCreateOperation,
-    DatabaseDeleteOperation,
-    DatabaseGetOperation,
-    DatabaseOperation,
-    DatabaseUpdateOperation,
-    Document,
-} from "./_module.mjs";
+  DatabaseCreateOperation,
+  DatabaseDeleteOperation,
+  DatabaseGetOperation,
+  DatabaseOperation,
+  DatabaseUpdateOperation,
+  Document,
+} from './_module.mjs';
 
 /**
  * An interface shared by both the client and server-side which defines how creation, update, and deletion operations are transacted.
  */
 export default abstract class DatabaseBackend {
-    /* -------------------------------------------- */
-    /*  Get Operations                              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Get Operations                              */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Retrieve Documents based on provided query parameters
      * @param documentClass The Document class definition
      * @param operation     Parameters of the get operation
      * @param [user]        The requesting User
      * @returns An array of retrieved Document instances or index objects
      */
-    get<TDocument extends Document>(
+  get<TDocument extends Document>(
         documentClass: ConstructorOf<TDocument>,
-        operation: DatabaseGetOperation<TDocument["parent"] | null>,
+        operation: DatabaseGetOperation<TDocument['parent'] | null>,
         user?: BaseUser,
     ): Promise<CompendiumIndexData[] | TDocument[]>;
 
-    protected _getDocuments<TDocument extends Document>(
+  protected _getDocuments<TDocument extends Document>(
         documentClass: AbstractConstructorOf<TDocument>,
-        operation: DatabaseGetOperation<TDocument["parent"]>,
+        operation: DatabaseGetOperation<TDocument['parent']>,
         user: BaseUser,
     ): Promise<TDocument[]>;
 
-    /* -------------------------------------------- */
-    /*  Create Operations                           */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Create Operations                           */
+  /* -------------------------------------------- */
 
-    create<TDocument extends Document>(
+  create<TDocument extends Document>(
         documentClass: ConstructorOf<TDocument>,
-        operation: DatabaseCreateOperation<TDocument["parent"]>,
+        operation: DatabaseCreateOperation<TDocument['parent']>,
         user: BaseUser,
     ): Promise<TDocument[]>;
 
@@ -55,7 +55,7 @@ export default abstract class DatabaseBackend {
      */
     protected abstract _createDocuments<TDocument extends Document>(
         documentClass: ConstructorOf<TDocument>,
-        operation: DatabaseCreateOperation<TDocument["parent"]>,
+        operation: DatabaseCreateOperation<TDocument['parent']>,
         user: BaseUser,
     ): Promise<(CompendiumIndexData | TDocument)[]>;
 
@@ -74,7 +74,7 @@ export default abstract class DatabaseBackend {
      */
     update<TDocument extends Document>(
         documentClass: ConstructorOf<TDocument>,
-        operation: DatabaseUpdateOperation<TDocument["parent"]>,
+        operation: DatabaseUpdateOperation<TDocument['parent']>,
         user: BaseUser,
     ): Promise<TDocument[]>;
 
@@ -87,7 +87,7 @@ export default abstract class DatabaseBackend {
      */
     protected abstract _updateDocuments<TDocument extends Document>(
         documentClass: ConstructorOf<TDocument>,
-        operation: DatabaseUpdateOperation<TDocument["parent"]>,
+        operation: DatabaseUpdateOperation<TDocument['parent']>,
         user: BaseUser,
     ): Promise<TDocument[]>;
 
@@ -106,7 +106,7 @@ export default abstract class DatabaseBackend {
      */
     delete<TDocument extends Document>(
         documentClass: ConstructorOf<TDocument>,
-        operation: DatabaseDeleteOperation<TDocument["parent"]>,
+        operation: DatabaseDeleteOperation<TDocument['parent']>,
         user: BaseUser,
     ): Promise<TDocument[]>;
 
@@ -119,7 +119,7 @@ export default abstract class DatabaseBackend {
      */
     protected abstract _deleteDocuments<TDocument extends Document>(
         documentClass: ConstructorOf<TDocument>,
-        operation: DatabaseDeleteOperation<TDocument["parent"]>,
+        operation: DatabaseDeleteOperation<TDocument['parent']>,
         user: BaseUser,
     ): Promise<TDocument[]>;
 

@@ -35,60 +35,60 @@ export interface TabsConfiguration {
  * ```
  */
 export default class Tabs {
-    /**
+  /**
      * @param config The Tabs Configuration to use for this tabbed container
      */
-    constructor(config?: TabsConfiguration);
+  constructor(config?: TabsConfiguration);
 
-    /** The name of the tabs group */
-    group: TabsConfiguration["group"];
+  /** The name of the tabs group */
+  group: TabsConfiguration['group'];
 
-    /** The value of the active tab */
-    active: string;
+  /** The value of the active tab */
+  active: string;
 
-    /** A callback function to trigger when the tab is changed */
-    callback: TabsConfiguration["callback"];
+  /** A callback function to trigger when the tab is changed */
+  callback: TabsConfiguration['callback'];
 
-    /**
+  /**
      * The CSS selector used to target the tab navigation element
      * @internal
      */
-    _navSelector: TabsConfiguration["navSelector"];
+  _navSelector: TabsConfiguration['navSelector'];
 
-    /**
+  /**
      * A reference to the HTML navigation element the tab controller is bound to
      * @internal
      */
-    _nav: HTMLElement | null;
+  _nav: HTMLElement | null;
 
-    /**
+  /**
      * The CSS selector used to target the tab content element
      * @internal
      */
-    _contentSelector: TabsConfiguration["contentSelector"];
+  _contentSelector: TabsConfiguration['contentSelector'];
 
-    /**
+  /**
      * A reference to the HTML container element of the tab content
      * @internal
      */
-    _content: HTMLElement | null;
+  _content: HTMLElement | null;
 
-    /**
+  /**
      * Bind the Tabs controller to an HTML application
      * @param html
      */
-    bind(html: HTMLElement): void;
+  bind(html: HTMLElement): void;
 
-    /**
+  /**
      * Activate a new tab by name
      * @param tabName
      * @param [options.triggerCallback]
      */
-    activate(tabName: string, options?: { triggerCallback?: boolean }): void;
+  activate(tabName: string, options?: { triggerCallback?: boolean }): void;
 
-    /**
+  /**
      * Handle click events on the tab navigation entries
      * @param event A left click event
      */
-    protected _onClickNav(event: PointerEvent): void;
+  protected _onClickNav(event: PointerEvent): void;
 }

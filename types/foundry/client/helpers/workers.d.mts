@@ -18,36 +18,36 @@ interface AsyncWorkerOptions extends WorkerOptions {
  * An asynchronous web Worker which can load user-defined functions and await execution using Promises.
  */
 export class AsyncWorker extends Worker {
-    /**
+  /**
      * @param name    The worker name to be initialized
      * @param options Worker initialization options
      */
-    constructor(name: string, options?: AsyncWorkerOptions);
+  constructor(name: string, options?: AsyncWorkerOptions);
 
-    /**
+  /**
      * A path reference to the JavaScript file which provides companion worker-side functionality.
      */
-    static WORKER_HARNESS_JS: string;
+  static WORKER_HARNESS_JS: string;
 
-    /**
+  /**
      * A Promise which resolves once the Worker is ready to accept tasks
      */
-    get ready(): Promise<void>;
+  get ready(): Promise<void>;
 
-    /* -------------------------------------------- */
-    /*  Task Management                             */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Task Management                             */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Load a function onto a given Worker.
      * The function must be a pure function with no external dependencies or requirements on global scope.
      * @param functionName The name of the function to load
      * @param functionRef  A reference to the function that should be loaded
      * @returns A Promise which resolves once the Worker has loaded the function.
      */
-    loadFunction(functionName: string, functionRef: Function): Promise<unknown>;
+  loadFunction(functionName: string, functionRef: Function): Promise<unknown>;
 
-    /**
+  /**
      * Execute a task on a specific Worker.
      * @param functionName The named function to execute on the worker. This function must first have been loaded.
      * @param args An array of parameters with which to call the requested function
@@ -55,7 +55,7 @@ export class AsyncWorker extends Worker {
      *                 See https://developer.mozilla.org/en-US/docs/Glossary/Transferable_objects
      * @returns A Promise which resolves with the returned result of the function once complete.
      */
-    executeFunction(functionName: string, args?: unknown[], transfer?: object[]): Promise<unknown>;
+  executeFunction(functionName: string, args?: unknown[], transfer?: object[]): Promise<unknown>;
 }
 
 /**
@@ -64,29 +64,29 @@ export class AsyncWorker extends Worker {
  * @see Game#workers
  */
 export class WorkerManager extends Map<string, AsyncWorker> {
-    constructor();
+  constructor();
 
-    /**
+  /**
      * Supported worker task actions
      */
-    static WORKER_TASK_ACTIONS: Readonly<{ INIT: "init"; LOAD: "load"; EXECUTE: "execute" }>;
+  static WORKER_TASK_ACTIONS: Readonly<{ INIT: 'init'; LOAD: 'load'; EXECUTE: 'execute' }>;
 
-    /* -------------------------------------------- */
-    /*  Worker Management                           */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Worker Management                           */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Create a new named Worker.
      * @param name   The named Worker to create
      * @param config Worker configuration parameters passed to the AsyncWorker constructor
      * @returns The created AsyncWorker which is ready to accept tasks
      */
-    createWorker(name: string, config?: AsyncWorkerOptions): Promise<AsyncWorker>;
+  createWorker(name: string, config?: AsyncWorkerOptions): Promise<AsyncWorker>;
 
-    /**
+  /**
      * Retire a current Worker, terminating it immediately.
      * @see Worker#terminate
      * @param name The named worker to terminate
      */
-    retireWorker(name: string): void;
+  retireWorker(name: string): void;
 }

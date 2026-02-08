@@ -1,10 +1,10 @@
-import AbstractBaseMaskFilter from "./base-mask-filter.mjs";
+import AbstractBaseMaskFilter from './base-mask-filter.mjs';
 
 /**
  * A filter used to apply color adjustments and other modifications to the environment.
  */
 export default class PrimaryCanvasGroupAmbienceFilter extends AbstractBaseMaskFilter {
-    static override defaultUniforms: {
+  static override defaultUniforms: {
         uSampler: null;
         darknessLevelTexture: null;
         cycle: boolean;

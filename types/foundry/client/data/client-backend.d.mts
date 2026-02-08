@@ -1,82 +1,83 @@
-import { CompendiumIndexData } from "@client/documents/collections/compendium-collection.mjs";
-import User from "@client/documents/user.mjs";
+import { CompendiumIndexData } from '@client/documents/collections/compendium-collection.mjs';
+import User from '@client/documents/user.mjs';
 import {
-    DatabaseBackend,
-    DatabaseCreateOperation,
-    DatabaseDeleteOperation,
-    DatabaseGetOperation,
-    DatabaseUpdateOperation,
-    Document,
-} from "@common/abstract/_module.mjs";
-import BaseUser from "@common/documents/user.mjs";
+  DatabaseBackend,
+  DatabaseCreateOperation,
+  DatabaseDeleteOperation,
+  DatabaseGetOperation,
+  DatabaseUpdateOperation,
+  Document,
+} from '@common/abstract/_module.mjs';
+import BaseUser from '@common/documents/user.mjs';
 
 /**
  * The client-side database backend implementation which handles Document modification operations.
  */
 export default class ClientDatabaseBackend extends DatabaseBackend {
-    /* -------------------------------------------- */
-    /*  Get Operations                              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Get Operations                              */
+  /* -------------------------------------------- */
 
-    protected override _getDocuments<TDocument extends Document>(
+  protected override _getDocuments<TDocument extends Document>(
         documentClass: AbstractConstructorOf<TDocument>,
-        operation: DatabaseGetOperation<TDocument["parent"]>,
+        operation: DatabaseGetOperation<TDocument['parent']>,
         user?: User,
     ): Promise<TDocument[]>;
-    protected override _getDocuments<TDocument extends Document>(
+
+  protected override _getDocuments<TDocument extends Document>(
         documentClass: AbstractConstructorOf<TDocument>,
-        operation: DatabaseGetOperation<TDocument["parent"]>,
+        operation: DatabaseGetOperation<TDocument['parent']>,
         user?: BaseUser,
     ): Promise<TDocument[]>;
 
-    /* -------------------------------------------- */
-    /*  Create Operations                           */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Create Operations                           */
+  /* -------------------------------------------- */
 
-    protected override _createDocuments<TDocument extends Document>(
+  protected override _createDocuments<TDocument extends Document>(
         documentClass: ConstructorOf<TDocument>,
-        operation: DatabaseCreateOperation<TDocument["parent"]>,
+        operation: DatabaseCreateOperation<TDocument['parent']>,
         user: User,
     ): Promise<(CompendiumIndexData | TDocument)[]>;
 
-    /* -------------------------------------------- */
-    /*  Update Operations                           */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Update Operations                           */
+  /* -------------------------------------------- */
 
-    protected override _updateDocuments<TDocument extends Document>(
+  protected override _updateDocuments<TDocument extends Document>(
         documentClass: ConstructorOf<TDocument>,
-        operation: DatabaseUpdateOperation<TDocument["parent"]>,
+        operation: DatabaseUpdateOperation<TDocument['parent']>,
         user: User,
     ): Promise<TDocument[]>;
 
-    /* -------------------------------------------- */
-    /*  Delete Operations                           */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Delete Operations                           */
+  /* -------------------------------------------- */
 
-    protected override _deleteDocuments<TDocument extends Document>(
+  protected override _deleteDocuments<TDocument extends Document>(
         documentClass: ConstructorOf<TDocument>,
-        operation: DatabaseDeleteOperation<TDocument["parent"]>,
+        operation: DatabaseDeleteOperation<TDocument['parent']>,
         user: User,
     ): Promise<TDocument[]>;
 
-    /* -------------------------------------------- */
-    /*  Socket Workflows                            */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Socket Workflows                            */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Activate the Socket event listeners used to receive responses from events which modify database documents
      * @param socket The active game socket
      * @internal
      */
-    activateSocketListeners(socket: io.Socket): void;
+  activateSocketListeners(socket: io.Socket): void;
 
-    /* -------------------------------------------- */
-    /*  Helper Methods                              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Helper Methods                              */
+  /* -------------------------------------------- */
 
-    override getFlagScopes(): string[];
+  override getFlagScopes(): string[];
 
-    override getCompendiumScopes(): string[];
+  override getCompendiumScopes(): string[];
 
-    protected override _log(level: string, message: string): void;
+  protected override _log(level: string, message: string): void;
 }

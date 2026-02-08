@@ -1,9 +1,11 @@
 /**
  * Siren light animation coloration shader
  */
+import AdaptiveColorationShader from '../coloration-lighting.mjs';
+import AdaptiveIlluminationShader from '../illumination-lighting.mjs';
 export class SirenColorationShader extends AdaptiveColorationShader {
-    /** @inheritDoc */
-    static defaultUniforms: {
+  /** @inheritDoc */
+  static defaultUniforms: {
         ratio: number;
         brightnessPulse: number;
         angle: number;
@@ -40,8 +42,8 @@ export class SirenColorationShader extends AdaptiveColorationShader {
  * Siren light animation illumination shader
  */
 export class SirenIlluminationShader extends AdaptiveIlluminationShader {
-    /** @inheritDoc */
-    static defaultUniforms: {
+  /** @inheritDoc */
+  static defaultUniforms: {
         angle: number;
         gradientFade: number;
         beamLength: number;
@@ -76,5 +78,3 @@ export class SirenIlluminationShader extends AdaptiveIlluminationShader {
         globalLightThresholds: number[];
     };
 }
-import AdaptiveColorationShader from "../coloration-lighting.mjs";
-import AdaptiveIlluminationShader from "../illumination-lighting.mjs";

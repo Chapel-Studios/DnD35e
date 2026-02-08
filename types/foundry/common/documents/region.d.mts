@@ -1,35 +1,35 @@
-import { Document, DocumentMetadata, EmbeddedCollection } from "@common/abstract/_module.mjs";
-import { REGION_VISIBILITY } from "../constants.mjs";
-import { BaseShapeData } from "../data/data.mjs";
-import * as fields from "../data/fields.mjs";
-import BaseRegionBehavior from "./region-behavior.mjs";
-import BaseScene from "./scene.mjs";
+import { Document, DocumentMetadata, EmbeddedCollection } from '@common/abstract/_module.mjs';
+import { REGION_VISIBILITY } from '../constants.mjs';
+import { BaseShapeData } from '../data/data.mjs';
+import * as fields from '../data/fields.mjs';
+import BaseRegionBehavior from './region-behavior.mjs';
+import BaseScene from './scene.mjs';
 
 export default class BaseRegion<TParent extends BaseScene | null = BaseScene | null> extends Document<
     TParent,
     RegionSchema
 > {
-    static override get metadata(): RegionMetadata;
+  static override get metadata(): RegionMetadata;
 
-    static override defineSchema(): RegionSchema;
+  static override defineSchema(): RegionSchema;
 }
 
 export default interface BaseRegion<TParent extends BaseScene | null = BaseScene | null>
     extends Document<TParent, RegionSchema>,
         fields.ModelPropsFromSchema<RegionSchema> {
-    get documentName(): RegionMetadata["name"];
+    get documentName(): RegionMetadata['name'];
 
     readonly behaviors: EmbeddedCollection<BaseRegionBehavior<this>>;
 }
 
 interface RegionMetadata extends DocumentMetadata {
-    name: "Region";
-    collection: "regions";
-    label: "DOCUMENT.Region";
-    labelPlural: "DOCUMENT.Regions";
+    name: 'Region';
+    collection: 'regions';
+    label: 'DOCUMENT.Region';
+    labelPlural: 'DOCUMENT.Regions';
     isEmbedded: true;
     embedded: {
-        RegionBehavior: "behaviors";
+        RegionBehavior: 'behaviors';
     };
 }
 

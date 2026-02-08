@@ -1,6 +1,6 @@
-import { ClientDocument, DocumentCollection } from "@client/documents/abstract/_module.mjs";
-import Document from "@common/abstract/document.mjs";
-import { CompatibilityMode } from "@common/constants.mjs";
+import { ClientDocument, DocumentCollection } from '@client/documents/abstract/_module.mjs';
+import Document from '@common/abstract/document.mjs';
+import { CompatibilityMode } from '@common/constants.mjs';
 
 /**
  * Wrap a callback in a debounced timeout.

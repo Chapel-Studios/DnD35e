@@ -1,8 +1,8 @@
-import { DocumentOwnershipLevel, DocumentOwnershipString, ImageFilePath, TextAnchorPoint } from "@common/constants.mjs";
-import { Document, DocumentMetadata, MetadataPermission } from "../abstract/_module.mjs";
-import * as data from "../data/data.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseScene, BaseUser } from "./_module.mjs";
+import { DocumentOwnershipLevel, DocumentOwnershipString, ImageFilePath, TextAnchorPoint } from '@common/constants.mjs';
+import { Document, DocumentMetadata, MetadataPermission } from '../abstract/_module.mjs';
+import * as data from '../data/data.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseScene, BaseUser } from './_module.mjs';
 
 /**
  * The Document definition for a Note.
@@ -13,22 +13,22 @@ import { BaseScene, BaseUser } from "./_module.mjs";
  * @param context Construction context options
  */
 export default class BaseNote<TParent extends BaseScene | null> extends Document<TParent, NoteSchema> {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): NoteMetadata;
+  static override get metadata(): NoteMetadata;
 
-    static override defineSchema(): NoteSchema;
+  static override defineSchema(): NoteSchema;
 
-    /** The default icon used for newly created Note documents. */
-    static DEFAULT_ICON: ImageFilePath;
+  /** The default icon used for newly created Note documents. */
+  static DEFAULT_ICON: ImageFilePath;
 
-    /* -------------------------------------------- */
-    /*  Model Methods                               */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Methods                               */
+  /* -------------------------------------------- */
 
-    testUserPermission(
+  testUserPermission(
         user: BaseUser,
         permission: DocumentOwnershipString | DocumentOwnershipLevel,
         { exact }?: { exact?: boolean },
@@ -38,17 +38,17 @@ export default class BaseNote<TParent extends BaseScene | null> extends Document
 export default interface BaseNote<TParent extends BaseScene | null>
     extends Document<TParent, NoteSchema>,
         fields.ModelPropsFromSchema<NoteSchema> {
-    get documentName(): NoteMetadata["name"];
+    get documentName(): NoteMetadata['name'];
 }
 
 interface NoteMetadata extends DocumentMetadata {
-    name: "Note";
-    collection: "notes";
-    label: "DOCUMENT.Note";
-    labelPlural: "DOCUMENT.Notes";
+    name: 'Note';
+    collection: 'notes';
+    label: 'DOCUMENT.Note';
+    labelPlural: 'DOCUMENT.Notes';
     permissions: {
         view: MetadataPermission;
-        create: "NOTE_CREATE";
+        create: 'NOTE_CREATE';
         update: MetadataPermission;
         delete: MetadataPermission;
     };

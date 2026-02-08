@@ -1,19 +1,19 @@
-import { PackageAvailabilityCode } from "@common/constants.mjs";
-import * as fields from "../data/fields.mjs";
-import * as packages from "./_module.mjs";
-import { PackageManifestData } from "./_types.mjs";
+import { PackageAvailabilityCode } from '@common/constants.mjs';
+import * as fields from '../data/fields.mjs';
+import * as packages from './_module.mjs';
+import { PackageManifestData } from './_types.mjs';
 
 export default class BaseWorld extends packages.BasePackage<WorldSchema> {
-    static override defineSchema(): WorldSchema;
+  static override defineSchema(): WorldSchema;
 
-    static override type: "world";
+  static override type: 'world';
 
-    /** The default icon used for this type of Package. */
-    static icon: string;
+  /** The default icon used for this type of Package. */
+  static icon: string;
 
-    static override migrateData(data: Record<string, unknown>): fields.SourceFromSchema<WorldSchema>;
+  static override migrateData(data: Record<string, unknown>): fields.SourceFromSchema<WorldSchema>;
 
-    static override testAvailability(
+  static override testAvailability(
         data?: Partial<PackageManifestData>,
         release?: packages.ReleaseData,
     ): PackageAvailabilityCode;
@@ -27,7 +27,7 @@ export default interface BaseWorld
  * The data schema used to define World manifest files.
  * Extends the basic PackageData schema with some additional world-specific fields.
  */
-type WorldSchema = Omit<packages.BasePackageSchema, "version"> & {
+type WorldSchema = Omit<packages.BasePackageSchema, 'version'> & {
     /** The game system name which this world relies upon */
     // system: fields.StringField<string, string, true, false, false>;
     /** A web URL or local file path which provides a background banner image */

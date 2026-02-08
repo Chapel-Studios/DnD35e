@@ -1,14 +1,16 @@
 /**
  * Allow coloring of illumination
  */
+import AdaptiveIlluminationShader from '../illumination-lighting.mjs';
+import AdaptiveColorationShader from '../coloration-lighting.mjs';
 export class TorchIlluminationShader extends AdaptiveIlluminationShader {
 }
 /**
  * Torch animation coloration shader
  */
 export class TorchColorationShader extends AdaptiveColorationShader {
-    /** @inheritdoc */
-    static defaultUniforms: {
+  /** @inheritdoc */
+  static defaultUniforms: {
         ratio: number;
         brightnessPulse: number;
         technique: number;
@@ -38,5 +40,3 @@ export class TorchColorationShader extends AdaptiveColorationShader {
         globalLightThresholds: number[];
     };
 }
-import AdaptiveIlluminationShader from "../illumination-lighting.mjs";
-import AdaptiveColorationShader from "../coloration-lighting.mjs";

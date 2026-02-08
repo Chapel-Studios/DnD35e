@@ -1,4 +1,4 @@
-import { KeybindingAction, KeyboardEventContext } from "@common/_types.mjs";
+import { KeybindingAction, KeyboardEventContext } from '@common/_types.mjs';
 
 /**
  * A set of helpers and management functions for dealing with user input from keyboard events.
@@ -6,84 +6,84 @@ import { KeybindingAction, KeyboardEventContext } from "@common/_types.mjs";
  * @see {@link foundry.Game#keyboard}
  */
 export default class KeyboardManager {
-    constructor();
+  constructor();
 
-    /**
+  /**
      * Begin listening to keyboard events.
      * @internal
      */
-    _activateListeners(): void;
+  _activateListeners(): void;
 
-    /**
+  /**
      * The set of key codes which are currently depressed (down)
      */
-    downKeys: Set<string>;
+  downKeys: Set<string>;
 
-    /**
+  /**
      * The set of movement keys which were recently pressed
      */
-    moveKeys: Set<string>;
+  moveKeys: Set<string>;
 
-    /**
+  /**
      * Allowed modifier keys.
      */
-    static MODIFIER_KEYS: {
-        CONTROL: "Control";
-        SHIFT: "Shift";
-        ALT: "Alt";
+  static MODIFIER_KEYS: {
+        CONTROL: 'Control';
+        SHIFT: 'Shift';
+        ALT: 'Alt';
     };
 
-    /**
+  /**
      * Track which KeyboardEvent#code presses associate with each modifier.
      */
-    static MODIFIER_CODES: {
-        Alt: ["AltLeft", "AltRight"];
-        Control: ["ControlLeft", "ControlRight", "MetaLeft", "MetaRight", "Meta", "OsLeft", "OsRight"];
-        Shift: ["ShiftLeft", "ShiftRight"];
+  static MODIFIER_CODES: {
+        Alt: ['AltLeft', 'AltRight'];
+        Control: ['ControlLeft', 'ControlRight', 'MetaLeft', 'MetaRight', 'Meta', 'OsLeft', 'OsRight'];
+        Shift: ['ShiftLeft', 'ShiftRight'];
     };
 
-    /**
+  /**
      * Key codes which are "protected" and should not be used because they are reserved for browser-level actions.
      */
-    static PROTECTED_KEYS: ["F5", "F11", "F12", "PrintScreen", "ScrollLock", "NumLock", "CapsLock"];
+  static PROTECTED_KEYS: ['F5', 'F11', 'F12', 'PrintScreen', 'ScrollLock', 'NumLock', 'CapsLock'];
 
-    /**
+  /**
      * The OS-specific string display for what their Command key is
      */
-    static CONTROL_KEY_STRING: "⌘" | "Control";
+  static CONTROL_KEY_STRING: '⌘' | 'Control';
 
-    /**
+  /**
      * A special mapping of how special KeyboardEvent#code values should map to displayed strings or symbols.
      * Values in this configuration object override any other display formatting rules which may be applied.
      * @type {Record<string, string>}
      */
-    static KEYCODE_DISPLAY_MAPPING: {
-        ArrowLeft: "⬅";
-        ArrowRight: "➡";
-        ArrowUp: "⬆";
-        ArrowDown: "⬇";
-        Backquote: "`";
-        Backslash: "\\";
-        BracketLeft: "[";
-        BracketRight: "]";
-        Comma: ",";
+  static KEYCODE_DISPLAY_MAPPING: {
+        ArrowLeft: '⬅';
+        ArrowRight: '➡';
+        ArrowUp: '⬆';
+        ArrowDown: '⬇';
+        Backquote: '`';
+        Backslash: '\\';
+        BracketLeft: '[';
+        BracketRight: ']';
+        Comma: ',';
         Control: typeof KeyboardManager.CONTROL_KEY_STRING;
-        Equal: "=";
-        Meta: "⌘" | "⊞";
-        MetaLeft: "⌘" | "⊞";
-        MetaRight: "⌘" | "⊞";
-        OsLeft: "⌘" | "⊞";
-        OsRight: "⌘" | "⊞";
-        Minus: "-";
-        NumpadAdd: "Numpad+";
-        NumpadSubtract: "Numpad-";
-        Period: ".";
-        Quote: "'";
-        Semicolon: ";";
-        Slash: "/";
+        Equal: '=';
+        Meta: '⌘' | '⊞';
+        MetaLeft: '⌘' | '⊞';
+        MetaRight: '⌘' | '⊞';
+        OsLeft: '⌘' | '⊞';
+        OsRight: '⌘' | '⊞';
+        Minus: '-';
+        NumpadAdd: 'Numpad+';
+        NumpadSubtract: 'Numpad-';
+        Period: '.';
+        Quote: '\'';
+        Semicolon: ';';
+        Slash: '/';
     };
 
-    /**
+  /**
      * Determines whether an `HTMLElement` currently has focus, which may influence keybinding actions.
      *
      * An element is considered to have focus if:
@@ -98,13 +98,13 @@ export default class KeyboardManager {
      *
      * If none of these conditions are met, the element is assumed to be unfocused.
      */
-    get hasFocus(): boolean;
+  get hasFocus(): boolean;
 
-    /* -------------------------------------------- */
-    /*  Methods                                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Methods                                     */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Emulates a key being pressed, triggering the Keyboard event workflow.
      * @param up If True, emulates the `keyup` Event. Else, the `keydown` event
      * @param code The KeyboardEvent#code which is being pressed
@@ -115,20 +115,20 @@ export default class KeyboardManager {
      * @param options.repeat Emulate this as a repeat event
      * @param options.force Force the event to be handled.
      */
-    static emulateKeypress(
+  static emulateKeypress(
         up: boolean,
         code: string,
         options?: { altKey?: boolean; ctrlKey?: boolean; shiftKey?: boolean; repeat?: boolean; force?: boolean },
     ): KeyboardEventContext;
 
-    /**
+  /**
      * Format a KeyboardEvent#code into a displayed string.
      * @param code The input code
      * @returns The displayed string for this code
      */
-    static getKeycodeDisplayString(code: string): string;
+  static getKeycodeDisplayString(code: string): string;
 
-    /**
+  /**
      * Get a standardized keyboard context for a given event.
      * Every individual keypress is uniquely identified using the KeyboardEvent#code property.
      * A list of possible key codes is documented here: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values
@@ -137,53 +137,53 @@ export default class KeyboardManager {
      * @param up A flag for whether the key is down or up
      * @returns The standardized context of the event
      */
-    static getKeyboardEventContext(event: KeyboardEvent, up?: boolean): KeyboardEventContext;
+  static getKeyboardEventContext(event: KeyboardEvent, up?: boolean): KeyboardEventContext;
 
-    /**
+  /**
      * Report whether a modifier in KeyboardManager.MODIFIER_KEYS is currently actively depressed.
      * @param modifier A modifier in MODIFIER_KEYS
      * @returns Is this modifier key currently down (active)?
      */
-    isModifierActive(modifier: string): boolean;
+  isModifierActive(modifier: string): boolean;
 
-    /**
+  /**
      * Report whether a core action key is currently actively depressed.
      * @param action The core action to verify (ex: "target")
      * @returns Is this core action key currently down (active)?
      */
-    isCoreActionKeyActive(action: string): boolean;
+  isCoreActionKeyActive(action: string): boolean;
 
-    /**
+  /**
      * Given a standardized pressed key, find all matching registered Keybind Actions.
      * @param context A standardized keyboard event context
      * @returns The matched Keybind Actions. May be empty.
      * @internal
      */
-    static _getMatchingActions(context: KeyboardEventContext): KeybindingAction[];
+  static _getMatchingActions(context: KeyboardEventContext): KeybindingAction[];
 
-    /**
+  /**
      * Processes a keyboard event context, checking it against registered keybinding actions
      * @param context The keyboard event context
      * @param options Additional options to configure behavior.
      * @param options.force Force the event to be handled.
      */
-    protected _processKeyboardContext(context: KeyboardEventContext, options?: { force?: boolean }): void;
+  protected _processKeyboardContext(context: KeyboardEventContext, options?: { force?: boolean }): void;
 
-    /**
+  /**
      * Emulate a key-up event for any currently down keys. When emulating, we go backwards such that combinations such as
      * "CONTROL + S" emulate the "S" first in order to capture modifiers.
      * @param options Options to configure behavior.
      * @param options.force Force the keyup events to be handled.
      */
-    releaseKeys({ force }?: { force?: boolean }): void;
+  releaseKeys({ force }?: { force?: boolean }): void;
 
-    /* -------------------------------------------- */
-    /*  Event Listeners and Handlers                */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Listeners and Handlers                */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Release any down keys when focusing a form element.
      * @param event The focus event.
      */
-    protected _onFocusIn(event: FocusEvent): void;
+  protected _onFocusIn(event: FocusEvent): void;
 }

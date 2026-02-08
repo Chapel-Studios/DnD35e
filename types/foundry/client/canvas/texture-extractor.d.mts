@@ -2,80 +2,81 @@
  * A class or interface that provide support for WebGL async read pixel/texture data extraction.
  */
 export default class TextureExtractor {
-    /**
+  /**
      * @param renderer The renderer
      * @param config Worker initialization options
      * @param config.format      The texture format
      * @param config.controlHash Should use control hash?
      * @param config.callerName  The caller name
      */
-    constructor(
+  constructor(
         renderer: PIXI.Renderer,
         config?: { format?: PIXI.FORMATS; controlHash?: boolean; callerName?: string; debug?: boolean },
     );
 
-    /**
+  /**
      * List of compression that could be applied with extraction
      */
-    static COMPRESSION_MODES: {
+  static COMPRESSION_MODES: {
         NONE: 0;
         BASE64: 1;
     };
 
-    /**
+  /**
      * The WebGL2 renderer.
      */
-    get renderer(): PIXI.Renderer;
-    /**
+  get renderer(): PIXI.Renderer;
+  /**
      * The texture format on which the Texture Extractor must work.
      */
-    get format(): PIXI.FORMATS;
+  get format(): PIXI.FORMATS;
 
-    /**
+  /**
      * The texture type on which the Texture Extractor must work.
      */
-    get type(): PIXI.TYPES;
+  get type(): PIXI.TYPES;
 
-    /**
+  /**
      * Debug flag.
      */
-    debug: boolean;
+  debug: boolean;
 
-    /* -------------------------------------------- */
-    /*  TextureExtractor Synchronization            */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  TextureExtractor Synchronization            */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Extract a rectangular block of pixels from the texture (without un-pre-multiplying).
      * @param options Options which configure pixels extraction behavior
      * @returns The pixels or undefined if there's no change compared to the last time pixels were extracted and the
      *          control hash option is enabled. If an output buffer was passed, the (new) output buffer is included in
      *          the result, which may be different from the output buffer that was passed because it was detached.
      */
-    extract(
+  extract(
         options?: TexturePixelsExtractionOptions,
     ): { pixels: Uint8ClampedArray | undefined; width: number; height: number; out?: ArrayBuffer } | undefined;
-    /**
+
+  /**
      *
      * @param options Options which configure base64 extraction behavior
      * @returns The base64 string or undefined if there's no change compared to the last time base64 was extracted and
      *          the control hash option is enabled.
      */
-    extract(options?: TextureBase64ExtractionOptions): string | undefined;
+  extract(options?: TextureBase64ExtractionOptions): string | undefined;
 
-    /* -------------------------------------------- */
-    /*  TextureExtractor Methods/Interface          */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  TextureExtractor Methods/Interface          */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Free all the bound objects.
      */
-    reset(): void;
+  reset(): void;
 
-    /**
+  /**
      * Called by the renderer contextChange runner.
      */
-    contextChange(): void;
+  contextChange(): void;
 }
 
 interface TextureBase64ExtractionOptions {

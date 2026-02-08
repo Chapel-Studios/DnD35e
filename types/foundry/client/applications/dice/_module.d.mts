@@ -1,1 +1,1 @@
-export { default as RollResolver } from "./roll-resolver.mjs";
+export { default as RollResolver } from './roll-resolver.mjs';

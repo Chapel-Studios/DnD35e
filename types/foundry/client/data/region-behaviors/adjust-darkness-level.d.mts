@@ -1,14 +1,14 @@
-import * as fields from "@common/data/fields.mjs";
-import { RegionBehaviorType } from "./base.mjs";
+import * as fields from '@common/data/fields.mjs';
+import { RegionBehaviorType } from './base.mjs';
 
 /**
  * The data model for a behavior that allows to suppress weather effects within the Region
  */
 export class AdjustDarknessLevelRegionBehaviorType extends RegionBehaviorType<AdjustDarknessLevelRegionBehaviorSchema> {
-    static override defineSchema(): AdjustDarknessLevelRegionBehaviorSchema;
+  static override defineSchema(): AdjustDarknessLevelRegionBehaviorSchema;
 
-    /** Darkness level behavior modes. */
-    static get MODES(): {
+  /** Darkness level behavior modes. */
+  static get MODES(): {
         /** Override the darkness level with the modifier. */
         OVERRIDE: 0;
         /** Brighten the darkness level: `darknessLevel * (1 - modifier)` */

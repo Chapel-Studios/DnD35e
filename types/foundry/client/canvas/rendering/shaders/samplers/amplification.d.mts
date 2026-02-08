@@ -1,10 +1,10 @@
-import ColorAdjustmentsSamplerShader from "./color-adjustments.mjs";
+import ColorAdjustmentsSamplerShader from './color-adjustments.mjs';
 
 /**
  * A light amplification shader.
  */
 export default class AmplificationSamplerShader extends ColorAdjustmentsSamplerShader {
-    static override defaultUniforms: {
+  static override defaultUniforms: {
         tintAlpha: number[];
         tint: number[];
         brightness: number;
@@ -13,18 +13,18 @@ export default class AmplificationSamplerShader extends ColorAdjustmentsSamplerS
         enable: boolean;
     };
 
-    /**
+  /**
      * Brightness controls the luminosity.
      */
-    get brightness(): number;
+  get brightness(): number;
 
-    set brightness(brightness: number);
+  set brightness(brightness: number);
 
-    /**
+  /**
      * Tint color applied to Light Amplification.
      * (default: [0.48, 1.0, 0.48]).
      */
-    get colorTint(): number[];
+  get colorTint(): number[];
 
-    set colorTint(color: number[]);
+  set colorTint(color: number[]);
 }

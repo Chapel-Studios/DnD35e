@@ -3,19 +3,19 @@
  * @module CONST
  */
 
-import * as data from "./data/data.mjs";
+import * as data from './data/data.mjs';
 
 /** The shortened software name */
-export const vtt: "Foundry VTT";
+export const vtt: 'Foundry VTT';
 
 /** The full software name */
-export const VTT: "Foundry Virtual Tabletop";
+export const VTT: 'Foundry Virtual Tabletop';
 
 /** The software website URL */
-export const WEBSITE_URL: "https://foundryvtt.com";
+export const WEBSITE_URL: 'https://foundryvtt.com';
 
 /** The serverless API URL */
-export const WEBSITE_API_URL: "https://api.foundryvtt.com";
+export const WEBSITE_API_URL: 'https://api.foundryvtt.com';
 
 /** An ASCII greeting displayed to the client */
 export const ASCII: string;
@@ -75,7 +75,7 @@ export type ActiveEffectChangeMode = (typeof ACTIVE_EFFECT_MODES)[keyof typeof A
 /**
  * Define the string name used for the base document type when specific sub-types are not defined by the system
  */
-export const BASE_DOCUMENT_TYPE: "base";
+export const BASE_DOCUMENT_TYPE: 'base';
 
 /**
  * Define the methods by which a Card can be drawn from a Cards stack
@@ -148,7 +148,7 @@ export type ChatMessageStyle = (typeof CHAT_MESSAGE_STYLES)[keyof typeof CHAT_ME
 /**
  * Define the set of languages which have built-in support in the core software
  */
-export const C: readonly ["en"];
+export const C: readonly ['en'];
 
 /**
  * Configure the severity of compatibility warnings.
@@ -178,14 +178,14 @@ export type CompatibilityMode = (typeof COMPATIBILITY_MODES)[keyof typeof COMPAT
  * Configure custom cursor images to use when interacting with the application.
  */
 export const CURSOR_STYLES: Readonly<{
-    default: "default";
-    "default-down": "default";
-    pointer: "pointer";
-    "pointer-down": "pointer";
-    grab: "grab";
-    "grab-down": "grabbing";
-    text: "text";
-    "text-down": "text";
+    default: 'default';
+    'default-down': 'default';
+    pointer: 'pointer';
+    'pointer-down': 'pointer';
+    grab: 'grab';
+    'grab-down': 'grabbing';
+    text: 'text';
+    'text-down': 'text';
 }>;
 
 /**
@@ -206,101 +206,101 @@ export type LightingLevel = (typeof LIGHTING_LEVELS)[keyof typeof LIGHTING_LEVEL
  * The CSS themes which are currently supported for the V11 Setup menu.
  */
 export const CSS_THEMES: Readonly<{
-    dark: "THEME.foundry";
-    fantasy: "THEME.fantasy";
-    scifi: "THEME.scifi";
+    dark: 'THEME.foundry';
+    fantasy: 'THEME.fantasy';
+    scifi: 'THEME.scifi';
 }>;
 
 /**
  * The default artwork used for Token images if none is provided
  */
-export const DEFAULT_TOKEN: "icons/svg/mystery-man.svg";
+export const DEFAULT_TOKEN: 'icons/svg/mystery-man.svg';
 
 /**
  * The primary Document types.
  */
 export const PRIMARY_DOCUMENT_TYPES: readonly [
-    "Actor",
-    "Adventure",
-    "Cards",
-    "ChatMessage",
-    "Combat",
-    "FogExploration",
-    "Folder",
-    "Item",
-    "JournalEntry",
-    "Macro",
-    "Playlist",
-    "RollTable",
-    "Scene",
-    "Setting",
-    "User",
+    'Actor',
+    'Adventure',
+    'Cards',
+    'ChatMessage',
+    'Combat',
+    'FogExploration',
+    'Folder',
+    'Item',
+    'JournalEntry',
+    'Macro',
+    'Playlist',
+    'RollTable',
+    'Scene',
+    'Setting',
+    'User',
 ];
 
 /**
  * The embedded Document types.
  */
 export const EMBEDDED_DOCUMENT_TYPES: readonly [
-    "ActiveEffect",
-    "ActorDelta",
-    "AmbientLight",
-    "AmbientSound",
-    "Card",
-    "Combatant",
-    "CombatantGroup",
-    "Drawing",
-    "Item",
-    "JournalEntryCategory",
-    "JournalEntryPage",
-    "MeasuredTemplate",
-    "Note",
-    "PlaylistSound",
-    "Region",
-    "RegionBehavior",
-    "TableResult",
-    "Tile",
-    "Token",
-    "Wall",
+    'ActiveEffect',
+    'ActorDelta',
+    'AmbientLight',
+    'AmbientSound',
+    'Card',
+    'Combatant',
+    'CombatantGroup',
+    'Drawing',
+    'Item',
+    'JournalEntryCategory',
+    'JournalEntryPage',
+    'MeasuredTemplate',
+    'Note',
+    'PlaylistSound',
+    'Region',
+    'RegionBehavior',
+    'TableResult',
+    'Tile',
+    'Token',
+    'Wall',
 ];
 
 /**
  * A listing of all valid Document types, both primary and embedded.
  */
 export const ALL_DOCUMENT_TYPES: readonly [
-    "ActiveEffect",
-    "Actor",
-    "ActorDelta",
-    "Adventure",
-    "AmbientLight",
-    "AmbientSound",
-    "Card",
-    "Cards",
-    "ChatMessage",
-    "Combat",
-    "Combatant",
-    "CombatantGroup",
-    "Drawing",
-    "FogExploration",
-    "Folder",
-    "Item",
-    "JournalEntry",
-    "JournalEntryCategory",
-    "JournalEntryPage",
-    "Macro",
-    "MeasuredTemplate",
-    "Note",
-    "Playlist",
-    "PlaylistSound",
-    "Region",
-    "RegionBehavior",
-    "RollTable",
-    "Scene",
-    "Setting",
-    "TableResult",
-    "Tile",
-    "Token",
-    "User",
-    "Wall",
+    'ActiveEffect',
+    'Actor',
+    'ActorDelta',
+    'Adventure',
+    'AmbientLight',
+    'AmbientSound',
+    'Card',
+    'Cards',
+    'ChatMessage',
+    'Combat',
+    'Combatant',
+    'CombatantGroup',
+    'Drawing',
+    'FogExploration',
+    'Folder',
+    'Item',
+    'JournalEntry',
+    'JournalEntryCategory',
+    'JournalEntryPage',
+    'Macro',
+    'MeasuredTemplate',
+    'Note',
+    'Playlist',
+    'PlaylistSound',
+    'Region',
+    'RegionBehavior',
+    'RollTable',
+    'Scene',
+    'Setting',
+    'TableResult',
+    'Tile',
+    'Token',
+    'User',
+    'Wall',
 ];
 
 export type DocumentType = (typeof ALL_DOCUMENT_TYPES)[number];
@@ -309,20 +309,20 @@ export type DocumentType = (typeof ALL_DOCUMENT_TYPES)[number];
  * The allowed primary Document types which may exist within a World.
  */
 export const WORLD_DOCUMENT_TYPES: readonly [
-    "Actor",
-    "Cards",
-    "ChatMessage",
-    "Combat",
-    "FogExploration",
-    "Folder",
-    "Item",
-    "JournalEntry",
-    "Macro",
-    "Playlist",
-    "RollTable",
-    "Scene",
-    "Setting",
-    "User",
+    'Actor',
+    'Cards',
+    'ChatMessage',
+    'Combat',
+    'FogExploration',
+    'Folder',
+    'Item',
+    'JournalEntry',
+    'Macro',
+    'Playlist',
+    'RollTable',
+    'Scene',
+    'Setting',
+    'User',
 ];
 
 export type WorldDocumentType = (typeof WORLD_DOCUMENT_TYPES)[number];
@@ -332,15 +332,15 @@ export type WorldDocumentType = (typeof WORLD_DOCUMENT_TYPES)[number];
  * @type {string[]}
  */
 export const COMPENDIUM_DOCUMENT_TYPES: readonly [
-    "Actor",
-    "Adventure",
-    "Cards",
-    "Item",
-    "JournalEntry",
-    "Macro",
-    "Playlist",
-    "RollTable",
-    "Scene",
+    'Actor',
+    'Adventure',
+    'Cards',
+    'Item',
+    'JournalEntry',
+    'Macro',
+    'Playlist',
+    'RollTable',
+    'Scene',
 ];
 
 /**
@@ -387,14 +387,14 @@ export const DOCUMENT_META_OWNERSHIP_LEVELS: Readonly<{
  * Define the allowed Document types which may be dynamically linked in chat
  */
 export const DOCUMENT_LINK_TYPES: readonly [
-    "Actor",
-    "Cards",
-    "Item",
-    "Scene",
-    "JournalEntry",
-    "Macro",
-    "RollTable",
-    "PlaylistSound",
+    'Actor',
+    'Cards',
+    'Item',
+    'Scene',
+    'JournalEntry',
+    'Macro',
+    'RollTable',
+    'PlaylistSound',
 ];
 
 /**
@@ -405,19 +405,19 @@ export const DICE_ROLL_MODES: Readonly<{
     /**
      * This roll is visible to all players.
      */
-    PUBLIC: "publicroll";
+    PUBLIC: 'publicroll';
     /**
      * Rolls of this type are only visible to the player that rolled and any Game Master users.
      */
-    PRIVATE: "gmroll";
+    PRIVATE: 'gmroll';
     /**
      * A private dice roll only visible to Game Master users. The rolling player will not see the result of their own roll.
      */
-    BLIND: "blindroll";
+    BLIND: 'blindroll';
     /**
      * A private dice roll which is only visible to the user who rolled it.
      */
-    SELF: "selfroll";
+    SELF: 'selfroll';
 }>;
 
 export type RollMode = (typeof DICE_ROLL_MODES)[keyof typeof DICE_ROLL_MODES];
@@ -447,16 +447,16 @@ export type DrawingFillType = (typeof DRAWING_FILL_TYPES)[keyof typeof DRAWING_F
  * Define the allowed Document types which Folders may contain
  */
 export const FOLDER_DOCUMENT_TYPES: readonly [
-    "Actor",
-    "Adventure",
-    "Item",
-    "Scene",
-    "JournalEntry",
-    "Playlist",
-    "RollTable",
-    "Cards",
-    "Macro",
-    "Compendium",
+    'Actor',
+    'Adventure',
+    'Item',
+    'Scene',
+    'JournalEntry',
+    'Playlist',
+    'RollTable',
+    'Cards',
+    'Macro',
+    'Compendium',
 ];
 
 export type FolderDocumentType = (typeof FOLDER_DOCUMENT_TYPES)[number];
@@ -468,7 +468,7 @@ export const FOLDER_MAX_DEPTH: 4;
 /**
  * A list of allowed game URL names
  */
-export const GAME_VIEWS: readonly ["game", "stream"];
+export const GAME_VIEWS: readonly ['game', 'stream'];
 
 /**
  * The directions of movement.
@@ -651,12 +651,12 @@ export type GridSnappingMode = (typeof GRID_SNAPPING_MODES)[keyof typeof GRID_SN
 /**
  * A list of supported setup URL names
  */
-export const SETUP_VIEWS: readonly ["auth", "license", "setup", "players", "join", "update"];
+export const SETUP_VIEWS: readonly ['auth', 'license', 'setup', 'players', 'join', 'update'];
 
 /**
  * An Array of valid MacroAction scope values
  */
-export const MACRO_SCOPES: readonly ["global", "actors", "actor"];
+export const MACRO_SCOPES: readonly ['global', 'actors', 'actor'];
 
 export type MacroScope = (typeof MACRO_SCOPES)[number];
 
@@ -668,11 +668,11 @@ export const MACRO_TYPES: Readonly<{
     /**
      * Complex and powerful macros which leverage the FVTT API through plain JavaScript to perform functions as simple or as advanced as you can imagine.
      */
-    SCRIPT: "script";
+    SCRIPT: 'script';
     /**
      * Simple and easy to use, chat macros post pre-defined chat messages to the chat log when executed. All users can execute chat macros by default.
      */
-    CHAT: "chat";
+    CHAT: 'chat';
 }>;
 
 export type MacroType = (typeof MACRO_TYPES)[keyof typeof MACRO_TYPES];
@@ -681,9 +681,9 @@ export type MacroType = (typeof MACRO_TYPES)[keyof typeof MACRO_TYPES];
  * The allowed channels for audio playback.
  */
 export const AUDIO_CHANNELS: Readonly<{
-    music: "AUDIO.CHANNELS.MUSIC.label";
-    environment: "AUDIO.CHANNELS.ENVIRONMENT.label";
-    interface: "AUDIO.CHANNELS.INTERFACE.label";
+    music: 'AUDIO.CHANNELS.MUSIC.label';
+    environment: 'AUDIO.CHANNELS.ENVIRONMENT.label';
+    interface: 'AUDIO.CHANNELS.INTERFACE.label';
 }>;
 
 /**
@@ -720,29 +720,29 @@ export const PLAYLIST_SORT_MODES: Readonly<{
      * Sort sounds alphabetically.
      * @defaultValue
      */
-    ALPHABETICAL: "a";
+    ALPHABETICAL: 'a';
     /**
      * Sort sounds by manual drag-and-drop.
      */
-    MANUAL: "m";
+    MANUAL: 'm';
 }>;
 
-export type PlaylistSortMode = "a" | "m";
+export type PlaylistSortMode = 'a' | 'm';
 
 /**
  * The available modes for searching within a DirectoryCollection
  */
 export const DIRECTORY_SEARCH_MODES: Readonly<{
-    FULL: "full";
-    NAME: "name";
+    FULL: 'full';
+    NAME: 'name';
 }>;
 
-export type DirectorySearchMode = "full" | "name";
+export type DirectorySearchMode = 'full' | 'name';
 
 /**
  * The allowed package types
  */
-export const PACKAGE_TYPES: readonly ["world", "system", "module"];
+export const PACKAGE_TYPES: readonly ['world', 'system', 'module'];
 
 export type PackageType = (typeof PACKAGE_TYPES)[number];
 
@@ -801,7 +801,7 @@ export type PackageAvailabilityCode = (typeof PACKAGE_AVAILABILITY_CODES)[keyof 
 /**
  * A safe password string which can be displayed
  */
-export const PASSWORD_SAFE_STRING: "••••••••••••••••";
+export const PASSWORD_SAFE_STRING: '••••••••••••••••';
 
 /**
  * The allowed software update channels
@@ -810,19 +810,19 @@ export const SOFTWARE_UPDATE_CHANNELS: Readonly<{
     /**
      * The Stable release channel
      */
-    stable: "SETUP.UpdateStable";
+    stable: 'SETUP.UpdateStable';
     /**
      * The User Testing release channel
      */
-    testing: "SETUP.UpdateTesting";
+    testing: 'SETUP.UpdateTesting';
     /**
      * The Development release channel
      */
-    development: "SETUP.UpdateDevelopment";
+    development: 'SETUP.UpdateDevelopment';
     /**
      * The Prototype release channel
      */
-    prototype: "SETUP.UpdatePrototype";
+    prototype: 'SETUP.UpdatePrototype';
 }>;
 
 export type SoftwareUpdateChannel = keyof typeof SOFTWARE_UPDATE_CHANNELS;
@@ -839,11 +839,11 @@ export const TABLE_RESULT_TYPES: Readonly<{
     /**
      *  Plain text or HTML scripted entries which will be output to Chat.
      */
-    TEXT: "text";
+    TEXT: 'text';
     /**
      * An in-World Document reference which will be linked to in the chat message.
      */
-    DOCUMENT: "document";
+    DOCUMENT: 'document';
 }>;
 
 export type TableResultType = (typeof TABLE_RESULT_TYPES)[keyof typeof TABLE_RESULT_TYPES];
@@ -1122,11 +1122,11 @@ export type UserRoleName = keyof typeof USER_ROLES;
  * @see USER_ROLES
  */
 export const USER_ROLE_NAMES: {
-    0: "NONE";
-    1: "PLAYER";
-    2: "TRUSTED";
-    3: "ASSISTANT";
-    4: "GAMEMASTER";
+    0: 'NONE';
+    1: 'PLAYER';
+    2: 'TRUSTED';
+    3: 'ASSISTANT';
+    4: 'GAMEMASTER';
 };
 
 export type UserRole = keyof typeof USER_ROLE_NAMES;
@@ -1139,19 +1139,19 @@ export const MEASURED_TEMPLATE_TYPES: Readonly<{
     /**
      * Circular templates create a radius around the starting point.
      */
-    CIRCLE: "circle";
+    CIRCLE: 'circle';
     /**
      * Cones create an effect in the shape of a triangle or pizza slice from the starting point.
      */
-    CONE: "cone";
+    CONE: 'cone';
     /**
      * A rectangle uses the origin point as one of the corners, treating the origin as being inside of the rectangle's area.
      */
-    RECTANGLE: "rect";
+    RECTANGLE: 'rect';
     /**
      * A ray creates a single line that is one square in width and as long as you want it to be.
      */
-    RAY: "ray";
+    RAY: 'ray';
 }>;
 
 export type MeasuredTemplateType = (typeof MEASURED_TEMPLATE_TYPES)[keyof typeof MEASURED_TEMPLATE_TYPES];
@@ -1374,12 +1374,12 @@ export type WallDoorState = (typeof WALL_DOOR_STATES)[keyof typeof WALL_DOOR_STA
 /**
  * The possible ways to interact with a door
  */
-export const WALL_DOOR_INTERACTIONS: readonly ["open", "close", "lock", "unlock", "test"];
+export const WALL_DOOR_INTERACTIONS: readonly ['open', 'close', 'lock', 'unlock', 'test'];
 
 /**
  * The wall properties which restrict the way interaction occurs with a specific wall
  */
-export const WALL_RESTRICTION_TYPES: readonly ["light", "sight", "sound", "move"];
+export const WALL_RESTRICTION_TYPES: readonly ['light', 'sight', 'sound', 'move'];
 
 export type WallRestrictionType = (typeof WALL_RESTRICTION_TYPES)[number];
 
@@ -1452,25 +1452,25 @@ export const KEYBINDING_PRECEDENCE: Readonly<{
  * The allowed set of HTML template extensions
  */
 export const HTML_FILE_EXTENSIONS: Readonly<{
-    handlebars: "text/x-handlebars-template";
-    hbs: "text/x-handlebars-template";
-    html: "text/html";
+    handlebars: 'text/x-handlebars-template';
+    hbs: 'text/x-handlebars-template';
+    html: 'text/html';
 }>;
 
 /**
  * The supported file extensions for image-type files, and their corresponding mime types.
  */
 export const IMAGE_FILE_EXTENSIONS: Readonly<{
-    apng: "image/apng";
-    avif: "image/avif";
-    bmp: "image/bmp";
-    gif: "image/gif";
-    jpeg: "image/jpeg";
-    jpg: "image/jpeg";
-    png: "image/png";
-    svg: "image/svg+xml";
-    tiff: "image/tiff";
-    webp: "image/webp";
+    apng: 'image/apng';
+    avif: 'image/avif';
+    bmp: 'image/bmp';
+    gif: 'image/gif';
+    jpeg: 'image/jpeg';
+    jpg: 'image/jpeg';
+    png: 'image/png';
+    svg: 'image/svg+xml';
+    tiff: 'image/tiff';
+    webp: 'image/webp';
 }>;
 
 export type ImageFileExtension = keyof typeof IMAGE_FILE_EXTENSIONS;
@@ -1479,10 +1479,10 @@ export type ImageFileExtension = keyof typeof IMAGE_FILE_EXTENSIONS;
  * The supported file extensions for video-type files, and their corresponding mime types.
  */
 export const VIDEO_FILE_EXTENSIONS: Readonly<{
-    m4v: "video/mp4";
-    mp4: "video/mp4";
-    ogv: "video/ogg";
-    webm: "video/webm";
+    m4v: 'video/mp4';
+    mp4: 'video/mp4';
+    ogv: 'video/ogg';
+    webm: 'video/webm';
 }>;
 
 export type VideoFileExtension = keyof typeof VIDEO_FILE_EXTENSIONS;
@@ -1491,15 +1491,15 @@ export type VideoFileExtension = keyof typeof VIDEO_FILE_EXTENSIONS;
  * The supported file extensions for audio-type files, and their corresponding mime types.
  */
 export const AUDIO_FILE_EXTENSIONS: Readonly<{
-    aac: "audio/aac";
-    flac: "audio/flac";
-    m4a: "audio/mp4";
-    mid: "audio/midi";
-    mp3: "audio/mpeg";
-    ogg: "audio/ogg";
-    opus: "audio/opus";
-    wav: "audio/wav";
-    webm: "audio/webm";
+    aac: 'audio/aac';
+    flac: 'audio/flac';
+    m4a: 'audio/mp4';
+    mid: 'audio/midi';
+    mp3: 'audio/mpeg';
+    ogg: 'audio/ogg';
+    opus: 'audio/opus';
+    wav: 'audio/wav';
+    webm: 'audio/webm';
 }>;
 
 export type AudioFileExtension = keyof typeof AUDIO_FILE_EXTENSIONS;
@@ -1508,86 +1508,86 @@ export type AudioFileExtension = keyof typeof AUDIO_FILE_EXTENSIONS;
  * The supported file extensions for text files, and their corresponding mime types.
  */
 export const TEXT_FILE_EXTENSIONS: Readonly<{
-    csv: "text/csv";
-    json: "application/json";
-    md: "text/markdown";
-    pdf: "application/pdf";
-    tsv: "text/tab-separated-values";
-    txt: "text/plain";
-    xml: "application/xml";
-    yml: "application/yaml";
-    yaml: "application/yaml";
+    csv: 'text/csv';
+    json: 'application/json';
+    md: 'text/markdown';
+    pdf: 'application/pdf';
+    tsv: 'text/tab-separated-values';
+    txt: 'text/plain';
+    xml: 'application/xml';
+    yml: 'application/yaml';
+    yaml: 'application/yaml';
 }>;
 
 /**
  * Supported file extensions for font files, and their corresponding mime types.
  */
 export const FONT_FILE_EXTENSIONS: Readonly<{
-    otf: "font/otf";
-    ttf: "font/ttf";
-    woff: "font/woff";
-    woff2: "font/woff2";
+    otf: 'font/otf';
+    ttf: 'font/ttf';
+    woff: 'font/woff';
+    woff2: 'font/woff2';
 }>;
 
 /**
  * Supported file extensions for 3D files, and their corresponding mime types.
  */
 export const GRAPHICS_FILE_EXTENSIONS: Readonly<{
-    fbx: "application/octet-stream";
-    glb: "model/gltf-binary";
-    gltf: "model/gltf+json";
-    mtl: "model/mtl";
-    obj: "model/obj";
-    stl: "model/stl";
-    usdz: "model/vnd.usdz+zip";
+    fbx: 'application/octet-stream';
+    glb: 'model/gltf-binary';
+    gltf: 'model/gltf+json';
+    mtl: 'model/mtl';
+    obj: 'model/obj';
+    stl: 'model/stl';
+    usdz: 'model/vnd.usdz+zip';
 }>;
 
 /**
  * A consolidated mapping of all extensions permitted for upload.
  */
 export const UPLOADABLE_FILE_EXTENSIONS: Readonly<{
-    fbx: "application/octet-stream";
-    glb: "model/gltf-binary";
-    gltf: "model/gltf+json";
-    mtl: "model/mtl";
-    obj: "model/obj";
-    stl: "model/stl";
-    usdz: "model/vnd.usdz+zip";
-    otf: "font/otf";
-    ttf: "font/ttf";
-    woff: "font/woff";
-    woff2: "font/woff2";
-    csv: "text/csv";
-    json: "application/json";
-    md: "text/markdown";
-    pdf: "application/pdf";
-    tsv: "text/tab-separated-values";
-    txt: "text/plain";
-    xml: "application/xml";
-    yml: "application/yaml";
-    yaml: "application/yaml";
-    m4v: "video/mp4";
-    mp4: "video/mp4";
-    ogv: "video/ogg";
-    webm: "video/webm";
-    aac: "audio/aac";
-    flac: "audio/flac";
-    m4a: "audio/mp4";
-    mid: "audio/midi";
-    mp3: "audio/mpeg";
-    ogg: "audio/ogg";
-    opus: "audio/opus";
-    wav: "audio/wav";
-    apng: "image/apng";
-    avif: "image/avif";
-    bmp: "image/bmp";
-    gif: "image/gif";
-    jpeg: "image/jpeg";
-    jpg: "image/jpeg";
-    png: "image/png";
-    svg: "image/svg+xml";
-    tiff: "image/tiff";
-    webp: "image/webp";
+    fbx: 'application/octet-stream';
+    glb: 'model/gltf-binary';
+    gltf: 'model/gltf+json';
+    mtl: 'model/mtl';
+    obj: 'model/obj';
+    stl: 'model/stl';
+    usdz: 'model/vnd.usdz+zip';
+    otf: 'font/otf';
+    ttf: 'font/ttf';
+    woff: 'font/woff';
+    woff2: 'font/woff2';
+    csv: 'text/csv';
+    json: 'application/json';
+    md: 'text/markdown';
+    pdf: 'application/pdf';
+    tsv: 'text/tab-separated-values';
+    txt: 'text/plain';
+    xml: 'application/xml';
+    yml: 'application/yaml';
+    yaml: 'application/yaml';
+    m4v: 'video/mp4';
+    mp4: 'video/mp4';
+    ogv: 'video/ogg';
+    webm: 'video/webm';
+    aac: 'audio/aac';
+    flac: 'audio/flac';
+    m4a: 'audio/mp4';
+    mid: 'audio/midi';
+    mp3: 'audio/mpeg';
+    ogg: 'audio/ogg';
+    opus: 'audio/opus';
+    wav: 'audio/wav';
+    apng: 'image/apng';
+    avif: 'image/avif';
+    bmp: 'image/bmp';
+    gif: 'image/gif';
+    jpeg: 'image/jpeg';
+    jpg: 'image/jpeg';
+    png: 'image/png';
+    svg: 'image/svg+xml';
+    tiff: 'image/tiff';
+    webp: 'image/webp';
 }>;
 
 export type FileExtension = keyof typeof UPLOADABLE_FILE_EXTENSIONS;
@@ -1597,64 +1597,64 @@ export type FileExtension = keyof typeof UPLOADABLE_FILE_EXTENSIONS;
  */
 export const FILE_CATEGORIES: Readonly<{
     HTML: Readonly<{
-        handlebars: "text/x-handlebars-template";
-        hbs: "text/x-handlebars-template";
-        html: "text/html";
+        handlebars: 'text/x-handlebars-template';
+        hbs: 'text/x-handlebars-template';
+        html: 'text/html';
     }>;
     IMAGE: Readonly<{
-        apng: "image/apng";
-        avif: "image/avif";
-        bmp: "image/bmp";
-        gif: "image/gif";
-        jpeg: "image/jpeg";
-        jpg: "image/jpeg";
-        png: "image/png";
-        svg: "image/svg+xml";
-        tiff: "image/tiff";
-        webp: "image/webp";
+        apng: 'image/apng';
+        avif: 'image/avif';
+        bmp: 'image/bmp';
+        gif: 'image/gif';
+        jpeg: 'image/jpeg';
+        jpg: 'image/jpeg';
+        png: 'image/png';
+        svg: 'image/svg+xml';
+        tiff: 'image/tiff';
+        webp: 'image/webp';
     }>;
     VIDEO: Readonly<{
-        m4v: "video/mp4";
-        mp4: "video/mp4";
-        ogv: "video/ogg";
-        webm: "video/webm";
+        m4v: 'video/mp4';
+        mp4: 'video/mp4';
+        ogv: 'video/ogg';
+        webm: 'video/webm';
     }>;
     AUDIO: Readonly<{
-        aac: "audio/aac";
-        flac: "audio/flac";
-        m4a: "audio/mp4";
-        mid: "audio/midi";
-        mp3: "audio/mpeg";
-        ogg: "audio/ogg";
-        opus: "audio/opus";
-        wav: "audio/wav";
-        webm: "audio/webm";
+        aac: 'audio/aac';
+        flac: 'audio/flac';
+        m4a: 'audio/mp4';
+        mid: 'audio/midi';
+        mp3: 'audio/mpeg';
+        ogg: 'audio/ogg';
+        opus: 'audio/opus';
+        wav: 'audio/wav';
+        webm: 'audio/webm';
     }>;
     TEXT: Readonly<{
-        csv: "text/csv";
-        json: "application/json";
-        md: "text/markdown";
-        pdf: "application/pdf";
-        tsv: "text/tab-separated-values";
-        txt: "text/plain";
-        xml: "application/xml";
-        yml: "application/yaml";
-        yaml: "application/yaml";
+        csv: 'text/csv';
+        json: 'application/json';
+        md: 'text/markdown';
+        pdf: 'application/pdf';
+        tsv: 'text/tab-separated-values';
+        txt: 'text/plain';
+        xml: 'application/xml';
+        yml: 'application/yaml';
+        yaml: 'application/yaml';
     }>;
     FONT: Readonly<{
-        otf: "font/otf";
-        ttf: "font/ttf";
-        woff: "font/woff";
-        woff2: "font/woff2";
+        otf: 'font/otf';
+        ttf: 'font/ttf';
+        woff: 'font/woff';
+        woff2: 'font/woff2';
     }>;
     GRAPHICS: Readonly<{
-        fbx: "application/octet-stream";
-        glb: "model/gltf-binary";
-        gltf: "model/gltf+json";
-        mtl: "model/mtl";
-        obj: "model/obj";
-        stl: "model/stl";
-        usdz: "model/vnd.usdz+zip";
+        fbx: 'application/octet-stream';
+        glb: 'model/gltf-binary';
+        gltf: 'model/gltf+json';
+        mtl: 'model/mtl';
+        obj: 'model/obj';
+        stl: 'model/stl';
+        usdz: 'model/vnd.usdz+zip';
     }>;
 }>;
 
@@ -1663,53 +1663,53 @@ export type FileCategory = keyof typeof FILE_CATEGORIES;
 /**
  * The list of file categories that are "media".
  */
-export const MEDIA_FILE_CATEGORIES: readonly ["IMAGE", "VIDEO", "AUDIO", "TEXT", "FONT", "GRAPHICS"];
+export const MEDIA_FILE_CATEGORIES: readonly ['IMAGE', 'VIDEO', 'AUDIO', 'TEXT', 'FONT', 'GRAPHICS'];
 
 /**
  * A list of MIME types which are treated as uploaded "media", which are allowed to overwrite existing files.
  * Any non-media MIME type is not allowed to replace an existing file.
  */
 export const MEDIA_MIME_TYPES: (
-    | "image/apng"
-    | "image/avif"
-    | "image/bmp"
-    | "image/gif"
-    | "image/jpeg"
-    | "image/png"
-    | "image/svg+xml"
-    | "image/tiff"
-    | "image/webp"
-    | "video/mp4"
-    | "video/ogg"
-    | "video/webm"
-    | "audio/aac"
-    | "audio/flac"
-    | "audio/mp4"
-    | "audio/midi"
-    | "audio/mpeg"
-    | "audio/ogg"
-    | "audio/opus"
-    | "audio/wav"
-    | "audio/webm"
-    | "text/csv"
-    | "application/json"
-    | "text/markdown"
-    | "application/pdf"
-    | "text/tab-separated-values"
-    | "text/plain"
-    | "application/xml"
-    | "application/yaml"
-    | "font/otf"
-    | "font/ttf"
-    | "font/woff"
-    | "font/woff2"
-    | "application/octet-stream"
-    | "model/gltf-binary"
-    | "model/gltf+json"
-    | "model/mtl"
-    | "model/obj"
-    | "model/stl"
-    | "model/vnd.usdz+zip"
+    | 'image/apng'
+    | 'image/avif'
+    | 'image/bmp'
+    | 'image/gif'
+    | 'image/jpeg'
+    | 'image/png'
+    | 'image/svg+xml'
+    | 'image/tiff'
+    | 'image/webp'
+    | 'video/mp4'
+    | 'video/ogg'
+    | 'video/webm'
+    | 'audio/aac'
+    | 'audio/flac'
+    | 'audio/mp4'
+    | 'audio/midi'
+    | 'audio/mpeg'
+    | 'audio/ogg'
+    | 'audio/opus'
+    | 'audio/wav'
+    | 'audio/webm'
+    | 'text/csv'
+    | 'application/json'
+    | 'text/markdown'
+    | 'application/pdf'
+    | 'text/tab-separated-values'
+    | 'text/plain'
+    | 'application/xml'
+    | 'application/yaml'
+    | 'font/otf'
+    | 'font/ttf'
+    | 'font/woff'
+    | 'font/woff2'
+    | 'application/octet-stream'
+    | 'model/gltf-binary'
+    | 'model/gltf+json'
+    | 'model/mtl'
+    | 'model/obj'
+    | 'model/stl'
+    | 'model/vnd.usdz+zip'
 )[];
 
 /**
@@ -1748,7 +1748,7 @@ export const TIMEOUTS: Readonly<{
 /**
  * A subset of Compendium types which require a specific system to be designated
  */
-export const SYSTEM_SPECIFIC_COMPENDIUM_TYPES: readonly ["Actor", "Item"];
+export const SYSTEM_SPECIFIC_COMPENDIUM_TYPES: readonly ['Actor', 'Item'];
 
 /**
  * The configured showdown bi-directional HTML <-> Markdown converter options.
@@ -1766,240 +1766,240 @@ export const SHOWDOWN_OPTIONS: Readonly<{
  * The list of allowed HTML tags.
  */
 export const ALLOWED_HTML_TAGS: readonly [
-    "header",
-    "main",
-    "section",
-    "article",
-    "aside",
-    "nav",
-    "footer",
-    "div",
-    "address",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "hr",
-    "br",
-    "p",
-    "blockquote",
-    "summary",
-    "details",
-    "span",
-    "code",
-    "pre",
-    "a",
-    "label",
-    "abbr",
-    "cite",
-    "mark",
-    "q",
-    "ruby",
-    "rp",
-    "rt",
-    "small",
-    "time",
-    "var",
-    "dfn",
-    "sub",
-    "sup",
-    "strong",
-    "em",
-    "b",
-    "i",
-    "u",
-    "s",
-    "del",
-    "ins",
-    "ol",
-    "ul",
-    "li",
-    "dl",
-    "dd",
-    "dt",
-    "menu",
-    "table",
-    "thead",
-    "tbody",
-    "tfoot",
-    "tr",
-    "th",
-    "td",
-    "col",
-    "colgroup",
-    "form",
-    "input",
-    "select",
-    "option",
-    "button",
-    "datalist",
-    "fieldset",
-    "legend",
-    "meter",
-    "optgroup",
-    "progress",
-    "textarea",
-    "output",
-    "figure",
-    "figcaption",
-    "caption",
-    "img",
-    "video",
-    "map",
-    "area",
-    "track",
-    "picture",
-    "source",
-    "audio",
-    "iframe",
-    "color-picker",
-    "code-mirror",
-    "document-embed",
-    "document-tags",
-    "enriched-content",
-    "file-picker",
-    "hue-slider",
-    "multi-select",
-    "multi-checkbox",
-    "range-picker",
-    "secret-block",
-    "string-tags",
-    "prose-mirror",
+    'header',
+    'main',
+    'section',
+    'article',
+    'aside',
+    'nav',
+    'footer',
+    'div',
+    'address',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'hr',
+    'br',
+    'p',
+    'blockquote',
+    'summary',
+    'details',
+    'span',
+    'code',
+    'pre',
+    'a',
+    'label',
+    'abbr',
+    'cite',
+    'mark',
+    'q',
+    'ruby',
+    'rp',
+    'rt',
+    'small',
+    'time',
+    'var',
+    'dfn',
+    'sub',
+    'sup',
+    'strong',
+    'em',
+    'b',
+    'i',
+    'u',
+    's',
+    'del',
+    'ins',
+    'ol',
+    'ul',
+    'li',
+    'dl',
+    'dd',
+    'dt',
+    'menu',
+    'table',
+    'thead',
+    'tbody',
+    'tfoot',
+    'tr',
+    'th',
+    'td',
+    'col',
+    'colgroup',
+    'form',
+    'input',
+    'select',
+    'option',
+    'button',
+    'datalist',
+    'fieldset',
+    'legend',
+    'meter',
+    'optgroup',
+    'progress',
+    'textarea',
+    'output',
+    'figure',
+    'figcaption',
+    'caption',
+    'img',
+    'video',
+    'map',
+    'area',
+    'track',
+    'picture',
+    'source',
+    'audio',
+    'iframe',
+    'color-picker',
+    'code-mirror',
+    'document-embed',
+    'document-tags',
+    'enriched-content',
+    'file-picker',
+    'hue-slider',
+    'multi-select',
+    'multi-checkbox',
+    'range-picker',
+    'secret-block',
+    'string-tags',
+    'prose-mirror',
 ];
 
 /**
  * The list of allowed attributes in HTML elements.
  */
 export const ALLOWED_HTML_ATTRIBUTES: Readonly<{
-    "*": readonly [
-        "class",
-        "data-*",
-        "id",
-        "title",
-        "style",
-        "draggable",
-        "aria-*",
-        "tabindex",
-        "dir",
-        "hidden",
-        "inert",
-        "role",
-        "is",
-        "lang",
-        "popover",
-        "autocapitalize",
-        "autocorrect",
-        "autofocus",
-        "contenteditable",
-        "spellcheck",
-        "translate",
+    '*': readonly [
+        'class',
+        'data-*',
+        'id',
+        'title',
+        'style',
+        'draggable',
+        'aria-*',
+        'tabindex',
+        'dir',
+        'hidden',
+        'inert',
+        'role',
+        'is',
+        'lang',
+        'popover',
+        'autocapitalize',
+        'autocorrect',
+        'autofocus',
+        'contenteditable',
+        'spellcheck',
+        'translate',
     ];
-    a: readonly ["href", "name", "target", "rel"];
-    area: readonly ["alt", "coords", "href", "rel", "shape", "target"];
-    audio: readonly ["controls", "loop", "muted", "src", "autoplay"];
-    blockquote: readonly ["cite"];
-    button: readonly ["disabled", "name", "type", "value"];
-    col: readonly ["span"];
-    colgroup: readonly ["span"];
-    "code-mirror": readonly [
-        "disabled",
-        "name",
-        "value",
-        "placeholder",
-        "readonly",
-        "required",
-        "language",
-        "indent",
-        "nowrap",
+    a: readonly ['href', 'name', 'target', 'rel'];
+    area: readonly ['alt', 'coords', 'href', 'rel', 'shape', 'target'];
+    audio: readonly ['controls', 'loop', 'muted', 'src', 'autoplay'];
+    blockquote: readonly ['cite'];
+    button: readonly ['disabled', 'name', 'type', 'value'];
+    col: readonly ['span'];
+    colgroup: readonly ['span'];
+    'code-mirror': readonly [
+        'disabled',
+        'name',
+        'value',
+        'placeholder',
+        'readonly',
+        'required',
+        'language',
+        'indent',
+        'nowrap',
     ];
-    "color-picker": readonly ["disabled", "name", "value", "placeholder", "readonly", "required"];
-    details: readonly ["open"];
-    "document-embed": readonly ["uuid"];
-    "document-tags": readonly [
-        "disabled",
-        "name",
-        "value",
-        "placeholder",
-        "readonly",
-        "required",
-        "type",
-        "single",
-        "max",
+    'color-picker': readonly ['disabled', 'name', 'value', 'placeholder', 'readonly', 'required'];
+    details: readonly ['open'];
+    'document-embed': readonly ['uuid'];
+    'document-tags': readonly [
+        'disabled',
+        'name',
+        'value',
+        'placeholder',
+        'readonly',
+        'required',
+        'type',
+        'single',
+        'max',
     ];
-    "enriched-content": readonly ["enricher"];
-    fieldset: readonly ["disabled"];
-    "file-picker": readonly ["disabled", "name", "value", "placeholder", "readonly", "required", "type", "noupload"];
-    form: readonly ["name"];
-    "hue-slider": readonly ["disabled", "name", "value", "readonly", "required"];
-    iframe: readonly ["src", "srcdoc", "name", "height", "width", "loading", "sandbox"];
-    img: readonly ["height", "src", "width", "usemap", "sizes", "srcset", "alt"];
+    'enriched-content': readonly ['enricher'];
+    fieldset: readonly ['disabled'];
+    'file-picker': readonly ['disabled', 'name', 'value', 'placeholder', 'readonly', 'required', 'type', 'noupload'];
+    form: readonly ['name'];
+    'hue-slider': readonly ['disabled', 'name', 'value', 'readonly', 'required'];
+    iframe: readonly ['src', 'srcdoc', 'name', 'height', 'width', 'loading', 'sandbox'];
+    img: readonly ['height', 'src', 'width', 'usemap', 'sizes', 'srcset', 'alt'];
     input: readonly [
-        "checked",
-        "disabled",
-        "name",
-        "value",
-        "placeholder",
-        "type",
-        "alt",
-        "height",
-        "list",
-        "max",
-        "min",
-        "readonly",
-        "size",
-        "src",
-        "step",
-        "width",
-        "required",
+        'checked',
+        'disabled',
+        'name',
+        'value',
+        'placeholder',
+        'type',
+        'alt',
+        'height',
+        'list',
+        'max',
+        'min',
+        'readonly',
+        'size',
+        'src',
+        'step',
+        'width',
+        'required',
     ];
-    label: readonly ["for"];
-    li: readonly ["value"];
-    map: readonly ["name"];
-    meter: readonly ["value", "min", "max", "low", "high", "optimum"];
-    "multi-checkbox": readonly ["disabled", "name", "required"];
-    "multi-select": readonly ["disabled", "name", "required"];
-    ol: readonly ["reversed", "start", "type"];
-    optgroup: readonly ["disabled", "label"];
-    option: readonly ["disabled", "selected", "label", "value"];
-    output: readonly ["for", "form", "name"];
-    progress: readonly ["max", "value"];
-    "prose-mirror": readonly ["disabled", "name", "value", "placeholder", "readonly", "required", "toggled", "open"];
-    "range-picker": readonly ["disabled", "name", "value", "placeholder", "readonly", "min", "max", "step"];
-    select: readonly ["name", "disabled", "multiple", "size", "required"];
-    source: readonly ["media", "sizes", "src", "srcset", "type"];
-    "string-tags": readonly ["disabled", "name", "value", "placeholder", "readonly", "required"];
-    table: readonly ["border"];
-    td: readonly ["colspan", "headers", "rowspan"];
-    textarea: readonly ["rows", "cols", "disabled", "name", "readonly", "wrap", "required"];
-    time: readonly ["datetime"];
-    th: readonly ["abbr", "colspan", "headers", "rowspan", "scope", "sorted"];
-    track: readonly ["default", "kind", "label", "src", "srclang"];
-    video: readonly ["controls", "height", "width", "loop", "muted", "poster", "src", "autoplay"];
+    label: readonly ['for'];
+    li: readonly ['value'];
+    map: readonly ['name'];
+    meter: readonly ['value', 'min', 'max', 'low', 'high', 'optimum'];
+    'multi-checkbox': readonly ['disabled', 'name', 'required'];
+    'multi-select': readonly ['disabled', 'name', 'required'];
+    ol: readonly ['reversed', 'start', 'type'];
+    optgroup: readonly ['disabled', 'label'];
+    option: readonly ['disabled', 'selected', 'label', 'value'];
+    output: readonly ['for', 'form', 'name'];
+    progress: readonly ['max', 'value'];
+    'prose-mirror': readonly ['disabled', 'name', 'value', 'placeholder', 'readonly', 'required', 'toggled', 'open'];
+    'range-picker': readonly ['disabled', 'name', 'value', 'placeholder', 'readonly', 'min', 'max', 'step'];
+    select: readonly ['name', 'disabled', 'multiple', 'size', 'required'];
+    source: readonly ['media', 'sizes', 'src', 'srcset', 'type'];
+    'string-tags': readonly ['disabled', 'name', 'value', 'placeholder', 'readonly', 'required'];
+    table: readonly ['border'];
+    td: readonly ['colspan', 'headers', 'rowspan'];
+    textarea: readonly ['rows', 'cols', 'disabled', 'name', 'readonly', 'wrap', 'required'];
+    time: readonly ['datetime'];
+    th: readonly ['abbr', 'colspan', 'headers', 'rowspan', 'scope', 'sorted'];
+    track: readonly ['default', 'kind', 'label', 'src', 'srclang'];
+    video: readonly ['controls', 'height', 'width', 'loop', 'muted', 'poster', 'src', 'autoplay'];
 }>;
 
 /**
  * The list of allowed URL schemes.
  */
-export const ALLOWED_URL_SCHEMES: readonly ["http", "https", "data", "mailto", "obsidian", "syrinscape-online"];
+export const ALLOWED_URL_SCHEMES: readonly ['http', 'https', 'data', 'mailto', 'obsidian', 'syrinscape-online'];
 
 /**
  * The list of attributes validated as URLs.
  */
-export const ALLOWED_URL_SCHEMES_APPLIED_TO_ATTRIBUTES: readonly ["href", "src", "cite"];
+export const ALLOWED_URL_SCHEMES_APPLIED_TO_ATTRIBUTES: readonly ['href', 'src', 'cite'];
 
 /**
  * The list of trusted iframe domains.
  */
-export const TRUSTED_IFRAME_DOMAINS: readonly ["google.com", "youtube.com"];
+export const TRUSTED_IFRAME_DOMAINS: readonly ['google.com', 'youtube.com'];
 
 /**
  * Available themes for the world join page.
  */
 export const WORLD_JOIN_THEMES: Readonly<{
-    default: "WORLD.JOIN_THEMES.default";
-    minimal: "WORLD.JOIN_THEMES.minimal";
+    default: 'WORLD.JOIN_THEMES.default';
+    minimal: 'WORLD.JOIN_THEMES.minimal';
 }>;
 
 /**
@@ -2007,51 +2007,51 @@ export const WORLD_JOIN_THEMES: Readonly<{
  */
 export const SETUP_PACKAGE_PROGRESS: Readonly<{
     ACTIONS: Readonly<{
-        CREATE_BACKUP: "createBackup";
-        RESTORE_BACKUP: "restoreBackup";
-        DELETE_BACKUP: "deleteBackup";
-        CREATE_SNAPSHOT: "createSnapshot";
-        RESTORE_SNAPSHOT: "restoreSnapshot";
-        DELETE_SNAPSHOT: "deleteSnapshot";
-        INSTALL_PKG: "installPackage";
-        LAUNCH_WORLD: "launchWorld";
-        UPDATE_CORE: "updateCore";
-        UPDATE_DOWNLOAD: "updateDownload";
+        CREATE_BACKUP: 'createBackup';
+        RESTORE_BACKUP: 'restoreBackup';
+        DELETE_BACKUP: 'deleteBackup';
+        CREATE_SNAPSHOT: 'createSnapshot';
+        RESTORE_SNAPSHOT: 'restoreSnapshot';
+        DELETE_SNAPSHOT: 'deleteSnapshot';
+        INSTALL_PKG: 'installPackage';
+        LAUNCH_WORLD: 'launchWorld';
+        UPDATE_CORE: 'updateCore';
+        UPDATE_DOWNLOAD: 'updateDownload';
     }>;
     STEPS: Readonly<{
-        ARCHIVE: "archive";
-        CHECK_DISK_SPACE: "checkDiskSpace";
-        CLEAN_WORLD: "cleanWorld";
-        EXTRACT_DEMO: "extractDemo";
-        CONNECT_WORLD: "connectWorld";
-        MIGRATE_WORLD: "migrateWorld";
-        CONNECT_PKG: "connectPackage";
-        MIGRATE_PKG: "migratePackage";
-        MIGRATE_CORE: "migrateCore";
-        MIGRATE_SYSTEM: "migrateSystem";
-        DOWNLOAD: "download";
-        EXTRACT: "extract";
-        INSTALL: "install";
-        CLEANUP: "cleanup";
-        COMPLETE: "complete";
-        DELETE: "delete";
-        ERROR: "error";
-        VEND: "vend";
-        SNAPSHOT_MODULES: "snapshotModules";
-        SNAPSHOT_SYSTEMS: "snapshotSystems";
-        SNAPSHOT_WORLDS: "snapshotWorlds";
+        ARCHIVE: 'archive';
+        CHECK_DISK_SPACE: 'checkDiskSpace';
+        CLEAN_WORLD: 'cleanWorld';
+        EXTRACT_DEMO: 'extractDemo';
+        CONNECT_WORLD: 'connectWorld';
+        MIGRATE_WORLD: 'migrateWorld';
+        CONNECT_PKG: 'connectPackage';
+        MIGRATE_PKG: 'migratePackage';
+        MIGRATE_CORE: 'migrateCore';
+        MIGRATE_SYSTEM: 'migrateSystem';
+        DOWNLOAD: 'download';
+        EXTRACT: 'extract';
+        INSTALL: 'install';
+        CLEANUP: 'cleanup';
+        COMPLETE: 'complete';
+        DELETE: 'delete';
+        ERROR: 'error';
+        VEND: 'vend';
+        SNAPSHOT_MODULES: 'snapshotModules';
+        SNAPSHOT_SYSTEMS: 'snapshotSystems';
+        SNAPSHOT_WORLDS: 'snapshotWorlds';
     }>;
 }>;
 
 /**
  * The combat announcements.
  */
-export const COMBAT_ANNOUNCEMENTS: readonly ["startEncounter", "nextUp", "yourTurn"];
+export const COMBAT_ANNOUNCEMENTS: readonly ['startEncounter', 'nextUp', 'yourTurn'];
 
 /**
  * The fit modes of {@link foundry.data.TextureData}.
  */
-export const TEXTURE_DATA_FIT_MODES: readonly ["fill", "contain", "cover", "width", "height"];
+export const TEXTURE_DATA_FIT_MODES: readonly ['fill', 'contain', 'cover', 'width', 'height'];
 
 /**
  * The maximum depth to recurse to when embedding enriched text.
@@ -2064,31 +2064,31 @@ export const REGION_EVENTS: Readonly<{
     /**
      * Triggered when the shapes or bottom/top elevation of the Region are changed.
      */
-    REGION_BOUNDARY: "regionBoundary";
+    REGION_BOUNDARY: 'regionBoundary';
     /**
      * Triggered when the Region Behavior becomes active, i.e. is enabled or created without being disabled.
      *
      * The event is triggered only for this Region Behavior.
      */
-    BEHAVIOR_ACTIVATED: "behaviorActivated";
+    BEHAVIOR_ACTIVATED: 'behaviorActivated';
     /**
      * Triggered when the Region Behavior becomes inactive, i.e. is disabled or deleted without being disabled.
      *
      * The event is triggered only for this Region Behavior.
      */
-    BEHAVIOR_DEACTIVATED: "behaviorDeactivated";
+    BEHAVIOR_DEACTIVATED: 'behaviorDeactivated';
     /**
      * Triggered when the Region Behavior becomes viewed, i.e. active and the Scene of its Region is viewed.
      *
      * The event is triggered only for this Region Behavior.
      */
-    BEHAVIOR_VIEWED: "behaviorViewed";
+    BEHAVIOR_VIEWED: 'behaviorViewed';
     /**
      * Triggered when the Region Behavior becomes unviewed, i.e. inactive or the Scene of its Region is unviewed.
      *
      * The event is triggered only for this Region Behavior.
      */
-    BEHAVIOR_UNVIEWED: "behaviorUnviewed";
+    BEHAVIOR_UNVIEWED: 'behaviorUnviewed';
     /**
      * Triggered when a Token enters a Region.
      *
@@ -2100,7 +2100,7 @@ export const REGION_EVENTS: Readonly<{
      *   - a Region Behavior becomes active (i.e., is enabled or created while enabled), in which case
      *     the event it triggered only for this Region Behavior.
      */
-    TOKEN_ENTER: "tokenEnter";
+    TOKEN_ENTER: 'tokenEnter';
     /**
      * Triggered when a Token exits a Region.
      *
@@ -2112,53 +2112,53 @@ export const REGION_EVENTS: Readonly<{
      *   - a Region Behavior becomes inactive (i.e., is disabled or deleted while enabled), in which case
      *     the event it triggered only for this Region Behavior.
      */
-    TOKEN_EXIT: "tokenExit";
+    TOKEN_EXIT: 'tokenExit';
     /**
      * Triggered when a Token moves into a Region.
      *
      * A Token moves whenever its x, y, elevation, width, height, or shape is changed.
      */
-    TOKEN_MOVE_IN: "tokenMoveIn";
+    TOKEN_MOVE_IN: 'tokenMoveIn';
     /**
      * Triggered when a Token moves out of a Region.
      *
      * A Token moves whenever its x, y, elevation, width, height, or shape is changed.
      */
-    TOKEN_MOVE_OUT: "tokenMoveOut";
+    TOKEN_MOVE_OUT: 'tokenMoveOut';
     /**
      * Triggered when a Token moves within a Region.
      *
      * A token moves whenever its x, y, elevation, width, height, or shape is changed.
      */
-    TOKEN_MOVE_WITHIN: "tokenMoveWithin";
+    TOKEN_MOVE_WITHIN: 'tokenMoveWithin';
     /**
      * Triggered when a Token animates into a Region.
      *
      * This event is only triggered only if the Scene the Token is in is viewed.
      */
-    TOKEN_ANIMATE_IN: "tokenAnimateIn";
+    TOKEN_ANIMATE_IN: 'tokenAnimateIn';
     /**
      * Triggered when a Token animates out of a Region.
      *
      * This event is triggered only if the Scene the Token is in is viewed.
      */
-    TOKEN_ANIMATE_OUT: "tokenAnimateOut";
+    TOKEN_ANIMATE_OUT: 'tokenAnimateOut';
     /**
      * Triggered when a Token starts its Combat turn in a Region.
      */
-    TOKEN_TURN_START: "tokenTurnStart";
+    TOKEN_TURN_START: 'tokenTurnStart';
     /**
      * Triggered when a Token ends its Combat turn in a Region.
      */
-    TOKEN_TURN_END: "tokenTurnEnd";
+    TOKEN_TURN_END: 'tokenTurnEnd';
     /**
      * Triggered when a Token starts the Combat round in a Region.
      */
-    TOKEN_ROUND_START: "tokenRoundStart";
+    TOKEN_ROUND_START: 'tokenRoundStart';
     /**
      * Triggered when a Token ends the Combat round in a Region.
      */
-    TOKEN_ROUND_END: "tokenRoundEnd";
+    TOKEN_ROUND_END: 'tokenRoundEnd';
 }>;
 
 /**
@@ -2206,15 +2206,15 @@ export const SETTING_SCOPES: Readonly<{
     /**
      * Settings scoped to the client device. Stored in localStorage.
      */
-    CLIENT: "client";
+    CLIENT: 'client';
     /**
      * Settings scoped to the game World. Applies to all Users in the World. Stored in the Settings database.
      */
-    WORLD: "world";
+    WORLD: 'world';
     /**
      * Settings scoped to an individual User in the World. Stored in the Settings database.
      */
-    USER: "user";
+    USER: 'user';
 }>;
 
 /**
@@ -2223,9 +2223,9 @@ export const SETTING_SCOPES: Readonly<{
  */
 export const CLIPPER_SCALING_FACTOR: 100;
 
-export type DrawingShapeType = "r" | "e" | "t" | "p" | "f";
+export type DrawingShapeType = 'r' | 'e' | 't' | 'p' | 'f';
 export type ShapeDataType = keyof typeof data.BaseShapeData.TYPES;
-export type UserAction = "create" | "update" | "delete";
+export type UserAction = 'create' | 'update' | 'delete';
 
 export type HexColorString = `#${string}`;
 export type AudioFilePath = `${string}.${AudioFileExtension}`;

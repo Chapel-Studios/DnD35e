@@ -1,6 +1,6 @@
-import DataModel from "./abstract/data.mjs";
-import { SoftwareUpdateChannel } from "./constants.mjs";
-import * as fields from "./data/fields.mjs";
+import DataModel from './abstract/data.mjs';
+import { SoftwareUpdateChannel } from './constants.mjs';
+import * as fields from './data/fields.mjs';
 
 /**
  * A data model definition which describes the application configuration options.
@@ -8,14 +8,14 @@ import * as fields from "./data/fields.mjs";
  * The server-side software extends this class and provides additional validations.
  */
 declare class ServerSettings extends DataModel<null, ServerSettingsSchema> {
-    static defineSchema(): ServerSettingsSchema;
+  static defineSchema(): ServerSettingsSchema;
 
-    static LOCALIZATION_PREFIXES: string[];
+  static LOCALIZATION_PREFIXES: string[];
 
-    static override migrateData<T extends DataModel>(
+  static override migrateData<T extends DataModel>(
         this: ConstructorOf<T>,
         source: Record<string, unknown>,
-    ): T["_source"];
+    ): T['_source'];
 }
 
 declare interface ServerSettings
@@ -53,7 +53,7 @@ type ServerSettingsSchema = {
     /** Whether to compress static files? True by default */
     compressStatic: fields.BooleanField;
     compressSocket: fields.BooleanField;
-    cssTheme: fields.StringField<"light" | "dark", "light" | "dark", false, false, true>;
+    cssTheme: fields.StringField<'light' | 'dark', 'light' | 'dark', false, false, true>;
     /** The absolute path of the user data directory (obscured) */
     dataPath: fields.StringField;
     deleteNEDB: fields.BooleanField;
@@ -96,13 +96,13 @@ type ServerSettingsSchema = {
  * @property {string} [download]        A temporary download URL where this version may be obtained
  */
 declare class ReleaseData extends DataModel {
-    static override defineSchema(): {
+  static override defineSchema(): {
         generation: fields.NumberField<number, number, true, false, true>;
         maxGeneration: fields.NumberField<any, any, false, false, true>;
         maxStableGeneration: fields.NumberField<any, any, false, false, true>;
         channel: fields.StringField<
-            "stable" | "testing" | "development" | "prototype",
-            "stable" | "testing" | "development" | "prototype",
+            'stable' | 'testing' | 'development' | 'prototype',
+            'stable' | 'testing' | 'development' | 'prototype',
             false,
             false,
             false
@@ -115,36 +115,36 @@ declare class ReleaseData extends DataModel {
         download: fields.StringField<string, string, false, false, false>;
     };
 
-    /**
+  /**
      * A formatted string for shortened display, such as "Version 9"
      */
-    get shortDisplay(): string;
+  get shortDisplay(): string;
 
-    /**
+  /**
      * A formatted string for general display, such as "V9 Prototype 1" or "Version 9"
      */
-    get display(): string;
+  get display(): string;
 
-    /**
+  /**
      * A formatted string for Version compatibility checking, such as "9.150"
      */
-    get version(): string;
+  get version(): string;
 
-    override toString(): string;
+  override toString(): string;
 
-    /**
+  /**
      * Is this ReleaseData object newer than some other version?
      * @param other Some other version to compare against
      * @returns Is this ReleaseData a newer version?
      */
-    isNewer(other: string | ReleaseData): boolean;
+  isNewer(other: string | ReleaseData): boolean;
 
-    /**
+  /**
      * Is this ReleaseData object a newer generation than some other version?
      * @param other Some other version to compare against
      * @returns Is this ReleaseData a newer generation?
      */
-    isGenerationalChange(other: string | ReleaseData): boolean;
+  isGenerationalChange(other: string | ReleaseData): boolean;
 }
 
 export { ReleaseData, ServerSettings };

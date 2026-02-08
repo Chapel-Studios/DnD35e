@@ -1,7 +1,7 @@
-import { DocumentOwnershipLevel, DocumentOwnershipString, ImageFilePath, UserAction } from "@common/constants.mjs";
-import * as abstract from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseActiveEffect, BaseActor, BaseFolder, BaseUser, ItemUUID } from "./_module.mjs";
+import { DocumentOwnershipLevel, DocumentOwnershipString, ImageFilePath, UserAction } from '@common/constants.mjs';
+import * as abstract from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseActiveEffect, BaseActor, BaseFolder, BaseUser, ItemUUID } from './_module.mjs';
 
 /**
  * The Document definition for an Item.
@@ -17,30 +17,30 @@ export default class BaseItem<
   TParent,
   ItemSchema
 > {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): ItemMetadata;
+  static override get metadata(): ItemMetadata;
 
-    static override defineSchema(): ItemSchema;
+  static override defineSchema(): ItemSchema;
 
-    /** The default icon used for newly created Item documents */
-    static DEFAULT_ICON: ImageFilePath;
+  /** The default icon used for newly created Item documents */
+  static DEFAULT_ICON: ImageFilePath;
 
-    /**
+  /**
      * Determine default artwork based on the provided item data.
      * @param The source item data.
      * @returns Candidate item image.
      */
-    static getDefaultArtwork(itemData: ItemSource): { img: ImageFilePath };
+  static getDefaultArtwork(itemData: ItemSource): { img: ImageFilePath };
 
-    /** The allowed set of Item types which may exist. */
-    static get TYPES(): string[];
+  /** The allowed set of Item types which may exist. */
+  static get TYPES(): string[];
 
-    override canUserModify(user: BaseUser, action: UserAction, data?: Record<string, unknown>): boolean;
+  override canUserModify(user: BaseUser, action: UserAction, data?: Record<string, unknown>): boolean;
 
-    override testUserPermission(
+  override testUserPermission(
         user: BaseUser,
         permission: DocumentOwnershipString | DocumentOwnershipLevel,
         { exact }?: { exact?: boolean },
@@ -50,21 +50,21 @@ export default class BaseItem<
 export default interface BaseItem<TParent extends BaseActor | null = BaseActor | null>
     extends abstract.Document<TParent, ItemSchema>,
         fields.ModelPropsFromSchema<ItemSchema> {
-    get documentName(): ItemMetadata["name"];
+    get documentName(): ItemMetadata['name'];
 
     readonly effects: abstract.EmbeddedCollection<BaseActiveEffect<this>>;
 }
 
 interface ItemMetadata extends abstract.DocumentMetadata {
-    name: "Item";
-    collection: "items";
+    name: 'Item';
+    collection: 'items';
     indexed: true;
-    compendiumIndexFields: ["_id", "name", "img", "type", "sort", "folder"];
-    embedded: { ActiveEffect: "effects" };
-    label: "DOCUMENT.Item";
-    labelPlural: "DOCUMENT.Items";
-    permissions: Omit<abstract.DocumentMetadata["permissions"], "create"> & {
-        create: "ITEM_CREATE";
+    compendiumIndexFields: ['_id', 'name', 'img', 'type', 'sort', 'folder'];
+    embedded: { ActiveEffect: 'effects' };
+    label: 'DOCUMENT.Item';
+    labelPlural: 'DOCUMENT.Items';
+    permissions: Omit<abstract.DocumentMetadata['permissions'], 'create'> & {
+        create: 'ITEM_CREATE';
     };
 }
 

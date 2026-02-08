@@ -1,8 +1,8 @@
-import Document from "@common/abstract/document.mjs";
-import Collection from "@common/utils/collection.mjs";
-import { Adventure, Folder, Setting, WorldDocument } from "../_module.mjs";
-import CompendiumCollection from "../collections/compendium-collection.mjs";
-import DocumentCollection from "./document-collection.mjs";
+import Document from '@common/abstract/document.mjs';
+import Collection from '@common/utils/collection.mjs';
+import { Adventure, Folder, Setting, WorldDocument } from '../_module.mjs';
+import CompendiumCollection from '../collections/compendium-collection.mjs';
+import DocumentCollection from './document-collection.mjs';
 
 export type DirectoryMixinEntry = WorldDocument | Setting | Adventure;
 
@@ -28,13 +28,13 @@ export declare abstract class DirectoryCollection<
     get tree(): object;
 
     /** The current search mode for this collection */
-    get searchMode(): "full" | "name";
+    get searchMode(): 'full' | 'name';
 
     /** Toggle the search mode for this collection between "name" and "full" text search */
     toggleSearchMode(): void;
 
     /** The current sort mode used to order the top level entries in this collection */
-    get sortingMode(): "a" | "m";
+    get sortingMode(): 'a' | 'm';
 
     /** Toggle the sorting mode for this collection between "a" (Alphabetical) and "m" (Manual by sort property) */
     toggleSortingMode(): void;

@@ -1,19 +1,19 @@
-import { DatabaseUpdateCallbackOptions, Document, DocumentMetadata, EmbeddedCollection } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseCombatant, BaseScene, BaseUser } from "./_module.mjs";
+import { DatabaseUpdateCallbackOptions, Document, DocumentMetadata, EmbeddedCollection } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseCombatant, BaseScene, BaseUser } from './_module.mjs';
 
 /** The Combat document model. */
 export default class BaseCombat extends Document<null, CombatSchema> {
-    static override get metadata(): CombatMetadata;
+  static override get metadata(): CombatMetadata;
 
-    static override defineSchema(): CombatSchema;
+  static override defineSchema(): CombatSchema;
 
-    /* -------------------------------------------- */
-    /*  Event Handlers                              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Handlers                              */
+  /* -------------------------------------------- */
 
-    protected override _preUpdate(
-        changed: DeepPartial<this["_source"]>,
+  protected override _preUpdate(
+        changed: DeepPartial<this['_source']>,
         options: DatabaseUpdateCallbackOptions,
         user: BaseUser,
     ): Promise<boolean | void>;
@@ -22,15 +22,15 @@ export default class BaseCombat extends Document<null, CombatSchema> {
 export default interface BaseCombat extends Document<null, CombatSchema>, fields.ModelPropsFromSchema<CombatSchema> {
     readonly combatants: EmbeddedCollection<BaseCombatant<this>>;
 
-    get documentName(): CombatMetadata["name"];
+    get documentName(): CombatMetadata['name'];
 }
 
 interface CombatMetadata extends DocumentMetadata {
-    name: "Combat";
-    collection: "combats";
-    label: "DOCUMENT.Combat";
+    name: 'Combat';
+    collection: 'combats';
+    label: 'DOCUMENT.Combat';
     embedded: {
-        Combatant: "combatants";
+        Combatant: 'combatants';
     };
     isPrimary: true;
 }

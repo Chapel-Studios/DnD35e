@@ -1,10 +1,10 @@
-import Sound from "@client/audio/sound.mjs";
-import { ElevatedPoint } from "@common/_types.mjs";
-import { SpriteMesh } from "../containers/_module.mjs";
-import PlaceableObject from "../placeables/placeable-object.mjs";
-import AmbientSound from "../placeables/sound.mjs";
-import PointSoundSource from "../sources/point-sound-source.mjs";
-import { CanvasLayerOptions } from "./base/canvas-layer.mjs";
+import Sound from '@client/audio/sound.mjs';
+import { ElevatedPoint } from '@common/_types.mjs';
+import { SpriteMesh } from '../containers/_module.mjs';
+import PlaceableObject from '../placeables/placeable-object.mjs';
+import AmbientSound from '../placeables/sound.mjs';
+import PointSoundSource from '../sources/point-sound-source.mjs';
+import { CanvasLayerOptions } from './base/canvas-layer.mjs';
 
 export interface AmbientSoundPlaybackConfig {
     /** The Sound node which should be controlled for playback */
@@ -27,7 +27,7 @@ export interface AmbientSoundPlaybackConfig {
 
 export interface CanvasHistoryEvent<TData extends object = object> {
     /** The type of operation stored as history */
-    type: "create" | "update" | "delete";
+    type: 'create' | 'update' | 'delete';
     /** The data corresponding to the action which may later be un-done */
     data: TData[];
     /** The options of the undo operation */

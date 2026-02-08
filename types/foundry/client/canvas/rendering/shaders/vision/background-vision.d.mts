@@ -1,10 +1,10 @@
-import AdaptiveVisionShader from "./base-vision.mjs";
+import AdaptiveVisionShader from './base-vision.mjs';
 
 /**
  * The default background shader used for vision sources
  */
 export default class BackgroundVisionShader extends AdaptiveVisionShader {
-    static override defaultUniforms: {
+  static override defaultUniforms: {
         technique: number;
         saturation: number;
         contrast: number;
@@ -32,16 +32,16 @@ export default class BackgroundVisionShader extends AdaptiveVisionShader {
         globalLightThresholds: number[];
     };
 
-    static override fragmentShader: string;
+  static override fragmentShader: string;
 
-    /**
+  /**
      * Memory allocations for the Adaptive Background Shader
      */
-    static SHADER_HEADER: string;
+  static SHADER_HEADER: string;
 
-    /**
+  /**
      * Flag whether the background shader is currently required.
      * If key uniforms are at their default values, we don't need to render the background container.
      */
-    get isRequired(): boolean;
+  get isRequired(): boolean;
 }

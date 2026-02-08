@@ -1,58 +1,58 @@
-import VisualEffectsMaskingFilter from "@client/canvas/rendering/filters/effects-masking.mjs";
-import CachedContainer from "../../containers/advanced/cached-container.mjs";
-import SpriteMesh from "../../containers/elements/sprite-mesh.mjs";
-import CanvasLayer from "../base/canvas-layer.mjs";
+import VisualEffectsMaskingFilter from '@client/canvas/rendering/filters/effects-masking.mjs';
+import CachedContainer from '../../containers/advanced/cached-container.mjs';
+import SpriteMesh from '../../containers/elements/sprite-mesh.mjs';
+import CanvasLayer from '../base/canvas-layer.mjs';
 
 /**
  * A CanvasLayer for displaying illumination visual effects
  */
 export default class CanvasIlluminationEffects extends CanvasLayer {
-    constructor();
+  constructor();
 
-    /**
+  /**
      * The filter used to mask visual effects on this layer
      */
-    filter: VisualEffectsMaskingFilter;
+  filter: VisualEffectsMaskingFilter;
 
-    /**
+  /**
      * The container holding the lights.
      */
-    lights: PIXI.Container;
+  lights: PIXI.Container;
 
-    /**
+  /**
      * The base line mesh.
      */
-    baselineMesh: SpriteMesh;
+  baselineMesh: SpriteMesh;
 
-    /**
+  /**
      * The cached container holding the illumination meshes.
      */
-    darknessLevelMeshes: DarknessLevelContainer;
+  darknessLevelMeshes: DarknessLevelContainer;
 
-    /**
+  /**
      * To know if dynamic darkness level is active on this scene.
      */
-    get hasDynamicDarknessLevel(): boolean;
+  get hasDynamicDarknessLevel(): boolean;
 
-    /**
+  /**
      * The illumination render texture.
      */
-    get renderTexture(): PIXI.RenderTexture;
+  get renderTexture(): PIXI.RenderTexture;
 
-    /**
+  /**
      * Clear illumination effects container
      */
-    clear(): void;
+  clear(): void;
 
-    /**
+  /**
      * Invalidate the cached container state to trigger a render pass.
      * @param force Force cached container invalidation?
      */
-    invalidateDarknessLevelContainer(force?: boolean): void;
+  invalidateDarknessLevelContainer(force?: boolean): void;
 
-    protected override _draw(): Promise<void>;
+  protected override _draw(): Promise<void>;
 
-    protected override _tearDown(): Promise<void>;
+  protected override _tearDown(): Promise<void>;
 }
 
 /**
@@ -61,9 +61,9 @@ export default class CanvasIlluminationEffects extends CanvasLayer {
  * to the desired darkness level. Other channels are ignored.
  */
 export class DarknessLevelContainer extends CachedContainer {
-    constructor(sprite: PIXI.Sprite | SpriteMesh);
+  constructor(sprite: PIXI.Sprite | SpriteMesh);
 
-    static override textureConfiguration: {
+  static override textureConfiguration: {
         multisample: PIXI.MSAA_QUALITY;
         scaleMode: PIXI.SCALE_MODES;
         format: PIXI.FORMATS;
