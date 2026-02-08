@@ -1,4 +1,4 @@
-import { ItemSheetDnd35e} from '@items/baseItem/index.mjs';
+import { ItemSheetDnd35e } from '@items/baseItem/index.mjs';
 import { MaterialSheetVue } from './index.mjs';
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
 import { Material } from '@items/material/index.mjs';
@@ -9,12 +9,11 @@ type MaterialSheetRenderContext = IdentifiableItemSheetRenderContext & {
   document: Material;
 };
 
-
 class MaterialSheet extends ItemSheetDnd35e<Material> {
-  get vueComponent() {
+  get vueComponent () {
     return MaterialSheetVue;
   }
-  
+
   // static override get DEFAULT_OPTIONS(): DeepPartial<VueApplicationConfiguration> {
   //   return {
   //     // id: 'dnd35e-material-sheet', // this probably should be unique
@@ -28,7 +27,7 @@ class MaterialSheet extends ItemSheetDnd35e<Material> {
   //   };
   // }
 
-  //declare showUnIdentifiedDescriptionEditor: boolean;
+  // declare showUnIdentifiedDescriptionEditor: boolean;
 }
 
 export {

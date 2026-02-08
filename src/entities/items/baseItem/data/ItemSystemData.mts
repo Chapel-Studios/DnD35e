@@ -24,11 +24,11 @@ interface ItemOrigin {
     originId: string;
     originVersion: string;
     originPack: string;
-};
+}
 
 interface ItemDescription {
     value: string;
-};
+}
 
 // whats actually stored in the DB
 interface ItemSystemSource {
@@ -42,10 +42,10 @@ interface ItemSystemSource {
     description: ItemDescription;
     isPsionic: boolean;
     isEpic: boolean;
-};
+}
 
 // This is ItemSystemSource after going through the ItemSystemModel.prepareDerivedData() process
-interface ItemSystemData extends ItemSystemSource {};
+type ItemSystemData = ItemSystemSource;
 
 export type {
   ItemSystemSource,

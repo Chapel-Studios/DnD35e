@@ -27,7 +27,6 @@ import type {
   ItemSheetTab,
 } from './sheet/index.mjs';
 
-
 export {
   useItemSheetStore,
   ItemSheetDnd35e,
@@ -49,4 +48,4 @@ export type {
   BaseItemSheetRenderContext,
   ItemSourceDnd35e,
   ItemSheetTab,
-}
+};

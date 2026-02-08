@@ -14,7 +14,7 @@ import {
 } from './sheet/index.mjs';
 
 import type {
-  WeaponItemType
+  WeaponItemType,
 } from './Weapon.mjs';
 import type {
   WeaponType,
@@ -23,7 +23,7 @@ import type {
   WeaponDamage,
   WeaponSystemSource,
   WeaponSystemData,
-} from './data/index.mjs'
+} from './data/index.mjs';
 import type {
   // WeaponSheetConfig,
   WeaponSheetRenderContext,

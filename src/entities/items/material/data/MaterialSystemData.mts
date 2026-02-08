@@ -1,5 +1,5 @@
-import { IdentifiableItemSystemData } from "@items/components/Identifiable/index.mjs";
-import { ItemSystemData } from "@items/baseItem/index.mjs";
+import { IdentifiableItemSystemData } from '@items/components/Identifiable/index.mjs';
+import { ItemSystemData } from '@items/baseItem/index.mjs';
 
 interface MaterialSystemSource {
   priceDifference: number;
@@ -9,9 +9,9 @@ interface MaterialSystemSource {
   isAlchemicalSilverEquivalent: boolean;
   isAdamantineEquivalent: boolean;
   isColdIronEquivalent: boolean;
-};
+}
 
-interface MaterialSystemData extends MaterialSystemSource, IdentifiableItemSystemData, ItemSystemData {};
+interface MaterialSystemData extends MaterialSystemSource, IdentifiableItemSystemData, ItemSystemData {}
 
 export {
   MaterialSystemSource,

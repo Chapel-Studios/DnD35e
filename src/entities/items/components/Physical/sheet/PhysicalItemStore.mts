@@ -1,8 +1,8 @@
-import { ItemSheetStore } from "@items/baseItem/index.mjs";
-import type { PhysicalItemSheetRenderContext } from "./index.mjs";
-import { useIdentifiableStore } from "@items/components/Identifiable/index.mjs";
-import { computed, type Ref } from "vue";
-import { PhysicalItemLike } from "../PhysicalItemDnd35e.mjs";
+import { ItemSheetStore } from '@items/baseItem/index.mjs';
+import type { PhysicalItemSheetRenderContext } from './index.mjs';
+import { useIdentifiableStore } from '@items/components/Identifiable/index.mjs';
+import { computed, type Ref } from 'vue';
+import { PhysicalItemLike } from '../PhysicalItemDnd35e.mjs';
 
 const usePhysicalItemStore = (context: PhysicalItemSheetRenderContext, baseStore: ItemSheetStore) => {
   const document = baseStore._document as unknown as Ref<PhysicalItemLike>;
@@ -10,13 +10,13 @@ const usePhysicalItemStore = (context: PhysicalItemSheetRenderContext, baseStore
   const identifiableStore = useIdentifiableStore(context, baseStore);
 
   const physicalItemGetters = {
-    quantity: computed(() =>  document.value.system.quantity),
-    weight: computed(() =>  document.value.system.weight),
-    price: computed(() =>  document.value.system.price),
-    resalePrice: computed(() =>  document.value.system.resalePrice),
-    brokenResalePrice: computed(() =>  document.value.system.brokenResalePrice),
-    isBroken: computed(() =>  document.value.system.isBroken),
-    maxHp: computed(() =>  document.value.system.hp.max),
+    quantity: computed(() => document.value.system.quantity),
+    weight: computed(() => document.value.system.weight),
+    price: computed(() => document.value.system.price),
+    resalePrice: computed(() => document.value.system.resalePrice),
+    brokenResalePrice: computed(() => document.value.system.brokenResalePrice),
+    isBroken: computed(() => document.value.system.isBroken),
+    maxHp: computed(() => document.value.system.hp.max),
     currentHp: computed(() => document.value.system.hp.value),
     hardness: computed(() => document.value.system.hardness),
     possibleContainers: computed(() => {
@@ -28,7 +28,7 @@ const usePhysicalItemStore = (context: PhysicalItemSheetRenderContext, baseStore
     size: computed(() => game.i18n.localize(document.value.system.size)),
   };
 
-  return  {
+  return {
     ...identifiableStore,
     physicalItemGetters,
   };

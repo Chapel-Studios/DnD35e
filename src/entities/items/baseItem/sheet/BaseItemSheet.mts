@@ -7,7 +7,7 @@ import type { ApplicationRenderOptions } from '@client/applications/_module.mjs'
 export interface BaseItemSheetRenderContext extends DocumentSheetRenderContext {
   document: ItemDnd35e<ItemType>;
   renderOptions: fa.ApplicationRenderOptions;
-};
+}
 
 /**
  * Base class for all DnD35e item sheets using Vue.
@@ -25,21 +25,21 @@ abstract class ItemSheetDnd35e<
    * Default options for all DnD35e item sheets.
    * These are merged with VueApplication.defaultOptions.
    */
-  static override get DEFAULT_OPTIONS(): DeepPartial<VueApplicationConfiguration<ItemDnd35e>> {
+  static override get DEFAULT_OPTIONS (): DeepPartial<VueApplicationConfiguration<ItemDnd35e>> {
     return {
-      classes: ["dnd35e", "item-sheet"],
-      id: "dnd35e-item-sheet",
+      classes: ['dnd35e', 'item-sheet'],
+      id: 'dnd35e-item-sheet',
       position: {
         width: 560,
-        height: 650
-      }
+        height: 650,
+      },
     };
   }
 
   /**
    * Title shown in the window header.
    */
-  override get title(): string {
+  override get title (): string {
     return this.document.displayName;
   }
 
@@ -47,13 +47,12 @@ abstract class ItemSheetDnd35e<
    * Provide the data that Vue receives on first mount.
    * VueApplication will merge this into the reactive context.
    */
-  protected override async _prepareContext(
-    options: ApplicationRenderOptions
+  protected override async _prepareContext (
+    options: ApplicationRenderOptions,
   ): Promise<object> {
-
     return {
       editable: this.isEditable,
-      renderOptions: options
+      renderOptions: options,
     };
   }
 }

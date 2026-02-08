@@ -1,4 +1,4 @@
-import { ItemSystemModelBase } from "@items/baseItem/index.mjs";
+import { ItemSystemModelBase } from '@items/baseItem/index.mjs';
 import { WEAPON_SUBTYPES, WEAPON_TYPES, WEAPOON_BASE_TYPES } from './constants.mjs';
 import { DAMAGE_TYPES } from '@constants/attacks/damageTypes.mjs';
 import {
@@ -8,23 +8,23 @@ import {
   requiredNullableStringField,
   requiredNumberField,
   requiredStringField,
-  requiredTypedStringField
-} from "@helpers/fieldBuilders.mjs";
-import { applyEquippableSchema } from "@items/components/Equippable/index.mjs";
+  requiredTypedStringField,
+} from '@helpers/fieldBuilders.mjs';
+import { applyEquippableSchema } from '@items/components/Equippable/index.mjs';
 
 const {
   fields: {
     SchemaField,
-  }
+  },
 } = foundry.data;
 
 class WeaponSystemModel extends ItemSystemModelBase {
-  static override defineSchema() {
+  static override defineSchema () {
     const schema = super.defineSchema();
-    
+
     applyEquippableSchema(schema);
-    
-    schema.isMasterwork = requiredBooleanField(false),
+
+    schema.isMasterwork = requiredBooleanField(false);
     schema.weaponType = requiredTypedStringField(WEAPON_TYPES, 'D35E.WeaponTypeSimple');
     schema.weaponSubtype = requiredTypedStringField(WEAPON_SUBTYPES, 'D35E.WeaponPropLight');
     schema.weaponBaseType = requiredTypedStringField(WEAPOON_BASE_TYPES, '', true);

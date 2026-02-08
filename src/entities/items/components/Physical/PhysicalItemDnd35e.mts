@@ -7,8 +7,8 @@ type PhysicalItemSourceProps = {
   system: PhysicalItemSystemSource;
 }
 
-type PhysicalItemSource<TItemType extends ItemType = ItemType> = 
-  Omit<ItemSourceDnd35e<TItemType>, "system">
+type PhysicalItemSource<TItemType extends ItemType = ItemType> =
+  Omit<ItemSourceDnd35e<TItemType>, 'system'>
     & IdentifiableItemSourceProps
     & PhysicalItemSourceProps;
 
@@ -17,7 +17,7 @@ interface PhysicalItem {
 
   get unidentifiedDisplayName(): string;
   get identifiedDisplayName(): string;
-};
+}
 
 type PhysicalItemLike = ItemDnd35e<ItemType>
   & PhysicalItem;
@@ -25,7 +25,6 @@ type PhysicalItemLike = ItemDnd35e<ItemType>
 const applyPhysicalPrototype = <T extends typeof ItemDnd35e<ItemType>> (item: T) => {
   applyIdentifiablePrototype(item);
   // applyDamagableRuntime(item);
-
 };
 
 const physicalOverrides = {

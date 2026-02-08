@@ -1,22 +1,15 @@
-import type { ApplicationRenderOptions } from "@client/applications/_module.mjs";
-import ApplicationV2 from "@client/applications/api/application.mjs";
-import type { DocumentSheetConfiguration } from "@client/applications/api/document-sheet.mjs";
-import { object } from "@client/applications/handlebars.mjs";
-import type { CompendiumDocument } from "@client/documents/_module.mjs";
-import type { ClientDocument } from "@client/documents/abstract/client-document.mjs";
-import type { CompendiumCollection } from "@client/documents/collections/_module.mjs";
-import { ItemDnd35e } from "@items/baseItem/index.mjs";
-import { App, Component, createApp, reactive } from "vue";
-
-interface VueApplicationContext<TDocument extends ItemDnd35e> {
-  document: TDocument;
-  appConfigOptions: VueApplicationConfiguration<TDocument>;
-  app: VueApplication<TDocument>;
-}
+import type { ApplicationRenderOptions } from '@client/applications/_module.mjs';
+import ApplicationV2 from '@client/applications/api/application.mjs';
+import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
+import type { CompendiumDocument } from '@client/documents/_module.mjs';
+import type { ClientDocument } from '@client/documents/abstract/client-document.mjs';
+import type { CompendiumCollection } from '@client/documents/collections/_module.mjs';
+import { ItemDnd35e } from '@items/baseItem/index.mjs';
+import { App, Component, createApp } from 'vue';
 
 interface VueRenderOptions extends ApplicationRenderOptions {
   isEditable?: boolean;
-};
+}
 
 interface VueSheetContext {
   document: any;
@@ -29,8 +22,14 @@ interface VueApplicationConfiguration<TDocument extends ItemDnd35e = ItemDnd35e>
   isEditable?: boolean;
 }
 
+interface VueApplicationContext<TDocument extends ItemDnd35e> {
+  document: TDocument;
+  appConfigOptions: VueApplicationConfiguration<TDocument>;
+  app: any;
+}
+
 abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.applications.api.ApplicationV2<VueApplicationConfiguration<TDocument>> {
-  constructor(options: VueApplicationConfiguration<TDocument>, ...args:any[]) {
+  constructor (options: VueApplicationConfiguration<TDocument>, ...args:any[]) {
     // TODO: in v13 foundry still calls applications using the app v1 signature. this will be phased out in v15, come back and clear this out too.
     options = new.target._migrateConstructorParams(options, args) as VueApplicationConfiguration<TDocument>;
     super(options);
@@ -41,15 +40,16 @@ abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.appl
       app: this,
     };
   }
- /**
+
+  /**
    * The Document instance associated with the application
    * @type {ClientDocument}
    */
-  get document() {
+  get document () {
     return this.#document;
   }
 
-  static get documentClass() { return Item; }
+  static get documentClass () { return Item; }
 
   #document: TDocument;
 
@@ -67,7 +67,7 @@ abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.appl
   protected context: VueApplicationContext<TDocument>;
   // private _frame: HTMLElement | null = null;
 
-  get id(): string {
+  get id (): string {
     return `dnd35e-${this.document.type}-sheet-${this.document.id}`;
   }
 
@@ -105,30 +105,30 @@ abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.appl
   //   };
   // }
 
-  get canConfigureSheet() {
-    if ( !this.options?.sheetConfig || !this.isEditable ) return false;
+  get canConfigureSheet () {
+    if (!this.options?.sheetConfig || !this.isEditable) return false;
     const document = this.#document;
     return !!document.collection?.has(document.id) && !document.flags.core?.sheetLock;
   }
 
   // DocumentSheetV2 implementation
-  get isVisible() {
+  get isVisible () {
     return this.document.testUserPermission(game.user, this.options.viewPermission as foundry.CONST.DocumentOwnershipLevel);
   }
-  
-  get isEditable() {
+
+  get isEditable () {
     if (this.options?.isEditable === false) return false;
-    
-    if ( this.document.pack ) {
+
+    if (this.document.pack) {
       const pack = game.packs.get(this.document.pack);
-      if ( pack?.locked ) return false;
+      if (pack?.locked) return false;
     }
     return this.document.testUserPermission(game.user, this.options.editPermission as foundry.CONST.DocumentOwnershipLevel);
   }
 
-  protected _onConfigureSheet(event: PointerEvent): void {
+  protected _onConfigureSheet (event: PointerEvent): void {
     event.stopPropagation(); // Don't trigger other events
-    if ( event.detail > 1 ) return; // Ignore repeated clicks
+    if (event.detail > 1) return; // Ignore repeated clicks
 
     const docSheetConfigWidth = Number(foundry.applications.apps.DocumentSheetConfig.DEFAULT_OPTIONS.position?.width) || 0;
     const positionWidth = Number(this.position.width) || 0;
@@ -136,20 +136,20 @@ abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.appl
       document: this.document,
       position: {
         top: this.position.top + 40,
-        left: this.position.left + ((positionWidth - docSheetConfigWidth) / 2)
-      }
+        left: this.position.left + ((positionWidth - docSheetConfigWidth) / 2),
+      },
     } as any).render({ force: true } as VueRenderOptions);
   }
 
-  protected _onCopyUuid(event: PointerEvent): void {
+  protected _onCopyUuid (event: PointerEvent): void {
     event.preventDefault(); // Don't open context menu
     event.stopPropagation(); // Don't trigger other events
-    if ( event.detail > 1 ) return; // Ignore repeated clicks
+    if (event.detail > 1) return; // Ignore repeated clicks
     const id = event.button === 2 ? this.document.id : this.document.uuid;
-    const type = event.button === 2 ? "id" : "uuid";
+    const type = event.button === 2 ? 'id' : 'uuid';
     const label = game.i18n.localize(this.document.type);
     game.clipboard.copyPlainText(id);
-    foundry.ui.notifications.info("DOCUMENT.IdCopiedClipboard", {format: {label, type, id}});
+    foundry.ui.notifications.info('DOCUMENT.IdCopiedClipboard', { format: { label, type, id } });
   }
 
   // protected _onEditImage(event: PointerEvent, target: HTMLElement): void {
@@ -179,7 +179,7 @@ abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.appl
   //   await fp.browse();
   // }
 
-  protected async _onImportDocument(event: PointerEvent) {
+  protected async _onImportDocument (_event: PointerEvent) {
     await this.close();
     const { documentName, collection, id } = this.document as unknown as ClientDocument;
     return game.collections.get(documentName)?.importFromCompendium(collection! as CompendiumCollection<CompendiumDocument>, id);
@@ -187,20 +187,19 @@ abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.appl
 
   // End DocumentSheetV2 implementation
 
-
   /**
    * super._renderHTML() is abstract we must implement this.
    * Foundry calls this to get HTML for .window-content.
    * We return a stable wrapper that Foundry will NOT replace again.
    */
-  protected override async _renderHTML(
+  protected override async _renderHTML (
     context: any,
-    options: ApplicationRenderOptions
+    _options: ApplicationRenderOptions,
   ): Promise<HTMLElement> {
-    return context
+    return context;
   }
 
-  protected _createVueApp(context: object): App {
+  protected _createVueApp (context: object): App {
     return createApp(this.vueComponent, {
       context: {
         ...this.context,
@@ -214,18 +213,18 @@ abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.appl
    * Foundry calls this after replacing .window-content.
    * We reattach our persistent vueRoot and update reactive context.
    */
-  protected override async _replaceHTML(
+  protected override async _replaceHTML (
     result: any,
     content: HTMLElement,
-    options: VueRenderOptions
+    options: VueRenderOptions,
   ): Promise<void> {
     this.context.document = this.#document;
     this.context.appConfigOptions = this.options;
 
-    let root = content.querySelector<HTMLElement>(".vue-root");
+    let root = content.querySelector<HTMLElement>('.vue-root');
     if (!root) {
-      root = document.createElement("div");
-      root.classList.add("vue-root");
+      root = document.createElement('div');
+      root.classList.add('vue-root');
 
       content.replaceChildren(root);
     }
@@ -242,43 +241,42 @@ abstract class VueApplication<TDocument extends ItemDnd35e> extends foundry.appl
     }
   }
 
-  override async render(options?: boolean | DeepPartial<VueRenderOptions> | undefined): Promise<this> {
+  override async render (options?: boolean | DeepPartial<VueRenderOptions> | undefined): Promise<this> {
     return super.render(options);
   }
 
-  override async close(options?: fa.ApplicationClosingOptions): Promise<ApplicationV2> {
+  override async close (options?: fa.ApplicationClosingOptions): Promise<ApplicationV2> {
     try {
       this.vueApp?.unmount();
-    }
-    finally {
+    } finally {
       this.vueApp = null;
       this.vueRoot = null;
     }
     return super.close(options);
   }
 
-  static _migrateConstructorParams(first: VueApplicationConfiguration<ItemDnd35e>, rest: any[]) {
-    if ( (first instanceof Object) && (first.document instanceof foundry.abstract.Document) ) {
+  static _migrateConstructorParams (first: VueApplicationConfiguration<ItemDnd35e>, rest: any[]) {
+    if ((first instanceof Object) && (first.document instanceof foundry.abstract.Document)) {
       return first;
     }
 
     // Probably using V1 constructor args, but make sure the first is in fact a Document.
-    if ( !(first instanceof foundry.abstract.Document) ) {
-      throw new Error("A DocumentSheetV2 application must be provided a Document instance.");
+    if (!(first instanceof foundry.abstract.Document)) {
+      throw new Error('A DocumentSheetV2 application must be provided a Document instance.');
     }
 
     // Warn, create a new partial configuration object, and recover at least some of the other options.
     const message = [
       `DocumentSheet V1 arguments passed to a ${this.name} constructor`,
-      "the first argument must be an options object with a document property."
-    ].join(": ");
-    foundry.utils.logCompatibilityWarning(message, {since: 13, until: 15});
-    const options: any = {document: first};
+      'the first argument must be an options object with a document property.',
+    ].join(': ');
+    foundry.utils.logCompatibilityWarning(message, { since: 13, until: 15 });
+    const options: any = { document: first };
     const legacyOptions = rest[1] instanceof Object ? rest[1] : {};
-    if ( typeof legacyOptions.title === "string" ) options.window = {title: legacyOptions.title};
-    const positionKeys = ["top", "left", "width", "height", "scale", "zIndex"];
+    if (typeof legacyOptions.title === 'string') options.window = { title: legacyOptions.title };
+    const positionKeys = ['top', 'left', 'width', 'height', 'scale', 'zIndex'];
     options.position = positionKeys.reduce((position:any, key) => {
-      if ( legacyOptions[key] !== undefined ) position[key] = legacyOptions[key];
+      if (legacyOptions[key] !== undefined) position[key] = legacyOptions[key];
       return position;
     }, {});
 
@@ -294,4 +292,4 @@ export type {
   VueApplicationConfiguration,
   VueSheetContext,
   VueRenderOptions,
-}
+};

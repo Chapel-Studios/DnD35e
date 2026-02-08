@@ -1,8 +1,8 @@
 const WEAPON_TYPES = [
- 'D35E.WeaponTypeSimple',
+  'D35E.WeaponTypeSimple',
   'D35E.WeaponTypeMartial',
   'D35E.WeaponTypeExotic',
-  'D35E.Misc', 
+  'D35E.Misc',
 ] as const;
 type WeaponType = (typeof WEAPON_TYPES)[number];
 

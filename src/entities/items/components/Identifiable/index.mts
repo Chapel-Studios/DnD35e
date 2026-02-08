@@ -1,4 +1,4 @@
-import { 
+import {
   IdentifiableDescription,
   IdentifiableHeader,
   IdentifiableNameConfig,
@@ -18,14 +18,14 @@ import {
 
 import type {
   IdentifiableItemSystemSource,
-  IdentifiableItemSystemData
+  IdentifiableItemSystemData,
 } from './data/index.mjs';
 import type {
   IdentifiableItem,
   IdentifiableItemLike,
   IdentifiableItemSource,
   IdentifiableItemSourceProps,
-} from './IdentifiableItem.mjs'
+} from './IdentifiableItem.mjs';
 import type {
   IdentifiableItemStore,
   IdentifiableItemSheetRenderContext,

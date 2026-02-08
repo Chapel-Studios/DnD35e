@@ -1,7 +1,7 @@
 export enum UnitOfMeasure {
   METRIC = 'metric',
   IMPERIAL = 'imperial',
-};
+}
 
 export const isImperial = (unit: UnitOfMeasure): unit is UnitOfMeasure.IMPERIAL => {
   return unit === UnitOfMeasure.IMPERIAL;

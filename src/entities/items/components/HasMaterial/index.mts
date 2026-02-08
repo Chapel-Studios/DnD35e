@@ -11,11 +11,10 @@ import type {
   ItemWithMaterialsLike,
   ItemWithMaterialsSource,
   ItemWithMaterialsSourceProps,
-} from './ItemWithMaterials.mjs'
+} from './ItemWithMaterials.mjs';
 
 import { applyHasMaterialsSchema } from './data/index.mjs';
 import { useItemWithMaterialsStore } from './sheet/index.mjs';
-
 
 export {
   applyHasMaterialsSchema,

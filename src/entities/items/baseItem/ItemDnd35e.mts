@@ -9,35 +9,35 @@ import { VueApplication } from '@vc/VueApplication.mjs';
 
 type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
 
-class ItemDnd35e<TItemType extends ItemType = ItemType> extends foundry.documents.Item {
+class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<TParent> {
   declare type: TItemType;
   declare system: ItemSystemData;
   declare _source: ItemSourceDnd35e<TItemType>;
-  declare _sheet: ItemSheetDnd35e<ItemDnd35e<TItemType>> | null;
+  declare _sheet: ItemSheetDnd35e<any> | null;
 
-
-  get sheet(): ItemSheetDnd35e<ItemDnd35e<TItemType>> | null {
+  get sheet (): ItemSheetDnd35e<any> | null {
     if (!this._sheet) {
       const superSheet = super.sheet;
       if (!superSheet) {
         const SheetClass = this._getSheetClass() as unknown as {
-          new (document: ItemDnd35e<TItemType>, options?: any): ItemSheetDnd35e<ItemDnd35e<TItemType>>;
+          new (document: any, options?: any): ItemSheetDnd35e<any>;
         };
         // Only instantiate if it's a VueApplication subclass
         if (foundry.utils.isSubclass(SheetClass, VueApplication)) {
           this._sheet = new SheetClass(this, { editable: this.isOwner });
         }
       }
-    } 
+    }
 
     return this._sheet;
   }
 
-  override prepareBaseData(): void {
+  override prepareBaseData (): void {
     super.prepareBaseData();
     // I don't actually think this is needed
-    //this.system ??= this._createFreshSystemData();
+    // this.system ??= this._createFreshSystemData();
   }
+
   // _createFreshSystemData (): ItemSystemData {
   //   return {
   //     description: { value: '' },
@@ -48,8 +48,8 @@ class ItemDnd35e<TItemType extends ItemType = ItemType> extends foundry.document
   //   };
   // }
   get localizedType (): string {
-    return ITEM_TYPES[this.type]
-      ?? 'D35E.Item';
+    return ITEM_TYPES[this.type] ??
+      'D35E.Item';
   }
 
   get _displayName (): string {

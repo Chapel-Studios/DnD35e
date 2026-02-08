@@ -1,14 +1,14 @@
-import { ItemDnd35e, ItemSourceDnd35e } from "@items/baseItem/index.mjs";
-import { IdentifiableItemSystemData, IdentifiableItemSystemSource } from "./index.mjs";
-import { ItemType } from "@items/index.mjs";
-import { replaceDataAttribute } from "@helpers/formulae/index.mjs";
+import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
+import { IdentifiableItemSystemData, IdentifiableItemSystemSource } from './index.mjs';
+import { ItemType } from '@items/index.mjs';
+import { replaceDataAttribute } from '@helpers/formulae/index.mjs';
 
 type IdentifiableItemSourceProps = {
   system: IdentifiableItemSystemSource;
 }
 
-type IdentifiableItemSource<TItemType extends ItemType = ItemType> = 
-  Omit<ItemSourceDnd35e<TItemType>, "system">
+type IdentifiableItemSource<TItemType extends ItemType = ItemType> =
+  Omit<ItemSourceDnd35e<TItemType>, 'system'>
     & IdentifiableItemSourceProps;
 
 interface IdentifiableItem {
@@ -16,7 +16,7 @@ interface IdentifiableItem {
 
   get unidentifiedDisplayName(): string;
   get identifiedDisplayName(): string;
-};
+}
 
 type IdentifiableItemLike =
   ItemDnd35e<ItemType> &
@@ -27,7 +27,7 @@ const applyIdentifiablePrototype = <T extends typeof ItemDnd35e<ItemType>> (item
 
   Object.defineProperties(item.prototype, {
     unidentifiedDisplayName: {
-      get() {
+      get () {
         const {
           unidentifiedInfo: {
             unidentifiedNameFormula,
@@ -39,12 +39,12 @@ const applyIdentifiablePrototype = <T extends typeof ItemDnd35e<ItemType>> (item
         return unidentifiedNameFormula && isUnidentifiedNameFromFormula
           ? replaceDataAttribute(unidentifiedNameFormula || '', this)
           : unidentifiedName ?? '';
-      }
+      },
     },
     identifiedDisplayName: {
-      get() {
+      get () {
         return this._displayName;
-      }
+      },
     },
   });
 

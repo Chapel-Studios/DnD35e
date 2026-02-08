@@ -3,6 +3,7 @@ node_modules/
 dist/
 build/
 out/
+types/
 
 # Ignore Foundry-generated files if needed
 packs/

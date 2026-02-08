@@ -1,8 +1,8 @@
-import { Component, computed, markRaw, reactive, ref, shallowRef, toRaw, toRef, triggerRef, unref } from "vue"
-import type { BaseItemSheetRenderContext, ItemDnd35e } from "../index.mjs";
-import { Description } from "./index.mjs";
-import NameConfig from "./tabs/NameConfig.vue";
-import { ItemType } from "@items/itemTypes.mjs";
+import { Component, computed, reactive, ref, triggerRef, unref } from 'vue';
+import type { BaseItemSheetRenderContext, ItemDnd35e } from '../index.mjs';
+import { Description } from './index.mjs';
+import NameConfig from './tabs/NameConfig.vue';
+import { ItemType } from '@items/itemTypes.mjs';
 
 interface ItemSheetTab {
   id: string;
@@ -11,17 +11,15 @@ interface ItemSheetTab {
   order: number;
   icon?: string;
   tooltip?: string
-};
+}
 
-interface baseItemSheetState {
+type ItemSheetState = {
   itemType: string;
   tabs: ItemSheetTab[];
   activeTab: string;
 };
 
-interface ItemSheetState extends baseItemSheetState {};
-
-const createDefaultState = (): baseItemSheetState => ({
+const createDefaultState = (): ItemSheetState => ({
   itemType: 'D35E.Item',
   tabs: [
     {
@@ -45,7 +43,7 @@ const useItemSheetStore = <TDocument extends ItemDnd35e> (context: BaseItemSheet
   const document = ref(context.document);
   const state = reactive({
     ...createDefaultState(),
-    // document: 
+    // document:
     isEditable: context.editable,
     renderOptions: unref(context.renderOptions),
   });
@@ -58,8 +56,8 @@ const useItemSheetStore = <TDocument extends ItemDnd35e> (context: BaseItemSheet
   // Tabs
   const tabGetters = {
     activeTabId: computed(() => state.activeTab),
-    tabs: computed(() => (state.tabs?? []).sort(
-      (a,b) => (a.order ?? 0) - (b.order ?? 0)
+    tabs: computed(() => (state.tabs ?? []).sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0),
     )),
     getIsTabOpen: (tabId: string) => computed(() => state.activeTab === tabId),
   };
@@ -69,31 +67,31 @@ const useItemSheetStore = <TDocument extends ItemDnd35e> (context: BaseItemSheet
     },
     replaceTabs: (newTabs: ItemSheetTab[]) => {
       state.tabs = [
-        ...newTabs
+        ...newTabs,
       ];
     },
     appendTabs: (newTabs: ItemSheetTab[]) => {
       state.tabs = [
         ...state.tabs,
-        ...newTabs
+        ...newTabs,
       ];
     },
   };
 
   // Document
   const documentGetters = {
-    getProperty: <T,>(path: string) => computed(() => foundry.utils.getProperty(document.value, path) as T),
+    getProperty: <T, >(path: string) => computed(() => foundry.utils.getProperty(document.value, path) as T),
 
-    name: computed(() => document.value.name || ""),
-    displayName: computed(() => document.value.displayName || ""),
+    name: computed(() => document.value.name || ''),
+    displayName: computed(() => document.value.displayName || ''),
     isNameFromFormula: computed(() => document.value.system.isNameFromFormula || false),
-    nameFormula: computed(() => document.value.system.nameFormula || ""),
-    
-    img: computed(() => document.value.img || ""),
+    nameFormula: computed(() => document.value.system.nameFormula || ''),
 
-    uniqueId: computed(() => document.value.system.uniqueId || ""),
+    img: computed(() => document.value.img || ''),
 
-    description: computed(() => document.value.system.description.value || ""),
+    uniqueId: computed(() => document.value.system.uniqueId || ''),
+
+    description: computed(() => document.value.system.description.value || ''),
 
     localizedType: computed(() => game.i18n.localize(document.value.localizedType)),
   };
@@ -117,7 +115,7 @@ const useItemSheetStore = <TDocument extends ItemDnd35e> (context: BaseItemSheet
     },
   };
 
-  return  {
+  return {
     itemType: computed(() => state.itemType),
     setItemType,
     getItemTypeDisplay,
@@ -133,11 +131,11 @@ const useItemSheetStore = <TDocument extends ItemDnd35e> (context: BaseItemSheet
   };
 };
 
-interface ItemSheetStore<TDocument extends ItemDnd35e<ItemType> = ItemDnd35e<ItemType>> extends ReturnType<typeof useItemSheetStore<TDocument>> {};
+type ItemSheetStore<TDocument extends ItemDnd35e<ItemType> = ItemDnd35e<ItemType>> = ReturnType<typeof useItemSheetStore<TDocument>>;
 
 export { useItemSheetStore };
 
 export type {
   ItemSheetTab,
   ItemSheetStore,
-}
+};

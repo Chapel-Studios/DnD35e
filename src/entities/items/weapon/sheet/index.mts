@@ -11,7 +11,7 @@ import type { WeaponStore } from './WeaponStore.mjs';
 export {
   WeaponSheet,
   WeaponSheetVue,
-  useWeaponStore
+  useWeaponStore,
 };
 
 export type {

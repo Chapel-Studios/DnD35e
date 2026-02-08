@@ -3,8 +3,8 @@ import type { PhysicalItemType } from './components/Physical/index.mjs';
 type ItemType = PhysicalItemType | 'material';
 
 const ITEM_TYPES = {
-  weapon: "TYPES.Item.weapon",
-  material: "TYPES.Item.material",
+  weapon: 'TYPES.Item.weapon',
+  material: 'TYPES.Item.material',
   // equipment: "D35E.ItemTypeEquipment",
   // loot: "D35E.ItemTypeLoot",
   // Consumable: "D35E.ItemTypeConsumable",
@@ -23,5 +23,5 @@ export {
 
 export type {
   ItemType,
-  ItemTypeLocalizationValues
+  ItemTypeLocalizationValues,
 };

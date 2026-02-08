@@ -20,9 +20,9 @@ interface PhysicalItemSystemSource {
   isBroken: boolean;
   // Container
   containerId: string | null;
-};
+}
 
-interface PhysicalItemSystemData extends PhysicalItemSystemSource, IdentifiableItemSystemData {};
+interface PhysicalItemSystemData extends PhysicalItemSystemSource, IdentifiableItemSystemData {}
 
 export type {
   PhysicalItemSystemSource,
