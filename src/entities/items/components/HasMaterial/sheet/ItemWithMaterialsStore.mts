@@ -2,7 +2,7 @@ import { ItemSheetStore } from '@items/baseItem/index.mjs';
 import type { ItemWithMaterialsLike, ItemWithMaterialsSheetRenderContext } from '@items/components/HasMaterial/index.mjs';
 import { computed, type Ref } from 'vue';
 
-const useItemWithMaterialsStore = (context: ItemWithMaterialsSheetRenderContext, baseStore: ItemSheetStore) => {
+const useItemWithMaterialsStore = (_context: ItemWithMaterialsSheetRenderContext, baseStore: ItemSheetStore) => {
   const document = baseStore._document as unknown as Ref<ItemWithMaterialsLike>;
 
   const itemWithMaterialsGetters = {

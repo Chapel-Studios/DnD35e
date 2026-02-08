@@ -38,7 +38,7 @@ const createDefaultState = (): ItemSheetState => ({
   activeTab: 'description',
 });
 
-const useItemSheetStore = <TDocument extends ItemDnd35e> (context: BaseItemSheetRenderContext) => {
+const useItemSheetStore = <TDocument extends ItemDnd35e> (context: BaseItemSheetRenderContext<ItemType, TDocument>) => {
   // Core state
   const document = ref(context.document);
   const state = reactive({

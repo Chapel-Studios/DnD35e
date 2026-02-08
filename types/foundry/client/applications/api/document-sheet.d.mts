@@ -51,7 +51,7 @@ export default abstract class DocumentSheetV2<
 
   protected override _configureRenderOptions(options: DeepPartial<TRenderOptions>): TRenderOptions;
 
-  protected override _prepareContext(options: TRenderOptions): Promise<DocumentSheetRenderContext>;
+    protected override _prepareContext(options: TRenderOptions): Promise<Partial<DocumentSheetRenderContext>>;
 
   protected override _renderFrame(options: TRenderOptions): Promise<HTMLElement>;
 
@@ -138,7 +138,7 @@ export default abstract class DocumentSheetV2<
     ): Promise<void>;
 }
 
-export interface DocumentSheetConfiguration<TDocument extends Document = Document> extends ApplicationConfiguration {
+export interface DocumentSheetConfiguration<TDocument extends Document = Document> extends DeepPartial<ApplicationConfiguration> {
     /** The Document instance associated with this sheet */
     document: TDocument;
     /** A permission level in CONST.DOCUMENT_OWNERSHIP_LEVELS */

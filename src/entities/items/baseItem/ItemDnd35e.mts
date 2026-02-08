@@ -5,7 +5,7 @@ import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { ItemType } from '@items/index.mjs';
 import type { ItemSheetDnd35e, ItemSystemData, ItemSystemSource } from './index.mjs';
-import { VueApplication } from '@vc/VueApplication.mjs';
+import { VueItemSheet } from '@vc/VueApplication.mjs';
 
 type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
 
@@ -15,7 +15,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   declare _source: ItemSourceDnd35e<TItemType>;
   declare _sheet: ItemSheetDnd35e<any> | null;
 
-  get sheet (): ItemSheetDnd35e<any> | null {
+  override get sheet (): ItemSheetDnd35e<any> | null {
     if (!this._sheet) {
       const superSheet = super.sheet;
       if (!superSheet) {
@@ -23,7 +23,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
           new (document: any, options?: any): ItemSheetDnd35e<any>;
         };
         // Only instantiate if it's a VueApplication subclass
-        if (foundry.utils.isSubclass(SheetClass, VueApplication)) {
+        if (foundry.utils.isSubclass(SheetClass, VueItemSheet)) {
           this._sheet = new SheetClass(this, { editable: this.isOwner });
         }
       }
