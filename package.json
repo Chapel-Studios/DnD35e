@@ -4,10 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint . --ext .mts,.ts,.js,.vue --fix",
+    "lint": "eslint --fix",
     "prebuild": "npm run lint",
     "build": "vite build --mode production",
-    "watch": "vite build --watch --mode development",
+    "watch": "npm-run-all --parallel lint:watch dev:watch",
+    "lint:watch": "eslint . --fix --watch",
+    "dev:watch": "vite build --watch --mode development",
     "update:version": "node scripts/update-version-yaml.mjs"
   },
   "keywords": [],
