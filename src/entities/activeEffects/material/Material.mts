@@ -1,6 +1,12 @@
 import { MaterialSystemData, MaterialSystemSource } from './index.mjs';
 import { ItemDnd35e, ItemSheetDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
-import { applyIdentifiablePrototype, IdentifiableItem, IdentifiableItemLike, IdentifiableItemSourceProps, identifiableOverrides } from '@items/components/Identifiable/index.mjs';
+import {
+  applyIdentifiablePrototype,
+  IdentifiableItem,
+  IdentifiableItemLike,
+  IdentifiableItemSourceProps,
+  identifiableOverrides,
+} from '@entityComponents/Identifiable/index.mjs';
 
 const materialItemType = 'material';
 type MaterialItemType = typeof materialItemType;

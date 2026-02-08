@@ -3,6 +3,8 @@
 //
 // type ItemGrantDeleteAction = 'cascade' | 'detach' | 'restrict';
 
+import { BaseDnd35eSystemData } from '@entities/common/index.mjs';
+
 // interface ItemGrantSource {
 //     /** The ID of a granting or granted item */
 //     id: string;
@@ -26,20 +28,9 @@ interface ItemOrigin {
     originPack: string;
 }
 
-interface ItemDescription {
-    value: string;
-}
-
 // whats actually stored in the DB
-interface ItemSystemSource {
-    version: string;
-    uniqueId?: string;
+interface ItemSystemSource extends BaseDnd35eSystemData {
     origin?: ItemOrigin;
-    // Name
-    isNameFromFormula: boolean;
-    nameFormula?: string | null;
-    // Description
-    description: ItemDescription;
     isPsionic: boolean;
     isEpic: boolean;
 }
