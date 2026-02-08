@@ -1,4 +1,4 @@
-import AbstractBaseFilter from "./base-filter.mjs";
+import AbstractBaseFilter from './base-filter.mjs';
 
 /**
  * A filter which implements an inner or outer glow around the source texture.
@@ -6,7 +6,7 @@ import AbstractBaseFilter from "./base-filter.mjs";
  * @license MIT
  */
 export default class GlowOverlayFilter extends AbstractBaseFilter {
-    static override defaultUniforms: {
+  static override defaultUniforms: {
         distance: number;
         glowColor: number[];
         quality: number;
@@ -15,27 +15,27 @@ export default class GlowOverlayFilter extends AbstractBaseFilter {
         alpha: number;
     };
 
-    /**
+  /**
      * Dynamically create the fragment shader used for filters of this type.
      */
-    static createFragmentShader(quality: number, distance: number): string;
+  static createFragmentShader(quality: number, distance: number): string;
 
-    static override create(initialUniforms?: object): GlowOverlayFilter;
+  static override create(initialUniforms?: object): GlowOverlayFilter;
 
-    /**
+  /**
      * The inner strength of the glow.
      */
-    innerStrength: number;
+  innerStrength: number;
 
-    /**
+  /**
      * The outer strength of the glow.
      */
-    outerStrength: number;
+  outerStrength: number;
 
-    /**
+  /**
      * Should this filter auto-animate?
      */
-    animated: boolean;
+  animated: boolean;
 
-    apply(filterManager: any, input: any, output: any, clear: any): void;
+  apply(filterManager: any, input: any, output: any, clear: any): void;
 }

@@ -3,8 +3,8 @@ import {
   optionalHtmlField,
   optionalStringField,
   requiredBooleanField,
-  requiredNullableNumberField
-} from "@helpers/fieldBuilders.mjs";
+  requiredNullableNumberField,
+} from '@helpers/fieldBuilders.mjs';
 
 const { fields: { SchemaField } } = foundry.data;
 
@@ -19,6 +19,6 @@ const applyIdentifiableSchema = (schema: Record<string, any>) => {
     unidentifiedNameFormula: nullableOptionalStringField(undefined),
     isUnidentifiedNameFromFormula: requiredBooleanField(false),
   }, { required: false, nullable: true });
-}
+};
 
 export { applyIdentifiableSchema };

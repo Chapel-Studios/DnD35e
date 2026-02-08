@@ -1,13 +1,13 @@
 import {
-    DocumentOwnershipLevel,
-    DocumentOwnershipString,
-    ImageFilePath,
-    MeasuredTemplateType,
-    VideoFilePath,
-} from "@common/constants.mjs";
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseScene, BaseUser } from "./_module.mjs";
+  DocumentOwnershipLevel,
+  DocumentOwnershipString,
+  ImageFilePath,
+  MeasuredTemplateType,
+  VideoFilePath,
+} from '@common/constants.mjs';
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseScene, BaseUser } from './_module.mjs';
 
 /**
  * The data schema for a MeasuredTemplate embedded document.
@@ -20,19 +20,19 @@ export default class BaseMeasuredTemplate<TParent extends BaseScene | null> exte
     TParent,
     MeasuredTemplateSchema
 > {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): MeasuredTemplateMetadata;
+  static override get metadata(): MeasuredTemplateMetadata;
 
-    static override defineSchema(): MeasuredTemplateSchema;
+  static override defineSchema(): MeasuredTemplateSchema;
 
-    /* -------------------------------------------- */
-    /*  Model Methods                               */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Methods                               */
+  /* -------------------------------------------- */
 
-    override testUserPermission(
+  override testUserPermission(
         user: BaseUser,
         permission: DocumentOwnershipString | DocumentOwnershipLevel,
         { exact }?: { exact?: boolean },
@@ -42,13 +42,13 @@ export default class BaseMeasuredTemplate<TParent extends BaseScene | null> exte
 export default interface BaseMeasuredTemplate<TParent extends BaseScene | null>
     extends Document<TParent, MeasuredTemplateSchema>,
         fields.ModelPropsFromSchema<MeasuredTemplateSchema> {
-    get documentName(): MeasuredTemplateMetadata["name"];
+    get documentName(): MeasuredTemplateMetadata['name'];
 }
 
 interface MeasuredTemplateMetadata extends DocumentMetadata {
-    name: "MeasuredTemplate";
-    collection: "templates";
-    label: "DOCUMENT.MeasuredTemplate";
+    name: 'MeasuredTemplate';
+    collection: 'templates';
+    label: 'DOCUMENT.MeasuredTemplate';
     isEmbedded: true;
 }
 

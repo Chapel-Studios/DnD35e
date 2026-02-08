@@ -1,5 +1,5 @@
-import { hbsTemplatePath } from "@constants/paths.mjs";
-import { registerPartial } from "@helpers/display.mjs";
+import { hbsTemplatePath } from '@constants/paths.mjs';
+import { registerPartial } from '@helpers/display.mjs';
 import './uniqueId.scss';
 
 const uniqueIdPartialName = '_uniqueId';
@@ -19,4 +19,4 @@ const createUniqueId = (): string => {
 export {
   createUniqueId,
   uniqueIdPartialName,
-}
+};

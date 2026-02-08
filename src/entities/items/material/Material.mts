@@ -1,25 +1,27 @@
-import { MaterialSheet, MaterialSystemData, MaterialSystemSource } from "./index.mjs";
-import { ItemDnd35e, ItemSourceDnd35e } from "@items/baseItem/index.mjs";
-import { applyIdentifiablePrototype, IdentifiableItem, IdentifiableItemLike, IdentifiableItemSourceProps, identifiableOverrides } from "@items/components/Identifiable/index.mjs";
+import { MaterialSystemData, MaterialSystemSource } from './index.mjs';
+import { ItemDnd35e, ItemSheetDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
+import { applyIdentifiablePrototype, IdentifiableItem, IdentifiableItemLike, IdentifiableItemSourceProps, identifiableOverrides } from '@items/components/Identifiable/index.mjs';
 
-const materialItemType = 'material'; 
+const materialItemType = 'material';
 type MaterialItemType = typeof materialItemType;
 
-type MaterialSource = Omit<ItemSourceDnd35e, "system">
-  & Omit<IdentifiableItemSourceProps, "system">
+type MaterialSource = Omit<ItemSourceDnd35e, 'system'>
+  & Omit<IdentifiableItemSourceProps, 'system'>
   & { system: MaterialSystemSource; };
 
 class Material extends ItemDnd35e<MaterialItemType> {
-  // declare type: MaterialItemType;
-  // declare system: MaterialSystemData;
-  //declare readonly _source: MaterialSource;
+  declare type: MaterialItemType;
+  declare system: MaterialSystemData;
+  declare _sheet: ItemSheetDnd35e<ItemDnd35e<MaterialItemType>> | null;
+  // declare get sheet(): ItemSheetDnd35e<ItemDnd35e<'material'>> | null;
+  // declare readonly _source: MaterialSource;
   // sheet = ty MaterialSheet;
 
-  override prepareBaseData(): void {
+  override prepareBaseData (): void {
     super.prepareBaseData();
   }
 
-  override get displayName(): string {
+  override get displayName (): string {
     // Identifiable runtime getters are applied in prepareBaseData
     return identifiableOverrides.displayName(this as unknown as IdentifiableItemLike);
   }
@@ -42,11 +44,6 @@ applyIdentifiablePrototype(Material);
 
 type MaterialType = Material & IdentifiableItem;
 
-interface Material extends ItemDnd35e<MaterialItemType>, IdentifiableItem {
-  type: MaterialItemType;
-  system: MaterialSystemData;
-}
-
 export {
   Material,
   materialItemType,
@@ -56,4 +53,4 @@ export type {
   MaterialItemType,
   MaterialType,
   MaterialSource,
- };
+};

@@ -1,5 +1,5 @@
-import { Schema, Slice } from "prosemirror-model";
-import { ProseMirrorSliceTransformer } from "./_types.mjs";
+import { Schema, Slice } from 'prosemirror-model';
+import { ProseMirrorSliceTransformer } from './_types.mjs';
 
 /**
  * @import {ProseMirrorSliceTransformer} from "./_types.mjs";

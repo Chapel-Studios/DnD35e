@@ -1,5 +1,5 @@
-import { TokenRulerData } from "@client/_module.mjs";
-import Token from "../token.mjs";
+import { TokenRulerData } from '@client/_module.mjs';
+import Token from '../token.mjs';
 
 /**
  * The ruler of a Token visualizes
@@ -8,26 +8,26 @@ import Token from "../token.mjs";
  *   - the planned movement path while the Token is being dragged.
  */
 export default abstract class BaseTokenRuler {
-    /**
+  /**
      * @param token The Token that this ruler belongs to
      */
-    constructor(token: Token);
+  constructor(token: Token);
 
-    /**
+  /**
      * The reference to the Token this ruler belongs to.
      */
-    get token(): Token;
+  get token(): Token;
 
-    /**
+  /**
      * Is the ruler visible?
      * @default false
      */
-    get visible(): boolean;
+  get visible(): boolean;
 
-    /**
+  /**
      * Set to {@link BaseTokenRuler#isVisible} in {@link Token#_refreshState}.
      */
-    set visible(value: boolean);
+  set visible(value: boolean);
 
     /**
      * Called when the ruler becomes visible or invisible.

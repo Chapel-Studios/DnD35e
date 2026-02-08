@@ -1,5 +1,5 @@
 export class CanvasEdges extends Map {
-    /**
+  /**
      * Initialize all active edges for the Scene. This workflow occurs once only when the Canvas is first initialized.
      * Edges are created from the following sources:
      * 1. Wall documents
@@ -7,8 +7,8 @@ export class CanvasEdges extends Map {
      * 3. Darkness sources
      * 4. Programmatically defined in the "initializeEdges" hook
      */
-    initialize(): void;
+  initialize(): void;
 
-    /** Incrementally refresh Edges by computing intersections between all registered edges. */
-    refresh(): void;
+  /** Incrementally refresh Edges by computing intersections between all registered edges. */
+  refresh(): void;
 }

@@ -1,7 +1,7 @@
-import { EditorCreateOptions } from "@client/applications/ux/prosemirror-editor.mjs";
-import { Plugin } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
-import Application, { AppV1RenderOptions, ApplicationV1Options } from "./application-v1.mjs";
+import { EditorCreateOptions } from '@client/applications/ux/prosemirror-editor.mjs';
+import { Plugin } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import Application, { AppV1RenderOptions, ApplicationV1Options } from './application-v1.mjs';
 
 /**
  * An abstract pattern for defining an Application responsible for updating some object using an HTML form
@@ -20,58 +20,58 @@ export default abstract class FormApplication<
     TObject extends object = object,
     TOptions extends FormApplicationOptions = FormApplicationOptions,
 > extends Application<TOptions> {
-    constructor(object?: TObject, options?: Partial<TOptions>);
+  constructor(object?: TObject, options?: Partial<TOptions>);
 
-    override options: TOptions;
+  override options: TOptions;
 
-    /**
+  /**
      * The object target which we are using this form to modify
      */
-    object: TObject;
+  object: TObject;
 
-    /** A convenience reference to the form HTLMElement */
-    form: HTMLFormElement;
+  /** A convenience reference to the form HTLMElement */
+  form: HTMLFormElement;
 
-    /**
+  /**
      * Keep track of any mce editors which may be active as part of this form
      * The values of this Array are inner-objects with references to the MCE editor and other metadata
      */
-    editors: Record<string, TinyMCEEditorData>;
+  editors: Record<string, TinyMCEEditorData>;
 
-    // Undocumented
-    _submitting?: boolean;
+  // Undocumented
+  _submitting?: boolean;
 
-    /** Assign the default options which are supported by the entity edit sheet */
-    static override get defaultOptions(): FormApplicationOptions;
+  /** Assign the default options which are supported by the entity edit sheet */
+  static override get defaultOptions(): FormApplicationOptions;
 
-    /** Is the Form Application currently editable? */
-    get isEditable(): boolean;
+  /** Is the Form Application currently editable? */
+  get isEditable(): boolean;
 
-    getData(options?: Partial<TOptions>): FormApplicationData<TObject> | Promise<FormApplicationData<TObject>>;
+  getData(options?: Partial<TOptions>): FormApplicationData<TObject> | Promise<FormApplicationData<TObject>>;
 
-    protected override _render(force?: boolean, options?: AppV1RenderOptions): Promise<void>;
+  protected override _render(force?: boolean, options?: AppV1RenderOptions): Promise<void>;
 
-    protected override _renderInner(data: FormApplicationData<TObject>, options: AppV1RenderOptions): Promise<JQuery>;
+  protected override _renderInner(data: FormApplicationData<TObject>, options: AppV1RenderOptions): Promise<JQuery>;
 
-    /* -------------------------------------------- */
-    /*  Event Listeners and Handlers                */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Listeners and Handlers                */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Activate the default set of listeners for the Entity sheet
      * These listeners handle basic stuff like form submission or updating images
      *
      * @param html The rendered template ready to have listeners attached
      */
-    override activateListeners(html: JQuery): void;
+  override activateListeners(html: JQuery): void;
 
-    /**
+  /**
      * If the form is not editable, disable its input fields
      * @param form The form HTML
      */
-    protected _disableFields(form: HTMLElement): void;
+  protected _disableFields(form: HTMLElement): void;
 
-    /**
+  /**
      * Handle standard form submission steps
      * @param event           The submit event which triggered this handler
      * @param [updateData]    Additional specific data keys/values which override or extend the contents of
@@ -81,27 +81,27 @@ export default abstract class FormApplication<
      * @param [preventRender] Prevent the application from re-rendering as a result of form submission
      * @returns A promise which resolves to the validated update data
      */
-    protected _onSubmit(event: Event, options?: OnSubmitFormOptions): Promise<Record<string, unknown> | false>;
+  protected _onSubmit(event: Event, options?: OnSubmitFormOptions): Promise<Record<string, unknown> | false>;
 
-    /**
+  /**
      * Get an object of update data used to update the form's target object
      * @param updateData Additional data that should be merged with the form data
      * @return The prepared update data
      */
-    protected _getSubmitData(updateData?: Record<string, unknown>): Record<string, unknown>;
+  protected _getSubmitData(updateData?: Record<string, unknown>): Record<string, unknown>;
 
-    /**
+  /**
      * Handle changes to an input element, submitting the form if options.submitOnChange is true.
      * Do not preventDefault in this handler as other interactions on the form may also be occurring.
      * @param event The initial change event
      */
-    protected _onChangeInput(event: Event): Promise<void>;
+  protected _onChangeInput(event: Event): Promise<void>;
 
-    /**
+  /**
      * Handle unfocusing an input on form - maybe trigger an update if ``options.liveUpdate`` has been set to true
      * @param event The initial triggering event
      */
-    protected _onUnfocus(event: Event | JQuery.Event): void;
+  protected _onUnfocus(event: Event | JQuery.Event): void;
 
     /**
      * This method is called upon form submission after form data is validated

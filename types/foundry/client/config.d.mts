@@ -1,55 +1,55 @@
-import { DataSchema, Document, TypeDataModel } from "@common/abstract/_module.mjs";
-import { AudioFilePath, ImageFilePath, RollMode } from "@common/constants.mjs";
-import { DocumentConstructionContext, Point } from "../common/_types.mjs";
-import { ActiveEffectSource } from "../common/documents/active-effect.mjs";
-import { applications, dice, documents } from "./_module.mjs";
-import DocumentSheetV2 from "./applications/api/document-sheet.mjs";
-import CameraViews from "./applications/apps/av/cameras.mjs";
-import HTMLEnrichedContentElement from "./applications/elements/enriched-content.mjs";
-import { PrototypeTokenConfig } from "./applications/sheets/_module.mjs";
-import * as sidebar from "./applications/sidebar/_module.mjs";
-import { CompendiumDirectory } from "./applications/sidebar/tabs/_module.mjs";
-import { MainMenu, Notifications, SceneNavigation } from "./applications/ui/_module.mjs";
-import Hotbar from "./applications/ui/hotbar.mjs";
-import { EnrichmentOptions } from "./applications/ux/text-editor.mjs";
-import ActorSheet from "./appv1/sheets/actor-sheet.mjs";
-import ItemSheet from "./appv1/sheets/item-sheet.mjs";
-import JournalSheet from "./appv1/sheets/journal-sheet.mjs";
-import { CanvasAnimationAttribute } from "./canvas/animation/_types.mjs";
-import ChatBubbles from "./canvas/animation/chat-bubbles.mjs";
-import { DoorControl, ParticleEffect } from "./canvas/containers/_module.mjs";
-import { PointSourcePolygon } from "./canvas/geometry/_module.mjs";
-import { PointSourcePolygonConfig } from "./canvas/geometry/_types.mjs";
-import ClockwiseSweepPolygon from "./canvas/geometry/clockwise-sweep.mjs";
+import { DataSchema, Document, TypeDataModel } from '@common/abstract/_module.mjs';
+import { AudioFilePath, ImageFilePath, RollMode } from '@common/constants.mjs';
+import { DocumentConstructionContext, Point } from '../common/_types.mjs';
+import { ActiveEffectSource } from '../common/documents/active-effect.mjs';
+import { applications, dice, documents } from './_module.mjs';
+import DocumentSheetV2 from './applications/api/document-sheet.mjs';
+import CameraViews from './applications/apps/av/cameras.mjs';
+import HTMLEnrichedContentElement from './applications/elements/enriched-content.mjs';
+import { PrototypeTokenConfig } from './applications/sheets/_module.mjs';
+import * as sidebar from './applications/sidebar/_module.mjs';
+import { CompendiumDirectory } from './applications/sidebar/tabs/_module.mjs';
+import { MainMenu, Notifications, SceneNavigation } from './applications/ui/_module.mjs';
+import Hotbar from './applications/ui/hotbar.mjs';
+import { EnrichmentOptions } from './applications/ux/text-editor.mjs';
+import ActorSheet from './appv1/sheets/actor-sheet.mjs';
+import ItemSheet from './appv1/sheets/item-sheet.mjs';
+import JournalSheet from './appv1/sheets/journal-sheet.mjs';
+import { CanvasAnimationAttribute } from './canvas/animation/_types.mjs';
+import ChatBubbles from './canvas/animation/chat-bubbles.mjs';
+import { DoorControl, ParticleEffect } from './canvas/containers/_module.mjs';
+import { PointSourcePolygon } from './canvas/geometry/_module.mjs';
+import { PointSourcePolygonConfig } from './canvas/geometry/_types.mjs';
+import ClockwiseSweepPolygon from './canvas/geometry/clockwise-sweep.mjs';
 import {
-    EffectsCanvasGroup,
-    EnvironmentCanvasGroup,
-    HiddenCanvasGroup,
-    InterfaceCanvasGroup,
-    PrimaryCanvasGroup,
-} from "./canvas/groups/_module.mjs";
-import { AlertPing, ArrowPing, ChevronPing, PulsePing, Ruler } from "./canvas/interaction/_module.mjs";
-import * as layers from "./canvas/layers/_module.mjs";
-import * as perception from "./canvas/perception/_module.mjs";
-import * as placeables from "./canvas/placeables/_module.mjs";
-import TokenRingConfig from "./canvas/placeables/tokens/ring-config.mjs";
+  EffectsCanvasGroup,
+  EnvironmentCanvasGroup,
+  HiddenCanvasGroup,
+  InterfaceCanvasGroup,
+  PrimaryCanvasGroup,
+} from './canvas/groups/_module.mjs';
+import { AlertPing, ArrowPing, ChevronPing, PulsePing, Ruler } from './canvas/interaction/_module.mjs';
+import * as layers from './canvas/layers/_module.mjs';
+import * as perception from './canvas/perception/_module.mjs';
+import * as placeables from './canvas/placeables/_module.mjs';
+import TokenRingConfig from './canvas/placeables/tokens/ring-config.mjs';
 import {
-    AbstractWeatherShader,
-    AdaptiveBackgroundShader,
-    AdaptiveColorationShader,
-    AdaptiveIlluminationShader,
-    WeatherShaderEffect,
-} from "./canvas/rendering/shaders/_module.mjs";
+  AbstractWeatherShader,
+  AdaptiveBackgroundShader,
+  AdaptiveColorationShader,
+  AdaptiveIlluminationShader,
+  WeatherShaderEffect,
+} from './canvas/rendering/shaders/_module.mjs';
 import type {
-    GlobalLightSource,
-    PointDarknessSource,
-    PointLightSource,
-    PointSoundSource,
-    PointVisionSource,
-} from "./canvas/sources/_module.mjs";
-import ClientDatabaseBackend from "./data/client-backend.mjs";
-import WorldCollection from "./documents/abstract/world-collection.mjs";
-import * as collections from "./documents/collections/_module.mjs";
+  GlobalLightSource,
+  PointDarknessSource,
+  PointLightSource,
+  PointSoundSource,
+  PointVisionSource,
+} from './canvas/sources/_module.mjs';
+import ClientDatabaseBackend from './data/client-backend.mjs';
+import WorldCollection from './documents/abstract/world-collection.mjs';
+import * as collections from './documents/collections/_module.mjs';
 
 export type TextEditorEnricher = (match: RegExpMatchArray, options?: EnrichmentOptions) => Promise<HTMLElement | null>;
 
@@ -238,7 +238,7 @@ export default interface Config<
     /** Configuration for the Actor document */
     Actor: {
         documentClass: {
-            new (data: PreCreate<TActor["_source"]>, context?: DocumentConstructionContext<TActor["parent"]>): TActor;
+            new (data: PreCreate<TActor['_source']>, context?: DocumentConstructionContext<TActor['parent']>): TActor;
         };
         collection: ConstructorOf<collections.Actors<documents.Actor<null>>>;
         compendiumIndexFields: string[];
@@ -289,7 +289,7 @@ export default interface Config<
         batchSize: number;
         collection: typeof collections.Messages;
         documentClass: {
-            new (data: PreCreate<TChatMessage["_source"]>, context?: DocumentConstructionContext<null>): TChatMessage;
+            new (data: PreCreate<TChatMessage['_source']>, context?: DocumentConstructionContext<null>): TChatMessage;
         };
         sidebarIcon: string;
         template: string;
@@ -298,7 +298,7 @@ export default interface Config<
     /** Configuration for Item document */
     Item: {
         documentClass: {
-            new (data: PreCreate<TItem["_source"]>, context?: DocumentConstructionContext<TItem["parent"]>): TItem;
+            new (data: PreCreate<TItem['_source']>, context?: DocumentConstructionContext<TItem['parent']>): TItem;
         };
         collection: typeof collections.Items;
         dataModels: Record<string, ConstructorOf<TypeDataModel<documents.Item, DataSchema>>>;
@@ -323,13 +323,13 @@ export default interface Config<
     /** Configuration for the Combat document */
     Combat: {
         documentClass: {
-            new (data: PreCreate<TCombat["_source"]>, context?: DocumentConstructionContext<null>): TCombat;
+            new (data: PreCreate<TCombat['_source']>, context?: DocumentConstructionContext<null>): TCombat;
         };
         collection: typeof collections.CombatEncounters;
         defeatedStatusId: string;
         sidebarIcon: string;
         initiative: {
-            formula: ((combatant: TCombat["turns"][number]) => string) | null;
+            formula: ((combatant: TCombat['turns'][number]) => string) | null;
             decimals: number;
         };
     };
@@ -399,15 +399,15 @@ export default interface Config<
     /** Configuration for the AmbientLight embedded document type and its representation on the game Canvas */
     AmbientLight: {
         documentClass: ConstructorOf<TAmbientLightDocument>;
-        objectClass: ConstructorOf<NonNullable<TAmbientLightDocument["object"]>>;
+        objectClass: ConstructorOf<NonNullable<TAmbientLightDocument['object']>>;
     };
 
     /** Configuration for the ActiveEffect embedded document type */
     ActiveEffect: {
         documentClass: {
             new (
-                data: PreCreate<TActiveEffect["_source"]>,
-                context?: DocumentConstructionContext<TActiveEffect["parent"]>,
+                data: PreCreate<TActiveEffect['_source']>,
+                context?: DocumentConstructionContext<TActiveEffect['parent']>,
             ): TActiveEffect;
         };
     };
@@ -420,8 +420,8 @@ export default interface Config<
     /** Configuration for the Combatant document */
     Combatant: {
         documentClass: new (
-            data: PreCreate<TCombatant["_source"]>,
-            context?: DocumentConstructionContext<TCombatant["parent"]>,
+            data: PreCreate<TCombatant['_source']>,
+            context?: DocumentConstructionContext<TCombatant['parent']>,
         ) => TCombatant;
     };
 
@@ -450,13 +450,13 @@ export default interface Config<
             ray: string;
         };
         documentClass: ConstructorOf<TMeasuredTemplateDocument>;
-        objectClass: ConstructorOf<NonNullable<TMeasuredTemplateDocument["object"]>>;
+        objectClass: ConstructorOf<NonNullable<TMeasuredTemplateDocument['object']>>;
     };
 
     /** Configuration for the Region embedded document type and its representation on the game Canvas  */
     Region: {
         documentClass: ConstructorOf<TRegionDocument>;
-        objectClass: ConstructorOf<TRegionDocument["object"]>;
+        objectClass: ConstructorOf<TRegionDocument['object']>;
     };
 
     /** Configuration for the RegionBehavior embedded document type */
@@ -470,13 +470,13 @@ export default interface Config<
     /** Configuration for the Tile embedded document type and its representation on the game Canvas */
     Tile: {
         documentClass: ConstructorOf<TTileDocument>;
-        objectClass: ConstructorOf<NonNullable<TTileDocument["object"]>>;
+        objectClass: ConstructorOf<NonNullable<TTileDocument['object']>>;
     };
 
     /** Configuration for the Token embedded document type and its representation on the game Canvas */
     Token: {
         documentClass: ConstructorOf<TTokenDocument>;
-        objectClass: ConstructorOf<NonNullable<TTokenDocument["object"]>>;
+        objectClass: ConstructorOf<NonNullable<TTokenDocument['object']>>;
         prototypeSheetClass: ConstructorOf<PrototypeTokenConfig>;
         ring: TokenRingConfig;
     };
@@ -517,73 +517,73 @@ export default interface Config<
         lightSourceClass: typeof PointLightSource;
         globalLightSourceClass: typeof GlobalLightSource;
         rulerClass: typeof Ruler;
-        visionSourceClass: ConstructorOf<PointVisionSource<NonNullable<TTokenDocument["object"]>>>;
+        visionSourceClass: ConstructorOf<PointVisionSource<NonNullable<TTokenDocument['object']>>>;
         soundSourceClass: typeof PointSoundSource;
         groups: {
             hidden: {
                 groupClass: typeof HiddenCanvasGroup;
-                parent: "stage";
+                parent: 'stage';
             };
             rendered: {
                 groupClass: typeof PIXI.Container;
-                parent: "stage";
+                parent: 'stage';
             };
             environment: {
                 groupClass: typeof EnvironmentCanvasGroup;
-                parent: "rendered";
+                parent: 'rendered';
             };
             primary: {
                 groupClass: typeof PrimaryCanvasGroup;
-                parent: "environment";
+                parent: 'environment';
             };
             effects: {
                 groupClass: ConstructorOf<TEffectsCanvasGroup>;
-                parent: "environment";
+                parent: 'environment';
             };
             interface: {
                 groupClass: typeof InterfaceCanvasGroup;
-                parent: "rendered";
+                parent: 'rendered';
             };
         };
         layers: {
             drawings: {
-                group: "primary";
+                group: 'primary';
                 layerClass: typeof layers.DrawingsLayer;
             };
             grid: {
-                group: "primary";
+                group: 'primary';
                 layerClass: typeof layers.GridLayer;
             };
             walls: {
-                group: "effects";
-                layerClass: ConstructorOf<NonNullable<TWallDocument["object"]>["layer"]>;
+                group: 'effects';
+                layerClass: ConstructorOf<NonNullable<TWallDocument['object']>['layer']>;
             };
             templates: {
-                group: "primary";
-                layerClass: ConstructorOf<NonNullable<TMeasuredTemplateDocument["object"]>["layer"]>;
+                group: 'primary';
+                layerClass: ConstructorOf<NonNullable<TMeasuredTemplateDocument['object']>['layer']>;
             };
             notes: {
-                group: "interface";
+                group: 'interface';
                 layerClass: typeof layers.NotesLayer;
             };
             tokens: {
-                group: "primary";
-                layerClass: ConstructorOf<NonNullable<TTokenDocument["object"]>["layer"]>;
+                group: 'primary';
+                layerClass: ConstructorOf<NonNullable<TTokenDocument['object']>['layer']>;
             };
             tiles: {
-                group: "primary";
+                group: 'primary';
                 layerClass: typeof layers.TilesLayer;
             };
             sounds: {
-                group: "interface";
+                group: 'interface';
                 layerClass: typeof layers.SoundsLayer;
             };
             lighting: {
-                group: "effects";
-                layerClass: ConstructorOf<NonNullable<TAmbientLightDocument["object"]>["layer"]>;
+                group: 'effects';
+                layerClass: ConstructorOf<NonNullable<TAmbientLightDocument['object']>['layer']>;
             };
             controls: {
-                group: "interface";
+                group: 'interface';
                 layerClass: typeof layers.ControlsLayer;
             };
         };
@@ -613,10 +613,10 @@ export default interface Config<
 
         pings: {
             types: {
-                PULSE: "pulse";
-                ALERT: "alert";
-                PULL: "chevron";
-                ARROW: "arrow";
+                PULSE: 'pulse';
+                ALERT: 'alert';
+                PULL: 'chevron';
+                ARROW: 'arrow';
             };
             styles: {
                 alert: {

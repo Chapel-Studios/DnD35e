@@ -1,5 +1,5 @@
-import Item from "@client/documents/item.mjs";
-import DocumentSheet, { DocumentSheetData, DocumentSheetV1Options } from "../api/document-sheet-v1.mjs";
+import Item from '@client/documents/item.mjs';
+import DocumentSheet, { DocumentSheetData, DocumentSheetV1Options } from '../api/document-sheet-v1.mjs';
 
 /**
  * The default Item Sheet
@@ -16,27 +16,27 @@ export default class ItemSheet<TItem extends Item, TOptions extends DocumentShee
     TItem,
     TOptions
 > {
-    constructor(item: TItem, options?: Partial<TOptions>);
+  constructor(item: TItem, options?: Partial<TOptions>);
 
-    static override get defaultOptions(): DocumentSheetV1Options;
+  static override get defaultOptions(): DocumentSheetV1Options;
 
-    override get id(): string;
+  override get id(): string;
 
-    /**
+  /**
      * A convenience reference to the Item entity
      */
-    get item(): TItem;
+  get item(): TItem;
 
-    /** The Actor instance which owns this item. This may be null if the item is unowned. */
-    get actor(): TItem["parent"];
+  /** The Actor instance which owns this item. This may be null if the item is unowned. */
+  get actor(): TItem['parent'];
 
-    override getData(option?: Partial<TOptions>): Promise<ItemSheetData<TItem>>;
+  override getData(option?: Partial<TOptions>): Promise<ItemSheetData<TItem>>;
 
-    /**
+  /**
      * Activate listeners which provide interactivity for item sheet events
      * @param html The HTML object returned by template rendering
      */
-    override activateListeners(html: JQuery): void;
+  override activateListeners(html: JQuery): void;
 }
 
 export interface ItemSheetData<TItem extends Item> extends DocumentSheetData<TItem> {

@@ -1,6 +1,8 @@
 /**
  * Fairy light animation coloration shader
  */
+import AdaptiveColorationShader from '../coloration-lighting.mjs';
+import AdaptiveIlluminationShader from '../illumination-lighting.mjs';
 export class FairyLightColorationShader extends AdaptiveColorationShader {
 }
 /**
@@ -8,5 +10,3 @@ export class FairyLightColorationShader extends AdaptiveColorationShader {
  */
 export class FairyLightIlluminationShader extends AdaptiveIlluminationShader {
 }
-import AdaptiveColorationShader from "../coloration-lighting.mjs";
-import AdaptiveIlluminationShader from "../illumination-lighting.mjs";

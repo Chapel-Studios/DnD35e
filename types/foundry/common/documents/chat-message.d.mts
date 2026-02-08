@@ -1,10 +1,10 @@
-import Roll from "@client/dice/roll.mjs";
-import { DatabaseCreateCallbackOptions, DatabaseCreateOperation } from "@common/abstract/_types.mjs";
-import { AudioFilePath, ChatMessageStyle, DocumentOwnershipLevel, RollMode } from "@common/constants.mjs";
-import { DocumentFlags } from "@common/data/_module.mjs";
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import BaseUser from "./user.mjs";
+import Roll from '@client/dice/roll.mjs';
+import { DatabaseCreateCallbackOptions, DatabaseCreateOperation } from '@common/abstract/_types.mjs';
+import { AudioFilePath, ChatMessageStyle, DocumentOwnershipLevel, RollMode } from '@common/constants.mjs';
+import { DocumentFlags } from '@common/data/_module.mjs';
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import BaseUser from './user.mjs';
 
 /**
  * The ChatMessage document model.
@@ -17,17 +17,17 @@ export default class BaseChatMessage<TUser extends BaseUser | null = BaseUser | 
     null,
     ChatMessageSchema
 > {
-    static override get metadata(): ChatMessageMetadata;
+  static override get metadata(): ChatMessageMetadata;
 
-    static override defineSchema(): ChatMessageSchema;
+  static override defineSchema(): ChatMessageSchema;
 
-    override getUserLevel(user: BaseUser): DocumentOwnershipLevel;
+  override getUserLevel(user: BaseUser): DocumentOwnershipLevel;
 }
 
 export default interface BaseChatMessage<TUser extends BaseUser | null>
     extends Document<null, ChatMessageSchema>,
-        Omit<fields.ModelPropsFromSchema<ChatMessageSchema>, "author"> {
-    get documentName(): ChatMessageMetadata["name"];
+        Omit<fields.ModelPropsFromSchema<ChatMessageSchema>, 'author'> {
+    get documentName(): ChatMessageMetadata['name'];
 
     author: TUser;
 }
@@ -89,19 +89,19 @@ declare type ChatSpeakerSchema = {
 export type ChatSpeakerData = fields.SourceFromSchema<ChatSpeakerSchema>;
 
 interface ChatMessageMetadata extends DocumentMetadata {
-    name: "ChatMessage";
-    collection: "messages";
-    label: "DOCUMENT.ChatMessage";
-    labelPlural: "DOCUMENT.ChatMessages";
+    name: 'ChatMessage';
+    collection: 'messages';
+    label: 'DOCUMENT.ChatMessage';
+    labelPlural: 'DOCUMENT.ChatMessages';
     isPrimary: true;
 }
 
 export interface ChatMessageCreateOperation extends DatabaseCreateOperation<null> {
-    rollMode?: RollMode | "roll";
+    rollMode?: RollMode | 'roll';
 }
 
 export interface ChatMessageCreateCallbackOptions extends DatabaseCreateCallbackOptions {
-    rollMode?: RollMode | "roll";
+    rollMode?: RollMode | 'roll';
 }
 
 export type ChatMessageSource = fields.SourceFromSchema<ChatMessageSchema>;

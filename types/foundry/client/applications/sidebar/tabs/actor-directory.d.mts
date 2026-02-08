@@ -1,26 +1,26 @@
-import { ContextMenuEntry } from "@client/applications/ux/context-menu.mjs";
-import Actor from "@client/documents/actor.mjs";
-import DocumentDirectory, { DocumentDirectoryConfiguration } from "../document-directory.mjs";
+import { ContextMenuEntry } from '@client/applications/ux/context-menu.mjs';
+import Actor from '@client/documents/actor.mjs';
+import DocumentDirectory, { DocumentDirectoryConfiguration } from '../document-directory.mjs';
 
 /**
  * The World Actor directory listing.
  */
 export default class ActorDirectory<TDocument extends Actor<null> = Actor<null>> extends DocumentDirectory<TDocument> {
-    static override DEFAULT_OPTIONS: DeepPartial<DocumentDirectoryConfiguration>;
+  static override DEFAULT_OPTIONS: DeepPartial<DocumentDirectoryConfiguration>;
 
-    static override tabName: "actors";
+  static override tabName: 'actors';
 
-    /* -------------------------------------------- */
-    /*  Rendering                                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering                                   */
+  /* -------------------------------------------- */
 
-    protected override _getEntryContextOptions(): ContextMenuEntry[];
+  protected override _getEntryContextOptions(): ContextMenuEntry[];
 
-    /* -------------------------------------------- */
-    /*  Drag & Drop                                 */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Drag & Drop                                 */
+  /* -------------------------------------------- */
 
-    protected override _canDragStart(): boolean;
+  protected override _canDragStart(): boolean;
 
-    protected override _onDragStart(event: DragEvent): void;
+  protected override _onDragStart(event: DragEvent): void;
 }

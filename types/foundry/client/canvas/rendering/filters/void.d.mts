@@ -1,4 +1,4 @@
-import AbstractBaseFilter from "./base-filter.mjs";
+import AbstractBaseFilter from './base-filter.mjs';
 
 /**
  * A minimalist filter (just used for blending)

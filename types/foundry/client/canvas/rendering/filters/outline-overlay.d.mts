@@ -1,4 +1,4 @@
-import AbstractBaseFilter from "./base-filter.mjs";
+import AbstractBaseFilter from './base-filter.mjs';
 
 /**
  * A filter which implements an outline.
@@ -6,7 +6,7 @@ import AbstractBaseFilter from "./base-filter.mjs";
  * @license MIT
  */
 export default class OutlineOverlayFilter extends AbstractBaseFilter {
-    static override defaultUniforms: {
+  static override defaultUniforms: {
         outlineColor: number[];
         thickness: number[];
         alphaThreshold: number;
@@ -14,26 +14,26 @@ export default class OutlineOverlayFilter extends AbstractBaseFilter {
         wave: boolean;
     };
 
-    /**
+  /**
      * Dynamically create the fragment shader used for filters of this type.
      */
-    static createFragmentShader(): string;
+  static createFragmentShader(): string;
 
-    static override create(initialUniforms?: object): OutlineOverlayFilter;
+  static override create(initialUniforms?: object): OutlineOverlayFilter;
 
-    /**
+  /**
      * If the filter is animated or not.
      */
-    animated: boolean;
+  animated: boolean;
 
-    /**
+  /**
      * The thickness of the outline.
      */
-    get thickness(): number;
+  get thickness(): number;
 
-    set thickness(value);
+  set thickness(value);
 
-    apply(
+  apply(
         filterManager: PIXI.FilterSystem,
         input: PIXI.RenderTexture,
         output: PIXI.RenderTexture,

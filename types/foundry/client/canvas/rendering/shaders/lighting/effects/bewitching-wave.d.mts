@@ -1,6 +1,8 @@
 /**
  * Bewitching Wave animation illumination shader
  */
+import AdaptiveIlluminationShader from '../illumination-lighting.mjs';
+import AdaptiveColorationShader from '../coloration-lighting.mjs';
 export class BewitchingWaveIlluminationShader extends AdaptiveIlluminationShader {
 }
 /**
@@ -8,5 +10,3 @@ export class BewitchingWaveIlluminationShader extends AdaptiveIlluminationShader
  */
 export class BewitchingWaveColorationShader extends AdaptiveColorationShader {
 }
-import AdaptiveIlluminationShader from "../illumination-lighting.mjs";
-import AdaptiveColorationShader from "../coloration-lighting.mjs";

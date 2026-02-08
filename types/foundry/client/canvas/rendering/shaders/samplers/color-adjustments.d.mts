@@ -1,12 +1,12 @@
-import BaseSamplerShader from "./base-sampler.mjs";
+import BaseSamplerShader from './base-sampler.mjs';
 
 /**
  * A color adjustment shader.
  */
 export default class ColorAdjustmentsSamplerShader extends BaseSamplerShader {
-    static override classPluginName: null;
+  static override classPluginName: null;
 
-    static override defaultUniforms: {
+  static override defaultUniforms: {
         tintAlpha: number[];
         tint: number[];
         contrast?: number;
@@ -18,19 +18,19 @@ export default class ColorAdjustmentsSamplerShader extends BaseSamplerShader {
         screenDimensions: number[];
     };
 
-    get linkedToDarknessLevel(): boolean;
+  get linkedToDarknessLevel(): boolean;
 
-    set linkedToDarknessLevel(link: boolean);
+  set linkedToDarknessLevel(link: boolean);
 
-    get contrast(): any;
+  get contrast(): any;
 
-    set contrast(contrast: any);
+  set contrast(contrast: any);
 
-    get exposure(): any;
+  get exposure(): any;
 
-    set exposure(exposure: any);
+  set exposure(exposure: any);
 
-    get saturation(): any;
+  get saturation(): any;
 
-    set saturation(saturation: any);
+  set saturation(saturation: any);
 }

@@ -1,16 +1,16 @@
 export const EQUIP_SLOTS = [
-  "head",
-  "face",
-  "neck",
-  "shoulders",
-  "chest",
-  "torso",
-  "belt",
-  "wrists",
-  "hands",
-  "ring-left",
-  "ring-right",
-  "feet"
+  'head',
+  'face',
+  'neck',
+  'shoulders',
+  'chest',
+  'torso',
+  'belt',
+  'wrists',
+  'hands',
+  'ring-left',
+  'ring-right',
+  'feet',
 ] as const;
 
 export type EquipSlot = (typeof EQUIP_SLOTS)[number];

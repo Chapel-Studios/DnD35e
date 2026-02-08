@@ -1,34 +1,34 @@
-import { SceneDimensions } from "@client/_types.mjs";
-import { TokenAnimationOptions } from "@client/canvas/placeables/token.mjs";
+import { SceneDimensions } from '@client/_types.mjs';
+import { TokenAnimationOptions } from '@client/canvas/placeables/token.mjs';
 import {
-    DatabaseCreateCallbackOptions,
-    DatabaseCreateOperation,
-    DatabaseDeleteCallbackOptions,
-    DatabaseUpdateCallbackOptions,
-    DatabaseUpdateOperation,
-} from "@common/abstract/_types.mjs";
-import Document from "@common/abstract/document.mjs";
-import EmbeddedCollection from "@common/abstract/embedded-collection.mjs";
-import { ImageFilePath } from "@common/constants.mjs";
-import SceneConfig from "../applications/sheets/scene-config.mjs";
+  DatabaseCreateCallbackOptions,
+  DatabaseCreateOperation,
+  DatabaseDeleteCallbackOptions,
+  DatabaseUpdateCallbackOptions,
+  DatabaseUpdateOperation,
+} from '@common/abstract/_types.mjs';
+import Document from '@common/abstract/document.mjs';
+import EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
+import { ImageFilePath } from '@common/constants.mjs';
+import SceneConfig from '../applications/sheets/scene-config.mjs';
 import {
-    AmbientLightDocument,
-    AmbientSoundDocument,
-    BaseScene,
-    BaseUser,
-    DrawingDocument,
-    MeasuredTemplateDocument,
-    NoteDocument,
-    NoteSource,
-    RegionDocument,
-    RegionSource,
-    TileDocument,
-    TokenDocument,
-    TokenSource,
-    WallDocument,
-} from "./_module.mjs";
-import { ClientDocument, ClientDocumentStatic } from "./abstract/client-document.mjs";
-import CompendiumCollection from "./collections/compendium-collection.mjs";
+  AmbientLightDocument,
+  AmbientSoundDocument,
+  BaseScene,
+  BaseUser,
+  DrawingDocument,
+  MeasuredTemplateDocument,
+  NoteDocument,
+  NoteSource,
+  RegionDocument,
+  RegionSource,
+  TileDocument,
+  TokenDocument,
+  TokenSource,
+  WallDocument,
+} from './_module.mjs';
+import { ClientDocument, ClientDocumentStatic } from './abstract/client-document.mjs';
+import CompendiumCollection from './collections/compendium-collection.mjs';
 
 type BaseSceneStatic = typeof BaseScene;
 interface ClientBaseSceneStatic extends BaseSceneStatic, ClientDocumentStatic {}
@@ -45,75 +45,75 @@ interface ClientBaseScene extends InstanceType<typeof ClientBaseScene> {}
  * @param [data={}]        Initial data provided to construct the Scene document
  */
 export default class Scene extends ClientBaseScene {
-    /**
+  /**
      * Track the viewed position of each scene (while in memory only, not persisted)
      * When switching back to a previously viewed scene, we can automatically pan to the previous position.
      */
-    protected _viewPosition: Record<string, never> | { x: number; y: number; scale: number };
+  protected _viewPosition: Record<string, never> | { x: number; y: number; scale: number };
 
-    /** Track whether the scene is the active view */
-    protected _view: boolean;
+  /** Track whether the scene is the active view */
+  protected _view: boolean;
 
-    /** Determine the canvas dimensions this Scene would occupy, if rendered */
-    dimensions: SceneDimensions;
+  /** Determine the canvas dimensions this Scene would occupy, if rendered */
+  dimensions: SceneDimensions;
 
-    /** Provide a thumbnail image path used to represent this document. */
-    get thumbnail(): string;
+  /** Provide a thumbnail image path used to represent this document. */
+  get thumbnail(): string;
 
-    /** A convenience accessor for whether the Scene is currently viewed */
-    get isView(): boolean;
+  /** A convenience accessor for whether the Scene is currently viewed */
+  get isView(): boolean;
 
-    /* -------------------------------------------- */
-    /*  Scene Methods                               */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Scene Methods                               */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Set this scene as currently active
      * @return A Promise which resolves to the current scene once it has been successfully activated
      */
-    activate(): Promise<this>;
+  activate(): Promise<this>;
 
-    override clone(data?: Record<string, unknown>, context?: DocumentCloneContext): this;
+  override clone(data?: Record<string, unknown>, context?: DocumentCloneContext): this;
 
-    /** Set this scene as the current view */
-    view(): Promise<this>;
+  /** Set this scene as the current view */
+  view(): Promise<this>;
 
-    override prepareBaseData(): void;
+  override prepareBaseData(): void;
 
-    /**
+  /**
      * Get the Canvas dimensions which would be used to display this Scene.
      * Apply padding to enlarge the playable space and round to the nearest 2x grid size to ensure symmetry.
      * The rounding accomplishes that the padding buffer around the map always contains whole grid spaces.
      */
-    getDimensions(): SceneDimensions;
+  getDimensions(): SceneDimensions;
 
-    protected override _preCreate(
-        data: this["_source"],
+  protected override _preCreate(
+        data: this['_source'],
         options: DatabaseCreateCallbackOptions,
         user: BaseUser,
     ): Promise<boolean | void>;
 
-    protected override _onCreate(data: this["_source"], options: DatabaseCreateCallbackOptions, userId: string): void;
+  protected override _onCreate(data: this['_source'], options: DatabaseCreateCallbackOptions, userId: string): void;
 
-    protected override _preUpdate(
+  protected override _preUpdate(
         data: Record<string, unknown>,
         options: SceneUpdateOptions,
         user: BaseUser,
     ): Promise<boolean | void>;
 
-    override _onUpdate(changed: DeepPartial<this["_source"]>, options: SceneUpdateOptions, userId: string): void;
+  override _onUpdate(changed: DeepPartial<this['_source']>, options: SceneUpdateOptions, userId: string): void;
 
-    protected override _preDelete(options: DatabaseDeleteCallbackOptions, user: BaseUser): Promise<boolean | void>;
+  protected override _preDelete(options: DatabaseDeleteCallbackOptions, user: BaseUser): Promise<boolean | void>;
 
-    protected override _onDelete(options: DatabaseDeleteCallbackOptions, userId: string): void;
+  protected override _onDelete(options: DatabaseDeleteCallbackOptions, userId: string): void;
 
-    /**
+  /**
      * Handle Scene activation workflow if the active state is changed to true
      * @param active Is the scene now active?
      */
-    protected _onActivate(active: boolean): Promise<this>;
+  protected _onActivate(active: boolean): Promise<this>;
 
-    protected override _preCreateDescendantDocuments<P extends Document>(
+  protected override _preCreateDescendantDocuments<P extends Document>(
         parent: P,
         collection: string,
         data: object[],
@@ -121,7 +121,7 @@ export default class Scene extends ClientBaseScene {
         userId: string,
     ): void;
 
-    protected override _preUpdateDescendantDocuments<P extends Document>(
+  protected override _preUpdateDescendantDocuments<P extends Document>(
         parent: P,
         collection: string,
         changes: Record<string, unknown>[],
@@ -129,7 +129,7 @@ export default class Scene extends ClientBaseScene {
         userId: string,
     ): void;
 
-    protected _onUpdateDescendantDocuments<P extends Document>(
+  protected _onUpdateDescendantDocuments<P extends Document>(
         parent: P,
         collection: string,
         documents: Document<P>[],
@@ -138,13 +138,13 @@ export default class Scene extends ClientBaseScene {
         userId: string,
     ): void;
 
-    /* -------------------------------------------- */
-    /*  Importing and Exporting                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Importing and Exporting                     */
+  /* -------------------------------------------- */
 
-    override toCompendium(pack: CompendiumCollection): this["_source"];
+  override toCompendium(pack: CompendiumCollection): this['_source'];
 
-    /**
+  /**
          * Create a 300px by 100px thumbnail image for this scene background
          * @param [string|null] A background image to use for thumbnail creation, otherwise the current scene background
                                 is used.
@@ -152,11 +152,12 @@ export default class Scene extends ClientBaseScene {
          * @param [height]      The desired thumbnail height. Default is 100px;
          * @return The created thumbnail data.
          */
-    createThumbnail({
-        img,
-        width,
-        height,
-    }?: {
+  createThumbnail({
+    img,
+    width,
+    height,
+  }
+  ?: {
         img?: ImageFilePath | null;
         width?: number;
         height?: number;
@@ -176,100 +177,100 @@ export default interface Scene extends ClientBaseScene {
 
     get sheet(): SceneConfig<this> | null;
 
-    getEmbeddedCollection(embeddedName: "Token"): this["tokens"];
+    getEmbeddedCollection(embeddedName: 'Token'): this['tokens'];
 
     update(data: Record<string, unknown>, options?: Partial<SceneUpdateOptions>): Promise<this>;
 
     createEmbeddedDocuments(
-        embeddedName: "Note",
+        embeddedName: 'Note',
         data: PreCreate<NoteSource>[],
         operation?: DatabaseCreateOperation<this>,
-    ): Promise<CollectionValue<this["notes"]>[]>;
+    ): Promise<CollectionValue<this['notes']>[]>;
     createEmbeddedDocuments(
-        embeddedName: "Token",
+        embeddedName: 'Token',
         data: PreCreate<TokenSource>[],
         operation?: DatabaseCreateOperation<this>,
-    ): Promise<CollectionValue<this["tokens"]>[]>;
+    ): Promise<CollectionValue<this['tokens']>[]>;
     createEmbeddedDocuments(
-        embeddedName: "Region",
+        embeddedName: 'Region',
         data: PreCreate<RegionSource>[],
         context?: DatabaseCreateOperation<this>,
-    ): Promise<CollectionValue<this["regions"]>[]>;
+    ): Promise<CollectionValue<this['regions']>[]>;
     createEmbeddedDocuments(
         embeddedName: SceneEmbeddedName,
         data: Record<string, unknown>[],
         operation?: DatabaseCreateOperation<this>,
     ): Promise<
-        | CollectionValue<this["drawings"]>[]
-        | CollectionValue<this["lights"]>[]
-        | CollectionValue<this["notes"]>[]
-        | CollectionValue<this["regions"]>[]
-        | CollectionValue<this["sounds"]>[]
-        | CollectionValue<this["tiles"]>[]
-        | CollectionValue<this["tokens"]>[]
-        | CollectionValue<this["tokens"]>[]
-        | CollectionValue<this["walls"]>[]
+        | CollectionValue<this['drawings']>[]
+        | CollectionValue<this['lights']>[]
+        | CollectionValue<this['notes']>[]
+        | CollectionValue<this['regions']>[]
+        | CollectionValue<this['sounds']>[]
+        | CollectionValue<this['tiles']>[]
+        | CollectionValue<this['tokens']>[]
+        | CollectionValue<this['tokens']>[]
+        | CollectionValue<this['walls']>[]
     >;
 
     updateEmbeddedDocuments(
-        embeddedName: "AmbientLight",
+        embeddedName: 'AmbientLight',
         updateData: EmbeddedDocumentUpdateData[],
         operation?: Partial<DatabaseUpdateOperation<this>>,
-    ): Promise<CollectionValue<this["lights"]>[]>;
+    ): Promise<CollectionValue<this['lights']>[]>;
     updateEmbeddedDocuments(
-        embeddedName: "AmbientSound",
+        embeddedName: 'AmbientSound',
         updateData: EmbeddedDocumentUpdateData[],
         operation?: Partial<DatabaseUpdateOperation<this>>,
-    ): Promise<CollectionValue<this["sounds"]>[]>;
+    ): Promise<CollectionValue<this['sounds']>[]>;
     updateEmbeddedDocuments(
-        embeddedName: "Drawing",
+        embeddedName: 'Drawing',
         updateData: EmbeddedDocumentUpdateData[],
         operation?: Partial<DatabaseUpdateOperation<this>>,
-    ): Promise<CollectionValue<this["drawings"]>[]>;
+    ): Promise<CollectionValue<this['drawings']>[]>;
     updateEmbeddedDocuments(
-        embeddedName: "MeasuredTemplate",
+        embeddedName: 'MeasuredTemplate',
         updateData: EmbeddedDocumentUpdateData[],
         operation?: Partial<DatabaseUpdateOperation<this>>,
-    ): Promise<CollectionValue<this["tokens"]>[]>;
+    ): Promise<CollectionValue<this['tokens']>[]>;
     updateEmbeddedDocuments(
-        embeddedName: "Note",
+        embeddedName: 'Note',
         updateData: EmbeddedDocumentUpdateData[],
         operation?: Partial<DatabaseUpdateOperation<this>>,
-    ): Promise<CollectionValue<this["notes"]>[]>;
+    ): Promise<CollectionValue<this['notes']>[]>;
     updateEmbeddedDocuments(
-        embeddedName: "Region",
+        embeddedName: 'Region',
         updateData: EmbeddedDocumentUpdateData[],
         operation?: Partial<DatabaseCreateOperation<this>>,
-    ): Promise<CollectionValue<this["regions"]>[]>;
+    ): Promise<CollectionValue<this['regions']>[]>;
     updateEmbeddedDocuments(
-        embeddedName: "Tile",
+        embeddedName: 'Tile',
         updateData: EmbeddedDocumentUpdateData[],
         operation?: Partial<DatabaseUpdateOperation<this>>,
-    ): Promise<CollectionValue<this["tiles"]>[]>;
+    ): Promise<CollectionValue<this['tiles']>[]>;
     updateEmbeddedDocuments(
-        embeddedName: "Token",
+        embeddedName: 'Token',
         updateData: EmbeddedDocumentUpdateData[],
         operation?: Partial<EmbeddedTokenUpdateOperation<this>>,
-    ): Promise<CollectionValue<this["tokens"]>[]>;
+    ): Promise<CollectionValue<this['tokens']>[]>;
     updateEmbeddedDocuments(
-        embeddedName: "Wall",
+        embeddedName: 'Wall',
         updateData: EmbeddedDocumentUpdateData[],
         operation?: Partial<DatabaseUpdateOperation<this>>,
-    ): Promise<CollectionValue<this["walls"]>[]>;
+    ): Promise<CollectionValue<this['walls']>[]>;
     updateEmbeddedDocuments(
         embeddedName: SceneEmbeddedName,
         updateData: EmbeddedDocumentUpdateData[],
         operation?: Partial<DatabaseUpdateOperation<this>>,
     ): Promise<
-        | CollectionValue<this["drawings"]>[]
-        | CollectionValue<this["lights"]>[]
-        | CollectionValue<this["notes"]>[]
-        | CollectionValue<this["regions"]>[]
-        | CollectionValue<this["sounds"]>[]
-        | CollectionValue<this["tiles"]>[]
-        | CollectionValue<this["tokens"]>[]
-        | CollectionValue<this["tokens"]>[]
-        | CollectionValue<this["walls"]>[]
+        | CollectionValue<this['drawings']>[]
+        | CollectionValue<this['lights']>[]
+        | CollectionValue<this['notes']>[]
+        | CollectionValue<this['regions']>[]
+        | CollectionValue<this['sounds']>[]
+        | CollectionValue<this['tiles']>[]
+        | CollectionValue<this['tokens']>[]
+        | CollectionValue<this['tokens']>[]
+        | CollectionValue<this['walls']>[]
     >;
 }
 
@@ -288,14 +289,14 @@ export type SceneTokenOperation<TParent extends Scene> = SceneEmbeddedOperation<
 };
 
 export type SceneEmbeddedName =
-    | "AmbientLight"
-    | "AmbientSound"
-    | "Drawing"
-    | "MeasuredTemplate"
-    | "Note"
-    | "Region"
-    | "Tile"
-    | "Token"
-    | "Wall";
+    | 'AmbientLight'
+    | 'AmbientSound'
+    | 'Drawing'
+    | 'MeasuredTemplate'
+    | 'Note'
+    | 'Region'
+    | 'Tile'
+    | 'Token'
+    | 'Wall';
 
 export {};

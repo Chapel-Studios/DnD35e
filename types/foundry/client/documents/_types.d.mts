@@ -1,11 +1,11 @@
-import { TokenConstrainMovementPathOptions, TokenMovementActionConfig } from "@client/_types.mjs";
-import Roll from "@client/dice/roll.mjs";
-import { ElevatedPoint, TokenPosition } from "@common/_types.mjs";
-import DataModel from "@common/abstract/data.mjs";
-import { RegionMovementSegmentType, TokenShapeType } from "@common/constants.mjs";
-import { EffectDurationData } from "@common/documents/active-effect.mjs";
-import { GridMeasurePathCostFunction3D } from "@common/grid/_types.mjs";
-import { Combat, Combatant, RegionDocument, TableResult, TokenDocument, User } from "./_module.mjs";
+import { TokenConstrainMovementPathOptions, TokenMovementActionConfig } from '@client/_types.mjs';
+import Roll from '@client/dice/roll.mjs';
+import { ElevatedPoint, TokenPosition } from '@common/_types.mjs';
+import DataModel from '@common/abstract/data.mjs';
+import { RegionMovementSegmentType, TokenShapeType } from '@common/constants.mjs';
+import { EffectDurationData } from '@common/documents/active-effect.mjs';
+import { GridMeasurePathCostFunction3D } from '@common/grid/_types.mjs';
+import { Combat, Combatant, RegionDocument, TableResult, TokenDocument, User } from './_module.mjs';
 
 /**
  * The data that is planned to be imported for the adventure, categorized into new documents that will be created and
@@ -53,7 +53,7 @@ interface AdventureImportResult {
     /** Documents created as a result of the import, grouped by document name */
     created: Record<string, Document[]>;
 
-    /** Documents updated as a result of the import, grouped by document name*/
+    /** Documents updated as a result of the import, grouped by document name */
     updated: Record<string, Document[]>;
 }
 
@@ -105,7 +105,7 @@ interface CombatTurnEventContext {
     skipped: boolean;
 }
 
-type CombatRoundEventContext = Omit<CombatTurnEventContext, "turn">;
+type CombatRoundEventContext = Omit<CombatTurnEventContext, 'turn'>;
 
 interface RegionEvent<TData extends object = object> {
     /** The name of the event */
@@ -408,11 +408,11 @@ interface TokenMeasuredMovementWaypoint {
 }
 
 interface TokenMovementWaypoint
-    extends Omit<TokenMeasuredMovementWaypoint, "terrain" | "intermediate" | "userId" | "movementId" | "cost"> {}
+    extends Omit<TokenMeasuredMovementWaypoint, 'terrain' | 'intermediate' | 'userId' | 'movementId' | 'cost'> {}
 
 type TokenMovementSegmentData = Pick<
     TokenMeasuredMovementWaypoint,
-    "width" | "height" | "shape" | "action" | "terrain"
+    'width' | 'height' | 'shape' | 'action' | 'terrain'
 > & {
     actionConfig: TokenMovementActionConfig;
     teleport: boolean;
@@ -525,7 +525,7 @@ interface TokenGetCompleteMovementPathWaypoint {
     intermediate?: boolean;
 }
 
-interface TokenCompleteMovementWaypoint extends Omit<TokenMeasuredMovementWaypoint, "userId" | "movementId" | "cost"> {}
+interface TokenCompleteMovementWaypoint extends Omit<TokenMeasuredMovementWaypoint, 'userId' | 'movementId' | 'cost'> {}
 
 interface TokenSegmentizeMovementWaypoint {
     /**
@@ -651,8 +651,8 @@ interface TokenMovementHistoryData {
      */
     diagonals: number;
 }
-type TokenMovementMethod = "api" | "config" | "dragging" | "keyboard" | "undo";
-type TokenMovementState = "completed" | "paused" | "pending" | "stopped";
+type TokenMovementMethod = 'api' | 'config' | 'dragging' | 'keyboard' | 'undo';
+type TokenMovementState = 'completed' | 'paused' | 'pending' | 'stopped';
 
 interface TokenMovementData {
     /** The ID of the movement */
@@ -683,7 +683,7 @@ interface TokenMovementData {
     method: TokenMovementMethod;
 
     /** The options to constrain movement */
-    constrainOptions: Omit<TokenConstrainMovementPathOptions, "preview" | "history">;
+    constrainOptions: Omit<TokenConstrainMovementPathOptions, 'preview' | 'history'>;
 
     /** Automatically rotate the token in the direction of movement? */
     autoRotate: boolean;
@@ -701,7 +701,7 @@ interface TokenMovementData {
     updateOptions: object;
 }
 
-interface TokenMovementOperation extends Omit<TokenMovementData, "user" | "state" | "updateOptions"> {}
+interface TokenMovementOperation extends Omit<TokenMovementData, 'user' | 'state' | 'updateOptions'> {}
 
 interface TokenMovementContinuationData {
     /** The movement ID */

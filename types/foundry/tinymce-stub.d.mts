@@ -63,7 +63,7 @@ export namespace TinyMCE {
         mixed?: boolean;
         block_expand?: boolean;
         onmatch?: (node: Element, fmt: T, itemName: string) => boolean;
-        remove?: "none" | "empty" | "all";
+        remove?: 'none' | 'empty' | 'all';
         remove_similar?: boolean;
         split?: boolean;
         deep?: boolean;

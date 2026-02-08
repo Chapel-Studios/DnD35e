@@ -8,8 +8,8 @@ interface IdentifiableItemSystemSource {
         unidentifiedNameFormula?: string | null;
         isUnidentifiedNameFromFormula: boolean;
     };
-};
+}
 
-interface IdentifiableItemSystemData extends IdentifiableItemSystemSource {};
+type IdentifiableItemSystemData = IdentifiableItemSystemSource;
 
 export type { IdentifiableItemSystemSource, IdentifiableItemSystemData };

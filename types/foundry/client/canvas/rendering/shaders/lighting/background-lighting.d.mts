@@ -2,16 +2,17 @@
  * The default coloration shader used by standard rendering and animations.
  * A fragment shader which creates a solid light source.
  */
+import AdaptiveLightingShader from './base-lighting.mjs';
 export default class AdaptiveBackgroundShader extends AdaptiveLightingShader {
-    /**
+  /**
      * Memory allocations for the Adaptive Background Shader
      * @type {string}
      */
-    static SHADER_HEADER: string;
-    /** @inheritdoc */
-    static fragmentShader: string;
-    /** @override */
-    static override defaultUniforms: {
+  static SHADER_HEADER: string;
+  /** @inheritdoc */
+  static fragmentShader: string;
+  /** @override */
+  static override defaultUniforms: {
         technique: number;
         contrast: number;
         shadows: number;
@@ -39,12 +40,12 @@ export default class AdaptiveBackgroundShader extends AdaptiveLightingShader {
         globalLight: boolean;
         globalLightThresholds: number[];
     };
-    /**
+
+  /**
      * Flag whether the background shader is currently required.
      * Check vision modes requirements first, then
      * if key uniforms are at their default values, we don't need to render the background container.
      * @type {boolean}
      */
-    get isRequired(): boolean;
+  get isRequired(): boolean;
 }
-import AdaptiveLightingShader from "./base-lighting.mjs";

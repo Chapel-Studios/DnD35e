@@ -1,7 +1,7 @@
-import { DocumentOwnershipLevel, DocumentOwnershipString, ImageFilePath, VideoFilePath } from "@common/constants.mjs";
-import * as abstract from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseCard, BaseFolder, BaseUser } from "./_module.mjs";
+import { DocumentOwnershipLevel, DocumentOwnershipString, ImageFilePath, VideoFilePath } from '@common/constants.mjs';
+import * as abstract from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseCard, BaseFolder, BaseUser } from './_module.mjs';
 
 /**
  * The Document definition for Cards.
@@ -12,20 +12,20 @@ import { BaseCard, BaseFolder, BaseUser } from "./_module.mjs";
  * @param context Construction context options
  */
 export default class BaseCards extends abstract.Document<null, CardsSchema> {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): CardsMetadata;
+  static override get metadata(): CardsMetadata;
 
-    static override defineSchema(): CardsSchema;
+  static override defineSchema(): CardsSchema;
 
-    /** The default icon used for a cards stack that does not have a custom image set */
-    static DEFAULT_ICON: ImageFilePath | VideoFilePath;
+  /** The default icon used for a cards stack that does not have a custom image set */
+  static DEFAULT_ICON: ImageFilePath | VideoFilePath;
 
-    static get TYPES(): string[];
+  static get TYPES(): string[];
 
-    override testUserPermission(
+  override testUserPermission(
         user: BaseUser,
         permission: DocumentOwnershipString | DocumentOwnershipLevel,
         { exact }?: { exact?: boolean },
@@ -35,24 +35,24 @@ export default class BaseCards extends abstract.Document<null, CardsSchema> {
 export default interface BaseCards
     extends abstract.Document<null, CardsSchema>,
         fields.ModelPropsFromSchema<CardsSchema> {
-    get documentName(): CardsMetadata["name"];
+    get documentName(): CardsMetadata['name'];
 }
 
 interface CardsMetadata extends abstract.DocumentMetadata {
-    name: "Cards";
-    collection: "cards";
+    name: 'Cards';
+    collection: 'cards';
     indexed: true;
-    compendiumIndexFields: ["_id", "name", "description", "img", "type", "sort", "folder"];
-    embedded: { Card: "cards" };
-    label: "DOCUMENT.Cards";
-    labelPlural: "DOCUMENT.CardsPlural";
+    compendiumIndexFields: ['_id', 'name', 'description', 'img', 'type', 'sort', 'folder'];
+    embedded: { Card: 'cards' };
+    label: 'DOCUMENT.Cards';
+    labelPlural: 'DOCUMENT.CardsPlural';
     permissions: {
         view: abstract.MetadataPermission;
-        create: "CARDS_CREATE";
+        create: 'CARDS_CREATE';
         update: abstract.MetadataPermission;
         delete: abstract.MetadataPermission;
     };
-    coreTypes: ["deck", "hand", "pile"];
+    coreTypes: ['deck', 'hand', 'pile'];
 }
 
 type CardsSchema = {
@@ -90,6 +90,6 @@ type CardsSchema = {
     _stats: fields.DocumentStatsField;
 };
 
-type CardsType = CardsMetadata["coreTypes"][number];
+type CardsType = CardsMetadata['coreTypes'][number];
 
 export type CardsSource = fields.SourceFromSchema<CardsSchema>;

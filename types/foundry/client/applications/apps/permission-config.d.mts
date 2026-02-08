@@ -1,6 +1,6 @@
-import { ApplicationConfiguration, FormFooterButton } from "../_types.mjs";
-import { HandlebarsApplicationMixin, HandlebarsRenderOptions, HandlebarsTemplatePart } from "../api/_module.mjs";
-import ApplicationV2 from "../api/application.mjs";
+import { ApplicationConfiguration, FormFooterButton } from '../_types.mjs';
+import { HandlebarsApplicationMixin, HandlebarsRenderOptions, HandlebarsTemplatePart } from '../api/_module.mjs';
+import ApplicationV2 from '../api/application.mjs';
 
 export interface PermissionConfigContext {
     roles: Record<keyof typeof CONST.USER_ROLES, string>;
@@ -10,13 +10,13 @@ export interface PermissionConfigContext {
 
 /** An application for configuring the permissions which are available to each User role. */
 export default class PermissionConfig extends HandlebarsApplicationMixin(ApplicationV2) {
-    static override DEFAULT_OPTIONS: DeepPartial<ApplicationConfiguration>;
+  static override DEFAULT_OPTIONS: DeepPartial<ApplicationConfiguration>;
 
-    static override PARTS: Record<string, HandlebarsTemplatePart>;
+  static override PARTS: Record<string, HandlebarsTemplatePart>;
 
-    /* -------------------------------------------- */
-    /*  Rendering                                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering                                   */
+  /* -------------------------------------------- */
 
-    override _prepareContext(options: HandlebarsRenderOptions): Promise<PermissionConfigContext>;
+  override _prepareContext(options: HandlebarsRenderOptions): Promise<PermissionConfigContext>;
 }

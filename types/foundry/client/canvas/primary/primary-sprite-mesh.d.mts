@@ -1,7 +1,7 @@
-import { SpriteMesh } from "../containers/_module.mjs";
-import { TextureAlphaData } from "../loader.mjs";
-import { PrimaryBaseSamplerShader } from "../rendering/shaders/_module.mjs";
-import PrimaryOccludableObjectMixin from "./primary-occludable-object.mjs";
+import { SpriteMesh } from '../containers/_module.mjs';
+import { TextureAlphaData } from '../loader.mjs';
+import { PrimaryBaseSamplerShader } from '../rendering/shaders/_module.mjs';
+import PrimaryOccludableObjectMixin from './primary-occludable-object.mjs';
 
 export interface PrimarySpriteMeshConstructorOptions {
     /** Texture passed to the SpriteMesh. */
@@ -21,35 +21,35 @@ export interface PrimarySpriteMeshConstructorOptions {
  * @param [options.object]      Any object that owns this sprite.
  */
 export default class PrimarySpriteMesh extends PrimaryOccludableObjectMixin(SpriteMesh) {
-    constructor(options: PrimarySpriteMeshConstructorOptions, shaderClass: typeof PrimaryBaseSamplerShader);
+  constructor(options: PrimarySpriteMeshConstructorOptions, shaderClass: typeof PrimaryBaseSamplerShader);
 
-    object: object | null;
+  object: object | null;
 
-    name: string | null;
+  name: string | null;
 
-    /** The texture alpha data. */
-    protected _textureAlphaData: TextureAlphaData | null;
+  /** The texture alpha data. */
+  protected _textureAlphaData: TextureAlphaData | null;
 
-    /**
+  /**
      * The texture alpha threshold used for point containment tests.
      * If set to a value larger than 0, the texture alpha data is
      * extracted from the texture at 25% resolution.
      */
-    textureAlphaThreshold: number;
+  textureAlphaThreshold: number;
 
-    /* -------------------------------------------- */
-    /*  PIXI Events                                 */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  PIXI Events                                 */
+  /* -------------------------------------------- */
 
-    protected override _onTextureUpdate(): void;
+  protected override _onTextureUpdate(): void;
 
-    /* -------------------------------------------- */
-    /*  Helper Methods                              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Helper Methods                              */
+  /* -------------------------------------------- */
 
-    override setShaderClass(shaderClass: typeof PrimaryBaseSamplerShader): void;
+  override setShaderClass(shaderClass: typeof PrimaryBaseSamplerShader): void;
 
-    /**
+  /**
      * An all-in-one helper method: Resizing the PCO according to desired dimensions and options.
      * This helper computes the width and height based on the following factors:
      *
@@ -77,51 +77,51 @@ export default class PrimarySpriteMesh extends PrimaryOccludableObjectMixin(Spri
      * @param [options.scaleX=1]    The scale on X axis.
      * @param [options.scaleY=1]    The scale on Y axis.
      */
-    resize(
+  resize(
         baseWidth: number,
         baseHeight: number,
         options?: {
-            fit?: "fill" | "cover" | "contain" | "width" | "height";
+            fit?: 'fill' | 'cover' | 'contain' | 'width' | 'height';
             scaleX?: number;
             scaleY?: number;
         },
     ): void;
 
-    /* -------------------------------------------- */
-    /*  Methods                                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Methods                                     */
+  /* -------------------------------------------- */
 
-    protected override _updateBatchData(): void;
+  protected override _updateBatchData(): void;
 
-    protected override _calculateCanvasBounds(): void;
+  protected override _calculateCanvasBounds(): void;
 
-    /**
+  /**
      * Is the given point in canvas space contained in this object?
      * @param point                   The point in canvas space
      * @param [textureAlphaThreshold] The minimum texture alpha required for containment
      */
-    override containsCanvasPoint(point: PIXI.IPointData, textureAlphaThreshold?: number): boolean;
+  override containsCanvasPoint(point: PIXI.IPointData, textureAlphaThreshold?: number): boolean;
 
-    /**
+  /**
      * Is the given point in world space contained in this object?
      * @param point                   The point in world space
      * @param [textureAlphaThreshold] The minimum texture alpha required for containment
      */
-    override containsPoint(point: PIXI.IPointData, textureAlphaThreshold?: number): boolean;
+  override containsPoint(point: PIXI.IPointData, textureAlphaThreshold?: number): boolean;
 
-    /* -------------------------------------------- */
-    /*  Rendering Methods                           */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering Methods                           */
+  /* -------------------------------------------- */
 
-    override renderDepthData(renderer: PIXI.Renderer): void;
+  override renderDepthData(renderer: PIXI.Renderer): void;
 
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Render the sprite with ERASE blending.
      * Note: The sprite must not have visible/renderable children.
      * @param renderer The renderer
      * @internal
      */
-    _renderVoid(renderer: PIXI.Renderer): void;
+  _renderVoid(renderer: PIXI.Renderer): void;
 }

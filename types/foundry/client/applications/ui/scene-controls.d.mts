@@ -1,6 +1,6 @@
-import type { ApplicationConfiguration, ApplicationPosition, ApplicationRenderOptions } from "../_types.mjs";
-import type { ApplicationV2, HandlebarsApplicationMixin } from "../api/_module.mjs";
-import type { HandlebarsRenderOptions, HandlebarsTemplatePart } from "../api/handlebars-application.mjs";
+import type { ApplicationConfiguration, ApplicationPosition, ApplicationRenderOptions } from '../_types.mjs';
+import type { ApplicationV2, HandlebarsApplicationMixin } from '../api/_module.mjs';
+import type { HandlebarsRenderOptions, HandlebarsTemplatePart } from '../api/handlebars-application.mjs';
 
 /** The data structure for a single tool in the {@link SceneControl#tools} record. */
 export interface SceneControlTool {
@@ -82,59 +82,59 @@ interface SceneControlsActivationChange {
 export default class SceneControls extends HandlebarsApplicationMixin(
     ApplicationV2<ApplicationConfiguration, SceneControlsRenderOptions>,
 ) {
-    static override DEFAULT_OPTIONS: ApplicationConfiguration;
+  static override DEFAULT_OPTIONS: ApplicationConfiguration;
 
-    static override PARTS: Record<string, HandlebarsTemplatePart>;
+  static override PARTS: Record<string, HandlebarsTemplatePart>;
 
-    /** Prepared data of available controls. */
-    get controls(): Record<string, SceneControl>;
+  /** Prepared data of available controls. */
+  get controls(): Record<string, SceneControl>;
 
-    /** The currently active control layer. */
-    get control(): SceneControl | null;
+  /** The currently active control layer. */
+  get control(): SceneControl | null;
 
-    /** The tools which are available within the current control layer. */
-    get tools(): Record<string, SceneControlTool>;
+  /** The tools which are available within the current control layer. */
+  get tools(): Record<string, SceneControlTool>;
 
-    /** The currently active tool in the control palette. */
-    get tool(): SceneControlTool;
+  /** The currently active tool in the control palette. */
+  get tool(): SceneControlTool;
 
-    /* -------------------------------------------- */
-    /*  Public API                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Public API                                  */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Activate a new control layer or tool.
      * This method is advantageous to use because it minimizes the amount of re-rendering necessary.
      */
-    activate(options?: Pick<SceneControlsRenderOptions, "event" | "control" | "tool" | "toggles">): Promise<void>;
+  activate(options?: Pick<SceneControlsRenderOptions, 'event' | 'control' | 'tool' | 'toggles'>): Promise<void>;
 
-    /* -------------------------------------------- */
-    /*  Rendering Methods                           */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering Methods                           */
+  /* -------------------------------------------- */
 
-    protected override _configureRenderOptions(options: Partial<ApplicationRenderOptions>): ApplicationRenderOptions;
+  protected override _configureRenderOptions(options: Partial<ApplicationRenderOptions>): ApplicationRenderOptions;
 
-    protected override _preRender(context: object, options: ApplicationRenderOptions): Promise<void>;
+  protected override _preRender(context: object, options: ApplicationRenderOptions): Promise<void>;
 
-    protected override _prepareContext(options: ApplicationRenderOptions): Promise<object>;
+  protected override _prepareContext(options: ApplicationRenderOptions): Promise<object>;
 
-    protected override _onRender(context: object, options: ApplicationRenderOptions): Promise<void>;
+  protected override _onRender(context: object, options: ApplicationRenderOptions): Promise<void>;
 
-    /**
+  /**
      * Update the class of the notes layer icon to reflect whether there are visible notes or not.
      * @internal
      */
-    _updateNotesIcon(): void;
+  _updateNotesIcon(): void;
 
-    override setPosition(position?: Partial<ApplicationPosition>): ApplicationPosition;
+  override setPosition(position?: Partial<ApplicationPosition>): ApplicationPosition;
 
-    /* -------------------------------------------- */
-    /*  Toolclip Definitions                        */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Toolclip Definitions                        */
+  /* -------------------------------------------- */
 
-    /** Reusable toolclip items. */
-    static COMMON_TOOLCLIP_ITEMS: Record<string, { heading: string; reference: string }>;
+  /** Reusable toolclip items. */
+  static COMMON_TOOLCLIP_ITEMS: Record<string, { heading: string; reference: string }>;
 
-    /** A helper function used to prepare an array of toolclip items. */
-    static buildToolclipItems(items: (ToolclipConfigurationItem | string | null)[]): ToolclipConfigurationItem[];
+  /** A helper function used to prepare an array of toolclip items. */
+  static buildToolclipItems(items: (ToolclipConfigurationItem | string | null)[]): ToolclipConfigurationItem[];
 }

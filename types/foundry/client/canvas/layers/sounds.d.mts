@@ -1,13 +1,13 @@
-import { SoundPlaybackOptions } from "@client/audio/_types.mjs";
-import { ElevatedPoint, Point } from "@common/_types.mjs";
-import Collection from "@common/utils/collection.mjs";
-import { SceneControl } from "../../applications/ui/scene-controls.mjs";
-import Sound from "../../audio/sound.mjs";
-import AmbientSound from "../placeables/sound.mjs";
-import { PointEffectSourceData } from "../sources/point-effect-source.mjs";
-import PointSoundSource from "../sources/point-sound-source.mjs";
-import { AmbientSoundPlaybackConfig, PlaceablesLayerOptions } from "./_types.mjs";
-import PlaceablesLayer, { PlaceablesLayerPointerEvent } from "./base/placeables-layer.mjs";
+import { SoundPlaybackOptions } from '@client/audio/_types.mjs';
+import { ElevatedPoint, Point } from '@common/_types.mjs';
+import Collection from '@common/utils/collection.mjs';
+import { SceneControl } from '../../applications/ui/scene-controls.mjs';
+import Sound from '../../audio/sound.mjs';
+import AmbientSound from '../placeables/sound.mjs';
+import { PointEffectSourceData } from '../sources/point-effect-source.mjs';
+import PointSoundSource from '../sources/point-sound-source.mjs';
+import { AmbientSoundPlaybackConfig, PlaceablesLayerOptions } from './_types.mjs';
+import PlaceablesLayer, { PlaceablesLayerPointerEvent } from './base/placeables-layer.mjs';
 
 export interface AmbientSoundEffect {
     /* The type of effect in CONFIG.soundEffects */
@@ -21,73 +21,73 @@ export interface AmbientSoundEffect {
  * @category Canvas
  */
 export default class SoundsLayer<TObject extends AmbientSound = AmbientSound> extends PlaceablesLayer<TObject> {
-    /** Track whether to actively preview ambient sounds with mouse cursor movements */
-    livePreview: boolean;
+  /** Track whether to actively preview ambient sounds with mouse cursor movements */
+  livePreview: boolean;
 
-    /** A mapping of ambient audio sources which are active within the rendered Scene */
-    sources: Collection<string, PointSoundSource<TObject>>;
+  /** A mapping of ambient audio sources which are active within the rendered Scene */
+  sources: Collection<string, PointSoundSource<TObject>>;
 
-    static override get layerOptions(): PlaceablesLayerOptions;
+  static override get layerOptions(): PlaceablesLayerOptions;
 
-    static override documentName: "AmbientSound";
+  static override documentName: 'AmbientSound';
 
-    override get hookName(): string;
+  override get hookName(): string;
 
-    /* -------------------------------------------- */
-    /*  Methods                                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Methods                                     */
+  /* -------------------------------------------- */
 
-    protected override _draw(options?: object): Promise<void>;
+  protected override _draw(options?: object): Promise<void>;
 
-    protected override _tearDown(options?: object): Promise<void>;
+  protected override _tearDown(options?: object): Promise<void>;
 
-    protected override _activate(): void;
+  protected override _activate(): void;
 
-    /** Initialize all AmbientSound sources which are present on this layer */
-    initializeSources(): void;
+  /** Initialize all AmbientSound sources which are present on this layer */
+  initializeSources(): void;
 
-    /**
+  /**
      * Update all AmbientSound effects in the layer by toggling their playback status.
      * Sync audio for the positions of tokens which are capable of hearing.
      * @param [options={}]  Additional options forwarded to AmbientSound synchronization
      */
-    refresh(options?: object): void;
+  refresh(options?: object): void;
 
-    /**
+  /**
      * Preview ambient audio for a given position
      * @param {Point|ElevatedPoint} position    The position to preview
      */
-    previewSound(position: Point | ElevatedPoint): void;
+  previewSound(position: Point | ElevatedPoint): void;
 
-    /** Terminate playback of all ambient audio sources */
-    stopAll(): void;
+  /** Terminate playback of all ambient audio sources */
+  stopAll(): void;
 
-    /** Get an array of listener positions for Tokens which are able to hear environmental sound. */
-    getListenerPositions(): ElevatedPoint[];
+  /** Get an array of listener positions for Tokens which are able to hear environmental sound. */
+  getListenerPositions(): ElevatedPoint[];
 
-    /**
+  /**
      * Sync the playing state and volume of all AmbientSound objects based on the position of listener points
      * @param {ElevatedPoint[]} listeners    Locations of listeners which have the capability to hear
      * @param {object} [options={}]          Additional options forwarded to AmbientSound synchronization
      * @protected
      */
-    protected _syncPositions(listeners: ElevatedPoint[], options?: object): void;
+  protected _syncPositions(listeners: ElevatedPoint[], options?: object): void;
 
-    /**
+  /**
      * Configure playback by assigning the muffled state and final playback volume for the sound.
      * This method should mutate the config object by assigning the volume and muffled properties.
      * @param config
      */
-    protected _configurePlayback(config: AmbientSoundPlaybackConfig): void;
+  protected _configurePlayback(config: AmbientSoundPlaybackConfig): void;
 
-    /**
+  /**
      * Actions to take when the darkness level of the Scene is changed
      * @param event
      * @internal
      */
-    _onDarknessChange(event: PIXI.FederatedEvent): void;
+  _onDarknessChange(event: PIXI.FederatedEvent): void;
 
-    /**
+  /**
      * Play a one-shot Sound originating from a predefined point on the canvas.
      * The sound plays locally for the current client only.
      * To play a sound for all connected clients use SoundsLayer#emitAtPosition.
@@ -137,7 +137,7 @@ export default class SoundsLayer<TObject extends AmbientSound = AmbientSound> ex
      * });
      * ```
      */
-    playAtPosition(
+  playAtPosition(
         src: string,
         origin: Point | ElevatedPoint,
         radius: number,
@@ -153,38 +153,38 @@ export default class SoundsLayer<TObject extends AmbientSound = AmbientSound> ex
         },
     ): Promise<Sound | null>;
 
-    /**
+  /**
      * Emit playback to other connected clients to occur at a specified position.
      * @param args  Arguments passed to SoundsLayer#playAtPosition
      * @returns  A Promise which resolves once playback for the initiating client has completed
      */
-    emitAtPosition(args: Parameters<this["playAtPosition"]>): Promise<Sound | null>;
+  emitAtPosition(args: Parameters<this['playAtPosition']>): Promise<Sound | null>;
 
-    static override prepareSceneControls(): SceneControl;
+  static override prepareSceneControls(): SceneControl;
 
-    /* -------------------------------------------- */
-    /*  Event Listeners and Handlers                */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Listeners and Handlers                */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Handle mouse cursor movements which may cause ambient audio previews to occur
      * @param  currentPos
      * @internal
      */
-    _onMouseMove(currentPos: PIXI.Point): void;
+  _onMouseMove(currentPos: PIXI.Point): void;
 
-    protected override _onDragLeftStart(event: PlaceablesLayerPointerEvent<TObject>): void;
+  protected override _onDragLeftStart(event: PlaceablesLayerPointerEvent<TObject>): void;
 
-    protected override _onDragLeftMove(event: PlaceablesLayerPointerEvent<TObject>): void;
+  protected override _onDragLeftMove(event: PlaceablesLayerPointerEvent<TObject>): void;
 
-    protected override _onDragLeftDrop(event: PlaceablesLayerPointerEvent<TObject>): void;
+  protected override _onDragLeftDrop(event: PlaceablesLayerPointerEvent<TObject>): void;
 
-    protected override _onDragLeftCancel(event: PlaceablesLayerPointerEvent<TObject>): void;
+  protected override _onDragLeftCancel(event: PlaceablesLayerPointerEvent<TObject>): void;
 
-    /**
+  /**
      * Handle PlaylistSound document drop data.
      * @param event  The drag drop event
      * @param data   The dropped transfer data.
      */
-    protected _onDropData(event: DragEvent, data: object): Promise<TObject>;
+  protected _onDropData(event: DragEvent, data: object): Promise<TObject>;
 }

@@ -1,11 +1,11 @@
-import { usePhysicalItemStore } from "@items/components/Physical/index.mjs";
-import type { Weapon, WeaponSheetRenderContext } from "@items/weapon/index.mjs";
-import { useItemSheetStore } from "@items/baseItem/index.mjs";
-import { useItemWithMaterialsStore } from "@items/components/HasMaterial/index.mjs";
-import { computed, type Ref } from "vue";
+import { usePhysicalItemStore } from '@items/components/Physical/index.mjs';
+import type { Weapon, WeaponSheetRenderContext } from '@items/weapon/index.mjs';
+import { useItemSheetStore } from '@items/baseItem/index.mjs';
+import { useItemWithMaterialsStore } from '@items/components/HasMaterial/index.mjs';
+import { computed, type Ref } from 'vue';
 
 const useWeaponStore = (context: WeaponSheetRenderContext) => {
-  const baseStore = useItemSheetStore(context)
+  const baseStore = useItemSheetStore(context);
   const physicalStore = usePhysicalItemStore(context, baseStore);
   const hasMaterialStore = useItemWithMaterialsStore(context, baseStore);
 

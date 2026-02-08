@@ -1,9 +1,9 @@
-import Wall from "../canvas/placeables/wall.mjs";
-import { BaseWall } from "./_module.mjs";
-import { CanvasDocument, CanvasDocumentStatic } from "./abstract/canvas-document.mjs";
-import Scene from "./scene.mjs";
+import Wall from '../canvas/placeables/wall.mjs';
+import { BaseWall } from './_module.mjs';
+import { CanvasDocument, CanvasDocumentStatic } from './abstract/canvas-document.mjs';
+import Scene from './scene.mjs';
 
-interface CanvasBaseWallStatic extends Omit<typeof BaseWall, "new">, CanvasDocumentStatic {}
+interface CanvasBaseWallStatic extends Omit<typeof BaseWall, 'new'>, CanvasDocumentStatic {}
 
 declare const CanvasBaseWall: {
     new <TParent extends Scene | null>(...args: any): BaseWall<TParent> & CanvasDocument<TParent>;

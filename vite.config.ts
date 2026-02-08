@@ -106,6 +106,7 @@ export default defineConfig(({ mode }) => ({
       '@entities': path.resolve(__dirname, 'src/entities'),
       '@scene': path.resolve(__dirname, 'src/scene'),
       '@source': path.resolve(__dirname, 'src'),
+      '@effects': path.resolve(__dirname, 'src/entities/activeEffects'),
     },
   },
   plugins: [

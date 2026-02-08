@@ -10,12 +10,12 @@
  * @property {boolean} disableCornerDetection      Is corner detection disabled?
  */
 export default class SMAAFilter extends PIXI.Filter {
-    /**
+  /**
      * The presets.
      * @type {Record<"LOW"|"MEDIUM"|"HIGH"|"ULTRA", SMAAFilterConfig>}
      */
-    static get PRESETS(): Record<"LOW" | "MEDIUM" | "HIGH" | "ULTRA", SMAAFilterConfig>;
-    static "__#201@#PRESETS": {
+  static get PRESETS(): Record<'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA', SMAAFilterConfig>;
+  static '__#201@#PRESETS': {
         LOW: {
             threshold: number;
             localContrastAdaptionFactor: number;
@@ -53,13 +53,14 @@ export default class SMAAFilter extends PIXI.Filter {
             disableCornerDetection: boolean;
         };
     };
-    /**
+
+  /**
      * @param {Partial<SMAAFilterConfig>} [config]
      */
-    constructor({ threshold, localContrastAdaptionFactor, maxSearchSteps, maxSearchStepsDiag, cornerRounding, disableDiagDetection, disableCornerDetection }?: Partial<SMAAFilterConfig> | undefined);
-    /** @override */
-    override apply(filterManager: any, input: any, output: any, clearMode: any, currentState: any): void;
-    #private;
+  constructor({ threshold, localContrastAdaptionFactor, maxSearchSteps, maxSearchStepsDiag, cornerRounding, disableDiagDetection, disableCornerDetection }?: Partial<SMAAFilterConfig> | undefined);
+  /** @override */
+  override apply(filterManager: any, input: any, output: any, clearMode: any, currentState: any): void;
+  #private;
 }
 export type SMAAFilterConfig = {
     /**

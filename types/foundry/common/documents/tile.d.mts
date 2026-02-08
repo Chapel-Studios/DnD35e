@@ -1,8 +1,8 @@
-import { TileOcclusionMode } from "@common/constants.mjs";
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import { TextureData } from "../data/data.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseScene } from "./_module.mjs";
+import { TileOcclusionMode } from '@common/constants.mjs';
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import { TextureData } from '../data/data.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseScene } from './_module.mjs';
 
 /**
  * The Document definition for a Tile.
@@ -13,26 +13,26 @@ import { BaseScene } from "./_module.mjs";
  * @param context Construction context options
  */
 export default class BaseTile<TParent extends BaseScene | null> extends Document<TParent, TileSchema> {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): TileMetadata;
+  static override get metadata(): TileMetadata;
 
-    static override defineSchema(): TileSchema;
+  static override defineSchema(): TileSchema;
 }
 
 export default interface BaseTile<TParent extends BaseScene | null>
     extends Document<TParent, TileSchema>,
         fields.ModelPropsFromSchema<TileSchema> {
-    get documentName(): TileMetadata["name"];
+    get documentName(): TileMetadata['name'];
 }
 
 interface TileMetadata extends DocumentMetadata {
-    name: "Tile";
-    collection: "tiles";
-    label: "DOCUMENT.Tile";
-    labelPlural: "DOCUMENT.Tiles";
+    name: 'Tile';
+    collection: 'tiles';
+    label: 'DOCUMENT.Tile';
+    labelPlural: 'DOCUMENT.Tiles';
 }
 
 type TileSchema = {

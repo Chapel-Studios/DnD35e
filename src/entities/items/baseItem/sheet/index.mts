@@ -1,4 +1,3 @@
-
 import { useItemSheetStore } from './ItemSheetStore.mjs';
 import { ItemSheetDnd35e } from './BaseItemSheet.mjs';
 import type { ItemSheetStore, ItemSheetTab } from './ItemSheetStore.mjs';
@@ -11,7 +10,7 @@ import {
 } from './components/index.mjs';
 import { Description, NameConfig } from './tabs/index.mjs';
 
-import type { BaseItemSheetRenderContext,  } from './BaseItemSheet.mts';
+import type { BaseItemSheetRenderContext } from './BaseItemSheet.mts';
 
 export {
   useItemSheetStore,

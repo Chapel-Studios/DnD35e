@@ -1,20 +1,25 @@
-import type { ApplicationRenderOptions } from "@client/applications/_module.mjs";
-import ApplicationV2 from "@client/applications/api/application.mjs";
-import type { DocumentSheetConfiguration, DocumentSheetRenderOptions } from "@client/applications/api/document-sheet.mjs";
-import { ItemDnd35e } from "@items/baseItem/index.mjs";
-import { App, Component, createApp } from "vue";
-
-interface VueApplicationContext<TDocument extends ItemDnd35e> {
-  document: TDocument;
-  appConfigOptions: VueApplicationConfiguration<TDocument>;
-  app: VueItemSheet<TDocument>;
-}
+import type { ApplicationRenderOptions } from '@client/applications/_module.mjs';
+import ApplicationV2 from '@client/applications/api/application.mjs';
+import type { DocumentSheetConfiguration, DocumentSheetRenderOptions } from '@client/applications/api/document-sheet.mjs';
+import { ItemDnd35e } from '@items/baseItem/index.mjs';
+import { App, Component, createApp } from 'vue';
 
 interface VueRenderOptions extends DocumentSheetRenderOptions {
   isEditable?: boolean;
-};
+}
 
-interface VueApplicationConfiguration<TDocument extends ItemDnd35e = ItemDnd35e> extends 
+interface VueApplicationConfiguration<TDocument extends ItemDnd35e = ItemDnd35e> extends
+  DocumentSheetConfiguration<TDocument>
+{
+  document: TDocument;
+  isEditable?: boolean;
+}
+
+interface VueRenderOptions extends ApplicationRenderOptions {
+  isEditable?: boolean;
+}
+
+interface VueApplicationConfiguration<TDocument extends ItemDnd35e = ItemDnd35e> extends
   DocumentSheetConfiguration<TDocument>
 {
   document: TDocument;
@@ -22,7 +27,7 @@ interface VueApplicationConfiguration<TDocument extends ItemDnd35e = ItemDnd35e>
 }
 
 abstract class VueItemSheet<TDocument extends ItemDnd35e> extends foundry.applications.sheets.ItemSheetV2<TDocument, VueApplicationConfiguration<TDocument>, VueRenderOptions> {
-  constructor(options: VueApplicationConfiguration<TDocument>) {
+  constructor (options: VueApplicationConfiguration<TDocument>) {
     super(options);
     this.#document = options.document;
     this.context = {
@@ -32,7 +37,7 @@ abstract class VueItemSheet<TDocument extends ItemDnd35e> extends foundry.applic
     };
   }
 
-  static get documentClass() { return Item; }
+  static get documentClass () { return Item; }
 
   #document: TDocument;
   /** The Vue component class to mount */
@@ -45,15 +50,16 @@ abstract class VueItemSheet<TDocument extends ItemDnd35e> extends foundry.applic
   protected vueRoot: HTMLElement | null = null;
 
   /** Shared reactive context passed into Vue */
+  // eslint-disable-next-line no-use-before-define
   protected context: VueApplicationContext<TDocument>;
 
-  override get id(): string {
-    return `dnd35e-${this.document.type}-sheet-${this.document.id}`;
+  override get id (): string {
+    return `dnd35e-${this.#document.type}-sheet-${this.#document.id}`;
   }
 
-  static override get DEFAULT_OPTIONS(): DeepPartial<DocumentSheetConfiguration<ItemDnd35e>> {
+  static override get DEFAULT_OPTIONS (): DeepPartial<DocumentSheetConfiguration<ItemDnd35e>> {
     return {
-      classes: ["dnd35e", "vueApp"],
+      classes: ['dnd35e', 'vueApp'],
       actions: {},
       position: {
         width: 560,
@@ -64,17 +70,14 @@ abstract class VueItemSheet<TDocument extends ItemDnd35e> extends foundry.applic
     } as DeepPartial<VueApplicationConfiguration<ItemDnd35e>>;
   }
 
-  get canConfigureSheet() {
-    if ( !this.options?.sheetConfig || !this.isEditable ) return false;
+  get canConfigureSheet () {
+    if (!this.options?.sheetConfig || !this.isEditable) return false;
     const document = this.#document;
     return !!document.collection?.has(document.id) && !document.flags.core?.sheetLock;
   }
 
-  override get isVisible() {
-    return this.document.testUserPermission(game.user, this.options.viewPermission as foundry.CONST.DocumentOwnershipLevel);
-  }
-  
-  override get isEditable() {
+  // DocumentSheetV2 implementation
+  override get isEditable () {
     return (this.options?.isEditable === false)
       ? false
       : super.isEditable;
@@ -85,14 +88,14 @@ abstract class VueItemSheet<TDocument extends ItemDnd35e> extends foundry.applic
    * Foundry calls this to get HTML for .window-content.
    * We return a stable wrapper that Foundry will NOT replace again.
    */
-  protected override async _renderHTML(
+  protected override async _renderHTML (
     context: any,
-    _options: ApplicationRenderOptions
+    _options: ApplicationRenderOptions,
   ): Promise<HTMLElement> {
-    return context
+    return context;
   }
 
-  protected _createVueApp(context: object): App {
+  protected _createVueApp (context: object): App {
     return createApp(this.vueComponent, {
       context: {
         ...this.context,
@@ -106,18 +109,18 @@ abstract class VueItemSheet<TDocument extends ItemDnd35e> extends foundry.applic
    * Foundry calls this after replacing .window-content.
    * We reattach our persistent vueRoot and update reactive context.
    */
-  protected override async _replaceHTML(
+  protected override async _replaceHTML (
     result: any,
     content: HTMLElement,
-    options: VueRenderOptions
+    options: VueRenderOptions,
   ): Promise<void> {
     this.context.document = this.#document;
     this.context.appConfigOptions = this.options;
 
-    let root = content.querySelector<HTMLElement>(".vue-root");
+    let root = content.querySelector<HTMLElement>('.vue-root');
     if (!root) {
-      root = document.createElement("div");
-      root.classList.add("vue-root");
+      root = document.createElement('div');
+      root.classList.add('vue-root');
 
       content.replaceChildren(root);
     }
@@ -134,20 +137,25 @@ abstract class VueItemSheet<TDocument extends ItemDnd35e> extends foundry.applic
     }
   }
 
-  override async render(options?: boolean | DeepPartial<VueRenderOptions> | undefined): Promise<this> {
+  override async render (options?: boolean | DeepPartial<VueRenderOptions> | undefined): Promise<this> {
     return super.render(options);
   }
 
-  override async close(options?: fa.ApplicationClosingOptions): Promise<ApplicationV2> {
+  override async close (options?: fa.ApplicationClosingOptions): Promise<ApplicationV2> {
     try {
       this.vueApp?.unmount();
-    }
-    finally {
+    } finally {
       this.vueApp = null;
       this.vueRoot = null;
     }
     return super.close(options);
   }
+}
+
+interface VueApplicationContext<TDocument extends ItemDnd35e> {
+  document: TDocument;
+  appConfigOptions: VueApplicationConfiguration<TDocument>;
+  app: VueItemSheet<TDocument>;
 }
 
 export {
@@ -158,4 +166,4 @@ export type {
   VueApplicationContext,
   VueApplicationConfiguration,
   VueRenderOptions,
-}
+};

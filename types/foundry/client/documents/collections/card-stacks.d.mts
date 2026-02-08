@@ -1,5 +1,5 @@
-import WorldCollection from "../abstract/world-collection.mjs";
-import Cards from "../cards.mjs";
+import WorldCollection from '../abstract/world-collection.mjs';
+import Cards from '../cards.mjs';
 
 /**
  * The collection of Cards documents which exist within the active World.
@@ -10,5 +10,5 @@ import Cards from "../cards.mjs";
  * @see {@link foundry.applications.sidebar.tabs.CardsDirectory}: The CardsDirectory sidebar directory
  */
 export default class CardStacks extends WorldCollection<Cards> {
-    static override documentName: "Cards";
+  static override documentName: 'Cards';
 }

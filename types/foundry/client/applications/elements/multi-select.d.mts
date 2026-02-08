@@ -1,5 +1,5 @@
-import { MultiSelectInputConfig } from "../forms/fields.mjs";
-import AbstractFormInputElement from "./form-element.mjs";
+import { MultiSelectInputConfig } from '../forms/fields.mjs';
+import AbstractFormInputElement from './form-element.mjs';
 
 /**
  * An abstract base class designed to standardize the behavior for a multi-select UI component.
@@ -7,34 +7,34 @@ import AbstractFormInputElement from "./form-element.mjs";
  * Different implementations may provide different experiences around how inputs are presented to the user.
  */
 export abstract class AbstractMultiSelectElement extends AbstractFormInputElement<string[], string[]> {
-    /** Predefined <option> and <optgroup> elements which were defined in the original HTML. */
-    protected _options: (HTMLOptionElement | HTMLOptGroupElement)[];
+  /** Predefined <option> and <optgroup> elements which were defined in the original HTML. */
+  protected _options: (HTMLOptionElement | HTMLOptGroupElement)[];
 
-    /** An object which maps option values to displayed labels. */
-    protected _choices: Record<string, string>;
+  /** An object which maps option values to displayed labels. */
+  protected _choices: Record<string, string>;
 
-    /** Preserve existing <option> and <optgroup> elements which are defined in the original HTML. */
-    protected _initialize(): void;
+  /** Preserve existing <option> and <optgroup> elements which are defined in the original HTML. */
+  protected _initialize(): void;
 
-    /**
+  /**
      * Mark a choice as selected.
      * @param value      The value to add to the chosen set
      */
-    select(value: string): void;
+  select(value: string): void;
 
-    /**
+  /**
      * Mark a choice as un-selected.
      * @param value      The value to delete from the chosen set
      */
-    unselect(value: string): void;
+  unselect(value: string): void;
 
-    /* -------------------------------------------- */
-    /*  Form Handling                               */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Form Handling                               */
+  /* -------------------------------------------- */
 
-    override _getValue(): string[];
+  override _getValue(): string[];
 
-    override _setValue(value: string[]): void;
+  override _setValue(value: string[]): void;
 }
 
 /**
@@ -56,14 +56,14 @@ export abstract class AbstractMultiSelectElement extends AbstractFormInputElemen
  * ```
  */
 export class HTMLMultiSelectElement extends AbstractMultiSelectElement {
-    static override tagName: "multi-select";
+  static override tagName: 'multi-select';
 
-    /**
+  /**
      * Create a HTMLMultiSelectElement using provided configuration data.
      * @param {FormInputConfig<string[]> & Omit<SelectInputConfig, "blank">} config
      * @returns {HTMLMultiSelectElement}
      */
-    static create(config: MultiSelectInputConfig): HTMLMultiSelectElement;
+  static create(config: MultiSelectInputConfig): HTMLMultiSelectElement;
 }
 
 /**
@@ -85,5 +85,5 @@ export class HTMLMultiSelectElement extends AbstractMultiSelectElement {
  * ```
  */
 export class HTMLMultiCheckboxElement extends AbstractMultiSelectElement {
-    static override tagName: "multi-checkbox";
+  static override tagName: 'multi-checkbox';
 }

@@ -1,21 +1,21 @@
-import { DocumentUUID } from "@client/utils/_module.mjs";
-import { FormInputConfig } from "@common/data/_types.mjs";
-import * as ProseMirror from "prosemirror-state";
-import AbstractFormInputElement from "./form-element.mjs";
+import { DocumentUUID } from '@client/utils/_module.mjs';
+import { FormInputConfig } from '@common/data/_types.mjs';
+import * as ProseMirror from 'prosemirror-state';
+import AbstractFormInputElement from './form-element.mjs';
 
 /**
  * A custom HTML element responsible displaying a ProseMirror rich text editor.
  */
 export default class HTMLProseMirrorElement extends AbstractFormInputElement<string> {
-    static override tagName: "prose-mirror";
+  static override tagName: 'prose-mirror';
 
-    disconnectedCallback(): void;
+  disconnectedCallback(): void;
 
-    /** Configure ProseMirror editor plugins. */
-    protected _configurePlugins(): Record<string, ProseMirror.Plugin>;
+  /** Configure ProseMirror editor plugins. */
+  protected _configurePlugins(): Record<string, ProseMirror.Plugin>;
 
-    /** Create a HTMLProseMirrorElement using provided configuration data. */
-    static create(config: ProseMirrorInputConfig): HTMLProseMirrorElement;
+  /** Create a HTMLProseMirrorElement using provided configuration data. */
+  static create(config: ProseMirrorInputConfig): HTMLProseMirrorElement;
 }
 
 declare global {

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint . --ext .ts,.js,.vue --fix",
+    "lint": "eslint . --ext .mts,.ts,.js,.vue --fix",
     "prebuild": "npm run lint",
     "build": "vite build --mode production",
     "watch": "vite build --watch --mode development",

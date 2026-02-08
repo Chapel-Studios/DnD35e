@@ -1,5 +1,5 @@
-import WorldCollection from "../abstract/world-collection.mjs";
-import ChatMessage from "../chat-message.mjs";
+import WorldCollection from '../abstract/world-collection.mjs';
+import ChatMessage from '../chat-message.mjs';
 
 /**
  * The Collection of ChatMessage documents which exist within the active World.
@@ -8,22 +8,22 @@ import ChatMessage from "../chat-message.mjs";
  * @see {@link ChatLog} The ChatLog sidebar directory
  */
 export default class Messages<TChatMessage extends ChatMessage = ChatMessage> extends WorldCollection<TChatMessage> {
-    static override documentName: "ChatMessage";
+  static override documentName: 'ChatMessage';
 
-    override render(force?: boolean): void;
+  override render(force?: boolean): void;
 
-    /**
+  /**
      * If requested, dispatch a Chat Bubble UI for the newly created message
      * @param message The ChatMessage entity to say
      */
-    sayBubble(message: ChatMessage): void;
+  sayBubble(message: ChatMessage): void;
 
-    /** Handle export of the chat log to a text file */
-    export(): void;
+  /** Handle export of the chat log to a text file */
+  export(): void;
 
-    /**
+  /**
      * Allow for bulk deletion of all chat messages, confirm first with a yes/no dialog.
      * @see {@link Dialog.confirm}
      */
-    flush(): Promise<unknown>;
+  flush(): Promise<unknown>;
 }

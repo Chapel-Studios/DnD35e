@@ -3,9 +3,9 @@
  * @module ui
  */
 
-import * as applications from "./applications/_module.mjs";
-import * as appv1 from "./appv1/_module.mjs";
-import Macro from "./documents/macro.mjs";
+import * as applications from './applications/_module.mjs';
+import * as appv1 from './appv1/_module.mjs';
+import Macro from './documents/macro.mjs';
 
 /* eslint-disable prefer-const */
 export let activeWindow: appv1.api.Application | applications.api.ApplicationV2 | null;

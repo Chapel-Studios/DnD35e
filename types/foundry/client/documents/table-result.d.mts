@@ -1,7 +1,7 @@
-import { DatabaseUpdateCallbackOptions } from "@common/abstract/_module.mjs";
-import { BaseTableResult, BaseUser } from "./_module.mjs";
-import { ClientDocument } from "./abstract/client-document.mjs";
-import RollTable from "./roll-table.mjs";
+import { DatabaseUpdateCallbackOptions } from '@common/abstract/_module.mjs';
+import { BaseTableResult, BaseUser } from './_module.mjs';
+import { ClientDocument } from './abstract/client-document.mjs';
+import RollTable from './roll-table.mjs';
 
 declare const ClientBaseTableResult: new <TParent extends RollTable | null>(
     ...args: any
@@ -15,25 +15,25 @@ declare const ClientBaseTableResult: new <TParent extends RollTable | null>(
 export default class TableResult<
     TParent extends RollTable | null = RollTable | null,
 > extends ClientBaseTableResult<TParent> {
-    /**
+  /**
      * A path reference to the icon image used to represent this result
      */
-    get icon(): string;
+  get icon(): string;
 
-    override prepareBaseData(): void;
+  override prepareBaseData(): void;
 
-    /**
+  /**
      * Prepare a string representation for this result.
      * @returns The enriched text to display
      */
-    getHTML(): Promise<string>;
+  getHTML(): Promise<string>;
 
-    /**
+  /**
      * Create a content-link anchor from this Result's referenced Document.
      */
-    documentToAnchor(): HTMLAnchorElement | null;
+  documentToAnchor(): HTMLAnchorElement | null;
 
-    protected override _preUpdate(
+  protected override _preUpdate(
         changes: Record<string, unknown>,
         options: DatabaseUpdateCallbackOptions,
         user: BaseUser,

@@ -1,6 +1,8 @@
 /**
  * A patch of smoke
  */
+import AdaptiveColorationShader from '../coloration-lighting.mjs';
+import AdaptiveIlluminationShader from '../illumination-lighting.mjs';
 export class SmokePatchColorationShader extends AdaptiveColorationShader {
 }
 /**
@@ -8,5 +10,3 @@ export class SmokePatchColorationShader extends AdaptiveColorationShader {
  */
 export class SmokePatchIlluminationShader extends AdaptiveIlluminationShader {
 }
-import AdaptiveColorationShader from "../coloration-lighting.mjs";
-import AdaptiveIlluminationShader from "../illumination-lighting.mjs";

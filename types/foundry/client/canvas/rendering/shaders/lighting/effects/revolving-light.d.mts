@@ -1,9 +1,10 @@
 /**
  * Revolving animation coloration shader
  */
+import AdaptiveColorationShader from '../coloration-lighting.mjs';
 export class RevolvingColorationShader extends AdaptiveColorationShader {
-    /** @inheritdoc */
-    static defaultUniforms: {
+  /** @inheritdoc */
+  static defaultUniforms: {
         angle: number;
         gradientFade: number;
         beamLength: number;
@@ -35,4 +36,3 @@ export class RevolvingColorationShader extends AdaptiveColorationShader {
         globalLightThresholds: number[];
     };
 }
-import AdaptiveColorationShader from "../coloration-lighting.mjs";

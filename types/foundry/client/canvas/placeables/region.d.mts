@@ -1,12 +1,12 @@
-import { RegionPolygonTree } from "@client/data/region-shapes/polygon-tree.mjs";
-import { RegionShape } from "@client/data/region-shapes/shape.mjs";
-import RegionDocument from "@client/documents/region.mjs";
-import Scene from "@client/documents/scene.mjs";
-import User from "@client/documents/user.mjs";
-import * as ClipperLib from "js-angusj-clipper";
-import { Point } from "../../../common/_types.mjs";
-import PlaceableObject from "./placeable-object.mjs";
-import RegionGeometry from "./regions/geometry.mjs";
+import { RegionPolygonTree } from '@client/data/region-shapes/polygon-tree.mjs';
+import { RegionShape } from '@client/data/region-shapes/shape.mjs';
+import RegionDocument from '@client/documents/region.mjs';
+import Scene from '@client/documents/scene.mjs';
+import User from '@client/documents/user.mjs';
+import * as ClipperLib from 'js-angusj-clipper';
+import { Point } from '../../../common/_types.mjs';
+import PlaceableObject from './placeable-object.mjs';
+import RegionGeometry from './regions/geometry.mjs';
 
 /**
  * A Region is an implementation of PlaceableObject which represents a Region document
@@ -18,22 +18,22 @@ import RegionGeometry from "./regions/geometry.mjs";
 export default class Region<
     TDocument extends RegionDocument<Scene | null> = RegionDocument<Scene | null>,
 > extends PlaceableObject<TDocument> {
-    static override embeddedName: "Region";
+  static override embeddedName: 'Region';
 
-    static override RENDER_FLAGS: {
-        redraw: { propagate: ["refresh"] };
-        refresh: { propagate: ["refreshState", "refreshBorder"]; alias: boolean };
+  static override RENDER_FLAGS: {
+        redraw: { propagate: ['refresh'] };
+        refresh: { propagate: ['refreshState', 'refreshBorder']; alias: boolean };
         refreshState: object;
         refreshBorder: object;
     };
 
-    /** The scaling factor used for Clipper paths. */
-    static CLIPPER_SCALING_FACTOR: {
+  /** The scaling factor used for Clipper paths. */
+  static CLIPPER_SCALING_FACTOR: {
         value: number;
     };
 
-    /** The three movement segment types: ENTER, MOVE, and EXIT. */
-    static readonly MOVEMENT_SEGMENT_TYPES: {
+  /** The three movement segment types: ENTER, MOVE, and EXIT. */
+  static readonly MOVEMENT_SEGMENT_TYPES: {
         /** The segment crosses the boundary of the region and exits it. */
         EXIT: -1;
         /** The segment does not cross the boundary of the region and is contained within it. */
@@ -42,82 +42,82 @@ export default class Region<
         ENTER: 1;
     };
 
-    /** The shapes of this Region in draw order. */
-    get shapes(): readonly RegionShape[];
+  /** The shapes of this Region in draw order. */
+  get shapes(): readonly RegionShape[];
 
-    /** The bottom elevation of this Region. */
-    get bottom(): number;
+  /** The bottom elevation of this Region. */
+  get bottom(): number;
 
-    /** The top elevation of this Region. */
-    get top(): number;
+  /** The top elevation of this Region. */
+  get top(): number;
 
-    /** The polygons of this Region. */
-    get polygons(): readonly PIXI.Polygon[];
+  /** The polygons of this Region. */
+  get polygons(): readonly PIXI.Polygon[];
 
-    /** The polygon tree of this Region. */
-    get polygonTree(): RegionPolygonTree;
+  /** The polygon tree of this Region. */
+  get polygonTree(): RegionPolygonTree;
 
-    /** The Clipper paths of this Region. */
-    get clipperPaths(): readonly (readonly ClipperLib.IntPoint[])[];
+  /** The Clipper paths of this Region. */
+  get clipperPaths(): readonly (readonly ClipperLib.IntPoint[])[];
 
-    /** The triangulation of this Region. */
-    get triangulation(): { vertices: Float32Array; indices: Uint16Array | Uint32Array };
+  /** The triangulation of this Region. */
+  get triangulation(): { vertices: Float32Array; indices: Uint16Array | Uint32Array };
 
-    /** The geometry of this Region. */
-    get geometry(): RegionGeometry;
+  /** The geometry of this Region. */
+  get geometry(): RegionGeometry;
 
-    /** Is this Region currently visible on the Canvas? */
-    get isVisible(): boolean;
+  /** Is this Region currently visible on the Canvas? */
+  get isVisible(): boolean;
 
-    /* -------------------------------------------- */
-    /*  Rendering                                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering                                   */
+  /* -------------------------------------------- */
 
-    override _draw(options?: object): Promise<void>;
+  override _draw(options?: object): Promise<void>;
 
-    /* -------------------------------------------- */
-    /*  Incremental Refresh                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Incremental Refresh                         */
+  /* -------------------------------------------- */
 
-    override _applyRenderFlags(flags: Record<string, boolean>): void;
+  override _applyRenderFlags(flags: Record<string, boolean>): void;
 
-    /** Refresh the state of the Region. */
-    protected _refreshState(): void;
+  /** Refresh the state of the Region. */
+  protected _refreshState(): void;
 
-    /** Refresh the border of the Region. */
-    protected _refreshBorder(): void;
+  /** Refresh the border of the Region. */
+  protected _refreshBorder(): void;
 
-    /** @override */
-    protected override _canDrag(user: User, event: PIXI.FederatedPointerEvent): boolean;
+  /** @override */
+  protected override _canDrag(user: User, event: PIXI.FederatedPointerEvent): boolean;
 
-    protected override _canHUD(user: User, event: PIXI.FederatedPointerEvent): boolean;
+  protected override _canHUD(user: User, event: PIXI.FederatedPointerEvent): boolean;
 
-    protected override _onControl(options: Record<string, unknown>): void;
+  protected override _onControl(options: Record<string, unknown>): void;
 
-    protected override _onRelease(options: Record<string, unknown>): void;
+  protected override _onRelease(options: Record<string, unknown>): void;
 
-    protected override _onHoverIn(
+  protected override _onHoverIn(
         event: PIXI.FederatedPointerEvent,
         options?: { updateLegend?: boolean; hoverOutOthers?: boolean },
     ): void;
 
-    protected override _onHoverOut(event: PIXI.FederatedPointerEvent, options?: { updateLegend?: boolean }): void;
+  protected override _onHoverOut(event: PIXI.FederatedPointerEvent, options?: { updateLegend?: boolean }): void;
 
-    protected override _overlapsSelection(rectangle: PIXI.Rectangle): boolean;
+  protected override _overlapsSelection(rectangle: PIXI.Rectangle): boolean;
 
-    /* -------------------------------------------- */
-    /*  Shape Methods                               */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Shape Methods                               */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Test whether the given point (at the given elevation) is inside this Region.
      * @param   point         The point.
      * @param   [elevation]   The elevation of the point.
      * @returns               Is the point (at the given elevation) inside this Region?
      */
-    testPoint(point: Point, elevation?: number): boolean;
+  testPoint(point: Point, elevation?: number): boolean;
 
-    /**
+  /**
      * Split the movement into its segments.
      * @param   waypoints                  The waypoints of movement.
      * @param   samples                    The points relative to the waypoints that are tested.
@@ -127,7 +127,7 @@ export default class Region<
      * @param   [options.teleport=false]   Is it teleportation?
      * @returns                            The movement split into its segments.
      */
-    segmentizeMovement(
+  segmentizeMovement(
         waypoints: RegionMovementWaypoint[],
         samples: Point[],
         options?: { teleport?: boolean },

@@ -1,4 +1,4 @@
-import Application, { AppV1RenderOptions, ApplicationV1Options } from "./application-v1.mjs";
+import Application, { AppV1RenderOptions, ApplicationV1Options } from './application-v1.mjs';
 
 /**
  * Create a modal dialog window displaying a title, a message, and a set of buttons which trigger callback functions.
@@ -41,13 +41,13 @@ import Application, { AppV1RenderOptions, ApplicationV1Options } from "./applica
  * @deprecated since v13
  */
 export default class Dialog extends Application {
-    constructor(data: DialogData, options?: Partial<DialogOptions>);
+  constructor(data: DialogData, options?: Partial<DialogOptions>);
 
-    /* -------------------------------------------- */
-    /*  Factory Methods                             */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Factory Methods                             */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * A helper factory method to create simple confirmation dialog windows which consist of simple yes/no prompts.
      * If you require more flexibility, a custom Dialog instance is preferred.
      *
@@ -71,53 +71,54 @@ export default class Dialog extends Application {
      *  defaultYes: false
      * });
      */
-    static confirm<Y = true, N = false>({
-        title,
-        content,
-        yes,
-        no,
-        render,
-        defaultYes,
-        rejectClose,
-        options,
-    }?: ConfirmDialogParameters<Y, N>): Promise<Y | N>;
+  static confirm<Y = true, N = false>({
+    title,
+    content,
+    yes,
+    no,
+    render,
+    defaultYes,
+    rejectClose,
+    options,
+  }
+  ?: ConfirmDialogParameters<Y, N>): Promise<Y | N>;
 
-    static override get defaultOptions(): DialogOptions;
+  static override get defaultOptions(): DialogOptions;
 
-    override get title(): string;
+  override get title(): string;
 
-    override getData(options?: DialogOptions): DialogData | Promise<DialogData>;
+  override getData(options?: DialogOptions): DialogData | Promise<DialogData>;
 
-    activateListeners(html: JQuery): void;
+  activateListeners(html: JQuery): void;
 
-    /**
+  /**
      * Handle a left-mouse click on one of the dialog choice buttons
      * @param event The left-mouse click event
      */
-    protected _onClickButton(event: MouseEvent): void;
+  protected _onClickButton(event: MouseEvent): void;
 
-    /**
+  /**
      * Handle a keydown event while the dialog is active
      * @param event   The keydown event
      */
-    protected _onKeyDown(event: KeyboardEvent): void;
+  protected _onKeyDown(event: KeyboardEvent): void;
 
-    protected override _renderOuter(): Promise<JQuery>;
+  protected override _renderOuter(): Promise<JQuery>;
 
-    /**
+  /**
      * Submit the Dialog by selecting one of its buttons
      * @param button The configuration of the chosen button
      * @param event  The originating click event
      */
-    protected submit(button: object, event?: PointerEvent): void;
+  protected submit(button: object, event?: PointerEvent): void;
 
-    override close(options?: { force: boolean; jQuery?: boolean }): Promise<void>;
+  override close(options?: { force: boolean; jQuery?: boolean }): Promise<void>;
 
-    /* -------------------------------------------- */
-    /*  Factory Methods                             */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Factory Methods                             */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * A helper factory method to create simple confirmation dialog windows which consist of simple yes/no prompts.
      * If you require more flexibility, a custom Dialog instance is preferred.
      *
@@ -141,9 +142,9 @@ export default class Dialog extends Application {
      * });
      * ```
      */
-    static confirm(config: DialogData): Promise<unknown>;
+  static confirm(config: DialogData): Promise<unknown>;
 
-    /**
+  /**
      * A helper factory method to display a basic "prompt" style Dialog with a single button
      * @param config Dialog configuration options
      * @param [config.callback]         A callback function to fire when the button is clicked
@@ -152,16 +153,16 @@ export default class Dialog extends Application {
      * @param [config.options] Additional dialog options
      * @returns The returned value from the provided callback function, if any
      */
-    static prompt(config?: DialogData): Promise<unknown>;
+  static prompt(config?: DialogData): Promise<unknown>;
 
-    /**
+  /**
      * Wrap the Dialog with an enclosing Promise which resolves or rejects when the client makes a choice.
      * @param [data]          Data passed to the Dialog constructor.
      * @param [options]       Options passed to the Dialog constructor.
      * @param [renderOptions] Options passed to the Dialog render call.
      * @returns A Promise that resolves to the chosen result.
      */
-    static wait(
+  static wait(
         data?: DialogData,
         options?: Partial<DialogOptions>,
         renderOptions?: Partial<AppV1RenderOptions>,

@@ -1,1 +1,1 @@
-export { default as TextureCompressor } from "./texture-worker.mjs";
+export { default as TextureCompressor } from './texture-worker.mjs';

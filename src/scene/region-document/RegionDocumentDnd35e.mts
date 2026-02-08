@@ -63,6 +63,6 @@ class RegionDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nu
       }
     }
   }
-};
+}
 
 export { RegionDocumentDnd35e };

@@ -1,77 +1,77 @@
-import { SceneDimensions } from "@client/_types.mjs";
-import { GridType } from "@common/constants.mjs";
-import Color from "@common/utils/color.mjs";
-import { GridHighlight, GridMesh } from "../containers/_module.mjs";
-import CanvasLayer, { CanvasLayerOptions } from "./base/canvas-layer.mjs";
+import { SceneDimensions } from '@client/_types.mjs';
+import { GridType } from '@common/constants.mjs';
+import Color from '@common/utils/color.mjs';
+import { GridHighlight, GridMesh } from '../containers/_module.mjs';
+import CanvasLayer, { CanvasLayerOptions } from './base/canvas-layer.mjs';
 
 /**
  * A CanvasLayer responsible for drawing a square grid
  */
 export default class GridLayer extends CanvasLayer {
-    /**
+  /**
      * The grid mesh.
      */
-    mesh: GridMesh;
+  mesh: GridMesh;
 
-    /**
+  /**
      * The Grid Highlight container
      */
-    highlight: PIXI.Container;
+  highlight: PIXI.Container;
 
-    /**
+  /**
      * Map named highlight layers
      * @type {}
      */
-    highlightLayers: Record<string, GridHighlight>;
+  highlightLayers: Record<string, GridHighlight>;
 
-    static override get layerOptions(): GridLayerOptions;
+  static override get layerOptions(): GridLayerOptions;
 
-    static override get instance(): GridLayer;
+  static override get instance(): GridLayer;
 
-    protected override _draw(options?: object): Promise<void>;
+  protected override _draw(options?: object): Promise<void>;
 
-    /**
+  /**
      * Creates the grid mesh.
      */
-    protected _drawMesh(): Promise<GridMesh>;
+  protected _drawMesh(): Promise<GridMesh>;
 
-    /**
+  /**
      * Initialize the grid mesh appearance and configure the grid shader.
      * @param options.style     The grid style
      * @param options.thickness The grid thickness
      * @param options.color     The grid color
      * @param options.alpha     The grid alpha
      */
-    initializeMesh(options?: { style: string; thickness?: number; color?: string; alpha?: number }): void;
+  initializeMesh(options?: { style: string; thickness?: number; color?: string; alpha?: number }): void;
 
-    /* -------------------------------------------- */
-    /*  Grid Highlighting Methods                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Grid Highlighting Methods                   */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Define a new Highlight graphic
      * @param name The name for the referenced highlight layer
      */
-    addHighlightLayer(name: string): GridHighlight | undefined;
+  addHighlightLayer(name: string): GridHighlight | undefined;
 
-    /**
+  /**
      * Clear a specific Highlight graphic
      * @param name The name for the referenced highlight layer
      */
-    clearHighlightLayer(name: string): void;
-    /**
+  clearHighlightLayer(name: string): void;
+  /**
      * Destroy a specific Highlight graphic
      * @param name The name for the referenced highlight layer
      */
-    destroyHighlightLayer(name: string): void;
+  destroyHighlightLayer(name: string): void;
 
-    /**
+  /**
      * Obtain the highlight layer graphic by name
      * @param {string} name     The name for the referenced highlight layer
      */
-    getHighlightLayer(name: string): GridHighlight | undefined;
+  getHighlightLayer(name: string): GridHighlight | undefined;
 
-    /**
+  /**
      * Add highlighting for a specific grid position to a named highlight graphic
      * @param name    The name for the referenced highlight layer
      * @param options Options for the grid position that should be highlighted
@@ -82,7 +82,7 @@ export default class GridLayer extends CanvasLayer {
      * @param options.alpha  The opacity of the highlight
      * @param options.shape  A predefined shape to highlight
      */
-    highlightPosition(
+  highlightPosition(
         name: string,
         options: {
             x: number;
@@ -108,5 +108,5 @@ interface MeasureDistancesOptions {
 }
 
 interface GridLayerOptions extends CanvasLayerOptions {
-    name: "grid";
+    name: 'grid';
 }

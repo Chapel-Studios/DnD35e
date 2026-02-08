@@ -1,4 +1,4 @@
-import { ItemDnd35e } from "@items/baseItem/ItemDnd35e.mjs";
+import { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 
 type Formula = string | null | undefined;
 

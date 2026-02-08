@@ -1,4 +1,4 @@
-import { ClientDocument } from "@client/documents/abstract/client-document.mjs";
+import { ClientDocument } from '@client/documents/abstract/client-document.mjs';
 
 export interface HTMLSecretConfiguration {
     /** The CSS selector used to target content that contains secret blocks. */
@@ -35,27 +35,27 @@ export interface HTMLSecretConfiguration {
  * ```
  */
 export default class HTMLSecret {
-    /** The CSS selector used to target secret blocks. */
-    parentSelector: HTMLSecretConfiguration["parentSelector"];
+  /** The CSS selector used to target secret blocks. */
+  parentSelector: HTMLSecretConfiguration['parentSelector'];
 
-    /** An object of callback functions for each operation. */
-    callbacks: HTMLSecretConfiguration["callbacks"];
+  /** An object of callback functions for each operation. */
+  callbacks: HTMLSecretConfiguration['callbacks'];
 
-    /**
+  /**
      *  @param config Configuration options.
      */
-    constructor(config: HTMLSecretConfiguration);
+  constructor(config: HTMLSecretConfiguration);
 
-    /**
+  /**
      * Add event listeners to the targeted secret blocks.
      * @param html The HTML content to select secret blocks from.
      */
-    bind(html: HTMLElement): void;
+  bind(html: HTMLElement): void;
 
-    /**
+  /**
      * Handle toggling a secret's revealed state.
      * @param event The triggering click event.
      * @returns The Document whose content was modified.
      */
-    protected _onToggleSecret(event: MouseEvent): Promise<ClientDocument | void>;
+  protected _onToggleSecret(event: MouseEvent): Promise<ClientDocument | void>;
 }

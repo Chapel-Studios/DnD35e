@@ -1,15 +1,15 @@
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import * as data from "../data/data.mjs";
-import * as fields from "../data/fields.mjs";
-import BaseScene from "./scene.mjs";
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import * as data from '../data/data.mjs';
+import * as fields from '../data/fields.mjs';
+import BaseScene from './scene.mjs';
 
 /** The AmbientLight embedded document model. */
 export default class BaseAmbientLight<TParent extends BaseScene | null> extends Document<TParent, AmbientLightSchema> {
-    static override get metadata(): AmbientLightMetadata;
+  static override get metadata(): AmbientLightMetadata;
 
-    static override defineSchema(): AmbientLightSchema;
+  static override defineSchema(): AmbientLightSchema;
 
-    protected override _initialize(): void;
+  protected override _initialize(): void;
 }
 
 export default interface BaseAmbientLight<TParent extends BaseScene | null>
@@ -17,9 +17,9 @@ export default interface BaseAmbientLight<TParent extends BaseScene | null>
         fields.ModelPropsFromSchema<AmbientLightSchema> {}
 
 interface AmbientLightMetadata extends DocumentMetadata {
-    name: "AmbientLight";
-    collection: "lights";
-    label: "DOCUMENT.AmbientLight";
+    name: 'AmbientLight';
+    collection: 'lights';
+    label: 'DOCUMENT.AmbientLight';
     isEmbedded: true;
 }
 

@@ -1,14 +1,14 @@
 import {
-    ApplicationClosingOptions,
-    ApplicationConfiguration,
-    ApplicationRenderContext,
-    ApplicationTabsConfiguration,
-} from "../_types.mjs";
-import ApplicationV2 from "./application.mjs";
+  ApplicationClosingOptions,
+  ApplicationConfiguration,
+  ApplicationRenderContext,
+  ApplicationTabsConfiguration,
+} from '../_types.mjs';
+import ApplicationV2 from './application.mjs';
 import HandlebarsApplicationMixin, {
-    HandlebarsRenderOptions,
-    HandlebarsTemplatePart,
-} from "./handlebars-application.mjs";
+  HandlebarsRenderOptions,
+  HandlebarsTemplatePart,
+} from './handlebars-application.mjs';
 
 export interface CategoryBrowserConfiguration extends ApplicationConfiguration {
     /** Where this application displays is a list of tagged FVTT packages */
@@ -31,29 +31,29 @@ export interface CategoryBrowserConfiguration extends ApplicationConfiguration {
  * by category.
  */
 export default abstract class CategoryBrowser extends HandlebarsApplicationMixin(ApplicationV2) {
-    static override DEFAULT_OPTIONS: DeepPartial<CategoryBrowserConfiguration>;
+  static override DEFAULT_OPTIONS: DeepPartial<CategoryBrowserConfiguration>;
 
-    static override PARTS: Record<string, HandlebarsTemplatePart>;
+  static override PARTS: Record<string, HandlebarsTemplatePart>;
 
-    /**
+  /**
      * Is category and/or entry data loaded? Most subclasses will already have their data close at hand.
      */
-    protected get _dataLoaded(): boolean;
+  protected get _dataLoaded(): boolean;
 
-    protected override _initializeApplicationOptions(
+  protected override _initializeApplicationOptions(
         options: DeepPartial<CategoryBrowserConfiguration>,
     ): CategoryBrowserConfiguration;
 
-    protected override _configureRenderParts(options: HandlebarsRenderOptions): Record<string, HandlebarsTemplatePart>;
+  protected override _configureRenderParts(options: HandlebarsRenderOptions): Record<string, HandlebarsTemplatePart>;
 
-    /**
+  /**
      * Perform a text search without a KeyboardEvent.
      */
-    search(query: string): void;
+  search(query: string): void;
 
-    override render(options: HandlebarsRenderOptions): Promise<this>;
+  override render(options: HandlebarsRenderOptions): Promise<this>;
 
-    protected override _prepareContext(options: HandlebarsRenderOptions): Promise<ApplicationRenderContext>;
+  protected override _prepareContext(options: HandlebarsRenderOptions): Promise<ApplicationRenderContext>;
 
     /**
      * Prepare the structure of category data which is rendered in this configuration form.

@@ -1,12 +1,10 @@
 const registeredPartials = new Set();
 const partialsToRegister = new Map<string, string>();
-const isGameLoaded = false;
 export const registerPartial = async (filePath: string, partialName: string) => {
   if (!game.socket) {
     partialsToRegister.set(partialName, filePath);
     console.log(`Partial awaiting registration: ${partialName}`);
-  }
-  else {
+  } else {
     foundry.applications.handlebars.loadTemplates({ [partialName]: filePath });
     console.log(`Partial registered successfully: ${partialName}`);
     registeredPartials.add(partialName);

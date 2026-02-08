@@ -1,6 +1,8 @@
 /**
  * Ghost light animation illumination shader
  */
+import AdaptiveIlluminationShader from '../illumination-lighting.mjs';
+import AdaptiveColorationShader from '../coloration-lighting.mjs';
 export class GhostLightIlluminationShader extends AdaptiveIlluminationShader {
 }
 /**
@@ -8,5 +10,3 @@ export class GhostLightIlluminationShader extends AdaptiveIlluminationShader {
  */
 export class GhostLightColorationShader extends AdaptiveColorationShader {
 }
-import AdaptiveIlluminationShader from "../illumination-lighting.mjs";
-import AdaptiveColorationShader from "../coloration-lighting.mjs";

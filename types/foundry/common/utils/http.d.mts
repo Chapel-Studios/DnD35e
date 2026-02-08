@@ -31,7 +31,7 @@ export function fetchJsonWithTimeout(
  * @extends {Error}
  */
 export class HttpError extends Error {
-    constructor(statusText: string, code: number, displayMessage?: string);
+  constructor(statusText: string, code: number, displayMessage?: string);
 
-    override toString(): string;
+  override toString(): string;
 }

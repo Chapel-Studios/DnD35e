@@ -1,19 +1,19 @@
-import { DeepReadonly, ElevatedPoint, Point, SocketRequest, SocketResponse, TokenPosition } from "@common/_types.mjs";
-import { DataModel } from "@common/abstract/_module.mjs";
-import { DataField } from "@common/data/fields.mjs";
-import { EffectDurationData } from "@common/documents/active-effect.mjs";
-import { GridMeasurePathCostFunction3D, GridOffset3D } from "@common/grid/_types.mjs";
-import { DocumentHTMLEmbedConfig } from "./applications/ux/text-editor.mjs";
-import { AVSettingsData } from "./av/settings.mjs";
-import { CanvasAnimationData, CanvasAnimationEasingFunction } from "./canvas/animation/_types.mjs";
-import { Ray } from "./canvas/geometry/_module.mjs";
-import { PingData } from "./canvas/interaction/_types.mjs";
-import AmbientLight from "./canvas/placeables/light.mjs";
-import Token, { TokenShape } from "./canvas/placeables/token.mjs";
-import PointVisionSource from "./canvas/sources/point-vision-source.mjs";
-import Roll from "./dice/roll.mjs";
-import { TableResult, TokenDocument, User } from "./documents/_module.mjs";
-import { Color } from "./utils/_module.mjs";
+import { DeepReadonly, ElevatedPoint, Point, SocketRequest, SocketResponse, TokenPosition } from '@common/_types.mjs';
+import { DataModel } from '@common/abstract/_module.mjs';
+import { DataField } from '@common/data/fields.mjs';
+import { EffectDurationData } from '@common/documents/active-effect.mjs';
+import { GridMeasurePathCostFunction3D, GridOffset3D } from '@common/grid/_types.mjs';
+import { DocumentHTMLEmbedConfig } from './applications/ux/text-editor.mjs';
+import { AVSettingsData } from './av/settings.mjs';
+import { CanvasAnimationData, CanvasAnimationEasingFunction } from './canvas/animation/_types.mjs';
+import { Ray } from './canvas/geometry/_module.mjs';
+import { PingData } from './canvas/interaction/_types.mjs';
+import AmbientLight from './canvas/placeables/light.mjs';
+import Token, { TokenShape } from './canvas/placeables/token.mjs';
+import PointVisionSource from './canvas/sources/point-vision-source.mjs';
+import Roll from './dice/roll.mjs';
+import { TableResult, TokenDocument, User } from './documents/_module.mjs';
+import { Color } from './utils/_module.mjs';
 
 export interface HotReloadData {
     /** The type of package which was modified */
@@ -115,7 +115,7 @@ export interface TokenMeasuredMovementWaypoint {
     cost: number;
 }
 
-export type TokenMovementWaypoint = Omit<TokenMeasuredMovementWaypoint, "terrain" | "intermediate" | "userId" | "cost">;
+export type TokenMovementWaypoint = Omit<TokenMeasuredMovementWaypoint, 'terrain' | 'intermediate' | 'userId' | 'cost'>;
 
 export interface TokenMeasureMovementPathWaypoint {
     /** The top-left x-coordinate in pixels (integer). Default: the previous or source x-coordinate. */
@@ -172,7 +172,7 @@ export interface TokenMeasureMovementPathWaypoint {
 export interface TokenMovementSegmentData
     extends Pick<
         TokenMeasuredMovementWaypoint,
-        "width" | "height" | "shape" | "action" | "teleport" | "forced" | "terrain"
+        'width' | 'height' | 'shape' | 'action' | 'teleport' | 'forced' | 'terrain'
     > {}
 
 export type TokenMovementCostFunction = GridMeasurePathCostFunction3D<TokenMovementSegmentData>;
@@ -244,7 +244,7 @@ export interface TokenGetCompleteMovementPathWaypoint {
     intermediate?: boolean;
 }
 
-export interface TokenCompleteMovementWaypoint extends Omit<TokenMeasuredMovementWaypoint, "userId" | "cost"> {}
+export interface TokenCompleteMovementWaypoint extends Omit<TokenMeasuredMovementWaypoint, 'userId' | 'cost'> {}
 
 export interface TokenFindMovementPathWaypoint {
     /**
@@ -514,9 +514,9 @@ export interface TokenMovementHistoryData {
     diagonals: number;
 }
 
-export type TokenMovementMethod = "api" | "config" | "dragging" | "keyboard" | "undo";
+export type TokenMovementMethod = 'api' | 'config' | 'dragging' | 'keyboard' | 'undo';
 
-export type TokenMovementState = "completed" | "paused" | "pending" | "stopped";
+export type TokenMovementState = 'completed' | 'paused' | 'pending' | 'stopped';
 
 export interface TokenMovementData {
     /** The ID of the movement */
@@ -547,7 +547,7 @@ export interface TokenMovementData {
     method: TokenMovementMethod;
 
     /** The options to constrain movement */
-    constrainOptions: Omit<TokenConstrainMovementPathOptions, "preview" | "history">;
+    constrainOptions: Omit<TokenConstrainMovementPathOptions, 'preview' | 'history'>;
 
     /** Automatically rotate the token in the direction of movement? */
     autoRotate: boolean;
@@ -568,7 +568,7 @@ export interface TokenMovementData {
     updateOptions: object;
 }
 
-export interface TokenMovementOperation extends Omit<TokenMovementData, "user" | "state" | "updateOptions"> {}
+export interface TokenMovementOperation extends Omit<TokenMovementData, 'user' | 'state' | 'updateOptions'> {}
 
 export interface TokenMovementContinuationData {
     /**
@@ -699,9 +699,9 @@ export interface TokenFindMovementPathJob {
     cancel: () => void;
 }
 
-export interface TokenGetTerrainMovementPathWaypoint extends Omit<TokenGetCompleteMovementPathWaypoint, "terrain"> {}
+export interface TokenGetTerrainMovementPathWaypoint extends Omit<TokenGetCompleteMovementPathWaypoint, 'terrain'> {}
 
-export interface TokenTerrainMovementWaypoint extends Omit<TokenMeasuredMovementWaypoint, "userId" | "cost"> {}
+export interface TokenTerrainMovementWaypoint extends Omit<TokenMeasuredMovementWaypoint, 'userId' | 'cost'> {}
 
 export interface TokenRulerData {
     /** The waypoints that were already passed by the Token */
@@ -746,7 +746,7 @@ export interface TokenRulerWaypointData {
     /**
      * The stage this waypoint belongs to.
      */
-    stage: "passed" | "pending" | "planned";
+    stage: 'passed' | 'pending' | 'planned';
     /**
      * Is this waypoint hidden?
      */
@@ -792,10 +792,10 @@ export interface TokenDragContext {
     token: Token;
     clonedToken: Token;
     origin: TokenPosition;
-    destination: Omit<TokenMovementWaypoint, "width" | "height" | "shape" | "action" | "teleport"> &
-        Partial<Pick<TokenMovementWaypoint, "width" | "height" | "shape" | "action" | "teleport">>;
-    waypoints: (Omit<TokenMovementWaypoint, "width" | "height" | "shape" | "action" | "teleport"> &
-        Partial<Pick<TokenMovementWaypoint, "width" | "height" | "shape" | "action" | "teleport">>)[];
+    destination: Omit<TokenMovementWaypoint, 'width' | 'height' | 'shape' | 'action' | 'teleport'> &
+        Partial<Pick<TokenMovementWaypoint, 'width' | 'height' | 'shape' | 'action' | 'teleport'>>;
+    waypoints: (Omit<TokenMovementWaypoint, 'width' | 'height' | 'shape' | 'action' | 'teleport'> &
+        Partial<Pick<TokenMovementWaypoint, 'width' | 'height' | 'shape' | 'action' | 'teleport'>>)[];
     foundPath: TokenMovementWaypoint[];
     unreachableWaypoints: TokenMovementWaypoint[];
     hidden: boolean;
@@ -854,7 +854,7 @@ export interface TokenAnimationContext {
     /** The animation chain. */
     chain: {
         to: Partial<TokenAnimationData>;
-        options: Omit<TokenAnimationOptions, "duration"> & { duration: number };
+        options: Omit<TokenAnimationOptions, 'duration'> & { duration: number };
         promise: Promise<void>;
         resolve: () => void;
         reject: (error: Error) => void;
@@ -996,19 +996,19 @@ export interface TokenMovementActionConfig {
 }
 
 export type TokenAnimationTransition =
-    | "crosshatch"
-    | "dots"
-    | "fade"
-    | "glitch"
-    | "hole"
-    | "holeSwirl"
-    | "hologram"
-    | "morph"
-    | "swirl"
-    | "waterDrop"
-    | "waves"
-    | "wind"
-    | "whiteNoise";
+    | 'crosshatch'
+    | 'dots'
+    | 'fade'
+    | 'glitch'
+    | 'hole'
+    | 'holeSwirl'
+    | 'hologram'
+    | 'morph'
+    | 'swirl'
+    | 'waterDrop'
+    | 'waves'
+    | 'wind'
+    | 'whiteNoise';
 
 export interface RegionSegmentizeMovementPathWaypoint extends ElevatedPoint {
     /** Teleport from the previous to this waypoint? Default: `false`. */
@@ -1289,7 +1289,7 @@ export interface CombatTurnEventContext {
     skipped: boolean;
 }
 
-export interface CombatRoundEventContext extends Omit<CombatTurnEventContext, "turn"> {}
+export interface CombatRoundEventContext extends Omit<CombatTurnEventContext, 'turn'> {}
 
 export interface JournalEntryPageHeading {
     /** The heading level, 1-6. */

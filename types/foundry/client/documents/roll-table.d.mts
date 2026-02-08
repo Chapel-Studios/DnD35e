@@ -1,12 +1,12 @@
-import { DatabaseCreateOperation, DatabaseDeleteOperation } from "@common/abstract/_types.mjs";
-import Document from "@common/abstract/document.mjs";
-import EmbeddedCollection from "@common/abstract/embedded-collection.mjs";
-import { RollMode } from "@common/constants.mjs";
-import { ChatMessageCreateOperation } from "@common/documents/chat-message.mjs";
-import Roll from "../dice/roll.mjs";
-import { BaseRollTable, ChatMessage, Folder, TableResult } from "./_module.mjs";
-import { ClientDocument, ClientDocumentStatic } from "./abstract/client-document.mjs";
-import CompendiumCollection from "./collections/compendium-collection.mjs";
+import { DatabaseCreateOperation, DatabaseDeleteOperation } from '@common/abstract/_types.mjs';
+import Document from '@common/abstract/document.mjs';
+import EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
+import { RollMode } from '@common/constants.mjs';
+import { ChatMessageCreateOperation } from '@common/documents/chat-message.mjs';
+import Roll from '../dice/roll.mjs';
+import { BaseRollTable, ChatMessage, Folder, TableResult } from './_module.mjs';
+import { ClientDocument, ClientDocumentStatic } from './abstract/client-document.mjs';
+import CompendiumCollection from './collections/compendium-collection.mjs';
 
 type BaseRollTableStatic = typeof BaseRollTable;
 interface ClientBaseRollTableStatic extends BaseRollTableStatic, ClientDocumentStatic {}
@@ -25,11 +25,11 @@ interface ClientBaseRollTable extends InstanceType<typeof ClientBaseRollTable> {
  * @see {@link applications.RollTableConfig}    The RollTable configuration application
  */
 export default class RollTable extends ClientBaseRollTable {
-    /* -------------------------------------------- */
-    /*  Methods                                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Methods                                     */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Display a result drawn from a RollTable in the Chat Log along.
      * Optionally also display the Roll which produced the result and configure aspects of the displayed messages.
      *
@@ -39,20 +39,21 @@ export default class RollTable extends ClientBaseRollTable {
      * @param options.messageData Additional data which customizes the created messages
      * @param options.messageOptions Additional options which customize the created messages
      */
-    toMessage(
+  toMessage(
         results: TableResult<this>[],
         {
-            roll,
-            messageData,
-            messageOptions,
-        }?: {
+          roll,
+          messageData,
+          messageOptions,
+        }
+        ?: {
             roll?: Roll | null;
             messageData?: Partial<foundry.documents.ChatMessageSource>;
             messageOptions?: ChatMessageCreateOperation;
         },
     ): Promise<ChatMessage | undefined>;
 
-    /**
+  /**
      * Draw a result from the RollTable based on the table formula or a provided Roll instance
      * @param [options={}]               Optional arguments which customize the draw behavior
      * @param [options.roll]             An existing Roll instance to use for drawing from the table
@@ -62,21 +63,22 @@ export default class RollTable extends ClientBaseRollTable {
      * @param [options.rollMode]         The chat roll mode to use when displaying the result
      * @returns A Promise which resolves to an object containing the executed roll and the produced results
      */
-    draw({
-        roll,
-        recursive,
-        results,
-        displayChat,
-        rollMode,
-    }?: {
+  draw({
+    roll,
+    recursive,
+    results,
+    displayChat,
+    rollMode,
+  }
+  ?: {
         roll?: Roll | null;
         recursive?: boolean;
         results?: TableResult<RollTable>[];
         displayChat?: boolean;
-        rollMode?: RollMode | "roll" | null;
+        rollMode?: RollMode | 'roll' | null;
     }): Promise<RollTableDraw<this>>;
 
-    /**
+  /**
      * Draw multiple results from a RollTable, constructing a final synthetic Roll as a dice pool of inner rolls.
      * @param number       The number of results to draw
      * @param [options={}] Optional arguments which customize the draw
@@ -86,23 +88,24 @@ export default class RollTable extends ClientBaseRollTable {
      * @param [options.rollMode]         Customize the roll mode used to display the drawn results
      * @returns The drawn results
      */
-    drawMany(
+  drawMany(
         number: number,
         {
-            roll,
-            recursive,
-            displayChat,
-            rollMode,
-        }?: { roll?: Roll | null; recursive?: boolean; displayChat?: boolean; rollMode?: RollMode | null },
+          roll,
+          recursive,
+          displayChat,
+          rollMode,
+        }
+        ?: { roll?: Roll | null; recursive?: boolean; displayChat?: boolean; rollMode?: RollMode | null },
     ): Promise<RollTableDraw<this>>;
 
-    /** Normalize the probabilities of rolling each item in the RollTable based on their assigned weights */
-    normalize(): Promise<this>;
+  /** Normalize the probabilities of rolling each item in the RollTable based on their assigned weights */
+  normalize(): Promise<this>;
 
-    /** Reset the state of the RollTable to return any drawn items to the table */
-    reset(): Promise<this>;
+  /** Reset the state of the RollTable to return any drawn items to the table */
+  reset(): Promise<this>;
 
-    /**
+  /**
      * Evaluate a RollTable by rolling its formula and retrieving a drawn result.
      *
      * Note that this function only performs the roll and identifies the result, the RollTable#draw function should be
@@ -121,28 +124,29 @@ export default class RollTable extends ClientBaseRollTable {
      * const roll = new Roll("1d20 + @abilities.wis.mod", actor.getRollData());
      * const customResults = await table.roll({roll});
      */
-    roll({
-        roll,
-        recursive,
-        _depth,
-    }?: {
+  roll({
+    roll,
+    recursive,
+    _depth,
+  }
+  ?: {
         roll?: Roll;
         recursive?: boolean;
         _depth?: number;
     }): Promise<RollTableDraw<this>>;
 
-    /**
+  /**
      * Get an Array of valid results for a given rolled total
      * @param value The rolled value
      * @return An Array of results
      */
-    getResultsForRoll(value: number): TableResult<this>[];
+  getResultsForRoll(value: number): TableResult<this>[];
 
-    /* -------------------------------------------- */
-    /*  Event Handlers                              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Handlers                              */
+  /* -------------------------------------------- */
 
-    protected override _onCreateDescendantDocuments<P extends Document>(
+  protected override _onCreateDescendantDocuments<P extends Document>(
         parent: P,
         collection: string,
         documents: Document<P>[],
@@ -151,7 +155,7 @@ export default class RollTable extends ClientBaseRollTable {
         userId: string,
     ): void;
 
-    protected override _onDeleteDescendantDocuments<P extends Document>(
+  protected override _onDeleteDescendantDocuments<P extends Document>(
         parent: P,
         collection: string,
         documents: Document<P>[],
@@ -160,18 +164,18 @@ export default class RollTable extends ClientBaseRollTable {
         userId: string,
     ): void;
 
-    /* -------------------------------------------- */
-    /*  Importing and Exporting                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Importing and Exporting                     */
+  /* -------------------------------------------- */
 
-    override toCompendium(pack: CompendiumCollection<this>): this["_source"];
+  override toCompendium(pack: CompendiumCollection<this>): this['_source'];
 
-    /**
+  /**
      * Create a new RollTable entity using all of the Entities from a specific Folder as new results.
      * @param folder  The Folder entity from which to create a roll table
      * @param operation Additional options passed to the RollTable.create method
      */
-    static fromFolder(folder: Folder, operation?: DatabaseCreateOperation<null>): Promise<RollTable | undefined>;
+  static fromFolder(folder: Folder, operation?: DatabaseCreateOperation<null>): Promise<RollTable | undefined>;
 }
 
 export default interface RollTable extends ClientBaseRollTable {

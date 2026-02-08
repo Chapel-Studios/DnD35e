@@ -1,4 +1,4 @@
-type DragAction = "dragstart" | "dragover" | "drop" | "dragenter" | "dragleave" | "dragend";
+type DragAction = 'dragstart' | 'dragover' | 'drop' | 'dragenter' | 'dragleave' | 'dragend';
 
 interface DragDropConfiguration {
     /** The CSS selector used to target draggable elements. */
@@ -6,7 +6,7 @@ interface DragDropConfiguration {
     /** The CSS selector used to target viable drop targets. */
     dropSelector: string | null;
     /** Permission tests for each action */
-    permissions: Record<"dragstart" | "drop", (selector: string) => boolean>;
+    permissions: Record<'dragstart' | 'drop', (selector: string) => boolean>;
     /** Callback functions for each action */
     callbacks: Partial<Record<DragAction, (event: DragEvent) => void>>;
 }
@@ -27,105 +27,105 @@ interface DragDropConfiguration {
  * ```
  */
 export default class DragDrop {
-    constructor(config?: Partial<DragDropConfiguration>);
+  constructor(config?: Partial<DragDropConfiguration>);
 
-    /* -------------------------------------------- */
-    /*  Properties                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Properties                                  */
+  /* -------------------------------------------- */
 
-    /** A set of callback functions for each action of the drag & drop workflow.  */
-    callbacks: DragDropConfiguration["callbacks"];
+  /** A set of callback functions for each action of the drag & drop workflow.  */
+  callbacks: DragDropConfiguration['callbacks'];
 
-    /** The HTML selector which identifies draggable elements. */
-    dragSelector: DragDropConfiguration["dragSelector"];
+  /** The HTML selector which identifies draggable elements. */
+  dragSelector: DragDropConfiguration['dragSelector'];
 
-    /** The HTML selector which identifies drop targets. */
-    dropSelector: DragDropConfiguration["dropSelector"];
+  /** The HTML selector which identifies drop targets. */
+  dropSelector: DragDropConfiguration['dropSelector'];
 
-    /** A set of functions to control authorization to begin drag workflows, and drop content. */
-    permissions: DragDropConfiguration["permissions"];
+  /** A set of functions to control authorization to begin drag workflows, and drop content. */
+  permissions: DragDropConfiguration['permissions'];
 
-    /* -------------------------------------------- */
-    /*  Public API                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Public API                                  */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Bind the DragDrop controller to an HTML application
      * @param html  The HTML element to which the handler is bound
      */
-    bind(html: HTMLElement): this;
+  bind(html: HTMLElement): this;
 
-    /**
+  /**
      * Execute a callback function associated with a certain action in the workflow
      * @param event   The drag event being handled
      * @param action  The action being attempted
      */
-    callback(event: DragEvent, action: DragAction): ((event: DragEvent) => void) | void;
+  callback(event: DragEvent, action: DragAction): ((event: DragEvent) => void) | void;
 
-    /**
+  /**
      * Test whether the current user has permission to perform a step of the workflow
      * @param action     The action being attempted
      * @param selector   The selector being targeted
      * @returns Can the action be performed?
      */
-    can(action: DragAction, selector: string): boolean;
+  can(action: DragAction, selector: string): boolean;
 
-    /* -------------------------------------------- */
-    /*  Event Listeners and Handlers                */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Listeners and Handlers                */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Handle the start of a drag workflow
      * @param event The drag event being handled
      */
-    protected _handleDragStart(event: DragEvent): void;
+  protected _handleDragStart(event: DragEvent): void;
 
-    /**
+  /**
      * Handle a drag workflow ending for any reason.
      * @param event  The drag event.
      */
-    protected _handleDragEnd(event: DragEvent): void;
+  protected _handleDragEnd(event: DragEvent): void;
 
-    /**
+  /**
      * Handle entering a drop target while dragging.
      * @param event  The drag event.
      */
-    protected _handleDragEnter(event: DragEvent): void;
+  protected _handleDragEnter(event: DragEvent): void;
 
-    /**
+  /**
      * Handle leaving a drop target while dragging.
      * @param event  The drag event.
      */
-    protected _handleDragLeave(event: DragEvent): void;
+  protected _handleDragLeave(event: DragEvent): void;
 
-    /**
+  /**
      * Handle a dragged element over a droppable target
      * @param event  The drag event being handled
      */
-    protected _handleDragOver(event: DragEvent): boolean;
+  protected _handleDragOver(event: DragEvent): boolean;
 
-    /**
+  /**
      * Handle a dragged element dropped on a droppable target
      * @param event  The drag event being handled
      */
-    protected _handleDrop(event: DragEvent): void;
+  protected _handleDrop(event: DragEvent): void;
 
-    /* -------------------------------------------- */
-    /*  Helpers                                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Helpers                                     */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * A helper to create an image preview element for use during HTML element dragging.
      * @param img
      * @param width
      * @param height
      */
-    static createDragImage(img: HTMLImageElement, width: number, height: number): HTMLDivElement;
+  static createDragImage(img: HTMLImageElement, width: number, height: number): HTMLDivElement;
 
-    /* -------------------------------------------- */
-    /*  Factory Methods                             */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Factory Methods                             */
+  /* -------------------------------------------- */
 
-    /** Retrieve the configured DragDrop implementation. */
-    static get implementation(): typeof DragDrop;
+  /** Retrieve the configured DragDrop implementation. */
+  static get implementation(): typeof DragDrop;
 }

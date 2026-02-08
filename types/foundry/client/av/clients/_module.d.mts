@@ -1,1 +1,1 @@
-export { default as SimplePeerAVClient } from "./simplepeer.mjs";
+export { default as SimplePeerAVClient } from './simplepeer.mjs';

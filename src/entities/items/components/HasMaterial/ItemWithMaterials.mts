@@ -1,13 +1,13 @@
-import { ItemDnd35e, ItemSourceDnd35e } from "@items/baseItem/index.mjs";
-import { HasMaterialsSystemData, HasMaterialsSystemSource } from "@items/components/HasMaterial/index.mjs";
-import { ItemType } from "@items/index.mjs";
+import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
+import { HasMaterialsSystemData, HasMaterialsSystemSource } from '@items/components/HasMaterial/index.mjs';
+import { ItemType } from '@items/index.mjs';
 
 type ItemWithMaterialsSourceProps = {
   system: HasMaterialsSystemSource;
 }
 
-type ItemWithMaterialsSource<TItemType extends ItemType = ItemType> = 
-  Omit<ItemSourceDnd35e<TItemType>, "system">
+type ItemWithMaterialsSource<TItemType extends ItemType = ItemType> =
+  Omit<ItemSourceDnd35e<TItemType>, 'system'>
     & ItemWithMaterialsSourceProps;
 
 interface ItemWithMaterials {
@@ -15,13 +15,13 @@ interface ItemWithMaterials {
 
   get unidentifiedDisplayName(): string;
   get identifiedDisplayName(): string;
-};
+}
 
 type ItemWithMaterialsLike =
   ItemDnd35e<ItemType> &
   ItemWithMaterials;
 
-const applyHasMaterialsPrototype = <T extends typeof ItemDnd35e<ItemType>> (item: T) => {
+const applyHasMaterialsPrototype = <T extends typeof ItemDnd35e<ItemType>> (_item: T) => {
   // if ((item as any).__isIdentifiedApplied) return;
 
   // Object.defineProperties(item.prototype, {

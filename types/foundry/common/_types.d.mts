@@ -1,14 +1,14 @@
-import { TokenShape } from "@client/canvas/placeables/token.mjs";
-import ApplicationV2 from "../client/applications/api/application.mjs";
-import Application from "../client/appv1/api/application-v1.mjs";
-import { DataModelConstructionContext } from "./abstract/_types.mjs";
-import DataModel from "./abstract/data.mjs";
-import Document from "./abstract/document.mjs";
-import * as CONST from "./constants.mjs";
-import { DataField } from "./data/fields.mjs";
-import { GridOffset2D } from "./grid/_types.mjs";
-import Color from "./utils/color.mjs";
-import type { DeepReadonly, DeepPartial, Maybe } from "./_shared-types.mjs";
+import { TokenShape } from '@client/canvas/placeables/token.mjs';
+import ApplicationV2 from '../client/applications/api/application.mjs';
+import Application from '../client/appv1/api/application-v1.mjs';
+import { DataModelConstructionContext } from './abstract/_types.mjs';
+import DataModel from './abstract/data.mjs';
+import Document from './abstract/document.mjs';
+import * as CONST from './constants.mjs';
+import { DataField } from './data/fields.mjs';
+import { GridOffset2D } from './grid/_types.mjs';
+import Color from './utils/color.mjs';
+import type { DeepReadonly, DeepPartial, Maybe } from './_shared-types.mjs';
 
 /* ----------------------------------------- */
 /*  Data Model                               */
@@ -29,7 +29,7 @@ type Builtin = Date | Function | Uint8Array | string | number | boolean | symbol
 /**
  * Re-export shared types from the dedicated shared-types module
  */
-export type { DeepReadonly, DeepPartial, Maybe } from "./_shared-types.mjs";
+export type { DeepReadonly, DeepPartial, Maybe } from './_shared-types.mjs';
 
 /**
  * A 2D point, expressed as an array [x, y].
@@ -89,7 +89,7 @@ export interface SettingConfig<
     /** An additional human readable hint */
     hint?: string;
     /** The scope the Setting is stored in, either World or Client */
-    scope: "world" | "client";
+    scope: 'world' | 'client';
     /** Indicates if this Setting should render in the Config application */
     config: boolean;
     /** This will prompt the user to reload the application for the setting to take effect. */
@@ -106,7 +106,7 @@ export interface SettingConfig<
     /** For string Types, defines the allowable values */
     choices?: TChoices;
     /** For numeric Types, defines the allowable range */
-    range?: this["type"] extends NumberConstructor ? { min: number; max: number; step: number } : never;
+    range?: this['type'] extends NumberConstructor ? { min: number; max: number; step: number } : never;
     /** The default value */
     default?: number | string | boolean | object | (() => number | string | boolean | object);
     /** Executes when the value of this Setting changes */
@@ -277,7 +277,7 @@ interface TokenPosition extends ElevatedPoint {
     shape: TokenShape;
 }
 
-type TokenDimensions = Pick<TokenPosition, "width" | "height" | "shape">;
+type TokenDimensions = Pick<TokenPosition, 'width' | 'height' | 'shape'>;
 
 interface TokenHexagonalOffsetsData {
     /** The occupied offsets in an even grid in the 0th row/column */
@@ -302,4 +302,4 @@ interface TokenHexagonalShapeData {
     anchor: Point;
 }
 
-type ModifierKey = "Control" | "Shift" | "Alt";
+type ModifierKey = 'Control' | 'Shift' | 'Alt';

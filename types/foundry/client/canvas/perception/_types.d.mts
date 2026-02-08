@@ -1,4 +1,4 @@
-import RenderFlags from "../interaction/render-flags.mjs";
+import RenderFlags from '../interaction/render-flags.mjs';
 
 export interface PerceptionManagerFlags extends RenderFlags {
     /**

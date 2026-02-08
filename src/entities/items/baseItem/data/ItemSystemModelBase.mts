@@ -2,8 +2,8 @@ import {
   nullableOptionalStringField,
   optionalStringField,
   requiredBooleanField,
-  requiredStringField
-} from "@helpers/fieldBuilders.mjs";
+  requiredStringField,
+} from '@helpers/fieldBuilders.mjs';
 
 const {
   HTMLField,
@@ -41,5 +41,5 @@ abstract class ItemSystemModelBase extends foundry.abstract.TypeDataModel<
 }
 
 export {
-  ItemSystemModelBase
+  ItemSystemModelBase,
 };

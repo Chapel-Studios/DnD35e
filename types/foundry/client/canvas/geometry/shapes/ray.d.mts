@@ -1,4 +1,4 @@
-import { Point } from "@common/_types.mjs";
+import { Point } from '@common/_types.mjs';
 
 /**
  * A ray for the purposes of computing sight and collision
@@ -12,56 +12,56 @@ import { Point } from "@common/_types.mjs";
  * R(t) = (1-t)A + tB
  */
 export default class Ray {
-    constructor(A: Point, B: Point);
+  constructor(A: Point, B: Point);
 
-    // Store points
-    A: Point;
-    B: Point;
+  // Store points
+  A: Point;
+  B: Point;
 
-    // Origins
-    y0: number;
-    x0: number;
+  // Origins
+  y0: number;
+  x0: number;
 
-    // Slopes
-    dx: number;
-    dy: number;
+  // Slopes
+  dx: number;
+  dy: number;
 
-    /** The slope of the ray, dy over dx */
-    slope: number;
+  /** The slope of the ray, dy over dx */
+  slope: number;
 
-    /** The normalized angle of the ray in radians on the range (-PI, PI) */
-    angle: number;
+  /** The normalized angle of the ray in radians on the range (-PI, PI) */
+  angle: number;
 
-    /** The distance of the ray */
-    distance: number;
+  /** The distance of the ray */
+  distance: number;
 
-    /**
+  /**
      * Return the value of the angle normalized to the range (0, 2*PI)
      * This is useful for testing whether an angle falls between two others
      */
-    readonly normAngle: number;
+  readonly normAngle: number;
 
-    static fromAngle(x: number, y: number, radians: number, distance: number): Ray;
+  static fromAngle(x: number, y: number, radians: number, distance: number): Ray;
 
-    static fromArrays(A: [], B: []): Ray;
+  static fromArrays(A: [], B: []): Ray;
 
-    /**
+  /**
      * Project the Array by some proportion of it's initial distance.
      * Return the coordinates of that point along the path.
      * @param t The distance along the Ray
      * @return The coordinates of the projected point
      */
-    project(t: number): Point;
+  project(t: number): Point;
 
-    shiftAngle(angleOffset: number, distance: number): Ray;
+  shiftAngle(angleOffset: number, distance: number): Ray;
 
-    /**
+  /**
      * Find the point I[x,y] and distance t* on ray R(t) which intersects another ray
      * http://paulbourke.net/geometry/pointlineplane/
      */
-    intersectSegment(coords: [number]): Vector2;
+  intersectSegment(coords: [number]): Vector2;
 
-    static _getIntersection(
+  static _getIntersection(
         x1: number,
         y1: number,
         x2: number,

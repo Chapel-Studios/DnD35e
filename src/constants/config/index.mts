@@ -1,4 +1,4 @@
-import ItemConfig from "./item.mjs";
+import ItemConfig from './item.mjs';
 
 export {
   ItemConfig,

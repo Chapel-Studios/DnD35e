@@ -1,8 +1,8 @@
-import Document, { DocumentMetadata } from "@common/abstract/document.mjs";
-import { ImageFilePath, TokenDisplayMode, TokenDisposition, VideoFilePath } from "@common/constants.mjs";
-import * as data from "../data/data.mjs";
-import * as fields from "../data/fields.mjs";
-import { BaseActorDelta, BaseScene } from "./_module.mjs";
+import Document, { DocumentMetadata } from '@common/abstract/document.mjs';
+import { ImageFilePath, TokenDisplayMode, TokenDisposition, VideoFilePath } from '@common/constants.mjs';
+import * as data from '../data/data.mjs';
+import * as fields from '../data/fields.mjs';
+import { BaseActorDelta, BaseScene } from './_module.mjs';
 
 /**
  * The Token document model.
@@ -13,12 +13,12 @@ export default class BaseToken<TParent extends BaseScene | null = BaseScene | nu
     TParent,
     TokenSchema
 > {
-    static override get metadata(): TokenMetadata;
+  static override get metadata(): TokenMetadata;
 
-    static override defineSchema(): TokenSchema;
+  static override defineSchema(): TokenSchema;
 
-    /** The default icon used for newly created Token documents */
-    static DEFAULT_ICON: ImageFilePath | VideoFilePath;
+  /** The default icon used for newly created Token documents */
+  static DEFAULT_ICON: ImageFilePath | VideoFilePath;
 }
 
 export default interface BaseToken<TParent extends BaseScene | null = BaseScene | null>
@@ -29,13 +29,13 @@ export default interface BaseToken<TParent extends BaseScene | null = BaseScene 
 }
 
 interface TokenMetadata extends DocumentMetadata {
-    name: "Token";
-    collection: "tokens";
-    label: "DOCUMENT.Token";
-    labelPlural: "DOCUMENT.Tokens";
+    name: 'Token';
+    collection: 'tokens';
+    label: 'DOCUMENT.Token';
+    labelPlural: 'DOCUMENT.Tokens';
     isEmbedded: true;
     embedded: {
-        ActorDelta: "delta";
+        ActorDelta: 'delta';
     };
 }
 
@@ -156,8 +156,8 @@ export type TokenSource = fields.SourceFromSchema<TokenSchema>;
 export class ActorDeltaField<
     TDocument extends BaseActorDelta<BaseToken> = BaseActorDelta<BaseToken>,
 > extends fields.EmbeddedDocumentField<TDocument> {
-    override initialize(
-        value: fields.MaybeSchemaProp<TDocument["_source"], true, true, true>,
+  override initialize(
+        value: fields.MaybeSchemaProp<TDocument['_source'], true, true, true>,
         model?: TDocument | null,
         options?: object,
     ): fields.MaybeSchemaProp<TDocument, true, true, true>;

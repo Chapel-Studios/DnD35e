@@ -1,16 +1,17 @@
 /**
  * The default coloration shader used for vision sources.
  */
+import AdaptiveVisionShader from './base-vision.mjs';
 export default class ColorationVisionShader extends AdaptiveVisionShader {
-    /**
+  /**
      * Memory allocations for the Adaptive Coloration Shader
      * @type {string}
      */
-    static SHADER_HEADER: string;
-    /** @inheritdoc */
-    static fragmentShader: string;
-    /** @inheritdoc */
-    static defaultUniforms: {
+  static SHADER_HEADER: string;
+  /** @inheritdoc */
+  static fragmentShader: string;
+  /** @inheritdoc */
+  static defaultUniforms: {
         technique: number;
         saturation: number;
         attenuation: number;
@@ -33,11 +34,11 @@ export default class ColorationVisionShader extends AdaptiveVisionShader {
         globalLight: boolean;
         globalLightThresholds: number[];
     };
-    /**
+
+  /**
      * Flag whether the coloration shader is currently required.
      * If key uniforms are at their default values, we don't need to render the coloration container.
      * @type {boolean}
      */
-    get isRequired(): boolean;
+  get isRequired(): boolean;
 }
-import AdaptiveVisionShader from "./base-vision.mjs";

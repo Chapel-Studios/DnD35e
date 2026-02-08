@@ -1,5 +1,5 @@
-import WorldCollection, { FromCompendiumOptions } from "../abstract/world-collection.mjs";
-import Actor from "../actor.mjs";
+import WorldCollection, { FromCompendiumOptions } from '../abstract/world-collection.mjs';
+import Actor from '../actor.mjs';
 
 /**
  * The singleton collection of Actor documents which exist within the active World.
@@ -15,16 +15,16 @@ import Actor from "../actor.mjs";
  * ```
  */
 export default class Actors<TDocument extends Actor<null>> extends WorldCollection<TDocument> {
-    /**
+  /**
      * A mapping of synthetic Token Actors which are currently active within the viewed Scene.
      * Each Actor is referenced by the Token.id.
      */
-    get tokens(): Record<string, TDocument | undefined>;
+  get tokens(): Record<string, TDocument | undefined>;
 
-    static override documentName: "Actor";
+  static override documentName: 'Actor';
 
-    override fromCompendium(
-        document: TDocument | TDocument["_source"],
+  override fromCompendium(
+        document: TDocument | TDocument['_source'],
         options?: FromCompendiumOptions,
-    ): TDocument["_source"];
+    ): TDocument['_source'];
 }

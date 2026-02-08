@@ -1,7 +1,8 @@
-import { computed, reactive, Ref } from "vue";
-import { Material, MaterialDetails } from "../index.mjs";
-import { useIdentifiableStore } from "@items/components/Identifiable/index.mjs";
-import { ItemSheetTab, useItemSheetStore } from "@items/baseItem/index.mjs";
+import { computed, Ref } from 'vue';
+import { Material, MaterialDetails } from '../index.mjs';
+import { useIdentifiableStore } from '@items/components/Identifiable/index.mjs';
+import { ItemSheetTab, useItemSheetStore } from '@items/baseItem/index.mjs';
+import { MaterialType } from '../Material.mjs';
 
 const getMaterialTabs = (): ItemSheetTab[] => [
   {
@@ -14,9 +15,9 @@ const getMaterialTabs = (): ItemSheetTab[] => [
 ];
 
 const useMaterialStore = (context: any) => {
-  const baseStore = useItemSheetStore<Material>(context)
+  const baseStore = useItemSheetStore<MaterialType>(context);
   baseStore.setItemType('TYPES.Item.material');
-  const identifiableStore = useIdentifiableStore<Material>(context, baseStore);
+  const identifiableStore = useIdentifiableStore<MaterialType>(context, baseStore);
   baseStore.tabs.tabActions.appendTabs(getMaterialTabs());
 
   const document = baseStore._document as unknown as Ref<Material>;
@@ -30,7 +31,7 @@ const useMaterialStore = (context: any) => {
     isColdIronEquivalent: computed(() => document.value.system.isColdIronEquivalent),
   };
 
-  return  {
+  return {
     ...baseStore,
     ...identifiableStore,
     materialGetters,

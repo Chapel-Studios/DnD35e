@@ -1,4 +1,4 @@
-import { Point } from "../_types.mjs";
+import { Point } from '../_types.mjs';
 
 /**
  * Determine the relative orientation of three points in two-dimensional space.

@@ -9,19 +9,18 @@ import type CompendiumDirectory from '@client/applications/sidebar/tabs/compendi
 import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type Config from '@client/config.mjs';
+import { ItemType } from '@items/itemTypes.mjs';
 
-interface GameDnd35e extends Game<
+type GameDnd35e = Game<
   ActorDnd35e<null>,
   fd.collections.Actors<ActorDnd35e<null>>,
   documents.ChatMessage,
   documents.Combat,
-  ItemDnd35e<null>,
+  ItemDnd35e<ItemType, null>,
   documents.Macro,
   SceneDnd35e,
   documents.User
-> {
-
-};
+>;
 
 type ThisConfig = Config<
   documents.AmbientLightDocument<SceneDnd35e | null>,

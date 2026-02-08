@@ -68,23 +68,23 @@ export interface ProgressNotificationOptions extends NotificationOptions {
  * ```
  */
 export default class Notifications {
-    constructor();
+  constructor();
 
-    /**
+  /**
      * The maximum number of active notifications.
      */
-    static MAX_ACTIVE: number;
+  static MAX_ACTIVE: number;
 
-    /**
+  /**
      * Notification lifetime in milliseconds.
      */
-    static LIFETIME_MS: number;
+  static LIFETIME_MS: number;
 
-    /* -------------------------------------------- */
-    /*  Public API                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Public API                                  */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Push a new notification into the queue
      * @param message The content of the notification message. A passed object should have a meaningful override of the
      *                `toString` method. If the object is an `Error` and console logging is requested, the stack trace
@@ -93,50 +93,50 @@ export default class Notifications {
      * @param options={}] Additional options which affect the notification
      * @returns The registered notification
      */
-    notify(
+  notify(
         message: string | object,
-        type: "info" | "warning" | "error" | "success",
+        type: 'info' | 'warning' | 'error' | 'success',
         options?: NotificationOptions,
     ): Notification;
 
-    /**
+  /**
      * Display a notification with the "info" type.
      * @param message The content of the info message
      * @param options Notification options passed to the notify function
      * @returns The registered notification
      * @see {@link notify}
      */
-    info(message: string | object, options: ProgressNotificationOptions): Readonly<ProgressNotification>;
-    info(message: string | object, options?: NotificationOptions): Readonly<Notification>;
+  info(message: string | object, options: ProgressNotificationOptions): Readonly<ProgressNotification>;
+  info(message: string | object, options?: NotificationOptions): Readonly<Notification>;
 
-    /**
+  /**
      * Display a notification with the "warning" type.
      * @param message The content of the warning message
      * @param options Notification options passed to the notify function
      * @returns The registered notification
      * @see {@link notify}
      */
-    warn(message: string | object, options?: NotificationOptions): Readonly<Notification>;
+  warn(message: string | object, options?: NotificationOptions): Readonly<Notification>;
 
-    /**
+  /**
      * Display a notification with the "error" type.
      * @param message The content of the error message
      * @param options Notification options passed to the notify function
      * @returns The registered notification
      * @see {@link notify}
      */
-    error(message: string | object, options?: NotificationOptions): Readonly<Notification>;
+  error(message: string | object, options?: NotificationOptions): Readonly<Notification>;
 
-    /**
+  /**
      * Display a notification with the "success" type.
      * @param message The content of the success message
      * @param options Notification options passed to the notify function
      * @returns The registered notification
      * @see {@link notify}
      */
-    success(message: string | object, options?: NotificationOptions): Readonly<Notification>;
+  success(message: string | object, options?: NotificationOptions): Readonly<Notification>;
 
-    /**
+  /**
      * Update the progress of the notification.
      * @param notification    A Notification or ID to update
      * @param update An incremental progress update
@@ -147,7 +147,7 @@ export default class Notifications {
      * @param update.format A mapping of formatting strings passed to Localization#format
      * @param update.pct An update to the completion percentage
      */
-    update(
+  update(
         notification: Notification | number,
         update: {
             message?: string;
@@ -159,14 +159,14 @@ export default class Notifications {
         },
     ): void;
 
-    /**
+  /**
      * Remove the notification linked to the ID.
      * @param notification The Notification or ID to remove
      */
-    remove(notification: Notification | number): void;
+  remove(notification: Notification | number): void;
 
-    /**
+  /**
      * Clear all notifications.
      */
-    clear(): void;
+  clear(): void;
 }

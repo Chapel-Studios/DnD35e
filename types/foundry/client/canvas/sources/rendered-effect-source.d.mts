@@ -1,9 +1,9 @@
-import Color from "@common/utils/color.mjs";
-import { PointSourceMesh } from "../containers/_module.mjs";
-import { PlaceableObject } from "../placeables/_module.mjs";
-import { AbstractBaseShader, AdaptiveLightingShader } from "../rendering/shaders/_module.mjs";
-import type BaseEffectSource from "./base-effect-source.mjs";
-import type { BaseEffectSourceData } from "./base-effect-source.mjs";
+import Color from '@common/utils/color.mjs';
+import { PointSourceMesh } from '../containers/_module.mjs';
+import { PlaceableObject } from '../placeables/_module.mjs';
+import { AbstractBaseShader, AdaptiveLightingShader } from '../rendering/shaders/_module.mjs';
+import type BaseEffectSource from './base-effect-source.mjs';
+import type { BaseEffectSourceData } from './base-effect-source.mjs';
 
 interface RenderedEffectSourceData extends BaseEffectSourceData {
     /** A color applied to the rendered effect */
@@ -58,95 +58,95 @@ interface RenderedEffectSourceLayer {
 export default abstract class RenderedEffectSource<
     TObject extends PlaceableObject | null,
 > extends BaseEffectSource<TObject> {
-    /** Keys of the data object which require shaders to be re-initialized. */
-    static _initializeShaderKeys: string[];
+  /** Keys of the data object which require shaders to be re-initialized. */
+  static _initializeShaderKeys: string[];
 
-    /** Keys of the data object which require uniforms to be refreshed. */
-    static _refreshUniformsKeys: string[];
+  /** Keys of the data object which require uniforms to be refreshed. */
+  static _refreshUniformsKeys: string[];
 
-    /**
+  /**
      * Layers handled by this rendered source.
      */
-    static get _layers(): Record<string, RenderedEffectLayerConfig>;
+  static get _layers(): Record<string, RenderedEffectLayerConfig>;
 
-    /** The offset in pixels applied to create soft edges. */
-    static EDGE_OFFSET: number;
+  /** The offset in pixels applied to create soft edges. */
+  static EDGE_OFFSET: number;
 
-    /* -------------------------------------------- */
-    /*  Rendered Source Attributes                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendered Source Attributes                  */
+  /* -------------------------------------------- */
 
-    /** The animation configuration applied to this source */
-    animation: RenderedPointSourceAnimationConfig;
+  /** The animation configuration applied to this source */
+  animation: RenderedPointSourceAnimationConfig;
 
-    /** The object of data which configures how the source is rendered */
-    data: RenderedEffectSourceData;
+  /** The object of data which configures how the source is rendered */
+  data: RenderedEffectSourceData;
 
-    /** Track the status of rendering layers */
-    layers: Record<"background" | "coloration" | "illumination", RenderedEffectSourceLayer>;
+  /** Track the status of rendering layers */
+  layers: Record<'background' | 'coloration' | 'illumination', RenderedEffectSourceLayer>;
 
-    /** The color of the source as a RGB vector. */
-    colorRGB: [number, number, number] | null;
+  /** The color of the source as a RGB vector. */
+  colorRGB: [number, number, number] | null;
 
-    /* -------------------------------------------- */
-    /*  Rendered Source Properties                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendered Source Properties                  */
+  /* -------------------------------------------- */
 
-    /** A convenience accessor to the background layer mesh. */
-    get background(): PointSourceMesh;
+  /** A convenience accessor to the background layer mesh. */
+  get background(): PointSourceMesh;
 
-    /** A convenience accessor to the coloration layer mesh. */
-    get coloration(): PointSourceMesh;
+  /** A convenience accessor to the coloration layer mesh. */
+  get coloration(): PointSourceMesh;
 
-    /** A convenience accessor to the illumination layer mesh. */
-    get illumination(): PointSourceMesh;
+  /** A convenience accessor to the illumination layer mesh. */
+  get illumination(): PointSourceMesh;
 
-    /** Is the rendered source animated? */
-    get isAnimated(): boolean;
+  /** Is the rendered source animated? */
+  get isAnimated(): boolean;
 
-    /** Has the rendered source at least one active layer? */
-    get hasActiveLayer(): boolean;
+  /** Has the rendered source at least one active layer? */
+  get hasActiveLayer(): boolean;
 
-    /** Is this RenderedPointSource a temporary preview? */
-    get isPreview(): boolean;
+  /** Is this RenderedPointSource a temporary preview? */
+  get isPreview(): boolean;
 
-    /* -------------------------------------------- */
-    /*  Rendered Source Initialization              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendered Source Initialization              */
+  /* -------------------------------------------- */
 
-    protected override _initialize(data: Partial<BaseEffectSourceData>): void;
+  protected override _initialize(data: Partial<BaseEffectSourceData>): void;
 
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Decide whether to render soft edges with a blur.
      */
-    protected _initializeSoftEdges(): void;
+  protected _initializeSoftEdges(): void;
 
-    protected override _configure(changes: object): void;
+  protected override _configure(changes: object): void;
 
-    /**
+  /**
      * Configure which shaders are used for each rendered layer.
      * @returns An object whose keys are layer identifiers and whose values are shader classes.
      */
-    protected _configureShaders(): Record<string, typeof AdaptiveLightingShader>;
+  protected _configureShaders(): Record<string, typeof AdaptiveLightingShader>;
 
-    /** Decide whether to render soft edges with a blur. */
-    protected _configureSoftEdges(): void;
+  /** Decide whether to render soft edges with a blur. */
+  protected _configureSoftEdges(): void;
 
-    /**
+  /**
      * Configure the derived color attributes and associated flag.
      * @param color The color to configure (usually a color coming for the rendered point source data)
      *              or null if no color is configured for this rendered source.
      */
-    protected _configureColorAttributes(color: number | null): void;
+  protected _configureColorAttributes(color: number | null): void;
 
-    /** Specific configuration for a layer. */
-    protected _configureLayer(layer: RenderedEffectSourceLayer, layerId: string): void;
+  /** Specific configuration for a layer. */
+  protected _configureLayer(layer: RenderedEffectSourceLayer, layerId: string): void;
 
-    /* -------------------------------------------- */
-    /*  Rendered Source Canvas Rendering            */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendered Source Canvas Rendering            */
+  /* -------------------------------------------- */
 
     /**
      * Create the geometry for the source shape that is used in shaders and compute its bounds for culling purpose.
@@ -155,7 +155,7 @@ export default abstract class RenderedEffectSource<
     protected abstract _updateGeometry(): void;
 
     /** Render the containers used to represent this light source within the LightingLayer */
-    drawMeshes(): Record<"background" | "coloration" | "illumination", PIXI.Mesh>;
+    drawMeshes(): Record<'background' | 'coloration' | 'illumination', PIXI.Mesh>;
 
     /* -------------------------------------------- */
     /*  Rendered Source Refresh                     */

@@ -5,9 +5,10 @@
  * The filter used by the weather layer to mask weather above occluded roofs.
  * @see {@link WeatherEffects}
  */
+import AbstractBaseMaskFilter from './base-mask-filter.mjs';
 export default class WeatherOcclusionMaskFilter extends AbstractBaseMaskFilter {
-    /** @override */
-    static override defaultUniforms: {
+  /** @override */
+  static override defaultUniforms: {
         depthElevation: number;
         useOcclusion: boolean;
         occlusionTexture: null;
@@ -21,10 +22,10 @@ export default class WeatherOcclusionMaskFilter extends AbstractBaseMaskFilter {
         sceneAnchor: number[];
         terrainUvMatrix: PIXI.Matrix;
     };
-    /**
+
+  /**
      * Elevation of this weather occlusion mask filter.
      * @type {number}
      */
-    elevation: number;
+  elevation: number;
 }
-import AbstractBaseMaskFilter from "./base-mask-filter.mjs";

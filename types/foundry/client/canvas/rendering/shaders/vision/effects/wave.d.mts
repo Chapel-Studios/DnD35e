@@ -1,6 +1,8 @@
 /**
  * Shader specialized in wave like senses (tremorsenses)
  */
+import BackgroundVisionShader from '../background-vision.mjs';
+import ColorationVisionShader from '../coloration-vision.mjs';
 export class WaveBackgroundVisionShader extends BackgroundVisionShader {
 }
 /**
@@ -8,5 +10,3 @@ export class WaveBackgroundVisionShader extends BackgroundVisionShader {
  */
 export class WaveColorationVisionShader extends ColorationVisionShader {
 }
-import BackgroundVisionShader from "../background-vision.mjs";
-import ColorationVisionShader from "../coloration-vision.mjs";

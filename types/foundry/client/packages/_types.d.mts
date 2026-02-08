@@ -1,4 +1,4 @@
-export * from "@common/packages/_types.mjs";
+export * from '@common/packages/_types.mjs';
 
 export interface PackageCompatibilityBadge {
     /** A type in "safe", "unsafe", "warning", "neutral" applied as a CSS class */

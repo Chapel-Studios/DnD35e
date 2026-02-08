@@ -1,48 +1,48 @@
-import { AVMaster, AVSettings } from "./_module.mjs";
+import { AVMaster, AVSettings } from './_module.mjs';
 
 /**
  * An interface for an Audio/Video client which is extended to provide broadcasting functionality.
  */
 export default abstract class AVClient {
-    /**
+  /**
      * @param master The master orchestration instance
      * @param settings The audio/video settings being used
      */
-    constructor(master: AVMaster, settings: AVSettings);
+  constructor(master: AVMaster, settings: AVSettings);
 
-    /**
+  /**
      * The master orchestration instance
      */
-    master: AVMaster;
+  master: AVMaster;
 
-    /**
+  /**
      * The active audio/video settings being used
      */
-    settings: AVSettings;
+  settings: AVSettings;
 
-    /**
+  /**
      * Is audio broadcasting push-to-talk enabled?
      */
-    get isVoicePTT(): boolean;
+  get isVoicePTT(): boolean;
 
-    /**
+  /**
      * Is audio broadcasting always enabled?
      */
-    get isVoiceAlways(): boolean;
+  get isVoiceAlways(): boolean;
 
-    /**
+  /**
      * Is audio broadcasting voice-activation enabled?
      */
-    get isVoiceActivated(): boolean;
+  get isVoiceActivated(): boolean;
 
-    /**
+  /**
      * Is the current user muted?
      */
-    get isMuted(): boolean;
+  get isMuted(): boolean;
 
-    /* -------------------------------------------- */
-    /*  Connection                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Connection                                  */
+  /* -------------------------------------------- */
 
     /**
      * One-time initialization actions that should be performed for this client implementation.

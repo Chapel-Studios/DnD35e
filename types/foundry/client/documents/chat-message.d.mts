@@ -1,18 +1,18 @@
-import Roll, { Rolled } from "@client/dice/roll.mjs";
-import { DocumentConstructionContext } from "@common/_types.mjs";
+import Roll, { Rolled } from '@client/dice/roll.mjs';
+import { DocumentConstructionContext } from '@common/_types.mjs';
 import {
-    DatabaseCreateCallbackOptions,
-    DatabaseCreateOperation,
-    DatabaseDeleteCallbackOptions,
-    DatabaseUpdateCallbackOptions,
-} from "@common/abstract/_types.mjs";
-import Document from "@common/abstract/document.mjs";
-import { RollMode } from "@common/constants.mjs";
-import BaseChatMessage, { ChatMessageSource, ChatSpeakerData } from "@common/documents/chat-message.mjs";
-import { Actor, BaseUser, Scene, TokenDocument, User } from "./_module.mjs";
-import { ClientDocument, ClientDocumentStatic } from "./abstract/client-document.mjs";
+  DatabaseCreateCallbackOptions,
+  DatabaseCreateOperation,
+  DatabaseDeleteCallbackOptions,
+  DatabaseUpdateCallbackOptions,
+} from '@common/abstract/_types.mjs';
+import Document from '@common/abstract/document.mjs';
+import { RollMode } from '@common/constants.mjs';
+import BaseChatMessage, { ChatMessageSource, ChatSpeakerData } from '@common/documents/chat-message.mjs';
+import { Actor, BaseUser, Scene, TokenDocument, User } from './_module.mjs';
+import { ClientDocument, ClientDocumentStatic } from './abstract/client-document.mjs';
 
-interface ClientBaseChatMessageStatic extends Omit<typeof BaseChatMessage, "new">, ClientDocumentStatic {}
+interface ClientBaseChatMessageStatic extends Omit<typeof BaseChatMessage, 'new'>, ClientDocumentStatic {}
 
 declare const ClientBaseChatMessage: {
     new <TUser extends User | null>(...args: any): BaseChatMessage<TUser> & ClientDocument<null>;
@@ -23,71 +23,71 @@ declare const ClientBaseChatMessage: {
  * Each ChatMessage document contains ChatMessageData which defines its data schema.
  */
 declare class ChatMessage<TUser extends User | null = User | null> extends ClientBaseChatMessage<TUser> {
-    rolls: Rolled<Roll>[];
+  rolls: Rolled<Roll>[];
 
-    /** Is this ChatMessage currently displayed in the sidebar ChatLog? */
-    logged: boolean;
+  /** Is this ChatMessage currently displayed in the sidebar ChatLog? */
+  logged: boolean;
 
-    /* -------------------------------------------- */
-    /*  Properties                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Properties                                  */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Return the recommended String alias for this message.
      * The alias could be a Token name in the case of in-character messages or dice rolls.
      * Alternatively it could be a User name in the case of OOC chat or whispers.
      */
-    get alias(): string;
+  get alias(): string;
 
-    /** Is the current User the author of this message? */
-    get isAuthor(): boolean;
+  /** Is the current User the author of this message? */
+  get isAuthor(): boolean;
 
-    /**
+  /**
      * Return whether the content of the message is visible to the current user.
      * For certain dice rolls, for example, the message itself may be visible while the content of that message is not.
      */
-    get isContentVisible(): boolean;
+  get isContentVisible(): boolean;
 
-    /**
+  /**
      * Does this message contain dice rolls?
      */
-    get isRoll(): boolean;
+  get isRoll(): boolean;
 
-    /**
+  /**
      * Return whether the ChatMessage is visible to the current User.
      * Messages may not be visible if they are private whispers.
      */
-    override get visible(): boolean;
+  override get visible(): boolean;
 
-    /**
+  /**
      * The Actor which represents the speaker of this message (if any).
      */
-    get speakerActor(): Actor | null;
+  get speakerActor(): Actor | null;
 
-    /* -------------------------------------------- */
-    /*  Methods                                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Methods                                     */
+  /* -------------------------------------------- */
 
-    override prepareDerivedData(): void;
+  override prepareDerivedData(): void;
 
-    /**
+  /**
      * Transform a provided object of ChatMessage data by applying a certain rollMode to the data object.
      * @param chatData The object of ChatMessage data prior to applying a rollMode preference
      * @param rollMode The rollMode preference to apply to this message data
      * @returns The modified ChatMessage data with rollMode preferences applied
      */
-    static applyRollMode<TData extends DeepPartial<ChatMessageSource>>(
+  static applyRollMode<TData extends DeepPartial<ChatMessageSource>>(
         chatData: TData,
-        rollMode: RollMode | "roll",
+        rollMode: RollMode | 'roll',
     ): TData;
 
-    /**
+  /**
      * Update the data of a ChatMessage instance to apply a requested rollMode
      * @param rollMode The rollMode preference to apply to this message data
      */
-    applyRollMode(rollMode: RollMode | "roll"): void;
+  applyRollMode(rollMode: RollMode | 'roll'): void;
 
-    /**
+  /**
      * Attempt to determine who is the speaking character (and token) for a certain Chat Message
      * First assume that the currently controlled Token is the speaker
      *
@@ -97,84 +97,85 @@ declare class ChatMessage<TUser extends User | null = User | null> extends Clien
      * @param alias The name of the speaker to display
      * @returns The identified speaker data
      */
-    static getSpeaker({
-        scene,
-        actor,
-        token,
-        alias,
-    }?: {
+  static getSpeaker({
+    scene,
+    actor,
+    token,
+    alias,
+  }
+  ?: {
         scene?: Scene | null;
         actor?: Actor | null;
         token?: TokenDocument | null;
         alias?: string;
     }): ChatSpeakerData;
 
-    /**
+  /**
      * Obtain an Actor instance which represents the speaker of this message (if any)
      * @param speaker The speaker data object
      */
-    static getSpeakerActor(speaker: DeepPartial<ChatSpeakerData>): Actor | null;
+  static getSpeakerActor(speaker: DeepPartial<ChatSpeakerData>): Actor | null;
 
-    /** Obtain a data object used to evaluate any dice rolls associated with this particular chat message */
-    getRollData(): object;
+  /** Obtain a data object used to evaluate any dice rolls associated with this particular chat message */
+  getRollData(): object;
 
-    /**
+  /**
      * Given a string whisper target, return an Array of the user IDs which should be targeted for the whisper
      * @param name The target name of the whisper target
      * @return An array of User instances
      */
-    static getWhisperRecipients(name: string): User[];
+  static getWhisperRecipients(name: string): User[];
 
-    /**
+  /**
      * Render the HTML for the ChatMessage which should be added to the log
      * @param options Additional options passed to the Handlebars template.
      * @param options.canDelete Render a delete button. By default, this is true for GM users.
      * @param options.canClose Render a close button for dismissing chat card notifications.
      */
-    renderHTML(options?: { canDelete?: boolean; canClose?: boolean }): Promise<HTMLElement>;
+  renderHTML(options?: { canDelete?: boolean; canClose?: boolean }): Promise<HTMLElement>;
 
-    /* -------------------------------------------- */
-    /*  Event Handlers                              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Handlers                              */
+  /* -------------------------------------------- */
 
-    protected override _preCreate(
-        data: this["_source"],
+  protected override _preCreate(
+        data: this['_source'],
         options: DatabaseCreateCallbackOptions,
         user: BaseUser,
     ): Promise<boolean | void>;
 
-    protected override _onCreate(data: this["_source"], options: DatabaseCreateCallbackOptions, userId: string): void;
+  protected override _onCreate(data: this['_source'], options: DatabaseCreateCallbackOptions, userId: string): void;
 
-    protected override _onUpdate(
-        changed: DeepPartial<this["_source"]>,
+  protected override _onUpdate(
+        changed: DeepPartial<this['_source']>,
         options: DatabaseUpdateCallbackOptions,
         userId: string,
     ): void;
 
-    protected override _onDelete(options: DatabaseDeleteCallbackOptions, userId: string): void;
+  protected override _onDelete(options: DatabaseDeleteCallbackOptions, userId: string): void;
 
-    /* -------------------------------------------- */
-    /*  Importing and Exporting                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Importing and Exporting                     */
+  /* -------------------------------------------- */
 
-    /** Export the content of the chat message into a standardized log format */
-    export(): string;
+  /** Export the content of the chat message into a standardized log format */
+  export(): string;
 }
 
 declare namespace ChatMessage {
     function create<TDocument extends Document>(
         this: ConstructorOf<TDocument>,
-        data: DeepPartial<TDocument["_source"]>,
+        data: DeepPartial<TDocument['_source']>,
         operation?: Partial<ChatMessageCreateOperation>,
     ): Promise<TDocument | undefined>;
     function create<TDocument extends Document>(
         this: ConstructorOf<TDocument>,
-        data: DeepPartial<TDocument["_source"]>[],
+        data: DeepPartial<TDocument['_source']>[],
         operation?: Partial<ChatMessageCreateOperation>,
     ): Promise<TDocument[]>;
     function create<TDocument extends Document>(
         this: ConstructorOf<TDocument>,
-        data: DeepPartial<TDocument["_source"]> | PreCreate<TDocument["_source"]>[],
+        data: DeepPartial<TDocument['_source']> | PreCreate<TDocument['_source']>[],
         operation?: Partial<ChatMessageCreateOperation>,
     ): Promise<TDocument[] | TDocument | undefined>;
 }
@@ -182,11 +183,11 @@ declare namespace ChatMessage {
 export default ChatMessage;
 
 export interface MessageConstructionContext extends DocumentConstructionContext<null> {
-    rollMode?: RollMode | "roll";
+    rollMode?: RollMode | 'roll';
 }
 
 export interface ChatMessageCreateOperation extends DatabaseCreateOperation<null> {
-    rollMode?: RollMode | "roll";
+    rollMode?: RollMode | 'roll';
 }
 
 export interface ChatMessageRenderData {

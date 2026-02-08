@@ -1,6 +1,6 @@
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import { FOLDER_DOCUMENT_TYPES, FolderDocumentType } from "../constants.mjs";
-import * as fields from "../data/fields.mjs";
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import { FOLDER_DOCUMENT_TYPES, FolderDocumentType } from '../constants.mjs';
+import * as fields from '../data/fields.mjs';
 
 /**
  * The Folder Document model.
@@ -9,32 +9,32 @@ import * as fields from "../data/fields.mjs";
  * @property data The constructed data object for the document.
  */
 export default class BaseFolder extends Document<null, FolderSchema> {
-    /* ---------------------------------------- */
-    /*  Model Configuration                     */
-    /* ---------------------------------------- */
-    static override get metadata(): FolderMetadata;
+  /* ---------------------------------------- */
+  /*  Model Configuration                     */
+  /* ---------------------------------------- */
+  static override get metadata(): FolderMetadata;
 
-    static override defineSchema(): FolderSchema;
+  static override defineSchema(): FolderSchema;
 
-    static override LOCALIZATION_PREFIXES: string[];
+  static override LOCALIZATION_PREFIXES: string[];
 
-    static override validateJoint(data: FolderSource): void;
+  static override validateJoint(data: FolderSource): void;
 
-    /** Allow folder sorting modes */
-    static SORTING_MODES: ["a", "m"];
+  /** Allow folder sorting modes */
+  static SORTING_MODES: ['a', 'm'];
 
-    static override get(documentId: string, options?: object): BaseFolder | null | undefined;
+  static override get(documentId: string, options?: object): BaseFolder | null | undefined;
 }
 
 export default interface BaseFolder extends Document<null, FolderSchema>, fields.ModelPropsFromSchema<FolderSchema> {
-    get documentName(): FolderMetadata["name"];
+    get documentName(): FolderMetadata['name'];
 }
 
 interface FolderMetadata extends DocumentMetadata {
-    name: "Folder";
-    collection: "folders";
-    label: "DOCUMENT.Folder";
-    labelPlural: "DOCUMENT.Folders";
+    name: 'Folder';
+    collection: 'folders';
+    label: 'DOCUMENT.Folder';
+    labelPlural: 'DOCUMENT.Folders';
     coreTypes: typeof FOLDER_DOCUMENT_TYPES;
 }
 

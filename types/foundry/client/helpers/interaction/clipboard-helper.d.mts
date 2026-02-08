@@ -4,11 +4,11 @@
  * @see {@link foundry.Game#clipboard}
  */
 export default class ClipboardHelper {
-    constructor();
+  constructor();
 
-    /**
+  /**
      * Copies plain text to the clipboard in a cross-browser compatible way.
      * @param text The text to copy.
      */
-    copyPlainText(text: string): Promise<void>;
+  copyPlainText(text: string): Promise<void>;
 }

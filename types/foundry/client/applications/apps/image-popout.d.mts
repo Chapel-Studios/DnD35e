@@ -1,11 +1,11 @@
-import Document from "@common/abstract/document.mjs";
-import { ApplicationConfiguration, ApplicationRenderContext } from "../_types.mjs";
+import Document from '@common/abstract/document.mjs';
+import { ApplicationConfiguration, ApplicationRenderContext } from '../_types.mjs';
 import {
-    ApplicationV2,
-    HandlebarsApplicationMixin,
-    HandlebarsRenderOptions,
-    HandlebarsTemplatePart,
-} from "../api/_module.mjs";
+  ApplicationV2,
+  HandlebarsApplicationMixin,
+  HandlebarsRenderOptions,
+  HandlebarsTemplatePart,
+} from '../api/_module.mjs';
 
 interface ImagePopoutConfiguration extends ApplicationConfiguration {
     /** The URL to the image or video file */
@@ -61,43 +61,43 @@ interface ShareImageConfig {
  * ```
  */
 export default class ImagePopout extends HandlebarsApplicationMixin(ApplicationV2) {
-    constructor(options: DeepPartial<ImagePopoutConfiguration>);
+  constructor(options: DeepPartial<ImagePopoutConfiguration>);
 
-    static override DEFAULT_OPTIONS: DeepPartial<ImagePopoutConfiguration>;
+  static override DEFAULT_OPTIONS: DeepPartial<ImagePopoutConfiguration>;
 
-    static override PARTS: Record<string, HandlebarsTemplatePart>;
+  static override PARTS: Record<string, HandlebarsTemplatePart>;
 
-    override get title(): string;
+  override get title(): string;
 
-    /**
+  /**
      * Whether the application should display video content.
      */
-    get isVideo(): boolean;
+  get isVideo(): boolean;
 
-    /**
+  /**
      * Share the displayed image with other connected Users
      */
-    shareImage(options?: ShareImageConfig): void;
+  shareImage(options?: ShareImageConfig): void;
 
-    protected override _initializeApplicationOptions(
+  protected override _initializeApplicationOptions(
         options: DeepPartial<ImagePopoutConfiguration>,
     ): ImagePopoutConfiguration;
 
-    protected override _prepareContext(options: HandlebarsRenderOptions): Promise<ApplicationRenderContext>;
+  protected override _prepareContext(options: HandlebarsRenderOptions): Promise<ApplicationRenderContext>;
 
-    protected override _preFirstRender(
+  protected override _preFirstRender(
         context: ApplicationRenderContext,
         options: HandlebarsRenderOptions,
     ): Promise<void>;
 
-    /* -------------------------------------------- */
-    /*  Helper Methods                              */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Helper Methods                              */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Handle a received request to display an image.
      * @param config The image configuration data.
      * @internal
      */
-    static _handleShareImage(config: ShareImageConfig): ImagePopout;
+  static _handleShareImage(config: ShareImageConfig): ImagePopout;
 }

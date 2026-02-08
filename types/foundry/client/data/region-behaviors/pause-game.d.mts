@@ -1,9 +1,9 @@
-import type * as fields from "@common/data/fields.mjs";
-import { RegionBehaviorType } from "./base.mjs";
+import type * as fields from '@common/data/fields.mjs';
+import { RegionBehaviorType } from './base.mjs';
 
 /** The data model for a behavior that pauses the game when a player-controlled Token enters the Region. */
 export class PauseGameRegionBehaviorType extends RegionBehaviorType<PauseGameRegionBehaviorTypeSchema> {
-    static override defineSchema(): PauseGameRegionBehaviorTypeSchema;
+  static override defineSchema(): PauseGameRegionBehaviorTypeSchema;
 }
 
 export interface PauseGameRegionBehaviorType

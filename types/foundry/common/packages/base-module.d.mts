@@ -1,6 +1,6 @@
-import * as fields from "../data/fields.mjs";
-import * as packages from "./_module.mjs";
-import AdditionalTypesField from "./sub-types.mjs";
+import * as fields from '../data/fields.mjs';
+import * as packages from './_module.mjs';
+import AdditionalTypesField from './sub-types.mjs';
 
 /**
  * The data schema used to define Module manifest files.
@@ -11,12 +11,12 @@ import AdditionalTypesField from "./sub-types.mjs";
  * @property [documentTypes] Additional document sub-types provided by this module.
  */
 export default class BaseModule extends packages.BasePackage<ModuleSchema> {
-    static override defineSchema(): ModuleSchema;
+  static override defineSchema(): ModuleSchema;
 
-    static override type: "module";
+  static override type: 'module';
 
-    /** The default icon used for this type of Package. */
-    static icon: string;
+  /** The default icon used for this type of Package. */
+  static icon: string;
 }
 
 export default interface BaseModule

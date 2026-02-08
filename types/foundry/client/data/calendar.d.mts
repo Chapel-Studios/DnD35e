@@ -1,6 +1,6 @@
-import DataModel from "@common/abstract/data.mjs";
-import * as fields from "@common/data/fields.mjs";
-import { CalendarConfig, TimeComponents, TimeFormatter } from "./_types.mjs";
+import DataModel from '@common/abstract/data.mjs';
+import * as fields from '@common/data/fields.mjs';
+import { CalendarConfig, TimeComponents, TimeFormatter } from './_types.mjs';
 
 /**
  * Game Time Calendar configuration data model.
@@ -9,49 +9,49 @@ export default class CalendarData<TComponents extends TimeComponents = TimeCompo
     null,
     CalendarDataSchema
 > {
-    static override defineSchema(): CalendarDataSchema;
+  static override defineSchema(): CalendarDataSchema;
 
-    static formatTimestamp<T extends TimeComponents>(calendar: CalendarData<T>, components: T, options: object): string;
+  static formatTimestamp<T extends TimeComponents>(calendar: CalendarData<T>, components: T, options: object): string;
 
-    static formatAgo<T extends TimeComponents>(calendar: CalendarData<T>, components: T, options: object): string;
+  static formatAgo<T extends TimeComponents>(calendar: CalendarData<T>, components: T, options: object): string;
 
-    /**
+  /**
      * Expand a world time integer into an object containing the relevant time components.
      * @param components An amount of time expressed as components
      * @returns The cumulative time in seconds
      */
-    componentsToTime(components: Partial<TComponents>): number;
+  componentsToTime(components: Partial<TComponents>): number;
 
-    /**
+  /**
      * Compute the difference between some new time and some other time.
      * @param endTime   A time to difference relative to the start time.
      * @param startTime The starting time. If not provided the current world time is used.
      * @returns The time difference expressed as components
      */
-    difference(endTime: number | TComponents, startTime?: number | TComponents): TComponents;
+  difference(endTime: number | TComponents, startTime?: number | TComponents): TComponents;
 
-    /**
+  /**
      * Format a time using one of several supported display formats.
      * @param time      The time components to format, by default the current world time.
      * @param formatter The formatter function applied to the time. If a string is provided, it must be a function
      *                  configured in CONFIG.time.formatters. Options passed to the formatter function
      * @returns The formatted date and time string
      */
-    format(time?: number | TComponents, formatter?: string | TimeFormatter, options?: object): string;
+  format(time?: number | TComponents, formatter?: string | TimeFormatter, options?: object): string;
 
-    /**
+  /**
      * Test whether a year is a leap year.
      * @param year The year to test
      * @returns Is it a leap year?
      */
-    isLeapYear(year: number): boolean;
+  isLeapYear(year: number): boolean;
 
-    /**
+  /**
      * Expand a world time integer into an object containing the relevant time components.
      * @param time A time in seconds
      * @returns The time expressed as components
      */
-    timeToComponents(time?: number): TComponents;
+  timeToComponents(time?: number): TComponents;
 }
 
 export default interface CalendarData<TComponents extends TimeComponents = TimeComponents>

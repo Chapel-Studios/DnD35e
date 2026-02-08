@@ -1,7 +1,7 @@
-import { WallDirection, WallDoorState, WallDoorType, WallMovementType, WallSenseType } from "@common/constants.mjs";
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import BaseScene from "./scene.mjs";
+import { WallDirection, WallDoorState, WallDoorType, WallMovementType, WallSenseType } from '@common/constants.mjs';
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import BaseScene from './scene.mjs';
 
 /**
  * The Document definition for a Wall.
@@ -12,26 +12,26 @@ import BaseScene from "./scene.mjs";
  * @param context Construction context options
  */
 export default class BaseWall<TParent extends BaseScene | null> extends Document<TParent, WallSchema> {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): WallMetadata;
+  static override get metadata(): WallMetadata;
 
-    static override defineSchema(): WallSchema;
+  static override defineSchema(): WallSchema;
 }
 
 export default interface BaseWall<TParent extends BaseScene | null>
     extends Document<TParent, WallSchema>,
         fields.ModelPropsFromSchema<WallSchema> {
-    get documentName(): WallMetadata["name"];
+    get documentName(): WallMetadata['name'];
 }
 
 interface WallMetadata extends DocumentMetadata {
-    name: "Wall";
-    collection: "walls";
-    label: "DOCUMENT.Wall";
-    labelPlural: "DOCUMENT.Walls";
+    name: 'Wall';
+    collection: 'walls';
+    label: 'DOCUMENT.Wall';
+    labelPlural: 'DOCUMENT.Walls';
 }
 
 type WallSchema = {

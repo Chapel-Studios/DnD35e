@@ -1,5 +1,5 @@
-import { PrimaryBaseSamplerShader } from "@client/canvas/rendering/shaders/_module.mjs";
-import { DynamicRingData, TokenRing } from "./_module.mjs";
+import { PrimaryBaseSamplerShader } from '@client/canvas/rendering/shaders/_module.mjs';
+import { DynamicRingData, TokenRing } from './_module.mjs';
 
 /**
  * Token Ring configuration Singleton Class.
@@ -62,140 +62,140 @@ import { DynamicRingData, TokenRing } from "./_module.mjs";
  * CONFIG.Token.ring.debugColorBands = true;
  */
 export default class TokenRingConfig {
-    constructor();
-    /**
+  constructor();
+  /**
      * Core token rings used in Foundry VTT.
      * Each key is a string identifier for a ring, and the value is an object containing the ring's data.
      * This object is frozen to prevent any modifications.
      */
-    static CORE_TOKEN_RINGS: Readonly<{
+  static CORE_TOKEN_RINGS: Readonly<{
         coreSteel: {
-            id: "coreSteel";
-            label: "TOKEN.RING.SETTINGS.coreSteel";
-            spritesheet: "canvas/tokens/rings-steel.json";
+            id: 'coreSteel';
+            label: 'TOKEN.RING.SETTINGS.coreSteel';
+            spritesheet: 'canvas/tokens/rings-steel.json';
         };
         coreBronze: {
-            id: "coreBronze";
-            label: "TOKEN.RING.SETTINGS.coreBronze";
-            spritesheet: "canvas/tokens/rings-bronze.json";
+            id: 'coreBronze';
+            label: 'TOKEN.RING.SETTINGS.coreBronze';
+            spritesheet: 'canvas/tokens/rings-bronze.json';
         };
     }>;
 
-    /**
+  /**
      * Core token rings fit modes used in Foundry VTT.
      */
-    static CORE_TOKEN_RINGS_FIT_MODES: Readonly<{
+  static CORE_TOKEN_RINGS_FIT_MODES: Readonly<{
         subject: {
-            id: "subject";
-            label: "TOKEN.RING.SETTINGS.FIT_MODES.subject";
+            id: 'subject';
+            label: 'TOKEN.RING.SETTINGS.FIT_MODES.subject';
         };
         grid: {
-            id: "grid";
-            label: "TOKEN.RING.SETTINGS.FIT_MODES.grid";
+            id: 'grid';
+            label: 'TOKEN.RING.SETTINGS.FIT_MODES.grid';
         };
     }>;
 
-    /**
+  /**
      * Register the token ring config and initialize it
      */
-    static initialize(): void;
+  static initialize(): void;
 
-    /**
+  /**
      * Register game settings used by the Token Ring
      */
-    static registerSettings(): void;
+  static registerSettings(): void;
 
-    /* -------------------------------------------- */
-    /*  Properties                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Properties                                  */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * A mapping of token subject paths where modules or systems have configured subject images.
      */
-    subjectPaths: Record<string, string>;
+  subjectPaths: Record<string, string>;
 
-    /**
+  /**
      * All color bands visual debug flag.
      * @returns {boolean}
      */
-    debugColorBands: boolean;
+  debugColorBands: boolean;
 
-    /**
+  /**
      * Get the current ring class.
      * @returns {typeof TokenRing} The current ring class.
      */
-    get ringClass(): typeof TokenRing;
+  get ringClass(): typeof TokenRing;
 
-    /**
+  /**
      * Get the current effects.
      * @returns The current effects.
      */
-    get effects(): Record<string, string>;
+  get effects(): Record<string, string>;
 
-    /**
+  /**
      * Get the current spritesheet.
      * @returns The current spritesheet path.
      */
-    get spritesheet(): string;
+  get spritesheet(): string;
 
-    /**
+  /**
      * Get the current shader class.
      * @returns The current shader class.
      */
-    get shaderClass(): typeof PrimaryBaseSamplerShader;
+  get shaderClass(): typeof PrimaryBaseSamplerShader;
 
-    set shaderClass(value);
+  set shaderClass(value);
 
-    /**
+  /**
      * Get the current localized label.
      */
-    get label(): string;
+  get label(): string;
 
-    /**
+  /**
      * Get the current id.
      */
-    get id(): string;
+  get id(): string;
 
-    /* -------------------------------------------- */
-    /*  Management                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Management                                  */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Is a custom fit mode active?
      * @returns {boolean}
      */
-    get isGridFitMode(): boolean;
+  get isGridFitMode(): boolean;
 
-    /**
+  /**
      * Add a new ring configuration.
      * @param id The id of the ring configuration.
      * @param config The configuration object for the ring.
      */
-    addConfig(id: string, config: DynamicRingData): void;
+  addConfig(id: string, config: DynamicRingData): void;
 
-    /**
+  /**
      * Get a ring configuration.
      * @param id The id of the ring configuration.
      * @returns The ring configuration object.
      */
-    getConfig(id: string): DynamicRingData;
+  getConfig(id: string): DynamicRingData;
 
-    /**
+  /**
      * Use a ring configuration.
      * @param id The id of the ring configuration to use.
      * @returns True if the configuration was successfully set, false otherwise.
      */
-    useConfig(id: string): boolean;
+  useConfig(id: string): boolean;
 
-    /**
+  /**
      * Get the IDs of all configurations.
      * @returns The names of all configurations.
      */
-    get configIDs(): string[];
+  get configIDs(): string[];
 
-    /**
+  /**
      * Get the labels of all configurations.
      * @returns An object with configuration names as keys and localized labels as values.
      */
-    get configLabels(): Record<string, string>;
+  get configLabels(): Record<string, string>;
 }

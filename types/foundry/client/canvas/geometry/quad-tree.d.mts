@@ -1,4 +1,4 @@
-import { Rectangle } from "@common/_types.mjs";
+import { Rectangle } from '@common/_types.mjs';
 
 export interface QuadtreeObject<
     TObject extends object = object,
@@ -27,86 +27,86 @@ export interface QuadtreeOptions<TObject extends object> {
  * @param [options._root]         The root of the quadtree. For internal use
  */
 export default class Quadtree<TObject extends object> {
-    /** The bounding rectangle of the region */
-    bounds: Rectangle;
+  /** The bounding rectangle of the region */
+  bounds: Rectangle;
 
-    /** The maximum number of objects allowed within this node before it must split */
-    maxObjects: number;
+  /** The maximum number of objects allowed within this node before it must split */
+  maxObjects: number;
 
-    /** The maximum number of levels that the base quadtree is allowed */
-    maxDepth: number;
+  /** The maximum number of levels that the base quadtree is allowed */
+  maxDepth: number;
 
-    /** The depth of this node within the root Quadtree */
-    depth: number;
+  /** The depth of this node within the root Quadtree */
+  depth: number;
 
-    /** The objects contained at this level of the tree */
-    objects: QuadtreeObject<TObject, this>[];
+  /** The objects contained at this level of the tree */
+  objects: QuadtreeObject<TObject, this>[];
 
-    /** Children of this node */
-    nodes: this[];
+  /** Children of this node */
+  nodes: this[];
 
-    /** The root Quadtree */
-    root: this;
+  /** The root Quadtree */
+  root: this;
 
-    constructor(bounds: Rectangle, options?: QuadtreeOptions<TObject>);
+  constructor(bounds: Rectangle, options?: QuadtreeOptions<TObject>);
 
-    /**
+  /**
      * A constant that enumerates the index order of the quadtree nodes from top-left to bottom-right.
      * @enum {number}
      */
-    static INDICES: { tl: number; tr: number; bl: number; br: number };
+  static INDICES: { tl: number; tr: number; bl: number; br: number };
 
-    /**
+  /**
      * Return an array of all the objects in the Quadtree (recursive)
      */
-    get all(): QuadtreeObject<TObject, this>[];
+  get all(): QuadtreeObject<TObject, this>[];
 
-    /* -------------------------------------------- */
-    /*  Tree Management                             */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Tree Management                             */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Split this node into 4 sub-nodes.
      * @returns The split Quadtree
      */
-    split(): this;
+  split(): this;
 
-    /* -------------------------------------------- */
-    /*  Object Management                           */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Object Management                           */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Clear the quadtree of all existing contents
      * @returns The cleared Quadtree
      */
-    clear(): this;
+  clear(): this;
 
-    /**
+  /**
      * Add a rectangle object to the tree
      * @param  obj  The object being inserted
      * @returns     The Quadtree nodes the object was added to.
      */
-    insert(obj: QuadtreeObject<TObject, this>): this[];
+  insert(obj: QuadtreeObject<TObject, this>): this[];
 
-    /**
+  /**
      * Remove an object from the quadtree
      * @param target     The quadtree target being removed
      * @returns          The Quadtree for method chaining
      */
-    remove(target: TObject): this;
+  remove(target: TObject): this;
 
-    /**
+  /**
      * Remove an existing object from the quadtree and re-insert it with a new position
      * @param obj  The object being inserted
      * @returns    The Quadtree nodes the object was added to
      */
-    update(obj: QuadtreeObject<TObject, this>): this[];
+  update(obj: QuadtreeObject<TObject, this>): this[];
 
-    /* -------------------------------------------- */
-    /*  Target Identification                       */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Target Identification                       */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Get all the objects which could collide with the provided rectangle
      * @param rect    The normalized target rectangle
      * @param [options]                    Options affecting the collision test.
@@ -116,7 +116,7 @@ export default class Quadtree<TObject extends object> {
      * @param [options._s]                    The existing result set, for internal use.
      * @returns   The objects in the Quadtree which represent potential collisions
      */
-    getObjects(
+  getObjects(
         rect: Rectangle,
         options?: {
             collisionTest?: (obj: QuadtreeObject, rect: Rectangle) => boolean;
@@ -124,36 +124,36 @@ export default class Quadtree<TObject extends object> {
         },
     ): Set<TObject>;
 
-    /**
+  /**
      * Obtain the leaf nodes to which a target rectangle belongs.
      * This traverses the quadtree recursively obtaining the final nodes which have no children.
      * @param rect  The target rectangle.
      * @returns     The Quadtree nodes to which the target rectangle belongs
      */
-    getLeafNodes(rect: Rectangle): this[];
+  getLeafNodes(rect: Rectangle): this[];
 
-    /**
+  /**
      * Obtain the child nodes within the current node which a rectangle belongs to.
      * Note that this function is not recursive, it only returns nodes at the current or child level.
      * @param rect  The target rectangle.
      * @returns     The Quadtree nodes to which the target rectangle belongs
      */
-    getChildNodes(rect: Rectangle): this[];
+  getChildNodes(rect: Rectangle): this[];
 
-    /** Identify all nodes which are adjacent to this one within the parent Quadtree. */
-    getAdjacentNodes(): this[];
+  /** Identify all nodes which are adjacent to this one within the parent Quadtree. */
+  getAdjacentNodes(): this[];
 
-    /**
+  /**
      * Visualize the nodes and objects in the quadtree
      * @param [options]
      * @param [options.objects]    Visualize the rectangular bounds of objects in the Quadtree. Default is false.
      */
-    private visualize(options?: { object?: boolean }): void;
+  private visualize(options?: { object?: boolean }): void;
 }
 
 /**
  * A subclass of Quadtree specifically intended for classifying the location of objects on the game canvas.
  */
 export class CanvasQuadtree<TObject extends object = object> extends Quadtree<TObject> {
-    constructor(options?: QuadtreeOptions<TObject>);
+  constructor(options?: QuadtreeOptions<TObject>);
 }

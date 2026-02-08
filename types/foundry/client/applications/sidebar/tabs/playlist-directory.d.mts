@@ -1,13 +1,13 @@
-import { ApplicationRenderContext } from "@client/applications/_types.mjs";
-import { HandlebarsRenderOptions, HandlebarsTemplatePart } from "@client/applications/api/handlebars-application.mjs";
-import HTMLRangePickerElement from "@client/applications/elements/range-picker.mjs";
-import { ContextMenuEntry } from "@client/applications/ux/context-menu.mjs";
-import Folder from "@client/documents/folder.mjs";
-import PlaylistSound from "@client/documents/playlist-sound.mjs";
-import Playlist from "@client/documents/playlist.mjs";
-import { PlaylistMode } from "@common/constants.mjs";
-import { NumberField } from "@common/data/fields.mjs";
-import DocumentDirectory, { DocumentDirectoryConfiguration } from "../document-directory.mjs";
+import { ApplicationRenderContext } from '@client/applications/_types.mjs';
+import { HandlebarsRenderOptions, HandlebarsTemplatePart } from '@client/applications/api/handlebars-application.mjs';
+import HTMLRangePickerElement from '@client/applications/elements/range-picker.mjs';
+import { ContextMenuEntry } from '@client/applications/ux/context-menu.mjs';
+import Folder from '@client/documents/folder.mjs';
+import PlaylistSound from '@client/documents/playlist-sound.mjs';
+import Playlist from '@client/documents/playlist.mjs';
+import { PlaylistMode } from '@common/constants.mjs';
+import { NumberField } from '@common/data/fields.mjs';
+import DocumentDirectory, { DocumentDirectoryConfiguration } from '../document-directory.mjs';
 
 export interface PlaylistDirectoryRenderContext extends ApplicationRenderContext {
     /** Volume control context. */
@@ -111,186 +111,186 @@ export interface PlaylistSoundRenderContext {
  * The World Playlist directory listing.
  */
 export default class PlaylistDirectory extends DocumentDirectory<Playlist> {
-    static override DEFAULT_OPTIONS: DeepPartial<DocumentDirectoryConfiguration>;
+  static override DEFAULT_OPTIONS: DeepPartial<DocumentDirectoryConfiguration>;
 
-    static override tabName: "playlists";
+  static override tabName: 'playlists';
 
-    static override PARTS: Record<string, HandlebarsTemplatePart>;
+  static override PARTS: Record<string, HandlebarsTemplatePart>;
 
-    /**
+  /**
      * Playlist mode button descriptors.
      */
-    static PLAYLIST_MODES: Record<PlaylistMode, PlaylistDirectoryControlContext>;
+  static PLAYLIST_MODES: Record<PlaylistMode, PlaylistDirectoryControlContext>;
 
-    protected static override _entryPartial: string;
+  protected static override _entryPartial: string;
 
-    /* -------------------------------------------- */
-    /*  Properties                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Properties                                  */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Track the playlist IDs which are currently expanded in the display.
      */
-    protected _expanded: Set<string>;
+  protected _expanded: Set<string>;
 
-    /**
+  /**
      * Cache the set of Playlist and PlaylistSound documents that are displayed as playing when the directory is rendered.
      */
-    protected _playing: { context: PlaylistSoundRenderContext[]; playlists: Playlist[]; sounds: PlaylistSound[] };
+  protected _playing: { context: PlaylistSoundRenderContext[]; playlists: Playlist[]; sounds: PlaylistSound[] };
 
-    /**
+  /**
      * Whether the global volume controls are currently expanded.
      */
-    protected _volumeExpanded: boolean;
+  protected _volumeExpanded: boolean;
 
-    /**
+  /**
      * The location of the currently-playing widget.
      */
-    get currentlyPlayingLocation(): "top" | "bottom";
+  get currentlyPlayingLocation(): 'top' | 'bottom';
 
-    /**
+  /**
      * The Playlist documents that are currently playing.
      */
-    get playing(): Playlist[];
+  get playing(): Playlist[];
 
-    /* -------------------------------------------- */
-    /*  Rendering                                   */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Rendering                                   */
+  /* -------------------------------------------- */
 
-    protected override _createContextMenus(): void;
+  protected override _createContextMenus(): void;
 
-    protected override _getEntryContextOptions(): ContextMenuEntry[];
+  protected override _getEntryContextOptions(): ContextMenuEntry[];
 
-    /**
+  /**
      * Context menu options for individual PlaylistSounds.
      */
-    protected _getSoundContextOptions(): ContextMenuEntry[];
+  protected _getSoundContextOptions(): ContextMenuEntry[];
 
-    protected override _onFirstRender(
+  protected override _onFirstRender(
         context: PlaylistDirectoryRenderContext,
         options: HandlebarsRenderOptions,
     ): Promise<void>;
 
-    protected override _onRender(
+  protected override _onRender(
         context: PlaylistDirectoryRenderContext,
         options: HandlebarsRenderOptions,
     ): Promise<void>;
 
-    protected override _prepareDirectoryContext(
+  protected override _prepareDirectoryContext(
         context: PlaylistRenderContext,
         options: HandlebarsRenderOptions,
     ): Promise<void>;
 
-    /**
+  /**
      * Augment the tree directory structure with playlist-level data objects for rendering.
      * @param root The root render context.
      * @param node The tree node being prepared.
      */
-    protected _prepareTreeContext(root: PlaylistDirectoryRenderContext, node: object): PlaylistDirectoryTreeContext;
+  protected _prepareTreeContext(root: PlaylistDirectoryRenderContext, node: object): PlaylistDirectoryTreeContext;
 
-    /**
+  /**
      * Prepare render context for a playlist.
      * @param root The root render context.
      * @param playlist The Playlist document.
      */
-    protected _preparePlaylistContext(root: PlaylistDirectoryRenderContext, playlist: Playlist): PlaylistRenderContext;
+  protected _preparePlaylistContext(root: PlaylistDirectoryRenderContext, playlist: Playlist): PlaylistRenderContext;
 
-    protected override _preparePartContext(
+  protected override _preparePartContext(
         partId: string,
         context: PlaylistRenderContext,
         options: HandlebarsRenderOptions,
     ): Promise<PlaylistRenderContext>;
 
-    /**
+  /**
      * Prepare render context for the volume controls part.
      */
-    protected _prepareControlsContext(
+  protected _prepareControlsContext(
         context: PlaylistDirectoryRenderContext,
         options: HandlebarsRenderOptions,
     ): Promise<void>;
 
-    /**
+  /**
      * Prepare render context for the currently playing part.
      */
-    protected _preparePlayingContext(
+  protected _preparePlayingContext(
         context: PlaylistDirectoryRenderContext,
         options: HandlebarsRenderOptions,
     ): Promise<void>;
 
-    /* -------------------------------------------- */
-    /*  Public API                                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Public API                                  */
+  /* -------------------------------------------- */
 
-    override collapseAll(): void;
+  override collapseAll(): void;
 
-    /* -------------------------------------------- */
-    /*  Event Listeners & Handlers                  */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Event Listeners & Handlers                  */
+  /* -------------------------------------------- */
 
-    protected override _attachFrameListeners(): void;
+  protected override _attachFrameListeners(): void;
 
-    protected override _onClickEntry(event: PointerEvent, target: HTMLElement): Promise<void>;
+  protected override _onClickEntry(event: PointerEvent, target: HTMLElement): Promise<void>;
 
-    /**
+  /**
      * Handle modifying a global volume slider.
      * @param slider The slider.
      */
-    protected _onGlobalVolume(slider: HTMLRangePickerElement): void;
+  protected _onGlobalVolume(slider: HTMLRangePickerElement): void;
 
-    /**
+  /**
      * Handle modifying a playing PlaylistSound's volume.
      * @param slider The volume slider.
      */
-    protected _onSoundVolume(slider: HTMLRangePickerElement): void;
+  protected _onSoundVolume(slider: HTMLRangePickerElement): void;
 
-    /**
+  /**
      * Update the displayed timestamps for all currently playing audio sources every second.
      */
-    updateTimestamps(): void;
+  updateTimestamps(): void;
 
-    /* -------------------------------------------- */
-    /*  Search & Filter                             */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Search & Filter                             */
+  /* -------------------------------------------- */
 
-    protected override _onMatchSearchEntry(
+  protected override _onMatchSearchEntry(
         query: string,
         entryIds: Set<string>,
         element: HTMLElement,
         options?: { soundIds?: string[] },
     ): void;
 
-    protected override _matchSearchEntries(
+  protected override _matchSearchEntries(
         query: RegExp,
         entryIds: Set<string>,
         folderIds: Set<string>,
         autoExpandIds: Set<string>,
     ): void;
 
-    protected override _matchSearchFolders(query: RegExp, folderIds: Set<string>, autoExpandIds: Set<string>): void;
+  protected override _matchSearchFolders(query: RegExp, folderIds: Set<string>, autoExpandIds: Set<string>): void;
 
-    /* -------------------------------------------- */
-    /*  Drag & Drop                                 */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Drag & Drop                                 */
+  /* -------------------------------------------- */
 
-    protected override _onDragStart(event: DragEvent): void;
+  protected override _onDragStart(event: DragEvent): void;
 
-    protected override _onDrop(event: DragEvent): Promise<void>;
+  protected override _onDrop(event: DragEvent): Promise<void>;
 
-    /* -------------------------------------------- */
-    /*  Helpers                                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Helpers                                     */
+  /* -------------------------------------------- */
 
-    /**
+  /**
      * Format the displayed timestamp given a number of seconds as input.
      * @param seconds The current playback time in seconds.
      * @returns The formatted timestamp.
      * @protected
      */
-    static formatTimestamp(seconds: number): string;
+  static formatTimestamp(seconds: number): string;
 
-    /**
+  /**
      * Register playlist directory specific settings.
      * @internal
      */
-    static _registerSettings(): void;
+  static _registerSettings(): void;
 }

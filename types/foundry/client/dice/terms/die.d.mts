@@ -1,4 +1,4 @@
-import DiceTerm, { DiceTermData } from "./dice.mjs";
+import DiceTerm, { DiceTermData } from './dice.mjs';
 
 /**
  * Define a fair n-sided die term that can be used as part of a Roll formula
@@ -8,33 +8,33 @@ import DiceTerm, { DiceTermData } from "./dice.mjs";
  * let die = new Die({faces: 6, number: 4}).evaluate();
  */
 export default class Die<TData extends DieData = DieData> extends DiceTerm<TData> {
-    constructor(termData?: Partial<DieData>);
+  constructor(termData?: Partial<DieData>);
 
-    static override DENOMINATION: string;
+  static override DENOMINATION: string;
 
-    static override MODIFIERS: {
-        r: "reroll";
-        rr: "rerollRecursive";
-        x: "explode";
-        xo: "explodeOnce";
-        k: "keep";
-        kh: "keep";
-        kl: "keep";
-        d: "drop";
-        dh: "drop";
-        dl: "drop";
-        min: "minimum";
-        max: "maximum";
-        even: "countEven";
-        odd: "countOdd";
-        cs: "countSuccess";
-        cf: "countFailures";
-        df: "deductFailures";
-        sf: "subtractFailures";
-        ms: "marginSuccess";
+  static override MODIFIERS: {
+        r: 'reroll';
+        rr: 'rerollRecursive';
+        x: 'explode';
+        xo: 'explodeOnce';
+        k: 'keep';
+        kh: 'keep';
+        kl: 'keep';
+        d: 'drop';
+        dh: 'drop';
+        dl: 'drop';
+        min: 'minimum';
+        max: 'maximum';
+        even: 'countEven';
+        odd: 'countOdd';
+        cs: 'countSuccess';
+        cf: 'countFailures';
+        df: 'deductFailures';
+        sf: 'subtractFailures';
+        ms: 'marginSuccess';
     };
 
-    /**
+  /**
      * Re-roll the Die, rolling additional results for any values which fall within a target set.
      * If no target number is specified, re-roll the lowest possible result.
      *
@@ -47,14 +47,14 @@ export default class Die<TData extends DieData = DieData> extends DiceTerm<TData
      * @param recursive Reroll recursively, continuing to reroll until the condition is no longer met
      * @returns False if the modifier was unmatched
      */
-    reroll(modifier: string, { recursive }?: { recursive?: boolean }): boolean | void;
+  reroll(modifier: string, { recursive }?: { recursive?: boolean }): boolean | void;
 
-    /**
+  /**
      * @see {@link Die#reroll}
      */
-    rerollRecursive(modifier: string): boolean | void;
+  rerollRecursive(modifier: string): boolean | void;
 
-    /**
+  /**
      * Explode the Die, rolling additional results for any values which match the target set.
      * If no target number is specified, explode the highest possible result.
      * Explosion can be a "small explode" using a lower-case x or a "big explode" using an upper-case "X"
@@ -62,14 +62,14 @@ export default class Die<TData extends DieData = DieData> extends DiceTerm<TData
      * @param modifier The matched modifier query
      * @param recursive Explode recursively, such that new rolls can also explode?
      */
-    explode(modifier: string, { recursive }?: { recursive?: boolean }): void;
+  explode(modifier: string, { recursive }?: { recursive?: boolean }): void;
 
-    /**
+  /**
      * @see {@link Die#explode}
      */
-    explodeOnce(modifier: string): void;
+  explodeOnce(modifier: string): void;
 
-    /**
+  /**
      * Keep a certain number of highest or lowest dice rolls from the result set.
      *
      * 20d20k       Keep the 1 highest die
@@ -80,9 +80,9 @@ export default class Die<TData extends DieData = DieData> extends DiceTerm<TData
      *
      * @param  modifier     The matched modifier query
      */
-    keep(modifier: string): void;
+  keep(modifier: string): void;
 
-    /**
+  /**
      * Drop a certain number of highest or lowest dice rolls from the result set.
      *
      * 20d20d       Drop the 1 lowest die
@@ -93,9 +93,9 @@ export default class Die<TData extends DieData = DieData> extends DiceTerm<TData
      *
      * @param modifier The matched modifier query
      */
-    drop(modifier: string): void;
+  drop(modifier: string): void;
 
-    /**
+  /**
      * Count the number of successful results which occurred in a given result set.
      * Successes are counted relative to some target, or relative to the maximum possible value if no target is given.
      * Applying a count-success modifier to the results re-casts all results to 1 (success) or 0 (failure)
@@ -106,9 +106,9 @@ export default class Die<TData extends DieData = DieData> extends DiceTerm<TData
      *
      * @param modifier The matched modifier query
      */
-    countSuccess(modifier: string): void;
+  countSuccess(modifier: string): void;
 
-    /**
+  /**
      * Count the number of failed results which occurred in a given result set.
      * Failures are counted relative to some target, or relative to the lowest possible value if no target is given.
      * Applying a count-failures modifier to the results re-casts all results to 1 (failure) or 0 (non-failure)
@@ -119,9 +119,9 @@ export default class Die<TData extends DieData = DieData> extends DiceTerm<TData
      *
      * @param modifier The matched modifier query
      */
-    countFailures(modifier: string): void;
+  countFailures(modifier: string): void;
 
-    /**
+  /**
      * Count the number of even results which occurred in a given result set.
      * Even numbers are marked as a success and counted as 1
      * Odd numbers are marked as a non-success and counted as 0.
@@ -130,9 +130,9 @@ export default class Die<TData extends DieData = DieData> extends DiceTerm<TData
      *
      * @param modifier The matched modifier query
      */
-    countEven(modifier: string): void;
+  countEven(modifier: string): void;
 
-    /**
+  /**
      * Count the number of odd results which occurred in a given result set.
      * Odd numbers are marked as a success and counted as 1
      * Even numbers are marked as a non-success and counted as 0.
@@ -141,9 +141,9 @@ export default class Die<TData extends DieData = DieData> extends DiceTerm<TData
      *
      * @param modifier The matched modifier query
      */
-    countOdd(modifier: string): void;
+  countOdd(modifier: string): void;
 
-    /**
+  /**
      * Deduct the number of failures from the dice result, counting each failure as -1
      * Failures are identified relative to some target, or relative to the lowest possible value if no target is given.
      * Applying a deduct-failures modifier to the results counts all failed results as -1.
@@ -154,9 +154,9 @@ export default class Die<TData extends DieData = DieData> extends DiceTerm<TData
      *
      * @param modifier The matched modifier query
      */
-    deductFailures(modifier: string): void;
+  deductFailures(modifier: string): void;
 
-    /**
+  /**
      * Subtract the value of failed dice from the non-failed total, where each failure counts as its negative value.
      * Failures are identified relative to some target, or relative to the lowest possible value if no target is given.
      * Applying a deduct-failures modifier to the results counts all failed results as -1.
@@ -165,28 +165,28 @@ export default class Die<TData extends DieData = DieData> extends DiceTerm<TData
      *
      * @param modifier The matched modifier query
      */
-    subtractFailures(modifier: string): void;
+  subtractFailures(modifier: string): void;
 
-    /**
+  /**
      * Subtract the total value of the DiceTerm from a target value, treating the difference as the final total.
      * Example: 6d6ms>12    Roll 6d6 and subtract 12 from the resulting total.
      * @param  modifier The matched modifier query
      */
-    marginSuccess(modifier: string): void;
+  marginSuccess(modifier: string): void;
 
-    /**
+  /**
      * Constrain each rolled result to be at least some minimum value.
      * Example: 6d6min2    Roll 6d6, each result must be at least 2
      * @param modifier The matched modifier query
      */
-    minimum(modifier: string): void;
+  minimum(modifier: string): void;
 
-    /**
+  /**
      * Constrain each rolled result to be at most some maximum value.
      * Example: 6d6max5    Roll 6d6, each result must be at most 5
      * @param modifier The matched modifier query
      */
-    maximum(modifier: string): void;
+  maximum(modifier: string): void;
 }
 
 declare global {

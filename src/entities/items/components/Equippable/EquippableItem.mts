@@ -8,14 +8,14 @@ type EquippableItemSourceProps = {
   system: EquippableItemSystemSource;
 }
 
-type EquippableItemSource<TItemType extends ItemType = ItemType> = 
-  Omit<ItemSourceDnd35e<TItemType>, "system">
+type EquippableItemSource<TItemType extends ItemType = ItemType> =
+  Omit<ItemSourceDnd35e<TItemType>, 'system'>
     & PhysicalItemSourceProps
     & EquippableItemSourceProps;
 
 interface EquippableItem {
   system: EquippableItemSystemData;
-};
+}
 
 type EquippableItemLike = ItemDnd35e<ItemType>
   & EquippableItem;
@@ -23,7 +23,6 @@ type EquippableItemLike = ItemDnd35e<ItemType>
 const applyEquippablePrototype = <T extends typeof ItemDnd35e<ItemType>> (item: T) => {
   applyPhysicalPrototype(item);
   // applyDamagableRuntime(item);
-
 };
 
 const equippableOverrides = {

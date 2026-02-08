@@ -1,14 +1,14 @@
-import { CompendiumDocumentType } from "@client/utils/helpers.mjs";
-import { DataModelConstructionContext, DataSchema } from "@common/abstract/_types.mjs";
-import { DocumentOwnershipLevel, PackageAvailabilityCode, PackageType, UserRole } from "@common/constants.mjs";
-import { DataFieldOptions, ObjectFieldOptions } from "@common/data/_module.mjs";
-import type DataModel from "../abstract/data.mjs";
-import type * as fields from "../data/fields.mjs";
-import { PackageManifestData } from "./_types.mjs";
+import { CompendiumDocumentType } from '@client/utils/helpers.mjs';
+import { DataModelConstructionContext, DataSchema } from '@common/abstract/_types.mjs';
+import { DocumentOwnershipLevel, PackageAvailabilityCode, PackageType, UserRole } from '@common/constants.mjs';
+import { DataFieldOptions, ObjectFieldOptions } from '@common/data/_module.mjs';
+import type DataModel from '../abstract/data.mjs';
+import type * as fields from '../data/fields.mjs';
+import { PackageManifestData } from './_types.mjs';
 
 /** A custom SchemaField for defining package compatibility versions. */
 export class PackageCompatibility extends fields.SchemaField<PackageCompatibilitySchema> {
-    constructor(options: DataFieldOptions<fields.SourceFromSchema<PackageCompatibilitySchema>, true, false, true>);
+  constructor(options: DataFieldOptions<fields.SourceFromSchema<PackageCompatibilitySchema>, true, false, true>);
 }
 
 type PackageCompatibilitySchema = {
@@ -22,7 +22,7 @@ type PackageCompatibilitySchema = {
 
 /** A custom SchemaField for defining package relationships. */
 export class PackageRelationships extends fields.SchemaField<PackageRelationshipsSchema> {
-    constructor(options?: DataFieldOptions<fields.SourceFromSchema<PackageRelationshipsSchema>, true, false, true>);
+  constructor(options?: DataFieldOptions<fields.SourceFromSchema<PackageRelationshipsSchema>, true, false, true>);
 }
 
 type PackageRelationshipsSchema = {
@@ -41,7 +41,7 @@ type PackageRelationshipsSchema = {
  * It may be required to be a specific type of package, by passing the packageType option to the constructor.
  */
 export class RelatedPackage extends fields.SchemaField<RelatedPackageSchema> {
-    constructor(options?: DataFieldOptions<fields.SourceFromSchema<RelatedPackageSchema>, true, false, true>);
+  constructor(options?: DataFieldOptions<fields.SourceFromSchema<RelatedPackageSchema>, true, false, true>);
 }
 
 type RelatedPackageSchema = {
@@ -54,45 +54,45 @@ type RelatedPackageSchema = {
 
 /** A custom SchemaField for defining the folder structure of the included compendium packs. */
 export class PackageCompendiumFolder extends fields.SchemaField<PackageCompendiumFolderSchema> {
-    constructor(options?: DataFieldOptions<PackageCompendiumFolderSchema, true, false, true>);
+  constructor(options?: DataFieldOptions<PackageCompendiumFolderSchema, true, false, true>);
 }
 
 type PackageCompendiumFolderSchema = {
     name: fields.StringField<string, string, true, false, false>;
-    sorting: fields.StringField<"a" | "m">;
+    sorting: fields.StringField<'a' | 'm'>;
     color: fields.ColorField;
     packs: fields.SetField<fields.StringField<string, string, true, false, false>>;
 };
 
 /** A special ObjectField which captures a mapping of USER_ROLES to DOCUMENT_OWNERSHIP_LEVELS. */
 export class CompendiumOwnershipField extends fields.ObjectField<Record<UserRole, DocumentOwnershipLevel>> {
-    static override get _defaults(): ObjectFieldOptions<
+  static override get _defaults(): ObjectFieldOptions<
         Record<UserRole, DocumentOwnershipLevel>,
         boolean,
         boolean,
         boolean
     >;
 
-    protected override _validateType(value: unknown, options?: Record<string, unknown>): void;
+  protected override _validateType(value: unknown, options?: Record<string, unknown>): void;
 }
 
 /** A special SetField which provides additional validation and initialization behavior specific to compendium packs. */
 export class PackageCompendiumPacks<TSchema extends PackageCompendiumSchema> extends fields.SetField<
     fields.SchemaField<TSchema>
 > {
-    protected override _cleanType(value: Record<string, unknown>[], options?: Record<string, unknown>): void;
+  protected override _cleanType(value: Record<string, unknown>[], options?: Record<string, unknown>): void;
 
-    override initialize(
+  override initialize(
         value: fields.SourceFromSchema<TSchema>[],
         model: DataModel,
         options?: Record<string, unknown>,
     ): Set<fields.ModelPropsFromSchema<TSchema>>;
 
-    /** Extend the logic for validating the complete set of packs to ensure uniqueness. */
-    protected override _validateElements(value: unknown[], options?: Record<string, unknown>): void;
+  /** Extend the logic for validating the complete set of packs to ensure uniqueness. */
+  protected override _validateElements(value: unknown[], options?: Record<string, unknown>): void;
 
-    /** Validate each individual compendium pack, ensuring its name and path are unique. */
-    protected _validateElement(value: unknown, options?: Record<string, unknown>): void;
+  /** Validate each individual compendium pack, ensuring its name and path are unique. */
+  protected _validateElement(value: unknown, options?: Record<string, unknown>): void;
 }
 
 /**
@@ -103,90 +103,90 @@ export default abstract class BasePackage<TDataSchema extends BasePackageSchema 
     null,
     TDataSchema
 > {
-    /** An availability code in PACKAGE_AVAILABILITY_CODES which defines whether this package can be used. */
-    availability: PackageAvailabilityCode;
+  /** An availability code in PACKAGE_AVAILABILITY_CODES which defines whether this package can be used. */
+  availability: PackageAvailabilityCode;
 
-    /** A flag which tracks whether this package is currently locked. */
-    locked: boolean;
+  /** A flag which tracks whether this package is currently locked. */
+  locked: boolean;
 
-    /** A flag which tracks whether this package is a free Exclusive pack */
-    exclusive: boolean;
+  /** A flag which tracks whether this package is a free Exclusive pack */
+  exclusive: boolean;
 
-    /** A flag which tracks whether this package is owned, if it is protected. */
-    owned: boolean | null;
+  /** A flag which tracks whether this package is owned, if it is protected. */
+  owned: boolean | null;
 
-    /** A set of Tags that indicate what kind of Package this is, provided by the Website */
-    tags: string[];
+  /** A set of Tags that indicate what kind of Package this is, provided by the Website */
+  tags: string[];
 
-    /** A flag which tracks if this package has files stored in the persistent storage folder */
-    hasStorage: boolean;
+  /** A flag which tracks if this package has files stored in the persistent storage folder */
+  hasStorage: boolean;
 
-    /**
+  /**
      * @param data         Source data for the package
      * @param [options={}] Options which affect DataModel construction
      */
-    constructor(data: PackageManifestData, options?: DataModelConstructionContext<null>);
+  constructor(data: PackageManifestData, options?: DataModelConstructionContext<null>);
 
-    /**
+  /**
      * Define the package type in CONST.PACKAGE_TYPES that this class represents.
      * Each BasePackage subclass must define this attribute.
      */
-    static type: PackageType;
+  static type: PackageType;
 
-    /** The type of this package instance. A value in CONST.PACKAGE_TYPES. */
-    get type(): PackageType;
+  /** The type of this package instance. A value in CONST.PACKAGE_TYPES. */
+  get type(): PackageType;
 
-    /** A flag which defines whether this package is unavailable to be used. */
-    get unavailable(): boolean;
+  /** A flag which defines whether this package is unavailable to be used. */
+  get unavailable(): boolean;
 
-    /** Is this Package incompatible with the currently installed core Foundry VTT software version? */
-    get incompatibleWithCoreVersion(): boolean;
+  /** Is this Package incompatible with the currently installed core Foundry VTT software version? */
+  get incompatibleWithCoreVersion(): boolean;
 
-    /**
+  /**
      * Test if a given availability is incompatible with the core version.
      * @param availability The availability value to test.
      */
-    static isIncompatibleWithCoreVersion(availability: PackageAvailabilityCode): boolean;
+  static isIncompatibleWithCoreVersion(availability: PackageAvailabilityCode): boolean;
 
-    /** The named collection to which this package type belongs */
-    static get collection(): string;
+  /** The named collection to which this package type belongs */
+  static get collection(): string;
 
-    static override defineSchema(): BasePackageSchema;
+  static override defineSchema(): BasePackageSchema;
 
-    /**
+  /**
      * Check the given compatibility data against the current installation state and determine its availability.
      * @param data      The compatibility data to test.
      * @param [release] A specific software release for which to test availability.
      *                  Tests against the current release by default.
      */
-    static testAvailability(data?: Partial<PackageManifestData>, release?: ReleaseData): PackageAvailabilityCode;
+  static testAvailability(data?: Partial<PackageManifestData>, release?: ReleaseData): PackageAvailabilityCode;
 
-    /**
+  /**
      *
      * @param compatibility The compatibility range declared for the dependency, if any
      * @param dependency    The known dependency package
      * @returns Is the dependency compatible with the required range?
      */
-    static testDependencyCompatibility(
+  static testDependencyCompatibility(
         compatibility: PackageCompatibility,
         dependency: BasePackage<BasePackageSchema>,
     ): boolean;
 
-    static override cleanData(
+  static override cleanData(
         source?: Record<string, unknown>,
         options?: Record<string, unknown>,
     ): fields.SourceFromSchema<BasePackageSchema>;
 
-    /**
+  /**
      * Validate that a Package ID is allowed.
      * @param id The candidate ID
      * @throws An error if the candidate ID is invalid
      */
-    static validateId(id: string): void;
+  static validateId(id: string): void;
 
-    static override migrateData(source: Record<string, unknown>): fields.SourceFromSchema<DataSchema>;
+  static override migrateData(source: Record<string, unknown>): fields.SourceFromSchema<DataSchema>;
 
-    /**
+  /**
      * Retrieve the latest Package manifest from a provided remote location.
      * @param manifestUrl A remote manifest URL to load
      * @param options     Additional options which affect package construction
@@ -194,7 +194,7 @@ export default abstract class BasePackage<TDataSchema extends BasePackageSchema 
      * @return A Promise which resolves to a constructed ServerPackage instance
      * @throws An error if the retrieved manifest data is invalid
      */
-    static fromRemoteManifest<T extends BasePackage<BasePackageSchema>>(
+  static fromRemoteManifest<T extends BasePackage<BasePackageSchema>>(
         this: ConstructorOf<T>,
         manifestUrl: string,
         options?: { strict?: boolean },

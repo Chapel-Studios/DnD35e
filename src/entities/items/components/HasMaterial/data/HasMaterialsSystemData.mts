@@ -1,8 +1,8 @@
 interface HasMaterialsSystemSource {
   materials: string[];
-};
+}
 
-interface HasMaterialsSystemData extends HasMaterialsSystemSource {};
+type HasMaterialsSystemData = HasMaterialsSystemSource;
 
 export type {
   HasMaterialsSystemSource,

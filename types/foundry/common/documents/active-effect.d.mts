@@ -1,14 +1,14 @@
-import { DatabaseCreateCallbackOptions } from "@common/abstract/_types.mjs";
+import { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import {
-    ActiveEffectChangeMode,
-    DocumentOwnershipLevel,
-    DocumentOwnershipString,
-    ImageFilePath,
-    UserAction,
-} from "@common/constants.mjs";
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import { ActorUUID, BaseActor, BaseItem, BaseUser, ItemUUID } from "./_module.mjs";
+  ActiveEffectChangeMode,
+  DocumentOwnershipLevel,
+  DocumentOwnershipString,
+  ImageFilePath,
+  UserAction,
+} from '@common/constants.mjs';
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import { ActorUUID, BaseActor, BaseItem, BaseUser, ItemUUID } from './_module.mjs';
 
 /**
  * The ActiveEffect document model.
@@ -19,32 +19,32 @@ export default class BaseActiveEffect<TParent extends BaseActor | BaseItem<BaseA
     TParent,
     ActiveEffectSchema
 > {
-    /* -------------------------------------------- */
-    /*  Model Configuration                         */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Configuration                         */
+  /* -------------------------------------------- */
 
-    static override get metadata(): ActiveEffectMetadata;
+  static override get metadata(): ActiveEffectMetadata;
 
-    static override defineSchema(): ActiveEffectSchema;
+  static override defineSchema(): ActiveEffectSchema;
 
-    /* -------------------------------------------- */
-    /*  Model Methods                               */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Model Methods                               */
+  /* -------------------------------------------- */
 
-    override canUserModify(user: BaseUser, action: UserAction, data?: object): boolean;
+  override canUserModify(user: BaseUser, action: UserAction, data?: object): boolean;
 
-    override testUserPermission(
+  override testUserPermission(
         user: BaseUser,
         permission: DocumentOwnershipString | DocumentOwnershipLevel,
         { exact }?: { exact?: boolean },
     ): boolean;
 
-    /* -------------------------------------------- */
-    /*  Database Event Handlers                     */
-    /* -------------------------------------------- */
+  /* -------------------------------------------- */
+  /*  Database Event Handlers                     */
+  /* -------------------------------------------- */
 
-    protected override _preCreate(
-        data: this["_source"],
+  protected override _preCreate(
+        data: this['_source'],
         options: DatabaseCreateCallbackOptions,
         user: BaseUser,
     ): Promise<boolean | void>;
@@ -53,13 +53,13 @@ export default class BaseActiveEffect<TParent extends BaseActor | BaseItem<BaseA
 export default interface BaseActiveEffect<TParent extends BaseActor | BaseItem<BaseActor | null> | null>
     extends Document<TParent, ActiveEffectSchema>,
         fields.ModelPropsFromSchema<ActiveEffectSchema> {
-    get documentName(): ActiveEffectMetadata["name"];
+    get documentName(): ActiveEffectMetadata['name'];
 }
 
 export interface ActiveEffectMetadata extends DocumentMetadata {
-    name: "ActiveEffect";
-    collection: "effects";
-    label: "DOCUMENT.ActiveEffect";
+    name: 'ActiveEffect';
+    collection: 'effects';
+    label: 'DOCUMENT.ActiveEffect';
     isEmbedded: true;
 }
 
@@ -102,4 +102,4 @@ export type ActiveEffectSource = fields.SourceFromSchema<ActiveEffectSchema>;
 
 export type EffectChangeData = fields.SourceFromSchema<EffectChangeSchema>;
 export type EffectDurationSource = fields.SourceFromSchema<EffectDurationSchema>;
-export type EffectDurationData = BaseActiveEffect<null>["duration"];
+export type EffectDurationData = BaseActiveEffect<null>['duration'];

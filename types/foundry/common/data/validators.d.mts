@@ -1,4 +1,4 @@
-import { HexColorString } from "@common/constants.mjs";
+import { HexColorString } from '@common/constants.mjs';
 
 /**
  * Test whether a string is a valid 16 character UID

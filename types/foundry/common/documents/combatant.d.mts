@@ -1,25 +1,25 @@
-import { ImageFilePath } from "@common/constants.mjs";
-import { Document, DocumentMetadata } from "../abstract/_module.mjs";
-import * as fields from "../data/fields.mjs";
-import BaseCombat from "./combat.mjs";
+import { ImageFilePath } from '@common/constants.mjs';
+import { Document, DocumentMetadata } from '../abstract/_module.mjs';
+import * as fields from '../data/fields.mjs';
+import BaseCombat from './combat.mjs';
 
 /** The Combat document model. */
 export default class BaseCombatant<TParent extends BaseCombat | null> extends Document<TParent, CombatantSchema> {
-    static override get metadata(): CombatantMetadata;
+  static override get metadata(): CombatantMetadata;
 
-    static override defineSchema(): CombatantSchema;
+  static override defineSchema(): CombatantSchema;
 }
 
 export default interface BaseCombatant<TParent extends BaseCombat | null>
     extends Document<TParent, CombatantSchema>,
         fields.ModelPropsFromSchema<CombatantSchema> {
-    get documentName(): CombatantMetadata["name"];
+    get documentName(): CombatantMetadata['name'];
 }
 
 interface CombatantMetadata extends DocumentMetadata {
-    name: "Combatant";
-    collection: "combatants";
-    label: "DOCUMENT.Combatant";
+    name: 'Combatant';
+    collection: 'combatants';
+    label: 'DOCUMENT.Combatant';
 }
 
 /** The data schema for a Combat document. */

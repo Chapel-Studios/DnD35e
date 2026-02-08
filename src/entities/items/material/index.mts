@@ -14,8 +14,7 @@ import {
   MaterialSheetVue,
 } from './sheet/index.mjs';
 
-
-import {
+import type {
   MaterialSystemData,
   MaterialSystemSource,
 } from './data/index.mjs';
