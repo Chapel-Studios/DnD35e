@@ -32,7 +32,7 @@ export default interface BaseChatMessage<TUser extends BaseUser | null>
     author: TUser;
 }
 
-declare type ChatMessageSchema = {
+type ChatMessageSchema = {
     /** The _id which uniquely identifies this ChatMessage document */
     _id: fields.DocumentIdField;
     /** An ChatMessage subtype which configures the system data model applied */
@@ -75,7 +75,7 @@ export type ChatMessageFlags = DocumentFlags & {
     };
 };
 
-declare type ChatSpeakerSchema = {
+type ChatSpeakerSchema = {
     /** The _id of the Scene where this message was created */
     scene: fields.ForeignDocumentField<string>;
     /** The _id of the Actor who generated this message */

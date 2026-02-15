@@ -26,6 +26,17 @@ export default class BaseActiveEffect<TParent extends BaseActor | BaseItem<BaseA
 
   static override defineSchema(): ActiveEffectSchema;
 
+  /**
+   * The default icon used for newly created ActiveEffect documents
+   */
+  static DEFAULT_ICON: string;
+
+  /**
+   * Shim changes array to add backward compatibility
+   * @internal
+   */
+  static _shimChanges<TParent extends BaseActor | BaseItem<BaseActor | null> | null = null>(changes: EffectChangeData<TParent>[]): void;
+
   /* -------------------------------------------- */
   /*  Model Methods                               */
   /* -------------------------------------------- */
@@ -125,9 +136,11 @@ export type EffectChangeData<TParent extends BaseActor | BaseItem<BaseActor | nu
 type EffectDurationSchema = {
     value: fields.NumberField<number, number, true, true, false>;
     units: fields.StringField<string, string, true, false, false>;
-    expiry: fields.StringField<string, string, true, true, false>;
+    expiry: fields.StringField<string, string, true, false, true>;
     expired: fields.BooleanField;
 };
+
+export type EffectDurationData = fields.SourceFromSchema<EffectDurationSchema>;
 
 export type ActiveEffectSource<
   TType extends string = string,
@@ -135,4 +148,3 @@ export type ActiveEffectSource<
 > = fields.SourceFromSchema<ActiveEffectSchema<TType, TSystemSource>>;
 
 export type EffectDurationSource = fields.SourceFromSchema<EffectDurationSchema>;
-export type EffectDurationData = BaseActiveEffect<null>['duration'];

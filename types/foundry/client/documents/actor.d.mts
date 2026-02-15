@@ -1,5 +1,5 @@
 import Token from '@client/canvas/placeables/token.mjs';
-import { DocumentConstructionContext } from '@common/_types.mjs';
+import type { DocumentConstructionContext } from '../../common/_types.mjs';
 import {
   DatabaseCreateOperation,
   DatabaseDeleteOperation,
@@ -52,7 +52,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
   protected override _initializeSource(source: Record<string, unknown>, options?: object): this['_source'];
 
   /** An object that tracks which tracks the changes to the data model which were applied by active effects */
-  overrides: Omit<DeepPartial<this['_source']>, 'prototypeToken'>;
+  overrides: ActorOverrides;
 
   /** The statuses that are applied to this actor by active effects */
   statuses: Set<string>;
@@ -299,6 +299,12 @@ export declare const ActiveEffectPhase: {
 };
 
 export type ActiveEffectPhase = typeof ActiveEffectPhase[keyof typeof ActiveEffectPhase];
+
+/**
+ * Simplified type for Actor overrides applied by active effects
+ * Excludes prototypeToken from deep partial source data
+ */
+export type ActorOverrides = Omit<DeepPartial<foundry.documents.ActorSource>, 'prototypeToken'>;
 
 export default Actor;
 

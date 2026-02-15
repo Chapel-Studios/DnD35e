@@ -1,6 +1,6 @@
 import { TokenConstrainMovementPathOptions } from '@client/_module.mjs';
 import TokenConfig from '@client/applications/sheets/token/token-config.mjs';
-import { DocumentConstructionContext, ElevatedPoint, TokenDimensions, TokenPosition } from '@common/_types.mjs';
+import type { DocumentConstructionContext, ElevatedPoint, TokenDimensions, TokenPosition } from '../../common/_types.mjs';
 import {
   DatabaseCreateCallbackOptions,
   DatabaseCreateOperation,

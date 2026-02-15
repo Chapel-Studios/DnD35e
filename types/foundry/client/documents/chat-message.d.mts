@@ -1,5 +1,5 @@
 import Roll, { Rolled } from '@client/dice/roll.mjs';
-import { DocumentConstructionContext } from '@common/_types.mjs';
+import type { DocumentConstructionContext } from '../../common/_types.mjs';
 import {
   DatabaseCreateCallbackOptions,
   DatabaseCreateOperation,

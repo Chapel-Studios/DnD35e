@@ -1,4 +1,4 @@
-import { DocumentConstructionContext } from '@common/_types.mjs';
+import type { DocumentConstructionContext } from '../../common/_types.mjs';
 import type { RegionBehaviorSource } from '@common/documents/region-behavior.mjs';
 import BaseRegionBehavior from '@common/documents/region-behavior.mjs';
 import { ClientDocument, ClientDocumentStatic } from './abstract/client-document.mjs';
