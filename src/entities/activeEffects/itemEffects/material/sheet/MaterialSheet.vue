@@ -2,7 +2,7 @@
   <IdentifiableItemSheetVue />
 </template>
 <script lang="ts" setup>
-  import { IdentifiableItemSheetVue } from '@items/components/Identifiable/index.mjs';
+  import { IdentifiableItemSheetVue } from '@ec/Identifiable/index.mjs';
   import { provide } from 'vue';
   import { type MaterialSheetRenderContext, useMaterialStore } from './index.mjs';
 

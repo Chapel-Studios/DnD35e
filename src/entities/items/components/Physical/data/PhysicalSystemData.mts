@@ -1,5 +1,5 @@
 import { Size } from '@constants/sizes.mjs';
-import { IdentifiableItemSystemData } from '@items/components/Identifiable/index.mjs';
+import { IdentifiableItemSystemData } from '@entities/components/Identifiable/index.mjs';
 
 interface PhysicalItemSystemSource {
   quantity: number;

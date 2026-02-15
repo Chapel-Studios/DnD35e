@@ -13,6 +13,7 @@ import ActorSheet from '../appv1/sheets/actor-sheet.mjs';
 import { ActiveEffect, ActorUUID, BaseActor, Combat, Item, Scene, TokenDocument } from './_module.mjs';
 import { ClientDocument, ClientDocumentStatic } from './abstract/client-document.mjs';
 import Actors from './collections/actors.mjs';
+import EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 
 interface ClientBaseActorStatic extends Omit<typeof BaseActor, 'new'>, ClientDocumentStatic {}
 
@@ -92,7 +93,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
   /* -------------------------------------------- */
 
   /** Apply any transformations to the Actor data which are caused by ActiveEffects. */
-  applyActiveEffects(): void;
+  applyActiveEffects(phase: ActiveEffectPhase): void;
 
   /**
          * Retrieve an Array of active tokens which represent this Actor in the current canvas Scene.
@@ -114,7 +115,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
      * If CONFIG.ActiveEffect.legacyTransferral is false, this will also return all the transferred ActiveEffects on any
      * of the Actor's owned Items.
      */
-  allApplicableEffects(): Generator<ActiveEffect<this>, void, void>;
+  allApplicableEffects(): Generator<ActiveEffect<this | Item<this>>, void, void>;
 
   /** Prepare a data object which defines the data schema used by dice roll commands against this Actor */
   getRollData(): Record<string, unknown>;
@@ -280,8 +281,8 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
 }
 
 declare interface Actor<TParent extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TParent> {
-    // readonly effects: EmbeddedCollection<ActiveEffect<this>>;
-    // readonly items: EmbeddedCollection<Item<this>>;
+    readonly effects: EmbeddedCollection<ActiveEffect<this>>;
+    readonly items: EmbeddedCollection<Item<this>>;
 
     get sheet(): ActorSheet<Actor>;
 
@@ -291,6 +292,13 @@ declare interface Actor<TParent extends TokenDocument | null = TokenDocument | n
 declare namespace Actor {
     const implementation: typeof Actor;
 }
+
+export declare const ActiveEffectPhase: {
+  readonly INITIAL: "initial";
+  readonly FINAL: "final";
+};
+
+export type ActiveEffectPhase = typeof ActiveEffectPhase[keyof typeof ActiveEffectPhase];
 
 export default Actor;
 

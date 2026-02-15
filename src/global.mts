@@ -10,6 +10,7 @@ import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type Config from '@client/config.mjs';
 import { ItemType } from '@items/itemTypes.mjs';
+import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
 
 type GameDnd35e = Game<
   ActorDnd35e<null>,
@@ -54,6 +55,9 @@ declare global {
       item: {
         documentClasses: Record<string, new (...args: any[]) => ItemDnd35e>;
       },
+      activeEffect: {
+        documentClasses: Record<string, new (...args: any[]) => DnD35eActiveEffect>;
+      }
     };
   }
   const CONFIG: ConfigDnd35e;
@@ -62,7 +66,6 @@ declare global {
   namespace globalThis {
     const game: GameDnd35e;
     export import fa = foundry.applications;
-    // export import fav1 = foundry.appv1;
     export import fc = foundry.canvas;
     export import fd = foundry.documents;
     export import fh = foundry.helpers;

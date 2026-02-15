@@ -9,16 +9,15 @@ import {
 import { Document, DocumentMetadata } from '../abstract/_module.mjs';
 import * as fields from '../data/fields.mjs';
 import { ActorUUID, BaseActor, BaseItem, BaseUser, ItemUUID } from './_module.mjs';
+import { object } from '@client/applications/handlebars.mjs';
 
 /**
  * The ActiveEffect document model.
  * @param data    Initial data from which to construct the document.
  * @param context Construction context options
  */
-export default class BaseActiveEffect<TParent extends BaseActor | BaseItem<BaseActor | null> | null> extends Document<
-    TParent,
-    ActiveEffectSchema
-> {
+export default class BaseActiveEffect<TParent extends BaseActor | BaseItem<BaseActor | null> | null>
+  extends Document<TParent, ActiveEffectSchema> {
   /* -------------------------------------------- */
   /*  Model Configuration                         */
   /* -------------------------------------------- */
@@ -63,12 +62,20 @@ export interface ActiveEffectMetadata extends DocumentMetadata {
     isEmbedded: true;
 }
 
-type ActiveEffectSchema = {
+type ActiveEffectSystemSchema = {
+  changes: fields.ArrayField<fields.SchemaField<EffectChangeSchema>>;
+};
+
+export type ActiveEffectSystemSource = fields.SourceFromSchema<ActiveEffectSystemSchema>;
+
+type ActiveEffectSchema<
+  TType extends string = string,
+  TSystemSource extends ActiveEffectSystemSource = ActiveEffectSystemSource
+> = {
     _id: fields.DocumentIdField;
     name: fields.StringField<string, string, true, false, false>;
-    changes: fields.ArrayField<fields.SchemaField<EffectChangeSchema>>;
-    system: fields.TypeDataField;
-    type: fields.StringField<string, string, false, true, true>;
+    system: fields.TypeDataField<TSystemSource>;
+    type: fields.StringField<TType, TType, true, false, false>;
     disabled: fields.BooleanField;
     duration: fields.SchemaField<EffectDurationSchema>;
     description: fields.HTMLField;
@@ -81,11 +88,22 @@ type ActiveEffectSchema = {
     _stats: fields.DocumentStatsField;
 };
 
+type EffectPhases = 'initial' | 'final';
+
 type EffectChangeSchema = {
     key: fields.StringField<string, string, true, false, false>;
     value: fields.StringField<string, string, true, false, false>;
     mode: fields.NumberField<ActiveEffectChangeMode, ActiveEffectChangeMode, false, false, true>;
     priority: fields.NumberField;
+    phase: fields.StringField<EffectPhases, EffectPhases, true, false, false>;
+};
+export type EffectChangeData<TParent extends BaseActor | BaseItem<BaseActor | null> | null = null> = {
+    key: string;
+    value: string;
+    mode: ActiveEffectChangeMode;
+    priority: number;
+    phase: 'initial' | 'final';
+    effect?: BaseActiveEffect<TParent> | null;
 };
 
 type EffectDurationSchema = {
@@ -98,8 +116,10 @@ type EffectDurationSchema = {
     startTurn: fields.NumberField;
 };
 
-export type ActiveEffectSource = fields.SourceFromSchema<ActiveEffectSchema>;
+export type ActiveEffectSource<
+  TType extends string = string,
+  TSystemSource extends ActiveEffectSystemSource = ActiveEffectSystemSource
+> = fields.SourceFromSchema<ActiveEffectSchema<TType, TSystemSource>>;
 
-export type EffectChangeData = fields.SourceFromSchema<EffectChangeSchema>;
 export type EffectDurationSource = fields.SourceFromSchema<EffectDurationSchema>;
 export type EffectDurationData = BaseActiveEffect<null>['duration'];

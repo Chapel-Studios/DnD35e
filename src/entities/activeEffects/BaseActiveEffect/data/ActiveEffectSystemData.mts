@@ -1,10 +1,16 @@
-import { BaseDnd35eSystemData } from '@entities/common/index.mjs';
+import { ActiveEffectSystemSource } from '@common/documents/active-effect.mjs';
+import { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
 
-interface ActiveEffectSystemSource extends BaseDnd35eSystemData {}
+type ActiveEffectTarget = 'Actor' | 'Item';
 
-type ActiveEffectSystemData = ActiveEffectSystemSource;
+interface Dnd35eActiveEffectSystemSource extends BaseDnd35eSystemData, ActiveEffectSystemSource {
+  target: ActiveEffectTarget;
+}
+
+type ActiveEffectSystemData = Dnd35eActiveEffectSystemSource;
 
 export type {
+  ActiveEffectTarget,
   ActiveEffectSystemData,
-  ActiveEffectSystemSource,
+  Dnd35eActiveEffectSystemSource,
 };

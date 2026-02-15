@@ -1,24 +1,26 @@
-import { MaterialSystemData, MaterialSystemSource } from './index.mjs';
-import { ItemDnd35e, ItemSheetDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
+import { MaterialSystemSource } from './index.mjs';
 import {
   applyIdentifiablePrototype,
   IdentifiableItem,
   IdentifiableItemLike,
   IdentifiableItemSourceProps,
   identifiableOverrides,
-} from '@entityComponents/Identifiable/index.mjs';
+} from '@ec/Identifiable/index.mjs';
+import { ItemEffect } from '@itemEffects/index.mjs';
+import { ActiveEffectSource } from '@common/documents/active-effect.mjs';
 
 const materialItemType = 'material';
 type MaterialItemType = typeof materialItemType;
 
-type MaterialSource = Omit<ItemSourceDnd35e, 'system'>
-  & Omit<IdentifiableItemSourceProps, 'system'>
-  & { system: MaterialSystemSource; };
+type MaterialSource = ActiveEffectSource<MaterialItemType, MaterialSystemSource>
+//  Omit<ItemSourceDnd35e, 'system'>
+  & Omit<IdentifiableItemSourceProps, 'system'>;
+  // & { system: MaterialSystemSource; };
 
-class Material extends ItemDnd35e<MaterialItemType> {
+class Material extends ItemEffect {
   declare type: MaterialItemType;
-  declare system: MaterialSystemData;
-  declare _sheet: ItemSheetDnd35e<ItemDnd35e<MaterialItemType>> | null;
+  // declare system: MaterialSystemData;
+  // declare _sheet: ItemSheetDnd35e<ItemDnd35e<MaterialItemType>> | null;
   // declare get sheet(): ItemSheetDnd35e<ItemDnd35e<'material'>> | null;
   // declare readonly _source: MaterialSource;
   // sheet = ty MaterialSheet;

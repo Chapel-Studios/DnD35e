@@ -1,6 +1,6 @@
 import { computed, Ref } from 'vue';
-import { Material, MaterialDetails } from '../index.mjs';
-import { useIdentifiableStore } from '@items/components/Identifiable/index.mjs';
+import { Material, MaterialDetails } from '@effects/material/index.mjs';
+import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { ItemSheetTab, useItemSheetStore } from '@items/baseItem/index.mjs';
 import { MaterialType } from '../Material.mjs';
 

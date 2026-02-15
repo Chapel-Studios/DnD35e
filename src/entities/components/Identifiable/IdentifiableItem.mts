@@ -2,6 +2,7 @@ import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { IdentifiableItemSystemData, IdentifiableItemSystemSource } from './index.mjs';
 import { ItemType } from '@items/index.mjs';
 import { replaceDataAttribute } from '@helpers/formulae/index.mjs';
+import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
 
 type IdentifiableItemSourceProps = {
   system: IdentifiableItemSystemSource;
@@ -22,7 +23,8 @@ type IdentifiableItemLike =
   ItemDnd35e<ItemType> &
   IdentifiableItem;
 
-const applyIdentifiablePrototype = <T extends typeof ItemDnd35e<ItemType>> (item: T) => {
+type ItemOrEffectCtor = AbstractConstructorOf<ItemDnd35e<ItemType>> | AbstractConstructorOf<DnD35eActiveEffect>;
+const applyIdentifiablePrototype = <T extends ItemOrEffectCtor> (item: T) => {
   if ((item as any).__isIdentifiedApplied) return;
 
   Object.defineProperties(item.prototype, {

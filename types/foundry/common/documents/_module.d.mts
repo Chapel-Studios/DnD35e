@@ -1,6 +1,7 @@
 import { WorldDocumentType } from '@common/constants.mjs';
 
 export { ActiveEffectSource, default as BaseActiveEffect } from './active-effect.mjs';
+export { EffectChangeData } from './active-effect.mjs';
 export { default as BaseActorDelta } from './actor-delta.mjs';
 export { ActorSource, default as BaseActor } from './actor.mjs';
 export { AdventureSource, default as BaseAdventure } from './adventure.mjs';

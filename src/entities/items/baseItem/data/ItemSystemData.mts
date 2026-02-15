@@ -3,7 +3,8 @@
 //
 // type ItemGrantDeleteAction = 'cascade' | 'detach' | 'restrict';
 
-import { BaseDnd35eSystemData } from '@entities/common/index.mjs';
+import { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
+
 
 // interface ItemGrantSource {
 //     /** The ID of a granting or granted item */

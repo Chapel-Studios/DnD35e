@@ -8,5 +8,18 @@ globalThis.fd = foundry.documents;
 globalThis.fh = foundry.helpers;
 globalThis.fu = foundry.utils;
 
+// TODO: move this to a more appropriate location, such as a system-specific initialization file
+CONFIG.Dnd35e = {
+  VERSION: '13.0.0-dev.1',
+  item: {
+    documentClasses: {
+    },
+  },
+  activeEffect: {
+    documentClasses: {
+    },
+  },
+};
+
 registerItems();
 registerHandlebarsHelpers();

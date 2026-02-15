@@ -43,7 +43,8 @@
       "@common/*": ["./types/foundry/common/*"],
       "@client/*": ["./types/foundry/client/*"],
       "@effects/*": ["./src/entities/activeEffects/*"],
-      "@entityComponents/*": ["./src/entities/components/*"],
+      "@itemEffects/*": ["./src/entities/activeEffects/itemEffects/*"],
+      "@ec/*": ["./src/entities/components/*"],
     },                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     "typeRoots": [

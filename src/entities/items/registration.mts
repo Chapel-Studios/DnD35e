@@ -1,13 +1,10 @@
-import { registerCommon } from '@entities/common/index.mjs';
-import { ItemProxyDnd35e } from './baseItem/index.mjs';
-import { MaterialSystemModel, MaterialSheet } from './material/index.mjs';
-import { WeaponSheet, WeaponSystemModel } from './weapon/index.mjs';
-import ItemConfig from '@constants/config/item.mjs';
+import { ItemProxyDnd35e } from '@items/baseItem/index.mjs';
+import { MaterialSystemModel, MaterialSheet } from '@itemEffects/material/index.mjs';
+import { Weapon, WeaponSheet, WeaponSystemModel } from '@items/weapon/index.mjs';
 
 const registerSheets = () => {
   foundry.documents.collections.Items.unregisterSheet('core', foundry.appv1.sheets.ItemSheet);
   const itemSheets = [
-    ['material', MaterialSheet],
     ['weapon', WeaponSheet],
   ] as const;
 
@@ -20,9 +17,8 @@ const registerSheets = () => {
 };
 
 export const registerItems = () => {
-  CONFIG.Dnd35e = {
-    VERSION: '13.0.0-dev.1',
-    item: ItemConfig,
+  CONFIG.Dnd35e.item.documentClasses = {
+    weapon: Weapon,
   };
 
   foundry.helpers.Hooks.once('init', () => {
@@ -34,7 +30,6 @@ export const registerItems = () => {
   });
 
   foundry.helpers.Hooks.once('setup', () => {
-    registerCommon();
     registerSheets();
   });
 };

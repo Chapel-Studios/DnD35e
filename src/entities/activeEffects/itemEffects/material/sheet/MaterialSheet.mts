@@ -1,8 +1,8 @@
 import { ItemSheetDnd35e } from '@items/baseItem/index.mjs';
 import { MaterialSheetVue } from './index.mjs';
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
-import { Material } from '@items/material/index.mjs';
-import type { IdentifiableItemSheetRenderContext } from '@items/components/Identifiable/index.mjs';
+import { Material } from '@effects/material/index.mjs';
+import type { IdentifiableItemSheetRenderContext } from '@ec/Identifiable/index.mjs';
 
 type MaterialSheetConfig = DocumentSheetConfiguration<Material>;
 type MaterialSheetRenderContext = IdentifiableItemSheetRenderContext & {

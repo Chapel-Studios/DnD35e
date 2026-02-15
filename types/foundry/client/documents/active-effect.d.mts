@@ -3,6 +3,7 @@ import {
   DatabaseCreateCallbackOptions,
   DatabaseDeleteCallbackOptions,
   DatabaseUpdateCallbackOptions,
+  DataSchema,
 } from '@common/abstract/_types.mjs';
 import Document from '@common/abstract/document.mjs';
 import { DataField } from '@common/data/fields.mjs';
@@ -13,6 +14,35 @@ import BaseActiveEffect, {
 } from '@common/documents/active-effect.mjs';
 import { Actor, BaseActor, BaseItem, BaseUser, Item } from './_module.mjs';
 import { ClientDocument } from './abstract/client-document.mjs';
+
+/**
+ * A function to render a stringified HTMLLIElement in the changes tab of ActiveEffectConfig
+ */
+type ActiveEffectChangeRenderer = (context: {
+  change: EffectChangeData;
+  index: number;
+  fields: DataSchema;
+  defaultPriority: number;
+}) => Promise<string>;
+
+/**
+ * A function that applies the change to a document
+ */
+type ActiveEffectChangeHandler = (
+  actor: Actor,
+  change: EffectChangeData,
+  options?: {
+    field?: DataField;
+    replacementData?: Record<string, unknown>;
+  }
+) => Promise<Record<string, unknown> | void>;
+
+interface ActiveEffectChangeTypeConfig {
+  label: string;
+  defaultPriority: number;
+  handler?: ActiveEffectChangeHandler | null;
+  render?: ActiveEffectChangeRenderer | null;
+}
 
 declare const ClientBaseActiveEffect: new <TParent extends BaseActor | BaseItem | null>(
     ...args: any
@@ -42,6 +72,9 @@ export default class ActiveEffect<
         options?: DocumentConstructionContext<foundry.abstract.Document | null>,
     ): Promise<ActiveEffect<Actor | Item> | undefined>;
 
+  static _shimChanges<TParent extends BaseActor | BaseItem<BaseActor | null> | null = null>(changes: EffectChangeData<TParent>[]): void;
+
+  static get CHANGE_TYPES(): Record<string, ActiveEffectChangeTypeConfig>;
   /**
      * Create an ActiveEffect instance from status effect data.
      * Called by {@link ActiveEffect.fromStatusEffect}.
@@ -210,6 +243,8 @@ export default class ActiveEffect<
      * @param enabled Is the active effect currently enabled?
      */
   protected _displayScrollingStatus(enabled: boolean): void;
+
+  static get CHANGE_PHASES(): Record<string, {label: string; hint: string}>;
 }
 
 export default interface ActiveEffect<TParent extends Actor | Item | null = Actor | Item | null> {
