@@ -39,7 +39,7 @@
     ItemSheetContainerSelector,
     ItemSheetIsCarriedCheckbox,
   } from '@items/components/Physical/index.mjs';
-  import { ItemUnidentifiedPrice } from '@items/components/Identifiable/index.mjs';
+  import { ItemUnidentifiedPrice } from '@ec/Identifiable/index.mjs';
   import { ItemIsWeightlessWhenEquipped } from '@items/components/Equippable/index.mjs';
 
   const {

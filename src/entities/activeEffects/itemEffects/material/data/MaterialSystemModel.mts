@@ -3,7 +3,7 @@ import { applyIdentifiableSchema } from '@ec/Identifiable/index.mjs';
 import { ItemEffectSystemModel } from '../../ItemEffect/index.mjs';
 import type { MaterialSystemData } from './MaterialSystemData.mjs';
 import type { ItemEffectChangeData } from '@itemEffects/ItemEffect/index.mjs';
-import { ActiveEffectChangeMode } from '@common/constants.mjs';
+import { EFFECT_CHANGE_TYPE, EffectChangeType } from '@effects/BaseActiveEffect/data/constants.mjs';
 import { EffectPhases } from '@common/documents/active-effect.mjs';
 
 class MaterialSystemModel extends ItemEffectSystemModel {
@@ -57,17 +57,17 @@ class MaterialSystemModel extends ItemEffectSystemModel {
   _buildChange(
     key: string,
     value: string,
-    mode: ActiveEffectChangeMode = CONST.ACTIVE_EFFECT_MODES.ADD,
+    type: EffectChangeType = EFFECT_CHANGE_TYPE.ADD,
     phase: EffectPhases = 'final',
     priority: number = 10,
   ): ItemEffectChangeData {
     return {
       key,
-      mode,
+      type,
       value,
       phase,
       priority,
-      effect: null, // to be filled in when the change is applied to an effect
+      effect: null,
     };
   }
 
@@ -75,7 +75,7 @@ class MaterialSystemModel extends ItemEffectSystemModel {
     return this._buildChange(
       'system.isColdIronEquivalent',
       this.isColdIronEquivalent.toString(),
-      CONST.ACTIVE_EFFECT_MODES.OVERRIDE,
+      EFFECT_CHANGE_TYPE.OVERRIDE,
     );
   }
 
@@ -83,7 +83,7 @@ class MaterialSystemModel extends ItemEffectSystemModel {
     return this._buildChange(
       'system.isAdamantineEquivalent',
       this.isAdamantineEquivalent.toString(),
-      CONST.ACTIVE_EFFECT_MODES.OVERRIDE,
+      EFFECT_CHANGE_TYPE.OVERRIDE,
     );
   }
 
@@ -91,7 +91,7 @@ class MaterialSystemModel extends ItemEffectSystemModel {
     return this._buildChange(
       'system.isAlchemicalSilverEquivalent',
       this.isAlchemicalSilverEquivalent.toString(),
-      CONST.ACTIVE_EFFECT_MODES.OVERRIDE,
+      EFFECT_CHANGE_TYPE.OVERRIDE,
     );
   }
 
@@ -117,7 +117,7 @@ class MaterialSystemModel extends ItemEffectSystemModel {
     return this._buildChange(
       'system.magicEquivalent',
       this.magicEquivalent.toString(),
-      CONST.ACTIVE_EFFECT_MODES.UPGRADE,
+      EFFECT_CHANGE_TYPE.UPGRADE,
     );
   }
 

@@ -1,19 +1,19 @@
 import type {
-  VueApplicationContext,
   VueApplicationConfiguration,
-  // VueSheetContext,
   VueRenderOptions,
-} from './VueApplication.mjs';
+  VueApplicationContext,
+} from './VueAppTypes.mts';
 
-import { VueItemSheet } from './VueApplication.mjs';
+import { useVueMixin } from './VueMixin.mjs';
+import type { VueMixin } from './VueMixin.mjs';
 
 export {
-  VueItemSheet,
+  useVueMixin,
 };
 
 export type {
-  VueApplicationContext,
+  VueMixin,
   VueApplicationConfiguration,
-  // VueSheetContext,
   VueRenderOptions,
+  VueApplicationContext,
 };

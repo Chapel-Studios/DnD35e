@@ -1,7 +1,7 @@
 import type { ItemSheetStore, ItemSheetTab } from '@items/baseItem/index.mjs';
 import { computed, Ref } from 'vue';
-import { IdentifiableNameConfig, IdentifiableDescription } from '@items/components/Identifiable/index.mjs';
-import type { IdentifiableItemSheetRenderContext, IdentifiableItemLike } from '@items/components/Identifiable/index.mjs';
+import { IdentifiableNameConfig, IdentifiableDescription } from '@ec/Identifiable/index.mjs';
+import type { IdentifiableItemSheetRenderContext, IdentifiableItemLike } from '@ec/Identifiable/index.mjs';
 
 const createIdentifiableTabs = (): ItemSheetTab[] => [
   {

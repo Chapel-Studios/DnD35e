@@ -37,7 +37,7 @@
     ItemSheetContainerSelector,
     ItemSheetIsCarriedCheckbox,
   } from '@items/components/Physical/index.mjs';
-  import { IdentifiableItemPrice } from '@items/components/Identifiable/index.mjs';
+  import { IdentifiableItemPrice } from '@ec/Identifiable/index.mjs';
 
   const {
     tabs: {

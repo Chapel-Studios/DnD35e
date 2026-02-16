@@ -29,7 +29,7 @@ type ActiveEffectChangeRenderer = (context: {
  * A function that applies the change to a document
  */
 type ActiveEffectChangeHandler = (
-  actor: Actor,
+   actor: Actor | Item,
   change: EffectChangeData,
   options?: {
     field?: DataField;
@@ -232,6 +232,19 @@ export default class ActiveEffect<
      * @returns The updated value.
      */
   static applyField(model: Document, change: EffectChangeData, field?: DataField): unknown;
+
+  /**
+     * Apply an ActiveEffect change to a provided Document.
+     * @param actor  The Document to whom this effect should be applied
+     * @param change The change data being applied
+     * @param options Options for applying the change
+     * @returns An object of property paths and their updated values.
+     */
+  static applyChange(
+    actor: Document,
+    change: EffectChangeData,
+    options?: { field?: DataField; replacementData?: Record<string, unknown> }
+  ): Record<string, unknown> | undefined;
 
   /**
      * Apply this ActiveEffect to a provided Actor.

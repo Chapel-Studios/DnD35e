@@ -1,5 +1,5 @@
 import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
-import { applyIdentifiablePrototype, IdentifiableItemSourceProps, identifiableOverrides } from '../Identifiable/IdentifiableItem.mjs';
+import { applyIdentifiablePrototype, IdentifiableItemSourceProps, identifiableOverrides } from '@ec/Identifiable/index.mjs';
 import { PhysicalItemSystemData, PhysicalItemSystemSource } from './index.mjs';
 import { ItemType } from '@items/itemTypes.mjs';
 

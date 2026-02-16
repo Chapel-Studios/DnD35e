@@ -1,5 +1,5 @@
 import { LogHelper } from '@helpers/logHelper.mjs';
-import { ActiveEffectSystemData, ActiveEffectSystemSource } from './index.mjs';
+import { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from './index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import { EffectType } from '../index.mjs';
 import { getDisplayName } from '@entities/components/CoreMixin/logic/displayName.mjs';
@@ -12,7 +12,7 @@ type DnD35eActiveEffectFlags<T extends object = Record<string, unknown>> = Recor
 
 type Dnd35eActiveEffectSource<
   TEffectType extends EffectType = EffectType,
-  TSystemSource extends ActiveEffectSystemSource = ActiveEffectSystemSource
+  TSystemSource extends Dnd35eActiveEffectSystemSource = Dnd35eActiveEffectSystemSource
 > = foundry.documents.ActiveEffectSource<TEffectType, TSystemSource>;
 
 class DnD35eActiveEffect<TParent extends ActorDnd35e | ItemDnd35e<any, ActorDnd35e | null> | null = ActorDnd35e | ItemDnd35e<any, ActorDnd35e | null> | null>

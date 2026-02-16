@@ -1,4 +1,4 @@
-import { MaterialSystemSource } from './index.mjs';
+import { MaterialSystemSource, MaterialSystemData } from './index.mjs';
 import {
   applyIdentifiablePrototype,
   IdentifiableItem,
@@ -19,7 +19,7 @@ type MaterialSource = ActiveEffectSource<MaterialItemType, MaterialSystemSource>
 
 class Material extends ItemEffect {
   declare type: MaterialItemType;
-  // declare system: MaterialSystemData;
+  declare system: MaterialSystemData;
   // declare _sheet: ItemSheetDnd35e<ItemDnd35e<MaterialItemType>> | null;
   // declare get sheet(): ItemSheetDnd35e<ItemDnd35e<'material'>> | null;
   // declare readonly _source: MaterialSource;
@@ -50,7 +50,7 @@ class Material extends ItemEffect {
 
 applyIdentifiablePrototype(Material);
 
-type MaterialType = Material & IdentifiableItem;
+type MaterialType = Material & Omit<IdentifiableItem, 'system'> & { system: MaterialSystemData };
 
 export {
   Material,

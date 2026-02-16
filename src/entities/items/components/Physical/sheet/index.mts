@@ -1,4 +1,4 @@
-import { IdentifiableItemSheetRenderContext } from '@items/components/Identifiable/index.mjs';
+import { IdentifiableItemSheetRenderContext } from '@ec/Identifiable/index.mjs';
 import PhysicalItemSheet from './PhysicalItemSheet.vue';
 import { PhysicalItem } from '../PhysicalItemDnd35e.mjs';
 import ItemPrice from './components/ItemPrice.vue';

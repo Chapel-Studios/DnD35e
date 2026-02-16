@@ -19,7 +19,7 @@
 <script lang="ts" setup>
   import { BaseItemSheetVue, useItemSheetStore } from '@items/baseItem/index.mjs';
   import { provide } from 'vue';
-  import { IdentifiableItemName } from '@items/components/Identifiable/index.mjs';
+  import { IdentifiableItemName } from '@ec/Identifiable/index.mjs';
 
   const props = defineProps<{
     context?: any;

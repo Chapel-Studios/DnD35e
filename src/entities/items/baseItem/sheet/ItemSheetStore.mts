@@ -3,6 +3,7 @@ import type { BaseItemSheetRenderContext, ItemDnd35e } from '../index.mjs';
 import { Description } from './index.mjs';
 import NameConfig from './tabs/NameConfig.vue';
 import { ItemType } from '@items/itemTypes.mjs';
+import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
 
 interface ItemSheetTab {
   id: string;
@@ -38,7 +39,7 @@ const createDefaultState = (): ItemSheetState => ({
   activeTab: 'description',
 });
 
-const useItemSheetStore = <TDocument extends ItemDnd35e> (context: BaseItemSheetRenderContext<ItemType, TDocument>) => {
+const useItemSheetStore = <TDocument extends ItemDnd35e | DnD35eActiveEffect> (context: BaseItemSheetRenderContext<ItemType, TDocument>) => {
   // Core state
   const document = ref(context.document);
   const state = reactive({

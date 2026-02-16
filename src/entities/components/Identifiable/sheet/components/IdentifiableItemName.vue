@@ -22,7 +22,7 @@
 <script setup lang="ts">
   import { computed, inject } from 'vue';
   import { ItemName } from '@items/baseItem/index.mjs';
-  import type { IdentifiableItemStore, IdentifiableItemLike } from '@items/components/Identifiable/index.mjs';
+  import type { IdentifiableItemStore, IdentifiableItemLike } from '@ec/Identifiable/index.mjs';
 
   const {
     unidentifiedInfoMode: {

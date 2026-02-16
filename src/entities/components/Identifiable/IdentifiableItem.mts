@@ -23,6 +23,12 @@ type IdentifiableItemLike =
   ItemDnd35e<ItemType> &
   IdentifiableItem;
 
+type IdentifiableEffectLike =
+  DnD35eActiveEffect &
+  IdentifiableItem;
+
+type WithIdenifiableComponent = IdentifiableItemLike | IdentifiableEffectLike;
+
 type ItemOrEffectCtor = AbstractConstructorOf<ItemDnd35e<ItemType>> | AbstractConstructorOf<DnD35eActiveEffect>;
 const applyIdentifiablePrototype = <T extends ItemOrEffectCtor> (item: T) => {
   if ((item as any).__isIdentifiedApplied) return;
@@ -54,7 +60,7 @@ const applyIdentifiablePrototype = <T extends ItemOrEffectCtor> (item: T) => {
 };
 
 const identifiableOverrides = {
-  displayName: (item: IdentifiableItemLike): string => {
+  displayName: (item: WithIdenifiableComponent): string => {
     const identifiedName = item._displayName;
     const {
       isIdentifiable,
@@ -77,6 +83,8 @@ export {
 export type {
   IdentifiableItem,
   IdentifiableItemLike,
+  IdentifiableEffectLike,
   IdentifiableItemSource,
   IdentifiableItemSourceProps,
+  WithIdenifiableComponent,
 };

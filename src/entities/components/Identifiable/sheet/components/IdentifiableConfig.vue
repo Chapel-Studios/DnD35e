@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
   import { inject } from 'vue';
-  import { IdentifiableItemStore } from '@items/components/Identifiable/index.mjs';
+  import { IdentifiableItemStore } from '@ec/Identifiable/index.mjs';
   import { ToggleSwitch } from '@vc/Fields/index.mjs';
 
   const {

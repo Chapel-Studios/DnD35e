@@ -117,20 +117,22 @@ type ActiveEffectSchema<
 type EffectPhases = 'initial' | 'final';
 
 type EffectChangeSchema = {
-    key: fields.StringField<string, string, true, false, false>;
-    value: fields.StringField<string, string, true, false, false>;
-    type: fields.StringField<string, string, true, false, false>;
-    priority?: fields.NumberField<number, number, false, true, true>;
-    phase: fields.StringField<EffectPhases, EffectPhases, true, false, false>;
+  key: fields.StringField<string, string, true, false, false>;
+  value: fields.StringField<string, string, true, false, false>;
+  type: fields.StringField<string, string, true, false, true>;
+  priority?: fields.NumberField<number, number, false, true, true>;
+  phase: fields.StringField<EffectPhases, EffectPhases, true, false, false>;
 };
 
-export type EffectChangeData<TParent extends BaseActor | BaseItem<BaseActor | null> | null = null> = {
-    key: string;
-    value: string;
-    type: string;
-    priority?: number;
-    phase: 'initial' | 'final';
-    effect?: BaseActiveEffect<TParent> | null;
+export type EffectChangeData<
+  TParent extends BaseActor | BaseItem<BaseActor | null> | null = BaseActor | BaseItem<BaseActor | null> | null
+> = {
+  key: string;
+  value: string;
+  type: string;
+  phase: EffectPhases;
+  priority?: number | null;
+  effect?: BaseActiveEffect<TParent> | null;
 };
 
 type EffectDurationSchema = {

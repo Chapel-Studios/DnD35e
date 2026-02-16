@@ -1,5 +1,7 @@
 import {
   ACTIVE_EFFECT_TARGETS,
+  EFFECT_CHANGE_TYPE,
+  EFFECT_CHANGE_PHASE,
 } from './constants.mjs';
 
 import type {
@@ -14,6 +16,8 @@ import type {
 
 export {
   ACTIVE_EFFECT_TARGETS,
+  EFFECT_CHANGE_TYPE,
+  EFFECT_CHANGE_PHASE,
 };
 
 export type {

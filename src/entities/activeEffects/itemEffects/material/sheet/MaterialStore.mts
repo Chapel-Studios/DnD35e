@@ -1,5 +1,5 @@
 import { computed, Ref } from 'vue';
-import { Material, MaterialDetails } from '@effects/material/index.mjs';
+import { Material, MaterialDetails } from '@itemEffects/material/index.mjs';
 import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { ItemSheetTab, useItemSheetStore } from '@items/baseItem/index.mjs';
 import { MaterialType } from '../Material.mjs';
@@ -20,7 +20,7 @@ const useMaterialStore = (context: any) => {
   const identifiableStore = useIdentifiableStore<MaterialType>(context, baseStore);
   baseStore.tabs.tabActions.appendTabs(getMaterialTabs());
 
-  const document = baseStore._document as unknown as Ref<Material>;
+  const document = baseStore._document as Ref<MaterialType>;
 
   const materialGetters = {
     bonusHardness: computed(() => document.value.system.bonusHardness),

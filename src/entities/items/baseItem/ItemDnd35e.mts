@@ -1,16 +1,14 @@
 import { LogHelper } from '@helpers/logHelper.mjs';
 import { ITEM_TYPES } from '@items/index.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
-import EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
+import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
+import type { DnD35eActiveEffect } from '@effects/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { ItemType } from '@items/index.mjs';
 import type { ItemSheetDnd35e, ItemSystemData, ItemSystemSource } from './index.mjs';
-import { VueItemSheet } from '@vc/VueApplication.mjs';
-import { getDisplayName } from '@entities/components/CoreMixin/logic/displayName.mjs';
-import { ActiveEffectPhase } from '@client/documents/actor.mjs';
-import { EffectChangeData } from '@common/documents/active-effect.mjs';
-import type { ActiveEffectChangeMode } from '@common/constants.mjs';
+import { getDisplayName } from '@ec/CoreMixin/index.mjs';
+import type { EffectChangeData } from '@common/documents/active-effect.mjs';
+import { EFFECT_CHANGE_PHASE, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
 
 type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
 
@@ -23,39 +21,33 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 
   _completedActiveEffectPhases: Set<string> = new Set();
 
-  override get sheet (): ItemSheetDnd35e<any> | null {
-    if (!this._sheet) {
-      const superSheet = super.sheet;
-      if (!superSheet) {
-        const SheetClass = this._getSheetClass() as unknown as {
-          new (document: any, options?: any): ItemSheetDnd35e<any>;
-        };
-        // Only instantiate if it's a VueApplication subclass
-        if (foundry.utils.isSubclass(SheetClass, VueItemSheet)) {
-          this._sheet = new SheetClass(this, { editable: this.isOwner });
-        }
-      }
-    }
+  // override get sheet (): ItemSheetDnd35e<any> | null {
+  //   if (!this._sheet) {
+  //     const superSheet = super.sheet;
+  //     if (!superSheet) {
+  //       const SheetClass = this._getSheetClass() as unknown as {
+  //         new (document: any, options?: any): ItemSheetDnd35e<any>;
+  //       };
+  //       // Only instantiate if it's a VueApplication subclass
+  //       if (foundry.utils.isSubclass(SheetClass, VueItemSheet)) {
+  //         this._sheet = new SheetClass(this, { editable: this.isOwner });
+  //       }
+  //     }
+  //   }
 
-    return this._sheet;
-  }
+  //   return this._sheet;
+  // }
 
   override prepareBaseData (): void {
     super.prepareBaseData();
-    // I don't actually think this is needed
-    // this.system ??= this._createFreshSystemData();
   }
 
   override prepareEmbeddedDocuments (): void {
     super.prepareEmbeddedDocuments();
-    this.applyActiveEffects(ActiveEffectPhase.INITIAL);
+    this.applyActiveEffects(EFFECT_CHANGE_PHASE.INITIAL);
   }
 
-  // ACtive Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method, but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
-  /**
-   * An object that tracks which tracks the changes to the data model which were applied by active effects
-   * @type {object}
-   */
+  // Active Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method, but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
   overrides: Record<string, unknown> = {};
 
   *allApplicableEffects() {
@@ -66,10 +58,8 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 
   // this function is laregly copied directly from actor.mjs on version 14.354
   applyActiveEffects(phase: string) {
-    const {
-      CHANGE_PHASES,
-    } = foundry.documents.ActiveEffect;
-    if ( !(phase in CHANGE_PHASES) ) {
+    const ActiveEffect = foundry.documents.ActiveEffect;
+    if ( !(phase in ActiveEffect.CHANGE_PHASES) ) {
       // TODO: we should probably incorporate the below into our logger at some point, since this is how foundrty does it
       // but for now we'll just use this to avoid adding a dependency on hook in our type definitions
       // Also, does that throw the error?
@@ -86,17 +76,19 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     }
     this._completedActiveEffectPhases.add(phase);
 
-    const changes: EffectChangeData<this>[] = [];
+    type AppliedItemEffectChange = EffectChangeData<ItemDnd35e<TItemType, TParent>>
+      & { type: string; effect: DnD35eActiveEffect<ItemDnd35e<TItemType, TParent>> };
+    const changes: AppliedItemEffectChange[] = [];
     for ( const effect of this.allApplicableEffects() ) {
       if ( !effect.active ) continue;
       for ( const change of effect.system.changes ) {
         if ( !change.key || (change.phase !== phase) ) continue;
-        const copy: EffectChangeData<this> = {
+        const copy: AppliedItemEffectChange = {
           key: change.key,
-          value: change.value,
-          mode: change.mode as ActiveEffectChangeMode,
-          priority: change.priority ?? 0,
+          value: String(change.value),
           phase: change.phase,
+          priority: change.priority ?? 0,
+          type: change.type ?? EFFECT_CHANGE_TYPE.ADD,
           effect,
         };
         changes.push(copy);
@@ -107,31 +99,22 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
       //   for ( const statusId of effect.statuses ) this.statuses.add(statusId);
       // }
     }
-    changes.sort((a, b) => a.priority - b.priority);
-    foundry.documents.ActiveEffect._shimChanges(changes);
+    changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+    ActiveEffect._shimChanges(changes);
 
     // Apply all changes
-    const overrides = {};
-    const replacementData = this.getRollData();
+    const overrides: Record<string, unknown> = {};
+    const replacementData = this.getRollData() as Record<string, unknown>;
     for ( const change of changes ) {
       const result = ActiveEffect.CHANGE_TYPES[change.type].handler?.(this, change)
-        ?? change.effect?.constructor.applyChange(this, change, {replacementData});
-      if ( foundry.utils.isPlainObject(result) ) Object.assign(overrides, result);
+        ?? ActiveEffect.applyChange(this, change, { replacementData });
+      if ( foundry.utils.isPlainObject(result) ) Object.assign(overrides, result as Record<string, unknown>);
     }
 
     // Expand the set of final overrides
     foundry.utils.mergeObject(this.overrides, foundry.utils.expandObject(overrides));
   }
-
-  // _createFreshSystemData (): ItemSystemData {
-  //   return {
-  //     description: { value: '' },
-  //     version: CONFIG.Dnd35e.VERSION,
-  //     isNameFromFormula: false,
-  //     isPsionic: false,
-  //     isEpic: false,
-  //   };
-  // }
+  
   get localizedType (): string {
     return ITEM_TYPES[this.type] ??
       'D35E.Item';

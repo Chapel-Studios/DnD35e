@@ -18,16 +18,17 @@
 <script lang="ts" setup>
   import { useItemSheetStore } from '@items/baseItem/index.mjs';
   import { provide } from 'vue';
-  import { IdentifiableItemSheetVue } from '@items/components/Identifiable/index.mjs';
-  import { usePhysicalItemStore } from './PhysicalItemStore.mjs';
+  import { IdentifiableItemSheetVue } from '@ec/Identifiable/index.mjs';
+  import { PhysicalItemSheetStore, usePhysicalItemStore } from './PhysicalItemStore.mjs';
+  import { PhysicalItemLike } from '../PhysicalItemDnd35e.mjs';
 
   const props = defineProps<{
     context?: any;
   }>();
 
   if (props.context) {
-    const baseStore = useItemSheetStore(props.context);
-    const physicalItemStore = usePhysicalItemStore(props.context, baseStore);
+    const baseStore = useItemSheetStore<PhysicalItemLike>(props.context);
+    const physicalItemStore = usePhysicalItemStore(props.context, baseStore) as PhysicalItemSheetStore;
 
     provide('itemSheetStore', {
       ...baseStore,

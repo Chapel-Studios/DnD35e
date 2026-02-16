@@ -1,13 +1,13 @@
 import { ItemSheetStore } from '@items/baseItem/index.mjs';
 import type { PhysicalItemSheetRenderContext } from './index.mjs';
-import { useIdentifiableStore } from '@items/components/Identifiable/index.mjs';
+import { IdentifiableItemLike, useIdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { computed, type Ref } from 'vue';
 import { PhysicalItemLike } from '../PhysicalItemDnd35e.mjs';
 
 const usePhysicalItemStore = (context: PhysicalItemSheetRenderContext, baseStore: ItemSheetStore) => {
   const document = baseStore._document as unknown as Ref<PhysicalItemLike>;
   baseStore.setItemType('D35E.PhysicalItem');
-  const identifiableStore = useIdentifiableStore(context, baseStore);
+  const identifiableStore = useIdentifiableStore(context, baseStore as unknown as ItemSheetStore<IdentifiableItemLike>);
 
   const physicalItemGetters = {
     quantity: computed(() => document.value.system.quantity),
