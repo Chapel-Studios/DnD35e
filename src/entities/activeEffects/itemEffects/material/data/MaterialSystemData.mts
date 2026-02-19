@@ -1,5 +1,5 @@
 import type { IdentifiableItemSystemData, IdentifiableItemSystemSource } from '@ec/Identifiable/index.mjs';
-import { ItemEffectSystemData, ItemEffectSystemSource } from '../../ItemEffect/index.mjs';
+import { ItemEffectSystemData, ItemEffectSystemSource } from '@itemEffects/ItemEffect/index.mjs';
 
 type MaterialSystemStats = {
   priceDifference: number;
@@ -16,7 +16,7 @@ interface MaterialSystemSource extends MaterialSystemStats, IdentifiableItemSyst
 interface MaterialSystemData extends MaterialSystemStats, IdentifiableItemSystemData, ItemEffectSystemData {}
 
 export type {
-  MaterialSystemStats,
-  MaterialSystemSource,
   MaterialSystemData,
+  MaterialSystemSource,
+  MaterialSystemStats,
 };

@@ -1,26 +1,31 @@
-import { computed, Ref } from 'vue';
-import { Material, MaterialDetails } from '@itemEffects/material/index.mjs';
+import { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+import type { IdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
-import { ItemSheetTab, useItemSheetStore } from '@items/baseItem/index.mjs';
-import { MaterialType } from '../Material.mjs';
+import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
+import {
+  effectChangesTab,
+  effectDurationTab,
+  useActiveEffectConfigStore,
+} from '@effects/BaseActiveEffect/index.mjs';
+import { materialDetailsTab, MaterialType } from '@itemEffects/material/index.mjs';
+import type { ComputedRef, Ref } from 'vue';
+import { computed } from 'vue';
 
-const getMaterialTabs = (): ItemSheetTab[] => [
-  {
-    id: 'material-details',
-    // TODO find this actual label, like D35E.Name
-    label: 'Details',
-    component: MaterialDetails,
-    order: 30,
-  },
-];
+import {  } from './index.mjs';
 
 const useMaterialStore = (context: any) => {
-  const baseStore = useItemSheetStore<MaterialType>(context);
-  baseStore.setItemType('TYPES.Item.material');
-  const identifiableStore = useIdentifiableStore<MaterialType>(context, baseStore);
-  baseStore.tabs.tabActions.appendTabs(getMaterialTabs());
+  const baseStore = useActiveEffectConfigStore<MaterialType>(context);
+  const identifiableStore = useIdentifiableStore(
+    context,
+    baseStore as unknown as DocumentSheetStore<MaterialType>,
+  );
+  baseStore.tabs.tabActions.appendTabs([
+    materialDetailsTab,
+    effectDurationTab,
+    effectChangesTab,
+  ]);
 
-  const document = baseStore._document as Ref<MaterialType>;
+  const document = baseStore._document as unknown as Ref<MaterialType>;
 
   const materialGetters = {
     bonusHardness: computed(() => document.value.system.bonusHardness),
@@ -38,5 +43,18 @@ const useMaterialStore = (context: any) => {
   };
 };
 
+interface MaterialStore extends IdentifiableStore,
+  ActiveEffectConfigStore<MaterialType>
+{
+  materialGetters: {
+    bonusHardness: ComputedRef<number>;
+    bonusHpPerInch: ComputedRef<number>;
+    magicEquivalent: ComputedRef<number | null>;
+    isAlchemicalSilverEquivalent: ComputedRef<boolean>;
+    isAdamantineEquivalent: ComputedRef<boolean>;
+    isColdIronEquivalent: ComputedRef<boolean>;
+  };
+}
+
 export { useMaterialStore };
-export type MaterialStore = ReturnType<typeof useMaterialStore>;
+export type { MaterialStore };

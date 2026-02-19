@@ -44,9 +44,9 @@
 </template>
 
 <script setup lang="ts">
-  import FormGroup from '@vc/Fields/FormGroup.vue';
+  import type { ItemSheetStore } from '@items/baseItem/index.mjs';
+  import { FormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { ItemSheetStore } from '../index.mjs';
 
   const {
     documentGetters: {
@@ -61,7 +61,7 @@
       tabGetters: { getIsTabOpen },
     },
     isEditable,
-  } = inject('itemSheetStore') as ItemSheetStore;
+  } = inject('documentSheetStore') as ItemSheetStore;
 
   const isActive = getIsTabOpen('name-config');
 

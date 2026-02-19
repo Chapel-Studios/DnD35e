@@ -11,7 +11,7 @@
 <script setup lang="ts">
   import { FormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
+  import { PhysicalItemStore } from '@items/components/Physical/index.mjs';
   import { EQUIP_SLOT_SELECT_OPTIONS } from '@constants/equipmentSlots.mjs';
 
   const {
@@ -22,7 +22,7 @@
     documentActions: {
       getFieldUpdater,
     },
-  } = inject('itemSheetStore') as PhysicalItemSheetStore;
+  } = inject('documentSheetStore') as PhysicalItemStore;
 
   const updater = getFieldUpdater('system.containerId');
 </script>

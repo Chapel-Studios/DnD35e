@@ -1,142 +1,55 @@
-import { Component, computed, reactive, ref, triggerRef, unref } from 'vue';
-import type { BaseItemSheetRenderContext, ItemDnd35e } from '../index.mjs';
-import { Description } from './index.mjs';
-import NameConfig from './tabs/NameConfig.vue';
-import { ItemType } from '@items/itemTypes.mjs';
-import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
+import type { DocumentSheetStore, SheetTab } from '@ec/CoreMixin/index.mjs';
+import { useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+import type { ItemDnd35e } from '@items/baseItem/index.mjs';
+import {
+  defaultDescriptionTab,
+  defaultNameConfigTab,
+} from '@items/baseItem/index.mjs';
+import type { ItemType } from '@items/index.mjs';
+import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 
-interface ItemSheetTab {
-  id: string;
-  label: string;
-  component: Component;
-  order: number;
-  icon?: string;
-  tooltip?: string
-}
+const getDefaultItemTabs = (): SheetTab[] => [
+  defaultDescriptionTab,
+  defaultNameConfigTab,
+];
 
-type ItemSheetState = {
-  itemType: string;
-  tabs: ItemSheetTab[];
-  activeTab: string;
-};
-
-const createDefaultState = (): ItemSheetState => ({
-  itemType: 'D35E.Item',
-  tabs: [
-    {
-      id: 'description',
-      label: 'D35E.Description',
-      component: Description,
-      order: 10,
-    },
-    {
-      id: 'name-config',
-      label: 'D35E.Name',
-      component: NameConfig,
-      order: 10,
-    },
-  ] satisfies ItemSheetTab[],
-  activeTab: 'description',
-});
-
-const useItemSheetStore = <TDocument extends ItemDnd35e | DnD35eActiveEffect> (context: BaseItemSheetRenderContext<ItemType, TDocument>) => {
-  // Core state
-  const document = ref(context.document);
-  const state = reactive({
-    ...createDefaultState(),
-    // document:
-    isEditable: context.editable,
-    renderOptions: unref(context.renderOptions),
+const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplicationContext<TDocument>): ItemSheetStore<TDocument> => {
+  // Get base store functionality
+  const baseStore = useDocumentSheetStore(context, {
+    defaultTabs: getDefaultItemTabs(),
+    defaultActiveTab: 'description',
   });
-  const setItemType = (itemType: string) => {
-    state.itemType = itemType;
-  };
-  const getItemTypeDisplay = (fallback: string = 'D35E.Item') =>
-    computed(() => game.i18n.localize(state.itemType || fallback));
 
-  // Tabs
-  const tabGetters = {
-    activeTabId: computed(() => state.activeTab),
-    tabs: computed(() => (state.tabs ?? []).sort(
-      (a, b) => (a.order ?? 0) - (b.order ?? 0),
-    )),
-    getIsTabOpen: (tabId: string) => computed(() => state.activeTab === tabId),
-  };
-  const tabActions = {
-    activateTab: (tabId: string) => {
-      state.activeTab = tabId;
-    },
-    replaceTabs: (newTabs: ItemSheetTab[]) => {
-      state.tabs = [
-        ...newTabs,
-      ];
-    },
-    appendTabs: (newTabs: ItemSheetTab[]) => {
-      state.tabs = [
-        ...state.tabs,
-        ...newTabs,
-      ];
-    },
-  };
+  // Item-specific state
 
-  // Document
-  const documentGetters = {
-    getProperty: <T, >(path: string) => computed(() => foundry.utils.getProperty(document.value, path) as T),
+  // const getItemTypeDisplay = (fallback: string = 'D35E.Item') =>
+  //   computed(() => game.i18n.localize(itemType || fallback));
 
-    name: computed(() => document.value.name || ''),
-    displayName: computed(() => document.value.displayName || ''),
-    isNameFromFormula: computed(() => document.value.system.isNameFromFormula || false),
-    nameFormula: computed(() => document.value.system.nameFormula || ''),
-
-    img: computed(() => document.value.img || ''),
-
-    uniqueId: computed(() => document.value.system.uniqueId || ''),
-
-    description: computed(() => document.value.system.description.value || ''),
-
-    localizedType: computed(() => game.i18n.localize(document.value.localizedType)),
-  };
-  const updateDocument = async (data: Partial<TDocument>) => {
-    const updatedDoc = await document.value.update(data) as TDocument;
-    if (updatedDoc) {
-      document.value = updatedDoc;
-      // Since the object was mutated Vue refuses to see any changes;
-      // TODO: write something smarter so we only have to refresh the parts of store that changed
-      triggerRef(document);
-      return true;
-    }
-    return false;
-  };
-  const documentActions = {
-    updateDocument,
-    getFieldUpdater: (path: string) => {
-      return async (value: any) => {
-        return await updateDocument({ [path]: value } as Partial<TDocument>);
-      };
-    },
+  // Item-specific document getters
+  const itemDocumentGetters = {
+    ...baseStore.documentGetters,
   };
 
   return {
-    itemType: computed(() => state.itemType),
-    setItemType,
-    getItemTypeDisplay,
-    isEditable: computed(() => state.isEditable),
-    isFirstRender: computed(() => state.renderOptions.isFirstRender),
-    tabs: {
-      tabGetters,
-      tabActions,
-    },
-    _document: document,
-    documentGetters,
-    documentActions,
+    ...baseStore,
+    documentGetters: itemDocumentGetters,
+    // Item-specific
   };
 };
 
-type ItemSheetStore<TDocument extends ItemDnd35e<ItemType> = ItemDnd35e<ItemType>> = ReturnType<typeof useItemSheetStore<TDocument>>;
+// TODO
+type ItemSheetStore<TDocument extends ItemDnd35e<ItemType> = ItemDnd35e<ItemType>> = DocumentSheetStore<TDocument>;
+// & {
+//   // itemType: ComputedRef<string>;
+//   setItemType: (newItemType: string) => void;
+//   getItemTypeDisplay: (fallback?: string) => ComputedRef<string>;
+// };
 
-export { useItemSheetStore };
+export {
+  getDefaultItemTabs,
+  useItemSheetStore,
+};
 
 export type {
-  ItemSheetTab,
   ItemSheetStore,
 };

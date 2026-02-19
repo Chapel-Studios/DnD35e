@@ -1,8 +1,8 @@
+import { ItemConfig } from '@constants/config/item.mjs';
 import { ItemProxyDnd35e } from '@items/baseItem/index.mjs';
-import { MaterialSystemModel, MaterialSheet } from '@itemEffects/material/index.mjs';
-import { Weapon, WeaponSheet, WeaponSystemModel } from '@items/weapon/index.mjs';
+import { WeaponSheet, WeaponSystemModel } from '@items/weapon/index.mjs';
 
-const registerSheets = () => {
+const registerItemSheets = () => {
   foundry.documents.collections.Items.unregisterSheet('core', foundry.appv1.sheets.ItemSheet);
   const itemSheets = [
     ['weapon', WeaponSheet],
@@ -17,19 +17,15 @@ const registerSheets = () => {
 };
 
 export const registerItems = () => {
-  CONFIG.Dnd35e.item.documentClasses = {
-    weapon: Weapon,
-  };
-
+  CONFIG.Dnd35e.item = ItemConfig;
   foundry.helpers.Hooks.once('init', () => {
     CONFIG.Item.documentClass = ItemProxyDnd35e;
     Object.assign(CONFIG.Item.dataModels, {
       weapon: WeaponSystemModel,
-      material: MaterialSystemModel,
     });
   });
 
   foundry.helpers.Hooks.once('setup', () => {
-    registerSheets();
+    registerItemSheets();
   });
 };

@@ -1,7 +1,8 @@
-import { IdentifiableItem } from '../IdentifiableItem.mjs';
-import { BaseItemSheetRenderContext } from '@items/baseItem/index.mjs';
+import type { IdentifiableItem, IdentifiableItemLike } from '@ec/Identifiable/index.mjs';
+import type { BaseItemSheetRenderContext } from '@items/baseItem/index.mjs';
+import type { ItemType } from '@items/itemTypes.mjs';
 
-type IdentifiableItemSheetRenderContext = BaseItemSheetRenderContext & {
+type IdentifiableItemSheetRenderContext = BaseItemSheetRenderContext<ItemType, IdentifiableItemLike> & {
   document: IdentifiableItem;
 };
 

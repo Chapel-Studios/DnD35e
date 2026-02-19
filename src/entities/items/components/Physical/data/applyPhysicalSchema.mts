@@ -1,6 +1,11 @@
 import { Size, SIZES } from '@constants/sizes.mjs';
-import { optionalNumberField, optionalStringField, requiredBooleanField, requiredNumberField } from '@helpers/fieldBuilders.mjs';
 import { applyIdentifiableSchema } from '@ec/Identifiable/index.mjs';
+import {
+  optionalNumberField,
+  optionalStringField,
+  requiredBooleanField,
+  requiredNumberField,
+} from '@helpers/fieldBuilders.mjs';
 
 const { fields: { StringField, SchemaField } } = foundry.data;
 

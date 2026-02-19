@@ -1,10 +1,11 @@
-import { requiredBooleanField, requiredNumberField } from '@helpers/fieldBuilders.mjs';
+import type { EffectPhases } from '@common/documents/active-effect.mjs';
 import { applyIdentifiableSchema } from '@ec/Identifiable/index.mjs';
-import { ItemEffectSystemModel } from '../../ItemEffect/index.mjs';
-import type { MaterialSystemData } from './MaterialSystemData.mjs';
+import type { EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
+import { EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
+import { requiredBooleanField, requiredNumberField } from '@helpers/fieldBuilders.mjs';
 import type { ItemEffectChangeData } from '@itemEffects/ItemEffect/index.mjs';
-import { EFFECT_CHANGE_TYPE, EffectChangeType } from '@effects/BaseActiveEffect/data/constants.mjs';
-import { EffectPhases } from '@common/documents/active-effect.mjs';
+import { ItemEffectSystemModel } from '@itemEffects/ItemEffect/index.mjs';
+import type { MaterialSystemData } from '@itemEffects/material/index.mjs';
 
 class MaterialSystemModel extends ItemEffectSystemModel {
   static override defineSchema () {
@@ -129,7 +130,6 @@ class MaterialSystemModel extends ItemEffectSystemModel {
   }
 }
 
-// Declaration merging: adds all properties from inherent and composed types
 interface MaterialSystemModel extends MaterialSystemData {}
 
 export { MaterialSystemModel };

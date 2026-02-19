@@ -90,13 +90,13 @@ const WEAPOON_BASE_TYPES = [
 type WeaponBaseType = (typeof WEAPOON_BASE_TYPES)[number];
 
 export type {
-  WeaponType,
-  WeaponSubtype,
   WeaponBaseType,
+  WeaponSubtype,
+  WeaponType,
 };
 
 export {
-  WEAPON_TYPES,
   WEAPON_SUBTYPES,
+  WEAPON_TYPES,
   WEAPOON_BASE_TYPES,
 };

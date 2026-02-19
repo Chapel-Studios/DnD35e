@@ -40,6 +40,6 @@ interface ItemSystemSource extends BaseDnd35eSystemData {
 type ItemSystemData = ItemSystemSource;
 
 export type {
-  ItemSystemSource,
   ItemSystemData,
+  ItemSystemSource,
 };

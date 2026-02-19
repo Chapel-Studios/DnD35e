@@ -1,10 +1,8 @@
 import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
-import { WeaponSystemData, WeaponSystemSource } from './index.mjs';
-import { applyPhysicalPrototype, PhysicalItem, PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
-import { ItemWithMaterials } from '@items/components/HasMaterial/ItemWithMaterials.mjs';
+import { applyPhysicalPrototype, PhysicalItemLike, PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
+import { WeaponItemType } from '@items/itemTypes.mjs';
 
-const weaponItemType = 'weapon';
-type WeaponItemType = typeof weaponItemType;
+import { WeaponSystemData, WeaponSystemSource } from './index.mjs';
 
 type WeaponSource = Omit<ItemSourceDnd35e, 'system'>
   & Omit<PhysicalItemSourceProps, 'system'>
@@ -31,15 +29,13 @@ class Weapon extends ItemDnd35e<WeaponItemType> {
 
 applyPhysicalPrototype(Weapon);
 
-type WeaponType = Weapon & PhysicalItem & ItemWithMaterials;
+type WeaponType = Weapon & PhysicalItemLike;
 
 export {
   Weapon,
-  weaponItemType,
 };
 
 export type {
-  WeaponItemType,
   WeaponSource,
   WeaponType,
 };

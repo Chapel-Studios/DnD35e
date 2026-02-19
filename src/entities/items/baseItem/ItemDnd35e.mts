@@ -1,26 +1,32 @@
-import { LogHelper } from '@helpers/logHelper.mjs';
-import { ITEM_TYPES } from '@items/index.mjs';
-import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
-import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import type { DnD35eActiveEffect } from '@effects/index.mjs';
+import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
-import type { ItemType } from '@items/index.mjs';
-import type { ItemSheetDnd35e, ItemSystemData, ItemSystemSource } from './index.mjs';
-import { getDisplayName } from '@ec/CoreMixin/index.mjs';
+import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
-import { EFFECT_CHANGE_PHASE, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
+import { getDisplayName } from '@ec/CoreMixin/index.mjs';
+import { EFFECT_CHANGE_TYPE, INITIAL_EFFECT_CHANGE_PHASE } from '@effects/BaseActiveEffect/index.mjs';
+import type { DnD35eActiveEffect } from '@effects/index.mjs';
+import { LogHelper } from '@helpers/logHelper.mjs';
+import type { ItemType } from '@items/index.mjs';
+import { ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
+
+import type { ItemSheetDnd35e, ItemSystemData, ItemSystemSource } from './index.mjs';
 
 type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
 
 class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<TParent> {
+  constructor(source: PreCreate<ItemSourceDnd35e<TItemType>>, context?: DocumentConstructionContext<TParent>) {
+    super(source, context);
+    this._completedActiveEffectPhases = new Set();
+  }
   declare readonly effects: EmbeddedCollection<DnD35eActiveEffect<this>>;
   declare type: TItemType;
   declare system: ItemSystemData;
   declare _source: ItemSourceDnd35e<TItemType>;
   declare _sheet: ItemSheetDnd35e<any> | null;
 
-  _completedActiveEffectPhases: Set<string> = new Set();
+  _completedActiveEffectPhases: Set<string>;
 
+  // Maybe this isn't needed?
   // override get sheet (): ItemSheetDnd35e<any> | null {
   //   if (!this._sheet) {
   //     const superSheet = super.sheet;
@@ -44,7 +50,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 
   override prepareEmbeddedDocuments (): void {
     super.prepareEmbeddedDocuments();
-    this.applyActiveEffects(EFFECT_CHANGE_PHASE.INITIAL);
+    this.applyActiveEffects(INITIAL_EFFECT_CHANGE_PHASE);
   }
 
   // Active Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method, but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
@@ -116,7 +122,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   }
   
   get localizedType (): string {
-    return ITEM_TYPES[this.type] ??
+    return ITEM_TYPES_LOCALIZED[this.type] ??
       'D35E.Item';
   }
 

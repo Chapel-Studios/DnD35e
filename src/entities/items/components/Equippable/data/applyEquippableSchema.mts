@@ -1,14 +1,12 @@
 import { EquipSlot } from '@constants/equipmentSlots.mjs';
 import { Size, SIZES } from '@constants/sizes.mjs';
 import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
-import { applyHasMaterialsSchema } from '@items/components/HasMaterial/index.mjs';
 import { applyPhysicalSchema } from '@items/components/Physical/index.mjs';
 
 const { fields: { ArrayField, StringField } } = foundry.data;
 
 const applyEquippableSchema = (schema: Record<string, any>) => {
   applyPhysicalSchema(schema);
-  applyHasMaterialsSchema(schema);
 
   // Equippable
   schema.isEquipped = requiredBooleanField(false);

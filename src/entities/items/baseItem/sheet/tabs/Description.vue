@@ -10,15 +10,15 @@
 </template>
 
 <script setup lang="ts">
+  import { ItemSheetStore } from '@items/baseItem/index.mjs';
   import { RichTextEditor } from '@vc/Fields/index.mjs';
-  import { ItemSheetStore } from '../index.mjs';
   import { inject } from 'vue';
 
   const {
     tabs: {
       tabGetters: { getIsTabOpen },
     },
-  } = inject('itemSheetStore') as ItemSheetStore;
+  } = inject('documentSheetStore') as ItemSheetStore;
 
   const isActiveTab = getIsTabOpen('description');
 

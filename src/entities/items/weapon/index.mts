@@ -1,52 +1,56 @@
-import {
-  Weapon,
-  weaponItemType,
-} from './Weapon.mjs';
-import {
-  WEAPON_TYPES,
-  WEAPON_SUBTYPES,
-  WEAPOON_BASE_TYPES,
-  WeaponSystemModel,
-} from './data/index.mjs';
-import {
-  WeaponSheet,
-  WeaponSheetVue,
-} from './sheet/index.mjs';
-
 import type {
-  WeaponItemType,
-} from './Weapon.mjs';
-import type {
-  WeaponType,
-  WeaponSubtype,
   WeaponBaseType,
   WeaponDamage,
-  WeaponSystemSource,
+  WeaponSubtype,
   WeaponSystemData,
+  WeaponSystemSource,
+  WeaponType,
+} from './data/index.mjs';
+import {
+  WEAPON_SUBTYPES,
+  WEAPON_TYPES,
+  WeaponSystemModel,
+  WEAPOON_BASE_TYPES,
 } from './data/index.mjs';
 import type {
-  // WeaponSheetConfig,
+  WeaponSheetConfig,
   WeaponSheetRenderContext,
+  WeaponStore,
 } from './sheet/index.mjs';
-
-export {
-  Weapon,
-  weaponItemType,
-  WEAPON_TYPES,
-  WEAPON_SUBTYPES,
-  WEAPOON_BASE_TYPES,
-  WeaponSystemModel,
+import {
+  useWeaponStore,
+  WeaponDetails,
+  weaponDetailsTab,
   WeaponSheet,
   WeaponSheetVue,
+  WeaponSummary,
+} from './sheet/index.mjs';
+import {
+  Weapon,
+} from './Weapon.mjs';
+
+export {
+  useWeaponStore,
+  Weapon,
+  WEAPON_SUBTYPES,
+  WEAPON_TYPES,
+  WeaponDetails,
+  weaponDetailsTab,
+  WeaponSheet,
+  WeaponSheetVue,
+  WeaponSummary,
+  WeaponSystemModel,
+  WEAPOON_BASE_TYPES,
 };
 
 export type {
-  WeaponItemType,
-  WeaponType,
-  WeaponSubtype,
   WeaponBaseType,
   WeaponDamage,
-  WeaponSystemSource,
-  WeaponSystemData,
+  WeaponSheetConfig,
   WeaponSheetRenderContext,
+  WeaponStore,
+  WeaponSubtype,
+  WeaponSystemData,
+  WeaponSystemSource,
+  WeaponType,
 };

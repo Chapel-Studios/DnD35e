@@ -11,14 +11,13 @@
 
 <script lang="ts" setup>
   import { PhysicalItemSheet } from '@items/components/Physical/index.mjs';
+  import { useWeaponStore, WeaponSummary } from '@items/weapon/index.mjs';
   import { provide } from 'vue';
-  import { useWeaponStore } from './index.mjs';
-  import WeaponSummary from './WeaponSummary.vue';
 
   const props = defineProps<{
     context: any;
   }>();
 
   const store = useWeaponStore(props.context);
-  provide('itemSheetStore', store);
+  provide('documentSheetStore', store);
 </script>

@@ -1,17 +1,18 @@
 <template>
   <div class="header-details flexrow">
     <div class="flexcol">
-      <ItemName :labelKey="'DND35E.Name'" :value="displayName" />
+      <DocumentName :labelKey="'DND35E.Name'" :value="displayName" />
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-  import { ItemSheetStore } from '../ItemSheetStore.mjs';
-  import ItemName from './ItemName.vue';
+  import { DocumentName } from '@ec/CoreMixin/index.mjs';
+  import { ItemSheetStore } from '@items/baseItem/index.mjs';
   import { inject } from 'vue';
+
 
   const {
     documentGetters: { displayName },
-  } = inject('itemSheetStore') as ItemSheetStore;
+  } = inject('documentSheetStore') as ItemSheetStore;
 </script>

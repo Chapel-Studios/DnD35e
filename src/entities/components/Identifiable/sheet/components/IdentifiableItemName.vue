@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, inject } from 'vue';
+  import type { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
   import { ItemName } from '@items/baseItem/index.mjs';
-  import type { IdentifiableItemStore, IdentifiableItemLike } from '@ec/Identifiable/index.mjs';
+  import { computed, inject } from 'vue';
 
   const {
     unidentifiedInfoMode: {
@@ -38,7 +38,7 @@
       identifiedDisplayName,
       unidentifiedDisplayName,
     },
-  } = inject('itemSheetStore') as IdentifiableItemStore<IdentifiableItemLike>;
+  } = inject('documentSheetStore') as IdentifiableDocumentStore;
 
   const identifiedValue = computed(() => showBoth
     ? identifiedDisplayName

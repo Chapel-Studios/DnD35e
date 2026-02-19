@@ -1,5 +1,3 @@
-import { ItemSystemModelBase } from '@items/baseItem/index.mjs';
-import { WEAPON_SUBTYPES, WEAPON_TYPES, WEAPOON_BASE_TYPES } from './constants.mjs';
 import { DAMAGE_TYPES } from '@constants/attacks/damageTypes.mjs';
 import {
   optionalStringField,
@@ -10,7 +8,9 @@ import {
   requiredStringField,
   requiredTypedStringField,
 } from '@helpers/fieldBuilders.mjs';
+import { ItemSystemModelBase } from '@items/baseItem/index.mjs';
 import { applyEquippableSchema } from '@items/components/Equippable/index.mjs';
+import { WEAPON_SUBTYPES, WEAPON_TYPES, WEAPOON_BASE_TYPES } from '@items/weapon/index.mjs';
 
 const {
   fields: {

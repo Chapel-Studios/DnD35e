@@ -1,8 +1,9 @@
-import type { EquippableItemSystemData, EquippableItemSystemSource } from './index.mjs';
-import type { ItemType } from '@items/index.mjs';
 import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
+import type { PhysicalItem, PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
 import { applyPhysicalPrototype, physicalOverrides } from '@items/components/Physical/index.mjs';
-import type { PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
+import type { ItemType } from '@items/index.mjs';
+
+import type { EquippableItemSystemData, EquippableItemSystemSource } from './index.mjs';
 
 type EquippableItemSourceProps = {
   system: EquippableItemSystemSource;
@@ -18,6 +19,7 @@ interface EquippableItem {
 }
 
 type EquippableItemLike = ItemDnd35e<ItemType>
+  & PhysicalItem
   & EquippableItem;
 
 const applyEquippablePrototype = <T extends typeof ItemDnd35e<ItemType>> (item: T) => {
@@ -35,8 +37,8 @@ export {
 };
 
 export type {
-  EquippableItemSourceProps,
   EquippableItem,
   EquippableItemLike,
   EquippableItemSource,
+  EquippableItemSourceProps,
 };

@@ -1,29 +1,20 @@
 import type { DocumentSheetRenderContext } from '@client/applications/api/document-sheet.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
-import { VueItemSheet, VueApplicationConfiguration, VueRenderOptions } from '@vc/VueApplication.mjs';
+import type { VueApplicationConfiguration, VueRenderOptions } from '@vueApps/index.mjs';
+import { VueItemSheet } from '@vueApps/index.mjs';
 
-export interface BaseItemSheetRenderContext<TItemType extends ItemType, TDocument extends ItemDnd35e<TItemType>> extends Partial<DocumentSheetRenderContext<TDocument>> {
+interface BaseItemSheetRenderContext<TItemType extends ItemType, TDocument extends ItemDnd35e<TItemType>> extends Partial<DocumentSheetRenderContext<TDocument>> {
   // document: TDocument;
   renderOptions: VueRenderOptions;
 }
 
-/**
- * Base class for all DnD35e item sheets using Vue.
- *
- * TDocument is fully typed based on the ItemType union.
- * Example: ItemSheetDnd35e<ItemDnd35e<"material">>
- */
 abstract class ItemSheetDnd35e<
   TDocument extends ItemDnd35e<ItemType> = ItemDnd35e<ItemType>
-> extends VueItemSheet<TDocument> {
+> extends VueItemSheet {
   /** Vue component class must be provided by subclasses */
   // static override vueComponent: any;
-
-  /**
-   * Default options for all DnD35e item sheets.
-   * These are merged with VueApplication.defaultOptions.
-   */
+  
   static override get DEFAULT_OPTIONS (): VueApplicationConfiguration<ItemDnd35e> {
     return {
       classes: ['dnd35e', 'item-sheet'],
@@ -48,7 +39,7 @@ abstract class ItemSheetDnd35e<
    */
   protected override async _prepareContext (
     options: VueRenderOptions,
-  ): Promise<BaseItemSheetRenderContext> {
+  ): Promise<BaseItemSheetRenderContext<ItemType, TDocument>> {
     return {
       editable: this.isEditable,
       renderOptions: options,
@@ -58,4 +49,8 @@ abstract class ItemSheetDnd35e<
 
 export {
   ItemSheetDnd35e,
+};
+
+export type {
+  BaseItemSheetRenderContext,
 };

@@ -1,5 +1,5 @@
 <template>
-  <BaseItemSheetVue>
+  <component :is="baseComponent">
     <template #header-name>
       <slot name="header-name">
         <IdentifiableItemName />
@@ -13,24 +13,33 @@
       <slot name="header-summary">
       </slot>
     </template>
-  </BaseItemSheetVue>
+  </component>
 </template>
 
 <script lang="ts" setup>
-  import { BaseItemSheetVue, useItemSheetStore } from '@items/baseItem/index.mjs';
-  import { provide } from 'vue';
   import { IdentifiableItemName } from '@ec/Identifiable/index.mjs';
+  import { ActiveEffectConfigVue, useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
+  import { BaseItemSheetVue, useItemSheetStore } from '@items/baseItem/index.mjs';
+  import { computed, provide } from 'vue';
 
-  const props = defineProps<{
+  type SheetMode = 'item' | 'effect';
+
+  const props = withDefaults(defineProps<{
     context?: any;
-  }>();
+    mode?: SheetMode;
+  }>(), {
+    mode: 'item',
+  });
+
+  const baseComponent = computed(() => props.mode === 'effect' ? ActiveEffectConfigVue : BaseItemSheetVue);
 
   if (props.context) {
-    const baseStore = useItemSheetStore(props.context);
-    const physicalItemStore = useItemSheetStore(props.context);
-    provide('itemSheetStore', {
-      ...baseStore,
-      ...physicalItemStore,
-    });
+    if (props.mode === 'effect') {
+      const store = useActiveEffectConfigStore(props.context);
+      provide('documentSheetStore', store);
+    } else {
+      const store = useItemSheetStore(props.context);
+      provide('documentSheetStore', store);
+    }
   }
 </script>

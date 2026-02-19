@@ -1,25 +1,37 @@
-import IdentifiableDescription from './tabs/IdentifiableDescription.vue';
-import IdentifiableNameConfig from './tabs/IdentifiableNameConfig.vue';
-import IdentifiableItemName from './components/IdentifiableItemName.vue';
 import IdentifiableConfig from './components/IdentifiableConfig.vue';
-import IdentifiableItemSheetVue from './IdentifiableItemSheet.vue';
+import IdentifiableItemName from './components/IdentifiableItemName.vue';
 import IdentifiableItemPrice from './components/IdentifiableItemPrice.vue';
-import { useIdentifiableStore } from './IdentifiableItemStore.mjs';
-
+import ItemUnidentifiedPrice from './components/ItemUnidentifiedPrice.vue';
 import type { IdentifiableItemSheetRenderContext } from './IdentifiableItemSheet.mjs';
-import type { IdentifiableItemStore } from './IdentifiableItemStore.mjs';
+import IdentifiableItemSheetVue from './IdentifiableItemSheet.vue';
+import type {
+  IdentifiableDocumentStore,
+  IdentifiableStore,
+} from './IdentifiableItemStore.mjs';
+import {
+  useIdentifiableStore,
+} from './IdentifiableItemStore.mjs';
+import {
+  IdentifiableDescription,
+  identifiableDescriptionTab,
+  IdentifiableNameConfig,
+  identifiableNameConfigTab,
+} from './tabs/index.mjs';
 
 export {
-  useIdentifiableStore,
-  IdentifiableDescription,
-  IdentifiableItemName as IdentifiableHeader,
-  IdentifiableNameConfig,
-  IdentifiableItemName,
-  IdentifiableItemSheetVue,
   IdentifiableConfig,
+  IdentifiableDescription,
+  identifiableDescriptionTab,
+  IdentifiableItemName,
   IdentifiableItemPrice,
+  IdentifiableItemSheetVue,
+  IdentifiableNameConfig,
+  identifiableNameConfigTab,
+  ItemUnidentifiedPrice,
+  useIdentifiableStore,
 };
 export type {
+  IdentifiableDocumentStore,
   IdentifiableItemSheetRenderContext,
-  IdentifiableItemStore,
+  IdentifiableStore,
 };

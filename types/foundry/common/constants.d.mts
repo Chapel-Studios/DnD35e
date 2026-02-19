@@ -73,6 +73,34 @@ export const ACTIVE_EFFECT_MODES: Readonly<{
 export type ActiveEffectChangeMode = (typeof ACTIVE_EFFECT_MODES)[keyof typeof ACTIVE_EFFECT_MODES];
 
 /**
+ * Time-based units in which an ActiveEffect's duration can be expressed
+ */
+export const ACTIVE_EFFECT_TIME_DURATION_UNITS: readonly ['years', 'months', 'days', 'hours', 'minutes', 'seconds'];
+
+export type ActiveEffectTimeDurationUnit = typeof ACTIVE_EFFECT_TIME_DURATION_UNITS[number];
+
+/**
+ * All units in which an ActiveEffect's duration can be expressed
+ */
+export const ACTIVE_EFFECT_DURATION_UNITS: readonly ['years', 'months', 'days', 'hours', 'minutes', 'seconds', 'rounds', 'turns'];
+
+export type ActiveEffectDurationUnit = typeof ACTIVE_EFFECT_DURATION_UNITS[number];
+
+/**
+ * Define the core ActiveEffect expiry events.
+ */
+export const ACTIVE_EFFECT_EXPIRY_EVENTS: readonly ['combatStart', 'roundStart', 'turnStart', 'combatEnd', 'roundEnd', 'turnEnd'];
+
+export type ActiveEffectExpiryEvent = typeof ACTIVE_EFFECT_EXPIRY_EVENTS[number];
+
+/**
+ * Define the core ActiveEffect change-application phases.
+ */
+export const ACTIVE_EFFECT_CHANGE_PHASES: readonly ['initial', 'final'];
+
+export type ActiveEffectChangePhase = typeof ACTIVE_EFFECT_CHANGE_PHASES[number];
+
+/**
  * Define the string name used for the base document type when specific sub-types are not defined by the system
  */
 export const BASE_DOCUMENT_TYPE: 'base';

@@ -1,13 +1,16 @@
+import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
 import type { ItemSheetStore } from '@items/baseItem/index.mjs';
-import type { EquippableItemSheetRenderContext, EquippableItemLike } from '@items/components/Equippable/index.mjs';
-import { useItemWithMaterialsStore } from '@items/components/HasMaterial/index.mjs';
+import type { EquippableItemLike } from '@items/components/Equippable/index.mjs';
+import type { PhysicalItemStore } from '@items/components/Physical/index.mjs';
 import { usePhysicalItemStore } from '@items/components/Physical/index.mjs';
-import { computed, type Ref } from 'vue';
+import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
+import type { ComputedRef, Ref } from 'vue';
+import { computed } from 'vue';
 
-const useEquippableItemStore = <TDocument extends EquippableItemLike> (context: EquippableItemSheetRenderContext, baseStore: ItemSheetStore<TDocument>) => {
+
+const useEquippableItemStore = <TDocument extends EquippableItemLike> (context: VueApplicationContext<TDocument>, baseStore: ItemSheetStore) => {
   const document = baseStore._document as unknown as Ref<TDocument>;
-  const physicalStore = usePhysicalItemStore(context, baseStore);
-  const hasMaterialStore = useItemWithMaterialsStore(context, baseStore);
+  const physicalStore = usePhysicalItemStore(context, baseStore as ItemSheetStore);
 
   const equippableGetters = {
     isEquipped: computed(() => document.value.system.isEquipped),
@@ -19,14 +22,24 @@ const useEquippableItemStore = <TDocument extends EquippableItemLike> (context: 
 
   return {
     ...physicalStore,
-    ...hasMaterialStore,
     equippableGetters,
   };
 };
 
-type EquippableItemStore = ReturnType<typeof useEquippableItemStore> & ItemSheetStore;
+type EquippableItemStore = PhysicalItemStore & {
+  equippableGetters: {
+    isEquipped: ComputedRef<boolean>;
+    equippedSlotIds: ComputedRef<string[]>;
+    isMelded: ComputedRef<boolean>;
+    designedForSize: ComputedRef<string>;
+    isWeightlessWhenEquipped: ComputedRef<boolean>;
+  };
+};
+
+interface EquippableDocumentStore extends EquippableItemStore, DocumentSheetStore<EquippableItemLike> {}
 
 export type {
+  EquippableDocumentStore,
   EquippableItemStore,
 };
 

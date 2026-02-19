@@ -8,9 +8,9 @@
   />
 </template>
 <script setup lang="ts">
+  import type { EquippableDocumentStore } from '@items/components/Equippable/index.mjs';
   import { FormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { EquippableItemStore } from '@items/components/Equippable/index.mjs';
 
   const {
     isEditable,
@@ -20,7 +20,7 @@
     documentActions: {
       getFieldUpdater,
     },
-  } = inject('itemSheetStore') as EquippableItemStore;
+  } = inject('documentSheetStore') as EquippableDocumentStore;
 
   const updater = getFieldUpdater('system.isWeightlessWhenEquipped');
 </script>

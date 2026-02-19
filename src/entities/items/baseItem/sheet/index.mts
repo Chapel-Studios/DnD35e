@@ -1,31 +1,36 @@
-import { useItemSheetStore } from './ItemSheetStore.mjs';
 import { ItemSheetDnd35e } from './BaseItemSheet.mjs';
-import type { ItemSheetStore, ItemSheetTab } from './ItemSheetStore.mjs';
+import type { BaseItemSheetRenderContext } from './BaseItemSheet.mts';
 import BaseItemSheetVue from './BaseItemSheet.vue';
 import {
-  NameArtWrapper,
   DefaultHeaderName,
-  ItemHeader,
-  ItemName,
 } from './components/index.mjs';
-import { Description, NameConfig } from './tabs/index.mjs';
-
-import type { BaseItemSheetRenderContext } from './BaseItemSheet.mts';
-
-export {
+import type {
+  ItemSheetStore,
+} from './ItemSheetStore.mjs';
+import {
+  getDefaultItemTabs,
   useItemSheetStore,
-  ItemSheetDnd35e,
-  BaseItemSheetVue,
-  NameArtWrapper,
-  DefaultHeaderName,
-  ItemHeader,
-  ItemName,
+} from './ItemSheetStore.mjs';
+import {
+  defaultDescriptionTab,
+  defaultNameConfigTab,
   Description,
   NameConfig,
+} from './tabs/index.mjs';
+
+export {
+  BaseItemSheetVue,
+  defaultDescriptionTab,
+  DefaultHeaderName,
+  defaultNameConfigTab,
+  Description,
+  getDefaultItemTabs,
+  ItemSheetDnd35e,
+  NameConfig,
+  useItemSheetStore,
 };
 
 export type {
-  ItemSheetTab,
-  ItemSheetStore,
   BaseItemSheetRenderContext,
+  ItemSheetStore,
 };

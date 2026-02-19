@@ -14,10 +14,9 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, inject } from 'vue';
+  import type { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
   import { RichTextEditor } from '@vc/Fields/index.mjs';
-  import type { IdentifiableItemStore } from './index.mjs';
-  import { IdentifiableItemLike } from '../index.mjs';
+  import { computed, inject } from 'vue';
 
   const {
     tabs: {
@@ -28,7 +27,7 @@
       showIdentified,
       showUnidentified,
     },
-  } = inject('itemSheetStore') as IdentifiableItemStore<IdentifiableItemLike>;
+  } = inject('documentSheetStore') as IdentifiableDocumentStore;
   const isActiveTab = getIsTabOpen('description');
 
   const identifiedLabel = computed(() => showBoth

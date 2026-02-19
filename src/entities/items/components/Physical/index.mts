@@ -1,63 +1,60 @@
+import type {
+  PhysicalItemSystemData,
+  PhysicalItemSystemSource,
+} from './data/index.mjs';
+import {
+  applyPhysicalSchema,
+} from './data/index.mjs';
+import type {
+  PhysicalItem,
+  PhysicalItemLike,
+  PhysicalItemSource,
+  PhysicalItemSourceProps,
+} from './PhysicalItemDnd35e.mjs';
 import {
   applyPhysicalPrototype,
   physicalOverrides,
 } from './PhysicalItemDnd35e.mjs';
-import {
-  PhysicalItemSheet,
-  usePhysicalItemStore,
-  ItemQuantity,
-  ItemWeight,
-  ItemPrice,
-  ItemHP,
-  ItemHardness,
-  ItemSheetIsCarriedCheckbox,
-  ItemSheetContainerSelector,
+import type {
+  PhysicalDocumentStore,
+  PhysicalItemSheetRenderContext,
+  PhysicalItemStore,
 } from './sheet/index.mjs';
 import {
-  applyPhysicalSchema,
-  PHYSICAL_ITEM_TYPES,
-} from './data/index.mjs';
-
-import type {
-  PhysicalItemSourceProps,
-  PhysicalItemSource,
-  PhysicalItem,
-  PhysicalItemLike,
-} from './PhysicalItemDnd35e.mjs';
-import type {
-  PhysicalItemType,
-  PhysicalItemSystemSource,
-  PhysicalItemSystemData,
-} from './data/index.mjs';
-import type {
-  PhysicalItemSheetRenderContext,
-  PhysicalItemSheetStore,
+  ItemHardness,
+  ItemHP,
+  ItemPrice,
+  ItemQuantity,
+  ItemSheetContainerSelector,
+  ItemSheetIsCarriedCheckbox,
+  ItemWeight,
+  PhysicalItemSheet,
+  usePhysicalItemStore,
 } from './sheet/index.mjs';
 
 export {
   applyPhysicalPrototype,
-  physicalOverrides,
-  PhysicalItemSheet,
   applyPhysicalSchema,
-  PHYSICAL_ITEM_TYPES,
-  usePhysicalItemStore,
-  ItemQuantity,
-  ItemWeight,
-  ItemPrice,
-  ItemHP,
   ItemHardness,
+  ItemHP,
+  ItemPrice,
+  ItemQuantity,
   ItemSheetContainerSelector,
   ItemSheetIsCarriedCheckbox,
+  ItemWeight,
+  PhysicalItemSheet,
+  physicalOverrides,
+  usePhysicalItemStore,
 };
 
 export type {
-  PhysicalItemSourceProps,
-  PhysicalItemSource,
+  PhysicalDocumentStore,
   PhysicalItem,
   PhysicalItemLike,
-  PhysicalItemType,
-  PhysicalItemSystemSource,
-  PhysicalItemSystemData,
   PhysicalItemSheetRenderContext,
-  PhysicalItemSheetStore,
+  PhysicalItemSource,
+  PhysicalItemSourceProps,
+  PhysicalItemStore,
+  PhysicalItemSystemData,
+  PhysicalItemSystemSource,
 };

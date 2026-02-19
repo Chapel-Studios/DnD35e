@@ -1,9 +1,9 @@
-import { defineConfig, Plugin } from 'vite';
-import tsconfigPaths, { PluginOptions } from 'vite-tsconfig-paths';
-import path from 'path';
+import vue from '@vitejs/plugin-vue';
 import fg from 'fast-glob';
 import fs from 'fs-extra';
-import vue from '@vitejs/plugin-vue';
+import path from 'path';
+import { defineConfig, Plugin } from 'vite';
+import tsconfigPaths, { PluginOptions } from 'vite-tsconfig-paths';
 
 // Copy Foundry system + static files
 function copyStaticFiles (_opts?: PluginOptions | undefined): Plugin {
@@ -97,7 +97,9 @@ function bundleLangFiles () {
 export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
-      '@vc': path.resolve(__dirname, 'src/vue'),
+      '@vueApps': path.resolve(__dirname, 'src/vue/apps'),
+      '@vueStores': path.resolve(__dirname, 'src/vue/stores'),
+      '@vc': path.resolve(__dirname, 'src/vue/components'),
       '@canvas': path.resolve(__dirname, 'src/canvas'),
       '@constants': path.resolve(__dirname, 'src/constants'),
       '@helpers': path.resolve(__dirname, 'src/helpers'),

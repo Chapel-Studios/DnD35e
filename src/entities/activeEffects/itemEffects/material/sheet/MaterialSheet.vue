@@ -1,9 +1,10 @@
 <template>
-  <IdentifiableItemSheetVue />
+  <IdentifiableItemSheetVue mode="effect" />
 </template>
 <script lang="ts" setup>
   import { IdentifiableItemSheetVue } from '@ec/Identifiable/index.mjs';
   import { provide } from 'vue';
+
   import { type MaterialSheetRenderContext, useMaterialStore } from './index.mjs';
 
   const props = defineProps<{
@@ -11,6 +12,6 @@
   }>();
 
   const store = useMaterialStore(props.context);
-  provide('itemSheetStore', store);
+  provide('documentSheetStore', store);
 
 </script>

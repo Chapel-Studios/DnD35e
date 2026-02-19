@@ -1,25 +1,28 @@
-import { useMaterialStore } from './MaterialStore.mjs';
-import {
-  MaterialSheet,
-} from './MaterialSheet.mjs';
-import MaterialDetails from './MaterialDetails.vue';
-import MaterialSheetVue from './MaterialSheet.vue';
-
-import type { MaterialStore } from './MaterialStore.mjs';
 import type {
   MaterialSheetConfig,
   MaterialSheetRenderContext,
 } from './MaterialSheet.mjs';
+import {
+  MaterialSheet,
+} from './MaterialSheet.mjs';
+import MaterialSheetVue from './MaterialSheet.vue';
+import type { MaterialStore } from './MaterialStore.mjs';
+import { useMaterialStore } from './MaterialStore.mjs';
+import { 
+  MaterialDetails,
+  materialDetailsTab,
+} from './tabs/index.mjs';
 
 export {
-  useMaterialStore,
-  MaterialSheet,
   MaterialDetails,
+  materialDetailsTab,
+  MaterialSheet,
   MaterialSheetVue,
+  useMaterialStore,
 };
 
 export type {
-  MaterialStore,
   MaterialSheetConfig,
   MaterialSheetRenderContext,
+  MaterialStore,
 };

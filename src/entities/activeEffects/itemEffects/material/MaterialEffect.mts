@@ -1,4 +1,5 @@
-import { DnD35eActiveEffectFlags, ItemEffect } from '@effects/index.mjs';
+import { DnD35eActiveEffectFlags } from '@effects/BaseActiveEffect/index.mjs';
+import { ItemEffect } from '@itemEffects/index.mjs';
 
 type MaterialEffectFlags = any;
 

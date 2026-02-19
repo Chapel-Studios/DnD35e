@@ -5,7 +5,6 @@
     data-group="primary"
     data-tab="name-config"
   >
-
     <!-- IDENTIFIED BLOCK -->
     <template v-if="showIdentified">
       <div class="form-container">
@@ -91,9 +90,9 @@
 </template>
 
 <script setup lang="ts">
-  import { inject } from 'vue';
+  import type { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
   import { FormGroup } from '@vc/Fields/index.mjs';
-  import { IdentifiableItemStore } from './index.mjs';
+  import { inject } from 'vue';
 
   const {
     tabs: {
@@ -116,7 +115,7 @@
       showBoth,
     },
     isEditable,
-  } = inject('itemSheetStore') as IdentifiableItemStore;
+  } = inject('documentSheetStore') as IdentifiableDocumentStore;
 
   const isActiveTab = getIsTabOpen('name-config');
 

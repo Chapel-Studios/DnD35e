@@ -1,10 +1,10 @@
-import { LogHelper } from '@helpers/logHelper.mjs';
-import { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from './index.mjs';
+import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
-import { EffectType } from '../index.mjs';
-import { getDisplayName } from '@entities/components/CoreMixin/logic/displayName.mjs';
-import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
-import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
+import { getDisplayName } from '@ec/CoreMixin/index.mjs';
+import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/index.mjs';
+import { EffectType } from '@effects/index.mjs';
+import { LogHelper } from '@helpers/logHelper.mjs';
+import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 
 type DnD35eActiveEffectFlags<T extends object = Record<string, unknown>> = Record<string, Record<string, unknown>> & {
   dnd35e: T;
@@ -19,6 +19,7 @@ class DnD35eActiveEffect<TParent extends ActorDnd35e | ItemDnd35e<any, ActorDnd3
   extends foundry.documents.ActiveEffect<TParent> {
   declare flags: DnD35eActiveEffectFlags;
   declare system: ActiveEffectSystemData;
+  declare type: EffectType;
 
   get _displayName (): string {
     return getDisplayName<ActiveEffectSystemData>(this.name, this.system, this);
@@ -45,5 +46,5 @@ const ActiveEffectProxyDnd35e = new Proxy(DnD35eActiveEffect, {
   },
 });
 
-export { DnD35eActiveEffect, ActiveEffectProxyDnd35e };
+export { ActiveEffectProxyDnd35e, DnD35eActiveEffect };
 export type { DnD35eActiveEffectFlags };

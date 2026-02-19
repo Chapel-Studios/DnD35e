@@ -12,4 +12,7 @@ interface IdentifiableItemSystemSource {
 
 type IdentifiableItemSystemData = IdentifiableItemSystemSource;
 
-export type { IdentifiableItemSystemSource, IdentifiableItemSystemData };
+export type {
+  IdentifiableItemSystemData,
+  IdentifiableItemSystemSource,
+};

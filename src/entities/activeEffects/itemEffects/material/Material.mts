@@ -1,4 +1,4 @@
-import { MaterialSystemSource, MaterialSystemData } from './index.mjs';
+import { ActiveEffectSource } from '@common/documents/active-effect.mjs';
 import {
   applyIdentifiablePrototype,
   IdentifiableItem,
@@ -7,15 +7,13 @@ import {
   identifiableOverrides,
 } from '@ec/Identifiable/index.mjs';
 import { ItemEffect } from '@itemEffects/index.mjs';
-import { ActiveEffectSource } from '@common/documents/active-effect.mjs';
+import { MaterialSystemData, MaterialSystemSource } from '@itemEffects/material/index.mjs';
 
 const materialItemType = 'material';
 type MaterialItemType = typeof materialItemType;
 
 type MaterialSource = ActiveEffectSource<MaterialItemType, MaterialSystemSource>
-//  Omit<ItemSourceDnd35e, 'system'>
   & Omit<IdentifiableItemSourceProps, 'system'>;
-  // & { system: MaterialSystemSource; };
 
 class Material extends ItemEffect {
   declare type: MaterialItemType;
@@ -30,27 +28,13 @@ class Material extends ItemEffect {
   }
 
   override get displayName (): string {
-    // Identifiable runtime getters are applied in prepareBaseData
     return identifiableOverrides.displayName(this as unknown as IdentifiableItemLike);
   }
-
-  // override _createFreshSystemData() {
-  //   return {
-  //     ...super._createFreshSystemData(),
-  //     bonusHardness: 0,
-  //     bonusHpPerInch: 0,
-  //     isAdamantineEquivalent: false,
-  //     isAlchemicalSilverEquivalent: false,
-  //     isColdIronEquivalent: false,
-  //     priceDifference: 0,
-  //     magicEquivalent: 0,
-  //   };
-  // }
 }
 
 applyIdentifiablePrototype(Material);
 
-type MaterialType = Material & Omit<IdentifiableItem, 'system'> & { system: MaterialSystemData };
+type MaterialType = Omit<IdentifiableItem, 'system'> & Material;
 
 export {
   Material,
@@ -59,6 +43,6 @@ export {
 
 export type {
   MaterialItemType,
-  MaterialType,
   MaterialSource,
+  MaterialType,
 };

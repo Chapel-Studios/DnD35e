@@ -1,4 +1,4 @@
-import { ActiveEffectSystemModelBase } from '@entities/activeEffects/BaseActiveEffect/data/ActiveEffectSystemModelBase.mjs';
+import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs';
 
 class ItemEffectSystemModel extends ActiveEffectSystemModelBase {
   static override defineSchema () {

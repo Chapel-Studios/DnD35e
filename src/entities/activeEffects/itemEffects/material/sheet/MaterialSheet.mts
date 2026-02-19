@@ -1,15 +1,16 @@
-import { ItemSheetDnd35e } from '@items/baseItem/index.mjs';
-import { MaterialSheetVue } from './index.mjs';
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
-import { Material } from '@itemEffects/material/index.mjs';
 import type { IdentifiableItemSheetRenderContext } from '@ec/Identifiable/index.mjs';
+import { Dnd35eActiveEffectConfig } from '@effects/BaseActiveEffect/index.mjs';
+import { Material } from '@itemEffects/material/index.mjs';
+
+import { MaterialSheetVue } from './index.mjs';
 
 type MaterialSheetConfig = DocumentSheetConfiguration<Material>;
 type MaterialSheetRenderContext = IdentifiableItemSheetRenderContext & {
   document: Material;
 };
 
-class MaterialSheet extends ItemSheetDnd35e<Material> {
+class MaterialSheet extends Dnd35eActiveEffectConfig {
   get vueComponent () {
     return MaterialSheetVue;
   }
@@ -38,3 +39,4 @@ export type {
   MaterialSheetConfig,
   MaterialSheetRenderContext,
 };
+

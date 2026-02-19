@@ -1,5 +1,5 @@
-import { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
-import { IdentifiableItemSystemData } from '@entities/components/Identifiable/index.mjs';
+import { IdentifiableItemSystemData } from '@ec/Identifiable/index.mjs';
+import { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/index.mjs';
 
 type ItemEffectSystemSource = Dnd35eActiveEffectSystemSource;
 

@@ -1,8 +1,9 @@
-import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
-import { IdentifiableItemSystemData, IdentifiableItemSystemSource } from './index.mjs';
-import { ItemType } from '@items/index.mjs';
-import { replaceDataAttribute } from '@helpers/formulae/index.mjs';
 import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
+import { replaceDataAttribute } from '@helpers/formulae/index.mjs';
+import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
+import { ItemType } from '@items/index.mjs';
+
+import { IdentifiableItemSystemData, IdentifiableItemSystemSource } from './index.mjs';
 
 type IdentifiableItemSourceProps = {
   system: IdentifiableItemSystemSource;
@@ -81,9 +82,9 @@ export {
 };
 
 export type {
+  IdentifiableEffectLike,
   IdentifiableItem,
   IdentifiableItemLike,
-  IdentifiableEffectLike,
   IdentifiableItemSource,
   IdentifiableItemSourceProps,
   WithIdenifiableComponent,

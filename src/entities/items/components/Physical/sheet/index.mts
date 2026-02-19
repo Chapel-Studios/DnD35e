@@ -1,27 +1,38 @@
 import { IdentifiableItemSheetRenderContext } from '@ec/Identifiable/index.mjs';
-import PhysicalItemSheet from './PhysicalItemSheet.vue';
-import { PhysicalItem } from '../PhysicalItemDnd35e.mjs';
+import type { PhysicalItem } from '@items/components/Physical/index.mjs';
+
+import ItemHardness from './components/ItemHardness.vue';
+import ItemHP from './components/ItemHP.vue';
 import ItemPrice from './components/ItemPrice.vue';
 import ItemQuantity from './components/ItemQuantity.vue';
-import ItemWeight from './components/ItemWeight.vue';
-import ItemHP from './components/ItemHP.vue';
-import ItemHardness from './components/ItemHardness.vue';
-import ItemSheetIsCarriedCheckbox from './components/ItemSheetIsCarriedCheckbox.vue';
 import ItemSheetContainerSelector from './components/ItemSheetContainerSelector.vue';
+import ItemSheetIsCarriedCheckbox from './components/ItemSheetIsCarriedCheckbox.vue';
+import ItemWeight from './components/ItemWeight.vue';
+import PhysicalItemSheet from './PhysicalItemSheet.vue';
+import type { 
+  PhysicalDocumentStore,
+  PhysicalItemStore,
+} from './PhysicalItemStore.mjs';
+import { usePhysicalItemStore } from './PhysicalItemStore.mjs';
 
-export { usePhysicalItemStore } from './PhysicalItemStore.mjs';
 export {
-  PhysicalItemSheet,
-  ItemQuantity,
-  ItemWeight,
-  ItemPrice,
-  ItemHP,
   ItemHardness,
-  ItemSheetIsCarriedCheckbox,
+  ItemHP,
+  ItemPrice,
+  ItemQuantity,
   ItemSheetContainerSelector,
+  ItemSheetIsCarriedCheckbox,
+  ItemWeight,
+  PhysicalItemSheet,
+  usePhysicalItemStore,
 };
 
-export type { PhysicalItemSheetStore } from './PhysicalItemStore.mjs';
-export type PhysicalItemSheetRenderContext = IdentifiableItemSheetRenderContext & {
+type PhysicalItemSheetRenderContext = IdentifiableItemSheetRenderContext & {
   document: PhysicalItem;
-}
+};
+
+export type {
+  PhysicalDocumentStore,
+  PhysicalItemSheetRenderContext,
+  PhysicalItemStore,
+};

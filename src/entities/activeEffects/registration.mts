@@ -1,7 +1,8 @@
-import { Material, MaterialSheet, MaterialSystemModel } from '@itemEffects/material/index.mjs';
+import { EffectConfig } from '@constants/config/activeEffect.mjs';
 import { ActiveEffectProxyDnd35e } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
+import { MaterialSheet, MaterialSystemModel } from '@itemEffects/material/index.mjs';
 
-const registerSheets = () => {
+const registerEffectSheets = () => {
   const effectSheets = [
     ['material', MaterialSheet],
   ] as const;
@@ -20,11 +21,7 @@ const registerSheets = () => {
 };
 
 export const registerEffects = () => {
-  CONFIG.Dnd35e.activeEffect = {
-    documentClasses: {
-      material: Material,
-    },
-  };
+  CONFIG.Dnd35e.activeEffect = EffectConfig;
 
   foundry.helpers.Hooks.once('init', () => {
     CONFIG.ActiveEffect.documentClass = ActiveEffectProxyDnd35e;
@@ -34,7 +31,7 @@ export const registerEffects = () => {
   });
 
   foundry.helpers.Hooks.once('setup', () => {
-    registerSheets();
+    registerEffectSheets();
   });
 };
 

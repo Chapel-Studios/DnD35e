@@ -11,9 +11,9 @@
 </template>
 
 <script setup lang="ts">
-  import { inject } from 'vue';
-  import { IdentifiableItemStore } from '@ec/Identifiable/index.mjs';
+  import { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
   import { ToggleSwitch } from '@vc/Fields/index.mjs';
+  import { inject } from 'vue';
 
   const {
     identifableGetters: {
@@ -23,7 +23,7 @@
       getFieldUpdater,
     },
     isEditable,
-  } = inject('itemSheetStore') as IdentifiableItemStore;
+  } = inject('documentSheetStore') as IdentifiableDocumentStore;
 
   // For some reason vue doesn't like using the result of getFieldUpdater directly on the emitter /shrug
   const handleToggleUpdate = (value: boolean) => getFieldUpdater('system.isIdentifiable')(value);

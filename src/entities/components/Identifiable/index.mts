@@ -1,60 +1,65 @@
-import {
-  IdentifiableDescription,
-  IdentifiableHeader,
-  IdentifiableNameConfig,
-  useIdentifiableStore,
-  IdentifiableItemName,
-  IdentifiableItemSheetVue,
-  IdentifiableConfig,
-  IdentifiableItemPrice,
-} from './sheet/index.mjs';
-import {
-  applyIdentifiableSchema,
+import type {
+  IdentifiableItemSystemData,
+  IdentifiableItemSystemSource,
 } from './data/index.mjs';
 import {
-  applyIdentifiablePrototype,
-  identifiableOverrides,
-} from './IdentifiableItem.mjs';
-
-import type {
-  IdentifiableItemSystemSource,
-  IdentifiableItemSystemData,
+  applyIdentifiableSchema,
 } from './data/index.mjs';
 import type {
   IdentifiableItem,
   IdentifiableItemLike,
   IdentifiableItemSource,
   IdentifiableItemSourceProps,
+  WithIdenifiableComponent,
+} from './IdentifiableItem.mjs';
+import {
+  applyIdentifiablePrototype,
+  identifiableOverrides,
 } from './IdentifiableItem.mjs';
 import type {
-  IdentifiableItemStore,
+  IdentifiableDocumentStore,
   IdentifiableItemSheetRenderContext,
+  IdentifiableStore,
+} from './sheet/index.mjs';
+import {
+  IdentifiableConfig,
+  IdentifiableDescription,
+  identifiableDescriptionTab,
+  IdentifiableItemName as IdentifiableHeader,
+  IdentifiableItemName,
+  IdentifiableItemPrice,
+  IdentifiableItemSheetVue,
+  IdentifiableNameConfig,
+  identifiableNameConfigTab,
+  ItemUnidentifiedPrice,
+  useIdentifiableStore,
 } from './sheet/index.mjs';
 
 export type {
-  IdentifiableItemSystemSource,
-  IdentifiableItemSource,
-  IdentifiableItemSystemData,
-  // IdentifiableItemInstance,
-  IdentifiableItemStore,
-  IdentifiableItemSheetRenderContext,
-  IdentifiableItemLike,
+  IdentifiableDocumentStore,
   IdentifiableItem,
+  IdentifiableItemLike,
+  IdentifiableItemSheetRenderContext,
+  IdentifiableItemSource,
   IdentifiableItemSourceProps,
+  IdentifiableItemSystemData,
+  IdentifiableItemSystemSource,
+  IdentifiableStore,
+  WithIdenifiableComponent,
 };
 export {
-  applyIdentifiableSchema,
   applyIdentifiablePrototype,
-  identifiableOverrides,
-  useIdentifiableStore,
-  IdentifiableDescription,
-  IdentifiableHeader,
-  IdentifiableNameConfig,
-  // IdentifiableItemMixin,
-  // IdentifiableItemSystemModel,
-  // DefaultIdentifiableItem,
-  IdentifiableItemName,
-  IdentifiableItemSheetVue,
+  applyIdentifiableSchema,
   IdentifiableConfig,
+  IdentifiableDescription,
+  identifiableDescriptionTab,
+  IdentifiableHeader,
+  IdentifiableItemName,
   IdentifiableItemPrice,
+  IdentifiableItemSheetVue,
+  IdentifiableNameConfig,
+  identifiableNameConfigTab,
+  identifiableOverrides,
+  ItemUnidentifiedPrice,
+  useIdentifiableStore,
 };

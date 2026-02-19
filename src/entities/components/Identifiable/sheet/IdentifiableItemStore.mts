@@ -1,27 +1,20 @@
-import type { ItemSheetStore, ItemSheetTab } from '@items/baseItem/index.mjs';
-import { computed, Ref } from 'vue';
-import { IdentifiableNameConfig, IdentifiableDescription } from '@ec/Identifiable/index.mjs';
-import type { IdentifiableItemSheetRenderContext, IdentifiableItemLike } from '@ec/Identifiable/index.mjs';
+import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+import type { WithIdenifiableComponent } from '@ec/Identifiable/index.mjs';
+import {
+  identifiableDescriptionTab,
+  identifiableNameConfigTab,
+} from '@ec/Identifiable/index.mjs';
+import { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
+import type { ComputedRef, Ref } from 'vue';
+import { computed } from 'vue';
 
-const createIdentifiableTabs = (): ItemSheetTab[] => [
-  {
-    id: 'description',
-    label: 'D35E.Description',
-    component: IdentifiableDescription,
-    order: 10,
-  },
-  {
-    id: 'name-config',
-    label: 'D35E.Name',
-    component: IdentifiableNameConfig,
-    order: 10,
-  },
-];
+const useIdentifiableStore = <TDocument extends WithIdenifiableComponent>(_context: VueApplicationContext<TDocument>, baseStore: DocumentSheetStore<TDocument>) => {
+  baseStore.tabs.tabActions.replaceTabs([
+    identifiableDescriptionTab,
+    identifiableNameConfigTab,
+  ]);
 
-const useIdentifiableStore = <TDocument extends IdentifiableItemLike> (context: IdentifiableItemSheetRenderContext, baseStore: ItemSheetStore<TDocument>) => {
-  baseStore.tabs.tabActions.replaceTabs(createIdentifiableTabs());
-
-  const document = baseStore._document as unknown as Ref<IdentifiableItemLike>;
+  const document = baseStore._document as unknown as Ref<WithIdenifiableComponent>;
 
   // UnidentifiedInfoMode
   const showBoth = computed(() => (game.user.isGM || baseStore.isEditable) && document.value.system.isIdentifiable);
@@ -57,9 +50,35 @@ const useIdentifiableStore = <TDocument extends IdentifiableItemLike> (context: 
   };
 };
 
-interface IdentifiableItemStore<TDocument extends IdentifiableItemLike = IdentifiableItemLike> extends ReturnType<typeof useIdentifiableStore>, ItemSheetStore<TDocument> {}
+interface IdentifiableStore {
+  unidentifiedInfoMode: {
+    showBoth: ComputedRef<boolean>;
+    showIdentified: ComputedRef<boolean>;
+    showUnidentified: ComputedRef<boolean>;
+    showOnlyIdentified: ComputedRef<boolean>;
+    showOnlyUnidentified: ComputedRef<boolean>;
+  };
+  identifableGetters: {
+    unidentifiedDescription: ComputedRef<string>;
+    isIdentifiable: ComputedRef<boolean>;
+    identifiedDisplayName: ComputedRef<string>;
+    unidentifiedDisplayName: ComputedRef<string>;
+    unidentifiedName: ComputedRef<string>;
+    isUnidentifiedNameFromFormula: ComputedRef<boolean>;
+    unidentifiedNameFormula: ComputedRef<string>;
+    unidentifiedPrice: ComputedRef<number | null | undefined>;
+  };
+}
 
-export { useIdentifiableStore };
+type IdentifiableDocumentStore = DocumentSheetStore<WithIdenifiableComponent> & IdentifiableStore;
+
+export {
+  identifiableDescriptionTab,
+  identifiableNameConfigTab,
+  useIdentifiableStore,
+};
+
 export type {
-  IdentifiableItemStore,
+  IdentifiableDocumentStore,
+  IdentifiableStore,
 };

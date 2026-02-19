@@ -16,21 +16,21 @@
 </template>
 
 <script lang="ts" setup>
-  import { useItemSheetStore } from '@items/baseItem/index.mjs';
-  import { provide } from 'vue';
   import { IdentifiableItemSheetVue } from '@ec/Identifiable/index.mjs';
-  import { PhysicalItemSheetStore, usePhysicalItemStore } from './PhysicalItemStore.mjs';
-  import { PhysicalItemLike } from '../PhysicalItemDnd35e.mjs';
+  import { useItemSheetStore } from '@items/baseItem/index.mjs';
+  import type { PhysicalItemStore } from '@items/components/Physical/index.mjs';
+  import { usePhysicalItemStore } from '@items/components/Physical/index.mjs';
+  import { provide } from 'vue';
 
   const props = defineProps<{
     context?: any;
   }>();
 
   if (props.context) {
-    const baseStore = useItemSheetStore<PhysicalItemLike>(props.context);
-    const physicalItemStore = usePhysicalItemStore(props.context, baseStore) as PhysicalItemSheetStore;
+    const baseStore = useItemSheetStore(props.context);
+    const physicalItemStore = usePhysicalItemStore(props.context, baseStore) as PhysicalItemStore;
 
-    provide('itemSheetStore', {
+    provide('documentSheetStore', {
       ...baseStore,
       ...physicalItemStore,
     });
