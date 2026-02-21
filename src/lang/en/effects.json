@@ -9,5 +9,8 @@
     "D35E.EffectTemporary": "Temporary Effects",
     "D35E.EffectPassive": "Passive Effects",
     "D35E.EffectInactive": "Inactive Effects",
-    "D35E.EffectsNone": "No effects on this item."
+    "D35E.EffectsNone": "No effects on this item.",
+    "D35E.EffectChangeTarget.Target": "Target",
+    "D35E.EffectChangeTarget.Item": "Item",
+    "D35E.EffectChangeTarget.Actor": "Actor"
 }

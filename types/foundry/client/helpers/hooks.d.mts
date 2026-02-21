@@ -203,6 +203,20 @@ export default class Hooks {
      * @param args  Arguments passed to the hook callback functions
      */
   static call(hook: string, ...args: unknown[]): boolean;
+
+  /**
+     * Handle an error which occurred during hook execution.
+     *
+     * @param location  The location where the error occurred
+     * @param error     The error that was thrown
+     * @param options   Additional options for error handling
+     */
+  static onError(location: string, error: Error, options?: {
+    msg?: string;
+    notify?: 'info' | 'warn' | 'error' | null;
+    log?: 'info' | 'warn' | 'error' | 'debug' | null;
+    [key: string]: unknown;
+  }): void;
 }
 
 export interface DropCanvasData<T extends string = string, D extends object = object> {

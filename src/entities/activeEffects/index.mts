@@ -1,13 +1,11 @@
 import type { DnD35eActiveEffectFlags } from './BaseActiveEffect/DnD35eActiveEffect.mjs';
 import { DnD35eActiveEffect } from './BaseActiveEffect/DnD35eActiveEffect.mjs';
 import type {
-  ItemEffectTarget,
-  ItemEffectType,
-  ItemEffectTypeLocalizationValues,
-} from './itemEffects/itemEffectTypes.mjs';
+  EffectTarget,
+  EffectType,
+  EffectTypeLocalizationValues,
+} from './effectTypes.mjs';
 import { registerEffects } from './registration.mjs';
-
-type EffectType = ItemEffectType;
 
 export {
   DnD35eActiveEffect,
@@ -16,8 +14,7 @@ export {
 
 export type {
   DnD35eActiveEffectFlags,
+  EffectTarget,
   EffectType,
-  ItemEffectTarget,
-  ItemEffectType,
-  ItemEffectTypeLocalizationValues,
+  EffectTypeLocalizationValues,
 };

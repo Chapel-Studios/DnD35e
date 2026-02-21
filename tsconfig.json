@@ -42,7 +42,6 @@
       "@client/*": ["./types/foundry/client/*"],
       "@items/*": ["./src/entities/items/*"],
       "@actors/*": ["./src/entities/actors/*"],
-      "@itemEffects/*": ["./src/entities/activeEffects/itemEffects/*"],
       "@effects/*": ["./src/entities/activeEffects/*"],
       "@ec/*": ["./src/entities/components/*"],
       "@entities/*": ["./src/entities/*"],

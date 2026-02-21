@@ -57,6 +57,12 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
   /** The statuses that are applied to this actor by active effects */
   statuses: Set<string>;
 
+  /**
+   * Track completed core ActiveEffect application phases.
+   * @internal
+   */
+  _completedActiveEffectPhases: Set<string>;
+
   /* -------------------------------------------- */
   /*  Properties                                  */
   /* -------------------------------------------- */

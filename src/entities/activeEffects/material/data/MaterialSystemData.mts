@@ -1,5 +1,5 @@
 import type { IdentifiableItemSystemData, IdentifiableItemSystemSource } from '@ec/Identifiable/index.mjs';
-import { ItemEffectSystemData, ItemEffectSystemSource } from '@itemEffects/ItemEffect/index.mjs';
+import { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/index.mjs';
 
 type MaterialSystemStats = {
   priceDifference: number;
@@ -11,9 +11,9 @@ type MaterialSystemStats = {
   isColdIronEquivalent: boolean;
 }
 
-interface MaterialSystemSource extends MaterialSystemStats, IdentifiableItemSystemSource, ItemEffectSystemSource {}
+interface MaterialSystemSource extends MaterialSystemStats, IdentifiableItemSystemSource, Dnd35eActiveEffectSystemSource {}
 
-interface MaterialSystemData extends MaterialSystemStats, IdentifiableItemSystemData, ItemEffectSystemData {}
+interface MaterialSystemData extends MaterialSystemStats, IdentifiableItemSystemData, ActiveEffectSystemData {}
 
 export type {
   MaterialSystemData,

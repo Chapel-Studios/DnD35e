@@ -1,6 +1,6 @@
 import { EffectConfig } from '@constants/config/activeEffect.mjs';
 import { ActiveEffectProxyDnd35e } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
-import { MaterialSheet, MaterialSystemModel } from '@itemEffects/material/index.mjs';
+import { MaterialSheet, MaterialSystemModel } from '@effects/material/index.mjs';
 
 const registerEffectSheets = () => {
   const effectSheets = [

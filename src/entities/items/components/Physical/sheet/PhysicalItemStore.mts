@@ -1,8 +1,8 @@
 import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
 import type { IdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
-import type { MaterialType } from '@itemEffects/material/index.mjs';
-import { materialItemType } from '@itemEffects/material/index.mjs';
+import type { MaterialType } from '@effects/material/index.mjs';
+import { materialItemType } from '@effects/material/index.mjs';
 import type { ItemSheetStore } from '@items/baseItem/index.mjs';
 import type { PhysicalItemLike } from '@items/components/Physical/index.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';

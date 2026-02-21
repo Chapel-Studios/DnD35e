@@ -1,14 +1,29 @@
-import { ItemEffectTarget } from '@entities/activeEffects/index.mjs';
-import { ITEM_EFFECT_TARGET } from '@entities/activeEffects/itemEffects/itemEffectTypes.mjs';
+import { EffectTarget } from '@effects/effectTypes.mjs';
+import { EFFECT_TARGET } from '@effects/effectTypes.mjs';
 
-type ActiveEffectTarget = ItemEffectTarget;
+type ActiveEffectTarget = EffectTarget;
 // | 'Actor';
 
 const ACTIVE_EFFECT_TARGETS = {
-  [ITEM_EFFECT_TARGET]: 'D35E.Item',
+  [EFFECT_TARGET]: 'D35E.Item',
 } as const satisfies Record<ActiveEffectTarget, string>;
 
 type ActiveEffectTargetLocalizationValues = typeof ACTIVE_EFFECT_TARGETS[keyof typeof ACTIVE_EFFECT_TARGETS];
+
+/**
+ * Per-change target types. Each change can independently target the item or actor.
+ */
+const EFFECT_CHANGE_TARGET = {
+  ITEM: 'item',
+  ACTOR: 'actor',
+} as const;
+
+type EffectChangeTarget = typeof EFFECT_CHANGE_TARGET[keyof typeof EFFECT_CHANGE_TARGET];
+
+const EFFECT_CHANGE_TARGETS = {
+  [EFFECT_CHANGE_TARGET.ITEM]: 'D35E.EffectChangeTarget.Item',
+  [EFFECT_CHANGE_TARGET.ACTOR]: 'D35E.EffectChangeTarget.Actor',
+} as const satisfies Record<EffectChangeTarget, string>;
 
 /**
  * String-based effect change types matching Foundry v14+ CONST.ACTIVE_EFFECT_CHANGE_TYPES keys.
@@ -38,6 +53,8 @@ type EffectChangePhase = typeof EFFECT_CHANGE_PHASES[keyof typeof EFFECT_CHANGE_
 export {
   ACTIVE_EFFECT_TARGETS,
   EFFECT_CHANGE_PHASES,
+  EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TARGETS,
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
   INITIAL_EFFECT_CHANGE_PHASE,
@@ -47,5 +64,6 @@ export type {
   ActiveEffectTarget,
   ActiveEffectTargetLocalizationValues,
   EffectChangePhase,
+  EffectChangeTarget,
   EffectChangeType,
 };

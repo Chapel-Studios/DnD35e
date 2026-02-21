@@ -38,6 +38,17 @@
             :placeholder="valuePlaceholder"
             :disabled="!isEditable"
           />
+          <select
+            :name="`system.changes.${index}.target`"
+            :value="change.target ?? 'item'"
+            :disabled="!isEditable"
+            class="target-select"
+            :title="targetLabel"
+          >
+            <option v-for="(label, target) in changeTargets" :key="target" :value="target">
+              {{ label }}
+            </option>
+          </select>
           <input
             type="number"
             :name="`system.changes.${index}.priority`"
@@ -57,6 +68,7 @@
 
 <script setup lang="ts">
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
+  import { EFFECT_CHANGE_TARGETS } from '@effects/BaseActiveEffect/index.mjs';
   import { computed, inject } from 'vue';
 
   const store = inject('documentSheetStore') as ActiveEffectConfigStore;
@@ -80,6 +92,7 @@
   const addLabel = game.i18n.localize('EFFECT.AddChange');
   const keyPlaceholder = game.i18n.localize('EFFECT.ChangeKey');
   const valuePlaceholder = game.i18n.localize('EFFECT.ChangeValue');
+  const targetLabel = game.i18n.localize('D35E.EffectChangeTarget.Target');
 
   const changeTypes = computed(() => {
     const types: Record<string, string> = {};
@@ -87,6 +100,14 @@
       types[type] = game.i18n.localize((config as { label: string }).label);
     }
     return types;
+  });
+
+  const changeTargets = computed(() => {
+    const targets: Record<string, string> = {};
+    for (const [target, label] of Object.entries(EFFECT_CHANGE_TARGETS)) {
+      targets[target] = game.i18n.localize(label);
+    }
+    return targets;
   });
 
   const getDefaultPriority = (type: string): string => {
@@ -150,6 +171,10 @@
 
   .change-row select {
     width: 120px;
+  }
+
+  .target-select {
+    width: 80px;
   }
 
   .priority-input {

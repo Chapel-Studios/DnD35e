@@ -1,13 +1,12 @@
 import type { EffectPhases } from '@common/documents/active-effect.mjs';
 import { applyIdentifiableSchema } from '@ec/Identifiable/index.mjs';
-import type { EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
-import { EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
+import type { Dnd35eEffectChangeData, EffectChangeTarget, EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
+import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs';
+import type { MaterialSystemData } from '@effects/material/index.mjs';
 import { requiredBooleanField, requiredNumberField } from '@helpers/fieldBuilders.mjs';
-import type { ItemEffectChangeData } from '@itemEffects/ItemEffect/index.mjs';
-import { ItemEffectSystemModel } from '@itemEffects/ItemEffect/index.mjs';
-import type { MaterialSystemData } from '@itemEffects/material/index.mjs';
 
-class MaterialSystemModel extends ItemEffectSystemModel {
+class MaterialSystemModel extends ActiveEffectSystemModelBase {
   static override defineSchema () {
     const schema = super.defineSchema();
 
@@ -29,8 +28,8 @@ class MaterialSystemModel extends ItemEffectSystemModel {
     this.changes = this.buildChanges();
   }
 
-  buildChanges(): ItemEffectChangeData[] {
-    const changes: ItemEffectChangeData[] = [];
+  buildChanges(): Dnd35eEffectChangeData[] {
+    const changes: Dnd35eEffectChangeData[] = [];
     if (this.priceDifference !== 0) { 
       changes.push(this.buildPriceDifferenceChange());
     }
@@ -61,18 +60,20 @@ class MaterialSystemModel extends ItemEffectSystemModel {
     type: EffectChangeType = EFFECT_CHANGE_TYPE.ADD,
     phase: EffectPhases = 'final',
     priority: number = 10,
-  ): ItemEffectChangeData {
+    target: EffectChangeTarget = EFFECT_CHANGE_TARGET.ITEM,
+  ): Dnd35eEffectChangeData {
     return {
       key,
       type,
       value,
       phase,
       priority,
+      target,
       effect: null,
     };
   }
 
-  buildIsColdIronEquivalentChange(): ItemEffectChangeData {
+  buildIsColdIronEquivalentChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.isColdIronEquivalent',
       this.isColdIronEquivalent.toString(),
@@ -80,7 +81,7 @@ class MaterialSystemModel extends ItemEffectSystemModel {
     );
   }
 
-  buildIsAdamantineEquivalentChange(): ItemEffectChangeData {
+  buildIsAdamantineEquivalentChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.isAdamantineEquivalent',
       this.isAdamantineEquivalent.toString(),
@@ -88,7 +89,7 @@ class MaterialSystemModel extends ItemEffectSystemModel {
     );
   }
 
-  buildIsAlchemicalSilverEquivalentChange(): ItemEffectChangeData {
+  buildIsAlchemicalSilverEquivalentChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.isAlchemicalSilverEquivalent',
       this.isAlchemicalSilverEquivalent.toString(),
@@ -98,14 +99,14 @@ class MaterialSystemModel extends ItemEffectSystemModel {
 
   // TODO: how should this actually work? Items just have HP, not HP-per-inch.
   // We should relook at how we handle item HP, perhaps add thickness and calculate HP based on that?
-  buildBonusHpPerInchChange(): ItemEffectChangeData {
+  buildBonusHpPerInchChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.hpPerInch',
       this.bonusHpPerInch.toString(),
     );
   }
 
-  buildBonusHardnessChange(): ItemEffectChangeData {
+  buildBonusHardnessChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.hardness',
       this.bonusHardness.toString(),
@@ -114,7 +115,7 @@ class MaterialSystemModel extends ItemEffectSystemModel {
 
   // TODO: This key doesn't currently exist,
   // we need to determine how to handle these equivalencies in the system.
-  buildMagicEquivalentChange(): ItemEffectChangeData {
+  buildMagicEquivalentChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.magicEquivalent',
       this.magicEquivalent.toString(),
@@ -122,7 +123,7 @@ class MaterialSystemModel extends ItemEffectSystemModel {
     );
   }
 
-  buildPriceDifferenceChange(): ItemEffectChangeData {
+  buildPriceDifferenceChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.price',
       this.priceDifference.toString(),

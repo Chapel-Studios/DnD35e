@@ -1,7 +1,7 @@
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
 import type { IdentifiableItemSheetRenderContext } from '@ec/Identifiable/index.mjs';
 import { Dnd35eActiveEffectConfig } from '@effects/BaseActiveEffect/index.mjs';
-import { Material } from '@itemEffects/material/index.mjs';
+import { Material } from '@effects/material/index.mjs';
 
 import { MaterialSheetVue } from './index.mjs';
 

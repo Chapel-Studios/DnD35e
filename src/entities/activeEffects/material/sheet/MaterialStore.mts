@@ -7,7 +7,7 @@ import {
   effectDurationTab,
   useActiveEffectConfigStore,
 } from '@effects/BaseActiveEffect/index.mjs';
-import { materialDetailsTab, MaterialType } from '@itemEffects/material/index.mjs';
+import { materialDetailsTab, MaterialType } from '@effects/material/index.mjs';
 import type { ComputedRef, Ref } from 'vue';
 import { computed } from 'vue';
 

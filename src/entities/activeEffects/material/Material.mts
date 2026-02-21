@@ -6,8 +6,8 @@ import {
   IdentifiableItemSourceProps,
   identifiableOverrides,
 } from '@ec/Identifiable/index.mjs';
-import { ItemEffect } from '@itemEffects/index.mjs';
-import { MaterialSystemData, MaterialSystemSource } from '@itemEffects/material/index.mjs';
+import { DnD35eActiveEffect, DnD35eActiveEffectFlags } from '@effects/BaseActiveEffect/index.mjs';
+import { MaterialSystemData, MaterialSystemSource } from '@effects/material/index.mjs';
 
 const materialItemType = 'material';
 type MaterialItemType = typeof materialItemType;
@@ -15,13 +15,24 @@ type MaterialItemType = typeof materialItemType;
 type MaterialSource = ActiveEffectSource<MaterialItemType, MaterialSystemSource>
   & Omit<IdentifiableItemSourceProps, 'system'>;
 
-class Material extends ItemEffect {
+type MaterialEffectFlags = any;
+
+class Material extends DnD35eActiveEffect {
   declare type: MaterialItemType;
   declare system: MaterialSystemData;
+  declare flags: DnD35eActiveEffectFlags<MaterialEffectFlags>;
   // declare _sheet: ItemSheetDnd35e<ItemDnd35e<MaterialItemType>> | null;
   // declare get sheet(): ItemSheetDnd35e<ItemDnd35e<'material'>> | null;
   // declare readonly _source: MaterialSource;
   // sheet = ty MaterialSheet;
+
+  override get transfer (): boolean {
+    return false;
+  }
+
+  override get isTemporary () {
+    return false;
+  }
 
   override prepareBaseData (): void {
     super.prepareBaseData();
@@ -42,6 +53,7 @@ export {
 };
 
 export type {
+  MaterialEffectFlags,
   MaterialItemType,
   MaterialSource,
   MaterialType,

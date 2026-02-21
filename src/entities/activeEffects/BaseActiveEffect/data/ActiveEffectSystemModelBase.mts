@@ -1,6 +1,6 @@
 import { applyBaseDnd35eSystemSchema } from '@ec/CoreMixin/index.mjs';
-import { ACTIVE_EFFECT_TARGETS } from '@effects/BaseActiveEffect/index.mjs';
-import { ITEM_EFFECT_TARGET } from '@entities/activeEffects/itemEffects/index.mjs';
+import { ACTIVE_EFFECT_TARGETS, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS } from '@effects/BaseActiveEffect/index.mjs';
+import { EFFECT_TARGET } from '@effects/effectTypes.mjs';
 
 class ActiveEffectSystemModelBase extends foundry.abstract.TypeDataModel<
   foundry.documents.ActiveEffect,
@@ -13,7 +13,7 @@ class ActiveEffectSystemModelBase extends foundry.abstract.TypeDataModel<
       target: new foundry.data.fields.StringField({
         required: true,
         choices: ACTIVE_EFFECT_TARGETS,
-        initial: ITEM_EFFECT_TARGET,
+        initial: EFFECT_TARGET,
       }),
       changes: new foundry.data.fields.ArrayField(
         new foundry.data.fields.SchemaField({
@@ -25,6 +25,11 @@ class ActiveEffectSystemModelBase extends foundry.abstract.TypeDataModel<
             required: true,
             choices: ['initial', 'final'],
             initial: 'initial',
+          }),
+          target: new foundry.data.fields.StringField({
+            required: true,
+            choices: EFFECT_CHANGE_TARGETS,
+            initial: EFFECT_CHANGE_TARGET.ITEM,
           }),
         }),
         { initial: [] },

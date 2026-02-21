@@ -78,7 +78,7 @@
 
 <script setup lang="ts">
   import { IdentifiableConfig } from '@ec/Identifiable/index.mjs';
-  import type { MaterialStore } from '@itemEffects/material/index.mjs';
+  import type { MaterialStore } from '@effects/material/index.mjs';
   import { FormGroup, UniqueId } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 

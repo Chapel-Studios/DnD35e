@@ -1,4 +1,4 @@
-import { Material } from '@itemEffects/material/index.mjs';
+import { Material } from '@effects/material/index.mjs';
 
 const EffectConfig = {
   documentClasses: {
