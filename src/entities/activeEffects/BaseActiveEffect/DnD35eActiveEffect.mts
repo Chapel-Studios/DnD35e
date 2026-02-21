@@ -5,6 +5,7 @@ import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@ef
 import { EffectType } from '@effects/index.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
+import { ItemType } from '@items/itemTypes.mjs';
 
 type DnD35eActiveEffectFlags<T extends object = Record<string, unknown>> = Record<string, Record<string, unknown>> & {
   dnd35e: T;
@@ -15,7 +16,7 @@ type Dnd35eActiveEffectSource<
   TSystemSource extends Dnd35eActiveEffectSystemSource = Dnd35eActiveEffectSystemSource
 > = foundry.documents.ActiveEffectSource<TEffectType, TSystemSource>;
 
-class DnD35eActiveEffect<TParent extends ActorDnd35e | ItemDnd35e<any, ActorDnd35e | null> | null = ActorDnd35e | ItemDnd35e<any, ActorDnd35e | null> | null>
+class DnD35eActiveEffect<TParent extends ActorDnd35e | ItemDnd35e<ItemType> | null = ActorDnd35e | ItemDnd35e<ItemType> | null>
   extends foundry.documents.ActiveEffect<TParent> {
   declare flags: DnD35eActiveEffectFlags;
   declare system: ActiveEffectSystemData;
@@ -33,14 +34,14 @@ class DnD35eActiveEffect<TParent extends ActorDnd35e | ItemDnd35e<any, ActorDnd3
 const ActiveEffectProxyDnd35e = new Proxy(DnD35eActiveEffect, {
   construct (
     _target,
-    args: [source: PreCreate<Dnd35eActiveEffectSource>, context?: DocumentConstructionContext<ActorDnd35e | ItemDnd35e<any, ActorDnd35e | null> | null>],
+    args: [source: PreCreate<Dnd35eActiveEffectSource>, context?: DocumentConstructionContext<ActorDnd35e | ItemDnd35e<ItemType> | null>],
   ) {
     const [source] = args;
     const type = source?.type;
     const ItemClass = CONFIG.Dnd35e.activeEffect.documentClasses[type] as unknown as typeof DnD35eActiveEffect;
     // const ItemClass: typeof ItemDnd35e = CONFIG.Dnd35e.item.documentClasses[type];
     if (!ItemClass) {
-      LogHelper.error(`Item type ${type} does not exist or is not properly supported for ItemProxyDnd35e`);
+      LogHelper.error(`ActiveEffect type ${type} does not exist or is not properly supported for ActiveEffectProxyDnd35e`);
     }
     return new ItemClass(...args);
   },

@@ -1,0 +1,13 @@
+{
+    "D35E.Effects": "Effects",
+    "D35E.EffectCreate": "Create Effect",
+    "D35E.EffectNew": "New Effect",
+    "D35E.EffectEdit": "Edit Effect",
+    "D35E.EffectDelete": "Delete Effect",
+    "D35E.EffectEnable": "Enable Effect",
+    "D35E.EffectDisable": "Disable Effect",
+    "D35E.EffectTemporary": "Temporary Effects",
+    "D35E.EffectPassive": "Passive Effects",
+    "D35E.EffectInactive": "Inactive Effects",
+    "D35E.EffectsNone": "No effects on this item."
+}

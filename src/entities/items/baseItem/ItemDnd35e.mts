@@ -3,13 +3,13 @@ import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import { getDisplayName } from '@ec/CoreMixin/index.mjs';
-import { EFFECT_CHANGE_TYPE, INITIAL_EFFECT_CHANGE_PHASE } from '@effects/BaseActiveEffect/index.mjs';
+import { EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE } from '@effects/BaseActiveEffect/index.mjs';
 import type { DnD35eActiveEffect } from '@effects/index.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemType } from '@items/index.mjs';
 import { ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
 
-import type { ItemSheetDnd35e, ItemSystemData, ItemSystemSource } from './index.mjs';
+import type { ItemSystemData, ItemSystemSource } from './index.mjs';
 
 type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
 
@@ -22,35 +22,36 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   declare type: TItemType;
   declare system: ItemSystemData;
   declare _source: ItemSourceDnd35e<TItemType>;
-  declare _sheet: ItemSheetDnd35e<any> | null;
+  // declare _sheet: ItemSheetDnd35e<any> | null;
 
   _completedActiveEffectPhases: Set<string>;
 
-  // Maybe this isn't needed?
-  // override get sheet (): ItemSheetDnd35e<any> | null {
-  //   if (!this._sheet) {
-  //     const superSheet = super.sheet;
-  //     if (!superSheet) {
-  //       const SheetClass = this._getSheetClass() as unknown as {
-  //         new (document: any, options?: any): ItemSheetDnd35e<any>;
-  //       };
-  //       // Only instantiate if it's a VueApplication subclass
-  //       if (foundry.utils.isSubclass(SheetClass, VueItemSheet)) {
-  //         this._sheet = new SheetClass(this, { editable: this.isOwner });
-  //       }
-  //     }
-  //   }
-
-  //   return this._sheet;
-  // }
-
   override prepareBaseData (): void {
+    this._completedActiveEffectPhases.clear();
     super.prepareBaseData();
   }
 
+  /**
+   * @sealed Do not override - manages initial active effect application.
+   */
   override prepareEmbeddedDocuments (): void {
     super.prepareEmbeddedDocuments();
     this.applyActiveEffects(INITIAL_EFFECT_CHANGE_PHASE);
+  }
+
+  /**
+   * @sealed Do not override - manages final active effect application.
+   * Override {@link _prepareDerivedItemData} instead.
+   */
+  override prepareDerivedData (): void {
+    super.prepareDerivedData();
+    this._prepareDerivedItemData();
+    this.applyActiveEffects(FINAL_EFFECT_CHANGE_PHASE);
+  }
+
+  /** Override this in subclasses for derived data calculations that should run before final active effects. */
+  protected _prepareDerivedItemData (): void {
+    // Base implementation - empty, subclasses override
   }
 
   // Active Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method, but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
@@ -62,7 +63,16 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     }
   }
 
-  // this function is laregly copied directly from actor.mjs on version 14.354
+  /**
+   * Apply active effects to this item for the given phase.
+   * 
+   * Implementation from actor.mjs on version 14.354, since items don't have their own
+   * applyActiveEffects method, but they do have active effects that need to be applied
+   * to themselves when prepareEmbeddedDocuments is called.
+   * 
+   * @sealed Do not override - core active effect application logic.
+   * @param phase - The effect application phase ('initial' or 'final')
+   */
   applyActiveEffects(phase: string) {
     const ActiveEffect = foundry.documents.ActiveEffect;
     if ( !(phase in ActiveEffect.CHANGE_PHASES) ) {
@@ -89,14 +99,10 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
       if ( !effect.active ) continue;
       for ( const change of effect.system.changes ) {
         if ( !change.key || (change.phase !== phase) ) continue;
-        const copy: AppliedItemEffectChange = {
-          key: change.key,
-          value: String(change.value),
-          phase: change.phase,
-          priority: change.priority ?? 0,
-          type: change.type ?? EFFECT_CHANGE_TYPE.ADD,
-          effect,
-        };
+        const copy = foundry.utils.deepClone(change) as AppliedItemEffectChange;
+        copy.effect = effect;
+        copy.type ??= EFFECT_CHANGE_TYPE.ADD;
+        copy.priority ??= 0;
         changes.push(copy);
       }
       // Not sure how statuses should interact with item active effects, since they don't have tokens,
@@ -112,8 +118,9 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     const overrides: Record<string, unknown> = {};
     const replacementData = this.getRollData() as Record<string, unknown>;
     for ( const change of changes ) {
+      const EffectClass = change.effect.constructor as typeof ActiveEffect;
       const result = ActiveEffect.CHANGE_TYPES[change.type].handler?.(this, change)
-        ?? ActiveEffect.applyChange(this, change, { replacementData });
+        ?? EffectClass.applyChange(this, change, { replacementData });
       if ( foundry.utils.isPlainObject(result) ) Object.assign(overrides, result as Record<string, unknown>);
     }
 

@@ -1,5 +1,14 @@
+import type { SheetTab } from '@ec/CoreMixin/index.mjs';
+
 import MaterialDetails from './MaterialDetails.vue';
-import { materialDetailsTab } from './tabs.mjs';
+
+const materialDetailsTab: SheetTab = {
+  id: 'material-details',
+  // TODO find this actual label, like D35E.Name
+  label: 'Details',
+  component: MaterialDetails,
+  order: 30,
+};
 
 export {
   MaterialDetails,

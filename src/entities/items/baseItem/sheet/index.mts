@@ -3,6 +3,7 @@ import type { BaseItemSheetRenderContext } from './BaseItemSheet.mts';
 import BaseItemSheetVue from './BaseItemSheet.vue';
 import {
   DefaultHeaderName,
+  EffectCategory,
 } from './components/index.mjs';
 import type {
   ItemSheetStore,
@@ -13,20 +14,21 @@ import {
 } from './ItemSheetStore.mjs';
 import {
   defaultDescriptionTab,
-  defaultNameConfigTab,
+  defaultEffectsTab,
   Description,
-  NameConfig,
+  Effects,
 } from './tabs/index.mjs';
 
 export {
   BaseItemSheetVue,
   defaultDescriptionTab,
+  defaultEffectsTab,
   DefaultHeaderName,
-  defaultNameConfigTab,
   Description,
+  EffectCategory,
+  Effects,
   getDefaultItemTabs,
   ItemSheetDnd35e,
-  NameConfig,
   useItemSheetStore,
 };
 

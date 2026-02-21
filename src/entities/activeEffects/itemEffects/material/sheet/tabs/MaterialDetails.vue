@@ -26,7 +26,7 @@
       />
 
       <!-- Magic Equivalent -->
-      <h3 class="form-header">{{ t("D35E.MagicEquivalent") }}</h3>
+      <h3 class="form-header">{{ localize("D35E.MagicEquivalent") }}</h3>
 
       <FormGroup
         label="D35E.MagicEquivalent"
@@ -37,7 +37,7 @@
       />
 
       <span class="notes">
-        <em>{{ t("D35E.MagicEquivalentDescription") }}</em>
+        <em>{{ localize("D35E.MagicEquivalentDescription") }}</em>
       </span>
 
       <!-- Material Equivalents -->
@@ -67,7 +67,7 @@
 
       <!-- GM‑Only Section -->
       <template v-if="userIsGM">
-        <h3 class="form-header">{{ t("D35E.SystemProperties") }}</h3>
+        <h3 class="form-header">{{ localize("D35E.SystemProperties") }}</h3>
         <IdentifiableConfig />
         <UniqueId />
       </template>
@@ -98,15 +98,12 @@
       getFieldUpdater,
     },
     isEditable,
+    localize,
   } = inject('documentSheetStore') as MaterialStore;
 
   const tabName = 'material-details';
   const isActiveTab = getIsTabOpen(tabName);
   const userIsGM = game.user.isGM;
-
-  function t (key: string) {
-    return game.i18n.localize(key);
-  }
 </script>
 
 <style scoped>

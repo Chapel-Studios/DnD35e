@@ -29,8 +29,7 @@ import {
   IdentifiableItemName,
   IdentifiableItemPrice,
   IdentifiableItemSheetVue,
-  IdentifiableNameConfig,
-  identifiableNameConfigTab,
+  IdentifiedViewToggle,
   ItemUnidentifiedPrice,
   useIdentifiableStore,
 } from './sheet/index.mjs';
@@ -57,9 +56,8 @@ export {
   IdentifiableItemName,
   IdentifiableItemPrice,
   IdentifiableItemSheetVue,
-  IdentifiableNameConfig,
-  identifiableNameConfigTab,
   identifiableOverrides,
+  IdentifiedViewToggle,
   ItemUnidentifiedPrice,
   useIdentifiableStore,
 };

@@ -1,20 +1,18 @@
 <template>
   <FormGroup
-    :editable="isEditable"
     label="Price"
     :value="currentContainerId"
-    @update="updater"
+    :onUpdate="updater"
     type="select"
     :options="possibleContainers"
   />
 </template>
 <script setup lang="ts">
+  import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { FormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemStore } from '@items/components/Physical/index.mjs';
 
   const {
-    isEditable,
     physicalItemGetters: {
       possibleContainers,
       currentContainerId,
@@ -22,7 +20,7 @@
     documentActions: {
       getFieldUpdater,
     },
-  } = inject('documentSheetStore') as PhysicalItemStore;
+  } = inject('documentSheetStore') as PhysicalDocumentStore;
 
   const updater = getFieldUpdater('system.containerId');
 </script>

@@ -1,7 +1,7 @@
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
 import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import type { VueApplicationConfiguration, VueRenderOptions } from '@vueApps/index.mjs';
-import { useVueMixin } from '@vueApps/index.mjs';
+import type { VueApplicationConfiguration, VueRenderOptions } from './VueAppTypes.mjs';
+import { useVueMixin } from './VueMixin.mjs';
 
 const EffectConfigBase = foundry.applications.sheets.ActiveEffectConfig<DnD35eActiveEffect, VueApplicationConfiguration<DnD35eActiveEffect>, VueRenderOptions>;
 

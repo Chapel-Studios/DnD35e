@@ -1,9 +1,9 @@
 <template>
   <FormGroup
-    :editable="isEditable"
+    v-if="showUnidentified"
     label="Unid. Price"
     :value="unidentifiedPrice"
-    @update="updater"
+    :onUpdate="updater"
   />
 </template>
 <script setup lang="ts">
@@ -12,12 +12,14 @@
   import { inject } from 'vue';
 
   const {
-    isEditable,
-    identifableGetters: {
+    identifiableGetters: {
       unidentifiedPrice,
     },
     documentActions: {
       getFieldUpdater,
+    },
+    unidentifiedInfoMode: {
+      showUnidentified,
     },
   } = inject('documentSheetStore') as IdentifiableDocumentStore;
 

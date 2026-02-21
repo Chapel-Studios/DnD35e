@@ -1,17 +1,14 @@
 <template>
   <div class="identifiable-header-main">
-    <!-- Identified or Both -->
-    <ItemName
+    <!-- Show identified name -->
+    <DocumentName
       v-if="showIdentified"
       :label-key="identifiedLabelKey"
       :value="identifiedValue"
     />
 
-    <!-- Divider when showing both -->
-    <hr v-if="showBoth" />
-
-    <!-- Unidentified or Both -->
-    <ItemName
+    <!-- Show unidentified name -->
+    <DocumentName
       v-if="showUnidentified"
       label-key="D35E.UnidentifiedName"
       :value="unidentifiedDisplayName"
@@ -20,8 +17,8 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentName } from '@ec/CoreMixin/index.mjs';
   import type { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
-  import { ItemName } from '@items/baseItem/index.mjs';
   import { computed, inject } from 'vue';
 
   const {
@@ -33,18 +30,18 @@
     documentGetters: {
       displayName,
     },
-    identifableGetters: {
+    identifiableGetters: {
       isIdentifiable,
       identifiedDisplayName,
       unidentifiedDisplayName,
     },
   } = inject('documentSheetStore') as IdentifiableDocumentStore;
 
-  const identifiedValue = computed(() => showBoth
+  const identifiedValue = computed(() => showBoth.value
     ? identifiedDisplayName
     : displayName,
   );
-  const identifiedLabelKey = computed(() => isIdentifiable && showBoth
+  const identifiedLabelKey = computed(() => isIdentifiable.value && showBoth.value
     ? 'D35E.IdentifiedName'
     : 'D35E.ItemName',
   );
@@ -62,10 +59,6 @@
 
     h3, h4 {
         margin: 0;
-    }
-
-    hr {
-        margin: 0.5rem 0;
     }
   }
 </style>

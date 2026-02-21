@@ -40,10 +40,10 @@
           </slot>
         </NameArtWrapper>
 
-        <template name="header-status">
+        <template #status>
           <slot name="status"></slot>
         </template>
-        <template name="summary">
+        <template #summary>
           <slot name="header-summary"></slot>
         </template>
       </DocumentHeader>

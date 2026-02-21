@@ -23,6 +23,10 @@
     "D35E.CustomNameFormula": "Custom name formula",
     "D35E.UsesNameFromFormula": "This Item will have a name updated based on a special formula. You can tweak it and see how it is defined by unlocking custom attributes panel.",
     "D35E.IsIdentifiable": "Is this item identifiable?",
+    "D35E.ShowingIdentified": "Showing Identified",
+    "D35E.ShowingUnidentified": "Showing Unidentified",
+    "D35E.ToggleToIdentified": "Toggle to Identified View",
+    "D35E.ToggleToUnidentified": "Toggle to Unidentified View",
     
     "D35E.Hardness": "Hardness",
     "D35e.HpPerInch": "HP per inch",

@@ -10,3 +10,27 @@ flex-direction: column;
 height: 100%;
 min-height: 0;
 }
+
+/* Header toggle buttons */
+.window-header {
+  .edit-mode-btn,
+  .identified-view-btn {
+    flex: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0 4px;
+    margin: 0;
+    font-size: var(--font-size-14);
+    color: var(--color-text-light-6);
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--color-text-light-primary);
+    }
+
+    i {
+      pointer-events: none;
+    }
+  }
+}

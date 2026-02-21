@@ -16,7 +16,7 @@
   import { inject } from 'vue';
 
   const {
-    identifableGetters: {
+    identifiableGetters: {
       isIdentifiable,
     },
     documentActions: {

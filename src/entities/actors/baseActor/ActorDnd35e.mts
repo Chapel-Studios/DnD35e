@@ -1,8 +1,8 @@
 import Actor from '@client/documents/actor.mjs';
 import EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import { ItemDnd35e } from '@items/baseItem/index.mjs';
-import { ItemType } from '@items/itemTypes.mjs';
+import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
+import type { ItemDnd35e } from '@items/baseItem/index.mjs';
+import type { ItemType } from '@items/itemTypes.mjs';
 import { TokenDocumentDnd35e } from '@scene/token-document/TokenDocumentDnd35e.mjs';
 
 class ActorDnd35e<TParent extends TokenDocumentDnd35e | null = TokenDocumentDnd35e | null> extends Actor<TParent> {

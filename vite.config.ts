@@ -116,7 +116,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     tsconfigPaths(),
     copyStaticFiles(),
-    copyHbsFiles(),
+    // copyHbsFiles(),
     bundleLangFiles(),
     vue(),
     logBuildTimestamp(),

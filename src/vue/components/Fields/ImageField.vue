@@ -1,7 +1,7 @@
 <template>
   <img
     class="item-art"
-    :class="props.class"
+    :class="[props.class, { editable: canEdit }]"
     :src="currentImg"
     :title="props.title"
     @click="editImage"
@@ -9,27 +9,27 @@
 </template>
 
 <script lang="ts" setup>
-  import { ItemSheetStore } from '@items/baseItem/sheet/ItemSheetStore.mjs';
+  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import { inject } from 'vue';
 
   const props = defineProps<{
-    field: string; // e.g. "system.description"
+    field: string;
     title?: string;
     class?: string;
   }>();
 
   const {
-    documentGetters: {
-      getProperty,
-    },
-    documentActions: {
-      getFieldUpdater,
-    },
-  } = inject('documentSheetStore') as ItemSheetStore;
+    documentGetters: { getProperty },
+    documentActions: { getFieldUpdater },
+    canEdit,
+  } = inject('documentSheetStore') as DocumentSheetStore;
+
   const updateField = getFieldUpdater(props.field);
   const currentImg = getProperty<string>(props.field);
 
   async function editImage (event: MouseEvent) {
+    if (!canEdit.value) return;
+
     event.preventDefault();
     event.stopPropagation();
     const current = currentImg.value as string;
@@ -47,4 +47,11 @@
 </script>
 
 <style lang="scss" scoped>
+.item-art {
+  cursor: default;
+
+  &.editable {
+    cursor: pointer;
+  }
+}
 </style>

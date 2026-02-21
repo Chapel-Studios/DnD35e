@@ -2,19 +2,19 @@ import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
 import type { WithIdenifiableComponent } from '@ec/Identifiable/index.mjs';
 import {
   identifiableDescriptionTab,
-  identifiableNameConfigTab,
 } from '@ec/Identifiable/index.mjs';
-import { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
+import type { EditorViewMode, VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef, Ref } from 'vue';
 import { computed } from 'vue';
 
-const useIdentifiableStore = <TDocument extends WithIdenifiableComponent>(_context: VueApplicationContext<TDocument>, baseStore: DocumentSheetStore<TDocument>) => {
+const useIdentifiableStore = <TDocument extends WithIdenifiableComponent>(context: VueApplicationContext<TDocument>, baseStore: DocumentSheetStore<TDocument>) => {
   baseStore.tabs.tabActions.replaceTabs([
     identifiableDescriptionTab,
-    identifiableNameConfigTab,
   ]);
 
-  const document = baseStore._document as unknown as Ref<WithIdenifiableComponent>;
+  const document = baseStore._document as Ref<TDocument>;
+
+  // Editor view mode uses shared sheetState from context
 
   // UnidentifiedInfoMode
   const showBoth = computed(() => (game.user.isGM || baseStore.isEditable) && document.value.system.isIdentifiable);
@@ -23,11 +23,21 @@ const useIdentifiableStore = <TDocument extends WithIdenifiableComponent>(_conte
     (document.value.system.unidentifiedInfo?.isIdentified || false),
   );
   const showOnlyUnidentified = computed(() => document.value.system.isIdentifiable && !document.value.system.unidentifiedInfo?.isIdentified);
-  const showIdentified = computed(() => showBoth.value || showOnlyIdentified.value);
-  const showUnidentified = computed(() => showBoth.value || showOnlyUnidentified.value);
+  const showIdentified = computed(() => {
+    if (showBoth.value) {
+      return context.sheetState.editorViewMode === 'identified';
+    }
+    return showOnlyIdentified.value;
+  });
+  const showUnidentified = computed(() => {
+    if (showBoth.value) {
+      return context.sheetState.editorViewMode === 'unidentified';
+    }
+    return showOnlyUnidentified.value;
+  });
 
   // Getters
-  const identifableGetters = {
+  const identifiableGetters = {
     unidentifiedDescription: computed(() => document.value.system.unidentifiedInfo?.unidentifiedDescription || ''),
     isIdentifiable: computed(() => document.value.system.isIdentifiable),
     identifiedDisplayName: computed(() => document.value.identifiedDisplayName),
@@ -38,6 +48,20 @@ const useIdentifiableStore = <TDocument extends WithIdenifiableComponent>(_conte
     unidentifiedPrice: computed(() => document.value.system.unidentifiedInfo?.unidentifiedPrice),
   };
 
+  // Actions for editor view mode - modifies shared sheetState
+  const editorViewActions = {
+    setEditorView: (mode: EditorViewMode) => {
+      if (showBoth.value) {
+        context.sheetState.editorViewMode = mode;
+      }
+    },
+    toggleEditorView: () => {
+      if (showBoth.value) {
+        context.sheetState.editorViewMode = context.sheetState.editorViewMode === 'identified' ? 'unidentified' : 'identified';
+      }
+    },
+  };
+
   return {
     unidentifiedInfoMode: {
       showBoth,
@@ -46,7 +70,9 @@ const useIdentifiableStore = <TDocument extends WithIdenifiableComponent>(_conte
       showOnlyIdentified,
       showOnlyUnidentified,
     },
-    identifableGetters,
+    identifiableGetters,
+    editorViewActions,
+    editorViewMode: computed(() => context.sheetState.editorViewMode),
   };
 };
 
@@ -58,7 +84,7 @@ interface IdentifiableStore {
     showOnlyIdentified: ComputedRef<boolean>;
     showOnlyUnidentified: ComputedRef<boolean>;
   };
-  identifableGetters: {
+  identifiableGetters: {
     unidentifiedDescription: ComputedRef<string>;
     isIdentifiable: ComputedRef<boolean>;
     identifiedDisplayName: ComputedRef<string>;
@@ -68,13 +94,17 @@ interface IdentifiableStore {
     unidentifiedNameFormula: ComputedRef<string>;
     unidentifiedPrice: ComputedRef<number | null | undefined>;
   };
+  editorViewMode: ComputedRef<EditorViewMode>;
+  editorViewActions: {
+    setEditorView: (mode: EditorViewMode) => void;
+    toggleEditorView: () => void;
+  };
 }
 
 type IdentifiableDocumentStore = DocumentSheetStore<WithIdenifiableComponent> & IdentifiableStore;
 
 export {
   identifiableDescriptionTab,
-  identifiableNameConfigTab,
   useIdentifiableStore,
 };
 

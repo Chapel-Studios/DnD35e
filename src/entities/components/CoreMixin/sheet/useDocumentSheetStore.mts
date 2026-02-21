@@ -2,8 +2,8 @@ import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type { DnD35eActiveEffect } from '@effects/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';
-import type { Component, ComputedRef, Ref } from 'vue';
-import { computed, reactive, ref, triggerRef, unref } from 'vue';
+import type { Component, ComputedRef, ShallowRef } from 'vue';
+import { computed, reactive, shallowRef, triggerRef, unref } from 'vue';
 
 /**
  * Base document type that both Items and ActiveEffects share
@@ -45,7 +45,9 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   } = {},
 ): DocumentSheetStore<TDocument> => {
   // Core state
-  const document = ref(context.document);
+  // Use shallowRef to avoid Vue's deep reactivity wrapping Foundry's document proxy,
+  // which would conflict with EmbeddedCollection's non-configurable properties (e.g., effects)
+  const document = shallowRef(context.document);
   const state = reactive({
     ...createBaseState(options.defaultTabs, options.defaultActiveTab),
     isEditable: context.isEditable,
@@ -88,10 +90,12 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
     img: computed(() => document.value.img || ''),
 
-    uniqueId: computed(() => document.value.system.uniqueId || ''),
+    systemUniqueId: computed(() => document.value.system.uniqueId || ''),
+    documentUuid: computed(() => document.value.uuid || ''),
 
     description: computed(() => document.value.system.description.value || ''),
   };
+  const localize = (text: string) => computed(() => game.i18n.localize(text));
 
   // Document actions
   const updateDocument = async (
@@ -118,21 +122,40 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     },
   };
 
+  // Edit mode - uses shared sheetState from context
+  const isEditMode = computed(() => context.sheetState.editMode);
+  const canEdit = computed(() => state.isEditable && isEditMode.value);
+
+  const modeActions = {
+    toggleEditMode: () => {
+      context.sheetState.editMode = !context.sheetState.editMode;
+    },
+    setEditMode: (enabled: boolean) => {
+      context.sheetState.editMode = enabled;
+    },
+  };
+
   return {
     isEditable: computed(() => state.isEditable),
+    isEditMode,
+    canEdit,
     isFirstRender: computed(() => state.renderOptions?.isFirstRender),
     tabs: {
       tabGetters,
       tabActions,
     },
-    _document: document as Ref<TDocument>,
+    modeActions,
+    _document: document as ShallowRef<TDocument>,
     documentGetters,
     documentActions,
+    localize,
   };
 };
 
 type DocumentSheetStore<TDocument extends SheetDocument = SheetDocument> = {
   isEditable: ComputedRef<boolean>;
+  isEditMode: ComputedRef<boolean>;
+  canEdit: ComputedRef<boolean>;
   isFirstRender: ComputedRef<boolean | undefined>;
   tabs: {
     tabGetters: {
@@ -146,7 +169,11 @@ type DocumentSheetStore<TDocument extends SheetDocument = SheetDocument> = {
       appendTabs: (newTabs: SheetTab[]) => void;
     };
   };
-  _document: Ref<TDocument>;
+  modeActions: {
+    toggleEditMode: () => void;
+    setEditMode: (enabled: boolean) => void;
+  };
+  _document: ShallowRef<TDocument>;
   documentGetters: {
     getProperty: <T>(path: string) => ComputedRef<T>;
     type: ComputedRef<string>;
@@ -157,13 +184,15 @@ type DocumentSheetStore<TDocument extends SheetDocument = SheetDocument> = {
     isNameFromFormula: ComputedRef<boolean>;
     nameFormula: ComputedRef<string>;
     img: ComputedRef<string>;
-    uniqueId: ComputedRef<string>;
+    systemUniqueId: ComputedRef<string>;
+    documentUuid: ComputedRef<string>;
     description: ComputedRef<string>;
   };
   documentActions: {
-    updateDocument: (data: Partial<TDocument>, options: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
+    updateDocument: (data: Partial<TDocument>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
     getFieldUpdater: (path: string) => (value: unknown) => Promise<boolean>;
   };
+  localize: (text: string) => ComputedRef<string>;
 };
 
 export { useDocumentSheetStore };

@@ -1,18 +1,20 @@
 import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import type { WithIdenifiableComponent } from '@ec/Identifiable/index.mjs';
 import type { IdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
+import type { MaterialType } from '@itemEffects/material/index.mjs';
+import { materialItemType } from '@itemEffects/material/index.mjs';
 import type { ItemSheetStore } from '@items/baseItem/index.mjs';
 import type { PhysicalItemLike } from '@items/components/Physical/index.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';
 import type { ComputedRef, Ref } from 'vue';
 import { computed } from 'vue';
 
-const usePhysicalItemStore = (context: VueApplicationContext<PhysicalItemLike>, baseStore: ItemSheetStore): PhysicalItemStore => {
-  const document = baseStore._document as unknown as Ref<PhysicalItemLike>;
+
+const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemLike>(context: VueApplicationContext<TDocument>, baseStore: ItemSheetStore<TDocument>): PhysicalItemStore => {
+  const document = baseStore._document as Ref<TDocument>;
   const identifiableStore = useIdentifiableStore(
-    context as unknown as VueApplicationContext<WithIdenifiableComponent>,
-    baseStore as unknown as DocumentSheetStore<WithIdenifiableComponent>,
+    context,
+    baseStore as DocumentSheetStore<TDocument>,
   );
 
   const physicalItemGetters = {
@@ -32,6 +34,11 @@ const usePhysicalItemStore = (context: VueApplicationContext<PhysicalItemLike>, 
     currentContainerId: computed(() => document.value.system.containerId),
     isCarried: computed(() => document.value.system.isCarried),
     size: computed(() => game.i18n.localize(document.value.system.size)),
+    materials: computed(() => 
+      document.value.effects
+        .filter((effect) => effect.type === materialItemType)
+        .map((effect) => effect as unknown as MaterialType),
+    ),
   };
 
   return {
@@ -55,10 +62,11 @@ interface PhysicalItemStore extends IdentifiableStore {
     currentContainerId: ComputedRef<string | null>;
     isCarried: ComputedRef<boolean>;
     size: ComputedRef<string>;
+    materials: ComputedRef<MaterialType[]>;
   };
 }
 
-interface PhysicalDocumentStore extends PhysicalItemStore, DocumentSheetStore<PhysicalItemLike> {}
+interface PhysicalDocumentStore extends PhysicalItemStore, ItemSheetStore<PhysicalItemLike> {}
 
 export { usePhysicalItemStore };
 export type {

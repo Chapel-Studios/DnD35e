@@ -5,7 +5,7 @@
         <IdentifiableItemName />
       </slot>
     </template>
-    <template #header-status>
+    <template #status>
       <slot name="header-status">
       </slot>
     </template>

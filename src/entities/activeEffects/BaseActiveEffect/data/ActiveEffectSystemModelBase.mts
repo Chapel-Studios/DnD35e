@@ -27,6 +27,7 @@ class ActiveEffectSystemModelBase extends foundry.abstract.TypeDataModel<
             initial: 'initial',
           }),
         }),
+        { initial: [] },
       ),
     };
     applyBaseDnd35eSystemSchema(schema);

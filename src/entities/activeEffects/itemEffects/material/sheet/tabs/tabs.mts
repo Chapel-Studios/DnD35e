@@ -1,14 +1,5 @@
-import { SheetTab } from '@ec/CoreMixin/sheet/useDocumentSheetStore.mjs';
-import { MaterialDetails } from '@itemEffects/material/index.mjs';
+// This file is deprecated. Tab definitions have been moved to index.mts to avoid circular imports.
+// Previously, tabs.mts imported MaterialDetails from the barrel export (@itemEffects/material/index.mjs),
+// which could create circular dependencies through the module chain.
+// By consolidating tab definitions in index.mts alongside Vue components, the circular dependency is broken.
 
-const materialDetailsTab: SheetTab = {
-  id: 'material-details',
-  // TODO find this actual label, like D35E.Name
-  label: 'Details',
-  component: MaterialDetails,
-  order: 30,
-};
-
-export {
-  materialDetailsTab,
-};

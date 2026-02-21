@@ -1,25 +1,27 @@
 <template>
   <FormGroup
-    :editable="isEditable"
+    v-if="showUnidentified"
     label="Unid. Price"
     :value="unidentifiedPrice"
-    @update="updater"
+    :onUpdate="updater"
   />
 </template>
 <script setup lang="ts">
+  import { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
   import { FormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { IdentifiableStore } from '../IdentifiableItemStore.mjs';
 
   const {
-    isEditable,
-    identifableGetters: {
+    identifiableGetters: {
       unidentifiedPrice,
     },
     documentActions: {
       getFieldUpdater,
     },
-  } = inject('documentSheetStore') as IdentifiableStore;
+    unidentifiedInfoMode: {
+      showUnidentified,
+    },
+  } = inject('documentSheetStore') as IdentifiableDocumentStore;
 
   const updater = getFieldUpdater('system.unidentifiedInfo.unidentifiedPrice');
 </script>

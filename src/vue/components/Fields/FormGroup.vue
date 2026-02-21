@@ -2,7 +2,7 @@
   <div class="form-group" :hidden="isHidden">
     <label v-if="hasLabel">
       <i v-if="props.isDmOnly" class="fas fa-low-vision"></i>
-      {{ t(label!) }}
+      {{ localize(label!) }}
     </label>
 
     <!-- Text input -->
@@ -10,7 +10,7 @@
       v-if="type === 'text'"
       type="text"
       :value="value"
-      :disabled="disabled || !editable"
+      :disabled="isDisabled"
       @change="onChange(($event.target as HTMLInputElement).value)"
     />
 
@@ -19,7 +19,7 @@
       v-else-if="type === 'number'"
       type="number"
       :value="value"
-      :disabled="disabled || !editable"
+      :disabled="isDisabled"
       @change="onChange(($event.target as HTMLInputElement).value)"
     />
 
@@ -28,7 +28,7 @@
       <input
         type="checkbox"
         :checked="value"
-        :disabled="disabled || !editable"
+        :disabled="isDisabled"
         @change="onChange(($event.target as HTMLInputElement).checked)"
       />
     </div>
@@ -37,7 +37,7 @@
     <select
       v-else-if="type === 'select'"
       :value="value"
-      :disabled="disabled || !editable"
+      :disabled="isDisabled"
       @change="onChange(($event.target as HTMLSelectElement).value)"
     >
       <option
@@ -45,7 +45,7 @@
         :key="opt.value"
         :value="opt.value"
       >
-        {{ t(opt.label) }}
+        {{ localize(opt.label) }}
       </option>
     </select>
 
@@ -54,7 +54,7 @@
       v-else-if="type === 'multiselect'"
       multiple
       :value="value"
-      :disabled="disabled || !editable"
+      :disabled="isDisabled"
       @change="onChange(Array.from(($event.target as HTMLSelectElement).selectedOptions).map(o => o.value))"
     >
       <option
@@ -62,7 +62,7 @@
         :key="opt.value"
         :value="opt.value"
       >
-        {{ t(opt.label) }}
+        {{ localize(opt.label) }}
       </option>
     </select>
 
@@ -70,11 +70,15 @@
 </template>
 
 <script setup lang="ts">
+  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import { computed, inject } from 'vue';
+
   const props = defineProps<{
     label?: string; // localization key
     value: any; // current value
     type?: 'text' | 'number' | 'checkbox' | 'select' | 'multiselect';
     disabled?: boolean;
+    /** @deprecated Use canEdit from store instead. Only use for overriding store behavior. */
     editable?: boolean;
     onUpdate:(value: any) => void;
     isDmOnly?: boolean;
@@ -83,9 +87,18 @@
     options?: Array<{ label: string; value: any }>;
   }>();
 
-  function t (key: string) {
-    return game.i18n.localize(key);
-  }
+  const store = inject('documentSheetStore') as DocumentSheetStore;
+  const storeCanEdit = store.canEdit;
+  const localize = store.localize;
+
+  // Compute whether the field is disabled
+  const isDisabled = computed(() => {
+    if (props.disabled) return true;
+    // If editable prop is explicitly provided, use it
+    if (props.editable !== undefined) return !props.editable;
+    // Otherwise use store's canEdit (inverted for disabled)
+    return storeCanEdit ? !storeCanEdit.value : false;
+  });
 
   function onChange (val: any) {
     props.onUpdate(val);

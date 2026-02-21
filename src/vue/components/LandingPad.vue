@@ -35,9 +35,10 @@
 </template>
 
 <script setup lang="ts">
-  import { ItemDnd35e } from '@items/baseItem/index.mjs';
-  import { ref, watch, onMounted } from 'vue';
-  import { VueRenderOptions } from './VueApplication.mjs';
+  import { ItemDnd35e, ItemSheetDnd35e } from '@items/baseItem/index.mjs';
+  import { VueRenderOptions } from '@vueApps/VueAppTypes.mjs';
+  import { onMounted,ref, watch } from 'vue';
+
 
   interface Props {
     /** List of UUIDs already attached to the document */
@@ -78,7 +79,7 @@
           name: item.displayName,
           uuid,
           renderSheet: () => {
-            item.sheet?.render({
+            (item.sheet as ItemSheetDnd35e)?.render({
               force: true,
               isEditable: false,
             } as VueRenderOptions);

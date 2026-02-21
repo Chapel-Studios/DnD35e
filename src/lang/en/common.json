@@ -14,5 +14,8 @@
   "D35E.DescriptionPlaceholder": "Enter a description here...",
   "D35E.Details": "Details",
 
-  "D35E.SystemProperties": "System Properties"
+  "D35E.SystemProperties": "System Properties",
+
+  "D35E.SheetModeEdit": "Editing",
+  "D35E.SheetModePlay": "Viewing"
 }

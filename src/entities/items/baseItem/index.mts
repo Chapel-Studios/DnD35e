@@ -17,25 +17,27 @@ import type {
 import {
   BaseItemSheetVue,
   defaultDescriptionTab,
+  defaultEffectsTab,
   DefaultHeaderName,
-  defaultNameConfigTab,
   Description,
+  EffectCategory,
+  Effects,
   ItemSheetDnd35e,
-  NameConfig,
   useItemSheetStore,
 } from './sheet/index.mjs';
 
 export {
   BaseItemSheetVue,
   defaultDescriptionTab,
+  defaultEffectsTab,
   DefaultHeaderName,
-  defaultNameConfigTab,
   Description,
+  EffectCategory,
+  Effects,
   ItemDnd35e,
   ItemProxyDnd35e,
   ItemSheetDnd35e,
   ItemSystemModelBase,
-  NameConfig,
   useItemSheetStore,
 };
 

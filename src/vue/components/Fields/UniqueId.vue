@@ -5,42 +5,38 @@
       label="UID"
       type="text"
       :value="uniqueId"
-      :editable="isEditable"
       :onUpdate="updateUUID"
     />
 
     <!-- Generate Button -->
     <button
       class="btn generate-uid"
+      :disabled="!canEdit"
       @click="generate"
       type="button"
     >
       <i class="fas fa-wand"></i>
-      {{ t("D35E.Generate") }}
+      {{ localize("D35E.Generate") }}
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ItemSheetStore } from '@items/baseItem/index.mjs';
+  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import FormGroup from '@vc/Fields/FormGroup.vue';
   import { inject } from 'vue';
 
   const _field = 'system.uniqueId';
-  const {
-    documentGetters: {
-      uniqueId,
-    },
-    documentActions: {
-      getFieldUpdater,
-    },
-    isEditable,
-  } = inject('documentSheetStore') as ItemSheetStore;
-  const updateUUID = getFieldUpdater(_field);
 
-  function t (key: string) {
-    return game.i18n.localize(key);
-  }
+  const {
+    documentGetters: { getProperty },
+    documentActions: { getFieldUpdater },
+    canEdit,
+    localize,
+  } = inject('documentSheetStore') as DocumentSheetStore;
+
+  const uniqueId = getProperty<string>(_field);
+  const updateUUID = getFieldUpdater(_field);
 
   async function generate () {
     const uid = crypto.randomUUID();

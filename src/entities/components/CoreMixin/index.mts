@@ -12,6 +12,7 @@ import type {
 import {
   DocumentHeader,
   DocumentName,
+  EditModeToggle,
   NameArtWrapper,
   useDocumentSheetStore,
 } from './sheet/index.mjs';
@@ -20,6 +21,7 @@ export {
   applyBaseDnd35eSystemSchema,
   DocumentHeader,
   DocumentName,
+  EditModeToggle,
   getDisplayName,
   NameArtWrapper,
   useDocumentSheetStore,

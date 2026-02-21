@@ -12,7 +12,7 @@
        @click.prevent="onTabClick"
     >
       <i v-if="tab.icon" :class="tab.icon" inert></i>
-      <span v-if="tab.label">{{ t(tab.label) }}</span>
+      <span v-if="tab.label">{{ localize(tab.label) }}</span>
     </a>
   </nav>
 </template>
@@ -26,6 +26,7 @@
       tabGetters: { tabs, activeTabId },
       tabActions: { activateTab },
     },
+    localize,
   } = inject('documentSheetStore') as ItemSheetStore;
 
   const { verticalTabs } = defineProps<{
@@ -47,10 +48,6 @@
     if (tabId) {
       activateTab(tabId);
     }
-  }
-
-  function t (key: string) {
-    return game.i18n.localize(key);
   }
 </script>
 
