@@ -1,35 +1,35 @@
 import IdentifiableConfig from './components/IdentifiableConfig.vue';
-import IdentifiableItemName from './components/IdentifiableItemName.vue';
-import IdentifiableItemPrice from './components/IdentifiableItemPrice.vue';
+import IdentifiableDocumentName from './components/IdentifiableDocumentName.vue';
+import IdentifiableDocumentPrice from './components/IdentifiableDocumentPrice.vue';
 import IdentifiedViewToggle from './components/IdentifiedViewToggle.vue';
 import ItemUnidentifiedPrice from './components/ItemUnidentifiedPrice.vue';
-import type { IdentifiableItemSheetRenderContext } from './IdentifiableItemSheet.mjs';
-import IdentifiableItemSheetVue from './IdentifiableItemSheet.vue';
+import type { IdentifiableDocumentSheetRenderContext } from './IdentifiableDocumentSheet.mjs';
+import IdentifiableDocumentSheetVue from './IdentifiableDocumentSheet.vue';
 import type {
   IdentifiableDocumentStore,
   IdentifiableStore,
-} from './IdentifiableItemStore.mjs';
+} from './IdentifiableDocumentStore.mjs';
 import {
   useIdentifiableStore,
-} from './IdentifiableItemStore.mjs';
+} from './IdentifiableDocumentStore.mjs';
 import {
-  IdentifiableDescription,
   identifiableDescriptionTab,
+  IdentifiableDetails,
 } from './tabs/index.mjs';
 
 export {
   IdentifiableConfig,
-  IdentifiableDescription,
   identifiableDescriptionTab,
-  IdentifiableItemName,
-  IdentifiableItemPrice,
-  IdentifiableItemSheetVue,
+  IdentifiableDetails,
+  IdentifiableDocumentName,
+  IdentifiableDocumentPrice,
+  IdentifiableDocumentSheetVue,
   IdentifiedViewToggle,
   ItemUnidentifiedPrice,
   useIdentifiableStore,
 };
 export type {
+  IdentifiableDocumentSheetRenderContext,
   IdentifiableDocumentStore,
-  IdentifiableItemSheetRenderContext,
   IdentifiableStore,
 };

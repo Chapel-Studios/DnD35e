@@ -23,6 +23,15 @@
       @change="onChange(($event.target as HTMLInputElement).value)"
     />
 
+    <!-- Color input -->
+    <input
+      v-else-if="type === 'color'"
+      type="color"
+      :value="value ?? '#ffffff'"
+      :disabled="isDisabled"
+      @change="onChange(($event.target as HTMLInputElement).value)"
+    />
+
     <!-- Checkbox -->
     <div v-else-if="type === 'checkbox'">
       <input
@@ -76,7 +85,7 @@
   const props = defineProps<{
     label?: string; // localization key
     value: any; // current value
-    type?: 'text' | 'number' | 'checkbox' | 'select' | 'multiselect';
+    type?: 'text' | 'number' | 'checkbox' | 'select' | 'multiselect' | 'color';
     disabled?: boolean;
     /** @deprecated Use canEdit from store instead. Only use for overriding store behavior. */
     editable?: boolean;
@@ -111,5 +120,16 @@
 <style scoped>
 .form-group {
   display: contents;
+}
+
+.form-group select[multiple] {
+  min-height: 80px;
+}
+
+.form-group input[type="color"] {
+  width: 60px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--color-border-light-tertiary);
 }
 </style>

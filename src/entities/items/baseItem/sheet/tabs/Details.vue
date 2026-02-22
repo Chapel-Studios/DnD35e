@@ -3,23 +3,24 @@
     class="overview"
     v-show="isActiveTab"
     data-group="primary"
-    :data-tab="tabName"
+    data-tab="details"
   >
     <div class="form-container">
       <!-- NAME CONFIGURATION SECTION -->
-      <NameConfig
-        :heading="nameHeading"
-        :nameLabel="nameLabel"
-        :nameValue="name"
-        :toggleValue="isNameFromFormula"
-        :formulaValue="nameFormula"
-        :isEditable="isEditable"
-        :getFieldUpdater="getFieldUpdater"
-        :localize="localize"
-      />
+      <slot name="name-section">
+        <NameConfig
+          :heading="nameHeading"
+          :nameLabel="nameLabel"
+          :nameValue="name"
+          :toggleValue="isNameFromFormula"
+          :formulaValue="nameFormula"
+        />
+      </slot>
 
       <!-- DESCRIPTION SECTION -->
-      <DescriptionEditor :localize="localize" />
+      <slot name="description-section">
+        <DescriptionEditor />
+      </slot>
 
       <!-- SLOT FOR ADDITIONAL CONTENT -->
       <slot></slot>
@@ -43,18 +44,18 @@
   import { inject } from 'vue';
 
   interface Props {
-    tabName?: string;
     nameHeading?: string;
     nameLabel?: string;
   }
 
-  const props = withDefaults(defineProps<Props>(), {
-    tabName: 'description',
+  withDefaults(defineProps<Props>(), {
     nameHeading: 'D35E.ItemName',
     nameLabel: 'D35E.ItemName',
   });
 
   defineSlots<{
+    'name-section'(): any;
+    'description-section'(): any;
     default(): any;
     'gm-section'(): any;
   }>();
@@ -69,14 +70,10 @@
       isNameFromFormula,
       nameFormula,
     },
-    documentActions: {
-      getFieldUpdater,
-    },
-    isEditable,
     localize,
   } = store;
 
-  const isActiveTab = getIsTabOpen(props.tabName);
+  const isActiveTab = getIsTabOpen('details');
   const userIsGM = game.user.isGM;
 </script>
 

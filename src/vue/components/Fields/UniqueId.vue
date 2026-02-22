@@ -52,9 +52,4 @@
     grid-column-gap: 1.5rem;
     align-items: center;
   }
-
-  /* Match your form-container override */
-  .form-container .unique-id-container {
-    display: contents;
-  }
 </style>

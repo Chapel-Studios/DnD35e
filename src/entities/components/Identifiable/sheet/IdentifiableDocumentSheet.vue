@@ -2,7 +2,7 @@
   <component :is="baseComponent">
     <template #header-name>
       <slot name="header-name">
-        <IdentifiableItemName />
+        <IdentifiableDocumentName />
       </slot>
     </template>
     <template #status>
@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { IdentifiableItemName } from '@ec/Identifiable/index.mjs';
+  import { IdentifiableDocumentName } from '@ec/Identifiable/index.mjs';
   import { ActiveEffectConfigVue, useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { BaseItemSheetVue, useItemSheetStore } from '@items/baseItem/index.mjs';
   import { computed, provide } from 'vue';

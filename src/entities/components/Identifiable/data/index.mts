@@ -1,13 +1,13 @@
 import { applyIdentifiableSchema } from './applyIdentifiableSchema.mjs';
 import type {
-  IdentifiableItemSystemData,
-  IdentifiableItemSystemSource,
-} from './IdentifiableItemSystemData.mjs';
+  IdentifiableDocumentSystemData,
+  IdentifiableDocumentSystemSource,
+} from './IdentifiableDocumentSystemData.mjs';
 
 export {
   applyIdentifiableSchema,
 };
 export type {
-  IdentifiableItemSystemData,
-  IdentifiableItemSystemSource,
+  IdentifiableDocumentSystemData,
+  IdentifiableDocumentSystemSource,
 };

@@ -3,32 +3,32 @@ import { replaceDataAttribute } from '@helpers/formulae/index.mjs';
 import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemType } from '@items/index.mjs';
 
-import { IdentifiableItemSystemData, IdentifiableItemSystemSource } from './index.mjs';
+import { IdentifiableDocumentSystemData, IdentifiableDocumentSystemSource } from './index.mjs';
 
-type IdentifiableItemSourceProps = {
-  system: IdentifiableItemSystemSource;
+type IdentifiableDocumentSourceProps = {
+  system: IdentifiableDocumentSystemSource;
 }
 
-type IdentifiableItemSource<TItemType extends ItemType = ItemType> =
+type IdentifiableDocumentSource<TItemType extends ItemType = ItemType> =
   Omit<ItemSourceDnd35e<TItemType>, 'system'>
-    & IdentifiableItemSourceProps;
+    & IdentifiableDocumentSourceProps;
 
-interface IdentifiableItem {
-  system: IdentifiableItemSystemData;
+interface IdentifiableDocument {
+  system: IdentifiableDocumentSystemData;
 
   get unidentifiedDisplayName(): string;
   get identifiedDisplayName(): string;
 }
 
-type IdentifiableItemLike =
+type IdentifiableDocumentLike =
   ItemDnd35e<ItemType> &
-  IdentifiableItem;
+  IdentifiableDocument;
 
 type IdentifiableEffectLike =
   DnD35eActiveEffect &
-  IdentifiableItem;
+  IdentifiableDocument;
 
-type WithIdenifiableComponent = IdentifiableItemLike | IdentifiableEffectLike;
+type WithIdentifiableComponent = IdentifiableDocumentLike | IdentifiableEffectLike;
 
 type ItemOrEffectCtor = AbstractConstructorOf<ItemDnd35e<ItemType>> | AbstractConstructorOf<DnD35eActiveEffect>;
 const applyIdentifiablePrototype = <T extends ItemOrEffectCtor> (item: T) => {
@@ -43,7 +43,7 @@ const applyIdentifiablePrototype = <T extends ItemOrEffectCtor> (item: T) => {
             isUnidentifiedNameFromFormula,
             unidentifiedName,
           } = {},
-        } = this.system as IdentifiableItemSystemData;
+        } = this.system as IdentifiableDocumentSystemData;
 
         return unidentifiedNameFormula && isUnidentifiedNameFromFormula
           ? replaceDataAttribute(unidentifiedNameFormula || '', this)
@@ -61,7 +61,7 @@ const applyIdentifiablePrototype = <T extends ItemOrEffectCtor> (item: T) => {
 };
 
 const identifiableOverrides = {
-  displayName: (item: WithIdenifiableComponent): string => {
+  displayName: (item: WithIdentifiableComponent): string => {
     const identifiedName = item._displayName;
     const {
       isIdentifiable,
@@ -82,10 +82,10 @@ export {
 };
 
 export type {
+  IdentifiableDocument,
+  IdentifiableDocumentLike,
+  IdentifiableDocumentSource,
+  IdentifiableDocumentSourceProps,
   IdentifiableEffectLike,
-  IdentifiableItem,
-  IdentifiableItemLike,
-  IdentifiableItemSource,
-  IdentifiableItemSourceProps,
-  WithIdenifiableComponent,
+  WithIdentifiableComponent,
 };

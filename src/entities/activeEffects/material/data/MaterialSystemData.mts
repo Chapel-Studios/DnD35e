@@ -1,4 +1,4 @@
-import type { IdentifiableItemSystemData, IdentifiableItemSystemSource } from '@ec/Identifiable/index.mjs';
+import type { IdentifiableDocumentSystemData, IdentifiableDocumentSystemSource } from '@ec/Identifiable/index.mjs';
 import { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/index.mjs';
 
 type MaterialSystemStats = {
@@ -11,9 +11,9 @@ type MaterialSystemStats = {
   isColdIronEquivalent: boolean;
 }
 
-interface MaterialSystemSource extends MaterialSystemStats, IdentifiableItemSystemSource, Dnd35eActiveEffectSystemSource {}
+interface MaterialSystemSource extends MaterialSystemStats, IdentifiableDocumentSystemSource, Dnd35eActiveEffectSystemSource {}
 
-interface MaterialSystemData extends MaterialSystemStats, IdentifiableItemSystemData, ActiveEffectSystemData {}
+interface MaterialSystemData extends MaterialSystemStats, IdentifiableDocumentSystemData, ActiveEffectSystemData {}
 
 export type {
   MaterialSystemData,

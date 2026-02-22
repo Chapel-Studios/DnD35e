@@ -11,8 +11,6 @@ import { materialDetailsTab, MaterialType } from '@effects/material/index.mjs';
 import type { ComputedRef, Ref } from 'vue';
 import { computed } from 'vue';
 
-import {  } from './index.mjs';
-
 const useMaterialStore = (context: any) => {
   const baseStore = useActiveEffectConfigStore<MaterialType>(context);
   const identifiableStore = useIdentifiableStore(

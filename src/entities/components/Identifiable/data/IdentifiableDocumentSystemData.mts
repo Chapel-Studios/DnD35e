@@ -1,4 +1,4 @@
-interface IdentifiableItemSystemSource {
+interface IdentifiableDocumentSystemSource {
     isIdentifiable: boolean;
     unidentifiedInfo?: {
         unidentifiedName: string;
@@ -10,9 +10,9 @@ interface IdentifiableItemSystemSource {
     };
 }
 
-type IdentifiableItemSystemData = IdentifiableItemSystemSource;
+type IdentifiableDocumentSystemData = IdentifiableDocumentSystemSource;
 
 export type {
-  IdentifiableItemSystemData,
-  IdentifiableItemSystemSource,
+  IdentifiableDocumentSystemData,
+  IdentifiableDocumentSystemSource,
 };

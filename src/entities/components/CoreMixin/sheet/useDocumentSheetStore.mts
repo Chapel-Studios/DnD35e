@@ -67,8 +67,11 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     activateTab: (tabId: string) => {
       state.activeTab = tabId;
     },
-    replaceTabs: (newTabs: SheetTab[]) => {
+    replaceTabs: (newTabs: SheetTab[], resetActiveTab: boolean = true) => {
       state.tabs = [...newTabs];
+      if (resetActiveTab) {
+        state.activeTab = newTabs[0]?.id || '';
+      }
     },
     appendTabs: (newTabs: SheetTab[]) => {
       state.tabs = [...state.tabs, ...newTabs];

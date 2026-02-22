@@ -1,6 +1,6 @@
 import type {
-  IdentifiableItem,
-  IdentifiableItemSourceProps,
+  IdentifiableDocument,
+  IdentifiableDocumentSourceProps,
 } from '@ec/Identifiable/index.mjs';
 import {
   applyIdentifiablePrototype,
@@ -17,7 +17,7 @@ type PhysicalItemSourceProps = {
 
 type PhysicalItemSource<TItemType extends ItemType = ItemType> =
   Omit<ItemSourceDnd35e<TItemType>, 'system'>
-    & IdentifiableItemSourceProps
+    & IdentifiableDocumentSourceProps
     & PhysicalItemSourceProps;
 
 interface PhysicalItem {
@@ -28,7 +28,7 @@ interface PhysicalItem {
 }
 
 type PhysicalItemLike = ItemDnd35e<ItemType>
-  & IdentifiableItem
+  & IdentifiableDocument
   & PhysicalItem;
 
 const applyPhysicalPrototype = <T extends typeof ItemDnd35e<ItemType>> (item: T) => {

@@ -1,10 +1,10 @@
 <template>
   <FormGroup
-    v-if="shouldShowPrice"
+    v-if="showIdentified"
     :editable="isEditable"
     label="Price"
-    :value="price"
-    @update="updater"
+    :value="activeValue"
+    @update="activeUpdater"
     type="number"
   />
 </template>
@@ -23,17 +23,16 @@
     documentActions: {
       getFieldUpdater,
     },
+    identifiableGetters: { unidentifiedPrice },
+    unidentifiedInfoMode: { showIdentified },
   } = documentSheetStore as PhysicalDocumentStore;
 
-  // Check if this is an identifiable sheet and if so, only show when viewing identified
-  const shouldShowPrice = computed(() => {
-    const identifiableStore = documentSheetStore as unknown as { unidentifiedInfoMode?: Record<string, unknown> };
-    if (identifiableStore.unidentifiedInfoMode) {
-      const { showIdentified } = identifiableStore.unidentifiedInfoMode as { showIdentified: boolean | { value: boolean } };
-      return typeof showIdentified === 'boolean' ? showIdentified : showIdentified.value;
-    }
-    return true; // Default to showing if not an identifiable sheet
-  });
-
-  const updater = getFieldUpdater('system.price');
+  const activeValue = computed(() => showIdentified
+    ? price.value
+    : unidentifiedPrice.value
+  );
+  const activeUpdater = computed(() => showIdentified
+    ? getFieldUpdater('system.price')
+    : getFieldUpdater('system.unidentifiedInfo.unidentifiedPrice')
+  );
 </script>

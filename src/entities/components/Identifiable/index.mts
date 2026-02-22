@@ -1,61 +1,61 @@
 import type {
-  IdentifiableItemSystemData,
-  IdentifiableItemSystemSource,
+  IdentifiableDocumentSystemData,
+  IdentifiableDocumentSystemSource,
 } from './data/index.mjs';
 import {
   applyIdentifiableSchema,
 } from './data/index.mjs';
 import type {
-  IdentifiableItem,
-  IdentifiableItemLike,
-  IdentifiableItemSource,
-  IdentifiableItemSourceProps,
-  WithIdenifiableComponent,
+  IdentifiableDocument,
+  IdentifiableDocumentLike,
+  IdentifiableDocumentSource,
+  IdentifiableDocumentSourceProps,
+  WithIdentifiableComponent,
 } from './IdentifiableItem.mjs';
 import {
   applyIdentifiablePrototype,
   identifiableOverrides,
 } from './IdentifiableItem.mjs';
 import type {
+  IdentifiableDocumentSheetRenderContext,
   IdentifiableDocumentStore,
-  IdentifiableItemSheetRenderContext,
   IdentifiableStore,
 } from './sheet/index.mjs';
 import {
   IdentifiableConfig,
-  IdentifiableDescription,
   identifiableDescriptionTab,
-  IdentifiableItemName as IdentifiableHeader,
-  IdentifiableItemName,
-  IdentifiableItemPrice,
-  IdentifiableItemSheetVue,
+  IdentifiableDetails,
+  IdentifiableDocumentName,
+  IdentifiableDocumentName as IdentifiableHeader,
+  IdentifiableDocumentPrice,
+  IdentifiableDocumentSheetVue,
   IdentifiedViewToggle,
   ItemUnidentifiedPrice,
   useIdentifiableStore,
 } from './sheet/index.mjs';
 
 export type {
+  IdentifiableDocument,
+  IdentifiableDocumentLike,
+  IdentifiableDocumentSheetRenderContext,
+  IdentifiableDocumentSource,
+  IdentifiableDocumentSourceProps,
   IdentifiableDocumentStore,
-  IdentifiableItem,
-  IdentifiableItemLike,
-  IdentifiableItemSheetRenderContext,
-  IdentifiableItemSource,
-  IdentifiableItemSourceProps,
-  IdentifiableItemSystemData,
-  IdentifiableItemSystemSource,
+  IdentifiableDocumentSystemData,
+  IdentifiableDocumentSystemSource,
   IdentifiableStore,
-  WithIdenifiableComponent,
+  WithIdentifiableComponent,
 };
 export {
   applyIdentifiablePrototype,
   applyIdentifiableSchema,
   IdentifiableConfig,
-  IdentifiableDescription,
   identifiableDescriptionTab,
+  IdentifiableDetails,
+  IdentifiableDocumentName,
+  IdentifiableDocumentPrice,
+  IdentifiableDocumentSheetVue,
   IdentifiableHeader,
-  IdentifiableItemName,
-  IdentifiableItemPrice,
-  IdentifiableItemSheetVue,
   identifiableOverrides,
   IdentifiedViewToggle,
   ItemUnidentifiedPrice,

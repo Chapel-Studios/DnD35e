@@ -1,12 +1,12 @@
 import type { SheetTab } from '@ec/CoreMixin/index.mjs';
 
-import Description from './Description.vue';
+import Details from './Details.vue';
 import Effects from './Effects.vue';
 
 const defaultDescriptionTab: SheetTab = {
-  id: 'description',
+  id: 'details',
   label: 'D35E.Description',
-  component: Description,
+  component: Details,
   order: 10,
 };
 
@@ -21,6 +21,6 @@ const defaultEffectsTab: SheetTab = {
 export {
   defaultDescriptionTab,
   defaultEffectsTab,
-  Description,
+  Details,
   Effects,
 };

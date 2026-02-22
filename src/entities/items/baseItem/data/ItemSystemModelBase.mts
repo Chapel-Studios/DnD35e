@@ -1,4 +1,7 @@
 import {
+  applyBaseDnd35eSystemSchema,
+} from '@ec/CoreMixin/index.mjs';
+import {
   requiredBooleanField,
   requiredStringField,
 } from '@helpers/fieldBuilders.mjs';
@@ -14,7 +17,7 @@ abstract class ItemSystemModelBase extends foundry.abstract.TypeDataModel<
   declare parent: foundry.documents.Item;
 
   static override defineSchema (): Record<string, any> {
-    return {
+    const schema = {
       // System Base
 
       origin: new SchemaField({
@@ -27,6 +30,9 @@ abstract class ItemSystemModelBase extends foundry.abstract.TypeDataModel<
       isPsionic: requiredBooleanField(),
       isEpic: requiredBooleanField(),
     };
+
+    applyBaseDnd35eSystemSchema(schema);
+    return schema;
   }
 }
 

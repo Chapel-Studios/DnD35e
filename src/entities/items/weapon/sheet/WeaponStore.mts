@@ -1,4 +1,3 @@
-import { identifiableDescriptionTab } from '@entities/components/Identifiable/index.mjs';
 import type { ItemSheetStore } from '@items/baseItem/index.mjs';
 import { defaultEffectsTab, useItemSheetStore } from '@items/baseItem/index.mjs';
 import type { EquippableItemLike, EquippableItemStore } from '@items/components/Equippable/index.mjs';
@@ -14,7 +13,6 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>) => {
   const physicalStore = useEquippableItemStore(context as unknown as VueApplicationContext<EquippableItemLike>, baseStore as any);
 
   baseStore.tabs.tabActions.replaceTabs([
-    identifiableDescriptionTab,
     weaponDetailsTab,
     defaultEffectsTab,
   ]);

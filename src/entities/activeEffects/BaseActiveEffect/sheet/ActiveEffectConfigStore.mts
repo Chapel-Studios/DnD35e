@@ -34,6 +34,11 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
     durationUnits: computed(() => document.value.duration?.units ?? 'none'),
     // Effect-specific
     isDisabled: computed(() => document.value.disabled ?? false),
+    tint: computed(() => document.value.tint ?? null),
+    transfer: computed(() => document.value.transfer ?? false),
+    statuses: computed(() => [...(document.value.statuses ?? [])]),
+    showIcon: computed(() => document.value.showIcon ?? 0),
+    origin: computed(() => document.value.origin ?? ''),
     changes: computed(() => document.value.system?.changes ?? []),
   };
 
@@ -76,6 +81,11 @@ type ActiveEffectConfigStore<TDocument extends DnD35eActiveEffect = DnD35eActive
     durationValue: ComputedRef<number | null>;
     durationUnits: ComputedRef<string>;
     isDisabled: ComputedRef<boolean>;
+    tint: ComputedRef<string | null>;
+    transfer: ComputedRef<boolean>;
+    statuses: ComputedRef<string[]>;
+    showIcon: ComputedRef<number>;
+    origin: ComputedRef<string>;
     changes: ComputedRef<any[]>;
   };
   documentActions: DocumentSheetStore<TDocument>['documentActions'] & {

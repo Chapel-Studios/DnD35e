@@ -15,7 +15,6 @@ import {
 import {
   defaultDescriptionTab,
   defaultEffectsTab,
-  Description,
   Effects,
 } from './tabs/index.mjs';
 
@@ -24,7 +23,6 @@ export {
   defaultDescriptionTab,
   defaultEffectsTab,
   DefaultHeaderName,
-  Description,
   EffectCategory,
   Effects,
   getDefaultItemTabs,

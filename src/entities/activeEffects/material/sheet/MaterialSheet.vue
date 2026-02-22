@@ -1,8 +1,8 @@
 <template>
-  <IdentifiableItemSheetVue mode="effect" />
+  <IdentifiableDocumentSheetVue mode="effect" />
 </template>
 <script lang="ts" setup>
-  import { IdentifiableItemSheetVue } from '@ec/Identifiable/index.mjs';
+  import { IdentifiableDocumentSheetVue } from '@ec/Identifiable/index.mjs';
   import { provide } from 'vue';
 
   import { type MaterialSheetRenderContext, useMaterialStore } from './index.mjs';

@@ -1,58 +1,106 @@
 <template>
-  <section
-    class="effect-details"
-    v-show="isActiveTab"
-    data-group="primary"
-    data-tab="details"
+  <Details
+    :name-heading="nameHeading"
+    :name-label="nameLabel"
   >
-    <div class="form-group">
-      <label>{{ nameLabel }}</label>
-      <input type="text" name="name" :value="name" :disabled="!isEditable" />
-    </div>
-    <div class="form-group">
-      <ImageField field="img" :label="imageLabel" />
-    </div>
-    <div class="form-group">
-      <RichTextEditor field="description" :label="descriptionLabel" />
-    </div>
-  </section>
+    <!-- TINT -->
+    <FormGroup
+      label="EFFECT.Tint"
+      type="color"
+      :value="tint"
+      :onUpdate="getFieldUpdater('tint')"
+    />
+
+    <!-- DISABLED -->
+    <FormGroup
+      label="EFFECT.Disabled"
+      type="checkbox"
+      :value="isDisabled"
+      :onUpdate="getFieldUpdater('disabled')"
+    />
+
+    <!-- ORIGIN -->
+    <FormGroup
+      label="EFFECT.Origin"
+      type="text"
+      :value="origin"
+      :disabled="true"
+      :onUpdate="() => {}"
+    />
+
+    <!-- STATUSES -->
+    <FormGroup
+      label="EFFECT.Statuses"
+      type="multiselect"
+      :value="statuses"
+      :options="statusOptions"
+      :onUpdate="getFieldUpdater('statuses')"
+    />
+
+    <!-- SHOW ICON -->
+    <FormGroup
+      label="EFFECT.ShowIcon"
+      type="select"
+      :value="showIcon"
+      :options="showIconOptions"
+      :onUpdate="getFieldUpdater('showIcon')"
+    />
+
+    <!-- GM-ONLY SECTION SLOT -->
+    <template #gm-section>
+      <IdentifiableConfig v-if="hasIdentifiable" />
+      <UniqueId v-if="hasIdentifiable" />
+    </template>
+  </Details>
 </template>
 
 <script setup lang="ts">
+  import { IdentifiableConfig } from '@ec/Identifiable/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-  import { ImageField, RichTextEditor } from '@vc/Fields/index.mjs';
-  import { inject } from 'vue';
+  import Details from '@items/baseItem/sheet/tabs/Details.vue';
+  import { FormGroup, UniqueId } from '@vc/Fields/index.mjs';
+  import { computed, inject } from 'vue';
 
   const store = inject('documentSheetStore') as ActiveEffectConfigStore;
   const {
-    tabs: {
-      tabGetters: { getIsTabOpen },
+    documentGetters: {
+      isDisabled,
+      tint,
+      statuses,
+      showIcon,
+      origin,
     },
-    isEditable,
-    documentGetters: { name },
+    documentActions: {
+      getFieldUpdater,
+    },
+    _document,
   } = store;
 
-  const isActiveTab = getIsTabOpen('details');
+  // Check if the effect has identifiable properties
+  const hasIdentifiable = computed(() => {
+    const doc = _document.value as any;
+    return doc?.system?.isIdentifiable !== undefined;
+  });
 
-  const nameLabel = game.i18n.localize('Name');
-  const imageLabel = game.i18n.localize('EFFECT.Image');
-  const descriptionLabel = game.i18n.localize('EFFECT.Description');
+  // Build status options from CONFIG.statusEffects
+  const statusOptions = computed(() => {
+    return Object.values(CONFIG.statusEffects).map((s: { id: string; name: string }) => ({
+      value: s.id,
+      label: s.name,
+    }));
+  });
+
+  // Build show icon options from CONST.ACTIVE_EFFECT_SHOW_ICON
+  const showIconOptions = computed(() => {
+    const showIconConst = (CONST as any).ACTIVE_EFFECT_SHOW_ICON as Record<string, number>;
+    return Object.entries(showIconConst)
+      .map(([key, value]) => ({
+        value: value,
+        label: `EFFECT.SHOW_ICON.${key.toLowerCase()}`,
+      }))
+      .reverse();
+  });
+
+  const nameHeading = game.i18n.localize('EFFECT.Name');
+  const nameLabel = game.i18n.localize('EFFECT.Name');
 </script>
-
-<style scoped>
-  .effect-details {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .form-group label {
-    font-weight: bold;
-  }
-</style>

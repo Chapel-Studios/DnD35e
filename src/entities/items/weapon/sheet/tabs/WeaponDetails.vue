@@ -1,14 +1,9 @@
 <template>
-  <section
-    class="flexcol material-details"
-    v-show="isActiveTab"
-    data-group="primary"
-    :data-tab="tabName"
-  >
-    <div class="form-container">
+  <IdentifiableDetails>
+    <ItemPrice />
+    <div class="weapon-details-container">
       <ItemQuantity />
       <ItemWeight />
-      <ItemPrice />
       <ItemUnidentifiedPrice />
       <ItemHP />
       <ItemHardness />
@@ -25,10 +20,10 @@
       /> -->
 
     </div>
-  </section>
+  </IdentifiableDetails>
 </template>
 <script setup lang="ts">
-  import { ItemUnidentifiedPrice } from '@ec/Identifiable/index.mjs';
+  import { IdentifiableDetails, ItemUnidentifiedPrice } from '@ec/Identifiable/index.mjs';
   import { ItemIsWeightlessWhenEquipped } from '@items/components/Equippable/index.mjs';
   import {
     ItemHardness,
@@ -39,16 +34,25 @@
     ItemSheetIsCarriedCheckbox,
     ItemWeight,
   } from '@items/components/Physical/index.mjs';
-  import { inject } from 'vue';
-
-  import { WeaponStore } from '../WeaponStore.mjs';
-
-  const {
-    tabs: {
-      tabGetters: { getIsTabOpen },
-    },
-  } = inject('documentSheetStore') as WeaponStore;
-
-  const tabName = 'weapon-details';
-  const isActiveTab = getIsTabOpen(tabName);
 </script>
+<style scoped lang="scss">
+  .weapon-details-container {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 0.33rem;
+
+    :deep(.form-group) {
+      border: 1px solid var(--color-border-light-tertiary, #7a7971);
+      display: grid;
+      grid-auto-flow: column;
+      align-items: anchor-center;
+      grid-gap: 0.33rem;
+      padding: 0.25rem;
+    }
+
+    :deep(.form-group input) {
+      max-width: 50px;
+    }
+  }
+</style>

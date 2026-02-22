@@ -1,15 +1,15 @@
 import type { SheetTab } from '@ec/CoreMixin/sheet/useDocumentSheetStore.mjs';
 
-import IdentifiableDescription from './IdentifiableDescription.vue';
+import IdentifiableDetails from './IdentifiableDetails.vue';
 
 const identifiableDescriptionTab: SheetTab = {
-  id: 'description',
+  id: 'details',
   label: 'D35E.Description',
-  component: IdentifiableDescription,
+  component: IdentifiableDetails,
   order: 10,
 };
 
 export {
-  IdentifiableDescription,
   identifiableDescriptionTab,
+  IdentifiableDetails,
 };

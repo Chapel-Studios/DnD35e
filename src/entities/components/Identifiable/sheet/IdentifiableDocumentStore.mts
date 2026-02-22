@@ -1,5 +1,5 @@
 import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import type { WithIdenifiableComponent } from '@ec/Identifiable/index.mjs';
+import type { WithIdentifiableComponent } from '@ec/Identifiable/index.mjs';
 import {
   identifiableDescriptionTab,
 } from '@ec/Identifiable/index.mjs';
@@ -7,7 +7,7 @@ import type { EditorViewMode, VueApplicationContext } from '@vueApps/VueAppTypes
 import type { ComputedRef, Ref } from 'vue';
 import { computed } from 'vue';
 
-const useIdentifiableStore = <TDocument extends WithIdenifiableComponent>(context: VueApplicationContext<TDocument>, baseStore: DocumentSheetStore<TDocument>) => {
+const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(context: VueApplicationContext<TDocument>, baseStore: DocumentSheetStore<TDocument>) => {
   baseStore.tabs.tabActions.replaceTabs([
     identifiableDescriptionTab,
   ]);
@@ -101,7 +101,7 @@ interface IdentifiableStore {
   };
 }
 
-type IdentifiableDocumentStore = DocumentSheetStore<WithIdenifiableComponent> & IdentifiableStore;
+type IdentifiableDocumentStore = DocumentSheetStore<WithIdentifiableComponent> & IdentifiableStore;
 
 export {
   identifiableDescriptionTab,

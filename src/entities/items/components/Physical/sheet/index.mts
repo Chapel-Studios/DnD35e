@@ -1,4 +1,4 @@
-import { IdentifiableItemSheetRenderContext } from '@ec/Identifiable/index.mjs';
+import { IdentifiableDocumentSheetRenderContext } from '@ec/Identifiable/index.mjs';
 import type { PhysicalItem } from '@items/components/Physical/index.mjs';
 
 import ItemHardness from './components/ItemHardness.vue';
@@ -27,7 +27,7 @@ export {
   usePhysicalItemStore,
 };
 
-type PhysicalItemSheetRenderContext = IdentifiableItemSheetRenderContext & {
+type PhysicalItemSheetRenderContext = IdentifiableDocumentSheetRenderContext & {
   document: PhysicalItem;
 };
 

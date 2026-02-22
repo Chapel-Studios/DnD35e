@@ -1,9 +1,9 @@
 import { ActiveEffectSource } from '@common/documents/active-effect.mjs';
 import {
   applyIdentifiablePrototype,
-  IdentifiableItem,
-  IdentifiableItemLike,
-  IdentifiableItemSourceProps,
+  IdentifiableDocument,
+  IdentifiableDocumentLike,
+  IdentifiableDocumentSourceProps,
   identifiableOverrides,
 } from '@ec/Identifiable/index.mjs';
 import { DnD35eActiveEffect, DnD35eActiveEffectFlags } from '@effects/BaseActiveEffect/index.mjs';
@@ -13,7 +13,7 @@ const materialItemType = 'material';
 type MaterialItemType = typeof materialItemType;
 
 type MaterialSource = ActiveEffectSource<MaterialItemType, MaterialSystemSource>
-  & Omit<IdentifiableItemSourceProps, 'system'>;
+  & Omit<IdentifiableDocumentSourceProps, 'system'>;
 
 type MaterialEffectFlags = any;
 
@@ -39,13 +39,13 @@ class Material extends DnD35eActiveEffect {
   }
 
   override get displayName (): string {
-    return identifiableOverrides.displayName(this as unknown as IdentifiableItemLike);
+    return identifiableOverrides.displayName(this as unknown as IdentifiableDocumentLike);
   }
 }
 
 applyIdentifiablePrototype(Material);
 
-type MaterialType = Omit<IdentifiableItem, 'system'> & Material;
+type MaterialType = Omit<IdentifiableDocument, 'system'> & Material;
 
 export {
   Material,
