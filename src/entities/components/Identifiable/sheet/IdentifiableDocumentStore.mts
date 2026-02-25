@@ -20,7 +20,7 @@ const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(conte
   const showBoth = computed(() => (game.user.isGM || baseStore.isEditable) && document.value.system.isIdentifiable);
   const showOnlyIdentified = computed(() =>
     !document.value.system.isIdentifiable ||
-    (document.value.system.unidentifiedInfo?.isIdentified || false),
+    (document.value.system.unidentifiedInfo?.isIdentified || false)
   );
   const showOnlyUnidentified = computed(() => document.value.system.isIdentifiable && !document.value.system.unidentifiedInfo?.isIdentified);
   const showIdentified = computed(() => {
@@ -45,7 +45,7 @@ const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(conte
     unidentifiedName: computed(() => document.value.system.unidentifiedInfo?.unidentifiedName || ''),
     isUnidentifiedNameFromFormula: computed(() => document.value.system.unidentifiedInfo?.isUnidentifiedNameFromFormula || false),
     unidentifiedNameFormula: computed(() => document.value.system.unidentifiedInfo?.unidentifiedNameFormula || ''),
-    unidentifiedPrice: computed(() => document.value.system.unidentifiedInfo?.unidentifiedPrice),
+    unidentifiedPrice: computed(() => document.value.system.unidentifiedInfo?.unidentifiedPrice ?? 0),
   };
 
   // Actions for editor view mode - modifies shared sheetState
@@ -92,7 +92,7 @@ interface IdentifiableStore {
     unidentifiedName: ComputedRef<string>;
     isUnidentifiedNameFromFormula: ComputedRef<boolean>;
     unidentifiedNameFormula: ComputedRef<string>;
-    unidentifiedPrice: ComputedRef<number | null | undefined>;
+    unidentifiedPrice: ComputedRef<number>;
   };
   editorViewMode: ComputedRef<EditorViewMode>;
   editorViewActions: {

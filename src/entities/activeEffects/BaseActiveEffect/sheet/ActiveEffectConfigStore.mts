@@ -11,7 +11,7 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
   context: VueApplicationContext<TDocument>,
   options: {
     additionalTabs?: SheetTab[];
-  } = {},
+  } = {}
 ) => {
   // Get base store functionality with effect-specific default tabs
   const defaultTabs = [
@@ -52,7 +52,7 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
         {
           diff: false,
-        },
+        }
       );
     },
     removeChange: async (index: number) => {
@@ -64,7 +64,7 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
         {
           diff: false,
-        },
+        }
       );
     },
   };
@@ -81,7 +81,7 @@ type ActiveEffectConfigStore<TDocument extends DnD35eActiveEffect = DnD35eActive
     durationValue: ComputedRef<number | null>;
     durationUnits: ComputedRef<string>;
     isDisabled: ComputedRef<boolean>;
-    tint: ComputedRef<string | null>;
+    tint: ComputedRef<string>;
     transfer: ComputedRef<boolean>;
     statuses: ComputedRef<string[]>;
     showIcon: ComputedRef<number>;

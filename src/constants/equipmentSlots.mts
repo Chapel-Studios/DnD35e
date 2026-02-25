@@ -1,4 +1,4 @@
-export const EQUIP_SLOTS = [
+const EQUIP_SLOTS = [
   'head',
   'face',
   'neck',
@@ -13,9 +13,18 @@ export const EQUIP_SLOTS = [
   'feet',
 ] as const;
 
-export type EquipSlot = (typeof EQUIP_SLOTS)[number];
+type EquipSlot = (typeof EQUIP_SLOTS)[number];
 
-export const EQUIP_SLOT_SELECT_OPTIONS: { value: EquipSlot | null; label: string }[] = [
+const EQUIP_SLOT_SELECT_OPTIONS: { value: EquipSlot | null; label: string }[] = [
   { value: null, label: game.i18n.localize('D35E.None') },
   ...EQUIP_SLOTS.map(slot => ({ value: slot, label: game.i18n.localize(`D35E.EquipSlot.${slot}`) })),
 ];
+
+export {
+  EQUIP_SLOT_SELECT_OPTIONS,
+  EQUIP_SLOTS,
+};
+
+export type {
+  EquipSlot,
+};

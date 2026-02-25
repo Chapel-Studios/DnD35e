@@ -4,46 +4,41 @@
     :name-label="nameLabel"
   >
     <!-- TINT -->
-    <FormGroup
+    <ColorFormGroup
       label="EFFECT.Tint"
-      type="color"
       :value="tint"
-      :onUpdate="getFieldUpdater('tint')"
+      :on-update="getFieldUpdater('tint')"
     />
 
     <!-- DISABLED -->
-    <FormGroup
+    <CheckBoxFormGroup
       label="EFFECT.Disabled"
-      type="checkbox"
       :value="isDisabled"
-      :onUpdate="getFieldUpdater('disabled')"
+      :on-update="getFieldUpdater('disabled')"
     />
 
     <!-- ORIGIN -->
-    <FormGroup
+    <TextFormGroup
       label="EFFECT.Origin"
-      type="text"
       :value="origin"
       :disabled="true"
-      :onUpdate="() => {}"
+      :on-update="() => {}"
     />
 
     <!-- STATUSES -->
-    <FormGroup
+    <MultiSelectFormGroup
       label="EFFECT.Statuses"
-      type="multiselect"
       :value="statuses"
       :options="statusOptions"
-      :onUpdate="getFieldUpdater('statuses')"
+      :on-update="getFieldUpdater('statuses')"
     />
 
     <!-- SHOW ICON -->
-    <FormGroup
+    <SelectFormGroup
       label="EFFECT.ShowIcon"
-      type="select"
       :value="showIcon"
       :options="showIconOptions"
-      :onUpdate="getFieldUpdater('showIcon')"
+      :on-update="getFieldUpdater('showIcon')"
     />
 
     <!-- GM-ONLY SECTION SLOT -->
@@ -58,7 +53,12 @@
   import { IdentifiableConfig } from '@ec/Identifiable/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import Details from '@items/baseItem/sheet/tabs/Details.vue';
-  import { FormGroup, UniqueId } from '@vc/Fields/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
+  import { ColorFormGroup } from '@vc/Fields/index.mjs';
+  import { MultiSelectFormGroup } from '@vc/Fields/index.mjs';
+  import { SelectFormGroup } from '@vc/Fields/index.mjs';
+  import { TextFormGroup } from '@vc/Fields/index.mjs';
+  import { UniqueId } from '@vc/Fields/index.mjs';
   import { computed, inject } from 'vue';
 
   const store = inject('documentSheetStore') as ActiveEffectConfigStore;

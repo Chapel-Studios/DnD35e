@@ -8,32 +8,29 @@
     <div class="form-container">
 
       <!-- Hardness -->
-      <FormGroup
+      <TextFormGroup
         label="D35E.Hardness"
-        type="text"
         :value="bonusHardness"
         :editable="isEditable"
-        :onUpdate="getFieldUpdater('system.bonusHardness')"
+        :on-update="getFieldUpdater('system.bonusHardness')"
       />
 
       <!-- HP per Inch -->
-      <FormGroup
+      <TextFormGroup
         label="D35E.HpPerInch"
-        type="text"
         :value="bonusHpPerInch"
         :editable="isEditable"
-        :onUpdate="getFieldUpdater('system.bonusHpPerInch')"
+        :on-update="getFieldUpdater('system.bonusHpPerInch')"
       />
 
       <!-- Magic Equivalent -->
       <h3 class="form-header">{{ localize("D35E.MagicEquivalent") }}</h3>
 
-      <FormGroup
+      <TextFormGroup
         label="D35E.MagicEquivalent"
-        type="text"
         :value="magicEquivalent"
         :editable="isEditable"
-        :onUpdate="getFieldUpdater('system.magicEquivalent')"
+        :on-update="getFieldUpdater('system.magicEquivalent')"
       />
 
       <span class="notes">
@@ -41,28 +38,25 @@
       </span>
 
       <!-- Material Equivalents -->
-      <FormGroup
+      <CheckBoxFormGroup
         label="D35E.MaterialAlchemicalSilverEquivalent"
-        type="checkbox"
         :value="isAlchemicalSilverEquivalent"
         :editable="isEditable"
-        :onUpdate="getFieldUpdater('system.isAlchemicalSilverEquivalent')"
+        :on-update="getFieldUpdater('system.isAlchemicalSilverEquivalent')"
       />
 
-      <FormGroup
+      <CheckBoxFormGroup
         label="D35E.MaterialAdamantineEquivalent"
-        type="checkbox"
         :value="isAdamantineEquivalent"
         :editable="isEditable"
-        :onUpdate="getFieldUpdater('system.isAdamantineEquivalent')"
+        :on-update="getFieldUpdater('system.isAdamantineEquivalent')"
       />
 
-      <FormGroup
+      <CheckBoxFormGroup
         label="D35E.MaterialColdIronEquivalent"
-        type="checkbox"
         :value="isColdIronEquivalent"
         :editable="isEditable"
-        :onUpdate="getFieldUpdater('system.isColdIronEquivalent')"
+        :on-update="getFieldUpdater('system.isColdIronEquivalent')"
       />
 
       <!-- GM‑Only Section -->
@@ -79,7 +73,9 @@
 <script setup lang="ts">
   import { IdentifiableConfig } from '@ec/Identifiable/index.mjs';
   import type { MaterialStore } from '@effects/material/index.mjs';
-  import { FormGroup, UniqueId } from '@vc/Fields/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
+  import { TextFormGroup } from '@vc/Fields/index.mjs';
+  import { UniqueId } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
   const {

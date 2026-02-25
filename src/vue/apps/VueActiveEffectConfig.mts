@@ -1,11 +1,12 @@
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
 import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
+
 import type { VueApplicationConfiguration, VueRenderOptions } from './VueAppTypes.mjs';
-import { useVueMixin } from './VueMixin.mjs';
+import { useVueDocumentSheetMixin } from './VueDocumentSheetMixin.mjs';
 
 const EffectConfigBase = foundry.applications.sheets.ActiveEffectConfig<DnD35eActiveEffect, VueApplicationConfiguration<DnD35eActiveEffect>, VueRenderOptions>;
 
-abstract class VueActiveEffectConfig extends useVueMixin(EffectConfigBase) {
+abstract class VueActiveEffectConfig extends useVueDocumentSheetMixin(EffectConfigBase) {
   static override get DEFAULT_OPTIONS (): DeepPartial<DocumentSheetConfiguration<DnD35eActiveEffect>> {
     return {
       classes: ['dnd35e', 'vueApp'],

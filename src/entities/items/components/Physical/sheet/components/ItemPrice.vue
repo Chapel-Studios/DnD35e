@@ -1,16 +1,15 @@
 <template>
-  <FormGroup
+  <NumberFormGroup
     v-if="showIdentified"
     :editable="isEditable"
     label="Price"
     :value="activeValue"
-    @update="activeUpdater"
-    type="number"
+    :on-update="activeUpdater"
   />
 </template>
 <script setup lang="ts">
   import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { NumberFormGroup } from '@vc/Fields/index.mjs';
   import { computed, inject } from 'vue';
 
   const documentSheetStore = inject('documentSheetStore') as PhysicalDocumentStore;

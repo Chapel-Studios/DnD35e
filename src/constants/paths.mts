@@ -1,2 +1,7 @@
-export const systemPath = 'systems/dnd35e/dist';
-export const hbsTemplatePath = `${systemPath}/hbsTemplates`;
+const systemPath = 'systems/dnd35e/dist';
+const hbsTemplatePath = `${systemPath}/hbsTemplates`;
+
+export {
+  hbsTemplatePath,
+  systemPath,
+};

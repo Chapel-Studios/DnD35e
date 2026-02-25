@@ -1,15 +1,14 @@
 <template>
-  <FormGroup
+  <CheckBoxFormGroup
     :editable="isEditable"
     label="Is Weightless When Equipped"
     :value="isWeightlessWhenEquipped"
-    @update="updater"
-    type="checkbox"
+    :on-update="updater"
   />
 </template>
 <script setup lang="ts">
   import type { EquippableDocumentStore } from '@items/components/Equippable/index.mjs';
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
   const {

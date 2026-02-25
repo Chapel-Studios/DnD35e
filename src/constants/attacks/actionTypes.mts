@@ -1,12 +1,22 @@
-export const ActionTypes = {
+const ActionTypes = {
   meleeWeaponAttack: 'meleeWeaponAttack',
   rangedWeaponAttack: 'rangedWeaponAttack',
   meleeSpellAttack: 'meleeSpellAttack',
   rangedSpellAttack: 'rangedSpellAttack',
 };
 
-export type ActionTypes = typeof ActionTypes[keyof typeof ActionTypes];
-export const ActionsTypesList = Object.values(ActionTypes);
-export const isAttackAction = (action: string): action is ActionTypes => {
-  return ActionsTypesList.includes(action as ActionTypes);
+type ActionType = typeof ActionTypes[keyof typeof ActionTypes];
+const ActionsTypesList = Object.values(ActionTypes);
+const isAttackAction = (action: string): action is ActionType => {
+  return ActionsTypesList.includes(action as ActionType);
+};
+
+export {
+  ActionsTypesList,
+  ActionTypes,
+  isAttackAction,
+};
+
+export type {
+  ActionType,
 };

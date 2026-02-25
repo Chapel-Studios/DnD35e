@@ -1,25 +1,42 @@
+/**
+ * Vue mixin for DocumentSheetV2-based applications.
+ * Extends VueAppBaseMixin with document-specific features like header buttons, edit mode, and identified view.
+ */
+
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
-import type { ApplicationV2, DocumentSheetV2 } from '@client/applications/api/_module.mjs';
+import type { DocumentSheetV2 } from '@client/applications/api/_module.mjs';
 import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
-import type { App, Component } from 'vue';
+import type { ItemDnd35e } from '@items/baseItem/index.mjs';
+import type { App } from 'vue';
 import { createApp, reactive } from 'vue';
 
+import type { VueAppBaseMembers } from './VueAppBaseMixin.mjs';
+import { useVueAppBaseMixin } from './VueAppBaseMixin.mjs';
 import type { SheetState, VueApplicationConfiguration, VueApplicationContext, VueRenderOptions } from './VueAppTypes.mjs';
 
+/**
+ * Interface describing members added by VueDocumentSheetMixin.
+ * Used for explicit typing instead of ReturnType inference.
+ */
+interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | DnD35eActiveEffect> extends VueAppBaseMembers {
+  /** Application options with document reference */
+  options: VueApplicationConfiguration<TDocument>;
+  /** Shared reactive context passed into Vue */
+  context: VueApplicationContext<TDocument>;
+  /** Shared reactive state for header controls */
+  sheetState: SheetState;
+  /** Whether the sheet can be configured */
+  readonly canConfigureSheet: boolean;
+  /** Whether the sheet is editable */
+  readonly isEditable: boolean;
+}
 
-const useVueMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocument extends ItemDnd35e | DnD35eActiveEffect> (base: TBase) => {
-  abstract class VueApp extends base {
+const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocument extends ItemDnd35e | DnD35eActiveEffect> (base: TBase) => {
+  const VueAppBase = useVueAppBaseMixin(base);
+
+  abstract class VueApp extends VueAppBase {
     declare options: VueApplicationConfiguration<TDocument>;
     #document!: TDocument;
-    /** The Vue component class to mount */
-    protected abstract get vueComponent(): Component;
-
-    /** Persistent Vue app instance */
-    protected vueApp: App | null = null;
-
-    /** Persistent mount node */
-    protected vueRoot: HTMLElement | null = null;
 
     /** Shared reactive context passed into Vue */
     protected context!: VueApplicationContext<TDocument>;
@@ -183,20 +200,9 @@ const useVueMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocu
     }
 
     /**
-     * super._renderHTML() is abstract we must implement this.
-     * Foundry calls this to get HTML for .window-content.
-     * We should be returning an HTMLElement here, but instead we return the context and do the actual rendering in _replaceHTML.
-     * This is because Vue needs to control the entire contents of .window-content to properly manage reactivity.
-     * If we return an HTMLElement here and then try to mount Vue onto it in _replaceHTML, Vue will not be able to properly manage the DOM and we will lose reactivity.
+     * Create the Vue app instance with document context
      */
-    protected override async _renderHTML (
-      context: ApplicationRenderContext,
-      _options: ApplicationRenderOptions,
-    ): Promise<object> {
-      return context;
-    }
-
-    protected _createVueApp (renderOptions: VueRenderOptions): App {
+    protected override _createVueApp (renderOptions: VueRenderOptions): App {
       const context: VueApplicationContext<TDocument> = {
         ...this.context,
         isEditable: this.isEditable,
@@ -208,32 +214,19 @@ const useVueMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocu
     }
 
     /**
-     * Foundry calls this after replacing .window-content.
-     * We reattach our persistent vueRoot and update reactive context.
+     * Update document context before base _replaceHTML handles mounting.
      */
     protected override async _replaceHTML (
-      _result: any,
+      result: object,
       content: HTMLElement,
-      options: VueRenderOptions,
+      options: VueRenderOptions
     ): Promise<void> {
+      // Update context with current document state
       this.context.document = this.#document;
       this.context.appConfigOptions = this.options;
 
-      let root = content.querySelector<HTMLElement>('.vue-root');
-      if (!root) {
-        root = document.createElement('div');
-        root.classList.add('vue-root');
-
-        content.replaceChildren(root);
-      }
-
-      this.vueRoot = root;
-
-      // // First render: create context + mount Vue
-      if (!this.vueApp) {
-        this.vueApp = this._createVueApp(options);
-        this.vueApp.mount(this.vueRoot);
-      }
+      // Let base handle Vue mounting
+      await super._replaceHTML(result, content, options);
     }
 
     /**
@@ -241,7 +234,7 @@ const useVueMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocu
      */
     protected override async _onRender (
       context: ApplicationRenderContext,
-      options: ApplicationRenderOptions,
+      options: ApplicationRenderOptions
     ): Promise<void> {
       await super._onRender(context, options);
       this._renderHeaderButtons();
@@ -250,27 +243,24 @@ const useVueMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocu
     override async render (options?: boolean | DeepPartial<VueRenderOptions> | undefined): Promise<this> {
       return super.render(options);
     }
-
-    override async close (options?: fa.ApplicationClosingOptions): Promise<ApplicationV2> {
-      try {
-        this.vueApp?.unmount();
-      } finally {
-        this.vueApp = null;
-        this.vueRoot = null;
-      }
-      return super.close(options);
-    }
   }
 
   return VueApp;
 };
 
-type VueMixin<TBase extends ConstructorOf<DocumentSheetV2>, TDocument extends ItemDnd35e | DnD35eActiveEffect> = ReturnType<typeof useVueMixin<TBase, TDocument>>;
+/**
+ * Type for classes created by useVueDocumentSheetMixin.
+ * Combines base DocumentSheetV2 with document-specific members.
+ */
+type VueDocumentSheetMixin<
+  TBase extends AbstractConstructorOf<DocumentSheetV2>,
+  TDocument extends ItemDnd35e | DnD35eActiveEffect
+> = TBase & AbstractConstructorOf<VueDocumentSheetMembers<TDocument>>;
 
 export {
-  useVueMixin,
+  useVueDocumentSheetMixin,
 };
 export type {
-  VueMixin,
+  VueDocumentSheetMembers,
+  VueDocumentSheetMixin,
 };
-

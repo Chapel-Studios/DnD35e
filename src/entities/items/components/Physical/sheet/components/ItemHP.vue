@@ -1,22 +1,21 @@
 <template>
-  <FormGroup
+  <NumberFormGroup
     :editable="isEditable"
     label="HP"
     :value="currentHp"
-    @update="updateCurrentHp"
-    type="number"
+    :on-update="updateCurrentHp"
   />
-  <FormGroup
+  <NumberFormGroup
     :editable="isEditable"
+    label="Max HP"
     :value="maxHp"
-    @update="updateMaxHp"
-    type="number"
+    :on-update="updateMaxHp"
   />
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import { NumberFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemStore } from '@items/components/Physical/index.mjs';
 
   const {
     isEditable,
@@ -27,7 +26,7 @@
     documentActions: {
       getFieldUpdater,
     },
-  } = inject('documentSheetStore') as PhysicalItemStore;
+  } = inject('documentSheetStore') as PhysicalDocumentStore;
 
   const updateCurrentHp = getFieldUpdater('system.hp.value');
   const updateMaxHp = getFieldUpdater('system.hp.max');

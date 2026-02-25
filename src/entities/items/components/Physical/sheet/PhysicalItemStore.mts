@@ -10,23 +10,26 @@ import type { ComputedRef, Ref } from 'vue';
 import { computed } from 'vue';
 
 
-const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemLike>(context: VueApplicationContext<TDocument>, baseStore: ItemSheetStore<TDocument>): PhysicalItemStore => {
+const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemLike> (
+  context: VueApplicationContext<TDocument>,
+  baseStore: ItemSheetStore<TDocument>
+): PhysicalItemStore => {
   const document = baseStore._document as Ref<TDocument>;
   const identifiableStore = useIdentifiableStore(
     context,
-    baseStore as DocumentSheetStore<TDocument>,
+  baseStore as DocumentSheetStore<TDocument>
   );
 
   const physicalItemGetters = {
     quantity: computed(() => document.value.system.quantity),
-    weight: computed(() => document.value.system.weight),
+    weight: computed(() => document.value.system.weight ?? 0),
     price: computed(() => document.value.system.price),
-    resalePrice: computed(() => document.value.system.resalePrice),
-    brokenResalePrice: computed(() => document.value.system.brokenResalePrice),
+    resalePrice: computed(() => document.value.system.resalePrice ?? 0),
+    brokenResalePrice: computed(() => document.value.system.brokenResalePrice ?? 0),
     isBroken: computed(() => document.value.system.isBroken),
     maxHp: computed(() => document.value.system.hp.max),
     currentHp: computed(() => document.value.system.hp.value),
-    hardness: computed(() => document.value.system.hardness),
+    hardness: computed(() => document.value.system.hardness ?? 0),
     possibleContainers: computed(() => {
       // TODO: build this out after implementing containers
       return [{ value: null, label: game.i18n.localize('D35E.None') }];
@@ -37,7 +40,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     materials: computed(() => 
       document.value.effects
         .filter((effect) => effect.type === materialItemType)
-        .map((effect) => effect as unknown as MaterialType),
+        .map((effect) => effect as unknown as MaterialType)
     ),
   };
 

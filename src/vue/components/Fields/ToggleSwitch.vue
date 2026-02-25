@@ -45,13 +45,16 @@
     (e: 'update', value: boolean): void;
   }>();
 
-  // Get canEdit from store if available
-  const store = inject('documentSheetStore') as DocumentSheetStore;
-  const storeCanEdit = store.canEdit;
-  const localize = store.localize;
+  // Store is optional - allows use in settings dialogs without DocumentSheetStore
+  const store = inject('documentSheetStore', null) as DocumentSheetStore | null;
+
+  function localize(key: string): string {
+    return game.i18n.localize(key);
+  }
 
   // Compute whether the field is disabled
   const isDisabled = computed(() => {
+    const storeCanEdit = store?.canEdit;
     if (props.disabled) return true;
     // If editable prop is explicitly provided, use it
     if (props.editable !== undefined) return !props.editable;

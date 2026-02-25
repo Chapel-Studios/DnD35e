@@ -35,6 +35,7 @@
       "@constants/*": ["./src/constants/*"],
       "@helpers/*": ["./src/helpers/*"],
       "@scene/*": ["./src/scene/*"],
+      "@settings/*": ["./src/settings/*"],
       "@vc/*": ["./src/vue/components/*"],
       "@vueApps/*": ["./src/vue/apps/*"],
       "@vueStores/*": ["./src/vue/stores/*"],

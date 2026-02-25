@@ -42,7 +42,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   options: {
     defaultTabs?: SheetTab[];
     defaultActiveTab?: string;
-  } = {},
+  } = {}
 ): DocumentSheetStore<TDocument> => {
   // Core state
   // Use shallowRef to avoid Vue's deep reactivity wrapping Foundry's document proxy,
@@ -58,7 +58,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   const tabGetters = {
     activeTabId: computed(() => state.activeTab),
     tabs: computed(() => (state.tabs ?? []).sort(
-      (a, b) => (a.order ?? 0) - (b.order ?? 0),
+      (a, b) => (a.order ?? 0) - (b.order ?? 0)
     )),
     getIsTabOpen: (tabId: string) => computed(() => state.activeTab === tabId),
   };
@@ -103,7 +103,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   // Document actions
   const updateDocument = async (
     data: Partial<TDocument>,
-    options: Partial<DatabaseUpdateOperation<TDocument>> = {},
+    options: Partial<DatabaseUpdateOperation<TDocument>> = {}
   ) => {
     const updatedDoc = await document.value.update(data, options) as TDocument;
     if (updatedDoc) {
@@ -127,7 +127,6 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
   // Edit mode - uses shared sheetState from context
   const isEditMode = computed(() => context.sheetState.editMode);
-  const canEdit = computed(() => state.isEditable && isEditMode.value);
 
   const modeActions = {
     toggleEditMode: () => {
@@ -139,9 +138,8 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   };
 
   return {
-    isEditable: computed(() => state.isEditable),
+    isEditable: computed(() => state.isEditable && isEditMode.value),
     isEditMode,
-    canEdit,
     isFirstRender: computed(() => state.renderOptions?.isFirstRender),
     tabs: {
       tabGetters,
@@ -158,7 +156,6 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 type DocumentSheetStore<TDocument extends SheetDocument = SheetDocument> = {
   isEditable: ComputedRef<boolean>;
   isEditMode: ComputedRef<boolean>;
-  canEdit: ComputedRef<boolean>;
   isFirstRender: ComputedRef<boolean | undefined>;
   tabs: {
     tabGetters: {

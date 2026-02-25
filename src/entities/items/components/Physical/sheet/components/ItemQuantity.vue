@@ -1,16 +1,15 @@
 <template>
-  <FormGroup
+  <NumberFormGroup
     :editable="isEditable"
     label="Quantity"
     :value="quantity"
-    @update="updater"
-    type="number"
+    :on-update="updater"
   />
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import { NumberFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemStore } from '@items/components/Physical/index.mjs';
 
   const {
     isEditable,
@@ -20,7 +19,7 @@
     documentActions: {
       getFieldUpdater,
     },
-  } = inject('documentSheetStore') as PhysicalItemStore;
+  } = inject('documentSheetStore') as PhysicalDocumentStore;
 
   const updater = getFieldUpdater('system.quantity');
 </script>

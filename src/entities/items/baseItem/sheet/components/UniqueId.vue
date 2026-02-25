@@ -1,17 +1,16 @@
 <template>
   <div class="unique-id-container">
     <!-- UID Field -->
-    <FormGroup
+    <TextFormGroup
       label="UID"
-      type="text"
       :value="uniqueId"
-      :onUpdate="updateUUID"
+      :on-update="updateUUID"
     />
 
     <!-- Generate Button -->
     <button
       class="btn generate-uid"
-      :disabled="!canEdit"
+      :disabled="!isEditable"
       @click="generate"
       type="button"
     >
@@ -23,7 +22,7 @@
 
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-  import FormGroup from '@vc/Fields/FormGroup.vue';
+  import TextFormGroup from '@vc/Fields/FormGroups/TextFormGroup.vue';
   import { inject } from 'vue';
 
   const _field = 'system.uniqueId';
@@ -31,7 +30,7 @@
   const {
     documentGetters: { getProperty },
     documentActions: { getFieldUpdater },
-    canEdit,
+    isEditable,
     localize,
   } = inject('documentSheetStore') as DocumentSheetStore;
 

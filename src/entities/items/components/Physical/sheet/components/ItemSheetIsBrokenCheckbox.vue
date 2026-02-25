@@ -1,15 +1,14 @@
 <template>
-  <FormGroup
+  <CheckBoxFormGroup
     label="D35E.IsBroken"
     :value="isBroken"
-    :onUpdate="updater"
-    type="checkbox"
+    :on-update="updater"
     is-dm-only
   />
 </template>
 <script setup lang="ts">
   import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
   const {

@@ -4,32 +4,29 @@
       <h3 class="form-header">{{ localize(heading) }}</h3>
       <i v-if="showEffectHelper" class="fa-solid fa-wand-magic-sparkles"></i>
       
-      <FormGroup
+      <CheckBoxFormGroup
         class="name-formula-group"
         :label="localize(toggleLabel).value"
-        type="checkbox"
         :value="toggleValue"
         :editable="isEditable"
-        :onUpdate="getFieldUpdater(toggleField)"
+        :on-update="getFieldUpdater(toggleField)"
       />
     </div>
 
     <!-- Show direct name input if not using formula -->
-    <FormGroup
+    <TextFormGroup
       v-if="!toggleValue"
       :label="localize(nameLabel).value"
-      type="text"
       :value="nameValue"
       :editable="isEditable"
-      :onUpdate="getFieldUpdater(nameField)"
+      :on-update="getFieldUpdater(nameField)"
     />
-    <FormGroup
+    <TextFormGroup
       v-if="toggleValue"
       :label="localize(formulaLabel).value"
-      type="text"
       :value="formulaValue"
       :editable="isEditable"
-      :onUpdate="getFieldUpdater(formulaField)"
+      :on-update="getFieldUpdater(formulaField)"
     />
 
     <!-- Not sure if this message still makes sense. We can add something back here if we want later -->
@@ -41,7 +38,8 @@
 
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
+  import { TextFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
   interface Props {

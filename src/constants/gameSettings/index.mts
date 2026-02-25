@@ -1,9 +1,17 @@
 import { UnitOfMeasure } from './UnitOfMeasure.mjs';
 
-export type GameSettings = {
+type GameSettings = {
   unitOfMeasure: UnitOfMeasure;
 };
 
-export const defaultGameSettings = {
+const defaultGameSettings = {
   unitOfMeasure: UnitOfMeasure.IMPERIAL,
+};
+
+export {
+  defaultGameSettings,
+};
+
+export type {
+  GameSettings,
 };

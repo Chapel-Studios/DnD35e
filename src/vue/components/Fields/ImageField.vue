@@ -1,7 +1,7 @@
 <template>
   <img
     class="item-art"
-    :class="[props.class, { editable: canEdit }]"
+    :class="[props.class, { editable: isEditable }]"
     :src="currentImg"
     :title="props.title"
     @click="editImage"
@@ -21,14 +21,14 @@
   const {
     documentGetters: { getProperty },
     documentActions: { getFieldUpdater },
-    canEdit,
+    isEditable,
   } = inject('documentSheetStore') as DocumentSheetStore;
 
   const updateField = getFieldUpdater(props.field);
   const currentImg = getProperty<string>(props.field);
 
   async function editImage (event: MouseEvent) {
-    if (!canEdit.value) return;
+    if (!isEditable.value) return;
 
     event.preventDefault();
     event.stopPropagation();

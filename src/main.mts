@@ -3,6 +3,7 @@ import './styles/core.scss';
 import { registerEffects } from '@entities/activeEffects/registration.mjs';
 
 import { registerItems } from './entities/items/index.mjs';
+import { registerSettings } from './settings/index.mjs';
 
 // globalThis.fa = foundry.applications;
 // globalThis.fc = foundry.canvas;
@@ -22,6 +23,11 @@ CONFIG.Dnd35e = {
     },
   },
 };
+
+// Register system settings (must happen during init)
+Hooks.once('init', () => {
+  registerSettings();
+});
 
 registerItems();
 registerEffects();

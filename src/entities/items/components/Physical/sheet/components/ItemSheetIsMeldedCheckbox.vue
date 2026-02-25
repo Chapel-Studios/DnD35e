@@ -1,16 +1,15 @@
 <template>
-  <FormGroup
+  <CheckBoxFormGroup
     :editable="isEditable"
     label="Is Carried"
     :value="isCarried"
-    @update="updater"
-    type="checkbox"
+    :on-update="updater"
   />
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemStore } from '@items/components/Physical/index.mjs';
 
   const {
     isEditable,
@@ -20,7 +19,7 @@
     documentActions: {
       getFieldUpdater,
     },
-  } = inject('documentSheetStore') as PhysicalItemStore;
+  } = inject('documentSheetStore') as PhysicalDocumentStore;
 
   const updater = getFieldUpdater('system.isCarried');
 </script>

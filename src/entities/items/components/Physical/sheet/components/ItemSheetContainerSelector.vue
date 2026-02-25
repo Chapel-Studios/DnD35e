@@ -1,15 +1,14 @@
 <template>
-  <FormGroup
+  <SelectFormGroup
     label="Price"
     :value="currentContainerId"
-    :onUpdate="updater"
-    type="select"
+    :on-update="updater"
     :options="possibleContainers"
   />
 </template>
 <script setup lang="ts">
   import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { SelectFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
   const {

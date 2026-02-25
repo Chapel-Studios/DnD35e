@@ -24,7 +24,7 @@ const optionalStringField = (initialValue?: string) => {
 const requiredTypedStringField = <TChoices extends readonly string[]> (
   choices: TChoices,
   initial: string,
-  blank: boolean = false,
+  blank: boolean = false
 ) => new StringField<TChoices[number], TChoices[number], true, false, true>({
   choices,
   initial,
@@ -60,17 +60,14 @@ const requiredNullableNumberField = () =>
   new NumberField<number, number, true, true, false>({ required: true, nullable: true });
 
 export {
-  requiredStringField,
-  requiredNullableStringField,
-  optionalStringField,
   nullableOptionalStringField,
-  requiredTypedStringField,
-
   optionalHtmlField,
-
-  requiredBooleanField,
-
-  requiredNumberField,
-  requiredNullableNumberField,
   optionalNumberField,
+  optionalStringField,
+  requiredBooleanField,
+  requiredNullableNumberField,
+  requiredNullableStringField,
+  requiredNumberField,
+  requiredStringField,
+  requiredTypedStringField,
 };

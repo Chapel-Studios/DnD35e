@@ -1,0 +1,138 @@
+{
+  "DND35E.Settings.Title": "System Settings",
+  "DND35E.Settings.Save": "Save Changes",
+  "DND35E.Settings.Reset": "Reset to Defaults",
+
+  "DND35E.Settings.GameRules.Name": "Game Rules",
+  "DND35E.Settings.GameRules.Label": "Configure Game Rules",
+  "DND35E.Settings.GameRules.Hint": "Configure variant rules and game mechanics.",
+  "DND35E.Settings.GameRules.Title": "Game Rules Configuration",
+  "DND35E.Settings.GameRules.Movement": "Movement",
+  "DND35E.Settings.GameRules.Experience": "Experience",
+  "DND35E.Settings.GameRules.OptionalRules": "Optional Rules",
+
+  "DND35E.Settings.Combat.Name": "Combat Settings",
+  "DND35E.Settings.Combat.Label": "Configure Combat",
+  "DND35E.Settings.Combat.Hint": "Configure combat automation and mechanics.",
+  "DND35E.Settings.Combat.Title": "Combat Configuration",
+  "DND35E.Settings.Combat.Weapons": "Weapons",
+  "DND35E.Settings.Combat.Ammunition": "Ammunition",
+  "DND35E.Settings.Combat.Spellpoints": "Spellpoints",
+  "DND35E.Settings.Combat.Vision": "Vision",
+
+  "DND35E.Settings.Display.Name": "Display Settings",
+  "DND35E.Settings.Display.Label": "Configure Display",
+  "DND35E.Settings.Display.Hint": "Configure UI and display options.",
+  "DND35E.Settings.Display.Title": "Display Configuration",
+  "DND35E.Settings.Display.General": "General",
+  "DND35E.Settings.Display.Interface": "Interface",
+  "DND35E.Settings.Display.PartyHud": "Party HUD",
+  "DND35E.Settings.Display.ChatCards": "Chat Cards",
+
+  "DND35E.Settings.Health.Name": "Health Configuration",
+  "DND35E.Settings.Health.Label": "Configure Health",
+  "DND35E.Settings.Health.Hint": "Configure HP calculation and variant health rules.",
+  "DND35E.Settings.Health.Title": "Health Configuration",
+  "DND35E.Settings.Health.HitDice": "Hit Dice",
+  "DND35E.Settings.Health.Variants": "Variants",
+  "DND35E.Settings.Health.Reset": "Health configuration reset to defaults.",
+  "DND35E.Settings.Health.Updated": "Health configuration updated.",
+  "DND35E.Settings.Health.HitDiceInstructions": "Configure how hit points are calculated for each hit die type. Auto-compute will automatically calculate HP based on the rate multiplied by the hit die maximum. Maximized indicates how many levels have maximized hit dice.",
+  "DND35E.Settings.Health.VariantsInstructions": "Enable variant health systems for your game.",
+  "DND35E.Settings.Health.Auto": "Auto",
+  "DND35E.Settings.Health.Manual": "Manual",
+  "DND35E.Settings.Health.Rounding.Name": "HP Rounding",
+  "DND35E.Settings.Health.Rounding.Hint": "How to round fractional hit points.",
+  "DND35E.Settings.Health.Rounding.Up": "Round Up",
+  "DND35E.Settings.Health.Rounding.Nearest": "Round Nearest",
+  "DND35E.Settings.Health.Rounding.Down": "Round Down",
+  "DND35E.Settings.Health.Continuity.Name": "HP Continuity",
+  "DND35E.Settings.Health.Continuity.Hint": "How HP are calculated across levels.",
+  "DND35E.Settings.Health.Continuity.Continuous": "Continuous (running total)",
+  "DND35E.Settings.Health.Continuity.Discrete": "Discrete (per level)",
+  "DND35E.Settings.Health.WoundsAndVigor.PC.Name": "Wounds & Vigor (PCs)",
+  "DND35E.Settings.Health.WoundsAndVigor.PC.Hint": "Use the Wounds and Vigor variant health system for player characters.",
+  "DND35E.Settings.Health.WoundsAndVigor.NPC.Name": "Wounds & Vigor (NPCs)",
+  "DND35E.Settings.Health.WoundsAndVigor.NPC.Hint": "Use the Wounds and Vigor variant health system for non-player characters.",
+
+  "DND35E.Settings.DiagonalMovement.Name": "Diagonal Movement",
+  "DND35E.Settings.DiagonalMovement.Hint": "Configure the diagonal movement calculation rule.",
+  "DND35E.Settings.DiagonalMovement.PHB": "Player's Handbook (5-5-5)",
+  "DND35E.Settings.DiagonalMovement.DMG": "Dungeon Master's Guide (5-10-5)",
+
+  "DND35E.Settings.ExperienceRate.Name": "Experience Progression",
+  "DND35E.Settings.ExperienceRate.Hint": "The rate at which characters progress through experience levels.",
+  "DND35E.Settings.ExperienceRate.Slow": "Slow",
+  "DND35E.Settings.ExperienceRate.Medium": "Medium",
+  "DND35E.Settings.ExperienceRate.Fast": "Fast",
+
+  "DND35E.Settings.DisableExperienceTracking.Name": "Disable Experience Tracking",
+  "DND35E.Settings.DisableExperienceTracking.Hint": "Hide the XP bar for milestone or story-based advancement.",
+
+  "DND35E.Settings.FractionalBaseBonuses.Name": "Fractional Base Bonuses",
+  "DND35E.Settings.FractionalBaseBonuses.Hint": "Use the optional fractional base attack bonus and save progression rules.",
+
+  "DND35E.Settings.BackgroundSkills.Name": "Background Skills",
+  "DND35E.Settings.BackgroundSkills.Hint": "Enable the background skills optional ruleset.",
+
+  "DND35E.Settings.PsionicsAreDifferent.Name": "Psionics Are Different",
+  "DND35E.Settings.PsionicsAreDifferent.Hint": "Treat psionics as fundamentally different from magic (no spell/power interactions).",
+
+  "DND35E.Settings.MeasureStyle.Name": "Alternate Measure Style",
+  "DND35E.Settings.MeasureStyle.Hint": "Use alternate visual style for measuring distances.",
+
+  "DND35E.Settings.AutosizeWeapons.Name": "Autosize Weapons",
+  "DND35E.Settings.AutosizeWeapons.Hint": "Automatically resize weapons to match the wielder's size.",
+
+  "DND35E.Settings.AutoScaleAttacksBab.Name": "Auto-Scale Attacks",
+  "DND35E.Settings.AutoScaleAttacksBab.Hint": "Automatically generate iterative attacks based on BAB.",
+
+  "DND35E.Settings.AllowNoAmmo.Name": "Allow No Ammo",
+  "DND35E.Settings.AllowNoAmmo.Hint": "Allow ranged attacks even without ammunition.",
+
+  "DND35E.Settings.AutoAmmoRecovery.Name": "Auto Ammo Recovery",
+  "DND35E.Settings.AutoAmmoRecovery.Hint": "Automatically recover ammunition after combat.",
+
+  "DND35E.Settings.NoAutoSpellpointsCost.Name": "Manual Spellpoint Cost",
+  "DND35E.Settings.NoAutoSpellpointsCost.Hint": "Disable automatic spellpoint cost calculation.",
+
+  "DND35E.Settings.SpellpointCostFormula.Name": "Spellpoint Cost Formula",
+  "DND35E.Settings.SpellpointCostFormula.Hint": "Custom formula for calculating spellpoint costs (leave blank for default).",
+
+  "DND35E.Settings.LowLightVisionMode.Name": "Low-Light Vision Mode",
+  "DND35E.Settings.LowLightVisionMode.Hint": "Enable enhanced low-light vision handling for tokens.",
+
+  "DND35E.Settings.Units.Name": "Unit System",
+  "DND35E.Settings.Units.Hint": "The measurement system used for distances and weights.",
+  "DND35E.Settings.Units.Imperial": "Imperial (feet, pounds)",
+  "DND35E.Settings.Units.Metric": "Metric (meters, kilograms)",
+
+  "DND35E.Settings.PartyHud.Name": "Party HUD",
+  "DND35E.Settings.PartyHud.Hint": "Display a party status HUD on the screen.",
+  "DND35E.Settings.PartyHud.Full": "Full Party HUD",
+  "DND35E.Settings.PartyHud.Narrow": "Narrow Party HUD",
+  "DND35E.Settings.PartyHud.None": "No Party HUD",
+
+  "DND35E.Settings.PartyHudTokenImage.Name": "Party HUD Token Images",
+  "DND35E.Settings.PartyHudTokenImage.Hint": "Show token images instead of portraits in the party HUD.",
+
+  "DND35E.Settings.CustomSkin.Name": "Custom Skin",
+  "DND35E.Settings.CustomSkin.Hint": "Use the custom D&D 3.5e visual theme.",
+
+  "DND35E.Settings.ColorblindColors.Name": "Colorblind-Friendly Colors",
+  "DND35E.Settings.ColorblindColors.Hint": "Use a colorblind-friendly color palette.",
+
+  "DND35E.Settings.TransparentSidebar.Name": "Transparent Sidebar",
+  "DND35E.Settings.TransparentSidebar.Hint": "Make the sidebar semi-transparent when using the custom theme.",
+
+  "DND35E.Settings.AutoCollapseItemCards.Name": "Auto-Collapse Item Cards",
+  "DND35E.Settings.AutoCollapseItemCards.Hint": "Automatically collapse item descriptions in chat cards.",
+
+  "DND35E.Settings.ClassFeaturesInTabs.Name": "Class Features in Tabs",
+  "DND35E.Settings.ClassFeaturesInTabs.Hint": "Display class features in multiple tabs instead of a single list.",
+
+  "DND35E.Settings.HideSpellDescriptions.Name": "Hide Spell Descriptions",
+  "DND35E.Settings.HideSpellDescriptions.Hint": "Hide spell descriptions in item lists to save space.",
+
+  "DND35E.HitDie": "Hit Die"
+}

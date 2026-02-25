@@ -1,14 +1,13 @@
 <template>
-  <FormGroup
+  <CheckBoxFormGroup
     label="Is Carried"
     :value="isCarried"
-    :onUpdate="updater"
-    type="checkbox"
+    :on-update="updater"
   />
 </template>
 <script setup lang="ts">
   import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
   const {

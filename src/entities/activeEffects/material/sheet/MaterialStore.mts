@@ -15,7 +15,7 @@ const useMaterialStore = (context: any) => {
   const baseStore = useActiveEffectConfigStore<MaterialType>(context);
   const identifiableStore = useIdentifiableStore(
     context,
-    baseStore as unknown as DocumentSheetStore<MaterialType>,
+    baseStore as unknown as DocumentSheetStore<MaterialType>
   );
   baseStore.tabs.tabActions.appendTabs([
     materialDetailsTab,
@@ -26,9 +26,9 @@ const useMaterialStore = (context: any) => {
   const document = baseStore._document as unknown as Ref<MaterialType>;
 
   const materialGetters = {
-    bonusHardness: computed(() => document.value.system.bonusHardness),
-    bonusHpPerInch: computed(() => document.value.system.bonusHpPerInch),
-    magicEquivalent: computed(() => document.value.system.magicEquivalent),
+    bonusHardness: computed(() => document.value.system.bonusHardness ?? 0),
+    bonusHpPerInch: computed(() => document.value.system.bonusHpPerInch ?? 0),
+    magicEquivalent: computed(() => document.value.system.magicEquivalent ?? 0),
     isAlchemicalSilverEquivalent: computed(() => document.value.system.isAlchemicalSilverEquivalent),
     isAdamantineEquivalent: computed(() => document.value.system.isAdamantineEquivalent),
     isColdIronEquivalent: computed(() => document.value.system.isColdIronEquivalent),

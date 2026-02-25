@@ -1,14 +1,14 @@
 <template>
-  <FormGroup
+  <NumberFormGroup
     v-if="showUnidentified"
     label="Unid. Price"
     :value="unidentifiedPrice"
-    :onUpdate="updater"
+    :on-update="updater"
   />
 </template>
 <script setup lang="ts">
   import { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { NumberFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
   const {
