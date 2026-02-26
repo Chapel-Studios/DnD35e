@@ -54,7 +54,7 @@
 
   // Compute whether the field is disabled
   const isDisabled = computed(() => {
-    const storeCanEdit = store?.canEdit;
+    const storeCanEdit = store?.isEditable;
     if (props.disabled) return true;
     // If editable prop is explicitly provided, use it
     if (props.editable !== undefined) return !props.editable;

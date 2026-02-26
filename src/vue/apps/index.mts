@@ -1,5 +1,10 @@
-import { VueCombatSettingsConfig } from '../../settings/UI/VueCombatSettingsConfig.mjs';
-import { VueGameRulesSettingsConfig } from '../../settings/UI/VueGameRulesSettingsConfig.mjs';
+/**
+ * Vue application utilities
+ *
+ * This module exports shared Vue mixins and base classes.
+ * Settings-specific Vue components are in their respective settings folders.
+ */
+
 import { VueActiveEffectConfig } from './VueActiveEffectConfig.mjs';
 import type { VueAppBaseMembers, VueAppBaseMixin } from './VueAppBaseMixin.mjs';
 import { useVueAppBaseMixin } from './VueAppBaseMixin.mjs';
@@ -26,8 +31,6 @@ export {
   useVueDocumentSheetMixin,
   useVueSettingsMixin,
   VueActiveEffectConfig,
-  VueCombatSettingsConfig,
-  VueGameRulesSettingsConfig,
   VueItemSheet,
 };
 
@@ -46,3 +49,4 @@ export type {
   VueSettingsMixin,
   VueSettingsRenderOptions,
 };
+

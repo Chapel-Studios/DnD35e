@@ -3,7 +3,7 @@
     <div class="editor-header">
       <label v-if="label">{{ label }}</label>
       <button
-        v-if="canEdit && !isEditing"
+        v-if="isEditable && !isEditing"
         type="button"
         class="edit-button"
         :aria-label="`Edit ${label || 'description'}`"
@@ -38,7 +38,7 @@
   const store = inject('documentSheetStore') as DocumentSheetStore;
   const { getProperty, documentUuid } = store.documentGetters;
   const { updateDocument } = store.documentActions;
-  const { canEdit } = store;
+  const { isEditable } = store;
   const document = store._document;
 
   const rawValue = getProperty<string>(props.field);

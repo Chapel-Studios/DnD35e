@@ -6,16 +6,13 @@ import {
   ToggleSwitch,
   UniqueId,
 } from './Fields/index.mjs';
-import {
-  HealthSettingsApp,
-} from './Settings/index.mjs';
 
 export {
   DocumentSheetBody,
   FormGroup,
-  HealthSettingsApp,
   ImageField,
   RichTextEditor,
   ToggleSwitch,
   UniqueId,
 };
+

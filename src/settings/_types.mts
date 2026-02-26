@@ -1,98 +1,59 @@
 /**
  * Type definitions for dnd35e system settings
+ *
+ * Category-specific types are defined in their respective folders.
+ * This file re-exports them for backwards compatibility and defines base types.
  */
 
-/**
- * Diagonal movement calculation rules
- */
-export type DiagonalMovementRule = '555' | '5105';
+// Import category types for use in SystemSettings
+import type { CurrencyConfig, CurrencyEntry } from './currency/_types.mjs';
+import type { PartyHudMode, UnitSystem } from './display/_types.mjs';
+import type { DiagonalMovementRule, ExperienceRate } from './gameRules/_types.mjs';
+import type { HealthConfig, HitDieConfig } from './health/_types.mjs';
+import type { RollConfig, RollModeConfig } from './roll/_types.mjs';
+import type { CustomSkill, SkillSettings } from './skills/_types.mjs';
+
+// Re-export category types
+export type {
+  CurrencyConfig,
+  CurrencyEntry,
+  CustomSkill,
+  DiagonalMovementRule,
+  ExperienceRate,
+  HealthConfig,
+  HitDieConfig,
+  PartyHudMode,
+  RollConfig,
+  RollModeConfig,
+  SkillSettings,
+  UnitSystem,
+};
 
 /**
- * Experience progression rate
+ * Setting scope - determines where the setting is stored
  */
-export type ExperienceRate = 'slow' | 'medium' | 'fast';
+export type SettingScope = 'world' | 'client';
 
 /**
- * Unit of measurement system
+ * Base setting configuration
  */
-export type UnitSystem = 'imperial' | 'metric';
-
-/**
- * Party HUD display mode
- */
-export type PartyHudMode = 'full' | 'narrow' | 'none';
-
-/**
- * Hit die computation method
- */
-export interface HitDieConfig {
-  /** Whether to auto-compute HP */
-  auto: boolean;
-  /** Rate multiplier for HP calculation */
-  rate: number;
-  /** Number of levels to maximize HD */
-  maximized: string;
-}
-
-/**
- * Health configuration settings
- */
-export interface HealthConfig {
-  hitdice: {
-    PC: HitDieConfig;
-    NPC: HitDieConfig;
-    Racial: HitDieConfig;
-  };
-  /** Rounding mode for HP calculations */
-  rounding: 'up' | 'nearest' | 'down';
-  /** HP continuity mode */
-  continuity: 'continuous' | 'discrete';
-  /** Variant health rules */
-  variants: {
-    pc: { useWoundsAndVigor: boolean };
-    npc: { useWoundsAndVigor: boolean };
-  };
-}
-
-/**
- * Roll configuration settings
- */
-export interface RollConfig {
-  /** Whether to skip dialog for standard rolls */
-  skipDialogs: boolean;
-  /** Auto-apply damage on hit */
-  autoApplyDamage: boolean;
-  /** Show attack/damage breakdown */
-  showBreakdown: boolean;
-}
-
-/**
- * Currency configuration settings
- */
-export interface CurrencyConfig {
-  /** Custom currency names (comma-separated) */
-  names: string;
-  /** Conversion rates */
-  conversionRates: {
-    pp: number;
-    gp: number;
-    sp: number;
-    cp: number;
-  };
-}
-
-/**
- * World default settings
- */
-export interface WorldDefaults {
-  /** Default actor type for new actors */
-  defaultActorType: string;
-  /** Auto-calculate encumbrance */
-  autoEncumbrance: boolean;
+export interface SettingConfig<T> {
+  name: string;
+  hint?: string;
+  scope: SettingScope;
+  config: boolean;
+  type: typeof String | typeof Number | typeof Boolean | typeof Object;
+  default: T;
+  choices?: Record<string, string>;
+  onChange?: (value: T) => void;
+  requiresReload?: boolean;
 }
 
 /**
  * All system settings mapped by key
+ *
+ * Note: This is a comprehensive type that imports from all category modules.
+ * For individual setting types, import from the specific category module.
  */
 export interface SystemSettings {
   // Core/Hidden settings
@@ -125,25 +86,6 @@ export interface SystemSettings {
   healthConfig: HealthConfig;
   rollConfig: RollConfig;
   currencyConfig: CurrencyConfig;
-  worldDefaults: WorldDefaults;
+  skillSettings: SkillSettings;
 }
 
-/**
- * Setting scope - determines where the setting is stored
- */
-export type SettingScope = 'world' | 'client';
-
-/**
- * Base setting configuration
- */
-export interface SettingConfig<T> {
-  name: string;
-  hint?: string;
-  scope: SettingScope;
-  config: boolean;
-  type: typeof String | typeof Number | typeof Boolean | typeof Object;
-  default: T;
-  choices?: Record<string, string>;
-  onChange?: (value: T) => void;
-  requiresReload?: boolean;
-}
