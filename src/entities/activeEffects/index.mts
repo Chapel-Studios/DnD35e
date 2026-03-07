@@ -1,4 +1,3 @@
-import type { DnD35eActiveEffectFlags } from './BaseActiveEffect/DnD35eActiveEffect.mjs';
 import { DnD35eActiveEffect } from './BaseActiveEffect/DnD35eActiveEffect.mjs';
 import type {
   EffectTarget,
@@ -13,7 +12,6 @@ export {
 };
 
 export type {
-  DnD35eActiveEffectFlags,
   EffectTarget,
   EffectType,
   EffectTypeLocalizationValues,

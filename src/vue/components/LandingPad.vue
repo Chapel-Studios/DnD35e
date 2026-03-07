@@ -35,17 +35,17 @@
 </template>
 
 <script setup lang="ts">
-  import { ItemDnd35e, ItemSheetDnd35e } from '@items/baseItem/index.mjs';
-  import { VueRenderOptions } from '@vueApps/VueAppTypes.mjs';
-  import { onMounted,ref, watch } from 'vue';
-
+  /**
+   * @deprecated This component is currently unused. Slated for refactoring or removal.
+   */
+  import { onMounted, ref, watch } from 'vue';
 
   interface Props {
     /** List of UUIDs already attached to the document */
     uuids: string[];
     isEditable: boolean;
     onRemoveItem: (uuid: string) => void;
-    onAddItem: (uuid: string) => void;
+    onAddItem?: (uuid: string) => void;
 
     /** Optional: restrict to specific item types */
     acceptedTypes?: string[];
@@ -73,16 +73,13 @@
     const resolved: itemData[] = [];
 
     for (const uuid of props.uuids) {
-      const item = (await foundry.utils.fromUuid(uuid)) as ItemDnd35e;
-      if (item instanceof Item) {
+      const doc = await foundry.utils.fromUuid(uuid);
+      if (doc instanceof Item) {
         resolved.push({
-          name: item.displayName,
+          name: doc.name ?? '',
           uuid,
           renderSheet: () => {
-            (item.sheet as ItemSheetDnd35e)?.render({
-              force: true,
-              isEditable: false,
-            } as VueRenderOptions);
+            doc.sheet?.render(true);
           },
         });
       }
@@ -127,7 +124,7 @@
       return;
     }
 
-    props.onAddItem(data.uuid);
+    props.onAddItem?.(data.uuid);
   }
 </script>
 

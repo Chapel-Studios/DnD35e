@@ -8,7 +8,7 @@
     <div class="form-container">
 
       <!-- Hardness -->
-      <TextFormGroup
+      <NumberFormGroup
         label="D35E.Hardness"
         :value="bonusHardness"
         :editable="isEditable"
@@ -16,7 +16,7 @@
       />
 
       <!-- HP per Inch -->
-      <TextFormGroup
+      <NumberFormGroup
         label="D35E.HpPerInch"
         :value="bonusHpPerInch"
         :editable="isEditable"
@@ -26,7 +26,7 @@
       <!-- Magic Equivalent -->
       <h3 class="form-header">{{ localize("D35E.MagicEquivalent") }}</h3>
 
-      <TextFormGroup
+      <NumberFormGroup
         label="D35E.MagicEquivalent"
         :value="magicEquivalent"
         :editable="isEditable"
@@ -62,7 +62,6 @@
       <!-- GM‑Only Section -->
       <template v-if="userIsGM">
         <h3 class="form-header">{{ localize("D35E.SystemProperties") }}</h3>
-        <IdentifiableConfig />
         <UniqueId />
       </template>
 
@@ -71,10 +70,8 @@
 </template>
 
 <script setup lang="ts">
-  import { IdentifiableConfig } from '@ec/Identifiable/index.mjs';
   import type { MaterialStore } from '@effects/material/index.mjs';
-  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
-  import { TextFormGroup } from '@vc/Fields/index.mjs';
+  import { CheckBoxFormGroup, NumberFormGroup } from '@vc/Fields/index.mjs';
   import { UniqueId } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 

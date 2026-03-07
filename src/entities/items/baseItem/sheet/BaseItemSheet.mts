@@ -30,7 +30,7 @@ abstract class ItemSheetDnd35e<
    * Title shown in the window header.
    */
   override get title (): string {
-    return this.document.displayName;
+    return this.document.name ?? '';
   }
 
   /**
@@ -38,7 +38,7 @@ abstract class ItemSheetDnd35e<
    * VueApplication will merge this into the reactive context.
    */
   protected override async _prepareContext (
-    options: VueRenderOptions,
+    options: VueRenderOptions
   ): Promise<BaseItemSheetRenderContext<ItemType, TDocument>> {
     return {
       editable: this.isEditable,

@@ -50,7 +50,7 @@ class DnD35eActiveEffect<TParent extends ActorDnd35e | ItemDnd35e<ItemType> | nu
 const ActiveEffectProxyDnd35e = new Proxy(DnD35eActiveEffect, {
   construct (
     _target,
-    args: [source: PreCreate<Dnd35eActiveEffectSource>, context?: DocumentConstructionContext<ActorDnd35e | ItemDnd35e<ItemType> | null>],
+    args: [source: PreCreate<Dnd35eActiveEffectSource>, context?: DocumentConstructionContext<ActorDnd35e | ItemDnd35e<ItemType> | null>]
   ) {
     const [source] = args;
     const type = source?.type;

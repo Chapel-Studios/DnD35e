@@ -1,8 +1,15 @@
 <template>
-  <Details
-    :name-heading="nameHeading"
-    :name-label="nameLabel"
-  >
+  <Details>
+    <!-- DESCRIPTION SECTION -->
+    <template #description-section>
+      <!-- Effects use default description from Effects tab typically -->
+    </template>
+
+    <!-- GM-ONLY SECTION SLOT -->
+    <template #gm-section>
+      <UniqueId v-if="hasIdentifiable" />
+    </template>
+
     <!-- TINT -->
     <ColorFormGroup
       label="EFFECT.Tint"
@@ -40,17 +47,10 @@
       :options="showIconOptions"
       :on-update="getFieldUpdater('showIcon')"
     />
-
-    <!-- GM-ONLY SECTION SLOT -->
-    <template #gm-section>
-      <IdentifiableConfig v-if="hasIdentifiable" />
-      <UniqueId v-if="hasIdentifiable" />
-    </template>
   </Details>
 </template>
 
 <script setup lang="ts">
-  import { IdentifiableConfig } from '@ec/Identifiable/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import Details from '@items/baseItem/sheet/tabs/Details.vue';
   import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
@@ -100,7 +100,4 @@
       }))
       .reverse();
   });
-
-  const nameHeading = game.i18n.localize('EFFECT.Name');
-  const nameLabel = game.i18n.localize('EFFECT.Name');
 </script>

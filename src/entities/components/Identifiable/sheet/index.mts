@@ -1,4 +1,5 @@
 import IdentifiableConfig from './components/IdentifiableConfig.vue';
+import IdentifiableDefaultHeaderName from './components/IdentifiableDefaultHeaderName.vue';
 import IdentifiableDocumentName from './components/IdentifiableDocumentName.vue';
 import IdentifiableDocumentPrice from './components/IdentifiableDocumentPrice.vue';
 import IdentifiedViewToggle from './components/IdentifiedViewToggle.vue';
@@ -19,6 +20,7 @@ import {
 
 export {
   IdentifiableConfig,
+  IdentifiableDefaultHeaderName,
   identifiableDescriptionTab,
   IdentifiableDetails,
   IdentifiableDocumentName,

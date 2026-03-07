@@ -1,11 +1,11 @@
 <script lang="ts" setup>
   import {
+    DefaultHeaderName,
     DocumentHeader,
-    DocumentName,
-    NameArtWrapper,
+    ItemArt,
   } from '@ec/CoreMixin/index.mjs';
   import type { ItemDnd35e } from '@items/baseItem/index.mjs';
-  import { ItemSheetStore, useItemSheetStore } from '@items/baseItem/index.mjs';
+  import { useItemSheetStore } from '@items/baseItem/index.mjs';
   import type { ItemType } from '@items/itemTypes.mjs';
   import { DocumentSheetBody } from '@vc/index.mjs';
   import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
@@ -22,23 +22,18 @@
   if (props.context) {
     provide('documentSheetStore', store);
   }
-
-  const {
-    documentGetters: {
-      displayName,
-    },
-  } = store as ItemSheetStore;
 </script>
 
 <template>
   <DocumentSheetBody>
     <template #header>
       <DocumentHeader>
-        <NameArtWrapper>
+        <ItemArt />
+        <div class="item-name-container">
           <slot name="header-name">
-            <DocumentName label-key="D35E.ItemName" :value="displayName" />
+            <DefaultHeaderName />
           </slot>
-        </NameArtWrapper>
+        </div>
 
         <template #status>
           <slot name="status"></slot>
@@ -58,5 +53,15 @@
   .sheet-tab {
     padding: 0.5rem 0.5rem 0 0;
     overflow: auto;
+  }
+
+  .name-and-art {
+    display: flex;
+  }
+
+  .item-name-container {
+    display: flex;
+    flex-direction: column;
+    padding: 0.25rem 1.5rem;
   }
 </style>

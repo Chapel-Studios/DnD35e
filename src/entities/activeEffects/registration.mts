@@ -1,4 +1,5 @@
 import { EffectConfig } from '@constants/config/activeEffect.mjs';
+import { ensureNameFormulaOnCreate } from '@ec/CoreMixin/index.mjs';
 import { ActiveEffectProxyDnd35e } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
 import { MaterialSheet, MaterialSystemModel } from '@effects/material/index.mjs';
 
@@ -15,7 +16,7 @@ const registerEffectSheets = () => {
       {
         types: [effectType],
         makeDefault: true,
-      },
+      }
     );
   }
 };
@@ -32,6 +33,10 @@ export const registerEffects = () => {
 
   foundry.helpers.Hooks.once('setup', () => {
     registerEffectSheets();
+  });
+
+  Hooks.on('preCreateActiveEffect', (document, _data, _options, _userId) => {
+    ensureNameFormulaOnCreate(document);
   });
 };
 

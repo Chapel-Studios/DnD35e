@@ -23,7 +23,7 @@
       getFieldUpdater,
     },
     identifiableGetters: { unidentifiedPrice },
-    unidentifiedInfoMode: { showIdentified },
+    unidentifiedVisibilityMode: { showIdentified },
   } = documentSheetStore as PhysicalDocumentStore;
 
   const activeValue = computed(() => showIdentified
@@ -32,6 +32,6 @@
   );
   const activeUpdater = computed(() => showIdentified
     ? getFieldUpdater('system.price')
-    : getFieldUpdater('system.unidentifiedInfo.unidentifiedPrice')
+    : getFieldUpdater('system.unidentifiedPrice')
   );
 </script>

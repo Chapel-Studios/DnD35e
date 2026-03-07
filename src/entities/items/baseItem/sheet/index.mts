@@ -2,7 +2,6 @@ import { ItemSheetDnd35e } from './BaseItemSheet.mjs';
 import type { BaseItemSheetRenderContext } from './BaseItemSheet.mts';
 import BaseItemSheetVue from './BaseItemSheet.vue';
 import {
-  DefaultHeaderName,
   EffectCategory,
 } from './components/index.mjs';
 import type {
@@ -22,7 +21,6 @@ export {
   BaseItemSheetVue,
   defaultDescriptionTab,
   defaultEffectsTab,
-  DefaultHeaderName,
   EffectCategory,
   Effects,
   getDefaultItemTabs,

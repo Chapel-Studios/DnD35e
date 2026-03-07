@@ -6,18 +6,6 @@
     :data-tab="tabName"
   >
     <div class="form-container">
-      <!-- NAME CONFIGURATION SECTION -->
-      <NameConfig
-        :heading="nameHeading"
-        :nameLabel="nameLabel"
-        :nameValue="name"
-        :toggleValue="isNameFromFormula"
-        :formulaValue="nameFormula"
-        :isEditable="isEditable"
-        :getFieldUpdater="getFieldUpdater"
-        :localize="localize"
-      />
-
       <!-- DESCRIPTION SECTION -->
       <DescriptionEditor :localize="localize" />
 
@@ -38,20 +26,15 @@
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import DescriptionEditor from '@ec/CoreMixin/sheet/components/DescriptionEditor.vue';
-  import NameConfig from '@ec/CoreMixin/sheet/components/NameConfig.vue';
   import { UniqueId } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
   interface Props {
     tabName?: string;
-    nameHeading?: string;
-    nameLabel?: string;
   }
 
   const props = withDefaults(defineProps<Props>(), {
     tabName: 'description',
-    nameHeading: 'D35E.ItemName',
-    nameLabel: 'D35E.ItemName',
   });
 
   defineSlots<{
@@ -64,15 +47,6 @@
     tabs: {
       tabGetters: { getIsTabOpen },
     },
-    documentGetters: {
-      name,
-      isNameFromFormula,
-      nameFormula,
-    },
-    documentActions: {
-      getFieldUpdater,
-    },
-    isEditable,
     localize,
   } = store;
 

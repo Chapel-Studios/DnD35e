@@ -1,7 +1,6 @@
 import {
-  nullableOptionalStringField,
+  formulaField,
   optionalStringField,
-  requiredBooleanField,
   requiredStringField,
 } from '@helpers/fieldBuilders.mjs';
 
@@ -13,8 +12,8 @@ const {
 const applyBaseDnd35eSystemSchema = (schema: Record<string, any>) => {
   schema.version = requiredStringField('1.0.0');
   schema.uniqueId = optionalStringField();
-  schema.nameFormula = nullableOptionalStringField();
-  schema.isNameFromFormula = requiredBooleanField(false);
+  schema.derivedName = requiredStringField();
+  schema.nameFormula = formulaField();
   schema.description = new SchemaField({
     value: new HTMLField(),
   });

@@ -1,8 +1,10 @@
 import Actor from '@client/documents/actor.mjs';
+import { DocumentConstructionContext } from '@common/_types.mjs';
 import EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import type { DnD35eActiveEffect, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
+import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
 import { TokenDocumentDnd35e } from '@scene/token-document/TokenDocumentDnd35e.mjs';
@@ -11,7 +13,8 @@ interface AppliedActorEffectChange extends Dnd35eEffectChangeData {
   effect: DnD35eActiveEffect;
 }
 
-class ActorDnd35e<TParent extends TokenDocumentDnd35e | null = TokenDocumentDnd35e | null> extends Actor<TParent> {
+
+class ActorDnd35e<TToken extends TokenDocumentDnd35e | null = TokenDocumentDnd35e | null> extends Actor<TToken> {
   declare readonly effects: EmbeddedCollection<DnD35eActiveEffect<this>>;
   declare readonly items: EmbeddedCollection<ItemDnd35e<ItemType, this>>;
 
@@ -70,7 +73,7 @@ class ActorDnd35e<TParent extends TokenDocumentDnd35e | null = TokenDocumentDnd3
   }
 
   /**
-   * Override to properly type the generator for our effect types.
+   * Override to iterate all applicable effects from actor and transferred item effects.
    */
   override *allApplicableEffects(): Generator<DnD35eActiveEffect<this | ItemDnd35e<ItemType, this>>, void, void> {
     for ( const effect of this.effects ) {
@@ -84,4 +87,19 @@ class ActorDnd35e<TParent extends TokenDocumentDnd35e | null = TokenDocumentDnd3
   }
 }
 
-export { ActorDnd35e };
+const ActorProxyDnd35e = new Proxy(ActorDnd35e, {
+  construct (
+    _target,
+    args: [source: PreCreate<foundry.documents.ActorSource>, context?: DocumentConstructionContext<ActorDnd35e | null>]
+  ) {
+    const [source] = args;
+    const type = source?.type;
+    const ActorClass = CONFIG.Dnd35e.actor.documentClasses[type] as unknown as typeof ActorDnd35e;
+    if (!ActorClass) {
+      LogHelper.error(`Actor type ${type} does not exist or is not properly supported for ActorProxyDnd35e`);
+    }
+    return new ActorClass(...args);
+  },
+});
+
+export { ActorDnd35e, ActorProxyDnd35e };

@@ -3,6 +3,10 @@
     :label="label"
     :hint="hint"
     :is-dm-only="isDmOnly"
+    :field-path="fieldPath"
+    :default-visibility="defaultVisibility"
+    :default-editability="defaultEditability"
+    :value="value"
   >
     <select
       :value="value"
@@ -24,6 +28,7 @@
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
+  import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
 
   interface SelectOption {
@@ -37,6 +42,9 @@
     value: any;
     options: SelectOption[];
     isDmOnly?: boolean;
+    fieldPath?: string;
+    defaultVisibility?: FieldVisibility;
+    defaultEditability?: FieldEditability;
     /** Only used for overriding store behavior. */
     disabled?: boolean;
     onUpdate: (value: any) => void;

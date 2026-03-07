@@ -1,14 +1,11 @@
-import { applyBaseDnd35eSystemSchema } from '@ec/CoreMixin/index.mjs';
+import { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSystemModel.mjs';
 import { ACTIVE_EFFECT_TARGETS, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS } from '@effects/BaseActiveEffect/index.mjs';
 import { EFFECT_TARGET } from '@effects/effectTypes.mjs';
+import { ensureNameFormula } from '@helpers/formulae/index.mjs';
 
-class ActiveEffectSystemModelBase extends foundry.abstract.TypeDataModel<
-  foundry.documents.ActiveEffect,
-  foundry.abstract.DataSchema
-> {
-  declare parent: foundry.documents.ActiveEffect;
-
-  static override defineSchema (): Record<string, any> {
+class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.documents.ActiveEffect> {
+  static override defineSchema(): Record<string, any> {
+    const superSchema = super.defineSchema();
     const schema = {
       target: new foundry.data.fields.StringField({
         required: true,
@@ -32,11 +29,15 @@ class ActiveEffectSystemModelBase extends foundry.abstract.TypeDataModel<
             initial: EFFECT_CHANGE_TARGET.ITEM,
           }),
         }),
-        { initial: [] },
+        { initial: [] }
       ),
     };
-    applyBaseDnd35eSystemSchema(schema);
-    return schema;
+    
+    return foundry.utils.mergeObject(superSchema, schema);
+  }
+
+  override prepareBaseData (): void {
+    ensureNameFormula(this, this.parent.name);
   }
 }
 

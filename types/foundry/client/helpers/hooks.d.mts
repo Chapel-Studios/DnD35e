@@ -6,6 +6,7 @@ import Canvas from '@client/canvas/board.mjs';
 import LightingLayer from '@client/canvas/layers/lighting.mjs';
 import Token from '@client/canvas/placeables/token.mjs';
 import {
+  ActiveEffect,
   Actor,
   Combat,
   Item,
@@ -26,9 +27,10 @@ import type ActorDirectory from '../applications/sidebar/tabs/actor-directory.mj
 import type Hotbar from '../applications/ui/hotbar.mjs';
 import type SceneControls from '../applications/ui/scene-controls.mjs';
 import type { SceneControl } from '../applications/ui/scene-controls.mjs';
-import Application from '../appv1/api/application-v1.mjs';
-import Dialog from '../appv1/api/dialog-v1.mjs';
-import { JournalPageSheet, JournalTextPageSheet } from '../appv1/sheets/journal-page-sheet.mjs';
+// AppV1 imports — commented out; all remaining render hooks use ApplicationV2
+// import Application from '../appv1/api/application-v1.mjs';
+// import Dialog from '../appv1/api/dialog-v1.mjs';
+// import { JournalPageSheet, JournalTextPageSheet } from '../appv1/sheets/journal-page-sheet.mjs';
 
 type HookCallback<P extends unknown[]> = (...args: P) => boolean | void | Promise<boolean | void>;
 type HookParameters<H extends string, C extends unknown[]> = [hook: H, callback: HookCallback<C>];
@@ -50,7 +52,11 @@ type HookParamsHotbarDrop = HookParameters<'hotbarDrop', [Hotbar<Macro>, DropCan
 type HookParamsLightingRefresh = HookParameters<'lightingRefresh', [LightingLayer]>;
 type HookParamsPreCreateItem = HookParameters<
     'preCreateItem',
-    [PreCreate<foundry.documents.ItemSource>, DatabaseCreateOperation<Actor | null>, string]
+    [Item<Actor | null>, object, DatabaseCreateOperation<Actor | null>, string]
+>;
+type HookParamsPreCreateActiveEffect = HookParameters<
+    'preCreateActiveEffect',
+    [ActiveEffect, object, DatabaseCreateOperation<Actor | Item | null>, string]
 >;
 type HooksParamsPreUpdateCombat = HookParameters<
     'preUpdateCombat',
@@ -66,11 +72,16 @@ type HookParamsPreUpdateToken = HookParameters<
         string,
     ]
 >;
-type HookParamsRender<T extends Application | ApplicationV2, N extends string> = HookParameters<
+// AppV1 render hook type — commented out
+// type HookParamsRender<T extends Application | ApplicationV2, N extends string> = HookParameters<
+//     `render${N}`,
+//     T extends Application
+//         ? [T, JQuery, Awaited<ReturnType<T['getData']>>]
+//         : [T, HTMLElement, T extends ApplicationV2<infer _First, infer _Second, infer U> ? U : never]
+// >;
+type HookParamsRender<T extends ApplicationV2, N extends string> = HookParameters<
     `render${N}`,
-    T extends Application
-        ? [T, JQuery, Awaited<ReturnType<T['getData']>>]
-        : [T, HTMLElement, T extends ApplicationV2<infer _First, infer _Second, infer U> ? U : never]
+    [T, HTMLElement, T extends ApplicationV2<infer _First, infer _Second, infer U> ? U : never]
 >;
 type HookParamsTargetToken = HookParameters<'targetToken', [User, Token<TokenDocument<Scene>>, boolean]>;
 type HookParamsUpdate<T extends foundry.abstract.Document, N extends string> = HookParameters<
@@ -103,25 +114,26 @@ export default class Hooks {
   static on(...args: HookParamsHotbarDrop): number;
   static on(...args: HookParamsLightingRefresh): number;
   static on(...args: HookParamsPreCreateItem): number;
+  static on(...args: HookParamsPreCreateActiveEffect): number;
   static on(...args: HooksParamsPreUpdateCombat): number;
   static on(...args: HookParamsPreUpdateToken): number;
   static on(...args: HookParamsRender<ChatLog, 'ChatLog'>): number;
   static on(...args: HookParamsRender<CombatTrackerConfig, 'CombatTrackerConfig'>): number;
   static on(...args: HookParamsRender<CompendiumDirectory, 'CompendiumDirectory'>): number;
-  static on(...args: HookParamsRender<Dialog, 'Dialog'>): number;
+  // static on(...args: HookParamsRender<Dialog, 'Dialog'>): number;
   static on(...args: HookParamsRender<DialogV2, 'DialogV2'>): number;
-  static on(...args: HookParamsRender<ActorDirectory<Actor<null>>, 'ActorDirectory'>): number;
-  static on(...args: HookParamsRender<ItemDirectory<Item<null>>, 'ItemDirectory'>): number;
+  // static on(...args: HookParamsRender<ActorDirectory<Actor<null>>, 'ActorDirectory'>): number;
+  // static on(...args: HookParamsRender<ItemDirectory<Item<null>>, 'ItemDirectory'>): number;
   static on(...args: HookParamsRender<SceneControls, 'SceneControls'>): number;
   static on(...args: HookParamsRender<SettingsConfig, 'SettingsConfig'>): number;
   static on(...args: HookParamsRender<TokenHUD, 'TokenHUD'>): number;
-  static on(
-        ...args: HookParamsRender<JournalPageSheet<JournalEntryPage<JournalEntry | null>>, 'JournalPageSheet'>
-    ): number;
+  // static on(
+  //       ...args: HookParamsRender<JournalPageSheet<JournalEntryPage<JournalEntry | null>>, 'JournalPageSheet'>
+  //   ): number;
 
-  static on(
-        ...args: HookParamsRender<JournalTextPageSheet<JournalEntryPage<JournalEntry | null>>, 'JournalTextPageSheet'>
-    ): number;
+  // static on(
+  //       ...args: HookParamsRender<JournalTextPageSheet<JournalEntryPage<JournalEntry | null>>, 'JournalTextPageSheet'>
+  //   ): number;
 
   static on(...args: HookParamsRender<ApplicationV2, 'RegionLegend'>): number;
   static on(...args: HookParamsTargetToken): number;
@@ -150,20 +162,21 @@ export default class Hooks {
   static once(...args: HookParamsHotbarDrop): number;
   static once(...args: HookParamsLightingRefresh): number;
   static once(...args: HookParamsPreCreateItem): number;
+  static once(...args: HookParamsPreCreateActiveEffect): number;
   static once(...args: HookParamsPreUpdateToken): number;
-  static once(...args: HookParamsRender<ActorDirectory<Actor<null>>, 'ActorDirectory'>): number;
+  // static once(...args: HookParamsRender<ActorDirectory<Actor<null>>, 'ActorDirectory'>): number;
   static once(...args: HookParamsRender<ChatLog, 'ChatLog'>): number;
   static once(...args: HookParamsRender<CombatTrackerConfig, 'CombatTrackerConfig'>): number;
   static once(...args: HookParamsRender<CompendiumDirectory, 'CompendiumDirectory'>): number;
-  static once(...args: HookParamsRender<Dialog, 'Dialog'>): number;
-  static once(...args: HookParamsRender<ItemDirectory<Item<null>>, 'ItemDirectory'>): number;
-  static once(
-        ...args: HookParamsRender<JournalPageSheet<JournalEntryPage<JournalEntry | null>>, 'JournalPageSheet'>
-    ): number;
+  // static once(...args: HookParamsRender<Dialog, 'Dialog'>): number;
+  // static once(...args: HookParamsRender<ItemDirectory<Item<null>>, 'ItemDirectory'>): number;
+  // static once(
+  //       ...args: HookParamsRender<JournalPageSheet<JournalEntryPage<JournalEntry | null>>, 'JournalPageSheet'>
+  //   ): number;
 
-  static once(
-        ...args: HookParamsRender<JournalTextPageSheet<JournalEntryPage<JournalEntry | null>>, 'JournalTextPageSheet'>
-    ): number;
+  // static once(
+  //       ...args: HookParamsRender<JournalTextPageSheet<JournalEntryPage<JournalEntry | null>>, 'JournalTextPageSheet'>
+  //   ): number;
 
   static once(...args: HookParamsRender<SceneControls, 'SceneControls'>): number;
   static once(...args: HookParamsRender<TokenHUD, 'TokenHUD'>): number;

@@ -17,6 +17,7 @@ import type {
 } from './sheet/index.mjs';
 import {
   equipableHeaderStatus,
+  EquippableItemSheet,
   ItemIsMelded,
   ItemIsWeightlessWhenEquipped,
   useEquippableItemStore,
@@ -37,6 +38,7 @@ export {
   applyEquippablePrototype,
   applyEquippableSchema,
   equipableHeaderStatus,
+  EquippableItemSheet,
   equippableOverrides,
   ItemIsMelded,
   ItemIsWeightlessWhenEquipped,

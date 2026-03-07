@@ -58,6 +58,9 @@ declare global {
       },
       activeEffect: {
         documentClasses: Record<string, new (...args: any[]) => DnD35eActiveEffect>;
+      },
+      actor: {
+        documentClasses: Record<string, new (...args: any[]) => ActorDnd35e>;
       }
     };
   }

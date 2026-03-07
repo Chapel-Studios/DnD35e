@@ -1,3 +1,4 @@
+import DmControl from './DmControl.vue';
 import DocumentSheetBody from './DocumentSheetBody.vue';
 import {
   FormGroup,
@@ -8,6 +9,7 @@ import {
 } from './Fields/index.mjs';
 
 export {
+  DmControl,
   DocumentSheetBody,
   FormGroup,
   ImageField,

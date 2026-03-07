@@ -6,17 +6,6 @@
     data-tab="details"
   >
     <div class="form-container">
-      <!-- NAME CONFIGURATION SECTION -->
-      <slot name="name-section">
-        <NameConfig
-          :heading="nameHeading"
-          :nameLabel="nameLabel"
-          :nameValue="name"
-          :toggleValue="isNameFromFormula"
-          :formulaValue="nameFormula"
-        />
-      </slot>
-
       <!-- DESCRIPTION SECTION -->
       <slot name="description-section">
         <DescriptionEditor />
@@ -39,36 +28,13 @@
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import DescriptionEditor from '@ec/CoreMixin/sheet/components/DescriptionEditor.vue';
-  import NameConfig from '@ec/CoreMixin/sheet/components/NameConfig.vue';
   import { UniqueId } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-
-  interface Props {
-    nameHeading?: string;
-    nameLabel?: string;
-  }
-
-  withDefaults(defineProps<Props>(), {
-    nameHeading: 'D35E.ItemName',
-    nameLabel: 'D35E.ItemName',
-  });
-
-  defineSlots<{
-    'name-section'(): any;
-    'description-section'(): any;
-    default(): any;
-    'gm-section'(): any;
-  }>();
 
   const store = inject('documentSheetStore') as DocumentSheetStore;
   const {
     tabs: {
       tabGetters: { getIsTabOpen },
-    },
-    documentGetters: {
-      name,
-      isNameFromFormula,
-      nameFormula,
     },
     localize,
   } = store;

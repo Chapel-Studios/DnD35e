@@ -13,8 +13,7 @@ import type {
   WithIdentifiableComponent,
 } from './IdentifiableItem.mjs';
 import {
-  applyIdentifiablePrototype,
-  identifiableOverrides,
+  IdentifiableDocumentMixin,
 } from './IdentifiableItem.mjs';
 import type {
   IdentifiableDocumentSheetRenderContext,
@@ -23,6 +22,7 @@ import type {
 } from './sheet/index.mjs';
 import {
   IdentifiableConfig,
+  IdentifiableDefaultHeaderName,
   identifiableDescriptionTab,
   IdentifiableDetails,
   IdentifiableDocumentName,
@@ -47,16 +47,16 @@ export type {
   WithIdentifiableComponent,
 };
 export {
-  applyIdentifiablePrototype,
   applyIdentifiableSchema,
   IdentifiableConfig,
+  IdentifiableDefaultHeaderName,
   identifiableDescriptionTab,
   IdentifiableDetails,
+  IdentifiableDocumentMixin,
   IdentifiableDocumentName,
   IdentifiableDocumentPrice,
   IdentifiableDocumentSheetVue,
   IdentifiableHeader,
-  identifiableOverrides,
   IdentifiedViewToggle,
   ItemUnidentifiedPrice,
   useIdentifiableStore,

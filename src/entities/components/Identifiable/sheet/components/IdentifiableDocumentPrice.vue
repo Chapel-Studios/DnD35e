@@ -18,10 +18,10 @@
     documentActions: {
       getFieldUpdater,
     },
-    unidentifiedInfoMode: {
+    unidentifiedVisibilityMode: {
       showUnidentified,
     },
   } = inject('documentSheetStore') as IdentifiableDocumentStore;
 
-  const updater = getFieldUpdater('system.unidentifiedInfo.unidentifiedPrice');
+  const updater = getFieldUpdater('system.unidentifiedPrice');
 </script>

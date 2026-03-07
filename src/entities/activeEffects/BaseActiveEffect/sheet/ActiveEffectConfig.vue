@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-  import { DocumentHeader, DocumentName, NameArtWrapper } from '@ec/CoreMixin/index.mjs';
+  import { DocumentHeader, DocumentName, ItemArt } from '@ec/CoreMixin/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import type { DnD35eActiveEffect } from '@effects/index.mjs';
@@ -30,11 +30,11 @@
   <DocumentSheetBody>
     <template #header>
       <DocumentHeader>
-        <NameArtWrapper>
+        <ItemArt>
           <slot name="header-name">
             <DocumentName label-key="EFFECT.Name" :value="displayName" />
           </slot>
-        </NameArtWrapper>
+        </ItemArt>
 
         <template name="header-status">
           <slot name="status"></slot>

@@ -2,22 +2,20 @@
   <component :is="baseComponent">
     <template #header-name>
       <slot name="header-name">
-        <IdentifiableDocumentName />
+        <IdentifiableDefaultHeaderName />
       </slot>
     </template>
-    <template #status>
-      <slot name="header-status">
-      </slot>
+    <template v-if="$slots['header-status']" #status>
+      <slot name="header-status" />
     </template>
-    <template #header-summary>
-      <slot name="header-summary">
-      </slot>
+    <template v-if="$slots['header-summary']" #header-summary>
+      <slot name="header-summary" />
     </template>
   </component>
 </template>
 
 <script lang="ts" setup>
-  import { IdentifiableDocumentName } from '@ec/Identifiable/index.mjs';
+  import { IdentifiableDefaultHeaderName } from '@ec/Identifiable/index.mjs';
   import { ActiveEffectConfigVue, useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { BaseItemSheetVue, useItemSheetStore } from '@items/baseItem/index.mjs';
   import { computed, provide } from 'vue';

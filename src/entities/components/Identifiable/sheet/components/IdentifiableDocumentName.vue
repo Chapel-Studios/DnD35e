@@ -22,7 +22,7 @@
   import { computed, inject } from 'vue';
 
   const {
-    unidentifiedInfoMode: {
+    unidentifiedVisibilityMode: {
       showBoth,
       showIdentified,
       showUnidentified,

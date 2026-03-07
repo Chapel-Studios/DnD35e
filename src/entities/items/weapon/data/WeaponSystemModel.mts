@@ -10,7 +10,7 @@ import {
 } from '@helpers/fieldBuilders.mjs';
 import { ItemSystemModelBase } from '@items/baseItem/index.mjs';
 import { applyEquippableSchema } from '@items/components/Equippable/index.mjs';
-import { WEAPON_SUBTYPES, WEAPON_TYPES, WEAPOON_BASE_TYPES } from '@items/weapon/index.mjs';
+import { WEAPON_BASE_TYPES,WEAPON_SUBTYPES, WEAPON_TYPES } from '@items/weapon/index.mjs';
 
 const {
   fields: {
@@ -25,9 +25,9 @@ class WeaponSystemModel extends ItemSystemModelBase {
     applyEquippableSchema(schema);
 
     schema.isMasterwork = requiredBooleanField(false);
-    schema.weaponType = requiredTypedStringField(WEAPON_TYPES, 'D35E.WeaponTypeSimple');
-    schema.weaponSubtype = requiredTypedStringField(WEAPON_SUBTYPES, 'D35E.WeaponPropLight');
-    schema.weaponBaseType = requiredTypedStringField(WEAPOON_BASE_TYPES, '', true);
+    schema.weaponType = requiredTypedStringField(WEAPON_TYPES, 'simple');
+    schema.weaponSubtype = requiredTypedStringField(WEAPON_SUBTYPES, 'light');
+    schema.weaponBaseType = requiredTypedStringField(WEAPON_BASE_TYPES, '', true);
     schema.weaponDamage = new SchemaField({
       damageRoll: requiredNullableStringField(),
       damageType: requiredTypedStringField(DAMAGE_TYPES, 'D35E.DRSlashing'),

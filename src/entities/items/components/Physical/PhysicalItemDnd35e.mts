@@ -2,10 +2,10 @@ import type {
   IdentifiableDocument,
   IdentifiableDocumentSourceProps,
 } from '@ec/Identifiable/index.mjs';
-import {
-  applyIdentifiablePrototype,
-  identifiableOverrides,
-} from '@ec/Identifiable/index.mjs';
+// import {
+//   applyIdentifiablePrototype,
+//   identifiableOverrides,
+// } from '@ec/Identifiable/index.mjs';
 import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/index.mjs';
 
@@ -32,17 +32,17 @@ type PhysicalItemLike = ItemDnd35e<ItemType>
   & PhysicalItem;
 
 const applyPhysicalPrototype = <T extends typeof ItemDnd35e<ItemType>> (item: T) => {
-  applyIdentifiablePrototype(item);
+  // applyIdentifiablePrototype(item);
   // applyDamagableRuntime(item);
 };
 
-const physicalOverrides = {
-  displayName: identifiableOverrides.displayName,
-};
+// const physicalOverrides = {
+//   displayName: identifiableOverrides.displayName,
+// };
 
 export {
   applyPhysicalPrototype,
-  physicalOverrides,
+  // physicalOverrides,
 };
 
 export type {

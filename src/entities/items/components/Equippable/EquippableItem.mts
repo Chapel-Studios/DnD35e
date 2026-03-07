@@ -1,6 +1,6 @@
 import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import type { PhysicalItem, PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
-import { applyPhysicalPrototype, physicalOverrides } from '@items/components/Physical/index.mjs';
+import { applyPhysicalPrototype } from '@items/components/Physical/index.mjs';
 import type { ItemType } from '@items/index.mjs';
 
 import type { EquippableItemSystemData, EquippableItemSystemSource } from './index.mjs';
@@ -28,7 +28,7 @@ const applyEquippablePrototype = <T extends typeof ItemDnd35e<ItemType>> (item: 
 };
 
 const equippableOverrides = {
-  displayName: physicalOverrides.displayName,
+  // displayName: physicalOverrides.displayName,
 };
 
 export {

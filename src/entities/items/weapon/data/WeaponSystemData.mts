@@ -1,7 +1,7 @@
 import { ItemSystemData } from '@items/baseItem/index.mjs';
 import { EquippableItemSystemData } from '@items/components/Equippable/index.mjs';
 
-import { WeaponBaseType, WeaponSubtype } from './index.mjs';
+import { WeaponBaseType, WeaponSubtype, WeaponType } from './index.mjs';
 
 type WeaponDamage = {
   damageRoll: string;
@@ -15,7 +15,7 @@ type WeaponDamage = {
 
 interface WeaponSystemSource {
   isMasterwork: boolean;
-  weaponType: string;
+  weaponType: WeaponType;
   weaponSubtype: WeaponSubtype;
   weaponBaseType: WeaponBaseType;
   weaponDamage: WeaponDamage;

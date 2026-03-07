@@ -3,6 +3,10 @@
     :label="label"
     :hint="hint"
     :is-dm-only="isDmOnly"
+    :field-path="fieldPath"
+    :default-visibility="defaultVisibility"
+    :default-editability="defaultEditability"
+    :value="displayValue"
   >
     <select
       multiple
@@ -25,6 +29,7 @@
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
+  import type { FieldEditability,FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
 
   interface SelectOption {
@@ -38,6 +43,9 @@
     value: any[];
     options: SelectOption[];
     isDmOnly?: boolean;
+    fieldPath?: string;
+    defaultVisibility?: FieldVisibility;
+    defaultEditability?: FieldEditability;
     /** Only used for overriding store behavior. */
     disabled?: boolean;
     onUpdate: (value: any[]) => void;
@@ -57,4 +65,6 @@
   function onChange(val: any[]) {
     props.onUpdate(val);
   }
+
+  const displayValue = computed(() => props.value.join(', '));
 </script>

@@ -1,12 +1,13 @@
 import { ActiveEffectSource } from '@common/documents/active-effect.mjs';
+import type { Dnd35eDocumentFlags } from '@ec/CoreMixin/index.mjs';
 import {
-  applyIdentifiablePrototype,
+  // applyIdentifiablePrototype,
   IdentifiableDocument,
-  IdentifiableDocumentLike,
+  // IdentifiableDocumentLike,
   IdentifiableDocumentSourceProps,
-  identifiableOverrides,
+  // identifiableOverrides,
 } from '@ec/Identifiable/index.mjs';
-import { DnD35eActiveEffect, DnD35eActiveEffectFlags } from '@effects/BaseActiveEffect/index.mjs';
+import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
 import { MaterialSystemData, MaterialSystemSource } from '@effects/material/index.mjs';
 
 const materialItemType = 'material';
@@ -15,12 +16,14 @@ type MaterialItemType = typeof materialItemType;
 type MaterialSource = ActiveEffectSource<MaterialItemType, MaterialSystemSource>
   & Omit<IdentifiableDocumentSourceProps, 'system'>;
 
-type MaterialEffectFlags = any;
+interface MaterialEffectFlags {
+  // Add material-specific flags here as needed
+}
 
 class Material extends DnD35eActiveEffect {
   declare type: MaterialItemType;
   declare system: MaterialSystemData;
-  declare flags: DnD35eActiveEffectFlags<MaterialEffectFlags>;
+  declare flags: Dnd35eDocumentFlags<MaterialEffectFlags>;
   // declare _sheet: ItemSheetDnd35e<ItemDnd35e<MaterialItemType>> | null;
   // declare get sheet(): ItemSheetDnd35e<ItemDnd35e<'material'>> | null;
   // declare readonly _source: MaterialSource;
@@ -38,12 +41,12 @@ class Material extends DnD35eActiveEffect {
     super.prepareBaseData();
   }
 
-  override get displayName (): string {
-    return identifiableOverrides.displayName(this as unknown as IdentifiableDocumentLike);
-  }
+  // override get displayName (): string {
+  //   return identifiableOverrides.displayName(this as unknown as IdentifiableDocumentLike);
+  // }
 }
 
-applyIdentifiablePrototype(Material);
+// applyIdentifiablePrototype(Material);
 
 type MaterialType = Omit<IdentifiableDocument, 'system'> & Material;
 

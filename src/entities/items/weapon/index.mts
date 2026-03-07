@@ -7,10 +7,15 @@ import type {
   WeaponType,
 } from './data/index.mjs';
 import {
+  buildWeaponIntellisense,
+  WEAPON_BASE_TYPES,
+  WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,
+  WEAPON_TYPE_LOCALIZED,
   WEAPON_TYPES,
+  weaponSubtypeSelectOptions,
   WeaponSystemModel,
-  WEAPOON_BASE_TYPES,
+  weaponTypeSelectOptions,
 } from './data/index.mjs';
 import type {
   WeaponSheetConfig,
@@ -30,17 +35,22 @@ import {
 } from './Weapon.mjs';
 
 export {
+  buildWeaponIntellisense,
   useWeaponStore,
   Weapon,
+  WEAPON_BASE_TYPES,
+  WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,
+  WEAPON_TYPE_LOCALIZED,
   WEAPON_TYPES,
   WeaponDetails,
   weaponDetailsTab,
   WeaponSheet,
   WeaponSheetVue,
+  weaponSubtypeSelectOptions,
   WeaponSummary,
   WeaponSystemModel,
-  WEAPOON_BASE_TYPES,
+  weaponTypeSelectOptions,
 };
 
 export type {

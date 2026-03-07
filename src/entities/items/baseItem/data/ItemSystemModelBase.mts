@@ -1,6 +1,4 @@
-import {
-  applyBaseDnd35eSystemSchema,
-} from '@ec/CoreMixin/index.mjs';
+import { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSystemModel.mjs';
 import {
   requiredBooleanField,
   requiredStringField,
@@ -10,29 +8,21 @@ const {
   SchemaField,
 } = foundry.data.fields;
 
-abstract class ItemSystemModelBase extends foundry.abstract.TypeDataModel<
-  foundry.documents.Item,
-  foundry.abstract.DataSchema
-> {
-  declare parent: foundry.documents.Item;
-
+abstract class ItemSystemModelBase extends Dnd35eDocumentSystemModel<foundry.documents.Item> {
   static override defineSchema (): Record<string, any> {
+    const superSchema = super.defineSchema();
     const schema = {
-      // System Base
-
       origin: new SchemaField({
         originId: requiredStringField(),
         originVersion: requiredStringField(),
         originPack: requiredStringField(),
       }),
 
-
       isPsionic: requiredBooleanField(),
       isEpic: requiredBooleanField(),
     };
-
-    applyBaseDnd35eSystemSchema(schema);
-    return schema;
+        
+    return foundry.utils.mergeObject(superSchema, schema);
   }
 }
 

@@ -6,7 +6,7 @@
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
 import type { DocumentSheetV2 } from '@client/applications/api/_module.mjs';
 import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import type { ItemDnd35e } from '@items/baseItem/index.mjs';
+import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { App } from 'vue';
 import { createApp, reactive } from 'vue';
 

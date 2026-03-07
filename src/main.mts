@@ -1,6 +1,7 @@
 import './styles/core.scss';
 
 import { registerEffects } from '@entities/activeEffects/registration.mjs';
+import { registerActors } from '@entities/actors/registration.mjs';
 
 import { registerItems } from './entities/items/index.mjs';
 import { registerSettings } from './settings/index.mjs';
@@ -22,6 +23,10 @@ CONFIG.Dnd35e = {
     documentClasses: {
     },
   },
+  actor: {
+    documentClasses: {
+    },
+  },
 };
 
 // Register system settings (must happen during init)
@@ -30,4 +35,5 @@ Hooks.once('init', () => {
 });
 
 registerItems();
+registerActors();
 registerEffects();

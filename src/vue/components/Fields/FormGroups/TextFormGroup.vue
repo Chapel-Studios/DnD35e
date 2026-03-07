@@ -3,6 +3,10 @@
     :label="label"
     :hint="hint"
     :is-dm-only="isDmOnly"
+    :field-path="fieldPath"
+    :default-visibility="defaultVisibility"
+    :default-editability="defaultEditability"
+    :value="value"
   >
     <input
       type="text"
@@ -17,6 +21,7 @@
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
+  import type { FieldEditability,FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
 
   const props = defineProps<{
@@ -24,6 +29,9 @@
     hint?: string;
     value: string;
     isDmOnly?: boolean;
+    fieldPath?: string;
+    defaultVisibility?: FieldVisibility;
+    defaultEditability?: FieldEditability;
     /** Only used for overriding store behavior. */
     disabled?: boolean;
     onUpdate: (value: string) => void;

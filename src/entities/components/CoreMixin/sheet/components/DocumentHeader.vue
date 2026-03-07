@@ -5,7 +5,7 @@
     </slot>
 
     <div class="item-subtitle">
-      <h4 class="item-type">{{itemType}}</h4>
+      <h4 class="item-type">{{localizedType}}</h4>
       <slot name="status"></slot>
     </div>
     <slot name="summary"></slot>
@@ -14,27 +14,26 @@
 
 <script lang="ts" setup>
   import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/useDocumentSheetStore.mjs';
-  import {
-    DefaultHeaderName,
-  } from '@items/baseItem/index.mjs';
   import { inject } from 'vue';
 
-  const { documentGetters: { getItemTypeDisplay } } = inject('documentSheetStore') as DocumentSheetStore;
+  import DefaultHeaderName from './DefaultHeaderName.vue';
 
-  const itemType = getItemTypeDisplay();
+  const { documentGetters: { localizedType } } = inject('documentSheetStore') as DocumentSheetStore;
+
 </script>
 
 <style scoped lang="scss">
   .item-header {
     display: grid;
-    grid-template: auto / 3fr minmax(80px, 1fr);
+    grid-template: auto / 130px 3fr minmax(80px, auto);
+    margin-bottom: 0.5rem;
   }
 
   .item-subtitle {
     flex: 0 0 80px;
     height: 60px;
     margin: 0;
-    padding: 5px;
+    padding: 1rem;
     text-align: right;
     color: #7a7971;
   }

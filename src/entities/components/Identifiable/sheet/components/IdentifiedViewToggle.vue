@@ -16,7 +16,7 @@
   import { computed, inject } from 'vue';
 
   const {
-    unidentifiedInfoMode: { showBoth },
+    unidentifiedVisibilityMode: { showBoth },
     editorViewMode,
     editorViewActions,
     identifiableGetters: { isIdentifiable },

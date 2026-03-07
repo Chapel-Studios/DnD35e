@@ -27,8 +27,8 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   _completedActiveEffectPhases: Set<string>;
 
   override prepareBaseData (): void {
-    this._completedActiveEffectPhases.clear();
     super.prepareBaseData();
+    this._completedActiveEffectPhases = new Set();
   }
 
   /**
@@ -152,7 +152,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 const ItemProxyDnd35e = new Proxy(ItemDnd35e, {
   construct (
     _target,
-    args: [source: PreCreate<ItemSourceDnd35e>, context?: DocumentConstructionContext<ActorDnd35e | null>],
+    args: [source: PreCreate<ItemSourceDnd35e>, context?: DocumentConstructionContext<ActorDnd35e | null>]
   ) {
     const [source] = args;
     const type = source?.type;

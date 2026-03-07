@@ -18,11 +18,13 @@ import {
   FINAL_EFFECT_CHANGE_PHASE,
   INITIAL_EFFECT_CHANGE_PHASE,
 } from './data/index.mjs';
+import type {
+  DnD35eActiveEffectFlags,
+} from './DnD35eActiveEffect.mjs';
 import {
   ActiveEffectProxyDnd35e,
   DnD35eActiveEffect,
 } from './DnD35eActiveEffect.mjs';
-import type { DnD35eActiveEffectFlags } from './DnD35eActiveEffect.mts';
 import type { ActiveEffectConfigStore } from './sheet/index.mjs';
 import {
   ActiveEffectConfigVue,

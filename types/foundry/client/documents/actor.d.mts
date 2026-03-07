@@ -46,7 +46,7 @@ declare interface ClientBaseActor<TParent extends TokenDocument | null>
  * let actor = game.actors.get(actorId);
  * ```
  */
-declare class Actor<TParent extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TParent> {
+declare class Actor<TToken extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TToken> {
   protected override _configure(options?: object): void;
 
   protected override _initializeSource(source: Record<string, unknown>, options?: object): this['_source'];
@@ -83,7 +83,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
   get temporaryEffects(): ActiveEffect<Actor | Item>[];
 
   /** Return a reference to the TokenDocument which owns this Actor as a synthetic override */
-  get token(): TParent;
+  get token(): TToken;
 
   /** Whether the Actor has at least one Combatant in the active Combat that represents it. */
   get inCombat(): boolean;
@@ -135,7 +135,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
   getTokenDocument(
         data?: DeepPartial<foundry.documents.TokenSource>,
         options?: Partial<DocumentConstructionContext<this>>,
-    ): Promise<NonNullable<TParent>>;
+    ): Promise<NonNullable<TToken>>;
 
   /** Get an Array of Token images which could represent this Actor */
   getTokenImages(): Promise<(ImageFilePath | VideoFilePath)[]>;
@@ -210,30 +210,30 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
      * @param [options.linked] Limit the results to tokens that are linked to the actor.
      */
   getDependentTokens(options?: {
-        scenes?: NonNullable<NonNullable<TParent>['parent']> | NonNullable<NonNullable<TParent>['parent']>[];
+        scenes?: NonNullable<NonNullable<TToken>['parent']> | NonNullable<NonNullable<TToken>['parent']>[];
         linked?: boolean;
-    }): NonNullable<TParent>[];
+    }): NonNullable<TToken>[];
 
   /**
      * Register a token as a dependent of this actor.
      * @param token  The token.
      * @internal
      */
-  _registerDependentToken(token: NonNullable<TParent>): void;
+  _registerDependentToken(token: NonNullable<TToken>): void;
 
   /**
      * Remove a token from this actor's dependents.
      * @param token The token.
      * @internal
      */
-  _unregisterDependentToken(token: NonNullable<TParent>): void;
+  _unregisterDependentToken(token: NonNullable<TToken>): void;
 
   /**
      * Prune a whole scene from this actor's dependent tokens.
      * @param scene The scene.
      * @internal
      */
-  _unregisterDependentScene(scene: NonNullable<NonNullable<TParent>['parent']>): void;
+  _unregisterDependentScene(scene: NonNullable<NonNullable<TToken>['parent']>): void;
 
   /* -------------------------------------------- */
   /*  Event Handlers                              */
@@ -282,11 +282,11 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
      */
   protected _updateDependentTokens(
         update?: Record<string, unknown>,
-        options?: DatabaseUpdateOperation<TParent>,
+        options?: DatabaseUpdateOperation<TToken>,
     ): void;
 }
 
-declare interface Actor<TParent extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TParent> {
+declare interface Actor<TToken extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TToken> {
     readonly effects: EmbeddedCollection<ActiveEffect<this>>;
     readonly items: EmbeddedCollection<Item<this>>;
 

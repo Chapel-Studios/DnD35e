@@ -13,7 +13,6 @@ import type {
 } from './PhysicalItemDnd35e.mjs';
 import {
   applyPhysicalPrototype,
-  physicalOverrides,
 } from './PhysicalItemDnd35e.mjs';
 import type {
   PhysicalDocumentStore,
@@ -43,7 +42,6 @@ export {
   ItemSheetIsCarriedCheckbox,
   ItemWeight,
   PhysicalItemSheet,
-  physicalOverrides,
   usePhysicalItemStore,
 };
 

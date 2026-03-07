@@ -1,16 +1,13 @@
 <template>
   <IdentifiableDocumentSheetVue>
-    <template #header-name>
-      <slot name="header-name">
-      </slot>
+    <template v-if="$slots['header-name']" #header-name>
+      <slot name="header-name" />
     </template>
-    <template #header-status>
-      <slot name="header-status">
-      </slot>
+    <template v-if="$slots['header-status']" #header-status>
+      <slot name="header-status" />
     </template>
-    <template #header-summary>
-      <slot name="header-summary">
-      </slot>
+    <template v-if="$slots['header-summary']" #header-summary>
+      <slot name="header-summary" />
     </template>
   </IdentifiableDocumentSheetVue>
 </template>

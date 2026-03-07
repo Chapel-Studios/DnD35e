@@ -9,7 +9,7 @@ type WeaponSheetRenderContext = PhysicalItemSheetRenderContext & {
   document: Weapon;
 };
 
-class WeaponSheet extends ItemSheetDnd35e<Weapon> {
+class WeaponSheet extends ItemSheetDnd35e {
   get vueComponent () {
     return WeaponSheetVue;
   }

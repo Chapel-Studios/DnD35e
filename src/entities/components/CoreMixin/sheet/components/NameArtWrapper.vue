@@ -1,13 +1,6 @@
 <template>
-  <div class="name-and-art">
-    <div class="item-art-container">
-      <ImageField field="img" :title="displayName" class="item-art" />
-    </div>
-    <div class="item-name-container">
-      <slot>
-        <!-- Name field goes here -->
-      </slot>
-    </div>
+  <div class="item-art-container">
+    <ImageField field="img" :title="displayName" class="item-art" />
   </div>
 </template>
 
@@ -24,9 +17,6 @@
 </script>
 
 <style scoped lang="scss">
-  .name-and-art {
-    display: flex;
-  }
 
   .item-art-container {
     flex: 0 128px;
@@ -39,11 +29,5 @@
       object-fit: contain;
       border: 2px solid #000;
     }
-  }
-
-  .item-name-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
   }
 </style>

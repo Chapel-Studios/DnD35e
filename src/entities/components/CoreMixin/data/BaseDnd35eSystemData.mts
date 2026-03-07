@@ -1,3 +1,5 @@
+import type { FormulaFieldData } from '@helpers/formulae/types.mjs';
+
 type ItemDescription = {
     value: string;
 };
@@ -5,9 +7,8 @@ type ItemDescription = {
 type BaseDnd35eSystemData = {
     version: string;
     uniqueId?: string;
-    // Name
-    isNameFromFormula: boolean;
-    nameFormula?: string | null;
+    derivedName: string;
+    nameFormula?: FormulaFieldData | null;
     description: ItemDescription;
 };
 

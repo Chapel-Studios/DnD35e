@@ -3,6 +3,8 @@ const {
   HTMLField,
   BooleanField,
   NumberField,
+  ObjectField,
+  SchemaField,
 } = foundry.data.fields;
 
 // Strings
@@ -21,16 +23,18 @@ const optionalStringField = (initialValue?: string) => {
   return new StringField<string, string, false, false, true>({ required: false, blank: true, initial: initialValue ?? undefined });
 };
 
-const requiredTypedStringField = <TChoices extends readonly string[]> (
+const requiredTypedStringField = <TChoices extends readonly string[] | Set<string>> (
   choices: TChoices,
   initial: string,
   blank: boolean = false
-) => new StringField<TChoices[number], TChoices[number], true, false, true>({
-  choices,
-  initial,
-  required: true,
-  blank,
-});
+) => {
+  return new StringField<string, string, true, false, true>({
+    choices: [...choices],
+    initial,
+    required: true,
+    blank,
+  });
+};
 
 // HTML
 const optionalHtmlField = () =>
@@ -59,7 +63,14 @@ const optionalNumberField = (initialValue?: number) => {
 const requiredNullableNumberField = () =>
   new NumberField<number, number, true, true, false>({ required: true, nullable: true });
 
+// Formula
+const formulaField = () => new SchemaField({
+  formula: new StringField({ required: false, blank: true, initial: '', nullable: true }),
+  contexts: new ObjectField({ required: false, initial: {} }),
+}, { required: false, nullable: true });
+
 export {
+  formulaField,
   nullableOptionalStringField,
   optionalHtmlField,
   optionalNumberField,
