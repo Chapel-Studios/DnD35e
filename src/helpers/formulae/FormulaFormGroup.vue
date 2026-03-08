@@ -81,7 +81,7 @@
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/useDocumentSheetStore.mjs';
   import FormGroup from '@vc/Fields/FormGroups/FormGroup.vue';
-  import { computed, inject, nextTick, onMounted, onUnmounted, type PropType,ref, toRef, watch, watchEffect } from 'vue';
+  import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, watch } from 'vue';
 
   import type { AutocompleteOption, FormulaFormGroupProps, IntellisenseSchema, ValidationError } from './types.mts';
   import {
@@ -101,24 +101,6 @@
     disabled: { type: Boolean, default: false },
     contexts: { type: Object as PropType<IntellisenseSchema>, required: true },
   });
-
-  // Debug - watch for prop changes
-  const contextsRef = toRef(props, 'contexts');
-  watch(contextsRef, (newVal, oldVal) => {
-    console.log('[FormulaFormGroup] WATCH contexts changed:', { newVal, oldVal });
-  }, { immediate: true, deep: true });
-
-  // Debug - log ALL props right away
-  console.log('[FormulaFormGroup] SETUP - ALL PROPS:', {
-    value: props.value,
-    label: props.label,
-    hint: props.hint,
-    contexts: props.contexts,
-    disabled: props.disabled,
-    isDmOnly: props.isDmOnly,
-    propsObject: { ...props },
-  });
-  console.log('[FormulaFormGroup] SETUP - props.contexts:', props.contexts);
 
   // Use contexts directly from props - handle case where it might still be a ref
   const contexts = computed(() => {
@@ -166,21 +148,6 @@
     if (keys.length === 0) return '';
     const capitalized = keys.map(k => k.charAt(0).toUpperCase() + k.slice(1));
     return `Available Contexts: [${capitalized.join(', ')}]`;
-  });
-
-  // Debug - log when contexts or hint changes
-  watchEffect(() => {
-    const raw = props.contexts;
-    const isRef = raw && typeof raw === 'object' && '__v_isRef' in raw;
-    const actualValue = isRef ? (raw as any).value : raw;
-    console.log('[FormulaFormGroup] DEBUG:', {
-      rawContexts: raw,
-      isRef,
-      actualValue,
-      actualValueKeys: actualValue ? Object.keys(actualValue) : [],
-      contextKeys: Object.keys(contexts.value),
-      dynamicHint: dynamicHint.value,
-    });
   });
 
 
@@ -286,15 +253,8 @@
   }
 
   function commitValue() {
-    console.log('[FormulaFormGroup] commitValue called');
-    console.log('[FormulaFormGroup] localValue:', localValue.value);
-    console.log('[FormulaFormGroup] props.onUpdate:', props.onUpdate);
-    console.log('[FormulaFormGroup] typeof props.onUpdate:', typeof props.onUpdate);
     if (typeof props.onUpdate === 'function') {
-      console.log('[FormulaFormGroup] Calling props.onUpdate...');
       props.onUpdate(localValue.value);
-    } else {
-      console.warn('FormulaFormGroup: onUpdate is not a function', props.onUpdate);
     }
   }
 

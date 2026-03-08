@@ -29,6 +29,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   override prepareBaseData (): void {
     super.prepareBaseData();
     this._completedActiveEffectPhases = new Set();
+    this.overrides = {};
   }
 
   /**

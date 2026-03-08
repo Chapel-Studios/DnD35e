@@ -8,8 +8,7 @@ import {
   requiredStringField,
   requiredTypedStringField,
 } from '@helpers/fieldBuilders.mjs';
-import { ItemSystemModelBase } from '@items/baseItem/index.mjs';
-import { applyEquippableSchema } from '@items/components/Equippable/index.mjs';
+import { EquippableItemSystemModel } from '@items/components/Equippable/index.mjs';
 import { WEAPON_BASE_TYPES,WEAPON_SUBTYPES, WEAPON_TYPES } from '@items/weapon/index.mjs';
 
 const {
@@ -18,11 +17,9 @@ const {
   },
 } = foundry.data;
 
-class WeaponSystemModel extends ItemSystemModelBase {
+class WeaponSystemModel extends EquippableItemSystemModel {
   static override defineSchema () {
     const schema = super.defineSchema();
-
-    applyEquippableSchema(schema);
 
     schema.isMasterwork = requiredBooleanField(false);
     schema.weaponType = requiredTypedStringField(WEAPON_TYPES, 'simple');

@@ -1,14 +1,12 @@
 import type { EquippableItemSystemData, EquippableItemSystemSource } from './data/index.mjs';
-import { applyEquippableSchema } from './data/index.mjs';
+import { EquippableItemSystemModel } from './data/index.mjs';
 import type {
-  EquippableItem,
   EquippableItemLike,
   EquippableItemSource,
   EquippableItemSourceProps,
 } from './EquippableItem.mjs';
 import {
-  applyEquippablePrototype,
-  equippableOverrides,
+  EquippableItem,
 } from './EquippableItem.mjs';
 import type {
   EquippableDocumentStore,
@@ -25,7 +23,6 @@ import {
 
 export type {
   EquippableDocumentStore,
-  EquippableItem,
   EquippableItemLike,
   EquippableItemSheetRenderContext,
   EquippableItemSource,
@@ -35,11 +32,10 @@ export type {
   EquippableItemSystemSource,
 };
 export {
-  applyEquippablePrototype,
-  applyEquippableSchema,
   equipableHeaderStatus,
+  EquippableItem,
   EquippableItemSheet,
-  equippableOverrides,
+  EquippableItemSystemModel,
   ItemIsMelded,
   ItemIsWeightlessWhenEquipped,
   useEquippableItemStore,

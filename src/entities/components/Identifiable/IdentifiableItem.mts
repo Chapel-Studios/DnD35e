@@ -1,7 +1,7 @@
 import { Dnd35eDocumentProperties } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import { FormulaContextBuilder, FormulaRegistration } from '@ec/CoreMixin/index.mjs';
 import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import { buildDocumentDataMap, DocumentContext, resolveFormulaField } from '@helpers/formulae/index.mjs';
+import { DocumentContext, resolveFormulaField } from '@helpers/formulae/index.mjs';
 import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemType } from '@items/index.mjs';
 
@@ -17,20 +17,15 @@ type IdentifiableDocumentSource<TItemType extends ItemType = ItemType> =
 
 interface IdentifiableDocument {
   system: IdentifiableDocumentSystemData;
-
-  get unidentifiedDisplayName(): string;
-  get identifiedDisplayName(): string;
 }
 
 type IdentifiableDocumentLike =
   ItemDnd35e<ItemType> &
-  IdentifiableDocument &
-  { _displayName: string };
+  IdentifiableDocument;
 
 type IdentifiableEffectLike =
   DnD35eActiveEffect &
-  IdentifiableDocument &
-  { _displayName: string };
+  IdentifiableDocument;
 
 type WithIdentifiableComponent = IdentifiableDocumentLike | IdentifiableEffectLike;
 
@@ -38,52 +33,22 @@ type Dnd35eDocumentCtor = AbstractConstructorOf<Dnd35eDocumentProperties>;
 type ItemOrEffectCtor = Dnd35eDocumentCtor & (
   AbstractConstructorOf<ItemDnd35e<ItemType>> | AbstractConstructorOf<DnD35eActiveEffect>
 );
-// const applyIdentifiablePrototype = <T extends ItemOrEffectCtor> (item: T) => {
-//   if ((item as any).__isIdentifiedApplied) return;
 
-//   Object.defineProperties(item.prototype, {
-//     unidentifiedDisplayName: {
-//       get () {
-//         const {
-//           unidentifiedInfo: {
-//             unidentifiedNameFormula,
-//           } = {},
-//         } = this.system as IdentifiableDocumentSystemData;
+// ─── Concrete return types ──────────────────────────────────────────────────
 
-//         return resolveFormulaField(
-//           unidentifiedNameFormula,
-//           buildDocumentDataMap(this, (this as any).actor),
-//           this.name
-//         );
-//       },
-//     },
-//     identifiedDisplayName: {
-//       get () {
-//         return this._displayName;
-//       },
-//     },
-//   });
+/**
+ * Public properties added by {@link IdentifiableDocumentMixin}.
+ * Extends Dnd35eDocumentProperties so the mixin chain's shape is flat for TS.
+ */
+interface IdentifiableDocumentProperties extends Dnd35eDocumentProperties {}
 
-//   (item as any).__isIdentifiedApplied = true;
-// };
+/** Constructor type returned by the mixin – avoids deep type inference. */
+type IdentifiableDocumentConstructor<TBase extends ItemOrEffectCtor> =
+  (abstract new (...args: ConstructorParameters<TBase>) => InstanceType<TBase> & IdentifiableDocumentProperties) & { [K in keyof TBase]: TBase[K] };
 
-// const identifiableOverrides = {
-//   displayName: (item: WithIdentifiableComponent): string => {
-//     const identifiedName = item._displayName;
-//     const {
-//       isIdentifiable,
-//       unidentifiedInfo: {
-//         isIdentified = false,
-//       } = {},
-//     } = item.system;
+// ─── Mixin ──────────────────────────────────────────────────────────────────
 
-//     return !isIdentifiable || isIdentified
-//       ? identifiedName
-//       : item.unidentifiedDisplayName;
-//   },
-// };
-
-const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase) => {
+const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase): IdentifiableDocumentConstructor<TBase> => {
   // Interface merging: gives access to public Dnd35eDocumentProperties
   interface IdentifiableDocument extends Dnd35eDocumentProperties {}
 
@@ -91,14 +56,16 @@ const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase)
     // Protected members can't be in interfaces - must declare separately
     declare protected readonly defaultDerivedNameRegistration: FormulaRegistration;
     declare protected readonly defaultNameRegistration: FormulaRegistration;
-    declare protected abstract unidentifiedNameContextBuilder: FormulaContextBuilder;
+
+    /** Subclasses provide context objects (e.g., owner actor) for unidentified name formulas. */
+    protected abstract unidentifiedNameContextBuilder: FormulaContextBuilder;
 
     protected readonly unidentifiedDerivedNameRegistration: FormulaRegistration = {
       impactedField: 'system.derivedUnidentifiedName',
       formulaField: 'system.unidentifiedNameFormula',
       evaluate: (document: DocumentContext) => {
         const idocument = document as IdentifiableDocumentLike;
-        if (!idocument || !idocument.system.isIdentified) return;
+        if (!idocument) return;
   
         const baseContext = this.unidentifiedNameContextBuilder(idocument)
           ?? {} as Record<string, DocumentContext>;
@@ -109,7 +76,6 @@ const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase)
           baseContext,
           idocument.system.derivedUnidentifiedName || idocument.name
         );
-        console.log('[updateDocument] Resolved newName:', newName);
         return newName;
       },
     };
@@ -129,13 +95,14 @@ const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase)
 
     constructor (...args: any[]) {
       super(...args);
-      this.registeredFormulas = new Set([
-        this.defaultDerivedNameRegistration,
-        this.defaultNameRegistration,
-      ]);
+      // Replace the base name registration with identifiable-aware version
+      // and add unidentified name formula registration
+      this.registeredFormulas.delete(this.defaultNameRegistration);
+      this.registeredFormulas.add(this.unidentifiedDerivedNameRegistration);
+      this.registeredFormulas.add(this.identifiableNameRegistration);
     }
   }
-  return IdentifiableDocument;
+  return IdentifiableDocument as unknown as IdentifiableDocumentConstructor<TBase>;
 };
 
 export {
@@ -144,9 +111,12 @@ export {
 
 export type {
   IdentifiableDocument,
+  IdentifiableDocumentConstructor,
   IdentifiableDocumentLike,
+  IdentifiableDocumentProperties,
   IdentifiableDocumentSource,
   IdentifiableDocumentSourceProps,
   IdentifiableEffectLike,
+  ItemOrEffectCtor,
   WithIdentifiableComponent,
 };

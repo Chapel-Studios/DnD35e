@@ -12,7 +12,6 @@ const registerItemSheets = () => {
   ] as const;
 
   for (const [type, Sheet] of itemSheets) {
-    // @ts-expect-error - Mixin chain loses ApplicationV2 type relationship
     foundry.documents.collections.Items.registerSheet('dnd35e', Sheet, {
       types: [type],
       makeDefault: true,

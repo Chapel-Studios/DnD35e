@@ -13,11 +13,13 @@ const replaceDataAttribute = <TContext extends ItemDnd35e> (formula: Formula, co
 
 export { replaceDataAttribute };
 
-// Re-export Vue component
-export { default as FormulaFormGroup } from './FormulaFormGroup.vue';
-
-// Re-export from registry
-export {
+import FormulaFormGroup from './FormulaFormGroup.vue';
+import type {
+  ContextDocumentType,
+  DocumentContext,
+  NonNullDocumentContext,
+} from './registry.mjs';
+import {
   buildContextFromFormula,
   decodeContextType,
   encodeContextType,
@@ -26,14 +28,7 @@ export {
   intellisenseSchemaRegistry,
   registerIntellisenseSchema,
 } from './registry.mjs';
-export type {
-  ContextDocumentType,
-  DocumentContext,
-  NonNullDocumentContext,
-} from './registry.mjs';
-
-// Re-export from types
-export type {
+import type {
   AutocompleteOption,
   FormulaFieldData,
   FormulaFormGroupProps,
@@ -45,10 +40,8 @@ export type {
   Token,
   ValidationError,
 } from './types.mjs';
-export { isIntellisenseProperty } from './types.mjs';
-
-// Re-export from utils
-export {
+import { isIntellisenseProperty } from './types.mjs';
+import {
   buildDocumentDataMap,
   ensureNameFormula,
   extractVariableAtPosition,
@@ -69,3 +62,50 @@ export {
   resolveFormulaField,
   validateFormula,
 } from './utils.mjs';
+
+export {
+  buildContextFromFormula,
+  buildDocumentDataMap,
+  decodeContextType,
+  encodeContextType,
+  ensureNameFormula,
+  extractVariableAtPosition,
+  extractVariables,
+  FormulaFormGroup,
+  getAutocompleteOptions,
+  getCaretCoordinates,
+  getIntellisenseBuilder,
+  getNestedValue,
+  getPropertyValue,
+  getTokenAtPosition,
+  getVariableTokenIndex,
+  getVariableTokens,
+  hasIntellisenseSchema,
+  insertAtCursor,
+  intellisenseProp,
+  intellisenseSchemaRegistry,
+  isIntellisenseProperty,
+  nameToFormulaData,
+  parseFormula,
+  registerIntellisenseSchema,
+  renderFormulaHTML,
+  resolveFormula,
+  resolveFormulaField,
+  validateFormula,
+};
+
+export type {
+  AutocompleteOption,
+  ContextDocumentType,
+  DocumentContext,
+  FormulaFieldData,
+  FormulaFormGroupProps,
+  FormulaVariable,
+  IntellisenseContext,
+  IntellisenseObject,
+  IntellisenseProperty,
+  IntellisenseSchema,
+  NonNullDocumentContext,
+  Token,
+  ValidationError,
+};

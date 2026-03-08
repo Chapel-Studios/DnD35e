@@ -1,4 +1,4 @@
-import { applyIdentifiableSchema } from './applyIdentifiableSchema.mjs';
+import { IdentifiableSchemaMixin } from './applyIdentifiableSchema.mjs';
 import type {
   IdentifiableDocumentSystemData,
   IdentifiableDocumentSystemSource,
@@ -7,7 +7,7 @@ import { applyIdentifiableIntellisense } from './identifiableIntellisense.mjs';
 
 export {
   applyIdentifiableIntellisense,
-  applyIdentifiableSchema,
+  IdentifiableSchemaMixin,
 };
 export type {
   IdentifiableDocumentSystemData,

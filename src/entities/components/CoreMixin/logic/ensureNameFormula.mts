@@ -24,7 +24,7 @@ const ensureNameFormulaOnCreate = (document: {
   }
   // While I normally prefer to keep unidentified document logic contained within the unidentified item mixin,
   // as this is called by the global preCreate hook, we're better off to register it in 1 place and handle both here.
-  if (document.system?.unidentifiedNameFormula !== undefined) {
+  if (document.system?.isIdentified !== undefined && !document.system?.unidentifiedNameFormula && document.name) {
     updateData.system.unidentifiedNameFormula = nameToFormulaData(document.name);
     updateData.system.unidentifiedDerivedName = document.name;
     hasUpdate = true;

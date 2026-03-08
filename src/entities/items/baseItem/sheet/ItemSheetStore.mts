@@ -2,14 +2,15 @@ import type { DocumentSheetStore, SheetTab } from '@ec/CoreMixin/index.mjs';
 import { useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
 import { DnD35eActiveEffect } from '@effects/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
-import {
-  defaultDescriptionTab,
-  defaultEffectsTab,
-} from './tabs/index.mjs';
 import type { ItemType } from '@items/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { Ref } from 'vue';
 import { computed } from 'vue';
+
+import {
+  defaultDescriptionTab,
+  defaultEffectsTab,
+} from './tabs/index.mjs';
 
 const getDefaultItemTabs = (): SheetTab[] => [
   defaultDescriptionTab,
@@ -23,14 +24,6 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
     defaultActiveTab: 'description',
   });
   const document = baseStore._document as unknown as Ref<TDocument>;
-  // baseStore.documentActions.removeFormula('name');
-  // baseStore.documentActions.registerFormula(createNameFormulaRegistration((document) => {    
-  // }));
-
-  // Item-specific state
-
-  // const getItemTypeDisplay = (fallback: string = 'D35E.Item') =>
-  //   computed(() => game.i18n.localize(itemType || fallback));
 
   // Item-specific document getters
   // Note: We spread the effects into a plain array to avoid Vue proxy conflicts

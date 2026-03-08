@@ -1,14 +1,14 @@
-import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
-import { applyPhysicalPrototype, PhysicalItemLike, PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
+import { EquippableItem } from '@items/components/Equippable/index.mjs';
+import type { PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
 import { WeaponItemType } from '@items/itemTypes.mjs';
 
 import { WeaponSystemData, WeaponSystemSource } from './index.mjs';
 
-type WeaponSource = Omit<ItemSourceDnd35e, 'system'>
+type WeaponSource = Omit<foundry.documents.ItemSource, 'system'>
   & Omit<PhysicalItemSourceProps, 'system'>
   & { system: WeaponSystemSource; };
 
-class Weapon extends ItemDnd35e<WeaponItemType> {
+class Weapon extends EquippableItem {
   declare system: WeaponSystemData;
   declare type: WeaponItemType;
 
@@ -27,9 +27,7 @@ class Weapon extends ItemDnd35e<WeaponItemType> {
   // }
 }
 
-applyPhysicalPrototype(Weapon);
-
-type WeaponType = Weapon & PhysicalItemLike;
+type WeaponType = Weapon;
 
 export {
   Weapon,

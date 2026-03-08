@@ -1,3 +1,4 @@
+import { ActorType } from '@actors/actorTypes.mjs';
 import Actor from '@client/documents/actor.mjs';
 import { DocumentConstructionContext } from '@common/_types.mjs';
 import EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
@@ -9,14 +10,22 @@ import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
 import { TokenDocumentDnd35e } from '@scene/token-document/TokenDocumentDnd35e.mjs';
 
+import { ActorSystemData } from './index.mjs';
+
 interface AppliedActorEffectChange extends Dnd35eEffectChangeData {
   effect: DnD35eActiveEffect;
 }
 
 
-class ActorDnd35e<TToken extends TokenDocumentDnd35e | null = TokenDocumentDnd35e | null> extends Actor<TToken> {
+class ActorDnd35e<
+  TToken extends TokenDocumentDnd35e | null = TokenDocumentDnd35e | null,
+  TActorType extends ActorType = ActorType,
+  TSystemData extends ActorSystemData = ActorSystemData
+> extends Actor<TToken> {
   declare readonly effects: EmbeddedCollection<DnD35eActiveEffect<this>>;
   declare readonly items: EmbeddedCollection<ItemDnd35e<ItemType, this>>;
+  declare type: TActorType;
+  declare system: TSystemData;
 
   /**
    * Override to filter out item-targeted changes from transferred effects.

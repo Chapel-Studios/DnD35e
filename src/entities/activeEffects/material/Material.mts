@@ -1,11 +1,9 @@
 import { ActiveEffectSource } from '@common/documents/active-effect.mjs';
-import type { Dnd35eDocumentFlags } from '@ec/CoreMixin/index.mjs';
+import { Dnd35eDocumentMixin } from '@ec/CoreMixin/Dnd35eDocument.mjs';
+import type { Dnd35eDocumentFlags, FormulaContextBuilder } from '@ec/CoreMixin/index.mjs';
 import {
-  // applyIdentifiablePrototype,
-  IdentifiableDocument,
-  // IdentifiableDocumentLike,
+  IdentifiableDocumentMixin,
   IdentifiableDocumentSourceProps,
-  // identifiableOverrides,
 } from '@ec/Identifiable/index.mjs';
 import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
 import { MaterialSystemData, MaterialSystemSource } from '@effects/material/index.mjs';
@@ -20,14 +18,19 @@ interface MaterialEffectFlags {
   // Add material-specific flags here as needed
 }
 
-class Material extends DnD35eActiveEffect {
+/** Pre-composed: DnD35eActiveEffect → Dnd35eDocumentMixin → IdentifiableDocumentMixin */
+const IdentifiableEffectBase = IdentifiableDocumentMixin(Dnd35eDocumentMixin(DnD35eActiveEffect));
+
+class Material extends IdentifiableEffectBase {
   declare type: MaterialItemType;
   declare system: MaterialSystemData;
   declare flags: Dnd35eDocumentFlags<MaterialEffectFlags>;
-  // declare _sheet: ItemSheetDnd35e<ItemDnd35e<MaterialItemType>> | null;
-  // declare get sheet(): ItemSheetDnd35e<ItemDnd35e<'material'>> | null;
-  // declare readonly _source: MaterialSource;
-  // sheet = ty MaterialSheet;
+
+  /** Default: no extra context for name formulas. */
+  protected nameContextBuilder: FormulaContextBuilder = () => null;
+
+  /** Default: no extra context for unidentified name formulas. */
+  protected unidentifiedNameContextBuilder: FormulaContextBuilder = () => null;
 
   override get transfer (): boolean {
     return false;
@@ -41,14 +44,12 @@ class Material extends DnD35eActiveEffect {
     super.prepareBaseData();
   }
 
-  // override get displayName (): string {
-  //   return identifiableOverrides.displayName(this as unknown as IdentifiableDocumentLike);
-  // }
+  override get localizedType (): string {
+    return game.i18n.localize('D35E.Material');
+  }
 }
 
-// applyIdentifiablePrototype(Material);
-
-type MaterialType = Omit<IdentifiableDocument, 'system'> & Material;
+type MaterialType = Material;
 
 export {
   Material,

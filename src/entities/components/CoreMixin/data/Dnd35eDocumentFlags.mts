@@ -5,6 +5,7 @@ import type { FieldOverrides } from '@vc/Fields/FormGroups/fieldPermissions.mjs'
  * Use this as the base for Items, Actors, and ActiveEffects.
  */
 interface Dnd35eBaseFlags {
+  [key: string]: unknown;
   /** Per-field visibility/editability overrides set by GMs */
   fieldOverrides?: FieldOverrides;
 }

@@ -17,11 +17,15 @@ type Dnd35eActiveEffectSource<
   TSystemSource extends Dnd35eActiveEffectSystemSource = Dnd35eActiveEffectSystemSource
 > = foundry.documents.ActiveEffectSource<TEffectType, TSystemSource>;
 
-class DnD35eActiveEffect<TParent extends ActorDnd35e | ItemDnd35e<ItemType> | null = ActorDnd35e | ItemDnd35e<ItemType> | null>
+class DnD35eActiveEffect<
+  TParent extends ActorDnd35e | ItemDnd35e<ItemType> | null = ActorDnd35e | ItemDnd35e<ItemType> | null,
+  TEffectType extends EffectType = EffectType,
+  TSystemData extends ActiveEffectSystemData = ActiveEffectSystemData
+>
   extends foundry.documents.ActiveEffect<TParent> {
   declare flags: DnD35eActiveEffectFlags;
-  declare system: ActiveEffectSystemData;
-  declare type: EffectType;
+  declare system: TSystemData;
+  declare type: TEffectType;
 
   /**
    * Transfer is computed based on whether the effect has any actor-targeted changes.

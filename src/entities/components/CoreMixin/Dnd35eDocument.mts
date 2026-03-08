@@ -1,4 +1,4 @@
-import { ClientDocument } from '@client/documents/abstract/_module.mjs';
+import type { ClientDocument } from '@client/documents/abstract/_module.mjs';
 import { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import { DocumentContext, NonNullDocumentContext } from '@helpers/formulae/registry.mjs';
 import type { FormulaFieldData } from '@helpers/formulae/types.mjs';
@@ -19,7 +19,7 @@ type Dnd35eDocument<TBase extends AbstractConstructorOf<ClientDocument>> =
 // Constructor type: TBase extended with abstract mixin members
 // The abstract class adds localizedType (abstract), flags, registeredFormulas
 type Dnd35eDocumentConstructor<TBase extends AbstractConstructorOf<ClientDocument>> = 
-  (abstract new (...args: ConstructorParameters<TBase>) => Dnd35eDocument<TBase>) & TBase;
+  (abstract new (...args: ConstructorParameters<TBase>) => Dnd35eDocument<TBase>) & { [K in keyof TBase]: TBase[K] };
 
 
 const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base: TBase): Dnd35eDocumentConstructor<TBase> => {
@@ -38,16 +38,15 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
       evaluate: (document: NonNullDocumentContext) => {
         if (!document) return;
 
-        const system = document.system as Record<string, unknown>;
+        const system = document.system;
         const baseContext = this.nameContextBuilder(document) ?? {} as Record<string, DocumentContext>;
         baseContext.self = document;
 
         const newName = resolveFormulaField(
           system.nameFormula as FormulaFieldData | null | undefined,
           baseContext,
-          (system.derivedName as string | undefined) ?? ''
+          system.derivedName as string
         );
-        console.log('[updateDocument] Resolved newName:', newName);
         return newName;
       },
     };
@@ -68,14 +67,19 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
 
     protected abstract nameContextBuilder: FormulaContextBuilder;
 
-    override async update (data: Record<string, unknown>, options?: Partial<Omit<DatabaseUpdateOperation<null>, 'parent' | 'pack'>>): Promise<this | undefined> {
+    override async update (updateData: Record<string, unknown>, options?: Partial<Omit<DatabaseUpdateOperation<null>, 'parent' | 'pack'>>): Promise<this | undefined> {
+      const thisObject = this.toObject(false);
       // Ensure that formulas are evaluated before update to have updated data for preUpdate hooks and active effect application
       for (const registration of this.registeredFormulas) {
-        // TODO: evaluate should either be passed the data object or it should retun a partial update object to be merged.
-        data[registration.impactedField] = registration.evaluate(this as unknown as NonNullDocumentContext);
+        const evaluationContext = foundry.utils.mergeObject(
+          thisObject,
+          foundry.utils.expandObject(updateData),
+          { inplace: false }
+        );
+        updateData[registration.impactedField] = registration.evaluate(evaluationContext as unknown as NonNullDocumentContext);
       }
 
-      return await super.update(data, options);
+      return await super.update(updateData, options);
     }
   }
   

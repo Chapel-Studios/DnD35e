@@ -1,5 +1,4 @@
 import { Size, SIZES } from '@constants/sizes.mjs';
-import { applyIdentifiableSchema } from '@ec/Identifiable/index.mjs';
 import {
   optionalNumberField,
   optionalStringField,
@@ -9,6 +8,10 @@ import {
 
 const { fields: { StringField, SchemaField } } = foundry.data;
 
+/**
+ * @deprecated Use {@link PhysicalItemSystemModel} instead.
+ * Legacy functional schema applier — retained for backward compatibility.
+ */
 const applyPhysicalSchema = (schema: Record<string, any>) => {
   // Components
   applyIdentifiableSchema(schema);

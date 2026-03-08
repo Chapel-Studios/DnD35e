@@ -3,16 +3,17 @@ import type {
   PhysicalItemSystemSource,
 } from './data/index.mjs';
 import {
-  applyPhysicalSchema,
+  IdentifiableItemSystemModel,
+  PhysicalItemSystemModel,
 } from './data/index.mjs';
 import type {
-  PhysicalItem,
   PhysicalItemLike,
   PhysicalItemSource,
   PhysicalItemSourceProps,
 } from './PhysicalItemDnd35e.mjs';
 import {
-  applyPhysicalPrototype,
+  IdentifiableItemBase,
+  PhysicalItem,
 } from './PhysicalItemDnd35e.mjs';
 import type {
   PhysicalDocumentStore,
@@ -32,8 +33,8 @@ import {
 } from './sheet/index.mjs';
 
 export {
-  applyPhysicalPrototype,
-  applyPhysicalSchema,
+  IdentifiableItemBase,
+  IdentifiableItemSystemModel,
   ItemHardness,
   ItemHP,
   ItemPrice,
@@ -41,13 +42,14 @@ export {
   ItemSheetContainerSelector,
   ItemSheetIsCarriedCheckbox,
   ItemWeight,
+  PhysicalItem,
   PhysicalItemSheet,
+  PhysicalItemSystemModel,
   usePhysicalItemStore,
 };
 
 export type {
   PhysicalDocumentStore,
-  PhysicalItem,
   PhysicalItemLike,
   PhysicalItemSheetRenderContext,
   PhysicalItemSource,

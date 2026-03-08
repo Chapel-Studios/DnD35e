@@ -1,5 +1,6 @@
 import { Size } from '@constants/sizes.mjs';
 import { IdentifiableDocumentSystemData } from '@entities/components/Identifiable/index.mjs';
+import type { ItemSystemSource } from '@items/baseItem/index.mjs';
 
 interface PhysicalItemSystemSource {
   quantity: number;
@@ -22,7 +23,7 @@ interface PhysicalItemSystemSource {
   containerId: string | null;
 }
 
-interface PhysicalItemSystemData extends PhysicalItemSystemSource,
+interface PhysicalItemSystemData extends ItemSystemSource, PhysicalItemSystemSource,
   IdentifiableDocumentSystemData {}
 
 export type {

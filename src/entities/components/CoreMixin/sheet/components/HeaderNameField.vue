@@ -44,11 +44,6 @@
     documentActions: { updateDocument },
   } = store;
 
-  // Debug - check destructured value
-  console.log('[HeaderNameField] store.intellisense:', store.intellisense);
-  console.log('[HeaderNameField] nameFormulaIntellisenseSchema:', nameFormulaIntellisenseSchema);
-  console.log('[HeaderNameField] nameFormulaIntellisenseSchema?.value:', nameFormulaIntellisenseSchema?.value);
-
   /**
    * Build the encoded context type map for saving with the formula.
    * Maps context names → compound keys like "Item.weapon".
@@ -79,12 +74,9 @@
    * Uses updateDocument to trigger name re-evaluation.
    */
   const onUpdate = (formula: string) => {
-    console.log('[HeaderNameField] onUpdate called with formula:', formula);
     const formulaData: FormulaFieldData | null = formula.trim()
       ? { formula, contexts: encodedContexts.value }
       : null;
-    console.log('[HeaderNameField] formulaData:', formulaData);
-    console.log('[HeaderNameField] fieldPath:', props.fieldPath);
     return updateDocument({ [props.fieldPath]: formulaData } as any);
   };
 

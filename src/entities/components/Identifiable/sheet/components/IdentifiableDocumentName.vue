@@ -31,7 +31,6 @@
       displayName,
     },
     identifiableGetters: {
-      isIdentifiable,
       identifiedDisplayName,
       unidentifiedDisplayName,
     },
@@ -39,11 +38,11 @@
 
   const identifiedValue = computed(() => showBoth.value
     ? identifiedDisplayName
-    : displayName,
+    : displayName
   );
-  const identifiedLabelKey = computed(() => isIdentifiable.value && showBoth.value
+  const identifiedLabelKey = computed(() => showBoth.value
     ? 'D35E.IdentifiedName'
-    : 'D35E.ItemName',
+    : 'D35E.ItemName'
   );
 </script>
 

@@ -3,13 +3,16 @@ import type {
   IdentifiableDocumentSystemSource,
 } from './data/index.mjs';
 import {
-  applyIdentifiableSchema,
+  IdentifiableSchemaMixin,
 } from './data/index.mjs';
 import type {
   IdentifiableDocument,
+  IdentifiableDocumentConstructor,
   IdentifiableDocumentLike,
+  IdentifiableDocumentProperties,
   IdentifiableDocumentSource,
   IdentifiableDocumentSourceProps,
+  ItemOrEffectCtor,
   WithIdentifiableComponent,
 } from './IdentifiableItem.mjs';
 import {
@@ -23,7 +26,6 @@ import type {
 import {
   IdentifiableConfig,
   IdentifiableDefaultHeaderName,
-  identifiableDescriptionTab,
   IdentifiableDetails,
   IdentifiableDocumentName,
   IdentifiableDocumentName as IdentifiableHeader,
@@ -36,7 +38,9 @@ import {
 
 export type {
   IdentifiableDocument,
+  IdentifiableDocumentConstructor,
   IdentifiableDocumentLike,
+  IdentifiableDocumentProperties,
   IdentifiableDocumentSheetRenderContext,
   IdentifiableDocumentSource,
   IdentifiableDocumentSourceProps,
@@ -44,19 +48,19 @@ export type {
   IdentifiableDocumentSystemData,
   IdentifiableDocumentSystemSource,
   IdentifiableStore,
+  ItemOrEffectCtor,
   WithIdentifiableComponent,
 };
 export {
-  applyIdentifiableSchema,
   IdentifiableConfig,
   IdentifiableDefaultHeaderName,
-  identifiableDescriptionTab,
   IdentifiableDetails,
   IdentifiableDocumentMixin,
   IdentifiableDocumentName,
   IdentifiableDocumentPrice,
   IdentifiableDocumentSheetVue,
   IdentifiableHeader,
+  IdentifiableSchemaMixin,
   IdentifiedViewToggle,
   ItemUnidentifiedPrice,
   useIdentifiableStore,

@@ -1,13 +1,15 @@
+import type { FormulaFieldData } from '@helpers/formulae/types.mjs';
+
+/**
+ * Flat identifiable system data matching {@link IdentifiableSchemaMixin}.
+ * All fields are at the root level — no nested `unidentifiedInfo`.
+ */
 interface IdentifiableDocumentSystemSource {
-    isIdentifiable: boolean;
-    unidentifiedInfo?: {
-        unidentifiedName: string;
-        unidentifiedDescription: string;
-        unidentifiedPrice: number | null;
-        isIdentified: boolean;
-        unidentifiedNameFormula?: string | null;
-        isUnidentifiedNameFromFormula: boolean;
-    };
+  isIdentified: boolean;
+  unidentifiedDescription?: string;
+  unidentifiedPrice: number | null;
+  derivedUnidentifiedName: string;
+  unidentifiedNameFormula: FormulaFieldData | null;
 }
 
 type IdentifiableDocumentSystemData = IdentifiableDocumentSystemSource;

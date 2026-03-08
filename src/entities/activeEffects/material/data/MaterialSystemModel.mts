@@ -1,16 +1,17 @@
 import type { EffectPhases } from '@common/documents/active-effect.mjs';
-import { applyIdentifiableSchema } from '@ec/Identifiable/index.mjs';
+import { IdentifiableSchemaMixin } from '@ec/Identifiable/index.mjs';
 import type { Dnd35eEffectChangeData, EffectChangeTarget, EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
 import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
 import { requiredBooleanField, requiredNumberField } from '@helpers/fieldBuilders.mjs';
 
-class MaterialSystemModel extends ActiveEffectSystemModelBase {
+/** Pre-composed: ActiveEffectSystemModelBase + identifiable schema fields. */
+const IdentifiableEffectSystemModel = IdentifiableSchemaMixin(ActiveEffectSystemModelBase);
+
+class MaterialSystemModel extends IdentifiableEffectSystemModel {
   static override defineSchema () {
     const schema = super.defineSchema();
-
-    applyIdentifiableSchema(schema);
 
     schema.priceDifference = requiredNumberField(0);
     schema.magicEquivalent = requiredNumberField(0);
@@ -60,7 +61,7 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
     type: EffectChangeType = EFFECT_CHANGE_TYPE.ADD,
     phase: EffectPhases = 'final',
     priority: number = 10,
-    target: EffectChangeTarget = EFFECT_CHANGE_TARGET.ITEM,
+    target: EffectChangeTarget = EFFECT_CHANGE_TARGET.ITEM
   ): Dnd35eEffectChangeData {
     return {
       key,
@@ -77,7 +78,7 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
     return this._buildChange(
       'system.isColdIronEquivalent',
       this.isColdIronEquivalent.toString(),
-      EFFECT_CHANGE_TYPE.OVERRIDE,
+      EFFECT_CHANGE_TYPE.OVERRIDE
     );
   }
 
@@ -85,7 +86,7 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
     return this._buildChange(
       'system.isAdamantineEquivalent',
       this.isAdamantineEquivalent.toString(),
-      EFFECT_CHANGE_TYPE.OVERRIDE,
+      EFFECT_CHANGE_TYPE.OVERRIDE
     );
   }
 
@@ -93,7 +94,7 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
     return this._buildChange(
       'system.isAlchemicalSilverEquivalent',
       this.isAlchemicalSilverEquivalent.toString(),
-      EFFECT_CHANGE_TYPE.OVERRIDE,
+      EFFECT_CHANGE_TYPE.OVERRIDE
     );
   }
 
@@ -102,14 +103,14 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
   buildBonusHpPerInchChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.hpPerInch',
-      this.bonusHpPerInch.toString(),
+      this.bonusHpPerInch.toString()
     );
   }
 
   buildBonusHardnessChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.hardness',
-      this.bonusHardness.toString(),
+      this.bonusHardness.toString()
     );
   }
 
@@ -119,14 +120,14 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
     return this._buildChange(
       'system.magicEquivalent',
       this.magicEquivalent.toString(),
-      EFFECT_CHANGE_TYPE.UPGRADE,
+      EFFECT_CHANGE_TYPE.UPGRADE
     );
   }
 
   buildPriceDifferenceChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.price',
-      this.priceDifference.toString(),
+      this.priceDifference.toString()
     );
   }
 }

@@ -53,10 +53,6 @@ type FormulaRegistration = {
   impactedField: string;
   formulaField: string;
   evaluate: (document: NonNullDocumentContext) => unknown;
-  // contexts: {
-  //   self: DocumentContext;
-  //   [key: string]: DocumentContext;
-  // };
 }
 type FormulaContextBuilder = (document: NonNullDocumentContext) => Record<string, DocumentContext> | null;
 
@@ -80,43 +76,6 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     isEditable: context.isEditable,
     renderOptions: unref(context.renderOptions),
   });
-
-  // const nameContextBuilder: Ref<FormulaContextBuilder> = ref(() => null);
-
-  // const registeredFormulas = ref(new Set<FormulaRegistration>([
-  //   {
-  //     impactedField: 'system.derivedName',
-  //     formulaField: 'system.nameFormula',
-  //     evaluate: (document: NonNullDocumentContext) => {
-  //       if (!document) return;
-
-  //       const baseContext = nameContextBuilder.value(document) ?? {} as Record<string, DocumentContext>;
-  //       baseContext.self = document;
-
-  //       const newName = resolveFormulaField(
-  //         document.system.nameFormula,
-  //         baseContext,
-  //         document.system.derivedName
-  //       );
-  //       console.log('[updateDocument] Resolved newName:', newName);
-  //       return newName;
-  //     },
-  //   },
-  //   {
-  //     impactedField: 'name',
-  //     formulaField: 'system.isIdentified',
-  //     evaluate: (document: NonNullDocumentContext) => {
-  //       return document.system.derivedName;
-  //     },
-  //   },
-  // ]));
-
-  // const setNameContextBuilder = (builder: FormulaContextBuilder) => {
-  //   nameContextBuilder.value = builder;
-  // };
-  // const registerFormula = (registration: FormulaRegistration) => {
-  //   registeredFormulas.value.add(registration);
-  // };
 
   // Tabs
   const tabGetters = {
@@ -245,16 +204,6 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       }
       return await updateDocument({ [FIELD_OVERRIDES_FLAG_PATH]: current } as unknown as Partial<TDocument>);
     },
-    // setNameContextBuilder,
-    // registerFormula,
-    // removeFormula: (formulaFieldPath: string) => {
-    //   for (const formula of registeredFormulas.value) {
-    //     if (formula.formulaField === formulaFieldPath) {
-    //       registeredFormulas.value.delete(formula);
-    //       break;
-    //     }
-    //   }
-    // },
   };
 
   // Edit mode - uses shared sheetState from context
@@ -341,8 +290,6 @@ type DocumentSheetStore<TDocument extends SheetDocument = SheetDocument> = {
     updateDocument: (data: Partial<TDocument>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
     getFieldUpdater: (path: string) => (value: unknown) => Promise<boolean>;
     setFieldOverride: (fieldPath: string, override: FieldOverride | null) => Promise<boolean>;
-    // registerFormula: (registration: FormulaRegistration) => void;
-    // removeFormula: (formulaFieldPath: string) => void;
   };
   localize: (text: string) => ComputedRef<string>;
   // Field permissions

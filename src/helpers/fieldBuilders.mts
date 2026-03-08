@@ -65,7 +65,7 @@ const requiredNullableNumberField = () =>
 
 // Formula
 const formulaField = () => new SchemaField({
-  formula: new StringField({ required: false, blank: true, initial: '', nullable: true }),
+  formula: new StringField({ required: true, initial: '', nullable: false }),
   contexts: new ObjectField({ required: false, initial: {} }),
 }, { required: false, nullable: true });
 

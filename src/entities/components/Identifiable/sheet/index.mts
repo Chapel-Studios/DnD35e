@@ -14,14 +14,12 @@ import {
   useIdentifiableStore,
 } from './IdentifiableDocumentStore.mjs';
 import {
-  identifiableDescriptionTab,
   IdentifiableDetails,
 } from './tabs/index.mjs';
 
 export {
   IdentifiableConfig,
   IdentifiableDefaultHeaderName,
-  identifiableDescriptionTab,
   IdentifiableDetails,
   IdentifiableDocumentName,
   IdentifiableDocumentPrice,
