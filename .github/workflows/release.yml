@@ -1,0 +1,79 @@
+name: Build & Release dist
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-core.yml
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build-and-release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine prerelease 
+        id: tag 
+        run: |
+          ref="${GITHUB_REF#refs/tags/}"
+          echo "tag=$ref" >> "$GITHUB_OUTPUT"
+
+          if [[ "$ref" == *"-alpha."* || "$ref" == *"-beta."* || "$ref" == *"-rc."* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download artifact (rebuild zip name)
+        run: echo "ZIP_NAME=dnd35e-dist-${{ steps.tag.outputs.tag }}.zip" >> "$GITHUB_ENV"
+      
+      - name: Rebuild dist zip (idempotent)
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+      
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Check version.yaml freshness (non-blocking)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm run update:version
+          if git diff --quiet -- version.yaml; then
+            echo "version.yaml is up to date."
+          else
+            echo "WARNING: version.yaml is out of date with GitHub milestones."
+            git checkout -- version.yaml
+          fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Package dist
+        env:
+          DIST_ZIP: dnd35e-dist-${{ github.ref_name }}.zip
+        run: |
+          test -d dist
+          zip -r "$DIST_ZIP" dist -x "dist/**/*.map"
+
+      - name: Create GitHub Release and upload dist
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dnd35e-dist-${{ github.ref_name }}.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: true
