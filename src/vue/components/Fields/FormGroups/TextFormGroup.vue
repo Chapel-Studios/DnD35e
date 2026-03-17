@@ -8,6 +8,12 @@
     :default-editability="defaultEditability"
     :value="value"
   >
+    <template v-if="slots.controls" #controls>
+      <slot name="controls" />
+    </template>
+    <template v-if="slots.readonly" #readonly>
+      <slot name="readonly" />
+    </template>
     <input
       type="text"
       :value="value"
@@ -19,11 +25,12 @@
 
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-  import { computed, inject } from 'vue';
+  import { computed, inject, useSlots } from 'vue';
 
   import type { FieldEditability,FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
 
+  const slots = useSlots();
   const props = defineProps<{
     label?: string;
     hint?: string;

@@ -3,6 +3,9 @@
     :label="props.label"
     :hint="dynamicHint"
     :localize-hint="false"
+    :field-path="props.fieldPath"
+    :default-visibility="props.defaultVisibility"
+    :default-editability="props.defaultEditability"
   >
     <template #readonly>
       <div
@@ -83,7 +86,7 @@
   import FormGroup from '@vc/Fields/FormGroups/FormGroup.vue';
   import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, watch } from 'vue';
 
-  import type { AutocompleteOption, FormulaFormGroupProps, IntellisenseSchema, ValidationError } from './types.mts';
+  import type { AutocompleteOption, IntellisenseSchema, ValidationError } from './types.mts';
   import {
     getAutocompleteOptions,
     parseFormula,
@@ -100,6 +103,9 @@
     onUpdate: { type: Function as PropType<(value: string) => void>, required: true },
     disabled: { type: Boolean, default: false },
     contexts: { type: Object as PropType<IntellisenseSchema>, required: true },
+    fieldPath: { type: String, default: undefined },
+    defaultVisibility: { type: String as PropType<'everyone' | 'ownerPlus' | 'gmOnly'>, default: undefined },
+    defaultEditability: { type: String as PropType<'normal' | 'gmOnly'>, default: undefined },
   });
 
   // Use contexts directly from props - handle case where it might still be a ref

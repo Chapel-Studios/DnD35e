@@ -16,6 +16,7 @@ import type {
 import {
   equipableHeaderStatus,
   EquippableItemSheet,
+  EquippableItemWeight,
   ItemIsMelded,
   ItemIsWeightlessWhenEquipped,
   useEquippableItemStore,
@@ -36,6 +37,7 @@ export {
   EquippableItem,
   EquippableItemSheet,
   EquippableItemSystemModel,
+  EquippableItemWeight,
   ItemIsMelded,
   ItemIsWeightlessWhenEquipped,
   useEquippableItemStore,

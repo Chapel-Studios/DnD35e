@@ -17,7 +17,7 @@
             type="button"
             class="effect-control"
             :title="localize('D35E.EffectEdit').value"
-            @click="$emit('edit', effect)"
+            @click="handleEdit(effect)"
           >
             <i class="fas fa-edit" />
           </button>
@@ -26,7 +26,7 @@
             class="effect-control"
             :title="effectEnablementTitle(effect).value"
             :disabled="!canEdit"
-            @click="$emit('toggle', effect)"
+            @click="handleToggle(effect)"
           >
             <i :class="effect.disabled ? 'fas fa-toggle-off' : 'fas fa-toggle-on'" />
           </button>
@@ -35,7 +35,7 @@
             class="effect-control delete"
             :title="localize('D35E.EffectDelete').value"
             :disabled="!canEdit"
-            @click="$emit('delete', effect)"
+            @click="handleDelete(effect)"
           >
             <i class="fas fa-trash" />
           </button>
@@ -46,9 +46,10 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import type { DnD35eActiveEffect } from '@effects/index.mjs';
   import { inject } from 'vue';
+
+  import { ItemSheetStore } from '../ItemSheetStore.mjs';
 
   defineProps<{
     label: string;
@@ -56,21 +57,34 @@
     canEdit: boolean;
   }>();
 
-  defineEmits<{
-    (e: 'edit', effect: DnD35eActiveEffect): void;
-    (e: 'toggle', effect: DnD35eActiveEffect): void;
-    (e: 'delete', effect: DnD35eActiveEffect): void;
-  }>();
-
-  const { localize } = inject('documentSheetStore') as DocumentSheetStore;
+  const {
+    documentActions: {
+      editEffect,
+      toggleEffect,
+      removeEffect,
+    },
+    localize,
+  } = inject('documentSheetStore') as ItemSheetStore;
   const effectEnablementTitle = (effect: DnD35eActiveEffect) => effect.disabled
     ? localize('D35E.EffectEnable')
     : localize('D35E.EffectDisable');
+
+  const handleDelete = async (effect: DnD35eActiveEffect) => {
+    await removeEffect(effect.id);
+  };
+
+  const handleEdit = (effect: DnD35eActiveEffect) => {
+    editEffect(effect.id);
+  };
+
+  const handleToggle = async (effect: DnD35eActiveEffect) => {
+    await toggleEffect(effect.id);
+  };
 </script>
 
 <style scoped lang="scss">
   .effect-category {
-    background: var(--color-bg-option);
+    background: var(--color-select-option-bg);
     border-radius: 4px;
     overflow: hidden;
   }
@@ -97,7 +111,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--color-border-light-2);
+    border-bottom: 1px solid var(--color-border);
 
     &:last-child {
       border-bottom: none;
@@ -130,7 +144,7 @@
     border: none;
     padding: 0.25rem 0.5rem;
     cursor: pointer;
-    color: var(--color-text-dark-primary);
+    color: var(--color-text-primary);
     opacity: 0.7;
 
     &:hover:not(:disabled) {

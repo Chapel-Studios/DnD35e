@@ -10,7 +10,7 @@
 
 <script lang="ts" setup>
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
 
   const props = defineProps<{
     field: string;
@@ -19,13 +19,16 @@
   }>();
 
   const {
-    documentGetters: { getProperty },
-    documentActions: { getFieldUpdater },
+    documentGetters: { getProperty, getEffectiveFieldValue },
+    documentActions: { getViewAwareFieldUpdater },
     isEditable,
   } = inject('documentSheetStore') as DocumentSheetStore;
 
-  const updateField = getFieldUpdater(props.field);
-  const currentImg = getProperty<string>(props.field);
+  const rawImg = getProperty<string>(props.field);
+  const currentImg = computed(() => 
+    getEffectiveFieldValue(props.field, rawImg.value)
+  );
+  const updateField = getViewAwareFieldUpdater(props.field);
 
   async function editImage (event: MouseEvent) {
     if (!isEditable.value) return;

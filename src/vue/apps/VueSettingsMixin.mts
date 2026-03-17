@@ -3,6 +3,7 @@
  * Extends VueAppBaseMixin with reactive data management for settings forms.
  */
 
+import { useSettingsStore } from '@settings/core/sheet/settingsStore.mjs';
 import type { App } from 'vue';
 import { createApp, reactive } from 'vue';
 
@@ -26,6 +27,7 @@ interface VueSettingsContext<TData = object> {
   isEditable: boolean;
   /** Render options */
   renderOptions?: VueSettingsRenderOptions;
+  close: () => void;
 }
 
 /**
@@ -63,6 +65,7 @@ function useVueSettingsMixin<
       this.context = reactive({
         data: {} as TData,
         isEditable: true,
+        close: () => this.close(),
       }) as VueSettingsContext<TData>;
     }
 
@@ -103,10 +106,8 @@ function useVueSettingsMixin<
 
       return createApp(this.vueComponent, {
         context: contextData,
-        onUpdateData: (path: string, value: unknown) => {
-          this.updateData(path, value);
-        },
-      });
+      })
+        .provide('settingsStore', useSettingsStore());
     }
 
     /**

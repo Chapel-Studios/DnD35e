@@ -7,7 +7,7 @@ const materialDetailsTab: SheetTab = {
   // TODO find this actual label, like D35E.Name
   label: 'Details',
   component: MaterialDetails,
-  order: 30,
+  order: 10,
 };
 
 export {

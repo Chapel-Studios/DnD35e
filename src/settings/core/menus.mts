@@ -68,9 +68,9 @@ function registerSettingsMenus(): void {
 
   // Currency Configuration Menu
   game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.CURRENCY, {
-    name: 'DND35E.Settings.CurrencyConfig.Name',
-    label: 'DND35E.Settings.CurrencyConfig.Label',
-    hint: 'DND35E.Settings.CurrencyConfig.Hint',
+    name: 'DND35E.Settings.Currency.Name',
+    label: 'DND35E.Settings.Currency.Label',
+    hint: 'DND35E.Settings.Currency.Hint',
     icon: 'fas fa-coins',
     type: CurrencySettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
     restricted: true,

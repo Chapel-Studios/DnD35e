@@ -27,11 +27,16 @@ min-height: 0;
     transition: color 0.2s;
 
     &:hover {
-      color: var(--color-text-light-primary);
+      color: var(--color-text-primary);
     }
 
     i {
       pointer-events: none;
     }
   }
+}
+
+/* Helper classes */
+.grid-full-row {
+  grid-column: 1 / -1;
 }

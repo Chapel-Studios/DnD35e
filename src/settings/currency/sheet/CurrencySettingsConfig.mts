@@ -10,9 +10,6 @@ import { SYSTEM_ID } from '../../shared.mjs';
 import { CURRENCY_KEY, type CurrencyConfig,DEFAULT_CURRENCY_CONFIG } from '../constants.mjs';
 import CurrencySettingsApp from './CurrencySettingsApp.vue';
 
-// Foundry global UI reference
-declare const ui: typeof foundry.ui;
-
 const { ApplicationV2 } = foundry.applications.api;
 
 // Create the base class with Vue mixin
@@ -26,7 +23,7 @@ class CurrencySettingsConfig extends VueSettingsBase {
     super.DEFAULT_OPTIONS,
     {
       id: 'dnd35e-currency-config',
-      tag: 'div',
+      tag: 'form',
       classes: ['dnd35e', 'vueApp', 'settings-config'],
       position: {
         width: 640,
@@ -37,6 +34,10 @@ class CurrencySettingsConfig extends VueSettingsBase {
         icon: 'fas fa-coins',
         resizable: true,
       },
+      form: 'form',
+      closeOnSubmit: false,
+      submitOnChange: false,
+      submitOnClose: false,
     },
     { inplace: false }
   );
@@ -72,7 +73,7 @@ class CurrencySettingsConfig extends VueSettingsBase {
     // Set up event listeners on the mounted app
     if (this.vueApp && this.vueRoot) {
       this.vueRoot.addEventListener('submit', () => this.#onSave());
-      this.vueRoot.addEventListener('reset', () => this.#onReset());
+      // this.vueRoot.addEventListener('reset', () => this.#onReset());
     }
   }
 
@@ -80,42 +81,35 @@ class CurrencySettingsConfig extends VueSettingsBase {
    * Handle form submission - save settings
    */
   async #onSave(): Promise<void> {
-    const data = this.getData();
+    // const data = this.getData();
 
-    try {
-      await game.settings.set(SYSTEM_ID, CURRENCY_KEY, data);
+    // try {
+    //   await game.settings.set(SYSTEM_ID, CURRENCY_KEY, data);
 
-      ui.notifications.info(game.i18n.localize('DND35E.Settings.ChangesSaved'));
-      await this.close();
-    } catch (error) {
-      console.error('Failed to save currency settings:', error);
-      ui.notifications.error(game.i18n.localize('DND35E.Settings.SaveError'));
-    }
+    //   ui.notifications.info(game.i18n.localize('DND35E.Settings.ChangesSaved'));
+    // } catch (error) {
+    //   console.error('Failed to save currency settings:', error);
+    //   ui.notifications.error(game.i18n.localize('DND35E.Settings.SaveError'));
+    // }
+    await this.close();
   }
 
-  /**
-   * Handle reset - restore default values
-   */
-  async #onReset(): Promise<void> {
-    // @ts-expect-error - DialogV2.confirm typing issues
-    const confirmed = await foundry.applications.api.DialogV2.confirm({
-      window: { title: game.i18n.localize('DND35E.Settings.ResetConfirm.Title') },
-      content: `<p>${game.i18n.localize('DND35E.Settings.ResetConfirm.Content')}</p>`,
-      yes: {
-        label: game.i18n.localize('DND35E.Settings.Reset'),
-        icon: 'fas fa-undo',
-      },
-      no: {
-        label: game.i18n.localize('Cancel'),
-      },
-    });
+  // /**
+  //  * Handle reset - restore default values
+  //  */
+  // async #onReset(): Promise<void> {
+  //   // @ts-expect-error - DialogV2.confirm typing issues
 
-    if (!confirmed) return;
-
-    const defaults = foundry.utils.deepClone(DEFAULT_CURRENCY_CONFIG);
-    this.initializeReactiveData(defaults);
-    this.render();
-  }
+  //   // Self-heal: Remove all custom coins, enable all SRD coins, set defaults
+  //   const srdCoinages = foundry.utils.deepClone(DEFAULT_CURRENCY_CONFIG.coinages).map(c => ({ ...c, enabled: true }));
+  //   const defaults = {
+  //     coinages: srdCoinages,
+  //     defaultDisplayCoin: 'srd_gp',
+  //     rollUpTargetCoin: 'srd_gp',
+  //   };
+  //   this.initializeReactiveData(defaults);
+  //   this.render();
+  // }
 }
 
 export { CurrencySettingsConfig };

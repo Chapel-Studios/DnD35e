@@ -4,8 +4,10 @@
     <span v-if="label" class="switch-label">{{ localize(label) }}</span>
 
     <div class="switch-container">
-      <!-- Optional false label -->
-      <span v-if="falseLabel" class="false-label">{{ localize(falseLabel) }}</span>
+      <!-- False side slot - default content is falseLabel -->
+      <span class="false-label">
+        <slot name="false">{{ falseLabel ? localize(falseLabel) : '' }}</slot>
+      </span>
 
       <div class="switch-box">
         <input
@@ -18,8 +20,10 @@
         <span class="slider"></span>
       </div>
 
-      <!-- Optional true label -->
-      <span v-if="trueLabel" class="true-label">{{ localize(trueLabel) }}</span>
+      <!-- True side slot - default content is trueLabel -->
+      <span class="true-label">
+        <slot name="true">{{ trueLabel ? localize(trueLabel) : '' }}</slot>
+      </span>
     </div>
   </label>
 </template>
@@ -35,8 +39,6 @@
     falseLabel?: string;
     checked: boolean;
     disabled?: boolean;
-    /** @deprecated Use canEdit from store instead. Only use for overriding store behavior. */
-    editable?: boolean;
   }>(), {
     disabled: false,
   });
@@ -56,9 +58,7 @@
   const isDisabled = computed(() => {
     const storeCanEdit = store?.isEditable;
     if (props.disabled) return true;
-    // If editable prop is explicitly provided, use it
-    if (props.editable !== undefined) return !props.editable;
-    // Otherwise use store's canEdit (inverted for disabled)
+    
     return storeCanEdit ? !storeCanEdit.value : false;
   });
 

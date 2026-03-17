@@ -5,18 +5,21 @@
       label="UID"
       :value="uniqueId"
       :on-update="updateUUID"
-    />
+    >
+      <template #controls>
+        <button
+          class="generate-uid"
+          :disabled="!isEditable"
+          @click="generate"
+          type="button"
+          :title="localize('D35E.GenerateUID').value"
+        >
+          <i class="fas fa-wand"></i>
+        </button>
+      </template>
+    </TextFormGroup>
 
     <!-- Generate Button -->
-    <button
-      class="btn generate-uid"
-      :disabled="!isEditable"
-      @click="generate"
-      type="button"
-    >
-      <i class="fas fa-wand"></i>
-      {{ localize("D35E.Generate") }}
-    </button>
   </div>
 </template>
 
@@ -29,13 +32,13 @@
 
   const {
     documentGetters: { getProperty },
-    documentActions: { getFieldUpdater },
+    documentActions: { getDirectFieldUpdater },
     isEditable,
     localize,
   } = inject('documentSheetStore') as DocumentSheetStore;
 
   const uniqueId = getProperty<string>(_field);
-  const updateUUID = getFieldUpdater(_field);
+  const updateUUID = getDirectFieldUpdater(_field);
 
   async function generate () {
     const uid = crypto.randomUUID();
@@ -45,10 +48,29 @@
 
 <style scoped lang="scss">
   .unique-id-container {
-    grid-column: span 2;
+    // grid-column: span 2;
+    width: 100%;
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr;
     grid-column-gap: 1.5rem;
     align-items: center;
+    
+    .generate-uid {
+      cursor: pointer;
+      padding: 0.125rem 0.25rem;
+      background: transparent;
+      border: none;
+      opacity: 0.5;
+      font-size: var(--font-size-11);
+
+      transition: 
+        opacity 0.15s ease,
+        transform 0.15s ease;
+
+      &:hover {
+        opacity: 1;
+        transform: translateY(-1px);
+      }
+    }
   }
 </style>

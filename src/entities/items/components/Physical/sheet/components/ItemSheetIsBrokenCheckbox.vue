@@ -3,7 +3,8 @@
     label="D35E.IsBroken"
     :value="isBroken"
     :on-update="updater"
-    is-dm-only
+    field-path="system.isBroken"
+    default-visibility="gmOnly"
   />
 </template>
 <script setup lang="ts">
@@ -16,9 +17,9 @@
       isBroken,
     },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
   } = inject('documentSheetStore') as PhysicalDocumentStore;
 
-  const updater = getFieldUpdater('system.isBroken');
+  const updater = getDirectFieldUpdater('system.isBroken');
 </script>

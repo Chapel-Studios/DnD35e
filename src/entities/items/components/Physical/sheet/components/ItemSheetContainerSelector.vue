@@ -1,9 +1,11 @@
 <template>
   <SelectFormGroup
-    label="Price"
+    v-if="hasOwner"
+    label="Container"
     :value="currentContainerId"
     :on-update="updater"
     :options="possibleContainers"
+    field-path="system.containerId"
   />
 </template>
 <script setup lang="ts">
@@ -16,10 +18,13 @@
       possibleContainers,
       currentContainerId,
     },
+    documentGetters: {
+      hasOwner,
+    },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
   } = inject('documentSheetStore') as PhysicalDocumentStore;
 
-  const updater = getFieldUpdater('system.containerId');
+  const updater = getDirectFieldUpdater('system.containerId');
 </script>

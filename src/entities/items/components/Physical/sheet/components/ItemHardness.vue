@@ -2,24 +2,31 @@
   <NumberFormGroup
     :editable="isEditable"
     label="Hardness"
-    :value="hardness"
-    :on-update="updateCurrentHp"
+    :value="effectiveHardness"
+    :on-update="hardnessUpdater"
+    field-path="system.hardness"
   />
 </template>
 <script setup lang="ts">
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { NumberFormGroup } from '@vc/Fields/index.mjs';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
 
   const {
     isEditable,
     physicalItemGetters: {
       hardness,
     },
+    documentGetters: {
+      getEffectiveFieldValue,
+    },
     documentActions: {
-      getFieldUpdater,
+      getViewAwareFieldUpdater,
     },
   } = inject('documentSheetStore') as PhysicalDocumentStore;
 
-  const updateCurrentHp = getFieldUpdater('system.hardness');
+  const effectiveHardness = computed(() =>
+    getEffectiveFieldValue('system.hardness', hardness.value)
+  );
+  const hardnessUpdater = getViewAwareFieldUpdater('system.hardness');
 </script>

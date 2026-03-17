@@ -8,6 +8,7 @@
  */
 
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
+import { useSettingsStore } from '@settings/core/sheet/index.mjs';
 import type { App, Component } from 'vue';
 
 /**
@@ -88,6 +89,7 @@ function useVueAppBaseMixin<
       // First render: create and mount Vue
       if (!this.vueApp) {
         this.vueApp = this._createVueApp(options);
+        this.vueApp.provide('settingsStore', useSettingsStore());
         this.vueApp.mount(this.vueRoot);
       }
     }

@@ -14,6 +14,10 @@ import type {
   PhysicalItemStore,
 } from './PhysicalItemStore.mjs';
 import { usePhysicalItemStore } from './PhysicalItemStore.mjs';
+import {
+  PhysicalItemEffects,
+  physicalItemEffectsTab,
+} from './tabs/index.mjs';
 
 export {
   ItemHardness,
@@ -23,6 +27,8 @@ export {
   ItemSheetContainerSelector,
   ItemSheetIsCarriedCheckbox,
   ItemWeight,
+  PhysicalItemEffects,
+  physicalItemEffectsTab,
   PhysicalItemSheet,
   usePhysicalItemStore,
 };

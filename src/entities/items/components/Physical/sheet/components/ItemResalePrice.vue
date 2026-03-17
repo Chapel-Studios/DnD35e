@@ -2,25 +2,32 @@
   <NumberFormGroup
     :editable="isEditable"
     label="D35E.ResalePrice"
-    :value="resalePrice"
+    :value="effectiveResalePrice"
     :on-update="updater"
-    is-dm-only
+    field-path="system.resalePrice"
+    default-visibility="gmOnly"
   />
 </template>
 <script setup lang="ts">
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { NumberFormGroup } from '@vc/Fields/index.mjs';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
 
   const {
     isEditable,
     physicalItemGetters: {
       resalePrice,
     },
+    documentGetters: {
+      getEffectiveFieldValue,
+    },
     documentActions: {
-      getFieldUpdater,
+      getViewAwareFieldUpdater,
     },
   } = inject('documentSheetStore') as PhysicalDocumentStore;
 
-  const updater = getFieldUpdater('system.resalePrice');
+  const effectiveResalePrice = computed(() =>
+    getEffectiveFieldValue('system.resalePrice', resalePrice.value)
+  );
+  const updater = getViewAwareFieldUpdater('system.resalePrice');
 </script>

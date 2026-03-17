@@ -31,16 +31,15 @@
 
   .item-subtitle {
     flex: 0 0 80px;
-    height: 60px;
     margin: 0;
-    padding: 1rem;
-    text-align: right;
+    padding: 0.25rem 1rem 1rem;
     color: #7a7971;
   }
 
   .item-type {
     font-size: 24px;
     line-height: 26px;
-    margin: 0;
+    text-align: center;
+    margin-bottom: 0.5rem;
   }
 </style>

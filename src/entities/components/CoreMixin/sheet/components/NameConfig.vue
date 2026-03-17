@@ -9,7 +9,7 @@
         :label="localize(toggleLabel).value"
         :value="toggleValue"
         :editable="isEditable"
-        :on-update="getFieldUpdater(toggleField)"
+        :on-update="getDirectFieldUpdater(toggleField)"
       />
     </div>
 
@@ -19,14 +19,14 @@
       :label="localize(nameLabel).value"
       :value="nameValue"
       :editable="isEditable"
-      :on-update="getFieldUpdater(nameField)"
+      :on-update="getDirectFieldUpdater(nameField)"
     />
     <TextFormGroup
       v-if="toggleValue"
       :label="localize(formulaLabel).value"
       :value="formulaValue"
       :editable="isEditable"
-      :on-update="getFieldUpdater(formulaField)"
+      :on-update="getDirectFieldUpdater(formulaField)"
     />
 
     <!-- Not sure if this message still makes sense. We can add something back here if we want later -->
@@ -64,7 +64,7 @@
     localize,
     isEditable,
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
   } = inject('documentSheetStore') as DocumentSheetStore;
 

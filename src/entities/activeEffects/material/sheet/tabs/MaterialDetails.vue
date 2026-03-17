@@ -12,7 +12,7 @@
         label="D35E.Hardness"
         :value="bonusHardness"
         :editable="isEditable"
-        :on-update="getFieldUpdater('system.bonusHardness')"
+        :on-update="getDirectFieldUpdater('system.bonusHardness')"
       />
 
       <!-- HP per Inch -->
@@ -20,7 +20,7 @@
         label="D35E.HpPerInch"
         :value="bonusHpPerInch"
         :editable="isEditable"
-        :on-update="getFieldUpdater('system.bonusHpPerInch')"
+        :on-update="getDirectFieldUpdater('system.bonusHpPerInch')"
       />
 
       <!-- Magic Equivalent -->
@@ -30,7 +30,7 @@
         label="D35E.MagicEquivalent"
         :value="magicEquivalent"
         :editable="isEditable"
-        :on-update="getFieldUpdater('system.magicEquivalent')"
+        :on-update="getDirectFieldUpdater('system.magicEquivalent')"
       />
 
       <span class="notes">
@@ -42,21 +42,21 @@
         label="D35E.MaterialAlchemicalSilverEquivalent"
         :value="isAlchemicalSilverEquivalent"
         :editable="isEditable"
-        :on-update="getFieldUpdater('system.isAlchemicalSilverEquivalent')"
+        :on-update="getDirectFieldUpdater('system.isAlchemicalSilverEquivalent')"
       />
 
       <CheckBoxFormGroup
         label="D35E.MaterialAdamantineEquivalent"
         :value="isAdamantineEquivalent"
         :editable="isEditable"
-        :on-update="getFieldUpdater('system.isAdamantineEquivalent')"
+        :on-update="getDirectFieldUpdater('system.isAdamantineEquivalent')"
       />
 
       <CheckBoxFormGroup
         label="D35E.MaterialColdIronEquivalent"
         :value="isColdIronEquivalent"
         :editable="isEditable"
-        :on-update="getFieldUpdater('system.isColdIronEquivalent')"
+        :on-update="getDirectFieldUpdater('system.isColdIronEquivalent')"
       />
 
       <!-- GM‑Only Section -->
@@ -88,7 +88,7 @@
       isColdIronEquivalent,
     },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
     isEditable,
     localize,

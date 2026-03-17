@@ -3,6 +3,8 @@ import { Size, SIZES } from '@constants/sizes.mjs';
 import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
 import { PhysicalItemSystemModel } from '@items/components/Physical/data/PhysicalItemSystemModel.mjs';
 
+import { EquippableItemSystemData } from './EquippableItemSystemData.mjs';
+
 const { fields: { ArrayField, StringField } } = foundry.data;
 
 /**
@@ -25,6 +27,15 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
 
     return schema;
   }
+
+  override prepareDerivedData(): void {
+    super.prepareDerivedData();
+    this.effectiveWeight = this.isWeightlessWhenEquipped && this.isCarried
+      ? 0
+      : this.weight ?? 0;
+  }
 }
+
+interface EquippableItemSystemModel extends EquippableItemSystemData {}
 
 export { EquippableItemSystemModel };

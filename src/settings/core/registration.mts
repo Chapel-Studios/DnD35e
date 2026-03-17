@@ -13,6 +13,7 @@ import { registerRollSettings } from '../roll/index.mjs';
 import { registerSkillsSettings } from '../skills/index.mjs';
 import { CORE_KEYS } from './constants.mjs';
 import { registerSettingsMenus } from './menus.mjs';
+import { registerRootSettings } from './settings/index.mjs';
 
 /**
  * Register core/hidden settings (not shown in UI)
@@ -153,6 +154,7 @@ function registerCoreSettings(): void {
 function registerSettings(): void {
   console.log(`${SYSTEM_ID} | Registering system settings`);
 
+  registerRootSettings();
   registerCoreSettings();
   registerSettingsMenus();
   registerGameRulesSettings();

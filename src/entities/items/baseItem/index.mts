@@ -15,8 +15,6 @@ import type {
   ItemSheetStore,
 } from './sheet/index.mjs';
 import {
-  BaseItemSheetVue,
-  defaultDescriptionTab,
   defaultEffectsTab,
   EffectCategory,
   Effects,
@@ -25,8 +23,6 @@ import {
 } from './sheet/index.mjs';
 
 export {
-  BaseItemSheetVue,
-  defaultDescriptionTab,
   defaultEffectsTab,
   EffectCategory,
   Effects,

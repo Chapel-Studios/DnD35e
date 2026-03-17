@@ -62,6 +62,6 @@
   .color-display {
     width: 60px;
     height: 30px;
-    border: 1px solid var(--color-border-light-tertiary);
+    border: 1px solid var(--color-border);
   }
 </style>

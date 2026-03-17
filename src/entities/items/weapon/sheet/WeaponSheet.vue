@@ -4,7 +4,9 @@
       <WeaponSummary />
     </template>
     <template #header-status>
-      <!-- EquipableHeaderStatus -->
+      <!-- EquipableHeaderStatus
+        is carried and is equipped status indicators will go here after character inventory POC is complete
+       -->
     </template>
   </PhysicalItemSheet>
 </template>

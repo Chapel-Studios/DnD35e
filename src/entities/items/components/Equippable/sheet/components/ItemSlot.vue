@@ -4,6 +4,7 @@
     :value="equippedSlotIds"
     :on-update="updater"
     :options="EQUIP_SLOT_SELECT_OPTIONS"
+    field-path="system.equippedSlotIds"
   />
 </template>
 <script setup lang="ts">
@@ -17,9 +18,9 @@
       equippedSlotIds,
     },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
   } = inject('documentSheetStore') as EquippableDocumentStore;
 
-  const updater = getFieldUpdater('system.equippedSlotIds');
+  const updater = getDirectFieldUpdater('system.equippedSlotIds');
 </script>

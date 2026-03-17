@@ -4,6 +4,7 @@
     label="Is Weightless When Equipped"
     :value="isWeightlessWhenEquipped"
     :on-update="updater"
+    field-path="system.isWeightlessWhenEquipped"
   />
 </template>
 <script setup lang="ts">
@@ -17,9 +18,9 @@
       isWeightlessWhenEquipped,
     },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
   } = inject('documentSheetStore') as EquippableDocumentStore;
 
-  const updater = getFieldUpdater('system.isWeightlessWhenEquipped');
+  const updater = getDirectFieldUpdater('system.isWeightlessWhenEquipped');
 </script>

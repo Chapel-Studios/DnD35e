@@ -1,4 +1,4 @@
-import type { DocumentSheetStore, SheetTab } from '@ec/CoreMixin/index.mjs';
+import type { DocumentSheetStore, DocumentSheetStoreDocumentActions, DocumentSheetStoreDocumentGetters } from '@ec/CoreMixin/index.mjs';
 import { useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
 import type { DnD35eActiveEffect, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
@@ -8,23 +8,14 @@ import { computed } from 'vue';
 import { getDefaultActiveEffectTabs } from './tabs/index.mjs';
 
 const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
-  context: VueApplicationContext<TDocument>,
-  options: {
-    additionalTabs?: SheetTab[];
-  } = {}
+  context: VueApplicationContext<TDocument>
 ) => {
-  // Get base store functionality with effect-specific default tabs
-  const defaultTabs = [
-    ...getDefaultActiveEffectTabs(),
-    ...(options.additionalTabs ?? []),
-  ];
-
   const baseStore = useDocumentSheetStore(context, {
-    defaultTabs,
+    ...getDefaultActiveEffectTabs(),
     defaultActiveTab: 'details',
   });
 
-  const document = baseStore._document as Ref<TDocument>;
+  const document = baseStore._storeUtils.document as Ref<TDocument>;
 
   // Effect-specific document getters
   const documentGetters = {
@@ -77,7 +68,7 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
 };
 
 type ActiveEffectConfigStore<TDocument extends DnD35eActiveEffect = DnD35eActiveEffect> = DocumentSheetStore<TDocument> & {
-  documentGetters: DocumentSheetStore<TDocument>['documentGetters'] & {
+  documentGetters: DocumentSheetStoreDocumentGetters & {
     durationValue: ComputedRef<number | null>;
     durationUnits: ComputedRef<string>;
     isDisabled: ComputedRef<boolean>;
@@ -88,7 +79,7 @@ type ActiveEffectConfigStore<TDocument extends DnD35eActiveEffect = DnD35eActive
     origin: ComputedRef<string>;
     changes: ComputedRef<any[]>;
   };
-  documentActions: DocumentSheetStore<TDocument>['documentActions'] & {
+  documentActions: DocumentSheetStoreDocumentActions<TDocument> & {
     addChange: (changeData: Dnd35eEffectChangeData) => Promise<TDocument | false>;
     removeChange?: (index: number) => Promise<TDocument | false>;
   };

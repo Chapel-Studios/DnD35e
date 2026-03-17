@@ -192,7 +192,7 @@
   .tabs {
     display: flex;
     gap: 0.25rem;
-    border-bottom: 1px solid var(--color-border-light-primary);
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 0.5rem;
 
     .item {
@@ -200,14 +200,14 @@
       cursor: pointer;
       border-radius: 3px 3px 0 0;
       text-decoration: none;
-      color: var(--color-text-dark-primary);
+      color: var(--color-text-primary);
 
       &:hover {
-        background: var(--color-bg-option);
+        background: var(--color-select-option-bg);
       }
 
       &.active {
-        background: var(--color-bg-option-active);
+        background: var(--color-select-option-bg-active);
         border-bottom: 2px solid var(--color-border-highlight);
       }
 
@@ -227,7 +227,7 @@
 
   .notes {
     font-style: italic;
-    color: var(--color-text-dark-secondary);
+    color: var(--color-text-secondary);
     margin-bottom: 0.5rem;
   }
 
@@ -247,7 +247,7 @@
 
     &.header {
       font-weight: bold;
-      border-bottom: 1px solid var(--color-border-light-primary);
+      border-bottom: 1px solid var(--color-border);
       padding-bottom: 0.5rem;
     }
   }
@@ -276,7 +276,7 @@
     justify-content: flex-end;
     gap: 0.5rem;
     padding-top: 0.5rem;
-    border-top: 1px solid var(--color-border-light-primary);
+    border-top: 1px solid var(--color-border);
     margin-top: auto;
 
     button {
@@ -288,14 +288,14 @@
       cursor: pointer;
 
       &.reset-btn {
-        background: var(--color-bg-option);
-        border: 1px solid var(--color-border-light-primary);
+        background: var(--color-select-option-bg);
+        border: 1px solid var(--color-border);
       }
 
       &.save-btn {
-        background: var(--color-bg-btn-positive);
-        border: 1px solid var(--color-border-positive);
-        color: var(--color-text-light-highlight);
+        background: var(----color-level-success);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-primary);
       }
     }
   }

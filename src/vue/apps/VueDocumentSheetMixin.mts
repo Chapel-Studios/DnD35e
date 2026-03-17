@@ -60,6 +60,7 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
         appConfigOptions: options,
         isEditable: this.isEditable,
         sheetState: this.sheetState,
+        close: async () => { await this.close(); },
       };
     }
 

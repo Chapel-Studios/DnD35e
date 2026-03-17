@@ -18,7 +18,6 @@ abstract class ItemSheetDnd35e<
   static override get DEFAULT_OPTIONS (): VueApplicationConfiguration<ItemDnd35e> {
     return {
       classes: ['dnd35e', 'item-sheet'],
-      id: 'dnd35e-item-sheet',
       position: {
         width: 560,
         height: 650,

@@ -2,25 +2,49 @@ import UniqueId from '@items/baseItem/sheet/components/UniqueId.vue';
 
 import CheckBoxFormGroup from './FormGroups/CheckBoxFormGroup.vue';
 import ColorFormGroup from './FormGroups/ColorFormGroup.vue';
+import type { FieldEditability, FieldVisibility } from './FormGroups/fieldPermissions.mjs';
+import {
+  everyoneVisibility,
+  FIELD_EDITABILITIES,
+  FIELD_VISIBILITIES,
+  gmOnlyEditability,
+  gmOnlyVisibility,
+  normalEditability,
+  ownerPlusVisibility,
+} from './FormGroups/fieldPermissions.mjs';
 import FormGroup from './FormGroups/FormGroup.vue';
+import ItemPriceFormGroup from './FormGroups/ItemPriceFormGroup.vue';
 import MultiSelectFormGroup from './FormGroups/MultiSelectFormGroup.vue';
 import NumberFormGroup from './FormGroups/NumberFormGroup.vue';
+import RichTextEditorFormGroup from './FormGroups/RichTextEditorFormGroup.vue';
 import SelectFormGroup from './FormGroups/SelectFormGroup.vue';
 import TextFormGroup from './FormGroups/TextFormGroup.vue';
 import ImageField from './ImageField.vue';
-import RichTextEditor from './RichTextEditor.vue';
 import ToggleSwitch from './ToggleSwitch.vue';
 
 export {
   CheckBoxFormGroup,
   ColorFormGroup,
+  everyoneVisibility,
+  FIELD_EDITABILITIES,
+  FIELD_VISIBILITIES,
   FormGroup,
+  gmOnlyEditability,
+  gmOnlyVisibility,
   ImageField,
+  ItemPriceFormGroup,
   MultiSelectFormGroup,
+  normalEditability,
   NumberFormGroup,
-  RichTextEditor,
+  ownerPlusVisibility,
+  RichTextEditorFormGroup,
   SelectFormGroup,
   TextFormGroup,
   ToggleSwitch,
   UniqueId,
+};
+
+export type {
+  FieldEditability,
+  FieldVisibility,
 };

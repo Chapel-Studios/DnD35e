@@ -3,17 +3,47 @@
     <!-- Sections -->
     <fieldset v-for="section in sections" :key="section.key" class="settings-section">
       <legend>{{ localize(section.label) }}</legend>
-
-      <component
-        v-for="field in section.fields"
-        :key="field.key"
-        :is="getFormGroupComponent(field)"
-        :label="field.label"
-        :hint="field.hint"
-        :value="getFieldValue(field.key)"
-        :options="field.choices?.map(c => ({ label: c.label, value: c.value })) ?? []"
-        :on-update="(value: unknown) => onUpdate(field.key, value)"
-      />
+      <div v-for="field in section.fields" :key="field.key" class="settings-field">
+        <label :for="field.key">
+          {{ localize(field.label) }}
+          <span v-if="field.hint" class="hint">{{ localize(field.hint) }}</span>
+        </label>
+        <template v-if="field.choices">
+          <select
+            :id="field.key"
+            :value="getFieldValue(field.key)"
+            @change="e => onUpdate(field.key, (e.target as HTMLSelectElement)?.value)"
+          >
+            <option v-for="choice in field.choices" :key="choice.value" :value="choice.value">
+              {{ localize(choice.label) }}
+            </option>
+          </select>
+        </template>
+        <template v-else-if="field.type === 'boolean'">
+          <input
+            type="checkbox"
+            :id="field.key"
+            :checked="Boolean(getFieldValue(field.key))"
+            @change="e => onUpdate(field.key, (e.target as HTMLInputElement)?.checked)"
+          />
+        </template>
+        <template v-else-if="field.type === 'number'">
+          <input
+            type="number"
+            :id="field.key"
+            :value="getFieldValue(field.key)"
+            @input="e => onUpdate(field.key, (e.target as HTMLInputElement)?.valueAsNumber)"
+          />
+        </template>
+        <template v-else>
+          <input
+            type="text"
+            :id="field.key"
+            :value="getFieldValue(field.key)"
+            @input="e => onUpdate(field.key, (e.target as HTMLInputElement)?.value)"
+          />
+        </template>
+      </div>
     </fieldset>
 
     <!-- Footer -->
@@ -27,13 +57,10 @@
 </template>
 
 <script setup lang="ts">
-  import CheckBoxFormGroup from '@vc/Fields/FormGroups/CheckBoxFormGroup.vue';
-  import NumberFormGroup from '@vc/Fields/FormGroups/NumberFormGroup.vue';
-  import SelectFormGroup from '@vc/Fields/FormGroups/SelectFormGroup.vue';
-  import TextFormGroup from '@vc/Fields/FormGroups/TextFormGroup.vue';
+  // Removed form group imports; using native controls inline
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
 
-  import type { SettingField, SettingsSection } from '../_types.mjs';
+  import type { SettingsSection } from '../_types.mjs';
 
   const props = defineProps<{
     context: VueSettingsContext<Record<string, unknown>>;
@@ -53,13 +80,7 @@
     return props.context.data[key];
   }
 
-  /** Map our field types to form group components */
-  function getFormGroupComponent(field: SettingField): typeof CheckBoxFormGroup | typeof SelectFormGroup | typeof NumberFormGroup | typeof TextFormGroup {
-    if (field.choices) return SelectFormGroup;
-    if (field.type === 'boolean') return CheckBoxFormGroup;
-    if (field.type === 'number') return NumberFormGroup;
-    return TextFormGroup;
-  }
+
 
   function onUpdate(key: string, value: unknown): void {
     props.onUpdateData(key, value);
@@ -76,10 +97,11 @@
     flex-direction: column;
     gap: 0.75rem;
     height: 100%;
+    overflow: auto;
   }
 
   .settings-section {
-    border: 1px solid var(--color-border-light-primary);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     padding: 0.75rem;
     margin: 0;
@@ -90,12 +112,45 @@
     }
   }
 
+  .settings-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+
+    label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .hint {
+      display: block;
+      font-size: 0.9em;
+      color: var(--color-text-light);
+      margin-left: 0.5em;
+    }
+
+    input,
+    select {
+      margin-top: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--color-border);
+      border-radius: 3px;
+      font-size: 1em;
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      margin-top: 0.5em;
+      margin-left: 0;
+    }
+  }
+
   .form-footer {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
     padding-top: 0.5rem;
-    border-top: 1px solid var(--color-border-light-primary);
+    border-top: 1px solid var(--color-border);
     margin-top: auto;
 
     button {
@@ -107,9 +162,9 @@
       cursor: pointer;
 
       &.save-btn {
-        background: var(--color-bg-btn-positive);
-        border: 1px solid var(--color-border-positive);
-        color: var(--color-text-light-highlight);
+        background: var(----color-level-success);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-primary);
       }
     }
   }

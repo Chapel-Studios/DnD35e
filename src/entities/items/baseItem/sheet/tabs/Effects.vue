@@ -8,9 +8,9 @@
     <div class="effects-header">
       <h3>{{ localize('D35E.Effects') }}</h3>
       <button
+        v-if="isEditable"
         type="button"
         class="create-effect-btn"
-        :disabled="!canEdit"
         @click="createEffect"
       >
         <i class="fas fa-plus" />
@@ -19,15 +19,15 @@
     </div>
 
     <div class="effects-list">
+
+      <slot name="effects-list-prepend" />
+
       <!-- Temporary Effects -->
       <EffectCategory
         v-if="temporaryEffects.length"
         :label="localize('D35E.EffectTemporary').value"
         :effects="temporaryEffects"
-        :can-edit="canEdit"
-        @edit="editEffect"
-        @toggle="toggleEffect"
-        @delete="deleteEffect"
+        :can-edit="isEditable"
       />
 
       <!-- Passive Effects -->
@@ -35,10 +35,7 @@
         v-if="passiveEffects.length"
         :label="localize('D35E.EffectPassive').value"
         :effects="passiveEffects"
-        :can-edit="canEdit"
-        @edit="editEffect"
-        @toggle="toggleEffect"
-        @delete="deleteEffect"
+        :can-edit="isEditable"
       />
 
       <!-- Inactive Effects -->
@@ -46,14 +43,13 @@
         v-if="inactiveEffects.length"
         :label="localize('D35E.EffectInactive').value"
         :effects="inactiveEffects"
-        :can-edit="canEdit"
-        @edit="editEffect"
-        @toggle="toggleEffect"
-        @delete="deleteEffect"
+        :can-edit="isEditable"
       />
 
+      <slot name="effects-list-append" />
+
       <!-- Empty State -->
-      <div v-if="!effects.length" class="effects-empty">
+      <div v-if="isEmpty" class="effects-empty">
         <p>{{ localize('D35E.EffectsNone') }}</p>
       </div>
     </div>
@@ -61,11 +57,16 @@
 </template>
 
 <script setup lang="ts">
-  import type { DnD35eActiveEffect } from '@effects/index.mjs';
   import type { ItemSheetStore } from '@items/baseItem/index.mjs';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
 
   import EffectCategory from '../components/EffectCategory.vue';
+
+  const {
+    hasAddedEffects,
+  } = defineProps<{
+    hasAddedEffects?: boolean;
+  }>();
 
   const store = inject('documentSheetStore') as ItemSheetStore;
   const {
@@ -76,35 +77,16 @@
       passiveEffects,
       inactiveEffects,
     },
-    canEdit,
+    documentActions: {
+      createEffect,
+    },
+    isEditable,
     localize,
-    _document: document,
   } = store;
 
   const isActiveTab = getIsTabOpen('effects');
 
-  // Actions
-  async function createEffect () {
-    const effectData = {
-      name: localize('D35E.EffectNew'),
-      img: 'icons/svg/aura.svg',
-      origin: document.value.uuid,
-      disabled: false,
-    };
-    await document.value.createEmbeddedDocuments('ActiveEffect', [effectData]);
-  }
-
-  function editEffect (effect: DnD35eActiveEffect) {
-    effect.sheet?.render(true);
-  }
-
-  async function toggleEffect (effect: DnD35eActiveEffect) {
-    await effect.update({ disabled: !effect.disabled });
-  }
-
-  async function deleteEffect (effect: DnD35eActiveEffect) {
-    await effect.delete();
-  }
+  const isEmpty = computed(() => !effects.value.length && !hasAddedEffects);
 </script>
 
 <style scoped lang="scss">
@@ -119,7 +101,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--color-border-light-1);
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 0.5rem;
 
     h3 {
@@ -150,7 +132,7 @@
 
   .effects-empty {
     text-align: center;
-    color: var(--color-text-dark-secondary);
+    color: var(--color-text-secondary);
     font-style: italic;
     padding: 2rem;
   }

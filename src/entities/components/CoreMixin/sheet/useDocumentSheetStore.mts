@@ -16,10 +16,10 @@ import type {
   FieldOverride,
   FieldOverrides,
 } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
-import { FIELD_OVERRIDES_FLAG_PATH } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+import { encodeFieldPath, FIELD_OVERRIDES_FLAG } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';
 import type { Component, ComputedRef, ShallowRef } from 'vue';
-import { computed, reactive, shallowRef, triggerRef, unref } from 'vue';
+import { computed, reactive, ref, shallowRef, triggerRef, unref } from 'vue';
 
 /**
  * Base document type that both Items and ActiveEffects share
@@ -78,7 +78,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   });
 
   // Tabs
-  const tabGetters = {
+  const tabGetters: DocumentSheetStoreTabGetters = {
     activeTabId: computed(() => state.activeTab),
     tabs: computed(() => (state.tabs ?? []).sort(
       (a, b) => (a.order ?? 0) - (b.order ?? 0)
@@ -86,7 +86,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     getIsTabOpen: (tabId: string) => computed(() => state.activeTab === tabId),
   };
 
-  const tabActions = {
+  const tabActions: DocumentSheetStoreTabActions = {
     activateTab: (tabId: string) => {
       state.activeTab = tabId;
     },
@@ -103,29 +103,55 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
   // Document getters - common to all document sheets
   const fieldOverrides = computed((): FieldOverrides => {
-    return (foundry.utils.getProperty(document.value, FIELD_OVERRIDES_FLAG_PATH) as FieldOverrides | undefined) ?? {};
+    return (document.value.getFlag('dnd35e', FIELD_OVERRIDES_FLAG) as FieldOverrides | undefined) ?? {};
   });
 
-  const documentGetters = {
+  // Overridable implementations - these can be replaced by extending stores via _storeUtils
+  type GetEffectiveFieldValueFn = <T>(fieldPath: string, realValue: T) => T;
+  type GetViewAwareFieldUpdaterFn = (path: string) => (value: unknown) => Promise<boolean>;
+  type EditorViewModeGetter = () => 'identified' | 'unidentified';
+
+  const _getEffectiveFieldValueImpl = ref<GetEffectiveFieldValueFn>(
+    <T,>(_fieldPath: string, realValue: T): T => realValue
+  );
+  const _getViewAwareFieldUpdaterImpl = ref<GetViewAwareFieldUpdaterFn>(
+    (path: string) => async (value: unknown) => {
+      return await updateDocument({ [path]: value } as Partial<TDocument>);
+    }
+  );
+  const _editorViewModeImpl = ref<EditorViewModeGetter>(() => 'identified');
+
+  /**
+   * Get the effective value for a field.
+   * Default implementation just returns the real value.
+   * Can be overridden via _storeUtils.setGetEffectiveFieldValue().
+   */
+  const getEffectiveFieldValue = <T,> (fieldPath: string, realValue: T): T => {
+    return _getEffectiveFieldValueImpl.value(fieldPath, realValue);
+  };
+
+  const documentGetters: DocumentSheetStoreDocumentGetters = {
+    getEffectiveFieldValue,
     getProperty: <T,>(path: string) => computed(() => foundry.utils.getProperty(document.value, path) as T),
     type: computed(() => document.value.type),
     localizedType: computed(() => game.i18n.localize(document.value.localizedType)),
 
-    name: computed(() => document.value.name || ''),
-    displayName: computed(() => document.value.name || ''),
-    nameFormula: computed(() => document.value.system.nameFormula?.formula || ''),
+    name: computed(() => getEffectiveFieldValue('name', document.value.name) || ''),
+    displayName: computed(() => getEffectiveFieldValue('displayName', document.value.name) || ''),
+    nameFormula: computed(() => getEffectiveFieldValue('nameFormula', document.value.system.nameFormula?.formula) || ''),
 
-    img: computed(() => document.value.img || ''),
+    img: computed(() => getEffectiveFieldValue('img', document.value.img) || ''),
 
     systemUniqueId: computed(() => document.value.system.uniqueId || ''),
     documentUuid: computed(() => document.value.uuid || ''),
 
-    description: computed(() => document.value.system.description.value || ''),
+    description: computed(() => getEffectiveFieldValue('description', document.value.system.description.value) || ''),
 
     // Field permission overrides
     fieldOverrides,
     getFieldOverride: (fieldPath: string): FieldOverride | undefined => {
-      return fieldOverrides.value[fieldPath];
+      const encodedPath = encodeFieldPath(fieldPath);
+      return fieldOverrides.value[encodedPath];
     },
   };
 
@@ -188,21 +214,46 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     return false;
   };
 
+  const updateFlag = async (key: string, value: unknown): Promise<boolean> => {
+    try {
+      await document.value.setFlag('dnd35e', key, value);
+      triggerRef(document);
+      return true;
+    } catch (err) {
+      console.error(`updateFlag('${key}'): error`, err);
+      return false;
+    }
+  };
+
   const documentActions = {
     updateDocument,
-    getFieldUpdater: (path: string) => {
+    /**
+     * Get a direct field updater that always writes to the real field.
+     * Use this for state fields (isCarried, isBroken, etc.) and meta fields (isIdentifiable).
+     */
+    getDirectFieldUpdater: (path: string) => {
       return async (value: unknown) => {
         return await updateDocument({ [path]: value } as Partial<TDocument>);
       };
     },
+    /**
+     * Get a field updater that is view-mode aware.
+     * Default implementation just writes to the real field.
+     * Can be overridden via _storeUtils.setGetViewAwareFieldUpdater().
+     */
+    getViewAwareFieldUpdater: (path: string) => {
+      return _getViewAwareFieldUpdaterImpl.value(path);
+    },
+    updateFlag,
     setFieldOverride: async (fieldPath: string, override: FieldOverride | null): Promise<boolean> => {
+      const encodedPath = encodeFieldPath(fieldPath);
       const current = { ...fieldOverrides.value };
       if (override === null) {
-        delete current[fieldPath];
+        delete current[encodedPath];
       } else {
-        current[fieldPath] = override;
+        current[encodedPath] = override;
       }
-      return await updateDocument({ [FIELD_OVERRIDES_FLAG_PATH]: current } as unknown as Partial<TDocument>);
+      return await updateFlag(FIELD_OVERRIDES_FLAG, current);
     },
   };
 
@@ -225,16 +276,44 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     return document.value.testUserPermission(game.user, 'OWNER');
   });
 
+  // Internal utilities for extending stores
+  const _storeUtils: DocumentSheetStoreUtils<TDocument> = {
+    /** The reactive document reference. Use for extending stores only. */
+    document: document as ShallowRef<TDocument>,
+    /** Update the document and trigger reactivity. */
+    updateDocument,
+    /** Update a flag on the document. */
+    updateFlag,
+    /** Manually trigger Vue reactivity on the document ref. */
+    refreshDocument: () => triggerRef(document),
+    /** Override the getEffectiveFieldValue implementation. */
+    setGetEffectiveFieldValue: (fn: <T>(fieldPath: string, realValue: T) => T) => {
+      _getEffectiveFieldValueImpl.value = fn;
+    },
+    /** Override the getViewAwareFieldUpdater implementation. */
+    setGetViewAwareFieldUpdater: (fn: (path: string) => (value: unknown) => Promise<boolean>) => {
+      _getViewAwareFieldUpdaterImpl.value = fn;
+    },
+    /** Override the editorViewMode getter. */
+    setEditorViewMode: (fn: () => 'identified' | 'unidentified') => {
+      _editorViewModeImpl.value = fn;
+    },
+  };
+
+  // Editor view mode - top level, can be overridden via _storeUtils.setEditorViewMode()
+  const editorViewMode = computed(() => _editorViewModeImpl.value());
+
   return {
     isEditable: computed(() => state.isEditable && isEditMode.value),
     isEditMode,
     isFirstRender: computed(() => state.renderOptions?.isFirstRender),
+    editorViewMode,
     tabs: {
       tabGetters,
       tabActions,
     },
     modeActions,
-    _document: document as ShallowRef<TDocument>,
+    _storeUtils,
     documentGetters,
     documentActions,
     intellisense,
@@ -245,52 +324,77 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   };
 };
 
+type DocumentSheetStoreTabGetters = {
+  activeTabId: ComputedRef<string>;
+  tabs: ComputedRef<(SheetTab & { order: number })[]>;
+  getIsTabOpen: (tabId: string) => ComputedRef<boolean>;
+};
+
+type DocumentSheetStoreTabActions = {
+  activateTab: (tabId: string) => void;
+  replaceTabs: (newTabs: SheetTab[]) => void;
+  appendTabs: (newTabs: SheetTab[]) => void;
+};
+
+type DocumentSheetStoreTabs = {
+  tabActions: DocumentSheetStoreTabActions;
+  tabGetters: DocumentSheetStoreTabGetters;
+}
+
+type DocumentSheetStoreUtils<TDocument extends SheetDocument> = {
+  document: ShallowRef<TDocument>;
+  updateDocument: (data: Partial<TDocument>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
+  updateFlag: (key: string, value: unknown) => Promise<boolean>;
+  refreshDocument: () => void;
+  setGetEffectiveFieldValue: (fn: <T>(fieldPath: string, realValue: T) => T) => void;
+  setGetViewAwareFieldUpdater: (fn: (path: string) => (value: unknown) => Promise<boolean>) => void;
+  setEditorViewMode: (fn: () => 'identified' | 'unidentified') => void;
+};
+
+type DocumentSheetStoreDocumentGetters = {
+  getProperty: <T>(path: string) => ComputedRef<T>;
+  type: ComputedRef<string>;
+  localizedType: ComputedRef<string>;
+  name: ComputedRef<string>;
+  displayName: ComputedRef<string>;
+  nameFormula: ComputedRef<string>;
+  img: ComputedRef<string>;
+  systemUniqueId: ComputedRef<string>;
+  documentUuid: ComputedRef<string>;
+  description: ComputedRef<string>;
+  // Field permission overrides
+  fieldOverrides: ComputedRef<FieldOverrides>;
+  getFieldOverride: (fieldPath: string) => FieldOverride | undefined;
+  // View-aware field access (default: returns real value)
+  getEffectiveFieldValue: <T>(fieldPath: string, realValue: T) => T;
+};
+
+type DocumentSheetStoreDocumentActions<TDocument extends SheetDocument> = {
+  updateDocument: (data: Partial<TDocument>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
+  getDirectFieldUpdater: (path: string) => (value: unknown) => Promise<boolean>;
+  getViewAwareFieldUpdater: (path: string) => (value: unknown) => Promise<boolean>;
+  updateFlag: (key: string, value: unknown) => Promise<boolean>;
+  setFieldOverride: (fieldPath: string, override: FieldOverride | null) => Promise<boolean>;
+};
+
 type DocumentSheetStore<TDocument extends SheetDocument = SheetDocument> = {
   isEditable: ComputedRef<boolean>;
   isEditMode: ComputedRef<boolean>;
   isFirstRender: ComputedRef<boolean | undefined>;
-  tabs: {
-    tabGetters: {
-      activeTabId: ComputedRef<string>;
-      tabs: ComputedRef<(SheetTab & { order: number })[]>;
-      getIsTabOpen: (tabId: string) => ComputedRef<boolean>;
-    };
-    tabActions: {
-      activateTab: (tabId: string) => void;
-      replaceTabs: (newTabs: SheetTab[]) => void;
-      appendTabs: (newTabs: SheetTab[]) => void;
-    };
-  };
+  editorViewMode: ComputedRef<'identified' | 'unidentified'>;
+  tabs: DocumentSheetStoreTabs;
   modeActions: {
     toggleEditMode: () => void;
     setEditMode: (enabled: boolean) => void;
   };
-  _document: ShallowRef<TDocument>;
-  documentGetters: {
-    getProperty: <T>(path: string) => ComputedRef<T>;
-    type: ComputedRef<string>;
-    localizedType: ComputedRef<string>;
-    name: ComputedRef<string>;
-    displayName: ComputedRef<string>;
-    nameFormula: ComputedRef<string>;
-    img: ComputedRef<string>;
-    systemUniqueId: ComputedRef<string>;
-    documentUuid: ComputedRef<string>;
-    description: ComputedRef<string>;
-    // Field permission overrides
-    fieldOverrides: ComputedRef<FieldOverrides>;
-    getFieldOverride: (fieldPath: string) => FieldOverride | undefined;
-  };
+  _storeUtils: DocumentSheetStoreUtils<TDocument>;
+  documentGetters: DocumentSheetStoreDocumentGetters;
   intellisense: {
     getSelf: (aliases?: string[]) => ComputedRef<IntellisenseContext>;
     getParent: (aliases?: string[], fallback?: { documentType: foundry.CONST.DocumentType; subtype: ContextDocumentType }) => ComputedRef<IntellisenseContext>;
     nameFormulaIntellisenseSchema: ComputedRef<IntellisenseSchema>;
   };
-  documentActions: {
-    updateDocument: (data: Partial<TDocument>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
-    getFieldUpdater: (path: string) => (value: unknown) => Promise<boolean>;
-    setFieldOverride: (fieldPath: string, override: FieldOverride | null) => Promise<boolean>;
-  };
+  documentActions: DocumentSheetStoreDocumentActions<TDocument>;
   localize: (text: string) => ComputedRef<string>;
   // Field permissions
   isGM: ComputedRef<boolean>;
@@ -303,6 +407,9 @@ export {
 
 export type {
   DocumentSheetStore,
+  DocumentSheetStoreDocumentActions,
+  DocumentSheetStoreDocumentGetters,
+  DocumentSheetStoreUtils,
   FormulaContextBuilder,
   FormulaRegistration,
   SheetDocument,

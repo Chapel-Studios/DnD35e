@@ -6,13 +6,13 @@ import {
   MaterialSystemModel,
 } from './data/index.mjs';
 import type {
-  MaterialItemType,
+  MaterialEffectType,
   MaterialSource,
   MaterialType,
 } from './Material.mjs';
 import {
   Material,
-  materialItemType,
+  materialEffectType,
 } from './Material.mjs';
 import type {
   MaterialSheetConfig,
@@ -31,7 +31,7 @@ export {
   Material,
   MaterialDetails,
   materialDetailsTab,
-  materialItemType,
+  materialEffectType,
   MaterialSheet,
   MaterialSheetVue,
   MaterialSystemModel,
@@ -39,7 +39,7 @@ export {
 };
 
 export type {
-  MaterialItemType,
+  MaterialEffectType,
   MaterialSheetConfig,
   MaterialSheetRenderContext,
   MaterialSource,

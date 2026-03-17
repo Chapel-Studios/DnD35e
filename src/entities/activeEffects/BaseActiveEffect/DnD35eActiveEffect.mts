@@ -3,7 +3,7 @@ import type { DocumentConstructionContext } from '@common/_types.mjs';
 import { getDisplayName } from '@ec/CoreMixin/index.mjs';
 import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/index.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/index.mjs';
-import { EffectType } from '@effects/index.mjs';
+import { BASE_EFFECT_TYPE, EffectType } from '@effects/index.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import { ItemType } from '@items/itemTypes.mjs';
@@ -58,10 +58,14 @@ const ActiveEffectProxyDnd35e = new Proxy(DnD35eActiveEffect, {
   ) {
     const [source] = args;
     const type = source?.type;
-    const ItemClass = CONFIG.Dnd35e.activeEffect.documentClasses[type] as unknown as typeof DnD35eActiveEffect;
+    if (type === BASE_EFFECT_TYPE) {
+      return new foundry.documents.ActiveEffect(...args);
+    }
+    const ItemClass = CONFIG.dnd35e.activeEffect.documentClasses[type] as unknown as typeof DnD35eActiveEffect;
     // const ItemClass: typeof ItemDnd35e = CONFIG.Dnd35e.item.documentClasses[type];
     if (!ItemClass) {
       LogHelper.error(`ActiveEffect type ${type} does not exist or is not properly supported for ActiveEffectProxyDnd35e`);
+      return new foundry.documents.ActiveEffect(...args);
     }
     return new ItemClass(...args);
   },

@@ -13,8 +13,8 @@ const { fields: { StringField, SchemaField } } = foundry.data;
  * Legacy functional schema applier — retained for backward compatibility.
  */
 const applyPhysicalSchema = (schema: Record<string, any>) => {
-  // Components
-  applyIdentifiableSchema(schema);
+  // Components - now using IdentifiableSchemaMixin on the model class
+  // applyIdentifiableSchema(schema);
   //     ...defineCursableSchema(),
   //     ...defineChangesSchema(),
   //     ...defineAlignmentSchema(),

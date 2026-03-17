@@ -13,7 +13,7 @@ import { registerSettings } from './settings/index.mjs';
 // globalThis.fu = foundry.utils;
 
 // TODO: move this to a more appropriate location, such as a system-specific initialization file
-CONFIG.Dnd35e = {
+CONFIG.dnd35e = {
   VERSION: '13.0.0-dev.1',
   item: {
     documentClasses: {
@@ -32,6 +32,13 @@ CONFIG.Dnd35e = {
 // Register system settings (must happen during init)
 Hooks.once('init', () => {
   registerSettings();
+
+  game.dnd35e = {
+    stores: {
+      items: {},
+      effects: {},
+    },
+  };
 });
 
 registerItems();

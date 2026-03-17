@@ -17,8 +17,8 @@
 
   const {
     unidentifiedVisibilityMode: { showBoth },
-    editorViewMode,
     editorViewActions,
+    editorViewMode,
     identifiableGetters: { isIdentifiable },
   } = inject('documentSheetStore') as IdentifiableDocumentStore;
 

@@ -27,7 +27,6 @@ import {
 } from './DnD35eActiveEffect.mjs';
 import type { ActiveEffectConfigStore } from './sheet/index.mjs';
 import {
-  ActiveEffectConfigVue,
   Dnd35eActiveEffectConfig,
   EffectChanges,
   effectChangesTab,
@@ -54,7 +53,6 @@ export type {
 
 export {
   ACTIVE_EFFECT_TARGETS,
-  ActiveEffectConfigVue,
   ActiveEffectProxyDnd35e,
   ActiveEffectSystemModelBase,
   DnD35eActiveEffect,

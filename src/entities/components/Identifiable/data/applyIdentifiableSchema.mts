@@ -1,9 +1,7 @@
 import { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSystemModel.mjs';
 import {
   formulaField,
-  optionalHtmlField,
   requiredBooleanField,
-  requiredNullableNumberField,
   requiredStringField,
 } from '@helpers/fieldBuilders.mjs';
 
@@ -15,8 +13,10 @@ const IdentifiableSchemaMixin = <TBase extends SystemModelCtor>(base: TBase) => 
   abstract class IdentifiableSystemModel extends base {
     static override defineSchema (): Record<string, any> {
       const schema = super.defineSchema();
-      schema.unidentifiedDescription = optionalHtmlField();
-      schema.unidentifiedPrice = requiredNullableNumberField();
+      // Added to schema just so items can check if item has identifiable component, should alwayws be true
+      schema.isIdentifiable = requiredBooleanField(true);
+      // Legacy unidentifiedDescription and unidentifiedPrice removed
+      // These are now stored in flags.dnd35e.unidentifiedOverrides
       schema.isIdentified = requiredBooleanField(false);
       schema.derivedUnidentifiedName = requiredStringField('');
       schema.unidentifiedNameFormula = formulaField();

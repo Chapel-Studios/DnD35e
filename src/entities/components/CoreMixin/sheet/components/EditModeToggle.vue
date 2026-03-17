@@ -60,7 +60,7 @@
   position: relative;
   width: 36px;
   height: 20px;
-  background-color: var(--color-border-light-tertiary, #7a7971);
+  background-color: var(--color-border, #7a7971);
   border-radius: 10px;
   transition: background-color 0.2s;
 }

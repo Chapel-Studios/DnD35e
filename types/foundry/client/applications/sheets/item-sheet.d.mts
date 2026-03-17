@@ -17,4 +17,6 @@ export default abstract class ItemSheetV2<
 
   /** The Actor instance which owns this Item, if any. */
   get actor(): TDocument['actor'];
+
+  protected _onDrop(event: DragEvent): Promise<void>
 }

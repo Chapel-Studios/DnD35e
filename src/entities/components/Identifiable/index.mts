@@ -24,15 +24,12 @@ import type {
   IdentifiableStore,
 } from './sheet/index.mjs';
 import {
-  IdentifiableConfig,
   IdentifiableDefaultHeaderName,
-  IdentifiableDetails,
   IdentifiableDocumentName,
   IdentifiableDocumentName as IdentifiableHeader,
-  IdentifiableDocumentPrice,
   IdentifiableDocumentSheetVue,
   IdentifiedViewToggle,
-  ItemUnidentifiedPrice,
+  IsIdentifiedToggle,
   useIdentifiableStore,
 } from './sheet/index.mjs';
 
@@ -52,16 +49,13 @@ export type {
   WithIdentifiableComponent,
 };
 export {
-  IdentifiableConfig,
   IdentifiableDefaultHeaderName,
-  IdentifiableDetails,
   IdentifiableDocumentMixin,
   IdentifiableDocumentName,
-  IdentifiableDocumentPrice,
   IdentifiableDocumentSheetVue,
   IdentifiableHeader,
   IdentifiableSchemaMixin,
   IdentifiedViewToggle,
-  ItemUnidentifiedPrice,
+  IsIdentifiedToggle,
   useIdentifiableStore,
 };

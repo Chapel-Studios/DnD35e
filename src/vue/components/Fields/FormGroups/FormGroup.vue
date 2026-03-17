@@ -1,50 +1,47 @@
 <template>
   <div class="form-group" :class="formGroupClasses" :hidden="!isFieldVisible">
-    <label v-if="hasLabel">
-      <i v-if="isVisibilityRestricted" class="fas fa-low-vision" :title="visibilityTooltip"></i>
-      {{ localize(props.label!) }}
-      <!-- GM permission controls in label -->
+    <div v-if="hasLabel" class="form-group-label">
+      <label>
+        <!-- <i v-if="isVisibilityRestricted" class="fas fa-low-vision" :title="visibilityTooltip"></i> -->
+        {{ localize(props.label!) }}
+      </label>
+      <!-- GM permission controls next to label -->
       <FieldControls
-        :show-controls="isEditMode"
-        :is-g-m="isGM"
         :field-path="props.fieldPath"
-        :is-visibility-restricted="isVisibilityRestricted"
-        :is-editability-restricted="isEditabilityRestricted"
-        :visibility-icon="visibilityIcon"
-        :visibility-tooltip="visibilityTooltip"
-        :editability-icon="editabilityIcon"
-        :editability-tooltip="editabilityTooltip"
-        @cycle-visibility="cycleVisibility"
-        @toggle-editability="toggleEditability"
+        :default-editability="props.defaultEditability"
+        :default-visibility="props.defaultVisibility"
       >
         <slot name="controls" />
       </FieldControls>
-    </label>
-
-    <!-- GM permission controls before content when no label -->
-    <FieldControls
-      v-if="!hasLabel"
-      :show-controls="isEditMode"
-      :is-g-m="isGM"
-      :field-path="props.fieldPath"
-      :is-visibility-restricted="isVisibilityRestricted"
-      :is-editability-restricted="isEditabilityRestricted"
-      :visibility-icon="visibilityIcon"
-      :visibility-tooltip="visibilityTooltip"
-      :editability-icon="editabilityIcon"
-      :editability-tooltip="editabilityTooltip"
-      @cycle-visibility="cycleVisibility"
-      @toggle-editability="toggleEditability"
-    >
-      <slot name="controls" />
-    </FieldControls>
+    </div>
 
     <!-- Content slot for input elements -->
     <slot v-if="isFieldEditable"></slot>
     <slot v-else name="readonly">{{ props.value }}</slot>
 
     <!-- Hint text -->
-    <p v-if="props.hint" class="hint">{{ props.localizeHint === false ? props.hint : localize(props.hint) }}</p>
+    <p v-if="props.hint" class="hint">
+      <!-- GM permission controls before content when no label -->
+      <FieldControls
+        v-if="!hasLabel"
+        :field-path="props.fieldPath"
+        :default-editability="props.defaultEditability"
+        :default-visibility="props.defaultVisibility"
+      >
+        <slot name="controls" />
+      </FieldControls>
+      {{ props.localizeHint === false ? props.hint : localize(props.hint) }}
+    </p>
+
+    <!-- Standalone controls when no label and no hint -->
+    <FieldControls
+      v-if="!hasLabel && !props.hint"
+      :field-path="props.fieldPath"
+      :default-editability="props.defaultEditability"
+      :default-visibility="props.defaultVisibility"
+    >
+      <slot name="controls" />
+    </FieldControls>
   </div>
 </template>
 
@@ -54,6 +51,13 @@
 
   import FieldControls from './FieldControls.vue';
   import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
+  import {
+    everyoneVisibility,
+    gmOnlyEditability,
+    gmOnlyVisibility,
+    normalEditability,
+    ownerPlusVisibility,
+  } from './fieldPermissions.mjs';
 
   const props = defineProps<{
     label?: string; // localization key
@@ -64,8 +68,6 @@
     fieldPath?: string; // unique identifier for this field's permission overrides
     defaultVisibility?: FieldVisibility; // defaults to 'everyone'
     defaultEditability?: FieldEditability; // defaults to 'normal'
-    // Legacy prop - maps to defaultVisibility: 'gmOnly'
-    isDmOnly?: boolean;
   }>();
   
   function localize(key: string): string {
@@ -75,22 +77,19 @@
   const hasLabel = !!props.label;
   
   const store = inject('documentSheetStore') as DocumentSheetStore;
-  const { isEditable, documentGetters, documentActions } = store;
+  const { isEditable, documentGetters } = store;
   const { getFieldOverride } = documentGetters;
-  const { setFieldOverride } = documentActions;
   
   // Safely access new store properties with fallbacks
   const isGM = computed(() => store.isGM?.value ?? game.user.isGM);
   const isOwnerOrGM = computed(() => store.isOwnerOrGM?.value ?? game.user.isGM);
-  const isEditMode = computed(() => store.isEditMode?.value ?? true);
 
-  // Get effective visibility: override > prop > legacy isDmOnly > 'everyone'
+  // Get effective visibility: override > prop > 'everyone'
   const effectiveVisibility = computed((): FieldVisibility => {
     const override = props.fieldPath ? getFieldOverride(props.fieldPath) : undefined;
     if (override?.visibility) return override.visibility;
     if (props.defaultVisibility) return props.defaultVisibility;
-    if (props.isDmOnly) return 'gmOnly';
-    return 'everyone';
+    return everyoneVisibility;
   });
 
   // Get effective editability: override > prop > 'normal'
@@ -98,15 +97,15 @@
     const override = props.fieldPath ? getFieldOverride(props.fieldPath) : undefined;
     if (override?.editability) return override.editability;
     if (props.defaultEditability) return props.defaultEditability;
-    return 'normal';
+    return normalEditability;
   });
 
   // Determine if current user can see this field
   const isFieldVisible = computed((): boolean => {
     switch (effectiveVisibility.value) {
-    case 'everyone': return true;
-    case 'ownerPlus': return isOwnerOrGM.value;
-    case 'gmOnly': return isGM.value;
+    case everyoneVisibility: return true;
+    case ownerPlusVisibility: return isOwnerOrGM.value;
+    case gmOnlyVisibility: return isGM.value;
     default: return true;
     }
   });
@@ -114,13 +113,13 @@
   // Determine if current user can edit this field
   const isFieldEditable = computed((): boolean => {
     if (!isEditable.value) return false;
-    if (effectiveEditability.value === 'gmOnly') return isGM.value;
+    if (effectiveEditability.value === gmOnlyEditability) return isGM.value;
     return true;
   });
 
   // Restriction checks
-  const isVisibilityRestricted = computed(() => effectiveVisibility.value !== 'everyone');
-  const isEditabilityRestricted = computed(() => effectiveEditability.value === 'gmOnly');
+  const isVisibilityRestricted = computed(() => effectiveVisibility.value !== everyoneVisibility);
+  const isEditabilityRestricted = computed(() => effectiveEditability.value === gmOnlyEditability);
 
   // Form group classes
   const formGroupClasses = computed(() => ({
@@ -129,54 +128,30 @@
     'restricted-editability': isEditabilityRestricted.value,
   }));
 
-  // Permission control icons and tooltips
-  const visibilityIcon = computed(() => {
-    switch (effectiveVisibility.value) {
-    case 'everyone': return 'fas fa-eye';
-    case 'ownerPlus': return 'fas fa-user-shield';
-    case 'gmOnly': return 'fas fa-low-vision';
-    default: return 'fas fa-eye';
-    }
-  });
-
+  // Visibility tooltip for the low-vision indicator icon in labels
   const visibilityTooltip = computed(() => {
     switch (effectiveVisibility.value) {
-    case 'everyone': return 'Visible to everyone';
-    case 'ownerPlus': return 'Visible to owners and GMs only';
-    case 'gmOnly': return 'Visible to GMs only';
+    case everyoneVisibility: return 'Visible to everyone';
+    case ownerPlusVisibility: return 'Visible to owners and GMs only';
+    case gmOnlyVisibility: return 'Visible to GMs only';
     default: return 'Visibility';
     }
   });
-
-  const editabilityIcon = computed(() => {
-    return effectiveEditability.value === 'gmOnly' ? 'fas fa-lock' : 'fas fa-lock-open';
-  });
-
-  const editabilityTooltip = computed(() => {
-    return effectiveEditability.value === 'gmOnly' ? 'GM-only editing' : 'Normal editing';
-  });
-
-  // Permission control actions
-  const cycleVisibility = async () => {
-    if (!props.fieldPath) return;
-    const order: FieldVisibility[] = ['everyone', 'ownerPlus', 'gmOnly'];
-    const currentIndex = order.indexOf(effectiveVisibility.value);
-    const nextVisibility = order[(currentIndex + 1) % order.length];
-    const current = getFieldOverride(props.fieldPath) ?? {};
-    await setFieldOverride(props.fieldPath, { ...current, visibility: nextVisibility });
-  };
-
-  const toggleEditability = async () => {
-    if (!props.fieldPath) return;
-    const nextEditability: FieldEditability = effectiveEditability.value === 'normal' ? 'gmOnly' : 'normal';
-    const current = getFieldOverride(props.fieldPath) ?? {};
-    await setFieldOverride(props.fieldPath, { ...current, editability: nextEditability });
-  };
 </script>
 
 <style scoped>
 .form-group {
   display: contents;
+}
+
+.form-group-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.form-group-label label {
+  margin: 0;
 }
 
 .form-group.with-hint {
@@ -186,7 +161,7 @@
   gap: 0.25rem 0.5rem;
   align-items: center;
   padding: 0.5rem 0;
-  border-bottom: 1px solid var(--color-border-light-tertiary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .form-group.with-hint:last-child {
@@ -211,7 +186,7 @@
 .form-group.with-hint :slotted(.hint) {
   grid-column: 1 / -1;
   font-size: var(--font-size-11);
-  color: var(--color-text-dark-secondary);
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
@@ -219,7 +194,7 @@
 .form-group.with-hint > .hint {
   grid-column: 1 / -1;
   font-size: var(--font-size-11);
-  color: var(--color-text-dark-secondary);
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
@@ -236,7 +211,7 @@
   width: 60px;
   height: 30px;
   padding: 0;
-  border: 1px solid var(--color-border-light-tertiary);
+  border: 1px solid var(--color-border);
 }
 
 /* Visual indicator for restricted fields */

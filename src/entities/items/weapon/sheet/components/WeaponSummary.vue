@@ -2,16 +2,18 @@
   <ul class="weapon-summary">
     <li>
       <SelectFormGroup
-        :value="weaponType"
+        :value="effectiveWeaponType"
         :options="weaponTypeSelectOptions"
-        :on-update="getFieldUpdater('system.weaponType')"
+        :on-update="weaponTypeUpdater"
+        field-path="system.weaponType"
       />
     </li>
     <li>
       <SelectFormGroup
-        :value="weaponSubtype"
+        :value="effectiveWeaponSubtype"
         :options="weaponSubtypeSelectOptions"
-        :on-update="getFieldUpdater('system.weaponSubtype')"
+        :on-update="weaponSubtypeUpdater"
+        field-path="system.weaponSubtype"
       />
     </li>
   </ul>
@@ -20,7 +22,7 @@
 <script setup lang="ts">
   import { weaponSubtypeSelectOptions, weaponTypeSelectOptions } from '@items/weapon/index.mjs';
   import { SelectFormGroup } from '@vc/Fields/index.mjs';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
 
   import type { WeaponStore } from '../WeaponStore.mjs';
 
@@ -31,10 +33,24 @@
       weaponType,
       weaponSubtype,
     },
+    documentGetters: {
+      getEffectiveFieldValue,
+    },
     documentActions: {
-      getFieldUpdater,
+      getViewAwareFieldUpdater,
     },
   } = inject('documentSheetStore') as WeaponStore;
+
+  // View-aware values: shows override when viewing as unidentified
+  const effectiveWeaponType = computed(() => 
+    getEffectiveFieldValue('system.weaponType', weaponType.value)
+  );
+  const effectiveWeaponSubtype = computed(() => 
+    getEffectiveFieldValue('system.weaponSubtype', weaponSubtype.value)
+  );
+
+  const weaponTypeUpdater = getViewAwareFieldUpdater('system.weaponType');
+  const weaponSubtypeUpdater = getViewAwareFieldUpdater('system.weaponSubtype');
 </script>
 
 <style scoped lang="scss">

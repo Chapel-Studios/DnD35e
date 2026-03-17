@@ -8,10 +8,10 @@ import {
 import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
 import { MaterialSystemData, MaterialSystemSource } from '@effects/material/index.mjs';
 
-const materialItemType = 'material';
-type MaterialItemType = typeof materialItemType;
+const materialEffectType = 'material';
+type MaterialEffectType = typeof materialEffectType;
 
-type MaterialSource = ActiveEffectSource<MaterialItemType, MaterialSystemSource>
+type MaterialSource = ActiveEffectSource<MaterialEffectType, MaterialSystemSource>
   & Omit<IdentifiableDocumentSourceProps, 'system'>;
 
 interface MaterialEffectFlags {
@@ -22,7 +22,7 @@ interface MaterialEffectFlags {
 const IdentifiableEffectBase = IdentifiableDocumentMixin(Dnd35eDocumentMixin(DnD35eActiveEffect));
 
 class Material extends IdentifiableEffectBase {
-  declare type: MaterialItemType;
+  declare type: MaterialEffectType;
   declare system: MaterialSystemData;
   declare flags: Dnd35eDocumentFlags<MaterialEffectFlags>;
 
@@ -53,12 +53,12 @@ type MaterialType = Material;
 
 export {
   Material,
-  materialItemType,
+  materialEffectType,
 };
 
 export type {
   MaterialEffectFlags,
-  MaterialItemType,
+  MaterialEffectType,
   MaterialSource,
   MaterialType,
 };

@@ -4,8 +4,9 @@ import type CompendiumDirectory from '@client/applications/sidebar/tabs/compendi
 import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type Config from '@client/config.mjs';
+import { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
 import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import { ItemDnd35e } from '@items/baseItem/index.mjs';
+import { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
 import { ItemType } from '@items/itemTypes.mjs';
 
 import { CanvasDnd35e } from './canvas/CanvasDnd35e.mjs';
@@ -22,7 +23,14 @@ type GameDnd35e = Game<
   documents.Macro,
   SceneDnd35e,
   documents.User
->;
+> & {
+  dnd35e: {
+    stores: {
+      items: Record<string, ItemSheetStore<any>>;
+      effects: Record<string, ActiveEffectConfigStore>;
+    };
+  }
+};
 
 type ThisConfig = Config<
   documents.AmbientLightDocument<SceneDnd35e | null>,
@@ -51,7 +59,7 @@ type ThisConfig = Config<
 
 declare global {
   interface ConfigDnd35e extends ThisConfig {
-    Dnd35e: {
+    dnd35e: {
       VERSION: string;
       item: {
         documentClasses: Record<string, new (...args: any[]) => ItemDnd35e>;

@@ -1,0 +1,70 @@
+import { CoinageDefinition, CURRENCY_KEY, CurrencyConfig } from '@settings/index.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
+import { computed, ComputedRef, ref } from 'vue';
+
+import { imperialUnitOfMeasure, UNIT_SETTINGS_KEY, UnitOfMeasureOption, WEIGHT_OPTIONS } from '../settings/unitOfMeasure.mjs';
+
+const useSettingsStore = (): SettingsStore => {
+  const currencySettings = ref(game.settings.get(SYSTEM_ID, CURRENCY_KEY) as CurrencyConfig);
+
+  const currency = {
+    coinages: computed(() => currencySettings.value?.coinages ?? []),
+    defaultDisplayCoin: computed(() => currencySettings.value?.defaultDisplayCoin ?? currencySettings.value?.coinages[0]?.id ?? ''),
+    rollUpTargetCoin: computed(() => currencySettings.value?.rollUpTargetCoin ?? currencySettings.value?.coinages[0]?.id ?? ''),
+  };
+
+  const unitOfMeasure: ComputedRef<UnitOfMeasureOption> = computed(() => game.settings.get(SYSTEM_ID, UNIT_SETTINGS_KEY) as UnitOfMeasureOption ?? imperialUnitOfMeasure);
+  const measurement = {
+    unitOfMeasure,
+    weightDisplayLabel: computed(() => {
+      return WEIGHT_OPTIONS[unitOfMeasure.value].label;
+    }),
+    weightDisplayShortLabel: computed(() => {
+      return WEIGHT_OPTIONS[unitOfMeasure.value].short;
+    }),
+    convertToLocalizedWeight: (storedWeight: number) => {
+      const unitOfMeasure = game.settings.get(SYSTEM_ID, UNIT_SETTINGS_KEY) ?? imperialUnitOfMeasure;
+      if (unitOfMeasure === 'imperial') {
+        return storedWeight;
+      } else {
+        // Convert to metric
+        return storedWeight * 0.5; // Example conversion, adjust as needed
+      }
+    },
+    convertToStoredWeight: (localizedWeight: number) => {
+      const unitOfMeasure = game.settings.get(SYSTEM_ID, UNIT_SETTINGS_KEY) ?? imperialUnitOfMeasure;
+      if (unitOfMeasure === 'imperial') {
+        return localizedWeight;
+      } else {
+        // Convert to imperial
+        return localizedWeight * 2; // Example conversion, adjust as needed
+      }
+    },
+  };
+
+  return {
+    currency,
+    measurement,
+  };
+};
+
+type SettingsStore = {
+  currency: {
+    coinages: ComputedRef<CoinageDefinition[]>;
+    defaultDisplayCoin: ComputedRef<string>;
+    rollUpTargetCoin: ComputedRef<string>;
+  };
+  measurement: {
+    unitOfMeasure: ComputedRef<string>;
+    convertToLocalizedWeight: (storedWeight: number) => number;
+    weightDisplayLabel: ComputedRef<string>;
+    weightDisplayShortLabel: ComputedRef<string>;
+    convertToStoredWeight: (localizedWeight: number) => number;
+  };
+};
+
+export { useSettingsStore };
+
+export type {
+  SettingsStore,
+};

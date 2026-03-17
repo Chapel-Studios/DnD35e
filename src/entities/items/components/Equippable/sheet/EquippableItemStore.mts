@@ -4,12 +4,12 @@ import type { EquippableItemLike } from '@items/components/Equippable/index.mjs'
 import type { PhysicalItemLike, PhysicalItemStore } from '@items/components/Physical/index.mjs';
 import { usePhysicalItemStore } from '@items/components/Physical/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
-import type { ComputedRef, Ref } from 'vue';
+import type { ComputedRef, ShallowRef } from 'vue';
 import { computed } from 'vue';
 
 
 const useEquippableItemStore = <TDocument extends EquippableItemLike> (context: VueApplicationContext<TDocument>, baseStore: ItemSheetStore) => {
-  const document = baseStore._document as unknown as Ref<TDocument>;
+  const document = baseStore._storeUtils.document as ShallowRef<TDocument>;
   const physicalStore = usePhysicalItemStore(context, baseStore as ItemSheetStore<PhysicalItemLike>);
 
   const equippableGetters = {

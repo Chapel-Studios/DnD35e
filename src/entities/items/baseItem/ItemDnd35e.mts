@@ -157,7 +157,7 @@ const ItemProxyDnd35e = new Proxy(ItemDnd35e, {
   ) {
     const [source] = args;
     const type = source?.type;
-    const ItemClass = CONFIG.Dnd35e.item.documentClasses[type] as unknown as typeof ItemDnd35e;
+    const ItemClass = CONFIG.dnd35e.item.documentClasses[type] as unknown as typeof ItemDnd35e;
     // const ItemClass: typeof ItemDnd35e = CONFIG.Dnd35e.item.documentClasses[type];
     if (!ItemClass) {
       LogHelper.error(`Item type ${type} does not exist or is not properly supported for ItemProxyDnd35e`);

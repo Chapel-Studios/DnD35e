@@ -134,5 +134,36 @@
   "DND35E.Settings.HideSpellDescriptions.Name": "Hide Spell Descriptions",
   "DND35E.Settings.HideSpellDescriptions.Hint": "Hide spell descriptions in item lists to save space.",
 
+  "DND35E.Settings.Currency.Name": "Currency Configuration",
+  "DND35E.Settings.Currency.Label": "Configure Currency",
+  "DND35E.Settings.Currency.Hint": "Configure available coinages and currency options.",
+  "DND35E.Settings.Currency.Title": "Currency Configuration",
+
+  "DND35E.Settings.CurrencyConfig.Instructions": "Configure which coinages are available in your world. System coinages can be enabled or disabled; custom coinages can be fully edited.",
+  "DND35E.Settings.CurrencyConfig.DefaultDisplayCoin": "Default Display Coin",
+  "DND35E.Settings.CurrencyConfig.RollUpMaximum": "Roll-Up Maximum",
+  "DND35E.Settings.CurrencyConfig.Status": "Status",
+  "DND35E.Settings.CurrencyConfig.Id": "ID",
+  "DND35E.Settings.CurrencyConfig.Label": "Label",
+  "DND35E.Settings.CurrencyConfig.ShortLabel": "Short",
+  "DND35E.Settings.CurrencyConfig.ValueInGp": "GP Value",
+  "DND35E.Settings.CurrencyConfig.Weight": "Weight",
+  "DND35E.Settings.CurrencyConfig.Visibility": "Visibility",
+  "DND35E.Settings.CurrencyConfig.RestoreDefaults": "Restore system defaults",
+  "DND35E.Settings.CurrencyConfig.NoCurrencies": "No currencies defined.",
+  "DND35E.Settings.CurrencyConfig.VisibilityEveryone": "Everyone",
+  "DND35E.Settings.CurrencyConfig.VisibilityGmSelect": "GM Select",
+  "DND35E.Settings.CurrencyConfig.VisibilityGmOnly": "GM Only",
+  "DND35E.Settings.CurrencyConfig.DuplicateId": "A coin with that ID already exists.",
+
+  "DND35E.Settings.CurrencyConfig.ResetIrreversible": "This will remove all custom coins and restore all defaults. This action cannot be undone.",
+
+  "DND35E.Currency.AddCoinStack": "Add coin stack",
+  "DND35E.Currency.RemoveCoinStack": "Remove coin stack",
+  "DND35E.Currency.Consolidate": "Consolidate currency",
+  
+  "DND35E.Settings.MeasurementUnitsN": "System of units",
+  "DND35E.Settings.MeasurementUnitsL": "System of units to be used in the world",
+
   "DND35E.HitDie": "Hit Die"
 }

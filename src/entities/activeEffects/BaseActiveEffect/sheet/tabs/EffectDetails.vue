@@ -1,5 +1,5 @@
 <template>
-  <Details>
+  <DocumentDetails>
     <!-- DESCRIPTION SECTION -->
     <template #description-section>
       <!-- Effects use default description from Effects tab typically -->
@@ -14,14 +14,14 @@
     <ColorFormGroup
       label="EFFECT.Tint"
       :value="tint"
-      :on-update="getFieldUpdater('tint')"
+      :on-update="getDirectFieldUpdater('tint')"
     />
 
     <!-- DISABLED -->
     <CheckBoxFormGroup
       label="EFFECT.Disabled"
       :value="isDisabled"
-      :on-update="getFieldUpdater('disabled')"
+      :on-update="getDirectFieldUpdater('disabled')"
     />
 
     <!-- ORIGIN -->
@@ -37,7 +37,7 @@
       label="EFFECT.Statuses"
       :value="statuses"
       :options="statusOptions"
-      :on-update="getFieldUpdater('statuses')"
+      :on-update="getDirectFieldUpdater('statuses')"
     />
 
     <!-- SHOW ICON -->
@@ -45,14 +45,14 @@
       label="EFFECT.ShowIcon"
       :value="showIcon"
       :options="showIconOptions"
-      :on-update="getFieldUpdater('showIcon')"
+      :on-update="getDirectFieldUpdater('showIcon')"
     />
-  </Details>
+  </DocumentDetails>
 </template>
 
 <script setup lang="ts">
+  import { DocumentDetails } from '@ec/CoreMixin/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-  import Details from '@items/baseItem/sheet/tabs/Details.vue';
   import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { ColorFormGroup } from '@vc/Fields/index.mjs';
   import { MultiSelectFormGroup } from '@vc/Fields/index.mjs';
@@ -71,9 +71,9 @@
       origin,
     },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
-    _document,
+    _storeUtils: { document: _document },
   } = store;
 
   // Check if the effect has identifiable properties

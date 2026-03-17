@@ -3,27 +3,26 @@ import type { IdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
 import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
 import {
-  effectChangesTab,
-  effectDurationTab,
+  getDefaultActiveEffectTabs,
   useActiveEffectConfigStore,
 } from '@effects/BaseActiveEffect/index.mjs';
 import { materialDetailsTab, MaterialType } from '@effects/material/index.mjs';
-import type { ComputedRef, Ref } from 'vue';
+import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
 
 const useMaterialStore = (context: any) => {
   const baseStore = useActiveEffectConfigStore<MaterialType>(context);
   const identifiableStore = useIdentifiableStore(
     context,
-    baseStore as unknown as DocumentSheetStore<MaterialType>
+    baseStore as DocumentSheetStore<MaterialType>
   );
-  baseStore.tabs.tabActions.appendTabs([
+  baseStore.tabs.tabActions.replaceTabs([
     materialDetailsTab,
-    effectDurationTab,
-    effectChangesTab,
+    ...getDefaultActiveEffectTabs()
+      .filter(tab => tab.id !== 'details'),
   ]);
 
-  const document = baseStore._document as unknown as Ref<MaterialType>;
+  const document = baseStore._storeUtils.document;
 
   const materialGetters = {
     bonusHardness: computed(() => document.value.system.bonusHardness ?? 0),

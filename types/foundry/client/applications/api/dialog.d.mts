@@ -52,14 +52,7 @@ export default class DialogV2<
      *              returned by its callback. If the dialog was dismissed, and rejectClose is
      *              false, the Promise resolves to null.
      */
-  static confirm({
-    yes,
-    no,
-    ...options
-  }: {
-        yes?: Partial<DialogV2Button>;
-        no?: Partial<DialogV2Button>;
-    } & DeepPartial<DialogV2Configuration & DialogV2WaitOptions>): Promise<boolean>;
+  static confirm(options: DialogConfirmOptions): Promise<boolean>;
 
   /**
      * A utility helper to generate a dialog with a single confirmation button.
@@ -178,3 +171,10 @@ export type DialogV2CloseCallback = (event: Event, dialog: DialogV2) => void;
  * the dialog, or the result returned by that button's callback
  */
 export type DialogV2SubmitCallback = (result: unknown) => Promise<void>;
+
+export type DialogConfirmOptions = (ForceOptional<DialogV2Configuration & DialogV2WaitOptions>)
+  & ({
+    yes?: Partial<DialogV2Button>;
+    no?: Partial<DialogV2Button>;
+  });
+

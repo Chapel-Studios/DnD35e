@@ -1,26 +1,27 @@
 <template>
-  <component :is="baseComponent">
+  <DocumentSheetBody>
     <template #header-name>
       <slot name="header-name">
         <IdentifiableDefaultHeaderName />
       </slot>
     </template>
-    <template v-if="$slots['header-status']" #status>
+    <template #header-status>
+      <IsIdentifiedToggle />
       <slot name="header-status" />
     </template>
     <template v-if="$slots['header-summary']" #header-summary>
       <slot name="header-summary" />
     </template>
-  </component>
+  </DocumentSheetBody>
 </template>
 
 <script lang="ts" setup>
-  import { IdentifiableDefaultHeaderName } from '@ec/Identifiable/index.mjs';
-  import { ActiveEffectConfigVue, useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-  import { BaseItemSheetVue, useItemSheetStore } from '@items/baseItem/index.mjs';
-  import { computed, provide } from 'vue';
-
-  type SheetMode = 'item' | 'effect';
+  import type { SheetMode } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetBody } from '@ec/CoreMixin/index.mjs';
+  import { IdentifiableDefaultHeaderName, IsIdentifiedToggle } from '@ec/Identifiable/index.mjs';
+  import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
+  import { useItemSheetStore } from '@items/baseItem/index.mjs';
+  import { provide } from 'vue';
 
   const props = withDefaults(defineProps<{
     context?: any;
@@ -28,8 +29,6 @@
   }>(), {
     mode: 'item',
   });
-
-  const baseComponent = computed(() => props.mode === 'effect' ? ActiveEffectConfigVue : BaseItemSheetVue);
 
   if (props.context) {
     if (props.mode === 'effect') {

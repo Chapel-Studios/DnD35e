@@ -28,6 +28,8 @@ import {
   ItemSheetContainerSelector,
   ItemSheetIsCarriedCheckbox,
   ItemWeight,
+  PhysicalItemEffects,
+  physicalItemEffectsTab,
   PhysicalItemSheet,
   usePhysicalItemStore,
 } from './sheet/index.mjs';
@@ -43,6 +45,8 @@ export {
   ItemSheetIsCarriedCheckbox,
   ItemWeight,
   PhysicalItem,
+  PhysicalItemEffects,
+  physicalItemEffectsTab,
   PhysicalItemSheet,
   PhysicalItemSystemModel,
   usePhysicalItemStore,

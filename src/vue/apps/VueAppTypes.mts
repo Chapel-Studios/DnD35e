@@ -31,6 +31,7 @@ interface VueApplicationContext<TDocument extends ItemDnd35e | DnD35eActiveEffec
   appConfigOptions: VueApplicationConfiguration<TDocument>;
   isEditable: boolean;
   renderOptions?: VueRenderOptions;
+  close: () => Promise<void>;
   /** Shared reactive state for header controls */
   sheetState: SheetState;
 }

@@ -1,9 +1,10 @@
 <template>
   <CheckBoxFormGroup
     :editable="isEditable"
-    label="Is Weightless When Equipped"
-    :value="isWeightlessWhenEquipped"
+    label="Is Melded"
+    :value="isMelded"
     :on-update="updater"
+    field-path="system.isMelded"
   />
 </template>
 <script setup lang="ts">
@@ -14,12 +15,12 @@
   const {
     isEditable,
     equippableGetters: {
-      isWeightlessWhenEquipped,
+      isMelded,
     },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
   } = inject('documentSheetStore') as EquippableDocumentStore;
 
-  const updater = getFieldUpdater('system.isWeightlessWhenEquipped');
+  const updater = getDirectFieldUpdater('system.isMelded');
 </script>

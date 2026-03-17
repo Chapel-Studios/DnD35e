@@ -1,6 +1,5 @@
 import { ItemSheetDnd35e } from './BaseItemSheet.mjs';
 import type { BaseItemSheetRenderContext } from './BaseItemSheet.mts';
-import BaseItemSheetVue from './BaseItemSheet.vue';
 import {
   EffectCategory,
 } from './components/index.mjs';
@@ -12,14 +11,11 @@ import {
   useItemSheetStore,
 } from './ItemSheetStore.mjs';
 import {
-  defaultDescriptionTab,
   defaultEffectsTab,
   Effects,
 } from './tabs/index.mjs';
 
 export {
-  BaseItemSheetVue,
-  defaultDescriptionTab,
   defaultEffectsTab,
   EffectCategory,
   Effects,

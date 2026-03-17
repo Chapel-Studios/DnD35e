@@ -13,6 +13,7 @@
         :value="editValueUnwrapped"
         :contexts="nameFormulaIntellisenseSchema"
         :onUpdate="onUpdate"
+        :field-path="props.fieldPath"
       />
     </div>
   </div>
@@ -50,7 +51,7 @@
    */
   const encodedContexts = computed((): Record<string, string> => {
     const contexts: Record<string, string> = {};
-    const doc = store._document.value;
+    const doc = store._storeUtils.document.value;
     const documentType = (doc as any).documentName;
     const subtype = doc.type;
 

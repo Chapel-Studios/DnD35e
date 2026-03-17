@@ -103,7 +103,7 @@ const ActorProxyDnd35e = new Proxy(ActorDnd35e, {
   ) {
     const [source] = args;
     const type = source?.type;
-    const ActorClass = CONFIG.Dnd35e.actor.documentClasses[type] as unknown as typeof ActorDnd35e;
+    const ActorClass = CONFIG.dnd35e.actor.documentClasses[type] as unknown as typeof ActorDnd35e;
     if (!ActorClass) {
       LogHelper.error(`Actor type ${type} does not exist or is not properly supported for ActorProxyDnd35e`);
     }

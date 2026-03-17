@@ -2,26 +2,33 @@
   <SelectFormGroup
     :editable="isEditable"
     label="Size"
-    :value="size"
+    :value="effectiveSize"
     :on-update="updater"
     :options="EQUIP_SLOT_SELECT_OPTIONS"
+    field-path="system.size"
   />
 </template>
 <script setup lang="ts">
   import { EQUIP_SLOT_SELECT_OPTIONS } from '@constants/equipmentSlots.mjs';
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { SelectFormGroup } from '@vc/Fields/index.mjs';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
 
   const {
     isEditable,
     physicalItemGetters: {
       size,
     },
+    documentGetters: {
+      getEffectiveFieldValue,
+    },
     documentActions: {
-      getFieldUpdater,
+      getViewAwareFieldUpdater,
     },
   } = inject('documentSheetStore') as PhysicalDocumentStore;
 
-  const updater = getFieldUpdater('system.size');
+  const effectiveSize = computed(() =>
+    getEffectiveFieldValue('system.size', size.value)
+  );
+  const updater = getViewAwareFieldUpdater('system.size');
 </script>

@@ -114,19 +114,19 @@
 
   .notes {
     font-style: italic;
-    color: var(--color-text-dark-secondary);
+    color: var(--color-text-secondary);
     margin-bottom: 0.5rem;
   }
 
   .roll-section {
-    border: 1px solid var(--color-border-light-primary);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     padding: 0.75rem;
 
     h3 {
       margin: 0 0 0.75rem 0;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--color-border-light-primary);
+      border-bottom: 1px solid var(--color-border);
     }
   }
 
@@ -156,7 +156,7 @@
     justify-content: flex-end;
     gap: 0.5rem;
     padding-top: 0.5rem;
-    border-top: 1px solid var(--color-border-light-primary);
+    border-top: 1px solid var(--color-border);
     margin-top: auto;
 
     button {
@@ -168,14 +168,14 @@
       cursor: pointer;
 
       &.reset-btn {
-        background: var(--color-bg-option);
-        border: 1px solid var(--color-border-light-primary);
+        background: var(--color-select-option-bg);
+        border: 1px solid var(--color-border);
       }
 
       &.save-btn {
-        background: var(--color-bg-btn-positive);
-        border: 1px solid var(--color-border-positive);
-        color: var(--color-text-light-highlight);
+        background: var(----color-level-success);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-primary);
       }
     }
   }

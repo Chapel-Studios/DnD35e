@@ -3,22 +3,21 @@
     class="overview"
     v-show="isActiveTab"
     data-group="primary"
-    :data-tab="tabName"
+    data-tab="details"
   >
     <div class="form-container">
-      <!-- DESCRIPTION SECTION -->
-      <DescriptionEditor :localize="localize" />
+      <DescriptionEditor />
 
       <!-- SLOT FOR ADDITIONAL CONTENT -->
       <slot></slot>
 
-      <!-- GM-ONLY SECTION -->
+      <!-- GM-ONLY SECTION
       <template v-if="userIsGM">
         <h3 class="form-header">{{ localize("D35E.SystemProperties") }}</h3>
         <slot name="gm-section">
           <UniqueId />
         </slot>
-      </template>
+      </template> -->
     </div>
   </section>
 </template>
@@ -29,19 +28,6 @@
   import { UniqueId } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
-  interface Props {
-    tabName?: string;
-  }
-
-  const props = withDefaults(defineProps<Props>(), {
-    tabName: 'description',
-  });
-
-  defineSlots<{
-    default(): any;
-    'gm-section'(): any;
-  }>();
-
   const store = inject('documentSheetStore') as DocumentSheetStore;
   const {
     tabs: {
@@ -50,7 +36,7 @@
     localize,
   } = store;
 
-  const isActiveTab = getIsTabOpen(props.tabName);
+  const isActiveTab = getIsTabOpen('details');
   const userIsGM = game.user.isGM;
 </script>
 
