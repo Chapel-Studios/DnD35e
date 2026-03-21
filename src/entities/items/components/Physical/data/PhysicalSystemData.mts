@@ -28,7 +28,7 @@ interface PhysicalItemSystemData extends ItemSystemSource, PhysicalItemSystemSou
   IdentifiableDocumentSystemData {
     effectiveWeight: number;
     // Material might apply these
-    magicEquivalent?: number;
+    magicEquivalency?: number;
     damageReductionTypes?: string[];
   }
 

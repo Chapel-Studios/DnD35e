@@ -1,5 +1,6 @@
 <template>
   <MultiSelectFormGroup
+    class="grid-full-row"
     label="DND35E.Settings.DamageReductionTypes.Label"
     field-path="system.damageReductionTypes"
     :value="damageReductionTypes"

@@ -4,32 +4,24 @@
       <ItemHardness direct-update />
       <!-- HP per Inch -->
       <NumberFormGroup
-        label="D35E.HpPerInch"
+        label="D35E.bonusHp"
         :value="bonusHp"
         field-path="system.bonusHp"
         direct-update
       />
-      <!-- Magic Equivalent -->
-      <NumberFormGroup
-        label="D35E.MagicEquivalent"
-        :value="magicEquivalent"
-        field-path="system.magicEquivalent"
-        direct-update
-      />
-      <DamageReductionTypes class="grid-full-row" />
+      <MagicEquivalency />
+      <DamageReductionTypes />
+      <ItemPrice />
     </template>
     <template #outer-append>
       <div class="material-details-container grid-full-row">
-        <!-- Material Equivalents -->
-        <!-- <DamageReductionTypes /> -->
-        <!-- Magic Equivalent -->
         <!-- 
         <h3 class="form-header">{{ localize("D35E.MagicEquivalent") }}</h3>
 
         <NumberFormGroup
           label="D35E.MagicEquivalent"
-          :value="magicEquivalent"
-          field-path="system.magicEquivalent"
+          :value="magicEquivalency"
+          field-path="system.magicEquivalency"
           direct-update
         />
 
@@ -77,17 +69,18 @@
 
 <script setup lang="ts">
   import { EffectDetails } from '@effects/BaseActiveEffect/index.mjs';
-  import DamageReductionTypes from '@effects/BaseActiveEffect/sheet/components/DamageReductionTypes.vue';
   import { ItemHardness } from '@items/components/Physical/index.mjs';
+  import ItemPrice from '@items/components/Physical/sheet/components/ItemPrice.vue';
   import { NumberFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
+  import DamageReductionTypes from '../components/DamageReductionTypes.vue';
+  import MagicEquivalency from '../components/MagicEquivalency.vue';
   import { MaterialStore } from '../MaterialStore.mjs';
 
   const {
     documentGetters: {
       bonusHp,
-      magicEquivalent,
     },
   } = inject('documentSheetStore') as MaterialStore;
 </script>

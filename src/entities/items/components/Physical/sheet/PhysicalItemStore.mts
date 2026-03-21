@@ -7,6 +7,9 @@ import type { ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@
 import { physicalItemEffectsTab, type PhysicalItemLike } from '@items/components/Physical/index.mjs';
 import { SettingsStore } from '@settings/core/sheet/settingsStore.mjs';
 import type { Price } from '@settings/currency/index.mjs';
+import { DamageReductionTypesConfig, GAME_RULES_KEYS } from '@settings/index.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
+import { MultiSelectOption } from '@vc/Fields/index.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';
 import type { ComputedRef } from 'vue';
 import { computed, inject } from 'vue';
@@ -65,6 +68,19 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     brokenResalePrice: computed(() => getEffectiveFieldValue('system.brokenResalePrice', document.value.system.brokenResalePrice) || []),
     isBroken: computed(() => getEffectiveFieldValue('system.isBroken', document.value.system.isBroken) || false),
     maxHp: computed(() => getEffectiveFieldValue('system.hp.max', document.value.system.hp.max) || 0),
+
+    // Material Effects support
+    magicEquivalency: computed(() => document.value.system.magicEquivalency ?? 0),
+    damageReductionTypes: computed(() => [...(document.value.system.damageReductionTypes ?? [])]),
+    damageReductionTypeOptions: computed<MultiSelectOption[]>(() => {
+      const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.DAMAGE_REDUCTION_TYPES) as DamageReductionTypesConfig;
+      return Object.entries(config)
+        .filter(([, entry]) => entry.enabled)
+        .map(([key, entry]) => ({
+          value: key,
+          label: entry.label,
+        }));
+    }),
   };
 
   return {
@@ -89,6 +105,9 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   isCarried: ComputedRef<boolean>;
   size: ComputedRef<string>;
   materials: ComputedRef<MaterialType[]>;
+  magicEquivalency: ComputedRef<number | null>;
+  damageReductionTypes: ComputedRef<string[]>;
+  damageReductionTypeOptions: ComputedRef<MultiSelectOption[]>;
 }
 
 interface PhysicalItemStoreUtils extends IdentifiableDocumentStoreUtils {}

@@ -67,7 +67,8 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     if (!this.parent?.parent) {
       this.isCarried = false;
     }
-    this.magicEquivalent = this.magicEquivalent ?? 0;
+    this.magicEquivalency = this.magicEquivalency ?? 0;
+    this.damageReductionTypes = this.damageReductionTypes ?? [];
   }
 }
 

@@ -1,16 +1,21 @@
 <template>
   <ItemPriceFormGroup
     label="Price"
-    :value="effectivePrice"
-    :on-update="priceUpdater"
+    :value="price"
     field-path="system.price"
-    class="item-price"
+    class="item-price grid-full-row"
+    :direct-update="props.directUpdate"
   />
 </template>
 <script setup lang="ts">
   import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { ItemPriceFormGroup } from '@vc/Fields/index.mjs';
-  import { computed, inject } from 'vue';
+  import { inject } from 'vue';
+
+  const props = defineProps<{
+    /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
+    directUpdate?: boolean;
+  }>();
 
   const documentSheetStore = inject('documentSheetStore') as PhysicalDocumentStore;
   
@@ -18,16 +23,8 @@
     documentGetters: {
       price,
     },
-    documentActions: {
-      getViewAwareFieldUpdater,
-    },
   } = documentSheetStore as PhysicalDocumentStore;
 
-  // View-aware price: shows override when viewing as unidentified
-  const effectivePrice = computed(() => price.value);
-
-  // View-aware updater: writes to override when editing in unidentified view
-  const priceUpdater = getViewAwareFieldUpdater('system.price');
 </script>
 <style lang="scss" scoped>
   .view-mode .form-group.item-price.price-form-group {

@@ -1,13 +1,15 @@
 <template>
   <DocumentDetails>
     <div class="weapon-details-container">
-      <ItemPrice class="grid-full-row" />
+      <ItemPrice />
       <ItemHP />
       <ItemQuantity />
       <EquippableItemWeight />
       <ItemHardness />
       <ItemSheetIsCarriedCheckbox />
       <ItemSheetContainerSelector />
+      <MagicEquivalency v-if="hasMagicEquivalentEffects" class="magic-eq-effect" />
+      <DamageReductionTypes v-if="hasDamageReductionTypeEffects" class="dr-types" />
     </div>
     <DmControl class="grid-full-row">
       <UniqueId />        
@@ -16,6 +18,8 @@
 </template>
 <script setup lang="ts">
   import { DocumentDetails } from '@ec/CoreMixin/index.mjs';
+  import { MaterialStore } from '@effects/material/index.mjs';
+  import { DamageReductionTypes, MagicEquivalency } from '@effects/material/index.mjs';
   import { EquippableItemWeight } from '@items/components/Equippable/index.mjs';
   import {
     ItemHardness,
@@ -26,6 +30,14 @@
     ItemSheetIsCarriedCheckbox,
   } from '@items/components/Physical/index.mjs';
   import { DmControl, UniqueId } from '@vc/index.mjs';
+  import { inject } from 'vue';
+
+  const {
+    documentGetters: { hasEffectsForField },
+  } = inject('documentSheetStore') as MaterialStore;
+
+  const hasMagicEquivalentEffects = hasEffectsForField('system.magicEquivalency');
+  const hasDamageReductionTypeEffects = hasEffectsForField('system.damageReductionTypes');
 </script>
 <style scoped lang="scss">
   .view-mode {
@@ -34,6 +46,9 @@
         flex-direction: row;
       }
     }
+  }
+  .magic-eq-effect {
+    grid-column: span 2;
   }
   .weapon-details-container {
     grid-column: span 2;
@@ -51,11 +66,20 @@
     }
     :deep(.form-group-label) {
       flex-direction: column;
+      text-align: center;
     }
 
     :deep(.form-group input) {
       max-width: 50px;
       text-align: right;
+    }
+
+    :deep(.multi-select-form-group.form-group) {
+      grid-auto-flow: row;
+
+      .form-group-label {
+        flex-direction: row;
+      }
     }
   }
 </style>

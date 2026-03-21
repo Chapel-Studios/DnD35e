@@ -277,7 +277,7 @@ erDiagram
         rollup GrantsChanges
 
         number priceDifference
-        number magicEquivalent
+        number magicEquivalency
         number bonusHardness
         number bonusHpPerInch
         string[] damageReductionTypes

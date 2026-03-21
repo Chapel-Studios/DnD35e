@@ -1,3 +1,5 @@
+import DamageReductionTypes from './components/DamageReductionTypes.vue';
+import MagicEquivalency from './components/MagicEquivalency.vue';
 import type {
   MaterialSheetConfig,
   MaterialSheetRenderContext,
@@ -14,6 +16,8 @@ import {
 } from './tabs/index.mjs';
 
 export {
+  DamageReductionTypes,
+  MagicEquivalency,
   MaterialDetails,
   materialDetailsTab,
   MaterialSheet,

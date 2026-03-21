@@ -4,7 +4,7 @@ import { Price } from '@settings/index.mjs';
 
 type MaterialSystemStats = {
   price: Price;
-  magicEquivalent: number;
+  magicEquivalency: number;
   hardness: number;
   bonusHp: number;
   damageReductionTypes: string[];

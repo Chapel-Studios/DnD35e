@@ -16,7 +16,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     const schema = super.defineSchema();
 
     schema.price = priceSchema();
-    schema.magicEquivalent = requiredNumberField(0);
+    schema.magicEquivalency = requiredNumberField(0);
     schema.hardness = requiredNumberField(0);
     schema.bonusHp = requiredNumberField(0);
     schema.damageReductionTypes = new foundry.data.fields.SetField(
@@ -39,7 +39,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     if (this.price.length !== 0) { 
       changes.push(this.buildPriceDifferenceChange());
     }
-    if (this.magicEquivalent !== 0) {
+    if (this.magicEquivalency !== 0) {
       changes.push(this.buildMagicEquivalentChange());
     }
     if (this.hardness !== 0) {
@@ -101,8 +101,8 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
   // we need to determine how to handle these equivalencies in the system.
   buildMagicEquivalentChange(): Dnd35eEffectChangeData {
     return this._buildChange(
-      'system.magicEquivalent',
-      this.magicEquivalent,
+      'system.magicEquivalency',
+      this.magicEquivalency,
       EFFECT_CHANGE_TYPE.UPGRADE
     );
   }

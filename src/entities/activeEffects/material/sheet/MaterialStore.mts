@@ -41,7 +41,7 @@ const useMaterialStore = (context: any) => {
     ...identifiableStore.documentGetters,
     hardness: computed(() => document.value.system.hardness ?? 0),
     bonusHp: computed(() => document.value.system.bonusHp ?? 0),
-    magicEquivalent: computed(() => document.value.system.magicEquivalent ?? 0),
+    magicEquivalency: computed(() => document.value.system.magicEquivalency ?? 0),
     damageReductionTypes: computed(() => [...(document.value.system.damageReductionTypes ?? [])]),
     damageReductionTypeOptions: computed<MultiSelectOption[]>(() => {
       const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.DAMAGE_REDUCTION_TYPES) as DamageReductionTypesConfig;
@@ -72,7 +72,7 @@ interface MaterialGetters extends ActiveEffectConfigStoreDocumentGetters,
 {
   hardness: ComputedRef<number>;
   bonusHp: ComputedRef<number>;
-  magicEquivalent: ComputedRef<number | null>;
+  magicEquivalency: ComputedRef<number | null>;
   damageReductionTypes: ComputedRef<string[]>;
   damageReductionTypeOptions: ComputedRef<MultiSelectOption[]>;
 }

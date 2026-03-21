@@ -20,6 +20,8 @@ import type {
   MaterialStore,
 } from './sheet/index.mjs';
 import {
+  DamageReductionTypes,
+  MagicEquivalency,
   MaterialDetails,
   materialDetailsTab,
   MaterialSheet,
@@ -28,6 +30,8 @@ import {
 } from './sheet/index.mjs';
 
 export {
+  DamageReductionTypes,
+  MagicEquivalency,
   Material,
   MaterialDetails,
   materialDetailsTab,
