@@ -1,7 +1,8 @@
 <template>
   <span v-if="!hideEverything" class="controls">
+    <HasActiveEffectsNotification :field-path="props.fieldPath" />
     <!-- GM permission controls - only show when GM, in edit mode, and fieldPath provided -->
-    <template v-if="showControls">
+    <template v-if="showGMControls">
       <!-- Visibility cycle (eye icon) -->
       <button
         type="button"
@@ -39,25 +40,31 @@
     normalEditability,
     ownerPlusVisibility,
   } from './fieldPermissions.mjs';
+  import HasActiveEffectsNotification from './HasActiveEffectsNotification.vue';
 
   const slots = useSlots();
   const props = defineProps<{
-    fieldPath?: string;
+    fieldPath: string;
     defaultEditability?: FieldEditability;
     defaultVisibility?: FieldVisibility;
   }>();
 
   const store = inject('documentSheetStore') as DocumentSheetStore;
   const { documentGetters, documentActions } = store;
-  const { getFieldOverride } = documentGetters;
+  const { getFieldOverride, hasEffectsForField } = documentGetters;
   const { setFieldOverride } = documentActions;
+  const hasActiveEffects = hasEffectsForField(props.fieldPath);
 
   // Computed: should we show controls?
   const isGM = computed(() => store.isGM?.value ?? game.user.isGM);
   const isEditMode = computed(() => store.isEditMode?.value ?? true);
-  const showControls = computed(() => isEditMode.value && isGM.value && !!props.fieldPath);
-  const hideEverything = computed(() => !isEditMode.value
-    || (!showControls.value && !slots.default)
+  const showGMControls = computed(() => isEditMode.value && isGM.value && !!props.fieldPath);
+  const hideEverything = computed(() => 
+    (
+      !isEditMode.value
+      || (!showGMControls.value && !slots.default)
+    )
+    && !hasActiveEffects.value
   );
 
   // === VISIBILITY ===
@@ -128,36 +135,32 @@
 </script>
 
 <style scoped>
-.controls {
-  display: inline-flex;
-  gap: 0.25rem;
-  align-items: center;
-  position: relative;
-}
-
-/* Permission control buttons */
-.field-control {
-  background: transparent;
-  border: none;
-  padding: 0.125rem 0.25rem;
-  cursor: pointer;
-  opacity: 0.5;
-  transition: opacity 0.15s ease;
-  font-size: var(--font-size-11);
-  position: relative;
-  z-index: 1;
-
-  &.is-active {
-    
+  .controls {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+    position: relative;
   }
-}
 
-.field-control:hover {
-  opacity: 1;
-}
+  /* Permission control buttons */
+  .field-control {
+    background: transparent;
+    border: none;
+    padding: 0.125rem 0.25rem;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
+    font-size: var(--font-size-11);
+    position: relative;
+    z-index: 1;
+  }
 
-.field-control.is-restricted {
-  opacity: 1;
-  color: var(--color-level-warning);
-}
+  .field-control:hover {
+    opacity: 1;
+  }
+
+  .field-control.is-restricted {
+    opacity: 1;
+    color: var(--color-level-warning);
+  }
 </style>

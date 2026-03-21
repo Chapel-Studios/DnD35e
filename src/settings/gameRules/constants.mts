@@ -1,3 +1,5 @@
+import type { DamageReductionTypesConfig } from './_types.mjs';
+
 /**
  * Game Rules settings constants
  */
@@ -15,6 +17,7 @@ export const GAME_RULES_KEYS = {
   LOW_LIGHT_VISION_MODE: 'lowLightVisionMode',
   USE_COMBAT_CHARACTER_SHEET: 'useCombatCharacterSheet',
   MEASURE_STYLE: 'measureStyle',
+  DAMAGE_REDUCTION_TYPES: 'damageReductionTypes',
 } as const;
 
 /**
@@ -38,3 +41,12 @@ export const EXPERIENCE_RATE_CHOICES = {
   medium: 'DND35E.Settings.ExperienceRate.Medium',
   fast: 'DND35E.Settings.ExperienceRate.Fast',
 } as const;
+
+/**
+ * Default damage reduction types (keyed by lowercase label)
+ */
+export const DEFAULT_DAMAGE_REDUCTION_TYPES: DamageReductionTypesConfig = {
+  'alchemical silver': { label: 'Alchemical Silver', enabled: true, isDefault: true },
+  'adamantine': { label: 'Adamantine', enabled: true, isDefault: true },
+  'cold iron': { label: 'Cold Iron', enabled: true, isDefault: true },
+};

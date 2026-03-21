@@ -4,7 +4,7 @@
     :value="effectivePrice"
     :on-update="priceUpdater"
     field-path="system.price"
-    class="price-group"
+    class="item-price"
   />
 </template>
 <script setup lang="ts">
@@ -15,7 +15,7 @@
   const documentSheetStore = inject('documentSheetStore') as PhysicalDocumentStore;
   
   const {
-    physicalItemGetters: {
+    documentGetters: {
       price,
     },
     documentActions: {
@@ -30,7 +30,10 @@
   const priceUpdater = getViewAwareFieldUpdater('system.price');
 </script>
 <style lang="scss" scoped>
-  // .price-group {
+  .view-mode .form-group.item-price.price-form-group {
+    grid-template-columns: minmax(max-content, 2fr) 5fr;
+  }
+  // .item-price {
   //   grid-column: 1 / -1;
   //   display: flex !important;
   // }

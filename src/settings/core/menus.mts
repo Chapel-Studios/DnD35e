@@ -26,15 +26,15 @@ function registerSettingsMenus(): void {
     restricted: true,
   });
 
-  // Combat Menu
-  game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.COMBAT, {
-    name: 'DND35E.Settings.Combat.Name',
-    label: 'DND35E.Settings.Combat.Label',
-    hint: 'DND35E.Settings.Combat.Hint',
-    icon: 'fas fa-swords',
-    type: CombatSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
-    restricted: true,
-  });
+  // // Combat Menu
+  // game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.COMBAT, {
+  //   name: 'DND35E.Settings.Combat.Name',
+  //   label: 'DND35E.Settings.Combat.Label',
+  //   hint: 'DND35E.Settings.Combat.Hint',
+  //   icon: 'fas fa-swords',
+  //   type: CombatSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
+  //   restricted: true,
+  // });
 
   // Display Menu
   game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.DISPLAY, {
@@ -46,25 +46,25 @@ function registerSettingsMenus(): void {
     restricted: false, // Client-side settings, available to all users
   });
 
-  // Health Configuration Menu
-  game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.HEALTH, {
-    name: 'DND35E.Settings.Health.Name',
-    label: 'DND35E.Settings.Health.Label',
-    hint: 'DND35E.Settings.Health.Hint',
-    icon: 'fas fa-heart-pulse',
-    type: HealthSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
-    restricted: true,
-  });
+  // // Health Configuration Menu
+  // game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.HEALTH, {
+  //   name: 'DND35E.Settings.Health.Name',
+  //   label: 'DND35E.Settings.Health.Label',
+  //   hint: 'DND35E.Settings.Health.Hint',
+  //   icon: 'fas fa-heart-pulse',
+  //   type: HealthSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
+  //   restricted: true,
+  // });
 
-  // Roll Configuration Menu
-  game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.ROLL, {
-    name: 'DND35E.Settings.RollConfig.Name',
-    label: 'DND35E.Settings.RollConfig.Label',
-    hint: 'DND35E.Settings.RollConfig.Hint',
-    icon: 'fas fa-dice-d20',
-    type: RollSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
-    restricted: true,
-  });
+  // // Roll Configuration Menu
+  // game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.ROLL, {
+  //   name: 'DND35E.Settings.RollConfig.Name',
+  //   label: 'DND35E.Settings.RollConfig.Label',
+  //   hint: 'DND35E.Settings.RollConfig.Hint',
+  //   icon: 'fas fa-dice-d20',
+  //   type: RollSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
+  //   restricted: true,
+  // });
 
   // Currency Configuration Menu
   game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.CURRENCY, {
@@ -77,14 +77,14 @@ function registerSettingsMenus(): void {
   });
 
   // Skill Settings Menu
-  game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.SKILLS, {
-    name: 'DND35E.Settings.SkillSettings.Name',
-    label: 'DND35E.Settings.SkillSettings.Label',
-    hint: 'DND35E.Settings.SkillSettings.Hint',
-    icon: 'fas fa-book-open',
-    type: SkillSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
-    restricted: true,
-  });
+  // game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.SKILLS, {
+  //   name: 'DND35E.Settings.SkillSettings.Name',
+  //   label: 'DND35E.Settings.SkillSettings.Label',
+  //   hint: 'DND35E.Settings.SkillSettings.Hint',
+  //   icon: 'fas fa-book-open',
+  //   type: SkillSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
+  //   restricted: true,
+  // });
 }
 
 export { registerSettingsMenus };

@@ -8,16 +8,7 @@
     <div class="form-container">
       <DescriptionEditor />
 
-      <!-- SLOT FOR ADDITIONAL CONTENT -->
       <slot></slot>
-
-      <!-- GM-ONLY SECTION
-      <template v-if="userIsGM">
-        <h3 class="form-header">{{ localize("D35E.SystemProperties") }}</h3>
-        <slot name="gm-section">
-          <UniqueId />
-        </slot>
-      </template> -->
     </div>
   </section>
 </template>
@@ -25,7 +16,6 @@
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import DescriptionEditor from '@ec/CoreMixin/sheet/components/DescriptionEditor.vue';
-  import { UniqueId } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
   const store = inject('documentSheetStore') as DocumentSheetStore;
@@ -33,11 +23,9 @@
     tabs: {
       tabGetters: { getIsTabOpen },
     },
-    localize,
   } = store;
 
   const isActiveTab = getIsTabOpen('details');
-  const userIsGM = game.user.isGM;
 </script>
 
 <style scoped>

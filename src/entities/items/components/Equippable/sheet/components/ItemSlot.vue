@@ -14,7 +14,7 @@
   import { inject } from 'vue';
 
   const {
-    equippableGetters: {
+    documentGetters: {
       equippedSlotIds,
     },
     documentActions: {

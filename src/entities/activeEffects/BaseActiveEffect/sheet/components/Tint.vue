@@ -2,7 +2,8 @@
   <ColorFormGroup
     label="EFFECT.Tint"
     :value="tint"
-    :on-update="getDirectFieldUpdater('tint')"
+    :on-update="getViewAwareFieldUpdater('tint')"
+    field-path="tint"
   />
 </template>
 
@@ -14,14 +15,10 @@
   const store = inject('documentSheetStore') as ActiveEffectConfigStore;
   const {
     documentGetters: {
-      isDisabled,
       tint,
-      statuses,
-      showIcon,
-      origin,
     },
     documentActions: {
-      getDirectFieldUpdater,
+      getViewAwareFieldUpdater,
     },
   } = store;
 </script>

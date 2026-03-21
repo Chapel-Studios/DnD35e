@@ -4,6 +4,7 @@
     :value="currentContainerId"
     :on-update="updater"
     :options="EQUIP_SLOT_SELECT_OPTIONS"
+    field-path="system.containerId"
   />
 </template>
 <script setup lang="ts">
@@ -14,7 +15,7 @@
 
   const {
     isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       slotIds,
     },
     documentActions: {

@@ -10,55 +10,45 @@
     <div class="hp-input">
       <input
         type="number"
-        :value="currentHp"
+        :value="currentHpSource"
         :disabled="!isEditable"
         @change="updateCurrentHp(($event.target as HTMLInputElement).value)"
       />
-      <span class="input-label">Current</span>
+      <div class="sub-label">
+        <span class="input-label">Current</span>
+        <HasActiveEffectsNotification :field-path="'system.hp.value'" />
+      </div>
     </div>
     <div class="hp-input">
       <input
         type="number"
-        :value="maxHp"
+        :value="maxHpSource"
         :disabled="!isEditable"
         @change="maxHpUpdater(($event.target as HTMLInputElement).value)"
       />
-      <span class="input-label">Max</span>
+      <div class="sub-label">
+        <span class="input-label">Max</span>
+        <HasActiveEffectsNotification :field-path="'system.hp.max'" />
+      </div>
     </div>
 
     <template #readonly>
-      <span>{{ currentHp }} / {{ maxHp }}</span>
+      <span class="hp-display">{{ currentHp }}<HasActiveEffectsNotification :field-path="'system.hp.value'" /> / {{ maxHp }}<HasActiveEffectsNotification :field-path="'system.hp.max'" /></span>
     </template>
   </FormGroup>
-
-  <!-- old implementation 
-  <NumberFormGroup
-    :editable="isEditable"
-    label="HP"
-    :value="currentHp"
-    :on-update="updateCurrentHp"
-    field-path="system.hp.value"
-  />
-  <NumberFormGroup
-    :editable="isEditable"
-    label="Max HP"
-    :value="maxHp"
-    :on-update="maxHpUpdater"
-    field-path="system.hp.max"
-  />
-  -->
 </template>
 <script setup lang="ts">
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import FormGroup from '@vc/Fields/FormGroups/FormGroup.vue';
-  import { gmOnlyEditability, ownerPlusVisibility } from '@vc/Fields/index.mjs';
+  import { gmOnlyEditability, HasActiveEffectsNotification, ownerPlusVisibility } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
   const {
     isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       maxHp,
       currentHp,
+      getSourceProperty,
     },
     documentActions: {
       getDirectFieldUpdater,
@@ -68,7 +58,10 @@
 
   // Current HP is state - always write directly
   const updateCurrentHp = getDirectFieldUpdater('system.hp.value');
+  const currentHpSource = getSourceProperty('system.hp.value');
+
   const maxHpUpdater = getViewAwareFieldUpdater('system.hp.max');
+  const maxHpSource = getSourceProperty('system.hp.max');
 </script>
 
 <style lang="scss" scoped>
@@ -84,6 +77,26 @@
     .input-label {
       font-size: 0.75rem;
       text-align: center;
+    }
+
+    .sub-label {
+      display: grid;
+      align-items: center;
+      justify-items: center;
+      grid-auto-flow: column;
+
+      :deep(.effect-tooltip) {
+        font-size: 0.75rem;
+      }
+    }
+  }
+  .hp-display {
+    display: inline-flex;
+    align-items: center;
+
+    :deep(.effect-tooltip) {
+      font-size: 0.75rem;
+      margin-left: 0.3rem;
     }
   }
 </style>

@@ -35,8 +35,9 @@ Hooks.once('init', () => {
 
   game.dnd35e = {
     stores: {
-      items: {},
-      effects: {},
+      Item: {},
+      ActiveEffect: {},
+      // Actor: {},
     },
   };
 });

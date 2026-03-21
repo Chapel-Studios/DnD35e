@@ -11,7 +11,9 @@ import ItemWeight from './components/ItemWeight.vue';
 import PhysicalItemSheet from './PhysicalItemSheet.vue';
 import type { 
   PhysicalDocumentStore,
+  PhysicalItemGetters,
   PhysicalItemStore,
+  PhysicalItemStoreUtils,
 } from './PhysicalItemStore.mjs';
 import { usePhysicalItemStore } from './PhysicalItemStore.mjs';
 import {
@@ -39,6 +41,8 @@ type PhysicalItemSheetRenderContext = IdentifiableDocumentSheetRenderContext & {
 
 export type {
   PhysicalDocumentStore,
+  PhysicalItemGetters,
   PhysicalItemSheetRenderContext,
   PhysicalItemStore,
+  PhysicalItemStoreUtils,
 };

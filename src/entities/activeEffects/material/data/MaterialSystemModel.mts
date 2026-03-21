@@ -4,7 +4,9 @@ import type { Dnd35eEffectChangeData, EffectChangeTarget, EffectChangeType } fro
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
 import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
-import { requiredBooleanField, requiredNumberField } from '@helpers/fieldBuilders.mjs';
+import { requiredNumberField } from '@helpers/fieldBuilders.mjs';
+import { priceSchema } from '@items/components/Physical/index.mjs';
+import { Price } from '@settings/index.mjs';
 
 /** Pre-composed: ActiveEffectSystemModelBase + identifiable schema fields. */
 const IdentifiableEffectSystemModel = IdentifiableSchemaMixin(ActiveEffectSystemModelBase);
@@ -13,13 +15,14 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
   static override defineSchema () {
     const schema = super.defineSchema();
 
-    schema.priceDifference = requiredNumberField(0);
+    schema.price = priceSchema();
     schema.magicEquivalent = requiredNumberField(0);
-    schema.bonusHardness = requiredNumberField(0);
-    schema.bonusHpPerInch = requiredNumberField(0);
-    schema.isAlchemicalSilverEquivalent = requiredBooleanField(false);
-    schema.isAdamantineEquivalent = requiredBooleanField(false);
-    schema.isColdIronEquivalent = requiredBooleanField(false);
+    schema.hardness = requiredNumberField(0);
+    schema.bonusHp = requiredNumberField(0);
+    schema.damageReductionTypes = new foundry.data.fields.SetField(
+      new foundry.data.fields.StringField({ required: true }),
+      { initial: [] }
+    );
 
     return schema;
   }
@@ -30,34 +33,30 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
   }
 
   buildChanges(): Dnd35eEffectChangeData[] {
-    const changes: Dnd35eEffectChangeData[] = [];
-    if (this.priceDifference !== 0) { 
+    const changes: Dnd35eEffectChangeData[] = [
+      ...this.changes.filter(change => !change.isSystem),
+    ];
+    if (this.price.length !== 0) { 
       changes.push(this.buildPriceDifferenceChange());
     }
     if (this.magicEquivalent !== 0) {
       changes.push(this.buildMagicEquivalentChange());
     }
-    if (this.bonusHardness !== 0) {
+    if (this.hardness !== 0) {
       changes.push(this.buildBonusHardnessChange());
     }
-    if (this.bonusHpPerInch !== 0) {
+    if (this.bonusHp !== 0) {
       changes.push(this.buildBonusHpPerInchChange());
     }
-    if (this.isColdIronEquivalent) {
-      changes.push(this.buildIsColdIronEquivalentChange());
-    }
-    if (this.isAdamantineEquivalent) {
-      changes.push(this.buildIsAdamantineEquivalentChange());
-    }
-    if (this.isAlchemicalSilverEquivalent) {
-      changes.push(this.buildIsAlchemicalSilverEquivalentChange());
+    for (const drType of this.damageReductionTypes) {
+      changes.push(this.buildDamageReductionTypeChange(drType));
     }
     return changes;
   }
 
   _buildChange(
     key: string,
-    value: string,
+    value: string | number | Price,
     type: EffectChangeType = EFFECT_CHANGE_TYPE.ADD,
     phase: EffectPhases = 'final',
     priority: number = 10,
@@ -71,30 +70,14 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
       priority,
       target,
       effect: null,
+      isSystem: true,
     };
   }
 
-  buildIsColdIronEquivalentChange(): Dnd35eEffectChangeData {
+  buildDamageReductionTypeChange(drType: string): Dnd35eEffectChangeData {
     return this._buildChange(
-      'system.isColdIronEquivalent',
-      this.isColdIronEquivalent.toString(),
-      EFFECT_CHANGE_TYPE.OVERRIDE
-    );
-  }
-
-  buildIsAdamantineEquivalentChange(): Dnd35eEffectChangeData {
-    return this._buildChange(
-      'system.isAdamantineEquivalent',
-      this.isAdamantineEquivalent.toString(),
-      EFFECT_CHANGE_TYPE.OVERRIDE
-    );
-  }
-
-  buildIsAlchemicalSilverEquivalentChange(): Dnd35eEffectChangeData {
-    return this._buildChange(
-      'system.isAlchemicalSilverEquivalent',
-      this.isAlchemicalSilverEquivalent.toString(),
-      EFFECT_CHANGE_TYPE.OVERRIDE
+      'system.damageReductionTypes',
+      drType
     );
   }
 
@@ -102,15 +85,15 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
   // We should relook at how we handle item HP, perhaps add thickness and calculate HP based on that?
   buildBonusHpPerInchChange(): Dnd35eEffectChangeData {
     return this._buildChange(
-      'system.hpPerInch',
-      this.bonusHpPerInch.toString()
+      'system.hp.max',
+      this.bonusHp
     );
   }
 
   buildBonusHardnessChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.hardness',
-      this.bonusHardness.toString()
+      this.hardness
     );
   }
 
@@ -119,7 +102,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
   buildMagicEquivalentChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.magicEquivalent',
-      this.magicEquivalent.toString(),
+      this.magicEquivalent,
       EFFECT_CHANGE_TYPE.UPGRADE
     );
   }
@@ -127,7 +110,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
   buildPriceDifferenceChange(): Dnd35eEffectChangeData {
     return this._buildChange(
       'system.price',
-      this.priceDifference.toString()
+      this.price
     );
   }
 }

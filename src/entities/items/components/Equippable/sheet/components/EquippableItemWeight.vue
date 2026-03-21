@@ -25,7 +25,7 @@
   import { EquippableDocumentStore } from '../EquippableItemStore.mjs';
 
   const {
-    equippableGetters: {
+    documentGetters: {
       isWeightlessWhenEquipped,
     },
     documentActions: {

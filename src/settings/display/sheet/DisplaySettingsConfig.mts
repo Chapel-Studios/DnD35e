@@ -63,85 +63,85 @@ class DisplaySettingsConfig extends VueSettingsBase {
         },
       ],
     },
-    {
-      key: 'interface',
-      label: 'DND35E.Settings.Display.Interface',
-      fields: [
-        { key: DISPLAY_KEYS.CUSTOM_SKIN, label: 'DND35E.Settings.CustomSkin.Name', hint: 'DND35E.Settings.CustomSkin.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.COLORBLIND_COLORS, label: 'DND35E.Settings.ColorblindColors.Name', hint: 'DND35E.Settings.ColorblindColors.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.TRANSPARENT_SIDEBAR, label: 'DND35E.Settings.TransparentSidebar.Name', hint: 'DND35E.Settings.TransparentSidebar.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.HIDE_PLAYERS_LIST, label: 'DND35E.Settings.HidePlayersList.Name', hint: 'DND35E.Settings.HidePlayersList.Hint', type: 'boolean' },
-      ],
-    },
-    {
-      key: 'partyHud',
-      label: 'DND35E.Settings.Display.PartyHud',
-      fields: [
-        {
-          key: DISPLAY_KEYS.SHOW_PARTY_HUD,
-          label: 'DND35E.Settings.ShowPartyHud.Name',
-          hint: 'DND35E.Settings.ShowPartyHud.Hint',
-          type: 'string',
-          choices: [
-            { value: 'none', label: 'DND35E.Settings.ShowPartyHud.None' },
-            { value: 'gm', label: 'DND35E.Settings.ShowPartyHud.GM' },
-            { value: 'all', label: 'DND35E.Settings.ShowPartyHud.All' },
-          ],
-        },
-        { key: DISPLAY_KEYS.SHOW_PARTY_HUD_TOKEN_IMAGE, label: 'DND35E.Settings.ShowPartyHudTokenImage.Name', hint: 'DND35E.Settings.ShowPartyHudTokenImage.Hint', type: 'boolean' },
-      ],
-    },
-    {
-      key: 'chatCards',
-      label: 'DND35E.Settings.Display.ChatCards',
-      fields: [
-        { key: DISPLAY_KEYS.AUTO_COLLAPSE_ITEM_CARDS, label: 'DND35E.Settings.AutoCollapseItemCards.Name', hint: 'DND35E.Settings.AutoCollapseItemCards.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.CLASS_FEATURES_IN_TABS, label: 'DND35E.Settings.ClassFeaturesInTabs.Name', hint: 'DND35E.Settings.ClassFeaturesInTabs.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.HIDE_SPELL_DESCRIPTIONS, label: 'DND35E.Settings.HideSpellDescriptions.Name', hint: 'DND35E.Settings.HideSpellDescriptions.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.HIDE_SPELL_DESCRIPTIONS_IF_HAS_ACTION, label: 'DND35E.Settings.HideSpellDescIfHasAction.Name', hint: 'DND35E.Settings.HideSpellDescIfHasAction.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.SAVE_ATTACK_WINDOW, label: 'DND35E.Settings.SaveAttackWindow.Name', hint: 'DND35E.Settings.SaveAttackWindow.Hint', type: 'boolean' },
-      ],
-    },
-    {
-      key: 'playerPermissions',
-      label: 'DND35E.Settings.Display.PlayerPermissions',
-      fields: [
-        { key: DISPLAY_KEYS.PLAYERS_NO_DAMAGE_DETAILS, label: 'DND35E.Settings.PlayersNoDamageDetails.Name', hint: 'DND35E.Settings.PlayersNoDamageDetails.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.PLAYERS_NO_DC_DETAILS, label: 'DND35E.Settings.PlayersNoDCDetails.Name', hint: 'DND35E.Settings.PlayersNoDCDetails.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.ALLOW_PLAYERS_APPLY_ACTIONS, label: 'DND35E.Settings.AllowPlayersApplyActions.Name', hint: 'DND35E.Settings.AllowPlayersApplyActions.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.PLAYERS_SHOW_CONTEXT_NOTES, label: 'DND35E.Settings.PlayersShowContextNotes.Name', hint: 'DND35E.Settings.PlayersShowContextNotes.Hint', type: 'boolean' },
-      ],
-    },
-    {
-      key: 'tokenVision',
-      label: 'DND35E.Settings.Display.TokenVision',
-      fields: [
-        { key: DISPLAY_KEYS.GLOBAL_DISABLE_TOKEN_LIGHT, label: 'DND35E.Settings.GlobalDisableTokenLight.Name', hint: 'DND35E.Settings.GlobalDisableTokenLight.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.GLOBAL_DISABLE_TOKEN_VISION, label: 'DND35E.Settings.GlobalDisableTokenVision.Name', hint: 'DND35E.Settings.GlobalDisableTokenVision.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.HIDE_TOKEN_CONDITIONS, label: 'DND35E.Settings.HideTokenConditions.Name', hint: 'DND35E.Settings.HideTokenConditions.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.CORE_EFFECTS, label: 'DND35E.Settings.CoreEffects.Name', hint: 'DND35E.Settings.CoreEffects.Hint', type: 'boolean' },
-        {
-          key: DISPLAY_KEYS.SHARED_VISION_MODE,
-          label: 'DND35E.Settings.SharedVisionMode.Name',
-          hint: 'DND35E.Settings.SharedVisionMode.Hint',
-          type: 'string',
-          choices: [
-            { value: 'none', label: 'DND35E.Settings.SharedVisionMode.None' },
-            { value: 'party', label: 'DND35E.Settings.SharedVisionMode.Party' },
-            { value: 'controlled', label: 'DND35E.Settings.SharedVisionMode.Controlled' },
-          ],
-        },
-      ],
-    },
-    {
-      key: 'items',
-      label: 'DND35E.Settings.Display.Items',
-      fields: [
-        { key: DISPLAY_KEYS.CHANGE_SCROLL_ICON, label: 'DND35E.Settings.ChangeScrollIcon.Name', hint: 'DND35E.Settings.ChangeScrollIcon.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.BUY_CHAT, label: 'DND35E.Settings.BuyChat.Name', hint: 'DND35E.Settings.BuyChat.Hint', type: 'boolean' },
-        { key: DISPLAY_KEYS.CLEAR_INVENTORY, label: 'DND35E.Settings.ClearInventory.Name', hint: 'DND35E.Settings.ClearInventory.Hint', type: 'boolean' },
-      ],
-    },
+    // {
+    //   key: 'interface',
+    //   label: 'DND35E.Settings.Display.Interface',
+    //   fields: [
+    //     { key: DISPLAY_KEYS.CUSTOM_SKIN, label: 'DND35E.Settings.CustomSkin.Name', hint: 'DND35E.Settings.CustomSkin.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.COLORBLIND_COLORS, label: 'DND35E.Settings.ColorblindColors.Name', hint: 'DND35E.Settings.ColorblindColors.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.TRANSPARENT_SIDEBAR, label: 'DND35E.Settings.TransparentSidebar.Name', hint: 'DND35E.Settings.TransparentSidebar.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.HIDE_PLAYERS_LIST, label: 'DND35E.Settings.HidePlayersList.Name', hint: 'DND35E.Settings.HidePlayersList.Hint', type: 'boolean' },
+    //   ],
+    // },
+    // {
+    //   key: 'partyHud',
+    //   label: 'DND35E.Settings.Display.PartyHud',
+    //   fields: [
+    //     {
+    //       key: DISPLAY_KEYS.SHOW_PARTY_HUD,
+    //       label: 'DND35E.Settings.ShowPartyHud.Name',
+    //       hint: 'DND35E.Settings.ShowPartyHud.Hint',
+    //       type: 'string',
+    //       choices: [
+    //         { value: 'none', label: 'DND35E.Settings.ShowPartyHud.None' },
+    //         { value: 'gm', label: 'DND35E.Settings.ShowPartyHud.GM' },
+    //         { value: 'all', label: 'DND35E.Settings.ShowPartyHud.All' },
+    //       ],
+    //     },
+    //     { key: DISPLAY_KEYS.SHOW_PARTY_HUD_TOKEN_IMAGE, label: 'DND35E.Settings.ShowPartyHudTokenImage.Name', hint: 'DND35E.Settings.ShowPartyHudTokenImage.Hint', type: 'boolean' },
+    //   ],
+    // },
+    // {
+    //   key: 'chatCards',
+    //   label: 'DND35E.Settings.Display.ChatCards',
+    //   fields: [
+    //     { key: DISPLAY_KEYS.AUTO_COLLAPSE_ITEM_CARDS, label: 'DND35E.Settings.AutoCollapseItemCards.Name', hint: 'DND35E.Settings.AutoCollapseItemCards.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.CLASS_FEATURES_IN_TABS, label: 'DND35E.Settings.ClassFeaturesInTabs.Name', hint: 'DND35E.Settings.ClassFeaturesInTabs.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.HIDE_SPELL_DESCRIPTIONS, label: 'DND35E.Settings.HideSpellDescriptions.Name', hint: 'DND35E.Settings.HideSpellDescriptions.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.HIDE_SPELL_DESCRIPTIONS_IF_HAS_ACTION, label: 'DND35E.Settings.HideSpellDescIfHasAction.Name', hint: 'DND35E.Settings.HideSpellDescIfHasAction.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.SAVE_ATTACK_WINDOW, label: 'DND35E.Settings.SaveAttackWindow.Name', hint: 'DND35E.Settings.SaveAttackWindow.Hint', type: 'boolean' },
+    //   ],
+    // },
+    // {
+    //   key: 'playerPermissions',
+    //   label: 'DND35E.Settings.Display.PlayerPermissions',
+    //   fields: [
+    //     { key: DISPLAY_KEYS.PLAYERS_NO_DAMAGE_DETAILS, label: 'DND35E.Settings.PlayersNoDamageDetails.Name', hint: 'DND35E.Settings.PlayersNoDamageDetails.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.PLAYERS_NO_DC_DETAILS, label: 'DND35E.Settings.PlayersNoDCDetails.Name', hint: 'DND35E.Settings.PlayersNoDCDetails.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.ALLOW_PLAYERS_APPLY_ACTIONS, label: 'DND35E.Settings.AllowPlayersApplyActions.Name', hint: 'DND35E.Settings.AllowPlayersApplyActions.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.PLAYERS_SHOW_CONTEXT_NOTES, label: 'DND35E.Settings.PlayersShowContextNotes.Name', hint: 'DND35E.Settings.PlayersShowContextNotes.Hint', type: 'boolean' },
+    //   ],
+    // },
+    // {
+    //   key: 'tokenVision',
+    //   label: 'DND35E.Settings.Display.TokenVision',
+    //   fields: [
+    //     { key: DISPLAY_KEYS.GLOBAL_DISABLE_TOKEN_LIGHT, label: 'DND35E.Settings.GlobalDisableTokenLight.Name', hint: 'DND35E.Settings.GlobalDisableTokenLight.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.GLOBAL_DISABLE_TOKEN_VISION, label: 'DND35E.Settings.GlobalDisableTokenVision.Name', hint: 'DND35E.Settings.GlobalDisableTokenVision.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.HIDE_TOKEN_CONDITIONS, label: 'DND35E.Settings.HideTokenConditions.Name', hint: 'DND35E.Settings.HideTokenConditions.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.CORE_EFFECTS, label: 'DND35E.Settings.CoreEffects.Name', hint: 'DND35E.Settings.CoreEffects.Hint', type: 'boolean' },
+    //     {
+    //       key: DISPLAY_KEYS.SHARED_VISION_MODE,
+    //       label: 'DND35E.Settings.SharedVisionMode.Name',
+    //       hint: 'DND35E.Settings.SharedVisionMode.Hint',
+    //       type: 'string',
+    //       choices: [
+    //         { value: 'none', label: 'DND35E.Settings.SharedVisionMode.None' },
+    //         { value: 'party', label: 'DND35E.Settings.SharedVisionMode.Party' },
+    //         { value: 'controlled', label: 'DND35E.Settings.SharedVisionMode.Controlled' },
+    //       ],
+    //     },
+    //   ],
+    // },
+    // {
+    //   key: 'items',
+    //   label: 'DND35E.Settings.Display.Items',
+    //   fields: [
+    //     { key: DISPLAY_KEYS.CHANGE_SCROLL_ICON, label: 'DND35E.Settings.ChangeScrollIcon.Name', hint: 'DND35E.Settings.ChangeScrollIcon.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.BUY_CHAT, label: 'DND35E.Settings.BuyChat.Name', hint: 'DND35E.Settings.BuyChat.Hint', type: 'boolean' },
+    //     { key: DISPLAY_KEYS.CLEAR_INVENTORY, label: 'DND35E.Settings.ClearInventory.Name', hint: 'DND35E.Settings.ClearInventory.Hint', type: 'boolean' },
+    //   ],
+    // },
   ];
 
   constructor(...args: any[]) {

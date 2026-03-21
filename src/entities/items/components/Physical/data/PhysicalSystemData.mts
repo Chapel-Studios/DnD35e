@@ -27,6 +27,9 @@ interface PhysicalItemSystemSource {
 interface PhysicalItemSystemData extends ItemSystemSource, PhysicalItemSystemSource,
   IdentifiableDocumentSystemData {
     effectiveWeight: number;
+    // Material might apply these
+    magicEquivalent?: number;
+    damageReductionTypes?: string[];
   }
 
 export type {

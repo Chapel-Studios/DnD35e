@@ -33,7 +33,7 @@
       displayName,
       nameFormula,
     },
-    identifiableGetters: {
+    documentGetters: {
       identifiedDisplayName,
       unidentifiedDisplayName,
       unidentifiedNameFormula,

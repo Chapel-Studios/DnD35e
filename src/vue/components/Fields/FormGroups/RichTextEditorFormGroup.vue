@@ -27,7 +27,7 @@
     <div v-if="isEditing" class="editor-container">
       <prose-mirror
         :name="field"
-        :value="effectiveValue"
+        :value="editorValue"
         :document-uuid="documentUuid"
         class="sized"
         @save="onSave"
@@ -69,11 +69,15 @@
     // Field permissions
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
+    /** When true, the editor uses derived data instead of source data. */
+    editDerived?: boolean;
+    /** When true, uses the store's direct field updater instead of view-aware. */
+    directUpdate?: boolean;
   }>();
 
   const {
-    documentGetters: { getProperty, documentUuid, getEffectiveFieldValue },
-    documentActions: { getViewAwareFieldUpdater },
+    documentGetters: { getProperty, getSourceProperty, documentUuid, getEffectiveFieldValue },
+    documentActions: { getViewAwareFieldUpdater, getDirectFieldUpdater },
     isEditable,
     localize,
     _storeUtils: { document },
@@ -82,14 +86,25 @@
   // Raw value from the document
   const rawValue = getProperty<string>(props.field);
 
+  // Source value for editing (pre-active-effect data)
+  const sourceRawValue = getSourceProperty<string>(props.field);
+
   // Effective value considering view mode (shows override when viewing as unidentified)
   // Ensure it's always a string to avoid Vue patching errors with null
   const effectiveValue = computed(() =>
     getEffectiveFieldValue(props.field, rawValue.value) ?? ''
   );
 
-  // View-aware updater: writes to override when in unidentified view
-  const viewAwareUpdater = getViewAwareFieldUpdater(props.field);
+  // Editor value: use source data by default, derived if editDerived is set
+  const editorValue = computed(() => {
+    if (props.editDerived) return effectiveValue.value;
+    return sourceRawValue.value ?? '';
+  });
+
+  // Field updater: respects directUpdate flag
+  const fieldUpdater = props.directUpdate
+    ? getDirectFieldUpdater(props.field)
+    : getViewAwareFieldUpdater(props.field);
 
   // Editing state
   const isEditing = ref(false);
@@ -103,7 +118,7 @@
   async function onSave(event: Event) {
     const target = event.target as HTMLElement & { value?: string };
     if (target.value !== undefined) {
-      await viewAwareUpdater(target.value);
+      await fieldUpdater(target.value);
       isEditing.value = false;
     }
   }
@@ -137,7 +152,7 @@
     &.form-group {
       display: inline;
       border: 1px solid var(--color-border, #7a7971);
-      padding: 0.25rem 0.25rem 0.5rem;
+      padding: 0.25rem 0.5rem 0.5rem;
     }
 
     &.editing {

@@ -39,6 +39,10 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
   const effects = computed(() => [...(document.value.effects ?? [])]
     .filter((effect: DnD35eActiveEffect) => !hiddenEffectIds.value.has(effect.type))
   );
+  const getEffectsForField = (fieldPath: string) => computed(() => document.value.overrides?.[fieldPath]
+    ? document.value.overrides?.[fieldPath] as []
+    : []
+  );
   const itemDocumentGetters = {
     ...baseStore.documentGetters,
     effects,
@@ -46,6 +50,8 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
     passiveEffects: computed(() => effects.value.filter((e: DnD35eActiveEffect) => !e.disabled && !e.isTemporary)),
     inactiveEffects: computed(() => effects.value.filter((e: DnD35eActiveEffect) => e.disabled)),
     hasOwner,
+    getEffectsForField,
+    hasEffectsForField: (fieldPath: string) => computed(() => getEffectsForField(fieldPath).value.length > 0),
   };
 
   const itemDocumentActions = {
@@ -107,29 +113,36 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
     // Item-specific
   };
 
-  game.dnd35e.stores.items[context.document.id] = store;
+  game.dnd35e.stores[document.value.documentName][context.document.id] = store;
 
   return store;
 };
 
+type ItemDocumentGetters = DocumentSheetStoreDocumentGetters & {
+  effects: ComputedRef<DnD35eActiveEffect[]>,
+  temporaryEffects: ComputedRef<DnD35eActiveEffect[]>,
+  passiveEffects: ComputedRef<DnD35eActiveEffect[]>,
+  inactiveEffects: ComputedRef<DnD35eActiveEffect[]>,
+  hasOwner: ComputedRef<boolean>;
+  getEffectsForField: (fieldPath: string) => ComputedRef<object[]>;
+};
+
+type ItemDocumentActions<TDocument extends ItemDnd35e> = DocumentSheetStoreDocumentActions<TDocument> & {
+  removeEffect: (effectId: string) => Promise<boolean>;
+  toggleEffect: (effectId: string) => Promise<boolean>;
+  editEffect: (effectId: string) => boolean;
+  createEffect: () => Promise<void>;
+};
+
+type ItemSheetStoreUtils<TDocument extends ItemDnd35e> = DocumentSheetStoreUtils<TDocument> & {
+  updateHiddenEffects: (effectTypes: EffectType[]) => Promise<void>;
+};
+
 type ItemSheetStore<TDocument extends ItemDnd35e<ItemType> = ItemDnd35e<ItemType>> = DocumentSheetStore<TDocument>
   & {
-    documentGetters: DocumentSheetStoreDocumentGetters & {
-      effects: ComputedRef<DnD35eActiveEffect[]>,
-      temporaryEffects: ComputedRef<DnD35eActiveEffect[]>,
-      passiveEffects: ComputedRef<DnD35eActiveEffect[]>,
-      inactiveEffects: ComputedRef<DnD35eActiveEffect[]>,
-      hasOwner: ComputedRef<boolean>;
-    },
-    documentActions: DocumentSheetStoreDocumentActions<TDocument> & {
-      removeEffect: (effectId: string) => Promise<boolean>;
-      toggleEffect: (effectId: string) => Promise<boolean>;
-      editEffect: (effectId: string) => boolean;
-      createEffect: () => Promise<void>;
-    },
-    _storeUtils: DocumentSheetStoreUtils<TDocument> & {
-      updateHiddenEffects: (effectTypes: EffectType[]) => Promise<void>;
-    }
+    documentGetters: ItemDocumentGetters,
+    documentActions: ItemDocumentActions<TDocument>,
+    _storeUtils: ItemSheetStoreUtils<TDocument>,
   };
 
 export {
@@ -138,5 +151,8 @@ export {
 };
 
 export type {
+  ItemDocumentActions,
+  ItemDocumentGetters,
   ItemSheetStore,
+  ItemSheetStoreUtils,
 };

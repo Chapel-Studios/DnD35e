@@ -8,7 +8,7 @@
         v-for="effect in effects"
         :key="effect.id"
         class="effect-item"
-        :class="{ disabled: effect.disabled }"
+        :class="{ 'effect-disabled': effect.disabled }"
       >
         <img :src="effect.img || 'icons/svg/aura.svg'" :alt="effect.name" class="effect-icon" />
         <span class="effect-name">{{ effect.name }}</span>
@@ -117,7 +117,7 @@
       border-bottom: none;
     }
 
-    &.disabled {
+    &.effect-disabled {
       opacity: 0.6;
     }
   }

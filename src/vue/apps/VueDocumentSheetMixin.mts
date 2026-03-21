@@ -5,6 +5,7 @@
 
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
 import type { DocumentSheetV2 } from '@client/applications/api/_module.mjs';
+import { DocumentSheetStore } from '@ec/CoreMixin/sheet/index.mjs';
 import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { App } from 'vue';
@@ -12,7 +13,7 @@ import { createApp, reactive } from 'vue';
 
 import type { VueAppBaseMembers } from './VueAppBaseMixin.mjs';
 import { useVueAppBaseMixin } from './VueAppBaseMixin.mjs';
-import type { SheetState, VueApplicationConfiguration, VueApplicationContext, VueRenderOptions } from './VueAppTypes.mjs';
+import type { SheetState, VueApplicationConfiguration, VueApplicationContext, VueApplicationContextTransfer, VueRenderOptions } from './VueAppTypes.mjs';
 
 /**
  * Interface describing members added by VueDocumentSheetMixin.
@@ -218,13 +219,14 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
      * Update document context before base _replaceHTML handles mounting.
      */
     protected override async _replaceHTML (
-      result: object,
+      result: VueApplicationContextTransfer<TDocument>,
       content: HTMLElement,
       options: VueRenderOptions
     ): Promise<void> {
       // Update context with current document state
-      this.context.document = this.#document;
-      this.context.appConfigOptions = this.options;
+      result.document = this.#document;
+      result.appConfigOptions = this.options;
+      result.store = game.dnd35e.stores[this.#document.documentName]?.[this.document.id] as DocumentSheetStore<TDocument> | undefined;
 
       // Let base handle Vue mounting
       await super._replaceHTML(result, content, options);

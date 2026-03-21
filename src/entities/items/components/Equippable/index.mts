@@ -10,8 +10,10 @@ import {
 } from './EquippableItem.mjs';
 import type {
   EquippableDocumentStore,
+  EquippableItemGetters,
   EquippableItemSheetRenderContext,
   EquippableItemStore,
+  EquippableItemStoreUtils,
 } from './sheet/index.mjs';
 import {
   equipableHeaderStatus,
@@ -24,6 +26,7 @@ import {
 
 export type {
   EquippableDocumentStore,
+  EquippableItemGetters,
   EquippableItemLike,
   EquippableItemSheetRenderContext,
   EquippableItemSource,
@@ -36,6 +39,7 @@ export {
   equipableHeaderStatus,
   EquippableItem,
   EquippableItemSheet,
+  EquippableItemStoreUtils,
   EquippableItemSystemModel,
   EquippableItemWeight,
   ItemIsMelded,

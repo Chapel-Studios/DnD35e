@@ -17,7 +17,7 @@
 
 
   const {
-    physicalItemGetters: {
+    documentGetters: {
       materials,
     },
     documentActions: {

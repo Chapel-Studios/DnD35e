@@ -1,5 +1,5 @@
 import { type DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import type { WithIdentifiableComponent } from '@ec/Identifiable/index.mjs';
+import type { IdentifiableDocumentLike, WithIdentifiableComponent } from '@ec/Identifiable/index.mjs';
 import type { UnidentifiedOverrides } from '@vc/Fields/FormGroups/unidentifiedOverrides.mjs';
 import {
   encodeFieldPath as encodeUnidentifiedPath,
@@ -103,8 +103,8 @@ const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(
       current[encodedPath] = value;
     }
     try {
-      await document.value.setFlag('dnd35e', UNIDENTIFIED_OVERRIDES_FLAG, current);
-      triggerDocumentRef();
+      const updatedDoc = await document.value.setFlag('dnd35e', UNIDENTIFIED_OVERRIDES_FLAG, current);
+      triggerDocumentRef({ ...context, document: updatedDoc as TDocument });
       return true;
     } catch (err) {
       console.error(`setUnidentifiedOverride('${fieldPath}'): error`, err);
@@ -152,7 +152,7 @@ const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(
       showUnidentifiedEditMode,
       showUnidentifiedDisplayMode,
     },
-    identifiableGetters: {
+    documentGetters: {
       isIdentifiable,
       isIdentified,
       isViewingAsUnidentified,
@@ -164,11 +164,26 @@ const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(
       // Name formula for unidentified name (kept for now, may be refactored later)
       unidentifiedNameFormula: computed(() => document.value.system.unidentifiedNameFormula?.formula || ''),
     },
-    identifiableActions: {
+    _storeUtils: {
       setUnidentifiedOverride,
     },
     editorViewActions,
   };
+};
+
+type IdentifiableDocumentGetters = {
+  isIdentifiable: ComputedRef<boolean>;
+  isIdentified: ComputedRef<boolean>;
+  isViewingAsUnidentified: ComputedRef<boolean>;
+  unidentifiedOverrides: ComputedRef<UnidentifiedOverrides>;
+  getUnidentifiedOverride: <T>(fieldPath: string) => T | undefined;
+  identifiedDisplayName: ComputedRef<string>;
+  unidentifiedDisplayName: ComputedRef<string>;
+  unidentifiedNameFormula: ComputedRef<string>;
+};
+
+type IdentifiableDocumentStoreUtils = {
+  setUnidentifiedOverride: (fieldPath: string, value: unknown) => Promise<boolean>;
 };
 
 interface IdentifiableStore {
@@ -183,19 +198,8 @@ interface IdentifiableStore {
     showUnidentifiedEditMode: ComputedRef<boolean>;
     showUnidentifiedDisplayMode: ComputedRef<boolean>;
   };
-  identifiableGetters: {
-    isIdentifiable: ComputedRef<boolean>;
-    isIdentified: ComputedRef<boolean>;
-    isViewingAsUnidentified: ComputedRef<boolean>;
-    unidentifiedOverrides: ComputedRef<UnidentifiedOverrides>;
-    getUnidentifiedOverride: <T>(fieldPath: string) => T | undefined;
-    identifiedDisplayName: ComputedRef<string>;
-    unidentifiedDisplayName: ComputedRef<string>;
-    unidentifiedNameFormula: ComputedRef<string>;
-  };
-  identifiableActions: {
-    setUnidentifiedOverride: (fieldPath: string, value: unknown) => Promise<boolean>;
-  };
+  documentGetters: IdentifiableDocumentGetters;
+  _storeUtils: IdentifiableDocumentStoreUtils;
   editorViewActions: {
     setEditorView: (mode: EditorViewMode) => void;
     toggleEditorView: () => void;
@@ -209,6 +213,8 @@ export {
 };
 
 export type {
+  IdentifiableDocumentGetters,
   IdentifiableDocumentStore,
+  IdentifiableDocumentStoreUtils,
   IdentifiableStore,
 };

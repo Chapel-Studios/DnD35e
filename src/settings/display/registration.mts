@@ -26,14 +26,14 @@ function registerDisplayWorldSettings(): void {
     type: String,
     default: 'imperial',
     choices: UNIT_CHOICES,
-    onChange: () => {
-      // Re-render sheets to update unit display
-      for (const actor of game.actors ?? []) {
-        if (actor.type === 'character' && actor.sheet?.rendered) {
-          actor.sheet.render();
-        }
-      }
-    },
+    // onChange: () => {
+    //   // Re-render sheets to update unit display
+    //   for (const actor of game.actors ?? []) {
+    //     if (actor.type === 'character' && actor.sheet?.rendered) {
+    //       actor.sheet.render();
+    //     }
+    //   }
+    // },
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.PLAYERS_NO_DAMAGE_DETAILS, {

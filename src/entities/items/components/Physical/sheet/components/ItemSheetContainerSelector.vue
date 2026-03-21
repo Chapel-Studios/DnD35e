@@ -14,7 +14,7 @@
   import { inject } from 'vue';
 
   const {
-    physicalItemGetters: {
+    documentGetters: {
       possibleContainers,
       currentContainerId,
     },

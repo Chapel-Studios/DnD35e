@@ -133,6 +133,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   const documentGetters: DocumentSheetStoreDocumentGetters = {
     getEffectiveFieldValue,
     getProperty: <T,>(path: string) => computed(() => foundry.utils.getProperty(document.value, path) as T),
+    getSourceProperty: <T,>(path: string) => computed(() => foundry.utils.getProperty(document.value._source, path) as T),
     type: computed(() => document.value.type),
     localizedType: computed(() => game.i18n.localize(document.value.localizedType)),
 
@@ -153,6 +154,8 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       const encodedPath = encodeFieldPath(fieldPath);
       return fieldOverrides.value[encodedPath];
     },
+    getEffectsForField: (_fieldPath: string) => computed(() => []), // default empty, can be overridden by extending stores that have effects
+    hasEffectsForField: (_fieldPath: string) => computed(() => false), // default false, can be overridden by extending stores that have effects
   };
 
   const buildIntellisenseContext = <TSubType extends ContextDocumentType = ContextDocumentType> (doc: DocumentContext, aliases: string[] = []): IntellisenseContext => {
@@ -285,7 +288,12 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     /** Update a flag on the document. */
     updateFlag,
     /** Manually trigger Vue reactivity on the document ref. */
-    refreshDocument: () => triggerRef(document),
+    refreshDocument: (context: Partial<VueApplicationContext<TDocument>> | undefined) => {
+      if (context?.document) {
+        document.value = context.document;
+      }
+      triggerRef(document);
+    },
     /** Override the getEffectiveFieldValue implementation. */
     setGetEffectiveFieldValue: (fn: <T>(fieldPath: string, realValue: T) => T) => {
       _getEffectiveFieldValueImpl.value = fn;
@@ -345,7 +353,7 @@ type DocumentSheetStoreUtils<TDocument extends SheetDocument> = {
   document: ShallowRef<TDocument>;
   updateDocument: (data: Partial<TDocument>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
   updateFlag: (key: string, value: unknown) => Promise<boolean>;
-  refreshDocument: () => void;
+  refreshDocument: (context: VueApplicationContext<TDocument> | undefined) => void;
   setGetEffectiveFieldValue: (fn: <T>(fieldPath: string, realValue: T) => T) => void;
   setGetViewAwareFieldUpdater: (fn: (path: string) => (value: unknown) => Promise<boolean>) => void;
   setEditorViewMode: (fn: () => 'identified' | 'unidentified') => void;
@@ -353,6 +361,7 @@ type DocumentSheetStoreUtils<TDocument extends SheetDocument> = {
 
 type DocumentSheetStoreDocumentGetters = {
   getProperty: <T>(path: string) => ComputedRef<T>;
+  getSourceProperty: <T>(path: string) => ComputedRef<T>;
   type: ComputedRef<string>;
   localizedType: ComputedRef<string>;
   name: ComputedRef<string>;
@@ -367,6 +376,8 @@ type DocumentSheetStoreDocumentGetters = {
   getFieldOverride: (fieldPath: string) => FieldOverride | undefined;
   // View-aware field access (default: returns real value)
   getEffectiveFieldValue: <T>(fieldPath: string, realValue: T) => T;
+  getEffectsForField: (fieldPath: string) => ComputedRef<object[]>;
+  hasEffectsForField: (fieldPath: string) => ComputedRef<boolean>;
 };
 
 type DocumentSheetStoreDocumentActions<TDocument extends SheetDocument> = {

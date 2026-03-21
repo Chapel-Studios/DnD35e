@@ -25,7 +25,11 @@ import {
   ActiveEffectProxyDnd35e,
   DnD35eActiveEffect,
 } from './DnD35eActiveEffect.mjs';
-import type { ActiveEffectConfigStore } from './sheet/index.mjs';
+import type {
+  ActiveEffectConfigStore,
+  ActiveEffectConfigStoreDocumentActions,
+  ActiveEffectConfigStoreDocumentGetters,
+} from './sheet/index.mjs';
 import {
   Dnd35eActiveEffectConfig,
   EffectChanges,
@@ -40,6 +44,8 @@ import {
 
 export type {
   ActiveEffectConfigStore,
+  ActiveEffectConfigStoreDocumentActions,
+  ActiveEffectConfigStoreDocumentGetters,
   ActiveEffectSystemData,
   ActiveEffectTarget,
   ActiveEffectTargetLocalizationValues,

@@ -18,12 +18,14 @@ const IdentifiableItemSystemModel = IdentifiableSchemaMixin(ItemSystemModelBase)
 /**
  * Schema for a single coin stack in a price.
  */
-function coinStackSchema() {
+const coinStackSchema = () => {
   return new SchemaField({
     coinId: new StringField({ required: true, blank: false }),
     count: requiredNumberField(0),
   });
-}
+};
+
+const priceSchema = () => new ArrayField(coinStackSchema(), { initial: [] });
 
 /**
  * Abstract system model for all physical items.
@@ -48,7 +50,7 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     schema.size = new StringField<Size, Size, true, false, true>({ choices: SIZES, initial: 'tiny', required: true });
 
     // Price - array of coin stacks
-    schema.price = new ArrayField(coinStackSchema(), { initial: [] });
+    schema.price = priceSchema();
     schema.resalePrice = new ArrayField(coinStackSchema(), { required: false, nullable: true, initial: null });
     schema.brokenResalePrice = new ArrayField(coinStackSchema(), { required: false, nullable: true, initial: null });
     schema.isBroken = requiredBooleanField(false);
@@ -65,9 +67,14 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     if (!this.parent?.parent) {
       this.isCarried = false;
     }
+    this.magicEquivalent = this.magicEquivalent ?? 0;
   }
 }
 
 interface PhysicalItemSystemModel extends PhysicalItemSystemData {}
 
-export { IdentifiableItemSystemModel, PhysicalItemSystemModel };
+export {
+  coinStackSchema,
+  PhysicalItemSystemModel,
+  priceSchema,
+};

@@ -39,7 +39,7 @@
   } = inject('settingsStore') as SettingsStore;
 
   const {
-    physicalItemGetters: {
+    documentGetters: {
       actualWeight: weight,
       effectiveWeight,
     },

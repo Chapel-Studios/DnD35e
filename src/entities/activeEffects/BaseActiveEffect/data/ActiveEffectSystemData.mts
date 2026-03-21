@@ -10,6 +10,7 @@ type ActiveEffectTarget = 'Actor' | 'Item';
  */
 interface Dnd35eEffectChangeData extends EffectChangeData {
   target: EffectChangeTarget;
+  isSystem: boolean;
 }
 
 interface Dnd35eActiveEffectSystemSource extends BaseDnd35eSystemData, Omit<ActiveEffectSystemSource, 'changes'> {

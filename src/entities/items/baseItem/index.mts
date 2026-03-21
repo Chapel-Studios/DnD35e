@@ -12,7 +12,10 @@ import {
 } from './ItemDnd35e.mjs';
 import type {
   BaseItemSheetRenderContext,
+  ItemDocumentActions,
+  ItemDocumentGetters,
   ItemSheetStore,
+  ItemSheetStoreUtils,
 } from './sheet/index.mjs';
 import {
   defaultEffectsTab,
@@ -35,7 +38,10 @@ export {
 
 export type {
   BaseItemSheetRenderContext,
+  ItemDocumentActions,
+  ItemDocumentGetters,
   ItemSheetStore,
+  ItemSheetStoreUtils,
   ItemSourceDnd35e,
   ItemSystemData,
   ItemSystemSource,

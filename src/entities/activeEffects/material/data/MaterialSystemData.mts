@@ -1,17 +1,22 @@
 import type { IdentifiableDocumentSystemData, IdentifiableDocumentSystemSource } from '@ec/Identifiable/index.mjs';
-import { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/index.mjs';
+import { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
+import { Price } from '@settings/index.mjs';
 
 type MaterialSystemStats = {
-  priceDifference: number;
+  price: Price;
   magicEquivalent: number;
-  bonusHardness: number;
-  bonusHpPerInch: number;
-  isAlchemicalSilverEquivalent: boolean;
-  isAdamantineEquivalent: boolean;
-  isColdIronEquivalent: boolean;
+  hardness: number;
+  bonusHp: number;
+  damageReductionTypes: string[];
 }
 
-interface MaterialSystemSource extends MaterialSystemStats, IdentifiableDocumentSystemSource, Dnd35eActiveEffectSystemSource {}
+interface MaterialEffectChangeData extends Dnd35eEffectChangeData {
+  value: string | number | Price;
+}
+
+interface MaterialSystemSource extends MaterialSystemStats, IdentifiableDocumentSystemSource, Dnd35eActiveEffectSystemSource {
+  changes: MaterialEffectChangeData[];
+}
 
 interface MaterialSystemData extends MaterialSystemStats, IdentifiableDocumentSystemData, ActiveEffectSystemData {}
 

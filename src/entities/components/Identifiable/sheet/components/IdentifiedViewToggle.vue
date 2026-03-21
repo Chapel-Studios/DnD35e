@@ -19,7 +19,7 @@
     unidentifiedVisibilityMode: { showBoth },
     editorViewActions,
     editorViewMode,
-    identifiableGetters: { isIdentifiable },
+    documentGetters: { isIdentifiable },
   } = inject('documentSheetStore') as IdentifiableDocumentStore;
 
   const buttonLabel = computed(() => {

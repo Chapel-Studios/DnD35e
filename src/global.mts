@@ -26,8 +26,8 @@ type GameDnd35e = Game<
 > & {
   dnd35e: {
     stores: {
-      items: Record<string, ItemSheetStore<any>>;
-      effects: Record<string, ActiveEffectConfigStore>;
+      Item: Record<string, ItemSheetStore<any>>;
+      ActiveEffect: Record<string, ActiveEffectConfigStore>;
     };
   }
 };

@@ -125,14 +125,17 @@ export default defineConfig(({ mode }) => ({
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
-    minify: mode === 'production',
-    ...(mode === 'development'
-      ? {
-        watch: {
-          clearScreen: false,
-        },
-      }
-      : {}),
+    ssr: false,
+    minify: false,
+    cssMinify: false,
+    // minify: mode === 'production',
+    // ...(mode === 'development'
+    //   ? {
+    //     watch: {
+    //       clearScreen: false,
+    //     },
+    //   }
+    //   : {}),
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'src/main.mts'),
@@ -165,9 +168,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   css: {
-    devSourcemap: true,
     preprocessorOptions: {
       scss: {
+        sourceMap: true,
         // // Glob all SCSS into one bundle
         // additionalData: () => {
         //   const files = fg.sync('src/**/*.scss');

@@ -14,7 +14,7 @@
   import { PhysicalDocumentStore } from '../PhysicalItemStore.mjs';
 
   const {
-    physicalItemGetters: {
+    documentGetters: {
       materials,
     },
     localize,

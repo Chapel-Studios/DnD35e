@@ -1,5 +1,9 @@
 import { applyPhysicalIntellisense } from './physicalIntellisense.mjs';
-import { IdentifiableItemSystemModel, PhysicalItemSystemModel } from './PhysicalItemSystemModel.mjs';
+import {
+  coinStackSchema,
+  PhysicalItemSystemModel,
+  priceSchema,
+} from './PhysicalItemSystemModel.mjs';
 import type {
   PhysicalItemSystemData,
   PhysicalItemSystemSource,
@@ -12,6 +16,7 @@ export type {
 
 export {
   applyPhysicalIntellisense,
-  IdentifiableItemSystemModel,
+  coinStackSchema,
   PhysicalItemSystemModel,
+  priceSchema,
 };

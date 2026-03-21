@@ -14,7 +14,7 @@
 
   const {
     isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       isCarried,
     },
     documentActions: {

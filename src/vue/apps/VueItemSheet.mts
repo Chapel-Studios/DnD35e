@@ -23,7 +23,6 @@ abstract class VueItemSheet extends useVueDocumentSheetMixin(ItemSheetBase) {
 
   override async _onDrop(event: DragEvent): Promise<void> {
     super._onDrop(event);
-    game.dnd35e.stores.items[this.document.id]?._storeUtils.refreshDocument();
   }
 }
 

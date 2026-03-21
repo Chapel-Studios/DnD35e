@@ -4,7 +4,10 @@ import {
   EffectCategory,
 } from './components/index.mjs';
 import type {
+  ItemDocumentActions,
+  ItemDocumentGetters,
   ItemSheetStore,
+  ItemSheetStoreUtils,
 } from './ItemSheetStore.mjs';
 import {
   getDefaultItemTabs,
@@ -26,5 +29,8 @@ export {
 
 export type {
   BaseItemSheetRenderContext,
+  ItemDocumentActions,
+  ItemDocumentGetters,
   ItemSheetStore,
+  ItemSheetStoreUtils,
 };

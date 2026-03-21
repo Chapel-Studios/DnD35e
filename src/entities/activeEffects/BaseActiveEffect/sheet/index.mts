@@ -1,4 +1,8 @@
-import type { ActiveEffectConfigStore } from './ActiveEffectConfigStore.mjs';
+import type {
+  ActiveEffectConfigStore,
+  ActiveEffectConfigStoreDocumentActions,
+  ActiveEffectConfigStoreDocumentGetters,
+} from './ActiveEffectConfigStore.mjs';
 import { useActiveEffectConfigStore } from './ActiveEffectConfigStore.mjs';
 import { Dnd35eActiveEffectConfig } from './Dnd35eActiveEffectConfig.mjs';
 import {
@@ -25,4 +29,6 @@ export {
 
 export type {
   ActiveEffectConfigStore,
+  ActiveEffectConfigStoreDocumentActions,
+  ActiveEffectConfigStoreDocumentGetters,
 };

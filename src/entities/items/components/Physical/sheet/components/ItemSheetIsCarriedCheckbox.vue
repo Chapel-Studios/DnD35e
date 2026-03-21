@@ -13,7 +13,7 @@
   import { inject } from 'vue';
 
   const {
-    physicalItemGetters: {
+    documentGetters: {
       isCarried,
     },
     documentGetters: {

@@ -1,9 +1,9 @@
-import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import type { IdentifiableStore } from '@ec/Identifiable/index.mjs';
+import type { DocumentSheetStore, DocumentSheetStoreUtils } from '@ec/CoreMixin/index.mjs';
+import type { IdentifiableDocumentGetters, IdentifiableDocumentStoreUtils, IdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
 import type { MaterialType } from '@effects/material/index.mjs';
 import { materialEffectType } from '@effects/material/index.mjs';
-import type { ItemSheetStore } from '@items/baseItem/index.mjs';
+import type { ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
 import { physicalItemEffectsTab, type PhysicalItemLike } from '@items/components/Physical/index.mjs';
 import { SettingsStore } from '@settings/core/sheet/settingsStore.mjs';
 import type { Price } from '@settings/currency/index.mjs';
@@ -40,7 +40,8 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     count: 0,
   }]);
 
-  const physicalItemGetters = {
+  const documentGetters: PhysicalItemGetters = {
+    ...identifiableStore.documentGetters,
     // static props: don't have an identifiable mode
     quantity: computed(() => document.value.system.quantity),
     actualWeight: computed(() => convertToLocalizedWeight(document.value.system.weight ?? 0) ?? 0),
@@ -68,34 +69,44 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
 
   return {
     ...identifiableStore,
-    physicalItemGetters,
+    documentGetters,
   };
 };
 
-interface PhysicalItemStore extends IdentifiableStore {
-  physicalItemGetters: {
-    quantity: ComputedRef<number>;
-    actualWeight: ComputedRef<number>;
-    effectiveWeight: ComputedRef<number>;
-    price: ComputedRef<Price>;
-    resalePrice: ComputedRef<Price>;
-    brokenResalePrice: ComputedRef<Price>;
-    isBroken: ComputedRef<boolean>;
-    maxHp: ComputedRef<number>;
-    currentHp: ComputedRef<number>;
-    hardness: ComputedRef<number | null>;
-    possibleContainers: ComputedRef<Array<{ value: null; label: string }>>;
-    currentContainerId: ComputedRef<string | null>;
-    isCarried: ComputedRef<boolean>;
-    size: ComputedRef<string>;
-    materials: ComputedRef<MaterialType[]>;
-  };
+interface PhysicalItemGetters extends IdentifiableDocumentGetters {
+  quantity: ComputedRef<number>;
+  actualWeight: ComputedRef<number>;
+  effectiveWeight: ComputedRef<number>;
+  price: ComputedRef<Price>;
+  resalePrice: ComputedRef<Price>;
+  brokenResalePrice: ComputedRef<Price>;
+  isBroken: ComputedRef<boolean>;
+  maxHp: ComputedRef<number>;
+  currentHp: ComputedRef<number>;
+  hardness: ComputedRef<number | null>;
+  possibleContainers: ComputedRef<Array<{ value: null; label: string }>>;
+  currentContainerId: ComputedRef<string | null>;
+  isCarried: ComputedRef<boolean>;
+  size: ComputedRef<string>;
+  materials: ComputedRef<MaterialType[]>;
 }
 
-interface PhysicalDocumentStore extends PhysicalItemStore, ItemSheetStore<PhysicalItemLike> {}
+interface PhysicalItemStoreUtils extends IdentifiableDocumentStoreUtils {}
+
+interface PhysicalItemStore extends IdentifiableStore {
+    documentGetters: PhysicalItemGetters;
+    _storeUtils: PhysicalItemStoreUtils;
+}
+
+interface PhysicalDocumentStore extends PhysicalItemStore, ItemSheetStore<PhysicalItemLike> {
+  _storeUtils: PhysicalItemStoreUtils & ItemSheetStoreUtils<PhysicalItemLike>;
+  documentGetters: PhysicalItemGetters & ItemDocumentGetters;
+}
 
 export { usePhysicalItemStore };
 export type {
   PhysicalDocumentStore,
+  PhysicalItemGetters,
   PhysicalItemStore,
+  PhysicalItemStoreUtils,
 };

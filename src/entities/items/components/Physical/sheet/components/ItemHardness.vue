@@ -1,32 +1,24 @@
 <template>
   <NumberFormGroup
-    :editable="isEditable"
     label="Hardness"
-    :value="effectiveHardness"
-    :on-update="hardnessUpdater"
+    :value="hardness"
     field-path="system.hardness"
+    :direct-update="props.directUpdate"
   />
 </template>
 <script setup lang="ts">
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { NumberFormGroup } from '@vc/Fields/index.mjs';
-  import { computed, inject } from 'vue';
+  import { inject } from 'vue';
+
+  const props = defineProps<{
+    /** When true uses the store's direct field updater instead of view-aware. */
+    directUpdate?: boolean;
+  }>();
 
   const {
-    isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       hardness,
     },
-    documentGetters: {
-      getEffectiveFieldValue,
-    },
-    documentActions: {
-      getViewAwareFieldUpdater,
-    },
   } = inject('documentSheetStore') as PhysicalDocumentStore;
-
-  const effectiveHardness = computed(() =>
-    getEffectiveFieldValue('system.hardness', hardness.value)
-  );
-  const hardnessUpdater = getViewAwareFieldUpdater('system.hardness');
 </script>

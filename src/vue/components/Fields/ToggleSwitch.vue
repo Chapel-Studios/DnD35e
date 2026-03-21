@@ -6,14 +6,14 @@
     <div class="switch-container">
       <!-- False side slot - default content is falseLabel -->
       <span class="false-label">
-        <slot name="false">{{ falseLabel ? localize(falseLabel) : '' }}</slot>
+        <slot name="false">{{ leftLabel }}</slot>
       </span>
 
       <div class="switch-box">
         <input
           type="checkbox"
           :name="name"
-          :checked="checked"
+          :checked="usableValue"
           :disabled="isDisabled"
           @change="onToggle"
         />
@@ -22,7 +22,7 @@
 
       <!-- True side slot - default content is trueLabel -->
       <span class="true-label">
-        <slot name="true">{{ trueLabel ? localize(trueLabel) : '' }}</slot>
+        <slot name="true">{{ rightLabel }}</slot>
       </span>
     </div>
   </label>
@@ -39,8 +39,12 @@
     falseLabel?: string;
     checked: boolean;
     disabled?: boolean;
+    // Use this to flip the value of disabled for cases where the store value is counterintuitive
+    // (e.g. "disabled" field on ActiveEffect)
+    flip?: boolean;
   }>(), {
     disabled: false,
+    flip: false,
   });
 
   const emit = defineEmits<{
@@ -54,6 +58,12 @@
     return game.i18n.localize(key);
   }
 
+  const usableValue = computed(() => props.flip ? !props.checked : props.checked);
+  const trueDisplay = computed(() =>  props.trueLabel ? localize(props.trueLabel) : '');
+  const falseDisplay = computed(() => props.falseLabel ? localize(props.falseLabel) : '');
+  const rightLabel = computed(() => props.flip ? falseDisplay.value : trueDisplay.value);
+  const leftLabel = computed(() => props.flip ? trueDisplay.value : falseDisplay.value);
+
   // Compute whether the field is disabled
   const isDisabled = computed(() => {
     const storeCanEdit = store?.isEditable;
@@ -64,7 +74,7 @@
 
   function onToggle (event: Event) {
     const target = event.target as HTMLInputElement;
-    emit('update', target.checked);
+    emit('update', props.flip ? !target.checked : target.checked);
   }
 </script>
 

@@ -72,6 +72,7 @@
         :value="context.data.rounding"
         :options="roundingOptions"
         :on-update="(v: unknown) => onUpdate('rounding', v)"
+        field-path="rounding"
       />
 
       <!-- Continuity options -->
@@ -81,6 +82,7 @@
         :value="context.data.continuity"
         :options="continuityOptions"
         :on-update="(v: unknown) => onUpdate('continuity', v)"
+        field-path="continuity"
       />
     </section>
 
@@ -94,6 +96,7 @@
         hint="DND35E.Settings.Health.WoundsAndVigor.PC.Hint"
         :value="context.data.variants.pc.useWoundsAndVigor"
         :on-update="(v: unknown) => onUpdate('variants.pc.useWoundsAndVigor', v)"
+        field-path="variants.pc.useWoundsAndVigor"
       />
 
       <!-- Wounds & Vigor for NPCs -->
@@ -102,6 +105,7 @@
         hint="DND35E.Settings.Health.WoundsAndVigor.NPC.Hint"
         :value="context.data.variants.npc.useWoundsAndVigor"
         :on-update="(v: unknown) => onUpdate('variants.npc.useWoundsAndVigor', v)"
+        field-path="variants.npc.useWoundsAndVigor"
       />
     </section>
 

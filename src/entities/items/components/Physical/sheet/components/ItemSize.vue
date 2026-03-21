@@ -16,7 +16,7 @@
 
   const {
     isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       size,
     },
     documentGetters: {

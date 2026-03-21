@@ -28,15 +28,18 @@
   import { DmControl, UniqueId } from '@vc/index.mjs';
 </script>
 <style scoped lang="scss">
+  .view-mode {
+    .weapon-details-container {
+      :deep(.form-group-label) {
+        flex-direction: row;
+      }
+    }
+  }
   .weapon-details-container {
     grid-column: span 2;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 0.33rem;
-
-    .full-row {
-      display: flex !important;
-    }
 
     :deep(.form-group) {
       border: 1px solid var(--color-border, #7a7971);

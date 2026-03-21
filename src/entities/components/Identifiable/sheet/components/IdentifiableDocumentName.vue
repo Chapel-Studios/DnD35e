@@ -30,7 +30,7 @@
     documentGetters: {
       displayName,
     },
-    identifiableGetters: {
+    documentGetters: {
       identifiedDisplayName,
       unidentifiedDisplayName,
     },

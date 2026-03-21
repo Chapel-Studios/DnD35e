@@ -23,7 +23,7 @@
   import { computed, inject } from 'vue';
 
   const {
-    identifiableGetters: {
+    documentGetters: {
       isIdentified,
     },
     documentActions: {

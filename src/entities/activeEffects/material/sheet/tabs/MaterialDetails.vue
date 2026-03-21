@@ -1,124 +1,117 @@
 <template>
-  <section
-    class="flexcol material-details"
-    v-show="isActiveTab"
-    data-group="primary"
-    :data-tab="tabName"
-  >
-    <div class="form-container">
-
-      <!-- Hardness -->
-      <NumberFormGroup
-        label="D35E.Hardness"
-        :value="bonusHardness"
-        :editable="isEditable"
-        :on-update="getDirectFieldUpdater('system.bonusHardness')"
-      />
-
+  <EffectDetails class="material-details">
+    <template #append>
+      <ItemHardness direct-update />
       <!-- HP per Inch -->
       <NumberFormGroup
         label="D35E.HpPerInch"
-        :value="bonusHpPerInch"
-        :editable="isEditable"
-        :on-update="getDirectFieldUpdater('system.bonusHpPerInch')"
+        :value="bonusHp"
+        field-path="system.bonusHp"
+        direct-update
       />
-
       <!-- Magic Equivalent -->
-      <h3 class="form-header">{{ localize("D35E.MagicEquivalent") }}</h3>
-
       <NumberFormGroup
         label="D35E.MagicEquivalent"
         :value="magicEquivalent"
-        :editable="isEditable"
-        :on-update="getDirectFieldUpdater('system.magicEquivalent')"
+        field-path="system.magicEquivalent"
+        direct-update
       />
+      <DamageReductionTypes class="grid-full-row" />
+    </template>
+    <template #outer-append>
+      <div class="material-details-container grid-full-row">
+        <!-- Material Equivalents -->
+        <!-- <DamageReductionTypes /> -->
+        <!-- Magic Equivalent -->
+        <!-- 
+        <h3 class="form-header">{{ localize("D35E.MagicEquivalent") }}</h3>
+
+        <NumberFormGroup
+          label="D35E.MagicEquivalent"
+          :value="magicEquivalent"
+          field-path="system.magicEquivalent"
+          direct-update
+        />
+
+        <span class="notes">
+          <em>{{ localize("D35E.MagicEquivalentDescription") }}</em>
+        </span>
+        -->
+      </div>
+
+      <!-- Hardness -->
+      <!--
+      <NumberFormGroup
+        label="D35E.Hardness"
+        :value="bonusHardness"
+        field-path="system.bonusHardness"
+        direct-update
+      /> -->
+
+      <!-- <NumberFormGroup
+        label="D35E.HpPerInch"
+        :value="bonusHpPerInch"
+        field-path="system.bonusHpPerInch"
+        direct-update
+      />
+      -->
+
+      <!--
+      <h3 class="form-header">{{ localize("D35E.MagicEquivalent") }}</h3>
+
+
 
       <span class="notes">
         <em>{{ localize("D35E.MagicEquivalentDescription") }}</em>
       </span>
-
-      <!-- Material Equivalents -->
-      <CheckBoxFormGroup
-        label="D35E.MaterialAlchemicalSilverEquivalent"
-        :value="isAlchemicalSilverEquivalent"
-        :editable="isEditable"
-        :on-update="getDirectFieldUpdater('system.isAlchemicalSilverEquivalent')"
-      />
-
-      <CheckBoxFormGroup
-        label="D35E.MaterialAdamantineEquivalent"
-        :value="isAdamantineEquivalent"
-        :editable="isEditable"
-        :on-update="getDirectFieldUpdater('system.isAdamantineEquivalent')"
-      />
-
-      <CheckBoxFormGroup
-        label="D35E.MaterialColdIronEquivalent"
-        :value="isColdIronEquivalent"
-        :editable="isEditable"
-        :on-update="getDirectFieldUpdater('system.isColdIronEquivalent')"
-      />
+      -->
 
       <!-- GM‑Only Section -->
-      <template v-if="userIsGM">
+      <!-- <template v-if="userIsGM">
         <h3 class="form-header">{{ localize("D35E.SystemProperties") }}</h3>
         <UniqueId />
-      </template>
-
-    </div>
-  </section>
+      </template> -->
+    </template>
+  </EffectDetails>
 </template>
 
 <script setup lang="ts">
-  import type { MaterialStore } from '@effects/material/index.mjs';
-  import { CheckBoxFormGroup, NumberFormGroup } from '@vc/Fields/index.mjs';
-  import { UniqueId } from '@vc/Fields/index.mjs';
+  import { EffectDetails } from '@effects/BaseActiveEffect/index.mjs';
+  import DamageReductionTypes from '@effects/BaseActiveEffect/sheet/components/DamageReductionTypes.vue';
+  import { ItemHardness } from '@items/components/Physical/index.mjs';
+  import { NumberFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
-  const {
-    tabs: {
-      tabGetters: { getIsTabOpen },
-    },
-    materialGetters: {
-      bonusHardness,
-      bonusHpPerInch,
-      magicEquivalent,
-      isAlchemicalSilverEquivalent,
-      isAdamantineEquivalent,
-      isColdIronEquivalent,
-    },
-    documentActions: {
-      getDirectFieldUpdater,
-    },
-    isEditable,
-    localize,
-  } = inject('documentSheetStore') as MaterialStore;
+  import { MaterialStore } from '../MaterialStore.mjs';
 
-  const tabName = 'material-details';
-  const isActiveTab = getIsTabOpen(tabName);
-  const userIsGM = game.user.isGM;
+  const {
+    documentGetters: {
+      bonusHp,
+      magicEquivalent,
+    },
+  } = inject('documentSheetStore') as MaterialStore;
 </script>
 
 <style scoped>
-.form-container {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 1rem 3rem;
-  align-items: center;
-}
+  .form-container {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 1rem 3rem;
+    align-items: center;
+  }
 
-.form-header {
-  grid-column: span 2;
-  margin: 1rem 0 0.25rem;
-  text-decoration: underline;
-}
+  .form-header {
+    grid-column: span 2;
+    margin: 1rem 0 0.25rem;
+    text-decoration: underline;
+  }
 
-.notes {
-  margin: -0.75rem 0 0.125rem;
-  grid-column: span 2;
-}
+  .notes {
+    margin: -0.75rem 0 0.125rem;
+    grid-column: span 2;
+  }
 
-.form-group {
-  display: contents;
-}
+  .form-group {
+    display: contents;
+  }
 </style>

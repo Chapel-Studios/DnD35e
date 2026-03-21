@@ -6,7 +6,7 @@
   import { PhysicalDocumentStore } from '../PhysicalItemStore.mjs';
 
   const {
-    physicalItemGetters: {
+    documentGetters: {
       materials,
     },
   } = inject('documentSheetStore') as PhysicalDocumentStore;

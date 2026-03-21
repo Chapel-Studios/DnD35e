@@ -13,6 +13,7 @@ import type {
   SheetState,
   VueApplicationConfiguration,
   VueApplicationContext,
+  VueApplicationContextTransfer,
   VueRenderOptions,
 } from './VueAppTypes.mjs';
 import type { VueDocumentSheetMembers, VueDocumentSheetMixin } from './VueDocumentSheetMixin.mjs';
@@ -41,6 +42,7 @@ export type {
   VueAppBaseMixin,
   VueApplicationConfiguration,
   VueApplicationContext,
+  VueApplicationContextTransfer,
   VueDocumentSheetMembers,
   VueDocumentSheetMixin,
   VueRenderOptions,

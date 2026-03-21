@@ -12,8 +12,8 @@ abstract class VueActiveEffectConfig extends useVueDocumentSheetMixin(EffectConf
       classes: ['dnd35e', 'vueApp'],
       actions: {},
       position: {
-        width: 500,
-        height: 500,
+        width: 985,
+        height: 625,
       },
       window: {
         resizable: true,

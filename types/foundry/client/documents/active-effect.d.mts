@@ -35,7 +35,7 @@ type ActiveEffectChangeHandler = (
     field?: DataField;
     replacementData?: Record<string, unknown>;
   }
-) => Promise<Record<string, unknown> | void>;
+) => Record<string, unknown> | void;
 
 interface ActiveEffectChangeTypeConfig {
   label: string;

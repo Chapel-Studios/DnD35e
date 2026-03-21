@@ -4,7 +4,8 @@
     <TextFormGroup
       label="UID"
       :value="uniqueId"
-      :on-update="updateUUID"
+      field-path="system.uniqueId"
+      direct-update
     >
       <template #controls>
         <button

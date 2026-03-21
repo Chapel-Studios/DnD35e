@@ -4,7 +4,12 @@ import ItemIsMelded from './components/ItemIsMelded.vue';
 import ItemIsWeightlessWhenEquipped from './components/ItemIsWeightlessWhenEquipped.vue';
 import type { EquippableItemSheetRenderContext } from './EquippableItemSheet.mjs';
 import EquippableItemSheet from './EquippableItemSheet.vue';
-import type { EquippableDocumentStore, EquippableItemStore } from './EquippableItemStore.mjs';
+import type {
+  EquippableDocumentStore,
+  EquippableItemGetters,
+  EquippableItemStore,
+  EquippableItemStoreUtils,
+} from './EquippableItemStore.mjs';
 import { useEquippableItemStore } from './EquippableItemStore.mjs';
 
 export {
@@ -18,6 +23,8 @@ export {
 
 export type {
   EquippableDocumentStore,
+  EquippableItemGetters,
   EquippableItemSheetRenderContext,
   EquippableItemStore,
+  EquippableItemStoreUtils,
 };

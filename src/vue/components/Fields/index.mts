@@ -13,14 +13,18 @@ import {
   ownerPlusVisibility,
 } from './FormGroups/fieldPermissions.mjs';
 import FormGroup from './FormGroups/FormGroup.vue';
+import HasActiveEffectsNotification from './FormGroups/HasActiveEffectsNotification.vue';
 import ItemPriceFormGroup from './FormGroups/ItemPriceFormGroup.vue';
 import MultiSelectFormGroup from './FormGroups/MultiSelectFormGroup.vue';
 import NumberFormGroup from './FormGroups/NumberFormGroup.vue';
 import RichTextEditorFormGroup from './FormGroups/RichTextEditorFormGroup.vue';
 import SelectFormGroup from './FormGroups/SelectFormGroup.vue';
 import TextFormGroup from './FormGroups/TextFormGroup.vue';
+import ToggleSwitchFormGroup from './FormGroups/ToggleSwitchFormGroup.vue';
+import type { MultiSelectOption,SelectOption } from './FormGroups/types.mjs';
 import ImageField from './ImageField.vue';
 import ToggleSwitch from './ToggleSwitch.vue';
+
 
 export {
   CheckBoxFormGroup,
@@ -31,6 +35,7 @@ export {
   FormGroup,
   gmOnlyEditability,
   gmOnlyVisibility,
+  HasActiveEffectsNotification,
   ImageField,
   ItemPriceFormGroup,
   MultiSelectFormGroup,
@@ -41,10 +46,13 @@ export {
   SelectFormGroup,
   TextFormGroup,
   ToggleSwitch,
+  ToggleSwitchFormGroup,
   UniqueId,
 };
 
 export type {
   FieldEditability,
   FieldVisibility,
+  MultiSelectOption,
+  SelectOption,
 };

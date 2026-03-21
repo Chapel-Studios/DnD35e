@@ -8,8 +8,8 @@
         class="name-formula-group"
         :label="localize(toggleLabel).value"
         :value="toggleValue"
-        :editable="isEditable"
-        :on-update="getDirectFieldUpdater(toggleField)"
+        :field-path="toggleField"
+        direct-update
       />
     </div>
 
@@ -18,15 +18,15 @@
       v-if="!toggleValue"
       :label="localize(nameLabel).value"
       :value="nameValue"
-      :editable="isEditable"
-      :on-update="getDirectFieldUpdater(nameField)"
+      :field-path="nameField"
+      direct-update
     />
     <TextFormGroup
       v-if="toggleValue"
       :label="localize(formulaLabel).value"
       :value="formulaValue"
-      :editable="isEditable"
-      :on-update="getDirectFieldUpdater(formulaField)"
+      :field-path="formulaField"
+      direct-update
     />
 
     <!-- Not sure if this message still makes sense. We can add something back here if we want later -->
@@ -62,10 +62,6 @@
 
   const {
     localize,
-    isEditable,
-    documentActions: {
-      getDirectFieldUpdater,
-    },
   } = inject('documentSheetStore') as DocumentSheetStore;
 
   withDefaults(defineProps<Props>(), {

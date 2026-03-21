@@ -15,7 +15,7 @@
 
   const {
     isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       resalePrice,
     },
     documentGetters: {

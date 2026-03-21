@@ -1,5 +1,6 @@
 import type { SheetTab } from '@ec/CoreMixin/index.mjs';
 
+import Tint from '../components/Tint.vue';
 import EffectChanges from './EffectChanges.vue';
 import EffectDetails from './EffectDetails.vue';
 import EffectDuration from './EffectDuration.vue';
@@ -49,4 +50,5 @@ export {
   EffectDuration,
   effectDurationTab,
   getDefaultActiveEffectTabs,
+  Tint,
 };

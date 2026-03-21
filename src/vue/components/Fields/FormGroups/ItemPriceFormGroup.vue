@@ -5,7 +5,7 @@
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
-    class="item-price-form-group"
+    class="price-form-group"
   >
     <!-- Controls slot: add coin stack button and consolidate button -->
     <template #controls>
@@ -19,7 +19,7 @@
         <i class="fas fa-plus" />
       </button>
       <button
-        v-if="!isDisabled && value.length > 0"
+        v-if="!isDisabled && editValue.length > 0"
         type="button"
         class="consolidate-btn"
         :title="localize('DND35E.Currency.Consolidate')"
@@ -32,10 +32,10 @@
 
     <!-- Editable coin stacks -->
     <div class="coin-stacks">
-      <div v-if="value.length === 0" class="empty-price">
+      <div v-if="editValue.length === 0" class="empty-price">
         <span class="zero-value">0 {{ defaultCoinShortLabel }}</span>
       </div>
-      <div v-for="(stack, index) in value" :key="index" class="coin-stack">
+      <div v-for="(stack, index) in editValue" :key="index" class="coin-stack">
         <input
           type="number"
           class="stack-count"
@@ -97,26 +97,50 @@
     label?: string;
     hint?: string;
     value: Price;
-    fieldPath?: string;
+    fieldPath: string;
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
     disabled?: boolean;
-    onUpdate: (value: Price) => void;
+    onUpdate?: (value: Price) => void;
+    /** When true, edit inputs show derived data instead of source data. */
+    editDerived?: boolean;
+    /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
+    directUpdate?: boolean;
   }>();
 
   function localize(key: string): string {
     return game.i18n.localize(key);
   }
 
-  const store = inject('documentSheetStore', null) as DocumentSheetStore | null;
+  const {
+    isEditable,
+    isGM,
+    documentActions: {
+      getDirectFieldUpdater,
+      getViewAwareFieldUpdater,
+    },
+    documentGetters: {
+      getSourceProperty,
+    },
+  } = inject('documentSheetStore') as DocumentSheetStore;
   
   const isDisabled = computed(() => {
-    const storeCanEdit = store?.isEditable;
+    const storeCanEdit = isEditable;
     if (props.disabled) return true;
     return storeCanEdit ? !storeCanEdit.value : false;
   });
 
-  const isGM = computed(() => store?.isGM?.value ?? game.user.isGM);
+  const fieldUpdater = props.onUpdate ?? (
+    props.directUpdate
+      ? getDirectFieldUpdater(props.fieldPath)
+      : getViewAwareFieldUpdater(props.fieldPath)
+  );
+
+  const sourceValue = getSourceProperty<Price>(props.fieldPath);
+  const editValue = computed((): Price => {
+    if (props.editDerived || !sourceValue) return props.value;
+    return (sourceValue.value ?? props.value) as Price;
+  });
 
   // Get currency config from settings
   const currencyConfig = computed((): CurrencyConfig => {
@@ -153,13 +177,13 @@
 
   // Available coins for a specific stack (includes currently selected + unselected coins)
   function availableCoinsForStack(currentCoinId: string): CoinageDefinition[] {
-    const usedCoinIds = new Set(props.value.map(s => s.coinId));
+    const usedCoinIds = new Set(editValue.value.map(s => s.coinId));
     return selectableCoinages.value.filter(c => c.id === currentCoinId || !usedCoinIds.has(c.id));
   }
 
   // Get the next available coin (not already in use)
   function getNextAvailableCoin(): CoinageDefinition | undefined {
-    const usedCoinIds = new Set(props.value.map(s => s.coinId));
+    const usedCoinIds = new Set(editValue.value.map(s => s.coinId));
     return selectableCoinages.value.find(c => !usedCoinIds.has(c.id));
   }
 
@@ -173,27 +197,27 @@
       coinId: nextCoin.id,
       count: 0,
     };
-    props.onUpdate([...props.value, newStack]);
+    fieldUpdater([...editValue.value, newStack]);
   }
 
   function removeCoinStack(index: number): void {
-    const newPrice = props.value.filter((_, i) => i !== index);
-    props.onUpdate(newPrice);
+    const newPrice = editValue.value.filter((_, i) => i !== index);
+    fieldUpdater(newPrice);
   }
 
   function updateStackCount(index: number, rawValue: string): void {
     const count = parseInt(rawValue, 10) || 0;
-    const newPrice = props.value.map((stack, i) =>
+    const newPrice = editValue.value.map((stack, i) =>
       i === index ? { ...stack, count: Math.max(0, count) } : stack
     );
-    props.onUpdate(newPrice);
+    fieldUpdater(newPrice);
   }
 
   function updateStackCoin(index: number, coinId: string): void {
-    const newPrice = props.value.map((stack, i) =>
+    const newPrice = editValue.value.map((stack, i) =>
       i === index ? { ...stack, coinId } : stack
     );
-    props.onUpdate(newPrice);
+    fieldUpdater(newPrice);
   }
 
   /**
@@ -201,11 +225,11 @@
    * targeting the rollUpTargetCoin from settings.
    */
   function consolidatePrice(): void {
-    if (props.value.length === 0) return;
+    if (editValue.value.length === 0) return;
 
     // Calculate total value in GP
     let totalGp = 0;
-    for (const stack of props.value) {
+    for (const stack of editValue.value) {
       const coin = enabledCoinages.value.find(c => c.id === stack.coinId);
       if (coin) {
         totalGp += stack.count * coin.valueInGp;
@@ -264,12 +288,12 @@
         return (coinB?.valueInGp ?? 0) - (coinA?.valueInGp ?? 0);
       });
 
-    props.onUpdate(finalPrice);
+    fieldUpdater(finalPrice);
   }
 </script>
 
 <style scoped>
-.item-price-form-group {
+.price-form-group {
   display: contents;
 }
 

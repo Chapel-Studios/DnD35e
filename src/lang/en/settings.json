@@ -165,5 +165,9 @@
   "DND35E.Settings.MeasurementUnitsN": "System of units",
   "DND35E.Settings.MeasurementUnitsL": "System of units to be used in the world",
 
-  "DND35E.HitDie": "Hit Die"
+  "DND35E.HitDie": "Hit Die",
+
+  "DND35E.Settings.DamageReductionTypes.Name": "Damage Reduction Types",
+  "DND35E.Settings.DamageReductionTypes.Hint": "Configure available damage reduction material types.",
+  "DND35E.Settings.DamageReductionTypes.Label": "Damage Reduction Types"
 }

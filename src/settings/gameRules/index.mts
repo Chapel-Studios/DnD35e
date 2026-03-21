@@ -2,8 +2,9 @@
  * Game Rules settings module
  */
 
-export type { DiagonalMovementRule, ExperienceRate } from './_types.mjs';
+export type { DamageReductionTypeEntry, DamageReductionTypesConfig, DiagonalMovementRule, ExperienceRate } from './_types.mjs';
 export {
+  DEFAULT_DAMAGE_REDUCTION_TYPES,
   DIAGONAL_MOVEMENT_CHOICES,
   EXPERIENCE_RATE_CHOICES,
   GAME_RULES_KEYS,

@@ -6,9 +6,9 @@
  */
 
 // Import category types for use in SystemSettings
-import type { CurrencyConfig, CurrencyEntry } from './currency/_types.mjs';
+import type { CurrencyConfig } from './currency/_types.mjs';
 import type { PartyHudMode, UnitSystem } from './display/_types.mjs';
-import type { DiagonalMovementRule, ExperienceRate } from './gameRules/_types.mjs';
+import type { DamageReductionTypesConfig, DiagonalMovementRule, ExperienceRate } from './gameRules/_types.mjs';
 import type { HealthConfig, HitDieConfig } from './health/_types.mjs';
 import type { RollConfig, RollModeConfig } from './roll/_types.mjs';
 import type { CustomSkill, SkillSettings } from './skills/_types.mjs';
@@ -16,8 +16,8 @@ import type { CustomSkill, SkillSettings } from './skills/_types.mjs';
 // Re-export category types
 export type {
   CurrencyConfig,
-  CurrencyEntry,
   CustomSkill,
+  DamageReductionTypesConfig,
   DiagonalMovementRule,
   ExperienceRate,
   HealthConfig,
@@ -66,6 +66,7 @@ export interface SystemSettings {
   useFractionalBaseBonuses: boolean;
   allowBackgroundSkills: boolean;
   psionicsAreDifferent: boolean;
+  damageReductionTypes: DamageReductionTypesConfig;
 
   // Combat settings
   autosizeWeapons: boolean;

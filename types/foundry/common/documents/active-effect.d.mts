@@ -97,7 +97,7 @@ type ActiveEffectSchema<
     _id: fields.DocumentIdField;
     name: fields.StringField<string, string, true, false, false>;
     system: fields.TypeDataField<TSystemSource>;
-    type: fields.StringField<TType, TType, true, false, false>;
+    type: fields.DocumentTypeField<TType, TType, true, false, false>;
     disabled: fields.BooleanField;
     start: fields.SchemaField<EffectStartSchema>;
     duration: fields.SchemaField<EffectDurationSchema>;
@@ -119,7 +119,7 @@ type EffectPhases = 'initial' | 'final';
 type EffectChangeSchema = {
   key: fields.StringField<string, string, true, false, false>;
   value: fields.StringField<string, string, true, false, false>;
-  type: fields.StringField<string, string, true, false, true>;
+  type: fields.StringField<ActiveEffectChangeMode, ActiveEffectChangeMode, true, false, true>;
   priority?: fields.NumberField<number, number, false, true, true>;
   phase: fields.StringField<EffectPhases, EffectPhases, true, false, false>;
 };
@@ -128,8 +128,8 @@ export type EffectChangeData<
   TParent extends BaseActor | BaseItem<BaseActor | null> | null = BaseActor | BaseItem<BaseActor | null> | null
 > = {
   key: string;
-  value: string;
-  type: string;
+  value: any;
+  type: ActiveEffectChangeMode;
   phase: EffectPhases;
   priority?: number | null;
   effect?: BaseActiveEffect<TParent> | null;

@@ -1,28 +1,35 @@
 <template>
-  <DocumentHeader>
-    <ItemArt />
-    <div class="doc-name-container">
-      <slot name="header-name">
-        <DefaultHeaderName />
-      </slot>
-    </div>
-
-    <template #status>
-      <slot name="header-status"></slot>
-    </template>
-    <template #summary>
-      <slot name="header-summary"></slot>
-    </template>
-  </DocumentHeader>
-  <TabDivider />
   <div
-    v-for="tab in tabList"
-    :key="tab.id"
-    class="sheet-tab"
+    :class="{
+      'edit-mode': isEditMode,
+      'view-mode': !isEditMode,
+    }"
   >
-    <component :is="tab.component" />
+    <DocumentHeader>
+      <ItemArt />
+      <div class="doc-name-container">
+        <slot name="header-name">
+          <DefaultHeaderName />
+        </slot>
+      </div>
+
+      <template #status>
+        <slot name="header-status"></slot>
+      </template>
+      <template #summary>
+        <slot name="header-summary"></slot>
+      </template>
+    </DocumentHeader>
+    <TabDivider />
+    <div
+      v-for="tab in tabList"
+      :key="tab.id"
+      class="sheet-tab"
+    >
+      <component :is="tab.component" />
+    </div>
+    <slot name="footer"></slot>
   </div>
-  <slot name="footer"></slot>
 </template>
 
 <script lang="ts" setup>
@@ -35,7 +42,7 @@
   import { ActiveEffectConfigStore, useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { type ItemSheetStore,useItemSheetStore } from '@items/baseItem/index.mjs';
   import TabDivider from '@vc/TabDivider/TabDivider.vue';
-  import { inject, provide } from 'vue';
+  import { computed, inject, provide } from 'vue';
 
   const props = withDefaults(defineProps<{
     context?: any;
@@ -56,6 +63,7 @@
   else{
     store = inject('documentSheetStore');
   }
+  const isEditMode = computed(() => store?.isEditable.value ?? false);
 
   const tabList = store?.tabs.tabGetters.tabs;
 </script>

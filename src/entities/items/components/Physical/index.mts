@@ -3,8 +3,9 @@ import type {
   PhysicalItemSystemSource,
 } from './data/index.mjs';
 import {
-  IdentifiableItemSystemModel,
+  coinStackSchema,
   PhysicalItemSystemModel,
+  priceSchema,
 } from './data/index.mjs';
 import type {
   PhysicalItemLike,
@@ -17,8 +18,10 @@ import {
 } from './PhysicalItemDnd35e.mjs';
 import type {
   PhysicalDocumentStore,
+  PhysicalItemGetters,
   PhysicalItemSheetRenderContext,
   PhysicalItemStore,
+  PhysicalItemStoreUtils,
 } from './sheet/index.mjs';
 import {
   ItemHardness,
@@ -35,8 +38,8 @@ import {
 } from './sheet/index.mjs';
 
 export {
+  coinStackSchema,
   IdentifiableItemBase,
-  IdentifiableItemSystemModel,
   ItemHardness,
   ItemHP,
   ItemPrice,
@@ -49,16 +52,19 @@ export {
   physicalItemEffectsTab,
   PhysicalItemSheet,
   PhysicalItemSystemModel,
+  priceSchema,
   usePhysicalItemStore,
 };
 
 export type {
   PhysicalDocumentStore,
+  PhysicalItemGetters,
   PhysicalItemLike,
   PhysicalItemSheetRenderContext,
   PhysicalItemSource,
   PhysicalItemSourceProps,
   PhysicalItemStore,
+  PhysicalItemStoreUtils,
   PhysicalItemSystemData,
   PhysicalItemSystemSource,
 };

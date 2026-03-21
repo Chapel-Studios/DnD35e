@@ -1,4 +1,5 @@
 import { DocumentSheetConfiguration, DocumentSheetRenderOptions } from '@client/applications/api/document-sheet.mjs';
+import { DocumentSheetStore } from '@ec/CoreMixin/sheet/index.mjs';
 import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
 import { ItemDnd35e } from '@items/baseItem/index.mjs';
 
@@ -36,10 +37,15 @@ interface VueApplicationContext<TDocument extends ItemDnd35e | DnD35eActiveEffec
   sheetState: SheetState;
 }
 
+interface VueApplicationContextTransfer<TDocument extends ItemDnd35e | DnD35eActiveEffect> extends VueApplicationContext<TDocument> {
+  store?: DocumentSheetStore<TDocument> | undefined;
+}
+
 export type {
   EditorViewMode,
   SheetState,
   VueApplicationConfiguration,
   VueApplicationContext,
+  VueApplicationContextTransfer,
   VueRenderOptions,
 };

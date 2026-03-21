@@ -1,8 +1,13 @@
 <template>
-  <IdentifiableDocumentSheetVue mode="effect" />
+  <IdentifiableDocumentSheetVue mode="effect">
+    <template #header-summary>
+      <DisableEffect />
+    </template>
+  </IdentifiableDocumentSheetVue>
 </template>
 <script lang="ts" setup>
   import { IdentifiableDocumentSheetVue } from '@ec/Identifiable/index.mjs';
+  import DisableEffect from '@effects/BaseActiveEffect/sheet/components/DisableEffect.vue';
   import { provide } from 'vue';
 
   import type { MaterialSheetRenderContext } from './index.mjs';

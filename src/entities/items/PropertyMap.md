@@ -280,9 +280,7 @@ erDiagram
         number magicEquivalent
         number bonusHardness
         number bonusHpPerInch
-        boolean isAlchemicalSilverEquivalent
-        boolean isAdamantineEquivalent
-        boolean isColdIronEquivalent
+        string[] damageReductionTypes
     }
     BaseItem        ||--o{ Material   : "rollup"
     Identifiable    ||--o{ Material   : "rollup"

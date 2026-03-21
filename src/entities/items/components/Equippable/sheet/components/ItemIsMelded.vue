@@ -14,7 +14,7 @@
 
   const {
     isEditable,
-    equippableGetters: {
+    documentGetters: {
       isMelded,
     },
     documentActions: {

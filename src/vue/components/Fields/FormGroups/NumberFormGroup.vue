@@ -16,7 +16,7 @@
     </template>
     <input
       type="number"
-      :value="value ?? ''"
+      :value="editValue ?? ''"
       :disabled="isDisabled"
       @change="onChange(($event.target as HTMLInputElement).value)"
     />
@@ -38,23 +38,40 @@
     hint?: string;
     value: number | null;
     isDmOnly?: boolean;
-    fieldPath?: string;
+    fieldPath: string;
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
     /** Only used for overriding store behavior. */
     disabled?: boolean;
-    onUpdate: (value: number | null) => void;
+    /** Optional updater override. When omitted, derives from the store using fieldPath. */
+    onUpdate?: (value: number | null) => void;
     unit?: string;
+    /** When true, edit inputs show derived data instead of source data. */
+    editDerived?: boolean;
+    /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
+    directUpdate?: boolean;
   }>();
 
-  const store = inject('documentSheetStore', null) as DocumentSheetStore | null;
+  const store = inject('documentSheetStore') as DocumentSheetStore;
   const isDisabled = computed(() => {
-    const storeCanEdit = store?.isEditable;
+    const storeCanEdit = store.isEditable;
     if (props.disabled) return true;
     return storeCanEdit ? !storeCanEdit.value : false;
   });
 
+  const fieldUpdater = props.onUpdate ?? (
+    props.directUpdate
+      ? store.documentActions.getDirectFieldUpdater(props.fieldPath)
+      : store.documentActions.getViewAwareFieldUpdater(props.fieldPath)
+  );
+
+  const sourceValue = store.documentGetters.getSourceProperty<number | null>(props.fieldPath);
+  const editValue = computed(() => {
+    if (props.editDerived || !sourceValue) return props.value;
+    return sourceValue.value as number | null;
+  });
+
   function onChange(val: string) {
-    props.onUpdate(val === '' ? null : Number(val));
+    fieldUpdater(val === '' ? null : Number(val));
   }
 </script>

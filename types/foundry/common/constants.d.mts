@@ -26,14 +26,14 @@ export const ASCII: string;
  */
 export const ACTIVE_EFFECT_MODES: Readonly<{
     /** Used to denote that the handling of the effect is programmatically provided by a system or module. */
-    CUSTOM: 0;
+    CUSTOM: 'custom';
 
     /**
      * Multiplies a numeric base value by the numeric effect value
      * @example
      * 2 (base value) * 3 (effect value) = 6 (derived value)
      */
-    MULTIPLY: 1;
+    MULTIPLY: 'multiply';
 
     /**
      * Adds a numeric base value to a numeric effect value, or concatenates strings
@@ -42,7 +42,7 @@ export const ACTIVE_EFFECT_MODES: Readonly<{
      * @example
      * "Hello" (base value) + " World" (effect value) = "Hello World"
      */
-    ADD: 2;
+    ADD: 'add';
 
     /**
      * Keeps the lower value of the base value and the effect value
@@ -51,7 +51,7 @@ export const ACTIVE_EFFECT_MODES: Readonly<{
      * @example
      * 2 (base value), 3 (effect value) = 2 (derived value)
      */
-    DOWNGRADE: 3;
+    DOWNGRADE: 'downgrade';
 
     /**
      * Keeps the greater value of the base value and the effect value
@@ -60,14 +60,14 @@ export const ACTIVE_EFFECT_MODES: Readonly<{
      * @example
      * 2 (base value), 1 (effect value) = 2 (derived value)
      */
-    UPGRADE: 4;
+    UPGRADE: 'upgrade';
 
     /**
      * Directly replaces the base value with the effect value
      * @example
      * 2 (base value), 4 (effect value) = 4 (derived value)
      */
-    OVERRIDE: 5;
+    OVERRIDE: 'override';
 }>;
 
 export type ActiveEffectChangeMode = (typeof ACTIVE_EFFECT_MODES)[keyof typeof ACTIVE_EFFECT_MODES];

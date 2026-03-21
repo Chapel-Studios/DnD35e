@@ -11,6 +11,8 @@ import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client
 import { useSettingsStore } from '@settings/core/sheet/index.mjs';
 import type { App, Component } from 'vue';
 
+import { VueApplicationContext, VueApplicationContextTransfer } from './index.mjs';
+
 /**
  * Base render options for Vue applications
  */
@@ -72,7 +74,7 @@ function useVueAppBaseMixin<
      * We mount Vue here, creating or reusing the root element.
      */
     protected override async _replaceHTML(
-      _result: object,
+      { store, ...context }: VueApplicationContextTransfer<any>,
       content: HTMLElement,
       options: VueBaseRenderOptions
     ): Promise<void> {
@@ -91,6 +93,9 @@ function useVueAppBaseMixin<
         this.vueApp = this._createVueApp(options);
         this.vueApp.provide('settingsStore', useSettingsStore());
         this.vueApp.mount(this.vueRoot);
+      }
+      else {
+        store?._storeUtils.refreshDocument(context);
       }
     }
 

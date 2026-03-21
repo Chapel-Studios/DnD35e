@@ -3,7 +3,7 @@ import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import { getDisplayName } from '@ec/CoreMixin/index.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE } from '@effects/BaseActiveEffect/index.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, EffectChangeType, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE } from '@effects/BaseActiveEffect/index.mjs';
 import type { DnD35eActiveEffect } from '@effects/index.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemType } from '@items/index.mjs';
@@ -12,6 +12,13 @@ import { ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
 import type { ItemSystemData, ItemSystemSource } from './index.mjs';
 
 type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
+
+type Override = {
+  fieldPath: string;
+  value: unknown;
+  effectName: string;
+  mode: EffectChangeType;
+};
 
 class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<TParent> {
   constructor(source: PreCreate<ItemSourceDnd35e<TItemType>>, context?: DocumentConstructionContext<TParent>) {
@@ -55,8 +62,9 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     // Base implementation - empty, subclasses override
   }
 
-  // Active Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method, but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
-  overrides: Record<string, unknown> = {};
+  // Active Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method,
+  // but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
+  overrides: Record<string, Override[]> = {};
 
   /**
    * Get all ActiveEffects that have item-targeted changes.
@@ -104,8 +112,8 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     for ( const effect of this.allApplicableEffects() ) {
       if ( !effect.active ) continue;
       for ( const change of effect.system.changes ) {
-        // Only apply item-targeted changes (default to item for backwards compatibility)
-        const changeTarget = change.target ?? EFFECT_CHANGE_TARGET.ITEM;
+        // Only apply item-targeted changes (default to actor for compatibility with base ActiveEffect change data structure)
+        const changeTarget = change.target ?? EFFECT_CHANGE_TARGET.ACTOR;
         if ( !change.key || (change.phase !== phase) || (changeTarget !== EFFECT_CHANGE_TARGET.ITEM) ) continue;
         const copy = foundry.utils.deepClone(change) as unknown as AppliedItemEffectChange;
         copy.effect = effect;
@@ -120,20 +128,30 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
       // }
     }
     changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+    // todo remove in v16, this is for backwards compatibility with older active effects
     ActiveEffect._shimChanges(changes);
 
     // Apply all changes
-    const overrides: Record<string, unknown> = {};
+    // const overrides: Record<string, Override[]> = {};
     const replacementData = this.getRollData() as Record<string, unknown>;
-    for ( const change of changes ) {
+    for (const change of changes) {
       const EffectClass = change.effect.constructor as typeof ActiveEffect;
-      const result = ActiveEffect.CHANGE_TYPES[change.type].handler?.(this, change)
-        ?? EffectClass.applyChange(this, change, { replacementData });
-      if ( foundry.utils.isPlainObject(result) ) Object.assign(overrides, result as Record<string, unknown>);
+      const result = (ActiveEffect.CHANGE_TYPES[change.type].handler?.(this, change)
+        ?? EffectClass.applyChange(this, change, { replacementData }) ?? {}) as Record<string, unknown>;
+      for (const fieldPath of Object.keys(result)) {
+        this.overrides[fieldPath] = [
+          ...(this.overrides[fieldPath] ?? []),
+          {
+            fieldPath,
+            value: change.value,
+            effectName: change.effect.name,
+            mode: change.type,
+          }];
+      }
     }
 
     // Expand the set of final overrides
-    foundry.utils.mergeObject(this.overrides, foundry.utils.expandObject(overrides));
+    //foundry.utils.mergeObject(this.overrides, foundry.utils.expandObject(overrides));
   }
   
   get localizedType (): string {

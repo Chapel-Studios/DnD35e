@@ -19,8 +19,10 @@ import {
   IdentifiableDocumentMixin,
 } from './IdentifiableItem.mjs';
 import type {
+  IdentifiableDocumentGetters,
   IdentifiableDocumentSheetRenderContext,
   IdentifiableDocumentStore,
+  IdentifiableDocumentStoreUtils,
   IdentifiableStore,
 } from './sheet/index.mjs';
 import {
@@ -36,12 +38,14 @@ import {
 export type {
   IdentifiableDocument,
   IdentifiableDocumentConstructor,
+  IdentifiableDocumentGetters,
   IdentifiableDocumentLike,
   IdentifiableDocumentProperties,
   IdentifiableDocumentSheetRenderContext,
   IdentifiableDocumentSource,
   IdentifiableDocumentSourceProps,
   IdentifiableDocumentStore,
+  IdentifiableDocumentStoreUtils,
   IdentifiableDocumentSystemData,
   IdentifiableDocumentSystemSource,
   IdentifiableStore,

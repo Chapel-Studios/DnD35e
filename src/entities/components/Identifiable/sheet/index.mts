@@ -5,7 +5,9 @@ import IsIdentifiedToggle from './components/IsIdentifiedToggle.vue';
 import type { IdentifiableDocumentSheetRenderContext } from './IdentifiableDocumentSheet.mjs';
 import IdentifiableDocumentSheetVue from './IdentifiableDocumentSheet.vue';
 import type {
+  IdentifiableDocumentGetters,
   IdentifiableDocumentStore,
+  IdentifiableDocumentStoreUtils,
   IdentifiableStore,
 } from './IdentifiableDocumentStore.mjs';
 import {
@@ -21,7 +23,9 @@ export {
   useIdentifiableStore,
 };
 export type {
+  IdentifiableDocumentGetters,
   IdentifiableDocumentSheetRenderContext,
   IdentifiableDocumentStore,
+  IdentifiableDocumentStoreUtils,
   IdentifiableStore,
 };

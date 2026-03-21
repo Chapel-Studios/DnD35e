@@ -65,7 +65,7 @@
     localizeHint?: boolean; // whether to localize hint (default: true)
     value?: string | number | null;
     // Field permissions
-    fieldPath?: string; // unique identifier for this field's permission overrides
+    fieldPath: string; // unique identifier for this field's permission overrides
     defaultVisibility?: FieldVisibility; // defaults to 'everyone'
     defaultEditability?: FieldEditability; // defaults to 'normal'
   }>();
@@ -127,107 +127,108 @@
     'restricted-visibility': isVisibilityRestricted.value,
     'restricted-editability': isEditabilityRestricted.value,
   }));
-
-  // Visibility tooltip for the low-vision indicator icon in labels
-  const visibilityTooltip = computed(() => {
-    switch (effectiveVisibility.value) {
-    case everyoneVisibility: return 'Visible to everyone';
-    case ownerPlusVisibility: return 'Visible to owners and GMs only';
-    case gmOnlyVisibility: return 'Visible to GMs only';
-    default: return 'Visibility';
-    }
-  });
 </script>
 
 <style scoped>
-.form-group {
-  display: contents;
-}
+  .view-mode .form-group {
+    & > :first-child {
+      justify-self: left;
+    }
 
-.form-group-label {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
+    & > :not(:first-child) {
+      justify-self: center;
+    }
+  }
+  
+  .form-group {
+    display: contents;
+    padding: 0.25rem 0.5rem;
+  }
 
-.form-group-label label {
-  margin: 0;
-}
+  .form-group-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
 
-.form-group.with-hint {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
-  gap: 0.25rem 0.5rem;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--color-border);
-}
+  .form-group-label label {
+    margin: 0;
+  }
 
-.form-group.with-hint:last-child {
-  border-bottom: none;
-}
+  .form-group.with-hint {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.25rem 0.5rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
 
-.form-group.with-hint label {
-  font-weight: 500;
-}
+  .form-group.with-hint:last-child {
+    border-bottom: none;
+  }
 
-/* When no label, let slotted content span full grid width */
-.form-group.with-hint :slotted(:first-child:last-of-type) {
-  grid-column: 1 / -1;
-}
+  .form-group.with-hint label {
+    font-weight: 500;
+  }
 
-.form-group.with-hint :slotted(input),
-.form-group.with-hint :slotted(select),
-.form-group.with-hint :slotted(.form-fields) {
-  justify-self: end;
-}
+  /* When no label, let slotted content span full grid width */
+  .form-group.with-hint :slotted(:first-child:last-of-type) {
+    grid-column: 1 / -1;
+  }
 
-.form-group.with-hint :slotted(.hint) {
-  grid-column: 1 / -1;
-  font-size: var(--font-size-11);
-  color: var(--color-text-secondary);
-  margin: 0;
-}
+  .form-group.with-hint :slotted(input),
+  .form-group.with-hint :slotted(select),
+  .form-group.with-hint :slotted(.form-fields) {
+    justify-self: end;
+  }
 
-/* Direct child hint (not slotted) also spans full width */
-.form-group.with-hint > .hint {
-  grid-column: 1 / -1;
-  font-size: var(--font-size-11);
-  color: var(--color-text-secondary);
-  margin: 0;
-}
+  .form-group.with-hint :slotted(.hint) {
+    grid-column: 1 / -1;
+    font-size: var(--font-size-11);
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
 
-.form-group.with-hint :slotted(select[multiple]) {
-  min-height: 80px;
-}
+  /* Direct child hint (not slotted) also spans full width */
+  .form-group.with-hint > .hint {
+    grid-column: 1 / -1;
+    font-size: var(--font-size-11);
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
 
-.form-group.with-hint :slotted(input[type='text']),
-.form-group.with-hint :slotted(input[type='number']) {
-  min-width: 10rem;
-}
+  .form-group.with-hint :slotted(select[multiple]) {
+    min-height: 80px;
+  }
 
-.form-group.with-hint :slotted(input[type='color']) {
-  width: 60px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid var(--color-border);
-}
+  .form-group.with-hint :slotted(input[type='text']),
+  .form-group.with-hint :slotted(input[type='number']) {
+    min-width: 10rem;
+  }
 
-/* Visual indicator for restricted fields */
-.form-group.restricted-visibility > label,
-.form-group.restricted-editability > label {
-  position: relative;
-}
+  .form-group.with-hint :slotted(input[type='color']) {
+    width: 60px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+  }
 
-.form-group.restricted-visibility > label::before {
-  content: '';
-  position: absolute;
-  left: -0.5rem;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--color-level-warning);
-  border-radius: 2px;
-}
+  /* Visual indicator for restricted fields */
+  .form-group.restricted-visibility > label,
+  .form-group.restricted-editability > label {
+    position: relative;
+  }
+
+  .form-group.restricted-visibility > label::before {
+    content: '';
+    position: absolute;
+    left: -0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--color-level-warning);
+    border-radius: 2px;
+  }
 </style>

@@ -60,7 +60,7 @@
 
   const {
     isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       quantity,
     },
     documentActions: {
