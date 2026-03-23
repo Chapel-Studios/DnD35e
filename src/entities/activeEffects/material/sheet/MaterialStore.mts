@@ -8,6 +8,7 @@ import {
 } from '@effects/BaseActiveEffect/index.mjs';
 import { materialDetailsTab, MaterialType } from '@effects/material/index.mjs';
 import { IntellisenseSchema } from '@helpers/formulae/types.mjs';
+import { PriceData } from '@settings/currency/index.mjs';
 import type { DamageReductionTypesConfig } from '@settings/gameRules/_types.mjs';
 import { GAME_RULES_KEYS } from '@settings/gameRules/constants.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -35,10 +36,12 @@ const useMaterialStore = (context: any) => {
   });
 
   const document = baseStore._storeUtils.document;
+  const getEffectiveFieldValue = baseStore.documentGetters.getEffectiveFieldValue;
 
   const documentGetters: MaterialGetters = {
     ...baseStore.documentGetters,
     ...identifiableStore.documentGetters,
+    price: computed(() => getEffectiveFieldValue('system.price', document.value.system.price) || new PriceData({})),
     hardness: computed(() => document.value.system.hardness ?? 0),
     bonusHp: computed(() => document.value.system.bonusHp ?? 0),
     magicEquivalency: computed(() => document.value.system.magicEquivalency ?? 0),
@@ -70,6 +73,7 @@ const useMaterialStore = (context: any) => {
 interface MaterialGetters extends ActiveEffectConfigStoreDocumentGetters,
   IdentifiableDocumentGetters
 {
+  price: ComputedRef<PriceData>;
   hardness: ComputedRef<number>;
   bonusHp: ComputedRef<number>;
   magicEquivalency: ComputedRef<number | null>;

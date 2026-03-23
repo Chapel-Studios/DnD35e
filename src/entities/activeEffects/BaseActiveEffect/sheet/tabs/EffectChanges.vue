@@ -13,14 +13,18 @@
       </button>
     </div>
     <ol class="changes-list" data-changes>
-      <li v-for="(change, index) in changes" :key="index" class="change-row" :data-index="index">
+      <li
+        v-for="(change, index) in changes"
+        :key="index" class="change-row"
+        :data-index="index"
+      >
         <div class="form-fields">
           <input
             type="text"
             :name="`system.changes.${index}.key`"
             :value="change.key"
             :placeholder="keyPlaceholder"
-            :disabled="!isEditable"
+            :disabled="!isEditable || change.isSystem"
           />
           <select
             :name="`system.changes.${index}.type`"
@@ -31,17 +35,14 @@
               {{ label }}
             </option>
           </select>
-          <input
-            type="text"
-            :name="`system.changes.${index}.value`"
-            :value="change.value"
-            :placeholder="valuePlaceholder"
-            :disabled="!isEditable"
+          <EffectChangeValue
+            :change="change"
+            :index="index"
           />
           <select
             :name="`system.changes.${index}.target`"
             :value="change.target ?? 'item'"
-            :disabled="!isEditable"
+            :disabled="!isEditable || change.isSystem"
             class="target-select"
             :title="targetLabel"
           >
@@ -54,10 +55,10 @@
             :name="`system.changes.${index}.priority`"
             :value="change.priority"
             :placeholder="getDefaultPriority(change.type)"
-            :disabled="!isEditable"
+            :disabled="!isEditable || change.isSystem"
             class="priority-input"
           />
-          <button type="button" @click="deleteChange(index)" :disabled="!isEditable" class="delete-change">
+          <button type="button" @click="deleteChange(index)" :disabled="!isEditable || change.isSystem" class="delete-change">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>
@@ -68,7 +69,7 @@
 
 <script setup lang="ts">
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-  import { EFFECT_CHANGE_TARGETS } from '@effects/BaseActiveEffect/index.mjs';
+  import { EFFECT_CHANGE_TARGETS, EffectChangeValue } from '@effects/BaseActiveEffect/index.mjs';
   import { computed, inject } from 'vue';
 
   const store = inject('documentSheetStore') as ActiveEffectConfigStore;
@@ -91,7 +92,6 @@
   const changesLabel = game.i18n.localize('EFFECT.TABS.changes');
   const addLabel = game.i18n.localize('EFFECT.AddChange');
   const keyPlaceholder = game.i18n.localize('EFFECT.ChangeKey');
-  const valuePlaceholder = game.i18n.localize('EFFECT.ChangeValue');
   const targetLabel = game.i18n.localize('D35E.EffectChangeTarget.Target');
 
   const changeTypes = computed(() => {
@@ -160,7 +160,8 @@
   }
 
   .change-row .form-fields {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr max-content max-content max-content auto 100px;
     gap: 0.25rem;
     align-items: center;
   }

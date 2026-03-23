@@ -8,14 +8,15 @@
       <ItemHardness />
       <ItemSheetIsCarriedCheckbox />
       <ItemSheetContainerSelector />
-      <MagicEquivalency v-if="hasMagicEquivalentEffects" class="magic-eq-effect" />
-      <DamageReductionTypes v-if="hasDamageReductionTypeEffects" class="dr-types" />
+      <MagicEquivalency v-if="hasMagicEquivalentEffects" class="magic-eq-effect" read-only />
+      <DamageReductionTypes v-if="hasDamageReductionTypeEffects" class="dr-types" read-only />
     </div>
     <DmControl class="grid-full-row">
       <UniqueId />        
     </DmControl>
   </DocumentDetails>
 </template>
+
 <script setup lang="ts">
   import { DocumentDetails } from '@ec/CoreMixin/index.mjs';
   import { MaterialStore } from '@effects/material/index.mjs';
@@ -39,6 +40,7 @@
   const hasMagicEquivalentEffects = hasEffectsForField('system.magicEquivalency');
   const hasDamageReductionTypeEffects = hasEffectsForField('system.damageReductionTypes');
 </script>
+
 <style scoped lang="scss">
   .view-mode {
     .weapon-details-container {
@@ -62,7 +64,6 @@
       grid-auto-flow: column;
       align-items: center;
       grid-gap: 0.33rem;
-      padding: 0.25rem;
     }
     :deep(.form-group-label) {
       flex-direction: column;

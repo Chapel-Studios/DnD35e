@@ -6,7 +6,7 @@ import { materialEffectType } from '@effects/material/index.mjs';
 import type { ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
 import { physicalItemEffectsTab, type PhysicalItemLike } from '@items/components/Physical/index.mjs';
 import { SettingsStore } from '@settings/core/sheet/settingsStore.mjs';
-import type { Price } from '@settings/currency/index.mjs';
+import { PriceData } from '@settings/currency/index.mjs';
 import { DamageReductionTypesConfig, GAME_RULES_KEYS } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import { MultiSelectOption } from '@vc/Fields/index.mjs';
@@ -38,10 +38,10 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
   ]);
   const getEffectiveFieldValue = baseStore.documentGetters.getEffectiveFieldValue;
 
-  const createDefaultCoinStack = (): Price => ([{
+  const createDefaultPrice = (): PriceData => new PriceData({ stacks: [{
     coinId: defaultDisplayCoin.value,
     count: 0,
-  }]);
+  }] });
 
   const documentGetters: PhysicalItemGetters = {
     ...identifiableStore.documentGetters,
@@ -63,9 +63,9 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     ),
 
     // Identifiable props: use effective value to allow overrides when viewing as unidentified
-    price: computed(() => getEffectiveFieldValue('system.price', document.value.system.price) || createDefaultCoinStack()),
-    resalePrice: computed(() => getEffectiveFieldValue('system.resalePrice', document.value.system.resalePrice) || []),
-    brokenResalePrice: computed(() => getEffectiveFieldValue('system.brokenResalePrice', document.value.system.brokenResalePrice) || []),
+    price: computed(() => getEffectiveFieldValue('system.price', document.value.system.price) || createDefaultPrice()),
+    resalePrice: computed(() => getEffectiveFieldValue('system.resalePrice', document.value.system.resalePrice) ?? null),
+    brokenResalePrice: computed(() => getEffectiveFieldValue('system.brokenResalePrice', document.value.system.brokenResalePrice) ?? null),
     isBroken: computed(() => getEffectiveFieldValue('system.isBroken', document.value.system.isBroken) || false),
     maxHp: computed(() => getEffectiveFieldValue('system.hp.max', document.value.system.hp.max) || 0),
 
@@ -93,9 +93,9 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   quantity: ComputedRef<number>;
   actualWeight: ComputedRef<number>;
   effectiveWeight: ComputedRef<number>;
-  price: ComputedRef<Price>;
-  resalePrice: ComputedRef<Price>;
-  brokenResalePrice: ComputedRef<Price>;
+  price: ComputedRef<PriceData>;
+  resalePrice: ComputedRef<PriceData | null>;
+  brokenResalePrice: ComputedRef<PriceData | null>;
   isBroken: ComputedRef<boolean>;
   maxHp: ComputedRef<number>;
   currentHp: ComputedRef<number>;

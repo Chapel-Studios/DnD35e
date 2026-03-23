@@ -6,6 +6,7 @@
     :value="damageReductionTypes"
     :options="damageReductionTypeOptions"
     :on-update="getDirectFieldUpdater('system.damageReductionTypes')"
+    :read-only="props.readOnly"
   />
 </template>
 
@@ -13,6 +14,11 @@
   import type { MaterialStore } from '@effects/material/index.mjs';
   import { MultiSelectFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
+
+  const props = defineProps<{
+    /** When true, forces the readonly display. */
+    readOnly?: boolean;
+  }>();
 
   const {
     documentGetters: {

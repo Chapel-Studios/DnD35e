@@ -5,8 +5,8 @@ import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEff
 import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
 import { requiredNumberField } from '@helpers/fieldBuilders.mjs';
-import { priceSchema } from '@items/components/Physical/index.mjs';
-import { Price } from '@settings/index.mjs';
+import { PriceField } from '@settings/currency/index.mjs';
+import type { Price, PriceData } from '@settings/index.mjs';
 
 /** Pre-composed: ActiveEffectSystemModelBase + identifiable schema fields. */
 const IdentifiableEffectSystemModel = IdentifiableSchemaMixin(ActiveEffectSystemModelBase);
@@ -15,7 +15,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
   static override defineSchema () {
     const schema = super.defineSchema();
 
-    schema.price = priceSchema();
+    schema.price = new PriceField();
     schema.magicEquivalency = requiredNumberField(0);
     schema.hardness = requiredNumberField(0);
     schema.bonusHp = requiredNumberField(0);
@@ -36,7 +36,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     const changes: Dnd35eEffectChangeData[] = [
       ...this.changes.filter(change => !change.isSystem),
     ];
-    if (this.price.length !== 0) { 
+    if (!this.price.isEmpty) {
       changes.push(this.buildPriceDifferenceChange());
     }
     if (this.magicEquivalency !== 0) {
@@ -56,7 +56,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
 
   _buildChange(
     key: string,
-    value: string | number | Price,
+    value: string | number | PriceData,
     type: EffectChangeType = EFFECT_CHANGE_TYPE.ADD,
     phase: EffectPhases = 'final',
     priority: number = 10,
@@ -75,42 +75,51 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
   }
 
   buildDamageReductionTypeChange(drType: string): Dnd35eEffectChangeData {
+    const existing = this.changes.find(change => change.key === 'system.damageReductionTypes' && change.isSystem);
     return this._buildChange(
       'system.damageReductionTypes',
-      drType
+      drType,
+      existing ? existing.type : EFFECT_CHANGE_TYPE.ADD
     );
   }
 
   // TODO: how should this actually work? Items just have HP, not HP-per-inch.
   // We should relook at how we handle item HP, perhaps add thickness and calculate HP based on that?
   buildBonusHpPerInchChange(): Dnd35eEffectChangeData {
+    const existing = this.changes.find(change => change.key === 'system.hp.max' && change.isSystem);
     return this._buildChange(
       'system.hp.max',
-      this.bonusHp
+      this.bonusHp,
+      existing ? existing.type : EFFECT_CHANGE_TYPE.ADD
     );
   }
 
   buildBonusHardnessChange(): Dnd35eEffectChangeData {
+    const existing = this.changes.find(change => change.key === 'system.hardness' && change.isSystem);
     return this._buildChange(
       'system.hardness',
-      this.hardness
+      this.hardness,
+      existing ? existing.type : EFFECT_CHANGE_TYPE.ADD
     );
   }
 
   // TODO: This key doesn't currently exist,
   // we need to determine how to handle these equivalencies in the system.
   buildMagicEquivalentChange(): Dnd35eEffectChangeData {
+    const existing = this.changes.find(change => change.key === 'system.magicEquivalency' && change.isSystem);
     return this._buildChange(
       'system.magicEquivalency',
       this.magicEquivalency,
-      EFFECT_CHANGE_TYPE.UPGRADE
+      existing ? existing.type : EFFECT_CHANGE_TYPE.UPGRADE
     );
   }
 
   buildPriceDifferenceChange(): Dnd35eEffectChangeData {
+    const existing = this.changes.find(change => change.key === 'system.price' && change.isSystem);
     return this._buildChange(
       'system.price',
-      this.price
+      this.price,
+      existing ? existing.type : EFFECT_CHANGE_TYPE.ADD
     );
   }
 }

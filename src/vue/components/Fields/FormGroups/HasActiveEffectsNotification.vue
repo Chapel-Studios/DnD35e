@@ -4,7 +4,7 @@
     <div class="effect-tooltip-popup">
       <div v-for="(effect, index) in typedEffects" :key="index" class="effect-tooltip-entry">
         <span class="effect-name">{{ effect.effectName }}</span>
-        <span class="effect-detail">{{ formatMode(effect.mode) }} {{ effect.value }}</span>
+        <span class="effect-detail">{{ formatMode(effect.type) }} {{ effect.value }}</span>
       </div>
     </div>
   </div>
@@ -26,7 +26,7 @@
   const activeEffects = getEffectsForField(props.fieldPath);
   const hasActiveEffects = hasEffectsForField(props.fieldPath);
 
-  type EffectOverride = { fieldPath: string; value: unknown; effectName: string; mode: string };
+  type EffectOverride = { fieldPath: string; value: unknown; effectName: string; type: string };
   const typedEffects = computed(() => activeEffects.value as EffectOverride[]);
 
   const formatMode = (mode: string): string => {

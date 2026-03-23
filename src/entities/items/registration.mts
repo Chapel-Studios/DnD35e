@@ -1,5 +1,5 @@
 import { ItemConfig } from '@constants/config/item.mjs';
-import { ensureNameFormulaOnCreate } from '@ec/CoreMixin/index.mjs';
+import { ensureNameFormulaOnCreate, PossibleNameFormulaDocument } from '@ec/CoreMixin/index.mjs';
 import { registerIntellisenseSchema } from '@helpers/formulae/index.mjs';
 import { ItemProxyDnd35e } from '@items/baseItem/index.mjs';
 import { weaponItemType } from '@items/itemTypes.mjs';
@@ -36,6 +36,10 @@ export const registerItems = () => {
   });
 
   Hooks.on('preCreateItem', (document, _data, _options, _userId) => {
-    ensureNameFormulaOnCreate(document);
+    ensureNameFormulaOnCreate(document as unknown as PossibleNameFormulaDocument);
+  });
+
+  Hooks.on('updateItem', (document, updateData, _options, _userId) => {
+    
   });
 };

@@ -5,6 +5,9 @@ import type {
   ItemDescription,
 } from './data/index.mjs';
 import { applyBaseDnd35eSystemSchema } from './data/index.mjs';
+import type {
+  PossibleNameFormulaDocument,
+} from './logic/index.mjs';
 import { ensureNameFormulaOnCreate, getDisplayName } from './logic/index.mjs';
 import type {
   DocumentSheetStore,
@@ -57,6 +60,7 @@ export type {
   FormulaContextBuilder,
   FormulaRegistration,
   ItemDescription,
+  PossibleNameFormulaDocument,
   SheetDocument,
   SheetMode,
   SheetTab,

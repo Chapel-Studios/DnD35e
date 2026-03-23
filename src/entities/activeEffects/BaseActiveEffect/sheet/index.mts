@@ -4,6 +4,9 @@ import type {
   ActiveEffectConfigStoreDocumentGetters,
 } from './ActiveEffectConfigStore.mjs';
 import { useActiveEffectConfigStore } from './ActiveEffectConfigStore.mjs';
+import {
+  EffectChangeValue,
+} from './components/index.mjs';
 import { Dnd35eActiveEffectConfig } from './Dnd35eActiveEffectConfig.mjs';
 import {
   EffectChanges,
@@ -19,6 +22,7 @@ export {
   Dnd35eActiveEffectConfig,
   EffectChanges,
   effectChangesTab,
+  EffectChangeValue,
   EffectDetails,
   EffectDetailsTab,
   EffectDuration,

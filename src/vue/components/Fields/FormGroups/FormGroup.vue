@@ -10,6 +10,7 @@
         :field-path="props.fieldPath"
         :default-editability="props.defaultEditability"
         :default-visibility="props.defaultVisibility"
+        :read-only="props.readOnly"
       >
         <slot name="controls" />
       </FieldControls>
@@ -68,6 +69,8 @@
     fieldPath: string; // unique identifier for this field's permission overrides
     defaultVisibility?: FieldVisibility; // defaults to 'everyone'
     defaultEditability?: FieldEditability; // defaults to 'normal'
+    /** When true, forces the readonly display. */
+    readOnly?: boolean;
   }>();
   
   function localize(key: string): string {
@@ -112,7 +115,7 @@
 
   // Determine if current user can edit this field
   const isFieldEditable = computed((): boolean => {
-    if (!isEditable.value) return false;
+    if (!isEditable.value || props.readOnly) return false;
     if (effectiveEditability.value === gmOnlyEditability) return isGM.value;
     return true;
   });
@@ -142,7 +145,7 @@
   
   .form-group {
     display: contents;
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem;
   }
 
   .form-group-label {

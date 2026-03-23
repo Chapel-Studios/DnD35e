@@ -17,7 +17,7 @@ type Override = {
   fieldPath: string;
   value: unknown;
   effectName: string;
-  mode: EffectChangeType;
+  type: EffectChangeType;
 };
 
 class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<TParent> {
@@ -145,7 +145,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
             fieldPath,
             value: change.value,
             effectName: change.effect.name,
-            mode: change.type,
+            type: change.type,
           }];
       }
     }

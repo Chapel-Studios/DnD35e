@@ -3,9 +3,7 @@ import type {
   PhysicalItemSystemSource,
 } from './data/index.mjs';
 import {
-  coinStackSchema,
   PhysicalItemSystemModel,
-  priceSchema,
 } from './data/index.mjs';
 import type {
   PhysicalItemLike,
@@ -38,7 +36,6 @@ import {
 } from './sheet/index.mjs';
 
 export {
-  coinStackSchema,
   IdentifiableItemBase,
   ItemHardness,
   ItemHP,
@@ -52,7 +49,6 @@ export {
   physicalItemEffectsTab,
   PhysicalItemSheet,
   PhysicalItemSystemModel,
-  priceSchema,
   usePhysicalItemStore,
 };
 

@@ -7,25 +7,14 @@ import {
   requiredNumberField,
 } from '@helpers/fieldBuilders.mjs';
 import { ItemSystemModelBase } from '@items/baseItem/index.mjs';
+import { PriceField } from '@settings/currency/index.mjs';
 
 import { PhysicalItemSystemData } from './PhysicalSystemData.mjs';
 
-const { fields: { StringField, SchemaField, ArrayField } } = foundry.data;
+const { fields: { StringField, SchemaField } } = foundry.data;
 
 /** Pre-composed: ItemSystemModelBase + identifiable schema fields. */
 const IdentifiableItemSystemModel = IdentifiableSchemaMixin(ItemSystemModelBase);
-
-/**
- * Schema for a single coin stack in a price.
- */
-const coinStackSchema = () => {
-  return new SchemaField({
-    coinId: new StringField({ required: true, blank: false }),
-    count: requiredNumberField(0),
-  });
-};
-
-const priceSchema = () => new ArrayField(coinStackSchema(), { initial: [] });
 
 /**
  * Abstract system model for all physical items.
@@ -49,10 +38,10 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     schema.isCarried = requiredBooleanField(true);
     schema.size = new StringField<Size, Size, true, false, true>({ choices: SIZES, initial: 'tiny', required: true });
 
-    // Price - array of coin stacks
-    schema.price = priceSchema();
-    schema.resalePrice = new ArrayField(coinStackSchema(), { required: false, nullable: true, initial: null });
-    schema.brokenResalePrice = new ArrayField(coinStackSchema(), { required: false, nullable: true, initial: null });
+    // Price - EmbeddedDataField wrapping PriceData with coin stacks
+    schema.price = new PriceField();
+    schema.resalePrice = new PriceField({ nullable: true, initial: null });
+    schema.brokenResalePrice = new PriceField({ nullable: true, initial: null });
     schema.isBroken = requiredBooleanField(false);
 
     // Container
@@ -75,7 +64,5 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
 interface PhysicalItemSystemModel extends PhysicalItemSystemData {}
 
 export {
-  coinStackSchema,
   PhysicalItemSystemModel,
-  priceSchema,
 };

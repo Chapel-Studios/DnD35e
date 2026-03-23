@@ -7,6 +7,7 @@
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
+    :read-only="props.readOnly"
   >
     <div class="multi-select-checkboxes">
       <label
@@ -75,6 +76,8 @@
     editDerived?: boolean;
     /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
     directUpdate?: boolean;
+    /** When true, forces the readonly display. */
+    readOnly?: boolean;
   }>();
 
   const store = inject('documentSheetStore') as DocumentSheetStore;

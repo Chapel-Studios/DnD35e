@@ -29,6 +29,7 @@ const COIN_CP: CoinageDefinition = {
   isSystem: true,
   enabled: true,
   visibility: coinageVisibilityEveryone,
+  excludeFromRollUp: false,
 };
 
 /** Standard D&D 3.5e SRD coinage: Silver Piece */
@@ -41,6 +42,7 @@ const COIN_SP: CoinageDefinition = {
   isSystem: true,
   enabled: true,
   visibility: coinageVisibilityEveryone,
+  excludeFromRollUp: false,
 };
 
 // /** Standard D&D 3.5e SRD coinage: Electrum Piece */
@@ -65,6 +67,7 @@ const COIN_GP: CoinageDefinition = {
   isSystem: true,
   enabled: true,
   visibility: coinageVisibilityEveryone,
+  excludeFromRollUp: false,
 };
 
 /** Standard D&D 3.5e SRD coinage: Platinum Piece */
@@ -77,6 +80,7 @@ const COIN_PP: CoinageDefinition = {
   isSystem: true,
   enabled: true,
   visibility: coinageVisibilityEveryone,
+  excludeFromRollUp: false,
 };
 
 /** All SRD system coins in standard order (lowest to highest value) */

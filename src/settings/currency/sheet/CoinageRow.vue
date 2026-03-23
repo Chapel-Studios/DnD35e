@@ -104,6 +104,19 @@
       >
         <i :class="visibilityIcon" />
       </button>
+
+      <!-- Button 3: Exclude from roll-up -->
+      <button
+        type="button"
+        class="rollup-btn"
+        :class="{ excluded: state.excludeFromRollUp }"
+        :title="state.excludeFromRollUp
+          ? localize('DND35E.Settings.CurrencyConfig.RollUpExcluded')
+          : localize('DND35E.Settings.CurrencyConfig.RollUpIncluded')"
+        @click="toggleExcludeFromRollUp"
+      >
+        <i :class="state.excludeFromRollUp ? 'fas fa-compress-arrows-alt' : 'fas fa-compress-arrows-alt'" />
+      </button>
     </span>
   </div>
 </template>
@@ -256,6 +269,12 @@
     emit('update-coinage', { ...state }, oldId);
   }
 
+  function toggleExcludeFromRollUp(): void {
+    const oldId = state.id;
+    state.excludeFromRollUp = !state.excludeFromRollUp;
+    emit('update-coinage', { ...state }, oldId);
+  }
+
   function localize(key: string): string {
     return game.i18n.localize(key);
   }
@@ -368,6 +387,15 @@
 
     .visibility-btn {
       color: var(--color-text-accent);
+    }
+
+    .rollup-btn {
+      color: var(--color-level-success);
+
+      &.excluded {
+        color: var(--color-level-error);
+        opacity: 0.6;
+      }
     }
 
     &.row-disabled input {

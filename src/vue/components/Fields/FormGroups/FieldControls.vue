@@ -47,6 +47,8 @@
     fieldPath: string;
     defaultEditability?: FieldEditability;
     defaultVisibility?: FieldVisibility;
+    /** When true, forces the readonly display. */
+    readOnly?: boolean;
   }>();
 
   const store = inject('documentSheetStore') as DocumentSheetStore;
@@ -58,7 +60,7 @@
   // Computed: should we show controls?
   const isGM = computed(() => store.isGM?.value ?? game.user.isGM);
   const isEditMode = computed(() => store.isEditMode?.value ?? true);
-  const showGMControls = computed(() => isEditMode.value && isGM.value && !!props.fieldPath);
+  const showGMControls = computed(() => isEditMode.value && isGM.value && !!props.fieldPath && !props.readOnly);
   const hideEverything = computed(() => 
     (
       !isEditMode.value

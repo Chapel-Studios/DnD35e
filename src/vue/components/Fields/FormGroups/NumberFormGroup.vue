@@ -7,6 +7,7 @@
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
     :value="value"
+    :read-only="props.readOnly"
   >
     <template v-if="slots.controls" #controls>
       <slot name="controls" />
@@ -50,6 +51,8 @@
     editDerived?: boolean;
     /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
     directUpdate?: boolean;
+    /** When true, forces the readonly display. */
+    readOnly?: boolean;
   }>();
 
   const store = inject('documentSheetStore') as DocumentSheetStore;

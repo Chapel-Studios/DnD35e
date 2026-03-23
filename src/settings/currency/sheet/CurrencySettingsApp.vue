@@ -124,6 +124,7 @@
       isSystem: false,
       enabled: true,
       visibility: coinageVisibilityEveryone,
+      excludeFromRollUp: false,
     };
 
     coinages.value = [...coinages.value, newCoinage];
@@ -137,12 +138,9 @@
 
   function updateCoinage(updateData: CoinageDefinition, oldId: string): void {
     // Find by oldId, not new id, to support id changes
-    const coinage = coinages.value.find(c => c.id === oldId);
-    if (!coinage || coinage.isSystem) return; // Can't update system coins
-    coinages.value = [
-      ...coinages.value.filter(c => c.id !== oldId),
-      updateData,
-    ];
+    const index = coinages.value.findIndex(c => c.id === oldId);
+    if (index === -1 || coinages.value[index].isSystem) return; // Can't update system coins
+    coinages.value = coinages.value.map((c, i) => i === index ? updateData : c);
   }
 
   watch(coinages, () => {

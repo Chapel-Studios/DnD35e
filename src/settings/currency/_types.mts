@@ -47,6 +47,8 @@ interface CoinageDefinition {
   enabled: boolean;
   /** Visibility/selectability of this coin */
   visibility: CoinageVisibility;
+  /** When true, this coin is skipped during price consolidation (roll-up). */
+  excludeFromRollUp: boolean;
 }
 
 // ─── Currency Config ────────────────────────────────────────────────────────
@@ -80,8 +82,19 @@ interface CoinStack {
 /**
  * Price represented as an array of coin stacks.
  * Each coin type can only appear once.
+ * This is the raw/conceptual type — useful when working with plain arrays.
  */
 type Price = CoinStack[];
+
+/**
+ * Source shape of a Price as stored in the database when using {@link PriceField}.
+ * The prepared (runtime) value is a {@link PriceData} instance.
+ */
+interface PriceSource {
+  stacks: CoinStack[];
+  /** Auto-computed by {@link PriceData._initializeSource}; never needs to be set manually. */
+  srdEquivalent?: number;
+}
 
 // ─── Exports ────────────────────────────────────────────────────────────────
 
@@ -98,4 +111,5 @@ export type {
   CoinStack,
   CurrencyConfig,
   Price,
+  PriceSource,
 };

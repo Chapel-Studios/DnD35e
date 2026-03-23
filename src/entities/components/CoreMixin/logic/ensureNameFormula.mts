@@ -3,7 +3,7 @@ import { ActiveEffectSystemData } from '@effects/BaseActiveEffect/index.mjs';
 import { nameToFormulaData } from '@helpers/formulae/index.mjs';
 import { ItemSystemData } from '@items/baseItem/index.mjs';
 
-type possibleDocument = ActiveEffect<Actor<TokenDocument<Scene | null>
+type PossibleNameFormulaDocument = ActiveEffect<Actor<TokenDocument<Scene | null>
  | null> | Item<Actor<TokenDocument<Scene | null> | null> | null> | null>;
 
 /**
@@ -11,7 +11,7 @@ type possibleDocument = ActiveEffect<Actor<TokenDocument<Scene | null>
  * Uses updateSource to properly set the pending creation data.
  * Intended for use in preCreate hooks.
  */
-const ensureNameFormulaOnCreate = (document: possibleDocument): void => {
+const ensureNameFormulaOnCreate = (document: PossibleNameFormulaDocument): void => {
   // When foundry creates a new document, it only provides the name field and leaves system empty.
   // This means that if we want to support name formulas on newly created documents,
   // we need to populate the nameFormula field based on the provided name.
@@ -46,4 +46,8 @@ const ensureNameFormulaOnCreate = (document: possibleDocument): void => {
 
 export {
   ensureNameFormulaOnCreate,
+};
+
+export type {
+  PossibleNameFormulaDocument,
 };
