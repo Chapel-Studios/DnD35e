@@ -18,6 +18,10 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
   });
 
   const document = baseStore._storeUtils.document;
+  baseStore._storeUtils.setGetFreshDocument(async (uuid: string) => {
+    const doc = await foundry.utils.fromUuid(uuid);
+    return doc as TDocument | null;
+  });
 
   const hasOwner = computed(() => !!document.value.parent);
 

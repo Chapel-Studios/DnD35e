@@ -1,6 +1,6 @@
 import { ActorType } from '@actors/actorTypes.mjs';
 import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
-import type { DnD35eActiveEffect } from '@effects/index.mjs';
+import type { DnD35eActiveEffect, EffectType } from '@effects/index.mjs';
 import {
   ContextDocumentType,
   DocumentContext,
@@ -135,6 +135,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     getProperty: <T,>(path: string) => computed(() => foundry.utils.getProperty(document.value, path) as T),
     getSourceProperty: <T,>(path: string) => computed(() => foundry.utils.getProperty(document.value._source, path) as T),
     type: computed(() => document.value.type),
+    documentName: computed(() => document.value.documentName),
     localizedType: computed(() => game.i18n.localize(document.value.localizedType)),
 
     name: computed(() => getEffectiveFieldValue('name', document.value.name) || ''),
@@ -279,6 +280,25 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     return document.value.testUserPermission(game.user, 'OWNER');
   });
 
+  const _getFreshDocumentImpl = ref<(id: string) => Promise<TDocument | null>>(
+    async (_id: string): Promise<TDocument | null> => {
+      console.error('getFreshDocument is not implemented for this store');
+      return null;
+    }
+  );
+
+  // const _refreshDocument = async (doc: TDocument | undefined) => {
+  //   throw new Error('refreshDocument is not implemented by default. Types need to provide a custom implementation.');
+  // };
+  
+  // const getFreshDocument = async (): Promise<TDocument> => {
+  //   if (!_getFreshDocumentImpl.value) {
+  //     throw new Error('getFreshDocument is not implemented because refreshDocument is not implemented');
+  //   }
+  //   await _getFreshDocumentImpl.value(document.value);
+  //   return document.value;
+  // };
+
   // Internal utilities for extending stores
   const _storeUtils: DocumentSheetStoreUtils<TDocument> = {
     /** The reactive document reference. Use for extending stores only. */
@@ -288,10 +308,24 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     /** Update a flag on the document. */
     updateFlag,
     /** Manually trigger Vue reactivity on the document ref. */
-    refreshDocument: (context: Partial<VueApplicationContext<TDocument>> | undefined) => {
-      if (context?.document) {
-        document.value = context.document;
+    refreshContext: async (context: Partial<VueApplicationContext<TDocument>> | undefined) => {
+      document.value = context?.document
+        ?? await _getFreshDocumentImpl.value(document.value._id)
+        ?? document.value;
+        
+      triggerRef(document);
+      state.isEditable = context?.isEditable ?? state.isEditable;
+      state.renderOptions = context?.renderOptions ?? state.renderOptions;
+    },
+    setGetFreshDocument: (fn: (id: string) => Promise<TDocument | null>) => {
+      _getFreshDocumentImpl.value = fn;
+    },
+    // getFreshDocument,
+    refreshDocument: async (doc?: TDocument | null) => {
+      if (!doc) {
+        doc = await _getFreshDocumentImpl.value(document.value._id);
       }
+      document.value = doc ?? null;
       triggerRef(document);
     },
     /** Override the getEffectiveFieldValue implementation. */
@@ -353,7 +387,9 @@ type DocumentSheetStoreUtils<TDocument extends SheetDocument> = {
   document: ShallowRef<TDocument>;
   updateDocument: (data: Partial<TDocument>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
   updateFlag: (key: string, value: unknown) => Promise<boolean>;
-  refreshDocument: (context: VueApplicationContext<TDocument> | undefined) => void;
+  refreshContext: (context: VueApplicationContext<TDocument> | undefined) => void;
+  refreshDocument: (doc?: TDocument | null) => Promise<void>;
+  setGetFreshDocument: (fn: (id: string) => Promise<TDocument | null>) => void;
   setGetEffectiveFieldValue: (fn: <T>(fieldPath: string, realValue: T) => T) => void;
   setGetViewAwareFieldUpdater: (fn: (path: string) => (value: unknown) => Promise<boolean>) => void;
   setEditorViewMode: (fn: () => 'identified' | 'unidentified') => void;
@@ -362,7 +398,8 @@ type DocumentSheetStoreUtils<TDocument extends SheetDocument> = {
 type DocumentSheetStoreDocumentGetters = {
   getProperty: <T>(path: string) => ComputedRef<T>;
   getSourceProperty: <T>(path: string) => ComputedRef<T>;
-  type: ComputedRef<string>;
+  type: ComputedRef<ItemType | ActorType | EffectType>;
+  documentName: ComputedRef<foundry.CONST.DocumentType>;
   localizedType: ComputedRef<string>;
   name: ComputedRef<string>;
   displayName: ComputedRef<string>;

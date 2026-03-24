@@ -21,7 +21,7 @@ const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(
   const {
     document,
     updateDocument,
-    refreshDocument: triggerDocumentRef,
+    refreshContext: triggerDocumentRef,
     setGetEffectiveFieldValue,
     setGetViewAwareFieldUpdater,
     setEditorViewMode,

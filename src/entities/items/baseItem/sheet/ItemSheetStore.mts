@@ -29,6 +29,10 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
     defaultActiveTab: 'details',
   });
   const document = baseStore._storeUtils.document;
+  baseStore._storeUtils.setGetFreshDocument(async (id: string) => {
+    const doc = game.items.get(id);
+    return Promise.resolve(doc) as Promise<TDocument | null>;
+  });
 
   const hasOwner = computed(() => !!document.value.parent);
 

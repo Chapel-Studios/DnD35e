@@ -45,7 +45,7 @@ type HookParamsReady = HookParameters<'ready', never[]>;
 
 type HookParamsClose<T extends ApplicationV2, N extends string> = HookParameters<`close${N}`, [T]>;
 type HookParamsDeleteCombat = HookParameters<'deleteCombat', [Combat, { [key: string]: unknown }, string]>;
-type HookParamsDropCanvasData = HookParameters<'dropCanvasData', [Canvas, DropCanvasData]>;
+type HookParamsDropCanvasData = HookParameters<'dropCanvasData', [Canvas, DropCanvasData, DragEvent]>;
 type HookParamsGetChatLogEntryContext = HookParameters<'getChatLogEntryContext', [HTMLElement, ContextMenuEntry[]]>;
 type HookParamsGetSceneControlButtons = HookParameters<'getSceneControlButtons', [Record<string, SceneControl>]>;
 type HookParamsHotbarDrop = HookParameters<'hotbarDrop', [Hotbar<Macro>, DropCanvasData, string]>;
@@ -58,7 +58,7 @@ type HookParamsPreCreateActiveEffect = HookParameters<
     'preCreateActiveEffect',
     [ActiveEffect, object, DatabaseCreateOperation<Actor | Item | null>, string]
 >;
-type HooksParamsPreUpdateCombat = HookParameters<
+type HookParamsPreUpdateCombat = HookParameters<
     'preUpdateCombat',
     [Combat, object, { diff: boolean; advanceTime: number; [key: string]: unknown }, string]
 >;
@@ -86,9 +86,9 @@ type HookParamsRender<T extends ApplicationV2, N extends string> = HookParameter
 type HookParamsTargetToken = HookParameters<'targetToken', [User, Token<TokenDocument<Scene>>, boolean]>;
 type HookParamsUpdate<T extends foundry.abstract.Document, N extends string> = HookParameters<
     `update${N}`,
-    [T, Record<string, unknown>, DatabaseCreateOperation<T['parent']>]
+    [T, Record<string, unknown>, DatabaseCreateOperation<T['parent']>, string]
 >;
-type HookParamsUpdateWorldTime = HookParameters<'updateWorldTime', [number, number]>;
+type HookParamsUpdateWorldTime = HookParameters<'updateWorldTime', [number, number, Record<string, unknown>, string]>;
 type HookParamsGetProseMirrorMenuDropDowns = HookParameters<
     'getProseMirrorMenuDropDowns',
     [foundry.prosemirror.ProseMirrorMenu, Record<string, ProseMirrorDropDownConfig>]
@@ -115,7 +115,7 @@ export default class Hooks {
   static on(...args: HookParamsLightingRefresh): number;
   static on(...args: HookParamsPreCreateItem): number;
   static on(...args: HookParamsPreCreateActiveEffect): number;
-  static on(...args: HooksParamsPreUpdateCombat): number;
+  static on(...args: HookParamsPreUpdateCombat): number;
   static on(...args: HookParamsPreUpdateToken): number;
   static on(...args: HookParamsRender<ChatLog, 'ChatLog'>): number;
   static on(...args: HookParamsRender<CombatTrackerConfig, 'CombatTrackerConfig'>): number;
@@ -127,6 +127,8 @@ export default class Hooks {
   static on(...args: HookParamsRender<SceneControls, 'SceneControls'>): number;
   static on(...args: HookParamsRender<SettingsConfig, 'SettingsConfig'>): number;
   static on(...args: HookParamsRender<TokenHUD, 'TokenHUD'>): number;
+  static on(...args: HookParamsUpdate<Actor, 'Actor'>): number;
+  static on(...args: HookParamsUpdate<Item, 'Item'>): number;
   // static on(
   //       ...args: HookParamsRender<JournalPageSheet<JournalEntryPage<JournalEntry | null>>, 'JournalPageSheet'>
   //   ): number;
@@ -194,7 +196,7 @@ export default class Hooks {
      * @param fn    The function that should be removed from the set of hooked callbacks
      */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static off(hook: string, fn: (...args: any[]) => boolean | void | Promise<boolean | void>): void;
+  static off(hook: string, fn: number | ((...args: any[]) => boolean | void | Promise<boolean | void>)): void;
 
   /**
      * Call all hook listeners in the order in which they were registered
@@ -203,7 +205,7 @@ export default class Hooks {
      * @param hook  The hook being triggered
      * @param args  Arguments passed to the hook callback functions
      */
-  static callAll(hook: string, ...args: unknown[]): boolean;
+  static callAll(hook: string, ...args: unknown[]): void;
 
   /**
      * Call hook listeners in the order in which they were registered.

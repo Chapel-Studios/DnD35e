@@ -1,7 +1,7 @@
 import { ItemConfig } from '@constants/config/item.mjs';
 import { ensureNameFormulaOnCreate, PossibleNameFormulaDocument } from '@ec/CoreMixin/index.mjs';
 import { registerIntellisenseSchema } from '@helpers/formulae/index.mjs';
-import { ItemProxyDnd35e } from '@items/baseItem/index.mjs';
+import { ItemProxyDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
 import { weaponItemType } from '@items/itemTypes.mjs';
 import { buildWeaponIntellisense, WeaponSheet, WeaponSystemModel } from '@items/weapon/index.mjs';
 
@@ -39,7 +39,8 @@ export const registerItems = () => {
     ensureNameFormulaOnCreate(document as unknown as PossibleNameFormulaDocument);
   });
 
-  Hooks.on('updateItem', (document, updateData, _options, _userId) => {
-    
+  Hooks.on('updateItem', (document, _updateData, _options, _userId) => {
+    if (!document._id) return;
+    (game.dnd35e.stores[document.documentName]?.[document._id] as ItemSheetStore<any>)?._storeUtils.refreshDocument?.(document);
   });
 };

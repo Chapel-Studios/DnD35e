@@ -14,12 +14,12 @@ export type ExperienceRate = 'slow' | 'medium' | 'fast';
 
 /**
  * A single damage reduction type entry.
- * `isDefault` entries can be disabled but not deleted.
+ * `isSystem` entries can be disabled but not deleted.
  */
 export interface DamageReductionTypeEntry {
   label: string;
   enabled: boolean;
-  isDefault: boolean;
+  isSystem: boolean;
 }
 
 /**

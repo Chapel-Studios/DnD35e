@@ -24,7 +24,7 @@ export const ASCII: string;
  * Define the allowed ActiveEffect application modes.
  * Other arbitrary mode numbers can be used by systems and modules to identify special behaviors and are ignored
  */
-export const ACTIVE_EFFECT_MODES: Readonly<{
+export const ACTIVE_EFFECT_CHANGE_TYPES: Readonly<{
     /** Used to denote that the handling of the effect is programmatically provided by a system or module. */
     CUSTOM: 'custom';
 
@@ -70,7 +70,7 @@ export const ACTIVE_EFFECT_MODES: Readonly<{
     OVERRIDE: 'override';
 }>;
 
-export type ActiveEffectChangeMode = (typeof ACTIVE_EFFECT_MODES)[keyof typeof ACTIVE_EFFECT_MODES];
+export type ActiveEffectChangeType = (typeof ACTIVE_EFFECT_CHANGE_TYPES)[keyof typeof ACTIVE_EFFECT_CHANGE_TYPES];
 
 /**
  * Time-based units in which an ActiveEffect's duration can be expressed

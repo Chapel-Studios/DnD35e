@@ -17,5 +17,10 @@
   "D35E.SystemProperties": "System Properties",
 
   "D35E.SheetModeEdit": "Editing",
-  "D35E.SheetModePlay": "Viewing"
+  "D35E.SheetModePlay": "Viewing",
+
+  "DND35E.Add": "Add",
+  "DND35E.Delete": "Delete",
+  "DND35E.Enable": "Enable",
+  "DND35E.Disable": "Disable"
 }

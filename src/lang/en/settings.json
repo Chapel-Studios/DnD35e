@@ -169,5 +169,8 @@
 
   "DND35E.Settings.DamageReductionTypes.Name": "Damage Reduction Types",
   "DND35E.Settings.DamageReductionTypes.Hint": "Configure available damage reduction material types.",
-  "DND35E.Settings.DamageReductionTypes.Label": "Damage Reduction Types"
+  "DND35E.Settings.DamageReductionTypes.Label": "Damage Reduction Types",
+  "DND35E.Settings.DamageReductionTypes.IdColumn": "ID",
+  "DND35E.Settings.DamageReductionTypes.LabelColumn": "Type",
+  "DND35E.Settings.DamageReductionTypes.None": "No damage reduction types configured."
 }

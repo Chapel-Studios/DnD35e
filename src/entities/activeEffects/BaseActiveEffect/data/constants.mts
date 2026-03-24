@@ -27,7 +27,7 @@ const EFFECT_CHANGE_TARGETS = {
 
 /**
  * String-based effect change types matching Foundry v14+ CONST.ACTIVE_EFFECT_CHANGE_TYPES keys.
- * Use these instead of numeric CONST.ACTIVE_EFFECT_MODES.
+ * Use these instead of the deprecated CONST.ACTIVE_EFFECT_MODES (removed in v16).
  */
 const EFFECT_CHANGE_TYPE = {
   CUSTOM: 'custom',

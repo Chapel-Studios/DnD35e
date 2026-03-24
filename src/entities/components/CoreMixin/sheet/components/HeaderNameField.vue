@@ -38,12 +38,15 @@
     show: true,
   });
 
-  const store = inject('documentSheetStore') as DocumentSheetStore;
   const {
     isEditable,
     intellisense: { nameFormulaIntellisenseSchema },
     documentActions: { updateDocument },
-  } = store;
+    // documentGetters: {
+    //   type,
+    //   documentName,
+    // }
+  } = inject('documentSheetStore') as DocumentSheetStore;
 
   /**
    * Build the encoded context type map for saving with the formula.
@@ -51,21 +54,27 @@
    */
   const encodedContexts = computed((): Record<string, string> => {
     const contexts: Record<string, string> = {};
-    const doc = store._storeUtils.document.value;
-    const documentType = (doc as any).documentName;
-    const subtype = doc.type;
+    // const documentType = documentName.value;
+    // const subtype = type.value;
 
-    // Self — the document being edited
-    if (documentType && subtype && hasIntellisenseSchema(documentType, subtype)) {
-      contexts.self = encodeContextType(documentType, subtype);
-    }
+    // // Self — the document being edited
+    // if (documentType && subtype && hasIntellisenseSchema(documentType, subtype)) {
+    //   contexts.self = encodeContextType(documentType, subtype);
+    // }
 
-    // Owner — always present; uses the parent actor's type or defaults to 'character'
-    const actor = (doc as any).actor;
-    const actorType = actor?.type ?? 'character';
-    if (hasIntellisenseSchema('Actor', actorType)) {
-      contexts.owner = encodeContextType('Actor', actorType);
-    }
+    Object.entries(nameFormulaIntellisenseSchema.value?.additionalContexts || {})
+      .forEach(([key, ctx]) => {
+        if (hasIntellisenseSchema(ctx.documentType, ctx.subtype)) {
+          contexts[key] = encodeContextType(ctx.documentType, ctx.subtype);
+        }
+      });
+
+    // // Owner — always present; uses the parent actor's type or defaults to 'character'
+    // const actor = (doc as any).actor;
+    // const actorType = actor?.type ?? 'character';
+    // if (hasIntellisenseSchema('Actor', actorType)) {
+    //   contexts.owner = encodeContextType('Actor', actorType);
+    // }
 
     return contexts;
   });

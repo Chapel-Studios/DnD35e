@@ -1,6 +1,6 @@
 import { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import {
-  ActiveEffectChangeMode,
+  ActiveEffectChangeType,
   DocumentOwnershipLevel,
   DocumentOwnershipString,
   ImageFilePath,
@@ -119,7 +119,7 @@ type EffectPhases = 'initial' | 'final';
 type EffectChangeSchema = {
   key: fields.StringField<string, string, true, false, false>;
   value: fields.AnyField;
-  type: fields.StringField<ActiveEffectChangeMode, ActiveEffectChangeMode, true, false, true>;
+  type: fields.StringField<ActiveEffectChangeType, ActiveEffectChangeType, true, false, true>;
   priority?: fields.NumberField<number, number, false, true, true>;
   phase: fields.StringField<EffectPhases, EffectPhases, true, false, false>;
 };
@@ -129,7 +129,7 @@ export type EffectChangeData<
 > = {
   key: string;
   value: any;
-  type: ActiveEffectChangeMode;
+  type: ActiveEffectChangeType;
   phase: EffectPhases;
   priority?: number | null;
   effect?: BaseActiveEffect<TParent> | null;

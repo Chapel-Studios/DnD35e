@@ -95,7 +95,7 @@ function useVueAppBaseMixin<
         this.vueApp.mount(this.vueRoot);
       }
       else {
-        store?._storeUtils.refreshDocument(context);
+        store?._storeUtils.refreshContext(context);
       }
     }
 

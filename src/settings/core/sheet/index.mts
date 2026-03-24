@@ -8,3 +8,5 @@ import type { SettingsStore } from './settingsStore.mts';
 
 export { GenericSettingsApp, useSettingsStore };
 export type { SettingsStore };
+export type { SettingsTableColumn, SettingsTableItem } from './SettingsTable/index.mjs';
+export { AUTO_ID_MARKER, SettingsTable, SettingsTableRow } from './SettingsTable/index.mjs';

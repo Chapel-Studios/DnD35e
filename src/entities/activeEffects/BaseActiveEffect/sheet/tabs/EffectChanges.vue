@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-  import { EFFECT_CHANGE_TARGETS, EffectChangeValue } from '@effects/BaseActiveEffect/index.mjs';
+  import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE, EffectChangeValue } from '@effects/BaseActiveEffect/index.mjs';
   import { computed, inject } from 'vue';
 
   const store = inject('documentSheetStore') as ActiveEffectConfigStore;
@@ -82,7 +82,7 @@
       changes,
     },
     documentActions: {
-      // addChange,
+      addChange,
       removeChange,
     },
   } = store;
@@ -116,13 +116,19 @@
   };
 
   const createChange = async () => {
-    // TODO: we need to either make our own app for this or tap into foundry's active effect change editor.
-    
-    // await addChange();
+    await addChange({
+      key: '',
+      type: EFFECT_CHANGE_TYPE.ADD,
+      value: '',
+      phase: 'initial',
+      priority: 10,
+      target: EFFECT_CHANGE_TARGET.ITEM,
+      effect: null,
+      isSystem: false,
+    });
   };
 
   const deleteChange = async (index: number) => {
-    // TODO: we need an id to reference it by
     await removeChange?.(index);
   };
 </script>

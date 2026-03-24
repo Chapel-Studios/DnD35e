@@ -103,7 +103,7 @@
     onUpdate: { type: Function as PropType<(value: string) => void>, required: true },
     disabled: { type: Boolean, default: false },
     contexts: { type: Object as PropType<IntellisenseSchema>, required: true },
-    fieldPath: { type: String, default: undefined },
+    fieldPath: { type: String, required: true },
     defaultVisibility: { type: String as PropType<'everyone' | 'ownerPlus' | 'gmOnly'>, default: undefined },
     defaultEditability: { type: String as PropType<'normal' | 'gmOnly'>, default: undefined },
   });

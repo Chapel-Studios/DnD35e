@@ -5,9 +5,11 @@
 
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
 import type { DocumentSheetV2 } from '@client/applications/api/_module.mjs';
+import { Dnd35eDocument } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import { DocumentSheetStore } from '@ec/CoreMixin/sheet/index.mjs';
 import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
+import { ItemType } from '@items/itemTypes.mjs';
 import type { App } from 'vue';
 import { createApp, reactive } from 'vue';
 
@@ -145,8 +147,8 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
      */
     protected _renderIdentifiedViewButton (header: Element, refreshTooltip = false): void {
       const doc = this.#document as ItemDnd35e;
-      const isIdentifiable = (doc.system as { isIdentifiable?: boolean })?.isIdentifiable;
-      const shouldShow = isIdentifiable && (game.user.isGM || this.isEditable);
+      const isIdentifiable = (doc.system as Dnd35eDocument<any>)?.isIdentifiable;
+      const shouldShow = isIdentifiable && (game.user.isGM);
       const existingBtn = header.querySelector('.identified-view-btn') as HTMLButtonElement | null;
 
       if (shouldShow && !existingBtn) {
@@ -182,6 +184,13 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
         }
       } else if (!shouldShow && existingBtn) {
         existingBtn.remove();
+      }
+
+      if (isIdentifiable) {
+        const isIdentified = (doc.system as Dnd35eDocument<any>)?.isIdentified;
+        this.sheetState.editorViewMode = isIdentified
+          ? 'identified'
+          : 'unidentified';
       }
     }
 
@@ -245,6 +254,11 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
 
     override async render (options?: boolean | DeepPartial<VueRenderOptions> | undefined): Promise<this> {
       return super.render(options);
+    }
+
+    override async close (options?: foundry.applications.ApplicationClosingOptions): Promise<foundry.applications.api.ApplicationV2> {
+      delete game.dnd35e.stores[this.#document.documentName]?.[this.#document.id];
+      return super.close(options);
     }
   }
 

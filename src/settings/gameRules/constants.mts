@@ -8,15 +8,15 @@ import type { DamageReductionTypesConfig } from './_types.mjs';
  * Game Rules setting keys
  */
 export const GAME_RULES_KEYS = {
-  DIAGONAL_MOVEMENT: 'diagonalMovement',
-  EXPERIENCE_RATE: 'experienceRate',
-  DISABLE_EXPERIENCE_TRACKING: 'disableExperienceTracking',
-  USE_FRACTIONAL_BASE_BONUSES: 'useFractionalBaseBonuses',
-  ALLOW_BACKGROUND_SKILLS: 'allowBackgroundSkills',
-  PSIONICS_ARE_DIFFERENT: 'psionicsAreDifferent',
-  LOW_LIGHT_VISION_MODE: 'lowLightVisionMode',
-  USE_COMBAT_CHARACTER_SHEET: 'useCombatCharacterSheet',
-  MEASURE_STYLE: 'measureStyle',
+  // DIAGONAL_MOVEMENT: 'diagonalMovement',
+  // EXPERIENCE_RATE: 'experienceRate',
+  // DISABLE_EXPERIENCE_TRACKING: 'disableExperienceTracking',
+  // USE_FRACTIONAL_BASE_BONUSES: 'useFractionalBaseBonuses',
+  // ALLOW_BACKGROUND_SKILLS: 'allowBackgroundSkills',
+  // PSIONICS_ARE_DIFFERENT: 'psionicsAreDifferent',
+  // LOW_LIGHT_VISION_MODE: 'lowLightVisionMode',
+  // USE_COMBAT_CHARACTER_SHEET: 'useCombatCharacterSheet',
+  // MEASURE_STYLE: 'measureStyle',
   DAMAGE_REDUCTION_TYPES: 'damageReductionTypes',
 } as const;
 
@@ -43,10 +43,10 @@ export const EXPERIENCE_RATE_CHOICES = {
 } as const;
 
 /**
- * Default damage reduction types (keyed by lowercase label)
+ * Default damage reduction types
  */
 export const DEFAULT_DAMAGE_REDUCTION_TYPES: DamageReductionTypesConfig = {
-  'alchemical silver': { label: 'Alchemical Silver', enabled: true, isDefault: true },
-  'adamantine': { label: 'Adamantine', enabled: true, isDefault: true },
-  'cold iron': { label: 'Cold Iron', enabled: true, isDefault: true },
+  'alchemical_silver': { label: 'Alchemical Silver', enabled: true, isSystem: true },
+  'adamantine': { label: 'Adamantine', enabled: true, isSystem: true },
+  'cold_iron': { label: 'Cold Iron', enabled: true, isSystem: true },
 };
