@@ -442,7 +442,7 @@
 
   // Initialize
   onMounted(() => {
-    localValue.value = props.value || '';
+    localValue.value = effectiveFormula.value || '';
     updateValidation();
     if (isEditable.value && formulaInput.value) {
       nextTick(() => formulaInput.value?.focus());

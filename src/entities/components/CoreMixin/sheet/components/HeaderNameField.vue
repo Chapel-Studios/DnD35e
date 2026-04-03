@@ -46,12 +46,10 @@
     isIdentifiedViewMode,
   } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
-  const formulaDataRef = getProperty<FormulaData | null>(fieldPath);
-  const formulaData = computed(() => formulaDataRef.value ?? null);
+  const formulaData = getProperty<FormulaData | null>(fieldPath);
 
   const displayValue = computed(() => name.value || '—');
   const showEditor = computed((): boolean => {
-    if (!isEditViewMode.value) return false;
     return getIsFieldVisible(fieldPath).value;
   });
 
@@ -60,6 +58,7 @@
    * - identified view → system.nameFormula.formula
    * - unidentified view → system.nameFormula.unidentifiedFormula
    */
+  
   const onUpdate = (formula: string) => {
     const subField = isIdentifiedViewMode.value ? 'formula' : 'unidentifiedFormula';
     return getDirectFieldUpdater(`${fieldPath}.${subField}`)(formula || null);
