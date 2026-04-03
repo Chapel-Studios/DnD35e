@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentDetails } from '@ec/CoreMixin/index.mjs';
+  import { DocumentDetails, DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { MaterialStore } from '@effects/material/index.mjs';
   import { DamageReductionTypes, MagicEquivalency } from '@effects/material/index.mjs';
   import { EquippableItemWeight } from '@items/components/Equippable/index.mjs';
@@ -35,7 +35,7 @@
 
   const {
     documentGetters: { hasEffectsForField },
-  } = inject('documentSheetStore') as MaterialStore;
+  } = inject(DocumentSheetStoreSymbol) as MaterialStore;
 
   const hasMagicEquivalentEffects = hasEffectsForField('system.magicEquivalency');
   const hasDamageReductionTypeEffects = hasEffectsForField('system.damageReductionTypes');
@@ -56,15 +56,21 @@
     grid-column: span 2;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 0.33rem;
+    gap: 0.66rem 0.5rem;
 
-    :deep(.form-group) {
+    :deep(.form-group),
+    :deep(.form-group-section) {
       border: 1px solid var(--color-border, #7a7971);
       display: grid;
       grid-auto-flow: column;
       align-items: center;
       grid-gap: 0.33rem;
     }
+
+    :deep(.form-group-section) {
+      position: relative;
+    }
+
     :deep(.form-group-label) {
       flex-direction: column;
       text-align: center;

@@ -24,10 +24,11 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import type { DocumentSheetStore, RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
-  import type { FieldEditability,FieldVisibility } from './fieldPermissions.mjs';
+  import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
 
   const props = defineProps<{
@@ -48,23 +49,33 @@
     directUpdate?: boolean;
   }>();
 
-  const store = inject('documentSheetStore') as DocumentSheetStore;
-  const { isEditable, localize } = store;
+  const { isEditViewMode, isIdentifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const {
+    documentActions: {
+      getDirectFieldUpdater,
+      getViewAwareFieldUpdater,
+    },
+    _storeUtils: {
+      getSourceProperty,
+      createLocalizedComputed: localize,
+    },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
   const isDisabled = computed(() => {
-    const storeCanEdit = isEditable;
     if (props.disabled) return true;
-    return storeCanEdit ? !storeCanEdit.value : false;
+    return !isEditViewMode.value;
   });
 
   const fieldUpdater = props.onUpdate ?? (
     props.directUpdate
-      ? store.documentActions.getDirectFieldUpdater(props.fieldPath)
-      : store.documentActions.getViewAwareFieldUpdater(props.fieldPath)
+      ? getDirectFieldUpdater(props.fieldPath)
+      : getViewAwareFieldUpdater(props.fieldPath)
   );
 
-  const sourceValue = store.documentGetters.getSourceProperty<string | null>(props.fieldPath);
+  const sourceValue = getSourceProperty<string | null>(props.fieldPath);
   const editValue = computed(() => {
     if (props.editDerived || !sourceValue) return props.value;
+    if (!isIdentifiedViewMode.value) return props.value;
     return sourceValue.value as string | null;
   });
 

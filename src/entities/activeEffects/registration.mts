@@ -1,7 +1,9 @@
 import { EffectConfig } from '@constants/config/activeEffect.mjs';
 import { ensureNameFormulaOnCreate } from '@ec/CoreMixin/index.mjs';
 import { ActiveEffectProxyDnd35e } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
+import { materialEffectType } from '@effects/material/index.mjs';
 import { MaterialSheet, MaterialSystemModel } from '@effects/material/index.mjs';
+import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
 
 const registerEffectSheets = () => {
   const effectSheets = [
@@ -29,6 +31,9 @@ export const registerEffects = () => {
     Object.assign(CONFIG.ActiveEffect.dataModels, {
       material: MaterialSystemModel,
     });
+
+    // Register familiar schemas for formula resolution
+    registerFamiliarSchema('ActiveEffect', materialEffectType, (context?) => gatherAspectsFromSchema(MaterialSystemModel, context));
   });
 
   foundry.helpers.Hooks.once('setup', () => {

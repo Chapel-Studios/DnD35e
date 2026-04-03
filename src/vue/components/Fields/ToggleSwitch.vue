@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import { type RenderModeStore,RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
   const props = withDefaults(defineProps<{
@@ -51,8 +51,7 @@
     (e: 'update', value: boolean): void;
   }>();
 
-  // Store is optional - allows use in settings dialogs without DocumentSheetStore
-  const store = inject('documentSheetStore', null) as DocumentSheetStore | null;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   function localize(key: string): string {
     return game.i18n.localize(key);
@@ -66,10 +65,8 @@
 
   // Compute whether the field is disabled
   const isDisabled = computed(() => {
-    const storeCanEdit = store?.isEditable;
     if (props.disabled) return true;
-    
-    return storeCanEdit ? !storeCanEdit.value : false;
+    return !isEditViewMode.value;
   });
 
   function onToggle (event: Event) {

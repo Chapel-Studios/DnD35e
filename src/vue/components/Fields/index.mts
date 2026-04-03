@@ -13,6 +13,7 @@ import {
   ownerPlusVisibility,
 } from './FormGroups/fieldPermissions.mjs';
 import FormGroup from './FormGroups/FormGroup.vue';
+import FormGroupSection from './FormGroups/FormGroupSection.vue';
 import HasActiveEffectsNotification from './FormGroups/HasActiveEffectsNotification.vue';
 import ItemPriceFormGroup from './FormGroups/ItemPriceFormGroup.vue';
 import MultiSelectFormGroup from './FormGroups/MultiSelectFormGroup.vue';
@@ -21,7 +22,10 @@ import RichTextEditorFormGroup from './FormGroups/RichTextEditorFormGroup.vue';
 import SelectFormGroup from './FormGroups/SelectFormGroup.vue';
 import TextFormGroup from './FormGroups/TextFormGroup.vue';
 import ToggleSwitchFormGroup from './FormGroups/ToggleSwitchFormGroup.vue';
-import type { MultiSelectOption,SelectOption } from './FormGroups/types.mjs';
+import type {
+  MultiSelectOption,
+  SelectOption,
+} from './FormGroups/types.mjs';
 import ImageField from './ImageField.vue';
 import ToggleSwitch from './ToggleSwitch.vue';
 
@@ -33,6 +37,7 @@ export {
   FIELD_EDITABILITIES,
   FIELD_VISIBILITIES,
   FormGroup,
+  FormGroupSection,
   gmOnlyEditability,
   gmOnlyVisibility,
   HasActiveEffectsNotification,

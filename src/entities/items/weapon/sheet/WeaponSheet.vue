@@ -12,6 +12,7 @@
 </template>
 
 <script lang="ts" setup>
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { PhysicalItemSheet } from '@items/components/Physical/index.mjs';
   import { useWeaponStore, WeaponSummary } from '@items/weapon/index.mjs';
   import { provide } from 'vue';
@@ -21,5 +22,5 @@
   }>();
 
   const store = useWeaponStore(props.context);
-  provide('documentSheetStore', store);
+  provide(DocumentSheetStoreSymbol, store);
 </script>

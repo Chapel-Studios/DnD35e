@@ -14,21 +14,12 @@
  */
 type UnidentifiedOverrides = Record<string, unknown>;
 
+import { decodeFieldPath, encodeFieldPath } from './fieldPermissions.mjs';
+
 /**
  * Flag key for unidentified overrides. Used with document.getFlag('dnd35e', key).
  */
 const UNIDENTIFIED_OVERRIDES_FLAG = 'unidentifiedOverrides';
-
-/**
- * Encode a field path for storage as a flag key.
- * Replaces dots with __ to avoid Foundry interpreting them as nested paths.
- */
-const encodeFieldPath = (fieldPath: string): string => fieldPath.replace(/\./g, '__');
-
-/**
- * Decode a stored flag key back to the original field path.
- */
-const decodeFieldPath = (encodedPath: string): string => encodedPath.replace(/__/g, '.');
 
 export {
   decodeFieldPath,

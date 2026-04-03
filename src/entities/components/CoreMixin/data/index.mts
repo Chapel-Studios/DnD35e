@@ -3,7 +3,6 @@ import type {
   BaseDnd35eSystemData,
   ItemDescription,
 } from './BaseDnd35eSystemData.mjs';
-import { createDocumentIntellisense } from './coreMixinIntellisense.mjs';
 import type {
   Dnd35eBaseFlags,
   Dnd35eDocumentFlags,
@@ -11,7 +10,6 @@ import type {
 
 export {
   applyBaseDnd35eSystemSchema,
-  createDocumentIntellisense as documentLevelIntellisense,
 };
 
 export type {

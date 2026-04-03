@@ -1,33 +1,26 @@
 <template>
-  <NumberFormGroup
-    :editable="isEditable"
+  <!-- <NumberFormGroup
+    :editable="isEditViewMode"
     label="D35E.ResalePrice"
-    :value="effectiveResalePrice"
+    :value="resalePrice"
     :on-update="updater"
     field-path="system.resalePrice"
     default-visibility="gmOnly"
-  />
+  /> -->
 </template>
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { NumberFormGroup } from '@vc/Fields/index.mjs';
-  import { computed, inject } from 'vue';
+  import { inject } from 'vue';
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    isEditable,
     documentGetters: {
-      resalePrice,
-    },
-    documentGetters: {
-      getEffectiveFieldValue,
+      // resalePrice,
     },
     documentActions: {
       getViewAwareFieldUpdater,
     },
-  } = inject('documentSheetStore') as PhysicalDocumentStore;
-
-  const effectiveResalePrice = computed(() =>
-    getEffectiveFieldValue('system.resalePrice', resalePrice.value)
-  );
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
   const updater = getViewAwareFieldUpdater('system.resalePrice');
 </script>

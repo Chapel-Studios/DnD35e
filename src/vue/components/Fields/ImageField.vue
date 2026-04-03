@@ -1,7 +1,7 @@
 <template>
   <img
     class="item-art"
-    :class="[props.class, { editable: isEditable }]"
+    :class="[props.class, { editable: isEditViewMode }]"
     :src="currentImg"
     :title="props.title"
     @click="editImage"
@@ -9,7 +9,8 @@
 </template>
 
 <script lang="ts" setup>
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import type { DocumentSheetStore, RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
   const props = defineProps<{
@@ -18,20 +19,19 @@
     class?: string;
   }>();
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    documentGetters: { getProperty, getEffectiveFieldValue },
+    documentGetters: { getViewAwareFieldValue },
     documentActions: { getViewAwareFieldUpdater },
-    isEditable,
-  } = inject('documentSheetStore') as DocumentSheetStore;
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const rawImg = getProperty<string>(props.field);
   const currentImg = computed(() => 
-    getEffectiveFieldValue(props.field, rawImg.value)
+    getViewAwareFieldValue<string>(props.field)
   );
   const updateField = getViewAwareFieldUpdater(props.field);
 
   async function editImage (event: MouseEvent) {
-    if (!isEditable.value) return;
+    if (!isEditViewMode.value) return;
 
     event.preventDefault();
     event.stopPropagation();
@@ -50,11 +50,11 @@
 </script>
 
 <style lang="scss" scoped>
-.item-art {
-  cursor: default;
+  .item-art {
+    cursor: default;
 
-  &.editable {
-    cursor: pointer;
+    &.editable {
+      cursor: pointer;
+    }
   }
-}
 </style>

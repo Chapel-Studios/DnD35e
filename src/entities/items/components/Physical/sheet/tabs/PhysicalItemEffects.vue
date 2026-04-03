@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { Effects } from '@items/baseItem/index.mjs';
   import { inject } from 'vue';
 
@@ -9,7 +10,7 @@
     documentGetters: {
       materials,
     },
-  } = inject('documentSheetStore') as PhysicalDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
 </script>
 

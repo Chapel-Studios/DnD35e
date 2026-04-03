@@ -2,7 +2,7 @@
   <ul class="weapon-summary">
     <li>
       <SelectFormGroup
-        :value="effectiveWeaponType"
+        :value="weaponType"
         :options="weaponTypeSelectOptions"
         :on-update="weaponTypeUpdater"
         field-path="system.weaponType"
@@ -10,7 +10,7 @@
     </li>
     <li>
       <SelectFormGroup
-        :value="effectiveWeaponSubtype"
+        :value="weaponSubtype"
         :options="weaponSubtypeSelectOptions"
         :on-update="weaponSubtypeUpdater"
         field-path="system.weaponSubtype"
@@ -20,34 +20,22 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { weaponSubtypeSelectOptions, weaponTypeSelectOptions } from '@items/weapon/index.mjs';
   import { SelectFormGroup } from '@vc/Fields/index.mjs';
-  import { computed, inject } from 'vue';
+  import { inject } from 'vue';
 
   import type { WeaponStore } from '../WeaponStore.mjs';
-
-
 
   const {
     documentGetters: {
       weaponType,
       weaponSubtype,
     },
-    documentGetters: {
-      getEffectiveFieldValue,
-    },
     documentActions: {
       getViewAwareFieldUpdater,
     },
-  } = inject('documentSheetStore') as WeaponStore;
-
-  // View-aware values: shows override when viewing as unidentified
-  const effectiveWeaponType = computed(() => 
-    getEffectiveFieldValue('system.weaponType', weaponType.value)
-  );
-  const effectiveWeaponSubtype = computed(() => 
-    getEffectiveFieldValue('system.weaponSubtype', weaponSubtype.value)
-  );
+  } = inject(DocumentSheetStoreSymbol) as WeaponStore;
 
   const weaponTypeUpdater = getViewAwareFieldUpdater('system.weaponType');
   const weaponSubtypeUpdater = getViewAwareFieldUpdater('system.weaponSubtype');

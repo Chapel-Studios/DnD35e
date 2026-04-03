@@ -1,7 +1,7 @@
 <template>
   <div class="item-header">
     <slot>
-      <DefaultHeaderName />
+      <HeaderNameField />
     </slot>
 
     <div class="item-subtitle">
@@ -13,13 +13,12 @@
 </template>
 
 <script lang="ts" setup>
-  import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/useDocumentSheetStore.mjs';
+  import { type DocumentSheetStore,DocumentSheetStoreSymbol } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
   import { inject } from 'vue';
 
-  import DefaultHeaderName from './DefaultHeaderName.vue';
+  import HeaderNameField from './HeaderNameField.vue';
 
-  const { documentGetters: { localizedType } } = inject('documentSheetStore') as DocumentSheetStore;
-
+  const { documentGetters: { localizedType } } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 </script>
 
 <style scoped lang="scss">

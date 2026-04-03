@@ -1,6 +1,6 @@
 <template>
   <CheckBoxFormGroup
-    :editable="isEditable"
+    :editable="isEditViewMode"
     label="Is Carried"
     :value="isCarried"
     :on-update="updater"
@@ -8,19 +8,20 @@
   />
 </template>
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    isEditable,
     documentGetters: {
       isCarried,
     },
     documentActions: {
       getDirectFieldUpdater,
     },
-  } = inject('documentSheetStore') as PhysicalDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
   const updater = getDirectFieldUpdater('system.isCarried');
 </script>

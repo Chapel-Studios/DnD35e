@@ -9,7 +9,7 @@
       name="system.isIdentified"
       :label="toggleLabel"
       :checked="isIdentified"
-      :editable="isEditable"
+      :editable="isEditViewMode"
       @update="handleToggleUpdate"
     />
     
@@ -18,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
   import ToggleSwitch from '@vc/Fields/ToggleSwitch.vue';
   import { computed, inject } from 'vue';
@@ -29,8 +30,8 @@
     documentActions: {
       getDirectFieldUpdater,
     },
-    isEditable,
-  } = inject('documentSheetStore') as IdentifiableDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as IdentifiableDocumentStore;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const toggleLabel = computed(() => 
     isIdentified.value 

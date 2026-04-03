@@ -8,7 +8,7 @@
     <div class="effects-header">
       <h3>{{ localize('D35E.Effects') }}</h3>
       <button
-        v-if="isEditable"
+        v-if="isEditViewMode"
         type="button"
         class="create-effect-btn"
         @click="createEffect"
@@ -27,7 +27,7 @@
         v-if="temporaryEffects.length"
         :label="localize('D35E.EffectTemporary').value"
         :effects="temporaryEffects"
-        :can-edit="isEditable"
+        :can-edit="isEditViewMode"
       />
 
       <!-- Passive Effects -->
@@ -35,7 +35,7 @@
         v-if="passiveEffects.length"
         :label="localize('D35E.EffectPassive').value"
         :effects="passiveEffects"
-        :can-edit="isEditable"
+        :can-edit="isEditViewMode"
       />
 
       <!-- Inactive Effects -->
@@ -43,7 +43,7 @@
         v-if="inactiveEffects.length"
         :label="localize('D35E.EffectInactive').value"
         :effects="inactiveEffects"
-        :can-edit="isEditable"
+        :can-edit="isEditViewMode"
       />
 
       <slot name="effects-list-append" />
@@ -57,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol, TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { ItemSheetStore } from '@items/baseItem/index.mjs';
   import { computed, inject } from 'vue';
 
@@ -68,9 +69,7 @@
     hasAddedEffects?: boolean;
   }>();
 
-  const store = inject('documentSheetStore') as ItemSheetStore;
   const {
-    tabs: { tabGetters: { getIsTabOpen } },
     documentGetters: {
       effects,
       temporaryEffects,
@@ -80,9 +79,12 @@
     documentActions: {
       createEffect,
     },
-    isEditable,
-    localize,
-  } = store;
+    _storeUtils: {
+      createLocalizedComputed: localize,
+    },
+  } = inject(DocumentSheetStoreSymbol) as ItemSheetStore;
+  const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const isActiveTab = getIsTabOpen('effects');
 

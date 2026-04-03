@@ -68,6 +68,7 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { EffectDetails } from '@effects/BaseActiveEffect/index.mjs';
   import { ItemHardness } from '@items/components/Physical/index.mjs';
   import ItemPrice from '@items/components/Physical/sheet/components/ItemPrice.vue';
@@ -82,7 +83,7 @@
     documentGetters: {
       bonusHp,
     },
-  } = inject('documentSheetStore') as MaterialStore;
+  } = inject(DocumentSheetStoreSymbol) as MaterialStore;
 </script>
 
 <style scoped>

@@ -41,3 +41,43 @@ h3 {
 .grid-full-row {
   grid-column: 1 / -1;
 }
+
+/**
+ * FIREFOX BUG WORKAROUND — This class MUST remain global (not in a scoped <style> block).
+ *
+ * Firefox has a known bug where [data-v-xxx] attribute selectors from Vue's scoped CSS
+ * sometimes fail to match elements that are slotted into a different component's DOM.
+ * This affects all custom buttons rendered inside FormGroup's #controls slot, because
+ * the button is defined in one component (e.g. ItemQuantity) but rendered inside
+ * another component's template (FieldControls > FormGroup).
+ *
+ * Chrome and Safari are not affected. The bug is documented in Vue, Svelte, and
+ * Firefox Bugzilla. The workaround is to use a global class instead of scoped styles.
+ *
+ * All custom buttons in #controls slots should use this class for base styling.
+ * Component-specific additions (custom width, icon styling) can still be scoped.
+ * See copilot-instructions.md "Control Button Styling" section for usage pattern.
+ */
+.field-control-btn {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.125rem 0.25rem;
+  color: var(--color-text-dark, #444);
+  background: transparent;
+  border: none;
+  opacity: 0.5;
+  font-size: var(--font-size-11);
+  height: 1.5rem;
+  transition: opacity 0.15s ease, color 150ms ease, transform 0.15s ease;
+
+  &:hover {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+
+  &.is-active {
+    opacity: 1;
+    color: var(--color-level-warning);
+  }
+}

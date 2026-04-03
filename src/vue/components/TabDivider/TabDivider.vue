@@ -18,22 +18,22 @@
 </template>
 
 <script lang="ts" setup>
-  import { ItemSheetStore } from '@items/baseItem/index.mjs';
+  import { TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
   const {
-    tabs: {
-      tabGetters: { tabs, activeTabId },
-      tabActions: { activateTab },
-    },
-    localize,
-  } = inject('documentSheetStore') as ItemSheetStore;
+    tabs,
+    activeTabId,
+    activateTab,
+  } = inject(TabStoreSymbol) as TabStore;
 
   const { verticalTabs } = defineProps<{
     verticalTabs?: boolean;
   }>();
+  
+  const localize = (key: string) => game.i18n.localize(key);
 
-  const navDescription = game.i18n.localize('SHEETS.FormNavLabel');
+  const navDescription = localize('SHEETS.FormNavLabel');
   const navClass = computed(() => {
     return {
       'sheet-tabs': true,

@@ -7,6 +7,7 @@
   />
 </template>
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { NumberFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
@@ -20,5 +21,5 @@
     documentGetters: {
       hardness,
     },
-  } = inject('documentSheetStore') as PhysicalDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 </script>

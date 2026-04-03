@@ -1,6 +1,6 @@
 import { IdentifiableDocumentSystemData } from '@ec/Identifiable/index.mjs';
 import { ActiveEffectSystemData } from '@effects/BaseActiveEffect/index.mjs';
-import { nameToFormulaData } from '@helpers/formulae/index.mjs';
+import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { ItemSystemData } from '@items/baseItem/index.mjs';
 
 type PossibleNameFormulaDocument = ActiveEffect<Actor<TokenDocument<Scene | null>
@@ -20,22 +20,18 @@ const ensureNameFormulaOnCreate = (document: PossibleNameFormulaDocument): void 
   };
   let hasUpdate = false;
   const system = document.system as ItemSystemData | ActiveEffectSystemData | undefined;
-  if (!system?.nameFormula && document.name) {
-    updateData.system.nameFormula = nameToFormulaData(document.name);
-    updateData.system.derivedName = document.name;
-    hasUpdate = true;
-  }
-  
-  // While I normally prefer to keep unidentified document logic contained within the unidentified item mixin,
-  // as this is called by the global preCreate hook, we're better off to register it in 1 place and handle both here.
-  const iSystem = document.system as unknown as IdentifiableDocumentSystemData | undefined;
-  if (
-    iSystem?.isIdentifiable
-    && !iSystem?.unidentifiedNameFormula
-    && document.name
-  ) {
-    updateData.system.unidentifiedNameFormula = nameToFormulaData(document.name);
-    updateData.system.unidentifiedDerivedName = document.name;
+  if (!system?.nameFormula?.formula && document.name) {
+    const iSystem = system as unknown as IdentifiableDocumentSystemData | undefined;
+    updateData.system.nameFormula = FormulaData.toSource(document.name, {
+      unidentifiedFormula: iSystem?.isIdentifiable
+        ? document.name
+        : null,
+      resolvedValue: document.name,
+      unidentifiedResolvedValue: iSystem?.isIdentifiable
+        ? document.name
+        : null,
+    });
+    // updateData.system.derivedName = document.name;
     hasUpdate = true;
   }
   

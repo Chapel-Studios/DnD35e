@@ -62,6 +62,9 @@ interface FieldOverride {
   editability?: FieldEditability;
 }
 
+/** The individual override categories that can be set per field. */
+type FieldOverrideKey = keyof FieldOverride;
+
 /**
  * Map of field paths to their override settings.
  * Stored at `document.flags.dnd35e.fieldOverrides`
@@ -101,6 +104,7 @@ export {
 export type {
   FieldEditability,
   FieldOverride,
+  FieldOverrideKey,
   FieldOverrides,
   FieldVisibility,
 };

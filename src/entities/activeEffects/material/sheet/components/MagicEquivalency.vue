@@ -9,6 +9,7 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { MaterialStore } from '@effects/material/index.mjs';
   import { NumberFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
@@ -22,7 +23,7 @@
     documentGetters: {
       magicEquivalency,
     },
-  } = inject('documentSheetStore') as MaterialStore;
+  } = inject(DocumentSheetStoreSymbol) as MaterialStore;
 </script>
 
 <style lang="scss" scoped>

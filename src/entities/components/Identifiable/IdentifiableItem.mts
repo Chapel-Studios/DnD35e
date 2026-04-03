@@ -1,7 +1,7 @@
 import { Dnd35eDocumentProperties } from '@ec/CoreMixin/Dnd35eDocument.mjs';
-import { FormulaContextBuilder, FormulaRegistration } from '@ec/CoreMixin/index.mjs';
+import { EvaluationDocument, FormulaRegistration } from '@ec/CoreMixin/index.mjs';
 import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import { DocumentContext, resolveFormulaField } from '@helpers/formulae/index.mjs';
+import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemType } from '@items/index.mjs';
 
@@ -19,13 +19,9 @@ interface IdentifiableDocument {
   system: IdentifiableDocumentSystemData;
 }
 
-type IdentifiableDocumentLike =
-  ItemDnd35e<ItemType> &
-  IdentifiableDocument;
+type IdentifiableDocumentLike = ItemDnd35e<ItemType> & IdentifiableDocument;
 
-type IdentifiableEffectLike =
-  DnD35eActiveEffect &
-  IdentifiableDocument;
+type IdentifiableEffectLike = DnD35eActiveEffect & IdentifiableDocument;
 
 type WithIdentifiableComponent = IdentifiableDocumentLike | IdentifiableEffectLike;
 
@@ -57,39 +53,23 @@ const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase)
     declare protected readonly defaultDerivedNameRegistration: FormulaRegistration;
     declare protected readonly defaultNameRegistration: FormulaRegistration;
 
-    /** Subclasses provide context objects (e.g., owner actor) for unidentified name formulas. */
-    protected abstract unidentifiedNameContextBuilder: FormulaContextBuilder;
-
     protected readonly unidentifiedDerivedNameRegistration: FormulaRegistration = {
-      impactedField: 'system.derivedUnidentifiedName',
-      formulaField: 'system.unidentifiedNameFormula',
-      evaluate: (document: DocumentContext) => {
-        const idocument = document as IdentifiableDocumentLike;
-        if (!idocument) return;
-  
-        const baseContext = this.unidentifiedNameContextBuilder(idocument)
-          ?? {} as Record<string, DocumentContext>;
-        baseContext.self = idocument;
-  
-        const newName = resolveFormulaField(
-          idocument.system.unidentifiedNameFormula,
-          baseContext,
-          idocument.system.derivedUnidentifiedName || idocument.name
-        );
-        return newName;
+      impactedField: 'system.nameFormula.unidentifiedResolvedValue',
+      formulaField: 'system.nameFormula',
+      evaluate: (document: EvaluationDocument) => {
+        const { nameFormula } = document.system;
+        if (!nameFormula?.unidentifiedFormula) return null;
+        return FormulaData.resolveUnidentifiedSource(nameFormula, { self: document }, document.name || '');
       },
     };
 
     protected readonly identifiableNameRegistration: FormulaRegistration = {
       impactedField: 'name',
       formulaField: 'system.isIdentified',
-      evaluate: (document: DocumentContext) => {
-        const idocument = document as IdentifiableDocumentLike;
-        if (!idocument) return;
-  
-        return idocument.system.isIdentified
-          ? idocument.system.derivedName
-          : idocument.system.derivedUnidentifiedName || '';
+      evaluate: (document: EvaluationDocument) => {
+        const { isIdentified, derivedName, nameFormula } = document.system;
+        if (isIdentified) return derivedName;
+        return nameFormula?.unidentifiedResolvedValue || derivedName || '';
       },
     };
 

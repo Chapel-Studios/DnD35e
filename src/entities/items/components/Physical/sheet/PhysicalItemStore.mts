@@ -1,13 +1,13 @@
-import type { DocumentSheetStore, DocumentSheetStoreUtils } from '@ec/CoreMixin/index.mjs';
-import type { IdentifiableDocumentGetters, IdentifiableDocumentStoreUtils, IdentifiableStore } from '@ec/Identifiable/index.mjs';
+import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+import type { IdentifiableDocumentActions, IdentifiableDocumentGetters, IdentifiableDocumentStoreUtils, IdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
 import type { MaterialType } from '@effects/material/index.mjs';
 import { materialEffectType } from '@effects/material/index.mjs';
-import type { ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
+import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
 import { physicalItemEffectsTab, type PhysicalItemLike } from '@items/components/Physical/index.mjs';
 import { SettingsStore } from '@settings/core/sheet/settingsStore.mjs';
 import { PriceData } from '@settings/currency/index.mjs';
-import { DamageReductionTypesConfig, GAME_RULES_KEYS } from '@settings/index.mjs';
+import { DamageReductionTypesConfig, GAME_RULES_KEYS, SettingsStoreSymbol } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import { MultiSelectOption } from '@vc/Fields/index.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';
@@ -25,18 +25,27 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     measurement: {
       convertToLocalizedWeight,
     },
-  } = inject('settingsStore') as SettingsStore;
-  const document = baseStore._storeUtils.document;
+  } = inject(SettingsStoreSymbol) as SettingsStore;
+  const {
+    documentGetters: {
+      getViewAwareFieldValue,
+    },
+    _storeUtils: {
+      document,
+      updateHiddenEffects,
+    },
+  } = baseStore;
   const identifiableStore = useIdentifiableStore(
     context,
   baseStore as DocumentSheetStore<TDocument>
   );
-  baseStore._storeUtils.updateHiddenEffects([materialEffectType]);
-  baseStore.tabs.tabActions.replaceTabs([
-    ...baseStore.tabs.tabGetters.tabs.value.filter((tab) => 'effects' !== tab.id),
+  updateHiddenEffects([materialEffectType]);
+  // const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { replaceTabs, tabs } = baseStore._storeUtils.tabStore;
+  replaceTabs([
+    ...tabs.value.filter((tab) => 'effects' !== tab.id),
     physicalItemEffectsTab,
   ]);
-  const getEffectiveFieldValue = baseStore.documentGetters.getEffectiveFieldValue;
 
   const createDefaultPrice = (): PriceData => new PriceData({ stacks: [{
     coinId: defaultDisplayCoin.value,
@@ -46,28 +55,29 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
   const documentGetters: PhysicalItemGetters = {
     ...identifiableStore.documentGetters,
     // static props: don't have an identifiable mode
-    quantity: computed(() => document.value.system.quantity),
-    actualWeight: computed(() => convertToLocalizedWeight(document.value.system.weight ?? 0) ?? 0),
+    quantity: computed(() => document.value.system.quantity.value),
+    actualWeight: computed(() => convertToLocalizedWeight(document.value.system.weight.value ?? 0) ?? 0),
     effectiveWeight: computed(() => convertToLocalizedWeight(document.value.system.effectiveWeight ?? 0) ?? 0),
-    currentHp: computed(() => document.value.system.hp.value),
+    currentHp: computed(() => getViewAwareFieldValue('system.hp.current') || 0),
+    maxHp: computed(() => getViewAwareFieldValue('system.hp.max') || 0),
     possibleContainers: computed(() => {
-      // TODO: build this out after implementing containers
+      // TODO: build this out after implementing containers 
       return [{ value: null, label: game.i18n.localize('D35E.None') }];
     }),
-    hardness: computed(() => document.value.system.hardness ?? 0),
-    currentContainerId: computed(() => document.value.system.containerId),
+    hardness: computed(() => getViewAwareFieldValue('system.hardness') ?? 0),
+    // currentContainerId: computed(() => document.value.system.containerId),
     isCarried: computed(() => document.value.system.isCarried),
-    size: computed(() => game.i18n.localize(document.value.system.size)),
+    size: computed(() => game.i18n.localize(getViewAwareFieldValue('system.size') ?? '')),
     materials: computed(() => 
       [...document.value.effects].filter((effect) => effect.type === materialEffectType) as unknown as MaterialType[]
     ),
 
     // Identifiable props: use effective value to allow overrides when viewing as unidentified
-    price: computed(() => getEffectiveFieldValue('system.price', document.value.system.price) || createDefaultPrice()),
-    resalePrice: computed(() => getEffectiveFieldValue('system.resalePrice', document.value.system.resalePrice) ?? null),
-    brokenResalePrice: computed(() => getEffectiveFieldValue('system.brokenResalePrice', document.value.system.brokenResalePrice) ?? null),
-    isBroken: computed(() => getEffectiveFieldValue('system.isBroken', document.value.system.isBroken) || false),
-    maxHp: computed(() => getEffectiveFieldValue('system.hp.max', document.value.system.hp.max) || 0),
+    price: computed(() => getViewAwareFieldValue('system.price') || createDefaultPrice()),
+    // Todo: These need to be reassessed as material effects
+    // resalePrice: computed(() => getViewAwareFieldValue('system.resalePrice') ?? null),
+    // brokenResalePrice: computed(() => getViewAwareFieldValue('system.brokenResalePrice') ?? null),
+    // isBroken: computed(() => getViewAwareFieldValue('system.isBroken') || false),
 
     // Material Effects support
     magicEquivalency: computed(() => document.value.system.magicEquivalency ?? 0),
@@ -94,14 +104,14 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   actualWeight: ComputedRef<number>;
   effectiveWeight: ComputedRef<number>;
   price: ComputedRef<PriceData>;
-  resalePrice: ComputedRef<PriceData | null>;
-  brokenResalePrice: ComputedRef<PriceData | null>;
-  isBroken: ComputedRef<boolean>;
+  // resalePrice: ComputedRef<PriceData | null>;
+  // brokenResalePrice: ComputedRef<PriceData | null>;
+  // isBroken: ComputedRef<boolean>;
   maxHp: ComputedRef<number>;
   currentHp: ComputedRef<number>;
   hardness: ComputedRef<number | null>;
   possibleContainers: ComputedRef<Array<{ value: null; label: string }>>;
-  currentContainerId: ComputedRef<string | null>;
+  // currentContainerId: ComputedRef<string | null>;
   isCarried: ComputedRef<boolean>;
   size: ComputedRef<string>;
   materials: ComputedRef<MaterialType[]>;
@@ -112,6 +122,8 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
 
 interface PhysicalItemStoreUtils extends IdentifiableDocumentStoreUtils {}
 
+interface PhysicalItemActions extends IdentifiableDocumentActions {}
+
 interface PhysicalItemStore extends IdentifiableStore {
     documentGetters: PhysicalItemGetters;
     _storeUtils: PhysicalItemStoreUtils;
@@ -120,11 +132,13 @@ interface PhysicalItemStore extends IdentifiableStore {
 interface PhysicalDocumentStore extends PhysicalItemStore, ItemSheetStore<PhysicalItemLike> {
   _storeUtils: PhysicalItemStoreUtils & ItemSheetStoreUtils<PhysicalItemLike>;
   documentGetters: PhysicalItemGetters & ItemDocumentGetters;
+  documentActions: ItemDocumentActions<PhysicalItemLike>;
 }
 
 export { usePhysicalItemStore };
 export type {
   PhysicalDocumentStore,
+  PhysicalItemActions,
   PhysicalItemGetters,
   PhysicalItemStore,
   PhysicalItemStoreUtils,

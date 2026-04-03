@@ -5,7 +5,7 @@
       :class="{ 'is-identified': isIdentified }"
     >
       <!-- Edit mode: show toggle -->
-      <template v-if="isEditable">
+      <template v-if="isEditViewMode">
         <ToggleSwitch
           name="system.isIdentified"
           :checked="isIdentified"
@@ -37,6 +37,7 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
   import { ToggleSwitch } from '@vc/Fields/index.mjs';
   import { DmControl } from '@vc/index.mjs';
@@ -49,8 +50,8 @@
     documentActions: {
       getDirectFieldUpdater,
     },
-    isEditable,
-  } = inject('documentSheetStore') as IdentifiableDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as IdentifiableDocumentStore;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const identifiedLabel = computed(() => game.i18n.localize('D35E.Identified'));
   const unidentifiedLabel = computed(() => game.i18n.localize('D35E.Unidentified'));

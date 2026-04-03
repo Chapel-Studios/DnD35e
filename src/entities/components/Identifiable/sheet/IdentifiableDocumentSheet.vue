@@ -1,15 +1,15 @@
 <template>
   <DocumentSheetBody>
     <template #header-name>
-      <slot name="header-name">
-        <IdentifiableDefaultHeaderName />
+      <slot v-if="slots.headerName" name="header-name">
+        <!-- <IdentifiableDefaultHeaderName /> -->
       </slot>
     </template>
     <template #header-status>
       <IsIdentifiedToggle />
       <slot name="header-status" />
     </template>
-    <template v-if="$slots['header-summary']" #header-summary>
+    <template v-if="slots.headerSummary" #header-summary>
       <slot name="header-summary" />
     </template>
   </DocumentSheetBody>
@@ -17,11 +17,13 @@
 
 <script lang="ts" setup>
   import type { SheetMode } from '@ec/CoreMixin/index.mjs';
-  import { DocumentSheetBody } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetBody, DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { IdentifiableDefaultHeaderName, IsIdentifiedToggle } from '@ec/Identifiable/index.mjs';
   import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { useItemSheetStore } from '@items/baseItem/index.mjs';
-  import { provide } from 'vue';
+  import { provide, useSlots } from 'vue';
+
+  const slots = useSlots();
 
   const props = withDefaults(defineProps<{
     context?: any;
@@ -31,12 +33,9 @@
   });
 
   if (props.context) {
-    if (props.mode === 'effect') {
-      const store = useActiveEffectConfigStore(props.context);
-      provide('documentSheetStore', store);
-    } else {
-      const store = useItemSheetStore(props.context);
-      provide('documentSheetStore', store);
-    }
+    const store = props.mode === 'effect'
+      ? useActiveEffectConfigStore(props.context)
+      : useItemSheetStore(props.context);
+    provide(DocumentSheetStoreSymbol, store);
   }
 </script>

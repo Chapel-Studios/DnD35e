@@ -117,7 +117,7 @@ class PriceField extends EmbeddedDataField {
    *    coins of each as fit within the remaining GP budget.
    * 3. Any leftover fractional GP is expressed in the smallest enabled coin.
    */
-  _applyChangeSubtract(value: PriceData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
+  override _applyChangeSubtract(value: PriceData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
     const currentGp = PriceData.computeGpValue(value.stacks);
     const subtractGp = PriceData.computeGpValue(delta);
     const remainingGp = currentGp - subtractGp;

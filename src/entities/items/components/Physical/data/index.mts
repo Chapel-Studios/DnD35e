@@ -1,4 +1,3 @@
-import { applyPhysicalIntellisense } from './physicalIntellisense.mjs';
 import {
   PhysicalItemSystemModel,
 } from './PhysicalItemSystemModel.mjs';
@@ -13,6 +12,5 @@ export type {
 };
 
 export {
-  applyPhysicalIntellisense,
   PhysicalItemSystemModel,
 };

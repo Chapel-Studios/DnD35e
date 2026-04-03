@@ -7,7 +7,6 @@ import type {
   WeaponType,
 } from './data/index.mjs';
 import {
-  buildWeaponIntellisense,
   WEAPON_BASE_TYPES,
   WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,
@@ -35,7 +34,6 @@ import {
 } from './Weapon.mjs';
 
 export {
-  buildWeaponIntellisense,
   useWeaponStore,
   Weapon,
   WEAPON_BASE_TYPES,

@@ -1,10 +1,8 @@
 import type { ClientDocument } from '@client/documents/abstract/_module.mjs';
 import { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
-import { DocumentContext, NonNullDocumentContext } from '@helpers/formulae/registry.mjs';
-import type { FormulaFieldData } from '@helpers/formulae/types.mjs';
-import { resolveFormulaField } from '@helpers/index.mjs';
+import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 
-import { Dnd35eDocumentFlags, FormulaContextBuilder, FormulaRegistration } from './index.mjs';
+import { Dnd35eDocumentFlags, EvaluationDocument, FormulaRegistration } from './index.mjs';
 
 interface Dnd35eDocumentProperties {
   readonly localizedType: string;
@@ -35,27 +33,18 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
     protected readonly defaultDerivedNameRegistration: FormulaRegistration = {
       impactedField: 'system.derivedName',
       formulaField: 'system.nameFormula',
-      evaluate: (document: NonNullDocumentContext) => {
-        if (!document) return;
-
-        const system = document.system;
-        const baseContext = this.nameContextBuilder(document) ?? {} as Record<string, DocumentContext>;
-        baseContext.self = document;
-
-        const newName = resolveFormulaField(
-          system.nameFormula as FormulaFieldData | null | undefined,
-          baseContext,
-          system.derivedName as string
-        );
-        return newName;
+      evaluate: (document: EvaluationDocument) => {
+        const { nameFormula, derivedName } = document.system;
+        if (!nameFormula?.formula) return derivedName;
+        return FormulaData.resolveSource(nameFormula, { self: document }, derivedName);
       },
     };
 
     protected readonly defaultNameRegistration: FormulaRegistration = {
       impactedField: 'name',
       formulaField: 'system.isIdentified',
-      evaluate: (document: NonNullDocumentContext) => {
-        return (document.system as Record<string, unknown>).derivedName as string | undefined;
+      evaluate: (document: EvaluationDocument) => {
+        return document.system.derivedName;
       },
     };
 
@@ -65,8 +54,6 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
 
     abstract get localizedType (): string;
 
-    protected abstract nameContextBuilder: FormulaContextBuilder;
-
     override async update (updateData: Record<string, unknown>, options?: Partial<Omit<DatabaseUpdateOperation<null>, 'parent' | 'pack'>>): Promise<this | undefined> {
       const thisObject = this.toObject(false);
       // Ensure that formulas are evaluated before update to have updated data for preUpdate hooks and active effect application
@@ -75,8 +62,8 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
           thisObject,
           foundry.utils.expandObject(updateData),
           { inplace: false }
-        );
-        updateData[registration.impactedField] = registration.evaluate(evaluationContext as unknown as NonNullDocumentContext);
+        ) as EvaluationDocument;
+        updateData[registration.impactedField] = registration.evaluate(evaluationContext);
       }
 
       return await super.update(updateData, options);

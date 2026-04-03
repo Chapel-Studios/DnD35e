@@ -12,7 +12,7 @@
         :default-visibility="props.defaultVisibility"
         :read-only="props.readOnly"
       >
-        <slot name="controls" />
+        <slot name="controls" :editable="isFieldEditable" />
       </FieldControls>
     </div>
 
@@ -29,7 +29,7 @@
         :default-editability="props.defaultEditability"
         :default-visibility="props.defaultVisibility"
       >
-        <slot name="controls" />
+        <slot name="controls" :editable="isFieldEditable" />
       </FieldControls>
       {{ props.localizeHint === false ? props.hint : localize(props.hint) }}
     </p>
@@ -41,13 +41,14 @@
       :default-editability="props.defaultEditability"
       :default-visibility="props.defaultVisibility"
     >
-      <slot name="controls" />
+      <slot name="controls" :editable="isFieldEditable" />
     </FieldControls>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
   import FieldControls from './FieldControls.vue';
@@ -55,14 +56,12 @@
   import {
     everyoneVisibility,
     gmOnlyEditability,
-    gmOnlyVisibility,
-    normalEditability,
-    ownerPlusVisibility,
   } from './fieldPermissions.mjs';
 
   const props = defineProps<{
     label?: string; // localization key
     hint?: string; // localization key for hint text, or raw string if localizeHint=false
+    // TODO: when would I ever want to not localize the hint? Probably should be removed
     localizeHint?: boolean; // whether to localize hint (default: true)
     value?: string | number | null;
     // Field permissions
@@ -79,50 +78,25 @@
 
   const hasLabel = !!props.label;
   
-  const store = inject('documentSheetStore') as DocumentSheetStore;
-  const { isEditable, documentGetters } = store;
-  const { getFieldOverride } = documentGetters;
-  
-  // Safely access new store properties with fallbacks
-  const isGM = computed(() => store.isGM?.value ?? game.user.isGM);
-  const isOwnerOrGM = computed(() => store.isOwnerOrGM?.value ?? game.user.isGM);
+  const {
+    documentGetters: {
+      getIsFieldVisible,
+      getIsFieldEditable,
+    },
+    _storeUtils: {
+      resolveVisibility,
+      resolveEditability,
+    },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  // Get effective visibility: override > prop > 'everyone'
-  const effectiveVisibility = computed((): FieldVisibility => {
-    const override = props.fieldPath ? getFieldOverride(props.fieldPath) : undefined;
-    if (override?.visibility) return override.visibility;
-    if (props.defaultVisibility) return props.defaultVisibility;
-    return everyoneVisibility;
-  });
+  // Get effective visibility: override > prop > schema default > 'everyone'
+  const isFieldVisible = getIsFieldVisible(props.fieldPath, props.defaultVisibility);
 
-  // Get effective editability: override > prop > 'normal'
-  const effectiveEditability = computed((): FieldEditability => {
-    const override = props.fieldPath ? getFieldOverride(props.fieldPath) : undefined;
-    if (override?.editability) return override.editability;
-    if (props.defaultEditability) return props.defaultEditability;
-    return normalEditability;
-  });
-
-  // Determine if current user can see this field
-  const isFieldVisible = computed((): boolean => {
-    switch (effectiveVisibility.value) {
-    case everyoneVisibility: return true;
-    case ownerPlusVisibility: return isOwnerOrGM.value;
-    case gmOnlyVisibility: return isGM.value;
-    default: return true;
-    }
-  });
-
-  // Determine if current user can edit this field
-  const isFieldEditable = computed((): boolean => {
-    if (!isEditable.value || props.readOnly) return false;
-    if (effectiveEditability.value === gmOnlyEditability) return isGM.value;
-    return true;
-  });
+  const isFieldEditable = getIsFieldEditable(props.fieldPath, props.defaultEditability);
 
   // Restriction checks
-  const isVisibilityRestricted = computed(() => effectiveVisibility.value !== everyoneVisibility);
-  const isEditabilityRestricted = computed(() => effectiveEditability.value === gmOnlyEditability);
+  const isVisibilityRestricted = computed(() => resolveVisibility(props.fieldPath, props.defaultVisibility) !== everyoneVisibility);
+  const isEditabilityRestricted = computed(() => resolveEditability(props.fieldPath, props.defaultEditability) === gmOnlyEditability);
 
   // Form group classes
   const formGroupClasses = computed(() => ({

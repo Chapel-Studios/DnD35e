@@ -3,8 +3,9 @@
     <HasActiveEffectsNotification :field-path="props.fieldPath" />
     <!-- GM permission controls - only show when GM, in edit mode, and fieldPath provided -->
     <template v-if="showGMControls">
-      <!-- Visibility cycle (eye icon) -->
+      <!-- Visibility cycle (eye icon) - only shown for identifiable fields -->
       <button
+        v-if="showVisibilityButton"
         type="button"
         class="field-control visibility-control"
         :class="{ 'is-restricted': isVisibilityRestricted }"
@@ -29,7 +30,8 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import type { DocumentSheetStore, RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject, useSlots } from 'vue';
 
   import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
@@ -51,31 +53,44 @@
     readOnly?: boolean;
   }>();
 
-  const store = inject('documentSheetStore') as DocumentSheetStore;
-  const { documentGetters, documentActions } = store;
-  const { getFieldOverride, hasEffectsForField } = documentGetters;
-  const { setFieldOverride } = documentActions;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const {
+    isGM,
+    documentGetters: {
+      hasEffectsForField,
+    },
+    documentActions: {
+      setFieldOverride,
+    },
+    _storeUtils: {
+      resolveEditability,
+      resolveVisibility,
+      resolveFieldMeta,
+    },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
   const hasActiveEffects = hasEffectsForField(props.fieldPath);
 
+  // Resolve schema field metadata (null for non-schema fields)
+  const fieldMeta = computed(() => resolveFieldMeta(props.fieldPath));
+
   // Computed: should we show controls?
-  const isGM = computed(() => store.isGM?.value ?? game.user.isGM);
-  const isEditMode = computed(() => store.isEditMode?.value ?? true);
-  const showGMControls = computed(() => isEditMode.value && isGM.value && !!props.fieldPath && !props.readOnly);
+  // For schema fields: only show controls if the field supports overrides. For legacy fields: always show.
+  const hasOverrides = computed(() => fieldMeta.value ? fieldMeta.value.hasOverrides : true);
+  const showGMControls = computed(() => isEditViewMode.value && isGM.value && !!props.fieldPath && !props.readOnly && hasOverrides.value);
+  // Visibility button: only for identifiable fields (or legacy fields where we default to showing it)
+  const showVisibilityButton = computed(() => fieldMeta.value ? fieldMeta.value.identifiable : true);
   const hideEverything = computed(() => 
     (
-      !isEditMode.value
+      !isEditViewMode.value
       || (!showGMControls.value && !slots.default)
     )
     && !hasActiveEffects.value
   );
 
   // === VISIBILITY ===
-  // Effective visibility: override > prop default > 'everyone'
+  // Controls display: show this field's OWN override, not the merged restrictive result
   const effectiveVisibility = computed((): FieldVisibility => {
-    const override = props.fieldPath ? getFieldOverride(props.fieldPath) : undefined;
-    if (override?.visibility) return override.visibility;
-    if (props.defaultVisibility) return props.defaultVisibility;
-    return everyoneVisibility;
+    return resolveVisibility(props.fieldPath, props.defaultVisibility) ?? everyoneVisibility;
   });
 
   const isVisibilityRestricted = computed(() => effectiveVisibility.value !== everyoneVisibility);
@@ -104,17 +119,13 @@
     const order: FieldVisibility[] = [everyoneVisibility, ownerPlusVisibility, gmOnlyVisibility];
     const currentIndex = order.indexOf(effectiveVisibility.value);
     const nextVisibility = order[(currentIndex + 1) % order.length];
-    const current = getFieldOverride(props.fieldPath) ?? {};
-    await setFieldOverride(props.fieldPath, { ...current, visibility: nextVisibility });
+    await setFieldOverride(props.fieldPath, 'visibility', nextVisibility);
   };
 
   // === EDITABILITY ===
-  // Effective editability: override > prop default > 'normal'
+  // Controls display: show this field's OWN override, not the merged restrictive result
   const effectiveEditability = computed((): FieldEditability => {
-    const override = props.fieldPath ? getFieldOverride(props.fieldPath) : undefined;
-    if (override?.editability) return override.editability;
-    if (props.defaultEditability) return props.defaultEditability;
-    return normalEditability;
+    return resolveEditability(props.fieldPath, props.defaultEditability) ?? normalEditability;
   });
 
   const isEditabilityRestricted = computed(() => effectiveEditability.value === gmOnlyEditability);
@@ -131,8 +142,7 @@
   const toggleEditability = async () => {
     if (!props.fieldPath) return;
     const nextEditability: FieldEditability = effectiveEditability.value === normalEditability ? gmOnlyEditability : normalEditability;
-    const current = getFieldOverride(props.fieldPath) ?? {};
-    await setFieldOverride(props.fieldPath, { ...current, editability: nextEditability });
+    await setFieldOverride(props.fieldPath, 'editability', nextEditability);
   };
 </script>
 

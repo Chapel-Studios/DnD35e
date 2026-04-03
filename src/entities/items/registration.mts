@@ -1,9 +1,9 @@
 import { ItemConfig } from '@constants/config/item.mjs';
 import { ensureNameFormulaOnCreate, PossibleNameFormulaDocument } from '@ec/CoreMixin/index.mjs';
-import { registerIntellisenseSchema } from '@helpers/formulae/index.mjs';
+import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
 import { ItemProxyDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
 import { weaponItemType } from '@items/itemTypes.mjs';
-import { buildWeaponIntellisense, WeaponSheet, WeaponSystemModel } from '@items/weapon/index.mjs';
+import { WeaponSheet, WeaponSystemModel } from '@items/weapon/index.mjs';
 
 const registerItemSheets = () => {
   foundry.documents.collections.Items.unregisterSheet('core', foundry.appv1.sheets.ItemSheet);
@@ -27,8 +27,8 @@ export const registerItems = () => {
       [weaponItemType]: WeaponSystemModel,
     });
 
-    // Register intellisense schemas for formula resolution
-    registerIntellisenseSchema('Item', weaponItemType, buildWeaponIntellisense);
+    // Register familiar schemas for formula resolution
+    registerFamiliarSchema('Item', weaponItemType, (ctx?) => gatherAspectsFromSchema(WeaponSystemModel, ctx));
   });
 
   foundry.helpers.Hooks.once('setup', () => {

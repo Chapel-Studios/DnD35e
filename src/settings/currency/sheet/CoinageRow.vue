@@ -123,7 +123,7 @@
 
 <script setup lang="ts">
   import { stripSpecialCharacters } from '@helpers/stringHelpers.mjs';
-  import { SettingsStore } from '@settings/core/sheet/settingsStore.mjs';
+  import { SettingsStore, SettingsStoreSymbol } from '@settings/core/sheet/settingsStore.mjs';
   import { computed, inject, reactive, ref, watch } from 'vue';
 
   import { CoinageDefinition, CoinageVisibility, coinageVisibilityEveryone, coinageVisibilityGmOnly, coinageVisibilityGmSelect } from '../_types.mjs';
@@ -134,7 +134,7 @@
     measurement: {
       weightDisplayShortLabel,
     },
-  } = inject('settingsStore') as SettingsStore;
+  } = inject(SettingsStoreSymbol) as SettingsStore;
 
   const props = defineProps<{
     coinage: CoinageDefinition;

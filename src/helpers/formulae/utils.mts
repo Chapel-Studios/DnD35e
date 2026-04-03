@@ -2,27 +2,29 @@
  * FormulaFormGroup Utility Functions
  * Core parsing, validation, and resolution logic
  */
+import type { FormulaDataSource } from './FormulaData.mjs';
+import { FormulaData } from './FormulaData.mjs';
 import { buildContextFromFormula, DocumentContext } from './registry.mjs';
 import type {
+  AspectGroup,
   AutocompleteOption,
+  FamiliarSchema,
+  FieldAspect,
   FormulaFieldData,
+  FormulaToken,
   FormulaVariable,
-  IntellisenseObject,
-  IntellisenseProperty,
-  IntellisenseSchema,
-  Token,
   ValidationError,
 } from './types.mjs';
-import { isIntellisenseProperty } from './types.mjs';
+import { isFieldAspect } from './types.mjs';
 
 /**
  * Regex matching formula variables:
- *   #context.property.nested       — standard intellisense path
+ *   #context.property.nested       — standard familiar path
  *   #context.'raw.dotted.path'     — custom / arbitrary document path (closed quote)
  *   #context.'partial.text         — unclosed quote, no spaces (still typing)
  *
  * The optional quoted segment (single-quotes) lets users reference any
- * document path that isn't exposed through the intellisense shortcuts.
+ * document path that isn't exposed through the familiar shortcuts.
  */
 const VARIABLE_REGEX = /#\w+(?:\.(?:'[^']*'|'[^ ']*|\w+))*/g;
 
@@ -30,8 +32,8 @@ const VARIABLE_REGEX = /#\w+(?:\.(?:'[^']*'|'[^ ']*|\w+))*/g;
  * Parse a formula into tokens (text and variables)
  * Handles #contextName.property.nested.path, #context.'raw.path' and partial syntax
  */
-export function parseFormula(formula: string): Token[] {
-  const tokens: Token[] = [];
+export function parseFormula(formula: string): FormulaToken[] {
+  const tokens: FormulaToken[] = [];
   const regex = new RegExp(VARIABLE_REGEX.source, 'g');
   let lastIndex = 0;
   let match;
@@ -149,19 +151,19 @@ export function extractVariables(formula: string): FormulaVariable[] {
 }
 
 /**
- * Resolve all variables in a formula against document data using intellisense accessPaths.
+ * Resolve all variables in a formula against document data using familiar accessPaths.
  *
- * For each #context.path variable, looks up the IntellisenseProperty in the schema
+ * For each #context.path variable, looks up the FieldAspect in the schema
  * to find its accessPath, then reads that path from the document data.
  *
  * @param formula The formula string with #context.path variables
- * @param intellisenseContext The intellisense schema (defines accessPaths)
+ * @param familiarSchema The familiar schema (defines accessPaths)
  * @param documentDataMap Maps context names to their document data objects
  * @returns Formula with variables replaced by their resolved values
  */
 export function resolveFormula(
   formula: string,
-  intellisenseContext: IntellisenseSchema,
+  familiarSchema: FamiliarSchema,
   documentDataMap: Record<string, DocumentContext>
 ): string {
   let result = formula;
@@ -185,8 +187,8 @@ export function resolveFormula(
       continue;
     }
 
-    // Find the IntellisenseProperty to get the accessPath
-    const prop = getIntellisenseProperty(intellisenseContext, variable.context, variable.path);
+    // Find the FieldAspect to get the accessPath
+    const prop = getFieldAspect(familiarSchema, variable.context, variable.path);
     if (!prop) continue;
 
     const value = getNestedValue(docData, prop.accessPath);
@@ -216,20 +218,20 @@ export function getNestedValue(obj: object, dottedPath: string): unknown {
 }
 
 /**
- * Factory for IntellisenseProperty that optionally resolves the value
+ * Factory for FieldAspect that optionally resolves the value
  * from a context object (live document or plain object) using the accessPath.
  *
  * When `context` is provided, the value at `accessPath` is read (including
  * any custom getters) and coerced to the property's type. Without context,
  * only the schema shape is returned (value remains undefined).
  */
-export function intellisenseProp<TContext extends DocumentContext>(
+export function fieldAspect<TContext extends DocumentContext>(
   display: string,
   type: 'string' | 'number',
   accessPath: string,
   context?: TContext
-): IntellisenseProperty {
-  const prop: IntellisenseProperty = { display, type, accessPath };
+): FieldAspect {
+  const prop: FieldAspect = { display, type, accessPath };
   if (context) {
     const raw = getNestedValue(context, accessPath);
     if (raw !== undefined && raw !== null) {
@@ -240,9 +242,9 @@ export function intellisenseProp<TContext extends DocumentContext>(
 }
 
 /**
- * Walk the intellisense tree to find the IntellisenseProperty at a given path.
+ * Walk the familiar tree to find the FieldAspect at a given path.
  */
-function getIntellisenseProperty(context: IntellisenseSchema, contextName: string, path: string[]): IntellisenseProperty | null {
+function getFieldAspect(context: FamiliarSchema, contextName: string, path: string[]): FieldAspect | null {
   let contextSchema = context[contextName];
 
   if (!contextSchema) {
@@ -258,16 +260,16 @@ function getIntellisenseProperty(context: IntellisenseSchema, contextName: strin
     current = (current as Record<string, unknown>)[key];
   }
 
-  return isIntellisenseProperty(current) ? current : null;
+  return isFieldAspect(current) ? current : null;
 }
 
 /**
- * Get the value of a property from the intellisense context.
+ * Get the value of a property from the familiar context.
  * Uses accessPath to read the value from the document data if available.
- * Falls back to the static value on the IntellisenseProperty.
+ * Falls back to the static value on the FieldAspect.
  */
-export function getPropertyValue(context: IntellisenseSchema, contextName: string, path: string[]): string | number | null {
-  const prop = getIntellisenseProperty(context, contextName, path);
+export function getPropertyValue(context: FamiliarSchema, contextName: string, path: string[]): string | number | null {
+  const prop = getFieldAspect(context, contextName, path);
   if (!prop) return null;
   return prop.value ?? null;
 }
@@ -275,10 +277,10 @@ export function getPropertyValue(context: IntellisenseSchema, contextName: strin
 /**
  * Validate all variables in a formula
  * @param formula The formula string
- * @param context The intellisense context
+ * @param context The familiar context
  * @returns Array of validation errors (empty if valid)
  */
-export function validateFormula(formula: string, context: IntellisenseSchema): ValidationError[] {
+export function validateFormula(formula: string, context: FamiliarSchema): ValidationError[] {
   if (!context) return [];
   const errors: ValidationError[] = [];
   const variables = extractVariables(formula);
@@ -296,10 +298,10 @@ export function validateFormula(formula: string, context: IntellisenseSchema): V
 /**
  * Validate a single variable
  * @param variable The FormulaVariable to validate
- * @param context The intellisense context
+ * @param context The familiar context
  * @returns ValidationError or null if valid
  */
-function validateVariable(variable: FormulaVariable, context: IntellisenseSchema): ValidationError | null {
+function validateVariable(variable: FormulaVariable, context: FamiliarSchema): ValidationError | null {
   // Custom quoted path — trusted, skip all validation, just flag as warning
   if (variable.customAccessPath !== undefined) {
     variable.isValid = true;
@@ -346,7 +348,7 @@ function validateVariable(variable: FormulaVariable, context: IntellisenseSchema
     };
   }
 
-  let current: unknown = (contextSchema as { properties: IntellisenseObject }).properties;
+  let current: unknown = (contextSchema as { properties: AspectGroup }).properties;
   let pathTraversed: string[] = [];
 
   for (const key of variable.path) {
@@ -366,7 +368,7 @@ function validateVariable(variable: FormulaVariable, context: IntellisenseSchema
   }
 
   // The path must resolve to a leaf property, not an intermediate object
-  if (!isIntellisenseProperty(current)) {
+  if (!isFieldAspect(current)) {
     return {
       variable: variable.variable,
       context: variable.context,
@@ -385,7 +387,7 @@ function validateVariable(variable: FormulaVariable, context: IntellisenseSchema
  * Get autocomplete options for the current context and path
  * Provides intelligent filtering and sorting
  */
-export function getAutocompleteOptions(currentText: string, context: IntellisenseSchema): AutocompleteOption[] {
+export function getAutocompleteOptions(currentText: string, context: FamiliarSchema): AutocompleteOption[] {
   if (!context) return [];
   // Remove leading # if present
   const text = currentText.startsWith('#') ? currentText.substring(1) : currentText;
@@ -478,7 +480,7 @@ export function getAutocompleteOptions(currentText: string, context: Intellisens
     // Match partial key (case-insensitive)
     if (!key.toLowerCase().startsWith(partialKey.toLowerCase())) continue;
 
-    if (isIntellisenseProperty(value)) {
+    if (isFieldAspect(value)) {
       options.push({
         path: key,
         display: value.display || key,
@@ -539,10 +541,10 @@ function escapeHTML(text: string): string {
 }
 
 /**
- * Check whether a partial path segment matches any intellisense option.
+ * Check whether a partial path segment matches any familiar option.
  * Used to decide if an in-progress variable should be blue (has matches) or red (no matches).
  */
-function hasPartialIntellisenseMatch(context: IntellisenseSchema, contextName: string, path: string[]): boolean {
+function hasPartialAspectMatch(context: FamiliarSchema, contextName: string, path: string[]): boolean {
   if (!context || path.length === 0) return false;
 
   let contextSchema = context[contextName];
@@ -572,7 +574,7 @@ function hasPartialIntellisenseMatch(context: IntellisenseSchema, contextName: s
  * Complete when followed by a space. At end of formula we always assume
  * the user is still typing — the value is validated on commit anyway.
  */
-function isVariableComplete(token: Token, formula: string): boolean {
+function isVariableComplete(token: FormulaToken, formula: string): boolean {
   if (token.endIndex < formula.length) {
     return formula[token.endIndex] === ' ';
   }
@@ -581,9 +583,9 @@ function isVariableComplete(token: Token, formula: string): boolean {
 
 export function renderFormulaHTML(
   formula: string,
-  tokens: Token[],
+  tokens: FormulaToken[],
   errors: ValidationError[],
-  intellisenseContext?: IntellisenseSchema
+  familiarSchema?: FamiliarSchema
 ): string {
   let variableIndex = 0;
 
@@ -618,20 +620,20 @@ export function renderFormulaHTML(
       // No validation error → exact match → blue + tooltip (both complete and in-progress)
       if (!matchingError) {
         let tooltip = '';
-        if (intellisenseContext) {
+        if (familiarSchema) {
           const parts = token.value.substring(1).split('.');
           const contextName = parts[0];
           const path = parts.slice(1);
           if (path.length > 0) {
-            const value = getPropertyValue(intellisenseContext, contextName, path);
+            const value = getPropertyValue(familiarSchema, contextName, path);
             if (value !== null && value !== undefined) {
               tooltip = escapeHTML(String(value));
             } else {
-              const prop = getIntellisenseProperty(intellisenseContext, contextName, path);
+              const prop = getFieldAspect(familiarSchema, contextName, path);
               if (prop) tooltip = escapeHTML(prop.accessPath);
             }
           } else {
-            const schema = intellisenseContext[contextName];
+            const schema = familiarSchema[contextName];
             tooltip = schema ? `Context: ${escapeHTML(contextName)}` : '';
           }
         }
@@ -646,12 +648,12 @@ export function renderFormulaHTML(
         return `<span class="formula-variable is-error" title="Invalid variable" data-var-index="${varIdx}" data-start="${token.startIndex}" data-end="${token.endIndex}">${escapeHTML(token.value)}</span>`;
       }
 
-      // In-progress + error: check if last segment partially matches intellisense
-      if (intellisenseContext && matchingError.severity === 'error') {
+      // In-progress + error: check if last segment partially matches familiar
+      if (familiarSchema && matchingError.severity === 'error') {
         const body = token.value.substring(1);
         const { context: ctxName, path } = parseVariableSegments(body);
 
-        if (path.length > 0 && hasPartialIntellisenseMatch(intellisenseContext, ctxName, path)) {
+        if (path.length > 0 && hasPartialAspectMatch(familiarSchema, ctxName, path)) {
           // Partial match → all blue, no tooltip (still typing)
           return `<span class="formula-variable" data-var-index="${varIdx}" data-start="${token.startIndex}" data-end="${token.endIndex}">${escapeHTML(token.value)}</span>`;
         }
@@ -678,14 +680,14 @@ export function renderFormulaHTML(
 /**
  * Find a token at a specific position in the formula
  */
-export function getTokenAtPosition(tokens: Token[], position: number): Token | null {
+export function getTokenAtPosition(tokens: FormulaToken[], position: number): FormulaToken | null {
   return tokens.find(t => position >= t.startIndex && position <= t.endIndex) ?? null;
 }
 
 /**
  * Get the position of a variable token within the tokens array
  */
-export function getVariableTokenIndex(tokens: Token[], position: number): number {
+export function getVariableTokenIndex(tokens: FormulaToken[], position: number): number {
   let varIndex = 0;
   for (let i = 0; i < tokens.length; i++) {
     if (tokens[i].type === 'variable') {
@@ -701,7 +703,7 @@ export function getVariableTokenIndex(tokens: Token[], position: number): number
 /**
  * Get all variable tokens from a formula
  */
-export function getVariableTokens(tokens: Token[]): Token[] {
+export function getVariableTokens(tokens: FormulaToken[]): FormulaToken[] {
   return tokens.filter(t => t.type === 'variable');
 }
 
@@ -752,32 +754,30 @@ export function getCaretCoordinates(element: HTMLElement, offset: number): { top
 // ── Name-formula helpers ────────────────────────────────────────────
 
 /**
- * Hydrate an IntellisenseContext with live values from document data.
+ * Hydrate a FamiliarContext with live values from document data.
  *
- * Walks every IntellisenseProperty in the schema tree and fills in its
+ * Walks every FieldAspect in the schema tree and fills in its
  * `value` field by reading the `accessPath` from the matching document
  * data object.  Mutates the context in place and returns it for chaining.
  *
  * @param context  The schema-only context (from buildContextFromFormula)
  * @param dataMap  Maps context names (e.g. "self", "owner") to plain objects
  */
-/** Build a FormulaFieldData from a plain name string (no variable references, just literal text). */
-export const nameToFormulaData = (name: string): FormulaFieldData => ({
-  formula: name,
-  contexts: {},
-});
+/** Build a FormulaDataSource from a plain name string (no variable references, just literal text). */
+export const nameToFormulaData = (name: string): FormulaDataSource => FormulaData.toSource(name);
 
 /** Ensures that systemData has a nameFormula value, using the documentName as a fallback. */
 export const ensureNameFormula = (systemData: Record<string, any>, documentName: string): void => {
-  if (!systemData.nameFormula) {
-    systemData.nameFormula = nameToFormulaData(documentName);
+  const nf = systemData.nameFormula;
+  if (nf && !nf.formula) {
+    nf.formula = documentName;
   }
 };
 
 /**
  * Evaluate a formula field by resolving #context.path variables.
  *
- * Uses the stored contexts map to look up the correct intellisense schema
+ * Uses the stored contexts map to look up the correct familiar schema
  * for each context, then resolves variables via their accessPaths against
  * the live document data.
  *
@@ -792,8 +792,8 @@ export const resolveFormulaField = (
 ): string => {
   if (!formulaData?.formula) return fallbackName;
 
-  const intellisenseContext = buildContextFromFormula(formulaData);
-  return resolveFormula(formulaData.formula, intellisenseContext, documentDataMap);
+  const familiarSchema = buildContextFromFormula(formulaData);
+  return resolveFormula(formulaData.formula, familiarSchema, documentDataMap);
 };
 
 /**

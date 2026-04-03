@@ -1,117 +1,69 @@
 <template>
-  <div v-if="show" class="name-field">
-    <!-- Display mode -->
-    <div v-if="!isEditable" class="flexrow">
+  <div v-if="showEditor" class="name-field">
+    <!--  see display node memo bellow -->
+    <div v-if="!isEditViewMode" class="flexrow">
       <div class="flexcol">
-        <DocumentName :value="displayValueUnwrapped" />
+        <DocumentName :value="displayValue" />
       </div>
     </div>
 
-    <!-- Edit mode with FormulaFormGroup (supports both text and formulas) -->
     <div v-else class="name-formula-inline">
       <FormulaFormGroup
-        :value="editValueUnwrapped"
-        :contexts="nameFormulaIntellisenseSchema"
+        :formula-data="formulaData"
         :onUpdate="onUpdate"
-        :field-path="props.fieldPath"
-      />
+        :field-path="fieldPath"
+      >
+      </FormulaFormGroup>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-  import { DocumentName } from '@ec/CoreMixin/index.mjs';
-  import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/useDocumentSheetStore.mjs';
-  import { encodeContextType, FormulaFormGroup, hasIntellisenseSchema } from '@helpers/formulae/index.mjs';
-  import type { FormulaFieldData } from '@helpers/formulae/types.mjs';
-  import type { ComputedRef, Ref } from 'vue';
+/**
+ * Display Node memo:
+ * We are using our own display mode to hide formula familiar hints when not editing
+ * TODO: maybe this should be refactored into Formula form group?
+ * Do we really want to show context hints when not editing a formula?
+ * Maybe we want to show them when hovering the display value?
+ * We tried setting up a read only slot but there were a lot of styling concerns so was put off as a todo
+ */
+  import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
+  import type { FormulaData } from '@helpers/formulae/FormulaData.mjs';
+  import { FormulaFormGroup } from '@helpers/formulae/index.mjs';
   import { computed, inject } from 'vue';
 
-  interface Props {
-    displayValue: string | ComputedRef<string> | Ref<string>;
-    editValue: string | ComputedRef<string> | Ref<string>;
-    fieldPath: string;
-    show?: ComputedRef<boolean> | Ref<boolean> | boolean;
-  }
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '../index.mjs';
+  import DocumentName from './DocumentName.vue';
 
-  const props = withDefaults(defineProps<Props>(), {
-    show: true,
-  });
-
+  const fieldPath = 'system.nameFormula';
   const {
-    isEditable,
-    intellisense: { nameFormulaIntellisenseSchema },
-    documentActions: { updateDocument },
-    // documentGetters: {
-    //   type,
-    //   documentName,
-    // }
-  } = inject('documentSheetStore') as DocumentSheetStore;
+    documentActions: { getDirectFieldUpdater },
+    documentGetters: { name, getIsFieldVisible },
+    _storeUtils: { getProperty },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+  const {
+    isEditViewMode,
+    isIdentifiedViewMode,
+  } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
-  /**
-   * Build the encoded context type map for saving with the formula.
-   * Maps context names → compound keys like "Item.weapon".
-   */
-  const encodedContexts = computed((): Record<string, string> => {
-    const contexts: Record<string, string> = {};
-    // const documentType = documentName.value;
-    // const subtype = type.value;
+  const formulaDataRef = getProperty<FormulaData | null>(fieldPath);
+  const formulaData = computed(() => formulaDataRef.value ?? null);
 
-    // // Self — the document being edited
-    // if (documentType && subtype && hasIntellisenseSchema(documentType, subtype)) {
-    //   contexts.self = encodeContextType(documentType, subtype);
-    // }
-
-    Object.entries(nameFormulaIntellisenseSchema.value?.additionalContexts || {})
-      .forEach(([key, ctx]) => {
-        if (hasIntellisenseSchema(ctx.documentType, ctx.subtype)) {
-          contexts[key] = encodeContextType(ctx.documentType, ctx.subtype);
-        }
-      });
-
-    // // Owner — always present; uses the parent actor's type or defaults to 'character'
-    // const actor = (doc as any).actor;
-    // const actorType = actor?.type ?? 'character';
-    // if (hasIntellisenseSchema('Actor', actorType)) {
-    //   contexts.owner = encodeContextType('Actor', actorType);
-    // }
-
-    return contexts;
+  const displayValue = computed(() => name.value || '—');
+  const showEditor = computed((): boolean => {
+    if (!isEditViewMode.value) return false;
+    return getIsFieldVisible(fieldPath).value;
   });
 
   /**
-   * Save the formula as FormulaFieldData (formula + contexts).
-   * Uses updateDocument to trigger name re-evaluation.
+   * Save the formula string. View mode determines which sub-field is written:
+   * - identified view → system.nameFormula.formula
+   * - unidentified view → system.nameFormula.unidentifiedFormula
    */
   const onUpdate = (formula: string) => {
-    const formulaData: FormulaFieldData | null = formula.trim()
-      ? { formula, contexts: encodedContexts.value }
-      : null;
-    return updateDocument({ [props.fieldPath]: formulaData } as any);
+    const subField = isIdentifiedViewMode.value ? 'formula' : 'unidentifiedFormula';
+    return getDirectFieldUpdater(`${fieldPath}.${subField}`)(formula || null);
   };
-
-  const show = computed(() => {
-    if (typeof props.show === 'boolean') return props.show;
-    return (props.show as any).value;
-  });
-
-  const displayValueUnwrapped = computed(() => {
-    let val = props.displayValue;
-    if (typeof val === 'object' && val !== null && 'value' in val) {
-      val = (val as any).value;
-    }
-    if (val === undefined || val === null || val === '') return '—';
-    return String(val);
-  });
-
-  const editValueUnwrapped = computed(() => {
-    let val = props.editValue;
-    if (typeof val === 'object' && val !== null && 'value' in val) {
-      val = (val as any).value;
-    }
-    if (val === undefined || val === null) return '';
-    return String(val);
-  });
 </script>
 
 <style scoped lang="scss">

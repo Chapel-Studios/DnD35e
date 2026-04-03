@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
   import { stripSpecialCharacters } from '@helpers/stringHelpers.mjs';
-  import { SettingsStore } from '@settings/core/sheet/settingsStore.mjs';
+  import { SettingsStore, SettingsStoreSymbol } from '@settings/core/sheet/settingsStore.mjs';
   import { SYSTEM_ID } from '@settings/shared.mjs';
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
   import { computed, inject, ref, watch } from 'vue';
@@ -86,7 +86,7 @@
       convertToStoredWeight,
       convertToLocalizedWeight,
     },
-  } = inject('settingsStore') as SettingsStore;
+  } = inject(SettingsStoreSymbol) as SettingsStore;
 
   const props = defineProps<{
     context: VueSettingsContext<CurrencyConfig>;

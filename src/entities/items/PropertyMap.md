@@ -2,6 +2,10 @@
 
 A unified reference for all item components, roll‑ups, and concrete item compositions in the system.
 
+> **Legend**: ✅ = Implemented &nbsp;|&nbsp; 🔲 = Planned (not yet in codebase)
+>
+> Fields wrapped with `Dnd35eField` are marked with `🔷` — they store data as `{ value, unidentifiedValue, overrides }`, not scalars.
+
 ```mermaid
 erDiagram
 
@@ -15,15 +19,14 @@ erDiagram
         string value
     }
 
-    BaseItem {
+    BaseItem["BaseItem ✅"] {
         ItemOrigin origin
         ItemDescription description
 
         string version
         string uniqueId
-
-        boolean isNameFromFormula
-        string nameFormula
+        string derivedName
+        FormulaData nameFormula
 
         boolean isPsionic
         boolean isEpic
@@ -31,63 +34,27 @@ erDiagram
     ItemOrigin  ||--o{ BaseItem   : "includes"
     ItemDescription ||--o{ BaseItem   : "includes"
 
-    UnidentifiedInfo {
-        string unidentifiedName
-        string unidentifiedDescription
-        number unidentifiedPrice
-        boolean isIdentified
-        string unidentifiedNameFormula
-        boolean isUnidentifiedNameFromFormula
-    }
-
-    Identifiable {
-        UnidentifiedInfo unidentifiedInfo
-
+    Identifiable["Identifiable ✅"] {
         boolean isIdentifiable
-    }
-    UnidentifiedInfo||--o{ Identifiable : "rollup"
-
-    HasMaterials {
-        string[] materials
+        boolean isIdentified
     }
 
-    HP {
-        number value
-        number max
+    HP["HP ✅"] {
+        number_D value
+        number_D max
     }
 
-    Damagable {
-        HP hp
-        number hardness
-    }
-    HP  ||--o{ Damagable   : "includes"
 
-    HasChanges {
-        ChangeFlag[] activeChanges
-        %% this is actually for data not source but worth mapping out
-    }
-    
-    GrantsChanges {
-        ChangeFlag[] grantedChanges
-    }
-
-    Changes {
-        rollup GrantsChanges
-        rollup HasChanges
-    }
-    HasChanges||--o{ Changes : "rollup"
-    GrantsChanges||--o{ Changes : "rollup"
-
-    Enhancable {
+    Enhancable["Enhancable 🔲"] {
         EnhancementData[] enhancements
     }
 
-    Cursable {
+    Cursable["Cursable 🔲"] {
         boolean isCursed
         boolean isCurseActive
     }
 
-    Illuminable {
+    Illuminable["Illuminable 🔲"] {
         string color
         number radius
         number opacity
@@ -100,32 +67,32 @@ erDiagram
         boolean emitLight
     }
 
-    Activation {
+    Activation["Activation 🔲"] {
         number cost
         string type
     }
 
-    Duration {
+    Duration["Duration 🔲"] {
         number value
         string units
     }
 
-    Target {
+    Target["Target 🔲"] {
         string value
     }
 
-    Range {
+    Range["Range 🔲"] {
         number value
         string units
     }
 
-    Recharge {
+    Recharge["Recharge 🔲"] {
         boolean enabled
         string formula
         number current
     }
 
-    Uses {
+    Uses["Uses 🔲"] {
         number value
         number max
         string per
@@ -140,7 +107,7 @@ erDiagram
         boolean canBeLinked
     }
 
-    MeasureTemplate {
+    MeasureTemplate["MeasureTemplate 🔲"] {
         string type
         string size
         boolean overrideColor
@@ -149,12 +116,12 @@ erDiagram
         string customTexture
     }
 
-    DamageParts {
+    DamageParts["DamageParts 🔲"] {
         string[] parts
         string[] alternativeParts
     }
 
-    AbilityData {
+    AbilityData["AbilityData 🔲"] {
         string attack
         string damage
         number damageMult
@@ -164,7 +131,7 @@ erDiagram
         boolean vsTouchAc
     }
 
-    SaveData {
+    SaveData["SaveData 🔲"] {
         number dc
         string description
         string ability
@@ -173,7 +140,7 @@ erDiagram
         string dcAutoAbility
     }
 
-    MetamagicFeats {
+    MetamagicFeats["MetamagicFeats 🔲"] {
         boolean maximized
         boolean empowered
         boolean enlarged
@@ -183,14 +150,14 @@ erDiagram
         boolean widened
     }
 
-    RollTableDraw {
+    RollTableDraw["RollTableDraw 🔲"] {
         string formula
         string name
         string pack
         string id
     }
 
-    Action {
+    Action["Action 🔲"] {
         MeasureTemplate measureTemplate
         string actionType
         string attackBonus
@@ -222,7 +189,7 @@ erDiagram
     MetamagicFeats  ||--o{ Action : "includes"
     RollTableDraw   ||--o{ Action : "includes"
 
-    Activatable {
+    Activatable["Activatable 🔲"] {
         Action action
         Activation activation
         Duration duration
@@ -241,75 +208,53 @@ erDiagram
     Recharge         ||--o{ Activatable : "includes"
     Uses             ||--o{ Activatable : "includes"
 
-    Physical {
+    Physical["Physical ✅"] {
         rollup Identifiable
-        rollup Damagable
-        rollup HasChanges
         rollup Cursable
         rollup Illuminable
         rollup Activatable
 
-        number bulk
-        string size
-        string equippedState
-
-        number quantity
-        number weight
-        boolean isWeightlessInContainer
-        boolean isWeightlessWhenCarried
+        HP hp
+        number_D hardness
+        number_D quantity
+        number_D weight
         boolean isCarried
-        number price
-        number resalePrice
-        number brokenResalePrice
-        boolean isFullResalePrice
+        Size_D size
+        PriceData_D price
+        PriceData resalePrice
+        PriceData brokenResalePrice
+        boolean isBroken
         string containerId
-    }
-    Identifiable    ||--o{ Physical   : "rollup"
-    Damagable       ||--o{ Physical   : "rollup"
-    HasChanges       ||--o{ Physical   : "rollup"
-    Cursable       ||--o{ Physical   : "rollup"
-    Illuminable       ||--o{ Physical   : "rollup"
-    Activatable       ||--o{ Physical   : "rollup"
-
-    Material {
-        rollup BaseItem
-        rollup Identifiable
-        rollup GrantsChanges
-
-        number priceDifference
+        %% Derived
+        number effectiveWeight
         number magicEquivalency
-        number bonusHardness
-        number bonusHpPerInch
         string[] damageReductionTypes
     }
-    BaseItem        ||--o{ Material   : "rollup"
-    Identifiable    ||--o{ Material   : "rollup"
-    Changes    ||--o{ Material   : "rollup"
+    Identifiable    ||--o{ Physical   : "rollup"
+    Cursable        ||--o{ Physical   : "rollup"
+    Illuminable     ||--o{ Physical   : "rollup"
+    Activatable     ||--o{ Physical   : "rollup"
+    HP              ||--o{ Physical   : "includes"
 
-    Equippable {
+    Equippable["Equippable ✅"] {
         rollup Physical
-        rollup HasMaterials
-        rollup Enhancable
-        rollup Changes
 
         boolean isEquipped
-        string slot
+        EquipSlot[] equippedSlotIds
         boolean isMelded
-        Size designedForSize
+        Size_D designedForSize
+        boolean isWeightlessWhenEquipped
     }
     Physical        ||--o{ Equippable   : "rollup"
-    HasMaterials    ||--o{ Equippable   : "rollup"
-    Enhancable      ||--o{ Equippable   : "rollup"
-    Changes      ||--o{ Equippable   : "rollup"
 
-    Equipment {
+    Equipment["Equipment 🔲"] {
         rollup BaseItem
         rollup Equippable
     }
     BaseItem        ||--o{ Equipment   : "rollup"
     Equippable      ||--o{ Equipment   : "rollup"
 
-    ArmorStats {
+    ArmorStats["ArmorStats 🔲"] {
         number ac
         number dexModifierCap
         number armorCheckPenalty
@@ -317,7 +262,7 @@ erDiagram
         boolean isMasterworkArmor
     }
 
-    Armor {
+    Armor["Armor 🔲"] {
         rollup BaseItem
         rollup Equippable
         rollup ArmorStats
@@ -326,79 +271,58 @@ erDiagram
     Equippable      ||--o{ Armor   : "rollup"
     ArmorStats      ||--o{ Armor   : "rollup"
 
-    WeaponDamage {
-        string damageRoll
-        string damageType
-        string critRange
-        number critMultiplier
-        number rangeIncrement
+    WeaponDamage["WeaponDamage ✅"] {
+        string_D damageRoll
+        string_D damageType
+        string_D critRange
+        number_D critMultiplier
+        number_D rangeIncrement
         string attackFormula
         string damageFormula
-        string bonusVsAlignment
     }
 
-    WeaponProperties {
-        boolean Blocking
-        boolean Brace
-        boolean Double
-        boolean Disarm
-        boolean Finesse
-        boolean Fragile
-        boolean Grapple
-        boolean Improvised
-        boolean Incorporeal
-        boolean Monk
-        boolean NonLethal
-        boolean Performance
-        boolean Reach
-        boolean Returning
-        boolean Sunder
-        boolean Thrown
-        boolean Trip
-    }
+    Weapon["Weapon ✅"] {
+        rollup BaseItem
+        rollup Equippable
 
-    WeaponStats {
+        boolean isMasterwork
+        WeaponType_D weaponType
+        WeaponSubtype_D weaponSubtype
+        WeaponBaseType_D weaponBaseType
         WeaponDamage weaponDamage
-        WeaponProperties[] weaponProperties
-        boolean isMasterworkWeapon
-        string weaponType
-        string weaponSubtype
-        string weaponBaseType
         string attackNotes
         string damageNotes
-        string damageType
     }
-    WeaponDamage    ||--o{ WeaponStats   : "includes"
-    WeaponProperties    ||--o{ WeaponStats   : "includes"
-
-    Weapon {
-        rollup BaseItem
-        rollup Equippable
-        rollup WeaponStats
-    }    
     BaseItem        ||--o{ Weapon   : "rollup"
     Equippable      ||--o{ Weapon   : "rollup"
-    WeaponStats    ||--o{ Weapon   : "rollup"
+    WeaponDamage    ||--o{ Weapon   : "includes"
 
-    Shield {
+    Shield["Shield 🔲"] {
         rollup BaseItem
         rollup Equippable
-        rollup WeaponStats
         rollup ArmorStats
+
+        boolean isMasterwork
+        WeaponType_D weaponType
+        WeaponSubtype_D weaponSubtype
+        WeaponBaseType_D weaponBaseType
+        WeaponDamage weaponDamage
+        string attackNotes
+        string damageNotes
     }
     BaseItem        ||--o{ Shield   : "rollup"
     Equippable      ||--o{ Shield   : "rollup"
-    WeaponStats      ||--o{ Shield   : "rollup"
+    WeaponDamage    ||--o{ Shield   : "includes"
     ArmorStats      ||--o{ Shield   : "rollup"
 
-    ConsumableUses {
+    ConsumableUses["ConsumableUses 🔲"] {
         number value
         number max
         string maxFormula
         string per
     }
 
-    Consumable {
+    Consumable["Consumable 🔲"] {
         rollup BaseItem
         rollup Physical
 
@@ -411,7 +335,7 @@ erDiagram
     Physical        ||--o{ Consumable   : "rollup"
     ConsumableUses            ||--o{ Consumable   : "includes"
 
-    BonusAmmo {
+    BonusAmmo["BonusAmmo 🔲"] {
         string attack
         string enhancement
         string damage
@@ -420,10 +344,9 @@ erDiagram
         string attackNote
     }
 
-    Loot {
+    Loot["Loot 🔲"] {
         rollup BaseItem
         rollup Physical
-        rollup HasMaterials
 
         string subType
         BonusAmmo bonusAmmo
@@ -433,15 +356,14 @@ erDiagram
     }
     BaseItem     ||--o{ Loot : "rollup"
     Physical     ||--o{ Loot : "rollup"
-    HasMaterials ||--o{ Loot : "rollup"
     BonusAmmo ||--o{ Loot : "includes"
 
-    NameExtension {
+    NameExtension["NameExtension 🔲"] {
         string prefix
         string suffix
     }
 
-    WeaponData {
+    WeaponData["WeaponData 🔲"] {
         string damageRoll
         string damageType
         string damageTypeId
@@ -450,9 +372,8 @@ erDiagram
         string alignment
     }
 
-    Enhancement {
+    Enhancement["Enhancement 🔲"] {
         rollup BaseItem
-        rollup HasChanges
         rollup Activatable
 
         string enhancementType
@@ -475,12 +396,12 @@ erDiagram
         string[] allowedTypes
     }
     BaseItem    ||--o{ Enhancement : "rollup"
-    HasChanges  ||--o{ Enhancement : "rollup"
+
     Activatable ||--o{ Enhancement : "rollup"
     NameExtension ||--o{ Enhancement : "includes"
     WeaponData    ||--o{ Enhancement : "includes"
 
-    DamageType {
+    DamageType["DamageType 🔲"] {
         rollup BaseItem
 
         string damageType
@@ -491,9 +412,8 @@ erDiagram
     }
     BaseItem ||--o{ DamageType : "rollup"
 
-    Race {
+    Race["Race 🔲"] {
         rollup BaseItem
-        rollup Changes
 
         string creatureType
         number levelAdjustment
@@ -502,9 +422,9 @@ erDiagram
         string[] disabledAbilities
     }
     BaseItem ||--o{ Race : "rollup"
-    Changes  ||--o{ Race : "rollup"
 
-    Timeline {
+
+    Timeline["Timeline 🔲"] {
         number elapsed
         number total
         string formula
@@ -513,7 +433,7 @@ erDiagram
         boolean tickOnEnd
     }
 
-    DamagePool {
+    DamagePool["DamagePool 🔲"] {
         number current
         number max
         string formula
@@ -521,14 +441,13 @@ erDiagram
         boolean deleteOnDamagePoolEmpty
     }
 
-    Shapechange {
+    Shapechange["Shapechange 🔲"] {
         object source
         string type
     }
 
-    Buff {
+    Buff["Buff 🔲"] {
         rollup BaseItem
-        rollup GrantsChanges
         rollup Activatable
         rollup Illuminable
 
@@ -547,16 +466,15 @@ erDiagram
         boolean hideFromToken
     }
     BaseItem      ||--o{ Buff : "rollup"
-    GrantsChanges ||--o{ Buff : "rollup"
+
     Activatable   ||--o{ Buff : "rollup"
     Illuminable   ||--o{ Buff : "rollup"
     Timeline    ||--o{ Buff : "includes"
     DamagePool  ||--o{ Buff : "includes"
     Shapechange ||--o{ Buff : "includes"
 
-    Aura {
+    Aura["Aura 🔲"] {
         rollup BaseItem
-        rollup GrantsChanges
 
         number level
         number range
@@ -572,19 +490,19 @@ erDiagram
         boolean hideFromToken
     }
     BaseItem     ||--o{ Aura : "rollup"
-    GrantsChanges||--o{ Aura : "rollup"
 
-    Associations {
+
+    Associations["Associations 🔲"] {
         string[] classes
     }
 
-    Metamagic {
+    Metamagic["Metamagic 🔲"] {
         boolean enabled
         string shortDesc
         string code
     }
 
-    SpellSpecSpell {
+    SpellSpecSpell["SpellSpecSpell 🔲"] {
         number level
         string name
         string img
@@ -592,7 +510,7 @@ erDiagram
         string id
     }
 
-    SpellSpecialization {
+    SpellSpecialization["SpellSpecialization 🔲"] {
         boolean isDomain
         SpellSpecSpell level1
         SpellSpecSpell level2
@@ -606,14 +524,13 @@ erDiagram
     }
     SpellSpecSpell  ||--o{ SpellSpecialization : "includes"
 
-    Links {
+    Links["Links 🔲"] {
         string[] charges
     }
 
-    Feat {
+    Feat["Feat 🔲"] {
         rollup BaseItem
         rollup Activatable
-        rollup GrantsChanges
 
         string featType
         string abilityType
@@ -634,13 +551,13 @@ erDiagram
     }
     BaseItem     ||--o{ Feat : "rollup"
     Activatable  ||--o{ Feat : "rollup"
-    GrantsChanges||--o{ Feat : "rollup"
+
     Associations        ||--o{ Feat : "includes"
     Metamagic           ||--o{ Feat : "includes"
     SpellSpecialization ||--o{ Feat : "includes"
     Links               ||--o{ Feat : "includes"
 
-    LearnedAt {
+    LearnedAt["LearnedAt 🔲"] {
         string[] class
         string[] domain
         string[] subDomain
@@ -648,7 +565,7 @@ erDiagram
         string[] bloodline
     }
 
-    SpellComponents {
+    SpellComponents["SpellComponents 🔲"] {
         string value
         boolean verbal
         boolean somatic
@@ -657,18 +574,18 @@ erDiagram
         number divineFocus
     }
 
-    Materials {
+    Materials["Materials 🔲"] {
         string value
         string focus
     }
 
-    Preparation {
+    Preparation["Preparation 🔲"] {
         number preparedAmount
         number maxAmount
         boolean autoDeductCharges
     }
 
-    Spell {
+    Spell["Spell 🔲"] {
         rollup BaseItem
         rollup Activatable
 
@@ -720,13 +637,13 @@ erDiagram
     Materials       ||--o{ Spell : "includes"
     Preparation     ||--o{ Spell : "includes"
 
-    SpellDurationData {
+    SpellDurationData["SpellDurationData 🔲"] {
         string units
         string value
         boolean dismissable
     }
 
-    Card {
+    Card["Card 🔲"] {
         rollup BaseItem
         rollup Activatable
 
@@ -764,11 +681,11 @@ erDiagram
     LearnedAt         ||--o{ Card : "includes"
     SpellDurationData ||--o{ Card : "includes"
 
-    OriginalWeaponProperties {
+    OriginalWeaponProperties["OriginalWeaponProperties 🔲"] {
         object value
     }
 
-    Attack {
+    Attack["Attack 🔲"] {
         rollup BaseItem
         rollup Activatable
 
@@ -812,7 +729,7 @@ erDiagram
     Associations            ||--o{ Attack : "includes"
     OriginalWeaponProperties||--o{ Attack : "includes"
 
-    FullAttackEntry {
+    FullAttackEntry["FullAttackEntry 🔲"] {
         number id
         string name
         string img
@@ -823,7 +740,7 @@ erDiagram
         number count
     }
 
-    FullAttack {
+    FullAttack["FullAttack 🔲"] {
         rollup BaseItem
 
         FullAttackEntry[] attacks
@@ -833,25 +750,24 @@ erDiagram
     BaseItem ||--o{ FullAttack : "rollup"
     FullAttackEntry ||--o{ FullAttack : "includes"
 
-    SavingThrows {
+    SavingThrows["SavingThrows 🔲"] {
         string fort
         string ref
         string will
     }
 
-    FavoredClassBonuses {
+    FavoredClassBonuses["FavoredClassBonuses 🔲"] {
         number hp
         number skill
         number alt
     }
 
-    LevelTable {
+    LevelTable["LevelTable 🔲"] {
         number[20] levels
     }
     
-    CharacterClass {
+    CharacterClass["CharacterClass 🔲"] {
         rollup ItemDescription
-        rollup Changes
 
         string classType
         number levels
@@ -923,7 +839,7 @@ erDiagram
         string[] nonActiveClassAbilities
     }
     ItemDescription ||--o{ CharacterClass : "rollup"
-    Changes         ||--o{ CharacterClass : "rollup"
+
     SavingThrows        ||--o{ CharacterClass : "includes"
     FavoredClassBonuses ||--o{ CharacterClass : "includes"
     LevelTable ||--o{ CharacterClass : "includes"

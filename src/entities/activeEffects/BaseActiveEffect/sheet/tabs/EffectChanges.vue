@@ -7,7 +7,7 @@
   >
     <div class="changes-header">
       <h3>{{ changesLabel }}</h3>
-      <button type="button" @click="createChange" :disabled="!isEditable" class="add-change">
+      <button type="button" @click="createChange" :disabled="!isEditViewMode" class="add-change">
         <i class="fa-solid fa-plus"></i>
         {{ addLabel }}
       </button>
@@ -24,12 +24,12 @@
             :name="`system.changes.${index}.key`"
             :value="change.key"
             :placeholder="keyPlaceholder"
-            :disabled="!isEditable || change.isSystem"
+            :disabled="!isEditViewMode || change.isSystem"
           />
           <select
             :name="`system.changes.${index}.type`"
             :value="change.type"
-            :disabled="!isEditable"
+            :disabled="!isEditViewMode"
           >
             <option v-for="(label, type) in changeTypes" :key="type" :value="type">
               {{ label }}
@@ -42,7 +42,7 @@
           <select
             :name="`system.changes.${index}.target`"
             :value="change.target ?? 'item'"
-            :disabled="!isEditable || change.isSystem"
+            :disabled="!isEditViewMode || change.isSystem"
             class="target-select"
             :title="targetLabel"
           >
@@ -55,10 +55,10 @@
             :name="`system.changes.${index}.priority`"
             :value="change.priority"
             :placeholder="getDefaultPriority(change.type)"
-            :disabled="!isEditable || change.isSystem"
+            :disabled="!isEditViewMode || change.isSystem"
             class="priority-input"
           />
-          <button type="button" @click="deleteChange(index)" :disabled="!isEditable || change.isSystem" class="delete-change">
+          <button type="button" @click="deleteChange(index)" :disabled="!isEditViewMode || change.isSystem" class="delete-change">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>
@@ -68,16 +68,15 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol, TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE, EffectChangeValue } from '@effects/BaseActiveEffect/index.mjs';
   import { computed, inject } from 'vue';
 
-  const store = inject('documentSheetStore') as ActiveEffectConfigStore;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;
+  const store = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
   const {
-    tabs: {
-      tabGetters: { getIsTabOpen },
-    },
-    isEditable,
     documentGetters: {
       changes,
     },

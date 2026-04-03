@@ -11,7 +11,8 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
   import { computed, inject } from 'vue';
 
@@ -21,7 +22,7 @@
 
   const {
     documentGetters: { getEffectsForField, hasEffectsForField },
-  } = inject('documentSheetStore') as DocumentSheetStore;
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
   const activeEffects = getEffectsForField(props.fieldPath);
   const hasActiveEffects = hasEffectsForField(props.fieldPath);

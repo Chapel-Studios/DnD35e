@@ -1,5 +1,4 @@
 import { Dnd35eDocumentMixin } from '@ec/CoreMixin/Dnd35eDocument.mjs';
-import type { FormulaContextBuilder } from '@ec/CoreMixin/index.mjs';
 import type { IdentifiableDocumentSourceProps } from '@ec/Identifiable/index.mjs';
 import {
   IdentifiableDocumentMixin,
@@ -32,12 +31,6 @@ const IdentifiableItemBase = IdentifiableDocumentMixin(Dnd35eDocumentMixin(ItemD
  */
 abstract class PhysicalItem extends IdentifiableItemBase {
   declare system: PhysicalItemSystemData;
-
-  /** Default: no extra context for name formulas. Override in concrete classes. */
-  protected nameContextBuilder: FormulaContextBuilder = () => null;
-
-  /** Default: no extra context for unidentified name formulas. Override in concrete classes. */
-  protected unidentifiedNameContextBuilder: FormulaContextBuilder = () => null;
 }
 
 type PhysicalItemLike = ItemDnd35e<ItemType> & PhysicalItem;

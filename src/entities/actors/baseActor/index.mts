@@ -5,13 +5,11 @@ import type {
 } from './data/index.mjs';
 import {
   ActorSystemModelBase,
-  buildBaseActorIntellisense,
 } from './data/index.mjs';
 
 export {
   ActorDnd35e,
   ActorSystemModelBase,
-  buildBaseActorIntellisense,
 };
 
 export type {

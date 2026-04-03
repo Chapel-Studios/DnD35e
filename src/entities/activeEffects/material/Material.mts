@@ -1,6 +1,6 @@
 import { ActiveEffectSource } from '@common/documents/active-effect.mjs';
 import { Dnd35eDocumentMixin } from '@ec/CoreMixin/Dnd35eDocument.mjs';
-import type { Dnd35eDocumentFlags, FormulaContextBuilder } from '@ec/CoreMixin/index.mjs';
+import type { Dnd35eDocumentFlags } from '@ec/CoreMixin/index.mjs';
 import {
   IdentifiableDocumentMixin,
   IdentifiableDocumentSourceProps,
@@ -25,12 +25,6 @@ class Material extends IdentifiableEffectBase {
   declare type: MaterialEffectType;
   declare system: MaterialSystemData;
   declare flags: Dnd35eDocumentFlags<MaterialEffectFlags>;
-
-  /** Default: no extra context for name formulas. */
-  protected nameContextBuilder: FormulaContextBuilder = () => null;
-
-  /** Default: no extra context for unidentified name formulas. */
-  protected unidentifiedNameContextBuilder: FormulaContextBuilder = () => null;
 
   override get transfer (): boolean {
     return false;

@@ -9,6 +9,7 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { SelectFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
@@ -22,7 +23,7 @@
     documentActions: {
       getViewAwareFieldUpdater,
     },
-  } = inject('documentSheetStore') as ActiveEffectConfigStore;
+  } = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
 </script>
 
 <style lang="scss" scoped>

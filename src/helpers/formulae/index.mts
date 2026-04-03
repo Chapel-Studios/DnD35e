@@ -1,4 +1,4 @@
-import { ItemDnd35e } from '@items/baseItem/index.mjs';
+import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 
 type Formula = string | null | undefined;
 
@@ -13,6 +13,10 @@ const replaceDataAttribute = <TContext extends ItemDnd35e> (formula: Formula, co
 
 export { replaceDataAttribute };
 
+import type { FormulaDataSource } from './FormulaData.mjs';
+import { FormulaData } from './FormulaData.mjs';
+import type { FormulaFieldOptions } from './FormulaField.mjs';
+import { FormulaField } from './FormulaField.mjs';
 import FormulaFormGroup from './FormulaFormGroup.vue';
 import type {
   ContextDocumentType,
@@ -21,31 +25,33 @@ import type {
 } from './registry.mjs';
 import {
   buildContextFromFormula,
-  decodeContextType,
-  encodeContextType,
-  getIntellisenseBuilder,
-  hasIntellisenseSchema,
-  intellisenseSchemaRegistry,
-  registerIntellisenseSchema,
+  buildDocumentFamiliar,
+  familiarSchemaRegistry,
+  registerFamiliarSchema,
 } from './registry.mjs';
+import { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema } from './schemaWalker.mjs';
 import type {
+  AspectGroup,
   AutocompleteOption,
+  EditorViewMode,
+  FamiliarContext,
+  FamiliarSchema,
+  FieldAspect,
+  FormulaContextBinding,
   FormulaFieldData,
+  FormulaFieldMeta,
   FormulaFormGroupProps,
+  FormulaToken,
   FormulaVariable,
-  IntellisenseContext,
-  IntellisenseObject,
-  IntellisenseProperty,
-  IntellisenseSchema,
-  Token,
   ValidationError,
 } from './types.mjs';
-import { isIntellisenseProperty } from './types.mjs';
+import { IDENTIFIED, isFieldAspect, UNIDENTIFIED } from './types.mjs';
 import {
   buildDocumentDataMap,
   ensureNameFormula,
   extractVariableAtPosition,
   extractVariables,
+  fieldAspect,
   getAutocompleteOptions,
   getCaretCoordinates,
   getNestedValue,
@@ -54,7 +60,6 @@ import {
   getVariableTokenIndex,
   getVariableTokens,
   insertAtCursor,
-  intellisenseProp,
   nameToFormulaData,
   parseFormula,
   renderFormulaHTML,
@@ -66,46 +71,54 @@ import {
 export {
   buildContextFromFormula,
   buildDocumentDataMap,
-  decodeContextType,
-  encodeContextType,
+  buildDocumentFamiliar,
+  DOCUMENT_LEVEL_ASPECTS,
   ensureNameFormula,
   extractVariableAtPosition,
   extractVariables,
+  familiarSchemaRegistry,
+  fieldAspect,
+  FormulaData,
+  FormulaField,
   FormulaFormGroup,
+  gatherAspectsFromSchema,
   getAutocompleteOptions,
   getCaretCoordinates,
-  getIntellisenseBuilder,
   getNestedValue,
   getPropertyValue,
   getTokenAtPosition,
   getVariableTokenIndex,
   getVariableTokens,
-  hasIntellisenseSchema,
+  IDENTIFIED,
   insertAtCursor,
-  intellisenseProp,
-  intellisenseSchemaRegistry,
-  isIntellisenseProperty,
+  isFieldAspect,
   nameToFormulaData,
   parseFormula,
-  registerIntellisenseSchema,
+  registerFamiliarSchema,
   renderFormulaHTML,
   resolveFormula,
   resolveFormulaField,
+  UNIDENTIFIED,
   validateFormula,
 };
 
 export type {
+  AspectGroup,
   AutocompleteOption,
   ContextDocumentType,
   DocumentContext,
+  EditorViewMode,
+  FamiliarContext,
+  FamiliarSchema,
+  FieldAspect,
+  FormulaContextBinding,
+  FormulaDataSource,
   FormulaFieldData,
+  FormulaFieldMeta,
+  FormulaFieldOptions,
   FormulaFormGroupProps,
+  FormulaToken,
   FormulaVariable,
-  IntellisenseContext,
-  IntellisenseObject,
-  IntellisenseProperty,
-  IntellisenseSchema,
   NonNullDocumentContext,
-  Token,
   ValidationError,
 };

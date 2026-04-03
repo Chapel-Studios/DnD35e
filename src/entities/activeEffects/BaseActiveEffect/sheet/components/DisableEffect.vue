@@ -11,6 +11,7 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { ToggleSwitchFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
@@ -23,7 +24,7 @@
     documentActions: {
       getDirectFieldUpdater,
     },
-  } = inject('documentSheetStore') as ActiveEffectConfigStore;
+  } = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
 </script>
 
 <style lang="scss" scoped>

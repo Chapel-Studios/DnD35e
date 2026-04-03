@@ -12,7 +12,6 @@ import {
   weaponSubtypeSelectOptions,
   weaponTypeSelectOptions,
 } from './constants.mjs';
-import { buildWeaponIntellisense } from './weaponIntellisense.mjs';
 import type {
   WeaponDamage,
   WeaponSystemData,
@@ -30,7 +29,6 @@ export type {
 };
 
 export {
-  buildWeaponIntellisense,
   WEAPON_BASE_TYPES,
   WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,

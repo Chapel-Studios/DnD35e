@@ -8,6 +8,7 @@
   />
 </template>
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { ItemPriceFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
@@ -17,14 +18,11 @@
     directUpdate?: boolean;
   }>();
 
-  const documentSheetStore = inject('documentSheetStore') as PhysicalDocumentStore;
-  
   const {
     documentGetters: {
       price,
     },
-  } = documentSheetStore as PhysicalDocumentStore;
-
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 </script>
 <style lang="scss" scoped>
   .view-mode .form-group.item-price.price-form-group {

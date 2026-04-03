@@ -8,7 +8,9 @@
     :default-editability="props.defaultEditability"
   >
     <template #readonly>
+      <slot v-if="!slots.readonly" />
       <div
+        v-else
         class="formula-display"
         :class="{ 'has-error': formulaErrors.length > 0 }"
       >
@@ -48,7 +50,7 @@
           ></div>
         </div>
 
-        <!-- Intellisense autocomplete menu -->
+        <!-- Familiar autocomplete menu -->
         <div
           v-if="showAutocomplete && autocompleteOptions.length > 0"
           ref="autocompleteMenu"
@@ -82,11 +84,13 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/useDocumentSheetStore.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
   import FormGroup from '@vc/Fields/FormGroups/FormGroup.vue';
-  import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, watch } from 'vue';
+  import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, useSlots, watch } from 'vue';
 
-  import type { AutocompleteOption, IntellisenseSchema, ValidationError } from './types.mts';
+  import type { FormulaData } from './FormulaData.mjs';
+  import type { AutocompleteOption, EditorViewMode, FamiliarSchema, ValidationError } from './types.mts';
   import {
     getAutocompleteOptions,
     parseFormula,
@@ -94,29 +98,52 @@
     validateFormula,
   } from './utils.mjs';
 
+  const slots = useSlots();
+
   // Use runtime props definition for better compatibility
   const props = defineProps({
     label: { type: String, default: undefined },
     hint: { type: String, default: undefined },
     isDmOnly: { type: Boolean, default: false },
-    value: { type: String, required: true },
+    /** Formula string (legacy). When formulaData is provided, this is ignored. */
+    value: { type: String, default: '' },
     onUpdate: { type: Function as PropType<(value: string) => void>, required: true },
     disabled: { type: Boolean, default: false },
-    contexts: { type: Object as PropType<IntellisenseSchema>, required: true },
+    /** Explicit familiar contexts. When omitted, auto-derived from the store's document. */
+    contexts: { type: Object as PropType<FamiliarSchema>, default: undefined },
     fieldPath: { type: String, required: true },
     defaultVisibility: { type: String as PropType<'everyone' | 'ownerPlus' | 'gmOnly'>, default: undefined },
     defaultEditability: { type: String as PropType<'normal' | 'gmOnly'>, default: undefined },
+    /** FormulaData instance for formula/unidentified formula access. */
+    formulaData: { type: Object as PropType<FormulaData | null>, default: undefined },
+  });
+  const { isEditViewMode, identifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+
+  // Effective formula — from FormulaData + viewMode, or legacy value prop
+  const effectiveFormula = computed(() => {
+    if (props.formulaData) {
+      return props.formulaData.getEffectiveFormula(identifiedViewMode.value) || '';
+    }
+    return props.value || '';
   });
 
-  // Use contexts directly from props - handle case where it might still be a ref
-  const contexts = computed(() => {
-    const raw = props.contexts;
-    if (!raw) return {};
-    // If it's still a ref (shouldn't happen but let's be safe), unwrap it
-    if (typeof raw === 'object' && '__v_isRef' in raw) {
-      return (raw as any).value ?? {};
+  // Effective contexts — explicit prop > store schema > FormulaData bindings > empty
+  const contexts = computed((): FamiliarSchema => {
+    if (props.contexts) {
+      const raw = props.contexts;
+      if (typeof raw === 'object' && '__v_isRef' in raw) {
+        return (raw as any).value ?? {};
+      }
+      return raw;
     }
-    return raw;
+    if (sheetStore?.documentGetters?.familiarSchema?.value) {
+      const schema = sheetStore.documentGetters.familiarSchema.value;
+      if (Object.keys(schema).length > 0) return schema;
+    }
+    if (props.formulaData && Object.keys(props.formulaData.contextBindings ?? {}).length > 0) {
+      return props.formulaData.buildFamiliarSchema();
+    }
+    return {};
   });
 
   // Refs
@@ -125,7 +152,7 @@
   const autocompleteMenu = ref<HTMLDivElement>();
 
   // Local state
-  const localValue = ref(props.value || '');
+  const localValue = ref(effectiveFormula.value || '');
   const formulaErrors = ref<ValidationError[]>([]);
   const autocompleteOptions = ref<AutocompleteOption[]>([]);
   const showAutocomplete = ref(false);
@@ -136,10 +163,10 @@
   let isUserEditing = false;
 
   // Read isEditable from the store, with disabled prop as override
-  const store = inject('documentSheetStore', null) as DocumentSheetStore | null;
+  const sheetStore = inject(DocumentSheetStoreSymbol, null) as DocumentSheetStore | null;
   const isEditable = computed(() => {
     if (props.disabled) return false;
-    return store?.isEditable?.value ?? false;
+    return isEditViewMode.value;
   });
 
   const formulaError = computed(() => {
@@ -155,8 +182,6 @@
     const capitalized = keys.map(k => k.charAt(0).toUpperCase() + k.slice(1));
     return `Available Contexts: [${capitalized.join(', ')}]`;
   });
-
-
 
   /**
    * Highlighted HTML for the overlay layer.
@@ -208,7 +233,7 @@
   }
 
   // Sync external value changes into local state (but not during active editing)
-  watch(() => props.value, (newValue) => {
+  watch(effectiveFormula, (newValue) => {
     if (!isUserEditing) {
       localValue.value = newValue || '';
       updateValidation();

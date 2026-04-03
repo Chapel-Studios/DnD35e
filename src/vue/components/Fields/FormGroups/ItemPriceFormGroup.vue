@@ -8,20 +8,20 @@
     class="price-form-group"
   >
     <!-- Controls slot: add coin stack button and consolidate button -->
-    <template #controls>
+    <template #controls="{ editable }">
       <button
-        v-if="!isDisabled"
+        v-if="editable && !isDisabled"
         type="button"
-        class="add-stack-btn"
+        class="field-control-btn add-stack-btn"
         :title="localize('DND35E.Currency.AddCoinStack')"
         @click="addCoinStack"
       >
         <i class="fas fa-plus" />
       </button>
       <button
-        v-if="!isDisabled && editStacks.length > 0"
+        v-if="editable && !isDisabled && editStacks.length > 0"
         type="button"
-        class="consolidate-btn"
+        class="field-control-btn consolidate-btn"
         :title="localize('DND35E.Currency.Consolidate')"
         @click="consolidatePrice"
       >
@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import { type DocumentSheetStore, DocumentSheetStoreSymbol, type RenderModeStore,RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { CoinageDefinition, CoinStack, PriceSource } from '@settings/currency/index.mjs';
   import {
     coinageVisibilityGmOnly,
@@ -110,22 +110,21 @@
     return game.i18n.localize(key);
   }
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    isEditable,
     isGM,
     documentActions: {
       getDirectFieldUpdater,
       getViewAwareFieldUpdater,
     },
-    documentGetters: {
+    _storeUtils: {
       getSourceProperty,
     },
-  } = inject('documentSheetStore') as DocumentSheetStore;
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
   
   const isDisabled = computed(() => {
-    const storeCanEdit = isEditable;
     if (props.disabled) return true;
-    return storeCanEdit ? !storeCanEdit.value : false;
+    return !isEditViewMode.value;
   });
 
   const fieldUpdater = props.onUpdate ?? (
@@ -280,22 +279,6 @@
 
 .remove-stack-btn:hover {
   opacity: 1;
-}
-
-.add-stack-btn,
-.consolidate-btn {
-  background: transparent;
-  border: none;
-  padding: 0.125rem 0.25rem;
-  cursor: pointer;
-  opacity: 0.5;
-  transition: opacity 0.15s, transform 0.15s;
-}
-
-.add-stack-btn:hover,
-.consolidate-btn:hover {
-  opacity: 1;
-  transform: translateY(-1px);
 }
 
 .empty-price {

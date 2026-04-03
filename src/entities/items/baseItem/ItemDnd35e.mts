@@ -2,7 +2,7 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
-import { getDisplayName } from '@ec/CoreMixin/index.mjs';
+import { getDisplayName } from '@ec/CoreMixin/logic/index.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, EffectChangeType, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE } from '@effects/BaseActiveEffect/index.mjs';
 import type { DnD35eActiveEffect } from '@effects/index.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';

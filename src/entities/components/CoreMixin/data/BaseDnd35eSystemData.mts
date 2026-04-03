@@ -1,18 +1,21 @@
-import type { FormulaFieldData } from '@helpers/formulae/types.mjs';
+import type { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 
 type ItemDescription = {
     value: string;
 };
 
-type BaseDnd35eSystemData = {
+type BaseDnd35eSystemSource = {
     version: string;
-    uniqueId?: string;
+    slug?: string;
     derivedName: string;
-    nameFormula?: FormulaFieldData | null;
+    nameFormula: FormulaData | null;
     description: ItemDescription;
 };
 
+interface BaseDnd35eSystemData extends BaseDnd35eSystemSource {}
+
 export type {
   BaseDnd35eSystemData,
+  BaseDnd35eSystemSource,
   ItemDescription,
 };

@@ -1,9 +1,9 @@
 <template>
-  <div v-if="isEditable" class="edit-mode-toggle">
+  <div v-if="isEditViewMode" class="edit-mode-toggle">
     <label class="toggle-label">
       <input
         type="checkbox"
-        :checked="isEditMode"
+        :checked="isEditViewMode"
         @change="onToggle"
       >
       <span class="toggle-slider" />
@@ -13,23 +13,19 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import { type DocumentSheetStore,DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
-  const store = inject('documentSheetStore') as DocumentSheetStore;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const store = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const {
-    isEditable,
-    isEditMode,
-    modeActions: { toggleEditMode },
-  } = store;
 
   const toggleLabel = computed(() =>
-    game.i18n.localize(isEditMode.value ? 'D35E.SheetModeEdit' : 'D35E.SheetModePlay'),
+    game.i18n.localize(isEditViewMode.value ? 'D35E.SheetModeEdit' : 'D35E.SheetModePlay')
   );
 
   function onToggle () {
-    toggleEditMode();
+    // toggleEditMode();
   }
 </script>
 

@@ -1,8 +1,8 @@
 <template>
   <ItemWeight>
-    <template #controls>
+    <template v-if="isEditViewMode" #controls>
       <button
-        class="weightless-toggle"
+        class="field-control-btn weightless-toggle"
         type="button"
         @click="isWeightlessWhenEquippedUpdater(!isWeightlessWhenEquipped)"
         :title="'Is Weightless When Equipped'"
@@ -19,11 +19,13 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import ItemWeight from '@items/components/Physical/sheet/components/ItemWeight.vue';
   import { inject } from 'vue';
 
   import { EquippableDocumentStore } from '../EquippableItemStore.mjs';
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
       isWeightlessWhenEquipped,
@@ -31,31 +33,15 @@
     documentActions: {
       getDirectFieldUpdater,
     },
-  } = inject('documentSheetStore') as EquippableDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as EquippableDocumentStore;
 
   const isWeightlessWhenEquippedUpdater = getDirectFieldUpdater('system.isWeightlessWhenEquipped');
-
 </script>
 
 <style scoped lang="scss">
+  /* Base button styles in core.scss .field-control-btn */
   .weightless-toggle {
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 0.125rem 0.25rem;
-    color: var(--color-text-dark, #444);
-    background: transparent;
-    border: none;
-    opacity: 0.5;
-    transition: opacity 150ms ease, transform 150ms ease;
-    font-size: var(--font-size-11);
-    height: 1.5rem;
     width: 1.25rem;
-
-    &:hover {
-      opacity: 1;
-      transform: translateY(-1px);
-    }
   }
 
   /* Inactive icon */

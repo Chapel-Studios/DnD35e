@@ -7,10 +7,10 @@
       field-path="system.uniqueId"
       direct-update
     >
-      <template #controls>
+      <template #controls="{ editable }">
         <button
-          class="generate-uid"
-          :disabled="!isEditable"
+          class="field-control-btn generate-uid"
+          :disabled="!editable"
           @click="generate"
           type="button"
           :title="localize('D35E.GenerateUID').value"
@@ -25,20 +25,21 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import { type DocumentSheetStore,DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import TextFormGroup from '@vc/Fields/FormGroups/TextFormGroup.vue';
   import { inject } from 'vue';
 
   const _field = 'system.uniqueId';
 
   const {
-    documentGetters: { getProperty },
+    documentGetters: { getViewAwareFieldValue },
     documentActions: { getDirectFieldUpdater },
-    isEditable,
-    localize,
-  } = inject('documentSheetStore') as DocumentSheetStore;
+    _storeUtils: {
+      createLocalizedComputed: localize,
+    },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const uniqueId = getProperty<string>(_field);
+  const uniqueId = getViewAwareFieldValue<string>(_field);
   const updateUUID = getDirectFieldUpdater(_field);
 
   async function generate () {
@@ -55,23 +56,5 @@
     grid-template-columns: auto 1fr;
     grid-column-gap: 1.5rem;
     align-items: center;
-    
-    .generate-uid {
-      cursor: pointer;
-      padding: 0.125rem 0.25rem;
-      background: transparent;
-      border: none;
-      opacity: 0.5;
-      font-size: var(--font-size-11);
-
-      transition: 
-        opacity 0.15s ease,
-        transform 0.15s ease;
-
-      &:hover {
-        opacity: 1;
-        transform: translateY(-1px);
-      }
-    }
   }
 </style>

@@ -8,10 +8,10 @@
  */
 
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
-import { useSettingsStore } from '@settings/core/sheet/index.mjs';
+import { SettingsStoreSymbol, useSettingsStore } from '@settings/core/sheet/index.mjs';
 import type { App, Component } from 'vue';
 
-import { VueApplicationContext, VueApplicationContextTransfer } from './index.mjs';
+import type { VueApplicationContextTransfer } from './VueAppTypes.mjs';
 
 /**
  * Base render options for Vue applications
@@ -91,7 +91,7 @@ function useVueAppBaseMixin<
       // First render: create and mount Vue
       if (!this.vueApp) {
         this.vueApp = this._createVueApp(options);
-        this.vueApp.provide('settingsStore', useSettingsStore());
+        this.vueApp.provide(SettingsStoreSymbol, useSettingsStore());
         this.vueApp.mount(this.vueRoot);
       }
       else {

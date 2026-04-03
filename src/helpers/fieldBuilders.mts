@@ -1,3 +1,5 @@
+import type { FormulaFieldMeta } from '@helpers/formulae/types.mjs';
+
 const {
   StringField,
   HTMLField,
@@ -69,6 +71,18 @@ const formulaField = () => new SchemaField({
   contexts: new ObjectField({ required: false, initial: {} }),
 }, { required: false, nullable: true });
 
+/**
+ * Attach familiar metadata to any DataField so the schema walker
+ * can auto-generate the formula autocomplete tree.
+ */
+function withFamiliar<T extends foundry.data.fields.DataField>(
+  field: T,
+  meta: FormulaFieldMeta
+): T {
+  (field.options as Record<string, unknown>).familiar = meta;
+  return field;
+}
+
 export {
   formulaField,
   nullableOptionalStringField,
@@ -81,4 +95,5 @@ export {
   requiredNumberField,
   requiredStringField,
   requiredTypedStringField,
+  withFamiliar,
 };

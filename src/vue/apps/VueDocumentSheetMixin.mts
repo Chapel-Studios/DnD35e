@@ -6,12 +6,13 @@
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
 import type { DocumentSheetV2 } from '@client/applications/api/_module.mjs';
 import { Dnd35eDocument } from '@ec/CoreMixin/Dnd35eDocument.mjs';
-import { DocumentSheetStore } from '@ec/CoreMixin/sheet/index.mjs';
+import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
+import { RenderModeStoreSymbol, useRenderModeStore } from '@ec/CoreMixin/sheet/stores/index.mjs';
+import type { RenderModeStore } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
 import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
-import { ItemType } from '@items/itemTypes.mjs';
 import type { App } from 'vue';
-import { createApp, reactive } from 'vue';
+import { createApp } from 'vue';
 
 import type { VueAppBaseMembers } from './VueAppBaseMixin.mjs';
 import { useVueAppBaseMixin } from './VueAppBaseMixin.mjs';
@@ -45,7 +46,9 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
     protected context!: VueApplicationContext<TDocument>;
 
     /** Shared reactive state for header controls */
-    protected sheetState!: SheetState;
+    // protected sheetState!: SheetState;
+
+    protected renderModeStore!: RenderModeStore;
 
     constructor (...args: any[]) {
       super(...args);
@@ -53,16 +56,18 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       this.#document = options.document;
 
       // Create shared reactive state for header controls
-      this.sheetState = reactive<SheetState>({
-        editMode: false,
-        editorViewMode: 'identified',
-      });
+      // Initialize editorViewMode based on the document's actual identification state
+      const system = this.#document.system as { isIdentifiable?: boolean; isIdentified?: boolean } | undefined;
+
+      this.renderModeStore = useRenderModeStore(
+        this.#document.testUserPermission(game.user, 'OWNER'),
+        system?.isIdentified ?? true,
+        system?.isIdentifiable ?? false
+      );
 
       this.context = {
         document: this.#document,
         appConfigOptions: options,
-        isEditable: this.isEditable,
-        sheetState: this.sheetState,
         close: async () => { await this.close(); },
       };
     }
@@ -113,10 +118,10 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
         btn.type = 'button';
         btn.classList.add('header-control', 'icon', 'edit-mode-btn');
         btn.dataset.action = 'toggleEditMode';
-        btn.dataset.tooltip = game.i18n.localize(this.sheetState.editMode ? 'D35E.SheetModeEdit' : 'D35E.SheetModePlay');
+        btn.dataset.tooltip = game.i18n.localize(this.renderModeStore.isEditViewMode.value ? 'D35E.SheetModeEdit' : 'D35E.SheetModePlay');
         btn.dataset.tooltipDirection = 'DOWN';
         btn.setAttribute('aria-label', btn.dataset.tooltip);
-        btn.innerHTML = `<i class="${this.sheetState.editMode ? 'fa-solid fa-lock-open' : 'fa-solid fa-lock'}" inert></i>`;
+        btn.innerHTML = `<i class="${this.renderModeStore.isEditViewMode.value ? 'fa-solid fa-lock-open' : 'fa-solid fa-lock'}" inert></i>`;
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           this._onToggleEditMode();
@@ -128,9 +133,9 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
         // Update existing button
         const icon = existingBtn.querySelector('i');
         if (icon) {
-          icon.className = this.sheetState.editMode ? 'fa-solid fa-lock-open' : 'fa-solid fa-lock';
+          icon.className = this.renderModeStore.isEditViewMode.value ? 'fa-solid fa-lock-open' : 'fa-solid fa-lock';
         }
-        existingBtn.dataset.tooltip = game.i18n.localize(this.sheetState.editMode ? 'D35E.SheetModeEdit' : 'D35E.SheetModePlay');
+        existingBtn.dataset.tooltip = game.i18n.localize(this.renderModeStore.isEditViewMode.value ? 'D35E.SheetModeEdit' : 'D35E.SheetModePlay');
         existingBtn.setAttribute('aria-label', existingBtn.dataset.tooltip);
         // Refresh tooltip if this button was clicked
         if (refreshTooltip) {
@@ -150,9 +155,9 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       const isIdentifiable = (doc.system as Dnd35eDocument<any>)?.isIdentifiable;
       const shouldShow = isIdentifiable && (game.user.isGM);
       const existingBtn = header.querySelector('.identified-view-btn') as HTMLButtonElement | null;
+      const isShowingIdentified = this.renderModeStore.isIdentifiedViewMode.value;
 
       if (shouldShow && !existingBtn) {
-        const isShowingIdentified = this.sheetState.editorViewMode === 'identified';
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.classList.add('header-control', 'icon', 'identified-view-btn');
@@ -170,7 +175,6 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
         header.prepend(btn);
       } else if (shouldShow && existingBtn) {
         // Update existing button
-        const isShowingIdentified = this.sheetState.editorViewMode === 'identified';
         const icon = existingBtn.querySelector('i');
         if (icon) {
           icon.className = isShowingIdentified ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
@@ -185,20 +189,13 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       } else if (!shouldShow && existingBtn) {
         existingBtn.remove();
       }
-
-      if (isIdentifiable) {
-        const isIdentified = (doc.system as Dnd35eDocument<any>)?.isIdentified;
-        this.sheetState.editorViewMode = isIdentified
-          ? 'identified'
-          : 'unidentified';
-      }
     }
 
     /**
      * Toggle edit mode and update header button.
      */
     protected _onToggleEditMode (): void {
-      this.sheetState.editMode = !this.sheetState.editMode;
+      this.renderModeStore.updateIsEditViewMode();
       this._renderHeaderButtons('editMode');
     }
 
@@ -206,7 +203,7 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
      * Toggle identified/unidentified view and update header button.
      */
     protected _onToggleIdentifiedView (): void {
-      this.sheetState.editorViewMode = this.sheetState.editorViewMode === 'identified' ? 'unidentified' : 'identified';
+      this.renderModeStore.updateIdentifiedViewMode();
       this._renderHeaderButtons('identifiedView');
     }
 
@@ -216,12 +213,15 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
     protected override _createVueApp (renderOptions: VueRenderOptions): App {
       const context: VueApplicationContext<TDocument> = {
         ...this.context,
-        isEditable: this.isEditable,
         renderOptions,
       };
-      return createApp(this.vueComponent, {
+      
+      const app = createApp(this.vueComponent, {
         context,
       });
+      app.provide(RenderModeStoreSymbol, this.renderModeStore);
+
+      return app;
     }
 
     /**
@@ -232,10 +232,11 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       content: HTMLElement,
       options: VueRenderOptions
     ): Promise<void> {
-      // Update context with current document state
-      result.document = this.#document;
+      // Update context with current document state — use this.document (live getter) not this.#document (stale snapshot)
+      const doc = this.document as TDocument;
+      result.document = doc;
       result.appConfigOptions = this.options;
-      result.store = game.dnd35e.stores[this.#document.documentName]?.[this.document.id] as DocumentSheetStore<TDocument> | undefined;
+      result.store = game.dnd35e.stores[doc.documentName]?.[doc.id] as DocumentSheetStore<TDocument> | undefined;
 
       // Let base handle Vue mounting
       await super._replaceHTML(result, content, options);

@@ -16,6 +16,7 @@ import {
 } from './PhysicalItemDnd35e.mjs';
 import type {
   PhysicalDocumentStore,
+  PhysicalItemActions,
   PhysicalItemGetters,
   PhysicalItemSheetRenderContext,
   PhysicalItemStore,
@@ -54,6 +55,7 @@ export {
 
 export type {
   PhysicalDocumentStore,
+  PhysicalItemActions,
   PhysicalItemGetters,
   PhysicalItemLike,
   PhysicalItemSheetRenderContext,

@@ -12,10 +12,10 @@
           type="number"
           name="duration.value"
           :value="durationValue"
-          :disabled="!isEditable"
+          :disabled="!isEditViewMode"
           min="0"
         />
-        <select name="duration.units" :value="durationUnits" :disabled="!isEditable">
+        <select name="duration.units" :value="durationUnits" :disabled="!isEditViewMode">
           <option v-for="unit in availableUnits" :key="unit.value" :value="unit.value">
             {{ unit.label }}
           </option>
@@ -26,20 +26,18 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol, TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { computed, inject } from 'vue';
 
-  const store = inject('documentSheetStore') as ActiveEffectConfigStore;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;
   const {
-    tabs: {
-      tabGetters: { getIsTabOpen },
-    },
     documentGetters: {
       durationValue,
       durationUnits,
     },
-    isEditable,
-  } = store;
+  } = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
 
   const isActiveTab = getIsTabOpen('duration');
 

@@ -10,11 +10,11 @@
     :class="{ editing: isEditing }"
   >
     <!-- Edit button in controls slot -->
-    <template #controls>
+    <template #controls="{ editable }">
       <button
-        v-if="isEditButtonVisible"
+        v-if="editable && isEditButtonVisible"
         type="button"
-        class="edit-button"
+        class="field-control-btn edit-button"
         :aria-label="`Edit ${label || 'content'}`"
         @click="startEditing"
       >
@@ -51,7 +51,8 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import type { DocumentSheetStore, RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject, onMounted, ref, watch } from 'vue';
 
   import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
@@ -75,16 +76,19 @@
     directUpdate?: boolean;
   }>();
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    documentGetters: { getProperty, getSourceProperty, documentUuid, getEffectiveFieldValue },
+    documentGetters: {
+      documentUuid,
+      getViewAwareFieldValue,
+    },
     documentActions: { getViewAwareFieldUpdater, getDirectFieldUpdater },
-    isEditable,
-    localize,
-    _storeUtils: { document },
-  } = inject('documentSheetStore') as DocumentSheetStore;
-
-  // Raw value from the document
-  const rawValue = getProperty<string>(props.field);
+    _storeUtils: {
+      getSourceProperty,
+      createLocalizedComputed: localize,
+      enrichHTML,
+    },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
   // Source value for editing (pre-active-effect data)
   const sourceRawValue = getSourceProperty<string>(props.field);
@@ -92,7 +96,7 @@
   // Effective value considering view mode (shows override when viewing as unidentified)
   // Ensure it's always a string to avoid Vue patching errors with null
   const effectiveValue = computed(() =>
-    getEffectiveFieldValue(props.field, rawValue.value) ?? ''
+    getViewAwareFieldValue<string>(props.field) ?? ''
   );
 
   // Editor value: use source data by default, derived if editDerived is set
@@ -113,7 +117,7 @@
     isEditing.value = true;
   }
 
-  const isEditButtonVisible = computed(() => !isEditing.value && isEditable.value);
+  const isEditButtonVisible = computed(() => !isEditing.value && isEditViewMode.value);
 
   async function onSave(event: Event) {
     const target = event.target as HTMLElement & { value?: string };
@@ -132,15 +136,7 @@
       enrichedHtml.value = '';
       return;
     }
-    try {
-      enrichedHtml.value = await foundry.applications.ux.TextEditor.enrichHTML(value, {
-        secrets: document.value.isOwner,
-        rollData: {},
-        relativeTo: document.value,
-      });
-    } catch {
-      enrichedHtml.value = value;
-    }
+    enrichedHtml.value = await enrichHTML(value);
   }
 
   onMounted(enrichContent);
@@ -175,22 +171,6 @@
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
-    }
-  }
-
-  .edit-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.25rem;
-    // color: var(--color-text-light-6, #666);
-    transition: color 0.2s;
-    opacity: 0.5;
-    transition: opacity 0.15s ease;
-
-    &:hover {
-      // color: var(--color-text-primary, #191813);
-      opacity: 1;
     }
   }
 

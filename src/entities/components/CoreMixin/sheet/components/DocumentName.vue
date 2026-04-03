@@ -5,10 +5,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, MaybeRef } from 'vue';
-
-  const props = defineProps<{
-    value: MaybeRef<string>;
+  defineProps<{
+    value: string;
   }>();
-  const value = computed(() => props.value);
 </script>

@@ -13,6 +13,7 @@
 </template>
 
 <script lang="ts" setup>
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { IdentifiableDocumentSheetVue } from '@ec/Identifiable/index.mjs';
   import type { ItemSheetStore } from '@items/baseItem/index.mjs';
   import { useItemSheetStore } from '@items/baseItem/index.mjs';
@@ -28,7 +29,7 @@
     const baseStore = useItemSheetStore(props.context) as ItemSheetStore<PhysicalItemLike>;
     const physicalItemStore = usePhysicalItemStore(props.context, baseStore) as PhysicalItemStore;
 
-    provide('documentSheetStore', {
+    provide(DocumentSheetStoreSymbol, {
       ...baseStore,
       ...physicalItemStore,
     });

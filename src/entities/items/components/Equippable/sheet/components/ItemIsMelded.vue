@@ -1,6 +1,6 @@
 <template>
   <CheckBoxFormGroup
-    :editable="isEditable"
+    :editable="isEditViewMode"
     label="Is Melded"
     :value="isMelded"
     :on-update="updater"
@@ -8,19 +8,20 @@
   />
 </template>
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { EquippableDocumentStore } from '@items/components/Equippable/index.mjs';
   import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    isEditable,
     documentGetters: {
       isMelded,
     },
     documentActions: {
       getDirectFieldUpdater,
     },
-  } = inject('documentSheetStore') as EquippableDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as EquippableDocumentStore;
 
   const updater = getDirectFieldUpdater('system.isMelded');
 </script>

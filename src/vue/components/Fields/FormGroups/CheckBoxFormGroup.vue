@@ -26,10 +26,10 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStore, DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
-  import type { FieldEditability,FieldVisibility } from './fieldPermissions.mjs';
+  import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
 
   const props = defineProps<{
@@ -50,22 +50,32 @@
     directUpdate?: boolean;
   }>();
 
-  const store = inject('documentSheetStore') as DocumentSheetStore;
+  const { isEditViewMode, isIdentifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const {
+    documentActions: {
+      getDirectFieldUpdater,
+      getViewAwareFieldUpdater,
+    },
+    _storeUtils: {
+      getSourceProperty,
+    },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
   const isDisabled = computed(() => {
-    const storeCanEdit = store.isEditable;
     if (props.disabled) return true;
-    return storeCanEdit ? !storeCanEdit.value : false;
+    return !isEditViewMode.value;
   });
 
   const fieldUpdater = props.onUpdate ?? (
     props.directUpdate
-      ? store.documentActions.getDirectFieldUpdater(props.fieldPath)
-      : store.documentActions.getViewAwareFieldUpdater(props.fieldPath)
+      ? getDirectFieldUpdater(props.fieldPath)
+      : getViewAwareFieldUpdater(props.fieldPath)
   );
 
-  const sourceValue = store.documentGetters.getSourceProperty<boolean>(props.fieldPath);
+  const sourceValue = getSourceProperty<boolean>(props.fieldPath);
   const editValue = computed(() => {
     if (props.editDerived || !sourceValue) return props.value;
+    if (!isIdentifiedViewMode.value) return props.value;
     return sourceValue.value as boolean;
   });
 

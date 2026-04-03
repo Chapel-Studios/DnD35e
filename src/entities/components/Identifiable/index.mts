@@ -19,6 +19,7 @@ import {
   IdentifiableDocumentMixin,
 } from './IdentifiableItem.mjs';
 import type {
+  IdentifiableDocumentActions,
   IdentifiableDocumentGetters,
   IdentifiableDocumentSheetRenderContext,
   IdentifiableDocumentStore,
@@ -27,16 +28,14 @@ import type {
 } from './sheet/index.mjs';
 import {
   IdentifiableDefaultHeaderName,
-  IdentifiableDocumentName,
-  IdentifiableDocumentName as IdentifiableHeader,
   IdentifiableDocumentSheetVue,
-  IdentifiedViewToggle,
   IsIdentifiedToggle,
   useIdentifiableStore,
 } from './sheet/index.mjs';
 
 export type {
   IdentifiableDocument,
+  IdentifiableDocumentActions,
   IdentifiableDocumentConstructor,
   IdentifiableDocumentGetters,
   IdentifiableDocumentLike,
@@ -55,11 +54,8 @@ export type {
 export {
   IdentifiableDefaultHeaderName,
   IdentifiableDocumentMixin,
-  IdentifiableDocumentName,
   IdentifiableDocumentSheetVue,
-  IdentifiableHeader,
   IdentifiableSchemaMixin,
-  IdentifiedViewToggle,
   IsIdentifiedToggle,
   useIdentifiableStore,
 };

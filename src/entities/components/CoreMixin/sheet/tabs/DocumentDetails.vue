@@ -14,17 +14,11 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-  import DescriptionEditor from '@ec/CoreMixin/sheet/components/DescriptionEditor.vue';
+  import type { DescriptionEditor, TabStore } from '@ec/CoreMixin/index.mjs';
+  import { TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { inject } from 'vue';
 
-  const store = inject('documentSheetStore') as DocumentSheetStore;
-  const {
-    tabs: {
-      tabGetters: { getIsTabOpen },
-    },
-  } = store;
-
+  const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;
   const isActiveTab = getIsTabOpen('details');
 </script>
 

@@ -6,26 +6,18 @@
     field-path="system.weight"
     :unit="weightDisplayShortLabel"
   >
-    <template v-if="slots.controls" #controls>
-      <slot name="controls" />
+    <template v-if="slots.controls" #controls="{ editable }">
+      <slot name="controls" :editable="editable" />
     </template>
     <template #readonly>
       {{ effectiveWeight }} {{ weightDisplayShortLabel }}
     </template>
-    <!-- old implementation
-    <input
-      type="number"
-      :value="weight"
-      :disabled="!isEditable"
-      @change="weightUpdater(($event.target as HTMLInputElement).value)"
-    />
-    <span>{{ weightDisplayShortLabel }}</span>
-    -->
   </NumberFormGroup>
 </template>
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { SettingsStore } from '@settings/core/sheet/index.mjs';
+  import { SettingsStore, SettingsStoreSymbol } from '@settings/core/sheet/index.mjs';
   import { NumberFormGroup } from '@vc/Fields/index.mjs';
   import { inject, useSlots } from 'vue';
 
@@ -36,7 +28,7 @@
       weightDisplayShortLabel,
       convertToStoredWeight,
     },
-  } = inject('settingsStore') as SettingsStore;
+  } = inject(SettingsStoreSymbol) as SettingsStore;
 
   const {
     documentGetters: {
@@ -46,7 +38,7 @@
     documentActions: {
       getViewAwareFieldUpdater,
     },
-  } = inject('documentSheetStore') as PhysicalDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
   const weightUpdater = (value: number | null) => {
     const realValue = convertToStoredWeight(value ?? 0);

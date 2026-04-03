@@ -9,7 +9,8 @@
 </template>
 <script setup lang="ts">
   import { EQUIP_SLOT_SELECT_OPTIONS } from '@constants/equipmentSlots.mjs';
-  import { EquippableDocumentStore } from '@items/components/Equippable/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { EquippableDocumentStore } from '@items/components/Equippable/index.mjs';
   import { MultiSelectFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
@@ -20,7 +21,7 @@
     documentActions: {
       getDirectFieldUpdater,
     },
-  } = inject('documentSheetStore') as EquippableDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as EquippableDocumentStore;
 
   const updater = getDirectFieldUpdater('system.equippedSlotIds');
 </script>

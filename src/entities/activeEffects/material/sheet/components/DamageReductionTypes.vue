@@ -5,12 +5,13 @@
     field-path="system.damageReductionTypes"
     :value="damageReductionTypes"
     :options="damageReductionTypeOptions"
-    :on-update="getDirectFieldUpdater('system.damageReductionTypes')"
+    :on-update="updater"
     :read-only="props.readOnly"
   />
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { MaterialStore } from '@effects/material/index.mjs';
   import { MultiSelectFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
@@ -28,7 +29,8 @@
     documentActions: {
       getDirectFieldUpdater,
     },
-  } = inject('documentSheetStore') as MaterialStore;
+  } = inject(DocumentSheetStoreSymbol) as MaterialStore;
+  const updater = getDirectFieldUpdater('system.damageReductionTypes');
 </script>
 
 <style lang="scss" scoped>

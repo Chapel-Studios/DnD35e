@@ -1,8 +1,8 @@
 <template>
   <SelectFormGroup
-    :editable="isEditable"
+    :editable="isEditViewMode"
     label="Size"
-    :value="effectiveSize"
+    :value="size"
     :on-update="updater"
     :options="EQUIP_SLOT_SELECT_OPTIONS"
     field-path="system.size"
@@ -10,25 +10,19 @@
 </template>
 <script setup lang="ts">
   import { EQUIP_SLOT_SELECT_OPTIONS } from '@constants/equipmentSlots.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { SelectFormGroup } from '@vc/Fields/index.mjs';
-  import { computed, inject } from 'vue';
+  import { inject } from 'vue';
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    isEditable,
     documentGetters: {
       size,
-    },
-    documentGetters: {
-      getEffectiveFieldValue,
     },
     documentActions: {
       getViewAwareFieldUpdater,
     },
-  } = inject('documentSheetStore') as PhysicalDocumentStore;
-
-  const effectiveSize = computed(() =>
-    getEffectiveFieldValue('system.size', size.value)
-  );
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
   const updater = getViewAwareFieldUpdater('system.size');
 </script>

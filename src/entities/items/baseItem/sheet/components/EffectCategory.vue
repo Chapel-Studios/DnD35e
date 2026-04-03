@@ -16,7 +16,7 @@
           <button
             type="button"
             class="effect-control"
-            :title="localize('D35E.EffectEdit').value"
+            :title="createLocalizedComputed('D35E.EffectEdit').value"
             @click="handleEdit(effect)"
           >
             <i class="fas fa-edit" />
@@ -33,7 +33,7 @@
           <button
             type="button"
             class="effect-control delete"
-            :title="localize('D35E.EffectDelete').value"
+            :title="createLocalizedComputed('D35E.EffectDelete').value"
             :disabled="!canEdit"
             @click="handleDelete(effect)"
           >
@@ -46,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { DnD35eActiveEffect } from '@effects/index.mjs';
   import { inject } from 'vue';
 
@@ -63,11 +64,13 @@
       toggleEffect,
       removeEffect,
     },
-    localize,
-  } = inject('documentSheetStore') as ItemSheetStore;
+    _storeUtils: {
+      createLocalizedComputed,
+    },
+  } = inject(DocumentSheetStoreSymbol) as ItemSheetStore;
   const effectEnablementTitle = (effect: DnD35eActiveEffect) => effect.disabled
-    ? localize('D35E.EffectEnable')
-    : localize('D35E.EffectDisable');
+    ? createLocalizedComputed('D35E.EffectEnable')
+    : createLocalizedComputed('D35E.EffectDisable');
 
   const handleDelete = async (effect: DnD35eActiveEffect) => {
     await removeEffect(effect.id);

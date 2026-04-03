@@ -1,51 +1,96 @@
-import DefaultHeaderName from './components/DefaultHeaderName.vue';
+import DescriptionEditor from './components/DescriptionEditor.vue';
+import DocumentArt from './components/DocumentArt.vue';
 import DocumentHeader from './components/DocumentHeader.vue';
 import DocumentName from './components/DocumentName.vue';
 import DocumentSheetBody from './components/DocumentSheetBody.vue';
-import EditModeToggle from './components/EditModeToggle.vue';
 import HeaderNameField from './components/HeaderNameField.vue';
-import ItemArt from './components/ItemArt.vue';
-import {
-  defaultDetailsTab,
-  DocumentDetails,
-} from './tabs/index.mjs';
 import type {
   DocumentSheetStore,
   DocumentSheetStoreDocumentActions,
   DocumentSheetStoreDocumentGetters,
   DocumentSheetStoreUtils,
-  FormulaContextBuilder,
-  FormulaRegistration,
   SheetDocument,
-  SheetTab,
-} from './useDocumentSheetStore.mjs';
+} from './DocumentSheetStore.mjs';
 import {
+  DocumentSheetStoreSymbol,
   useDocumentSheetStore,
-} from './useDocumentSheetStore.mjs';
+} from './DocumentSheetStore.mjs';
+import type { 
+  DocumentSheetStoreTabActions,
+  DocumentSheetStoreTabGetters,
+  FieldMeta,
+  FieldOverridesStore,
+  FieldOverridesStoreActions,
+  FieldOverridesStoreGetters,
+  FieldOverridesStoreOptions,
+  FieldOverridesStoreUtils,
+  FieldOverrideValue,
+  RenderModeStore,
+  SheetTab,
+  TabsState,
+  TabStore,
+  TabStoreOptions,
+} from './stores/index.mjs';
+import {
+  defaultTabStoreOptions,
+  FieldOverridesStoreSymbol,
+  pickMoreRestrictive,
+  RenderModeStoreSymbol,
+  TabStoreSymbol,
+  useFieldOverridesStore,
+  useRenderModeStore,
+  useTabStore,
+} from './stores/index.mjs';
+import {
+  defaultDetailsTab,
+  DocumentDetails,
+} from './tabs/index.mjs';
+import type { EvaluationDocument, FormulaRegistration } from './types.mjs';
 
 type SheetMode = 'item' | 'effect';
 
 export {
   defaultDetailsTab,
-  DefaultHeaderName,
+  defaultTabStoreOptions,
+  DescriptionEditor,
+  DocumentArt,
   DocumentDetails,
   DocumentHeader,
   DocumentName,
   DocumentSheetBody,
-  EditModeToggle,
+  DocumentSheetStoreSymbol,
+  FieldOverridesStoreSymbol,
   HeaderNameField,
-  ItemArt,
+  pickMoreRestrictive,
+  RenderModeStoreSymbol,
+  TabStoreSymbol,
   useDocumentSheetStore,
+  useFieldOverridesStore,
+  useRenderModeStore,
+  useTabStore,
 };
 
 export type {
   DocumentSheetStore,
   DocumentSheetStoreDocumentActions,
   DocumentSheetStoreDocumentGetters,
+  DocumentSheetStoreTabActions,
+  DocumentSheetStoreTabGetters,
   DocumentSheetStoreUtils,
-  FormulaContextBuilder,
+  EvaluationDocument,
+  FieldMeta,
+  FieldOverridesStore,
+  FieldOverridesStoreActions,
+  FieldOverridesStoreGetters,
+  FieldOverridesStoreOptions,
+  FieldOverridesStoreUtils,
+  FieldOverrideValue,
   FormulaRegistration,
+  RenderModeStore,
   SheetDocument,
   SheetMode,
   SheetTab,
+  TabsState,
+  TabStore,
+  TabStoreOptions,
 };

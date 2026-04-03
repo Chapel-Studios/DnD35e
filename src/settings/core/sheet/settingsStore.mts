@@ -48,6 +48,8 @@ const useSettingsStore = (): SettingsStore => {
   };
 };
 
+const SettingsStoreSymbol = Symbol('settingsStore');
+
 type SettingsStore = {
   currency: {
     coinages: ComputedRef<CoinageDefinition[]>;
@@ -63,7 +65,10 @@ type SettingsStore = {
   };
 };
 
-export { useSettingsStore };
+export {
+  SettingsStoreSymbol,
+  useSettingsStore,
+};
 
 export type {
   SettingsStore,

@@ -1,15 +1,15 @@
 <template>
   <div
     :class="{
-      'edit-mode': isEditMode,
-      'view-mode': !isEditMode,
+      'edit-mode': isEditViewMode,
+      'view-mode': !isEditViewMode,
     }"
   >
     <DocumentHeader>
-      <ItemArt />
+      <DocumentArt />
       <div class="doc-name-container">
         <slot name="header-name">
-          <DefaultHeaderName />
+          <HeaderNameField />
         </slot>
       </div>
 
@@ -34,15 +34,20 @@
 
 <script lang="ts" setup>
   import {
-    DefaultHeaderName,
+    DocumentArt,
     DocumentHeader,
-    ItemArt,
+    DocumentSheetStoreSymbol,
+    HeaderNameField,
+    RenderModeStore,
+    RenderModeStoreSymbol,
     SheetMode,
+    TabStore,
+    TabStoreSymbol,
   } from '@ec/CoreMixin/index.mjs';
-  import { ActiveEffectConfigStore, useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-  import { type ItemSheetStore,useItemSheetStore } from '@items/baseItem/index.mjs';
+  import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
+  import { useItemSheetStore } from '@items/baseItem/index.mjs';
   import TabDivider from '@vc/TabDivider/TabDivider.vue';
-  import { computed, inject, provide } from 'vue';
+  import { inject, provide } from 'vue';
 
   const props = withDefaults(defineProps<{
     context?: any;
@@ -51,21 +56,16 @@
     mode: 'item',
   });
 
-  let store: ItemSheetStore | ActiveEffectConfigStore | undefined;
-
   if (props.context) {
     const store = props.mode === 'effect'
       ? useActiveEffectConfigStore(props.context)
       : useItemSheetStore(props.context);
 
-    provide('documentSheetStore', store);
+    provide(DocumentSheetStoreSymbol, store);
   }
-  else{
-    store = inject('documentSheetStore');
-  }
-  const isEditMode = computed(() => store?.isEditable.value ?? false);
 
-  const tabList = store?.tabs.tabGetters.tabs;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { tabs: tabList } = inject(TabStoreSymbol) as TabStore;
 </script>
 
 <style lang="scss">

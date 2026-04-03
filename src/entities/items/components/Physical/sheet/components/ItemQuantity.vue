@@ -5,12 +5,13 @@
     :default-visibility="everyoneVisibility"
     :default-editability="normalEditability"
   >
-    <template #controls>
+    <template #controls="{ editable }">
       <button
-        class="infinite-toggle"
+        v-if="editable"
+        class="field-control-btn infinite-toggle"
         type="button"
         @click="toggleInfinite"
-        :class="{ 'is-infinite': isInfinite }"
+        :class="{ 'is-active': isInfinite }"
         :title="'Is Infinite'"
       >
         <i class="fas fa-infinity" />
@@ -25,7 +26,7 @@
       v-else
       type="number"
       :value="quantity"
-      :disabled="!isEditable"
+      :disabled="!isEditViewMode"
       @change="onQuantityChange(($event.target as HTMLInputElement).value)"
       min=0
     />
@@ -37,19 +38,10 @@
       <span v-else>{{ quantity }}</span>
     </template>
   </FormGroup>
-  
-  <!-- old implementation
-  <NumberFormGroup
-    :editable="isEditable"
-    label="Quantity"
-    :value="quantity"
-    :on-update="onQuantityChange"
-    field-path="system.quantity"
-  />
-  -->
 </template>
 
 <script setup lang="ts">
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import {
     everyoneVisibility,
@@ -58,15 +50,15 @@
   } from '@vc/Fields/index.mjs';
   import { computed, inject } from 'vue';
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    isEditable,
     documentGetters: {
       quantity,
     },
     documentActions: {
       getDirectFieldUpdater,
     },
-  } = inject('documentSheetStore') as PhysicalDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
   const updater = getDirectFieldUpdater('system.quantity');
 
   const toggleInfinite = () => {
@@ -86,29 +78,3 @@
     updater(value);
   };
 </script>
-
-<style lang="scss" scoped>
-  button.infinite-toggle {
-    cursor: pointer;
-    padding: 0.125rem 0.25rem;
-    color: var(--color-text-dark, #444);
-    background: transparent;
-    border: none;
-    opacity: 0.5;
-    font-size: var(--font-size-11);
-
-    transition: 
-      opacity 0.15s ease,
-      color 150ms ease,
-      transform 0.15s ease;
-
-    &:hover {
-      opacity: 1;
-      transform: translateY(-1px);
-    }
-
-    &.is-infinite {
-      color: var(--color-level-warning);
-    }
-  }
-</style>
