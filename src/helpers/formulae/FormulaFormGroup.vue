@@ -140,9 +140,6 @@
       const schema = sheetStore.documentGetters.familiarSchema.value;
       if (Object.keys(schema).length > 0) return schema;
     }
-    if (props.formulaData && Object.keys(props.formulaData.contextBindings ?? {}).length > 0) {
-      return props.formulaData.buildFamiliarSchema();
-    }
     return {};
   });
 

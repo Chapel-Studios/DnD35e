@@ -41,7 +41,6 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
           formula: '',
           unidentifiedFormula: '',
           expectedType: 'string',
-          contextBindings: {},
           resolvedValue: null,
           unidentifiedResolvedValue: null,
         },

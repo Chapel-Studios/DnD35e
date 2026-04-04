@@ -2,22 +2,21 @@
  * FormulaData — DataModel for formula fields.
  *
  * Stores a formula string, its resolved value, an optional unidentified variant,
- * and resolution metadata (expectedType, contextBindings).
+ * and resolution metadata (expectedType).
  *
- * Live instance methods: resolve(), resolveUnidentified(), buildFamiliarSchema(),
+ * Live instance methods: resolve(), resolveUnidentified(),
  * getEffective(), getEffectiveFormula().
  *
  * @module
  */
 
 import type { DocumentContext } from './registry.mjs';
-import { buildContextFromFormula } from './registry.mjs';
-import type { EditorViewMode, FamiliarSchema, FormulaContextBinding } from './types.mjs';
+import { buildDocumentFamiliar } from './registry.mjs';
+import type { EditorViewMode, FamiliarSchema } from './types.mjs';
 import { UNIDENTIFIED } from './types.mjs';
 import { resolveFormula } from './utils.mjs';
 
 const {
-  ObjectField,
   StringField,
 } = foundry.data.fields;
 
@@ -30,7 +29,6 @@ interface FormulaDataSource {
   unidentifiedFormula: string | null;
   unidentifiedResolvedValue: string | null;
   expectedType: 'string' | 'number';
-  contextBindings: Record<string, FormulaContextBinding>;
 }
 
 class FormulaData extends foundry.abstract.DataModel {
@@ -40,7 +38,6 @@ class FormulaData extends foundry.abstract.DataModel {
   declare unidentifiedFormula: string | null;
   declare unidentifiedResolvedValue: string | null;
   declare expectedType: 'string' | 'number';
-  declare contextBindings: Record<string, FormulaContextBinding>;
 
   static override defineSchema() {
     return {
@@ -54,7 +51,6 @@ class FormulaData extends foundry.abstract.DataModel {
 
       // Resolution config
       expectedType: new StringField({ choices: ['string', 'number'], initial: 'string' }),
-      contextBindings: new ObjectField({ initial: {} }),
     };
   }
 
@@ -98,13 +94,7 @@ class FormulaData extends foundry.abstract.DataModel {
    */
   resolve(documentDataMap: Record<string, DocumentContext>, fallback: string = ''): string {
     if (!this.formula) return fallback;
-
-    // Build familiar context from stored contextBindings (legacy: contexts)
-    const familiarSchema = buildContextFromFormula({
-      formula: this.formula,
-      contexts: this._contextsFromBindings(),
-    });
-
+    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap);
     return resolveFormula(this.formula, familiarSchema, documentDataMap);
   }
 
@@ -117,27 +107,8 @@ class FormulaData extends foundry.abstract.DataModel {
    */
   resolveUnidentified(documentDataMap: Record<string, DocumentContext>, fallback: string = ''): string {
     if (!this.unidentifiedFormula) return fallback;
-
-    const familiarSchema = buildContextFromFormula({
-      formula: this.unidentifiedFormula,
-      contexts: this._contextsFromBindings(),
-    });
-
+    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap);
     return resolveFormula(this.unidentifiedFormula, familiarSchema, documentDataMap);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Familiar
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Build the full FamiliarSchema for formula autocomplete based on context bindings.
-   */
-  buildFamiliarSchema(): FamiliarSchema {
-    return buildContextFromFormula({
-      formula: this.formula,
-      contexts: this._contextsFromBindings(),
-    });
   }
 
   // ---------------------------------------------------------------------------
@@ -154,8 +125,7 @@ class FormulaData extends foundry.abstract.DataModel {
     fallback: string = ''
   ): string {
     if (!source.formula) return fallback;
-    const contexts = FormulaData._contextsFromSource(source);
-    const familiarSchema = buildContextFromFormula({ formula: source.formula, contexts });
+    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>);
     return resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
   }
 
@@ -169,8 +139,7 @@ class FormulaData extends foundry.abstract.DataModel {
     fallback: string = ''
   ): string {
     if (!source.unidentifiedFormula) return fallback;
-    const contexts = FormulaData._contextsFromSource(source);
-    const familiarSchema = buildContextFromFormula({ formula: source.unidentifiedFormula, contexts });
+    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>);
     return resolveFormula(source.unidentifiedFormula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
   }
 
@@ -189,7 +158,6 @@ class FormulaData extends foundry.abstract.DataModel {
       unidentifiedFormula: opts.unidentifiedFormula ?? null,
       unidentifiedResolvedValue: opts.unidentifiedResolvedValue ?? null,
       expectedType: opts.expectedType ?? 'string',
-      contextBindings: opts.contextBindings ?? {},
     };
   }
 
@@ -198,34 +166,23 @@ class FormulaData extends foundry.abstract.DataModel {
   // ---------------------------------------------------------------------------
 
   /**
-   * Convert contextBindings to the legacy contexts map.
-   * Static version that operates on a raw source object.
+   * Build a FamiliarSchema by auto-deriving schemas from the live documents
+   * in the data map. Each document is introspected via buildDocumentFamiliar
+   * to derive its property tree.
    * @internal
    */
-  private static _contextsFromSource(source: FormulaDataSource): Record<string, string> {
-    const bindings = source.contextBindings;
-    if (!bindings || typeof bindings !== 'object') return {};
-
-    const contexts: Record<string, string> = {};
-    for (const [name, binding] of Object.entries(bindings)) {
-      if (binding?.documentType && binding?.expectedSubtypes?.length) {
-        contexts[name] = `${binding.documentType}.${binding.expectedSubtypes[0]}`;
+  private static _buildFamiliarFromDocumentMap(documentDataMap: Record<string, DocumentContext>): FamiliarSchema {
+    const schema: FamiliarSchema = {};
+    for (const [contextName, doc] of Object.entries(documentDataMap)) {
+      if (!doc) continue;
+      const docSchema = buildDocumentFamiliar(doc);
+      // buildDocumentFamiliar returns { self: ..., Owner: ... } keyed by role.
+      // Map the "self" entry to the actual context name from the data map.
+      if (docSchema.self) {
+        schema[contextName] = docSchema.self;
       }
     }
-    return contexts;
-  }
-
-  /**
-   * Convert contextBindings (new format) to the legacy contexts map
-   * expected by buildContextFromFormula().
-   *
-   * contextBindings: { owner: { documentType: 'Actor', ... } }
-   * → contexts: { owner: 'Actor.character' } (first expectedSubtype)
-   *
-   * @internal
-   */
-  private _contextsFromBindings(): Record<string, string> {
-    return FormulaData._contextsFromSource(this as unknown as FormulaDataSource);
+    return schema;
   }
 }
 
