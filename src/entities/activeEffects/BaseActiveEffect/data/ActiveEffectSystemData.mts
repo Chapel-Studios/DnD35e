@@ -1,6 +1,6 @@
 import type { ActiveEffectSystemSource, EffectChangeData } from '@common/documents/active-effect.mjs';
 import type { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
-import type { EffectChangeTarget } from '@effects/BaseActiveEffect/index.mjs';
+import type { EffectChangeTarget, EffectChangeTargetField } from '@effects/BaseActiveEffect/index.mjs';
 
 type ActiveEffectTarget = 'Actor' | 'Item';
 
@@ -10,6 +10,8 @@ type ActiveEffectTarget = 'Actor' | 'Item';
  */
 interface Dnd35eEffectChangeData extends EffectChangeData {
   target: EffectChangeTarget;
+  /** Which sub-field of a Dnd35eField compound this change targets: 'value' or 'unidentifiedValue'. */
+  targetField: EffectChangeTargetField;
   isSystem: boolean;
 }
 

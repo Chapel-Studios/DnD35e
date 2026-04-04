@@ -6,6 +6,7 @@ import type {
   Dnd35eEffectChangeData,
   EffectChangePhase,
   EffectChangeTarget,
+  EffectChangeTargetField,
   EffectChangeType,
 } from './data/index.mjs';
 import {
@@ -13,6 +14,8 @@ import {
   ActiveEffectSystemModelBase,
   EFFECT_CHANGE_PHASES,
   EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TARGET_FIELD,
+  EFFECT_CHANGE_TARGET_FIELDS,
   EFFECT_CHANGE_TARGETS,
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
@@ -55,6 +58,7 @@ export type {
   Dnd35eEffectChangeData,
   EffectChangePhase,
   EffectChangeTarget,
+  EffectChangeTargetField,
   EffectChangeType,
 };
 
@@ -66,6 +70,8 @@ export {
   Dnd35eActiveEffectConfig,
   EFFECT_CHANGE_PHASES,
   EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TARGET_FIELD,
+  EFFECT_CHANGE_TARGET_FIELDS,
   EFFECT_CHANGE_TARGETS,
   EFFECT_CHANGE_TYPE,
   EffectChanges,

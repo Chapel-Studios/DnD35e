@@ -9,12 +9,15 @@ import type {
   ActiveEffectTargetLocalizationValues,
   EffectChangePhase,
   EffectChangeTarget,
+  EffectChangeTargetField,
   EffectChangeType,
 } from './constants.mjs';
 import {
   ACTIVE_EFFECT_TARGETS,
   EFFECT_CHANGE_PHASES,
   EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TARGET_FIELD,
+  EFFECT_CHANGE_TARGET_FIELDS,
   EFFECT_CHANGE_TARGETS,
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
@@ -26,6 +29,8 @@ export {
   ActiveEffectSystemModelBase,
   EFFECT_CHANGE_PHASES,
   EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TARGET_FIELD,
+  EFFECT_CHANGE_TARGET_FIELDS,
   EFFECT_CHANGE_TARGETS,
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
@@ -40,5 +45,6 @@ export type {
   Dnd35eEffectChangeData,
   EffectChangePhase,
   EffectChangeTarget,
+  EffectChangeTargetField,
   EffectChangeType,
 };

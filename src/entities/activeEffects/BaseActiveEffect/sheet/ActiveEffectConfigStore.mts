@@ -1,11 +1,14 @@
 import type Color from '@common/utils/color.mjs';
 import type { DocumentSheetStore, DocumentSheetStoreDocumentActions, DocumentSheetStoreDocumentGetters } from '@ec/CoreMixin/index.mjs';
-import { useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+import { RenderModeStoreSymbol, useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
 import type { DnD35eActiveEffect, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
+import { EFFECT_CHANGE_TARGET_FIELD } from '@effects/BaseActiveEffect/index.mjs';
+import { IDENTIFIED } from '@helpers/formulae/types.mjs';
 import type { MultiSelectOption, SelectOption } from '@vc/Fields/FormGroups/types.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 
 import { getDefaultActiveEffectTabs } from './tabs/index.mjs';
 
@@ -18,6 +21,7 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
   });
 
   const document = baseStore._storeUtils.document;
+  const { identifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   baseStore._storeUtils.setGetFreshDocument(async (uuid: string) => {
     const doc = await foundry.utils.fromUuid(uuid);
     return doc as TDocument | null;
@@ -59,6 +63,20 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
     }),
     origin: computed(() => document.value.origin ?? ''),
     changes: computed(() => document.value.system?.changes ?? []),
+    /**
+     * Changes filtered by the current identified/unidentified view mode.
+     * In identified view: shows only changes targeting .value (identified).
+     * In unidentified view: shows only changes targeting .unidentifiedValue.
+     */
+    visibleChanges: computed(() => {
+      const allChanges = document.value.system?.changes ?? [];
+      const targetField = identifiedViewMode.value === IDENTIFIED
+        ? EFFECT_CHANGE_TARGET_FIELD.VALUE
+        : EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED;
+      return allChanges.filter(
+        (c: Dnd35eEffectChangeData) => (c.targetField ?? EFFECT_CHANGE_TARGET_FIELD.VALUE) === targetField
+      );
+    }),
   };
 
   const documentActions: ActiveEffectConfigStoreDocumentActions<TDocument> = {
@@ -107,6 +125,8 @@ type ActiveEffectConfigStoreDocumentGetters = DocumentSheetStoreDocumentGetters 
   showIconOptions: ComputedRef<SelectOption[]>;
   origin: ComputedRef<string>;
   changes: ComputedRef<any[]>;
+  /** Changes filtered by view mode — hides unidentified-targeted changes in identified view. */
+  visibleChanges: ComputedRef<any[]>;
   hasOwner: ComputedRef<boolean>;
 };
 

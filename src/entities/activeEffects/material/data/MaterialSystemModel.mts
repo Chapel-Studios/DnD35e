@@ -1,7 +1,7 @@
 import type { EffectPhases } from '@common/documents/active-effect.mjs';
 import { IdentifiableSchemaMixin } from '@ec/Identifiable/index.mjs';
-import type { Dnd35eEffectChangeData, EffectChangeTarget, EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
+import type { Dnd35eEffectChangeData, EffectChangeTarget, EffectChangeTargetField, EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
 import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
 import { Dnd35eField } from '@helpers/fields/index.mjs';
@@ -44,6 +44,8 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     const changes: Dnd35eEffectChangeData[] = [
       ...this.changes.filter(change => !change.isSystem),
     ];
+
+    // Identified value changes
     if (!this.price.value.isEmpty) {
       changes.push(this.buildPriceDifferenceChange());
     }
@@ -59,6 +61,21 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     for (const drType of this.damageReductionTypes) {
       changes.push(this.buildDamageReductionTypeChange(drType));
     }
+
+    // Unidentified value changes — emitted when the unidentifiedValue is explicitly set
+    if (this.price.unidentifiedValue != null && !this.price.unidentifiedValue.isEmpty) {
+      changes.push(this.buildPriceDifferenceChange(EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED));
+    }
+    if (this.magicEquivalency.unidentifiedValue != null && this.magicEquivalency.unidentifiedValue !== 0) {
+      changes.push(this.buildMagicEquivalentChange(EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED));
+    }
+    if (this.hardness.unidentifiedValue != null && this.hardness.unidentifiedValue !== 0) {
+      changes.push(this.buildBonusHardnessChange(EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED));
+    }
+    if (this.bonusHp.unidentifiedValue != null && this.bonusHp.unidentifiedValue !== 0) {
+      changes.push(this.buildBonusHpPerInchChange(EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED));
+    }
+
     return changes;
   }
 
@@ -68,7 +85,8 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     type: EffectChangeType = EFFECT_CHANGE_TYPE.ADD,
     phase: EffectPhases = 'final',
     priority: number = 10,
-    target: EffectChangeTarget = EFFECT_CHANGE_TARGET.ITEM
+    target: EffectChangeTarget = EFFECT_CHANGE_TARGET.ITEM,
+    targetField: EffectChangeTargetField = EFFECT_CHANGE_TARGET_FIELD.VALUE
   ): Dnd35eEffectChangeData {
     return {
       key,
@@ -77,6 +95,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
       phase,
       priority,
       target,
+      targetField,
       effect: null,
       isSystem: true,
     };
@@ -93,41 +112,77 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
 
   // TODO: how should this actually work? Items just have HP, not HP-per-inch.
   // We should relook at how we handle item HP, perhaps add thickness and calculate HP based on that?
-  buildBonusHpPerInchChange(): Dnd35eEffectChangeData {
-    const existing = this.changes.find(change => change.key === 'system.hp.max' && change.isSystem);
+  buildBonusHpPerInchChange(
+    targetField: EffectChangeTargetField = EFFECT_CHANGE_TARGET_FIELD.VALUE
+  ): Dnd35eEffectChangeData {
+    const existing = this.changes.find(change => change.key === 'system.hp.max' && change.isSystem && change.targetField === targetField);
+    const fieldValue = targetField === EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED
+      ? this.bonusHp.unidentifiedValue!
+      : this.bonusHp.value;
     return this._buildChange(
       'system.hp.max',
-      this.bonusHp.value,
-      existing ? existing.type : EFFECT_CHANGE_TYPE.ADD
+      fieldValue,
+      existing ? existing.type : EFFECT_CHANGE_TYPE.ADD,
+      'final',
+      10,
+      EFFECT_CHANGE_TARGET.ITEM,
+      targetField
     );
   }
 
-  buildBonusHardnessChange(): Dnd35eEffectChangeData {
-    const existing = this.changes.find(change => change.key === 'system.hardness' && change.isSystem);
+  buildBonusHardnessChange(
+    targetField: EffectChangeTargetField = EFFECT_CHANGE_TARGET_FIELD.VALUE
+  ): Dnd35eEffectChangeData {
+    const existing = this.changes.find(change => change.key === 'system.hardness' && change.isSystem && change.targetField === targetField);
+    const fieldValue = targetField === EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED
+      ? this.hardness.unidentifiedValue!
+      : this.hardness.value;
     return this._buildChange(
       'system.hardness',
-      this.hardness.value,
-      existing ? existing.type : EFFECT_CHANGE_TYPE.ADD
+      fieldValue,
+      existing ? existing.type : EFFECT_CHANGE_TYPE.ADD,
+      'final',
+      10,
+      EFFECT_CHANGE_TARGET.ITEM,
+      targetField
     );
   }
 
   // TODO: This key doesn't currently exist,
   // we need to determine how to handle these equivalencies in the system.
-  buildMagicEquivalentChange(): Dnd35eEffectChangeData {
-    const existing = this.changes.find(change => change.key === 'system.magicEquivalency' && change.isSystem);
+  buildMagicEquivalentChange(
+    targetField: EffectChangeTargetField = EFFECT_CHANGE_TARGET_FIELD.VALUE
+  ): Dnd35eEffectChangeData {
+    const existing = this.changes.find(change => change.key === 'system.magicEquivalency' && change.isSystem && change.targetField === targetField);
+    const fieldValue = targetField === EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED
+      ? this.magicEquivalency.unidentifiedValue!
+      : this.magicEquivalency.value;
     return this._buildChange(
       'system.magicEquivalency',
-      this.magicEquivalency.value,
-      existing ? existing.type : EFFECT_CHANGE_TYPE.UPGRADE
+      fieldValue,
+      existing ? existing.type : EFFECT_CHANGE_TYPE.UPGRADE,
+      'final',
+      10,
+      EFFECT_CHANGE_TARGET.ITEM,
+      targetField
     );
   }
 
-  buildPriceDifferenceChange(): Dnd35eEffectChangeData {
-    const existing = this.changes.find(change => change.key === 'system.price' && change.isSystem);
+  buildPriceDifferenceChange(
+    targetField: EffectChangeTargetField = EFFECT_CHANGE_TARGET_FIELD.VALUE
+  ): Dnd35eEffectChangeData {
+    const existing = this.changes.find(change => change.key === 'system.price' && change.isSystem && change.targetField === targetField);
+    const fieldValue = targetField === EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED
+      ? this.price.unidentifiedValue!
+      : this.price.value;
     return this._buildChange(
       'system.price',
-      this.price.value,
-      existing ? existing.type : EFFECT_CHANGE_TYPE.ADD
+      fieldValue,
+      existing ? existing.type : EFFECT_CHANGE_TYPE.ADD,
+      'final',
+      10,
+      EFFECT_CHANGE_TARGET.ITEM,
+      targetField
     );
   }
 }

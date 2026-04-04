@@ -23,6 +23,7 @@
  */
 
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
+import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
 import type { EditorViewMode, FormulaFieldMeta } from '@helpers/formulae/types.mjs';
 import { UNIDENTIFIED } from '@helpers/formulae/types.mjs';
 import type { FieldEditability, FieldVisibility } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
@@ -152,23 +153,33 @@ class Dnd35eField<
   }
 
   // ---------------------------------------------------------------------------
-  // Active Effect change routing — all changes target .value
+  // Active Effect change routing — routes to .value or .unidentifiedValue
+  // based on change.targetField
   // ---------------------------------------------------------------------------
 
   /**
-   * Delegate to the inner value field's protected AE method by name.
-   * Cast through `any` because TypeScript disallows calling protected methods
-   * on a different instance, even from a subclass.
+   * Resolve which sub-field key ('value' or 'unidentifiedValue') a change targets.
+   * Defaults to 'value' for backward compatibility.
+   */
+  private _resolveTargetField(change: EffectChangeData): 'value' | 'unidentifiedValue' {
+    const targetField = (change as Partial<Dnd35eEffectChangeData>).targetField;
+    if (targetField === 'unidentifiedValue' && this.fields.unidentifiedValue) return 'unidentifiedValue';
+    return 'value';
+  }
+
+  /**
+   * Delegate to the appropriate sub-field (value or unidentifiedValue) based on change.targetField.
    * @internal
    */
-  private _delegateToValueField(
+  private _delegateToTargetField(
     method: FieldMethods,
     value: unknown,
     delta: unknown,
     model: foundry.abstract.DataModel,
     change: EffectChangeData
   ): unknown {
-    const field = this.fields.value;
+    const targetKey = this._resolveTargetField(change);
+    const field = this.fields[targetKey] ?? this.fields.value;
     return field[method]?.(value, delta, model, change);
   }
 
@@ -184,8 +195,10 @@ class Dnd35eField<
     change: EffectChangeData
   ): unknown {
     const data = current as Dnd35eFieldData<TSource>;
-    const newValue = this._delegateToValueField('_applyChangeAdd', data.value, delta, model, change);
-    return { ...data, value: newValue };
+    const targetKey = this._resolveTargetField(change);
+    const currentValue = data[targetKey] ?? data.value;
+    const newValue = this._delegateToTargetField('_applyChangeAdd', currentValue, delta, model, change);
+    return { ...data, [targetKey]: newValue };
   }
 
   override _applyChangeMultiply(
@@ -195,8 +208,10 @@ class Dnd35eField<
     change: EffectChangeData
   ): unknown {
     const data = current as Dnd35eFieldData<TSource>;
-    const newValue = this._delegateToValueField('_applyChangeMultiply', data.value, delta, model, change);
-    return { ...data, value: newValue };
+    const targetKey = this._resolveTargetField(change);
+    const currentValue = data[targetKey] ?? data.value;
+    const newValue = this._delegateToTargetField('_applyChangeMultiply', currentValue, delta, model, change);
+    return { ...data, [targetKey]: newValue };
   }
 
   override _applyChangeOverride(
@@ -206,7 +221,8 @@ class Dnd35eField<
     _change: EffectChangeData
   ): unknown {
     const data = current as Dnd35eFieldData<TSource>;
-    return { ...data, value: delta };
+    const targetKey = this._resolveTargetField(_change);
+    return { ...data, [targetKey]: delta };
   }
 
   override _applyChangeUpgrade(
@@ -216,8 +232,10 @@ class Dnd35eField<
     change: EffectChangeData
   ): unknown {
     const data = current as Dnd35eFieldData<TSource>;
-    const newValue = this._delegateToValueField('_applyChangeUpgrade', data.value, delta, model, change);
-    return { ...data, value: newValue };
+    const targetKey = this._resolveTargetField(change);
+    const currentValue = data[targetKey] ?? data.value;
+    const newValue = this._delegateToTargetField('_applyChangeUpgrade', currentValue, delta, model, change);
+    return { ...data, [targetKey]: newValue };
   }
 
   override _applyChangeDowngrade(
@@ -227,8 +245,10 @@ class Dnd35eField<
     change: EffectChangeData
   ): unknown {
     const data = current as Dnd35eFieldData<TSource>;
-    const newValue = this._delegateToValueField('_applyChangeDowngrade', data.value, delta, model, change);
-    return { ...data, value: newValue };
+    const targetKey = this._resolveTargetField(change);
+    const currentValue = data[targetKey] ?? data.value;
+    const newValue = this._delegateToTargetField('_applyChangeDowngrade', currentValue, delta, model, change);
+    return { ...data, [targetKey]: newValue };
   }
 
   override _applyChangeSubtract(
@@ -238,8 +258,10 @@ class Dnd35eField<
     change: EffectChangeData
   ): unknown {
     const data = current as Dnd35eFieldData<TSource>;
-    const newValue = this._delegateToValueField('_applyChangeSubtract', data.value, delta, model, change);
-    return { ...data, value: newValue };
+    const targetKey = this._resolveTargetField(change);
+    const currentValue = data[targetKey] ?? data.value;
+    const newValue = this._delegateToTargetField('_applyChangeSubtract', currentValue, delta, model, change);
+    return { ...data, [targetKey]: newValue };
   }
 }
 

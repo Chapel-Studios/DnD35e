@@ -14,7 +14,7 @@
     </div>
     <ol class="changes-list" data-changes>
       <li
-        v-for="(change, index) in changes"
+        v-for="(change, index) in visibleChanges"
         :key="index" class="change-row"
         :data-index="index"
       >
@@ -70,15 +70,16 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol, TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-  import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE, EffectChangeValue } from '@effects/BaseActiveEffect/index.mjs';
+  import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE, EffectChangeValue } from '@effects/BaseActiveEffect/index.mjs';
+  import { UNIDENTIFIED } from '@helpers/formulae/types.mjs';
   import { computed, inject } from 'vue';
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditViewMode, identifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;
   const store = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
   const {
     documentGetters: {
-      changes,
+      visibleChanges,
     },
     documentActions: {
       addChange,
@@ -115,6 +116,9 @@
   };
 
   const createChange = async () => {
+    const targetField = identifiedViewMode.value === UNIDENTIFIED
+      ? EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED
+      : EFFECT_CHANGE_TARGET_FIELD.VALUE;
     await addChange({
       key: '',
       type: EFFECT_CHANGE_TYPE.ADD,
@@ -122,6 +126,7 @@
       phase: 'initial',
       priority: 10,
       target: EFFECT_CHANGE_TARGET.ITEM,
+      targetField,
       effect: null,
       isSystem: false,
     });

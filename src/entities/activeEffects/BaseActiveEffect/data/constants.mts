@@ -26,6 +26,22 @@ const EFFECT_CHANGE_TARGETS = {
 } as const satisfies Record<EffectChangeTarget, string>;
 
 /**
+ * Per-change sub-field targeting for Dnd35eField compounds.
+ * Determines whether the change applies to .value or .unidentifiedValue.
+ */
+const EFFECT_CHANGE_TARGET_FIELD = {
+  VALUE: 'value',
+  UNIDENTIFIED: 'unidentifiedValue',
+} as const;
+
+type EffectChangeTargetField = typeof EFFECT_CHANGE_TARGET_FIELD[keyof typeof EFFECT_CHANGE_TARGET_FIELD];
+
+const EFFECT_CHANGE_TARGET_FIELDS = {
+  [EFFECT_CHANGE_TARGET_FIELD.VALUE]: 'D35E.EffectChangeTargetField.Value',
+  [EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED]: 'D35E.EffectChangeTargetField.Unidentified',
+} as const satisfies Record<EffectChangeTargetField, string>;
+
+/**
  * String-based effect change types matching Foundry v14+ CONST.ACTIVE_EFFECT_CHANGE_TYPES keys.
  * Use these instead of the deprecated CONST.ACTIVE_EFFECT_MODES (removed in v16).
  */
@@ -54,6 +70,8 @@ export {
   ACTIVE_EFFECT_TARGETS,
   EFFECT_CHANGE_PHASES,
   EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TARGET_FIELD,
+  EFFECT_CHANGE_TARGET_FIELDS,
   EFFECT_CHANGE_TARGETS,
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
@@ -65,5 +83,6 @@ export type {
   ActiveEffectTargetLocalizationValues,
   EffectChangePhase,
   EffectChangeTarget,
+  EffectChangeTargetField,
   EffectChangeType,
 };
