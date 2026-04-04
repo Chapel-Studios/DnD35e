@@ -5,7 +5,6 @@
 
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
 import type { DocumentSheetV2 } from '@client/applications/api/_module.mjs';
-import { Dnd35eDocument } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
 import { RenderModeStoreSymbol, useRenderModeStore } from '@ec/CoreMixin/sheet/stores/index.mjs';
 import type { RenderModeStore } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
@@ -38,7 +37,7 @@ interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | DnD35eActiveEff
 const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocument extends ItemDnd35e | DnD35eActiveEffect> (base: TBase) => {
   const VueAppBase = useVueAppBaseMixin(base);
 
-  abstract class VueApp extends VueAppBase {
+  abstract class VueDocumentSheet extends VueAppBase {
     declare options: VueApplicationConfiguration<TDocument>;
     #document!: TDocument;
 
@@ -92,122 +91,6 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
     }
 
     /**
-     * Render header buttons directly in the window header bar.
-     * Called from _onRender to add/update buttons.
-     * @param refreshTooltipFor - Which button triggered the update (to refresh its tooltip)
-     */
-    protected _renderHeaderButtons (refreshTooltipFor?: 'editMode' | 'identifiedView'): void {
-      const header = this.element?.querySelector('.window-header');
-      if (!header) return;
-
-      // Edit mode toggle button
-      this._renderEditModeButton(header, refreshTooltipFor === 'editMode');
-
-      // Identified view toggle button
-      this._renderIdentifiedViewButton(header, refreshTooltipFor === 'identifiedView');
-    }
-
-    /**
-     * Render or update the edit mode toggle button in the header.
-     */
-    protected _renderEditModeButton (header: Element, refreshTooltip = false): void {
-      const existingBtn = header.querySelector('.edit-mode-btn') as HTMLButtonElement | null;
-
-      if (this.isEditable && !existingBtn) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.classList.add('header-control', 'icon', 'edit-mode-btn');
-        btn.dataset.action = 'toggleEditMode';
-        btn.dataset.tooltip = game.i18n.localize(this.renderModeStore.isEditViewMode.value ? 'D35E.SheetModeEdit' : 'D35E.SheetModePlay');
-        btn.dataset.tooltipDirection = 'DOWN';
-        btn.setAttribute('aria-label', btn.dataset.tooltip);
-        btn.innerHTML = `<i class="${this.renderModeStore.isEditViewMode.value ? 'fa-solid fa-lock-open' : 'fa-solid fa-lock'}" inert></i>`;
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this._onToggleEditMode();
-        });
-        btn.addEventListener('dblclick', e => e.stopPropagation());
-        btn.addEventListener('pointerdown', e => e.stopPropagation());
-        header.prepend(btn);
-      } else if (this.isEditable && existingBtn) {
-        // Update existing button
-        const icon = existingBtn.querySelector('i');
-        if (icon) {
-          icon.className = this.renderModeStore.isEditViewMode.value ? 'fa-solid fa-lock-open' : 'fa-solid fa-lock';
-        }
-        existingBtn.dataset.tooltip = game.i18n.localize(this.renderModeStore.isEditViewMode.value ? 'D35E.SheetModeEdit' : 'D35E.SheetModePlay');
-        existingBtn.setAttribute('aria-label', existingBtn.dataset.tooltip);
-        // Refresh tooltip if this button was clicked
-        if (refreshTooltip) {
-          game.tooltip.deactivate();
-          game.tooltip.activate(existingBtn, { text: existingBtn.dataset.tooltip, direction: 'DOWN' });
-        }
-      } else if (!this.isEditable && existingBtn) {
-        existingBtn.remove();
-      }
-    }
-
-    /**
-     * Render or update the identified view toggle button in the header.
-     */
-    protected _renderIdentifiedViewButton (header: Element, refreshTooltip = false): void {
-      const doc = this.#document as ItemDnd35e;
-      const isIdentifiable = (doc.system as Dnd35eDocument<any>)?.isIdentifiable;
-      const shouldShow = isIdentifiable && (game.user.isGM);
-      const existingBtn = header.querySelector('.identified-view-btn') as HTMLButtonElement | null;
-      const isShowingIdentified = this.renderModeStore.isIdentifiedViewMode.value;
-
-      if (shouldShow && !existingBtn) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.classList.add('header-control', 'icon', 'identified-view-btn');
-        btn.dataset.action = 'toggleIdentifiedView';
-        btn.dataset.tooltip = game.i18n.localize(isShowingIdentified ? 'D35E.Identified' : 'D35E.Unidentified');
-        btn.dataset.tooltipDirection = 'DOWN';
-        btn.setAttribute('aria-label', btn.dataset.tooltip);
-        btn.innerHTML = `<i class="${isShowingIdentified ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'}" inert></i>`;
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this._onToggleIdentifiedView();
-        });
-        btn.addEventListener('dblclick', e => e.stopPropagation());
-        btn.addEventListener('pointerdown', e => e.stopPropagation());
-        header.prepend(btn);
-      } else if (shouldShow && existingBtn) {
-        // Update existing button
-        const icon = existingBtn.querySelector('i');
-        if (icon) {
-          icon.className = isShowingIdentified ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
-        }
-        existingBtn.dataset.tooltip = game.i18n.localize(isShowingIdentified ? 'D35E.Identified' : 'D35E.Unidentified');
-        existingBtn.setAttribute('aria-label', existingBtn.dataset.tooltip);
-        // Refresh tooltip if this button was clicked
-        if (refreshTooltip) {
-          game.tooltip.deactivate();
-          game.tooltip.activate(existingBtn, { text: existingBtn.dataset.tooltip, direction: 'DOWN' });
-        }
-      } else if (!shouldShow && existingBtn) {
-        existingBtn.remove();
-      }
-    }
-
-    /**
-     * Toggle edit mode and update header button.
-     */
-    protected _onToggleEditMode (): void {
-      this.renderModeStore.updateIsEditViewMode();
-      this._renderHeaderButtons('editMode');
-    }
-
-    /**
-     * Toggle identified/unidentified view and update header button.
-     */
-    protected _onToggleIdentifiedView (): void {
-      this.renderModeStore.updateIdentifiedViewMode();
-      this._renderHeaderButtons('identifiedView');
-    }
-
-    /**
      * Create the Vue app instance with document context
      */
     protected override _createVueApp (renderOptions: VueRenderOptions): App {
@@ -250,7 +133,10 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       options: ApplicationRenderOptions
     ): Promise<void> {
       await super._onRender(context, options);
-      this._renderHeaderButtons();
+      const header = this.element?.querySelector('.window-header');
+      if (header) {
+        this.renderModeStore.setHeaderElement(header, this.isEditable);
+      }
     }
 
     override async render (options?: boolean | DeepPartial<VueRenderOptions> | undefined): Promise<this> {
@@ -263,7 +149,7 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
     }
   }
 
-  return VueApp;
+  return VueDocumentSheet;
 };
 
 /**

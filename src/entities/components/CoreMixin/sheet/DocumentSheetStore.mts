@@ -389,7 +389,9 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     getProperty: <T,>(path: string) => computed(() => foundry.utils.getProperty(document.value, path) as T),
     getSourceProperty: <T,>(path: string) => computed(() => {
       const raw = foundry.utils.getProperty(document.value._source, path);
-      return (isDnd35eFieldShape(raw) ? raw.value : raw) as T;
+      const result = isDnd35eFieldShape(raw) ? raw.value : raw;
+      // Clone objects so Vue's computed cache detects in-place mutations from Foundry's mergeObject
+      return (typeof result === 'object' && result !== null ? foundry.utils.deepClone(result) : result) as T;
     }),
     getFlagValue,
 

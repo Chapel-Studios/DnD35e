@@ -2,7 +2,7 @@
   <div class="form-group" :class="formGroupClasses" :hidden="!isFieldVisible">
     <div v-if="hasLabel" class="form-group-label">
       <label>
-        <!-- <i v-if="isVisibilityRestricted" class="fas fa-low-vision" :title="visibilityTooltip"></i> -->
+        <i v-if="showUnidentifiedIndicator" class="fas fa-low-vision unidentified-indicator" :title="localize('D35E.UnidentifiedValueHint')"></i>
         {{ localize(props.label!) }}
       </label>
       <!-- GM permission controls next to label -->
@@ -49,6 +49,8 @@
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { RenderModeStore } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
+  import { RenderModeStoreSymbol } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
   import { computed, inject } from 'vue';
 
   import FieldControls from './FieldControls.vue';
@@ -86,8 +88,10 @@
     _storeUtils: {
       resolveVisibility,
       resolveEditability,
+      resolveFieldMeta,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+  const { isIdentifiedViewMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   // Get effective visibility: override > prop > schema default > 'everyone'
   const isFieldVisible = getIsFieldVisible(props.fieldPath, props.defaultVisibility);
@@ -97,6 +101,12 @@
   // Restriction checks
   const isVisibilityRestricted = computed(() => resolveVisibility(props.fieldPath, props.defaultVisibility) !== everyoneVisibility);
   const isEditabilityRestricted = computed(() => resolveEditability(props.fieldPath, props.defaultEditability) === gmOnlyEditability);
+
+  // Unidentified value indicator: GM-only, unidentified view, field has identifiable unidentified value
+  const fieldIdentifiable = resolveFieldMeta(props.fieldPath)?.identifiable ?? false;
+  const showUnidentifiedIndicator = computed(() =>
+    fieldIdentifiable && isGM.value && !isIdentifiedViewMode.value
+  );
 
   // Form group classes
   const formGroupClasses = computed(() => ({
@@ -130,6 +140,12 @@
 
   .form-group-label label {
     margin: 0;
+  }
+
+  .unidentified-indicator {
+    color: var(--color-level-warning);
+    font-size: var(--font-size-11);
+    opacity: 0.8;
   }
 
   .form-group.with-hint {

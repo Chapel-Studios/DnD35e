@@ -39,6 +39,7 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
+  import { IDENTIFIED, UNIDENTIFIED } from '@helpers/formulae/types.mjs';
   import { ToggleSwitch } from '@vc/Fields/index.mjs';
   import { DmControl } from '@vc/index.mjs';
   import { computed, inject } from 'vue';
@@ -51,12 +52,15 @@
       getDirectFieldUpdater,
     },
   } = inject(DocumentSheetStoreSymbol) as IdentifiableDocumentStore;
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditViewMode, updateIdentifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const identifiedLabel = computed(() => game.i18n.localize('D35E.Identified'));
   const unidentifiedLabel = computed(() => game.i18n.localize('D35E.Unidentified'));
 
-  const handleToggleUpdate = (value: boolean) => getDirectFieldUpdater('system.isIdentified')(value);
+  const handleToggleUpdate = (value: boolean) => {
+    getDirectFieldUpdater('system.isIdentified')(value);
+    updateIdentifiedViewMode(value ? IDENTIFIED : UNIDENTIFIED);
+  };
 </script>
 
 <style lang="scss" scoped>

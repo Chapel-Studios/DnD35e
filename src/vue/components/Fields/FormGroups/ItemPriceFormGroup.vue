@@ -19,7 +19,7 @@
         <i class="fas fa-plus" />
       </button>
       <button
-        v-if="editable && !isDisabled && editStacks.length > 0"
+        v-if="editable && !isDisabled && hasEditStacks"
         type="button"
         class="field-control-btn consolidate-btn"
         :title="localize('DND35E.Currency.Consolidate')"
@@ -32,7 +32,7 @@
 
     <!-- Editable coin stacks -->
     <div class="coin-stacks">
-      <div v-if="editStacks.length === 0" class="empty-price">
+      <div v-if="!hasEditStacks" class="empty-price">
         <span class="zero-value">0 {{ defaultCoinShortLabel }}</span>
       </div>
       <div v-for="(stack, index) in editStacks" :key="index" class="coin-stack">
@@ -141,6 +141,8 @@
     const src = sourceValue.value;
     return src?.stacks ?? props.value?.stacks ?? [];
   });
+
+  const hasEditStacks = computed(() => editStacks.value.length > 0);
 
   /** The stacks shown in the readonly display. */
   const readonlyStacks = computed((): CoinStack[] => {

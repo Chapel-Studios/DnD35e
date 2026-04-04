@@ -16,6 +16,7 @@
     "D35E.UnidentifiedName": "Unidentified Name",
     "D35E.IdentifiedName": "Identified Name",
     "D35E.UnidentifiedDescription": "Unidentified Description",
+    "D35E.UnidentifiedValueHint": "Editing unidentified value",
     "D35E.IdentifiedDescription": "Identified Description",
     "D35E.ItemName": "Item Name",
     "D35E.UseNameFromFormula": "Use name from formula",
