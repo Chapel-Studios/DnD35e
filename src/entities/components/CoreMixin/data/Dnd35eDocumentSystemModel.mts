@@ -35,6 +35,7 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
         expectedType: 'string',
         identifiable: true,
         canVisibilityBeChanged: false,
+        excludedFields: ['name'],
         nullable: false,
         required: true,
         initial: {
@@ -46,6 +47,7 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
         },
       }),
       description: new Dnd35eField(HTMLField, {}, {
+        familiar: { formulaVisible: false },
         label: 'Description',
         hint: 'The item description, shown in the item sheet and when hovering the item in the inventory.',
       }),
@@ -56,15 +58,46 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
   override prepareDerivedData(): void {
     super.prepareDerivedData();
     const nameFormula = this.nameFormula;
+    const doc = this.parent as unknown as DocumentContext;
+    const nameFormulaField = (this.constructor as any).schema?.fields?.nameFormula as FormulaField | undefined;
+    const dataMap = this._buildFormulaDataMap(doc, nameFormulaField?.formulaContexts ?? []);
+    const excluded = nameFormulaField?.excludedFields ?? [];
     if (nameFormula?.formula) {
-      const dataMap: Record<string, DocumentContext> = { self: this.parent as unknown as DocumentContext };
-      nameFormula.resolvedValue = nameFormula.resolve(dataMap, this.derivedName);
+      nameFormula.resolvedValue = nameFormula.resolve(dataMap, this.derivedName, excluded);
       this.derivedName = nameFormula.resolvedValue;
     }
     if (nameFormula?.unidentifiedFormula) {
-      const dataMap: Record<string, DocumentContext> = { self: this.parent as unknown as DocumentContext };
-      nameFormula.unidentifiedResolvedValue = nameFormula.resolveUnidentified(dataMap, '');
+      nameFormula.unidentifiedResolvedValue = nameFormula.resolveUnidentified(dataMap, '', excluded);
     }
+  }
+
+  /**
+   * Build the formula data map for a specific formula field.
+   * Resolves additional contexts from the field's declared context list.
+   */
+  protected _buildFormulaDataMap(doc: DocumentContext, declarations: { contextName: string; resolvePath?: string }[]): Record<string, DocumentContext> {
+    const map: Record<string, DocumentContext> = { self: doc };
+    for (const decl of declarations) {
+      if (!decl.resolvePath) continue; // Runtime-provided context, skip auto-resolution
+      const resolved = this._resolveContextPath(doc, decl.resolvePath);
+      if (resolved) {
+        map[decl.contextName] = resolved;
+      }
+    }
+    return map;
+  }
+
+  /**
+   * Walk a dot-separated path from a document to resolve a context source.
+   * e.g. 'parent' → doc.parent, 'parent.parent' → doc.parent.parent
+   */
+  private _resolveContextPath(doc: DocumentContext, path: string): DocumentContext | undefined {
+    let current: any = doc;
+    for (const segment of path.split('.')) {
+      if (!current) return undefined;
+      current = current[segment];
+    }
+    return current?.documentName ? current : undefined;
   }
 }
 

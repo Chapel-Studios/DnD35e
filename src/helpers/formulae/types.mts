@@ -12,9 +12,7 @@
  * Used by the schema walker to auto-generate AspectGroup trees.
  */
 export interface FormulaFieldMeta {
-  /** Localized label override. Falls back to DataField.label. */
-  display?: string;
-  /** If true, this field appears in formula autocomplete. Default false. */
+  /** If true, this field appears in formula autocomplete. Default true. */
   formulaVisible?: boolean;
   /** Override the inferred aspect type (normally inferred from inner field class). */
   aspectType?: 'string' | 'number';
@@ -27,13 +25,47 @@ export interface FormulaFieldMeta {
  * Describes how to resolve a named context (e.g. "owner") to a live document.
  */
 export interface FormulaContextBinding {
-  /** Path from the formula's document upward, e.g. 'parent', 'parent.parent' */
-  resolvePath: string;
+  /** Path from the formula's document upward, e.g. 'parent', 'parent.parent'. Omit for runtime-provided contexts. */
+  resolvePath?: string;
   /** Expected Foundry document type, e.g. 'Actor', 'Item' */
   documentType: string;
   /** Expected subtypes for familiar union, e.g. ['character', 'npc'] */
   expectedSubtypes: string[];
   /** Alternative names that also resolve to this context, e.g. ['item', 'weapon'] */
+  aliases?: string[];
+}
+
+/**
+ * Static declaration of an additional formula context available on a system model.
+ *
+ * Each concrete system model (WeaponSystemModel, MaterialSystemModel, etc.)
+ * declares its desired contexts via `static get formulaContexts()`.
+ * This drives both autocomplete/schema building AND runtime data resolution.
+ */
+export interface FormulaContextDeclaration {
+  /** The context name used in formulas, e.g. 'Owner', 'Item'. */
+  contextName: string;
+  /**
+   * How to resolve the live document from the formula's own document.
+   * e.g. 'parent' → `doc.parent`, 'parent.parent' → `doc.parent.parent`.
+   *
+   * When omitted, the context is **runtime-provided** — the caller must
+   * inject it at evaluation time (e.g. a combat target). Autocomplete
+   * still works via `documentType` + `fallbackSubtypes`.
+   */
+  resolvePath?: string;
+  /**
+   * Foundry document type for schema lookups, e.g. 'Actor', 'Item'.
+   * Used when no live parent is available (schema-only/fallback mode).
+   */
+  documentType: foundry.CONST.DocumentType;
+  /**
+   * Subtypes whose schemas should be unioned for autocomplete when no
+   * live parent is available. e.g. `['weapon']` or `['weapon', 'armor']`.
+   * When a live parent IS available, its actual type is used instead.
+   */
+  fallbackSubtypes: string[];
+  /** Aliases users can type instead of the context name, e.g. ['Parent']. */
   aliases?: string[];
 }
 

@@ -106,16 +106,38 @@ function buildContextFromFormula(
 }
 
 /**
- * Build a FamiliarSchema from a live document by auto-deriving contexts.
+ * Recursively gather FormulaContextDeclarations from all FormulaField instances
+ * in a schema's field tree.
+ */
+function gatherFieldContextDeclarations(fields: Record<string, any>): { contextName: string; resolvePath?: string; documentType: string; fallbackSubtypes: string[]; aliases?: string[] }[] {
+  const results: { contextName: string; resolvePath?: string; documentType: string; fallbackSubtypes: string[]; aliases?: string[] }[] = [];
+  for (const field of Object.values(fields)) {
+    const contexts = field?.formulaContexts ?? field?.options?.contexts;
+    if (Array.isArray(contexts)) {
+      results.push(...contexts);
+    }
+    // Recurse into SchemaField children
+    if (field?.fields) {
+      results.push(...gatherFieldContextDeclarations(field.fields));
+    }
+  }
+  return results;
+}
+
+/**
+ * Build a FamiliarSchema from a live document by gathering context
+ * declarations from all FormulaField instances in its schema.
  *
- * Every document gets a `self` context. Parent contexts are named by their
- * document type to be more meaningful than a generic "parent":
+ * Every document gets a `self` context. Additional contexts are derived
+ * from the union of all FormulaField `contexts` declarations across the
+ * entire schema (for document-level autocomplete).
  *
- * - Item → parent actor is **Owner** (alias: Parent)
- * - ActiveEffect → parent item/actor is **Item** or **Actor** (alias: Parent)
+ * When no live parent is available (e.g. building schema for autocomplete
+ * on a detached item), `fallbackSubtypes` from the declaration are used
+ * to build a schema-only context.
  *
  * @param document A live Foundry document with .documentName and .type
- * @returns FamiliarSchema with self (and optionally parent) contexts
+ * @returns FamiliarSchema with self (and optionally declared) contexts
  */
 function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
   const schema: FamiliarSchema = {};
@@ -130,20 +152,52 @@ function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
     };
   }
 
-  // --- Parent: named by document type for clarity ---
-  const parent = (document as any)?.parent as DocumentContext | undefined;
-  if (parent) {
-    const pDocType = parent.documentName;
-    const pSubtype = parent.type as ContextDocumentType;
-    if (hasFamiliarSchema(pDocType, pSubtype)) {
-      const properties = getFamiliarBuilder(pDocType, pSubtype)!(parent);
-      // Use the parent's document type as the context name (e.g. "Owner", "Item")
-      // with "Parent" always available as an alias.
-      const contextName = pDocType === 'Actor' ? 'Owner' : pDocType;
-      schema[contextName] = {
-        properties,
-        aliases: ['Parent'],
-      };
+  // --- Additional contexts: union of all FormulaField declarations ---
+  const systemSchema = (document as any).system?.schema;
+  if (systemSchema?.fields) {
+    const allDeclarations = gatherFieldContextDeclarations(systemSchema.fields);
+    // Deduplicate by contextName (first declaration wins)
+    const seen = new Set<string>();
+    for (const decl of allDeclarations) {
+      if (seen.has(decl.contextName)) continue;
+      seen.add(decl.contextName);
+
+      // Try to resolve the live context document via the declared path
+      let contextDoc: DocumentContext | undefined;
+      if (decl.resolvePath) {
+        let current: any = document;
+        for (const segment of decl.resolvePath.split('.')) {
+          if (!current) break;
+          current = current[segment];
+        }
+        if (current?.documentName) {
+          contextDoc = current as DocumentContext;
+        }
+      }
+
+      if (contextDoc) {
+        // Live parent available — use its actual type for schema
+        const ctxDocType = contextDoc.documentName;
+        const ctxSubtype = contextDoc.type as ContextDocumentType;
+        if (hasFamiliarSchema(ctxDocType, ctxSubtype)) {
+          schema[decl.contextName] = {
+            properties: getFamiliarBuilder(ctxDocType, ctxSubtype)!(contextDoc),
+            aliases: decl.aliases,
+          };
+        }
+      } else if (decl.fallbackSubtypes?.length) {
+        // No live parent: build a schema-only context from fallback subtypes
+        const fallbackDocType = decl.documentType as foundry.CONST.DocumentType;
+        for (const fallbackSubtype of decl.fallbackSubtypes) {
+          if (hasFamiliarSchema(fallbackDocType, fallbackSubtype as ContextDocumentType)) {
+            schema[decl.contextName] = {
+              properties: getFamiliarBuilder(fallbackDocType, fallbackSubtype as ContextDocumentType)!(),
+              aliases: decl.aliases,
+            };
+            break;
+          }
+        }
+      }
     }
   }
 

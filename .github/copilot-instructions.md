@@ -21,7 +21,8 @@ The autocomplete/context system for formulas is branded **FormulaFamiliar** (not
 - **AspectGroup** — tree of properties
 - **FamiliarSchema** — full schema for a document type
 - **FamiliarContext** — resolved context with properties + aliases
-- Option key on fields: `familiar` (e.g. `{ familiar: { formulaVisible: true, display: 'Hardness' } }`)
+- Option key on fields: `familiar` (e.g. `{ familiar: { formulaVisible: false } }` to opt out)
+- Dnd35eField has `static isFamiliarField = true` — the schema walker auto-includes all Dnd35eField instances in formula autocomplete unless `familiar.formulaVisible === false`
 
 ## Component Architecture
 - Composition chain: CoreMixin → Identifiable → PhysicalItem → EquippableItem → Weapon

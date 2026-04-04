@@ -90,11 +90,12 @@ class FormulaData extends foundry.abstract.DataModel {
    *
    * @param documentDataMap Map of context names → live documents/objects
    * @param fallback Fallback value if formula is empty
+   * @param excludedFields Top-level aspect keys to remove from the familiar before resolution
    * @returns Resolved string, or fallback if no formula
    */
-  resolve(documentDataMap: Record<string, DocumentContext>, fallback: string = ''): string {
+  resolve(documentDataMap: Record<string, DocumentContext>, fallback: string = '', excludedFields: string[] = []): string {
     if (!this.formula) return fallback;
-    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap);
+    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap, excludedFields);
     return resolveFormula(this.formula, familiarSchema, documentDataMap);
   }
 
@@ -103,11 +104,12 @@ class FormulaData extends foundry.abstract.DataModel {
    *
    * @param documentDataMap Map of context names → live documents/objects
    * @param fallback Fallback value if unidentified formula is empty
+   * @param excludedFields Top-level aspect keys to remove from the familiar before resolution
    * @returns Resolved string, or fallback if no unidentified formula
    */
-  resolveUnidentified(documentDataMap: Record<string, DocumentContext>, fallback: string = ''): string {
+  resolveUnidentified(documentDataMap: Record<string, DocumentContext>, fallback: string = '', excludedFields: string[] = []): string {
     if (!this.unidentifiedFormula) return fallback;
-    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap);
+    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap, excludedFields);
     return resolveFormula(this.unidentifiedFormula, familiarSchema, documentDataMap);
   }
 
@@ -122,10 +124,11 @@ class FormulaData extends foundry.abstract.DataModel {
   static resolveSource(
     source: FormulaDataSource,
     documentDataMap: Record<string, unknown>,
-    fallback: string = ''
+    fallback: string = '',
+    excludedFields: string[] = []
   ): string {
     if (!source.formula) return fallback;
-    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>);
+    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>, excludedFields);
     return resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
   }
 
@@ -136,10 +139,11 @@ class FormulaData extends foundry.abstract.DataModel {
   static resolveUnidentifiedSource(
     source: FormulaDataSource,
     documentDataMap: Record<string, unknown>,
-    fallback: string = ''
+    fallback: string = '',
+    excludedFields: string[] = []
   ): string {
     if (!source.unidentifiedFormula) return fallback;
-    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>);
+    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>, excludedFields);
     return resolveFormula(source.unidentifiedFormula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
   }
 
@@ -169,19 +173,43 @@ class FormulaData extends foundry.abstract.DataModel {
    * Build a FamiliarSchema by auto-deriving schemas from the live documents
    * in the data map. Each document is introspected via buildDocumentFamiliar
    * to derive its property tree.
+   *
+   * @param documentDataMap Maps context names to their documents
+   * @param excludedFields Top-level aspect keys to strip from every context's properties
    * @internal
    */
-  private static _buildFamiliarFromDocumentMap(documentDataMap: Record<string, DocumentContext>): FamiliarSchema {
+  private static _buildFamiliarFromDocumentMap(
+    documentDataMap: Record<string, DocumentContext>,
+    excludedFields: string[] = []
+  ): FamiliarSchema {
     const schema: FamiliarSchema = {};
     for (const [contextName, doc] of Object.entries(documentDataMap)) {
       if (!doc) continue;
       const docSchema = buildDocumentFamiliar(doc);
-      // buildDocumentFamiliar returns { self: ..., Owner: ... } keyed by role.
+      // buildDocumentFamiliar returns { self: ..., Owner/Item: ... } keyed by role.
       // Map the "self" entry to the actual context name from the data map.
       if (docSchema.self) {
         schema[contextName] = docSchema.self;
       }
+      // Also merge any parent contexts that buildDocumentFamiliar discovered,
+      // but only if we don't already have an entry for that context name
+      // (explicit entries in the data map take precedence).
+      for (const [key, ctx] of Object.entries(docSchema)) {
+        if (key !== 'self' && !schema[key]) {
+          schema[key] = ctx;
+        }
+      }
     }
+
+    // Strip excluded fields from every context's properties
+    if (excludedFields.length) {
+      for (const ctx of Object.values(schema)) {
+        for (const key of excludedFields) {
+          delete ctx.properties[key];
+        }
+      }
+    }
+
     return schema;
   }
 }

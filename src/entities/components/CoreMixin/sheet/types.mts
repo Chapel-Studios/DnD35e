@@ -7,6 +7,9 @@ import type { FormulaDataSource } from '@helpers/formulae/FormulaData.mjs';
  */
 type EvaluationDocument = {
   name: string;
+  /** Foundry document type (e.g. 'Item', 'Actor'). Preserved from the live document so schema lookups work on POJOs. */
+  documentName: string;
+  type: string;
   system: {
     derivedName: string;
     nameFormula: FormulaDataSource | null;
@@ -20,7 +23,11 @@ type EvaluationDocument = {
 type FormulaRegistration = {
   impactedField: string;
   formulaField: string;
-  evaluate: (document: EvaluationDocument) => unknown;
+  /**
+   * @param document  The self POJO (toObject + merged updates)
+   * @param contexts  Additional named context POJOs (e.g. { Owner: actorPojo, Item: itemPojo })
+   */
+  evaluate: (document: EvaluationDocument, contexts: Record<string, EvaluationDocument>) => unknown;
 }
 
 export type {

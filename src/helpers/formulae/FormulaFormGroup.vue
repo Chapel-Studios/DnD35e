@@ -67,15 +67,14 @@
             class="autocomplete-item"
             :class="{ 'is-selected': index === autocompleteIndex }"
             @click="onAutocompleteItemClick(option)"
-            :title="option.display"
+            :title="option.accessPath ?? option.fullPath"
           >
-            <span class="option-path">{{ option.path }}</span>
+            <span class="option-path">{{ option.display }}</span>
             <template v-if="option.isLeaf && option.value != null">
               <span class="option-value">=</span>
               <span class="option-value">{{ option.value }}</span>
             </template>
-            <span v-else-if="option.isLeaf && option.accessPath" class="option-type">{{ option.accessPath }}</span>
-            <span v-else-if="!option.isLeaf" class="option-type">[object]</span>
+            <span v-else-if="!option.isLeaf" class="option-type">[Group]</span>
           </div>
         </div>
       </div>
@@ -90,8 +89,10 @@
   import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, useSlots, watch } from 'vue';
 
   import type { FormulaData } from './FormulaData.mjs';
+  import type { FormulaField } from './FormulaField.mjs';
   import type { AutocompleteOption, EditorViewMode, FamiliarSchema, ValidationError } from './types.mts';
   import {
+    filterExcludedFields,
     getAutocompleteOptions,
     parseFormula,
     renderFormulaHTML,
@@ -127,20 +128,33 @@
     return props.value || '';
   });
 
+  // Resolve the FormulaField schema entry for this field path to read excludedFields
+  const formulaField = computed((): FormulaField | undefined => {
+    const doc = (sheetStore as any)?.document?.value;
+    if (!doc?.system?.schema?.fields) return undefined;
+    // fieldPath is e.g. 'system.nameFormula' — strip 'system.' prefix to get the schema key
+    const schemaKey = props.fieldPath.startsWith('system.') ? props.fieldPath.slice(7) : props.fieldPath;
+    return doc.system.schema.fields[schemaKey] as FormulaField | undefined;
+  });
+
   // Effective contexts — explicit prop > store schema > FormulaData bindings > empty
+  // Then filter out excludedFields declared on the FormulaField.
   const contexts = computed((): FamiliarSchema => {
+    let schema: FamiliarSchema = {};
     if (props.contexts) {
       const raw = props.contexts;
       if (typeof raw === 'object' && '__v_isRef' in raw) {
-        return (raw as any).value ?? {};
+        schema = (raw as any).value ?? {};
+      } else {
+        schema = raw;
       }
-      return raw;
+    } else if (sheetStore?.documentGetters?.familiarSchema?.value) {
+      const storeSchema = sheetStore.documentGetters.familiarSchema.value;
+      if (Object.keys(storeSchema).length > 0) schema = storeSchema;
     }
-    if (sheetStore?.documentGetters?.familiarSchema?.value) {
-      const schema = sheetStore.documentGetters.familiarSchema.value;
-      if (Object.keys(schema).length > 0) return schema;
-    }
-    return {};
+
+    const excluded = formulaField.value?.excludedFields ?? [];
+    return filterExcludedFields(schema, excluded);
   });
 
   // Refs
@@ -251,11 +265,11 @@
     updateValidation();
     nextTick(syncScroll);
 
-    // Check for autocomplete trigger
+    // Check for autocomplete trigger (ignore escaped \#)
     const caretPosition = target.selectionStart ?? value.length;
     const textBeforeCursor = value.substring(0, caretPosition);
 
-    if (textBeforeCursor.includes('#')) {
+    if (/(?<!\\)#/.test(textBeforeCursor)) {
       updateAutocompleteMenu(value, caretPosition);
     } else {
       showAutocomplete.value = false;
@@ -364,7 +378,15 @@
 
   function updateAutocompleteMenu(formula: string, cursorPosition: number) {
     const beforeCursor = formula.substring(0, cursorPosition);
-    const lastHashIndex = beforeCursor.lastIndexOf('#');
+
+    // Find the last unescaped '#' (not preceded by \)
+    let lastHashIndex = -1;
+    for (let i = beforeCursor.length - 1; i >= 0; i--) {
+      if (beforeCursor[i] === '#' && (i === 0 || beforeCursor[i - 1] !== '\\')) {
+        lastHashIndex = i;
+        break;
+      }
+    }
 
     if (lastHashIndex === -1) {
       showAutocomplete.value = false;

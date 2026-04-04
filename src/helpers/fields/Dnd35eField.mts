@@ -8,11 +8,15 @@
  *
  * @example
  * ```ts
+ * // Auto-eligible for formula familiar (isFamiliarField marker)
  * schema.hardness = new Dnd35eField(NumberField, { initial: 0 }, {
- *   familiar: { formulaVisible: true, display: 'Hardness' },
+ *   label: 'Hardness', hint: 'The hardness of this item.',
  * });
- * schema.size = new Dnd35eField(StringField, { initial: 'medium', choices: SIZES });
- * schema.isCarried = new Dnd35eField(BooleanField, { initial: true });
+ * // Opt out with formulaVisible: false
+ * schema.description = new Dnd35eField(HTMLField, {}, {
+ *   familiar: { formulaVisible: false },
+ *   label: 'Description', hint: 'The item description.',
+ * });
  * ```
  *
  * @module
@@ -68,6 +72,12 @@ class Dnd35eField<
   TSource extends JSONValue = JSONValue,
   TDataField extends foundry.data.fields.DataField<TSource> = foundry.data.fields.DataField<TSource>
 > extends SchemaField {
+  /**
+   * Marker that tells the schema walker this field type is auto-eligible
+   * for formula familiar. Individual instances can still opt out via
+   * `familiar: { formulaVisible: false }`.
+   */
+  static readonly isFamiliarField = true;
   constructor(
     InnerFieldClass: ConstructorOf<TDataField>,
     innerOptions: Record<string, unknown> = {},

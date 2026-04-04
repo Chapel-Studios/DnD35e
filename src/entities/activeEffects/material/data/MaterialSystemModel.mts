@@ -5,6 +5,7 @@ import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEff
 import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
 import { Dnd35eField } from '@helpers/fields/index.mjs';
+import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import { PriceField } from '@settings/currency/index.mjs';
 import type { PriceData } from '@settings/index.mjs';
 
@@ -17,10 +18,15 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
   static override defineSchema () {
     const schema = super.defineSchema();
 
-    schema.price = new Dnd35eField(PriceField, {}, { familiar: { formulaVisible: true, display: 'Price' }, label: 'Price', hint: 'The price modifier for this material.' });
-    schema.magicEquivalency = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { familiar: { formulaVisible: true, display: 'Magic Equivalency' }, label: 'Magic Equivalency', hint: 'The magic equivalency of this material.' });
-    schema.hardness = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { familiar: { formulaVisible: true, display: 'Hardness' }, label: 'Hardness', hint: 'The hardness of this material.' });
-    schema.bonusHp = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { familiar: { formulaVisible: true, display: 'Bonus HP' }, label: 'Bonus HP', hint: 'The bonus HP provided by this material.' });
+    // Declare Item context on inherited nameFormula
+    (schema.nameFormula as FormulaField).formulaContexts = [
+      { contextName: 'Item', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['Parent'] },
+    ];
+
+    schema.price = new Dnd35eField(PriceField, {}, { label: 'Price', hint: 'The price modifier for this material.' });
+    schema.magicEquivalency = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Magic Equivalency', hint: 'The magic equivalency of this material.' });
+    schema.hardness = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Hardness', hint: 'The hardness of this material.' });
+    schema.bonusHp = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Bonus HP', hint: 'The bonus HP provided by this material.' });
     schema.damageReductionTypes = new foundry.data.fields.SetField(
       new foundry.data.fields.StringField({ required: true }),
       { initial: [] }

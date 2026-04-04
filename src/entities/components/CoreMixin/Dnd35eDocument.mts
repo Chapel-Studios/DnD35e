@@ -1,6 +1,7 @@
 import type { ClientDocument } from '@client/documents/abstract/_module.mjs';
 import { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
+import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 
 import { Dnd35eDocumentFlags, EvaluationDocument, FormulaRegistration } from './index.mjs';
 
@@ -33,17 +34,18 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
     protected readonly defaultDerivedNameRegistration: FormulaRegistration = {
       impactedField: 'system.derivedName',
       formulaField: 'system.nameFormula',
-      evaluate: (document: EvaluationDocument) => {
+      evaluate: (document: EvaluationDocument, contexts: Record<string, EvaluationDocument>) => {
         const { nameFormula, derivedName } = document.system;
         if (!nameFormula?.formula) return derivedName;
-        return FormulaData.resolveSource(nameFormula, { self: document }, derivedName);
+        const excluded = ((this as any).system?.schema?.fields?.nameFormula as FormulaField | undefined)?.excludedFields ?? [];
+        return FormulaData.resolveSource(nameFormula, { self: document, ...contexts }, derivedName, excluded);
       },
     };
 
     protected readonly defaultNameRegistration: FormulaRegistration = {
       impactedField: 'name',
       formulaField: 'system.isIdentified',
-      evaluate: (document: EvaluationDocument) => {
+      evaluate: (document: EvaluationDocument, _contexts: Record<string, EvaluationDocument>) => {
         return document.system.derivedName;
       },
     };
@@ -55,18 +57,62 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
     abstract get localizedType (): string;
 
     override async update (updateData: Record<string, unknown>, options?: Partial<Omit<DatabaseUpdateOperation<null>, 'parent' | 'pack'>>): Promise<this | undefined> {
-      const thisObject = this.toObject(false);
+      const thisObject = this.toObject(false) as Record<string, unknown>;
+      // Preserve documentName/type so buildDocumentFamiliar can look up the schema on POJOs
+      thisObject.documentName = this.documentName;
+      thisObject.type = (this as any).type;
+
+      // Build additional context POJOs from the live document's relationships
       // Ensure that formulas are evaluated before update to have updated data for preUpdate hooks and active effect application
       for (const registration of this.registeredFormulas) {
+        const additionalContexts = this._buildFormulaContexts(registration.formulaField);
         const evaluationContext = foundry.utils.mergeObject(
           thisObject,
           foundry.utils.expandObject(updateData),
           { inplace: false }
         ) as EvaluationDocument;
-        updateData[registration.impactedField] = registration.evaluate(evaluationContext);
+        updateData[registration.impactedField] = registration.evaluate(evaluationContext, additionalContexts);
       }
 
       return await super.update(updateData, options);
+    }
+
+    /**
+     * Build additional formula context POJOs for a specific formula field.
+     * Looks up the FormulaField in the schema by path and reads its
+     * `formulaContexts` declarations to know which contexts to resolve.
+     */
+    protected _buildFormulaContexts (formulaFieldPath: string): Record<string, EvaluationDocument> {
+      const contexts: Record<string, EvaluationDocument> = {};
+      const systemModel = (this as any).system;
+      if (!systemModel?.schema) return contexts;
+
+      // Walk schema to find the FormulaField at the given path (strip system. prefix)
+      const fieldPath = formulaFieldPath.replace(/^system\./, '');
+      let currentField: any = systemModel.schema;
+      for (const part of fieldPath.split('.')) {
+        currentField = currentField?.fields?.[part];
+        if (!currentField) return contexts;
+      }
+
+      const declarations = currentField?.formulaContexts ?? [];
+      if (!declarations?.length) return contexts;
+
+      for (const decl of declarations) {
+        if (!decl.resolvePath) continue; // Runtime-provided context, skip auto-resolution
+        let current: any = this;
+        for (const segment of decl.resolvePath.split('.')) {
+          if (!current) break;
+          current = current[segment];
+        }
+        if (current?.documentName) {
+          const pojo = current.toObject ? current.toObject(false) : { ...current };
+          pojo.documentName = current.documentName;
+          pojo.type = current.type;
+          contexts[decl.contextName] = pojo as EvaluationDocument;
+        }
+      }
+      return contexts;
     }
   }
   

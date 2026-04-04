@@ -17,7 +17,7 @@ import type { FieldEditability, FieldVisibility } from '@vc/Fields/FormGroups/fi
 
 import type { FormulaDataSource } from './FormulaData.mjs';
 import { FormulaData } from './FormulaData.mjs';
-import type { FormulaFieldMeta } from './types.mjs';
+import type { FormulaContextDeclaration, FormulaFieldMeta } from './types.mjs';
 
 const { EmbeddedDataField } = foundry.data.fields;
 
@@ -36,6 +36,13 @@ type BaseFormulaFieldOptions = {
   canEditabilityBeChanged?: boolean;
   /** Familiar metadata for the schema walker. */
   familiar?: FormulaFieldMeta;
+  /** Formula context declarations — which additional contexts this field can reference. */
+  contexts?: FormulaContextDeclaration[];
+  /**
+   * Top-level aspect keys that this formula must NOT reference.
+   * Used to prevent circular references (e.g. nameFormula cannot reference 'name').
+   */
+  excludedFields?: string[];
   /** Required field. Default: false. */
   required?: boolean;
   /** Label for the field. */
@@ -88,6 +95,8 @@ class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
       canVisibilityBeChanged,
       canEditabilityBeChanged,
       familiar,
+      contexts,
+      excludedFields,
       ...fieldOptions
     } = options;
 
@@ -108,6 +117,38 @@ class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
     if (familiar) {
       opts.familiar = familiar;
     }
+    if (contexts) {
+      opts.contexts = contexts;
+    }
+    if (excludedFields) {
+      opts.excludedFields = excludedFields;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Formula context declarations
+  // ---------------------------------------------------------------------------
+
+  /** Formula context declarations for this field. */
+  get formulaContexts (): FormulaContextDeclaration[] {
+    return (this.options as Record<string, unknown>).contexts as FormulaContextDeclaration[] ?? [];
+  }
+
+  set formulaContexts (value: FormulaContextDeclaration[]) {
+    (this.options as Record<string, unknown>).contexts = value;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Excluded fields
+  // ---------------------------------------------------------------------------
+
+  /** Top-level aspect keys this formula must not reference (e.g. ['name']). */
+  get excludedFields (): string[] {
+    return (this.options as Record<string, unknown>).excludedFields as string[] ?? [];
+  }
+
+  set excludedFields (value: string[]) {
+    (this.options as Record<string, unknown>).excludedFields = value;
   }
 
   // ---------------------------------------------------------------------------

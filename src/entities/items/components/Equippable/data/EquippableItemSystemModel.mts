@@ -23,7 +23,7 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
       { initial: [], required: true }
     );
     schema.isMelded = requiredBooleanField(false);
-    schema.designedForSize = new Dnd35eField(StringField, { choices: SIZES, initial: 'medium', required: true }, { familiar: { formulaVisible: true, display: 'Designed For Size' }, label: 'Designed For Size', hint: 'The size category this item is designed for. This may affect the item\'s stats and which characters can equip it.' });
+    schema.designedForSize = new Dnd35eField(StringField, { choices: SIZES, initial: 'medium', required: true }, { label: 'Designed For Size', hint: 'The size category this item is designed for. This may affect the item\'s stats and which characters can equip it.' });
     schema.isWeightlessWhenEquipped = requiredBooleanField(false);
 
     return schema;

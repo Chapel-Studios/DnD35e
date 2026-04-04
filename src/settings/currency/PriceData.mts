@@ -232,12 +232,14 @@ class PriceData extends DataModel {
 
   override toString(): string {
     const coinages = PriceData.getEnabledCoinages();
-    return this.stacks
-      .map(s => {
-        const coin = coinages.find(c => c.id === s.coinId);
-        return `${s.count} ${coin?.shortLabel ?? s.coinId}`;
-      })
-      .join(', ');
+    return this.stacks.length === 0
+      ? '0'
+      : this.stacks
+        .map(s => {
+          const coin = coinages.find(c => c.id === s.coinId);
+          return `${s.count} ${coin?.shortLabel ?? s.coinId}`;
+        })
+        .join(', ');
   }
 }
 

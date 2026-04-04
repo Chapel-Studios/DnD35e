@@ -17,6 +17,35 @@ import type {
 } from './types.mjs';
 import { isFieldAspect } from './types.mjs';
 
+// ============================================================================
+// Schema Filtering
+// ============================================================================
+
+/**
+ * Return a copy of `schema` with the given top-level aspect keys removed from
+ * every context's properties.  Used to prevent circular references (e.g.
+ * nameFormula must not reference `name`).
+ *
+ * Only strips keys at the root of each context's `properties` — nested paths
+ * are not affected.
+ */
+export function filterExcludedFields(
+  schema: FamiliarSchema,
+  excludedFields: string[]
+): FamiliarSchema {
+  if (!excludedFields.length) return schema;
+
+  const filtered: FamiliarSchema = {};
+  for (const [ctxName, ctx] of Object.entries(schema)) {
+    const props = { ...ctx.properties };
+    for (const key of excludedFields) {
+      delete props[key];
+    }
+    filtered[ctxName] = { ...ctx, properties: props };
+  }
+  return filtered;
+}
+
 /**
  * Regex matching formula variables:
  *   #context.property.nested       — standard familiar path
@@ -25,8 +54,10 @@ import { isFieldAspect } from './types.mjs';
  *
  * The optional quoted segment (single-quotes) lets users reference any
  * document path that isn't exposed through the familiar shortcuts.
+ *
+ * Uses a negative lookbehind so `\#` is treated as a literal `#`, not a variable.
  */
-const VARIABLE_REGEX = /#\w+(?:\.(?:'[^']*'|'[^ ']*|\w+))*/g;
+const VARIABLE_REGEX = /(?<!\\)#\w+(?:\.(?:'[^']*'|'[^ ']*|\w+))*/g;
 
 /**
  * Parse a formula into tokens (text and variables)
@@ -200,6 +231,9 @@ export function resolveFormula(
         result.substring(variable.endIndex);
     }
   }
+
+  // Unescape literal \# → #
+  result = result.replace(/\\#/g, '#');
 
   return result;
 }
@@ -797,22 +831,47 @@ export const resolveFormulaField = (
 };
 
 /**
- * Build a documentDataMap from a document or plain object.
- * Handles both live Foundry documents (with toObject()) and pre-merged plain objects.
+ * Convert a live document or POJO to a plain data object suitable for
+ * formula resolution, preserving `documentName` and `type` for schema lookups.
+ */
+export function toFormulaDataObject(doc: any): any {
+  const data = doc.toObject ? doc.toObject() : doc;
+  if (doc.documentName) data.documentName = doc.documentName;
+  if (doc.type) data.type = doc.type;
+  return data;
+}
+
+/**
+ * Build a documentDataMap for formula resolution.
  *
- * @param docOrPlainObject The document or plain object for #self resolution
- * @param actor Optional actor document for #owner resolution
+ * Callers explicitly declare which contexts they want. Each entry is
+ * converted to a POJO with `documentName` / `type` preserved for schema lookups.
+ *
+ * @param self The document (or POJO) for the `self` context
+ * @param additionalContexts Named context entries — e.g. `{ Owner: actorDoc, Item: itemDoc }`.
+ *   Values can be live documents or POJOs; live documents are converted via `.toObject()`.
+ *   Null/undefined values are silently skipped.
  * @returns Record mapping context names to their plain-object data
+ *
+ * @example
+ * // Weapon on an actor
+ * buildDocumentDataMap(weaponDoc, { Owner: weaponDoc.parent })
+ *
+ * // Material effect on an item
+ * buildDocumentDataMap(materialEffect, { Item: materialEffect.parent })
+ *
+ * // Future: with a target
+ * buildDocumentDataMap(weaponDoc, { Owner: weaponDoc.parent, target: targetActor })
  */
 export function buildDocumentDataMap(
-  docOrPlainObject: any,
-  actor?: any
+  self: any,
+  additionalContexts?: Record<string, any>
 ): Record<string, DocumentContext> {
-  const map: Record<string, DocumentContext> = {
-    self: docOrPlainObject.toObject ? docOrPlainObject.toObject() : docOrPlainObject,
-  };
-  if (actor) {
-    map.owner = actor.toObject ? actor.toObject() : actor;
+  const map: Record<string, DocumentContext> = { self: toFormulaDataObject(self) };
+  if (additionalContexts) {
+    for (const [name, doc] of Object.entries(additionalContexts)) {
+      if (doc) map[name] = toFormulaDataObject(doc);
+    }
   }
   return map;
 }

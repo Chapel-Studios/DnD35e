@@ -2,6 +2,7 @@ import { Dnd35eDocumentProperties } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import { EvaluationDocument, FormulaRegistration } from '@ec/CoreMixin/index.mjs';
 import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
+import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemType } from '@items/index.mjs';
 
@@ -56,17 +57,18 @@ const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase)
     protected readonly unidentifiedDerivedNameRegistration: FormulaRegistration = {
       impactedField: 'system.nameFormula.unidentifiedResolvedValue',
       formulaField: 'system.nameFormula',
-      evaluate: (document: EvaluationDocument) => {
+      evaluate: (document: EvaluationDocument, contexts: Record<string, EvaluationDocument>) => {
         const { nameFormula } = document.system;
         if (!nameFormula?.unidentifiedFormula) return null;
-        return FormulaData.resolveUnidentifiedSource(nameFormula, { self: document }, document.name || '');
+        const excluded = ((this as any).system?.schema?.fields?.nameFormula as FormulaField | undefined)?.excludedFields ?? [];
+        return FormulaData.resolveUnidentifiedSource(nameFormula, { self: document, ...contexts }, document.name || '', excluded);
       },
     };
 
     protected readonly identifiableNameRegistration: FormulaRegistration = {
       impactedField: 'name',
       formulaField: 'system.isIdentified',
-      evaluate: (document: EvaluationDocument) => {
+      evaluate: (document: EvaluationDocument, _contexts: Record<string, EvaluationDocument>) => {
         const { isIdentified, derivedName, nameFormula } = document.system;
         if (isIdentified) return derivedName;
         return nameFormula?.unidentifiedResolvedValue || derivedName || '';

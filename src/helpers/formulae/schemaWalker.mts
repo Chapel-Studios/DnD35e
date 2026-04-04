@@ -5,9 +5,11 @@
  * by reading field metadata directly from schema declarations.
  *
  * Field handling:
- * - Field with `options.familiar.formulaVisible === true` → leaf FieldAspect
- *   - For Dnd35eField (SchemaField with a `value` sub-field): accessPath targets `.value`
- * - SchemaField without `formulaVisible` → recurse into children (grouping node)
+ * - Field whose constructor has `isFamiliarField === true` (e.g. Dnd35eField) → auto-leaf
+ *   - Can be explicitly excluded with `familiar: { formulaVisible: false }`
+ *   - For compound wrappers (SchemaField with a `value` sub-field): accessPath targets `.value`
+ * - Field with `options.familiar.formulaVisible === true` → manual opt-in leaf
+ * - SchemaField without the above → recurse into children (grouping node)
  * - All other fields → skipped
  *
  * @module
@@ -40,6 +42,10 @@ function inferFieldType(field: foundry.data.fields.DataField): 'string' | 'numbe
 
 /**
  * Resolve a live value from a context document and coerce it to the target type.
+ *
+ * For scalar values this is straightforward.  For objects (e.g. a DataModel
+ * like PriceData), we call `toString()` only if the instance provides a
+ * custom override — a plain `[object Object]` fallback is treated as missing.
  */
 function resolveValue(
   context: DocumentContext,
@@ -48,7 +54,19 @@ function resolveValue(
 ): string | number | undefined {
   const raw = foundry.utils.getProperty(context as object, accessPath) as unknown;
   if (raw === undefined || raw === null) return undefined;
-  return type === 'number' ? Number(raw) : String(raw);
+
+  if (type === 'number') return Number(raw);
+
+  // Scalar → coerce directly
+  if (typeof raw !== 'object') return String(raw);
+
+  // Object with a custom toString (e.g. PriceData DataModel) → use it
+  if (typeof (raw as Record<string, unknown>).toString === 'function'
+    && (raw as object).toString !== Object.prototype.toString) {
+    return String(raw);
+  }
+
+  return undefined;
 }
 
 /**
@@ -68,11 +86,15 @@ function walkFields(
   for (const [key, field] of Object.entries(fields)) {
     const meta = (field.options as Record<string, unknown>).familiar as FormulaFieldMeta | undefined;
     const currentPath = pathPrefix ? `${pathPrefix}.${key}` : key;
+    const isAutoEligible = (field.constructor as unknown as Record<string, unknown>).isFamiliarField === true;
 
-    if (meta?.formulaVisible) {
-      // ── Leaf: this field is exposed to formula familiar ──
-      const type = meta.aspectType ?? inferFieldType(field);
-      const aspectKey = meta.aspectKey ?? key;
+    if (meta?.formulaVisible === false) {
+      // ── Explicit opt-out — skip this field entirely ──
+      continue;
+    } else if (isAutoEligible || meta?.formulaVisible) {
+      // ── Leaf: auto-eligible field type or explicitly opted in ──
+      const type = meta?.aspectType ?? inferFieldType(field);
+      const aspectKey = meta?.aspectKey ?? key;
 
       // For compound wrappers (Dnd35eField), the real data lives at .value
       const isCompound = field instanceof SchemaField
@@ -80,7 +102,7 @@ function walkFields(
       const accessPath = isCompound ? `${currentPath}.value` : currentPath;
 
       const prop: FieldAspect = {
-        display: meta.display ?? (field.options as Record<string, unknown>).label as string ?? key,
+        display: (field.options as Record<string, unknown>).label as string ?? key,
         type,
         accessPath,
       };
@@ -111,8 +133,10 @@ function walkFields(
 /**
  * Build an AspectGroup from a DataModel class's schema.
  *
- * Walks `ModelClass.defineSchema()` and collects all fields that have
- * `options.familiar.formulaVisible === true`, plus standard document-level fields.
+ * Walks `ModelClass.defineSchema()` and collects all auto-eligible fields
+ * (those whose constructor has `isFamiliarField === true`, e.g. Dnd35eField)
+ * plus fields with explicit `familiar.formulaVisible === true`,
+ * plus standard document-level fields.
  *
  * @param ModelClass  A DataModel class (or any object with a static `defineSchema()`)
  * @param context     Optional live Foundry document – when provided, property values are resolved inline
