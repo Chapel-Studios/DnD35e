@@ -1,3 +1,4 @@
+import type { Dnd35eFieldData } from '@helpers/fields/Dnd35eField.mjs';
 import type { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 
 type ItemDescription = {
@@ -8,7 +9,7 @@ type BaseDnd35eSystemSource = {
     version: string;
     slug?: string;
     derivedName: string;
-    nameFormula: FormulaData | null;
+    nameFormula: Dnd35eFieldData<FormulaData>;
     description: ItemDescription;
 };
 

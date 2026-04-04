@@ -37,7 +37,7 @@
 
   const fieldPath = 'system.nameFormula';
   const {
-    documentActions: { getDirectFieldUpdater },
+    documentActions: { getViewAwareFieldUpdater },
     documentGetters: { name, getIsFieldVisible },
     _storeUtils: { getProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
@@ -46,7 +46,15 @@
     isIdentifiedViewMode,
   } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
-  const formulaData = getProperty<FormulaData | null>(fieldPath);
+  // Dnd35eField compound: { value: FormulaData, unidentifiedValue: FormulaData | null }
+  const nameFormulaCompound = getProperty<{ value: FormulaData | null; unidentifiedValue: FormulaData | null }>(fieldPath);
+
+  /** Pick the correct FormulaData instance based on view mode. */
+  const formulaData = computed(() => {
+    const compound = nameFormulaCompound?.value;
+    if (!compound) return null;
+    return isIdentifiedViewMode.value ? compound.value : compound.unidentifiedValue;
+  });
 
   const displayValue = computed(() => name.value || '—');
   const showEditor = computed((): boolean => {
@@ -54,14 +62,11 @@
   });
 
   /**
-   * Save the formula string. View mode determines which sub-field is written:
-   * - identified view → system.nameFormula.formula
-   * - unidentified view → system.nameFormula.unidentifiedFormula
+   * Save the formula string. The view-aware updater automatically routes to
+   * .value.formula or .unidentifiedValue.formula based on view mode.
    */
-  
   const onUpdate = (formula: string) => {
-    const subField = isIdentifiedViewMode.value ? 'formula' : 'unidentifiedFormula';
-    return getDirectFieldUpdater(`${fieldPath}.${subField}`)(formula || null);
+    return getViewAwareFieldUpdater(`${fieldPath}.formula`)(formula || null);
   };
 </script>
 

@@ -55,13 +55,15 @@ const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase)
     declare protected readonly defaultNameRegistration: FormulaRegistration;
 
     protected readonly unidentifiedDerivedNameRegistration: FormulaRegistration = {
-      impactedField: 'system.nameFormula.unidentifiedResolvedValue',
+      impactedField: 'system.nameFormula.unidentifiedValue.resolvedValue',
       formulaField: 'system.nameFormula',
       evaluate: (document: EvaluationDocument, contexts: Record<string, EvaluationDocument>) => {
-        const { nameFormula } = document.system;
-        if (!nameFormula?.unidentifiedFormula) return null;
-        const excluded = ((this as any).system?.schema?.fields?.nameFormula as FormulaField | undefined)?.excludedFields ?? [];
-        return FormulaData.resolveUnidentifiedSource(nameFormula, { self: document, ...contexts }, document.name || '', excluded);
+        const unidentifiedFormula = document.system.nameFormula?.unidentifiedValue;
+        if (!unidentifiedFormula?.formula) return null;
+        const nameFormulaDnd35e = (this as any).system?.schema?.fields?.nameFormula;
+        const innerField = nameFormulaDnd35e?.fields?.value as FormulaField | undefined;
+        const excluded = innerField?.excludedFields ?? [];
+        return FormulaData.resolveSource(unidentifiedFormula, { self: document, ...contexts }, document.name || '', excluded);
       },
     };
 
@@ -71,7 +73,7 @@ const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase)
       evaluate: (document: EvaluationDocument, _contexts: Record<string, EvaluationDocument>) => {
         const { isIdentified, derivedName, nameFormula } = document.system;
         if (isIdentified) return derivedName;
-        return nameFormula?.unidentifiedResolvedValue || derivedName || '';
+        return nameFormula?.unidentifiedValue?.resolvedValue || derivedName || '';
       },
     };
 

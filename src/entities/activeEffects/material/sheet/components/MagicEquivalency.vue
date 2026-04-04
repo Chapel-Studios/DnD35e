@@ -3,7 +3,6 @@
     label="D35E.MagicEquivalent"
     :value="magicEquivalency"
     field-path="system.magicEquivalency"
-    direct-update
     :read-only="props.readOnly"
   />
 </template>

@@ -24,8 +24,6 @@ const { EmbeddedDataField } = foundry.data.fields;
 type BaseFormulaFieldOptions = {
   /** Expected result type when resolving the formula. Default: 'string'. */
   expectedType?: 'string' | 'number';
-  /** Whether this field supports identified/unidentified variants. Default: true. */
-  identifiable?: boolean;
   /** Default visibility when no GM override is saved. Default: 'everyone'. */
   defaultVisibility?: FieldVisibility;
   /** Default editability when no GM override is saved. Default: 'normal'. */
@@ -82,14 +80,12 @@ class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
     defaultVisibility: 'everyone',
     expectedType: 'number',
     familiar: {},
-    identifiable: false,
     nullable: true,
     required: false,
     initial: null,
   }) {
     const {
       expectedType,
-      identifiable,
       defaultVisibility,
       defaultEditability,
       canVisibilityBeChanged,
@@ -106,7 +102,6 @@ class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
 
     // Store metadata in options bag (Foundry preserves unknown keys)
     const opts = this.options as Record<string, unknown>;
-    opts.identifiable = identifiable;
     if (defaultVisibility) opts.defaultVisibility = defaultVisibility;
     if (defaultEditability) opts.defaultEditability = defaultEditability;
     if (canVisibilityBeChanged !== undefined) opts.canVisibilityBeChanged = canVisibilityBeChanged;

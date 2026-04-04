@@ -30,7 +30,10 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
     ...baseStore.documentGetters,
     hasOwner,
     // Duration properties
-    durationValue: computed(() => document.value.duration?.value ?? null),
+    durationValue: computed(() => {
+      const val = document.value.duration?.value;
+      return val != null && Number.isFinite(val) ? val : null;
+    }),
     durationUnits: computed(() => document.value.duration?.units ?? 'none'),
     // Effect-specific
     isDisabled: computed(() => document.value.disabled ?? false),
@@ -64,7 +67,7 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
       if (!('changes' in document.value.system)) return false;
       const changes = document.value.system.changes || [];
       const updatedChanges = [...changes, changeData];
-      return await baseStore.documentActions.updateDocument(
+      return await baseStore._storeUtils.updateDocument(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
         {
           diff: false,
@@ -76,7 +79,7 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
       const changes = document.value.system.changes || [];
       const updatedChanges = [...changes];
       updatedChanges.splice(index, 1);
-      return await baseStore.documentActions.updateDocument(
+      return await baseStore._storeUtils.updateDocument(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
         {
           diff: false,

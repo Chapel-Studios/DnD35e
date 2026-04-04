@@ -1,19 +1,16 @@
 /**
  * FormulaData — DataModel for formula fields.
  *
- * Stores a formula string, its resolved value, an optional unidentified variant,
- * and resolution metadata (expectedType).
- *
- * Live instance methods: resolve(), resolveUnidentified(),
- * getEffective(), getEffectiveFormula().
+ * Stores a formula string, its resolved value, and resolution metadata (expectedType).
+ * Identified/unidentified duality is handled by wrapping FormulaField in Dnd35eField,
+ * NOT by storing parallel formula variants inside FormulaData.
  *
  * @module
  */
 
 import type { DocumentContext } from './registry.mjs';
 import { buildDocumentFamiliar } from './registry.mjs';
-import type { EditorViewMode, FamiliarSchema } from './types.mjs';
-import { UNIDENTIFIED } from './types.mjs';
+import type { FamiliarSchema } from './types.mjs';
 import { resolveFormula } from './utils.mjs';
 
 const {
@@ -26,8 +23,6 @@ const {
 interface FormulaDataSource {
   formula: string;
   resolvedValue: string | null;
-  unidentifiedFormula: string | null;
-  unidentifiedResolvedValue: string | null;
   expectedType: 'string' | 'number';
 }
 
@@ -35,49 +30,14 @@ class FormulaData extends foundry.abstract.DataModel {
   // Declare model properties for TypeScript
   declare formula: string;
   declare resolvedValue: string | null;
-  declare unidentifiedFormula: string | null;
-  declare unidentifiedResolvedValue: string | null;
   declare expectedType: 'string' | 'number';
 
   static override defineSchema() {
     return {
-      // Identified formula
       formula: new StringField({ blank: true, initial: '' }),
       resolvedValue: new StringField({ nullable: true, initial: null }),
-
-      // Unidentified formula
-      unidentifiedFormula: new StringField({ nullable: true, initial: null }),
-      unidentifiedResolvedValue: new StringField({ nullable: true, initial: null }),
-
-      // Resolution config
       expectedType: new StringField({ choices: ['string', 'number'], initial: 'string' }),
     };
-  }
-
-  // ---------------------------------------------------------------------------
-  // View-mode helpers
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Get the effective formula for a given view mode.
-   * Returns unidentifiedFormula when viewing unidentified (if set), otherwise formula.
-   */
-  getEffectiveFormula(viewMode: EditorViewMode): string {
-    if (viewMode === UNIDENTIFIED && this.unidentifiedFormula != null) {
-      return this.unidentifiedFormula;
-    }
-    return this.formula;
-  }
-
-  /**
-   * Get the effective resolved value for a given view mode.
-   * Returns unidentifiedResolvedValue when viewing unidentified (if set), otherwise resolvedValue.
-   */
-  getEffective(viewMode: EditorViewMode): string | null {
-    if (viewMode === UNIDENTIFIED && this.unidentifiedResolvedValue != null) {
-      return this.unidentifiedResolvedValue;
-    }
-    return this.resolvedValue;
   }
 
   // ---------------------------------------------------------------------------
@@ -85,7 +45,7 @@ class FormulaData extends foundry.abstract.DataModel {
   // ---------------------------------------------------------------------------
 
   /**
-   * Resolve the identified formula using a document data map.
+   * Resolve the formula using a document data map.
    * Delegates to the existing resolveFormula() utility.
    *
    * @param documentDataMap Map of context names → live documents/objects
@@ -99,26 +59,12 @@ class FormulaData extends foundry.abstract.DataModel {
     return resolveFormula(this.formula, familiarSchema, documentDataMap);
   }
 
-  /**
-   * Resolve the unidentified formula using a document data map.
-   *
-   * @param documentDataMap Map of context names → live documents/objects
-   * @param fallback Fallback value if unidentified formula is empty
-   * @param excludedFields Top-level aspect keys to remove from the familiar before resolution
-   * @returns Resolved string, or fallback if no unidentified formula
-   */
-  resolveUnidentified(documentDataMap: Record<string, DocumentContext>, fallback: string = '', excludedFields: string[] = []): string {
-    if (!this.unidentifiedFormula) return fallback;
-    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap, excludedFields);
-    return resolveFormula(this.unidentifiedFormula, familiarSchema, documentDataMap);
-  }
-
   // ---------------------------------------------------------------------------
   // Static source-level resolution (for POJOs, avoids DataModel construction)
   // ---------------------------------------------------------------------------
 
   /**
-   * Resolve the identified formula from a raw FormulaDataSource POJO.
+   * Resolve the formula from a raw FormulaDataSource POJO.
    * Use when you have serialized data (e.g. from toObject()) rather than a live DataModel.
    */
   static resolveSource(
@@ -130,21 +76,6 @@ class FormulaData extends foundry.abstract.DataModel {
     if (!source.formula) return fallback;
     const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>, excludedFields);
     return resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
-  }
-
-  /**
-   * Resolve the unidentified formula from a raw FormulaDataSource POJO.
-   * Use when you have serialized data (e.g. from toObject()) rather than a live DataModel.
-   */
-  static resolveUnidentifiedSource(
-    source: FormulaDataSource,
-    documentDataMap: Record<string, unknown>,
-    fallback: string = '',
-    excludedFields: string[] = []
-  ): string {
-    if (!source.unidentifiedFormula) return fallback;
-    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>, excludedFields);
-    return resolveFormula(source.unidentifiedFormula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
   }
 
   // ---------------------------------------------------------------------------
@@ -159,8 +90,6 @@ class FormulaData extends foundry.abstract.DataModel {
     return {
       formula,
       resolvedValue: opts.resolvedValue ?? null,
-      unidentifiedFormula: opts.unidentifiedFormula ?? null,
-      unidentifiedResolvedValue: opts.unidentifiedResolvedValue ?? null,
       expectedType: opts.expectedType ?? 'string',
     };
   }

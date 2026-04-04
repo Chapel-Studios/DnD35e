@@ -35,10 +35,12 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
       impactedField: 'system.derivedName',
       formulaField: 'system.nameFormula',
       evaluate: (document: EvaluationDocument, contexts: Record<string, EvaluationDocument>) => {
-        const { nameFormula, derivedName } = document.system;
-        if (!nameFormula?.formula) return derivedName;
-        const excluded = ((this as any).system?.schema?.fields?.nameFormula as FormulaField | undefined)?.excludedFields ?? [];
-        return FormulaData.resolveSource(nameFormula, { self: document, ...contexts }, derivedName, excluded);
+        const identifiedFormula = document.system.nameFormula?.value;
+        if (!identifiedFormula?.formula) return document.system.derivedName;
+        const nameFormulaDnd35e = (this as any).system?.schema?.fields?.nameFormula;
+        const innerField = nameFormulaDnd35e?.fields?.value as FormulaField | undefined;
+        const excluded = innerField?.excludedFields ?? [];
+        return FormulaData.resolveSource(identifiedFormula, { self: document, ...contexts }, document.system.derivedName, excluded);
       },
     };
 
@@ -93,6 +95,11 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
       for (const part of fieldPath.split('.')) {
         currentField = currentField?.fields?.[part];
         if (!currentField) return contexts;
+      }
+
+      // Unwrap Dnd35eField compound if present (the FormulaField is the .value sub-field)
+      if ((currentField?.constructor as any)?.isFamiliarField && currentField?.fields?.value) {
+        currentField = currentField.fields.value;
       }
 
       const declarations = currentField?.formulaContexts ?? [];

@@ -90,7 +90,7 @@
 
   import type { FormulaData } from './FormulaData.mjs';
   import type { FormulaField } from './FormulaField.mjs';
-  import type { AutocompleteOption, EditorViewMode, FamiliarSchema, ValidationError } from './types.mts';
+  import type { AutocompleteOption, FamiliarSchema, ValidationError } from './types.mts';
   import {
     filterExcludedFields,
     getAutocompleteOptions,
@@ -118,23 +118,29 @@
     /** FormulaData instance for formula/unidentified formula access. */
     formulaData: { type: Object as PropType<FormulaData | null>, default: undefined },
   });
-  const { isEditViewMode, identifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
-  // Effective formula — from FormulaData + viewMode, or legacy value prop
+  // Effective formula — from FormulaData, or legacy value prop
   const effectiveFormula = computed(() => {
     if (props.formulaData) {
-      return props.formulaData.getEffectiveFormula(identifiedViewMode.value) || '';
+      return props.formulaData.formula || '';
     }
     return props.value || '';
   });
 
   // Resolve the FormulaField schema entry for this field path to read excludedFields
+  // If the field is wrapped in Dnd35eField, navigate to the inner FormulaField via .fields.value
   const formulaField = computed((): FormulaField | undefined => {
     const doc = (sheetStore as any)?.document?.value;
     if (!doc?.system?.schema?.fields) return undefined;
     // fieldPath is e.g. 'system.nameFormula' — strip 'system.' prefix to get the schema key
     const schemaKey = props.fieldPath.startsWith('system.') ? props.fieldPath.slice(7) : props.fieldPath;
-    return doc.system.schema.fields[schemaKey] as FormulaField | undefined;
+    const field = doc.system.schema.fields[schemaKey];
+    // Unwrap Dnd35eField compound if present (isFamiliarField marker)
+    if ((field?.constructor as any)?.isFamiliarField && field?.fields?.value) {
+      return field.fields.value as FormulaField;
+    }
+    return field as FormulaField | undefined;
   });
 
   // Effective contexts — explicit prop > store schema > FormulaData bindings > empty

@@ -12,7 +12,10 @@ type EvaluationDocument = {
   type: string;
   system: {
     derivedName: string;
-    nameFormula: FormulaDataSource | null;
+    nameFormula: {
+      value: FormulaDataSource;
+      unidentifiedValue: FormulaDataSource | null;
+    };
     isIdentified?: boolean;
     isIdentifiable?: boolean;
     [key: string]: unknown;

@@ -216,6 +216,18 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
           }
         }
 
+        // Check if the path passes THROUGH a compound at an intermediate segment
+        // e.g. "system.nameFormula.formula" where "system.nameFormula" is { value, unidentifiedValue }
+        const segments = key.split('.');
+        for (let i = segments.length - 1; i >= 1; i--) {
+          const ancestorPath = segments.slice(0, i).join('.');
+          const ancestorRaw = foundry.utils.getProperty(document.value._source, ancestorPath);
+          if (isDnd35eFieldShape(ancestorRaw)) {
+            const remainder = segments.slice(i).join('.');
+            return [`${ancestorPath}.${valueTarget}.${remainder}`, value];
+          }
+        }
+
         // Non-compound field — leave path as-is
         return [key, value];
       })

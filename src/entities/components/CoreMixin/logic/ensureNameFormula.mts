@@ -20,17 +20,18 @@ const ensureNameFormulaOnCreate = (document: PossibleNameFormulaDocument): void 
   };
   let hasUpdate = false;
   const system = document.system as ItemSystemData | ActiveEffectSystemData | undefined;
-  if (!system?.nameFormula?.formula && document.name) {
+  if (!system?.nameFormula?.value?.formula && document.name) {
     const iSystem = system as unknown as IdentifiableDocumentSystemData | undefined;
-    updateData.system.nameFormula = FormulaData.toSource(document.name, {
-      unidentifiedFormula: iSystem?.isIdentifiable
-        ? document.name
+    updateData.system.nameFormula = {
+      value: FormulaData.toSource(document.name, {
+        resolvedValue: document.name,
+      }),
+      unidentifiedValue: iSystem?.isIdentifiable
+        ? FormulaData.toSource(document.name, {
+          resolvedValue: document.name,
+        })
         : null,
-      resolvedValue: document.name,
-      unidentifiedResolvedValue: iSystem?.isIdentifiable
-        ? document.name
-        : null,
-    });
+    };
     // updateData.system.derivedName = document.name;
     hasUpdate = true;
   }

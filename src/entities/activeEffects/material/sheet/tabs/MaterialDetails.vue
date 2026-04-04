@@ -1,13 +1,12 @@
 <template>
   <EffectDetails class="material-details">
     <template #append>
-      <ItemHardness direct-update />
+      <ItemHardness />
       <!-- HP per Inch -->
       <NumberFormGroup
         label="D35E.bonusHp"
         :value="bonusHp"
         field-path="system.bonusHp"
-        direct-update
       />
       <MagicEquivalency />
       <DamageReductionTypes />

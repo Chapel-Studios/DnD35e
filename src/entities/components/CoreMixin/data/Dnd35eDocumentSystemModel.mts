@@ -29,22 +29,23 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
       version: requiredStringField('14.0.0'),
       slug: optionalStringField(),
       derivedName: requiredStringField(),
-      nameFormula: new FormulaField({
-        label: 'Name Formula',
-        hint: 'A formula which calculates the name of this document based on other data. If no formula is provided, the name will be taken from the parent document.',
+      nameFormula: new Dnd35eField(FormulaField, {
         expectedType: 'string',
-        identifiable: true,
         canVisibilityBeChanged: false,
         excludedFields: ['name'],
         nullable: false,
         required: true,
         initial: {
           formula: '',
-          unidentifiedFormula: '',
           expectedType: 'string',
           resolvedValue: null,
-          unidentifiedResolvedValue: null,
         },
+        label: 'Name Formula',
+        hint: 'A formula which calculates the name of this document based on other data. If no formula is provided, the name will be taken from the parent document.',
+      }, {
+        familiar: { formulaVisible: false },
+        label: 'Name Formula',
+        hint: 'A formula which calculates the name of this document based on other data. If no formula is provided, the name will be taken from the parent document.',
       }),
       description: new Dnd35eField(HTMLField, {}, {
         familiar: { formulaVisible: false },
@@ -57,17 +58,22 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
 
   override prepareDerivedData(): void {
     super.prepareDerivedData();
-    const nameFormula = this.nameFormula;
+    const nameFormulaCompound = this.nameFormula;
     const doc = this.parent as unknown as DocumentContext;
-    const nameFormulaField = (this.constructor as any).schema?.fields?.nameFormula as FormulaField | undefined;
-    const dataMap = this._buildFormulaDataMap(doc, nameFormulaField?.formulaContexts ?? []);
-    const excluded = nameFormulaField?.excludedFields ?? [];
-    if (nameFormula?.formula) {
-      nameFormula.resolvedValue = nameFormula.resolve(dataMap, this.derivedName, excluded);
-      this.derivedName = nameFormula.resolvedValue;
+    const nameFormulaDnd35e = (this.constructor as any).schema?.fields?.nameFormula;
+    const innerFormulaField = nameFormulaDnd35e?.fields?.value as FormulaField | undefined;
+    const dataMap = this._buildFormulaDataMap(doc, innerFormulaField?.formulaContexts ?? []);
+    const excluded = innerFormulaField?.excludedFields ?? [];
+
+    const identifiedFormula = nameFormulaCompound?.value;
+    if (identifiedFormula?.formula) {
+      identifiedFormula.resolvedValue = identifiedFormula.resolve(dataMap, this.derivedName, excluded);
+      this.derivedName = identifiedFormula.resolvedValue;
     }
-    if (nameFormula?.unidentifiedFormula) {
-      nameFormula.unidentifiedResolvedValue = nameFormula.resolveUnidentified(dataMap, '', excluded);
+
+    const unidentifiedFormula = nameFormulaCompound?.unidentifiedValue;
+    if (unidentifiedFormula?.formula) {
+      unidentifiedFormula.resolvedValue = unidentifiedFormula.resolve(dataMap, '', excluded);
     }
   }
 

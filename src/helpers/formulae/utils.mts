@@ -802,7 +802,7 @@ export const nameToFormulaData = (name: string): FormulaDataSource => FormulaDat
 
 /** Ensures that systemData has a nameFormula value, using the documentName as a fallback. */
 export const ensureNameFormula = (systemData: Record<string, any>, documentName: string): void => {
-  const nf = systemData.nameFormula;
+  const nf = systemData.nameFormula?.value;
   if (nf && !nf.formula) {
     nf.formula = documentName;
   }

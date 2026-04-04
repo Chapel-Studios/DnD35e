@@ -2,12 +2,13 @@ import { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
 import { buildDocumentDataMap } from '@helpers/formulae/index.mjs';
 
 const getDisplayName = <TSystemData extends BaseDnd35eSystemData = BaseDnd35eSystemData> (documentName: string, systemData: TSystemData, conversionContext: any): string => {
-  const nameFormula = systemData.nameFormula;
-  if (!nameFormula?.formula) return documentName;
+  const identifiedFormula = systemData.nameFormula?.value;
+  if (!identifiedFormula?.formula) return documentName;
 
   // Build explicit context map from the nameFormula field's context declarations
   const additionalContexts: Record<string, any> = {};
-  const nameFormulaField = conversionContext.system?.schema?.fields?.nameFormula;
+  const nameFormulaDnd35e = conversionContext.system?.schema?.fields?.nameFormula;
+  const nameFormulaField = nameFormulaDnd35e?.fields?.value ?? nameFormulaDnd35e;
   const declarations = nameFormulaField?.formulaContexts ?? [];
   if (declarations.length) {
     for (const decl of declarations) {
@@ -25,7 +26,7 @@ const getDisplayName = <TSystemData extends BaseDnd35eSystemData = BaseDnd35eSys
 
   const excluded = nameFormulaField?.excludedFields ?? [];
 
-  return nameFormula.resolve(
+  return identifiedFormula.resolve(
     buildDocumentDataMap(conversionContext, additionalContexts),
     documentName,
     excluded
