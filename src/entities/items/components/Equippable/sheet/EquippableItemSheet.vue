@@ -14,22 +14,19 @@
 
 <script lang="ts" setup>
   import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import type { ItemSheetStore } from '@items/baseItem/index.mjs';
   import { useItemSheetStore } from '@items/baseItem/index.mjs';
-  import { usePhysicalItemStore } from '@items/components/Physical/index.mjs';
   import PhysicalItemSheet from '@items/components/Physical/sheet/PhysicalItemSheet.vue';
   import { provide } from 'vue';
 
-  import { EquippableItemLike } from '../EquippableItem.mjs';
-  import { EquippableItemStore } from './EquippableItemStore.mjs';
+  import { useEquippableItemStore } from './EquippableItemStore.mjs';
 
   const props = defineProps<{
     context?: any;
   }>();
 
   if (props.context) {
-    const baseStore = useItemSheetStore(props.context) as ItemSheetStore<EquippableItemLike>;
-    const equippableItemStore = usePhysicalItemStore(props.context, baseStore) as EquippableItemStore;
+    const baseStore = useItemSheetStore(props.context);
+    const equippableItemStore = useEquippableItemStore(props.context, baseStore);
 
     provide(DocumentSheetStoreSymbol, {
       ...baseStore,
