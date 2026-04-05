@@ -21,8 +21,8 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
   static override defineSchema () {
     const schema = super.defineSchema();
 
-    // Declare Item context on inherited nameFormula
-    (schema.nameFormula as FormulaField).formulaContexts = [
+    // Declare Item context on inherited nameFormula (access inner FormulaField via .fields.value)
+    (schema.nameFormula.fields.value as FormulaField).formulaContexts = [
       { contextName: 'Item', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['Parent'] },
     ];
 

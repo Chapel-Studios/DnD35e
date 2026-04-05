@@ -1,5 +1,5 @@
 import type { ClientDocument } from '@client/documents/abstract/_module.mjs';
-import { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
+import { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 
@@ -57,6 +57,43 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
     declare registeredFormulas: Set<FormulaRegistration>;
 
     abstract get localizedType (): string;
+
+    /**
+     * Resolve registered name formulas during creation so that embedded
+     * documents (e.g. a material effect dropped on a weapon) persist the
+     * resolved name immediately rather than requiring a subsequent update().
+     */
+    protected override async _preCreate (
+      data: Record<string, unknown>,
+      options: DatabaseCreateCallbackOptions,
+      user: foundry.documents.BaseUser,
+    ): Promise<boolean | void> {
+      const result = await super._preCreate(data as any, options, user);
+      if (result === false) return false;
+
+      // Only resolve if the document already has a populated name formula
+      // (e.g. material effects from compendium). If empty, the preCreate hook
+      // will populate it later — no resolution needed at this stage.
+      const nameFormula = (this as any).system?.nameFormula?.value?.formula;
+      if (!nameFormula) return;
+
+      const thisObject = this.toObject(false) as Record<string, unknown>;
+      thisObject.documentName = this.documentName;
+      thisObject.type = (this as any).type;
+
+      const sourceUpdate: Record<string, unknown> = {};
+      for (const registration of this.registeredFormulas) {
+        const additionalContexts = this._buildFormulaContexts(registration.formulaField);
+        const evaluationContext = foundry.utils.mergeObject(
+          thisObject,
+          foundry.utils.expandObject(sourceUpdate),
+          { inplace: false },
+        ) as EvaluationDocument;
+        sourceUpdate[registration.impactedField] = registration.evaluate(evaluationContext, additionalContexts);
+      }
+
+      this.updateSource(sourceUpdate);
+    }
 
     override async update (updateData: Record<string, unknown>, options?: Partial<Omit<DatabaseUpdateOperation<null>, 'parent' | 'pack'>>): Promise<this | undefined> {
       const thisObject = this.toObject(false) as Record<string, unknown>;

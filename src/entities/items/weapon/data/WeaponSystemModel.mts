@@ -21,8 +21,8 @@ class WeaponSystemModel extends EquippableItemSystemModel {
   static override defineSchema () {
     const schema = super.defineSchema();
 
-    // Declare Owner context on inherited nameFormula
-    (schema.nameFormula as FormulaField).formulaContexts = [
+    // Declare Owner context on inherited nameFormula (access inner FormulaField via .fields.value)
+    (schema.nameFormula.fields.value as FormulaField).formulaContexts = [
       { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
     ];
 
