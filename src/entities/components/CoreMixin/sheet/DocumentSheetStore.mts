@@ -38,7 +38,7 @@ type SheetDocument = ItemDnd35e | DnD35eActiveEffect;
 
 type DocumentSheetStoreUtils<TDocument extends SheetDocument> = FieldOverridesStoreUtils & {
   document: ShallowRef<TDocument>;
-  updateDocument: (data: Partial<TDocument>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
+  updateDocument: (data: Record<string, unknown>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
   updateFlag: (key: string, value: unknown) => Promise<boolean>;
   getProperty: <T>(path: string) => ComputedRef<T>;
   getSourceProperty: <T>(path: string) => ComputedRef<T>;
