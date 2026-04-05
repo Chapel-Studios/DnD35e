@@ -64,7 +64,7 @@ const EFFECT_CHANGE_PHASES = [
 ] as const;
 
 type EffectChangeType = typeof EFFECT_CHANGE_TYPE[keyof typeof EFFECT_CHANGE_TYPE];
-type EffectChangePhase = typeof EFFECT_CHANGE_PHASES[keyof typeof EFFECT_CHANGE_PHASES];
+type EffectChangePhase = typeof EFFECT_CHANGE_PHASES[number];
 
 export {
   ACTIVE_EFFECT_TARGETS,
