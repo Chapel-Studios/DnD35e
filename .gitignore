@@ -16,7 +16,9 @@ logs/
 coverage/
 
 # IDE and editor files
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 .vscode-test/
 *.code-workspace
