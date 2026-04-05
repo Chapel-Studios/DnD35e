@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint --fix",
+    "lint": "eslint . --fix",
     "prebuild": "npm run lint",
     "build": "vite build --mode production",
     "watch": "npm-run-all --parallel lint:watch dev:watch",
