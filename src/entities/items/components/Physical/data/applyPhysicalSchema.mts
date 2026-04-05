@@ -20,7 +20,7 @@ const applyPhysicalSchema = (schema: Record<string, any>) => {
 
   // Physical
   schema.hp = new SchemaField({
-    value: requiredNumberField('D35E.CurrentHp', 'D35E.CurrentHpHint', 0),
+    current: requiredNumberField('D35E.CurrentHp', 'D35E.CurrentHpHint', 0),
     max: requiredNumberField('D35E.MaxHp', 'D35E.MaxHpHint', 0),
   });
   schema.hardness = requiredNumberField('D35E.Hardness', 'D35E.HardnessHint', 0);
