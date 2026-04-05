@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-  import { type DocumentSheetStore,DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { type DocumentSheetStore, DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import TextFormGroup from '@vc/Fields/FormGroups/TextFormGroup.vue';
   import { inject } from 'vue';
 
