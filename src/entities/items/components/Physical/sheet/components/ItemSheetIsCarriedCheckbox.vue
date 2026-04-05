@@ -17,8 +17,6 @@
   const {
     documentGetters: {
       isCarried,
-    },
-    documentGetters: {
       hasOwner,
     },
     documentActions: {
