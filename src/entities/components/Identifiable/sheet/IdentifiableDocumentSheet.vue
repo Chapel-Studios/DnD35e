@@ -1,7 +1,7 @@
 <template>
   <DocumentSheetBody>
     <template #header-name>
-      <slot v-if="slots.headerName" name="header-name">
+      <slot v-if="slots['header-name']" name="header-name">
         <!-- <IdentifiableDefaultHeaderName /> -->
       </slot>
     </template>
@@ -9,7 +9,7 @@
       <IsIdentifiedToggle />
       <slot name="header-status" />
     </template>
-    <template v-if="slots.headerSummary" #header-summary>
+    <template v-if="slots['header-summary']" #header-summary>
       <slot name="header-summary" />
     </template>
   </DocumentSheetBody>

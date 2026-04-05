@@ -18,8 +18,6 @@
     documentGetters: {
       possibleContainers,
       // currentContainerId,
-    },
-    documentGetters: {
       hasOwner,
     },
     documentActions: {

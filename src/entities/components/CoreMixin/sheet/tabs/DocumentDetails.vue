@@ -14,7 +14,8 @@
 </template>
 
 <script setup lang="ts">
-  import type { DescriptionEditor, TabStore } from '@ec/CoreMixin/index.mjs';
+  import { DescriptionEditor } from '@ec/CoreMixin/index.mjs';
+  import type { TabStore } from '@ec/CoreMixin/index.mjs';
   import { TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { inject } from 'vue';
 

@@ -28,8 +28,6 @@
   // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
   const {
     documentGetters: {
-    },
-    documentGetters: {
       getViewAwareFieldValue,
     },
     documentActions: {

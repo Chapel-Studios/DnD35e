@@ -16,7 +16,7 @@ import type {
   EquippableItemStoreUtils,
 } from './sheet/index.mjs';
 import {
-  equipableHeaderStatus,
+  equippableHeaderStatus,
   EquippableItemSheet,
   EquippableItemWeight,
   ItemIsMelded,
@@ -36,7 +36,7 @@ export type {
   EquippableItemSystemSource,
 };
 export {
-  equipableHeaderStatus,
+  equippableHeaderStatus,
   EquippableItem,
   EquippableItemSheet,
   EquippableItemStoreUtils,

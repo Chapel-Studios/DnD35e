@@ -1,4 +1,4 @@
-import equipableHeaderStatus from './components/EquipableHeaderStatus.vue';
+import equippableHeaderStatus from './components/EquippableHeaderStatus.vue';
 import EquippableItemWeight from './components/EquippableItemWeight.vue';
 import ItemIsMelded from './components/ItemIsMelded.vue';
 import ItemIsWeightlessWhenEquipped from './components/ItemIsWeightlessWhenEquipped.vue';
@@ -13,7 +13,7 @@ import type {
 import { useEquippableItemStore } from './EquippableItemStore.mjs';
 
 export {
-  equipableHeaderStatus,
+  equippableHeaderStatus,
   EquippableItemSheet,
   EquippableItemWeight,
   ItemIsMelded,
