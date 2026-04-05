@@ -183,6 +183,16 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
         }
       );
     },
+    updateDurationValue: async (value: number | null) => {
+      return await baseStore._storeUtils.updateDocument(
+        { 'duration.value': value }
+      );
+    },
+    updateDurationUnits: async (units: string) => {
+      return await baseStore._storeUtils.updateDocument(
+        { 'duration.units': units }
+      );
+    },
   };
 
   return {
@@ -215,6 +225,8 @@ type ActiveEffectConfigStoreDocumentActions<TDocument extends DnD35eActiveEffect
   addChange: (changeData: Dnd35eEffectChangeData) => Promise<boolean>;
   removeChange?: (index: number) => Promise<boolean>;
   updateChangeField: (index: number, field: string, value: unknown) => Promise<boolean>;
+  updateDurationValue: (value: number | null) => Promise<boolean>;
+  updateDurationUnits: (units: string) => Promise<boolean>;
 };
 
 type ActiveEffectConfigStore<TDocument extends DnD35eActiveEffect = DnD35eActiveEffect> = DocumentSheetStore<TDocument> & {

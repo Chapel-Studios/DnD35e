@@ -5,50 +5,48 @@
     data-group="primary"
     data-tab="duration"
   >
-    <div class="form-group">
-      <label>{{ durationLabel }}</label>
-      <div class="form-fields">
-        <input
-          type="number"
-          name="duration.value"
-          :value="durationValue"
-          :disabled="!isEditViewMode"
-          min="0"
-        />
-        <select name="duration.units" :value="durationUnits" :disabled="!isEditViewMode">
-          <option v-for="unit in availableUnits" :key="unit.value" :value="unit.value">
-            {{ unit.label }}
-          </option>
-        </select>
-      </div>
-    </div>
+    <NumberFormGroup
+      :label="durationLabel"
+      field-path="duration.value"
+      :value="durationValue"
+      :on-update="updateDurationValue"
+      edit-derived
+    />
+    <SelectFormGroup
+      :label="durationUnitsLabel"
+      field-path="duration.units"
+      :value="durationUnits"
+      :options="availableUnits"
+      :on-update="updateDurationUnits"
+      edit-derived
+    />
   </section>
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol, TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
+  import { NumberFormGroup, SelectFormGroup } from '@vc/Fields/index.mjs';
   import { computed, inject } from 'vue';
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;
   const {
-    documentGetters: {
-      durationValue,
-      durationUnits,
-    },
+    documentGetters: { durationValue, durationUnits, },
+    documentActions: { updateDurationValue, updateDurationUnits },
+    _storeUtils: { createLocalizedComputed },
   } = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
 
   const isActiveTab = getIsTabOpen('duration');
 
-  const durationLabel = game.i18n.localize('EFFECT.Duration');
+  const durationLabel = createLocalizedComputed('EFFECT.Duration');
+  const durationUnitsLabel = createLocalizedComputed('EFFECT.DURATION.Units');
 
-  const availableUnits = computed(() => {
-    return CONST.ACTIVE_EFFECT_DURATION_UNITS.map((value) => ({
+  const availableUnits = computed(() =>
+    CONST.ACTIVE_EFFECT_DURATION_UNITS.map((value) => ({
       value,
       label: game.i18n.localize(`EFFECT.DURATION.UNITS.${value}`),
-    }));
-  });
+    }))
+  );
 </script>
 
 <style scoped>
