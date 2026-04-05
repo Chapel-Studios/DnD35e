@@ -1,5 +1,5 @@
 import { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSystemModel.mjs';
-import { ACTIVE_EFFECT_TARGETS, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TARGET_FIELDS, EFFECT_CHANGE_TARGETS } from '@effects/BaseActiveEffect/index.mjs';
+import { ACTIVE_EFFECT_TARGETS, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TARGET_FIELDS, EFFECT_CHANGE_TARGETS } from '../constants.mjs';
 import { EFFECT_TARGET } from '@effects/effectTypes.mjs';
 import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
 import { ensureNameFormula } from '@helpers/formulae/index.mjs';
