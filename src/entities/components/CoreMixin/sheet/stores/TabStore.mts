@@ -28,7 +28,7 @@ type DocumentSheetStoreTabGetters = {
 
 type DocumentSheetStoreTabActions = {
   activateTab: (tabId: string) => void;
-  replaceTabs: (newTabs: SheetTab[]) => void;
+  replaceTabs: (newTabs: SheetTab[], resetActiveTab?: boolean) => void;
   appendTabs: (newTabs: SheetTab[]) => void;
 };
 
