@@ -60,6 +60,7 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
   }
 
   override prepareBaseData (): void {
+    super.prepareBaseData();
     ensureNameFormula(this, this.parent.name);
   }
 }

@@ -25,15 +25,15 @@ const optionalStringField = (label: string, hint: string, initialValue?: string)
   return new StringField<string, string, false, false, true>({ required: false, blank: true, initial: initialValue ?? undefined, label, hint });
 };
 
-const requiredTypedStringField = <TChoices extends readonly string[] | Set<string>> (
+const requiredTypedStringField = <TChoice extends string> (
   label: string,
   hint: string,
-  choices: TChoices,
-  initial: string,
+  choices: readonly TChoice[] | Set<TChoice>,
+  initial: TChoice,
   blank: boolean = false
 ) => {
-  return new StringField<string, string, true, false, true>({
-    choices: [...choices],
+  return new StringField<TChoice, TChoice, true, false, true>({
+    choices: Array.from(choices),
     initial,
     required: true,
     blank,

@@ -1,5 +1,5 @@
 import { getDisplayName } from './displayName.mjs';
-import type { PossibleNameFormulaDocument } from './ensureNameFormula.mjs';
+import type { NameFormulaDocument } from './ensureNameFormula.mjs';
 import { ensureNameFormulaOnCreate } from './ensureNameFormula.mjs';
 
 export {
@@ -8,5 +8,5 @@ export {
 };
 
 export type {
-  PossibleNameFormulaDocument,
+  NameFormulaDocument,
 };

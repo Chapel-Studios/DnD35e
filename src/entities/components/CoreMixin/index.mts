@@ -5,7 +5,7 @@ import type {
   ItemDescription,
 } from './data/index.mjs';
 import type {
-  PossibleNameFormulaDocument,
+  NameFormulaDocument,
 } from './logic/index.mjs';
 import { ensureNameFormulaOnCreate, getDisplayName } from './logic/index.mjs';
 import type {
@@ -96,7 +96,7 @@ export type {
   FieldOverrideValue,
   FormulaRegistration,
   ItemDescription,
-  PossibleNameFormulaDocument,
+  NameFormulaDocument,
   RenderModeStore,
   SheetDocument,
   SheetMode,

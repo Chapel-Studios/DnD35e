@@ -31,7 +31,7 @@ interface ItemOrigin {
 
 // whats actually stored in the DB
 interface ItemSystemSource extends BaseDnd35eSystemData {
-    origin?: ItemOrigin;
+    origin: ItemOrigin | null;
     isPsionic: boolean;
     isEpic: boolean;
 }

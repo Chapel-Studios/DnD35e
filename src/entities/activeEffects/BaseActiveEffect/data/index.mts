@@ -2,7 +2,7 @@ import type {
   ActiveEffectSystemData,
   Dnd35eActiveEffectSystemSource,
   Dnd35eEffectChangeData,
-} from './ActiveEffectSystemData.mts';
+} from './ActiveEffectSystemData.mjs';
 import { ActiveEffectSystemModelBase } from './ActiveEffectSystemModelBase.mjs';
 import type {
   ActiveEffectTarget,

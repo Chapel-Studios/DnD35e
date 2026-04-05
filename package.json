@@ -4,11 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint . --fix",
+    "lint": "eslint \"src/**/*.{js,mjs,ts,mts,vue}\" --fix",
     "prebuild": "npm run lint",
     "build": "vite build --mode production",
-    "watch": "npm-run-all --parallel lint:watch dev:watch",
-    "lint:watch": "eslint . --fix --watch",
     "dev:watch": "vite build --watch --mode development",
     "update:version": "node scripts/update-version-yaml.mjs"
   },

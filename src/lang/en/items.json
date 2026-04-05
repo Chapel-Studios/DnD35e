@@ -38,6 +38,7 @@
     "D35E.MaterialColdIronEquivalent": "Cold Iron Equivalent",
 
     "D35E.IsIdentifiableHint": "Whether this item can be identified or unidentified.",
+    "D35E.IsIdentified": "Is Identified",
     "D35E.IsIdentifiedHint": "Whether this item is currently identified.",
 
     "D35E.OriginId": "Origin ID",
