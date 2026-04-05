@@ -13,7 +13,7 @@ interface PhysicalItemSystemSource {
   isCarried: boolean;
   size: Dnd35eFieldData<Size>;
   hp: {
-      current: Dnd35eFieldData<number>;
+      value: Dnd35eFieldData<number>;
       max: Dnd35eFieldData<number>;
   };
   hardness: Dnd35eFieldData<number>;

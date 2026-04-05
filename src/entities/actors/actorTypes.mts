@@ -1,4 +1,4 @@
-// TODO: remove this place hold with actual actor types when implemented.
+// TODO: remove this placeholder with actual actor types when implemented.
 const characterActorType = 'character';
 type CharacterActorType = typeof characterActorType;// | 'npc' | 'trap'; 
 

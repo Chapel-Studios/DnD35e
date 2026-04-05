@@ -28,7 +28,7 @@ type DocumentSheetStoreTabGetters = {
 
 type DocumentSheetStoreTabActions = {
   activateTab: (tabId: string) => void;
-  replaceTabs: (newTabs: SheetTab[]) => void;
+  replaceTabs: (newTabs: SheetTab[], resetActiveTab?: boolean) => void;
   appendTabs: (newTabs: SheetTab[]) => void;
 };
 
@@ -48,7 +48,7 @@ const useTabStore = (options: TabStoreOptions = {}): TabStore => {
 
   const tabGetters: DocumentSheetStoreTabGetters = {
     activeTabId: computed(() => state.activeTab),
-    tabs: computed(() => (state.tabs ?? []).sort(
+    tabs: computed(() => [...(state.tabs ?? [])].sort(
       (a, b) => (a.order ?? 0) - (b.order ?? 0)
     )),
     getIsTabOpen: (tabId: string) => computed(() => state.activeTab === tabId),
