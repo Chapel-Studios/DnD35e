@@ -3,6 +3,7 @@ import { ACTIVE_EFFECT_TARGETS, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD
 import { EFFECT_TARGET } from '@effects/effectTypes.mjs';
 import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
 import { ensureNameFormula } from '@helpers/formulae/index.mjs';
+import type { TargetContexts } from '@helpers/formulae/registry.mjs';
 
 const {
   ArrayField,
@@ -13,6 +14,13 @@ const {
 } = foundry.data.fields;
 
 class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.documents.ActiveEffect> {
+  /**
+   * Declares which item/actor subtypes this effect type can target.
+   * Used by AspectPicker to build autocomplete contexts.
+   * Override in subclasses to declare specific subtypes.
+   */
+  static targetContexts: TargetContexts = {};
+
   static override defineSchema(): Record<string, any> {
     const superSchema = super.defineSchema();
     const schema = {

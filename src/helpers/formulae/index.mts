@@ -18,6 +18,7 @@ import { FormulaData } from './FormulaData.mjs';
 import type { FormulaFieldOptions } from './FormulaField.mjs';
 import { FormulaField } from './FormulaField.mjs';
 import FormulaFormGroup from './FormulaFormGroup.vue';
+import FamiliarDropdown from '../../vue/components/FamiliarDropdown.vue';
 import type {
   ContextDocumentType,
   DocumentContext,
@@ -26,10 +27,15 @@ import type {
 import {
   buildContextFromFormula,
   buildDocumentFamiliar,
+  buildMergedFamiliarContext,
   familiarSchemaRegistry,
+  getFamiliarBuilder,
   registerFamiliarSchema,
 } from './registry.mjs';
+import type { TargetContexts } from './registry.mjs';
 import { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema } from './schemaWalker.mjs';
+import type { FamiliarKeyDownResult, UseFamiliarOptions } from './useFamiliar.mjs';
+import { measureTextOffset, useFamiliar } from './useFamiliar.mjs';
 import type {
   AspectGroup,
   AutocompleteOption,
@@ -54,6 +60,7 @@ import {
   extractVariables,
   fieldAspect,
   filterExcludedFields,
+  findAspectByAccessPath,
   getAutocompleteOptions,
   getCaretCoordinates,
   getNestedValue,
@@ -62,6 +69,7 @@ import {
   getVariableTokenIndex,
   getVariableTokens,
   insertAtCursor,
+  mergeAspectGroups,
   nameToFormulaData,
   parseFormula,
   renderFormulaHTML,
@@ -69,19 +77,24 @@ import {
   resolveFormulaField,
   validateFormula,
 } from './utils.mjs';
+import type { AspectLookupResult, GetAutocompleteOptionsConfig } from './utils.mjs';
 
 export {
   buildContextFromFormula,
   buildDocumentDataMap,
   buildDocumentFamiliar,
+  buildMergedFamiliarContext,
   DOCUMENT_LEVEL_ASPECTS,
   ensureNameFormula,
   extractVariableAtPosition,
   extractVariables,
   familiarSchemaRegistry,
+  FamiliarDropdown,
   fieldAspect,
   filterExcludedFields,
+  findAspectByAccessPath,
   FormulaData,
+  getFamiliarBuilder,
   FormulaField,
   FormulaFormGroup,
   gatherAspectsFromSchema,
@@ -95,6 +108,8 @@ export {
   IDENTIFIED,
   insertAtCursor,
   isFieldAspect,
+  measureTextOffset,
+  mergeAspectGroups,
   nameToFormulaData,
   parseFormula,
   registerFamiliarSchema,
@@ -102,16 +117,19 @@ export {
   resolveFormula,
   resolveFormulaField,
   UNIDENTIFIED,
+  useFamiliar,
   validateFormula,
 };
 
 export type {
   AspectGroup,
+  AspectLookupResult,
   AutocompleteOption,
   ContextDocumentType,
   DocumentContext,
   EditorViewMode,
   FamiliarContext,
+  FamiliarKeyDownResult,
   FamiliarSchema,
   FieldAspect,
   FormulaContextBinding,
@@ -123,6 +141,9 @@ export type {
   FormulaFormGroupProps,
   FormulaToken,
   FormulaVariable,
+  GetAutocompleteOptionsConfig,
   NonNullDocumentContext,
+  TargetContexts,
+  UseFamiliarOptions,
   ValidationError,
 };

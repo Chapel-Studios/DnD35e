@@ -6,6 +6,7 @@ import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs
 import type { MaterialSystemData } from '@effects/material/index.mjs';
 import { Dnd35eField } from '@helpers/fields/index.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
+import type { TargetContexts } from '@helpers/formulae/registry.mjs';
 import { PriceField } from '@settings/currency/index.mjs';
 import type { PriceData } from '@settings/index.mjs';
 
@@ -15,6 +16,8 @@ const { fields: { NumberField } } = foundry.data;
 const IdentifiableEffectSystemModel = IdentifiableSchemaMixin(ActiveEffectSystemModelBase);
 
 class MaterialSystemModel extends IdentifiableEffectSystemModel {
+  static override targetContexts: TargetContexts = { item: ['weapon'] };
+
   static override defineSchema () {
     const schema = super.defineSchema();
 

@@ -18,6 +18,8 @@ export interface FormulaFieldMeta {
   aspectType?: 'string' | 'number';
   /** Override the key used in the AspectGroup (normally the field name). */
   aspectKey?: string;
+  /** Alternative names that also resolve to this field, e.g. ['dmg', 'damage']. */
+  aliases?: string[];
 }
 
 /**
@@ -90,6 +92,7 @@ export interface FieldAspect {
   value?: string | number;    // Current computed value (e.g., 10, "common") — optional, filled at runtime
   type: 'string' | 'number';  // Type determines what operations can be performed
   accessPath: string;         // The real document path (e.g., "system.hardness", "name")
+  aliases?: string[];         // Alternative names that also resolve to this field
 }
 
 /**

@@ -19,12 +19,13 @@
         :data-index="index"
       >
         <div class="form-fields">
-          <input
-            type="text"
-            :name="`system.changes.${index}.key`"
-            :value="change.key"
+          <AspectPicker
+            :model-value="change.key"
             :placeholder="keyPlaceholder"
             :disabled="!isEditViewMode || change.isSystem"
+            :familiar-context="store.documentGetters.getTargetFamiliarContext(change.target ?? 'item')"
+            :context-name="change.target ?? 'item'"
+            @update:model-value="(val: string) => updateChangeKey(index, val)"
           />
           <select
             :name="`system.changes.${index}.type`"
@@ -72,6 +73,7 @@
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE, EffectChangeValue } from '@effects/BaseActiveEffect/index.mjs';
   import { UNIDENTIFIED } from '@helpers/formulae/types.mjs';
+  import AspectPicker from '@vc/Fields/FormGroups/AspectPicker.vue';
   import { computed, inject } from 'vue';
 
   const { isEditViewMode, identifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
@@ -84,6 +86,7 @@
     documentActions: {
       addChange,
       removeChange,
+      updateChangeField,
     },
   } = store;
 
@@ -134,6 +137,10 @@
 
   const deleteChange = async (index: number) => {
     await removeChange?.(index);
+  };
+
+  const updateChangeKey = async (index: number, val: string) => {
+    await updateChangeField(index, 'key', val);
   };
 </script>
 

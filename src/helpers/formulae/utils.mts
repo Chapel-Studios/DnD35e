@@ -290,8 +290,21 @@ function getFieldAspect(context: FamiliarSchema, contextName: string, path: stri
 
   let current: unknown = contextSchema.properties;
   for (const key of path) {
-    if (typeof current !== 'object' || current === null || !(key in current)) return null;
-    current = (current as Record<string, unknown>)[key];
+    if (typeof current !== 'object' || current === null) return null;
+    const obj = current as Record<string, unknown>;
+    if (key in obj) {
+      current = obj[key];
+    } else {
+      // Alias fallback
+      const aliasMatch = Object.entries(obj).find(([, v]) =>
+        isFieldAspect(v) && v.aliases?.includes(key),
+      );
+      if (aliasMatch) {
+        current = aliasMatch[1];
+      } else {
+        return null;
+      }
+    }
   }
 
   return isFieldAspect(current) ? current : null;
@@ -306,6 +319,62 @@ export function getPropertyValue(context: FamiliarSchema, contextName: string, p
   const prop = getFieldAspect(context, contextName, path);
   if (!prop) return null;
   return prop.value ?? null;
+}
+
+/** Result of a reverse-lookup from a raw document path to the familiar tree. */
+export interface AspectLookupResult {
+  /** The FieldAspect that matched. */
+  aspect: FieldAspect;
+  /** The familiar tree path segments (e.g., ['hp', 'max']). */
+  treePath: string[];
+}
+
+/**
+ * Reverse-lookup: given a raw document `accessPath` (e.g. `system.hardness.value`),
+ * find the FieldAspect and its familiar tree key path within an AspectGroup.
+ *
+ * Performs a depth-first search of the group tree, comparing each leaf's
+ * `accessPath` against the target.
+ */
+export function findAspectByAccessPath(group: AspectGroup, accessPath: string): AspectLookupResult | null {
+  for (const [key, value] of Object.entries(group)) {
+    if (isFieldAspect(value)) {
+      if (value.accessPath === accessPath) {
+        return { aspect: value, treePath: [key] };
+      }
+    } else if (typeof value === 'object' && value !== null) {
+      const nested = findAspectByAccessPath(value as AspectGroup, accessPath);
+      if (nested) {
+        return { aspect: nested.aspect, treePath: [key, ...nested.treePath] };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Deep-merge multiple AspectGroups into one.
+ *
+ * - Nested groups merge recursively.
+ * - Leaf conflicts (same key in multiple groups): first group wins.
+ * - A leaf in one group and a branch in another: first group wins (no mixing).
+ */
+export function mergeAspectGroups(...groups: AspectGroup[]): AspectGroup {
+  const result: AspectGroup = {};
+  for (const group of groups) {
+    for (const [key, value] of Object.entries(group)) {
+      const existing = result[key];
+      if (existing === undefined) {
+        // New key — take it
+        result[key] = value;
+      } else if (!isFieldAspect(existing) && !isFieldAspect(value)) {
+        // Both are branches — recurse
+        result[key] = mergeAspectGroups(existing as AspectGroup, value as AspectGroup);
+      }
+      // else: conflict (leaf vs leaf, or leaf vs branch) — first wins, skip
+    }
+  }
+  return result;
 }
 
 /**
@@ -386,7 +455,7 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
   let pathTraversed: string[] = [];
 
   for (const key of variable.path) {
-    if (typeof current !== 'object' || current === null || !(key in current)) {
+    if (typeof current !== 'object' || current === null) {
       return {
         variable: variable.variable,
         context: variable.context,
@@ -397,7 +466,27 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
       };
     }
 
-    current = (current as Record<string, unknown>)[key];
+    const obj = current as Record<string, unknown>;
+    if (key in obj) {
+      current = obj[key];
+    } else {
+      // Alias fallback — check if any sibling FieldAspect has this as an alias
+      const aliasMatch = Object.entries(obj).find(([, v]) =>
+        isFieldAspect(v) && v.aliases?.includes(key),
+      );
+      if (aliasMatch) {
+        current = aliasMatch[1];
+      } else {
+        return {
+          variable: variable.variable,
+          context: variable.context,
+          path: variable.path,
+          error: `Property '${key}' not found on ${variable.context}${pathTraversed.length > 0 ? '.' + pathTraversed.join('.') : ''}`,
+          severity: 'error',
+          index: variable.startIndex,
+        };
+      }
+    }
     pathTraversed.push(key);
   }
 
@@ -417,12 +506,28 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
   return null;
 }
 
+/** Configuration for `getAutocompleteOptions()`. */
+export interface GetAutocompleteOptionsConfig {
+  /**
+   * Override how `fullPath` is constructed for each option.
+   * Default: `(ctx, prefix, key) => \`#\${ctx}.\${prefix}\${key}\`` (formula syntax).
+   */
+  formatFullPath?: (contextName: string, pathPrefix: string, key: string) => string;
+}
+
+const defaultFormatFullPath = (ctx: string, prefix: string, key: string): string => `#${ctx}.${prefix}${key}`;
+
 /**
  * Get autocomplete options for the current context and path
  * Provides intelligent filtering and sorting
  */
-export function getAutocompleteOptions(currentText: string, context: FamiliarSchema): AutocompleteOption[] {
+export function getAutocompleteOptions(
+  currentText: string,
+  context: FamiliarSchema,
+  config?: GetAutocompleteOptionsConfig,
+): AutocompleteOption[] {
   if (!context) return [];
+  const formatFull = config?.formatFullPath ?? defaultFormatFullPath;
   // Remove leading # if present
   const text = currentText.startsWith('#') ? currentText.substring(1) : currentText;
   const parts = text.split('.');
@@ -451,7 +556,7 @@ export function getAutocompleteOptions(currentText: string, context: FamiliarSch
             display: `${name}${aliasHint}`,
             value: null,
             isLeaf: false,
-            fullPath: `#${name}.`,
+            fullPath: formatFull(name, '', ''),
           });
           seenOptions.add(name);
         }
@@ -501,8 +606,8 @@ export function getAutocompleteOptions(currentText: string, context: FamiliarSch
   const partialKey = partialPath.length > 0 ? partialPath[partialPath.length - 1] : '';
   const pathPrefix = partialPath.length > 1 ? partialPath.slice(0, -1).join('.') + '.' : '';
 
-  // Build the path so far
-  const baseFullPath = `#${contextName}.${pathPrefix}`;
+  // Build the path so far — delegate to the formatter
+  const buildFullPath = (key: string): string => formatFull(contextName, pathPrefix, key);
 
   // Filter and build properties
   const entries = Object.entries(currentObj);
@@ -511,16 +616,21 @@ export function getAutocompleteOptions(currentText: string, context: FamiliarSch
     // Skip private properties
     if (key.startsWith('_')) continue;
 
-    // Match partial key (case-insensitive)
-    if (!key.toLowerCase().startsWith(partialKey.toLowerCase())) continue;
+    // Match partial key against property name or aliases (case-insensitive)
+    const matchesKey = key.toLowerCase().startsWith(partialKey.toLowerCase());
+    const matchesAlias = !matchesKey && isFieldAspect(value) && value.aliases?.some(
+      alias => alias.toLowerCase().startsWith(partialKey.toLowerCase()),
+    );
+    if (!matchesKey && !matchesAlias) continue;
 
     if (isFieldAspect(value)) {
+      const aliasHint = value.aliases?.length ? ` (${value.aliases.join(', ')})` : '';
       options.push({
         path: key,
-        display: value.display || key,
+        display: (value.display || key) + aliasHint,
         value: value.value ?? null,
         isLeaf: true,
-        fullPath: baseFullPath + key,
+        fullPath: buildFullPath(key),
         accessPath: value.accessPath,
       });
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
@@ -530,7 +640,7 @@ export function getAutocompleteOptions(currentText: string, context: FamiliarSch
         display: key,
         value: null,
         isLeaf: false,
-        fullPath: baseFullPath + key + '.',
+        fullPath: buildFullPath(key) + '.',
       });
     }
   }
@@ -591,14 +701,33 @@ function hasPartialAspectMatch(context: FamiliarSchema, contextName: string, pat
   // Walk to the parent of the last segment
   let current: unknown = contextSchema.properties;
   for (let i = 0; i < path.length - 1; i++) {
-    if (typeof current !== 'object' || current === null || !(path[i] in current)) return false;
-    current = (current as Record<string, unknown>)[path[i]];
+    if (typeof current !== 'object' || current === null) return false;
+    const obj = current as Record<string, unknown>;
+    if (path[i] in obj) {
+      current = obj[path[i]];
+    } else {
+      // Alias fallback
+      const aliasMatch = Object.entries(obj).find(([, v]) =>
+        isFieldAspect(v) && v.aliases?.includes(path[i]),
+      );
+      if (aliasMatch) {
+        current = aliasMatch[1];
+      } else {
+        return false;
+      }
+    }
   }
 
   if (typeof current !== 'object' || current === null) return false;
 
   const partial = path[path.length - 1].toLowerCase();
-  return Object.keys(current).some(k => k.toLowerCase().startsWith(partial) && k.toLowerCase() !== partial);
+  const obj = current as Record<string, unknown>;
+  return Object.entries(obj).some(([k, v]) => {
+    if (k.toLowerCase().startsWith(partial) && k.toLowerCase() !== partial) return true;
+    // Also match against aliases on leaf nodes
+    if (isFieldAspect(v) && v.aliases?.some(a => a.toLowerCase().startsWith(partial) && a.toLowerCase() !== partial)) return true;
+    return false;
+  });
 }
 
 /**

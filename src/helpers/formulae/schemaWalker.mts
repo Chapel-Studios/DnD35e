@@ -107,6 +107,10 @@ function walkFields(
         accessPath,
       };
 
+      if (meta?.aliases?.length) {
+        prop.aliases = meta.aliases;
+      }
+
       if (context) {
         const resolved = resolveValue(context, accessPath, type);
         if (resolved !== undefined) prop.value = resolved;

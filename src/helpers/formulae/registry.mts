@@ -15,13 +15,23 @@ import { EffectType } from '@effects/effectTypes.mjs';
 import { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import { ItemType } from '@items/itemTypes.mjs';
 
-import type { AspectGroup, FamiliarSchema, FormulaFieldData } from './types.mjs';
+import type { AspectGroup, FamiliarContext, FamiliarSchema, FormulaFieldData } from './types.mjs';
+import { mergeAspectGroups } from './utils.mjs';
 
 /** Union of all Foundry document classes that can serve as familiar context. */
 export type NonNullDocumentContext = ItemDnd35e | ActorDnd35e | DnD35eActiveEffect;
 export type DocumentContext = NonNullDocumentContext | null;
 
 export type ContextDocumentType = ItemType | EffectType | ActorType;
+
+/**
+ * Declares which item/actor subtypes compose each target context for an effect model.
+ * Used by `buildMergedFamiliarContext` to build a union schema for AspectPicker.
+ */
+export interface TargetContexts {
+  item?: ContextDocumentType[];
+  actor?: ContextDocumentType[];
+}
 
 /**
  * Two-level registry: documentType → subtype → schema builder.
@@ -204,9 +214,37 @@ function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
   return schema;
 }
 
+/**
+ * Build a FamiliarContext by merging the schemas of multiple subtypes.
+ *
+ * Used by the AspectPicker when no live parent document is available —
+ * e.g., an orphaned effect or compendium entry. Builds each subtype's
+ * schema statically (no live document) and deep-merges them.
+ *
+ * @param documentType Foundry document type ('Item' or 'Actor')
+ * @param subtypes     Subtype keys to merge (e.g. ['weapon', 'armor'])
+ * @returns Merged FamiliarContext, or `null` if no subtypes have registered builders
+ */
+function buildMergedFamiliarContext(
+  documentType: foundry.CONST.DocumentType,
+  subtypes: ContextDocumentType[],
+): FamiliarContext | null {
+  const groups: AspectGroup[] = [];
+  for (const subtype of subtypes) {
+    const builder = getFamiliarBuilder(documentType, subtype);
+    if (builder) {
+      groups.push(builder());
+    }
+  }
+  if (groups.length === 0) return null;
+  return { properties: mergeAspectGroups(...groups) };
+}
+
 export {
   buildContextFromFormula,
   buildDocumentFamiliar,
+  buildMergedFamiliarContext,
   familiarSchemaRegistry,
+  getFamiliarBuilder,
   registerFamiliarSchema,
 };

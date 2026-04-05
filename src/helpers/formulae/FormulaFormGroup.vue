@@ -51,32 +51,14 @@
         </div>
 
         <!-- Familiar autocomplete menu -->
-        <div
-          v-if="showAutocomplete && autocompleteOptions.length > 0"
-          ref="autocompleteMenu"
-          class="autocomplete-menu"
-          :style="{
-            top: `${autocompletePosition.top}px`,
-            left: `${autocompletePosition.left}px`,
-          }"
-          @mousedown.prevent
-        >
-          <div
-            v-for="(option, index) in autocompleteOptions"
-            :key="`${option.fullPath}-${index}`"
-            class="autocomplete-item"
-            :class="{ 'is-selected': index === autocompleteIndex }"
-            @click="onAutocompleteItemClick(option)"
-            :title="option.accessPath ?? option.fullPath"
-          >
-            <span class="option-path">{{ option.display }}</span>
-            <template v-if="option.isLeaf && option.value != null">
-              <span class="option-value">=</span>
-              <span class="option-value">{{ option.value }}</span>
-            </template>
-            <span v-else-if="!option.isLeaf" class="option-type">[Group]</span>
-          </div>
-        </div>
+        <FamiliarDropdown
+          ref="familiarDropdownRef"
+          :show="showFamiliar"
+          :options="familiarOptions"
+          :selected-index="familiarIndex"
+          :position="familiarPosition"
+          @select="onFamiliarSelect"
+        />
       </div>
     </div>
   </FormGroup>
@@ -85,15 +67,16 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
+  import FamiliarDropdown from '@vc/FamiliarDropdown.vue';
   import FormGroup from '@vc/Fields/FormGroups/FormGroup.vue';
   import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, useSlots, watch } from 'vue';
 
   import type { FormulaData } from './FormulaData.mjs';
   import type { FormulaField } from './FormulaField.mjs';
   import type { AutocompleteOption, FamiliarSchema, ValidationError } from './types.mts';
+  import { measureTextOffset, useFamiliar } from './useFamiliar.mjs';
   import {
     filterExcludedFields,
-    getAutocompleteOptions,
     parseFormula,
     renderFormulaHTML,
     validateFormula,
@@ -166,15 +149,23 @@
   // Refs
   const formulaInput = ref<HTMLInputElement>();
   const highlightLayer = ref<HTMLDivElement>();
-  const autocompleteMenu = ref<HTMLDivElement>();
+  const familiarDropdownRef = ref<InstanceType<typeof FamiliarDropdown>>();
+
+  // Familiar composable — manages autocomplete state, keyboard nav, positioning
+  const {
+    familiarOptions,
+    showFamiliar,
+    familiarIndex,
+    familiarPosition,
+    updateOptions: updateFamiliarOptions,
+    handleKeyDown: handleFamiliarKeyDown,
+    scrollSelectedIntoView,
+    dismiss: dismissFamiliar,
+  } = useFamiliar();
 
   // Local state
   const localValue = ref(effectiveFormula.value || '');
   const formulaErrors = ref<ValidationError[]>([]);
-  const autocompleteOptions = ref<AutocompleteOption[]>([]);
-  const showAutocomplete = ref(false);
-  const autocompleteIndex = ref(0);
-  const autocompletePosition = ref({ top: 0, left: 0 });
 
   // Track whether the user is actively editing to avoid feedback loops
   let isUserEditing = false;
@@ -278,7 +269,7 @@
     if (/(?<!\\)#/.test(textBeforeCursor)) {
       updateAutocompleteMenu(value, caretPosition);
     } else {
-      showAutocomplete.value = false;
+      dismissFamiliar();
     }
   }
 
@@ -289,8 +280,7 @@
   function onBlur() {
     // Delay to allow autocomplete item clicks
     setTimeout(() => {
-      showAutocomplete.value = false;
-      autocompleteIndex.value = 0;
+      dismissFamiliar();
 
       // Persist the value on blur
       if (isUserEditing) {
@@ -307,25 +297,17 @@
   }
 
   function onKeyDown(event: KeyboardEvent) {
-    // Handle autocomplete navigation
-    if (showAutocomplete.value && autocompleteOptions.value.length > 0) {
-      switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        autocompleteIndex.value = (autocompleteIndex.value + 1) % autocompleteOptions.value.length;
-        scrollAutocompleteIntoView();
-        return;
-      case 'ArrowUp':
-        event.preventDefault();
-        autocompleteIndex.value = (autocompleteIndex.value - 1 + autocompleteOptions.value.length) % autocompleteOptions.value.length;
-        scrollAutocompleteIntoView();
-        return;
-      case 'Enter':
-      case 'Tab':
-        event.preventDefault();
-        selectAutocomplete(autocompleteOptions.value[autocompleteIndex.value]);
-        return;
+    // Delegate autocomplete navigation to the Familiar composable
+    const result = handleFamiliarKeyDown(event);
+    if (result.handled) {
+      event.preventDefault();
+      if (result.selectedOption) {
+        selectAutocomplete(result.selectedOption);
+      } else {
+        // Arrow key nav — scroll the selected item into view
+        scrollSelectedIntoView(familiarDropdownRef.value?.menuRef);
       }
+      return;
     }
 
     // Enter without autocomplete = commit
@@ -337,49 +319,14 @@
       return;
     }
 
-    // Escape = dismiss autocomplete or cancel editing
+    // Escape = cancel editing (Familiar already handled its own Escape above)
     if (event.key === 'Escape') {
-      if (showAutocomplete.value) {
-        showAutocomplete.value = false;
-      } else {
-        // Revert to prop value
-        localValue.value = props.value || '';
-        isUserEditing = false;
-        formulaInput.value?.blur();
-      }
+      // Revert to prop value
+      localValue.value = props.value || '';
+      isUserEditing = false;
+      formulaInput.value?.blur();
       event.preventDefault();
     }
-  }
-
-  function scrollAutocompleteIntoView() {
-    if (!autocompleteMenu.value) return;
-    const items = autocompleteMenu.value.querySelectorAll('.autocomplete-item');
-    const selectedItem = items[autocompleteIndex.value] as HTMLElement;
-    if (selectedItem) {
-      selectedItem.scrollIntoView({ block: 'nearest' });
-    }
-  }
-
-  /**
-   * Measure the pixel offset of a character position inside an <input>,
-   * accounting for font, padding, scroll, etc.
-   */
-  function measureTextOffset(input: HTMLInputElement, charIndex: number): number {
-    const mirror = document.createElement('span');
-    const style = window.getComputedStyle(input);
-    mirror.style.font = style.font;
-    mirror.style.letterSpacing = style.letterSpacing;
-    mirror.style.wordSpacing = style.wordSpacing;
-    mirror.style.visibility = 'hidden';
-    mirror.style.position = 'absolute';
-    mirror.style.whiteSpace = 'pre';
-    mirror.textContent = input.value.substring(0, charIndex);
-    document.body.appendChild(mirror);
-    const textWidth = mirror.offsetWidth;
-    document.body.removeChild(mirror);
-
-    const paddingLeft = parseFloat(style.paddingLeft) || 0;
-    return paddingLeft + textWidth - input.scrollLeft;
   }
 
   function updateAutocompleteMenu(formula: string, cursorPosition: number) {
@@ -395,35 +342,29 @@
     }
 
     if (lastHashIndex === -1) {
-      showAutocomplete.value = false;
+      dismissFamiliar();
       return;
     }
 
     const partialVariable = beforeCursor.substring(lastHashIndex);
-    const options = getAutocompleteOptions(partialVariable, contexts.value);
 
-    autocompleteOptions.value = options;
-    showAutocomplete.value = options.length > 0;
-    autocompleteIndex.value = 0;
-
-    // Position autocomplete anchored to the '#' or last '.' in the variable
+    // Compute dropdown position anchored to the '#' or last '.' in the variable
+    let position = { top: 0, left: 0 };
     if (formulaInput.value) {
       const inputRect = formulaInput.value.getBoundingClientRect();
       const wrapperRect = formulaInput.value.closest('.formula-input-wrapper')?.getBoundingClientRect();
       if (wrapperRect) {
-        // Find the anchor character: last '.' if present, otherwise the '#'
         const lastDotIndex = partialVariable.lastIndexOf('.');
         const anchorOffset = lastHashIndex + (lastDotIndex !== -1 ? lastDotIndex + 1 : 0);
-
-        // Measure text width up to the anchor using a mirror span
         const anchorLeft = measureTextOffset(formulaInput.value, anchorOffset);
-
-        autocompletePosition.value = {
+        position = {
           top: inputRect.bottom - wrapperRect.top + 2,
           left: anchorLeft,
         };
       }
     }
+
+    updateFamiliarOptions(partialVariable, position, contexts.value);
   }
 
   function selectAutocomplete(option: AutocompleteOption) {
@@ -456,12 +397,12 @@
       if (!option.isLeaf) {
         updateAutocompleteMenu(newValue, newCursorPos);
       } else {
-        showAutocomplete.value = false;
+        dismissFamiliar();
       }
     });
   }
 
-  function onAutocompleteItemClick(option: AutocompleteOption) {
+  function onFamiliarSelect(option: AutocompleteOption) {
     selectAutocomplete(option);
   }
 
@@ -475,7 +416,7 @@
   });
 
   onUnmounted(() => {
-    showAutocomplete.value = false;
+    dismissFamiliar();
   });
 </script>
 
@@ -635,88 +576,6 @@
     }
   }
 
-  .autocomplete-menu {
-    position: absolute;
-    max-height: 180px;
-    min-width: 140px;
-    max-width: 320px;
-    overflow-y: auto;
-    border: 1px solid rgba(102, 166, 255, 0.3);
-    background: rgba(30, 30, 30, 0.98);
-    border-radius: 3px;
-    backdrop-filter: blur(8px);
-    z-index: 1000;
-    font-size: 0.78rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    animation: autocompleteSlideUp 0.15s ease-out;
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: rgba(102, 166, 255, 0.2);
-      border-radius: 3px;
-
-      &:hover {
-        background: rgba(102, 166, 255, 0.4);
-      }
-    }
-
-    .autocomplete-item {
-      padding: 0.15rem 0.4rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      transition: background-color 0.1s ease;
-      line-height: 1.3;
-      white-space: nowrap;
-
-      &:last-child {
-        border-bottom: none;
-      }
-
-      &:hover,
-      &.is-selected {
-        background: rgba(102, 166, 255, 0.15);
-      }
-
-      .option-path {
-        font-weight: 500;
-        color: #66b3ff;
-        text-align: left;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .option-value {
-        font-family: 'Courier New', monospace;
-        font-size: 0.72rem;
-        color: #b3b3b3;
-        white-space: nowrap;
-
-        &:first-of-type {
-          color: #888;
-          margin: 0 -0.5rem;
-        }
-      }
-
-      .option-type {
-        font-size: 0.68rem;
-        color: #888;
-        font-style: italic;
-        white-space: nowrap;
-      }
-    }
-  }
-
 }
 
 /* Animations */
@@ -724,10 +583,5 @@
   0% { opacity: 1; }
   50% { opacity: 0.6; }
   100% { opacity: 1; }
-}
-
-@keyframes autocompleteSlideUp {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 </style>
