@@ -15,5 +15,8 @@
     "D35E.EffectChangeTarget.Actor": "Actor",
     "D35E.EffectChangeTargetField.TargetField": "Target Field",
     "D35E.EffectChangeTargetField.Value": "Identified",
-    "D35E.EffectChangeTargetField.Unidentified": "Unidentified"
+    "D35E.EffectChangeTargetField.Unidentified": "Unidentified",
+
+    "D35E.IsSystemEffect": "System Effect",
+    "D35E.IsSystemEffectHint": "Whether this effect is a built-in system effect and should not be edited by users."
 }

@@ -26,8 +26,8 @@ type CursableItemSchema = {
 
 const defineCursableSchema = (): CursableItemSchema => ({
   cursedInfo: new fields.SchemaField({
-    isCursed: requiredBooleanField(),
-    isCurseActive: requiredBooleanField(),
+    isCursed: requiredBooleanField('D35E.IsCursed', 'D35E.IsCursedHint'),
+    isCurseActive: requiredBooleanField('D35E.IsCurseActive', 'D35E.IsCurseActiveHint'),
   }),
 });
 

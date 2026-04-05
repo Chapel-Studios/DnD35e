@@ -18,7 +18,7 @@ erDiagram
     BaseDnd35eSystem["BaseDnd35eSystem ✅"] {
         ItemDescription description
         string version
-        string uniqueId
+        string slug
         string derivedName
         FormulaData nameFormula
     }

@@ -1,4 +1,3 @@
-import { applyBaseDnd35eSystemSchema } from './applyBaseDnd35eSystemSchema.mjs';
 import type {
   BaseDnd35eSystemData,
   ItemDescription,
@@ -8,9 +7,7 @@ import type {
   Dnd35eDocumentFlags,
 } from './Dnd35eDocumentFlags.mjs';
 
-export {
-  applyBaseDnd35eSystemSchema,
-};
+export {};
 
 export type {
   BaseDnd35eSystemData,

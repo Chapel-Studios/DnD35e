@@ -10,22 +10,24 @@ const {
 } = foundry.data.fields;
 
 // Strings
-const requiredStringField = (initialValue?: string) => {
-  return new StringField<string, string, true, false, true>({ required: true, nullable: false, initial: initialValue ?? '' });
+const requiredStringField = (label: string, hint: string, initialValue?: string) => {
+  return new StringField<string, string, true, false, true>({ required: true, nullable: false, initial: initialValue ?? '', label, hint });
 };
-const requiredNullableStringField = (initialValue?: string) => {
-  return new StringField<string, string, true, false, true>({ initial: initialValue ?? '', required: true, blank: true });
-};
-
-const nullableOptionalStringField = (initialValue?: string) => {
-  return new StringField<string, string, false, true, true>({ required: false, blank: true, initial: initialValue ?? undefined });
+const requiredNullableStringField = (label: string, hint: string, initialValue?: string) => {
+  return new StringField<string, string, true, false, true>({ initial: initialValue ?? '', required: true, blank: true, label, hint });
 };
 
-const optionalStringField = (initialValue?: string) => {
-  return new StringField<string, string, false, false, true>({ required: false, blank: true, initial: initialValue ?? undefined });
+const nullableOptionalStringField = (label: string, hint: string, initialValue?: string) => {
+  return new StringField<string, string, false, true, true>({ required: false, blank: true, initial: initialValue ?? undefined, label, hint });
+};
+
+const optionalStringField = (label: string, hint: string, initialValue?: string) => {
+  return new StringField<string, string, false, false, true>({ required: false, blank: true, initial: initialValue ?? undefined, label, hint });
 };
 
 const requiredTypedStringField = <TChoices extends readonly string[] | Set<string>> (
+  label: string,
+  hint: string,
   choices: TChoices,
   initial: string,
   blank: boolean = false
@@ -35,35 +37,37 @@ const requiredTypedStringField = <TChoices extends readonly string[] | Set<strin
     initial,
     required: true,
     blank,
+    label,
+    hint,
   });
 };
 
 // HTML
-const optionalHtmlField = () =>
-  new HTMLField({ required: false, nullable: false, blank: true });
+const optionalHtmlField = (label: string, hint: string) =>
+  new HTMLField({ required: false, nullable: false, blank: true, label, hint });
 
 // Bools
-const requiredBooleanField = (initialValue?: boolean) => {
+const requiredBooleanField = (label: string, hint: string, initialValue?: boolean) => {
   if (initialValue === undefined) {
     initialValue = false;
   }
-  return new BooleanField<boolean, boolean, true, false, true>({ required: true, nullable: false, initial: initialValue });
+  return new BooleanField<boolean, boolean, true, false, true>({ required: true, nullable: false, initial: initialValue, label, hint });
 };
 
 // Numbers
-const requiredNumberField = (initialValue?: number) => {
+const requiredNumberField = (label: string, hint: string, initialValue?: number) => {
   if (initialValue === undefined) {
     initialValue = 0;
   }
-  return new NumberField<number, number, true, false, true>({ required: true, nullable: false, initial: initialValue });
+  return new NumberField<number, number, true, false, true>({ required: true, nullable: false, initial: initialValue, label, hint });
 };
 
-const optionalNumberField = (initialValue?: number) => {
-  return new NumberField({ required: false, nullable: true, initial: initialValue });
+const optionalNumberField = (label: string, hint: string, initialValue?: number) => {
+  return new NumberField({ required: false, nullable: true, initial: initialValue, label, hint });
 };
 
-const requiredNullableNumberField = () =>
-  new NumberField<number, number, true, true, false>({ required: true, nullable: true });
+const requiredNullableNumberField = (label: string, hint: string) =>
+  new NumberField<number, number, true, true, false>({ required: true, nullable: true, label, hint });
 
 // Formula
 const formulaField = () => new SchemaField({

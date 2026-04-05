@@ -1,6 +1,6 @@
 <template>
   <DocumentDetails>
-    <slot name="outter-prepend"></slot>
+    <slot name="outer-prepend"></slot>
     <div class="effect-details grid-full-row">
       <slot name="prepend"></slot>
 

@@ -11,7 +11,14 @@
   
   "D35E.Name": "Name",
   "D35E.Description": "Description",
+  "D35E.DescriptionHint": "The description of this document.",
   "D35E.DescriptionPlaceholder": "Enter a description here...",
+
+  "D35E.Slug": "Unique ID",
+  "D35E.SlugHint": "A unique identifier (slug) for this document, used for cross-referencing.",
+
+  "D35E.NameFormula": "Name Formula",
+  "D35E.NameFormulaHint": "Formula used to compute the displayed name of this document.",
   "D35E.Details": "Details",
 
   "D35E.SystemProperties": "System Properties",
@@ -22,5 +29,10 @@
   "DND35E.Add": "Add",
   "DND35E.Delete": "Delete",
   "DND35E.Enable": "Enable",
-  "DND35E.Disable": "Disable"
+  "DND35E.Disable": "Disable",
+
+  "D35E.Version": "System Version",
+  "D35E.VersionHint": "Internal version of the document's system data schema.",
+  "D35E.DerivedName": "Derived Name",
+  "D35E.DerivedNameHint": "The computed name of this document, resolved from the name formula if set."
 }

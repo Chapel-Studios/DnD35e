@@ -26,9 +26,9 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
 
   static override defineSchema(): Record<string, any> {
     const schema = {
-      version: requiredStringField('14.0.0'),
-      slug: optionalStringField(),
-      derivedName: requiredStringField(),
+      version: requiredStringField('D35E.Version', 'D35E.VersionHint', '14.0.0'),
+      slug: optionalStringField('D35E.Slug', 'D35E.SlugHint'),
+      derivedName: requiredStringField('D35E.DerivedName', 'D35E.DerivedNameHint'),
       nameFormula: new Dnd35eField(FormulaField, {
         expectedType: 'string',
         canVisibilityBeChanged: false,
@@ -40,17 +40,17 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
           expectedType: 'string',
           resolvedValue: null,
         },
-        label: 'Name Formula',
-        hint: 'A formula which calculates the name of this document based on other data. If no formula is provided, the name will be taken from the parent document.',
+        label: 'D35E.NameFormula',
+        hint: 'D35E.NameFormulaHint',
       }, {
         familiar: { formulaVisible: false },
-        label: 'Name Formula',
-        hint: 'A formula which calculates the name of this document based on other data. If no formula is provided, the name will be taken from the parent document.',
+        label: 'D35E.NameFormula',
+        hint: 'D35E.NameFormulaHint',
       }),
       description: new Dnd35eField(HTMLField, {}, {
         familiar: { formulaVisible: false },
-        label: 'Description',
-        hint: 'The item description, shown in the item sheet and when hovering the item in the inventory.',
+        label: 'D35E.Description',
+        hint: 'D35E.DescriptionHint',
       }),
     };
     return schema;

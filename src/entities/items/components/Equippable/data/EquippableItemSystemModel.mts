@@ -17,14 +17,14 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
     const schema = super.defineSchema();
 
     // Equippable
-    schema.isEquipped = requiredBooleanField(false);
+    schema.isEquipped = requiredBooleanField('D35E.IsEquipped', 'D35E.IsEquippedHint', false);
     schema.equippedSlotIds = new ArrayField(
       new StringField<EquipSlot, EquipSlot, true, false, true>({ required: true }),
       { initial: [], required: true }
     );
-    schema.isMelded = requiredBooleanField(false);
+    schema.isMelded = requiredBooleanField('D35E.IsMelded', 'D35E.IsMeldedHint', false);
     schema.designedForSize = new Dnd35eField(StringField, { choices: SIZES, initial: 'medium', required: true }, { label: 'Designed For Size', hint: 'The size category this item is designed for. This may affect the item\'s stats and which characters can equip it.' });
-    schema.isWeightlessWhenEquipped = requiredBooleanField(false);
+    schema.isWeightlessWhenEquipped = requiredBooleanField('D35E.IsWeightlessWhenEquipped', 'D35E.IsWeightlessWhenEquippedHint', false);
 
     return schema;
   }

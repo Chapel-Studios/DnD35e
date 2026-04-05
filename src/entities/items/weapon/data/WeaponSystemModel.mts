@@ -26,7 +26,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
       { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
     ];
 
-    schema.isMasterwork = requiredBooleanField(false);
+    schema.isMasterwork = requiredBooleanField('D35E.IsMasterwork', 'D35E.IsMasterworkHint', false);
     schema.weaponType = new Dnd35eField(
       StringField, 
       { 
@@ -49,11 +49,11 @@ class WeaponSystemModel extends EquippableItemSystemModel {
       critRange: new Dnd35eField(StringField, { required: true, initial: '20' }, { label: 'Critical Range', hint: 'The range of dice rolls that result in a critical hit.', familiar: { aliases: ['range', 'threat'] } }),
       critMultiplier: new Dnd35eField(NumberField, { required: true, nullable: false, initial: 2 }, { label: 'Critical Multiplier', hint: 'The multiplier applied to damage on a critical hit.', familiar: { aliases: ['multiplier', 'mult'] } }),
       rangeIncrement: new Dnd35eField(NumberField, { required: true, nullable: true }, { label: 'Range Increment', hint: 'The distance at which the weapon\'s range increment applies.' }),
-      attackFormula: optionalStringField(),
-      damageFormula: optionalStringField(),
+      attackFormula: optionalStringField('D35E.AttackFormula', 'D35E.AttackFormulaHint'),
+      damageFormula: optionalStringField('D35E.DamageFormula', 'D35E.DamageFormulaHint'),
     });
-    schema.attackNotes = requiredNullableStringField();
-    schema.damageNotes = requiredNullableStringField();
+    schema.attackNotes = requiredNullableStringField('D35E.AttackNotes', 'D35E.AttackNotesHint');
+    schema.damageNotes = requiredNullableStringField('D35E.DamageNotes', 'D35E.DamageNotesHint');
 
     return schema;
   }

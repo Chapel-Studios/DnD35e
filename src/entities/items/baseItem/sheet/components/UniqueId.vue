@@ -4,7 +4,7 @@
     <TextFormGroup
       label="UID"
       :value="uniqueId"
-      field-path="system.uniqueId"
+      field-path="system.slug"
       direct-update
     >
       <template #controls="{ editable }">
@@ -29,7 +29,7 @@
   import TextFormGroup from '@vc/Fields/FormGroups/TextFormGroup.vue';
   import { inject } from 'vue';
 
-  const _field = 'system.uniqueId';
+  const _field = 'system.slug';
 
   const {
     documentGetters: { getViewAwareFieldValue },

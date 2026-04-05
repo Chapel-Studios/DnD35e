@@ -10,7 +10,7 @@ erDiagram
         rollup ItemDescription
 
         string version
-        string uniqueId
+        string slug
 
         boolean isNameFromFormula
         string nameFormula

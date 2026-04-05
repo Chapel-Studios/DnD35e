@@ -34,16 +34,16 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     schema.weight = new Dnd35eField(NumberField, { required: false, nullable: true, initial: 0 }, { label: 'Weight', hint: 'The weight of this item.' });
     // schema.isWeightlessInContainer = requiredBooleanField(false);
     // schema.isWeightlessWhenCarried = requiredBooleanField(false);
-    schema.isCarried = requiredBooleanField(true);
+    schema.isCarried = requiredBooleanField('D35E.IsCarried', 'D35E.IsCarriedHint', true);
     schema.size = new Dnd35eField(StringField, { choices: SIZES, initial: 'tiny', required: true }, { label: 'Size', hint: 'The size of this item.' });
     // Price - EmbeddedDataField wrapping PriceData with coin stacks
     schema.price = new Dnd35eField(PriceField, {}, { label: 'Price', hint: 'The price of this item.' });
     schema.resalePrice = new PriceField({ nullable: true, initial: null });
     schema.brokenResalePrice = new PriceField({ nullable: true, initial: null });
-    schema.isBroken = requiredBooleanField(false);
+    schema.isBroken = requiredBooleanField('D35E.IsBroken', 'D35E.IsBrokenHint', false);
 
     // Container
-    schema.containerId = optionalStringField();
+    schema.containerId = optionalStringField('D35E.ContainerId', 'D35E.ContainerIdHint');
 
     return schema;
   }

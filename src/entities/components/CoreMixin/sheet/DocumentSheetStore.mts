@@ -65,7 +65,7 @@ type DocumentSheetStoreDocumentGetters = FieldOverridesStoreGetters & {
   name: ComputedRef<string>;
   nameFormula: ComputedRef<string>;
   img: ComputedRef<string>;
-  systemUniqueId: ComputedRef<string>;
+  systemSlug: ComputedRef<string>;
   documentUuid: ComputedRef<string>;
   description: ComputedRef<string>;
   getEffectsForField: (fieldPath: string) => ComputedRef<object[]>;
@@ -331,7 +331,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     type: computed(() => document.value.type),
     documentName: computed(() => document.value.documentName),
     localizedType: computed(() => game.i18n.localize(document.value.localizedType)),
-    systemUniqueId: computed(() => document.value.system.uniqueId || ''),
+    systemSlug: computed(() => document.value.system.slug || ''),
     documentUuid: computed(() => document.value.uuid || ''),
 
     // View-aware document fields

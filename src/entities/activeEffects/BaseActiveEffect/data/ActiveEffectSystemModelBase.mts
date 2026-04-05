@@ -50,7 +50,7 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
             choices: EFFECT_CHANGE_TARGET_FIELDS,
             initial: EFFECT_CHANGE_TARGET_FIELD.VALUE,
           }),
-          isSystem: requiredBooleanField(false),
+          isSystem: requiredBooleanField('D35E.IsSystemEffect', 'D35E.IsSystemEffectHint', false),
         }),
         { initial: [] }
       ),

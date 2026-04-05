@@ -11,7 +11,7 @@
   import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import ColorFormGroup from '@vc/Fields/FormGroups/ColorFormGroup.vue';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
   
   const store = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
   const {
@@ -23,7 +23,7 @@
     },
   } = store;
 
-  const tintString = tint.value?.toString() || '';
+  const tintString = computed(() => tint.value?.toString() || '');
 </script>
 
 <style lang="scss" scoped>

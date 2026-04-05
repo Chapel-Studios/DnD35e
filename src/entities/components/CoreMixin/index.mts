@@ -4,7 +4,6 @@ import type {
   Dnd35eDocumentFlags,
   ItemDescription,
 } from './data/index.mjs';
-import { applyBaseDnd35eSystemSchema } from './data/index.mjs';
 import type {
   PossibleNameFormulaDocument,
 } from './logic/index.mjs';
@@ -55,7 +54,6 @@ import {
 } from './sheet/index.mjs';
 
 export {
-  applyBaseDnd35eSystemSchema,
   defaultDetailsTab,
   defaultTabStoreOptions,
   DescriptionEditor,

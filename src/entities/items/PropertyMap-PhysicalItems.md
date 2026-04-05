@@ -24,7 +24,7 @@ erDiagram
         ItemDescription description
 
         string version
-        string uniqueId
+        string slug
         string derivedName
         FormulaData nameFormula
 

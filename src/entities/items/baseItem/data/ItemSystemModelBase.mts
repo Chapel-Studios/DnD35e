@@ -13,13 +13,13 @@ abstract class ItemSystemModelBase extends Dnd35eDocumentSystemModel<foundry.doc
     const superSchema = super.defineSchema();
     const schema = {
       origin: new SchemaField({
-        originId: requiredStringField(),
-        originVersion: requiredStringField(),
-        originPack: requiredStringField(),
+        originId: requiredStringField('D35E.OriginId', 'D35E.OriginIdHint'),
+        originVersion: requiredStringField('D35E.OriginVersion', 'D35E.OriginVersionHint'),
+        originPack: requiredStringField('D35E.OriginPack', 'D35E.OriginPackHint'),
       }),
 
-      isPsionic: requiredBooleanField(),
-      isEpic: requiredBooleanField(),
+      isPsionic: requiredBooleanField('D35E.IsPsionic', 'D35E.IsPsionicHint'),
+      isEpic: requiredBooleanField('D35E.IsEpic', 'D35E.IsEpicHint'),
     };
         
     return foundry.utils.mergeObject(superSchema, schema);
