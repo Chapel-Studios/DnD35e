@@ -5,8 +5,6 @@
 import { SYSTEM_ID } from '../shared.mjs';
 import {
   DEFAULT_DAMAGE_REDUCTION_TYPES,
-  DIAGONAL_MOVEMENT_CHOICES,
-  EXPERIENCE_RATE_CHOICES,
   GAME_RULES_KEYS,
 } from './constants.mjs';
 

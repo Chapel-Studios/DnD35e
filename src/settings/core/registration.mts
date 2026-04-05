@@ -4,16 +4,11 @@
 
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
-import { registerCombatSettings } from '../combat/index.mjs';
 import { registerCurrencySettings } from '../currency/index.mjs';
 import { registerDisplaySettings } from '../display/index.mjs';
 import { registerGameRulesSettings } from '../gameRules/index.mjs';
-import { registerHealthSettings } from '../health/index.mjs';
-import { registerRollSettings } from '../roll/index.mjs';
-import { registerSkillsSettings } from '../skills/index.mjs';
 import { CORE_KEYS } from './constants.mjs';
 import { registerSettingsMenus } from './menus.mjs';
-import { registerRootSettings } from './settings/index.mjs';
 
 /**
  * Register core/hidden settings (not shown in UI)

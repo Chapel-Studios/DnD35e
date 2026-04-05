@@ -1,4 +1,4 @@
-import type { Dnd35eFieldOverrides } from '@helpers/formulae/types.mjs';
+import type { Dnd35eFieldOverrides as _Dnd35eFieldOverrides } from '@helpers/formulae/types.mjs';
 
 const {
   StringField,
@@ -9,9 +9,9 @@ const {
  * Creates the shared overrides sub-schema used by Dnd35eField and FormulaField.
  * When null, the field uses default permissions (everyone can see, normal editability).
  *
- * @returns A nullable SchemaField matching {@link Dnd35eFieldOverrides}
+ * @returns A nullable SchemaField matching {@link _Dnd35eFieldOverrides}
  */
-const fieldOverridesSchema = () => new SchemaField<Dnd35eFieldOverrides>({
+const fieldOverridesSchema = () => new SchemaField({
   visibility: new StringField({
     choices: ['everyone', 'ownerPlus', 'gmOnly'],
     initial: 'everyone',
@@ -22,6 +22,6 @@ const fieldOverridesSchema = () => new SchemaField<Dnd35eFieldOverrides>({
     initial: 'normal',
     required: true,
   }),
-}, { nullable: true, initial: null });
+}, { nullable: true, initial: null } as const);
 
 export { fieldOverridesSchema };

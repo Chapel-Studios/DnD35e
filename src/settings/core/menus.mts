@@ -2,15 +2,11 @@
  * Settings menus registration
  */
 
-import { CombatSettingsConfig } from '../combat/index.mjs';
 import { SETTING_MENUS } from '../constants/index.mjs';
 import { CurrencySettingsConfig } from '../currency/index.mjs';
 import { DisplaySettingsConfig } from '../display/index.mjs';
 import { GameRulesSettingsConfig } from '../gameRules/index.mjs';
-import { HealthSettingsConfig } from '../health/index.mjs';
-import { RollSettingsConfig } from '../roll/index.mjs';
 import { SYSTEM_ID } from '../shared.mjs';
-import { SkillSettingsConfig } from '../skills/index.mjs';
 
 /**
  * Register settings menu buttons

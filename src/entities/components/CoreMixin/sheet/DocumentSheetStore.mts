@@ -270,13 +270,6 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     return document.value.getFlag('dnd35e', flagPath) as T;
   };
 
-  const getSchemaField = (fieldPath: string): Dnd35eField | undefined => {
-    const systemPath = fieldPath.replace(/^system\./, '');
-    const schema = (document.value.system as foundry.abstract.DataModel | undefined)?.schema;
-    const field = schema?._getField(systemPath.split('.'));
-    return field instanceof Dnd35eField ? field : undefined;
-  };
-
   const getViewAwareFieldValue = <T,>(fieldPath: string, getFromSource = false): T => {
     if (isEditViewMode.value) {
       // In edit mode, always get from source to avoid Active Effect overrides

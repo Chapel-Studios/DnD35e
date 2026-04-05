@@ -81,6 +81,12 @@ export type EditorViewMode = 'identified' | 'unidentified';
 export const IDENTIFIED: EditorViewMode = 'identified';
 export const UNIDENTIFIED: EditorViewMode = 'unidentified';
 
+/** Per-field permission overrides — nullable (null = use defaults). */
+export interface Dnd35eFieldOverrides {
+  visibility: 'everyone' | 'ownerPlus' | 'gmOnly';
+  editability: 'normal' | 'gmOnly';
+}
+
 // ============================================================================
 // Familiar Types
 // ============================================================================

@@ -98,7 +98,6 @@ class HealthSettingsConfig extends VueSettingsBase {
    * Handle reset - restore default values
    */
   async #onReset(): Promise<void> {
-    // @ts-expect-error - DialogV2.confirm typing issues
     const confirmed = await foundry.applications.api.DialogV2.confirm({
       window: { title: game.i18n.localize('DND35E.Settings.ResetConfirm.Title') },
       content: `<p>${game.i18n.localize('DND35E.Settings.ResetConfirm.Content')}</p>`,

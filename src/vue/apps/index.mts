@@ -8,8 +8,8 @@
 import { VueActiveEffectConfig } from './VueActiveEffectConfig.mjs';
 import type { VueAppBaseMembers, VueAppBaseMixin } from './VueAppBaseMixin.mjs';
 import { useVueAppBaseMixin } from './VueAppBaseMixin.mjs';
+import type { EditorViewMode } from '@helpers/formulae/types.mjs';
 import type {
-  EditorViewMode,
   SheetState,
   VueApplicationConfiguration,
   VueApplicationContext,

@@ -1,7 +1,7 @@
 import { DocumentSheetConfiguration, DocumentSheetRenderOptions } from '@client/applications/api/document-sheet.mjs';
 import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
 import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import { EditorViewMode } from '@helpers/formulae/types.mjs';
+import type { EditorViewMode } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 
 interface VueApplicationConfiguration<TDocument extends ItemDnd35e | DnD35eActiveEffect> extends
