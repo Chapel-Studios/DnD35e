@@ -55,7 +55,7 @@
 
     li {
       color: #4b4a44;
-      padding: 0.5rem 1rem;;
+      padding: 0.5rem 1rem;
     }
 
     :deep(select) {
