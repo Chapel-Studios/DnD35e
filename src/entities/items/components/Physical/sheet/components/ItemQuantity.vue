@@ -28,7 +28,7 @@
       :value="quantity"
       :disabled="!isEditViewMode"
       @change="onQuantityChange(($event.target as HTMLInputElement).value)"
-      min=0
+      min="0"
     />
 
     <template #readonly>
