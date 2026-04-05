@@ -2,7 +2,7 @@ import type { ActiveEffectSystemSource, EffectChangeData } from '@common/documen
 import type { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
 import type { EffectChangeTarget, EffectChangeTargetField } from '@effects/BaseActiveEffect/index.mjs';
 
-type ActiveEffectTarget = 'Actor' | 'Item';
+type ActiveEffectTarget = 'actor' | 'item';
 
 /**
  * Extended change data that includes the per-change target field.
