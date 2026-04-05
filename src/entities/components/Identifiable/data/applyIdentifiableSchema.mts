@@ -14,8 +14,8 @@ const IdentifiableSchemaMixin = <TBase extends SystemModelCtor>(base: TBase) => 
       // Added to schema just so items can check if item has identifiable component, should always be true
       schema.isIdentifiable = requiredBooleanField('D35E.IsIdentifiable', 'D35E.IsIdentifiableHint', true);
       // Legacy unidentifiedDescription and unidentifiedPrice removed
-      // These are now stored in flags.dnd35e.unidentifiedOverrides
-      schema.isIdentified = requiredBooleanField('D35E.IsIdentified', 'D35E.IsIdentifiedHint', true);
+      // Unidentified values are now stored inline on the relevant Dnd35eField via `.unidentifiedValue`
+      schema.isIdentified = requiredBooleanField(true);
       
       return schema;
     }
