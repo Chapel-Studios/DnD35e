@@ -6,7 +6,7 @@ import {
   IdentifiableDocumentSourceProps,
 } from '@ec/Identifiable/index.mjs';
 import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
-import { MaterialSystemData, MaterialSystemSource } from '@effects/material/index.mjs';
+import type { MaterialSystemData, MaterialSystemSource } from './data/index.mjs';
 
 const materialEffectType = 'material';
 type MaterialEffectType = typeof materialEffectType;

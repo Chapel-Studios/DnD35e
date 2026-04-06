@@ -63,7 +63,13 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
   override prepareBaseData (): void {
     super.prepareBaseData();
     const parentName = this.parent?.name;
-    if (!parentName) throw new Error('ActiveEffect parent has no name');
+    if (!parentName) {
+      console.warn('ActiveEffectSystemModelBase.prepareBaseData: ActiveEffect parent has no name; skipping ensureNameFormula.', {
+        effect: this,
+        parent: this.parent,
+      });
+      return;
+    }
     ensureNameFormula(this, parentName);
   }
 }
