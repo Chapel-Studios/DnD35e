@@ -5,7 +5,7 @@
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
-    class="price-form-group"
+    class="price-form-group depth1 depth2"
   >
     <!-- Controls slot: add coin stack button and consolidate button -->
     <template #controls="{ editable }">
@@ -234,65 +234,75 @@
   }
 </script>
 
-<style scoped>
-.price-form-group {
-  display: contents;
-}
+<style scoped lang="scss">
+  .price-form-group {
+    display: contents;
+    
+    /* Ensure the form-group wrapper uses row flow and centers items */
+    &.depth1.form-group {
+      grid-auto-flow: row;
+      justify-items: center;
+      
+      :deep(.form-group-label) {
+        flex-direction: row;
+      }
+    }
+  }
 
-.coin-stacks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-}
+  .coin-stacks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
 
-.coin-stacks.readonly {
-  font-size: var(--font-size-14);
-}
+    .readonly {
+      font-size: var(--font-size-14);
+    }
+  }
 
-.coin-stack {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  background: var(--color-select-option-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 3px;
-  padding: 0.25rem;
-}
+  .coin-stack {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--color-select-option-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    padding: 0.25rem;
+  }
 
-.stack-count {
-  width: 60px;
-  text-align: right;
-}
+  .stack-count {
+    width: 60px;
+    text-align: right;
+  }
 
-.stack-coin {
-  padding: 0.05rem;
-}
+  .stack-coin {
+    padding: 0.05rem;
+  }
 
-.remove-stack-btn {
-  background: transparent;
-  border: none;
-  padding: 0.125rem 0.25rem;
-  cursor: pointer;
-  color: var(--color-level-error);
-  opacity: 0.6;
-  transition: opacity 0.15s;
-}
+  .remove-stack-btn {
+    background: transparent;
+    border: none;
+    padding: 0.125rem 0.25rem;
+    cursor: pointer;
+    color: var(--color-level-error);
+    opacity: 0.6;
+    transition: opacity 0.15s;
+  }
 
-.remove-stack-btn:hover {
-  opacity: 1;
-}
+  .remove-stack-btn:hover {
+    opacity: 1;
+  }
 
-.empty-price {
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
+  .empty-price {
+    color: var(--color-text-secondary);
+    font-style: italic;
+  }
 
-.zero-value {
-  font-style: normal;
-}
+  .zero-value {
+    font-style: normal;
+  }
 
-.coin-stack-display {
-  white-space: nowrap;
-}
+  .coin-stack-display {
+    white-space: nowrap;
+  }
 </style>
