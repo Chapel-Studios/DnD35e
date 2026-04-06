@@ -31,7 +31,7 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
 
   override prepareDerivedData(): void {
     super.prepareDerivedData();
-    this.effectiveWeight = this.isWeightlessWhenEquipped && this.isCarried
+    this.effectiveWeight = this.isWeightlessWhenEquipped && this.isEquipped
       ? 0
       : this.weight.value ?? 0;
   }
