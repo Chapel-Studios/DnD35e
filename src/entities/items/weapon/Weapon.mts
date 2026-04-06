@@ -2,7 +2,7 @@ import { EquippableItem } from '@items/components/Equippable/index.mjs';
 import type { PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
 import { WeaponItemType } from '@items/itemTypes.mjs';
 
-import { WeaponSystemData, WeaponSystemSource } from './index.mjs';
+import type { WeaponSystemData, WeaponSystemSource } from './data/WeaponSystemData.mjs';
 
 type WeaponSource = Omit<foundry.documents.ItemSource, 'system'>
   & Omit<PhysicalItemSourceProps, 'system'>
