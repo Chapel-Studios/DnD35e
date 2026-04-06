@@ -31,10 +31,10 @@ class WeaponSystemModel extends EquippableItemSystemModel {
       StringField, 
       { 
         choices: [
-          ...WEAPON_TYPES
+          ...WEAPON_TYPES,
         ],
         initial: 'simple',
-        required: true
+        required: true,
       },
       {
         label: 'Weapon Type',

@@ -23,6 +23,7 @@ function copyStaticFiles (_opts?: PluginOptions | undefined): Plugin {
 }
 
 // Copy .hbs templates into dist/hbsTemplates
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function copyHbsFiles (_opts?: PluginOptions | undefined): Plugin {
   return {
     name: 'copy-hbs-files',
@@ -94,7 +95,7 @@ function bundleLangFiles () {
   };
 }
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   resolve: {
     alias: {
       '@vueApps': path.resolve(__dirname, 'src/vue/apps'),

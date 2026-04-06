@@ -22,6 +22,7 @@
 </template> -->
 
 <script setup lang="ts">
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   import { ref } from 'vue';
 
   import { FormulaFormGroup } from './index.mjs';

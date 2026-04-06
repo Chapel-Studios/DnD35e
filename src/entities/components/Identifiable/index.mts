@@ -27,7 +27,6 @@ import type {
   IdentifiableStore,
 } from './sheet/index.mjs';
 import {
-  IdentifiableDefaultHeaderName,
   IdentifiableDocumentSheetVue,
   IsIdentifiedToggle,
   useIdentifiableStore,
@@ -52,7 +51,6 @@ export type {
   WithIdentifiableComponent,
 };
 export {
-  IdentifiableDefaultHeaderName,
   IdentifiableDocumentMixin,
   IdentifiableDocumentSheetVue,
   IdentifiableSchemaMixin,

@@ -32,6 +32,6 @@ const helpers = {
 
 export {
   getSetting,
-  setSetting,
   helpers,
+  setSetting,
 };

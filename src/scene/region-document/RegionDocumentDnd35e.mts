@@ -1,4 +1,5 @@
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
+
 import type { SpecificRegionBehavior } from '../region-behaviour/types.mjs';
 import { SceneDnd35e } from '../SceneDnd35e.mjs';
 // import type EmbeddedCollection from "@common/abstract/embedded-collection.d.mts";

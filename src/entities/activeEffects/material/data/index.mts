@@ -1,16 +1,16 @@
-import { MaterialSystemModel } from './MaterialSystemModel.mjs';
 import type {
-  MaterialSystemSource,
   MaterialSystemData,
+  MaterialSystemSource,
   MaterialSystemStats,
 } from './MaterialSystemData.mjs';
+import { MaterialSystemModel } from './MaterialSystemModel.mjs';
 
 export {
   MaterialSystemModel,
 };
 
 export type {
-  MaterialSystemStats,
   MaterialSystemData,
   MaterialSystemSource,
+  MaterialSystemStats,
 };

@@ -9,31 +9,25 @@ import vueParser from 'vue-eslint-parser';
 
 export default [
 
-  // Base config for all TS/JS/Vue files
+  // Global ignores — standalone object with no `files` key applies to all files
   {
-    files: ['**/*.{ts,mts,js,vue}'],
-
     ignores: [
-      // Ignore build artifacts and dependencies
       'node_modules/',
       'dist/',
       'build/',
       'out/',
       'types/',
-
-      // Ignore Foundry-generated files
       'packs/',
       'lang/',
       'templates/',
-
-      // Allow source files (negated patterns)
-      '!src/',
-      '!scripts/',
-
-      // Ignore declaration files
       '**/*.d.ts',
       '**/*.d.mts',
     ],
+  },
+
+  // Base config for all TS/JS/Vue files
+  {
+    files: ['**/*.{ts,mts,js,vue}'],
 
     languageOptions: {
       parser: vueParser,
@@ -98,7 +92,7 @@ export default [
       'no-console': 'off',
       'no-unused-vars': 'off',
 
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-namespace': ['error', { allowDeclarations: true }],

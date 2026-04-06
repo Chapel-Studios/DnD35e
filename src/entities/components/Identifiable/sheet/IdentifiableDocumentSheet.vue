@@ -2,7 +2,6 @@
   <DocumentSheetBody>
     <template #header-name>
       <slot v-if="slots['header-name']" name="header-name">
-        <!-- <IdentifiableDefaultHeaderName /> -->
       </slot>
     </template>
     <template #header-status>
@@ -18,7 +17,7 @@
 <script lang="ts" setup>
   import type { SheetMode } from '@ec/CoreMixin/index.mjs';
   import { DocumentSheetBody, DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { IdentifiableDefaultHeaderName, IsIdentifiedToggle } from '@ec/Identifiable/index.mjs';
+  import { IsIdentifiedToggle } from '@ec/Identifiable/index.mjs';
   import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { useItemSheetStore } from '@items/baseItem/index.mjs';
   import { provide, useSlots } from 'vue';

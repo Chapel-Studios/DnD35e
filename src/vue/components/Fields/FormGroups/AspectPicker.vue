@@ -29,12 +29,11 @@
 </template>
 
 <script setup lang="ts">
-  import FamiliarDropdown from '@vc/FamiliarDropdown.vue';
-  import { computed, nextTick, onUnmounted, type PropType, ref, watch } from 'vue';
-
   import type { AutocompleteOption, FamiliarContext, FamiliarSchema } from '@helpers/formulae/types.mjs';
   import { measureTextOffset, useFamiliar } from '@helpers/formulae/useFamiliar.mjs';
   import { findAspectByAccessPath } from '@helpers/formulae/utils.mjs';
+  import FamiliarDropdown from '@vc/FamiliarDropdown.vue';
+  import { computed, nextTick, onUnmounted, type PropType, ref, watch } from 'vue';
 
   const props = defineProps({
     /** Stored raw document path (e.g. 'system.hardness.value') */

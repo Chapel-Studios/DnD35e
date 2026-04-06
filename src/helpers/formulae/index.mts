@@ -13,17 +13,18 @@ const replaceDataAttribute = <TContext extends ItemDnd35e> (formula: Formula, co
 
 export { replaceDataAttribute };
 
+import FamiliarDropdown from '../../vue/components/FamiliarDropdown.vue';
 import type { FormulaDataSource } from './FormulaData.mjs';
 import { FormulaData } from './FormulaData.mjs';
 import type { FormulaFieldOptions } from './FormulaField.mjs';
 import { FormulaField } from './FormulaField.mjs';
 import FormulaFormGroup from './FormulaFormGroup.vue';
-import FamiliarDropdown from '../../vue/components/FamiliarDropdown.vue';
 import type {
   ContextDocumentType,
   DocumentContext,
   NonNullDocumentContext,
 } from './registry.mjs';
+import type { TargetContexts } from './registry.mjs';
 import {
   buildContextFromFormula,
   buildDocumentFamiliar,
@@ -32,10 +33,7 @@ import {
   getFamiliarBuilder,
   registerFamiliarSchema,
 } from './registry.mjs';
-import type { TargetContexts } from './registry.mjs';
 import { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema } from './schemaWalker.mjs';
-import type { FamiliarKeyDownResult, UseFamiliarOptions } from './useFamiliar.mjs';
-import { measureTextOffset, useFamiliar } from './useFamiliar.mjs';
 import type {
   AspectGroup,
   AutocompleteOption,
@@ -53,6 +51,9 @@ import type {
   ValidationError,
 } from './types.mjs';
 import { IDENTIFIED, isFieldAspect, UNIDENTIFIED } from './types.mjs';
+import type { FamiliarKeyDownResult, UseFamiliarOptions } from './useFamiliar.mjs';
+import { measureTextOffset, useFamiliar } from './useFamiliar.mjs';
+import type { AspectLookupResult, GetAutocompleteOptionsConfig } from './utils.mjs';
 import {
   buildDocumentDataMap,
   ensureNameFormula,
@@ -77,7 +78,6 @@ import {
   resolveFormulaField,
   validateFormula,
 } from './utils.mjs';
-import type { AspectLookupResult, GetAutocompleteOptionsConfig } from './utils.mjs';
 
 export {
   buildContextFromFormula,
@@ -88,18 +88,18 @@ export {
   ensureNameFormula,
   extractVariableAtPosition,
   extractVariables,
-  familiarSchemaRegistry,
   FamiliarDropdown,
+  familiarSchemaRegistry,
   fieldAspect,
   filterExcludedFields,
   findAspectByAccessPath,
   FormulaData,
-  getFamiliarBuilder,
   FormulaField,
   FormulaFormGroup,
   gatherAspectsFromSchema,
   getAutocompleteOptions,
   getCaretCoordinates,
+  getFamiliarBuilder,
   getNestedValue,
   getPropertyValue,
   getTokenAtPosition,

@@ -35,7 +35,7 @@ export function useFamiliar(options: UseFamiliarOptions = {}) {
   function updateOptions(
     text: string,
     position: { top: number; left: number },
-    context: FamiliarSchema,
+    context: FamiliarSchema
   ): void {
     const config: GetAutocompleteOptionsConfig = {};
     if (options.formatFullPath) {

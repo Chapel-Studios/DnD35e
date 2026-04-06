@@ -31,7 +31,7 @@
 
   const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;
   const {
-    documentGetters: { durationValue, durationUnits, },
+    documentGetters: { durationValue, durationUnits },
     documentActions: { updateDurationValue, updateDurationUnits },
     _storeUtils: { createLocalizedComputed },
   } = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;

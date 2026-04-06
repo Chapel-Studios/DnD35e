@@ -1,4 +1,3 @@
-import IdentifiableDefaultHeaderName from './components/IdentifiableDefaultHeaderName.vue';
 import IsIdentifiedToggle from './components/IsIdentifiedToggle.vue';
 import type { IdentifiableDocumentSheetRenderContext } from './IdentifiableDocumentSheet.mjs';
 import IdentifiableDocumentSheetVue from './IdentifiableDocumentSheet.vue';
@@ -14,7 +13,6 @@ import {
 } from './IdentifiableDocumentStore.mjs';
 
 export {
-  IdentifiableDefaultHeaderName,
   IdentifiableDocumentSheetVue,
   IsIdentifiedToggle,
   useIdentifiableStore,

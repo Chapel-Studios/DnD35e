@@ -66,7 +66,7 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
     protected override async _preCreate (
       data: Record<string, unknown>,
       options: DatabaseCreateCallbackOptions,
-      user: foundry.documents.BaseUser,
+      user: foundry.documents.BaseUser
     ): Promise<boolean | void> {
       const result = await super._preCreate(data as any, options, user);
       if (result === false) return false;
@@ -87,7 +87,7 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
         const evaluationContext = foundry.utils.mergeObject(
           thisObject,
           foundry.utils.expandObject(sourceUpdate),
-          { inplace: false },
+          { inplace: false }
         ) as EvaluationDocument;
         sourceUpdate[registration.impactedField] = registration.evaluate(evaluationContext, additionalContexts);
       }

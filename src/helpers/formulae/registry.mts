@@ -227,7 +227,7 @@ function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
  */
 function buildMergedFamiliarContext(
   documentType: foundry.CONST.DocumentType,
-  subtypes: ContextDocumentType[],
+  subtypes: ContextDocumentType[]
 ): FamiliarContext | null {
   const groups: AspectGroup[] = [];
   for (const subtype of subtypes) {

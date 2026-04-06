@@ -28,10 +28,9 @@
 </template>
 
 <script setup lang="ts">
+  import type { AutocompleteOption } from '@helpers/formulae/types.mjs';
   import type { PropType } from 'vue';
   import { ref } from 'vue';
-
-  import type { AutocompleteOption } from '@helpers/formulae/types.mjs';
 
   defineProps({
     show: { type: Boolean, required: true },

@@ -297,7 +297,7 @@ function getFieldAspect(context: FamiliarSchema, contextName: string, path: stri
     } else {
       // Alias fallback
       const aliasMatch = Object.entries(obj).find(([, v]) =>
-        isFieldAspect(v) && v.aliases?.includes(key),
+        isFieldAspect(v) && v.aliases?.includes(key)
       );
       if (aliasMatch) {
         current = aliasMatch[1];
@@ -472,7 +472,7 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
     } else {
       // Alias fallback — check if any sibling FieldAspect has this as an alias
       const aliasMatch = Object.entries(obj).find(([, v]) =>
-        isFieldAspect(v) && v.aliases?.includes(key),
+        isFieldAspect(v) && v.aliases?.includes(key)
       );
       if (aliasMatch) {
         current = aliasMatch[1];
@@ -524,7 +524,7 @@ const defaultFormatFullPath = (ctx: string, prefix: string, key: string): string
 export function getAutocompleteOptions(
   currentText: string,
   context: FamiliarSchema,
-  config?: GetAutocompleteOptionsConfig,
+  config?: GetAutocompleteOptionsConfig
 ): AutocompleteOption[] {
   if (!context) return [];
   const formatFull = config?.formatFullPath ?? defaultFormatFullPath;
@@ -619,7 +619,7 @@ export function getAutocompleteOptions(
     // Match partial key against property name or aliases (case-insensitive)
     const matchesKey = key.toLowerCase().startsWith(partialKey.toLowerCase());
     const matchesAlias = !matchesKey && isFieldAspect(value) && value.aliases?.some(
-      alias => alias.toLowerCase().startsWith(partialKey.toLowerCase()),
+      alias => alias.toLowerCase().startsWith(partialKey.toLowerCase())
     );
     if (!matchesKey && !matchesAlias) continue;
 
@@ -708,7 +708,7 @@ function hasPartialAspectMatch(context: FamiliarSchema, contextName: string, pat
     } else {
       // Alias fallback
       const aliasMatch = Object.entries(obj).find(([, v]) =>
-        isFieldAspect(v) && v.aliases?.includes(path[i]),
+        isFieldAspect(v) && v.aliases?.includes(path[i])
       );
       if (aliasMatch) {
         current = aliasMatch[1];

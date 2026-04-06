@@ -13,11 +13,10 @@
    */
   import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { materialEffectType } from '../index.mjs';
-
   import LandingPad from '@vc/components/LandingPad.vue';
-
   import { inject } from 'vue';
+
+  import { materialEffectType } from '../index.mjs';
   const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
