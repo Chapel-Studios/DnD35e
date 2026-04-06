@@ -25,4 +25,18 @@ const defineAlignmentSchema = (): AlignmentSchema => ({
   alignment: new fields.StringField<Alignments, Alignments, false, true, true>({ choices: ALIGNMENTS, required: false }),
 });
 
-export { type Alignment, ALIGNMENTS, type Alignments, type AlignmentSchema, defineAlignmentSchema, getFullAlignment,MORAL_ALIGNMENTS, type MoralAlignments, ORDER_ALIGNMENTS, type OrderAlignments };
+export {
+  ALIGNMENTS,
+  defineAlignmentSchema,
+  getFullAlignment,
+  MORAL_ALIGNMENTS,
+  ORDER_ALIGNMENTS,
+};
+
+export type {
+  Alignment,
+  Alignments,
+  AlignmentSchema,
+  MoralAlignments,
+  OrderAlignments,
+};

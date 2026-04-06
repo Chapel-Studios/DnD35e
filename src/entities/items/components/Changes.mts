@@ -46,4 +46,13 @@ const defineChangesSchema = (): ChangesPropertySetSchema => ({
   changeFlags: new fields.ArrayField(new fields.SchemaField({})),
 });
 
-export { CHANGE_FLAGS, ChangeFlagKey,type ChangesPropertySet, type ChangesPropertySetSchema, defineChangesSchema };
+export {
+  CHANGE_FLAGS,
+  ChangeFlagKey,
+  defineChangesSchema,
+};
+
+export type {
+  ChangesPropertySet,
+  ChangesPropertySetSchema,
+};

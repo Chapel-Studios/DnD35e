@@ -7,8 +7,6 @@ import type {
   Dnd35eDocumentFlags,
 } from './Dnd35eDocumentFlags.mjs';
 
-export {};
-
 export type {
   BaseDnd35eSystemData,
   Dnd35eBaseFlags,
