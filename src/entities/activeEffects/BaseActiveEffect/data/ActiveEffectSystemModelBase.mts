@@ -35,7 +35,7 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
           key: new StringField({ required: true }),
           type: new StringField({ required: true, choices: Object.values(EFFECT_CHANGE_TYPE), initial: EFFECT_CHANGE_TYPE.ADD }),
           value: new AnyField({ required: true }),
-          priority: new NumberField({ required: true }),
+          priority: new NumberField({ required: true, initial: 0 }),
           phase: new StringField({
             required: true,
             choices: ['initial', 'final'],
