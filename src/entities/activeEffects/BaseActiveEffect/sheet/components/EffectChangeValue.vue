@@ -2,7 +2,7 @@
   <input
     type="text"
     :name="`system.changes.${index}.value`"
-    :value="change.value.toString()"
+    :value="String(change.value ?? '')"
     :placeholder="valuePlaceholder"
     :disabled="!isEditViewMode || change.isSystem"
   />
