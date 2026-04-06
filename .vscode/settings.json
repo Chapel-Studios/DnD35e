@@ -9,8 +9,7 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always"
   },
-  "typescript.format.enable": false,
-  "javascript.format.enable": false,
+  "js/ts.format.enabled": false,
 
   // ── Indentation ───────────────────────────────────────────────────────────
   "editor.tabSize": 2,
@@ -22,10 +21,8 @@
   "[typescriptreact]": { "editor.tabSize": 2, "editor.insertSpaces": true },
 
   // ── Language preferences ──────────────────────────────────────────────────
-  "javascript.preferences.quoteStyle": "single",
-  "typescript.preferences.quoteStyle": "single",
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "javascript.updateImportsOnFileMove.enabled": "always",
+  "js/ts.preferences.quoteStyle": "single",
+  "js/ts.updateImportsOnFileMove.enabled": "always",
 
   // ── File associations ─────────────────────────────────────────────────────
   "files.associations": {

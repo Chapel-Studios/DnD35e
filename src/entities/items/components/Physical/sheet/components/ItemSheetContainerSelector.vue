@@ -16,11 +16,11 @@
   import { inject } from 'vue';
 
   const {
-    documentGetters: {
-      possibleContainers,
-      // currentContainerId,
-      hasOwner,
-    },
+    // documentGetters: {
+    //   possibleContainers,
+    //   // currentContainerId,
+    //   hasOwner,
+    // },
     documentActions: {
       getDirectFieldUpdater,
     },
