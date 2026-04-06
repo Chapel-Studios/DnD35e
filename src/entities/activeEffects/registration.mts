@@ -1,13 +1,14 @@
 import { EffectConfig } from '@constants/config/activeEffect.mjs';
-import { ensureNameFormulaOnCreate } from '@ec/CoreMixin/index.mjs';
+import { ensureNameFormulaOnCreate, NameFormulaDocument } from '@ec/CoreMixin/index.mjs';
 import { ActiveEffectProxyDnd35e } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
 import { materialEffectType } from '@effects/material/index.mjs';
 import { MaterialSheet, MaterialSystemModel } from '@effects/material/index.mjs';
+
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
 
 const registerEffectSheets = () => {
   const effectSheets = [
-    ['material', MaterialSheet],
+    [materialEffectType, MaterialSheet],
   ] as const;
 
   for (const [effectType, Sheet] of effectSheets) {
@@ -29,7 +30,7 @@ export const registerEffects = () => {
   foundry.helpers.Hooks.once('init', () => {
     CONFIG.ActiveEffect.documentClass = ActiveEffectProxyDnd35e;
     Object.assign(CONFIG.ActiveEffect.dataModels, {
-      material: MaterialSystemModel,
+      [materialEffectType]: MaterialSystemModel,
     });
 
     // Register familiar schemas for formula resolution
@@ -41,7 +42,7 @@ export const registerEffects = () => {
   });
 
   Hooks.on('preCreateActiveEffect', (document, _data, _options, _userId) => {
-    ensureNameFormulaOnCreate(document);
+    ensureNameFormulaOnCreate(document as NameFormulaDocument);
   });
 };
 
