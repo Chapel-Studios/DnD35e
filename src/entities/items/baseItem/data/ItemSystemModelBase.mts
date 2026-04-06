@@ -16,7 +16,7 @@ abstract class ItemSystemModelBase extends Dnd35eDocumentSystemModel<foundry.doc
         originId: requiredStringField('D35E.OriginId', 'D35E.OriginIdHint'),
         originVersion: requiredStringField('D35E.OriginVersion', 'D35E.OriginVersionHint'),
         originPack: requiredStringField('D35E.OriginPack', 'D35E.OriginPackHint'),
-      }),
+      }, { required: false, nullable: true }),
 
       isPsionic: requiredBooleanField('D35E.IsPsionic', 'D35E.IsPsionicHint'),
       isEpic: requiredBooleanField('D35E.IsEpic', 'D35E.IsEpicHint'),
