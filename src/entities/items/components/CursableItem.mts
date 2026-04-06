@@ -31,4 +31,4 @@ const defineCursableSchema = (): CursableItemSchema => ({
   }),
 });
 
-export { type CursableItem, type CursableItemSchema,defineCursableSchema };
+export { type CursableItem, type CursableItemSchema, defineCursableSchema };
