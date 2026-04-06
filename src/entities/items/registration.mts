@@ -40,7 +40,7 @@ export const registerItems = () => {
   });
 
   Hooks.on('updateItem', (document, _updateData, _options, _userId) => {
-    if (!document._id) return;
+    if (!document._id || !game.dnd35e?.stores?.[document.documentName]?.[document._id]) return;
     (game.dnd35e.stores[document.documentName]?.[document._id] as ItemSheetStore<any>)?._storeUtils.refreshDocument?.(document);
   });
 };
