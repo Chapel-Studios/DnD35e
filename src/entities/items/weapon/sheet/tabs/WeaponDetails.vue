@@ -5,11 +5,11 @@
       <ItemHP />
       <ItemQuantity />
       <EquippableItemWeight />
+      <ItemSize class="span-2" />
       <ItemHardness />
+      <DesignedForSize class="span-2" />
       <ItemSheetIsCarriedCheckbox />
       <ItemSheetContainerSelector />
-      <ItemSize />
-      <DesignedForSize />
       <MagicEquivalency v-if="hasMagicEquivalentEffects" class="magic-eq-effect" read-only />
       <DamageReductionTypes v-if="hasDamageReductionTypeEffects" class="dr-types" read-only />
     </div>
@@ -52,9 +52,11 @@
       }
     }
   }
+
   .magic-eq-effect {
     grid-column: span 2;
   }
+
   .weapon-details-container {
     grid-column: span 2;
     display: grid;
@@ -91,5 +93,9 @@
         flex-direction: row;
       }
     }
+  }
+  
+  .span-2 {
+    grid-column: span 2;
   }
 </style>
