@@ -89,5 +89,18 @@
     "D35E.IsCursed": "Is Cursed",
     "D35E.IsCursedHint": "Whether this item is cursed.",
     "D35E.IsCurseActive": "Is Curse Active",
-    "D35E.IsCurseActiveHint": "Whether the curse on this item is currently active."
+    "D35E.IsCurseActiveHint": "Whether the curse on this item is currently active.",
+
+    "D35E.Size": "Size",
+    "D35E.DesignedForSize": "Designed For Size",
+
+    "D35E.Size.fine": "Fine",
+    "D35E.Size.diminutive": "Diminutive",
+    "D35E.Size.tiny": "Tiny",
+    "D35E.Size.small": "Small",
+    "D35E.Size.medium": "Medium",
+    "D35E.Size.large": "Large",
+    "D35E.Size.huge": "Huge",
+    "D35E.Size.gargantuan": "Gargantuan",
+    "D35E.Size.colossal": "Colossal"
 }

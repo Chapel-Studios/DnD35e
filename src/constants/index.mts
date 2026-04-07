@@ -5,7 +5,7 @@ import { EQUIP_SLOT_SELECT_OPTIONS,EQUIP_SLOTS } from './equipmentSlots.mjs';
 import { defaultGameSettings } from './gameSettings/index.mjs';
 import { LogLevel } from './logging.mjs';
 import { hbsTemplatePath,systemPath } from './paths.mjs';
-import { SIZES } from './sizes.mjs';
+import { SIZE_SELECT_OPTIONS, SIZES } from './sizes.mjs';
 
 export {
   ActionsTypesList,
@@ -20,6 +20,7 @@ export {
   isAttackAction,
   ItemConfig,
   LogLevel,
+  SIZE_SELECT_OPTIONS,
   SIZES,
   systemPath,
 };

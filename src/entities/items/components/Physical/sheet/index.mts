@@ -7,6 +7,7 @@ import ItemPrice from './components/ItemPrice.vue';
 import ItemQuantity from './components/ItemQuantity.vue';
 import ItemSheetContainerSelector from './components/ItemSheetContainerSelector.vue';
 import ItemSheetIsCarriedCheckbox from './components/ItemSheetIsCarriedCheckbox.vue';
+import ItemSize from './components/ItemSize.vue';
 import ItemWeight from './components/ItemWeight.vue';
 import PhysicalItemSheet from './PhysicalItemSheet.vue';
 import type { 
@@ -29,6 +30,7 @@ export {
   ItemQuantity,
   ItemSheetContainerSelector,
   ItemSheetIsCarriedCheckbox,
+  ItemSize,
   ItemWeight,
   PhysicalItemEffects,
   physicalItemEffectsTab,

@@ -16,6 +16,7 @@ import type {
   EquippableItemStoreUtils,
 } from './sheet/index.mjs';
 import {
+  DesignedForSize,
   equippableHeaderStatus,
   EquippableItemSheet,
   EquippableItemWeight,
@@ -36,6 +37,7 @@ export type {
   EquippableItemSystemSource,
 };
 export {
+  DesignedForSize,
   equippableHeaderStatus,
   EquippableItem,
   EquippableItemSheet,

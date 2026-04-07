@@ -67,7 +67,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     hardness: computed(() => getViewAwareFieldValue('system.hardness') ?? 0),
     // currentContainerId: computed(() => document.value.system.containerId),
     isCarried: computed(() => document.value.system.isCarried),
-    size: computed(() => game.i18n.localize(getViewAwareFieldValue('system.size') ?? '')),
+    size: computed(() => getViewAwareFieldValue('system.size') ?? ''),
     materials: computed(() => 
       [...document.value.effects].filter((effect) => effect.type === materialEffectType) as unknown as MaterialType[]
     ),
