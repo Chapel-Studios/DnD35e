@@ -82,7 +82,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     // Material Effects support
     magicEquivalency: computed(() => document.value.system.magicEquivalency ?? 0),
     damageReductionTypes: computed(() => [...(document.value.system.damageReductionTypes ?? [])]),
-    damageReductionTypeOptions: computed<MultiSelectOption[]>(() => {
+    damageReductionTypeOptions: computed<MultiSelectOption<string>[]>(() => {
       const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.DAMAGE_REDUCTION_TYPES) as DamageReductionTypesConfig;
       return Object.entries(config)
         .filter(([, entry]) => entry.enabled)
@@ -117,7 +117,7 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   materials: ComputedRef<MaterialType[]>;
   magicEquivalency: ComputedRef<number | null>;
   damageReductionTypes: ComputedRef<string[]>;
-  damageReductionTypeOptions: ComputedRef<MultiSelectOption[]>;
+  damageReductionTypeOptions: ComputedRef<MultiSelectOption<string>[]>;
 }
 
 interface PhysicalItemStoreUtils extends IdentifiableDocumentStoreUtils {}

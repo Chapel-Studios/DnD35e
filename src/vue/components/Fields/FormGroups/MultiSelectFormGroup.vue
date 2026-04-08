@@ -25,7 +25,7 @@
         <img
           v-if="opt.icon"
           :src="opt.icon"
-          :alt="localize(opt.label).value"
+          :alt="localize(opt.label)"
           class="multi-select-icon"
         />
         <span>{{ localize(opt.label) }}</span>
@@ -42,7 +42,7 @@
           <img
             v-if="opt.icon"
             :src="opt.icon"
-            :alt="localize(opt.label).value"
+            :alt="localize(opt.label)"
             class="multi-select-icon"
           />
           <span>{{ localize(opt.label) }}</span>
@@ -52,7 +52,7 @@
   </FormGroup>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TValue">
   import type { DocumentSheetStore, RenderModeStore } from '@ec/CoreMixin/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
@@ -64,15 +64,15 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: string[];
-    options: (MultiSelectOption)[];
+    value: TValue[];
+    options: MultiSelectOption<TValue>[];
     isDmOnly?: boolean;
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
     /** Only used for overriding store behavior. */
     disabled?: boolean;
-    onUpdate?: (value: string[]) => void;
+    onUpdate?: (value: TValue[]) => void;
     /** When true, edit inputs show derived data instead of source data. */
     editDerived?: boolean;
     /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
@@ -89,9 +89,13 @@
     },
     _storeUtils: {
       getSourceProperty,
-      createLocalizedComputed: localize,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  function localize(key: string): string {
+    return game.i18n.localize(key);
+  }
+
   const isDisabled = computed(() => {
     if (props.disabled) return true;
     return !isEditViewMode.value;
@@ -103,14 +107,14 @@
       : getViewAwareFieldUpdater(props.fieldPath)
   );
 
-  const sourceValue = getSourceProperty<string[]>(props.fieldPath);
+  const sourceValue = getSourceProperty<TValue[]>(props.fieldPath);
   const editValue = computed(() => {
     if (props.editDerived || !sourceValue) return props.value;
     if (!isIdentifiedViewMode.value) return props.value;
-    return (sourceValue.value ?? props.value) as string[];
+    return (sourceValue.value ?? props.value);
   });
 
-  function onToggle(val: string, checked: boolean) {
+  function onToggle(val: TValue, checked: boolean) {
     const current = editValue.value;
     const updated = checked
       ? [...current, val]

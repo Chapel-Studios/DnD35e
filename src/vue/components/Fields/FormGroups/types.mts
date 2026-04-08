@@ -1,12 +1,12 @@
 
-interface SelectOption {
+interface SelectOption<TValue> {
   label: string;
-  value: any;
+  value: TValue;
 }
 
-interface MultiSelectOption {
+interface MultiSelectOption<TValue> {
   label: string;
-  value: string;
+  value: TValue;
   icon?: string;
 }
 

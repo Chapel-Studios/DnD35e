@@ -29,7 +29,7 @@
   </FormGroup>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TValue extends string">
   import type { DocumentSheetStore, RenderModeStore } from '@ec/CoreMixin/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
@@ -41,8 +41,8 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: any;
-    options: SelectOption[];
+    value: TValue;
+    options: SelectOption<TValue>[];
     isDmOnly?: boolean;
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
@@ -50,7 +50,7 @@
     /** Only used for overriding store behavior. */
     disabled?: boolean;
     /** Optional updater override. When omitted, derives from the store using fieldPath. */
-    onUpdate?: (value: any) => void;
+    onUpdate?: (value: TValue) => void;
     /** When true, edit inputs show derived data instead of source data. */
     editDerived?: boolean;
     /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
@@ -75,7 +75,7 @@
         : getViewAwareFieldUpdater(props.fieldPath)
     );
 
-  const sourceValue = getSourceProperty<any>(props.fieldPath);
+  const sourceValue = getSourceProperty<TValue>(props.fieldPath);
   const editValue = computed(() => {
     if (props.editDerived || !sourceValue) return props.value;
     // When viewing as unidentified, show the effective (override) value for editing
@@ -87,7 +87,7 @@
     return game.i18n.localize(key);
   }
 
-  function onChange(val: any) {
-    fieldUpdater(val);
+  function onChange(val: string) {
+    fieldUpdater(val as TValue);
   }
 </script>

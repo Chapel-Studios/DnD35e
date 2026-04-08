@@ -1,3 +1,5 @@
+import { SelectOption } from '@vc/Fields/index.mjs';
+
 const WEAPON_TYPES = new Set([
   'simple',
   'martial',
@@ -12,7 +14,7 @@ const WEAPON_TYPE_LOCALIZED: Record<WeaponType, string> = {
   'misc': 'D35E.WeaponTypeMisc',
 } as const;
 const weaponTypeSelectOptions = Object.entries(WEAPON_TYPE_LOCALIZED)
-  .map(([value, label]) => ({ value, label }));
+  .map(([value, label]) => ({ value, label } as SelectOption<WeaponType>));
 
 
 const WEAPON_SUBTYPES = new Set([
@@ -32,7 +34,7 @@ const WEAPON_SUBTYPE_LOCALIZED: Record<WeaponSubtype, string> = {
   'ranged': 'D35E.WeaponSubtypeRanged',
 } as const;
 const weaponSubtypeSelectOptions = Object.entries(WEAPON_SUBTYPE_LOCALIZED)
-  .map(([value, label]) => ({ value, label }));
+  .map(([value, label]) => ({ value, label } as SelectOption<WeaponSubtype>));
 
 const WEAPON_BASE_TYPES = [
   '',

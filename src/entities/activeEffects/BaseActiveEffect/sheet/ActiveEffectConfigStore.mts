@@ -109,7 +109,7 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
     tint: computed(() => document.value.tint ?? null),
     transfer: computed(() => document.value.transfer ?? false),
     statuses: computed(() => [...(document.value.statuses ?? [])]),
-    statusOptions: computed<MultiSelectOption[]>(() =>
+    statusOptions: computed<MultiSelectOption<string>[]>(() =>
       Object.values(CONFIG.statusEffects).map(s => ({
         value: s.id,
         label: s.name,
@@ -117,7 +117,7 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
       }))
     ),
     showIcon: computed(() => document.value.showIcon ?? 0),
-    showIconOptions: computed<SelectOption[]>(() => {
+    showIconOptions: computed<SelectOption<number>[]>(() => {
       const showIconConst = (CONST as any).ACTIVE_EFFECT_SHOW_ICON as Record<string, number>;
       return Object.entries(showIconConst)
         .map(([key, value]) => ({
@@ -209,9 +209,9 @@ type ActiveEffectConfigStoreDocumentGetters = DocumentSheetStoreDocumentGetters 
   tint: ComputedRef<Color | null>;
   transfer: ComputedRef<boolean>;
   statuses: ComputedRef<string[]>;
-  statusOptions: ComputedRef<MultiSelectOption[]>;
+  statusOptions: ComputedRef<MultiSelectOption<string>[]>;
   showIcon: ComputedRef<number>;
-  showIconOptions: ComputedRef<SelectOption[]>;
+  showIconOptions: ComputedRef<SelectOption<number>[]>;
   origin: ComputedRef<string>;
   changes: ComputedRef<any[]>;
   /** Changes filtered by view mode — hides unidentified-targeted changes in identified view. */

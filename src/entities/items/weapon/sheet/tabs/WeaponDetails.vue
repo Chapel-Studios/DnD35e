@@ -21,7 +21,6 @@
 
 <script setup lang="ts">
   import { DocumentDetails, DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { MaterialStore } from '@effects/material/index.mjs';
   import { DamageReductionTypes, MagicEquivalency } from '@effects/material/index.mjs';
   import { DesignedForSize, EquippableItemWeight } from '@items/components/Equippable/index.mjs';
   import {
@@ -36,9 +35,11 @@
   import { DmControl, UniqueId } from '@vc/index.mjs';
   import { inject } from 'vue';
 
+  import { WeaponStore } from '../WeaponStore.mjs';
+
   const {
     documentGetters: { hasEffectsForField },
-  } = inject(DocumentSheetStoreSymbol) as MaterialStore;
+  } = inject(DocumentSheetStoreSymbol) as WeaponStore;
 
   const hasMagicEquivalentEffects = hasEffectsForField('system.magicEquivalency');
   const hasDamageReductionTypeEffects = hasEffectsForField('system.damageReductionTypes');
