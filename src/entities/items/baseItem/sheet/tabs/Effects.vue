@@ -6,7 +6,7 @@
     data-tab="effects"
   >
     <div class="effects-header">
-      <h3>{{ localize('D35E.Effects') }}</h3>
+      <h3>{{ localize('dnd35e.EFFECT.Effects') }}</h3>
       <button
         v-if="isEditViewMode"
         type="button"
@@ -14,7 +14,7 @@
         @click="createEffect"
       >
         <i class="fas fa-plus" />
-        {{ localize('D35E.EffectCreate') }}
+        {{ localize('dnd35e.EFFECT.Create') }}
       </button>
     </div>
 
@@ -25,7 +25,7 @@
       <!-- Temporary Effects -->
       <EffectCategory
         v-if="temporaryEffects.length"
-        :label="localize('D35E.EffectTemporary').value"
+        :label="localize('dnd35e.EFFECT.Temporary').value"
         :effects="temporaryEffects"
         :can-edit="isEditViewMode"
       />
@@ -33,7 +33,7 @@
       <!-- Passive Effects -->
       <EffectCategory
         v-if="passiveEffects.length"
-        :label="localize('D35E.EffectPassive').value"
+        :label="localize('dnd35e.EFFECT.Passive').value"
         :effects="passiveEffects"
         :can-edit="isEditViewMode"
       />
@@ -41,7 +41,7 @@
       <!-- Inactive Effects -->
       <EffectCategory
         v-if="inactiveEffects.length"
-        :label="localize('D35E.EffectInactive').value"
+        :label="localize('dnd35e.EFFECT.Inactive').value"
         :effects="inactiveEffects"
         :can-edit="isEditViewMode"
       />
@@ -50,7 +50,7 @@
 
       <!-- Empty State -->
       <div v-if="isEmpty" class="effects-empty">
-        <p>{{ localize('D35E.EffectsNone') }}</p>
+        <p>{{ localize('dnd35e.EFFECT.None') }}</p>
       </div>
     </div>
   </section>

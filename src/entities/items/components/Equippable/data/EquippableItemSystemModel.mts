@@ -13,18 +13,20 @@ const { fields: { ArrayField, StringField } } = foundry.data;
  * Inherits physical + identifiable fields and adds equipment slot, meld, and size fields.
  */
 abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
+  static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.EQUIPPABLE'];
+
   static override defineSchema (): Record<string, any> {
     const schema = super.defineSchema();
 
     // Equippable
-    schema.isEquipped = requiredBooleanField('D35E.IsEquipped', 'D35E.IsEquippedHint', false);
+    schema.isEquipped = requiredBooleanField(false);
     schema.equippedSlotIds = new ArrayField(
       new StringField<EquipSlot, EquipSlot, true, false, true>({ required: true }),
       { initial: [], required: true }
     );
-    schema.isMelded = requiredBooleanField('D35E.IsMelded', 'D35E.IsMeldedHint', false);
-    schema.designedForSize = new Dnd35eField(StringField, { choices: SIZES, initial: 'medium', required: true }, { label: 'Designed For Size', hint: 'The size category this item is designed for. This may affect the item\'s stats and which characters can equip it.' });
-    schema.isWeightlessWhenEquipped = requiredBooleanField('D35E.IsWeightlessWhenEquipped', 'D35E.IsWeightlessWhenEquippedHint', false);
+    schema.isMelded = requiredBooleanField(false);
+    schema.designedForSize = new Dnd35eField(StringField, { choices: SIZES, initial: 'medium', required: true });
+    schema.isWeightlessWhenEquipped = requiredBooleanField(false);
 
     return schema;
   }

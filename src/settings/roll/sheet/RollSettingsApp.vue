@@ -1,6 +1,6 @@
 <template>
   <form class="roll-settings-form" @submit.prevent="onSubmit">
-    <p class="notes">{{ localize('DND35E.Settings.RollConfig.Instructions') }}</p>
+    <p class="notes">{{ localize('dnd35e.SETTINGS.RollConfig.Instructions') }}</p>
 
     <!-- Actor Type Sections -->
     <section v-for="actorType in actorTypes" :key="actorType.key" class="roll-section">
@@ -8,12 +8,12 @@
 
       <div class="roll-grid">
         <div v-for="rollType in rollTypes" :key="rollType.key" class="form-group">
-          <label>{{ localize(rollType.label) }} {{ localize('DND35E.RollMode') }}</label>
+          <label>{{ localize(rollType.label) }} {{ localize('dnd35e.COMMON.RollMode') }}</label>
           <select
             :value="context.data.rollConfig[actorType.key][rollType.key]"
             @change="onUpdate(`rollConfig.${actorType.key}.${rollType.key}`, ($event.target as HTMLSelectElement).value)"
           >
-            <option value="">{{ localize('DND35E.Default') }}</option>
+            <option value="">{{ localize('dnd35e.COMMON.Default') }}</option>
             <option v-for="mode in rollModes" :key="mode.value" :value="mode.value">
               {{ localize(mode.label) }}
             </option>
@@ -26,11 +26,11 @@
     <footer class="form-footer">
       <button type="button" class="reset-btn" @click="onReset">
         <i class="fas fa-undo" />
-        {{ localize('DND35E.Settings.Reset') }}
+        {{ localize('dnd35e.SETTINGS.Reset') }}
       </button>
       <button type="submit" class="save-btn">
         <i class="fas fa-save" />
-        {{ localize('DND35E.Settings.Save') }}
+        {{ localize('dnd35e.SETTINGS.Save') }}
       </button>
     </footer>
   </form>
@@ -67,18 +67,18 @@
   }>();
 
   const actorTypes: ActorTypeInfo[] = [
-    { key: 'character', label: 'DND35E.ActorTypeCharacter' },
-    { key: 'npc', label: 'DND35E.ActorTypeNPC' },
-    { key: 'trap', label: 'DND35E.ActorTypeTrap' },
+    { key: 'character', label: 'dnd35e.COMMON.ActorTypeCharacter' },
+    { key: 'npc', label: 'dnd35e.COMMON.ActorTypeNPC' },
+    { key: 'trap', label: 'dnd35e.COMMON.ActorTypeTrap' },
   ];
 
   const rollTypes: RollTypeInfo[] = [
-    { key: 'attack', label: 'DND35E.Attack' },
-    { key: 'applyDamage', label: 'DND35E.ApplyDamage' },
-    { key: 'savingThrow', label: 'DND35E.SavingThrow' },
-    { key: 'skill', label: 'DND35E.Skill' },
-    { key: 'grapple', label: 'DND35E.Grapple' },
-    { key: 'hpRoll', label: 'DND35E.HitPoints' },
+    { key: 'attack', label: 'dnd35e.COMMON.Attack' },
+    { key: 'applyDamage', label: 'dnd35e.COMMON.ApplyDamage' },
+    { key: 'savingThrow', label: 'dnd35e.COMMON.SavingThrow' },
+    { key: 'skill', label: 'dnd35e.COMMON.Skill' },
+    { key: 'grapple', label: 'dnd35e.COMMON.Grapple' },
+    { key: 'hpRoll', label: 'dnd35e.COMMON.HitPoints' },
   ];
 
   // Get roll modes from Foundry config

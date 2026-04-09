@@ -1,4 +1,5 @@
 import vue from '@vitejs/plugin-vue';
+import deepmerge from 'deepmerge';
 import fg from 'fast-glob';
 import fs from 'fs-extra';
 import path from 'path';
@@ -75,11 +76,11 @@ function bundleLangFiles () {
         // Find all JSON files in this language folder (recursive)
         const files = await fg('**/*.json', { cwd: langPath, absolute: true });
 
-        let merged: Record<string, string> = {};
+        let merged: Record<string, any> = {};
 
         for (const file of files) {
           const json = await fs.readJSON(file);
-          merged = { ...merged, ...json };
+          merged = deepmerge(merged, json, { arrayMerge: (_target, source) => source });
         }
 
         // Ensure dist/lang exists
@@ -168,16 +169,5 @@ export default defineConfig(() => ({
       },
     },
   },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        sourceMap: true,
-        // // Glob all SCSS into one bundle
-        // additionalData: () => {
-        //   const files = fg.sync('src/**/*.scss');
-        //   return files.map(f => `@import "${f.replace(/\\/g, '/')}";`).join('\n');
-        // }
-      },
-    },
-  },
+  css: {},
 }));

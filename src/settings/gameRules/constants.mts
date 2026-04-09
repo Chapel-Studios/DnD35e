@@ -29,17 +29,17 @@ export const GAME_RULES_MENU = 'gameRulesConfig';
  * Diagonal movement choices
  */
 export const DIAGONAL_MOVEMENT_CHOICES = {
-  '555': 'DND35E.Settings.DiagonalMovement.PHB',
-  '5105': 'DND35E.Settings.DiagonalMovement.DMG',
+  '555': 'dnd35e.SETTINGS.DiagonalMovement.PHB',
+  '5105': 'dnd35e.SETTINGS.DiagonalMovement.DMG',
 } as const;
 
 /**
  * Experience rate choices
  */
 export const EXPERIENCE_RATE_CHOICES = {
-  slow: 'DND35E.Settings.ExperienceRate.Slow',
-  medium: 'DND35E.Settings.ExperienceRate.Medium',
-  fast: 'DND35E.Settings.ExperienceRate.Fast',
+  slow: 'dnd35e.SETTINGS.ExperienceRate.Slow',
+  medium: 'dnd35e.SETTINGS.ExperienceRate.Medium',
+  fast: 'dnd35e.SETTINGS.ExperienceRate.Fast',
 } as const;
 
 /**

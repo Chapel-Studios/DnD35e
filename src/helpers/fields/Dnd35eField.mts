@@ -42,8 +42,6 @@ interface Dnd35eFieldOptions {
   canVisibilityBeChanged?: boolean;
   /** Whether the GM can change editability on this field. Default: true. */
   canEditabilityBeChanged?: boolean;
-  label: string;
-  hint: string;
 }
 
 /**
@@ -82,13 +80,8 @@ class Dnd35eField<
   constructor(
     InnerFieldClass: ConstructorOf<TDataField>,
     innerOptions: Record<string, unknown> = {},
-    wrapperOptions: Dnd35eFieldOptions = {
-      label: '',
-      hint: '',
-    }
+    wrapperOptions: Dnd35eFieldOptions = {}
   ) {
-    innerOptions.label = innerOptions.label ?? wrapperOptions.label;
-    innerOptions.hint = innerOptions.hint ?? wrapperOptions.hint;
     const {
       familiar,
       identifiable = true,

@@ -1,41 +1,95 @@
-{
-    "D35E.WeaponType": "Weapon Type",
-    "D35E.WeaponTypeSimple": "Simple",
-    "D35E.WeaponTypeMartial": "Martial",
-    "D35E.WeaponTypeExotic": "Exotic",
-    "D35E.WeaponTypeSplash": "Splash",
-
-    "D35E.WeaponPropBlocking": "Blocking",
-    "D35E.WeaponPropBrace": "Brace",
-    "D35E.WeaponPropDouble": "Double",
-    "D35E.WeaponPropDisarm": "Disarm",
-    "D35E.WeaponPropFinesse": "Finesse",
-    "D35E.WeaponPropFragile": "Fragile",
-    "D35E.WeaponPropGrapple": "Grapple",
-    "D35E.WeaponPropImprovised": "Improvised",
-    "D35E.WeaponPropMonk": "Monk",
-    "D35E.WeaponPropNonLethal": "Non-lethal",
-    "D35E.WeaponPropNonLethalNoPenalty": "No Penalty Non-lethal Attacks",
-    "D35E.WeaponPropPerformance": "Performance",
-    "D35E.WeaponPropReach": "Reach",
-    "D35E.WeaponPropSunder": "Sunder",
-    "D35E.WeaponPropThrown": "Thrown",
-    "D35E.WeaponPropTrip": "Trip",
-
-    "D35E.WeaponSubtype": "Weapon Subtype",
-    "D35E.WeaponPropLight": "Light",
-    "D35E.WeaponPropOneHanded": "One-handed",
-    "D35E.WeaponPropTwoHanded": "Two-handed",
-    "D35E.WeaponSubtypeRanged": "Ranged",
-
-    "D35E.IsMasterwork": "Is Masterwork",
-    "D35E.IsMasterworkHint": "Whether this weapon is of masterwork quality, providing a +1 bonus to attack rolls.",
-    "D35E.AttackFormula": "Attack Formula Override",
-    "D35E.AttackFormulaHint": "Optional override formula for the attack roll of this weapon.",
-    "D35E.DamageFormula": "Damage Formula Override",
-    "D35E.DamageFormulaHint": "Optional override formula for the damage roll of this weapon.",
-    "D35E.AttackNotes": "Attack Notes",
-    "D35E.AttackNotesHint": "Notes or flavor text related to attacks with this weapon.",
-    "D35E.DamageNotes": "Damage Notes",
-    "D35E.DamageNotesHint": "Notes or flavor text related to damage from this weapon."
+﻿{
+  "dnd35e": {
+    "WEAPON": {
+      "FIELDS": {
+        "isMasterwork": {
+          "label": "Is Masterwork",
+          "hint": "Whether this weapon is of masterwork quality, providing a +1 bonus to attack rolls."
+        },
+        "weaponType": {
+          "label": "Weapon Type",
+          "hint": "The general type of this weapon, which may affect which characters can use it and how it interacts with certain effects."
+        },
+        "weaponSubtype": {
+          "label": "Weapon Subtype",
+          "hint": "The specific subtype of this weapon, which may affect its properties and usage."
+        },
+        "weaponBaseType": {
+          "label": "Base Type",
+          "hint": "The base type of this weapon, which may affect its characteristics and interactions."
+        },
+        "weaponDamage": {
+          "label": "Weapon Damage",
+          "damageRoll": {
+            "label": "Damage Roll",
+            "hint": "The roll used to determine the damage dealt by this weapon."
+          },
+          "damageType": {
+            "label": "Damage Type",
+            "hint": "The type of damage this weapon deals, which may affect resistances and vulnerabilities."
+          },
+          "critRange": {
+            "label": "Critical Range",
+            "hint": "The range of dice rolls that result in a critical hit."
+          },
+          "critMultiplier": {
+            "label": "Critical Multiplier",
+            "hint": "The multiplier applied to damage on a critical hit."
+          },
+          "rangeIncrement": {
+            "label": "Range Increment",
+            "hint": "The distance at which the weapon's range increment applies."
+          },
+          "attackFormula": {
+            "label": "Attack Formula Override",
+            "hint": "Optional override formula for the attack roll of this weapon."
+          },
+          "damageFormula": {
+            "label": "Damage Formula Override",
+            "hint": "Optional override formula for the damage roll of this weapon."
+          }
+        },
+        "attackNotes": {
+          "label": "Attack Notes",
+          "hint": "Notes or flavor text related to attacks with this weapon."
+        },
+        "damageNotes": {
+          "label": "Damage Notes",
+          "hint": "Notes or flavor text related to damage from this weapon."
+        }
+      },
+      "Type": {
+        "simple": "Simple",
+        "martial": "Martial",
+        "exotic": "Exotic",
+        "misc": "Miscellaneous",
+        "splash": "Splash"
+      },
+      "Property": {
+        "blocking": "Blocking",
+        "brace": "Brace",
+        "double": "Double",
+        "disarm": "Disarm",
+        "finesse": "Finesse",
+        "fragile": "Fragile",
+        "grapple": "Grapple",
+        "improvised": "Improvised",
+        "monk": "Monk",
+        "nonLethal": "Non-lethal",
+        "nonLethalNoPenalty": "No Penalty Non-lethal Attacks",
+        "performance": "Performance",
+        "reach": "Reach",
+        "sunder": "Sunder",
+        "thrown": "Thrown",
+        "trip": "Trip"
+      },
+      "Subtype": {
+        "unarmed": "Unarmed",
+        "light": "Light",
+        "oneHanded": "One-handed",
+        "twoHanded": "Two-handed",
+        "ranged": "Ranged"
+      }
+    }
+  }
 }

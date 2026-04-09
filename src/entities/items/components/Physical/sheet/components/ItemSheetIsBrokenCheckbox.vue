@@ -1,6 +1,6 @@
 <template>
   <!-- <CheckBoxFormGroup
-    label="D35E.IsBroken"
+    label="dnd35e.ITEM.IsBroken"
     :value="isBroken"
     :on-update="updater"
     field-path="system.isBroken"

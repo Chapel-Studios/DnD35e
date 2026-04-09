@@ -14,9 +14,9 @@ import { SYSTEM_ID } from '../shared.mjs';
 function registerSettingsMenus(): void {
   // Game Rules Menu
   game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.GAME_RULES, {
-    name: 'DND35E.Settings.GameRules.Name',
-    label: 'DND35E.Settings.GameRules.Label',
-    hint: 'DND35E.Settings.GameRules.Hint',
+    name: 'dnd35e.SETTINGS.GameRules.Name',
+    label: 'dnd35e.SETTINGS.GameRules.Label',
+    hint: 'dnd35e.SETTINGS.GameRules.Hint',
     icon: 'fas fa-list-check',
     type: GameRulesSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
     restricted: true,
@@ -24,9 +24,9 @@ function registerSettingsMenus(): void {
 
   // // Combat Menu
   // game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.COMBAT, {
-  //   name: 'DND35E.Settings.Combat.Name',
-  //   label: 'DND35E.Settings.Combat.Label',
-  //   hint: 'DND35E.Settings.Combat.Hint',
+  //   name: 'dnd35e.SETTINGS.Combat.Name',
+  //   label: 'dnd35e.SETTINGS.Combat.Label',
+  //   hint: 'dnd35e.SETTINGS.Combat.Hint',
   //   icon: 'fas fa-swords',
   //   type: CombatSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
   //   restricted: true,
@@ -34,9 +34,9 @@ function registerSettingsMenus(): void {
 
   // Display Menu
   game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.DISPLAY, {
-    name: 'DND35E.Settings.Display.Name',
-    label: 'DND35E.Settings.Display.Label',
-    hint: 'DND35E.Settings.Display.Hint',
+    name: 'dnd35e.SETTINGS.Display.Name',
+    label: 'dnd35e.SETTINGS.Display.Label',
+    hint: 'dnd35e.SETTINGS.Display.Hint',
     icon: 'fas fa-display',
     type: DisplaySettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
     restricted: false, // Client-side settings, available to all users
@@ -44,9 +44,9 @@ function registerSettingsMenus(): void {
 
   // // Health Configuration Menu
   // game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.HEALTH, {
-  //   name: 'DND35E.Settings.Health.Name',
-  //   label: 'DND35E.Settings.Health.Label',
-  //   hint: 'DND35E.Settings.Health.Hint',
+  //   name: 'dnd35e.SETTINGS.Health.Name',
+  //   label: 'dnd35e.SETTINGS.Health.Label',
+  //   hint: 'dnd35e.SETTINGS.Health.Hint',
   //   icon: 'fas fa-heart-pulse',
   //   type: HealthSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
   //   restricted: true,
@@ -54,9 +54,9 @@ function registerSettingsMenus(): void {
 
   // // Roll Configuration Menu
   // game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.ROLL, {
-  //   name: 'DND35E.Settings.RollConfig.Name',
-  //   label: 'DND35E.Settings.RollConfig.Label',
-  //   hint: 'DND35E.Settings.RollConfig.Hint',
+  //   name: 'dnd35e.SETTINGS.RollConfig.Name',
+  //   label: 'dnd35e.SETTINGS.RollConfig.Label',
+  //   hint: 'dnd35e.SETTINGS.RollConfig.Hint',
   //   icon: 'fas fa-dice-d20',
   //   type: RollSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
   //   restricted: true,
@@ -64,9 +64,9 @@ function registerSettingsMenus(): void {
 
   // Currency Configuration Menu
   game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.CURRENCY, {
-    name: 'DND35E.Settings.Currency.Name',
-    label: 'DND35E.Settings.Currency.Label',
-    hint: 'DND35E.Settings.Currency.Hint',
+    name: 'dnd35e.SETTINGS.Currency.Name',
+    label: 'dnd35e.SETTINGS.Currency.Label',
+    hint: 'dnd35e.SETTINGS.Currency.Hint',
     icon: 'fas fa-coins',
     type: CurrencySettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
     restricted: true,
@@ -74,9 +74,9 @@ function registerSettingsMenus(): void {
 
   // Skill Settings Menu
   // game.settings.registerMenu(SYSTEM_ID, SETTING_MENUS.SKILLS, {
-  //   name: 'DND35E.Settings.SkillSettings.Name',
-  //   label: 'DND35E.Settings.SkillSettings.Label',
-  //   hint: 'DND35E.Settings.SkillSettings.Hint',
+  //   name: 'dnd35e.SETTINGS.SkillSettings.Name',
+  //   label: 'dnd35e.SETTINGS.SkillSettings.Label',
+  //   hint: 'dnd35e.SETTINGS.SkillSettings.Hint',
   //   icon: 'fas fa-book-open',
   //   type: SkillSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
   //   restricted: true,

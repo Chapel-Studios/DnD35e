@@ -9,7 +9,7 @@
 
 /**
  * Map of field paths to their unidentified values.
- * Stored at `document.flags.dnd35e.unidentifiedOverrides`
+ * Stored at `document.flags.dnd35e.fieldOverrides`
  * Keys use encoded format (dots replaced with __) to avoid Foundry nested object issues.
  */
 type UnidentifiedOverrides = Record<string, unknown>;

@@ -43,10 +43,6 @@ type BaseFormulaFieldOptions = {
   excludedFields?: string[];
   /** Required field. Default: false. */
   required?: boolean;
-  /** Label for the field. */
-  label: string;
-  /** Hint for the field. */
-  hint: string;
 }
 
 type NullableFieldOptions = {
@@ -72,8 +68,6 @@ type FormulaFieldOptions = BaseFormulaFieldOptions
  */
 class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
   constructor(options: FormulaFieldOptions = {
-    label: '',
-    hint: '',
     canEditabilityBeChanged: true,
     canVisibilityBeChanged: true,
     defaultEditability: 'normal',

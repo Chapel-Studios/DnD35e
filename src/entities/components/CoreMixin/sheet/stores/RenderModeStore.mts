@@ -66,7 +66,7 @@ const useRenderModeStore = (
       btn.type = 'button';
       btn.classList.add('header-control', 'icon', 'edit-mode-btn');
       btn.dataset.action = 'toggleEditMode';
-      btn.dataset.tooltip = game.i18n.localize(state.isEditViewMode ? 'D35E.SheetModeEdit' : 'D35E.SheetModePlay');
+      btn.dataset.tooltip = game.i18n.localize(state.isEditViewMode ? 'dnd35e.COMMON.SheetModeEdit' : 'dnd35e.COMMON.SheetModePlay');
       btn.dataset.tooltipDirection = 'DOWN';
       btn.setAttribute('aria-label', btn.dataset.tooltip);
       btn.innerHTML = `<i class="${state.isEditViewMode ? 'fa-solid fa-lock-open' : 'fa-solid fa-lock'}" inert></i>`;
@@ -82,7 +82,7 @@ const useRenderModeStore = (
       if (icon) {
         icon.className = state.isEditViewMode ? 'fa-solid fa-lock-open' : 'fa-solid fa-lock';
       }
-      existingBtn.dataset.tooltip = game.i18n.localize(state.isEditViewMode ? 'D35E.SheetModeEdit' : 'D35E.SheetModePlay');
+      existingBtn.dataset.tooltip = game.i18n.localize(state.isEditViewMode ? 'dnd35e.COMMON.SheetModeEdit' : 'dnd35e.COMMON.SheetModePlay');
       existingBtn.setAttribute('aria-label', existingBtn.dataset.tooltip);
       if (refreshTooltip) {
         game.tooltip.deactivate();
@@ -104,7 +104,7 @@ const useRenderModeStore = (
       btn.type = 'button';
       btn.classList.add('header-control', 'icon', 'identified-view-btn');
       btn.dataset.action = 'toggleIdentifiedView';
-      btn.dataset.tooltip = game.i18n.localize(isShowingIdentified ? 'D35E.Identified' : 'D35E.Unidentified');
+      btn.dataset.tooltip = game.i18n.localize(isShowingIdentified ? 'dnd35e.IDENTIFIABLE.Identified' : 'dnd35e.IDENTIFIABLE.Unidentified');
       btn.dataset.tooltipDirection = 'DOWN';
       btn.setAttribute('aria-label', btn.dataset.tooltip);
       btn.innerHTML = `<i class="${isShowingIdentified ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'}" inert></i>`;
@@ -120,7 +120,7 @@ const useRenderModeStore = (
       if (icon) {
         icon.className = isShowingIdentified ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
       }
-      existingBtn.dataset.tooltip = game.i18n.localize(isShowingIdentified ? 'D35E.Identified' : 'D35E.Unidentified');
+      existingBtn.dataset.tooltip = game.i18n.localize(isShowingIdentified ? 'dnd35e.IDENTIFIABLE.Identified' : 'dnd35e.IDENTIFIABLE.Unidentified');
       existingBtn.setAttribute('aria-label', existingBtn.dataset.tooltip);
       if (refreshTooltip) {
         game.tooltip.deactivate();

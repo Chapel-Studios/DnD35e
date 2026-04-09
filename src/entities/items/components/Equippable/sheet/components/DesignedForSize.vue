@@ -1,6 +1,6 @@
 <template>
   <SelectFormGroup
-    label="D35E.DesignedForSize"
+    label="dnd35e.EQUIPPABLE.DesignedForSize"
     :value="designedForSize"
     :options="SIZE_SELECT_OPTIONS"
     field-path="system.designedForSize"

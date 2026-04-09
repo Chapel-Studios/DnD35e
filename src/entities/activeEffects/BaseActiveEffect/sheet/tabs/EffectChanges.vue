@@ -95,7 +95,7 @@
   const changesLabel = game.i18n.localize('EFFECT.TABS.changes');
   const addLabel = game.i18n.localize('EFFECT.AddChange');
   const keyPlaceholder = game.i18n.localize('EFFECT.ChangeKey');
-  const targetLabel = game.i18n.localize('D35E.EffectChangeTarget.Target');
+  const targetLabel = game.i18n.localize('dnd35e.EFFECT.ChangeTarget.Target');
 
   const changeTypes = computed(() => {
     const types: Record<string, string> = {};

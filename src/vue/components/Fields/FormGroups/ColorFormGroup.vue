@@ -18,7 +18,7 @@
         class="color-display"
         :style="{ backgroundColor: value ?? '#ffffff' }"
       ></div>
-      {{ value ?? localize('D35E.NoColor') }}
+      {{ value ?? localize('dnd35e.COMMON.NoColor') }}
     </template>
   </FormGroup>
 </template>

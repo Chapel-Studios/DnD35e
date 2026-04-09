@@ -1,7 +1,7 @@
 <template>
   <EffectCategory
     v-if="materials.length"
-    :label="localize('D35E.Materials').value"
+    :label="localize('dnd35e.COMMON.Materials').value"
     :effects="materials"
     :can-edit="isEditViewMode"
   />

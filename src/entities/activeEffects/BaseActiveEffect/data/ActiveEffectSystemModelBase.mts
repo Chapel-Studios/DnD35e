@@ -21,6 +21,7 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
    * Override in subclasses to declare specific subtypes.
    */
   static targetContexts: TargetContexts = {};
+  static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.EFFECT'];
 
   static override defineSchema(): Record<string, any> {
     const superSchema = super.defineSchema();
@@ -51,7 +52,7 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
             choices: EFFECT_CHANGE_TARGET_FIELDS,
             initial: EFFECT_CHANGE_TARGET_FIELD.VALUE,
           }),
-          isSystem: requiredBooleanField('D35E.IsSystemEffect', 'D35E.IsSystemEffectHint', false),
+          isSystem: requiredBooleanField(false),
         }),
         { initial: [] }
       ),

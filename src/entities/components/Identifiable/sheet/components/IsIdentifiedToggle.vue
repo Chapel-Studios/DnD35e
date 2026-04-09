@@ -54,8 +54,8 @@
   } = inject(DocumentSheetStoreSymbol) as IdentifiableDocumentStore;
   const { isEditViewMode, updateIdentifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
-  const identifiedLabel = computed(() => game.i18n.localize('D35E.Identified'));
-  const unidentifiedLabel = computed(() => game.i18n.localize('D35E.Unidentified'));
+  const identifiedLabel = computed(() => game.i18n.localize('dnd35e.IDENTIFIABLE.Identified'));
+  const unidentifiedLabel = computed(() => game.i18n.localize('dnd35e.IDENTIFIABLE.Unidentified'));
 
   const handleToggleUpdate = (value: boolean) => {
     getDirectFieldUpdater('system.isIdentified')(value);

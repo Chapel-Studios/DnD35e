@@ -41,7 +41,7 @@ const useMaterialStore = (context: VueApplicationContext<Material>): MaterialSto
     bonusHp: computed(() => getViewAwareFieldValue('system.bonusHp') ?? 0),
     magicEquivalency: computed(() => getViewAwareFieldValue('system.magicEquivalency') ?? 0),
     damageReductionTypes: computed(() => [...(getViewAwareFieldValue<string[]>('system.damageReductionTypes') ?? [])]),
-    damageReductionTypeOptions: computed<MultiSelectOption[]>(() => {
+    damageReductionTypeOptions: computed<MultiSelectOption<string>[]>(() => {
       const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.DAMAGE_REDUCTION_TYPES) as DamageReductionTypesConfig;
       return Object.entries(config)
         .filter(([, entry]) => entry.enabled)
@@ -77,7 +77,7 @@ interface MaterialGetters extends ActiveEffectConfigStoreDocumentGetters,
   bonusHp: ComputedRef<number>;
   magicEquivalency: ComputedRef<number | null>;
   damageReductionTypes: ComputedRef<string[]>;
-  damageReductionTypeOptions: ComputedRef<MultiSelectOption[]>;
+  damageReductionTypeOptions: ComputedRef<MultiSelectOption<string>[]>;
 }
 
 interface MaterialStoreUtils extends DocumentSheetStoreUtils<MaterialType>, 

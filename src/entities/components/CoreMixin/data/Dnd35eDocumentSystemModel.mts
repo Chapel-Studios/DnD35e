@@ -24,11 +24,13 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
 > {
   declare parent: TDocType;
 
+  static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.DOCUMENT'];
+
   static override defineSchema(): Record<string, any> {
     const schema = {
-      version: requiredStringField('D35E.Version', 'D35E.VersionHint', '14.0.0'),
-      slug: optionalStringField('D35E.Slug', 'D35E.SlugHint'),
-      derivedName: requiredStringField('D35E.DerivedName', 'D35E.DerivedNameHint'),
+      version: requiredStringField('14.0.0'),
+      slug: optionalStringField(),
+      derivedName: requiredStringField(),
       nameFormula: new Dnd35eField(FormulaField, {
         expectedType: 'string',
         canVisibilityBeChanged: false,
@@ -40,17 +42,11 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
           expectedType: 'string',
           resolvedValue: null,
         },
-        label: 'D35E.NameFormula',
-        hint: 'D35E.NameFormulaHint',
       }, {
         familiar: { formulaVisible: false },
-        label: 'D35E.NameFormula',
-        hint: 'D35E.NameFormulaHint',
       }),
       description: new Dnd35eField(HTMLField, {}, {
         familiar: { formulaVisible: false },
-        label: 'D35E.Description',
-        hint: 'D35E.DescriptionHint',
       }),
     };
     return schema;

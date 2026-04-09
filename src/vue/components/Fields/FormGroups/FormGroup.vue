@@ -2,7 +2,7 @@
   <div class="form-group" :class="formGroupClasses" :hidden="!isFieldVisible">
     <div v-if="hasLabel" class="form-group-label">
       <label>
-        <i v-if="showUnidentifiedIndicator" class="fas fa-low-vision unidentified-indicator" :title="localize('D35E.UnidentifiedValueHint')"></i>
+        <i v-if="showUnidentifiedIndicator" class="fas fa-low-vision unidentified-indicator" :title="localize('dnd35e.IDENTIFIABLE.UnidentifiedValueHint')"></i>
         {{ localize(props.label!) }}
       </label>
       <!-- GM permission controls next to label -->

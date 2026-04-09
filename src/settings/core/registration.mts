@@ -24,8 +24,8 @@ function registerCoreSettings(): void {
 
   // Compendium Cache Settings
   // game.settings.register(SYSTEM_ID, CORE_KEYS.ADDITIONAL_COMPENDIUMS_CLASS_ABILITIES, {
-  //   name: 'DND35E.Settings.AdditionalCompendiums.ClassAbilities.Name',
-  //   hint: 'DND35E.Settings.AdditionalCompendiums.ClassAbilities.Hint',
+  //   name: 'dnd35e.SETTINGS.AdditionalCompendiums.ClassAbilities.Name',
+  //   hint: 'dnd35e.SETTINGS.AdditionalCompendiums.ClassAbilities.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: String,
@@ -36,8 +36,8 @@ function registerCoreSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, CORE_KEYS.ADDITIONAL_COMPENDIUMS_RACIAL_ABILITIES, {
-  //   name: 'DND35E.Settings.AdditionalCompendiums.RacialAbilities.Name',
-  //   hint: 'DND35E.Settings.AdditionalCompendiums.RacialAbilities.Hint',
+  //   name: 'dnd35e.SETTINGS.AdditionalCompendiums.RacialAbilities.Name',
+  //   hint: 'dnd35e.SETTINGS.AdditionalCompendiums.RacialAbilities.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: String,
@@ -48,8 +48,8 @@ function registerCoreSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, CORE_KEYS.ADDITIONAL_COMPENDIUMS_SPELL_LIKE_ABILITIES, {
-  //   name: 'DND35E.Settings.AdditionalCompendiums.SpellLikeAbilities.Name',
-  //   hint: 'DND35E.Settings.AdditionalCompendiums.SpellLikeAbilities.Hint',
+  //   name: 'dnd35e.SETTINGS.AdditionalCompendiums.SpellLikeAbilities.Name',
+  //   hint: 'dnd35e.SETTINGS.AdditionalCompendiums.SpellLikeAbilities.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: String,
@@ -60,8 +60,8 @@ function registerCoreSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, CORE_KEYS.ADDITIONAL_COMPENDIUMS_MATERIALS, {
-  //   name: 'DND35E.Settings.AdditionalCompendiums.Materials.Name',
-  //   hint: 'DND35E.Settings.AdditionalCompendiums.Materials.Hint',
+  //   name: 'dnd35e.SETTINGS.AdditionalCompendiums.Materials.Name',
+  //   hint: 'dnd35e.SETTINGS.AdditionalCompendiums.Materials.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: String,
@@ -72,8 +72,8 @@ function registerCoreSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, CORE_KEYS.ADDITIONAL_COMPENDIUMS_DAMAGE_TYPES, {
-  //   name: 'DND35E.Settings.AdditionalCompendiums.DamageTypes.Name',
-  //   hint: 'DND35E.Settings.AdditionalCompendiums.DamageTypes.Hint',
+  //   name: 'dnd35e.SETTINGS.AdditionalCompendiums.DamageTypes.Name',
+  //   hint: 'dnd35e.SETTINGS.AdditionalCompendiums.DamageTypes.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: String,

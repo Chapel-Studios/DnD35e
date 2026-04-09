@@ -1,6 +1,6 @@
 <template>
   <SelectFormGroup
-    label="D35E.Size"
+    label="dnd35e.SIZE.Size"
     :value="size"
     :options="SIZE_SELECT_OPTIONS"
     field-path="system.size"

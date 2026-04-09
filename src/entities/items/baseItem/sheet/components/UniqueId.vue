@@ -13,7 +13,7 @@
           :disabled="!editable"
           @click="generate"
           type="button"
-          :title="localize('D35E.GenerateUID').value"
+          :title="localize('dnd35e.COMMON.GenerateUID').value"
         >
           <i class="fas fa-wand"></i>
         </button>

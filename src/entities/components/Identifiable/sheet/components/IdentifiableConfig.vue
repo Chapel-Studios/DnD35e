@@ -35,8 +35,8 @@
 
   const toggleLabel = computed(() => 
     isIdentified.value 
-      ? game.i18n.localize('D35E.Identified') 
-      : game.i18n.localize('D35E.Unidentified')
+      ? game.i18n.localize('dnd35e.IDENTIFIABLE.Identified') 
+      : game.i18n.localize('dnd35e.IDENTIFIABLE.Unidentified')
   );
 
   const handleToggleUpdate = (value: boolean) => getDirectFieldUpdater('system.isIdentified')(value);

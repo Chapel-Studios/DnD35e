@@ -33,7 +33,7 @@ class CombatSettingsConfig extends VueSettingsBase {
         height: 'auto',
       },
       window: {
-        title: 'DND35E.Settings.Combat.Title',
+        title: 'dnd35e.SETTINGS.Combat.Title',
         icon: 'fas fa-swords',
         resizable: true,
       },
@@ -48,37 +48,37 @@ class CombatSettingsConfig extends VueSettingsBase {
   static SECTIONS: SettingsSection[] = [
     {
       key: 'weapons',
-      label: 'DND35E.Settings.Combat.Weapons',
+      label: 'dnd35e.SETTINGS.Combat.Weapons',
       fields: [
-        { key: COMBAT_KEYS.AUTOSIZE_WEAPONS, label: 'DND35E.Settings.AutosizeWeapons.Name', hint: 'DND35E.Settings.AutosizeWeapons.Hint', type: 'boolean' },
-        { key: COMBAT_KEYS.AUTO_SCALE_ATTACKS_BAB, label: 'DND35E.Settings.AutoScaleAttacksBab.Name', hint: 'DND35E.Settings.AutoScaleAttacksBab.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.AUTOSIZE_WEAPONS, label: 'dnd35e.SETTINGS.AutosizeWeapons.Name', hint: 'dnd35e.SETTINGS.AutosizeWeapons.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.AUTO_SCALE_ATTACKS_BAB, label: 'dnd35e.SETTINGS.AutoScaleAttacksBab.Name', hint: 'dnd35e.SETTINGS.AutoScaleAttacksBab.Hint', type: 'boolean' },
       ],
     },
     {
       key: 'ammunition',
-      label: 'DND35E.Settings.Combat.Ammunition',
+      label: 'dnd35e.SETTINGS.Combat.Ammunition',
       fields: [
-        { key: COMBAT_KEYS.ALLOW_NO_AMMO, label: 'DND35E.Settings.AllowNoAmmo.Name', hint: 'DND35E.Settings.AllowNoAmmo.Hint', type: 'boolean' },
-        { key: COMBAT_KEYS.USE_AUTO_AMMO_RECOVERY, label: 'DND35E.Settings.UseAutoAmmoRecovery.Name', hint: 'DND35E.Settings.UseAutoAmmoRecovery.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.ALLOW_NO_AMMO, label: 'dnd35e.SETTINGS.AllowNoAmmo.Name', hint: 'dnd35e.SETTINGS.AllowNoAmmo.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.USE_AUTO_AMMO_RECOVERY, label: 'dnd35e.SETTINGS.UseAutoAmmoRecovery.Name', hint: 'dnd35e.SETTINGS.UseAutoAmmoRecovery.Hint', type: 'boolean' },
       ],
     },
     {
       key: 'spellpoints',
-      label: 'DND35E.Settings.Combat.Spellpoints',
+      label: 'dnd35e.SETTINGS.Combat.Spellpoints',
       fields: [
-        { key: COMBAT_KEYS.NO_AUTO_SPELLPOINTS_COST, label: 'DND35E.Settings.NoAutoSpellpointsCost.Name', hint: 'DND35E.Settings.NoAutoSpellpointsCost.Hint', type: 'boolean' },
-        { key: COMBAT_KEYS.SPELLPOINT_COST_FORMULA, label: 'DND35E.Settings.SpellpointCostFormula.Name', hint: 'DND35E.Settings.SpellpointCostFormula.Hint', type: 'string' },
+        { key: COMBAT_KEYS.NO_AUTO_SPELLPOINTS_COST, label: 'dnd35e.SETTINGS.NoAutoSpellpointsCost.Name', hint: 'dnd35e.SETTINGS.NoAutoSpellpointsCost.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.SPELLPOINT_COST_FORMULA, label: 'dnd35e.SETTINGS.SpellpointCostFormula.Name', hint: 'dnd35e.SETTINGS.SpellpointCostFormula.Hint', type: 'string' },
       ],
     },
     {
       key: 'automation',
-      label: 'DND35E.Settings.Combat.Automation',
+      label: 'dnd35e.SETTINGS.Combat.Automation',
       fields: [
-        { key: COMBAT_KEYS.SHOW_FULL_ATTACK_CHAT_CARD, label: 'DND35E.Settings.ShowFullAttackChatCard.Name', hint: 'DND35E.Settings.ShowFullAttackChatCard.Hint', type: 'boolean' },
-        { key: COMBAT_KEYS.REPEAT_ANIMATIONS, label: 'DND35E.Settings.RepeatAnimations.Name', hint: 'DND35E.Settings.RepeatAnimations.Hint', type: 'boolean' },
-        { key: COMBAT_KEYS.AUTOMATE_FLANKING_THREAT, label: 'DND35E.Settings.AutomateFlankingThreat.Name', hint: 'DND35E.Settings.AutomateFlankingThreat.Hint', type: 'boolean' },
-        { key: COMBAT_KEYS.THREATENED_SHOW_SQUARES, label: 'DND35E.Settings.ThreatenedShowSquares.Name', hint: 'DND35E.Settings.ThreatenedShowSquares.Hint', type: 'boolean' },
-        { key: COMBAT_KEYS.RANDOMIZE_HP, label: 'DND35E.Settings.RandomizeHp.Name', hint: 'DND35E.Settings.RandomizeHp.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.SHOW_FULL_ATTACK_CHAT_CARD, label: 'dnd35e.SETTINGS.ShowFullAttackChatCard.Name', hint: 'dnd35e.SETTINGS.ShowFullAttackChatCard.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.REPEAT_ANIMATIONS, label: 'dnd35e.SETTINGS.RepeatAnimations.Name', hint: 'dnd35e.SETTINGS.RepeatAnimations.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.AUTOMATE_FLANKING_THREAT, label: 'dnd35e.SETTINGS.AutomateFlankingThreat.Name', hint: 'dnd35e.SETTINGS.AutomateFlankingThreat.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.THREATENED_SHOW_SQUARES, label: 'dnd35e.SETTINGS.ThreatenedShowSquares.Name', hint: 'dnd35e.SETTINGS.ThreatenedShowSquares.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.RANDOMIZE_HP, label: 'dnd35e.SETTINGS.RandomizeHp.Name', hint: 'dnd35e.SETTINGS.RandomizeHp.Hint', type: 'boolean' },
       ],
     },
   ];
@@ -133,11 +133,11 @@ class CombatSettingsConfig extends VueSettingsBase {
         }
       }
 
-      ui.notifications.info(game.i18n.localize('DND35E.Settings.ChangesSaved'));
+      ui.notifications.info(game.i18n.localize('dnd35e.SETTINGS.ChangesSaved'));
       await this.close();
     } catch (error) {
       console.error('Failed to save combat settings:', error);
-      ui.notifications.error(game.i18n.localize('DND35E.Settings.SaveError'));
+      ui.notifications.error(game.i18n.localize('dnd35e.SETTINGS.SaveError'));
     }
   }
 }
