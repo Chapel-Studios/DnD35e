@@ -1,26 +1,28 @@
 <template>
-  <FormGroup
-    :editable="isEditable"
+  <CheckBoxFormGroup
+    v-if="hasOwner"
     label="Is Carried"
     :value="isCarried"
-    @update="updater"
-    type="checkbox"
+    :on-update="updater"
+    field-path="system.isCarried"
+    disabled
   />
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
 
   const {
-    isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       isCarried,
+      hasOwner,
     },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
-  } = inject('itemSheetStore') as PhysicalItemSheetStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
-  const updater = getFieldUpdater('system.isCarried');
+  const updater = getDirectFieldUpdater('system.isCarried');
 </script>

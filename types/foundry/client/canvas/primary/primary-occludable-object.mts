@@ -1,4 +1,5 @@
 import { TileOcclusionMode } from '@common/constants.mjs';
+
 import Token from '../placeables/token.mjs';
 import PrimaryCanvasObjectMixin from './primary-canvas-object.mjs';
 
@@ -12,7 +13,7 @@ import PrimaryCanvasObjectMixin from './primary-canvas-object.mjs';
 /* eslint-disable @typescript-eslint/no-unused-expressions, no-unused-expressions */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export default function PrimaryOccludableObjectMixin<TBase extends ConstructorOf<PIXI.DisplayObject>> (
-  DisplayObject: TBase,
+  DisplayObject: TBase
 ) {
   abstract class PrimaryOccludableObject extends PrimaryCanvasObjectMixin(DisplayObject) {
     /** Is this occludable object hidden for Gamemaster visibility only? */

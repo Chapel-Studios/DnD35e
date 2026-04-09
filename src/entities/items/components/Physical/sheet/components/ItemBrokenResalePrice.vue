@@ -1,27 +1,44 @@
 <template>
-  <FormGroup
+  <!-- <NumberFormGroup
     :editable="isEditable"
     label="D35E.BrokenResalePrice"
-    :value="brokenResalePrice"
-    @update="updater"
-    type="number"
-    is-dm-only
-  />
+    :value="effectiveBrokenResalePrice"
+    :on-update="updater"
+    field-path="system.brokenResalePrice"
+    default-visibility="gmOnly"
+  /> -->
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
-  import { inject } from 'vue';
-  import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import { NumberFormGroup } from '@vc/Fields/index.mjs';
+  import { computed, inject } from 'vue';
 
+  // const {
+  //   isEditable,
+  //   documentGetters: {
+  //     brokenResalePrice,
+  //   },
+  //   documentGetters: {
+  //     getViewAwareFieldValue,
+  //   },
+  //   documentActions: {
+  //     getViewAwareFieldUpdater,
+  //   },
+  // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
   const {
-    isEditable,
-    physicalItemGetters: {
-      brokenResalePrice,
+    documentGetters: {
+      getViewAwareFieldValue,
     },
     documentActions: {
-      getFieldUpdater,
+      getViewAwareFieldUpdater,
     },
-  } = inject('itemSheetStore') as PhysicalItemSheetStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
-  const updater = getFieldUpdater('system.brokenResalePrice');
+  const effectiveBrokenResalePrice = computed(() =>
+    getViewAwareFieldValue('system.brokenResalePrice')
+  );
+  const updater = getViewAwareFieldUpdater('system.brokenResalePrice');
 </script>

@@ -43,7 +43,7 @@ export interface HandlebarsRenderOptions extends ApplicationRenderOptions {
 /* eslint-disable @typescript-eslint/no-unused-expressions, no-unused-expressions */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export default function HandlebarsApplicationMixin<TBase extends AbstractConstructorOf<ApplicationV2>> (
-  BaseApplication: TBase,
+  BaseApplication: TBase
 ) {
   abstract class HandlebarsApplication extends BaseApplication {
     declare static PARTS: Record<string, HandlebarsTemplatePart>;
@@ -71,7 +71,7 @@ export default function HandlebarsApplicationMixin<TBase extends AbstractConstru
          */
     protected override async _renderHTML (
       context: object,
-      options: HandlebarsRenderOptions,
+      options: HandlebarsRenderOptions
     ): Promise<Record<string, HTMLElement>> {
       context;
       options;
@@ -92,7 +92,7 @@ export default function HandlebarsApplicationMixin<TBase extends AbstractConstru
     protected async _preparePartContext (
       partId: string,
       context: ApplicationRenderContext,
-      options: HandlebarsRenderOptions,
+      options: HandlebarsRenderOptions
     ): Promise<ApplicationRenderContext> {
       partId;
       context;
@@ -109,7 +109,7 @@ export default function HandlebarsApplicationMixin<TBase extends AbstractConstru
     protected override _replaceHTML (
       result: Record<string, HTMLElement>,
       content: HTMLElement,
-      options: HandlebarsRenderOptions,
+      options: HandlebarsRenderOptions
     ): void {
       result;
       content;
@@ -127,7 +127,7 @@ export default function HandlebarsApplicationMixin<TBase extends AbstractConstru
       partId: string,
       newElement: HTMLElement,
       priorElement: HTMLElement,
-      state: object,
+      state: object
     ): void {
       partId;
       newElement;
@@ -146,7 +146,7 @@ export default function HandlebarsApplicationMixin<TBase extends AbstractConstru
       partId: string,
       newElement: HTMLElement,
       priorElement: HTMLElement,
-      state: object,
+      state: object
     ): void {
       partId;
       newElement;
@@ -167,7 +167,7 @@ export default function HandlebarsApplicationMixin<TBase extends AbstractConstru
     protected _attachPartListeners (
       partId: string,
       htmlElement: HTMLElement,
-      options: HandlebarsRenderOptions,
+      options: HandlebarsRenderOptions
     ): void {
       partId;
       htmlElement;

@@ -1,27 +1,27 @@
 <template>
-  <FormGroup
-    :editable="isEditable"
+  <!-- <CheckBoxFormGroup
     label="D35E.IsBroken"
     :value="isBroken"
-    @update="updater"
-    type="checkbox"
-    is-dm-only
-  />
+    :on-update="updater"
+    field-path="system.isBroken"
+    default-visibility="gmOnly"
+  /> -->
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
 
   const {
-    isEditable,
-    physicalItemGetters: {
-      isBroken,
+    documentGetters: {
+      // isBroken,
     },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
-  } = inject('itemSheetStore') as PhysicalItemSheetStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
-  const updater = getFieldUpdater('system.isBroken');
+  const updater = getDirectFieldUpdater('system.isBroken');
 </script>

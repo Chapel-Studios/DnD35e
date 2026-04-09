@@ -1,8 +1,9 @@
-import { DocumentConstructionContext } from '@common/_types.mjs';
+import type { DocumentConstructionContext } from '../../common/_types.mjs';
 import {
   DatabaseCreateCallbackOptions,
   DatabaseDeleteCallbackOptions,
   DatabaseUpdateCallbackOptions,
+  DataSchema,
 } from '@common/abstract/_types.mjs';
 import Document from '@common/abstract/document.mjs';
 import { DataField } from '@common/data/fields.mjs';
@@ -13,6 +14,35 @@ import BaseActiveEffect, {
 } from '@common/documents/active-effect.mjs';
 import { Actor, BaseActor, BaseItem, BaseUser, Item } from './_module.mjs';
 import { ClientDocument } from './abstract/client-document.mjs';
+
+/**
+ * A function to render a stringified HTMLLIElement in the changes tab of ActiveEffectConfig
+ */
+type ActiveEffectChangeRenderer = (context: {
+  change: EffectChangeData;
+  index: number;
+  fields: DataSchema;
+  defaultPriority: number;
+}) => Promise<string>;
+
+/**
+ * A function that applies the change to a document
+ */
+type ActiveEffectChangeHandler = (
+   actor: Actor | Item,
+  change: EffectChangeData,
+  options?: {
+    field?: DataField;
+    replacementData?: Record<string, unknown>;
+  }
+) => Record<string, unknown> | void;
+
+interface ActiveEffectChangeTypeConfig {
+  label: string;
+  defaultPriority: number;
+  handler?: ActiveEffectChangeHandler | null;
+  render?: ActiveEffectChangeRenderer | null;
+}
 
 declare const ClientBaseActiveEffect: new <TParent extends BaseActor | BaseItem | null>(
     ...args: any
@@ -42,6 +72,28 @@ export default class ActiveEffect<
         options?: DocumentConstructionContext<foundry.abstract.Document | null>,
     ): Promise<ActiveEffect<Actor | Item> | undefined>;
 
+  static _shimChanges<TParent extends BaseActor | BaseItem<BaseActor | null> | null = null>(changes: EffectChangeData<TParent>[]): void;
+
+  /**
+   * A cached compilation of core and registered change types, along with their labels and default priorities
+   */
+  static get CHANGE_TYPES(): Record<string, ActiveEffectChangeTypeConfig>;
+
+  /**
+   * A cached compilation of core and registered application phases, along with their labels
+   */
+  static get CHANGE_PHASES(): Record<string, {label: string; hint: string}>;
+
+  /**
+   * A cached compilation of core and registered expiry events
+   */
+  static get EXPIRY_EVENTS(): Record<string, string>;
+
+  /**
+   * A helper class that accepts registration of ActiveEffects and manages their prepared duration and expiry data.
+   */
+  static registry: any; // ActiveEffectRegistry type
+
   /**
      * Create an ActiveEffect instance from status effect data.
      * Called by {@link ActiveEffect.fromStatusEffect}.
@@ -61,7 +113,23 @@ export default class ActiveEffect<
   /* -------------------------------------------- */
 
   /**
-     * Is there some system logic that makes this active effect ineligible for application?
+   * The Actor in which this ActiveEffect is embedded, either directly or as a grandchild Document
+   */
+  get actor(): Actor | null;
+
+  /**
+   * The Item in which this ActiveEffect is embedded
+   */
+  get item(): Item | null;
+
+  /**
+   * Provide a thumbnail image path used to represent this document.
+   */
+  get thumbnail(): string;
+
+  /**
+   * Is there some system logic (or, absent that, an expired status) that makes this Active Effect ineligible for
+   * application?
      */
   get isSuppressed(): boolean;
 
@@ -98,16 +166,22 @@ export default class ActiveEffect<
   protected _requiresDurationUpdate(): boolean;
 
   /**
-     * Compute derived data related to active effect duration.
-     */
-  _prepareDuration(): {
-        type: string;
-        duration: number | null;
-        remaining: number | null;
-        label: string;
-        _worldTime?: number;
-        _combatTime?: number;
-    };
+   * Compute derived data related to active effect duration.
+   * @param duration - The duration data to prepare
+   */
+  _prepareDuration(duration?: EffectDurationData): PreparedEffectDurationData;
+
+  /**
+   * Prepare duration data from time-based (minutes, seconds, etc.) source data.
+   * @param duration - The duration data to prepare
+   */
+  protected _prepareTimeBasedDuration(duration: EffectDurationData): PreparedEffectDurationData;
+
+  /**
+   * Prepare duration data from combat-based (rounds or turns) source data.
+   * @param duration - The duration data to prepare
+   */
+  protected _prepareCombatBasedDuration(duration: EffectDurationData): PreparedEffectDurationData;
 
   /**
      * Format a round+turn combination as a decimal
@@ -127,12 +201,22 @@ export default class ActiveEffect<
   protected _getDurationLabel(rounds: number, turns: number): string;
 
   /**
-     * Describe whether the ActiveEffect has a temporary duration based on combat turns or rounds.
-     */
+   * Describe whether the ActiveEffect has a temporary duration based on combat turns or rounds.
+   */
   get isTemporary(): boolean;
 
   /**
-     * A cached property for obtaining the source name
+   * Whether this Active Effect is eligible to be registered with the ActiveEffectRegistry
+   */
+  get isExpiryTrackable(): boolean;
+
+  /**
+   * Whether this Active Effect is currently expired
+   */
+  get isExpired(): boolean;
+
+  /**
+   * A cached property for obtaining the source name
      */
   get sourceName(): string;
 
@@ -148,6 +232,19 @@ export default class ActiveEffect<
      * @returns The updated value.
      */
   static applyField(model: Document, change: EffectChangeData, field?: DataField): unknown;
+
+  /**
+     * Apply an ActiveEffect change to a provided Document.
+     * @param actor  The Document to whom this effect should be applied
+     * @param change The change data being applied
+     * @param options Options for applying the change
+     * @returns An object of property paths and their updated values.
+     */
+  static applyChange(
+    actor: Document,
+    change: EffectChangeData,
+    options?: { field?: DataField; replacementData?: Record<string, unknown> }
+  ): Record<string, unknown> | undefined;
 
   /**
      * Apply this ActiveEffect to a provided Actor.
@@ -169,9 +266,10 @@ export default class ActiveEffect<
   protected _applyLegacy(actor: Actor, change: EffectChangeData, changes: Record<string, unknown>): void;
 
   /**
-     * Retrieve the initial duration configuration.
-     */
-  static getInitialDuration(): { startTime: number; startRound?: number; startTurn?: number };
+   * Retrieve the initial duration configuration.
+   * @returns Initial duration data with start time, round, and turn
+   */
+  static getInitialDuration(): { startTime: number; startRound?: number; startTurn?: number; combat?: string; combatant?: string };
 
   /* -------------------------------------------- */
   /*  Flag Operations                             */
@@ -206,9 +304,9 @@ export default class ActiveEffect<
   protected override _onDelete(options: DatabaseDeleteCallbackOptions, userId: string): void;
 
   /**
-     * Display changes to active effects as scrolling Token status text.
-     * @param enabled Is the active effect currently enabled?
-     */
+   * Display changes to active effects as scrolling Token status text.
+   * @param enabled Is the active effect currently enabled?
+   */
   protected _displayScrollingStatus(enabled: boolean): void;
 }
 
@@ -216,10 +314,20 @@ export default interface ActiveEffect<TParent extends Actor | Item | null = Acto
     duration: PreparedEffectDurationData;
 }
 
+/**
+ * Extended duration data with computed properties for display
+ */
 export interface PreparedEffectDurationData extends EffectDurationData {
-    type: string;
-    remaining?: string;
+    /** The computed remaining duration */
+    remaining?: number | string;
+    /** Human-readable label for the duration */
     label?: string;
+    /** Total seconds for the duration */
+    seconds?: number;
+    /** Cached world time for duration calculations */
+    _worldTime?: number;
+    /** Cached combat time for duration calculations */
+    _combatTime?: number;
 }
 
 export {};

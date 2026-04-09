@@ -1,15 +1,20 @@
+import type { LogLevelValue } from './logging.mjs';
 import { LogLevel } from './logging.mjs';
 
 const isDevMode: boolean = true;
 const shouldLogNonCriticalErrors: boolean = true;
-const logLevel: LogLevel = LogLevel.DEBUG;
+const logLevel: LogLevelValue = LogLevel.DEBUG;
 
-export const devConfig: {
+const devConfig: {
   isDevMode: boolean;
   shouldLogNonCriticalErrors: boolean;
-  logLevel: LogLevel;
+  logLevel: LogLevelValue;
 } = {
   isDevMode,
   shouldLogNonCriticalErrors,
   logLevel,
+};
+
+export {
+  devConfig,
 };

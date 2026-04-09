@@ -26,5 +26,16 @@
     "D35E.WeaponPropLight": "Light",
     "D35E.WeaponPropOneHanded": "One-handed",
     "D35E.WeaponPropTwoHanded": "Two-handed",
-    "D35E.WeaponSubtypeRanged": "Ranged"
+    "D35E.WeaponSubtypeRanged": "Ranged",
+
+    "D35E.IsMasterwork": "Is Masterwork",
+    "D35E.IsMasterworkHint": "Whether this weapon is of masterwork quality, providing a +1 bonus to attack rolls.",
+    "D35E.AttackFormula": "Attack Formula Override",
+    "D35E.AttackFormulaHint": "Optional override formula for the attack roll of this weapon.",
+    "D35E.DamageFormula": "Damage Formula Override",
+    "D35E.DamageFormulaHint": "Optional override formula for the damage roll of this weapon.",
+    "D35E.AttackNotes": "Attack Notes",
+    "D35E.AttackNotesHint": "Notes or flavor text related to attacks with this weapon.",
+    "D35E.DamageNotes": "Damage Notes",
+    "D35E.DamageNotesHint": "Notes or flavor text related to damage from this weapon."
 }

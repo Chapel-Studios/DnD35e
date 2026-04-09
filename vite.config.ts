@@ -1,9 +1,9 @@
-import { defineConfig, Plugin } from 'vite';
-import tsconfigPaths, { PluginOptions } from 'vite-tsconfig-paths';
-import path from 'path';
+import vue from '@vitejs/plugin-vue';
 import fg from 'fast-glob';
 import fs from 'fs-extra';
-import vue from '@vitejs/plugin-vue';
+import path from 'path';
+import { defineConfig, Plugin } from 'vite';
+import tsconfigPaths, { PluginOptions } from 'vite-tsconfig-paths';
 
 // Copy Foundry system + static files
 function copyStaticFiles (_opts?: PluginOptions | undefined): Plugin {
@@ -23,6 +23,7 @@ function copyStaticFiles (_opts?: PluginOptions | undefined): Plugin {
 }
 
 // Copy .hbs templates into dist/hbsTemplates
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function copyHbsFiles (_opts?: PluginOptions | undefined): Plugin {
   return {
     name: 'copy-hbs-files',
@@ -94,10 +95,12 @@ function bundleLangFiles () {
   };
 }
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   resolve: {
     alias: {
-      '@vc': path.resolve(__dirname, 'src/vue'),
+      '@vueApps': path.resolve(__dirname, 'src/vue/apps'),
+      '@vueStores': path.resolve(__dirname, 'src/vue/stores'),
+      '@vc': path.resolve(__dirname, 'src/vue/components'),
       '@canvas': path.resolve(__dirname, 'src/canvas'),
       '@constants': path.resolve(__dirname, 'src/constants'),
       '@helpers': path.resolve(__dirname, 'src/helpers'),
@@ -105,14 +108,16 @@ export default defineConfig(({ mode }) => ({
       '@actors': path.resolve(__dirname, 'src/entities/actors'),
       '@entities': path.resolve(__dirname, 'src/entities'),
       '@scene': path.resolve(__dirname, 'src/scene'),
+      '@settings': path.resolve(__dirname, 'src/settings'),
       '@source': path.resolve(__dirname, 'src'),
       '@effects': path.resolve(__dirname, 'src/entities/activeEffects'),
+      '@ec': path.resolve(__dirname, 'src/entities/components'),
     },
   },
   plugins: [
     tsconfigPaths(),
     copyStaticFiles(),
-    copyHbsFiles(),
+    // copyHbsFiles(),
     bundleLangFiles(),
     vue(),
     logBuildTimestamp(),
@@ -121,14 +126,17 @@ export default defineConfig(({ mode }) => ({
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
-    minify: mode === 'production',
-    ...(mode === 'development'
-      ? {
-        watch: {
-          clearScreen: false,
-        },
-      }
-      : {}),
+    ssr: false,
+    minify: false,
+    cssMinify: false,
+    // minify: mode === 'production',
+    // ...(mode === 'development'
+    //   ? {
+    //     watch: {
+    //       clearScreen: false,
+    //     },
+    //   }
+    //   : {}),
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'src/main.mts'),
@@ -161,9 +169,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   css: {
-    devSourcemap: true,
     preprocessorOptions: {
       scss: {
+        sourceMap: true,
         // // Glob all SCSS into one bundle
         // additionalData: () => {
         //   const files = fg.sync('src/**/*.scss');

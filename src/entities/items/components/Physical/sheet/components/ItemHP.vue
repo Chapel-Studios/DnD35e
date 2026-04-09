@@ -1,34 +1,71 @@
 <template>
-  <FormGroup
-    :editable="isEditable"
+  <FormGroupSection
     label="HP"
-    :value="currentHp"
-    @update="updateCurrentHp"
-    type="number"
-  />
-  <FormGroup
-    :editable="isEditable"
-    :value="maxHp"
-    @update="updateMaxHp"
-    type="number"
-  />
+    field-path="system.hp"
+    :default-visibility="ownerPlusVisibility"
+    :default-editability="gmOnlyEditability"
+    class="item-hp-section"
+  >
+    <NumberFormGroup
+      label="Current"
+      :value="currentHp"
+      :on-update="updateCurrentHp"
+      field-path="system.hp.value"
+      :default-visibility="ownerPlusVisibility"
+      :default-editability="gmOnlyEditability"
+      direct-update
+    />
+    <NumberFormGroup
+      label="Max"
+      :value="maxHp"
+      :on-update="maxHpUpdater"
+      field-path="system.hp.max"
+      :default-visibility="ownerPlusVisibility"
+      :default-editability="gmOnlyEditability"
+    />
+    <template #readonly>
+      <span class="hp-display">{{ currentHp }}<HasActiveEffectsNotification :field-path="'system.hp.value'" /> / {{ maxHp }}<HasActiveEffectsNotification :field-path="'system.hp.max'" /></span>
+    </template>
+  </FormGroupSection>
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import FormGroupSection from '@vc/Fields/FormGroups/FormGroupSection.vue';
+  import { HasActiveEffectsNotification, NumberFormGroup, ownerPlusVisibility } from '@vc/Fields/index.mjs';
+  import { gmOnlyEditability } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
 
   const {
-    isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       maxHp,
       currentHp,
     },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
+      getViewAwareFieldUpdater,
     },
-  } = inject('itemSheetStore') as PhysicalItemSheetStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
-  const updateCurrentHp = getFieldUpdater('system.hp.value');
-  const updateMaxHp = getFieldUpdater('system.hp.max');
+  // Current HP is state - always write directly
+  const updateCurrentHp = getDirectFieldUpdater('system.hp.value');
+
+  // Max HP is identifiable - view-aware updater
+  const maxHpUpdater = getViewAwareFieldUpdater('system.hp.max');
 </script>
+
+<style lang="scss" scoped>
+  .hp-display {
+    display: inline-flex;
+    align-items: center;
+
+    :deep(.effect-tooltip) {
+      font-size: 0.75rem;
+      margin-left: 0.3rem;
+    }
+  }
+
+  .item-hp-section {
+    grid-column: span 2;
+  }
+</style>

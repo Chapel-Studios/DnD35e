@@ -314,6 +314,8 @@ export function logCompatibilityWarning(
     },
 ): void;
 
+export function isPlainObject(value: unknown): boolean;
+
 declare global {
     interface MergeObjectOptions {
         /**

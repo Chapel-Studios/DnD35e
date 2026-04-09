@@ -1,11 +1,12 @@
 import { devConfig } from '../constants/devConfig.mjs';
+import type { LogLevelValue } from '../constants/logging.mjs';
 import { LogLevel } from '../constants/logging.mjs';
 
-export class LogHelper {
-  static logLevel: LogLevel = devConfig.logLevel;
+class LogHelper {
+  static logLevel: LogLevelValue = devConfig.logLevel;
   static shouldLogNonCriticalErrors: boolean = devConfig.shouldLogNonCriticalErrors;
 
-  static setLogLevel (level: LogLevel): void {
+  static setLogLevel (level: LogLevelValue): void {
     LogHelper.logLevel = level;
   }
 
@@ -54,3 +55,7 @@ export class LogHelper {
 // Apply config settings on startup
 LogHelper.setLogLevel(devConfig.logLevel);
 LogHelper.setShouldLogNonCriticalErrors(devConfig.shouldLogNonCriticalErrors);
+
+export {
+  LogHelper,
+};

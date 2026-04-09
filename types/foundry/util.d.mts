@@ -34,6 +34,10 @@ declare global {
 
     /** A JSON-compatible value, plus `undefined` */
     type JSONValue = string | number | boolean | object | null | undefined;
+    
+    type ForceOptional<T> = {
+      [K in keyof T]?: T[K] extends object ? ForceOptional<T[K]> : T[K];
+    };
 }
 
 type ExtractObjects<T> = T extends infer U ? (U extends object ? U : never) : never;

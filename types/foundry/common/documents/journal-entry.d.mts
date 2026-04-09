@@ -7,6 +7,9 @@ export default class BaseJournalEntry extends Document<null, JournalEntrySchema>
   static override get metadata(): JournalEntryMetadata;
 
   static override defineSchema(): JournalEntrySchema;
+
+  /** The default icon used for newly created JournalEntry documents */
+  static DEFAULT_ICON: ImageFilePath;
 }
 
 export default interface BaseJournalEntry

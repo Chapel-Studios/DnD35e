@@ -10,6 +10,7 @@ import Actor from '@client/documents/actor.mjs';
 import TokenDocument from '@client/documents/token.mjs';
 import { DataSchema } from '@common/abstract/_types.mjs';
 import { PrototypeToken } from '@common/data/_module.mjs';
+
 import HandlebarsApplicationMixin, {
   HandlebarsRenderOptions,
   HandlebarsTemplatePart,
@@ -92,7 +93,7 @@ export default function TokenApplicationMixin<
 
         protected override async _preFirstRender (
           context: Record<string, unknown>,
-          options: HandlebarsRenderOptions,
+          options: HandlebarsRenderOptions
         ): Promise<void> {
           context;
           options;
@@ -114,7 +115,7 @@ export default function TokenApplicationMixin<
         protected override async _preparePartContext (
           partId: string,
           context: ApplicationRenderContext,
-          options: HandlebarsRenderOptions,
+          options: HandlebarsRenderOptions
         ): Promise<ApplicationRenderContext> {
           context = await super._preparePartContext(partId, context, options);
           return context;

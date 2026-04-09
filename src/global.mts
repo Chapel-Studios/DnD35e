@@ -1,15 +1,18 @@
-import { CanvasDnd35e } from './canvas/CanvasDnd35e.mjs';
-import { RegionDocumentDnd35e } from './scene/region-document/RegionDocumentDnd35e.mjs';
-import { SceneDnd35e } from './scene/SceneDnd35e.mjs';
-import { TokenDocumentDnd35e } from './scene/token-document/index.mjs';
 import { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
-import { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { documents, Game } from '@client/_module.mjs';
 import type CompendiumDirectory from '@client/applications/sidebar/tabs/compendium-directory.mjs';
 import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type Config from '@client/config.mjs';
+import { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
+import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
+import { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
 import { ItemType } from '@items/itemTypes.mjs';
+
+import { CanvasDnd35e } from './canvas/CanvasDnd35e.mjs';
+import { RegionDocumentDnd35e } from './scene/region-document/RegionDocumentDnd35e.mjs';
+import { SceneDnd35e } from './scene/SceneDnd35e.mjs';
+import { TokenDocumentDnd35e } from './scene/token-document/index.mjs';
 
 type GameDnd35e = Game<
   ActorDnd35e<null>,
@@ -20,7 +23,14 @@ type GameDnd35e = Game<
   documents.Macro,
   SceneDnd35e,
   documents.User
->;
+> & {
+  dnd35e: {
+    stores: {
+      Item: Record<string, ItemSheetStore<any>>;
+      ActiveEffect: Record<string, ActiveEffectConfigStore>;
+    };
+  }
+};
 
 type ThisConfig = Config<
   documents.AmbientLightDocument<SceneDnd35e | null>,
@@ -49,11 +59,17 @@ type ThisConfig = Config<
 
 declare global {
   interface ConfigDnd35e extends ThisConfig {
-    Dnd35e: {
+    dnd35e: {
       VERSION: string;
       item: {
         documentClasses: Record<string, new (...args: any[]) => ItemDnd35e>;
       },
+      activeEffect: {
+        documentClasses: Record<string, new (...args: any[]) => DnD35eActiveEffect>;
+      },
+      actor: {
+        documentClasses: Record<string, new (...args: any[]) => ActorDnd35e>;
+      }
     };
   }
   const CONFIG: ConfigDnd35e;
@@ -62,7 +78,6 @@ declare global {
   namespace globalThis {
     const game: GameDnd35e;
     export import fa = foundry.applications;
-    // export import fav1 = foundry.appv1;
     export import fc = foundry.canvas;
     export import fd = foundry.documents;
     export import fh = foundry.helpers;

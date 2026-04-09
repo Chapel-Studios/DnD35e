@@ -1,51 +1,48 @@
-import {
-  useItemSheetStore,
-  ItemSheetDnd35e,
-  BaseItemSheetVue,
-  DefaultHeaderName,
-  ItemHeader,
-  ItemName,
-  Description,
-  NameConfig,
-} from './sheet/index.mjs';
+import type {
+  ItemSystemData,
+  ItemSystemSource,
+} from './data/index.mjs';
+import { ItemSystemModelBase } from './data/index.mjs';
+import type {
+  ItemSourceDnd35e,
+} from './ItemDnd35e.mjs';
 import {
   ItemDnd35e,
   ItemProxyDnd35e,
 } from './ItemDnd35e.mjs';
-import { ItemSystemModelBase } from './data/index.mjs';
-
 import type {
-  ItemSourceDnd35e,
-} from './ItemDnd35e.mjs';
-import type {
-  ItemSystemSource,
-  ItemSystemData,
-} from './data/index.mjs';
-import type {
-  ItemSheetStore,
   BaseItemSheetRenderContext,
-  ItemSheetTab,
+  ItemDocumentActions,
+  ItemDocumentGetters,
+  ItemSheetStore,
+  ItemSheetStoreUtils,
+} from './sheet/index.mjs';
+import {
+  defaultEffectsTab,
+  EffectCategory,
+  Effects,
+  ItemSheetDnd35e,
+  useItemSheetStore,
 } from './sheet/index.mjs';
 
 export {
-  useItemSheetStore,
-  ItemSheetDnd35e,
-  BaseItemSheetVue,
-  DefaultHeaderName as DefaultNameHeader,
-  ItemHeader,
-  ItemName,
-  Description,
-  NameConfig,
+  defaultEffectsTab,
+  EffectCategory,
+  Effects,
   ItemDnd35e,
   ItemProxyDnd35e,
+  ItemSheetDnd35e,
   ItemSystemModelBase,
+  useItemSheetStore,
 };
 
 export type {
-  ItemSystemSource,
-  ItemSystemData,
-  ItemSheetStore,
   BaseItemSheetRenderContext,
+  ItemDocumentActions,
+  ItemDocumentGetters,
+  ItemSheetStore,
+  ItemSheetStoreUtils,
   ItemSourceDnd35e,
-  ItemSheetTab,
+  ItemSystemData,
+  ItemSystemSource,
 };

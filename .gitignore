@@ -5,6 +5,7 @@ node_modules/
 dist/
 out/
 *.js
+!eslint.config.js
 *.js.map
 *.d.ts
 
@@ -16,7 +17,9 @@ logs/
 coverage/
 
 # IDE and editor files
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 .vscode-test/
 *.code-workspace

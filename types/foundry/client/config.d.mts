@@ -410,6 +410,7 @@ export default interface Config<
                 context?: DocumentConstructionContext<TActiveEffect['parent']>,
             ): TActiveEffect;
         };
+        dataModels: Record<string, ConstructorOf<TypeDataModel<documents.ActiveEffect, DataSchema>>>;
     };
 
     /** Configuration for the ActorDelta embedded document type. */

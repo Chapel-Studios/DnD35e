@@ -1,4 +1,4 @@
-export const LogLevel = {
+const LogLevel = {
   DEBUG: 0,
   INFO: 1,
   WARN: 2,
@@ -6,4 +6,12 @@ export const LogLevel = {
   FATAL: 4,
 } as const;
 
-export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+type LogLevelValue = (typeof LogLevel)[keyof typeof LogLevel];
+
+export {
+  LogLevel,
+};
+
+export type {
+  LogLevelValue,
+};

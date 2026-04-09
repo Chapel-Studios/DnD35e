@@ -1,0 +1,22 @@
+{
+    "D35E.Effects": "Effects",
+    "D35E.EffectCreate": "Create Effect",
+    "D35E.EffectNew": "New Effect",
+    "D35E.EffectEdit": "Edit Effect",
+    "D35E.EffectDelete": "Delete Effect",
+    "D35E.EffectEnable": "Enable Effect",
+    "D35E.EffectDisable": "Disable Effect",
+    "D35E.EffectTemporary": "Temporary Effects",
+    "D35E.EffectPassive": "Passive Effects",
+    "D35E.EffectInactive": "Inactive Effects",
+    "D35E.EffectsNone": "No effects on this item.",
+    "D35E.EffectChangeTarget.Target": "Target",
+    "D35E.EffectChangeTarget.Item": "Item",
+    "D35E.EffectChangeTarget.Actor": "Actor",
+    "D35E.EffectChangeTargetField.TargetField": "Target Field",
+    "D35E.EffectChangeTargetField.Value": "Identified",
+    "D35E.EffectChangeTargetField.Unidentified": "Unidentified",
+
+    "D35E.IsSystemEffect": "System Effect",
+    "D35E.IsSystemEffectHint": "Whether this effect is a built-in system effect and should not be edited by users."
+}

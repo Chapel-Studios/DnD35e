@@ -1,28 +1,29 @@
 <template>
-  <FormGroup
-    :editable="isEditable"
-    label="Price"
+  <!-- <SelectFormGroup
+    v-if="hasOwner"
+    label="Container"
     :value="currentContainerId"
-    @update="updater"
-    type="select"
+    :on-update="updater"
     :options="possibleContainers"
-  />
+    field-path="system.containerId"
+  /> -->
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
 
   const {
-    isEditable,
-    physicalItemGetters: {
-      possibleContainers,
-      currentContainerId,
-    },
+    // documentGetters: {
+    //   possibleContainers,
+    //   // currentContainerId,
+    //   hasOwner,
+    // },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
-  } = inject('itemSheetStore') as PhysicalItemSheetStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
-  const updater = getFieldUpdater('system.containerId');
+  const updater = getDirectFieldUpdater('system.containerId');
 </script>

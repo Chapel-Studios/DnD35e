@@ -26,6 +26,15 @@ interface ClientBaseRollTable extends InstanceType<typeof ClientBaseRollTable> {
  */
 export default class RollTable extends ClientBaseRollTable {
   /* -------------------------------------------- */
+  /*  Properties                                  */
+  /* -------------------------------------------- */
+
+  /**
+   * Provide a thumbnail image path used to represent this document.
+   */
+  get thumbnail(): this['img'];
+
+  /* -------------------------------------------- */
   /*  Methods                                     */
   /* -------------------------------------------- */
 

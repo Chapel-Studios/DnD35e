@@ -1,4 +1,5 @@
 import Collection from '@common/utils/collection.mjs';
+
 import { BasePackage, Module, RelatedPackage, System } from './_module.mjs';
 import { PackageCompatibilityBadge, PackageManifestData } from './_types.mjs';
 
@@ -47,7 +48,7 @@ export default function ClientPackageMixin<TBase extends ConstructorOf<BasePacka
     static getVersionBadge (
       availability: number,
       data: Partial<PackageManifestData>,
-      options?: { modules?: Collection<string, Module>; systems?: Collection<string, System> },
+      options?: { modules?: Collection<string, Module>; systems?: Collection<string, System> }
     ): PackageCompatibilityBadge | null {
       availability;
       data;
@@ -74,7 +75,7 @@ export default function ClientPackageMixin<TBase extends ConstructorOf<BasePacka
       availability: number,
       data: Partial<PackageManifestData>,
       deps: Iterable<RelatedPackage>,
-      options?: { modules?: Collection<string, Module>; systems?: Collection<string, System> },
+      options?: { modules?: Collection<string, Module>; systems?: Collection<string, System> }
     ): string {
       availability;
       data;
@@ -99,7 +100,7 @@ export default function ClientPackageMixin<TBase extends ConstructorOf<BasePacka
     static _formatIncompatibleSystemsTooltip (
       data: Partial<PackageManifestData>,
       relationships: Iterable<RelatedPackage>,
-      options?: { systems?: Collection<string, System> },
+      options?: { systems?: Collection<string, System> }
     ): string {
       data;
       relationships;
@@ -135,7 +136,7 @@ export default function ClientPackageMixin<TBase extends ConstructorOf<BasePacka
          */
     static async fromRemoteManifest (
       manifest: string,
-      options?: { strict?: boolean },
+      options?: { strict?: boolean }
     ): Promise<ClientPackage | null> {
       manifest;
       options;

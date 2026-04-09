@@ -1,10 +1,22 @@
-import type { PhysicalItemType } from './components/Physical/index.mjs';
 
-type ItemType = PhysicalItemType | 'material';
+const weaponItemType = 'weapon';
+type WeaponItemType = typeof weaponItemType;
 
-const ITEM_TYPES = {
-  weapon: 'TYPES.Item.weapon',
-  material: 'TYPES.Item.material',
+const EQUIPPABLE_ITEM_TYPES = new Set([
+  weaponItemType,
+] as const);
+type EquippableItemType = SetElement<typeof EQUIPPABLE_ITEM_TYPES>;
+
+const PHYSICAL_ITEM_TYPES = new Set([
+  ...EQUIPPABLE_ITEM_TYPES,
+] as const);
+type PhysicalItemType = SetElement<typeof PHYSICAL_ITEM_TYPES>;
+
+type ItemType = PhysicalItemType;
+
+
+const ITEM_TYPES_LOCALIZED = {
+  [weaponItemType]: 'TYPES.Item.weapon',
   // equipment: "D35E.ItemTypeEquipment",
   // loot: "D35E.ItemTypeLoot",
   // Consumable: "D35E.ItemTypeConsumable",
@@ -15,13 +27,18 @@ const ITEM_TYPES = {
   // Attack: "D35E.ItemTypeAttack",
 } as const satisfies Record<ItemType, string>;
 
-type ItemTypeLocalizationValues = typeof ITEM_TYPES[keyof typeof ITEM_TYPES];
+type ItemTypeLocalizationValues = typeof ITEM_TYPES_LOCALIZED[keyof typeof ITEM_TYPES_LOCALIZED];
 
 export {
-  ITEM_TYPES,
+  ITEM_TYPES_LOCALIZED,
+  PHYSICAL_ITEM_TYPES,
+  weaponItemType,
 };
 
 export type {
+  EquippableItemType,
   ItemType,
   ItemTypeLocalizationValues,
+  PhysicalItemType,
+  WeaponItemType,
 };

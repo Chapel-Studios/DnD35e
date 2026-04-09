@@ -1,63 +1,70 @@
+import type {
+  PhysicalItemSystemData,
+  PhysicalItemSystemSource,
+} from './data/index.mjs';
 import {
-  applyPhysicalPrototype,
-  physicalOverrides,
+  PhysicalItemSystemModel,
+} from './data/index.mjs';
+import type {
+  PhysicalItemLike,
+  PhysicalItemSource,
+  PhysicalItemSourceProps,
 } from './PhysicalItemDnd35e.mjs';
 import {
-  PhysicalItemSheet,
-  usePhysicalItemStore,
-  ItemQuantity,
-  ItemWeight,
-  ItemPrice,
-  ItemHP,
-  ItemHardness,
-  ItemSheetIsCarriedCheckbox,
-  ItemSheetContainerSelector,
+  IdentifiableItemBase,
+  PhysicalItem,
+} from './PhysicalItemDnd35e.mjs';
+import type {
+  PhysicalDocumentStore,
+  PhysicalItemActions,
+  PhysicalItemGetters,
+  PhysicalItemSheetRenderContext,
+  PhysicalItemStore,
+  PhysicalItemStoreUtils,
 } from './sheet/index.mjs';
 import {
-  applyPhysicalSchema,
-  PHYSICAL_ITEM_TYPES,
-} from './data/index.mjs';
-
-import type {
-  PhysicalItemSourceProps,
-  PhysicalItemSource,
-  PhysicalItem,
-  PhysicalItemLike,
-} from './PhysicalItemDnd35e.mjs';
-import type {
-  PhysicalItemType,
-  PhysicalItemSystemSource,
-  PhysicalItemSystemData,
-} from './data/index.mjs';
-import type {
-  PhysicalItemSheetRenderContext,
-  PhysicalItemSheetStore,
+  ItemHardness,
+  ItemHP,
+  ItemPrice,
+  ItemQuantity,
+  ItemSheetContainerSelector,
+  ItemSheetIsCarriedCheckbox,
+  ItemSize,
+  ItemWeight,
+  PhysicalItemEffects,
+  physicalItemEffectsTab,
+  PhysicalItemSheet,
+  usePhysicalItemStore,
 } from './sheet/index.mjs';
 
 export {
-  applyPhysicalPrototype,
-  physicalOverrides,
-  PhysicalItemSheet,
-  applyPhysicalSchema,
-  PHYSICAL_ITEM_TYPES,
-  usePhysicalItemStore,
-  ItemQuantity,
-  ItemWeight,
-  ItemPrice,
-  ItemHP,
+  IdentifiableItemBase,
   ItemHardness,
+  ItemHP,
+  ItemPrice,
+  ItemQuantity,
   ItemSheetContainerSelector,
   ItemSheetIsCarriedCheckbox,
+  ItemSize,
+  ItemWeight,
+  PhysicalItem,
+  PhysicalItemEffects,
+  physicalItemEffectsTab,
+  PhysicalItemSheet,
+  PhysicalItemSystemModel,
+  usePhysicalItemStore,
 };
 
 export type {
-  PhysicalItemSourceProps,
-  PhysicalItemSource,
-  PhysicalItem,
+  PhysicalDocumentStore,
+  PhysicalItemActions,
+  PhysicalItemGetters,
   PhysicalItemLike,
-  PhysicalItemType,
-  PhysicalItemSystemSource,
-  PhysicalItemSystemData,
   PhysicalItemSheetRenderContext,
-  PhysicalItemSheetStore,
+  PhysicalItemSource,
+  PhysicalItemSourceProps,
+  PhysicalItemStore,
+  PhysicalItemStoreUtils,
+  PhysicalItemSystemData,
+  PhysicalItemSystemSource,
 };
