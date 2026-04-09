@@ -49,7 +49,7 @@ const EFFECT_CHANGE_TYPE = {
   CUSTOM: 'custom',
   MULTIPLY: 'multiply',
   ADD: 'add',
-  // SUBTRACT: 'subtract',
+  SUBTRACT: 'subtract',
   DOWNGRADE: 'downgrade',
   UPGRADE: 'upgrade',
   OVERRIDE: 'override',
