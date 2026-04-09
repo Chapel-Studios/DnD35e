@@ -1,33 +1,40 @@
-import {
-  WEAPON_TYPES,
-  WEAPON_SUBTYPES,
-  WEAPOON_BASE_TYPES,
+import type {
+  WeaponBaseType,
+  WeaponSubtype,
+  WeaponType,
 } from './constants.mjs';
+import {
+  WEAPON_BASE_TYPES,
+  WEAPON_SUBTYPE_LOCALIZED,
+  WEAPON_SUBTYPES,
+  WEAPON_TYPE_LOCALIZED,
+  WEAPON_TYPES,
+  weaponSubtypeSelectOptions,
+  weaponTypeSelectOptions,
+} from './constants.mjs';
+import type {
+  WeaponDamage,
+  WeaponSystemData,
+  WeaponSystemSource,
+} from './WeaponSystemData.mjs';
 import { WeaponSystemModel } from './WeaponSystemModel.mjs';
 
-import type {
-  WeaponType,
-  WeaponSubtype,
-  WeaponBaseType,
-} from './constants.mjs';
-import type {
-  WeaponDamage,
-  WeaponSystemSource,
-  WeaponSystemData,
-} from './WeaponSystemData.mjs';
-
 export type {
-  WeaponType,
-  WeaponSubtype,
   WeaponBaseType,
   WeaponDamage,
-  WeaponSystemSource,
+  WeaponSubtype,
   WeaponSystemData,
+  WeaponSystemSource,
+  WeaponType,
 };
 
 export {
-  WEAPON_TYPES,
+  WEAPON_BASE_TYPES,
+  WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,
-  WEAPOON_BASE_TYPES,
+  WEAPON_TYPE_LOCALIZED,
+  WEAPON_TYPES,
+  weaponSubtypeSelectOptions,
   WeaponSystemModel,
+  weaponTypeSelectOptions,
 };

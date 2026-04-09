@@ -1,6 +1,6 @@
 import { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import {
-  ActiveEffectChangeMode,
+  ActiveEffectChangeType,
   DocumentOwnershipLevel,
   DocumentOwnershipString,
   ImageFilePath,
@@ -10,15 +10,14 @@ import { Document, DocumentMetadata } from '../abstract/_module.mjs';
 import * as fields from '../data/fields.mjs';
 import { ActorUUID, BaseActor, BaseItem, BaseUser, ItemUUID } from './_module.mjs';
 
+
 /**
  * The ActiveEffect document model.
  * @param data    Initial data from which to construct the document.
  * @param context Construction context options
  */
-export default class BaseActiveEffect<TParent extends BaseActor | BaseItem<BaseActor | null> | null> extends Document<
-    TParent,
-    ActiveEffectSchema
-> {
+export default class BaseActiveEffect<TParent extends BaseActor | BaseItem<BaseActor | null> | null>
+  extends Document<TParent, ActiveEffectSchema> {
   /* -------------------------------------------- */
   /*  Model Configuration                         */
   /* -------------------------------------------- */
@@ -26,6 +25,17 @@ export default class BaseActiveEffect<TParent extends BaseActor | BaseItem<BaseA
   static override get metadata(): ActiveEffectMetadata;
 
   static override defineSchema(): ActiveEffectSchema;
+
+  /**
+   * The default icon used for newly created ActiveEffect documents
+   */
+  static DEFAULT_ICON: string;
+
+  /**
+   * Shim changes array to add backward compatibility
+   * @internal
+   */
+  static _shimChanges<TParent extends BaseActor | BaseItem<BaseActor | null> | null = null>(changes: EffectChangeData<TParent>[]): void;
 
   /* -------------------------------------------- */
   /*  Model Methods                               */
@@ -63,43 +73,80 @@ export interface ActiveEffectMetadata extends DocumentMetadata {
     isEmbedded: true;
 }
 
-type ActiveEffectSchema = {
+type ActiveEffectSystemSchema = {
+  changes: fields.ArrayField<fields.SchemaField<EffectChangeSchema>>;
+};
+
+export type ActiveEffectSystemSource = fields.SourceFromSchema<ActiveEffectSystemSchema>;
+
+type EffectStartSchema = {
+    combat: fields.ForeignDocumentField;
+    combatant: fields.ForeignDocumentField;
+    initiative: fields.NumberField<number, number, true, false, false>;
+    round: fields.NumberField<number, number, true, false, false>;
+    turn: fields.NumberField<number, number, true, false, false>;
+    time: fields.NumberField<number, number, true, false, false>;
+};
+
+export type EffectStartData = fields.SourceFromSchema<EffectStartSchema>;
+
+type ActiveEffectSchema<
+  TType extends string = string,
+  TSystemSource extends ActiveEffectSystemSource = ActiveEffectSystemSource
+> = {
     _id: fields.DocumentIdField;
     name: fields.StringField<string, string, true, false, false>;
-    changes: fields.ArrayField<fields.SchemaField<EffectChangeSchema>>;
-    system: fields.TypeDataField;
-    type: fields.StringField<string, string, false, true, true>;
+    system: fields.TypeDataField<TSystemSource>;
+    type: fields.DocumentTypeField<TType, TType, true, false, false>;
     disabled: fields.BooleanField;
+    start: fields.SchemaField<EffectStartSchema>;
     duration: fields.SchemaField<EffectDurationSchema>;
     description: fields.HTMLField;
     img: fields.FilePathField<ImageFilePath>;
-    origin: fields.StringField<ActorUUID | ItemUUID, ActorUUID | ItemUUID, false, true, true>;
+    origin: fields.DocumentUUIDField;
     tint: fields.ColorField;
     transfer: fields.BooleanField;
     statuses: fields.SetField<fields.StringField<string, string, true, false, false>>;
+    showIcon: fields.NumberField<number, number, true, false, false>;
+    folder: fields.ForeignDocumentField;
+    sort: fields.IntegerSortField;
     flags: fields.DocumentFlagsField;
     _stats: fields.DocumentStatsField;
 };
 
+type EffectPhases = 'initial' | 'final';
+
 type EffectChangeSchema = {
-    key: fields.StringField<string, string, true, false, false>;
-    value: fields.StringField<string, string, true, false, false>;
-    mode: fields.NumberField<ActiveEffectChangeMode, ActiveEffectChangeMode, false, false, true>;
-    priority: fields.NumberField;
+  key: fields.StringField<string, string, true, false, false>;
+  value: fields.AnyField;
+  type: fields.StringField<ActiveEffectChangeType, ActiveEffectChangeType, true, false, true>;
+  priority?: fields.NumberField<number, number, false, true, true>;
+  phase: fields.StringField<EffectPhases, EffectPhases, true, false, false>;
+};
+
+export type EffectChangeData<
+  TParent extends BaseActor | BaseItem<BaseActor | null> | null = BaseActor | BaseItem<BaseActor | null> | null
+> = {
+  key: string;
+  value: any;
+  type: ActiveEffectChangeType;
+  phase: EffectPhases;
+  priority?: number | null;
+  effect?: BaseActiveEffect<TParent> | null;
 };
 
 type EffectDurationSchema = {
-    startTime: fields.NumberField<number, number, false, true, true>;
-    seconds: fields.NumberField;
-    combat: fields.ForeignDocumentField;
-    rounds: fields.NumberField;
-    turns: fields.NumberField;
-    startRound: fields.NumberField;
-    startTurn: fields.NumberField;
+    value: fields.NumberField<number, number, true, true, false>;
+    units: fields.StringField<string, string, true, false, false>;
+    expiry: fields.StringField<string, string, true, false, true>;
+    expired: fields.BooleanField;
 };
 
-export type ActiveEffectSource = fields.SourceFromSchema<ActiveEffectSchema>;
+export type EffectDurationData = fields.SourceFromSchema<EffectDurationSchema>;
 
-export type EffectChangeData = fields.SourceFromSchema<EffectChangeSchema>;
+export type ActiveEffectSource<
+  TType extends string = string,
+  TSystemSource extends ActiveEffectSystemSource = ActiveEffectSystemSource
+> = fields.SourceFromSchema<ActiveEffectSchema<TType, TSystemSource>>;
+
 export type EffectDurationSource = fields.SourceFromSchema<EffectDurationSchema>;
-export type EffectDurationData = BaseActiveEffect<null>['duration'];

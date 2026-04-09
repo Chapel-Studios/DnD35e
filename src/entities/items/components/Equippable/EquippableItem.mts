@@ -1,42 +1,35 @@
-import type { EquippableItemSystemData, EquippableItemSystemSource } from './index.mjs';
-import type { ItemType } from '@items/index.mjs';
-import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
-import { applyPhysicalPrototype, physicalOverrides } from '@items/components/Physical/index.mjs';
+import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
+import { PhysicalItem } from '@items/components/Physical/index.mjs';
+import type { ItemType } from '@items/index.mjs';
+
+import type { EquippableItemSystemData, EquippableItemSystemSource } from './index.mjs';
 
 type EquippableItemSourceProps = {
   system: EquippableItemSystemSource;
 }
 
 type EquippableItemSource<TItemType extends ItemType = ItemType> =
-  Omit<ItemSourceDnd35e<TItemType>, 'system'>
+  Omit<foundry.documents.ItemSource<TItemType>, 'system'>
     & PhysicalItemSourceProps
     & EquippableItemSourceProps;
 
-interface EquippableItem {
-  system: EquippableItemSystemData;
+/**
+ * Abstract base for all equippable items.
+ * Inherits physical + identifiable behaviour from {@link PhysicalItem}.
+ */
+abstract class EquippableItem extends PhysicalItem {
+  declare system: EquippableItemSystemData;
 }
 
-type EquippableItemLike = ItemDnd35e<ItemType>
-  & EquippableItem;
-
-const applyEquippablePrototype = <T extends typeof ItemDnd35e<ItemType>> (item: T) => {
-  applyPhysicalPrototype(item);
-  // applyDamagableRuntime(item);
-};
-
-const equippableOverrides = {
-  displayName: physicalOverrides.displayName,
-};
+type EquippableItemLike = ItemDnd35e<ItemType> & EquippableItem;
 
 export {
-  applyEquippablePrototype,
-  equippableOverrides,
+  EquippableItem,
 };
 
 export type {
-  EquippableItemSourceProps,
-  EquippableItem,
   EquippableItemLike,
   EquippableItemSource,
+  EquippableItemSourceProps,
 };

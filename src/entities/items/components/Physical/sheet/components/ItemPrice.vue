@@ -1,26 +1,35 @@
 <template>
-  <FormGroup
-    :editable="isEditable"
+  <ItemPriceFormGroup
     label="Price"
     :value="price"
-    @update="updater"
-    type="number"
+    field-path="system.price"
+    class="item-price grid-full-row"
+    :direct-update="props.directUpdate"
   />
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import { ItemPriceFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
+
+  const props = defineProps<{
+    /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
+    directUpdate?: boolean;
+  }>();
 
   const {
-    isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       price,
     },
-    documentActions: {
-      getFieldUpdater,
-    },
-  } = inject('itemSheetStore') as PhysicalItemSheetStore;
-
-  const updater = getFieldUpdater('system.price');
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 </script>
+<style lang="scss" scoped>
+  .view-mode .form-group.item-price.price-form-group {
+    grid-template-columns: minmax(max-content, 2fr) 5fr;
+  }
+  // .item-price {
+  //   grid-column: 1 / -1;
+  //   display: flex !important;
+  // }
+</style>

@@ -1,27 +1,27 @@
 <template>
-  <FormGroup
-    :editable="isEditable"
+  <!-- <NumberFormGroup
+    :editable="isEditViewMode"
     label="D35E.ResalePrice"
     :value="resalePrice"
-    @update="updater"
-    type="number"
-    is-dm-only
-  />
+    :on-update="updater"
+    field-path="system.resalePrice"
+    default-visibility="gmOnly"
+  /> -->
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    isEditable,
-    physicalItemGetters: {
-      resalePrice,
+    documentGetters: {
+      // resalePrice,
     },
     documentActions: {
-      getFieldUpdater,
+      getViewAwareFieldUpdater,
     },
-  } = inject('itemSheetStore') as PhysicalItemSheetStore;
-
-  const updater = getFieldUpdater('system.resalePrice');
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
+  const updater = getViewAwareFieldUpdater('system.resalePrice');
 </script>

@@ -1,28 +1,29 @@
 <template>
-  <FormGroup
-    :editable="isEditable"
-    label="Price"
+  <!-- <MultiSelectFormGroup
+    label="Container"
     :value="currentContainerId"
-    @update="updater"
-    type="multiselect"
+    :on-update="updater"
     :options="EQUIP_SLOT_SELECT_OPTIONS"
-  />
+    field-path="system.containerId"
+  /> -->
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
-  import { inject } from 'vue';
-  import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   import { EQUIP_SLOT_SELECT_OPTIONS } from '@constants/equipmentSlots.mjs';
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import { MultiSelectFormGroup } from '@vc/Fields/index.mjs';
+  import { inject } from 'vue';
 
   const {
-    isEditable,
-    physicalItemGetters: {
-      currentContainerId,
-    },
+    // isEditable,
+    // documentGetters: {
+    //   slotIds,
+    // },
     documentActions: {
-      getFieldUpdater,
+      getViewAwareFieldUpdater,
     },
-  } = inject('itemSheetStore') as PhysicalItemSheetStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
-  const updater = getFieldUpdater('system.containerId');
+  const updater = getViewAwareFieldUpdater('system.containerId');
 </script>

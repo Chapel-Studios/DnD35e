@@ -1,10 +1,11 @@
-import { RegionDocumentDnd35e } from '../region-document/RegionDocumentDnd35e.mjs';
+import type { RegionDocumentDnd35e } from '../region-document/RegionDocumentDnd35e.mjs';
 import coreBehaviors = foundry.data.regionBehaviors;
-import { RegionBehaviorDnd35e } from './RegionBehaviorDnd35e.mjs';
+import { type RegionEvent } from '@client/documents/region.mjs';
+
+import { DIFFICULT_TERRAIN_GRADES } from './constants.mjs';
 import { EnvironmentBehaviorType } from './environment.mjs';
 import { EnvironmentFeatureBehaviorType } from './environment-feature.mjs';
-import { DIFFICULT_TERRAIN_GRADES } from './constants.mjs';
-import { type RegionEvent } from '@client/documents/region.mjs';
+import { RegionBehaviorDnd35e } from './RegionBehaviorDnd35e.mjs';
 
 interface AdjustDarknessLevelRegionBehavior<TParent extends RegionDocumentDnd35e | null = RegionDocumentDnd35e | null>
     extends RegionBehaviorDnd35e<TParent> {
@@ -76,9 +77,16 @@ type DifficultTerrainGrade = (typeof DIFFICULT_TERRAIN_GRADES)[keyof typeof DIFF
 type RegionEventDnd35e = RegionEvent<RegionDocumentDnd35e, User>;
 
 export type {
+  AdjustDarknessLevelRegionBehavior,
   DifficultTerrainGrade,
   EnvironmentFeatureRegionBehavior,
   EnvironmentRegionBehavior,
+  ExecuteMacroRegionBehavior,
+  ExecuteScriptRegionBehavior,
+  PauseGameRegionBehavior,
   RegionEventDnd35e,
   SpecificRegionBehavior,
+  SuppressWeatherRegionBehavior,
+  TeleportTokenRegionBehavior,
+  ToggleBehaviorRegionBehavior,
 };

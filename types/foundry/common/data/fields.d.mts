@@ -345,6 +345,21 @@ export abstract class DataField<
     ): unknown;
 
   /**
+     * Apply a SUBTRACT change to this field.
+     * @param   value   The field's current value.
+     * @param   delta   The change delta.
+     * @param   model   The model instance.
+     * @param   change  The original change data.
+     * @returns         The updated value.
+     */
+  protected _applyChangeSubtract(
+        value: unknown,
+        delta: unknown,
+        model: abstract.DataModel,
+        change: EffectChangeData,
+    ): unknown;
+
+  /**
      * Apply a MULTIPLY change to this field.
      * @param   value   The field's current value.
      * @param   delta   The change delta.

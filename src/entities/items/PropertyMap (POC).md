@@ -10,7 +10,7 @@ erDiagram
         rollup ItemDescription
 
         string version
-        string uniqueId
+        string slug
 
         boolean isNameFromFormula
         string nameFormula
@@ -79,7 +79,7 @@ erDiagram
         rollup Identifiable
 
         number priceDifference
-        number magicEquivalent
+        number magicEquivalency
         number bonusHardness
         number bonusHpPerInch
         boolean isAlchemicalSilverEquivalent

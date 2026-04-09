@@ -14,6 +14,9 @@ export default class BaseScene extends Document<null, SceneSchema> {
   static override get metadata(): SceneMetadata;
 
   static override defineSchema(): SceneSchema;
+
+  /** The default thumbnail image used for newly created Scene documents */
+  static DEFAULT_ICON: ImageFilePath;
 }
 
 export default interface BaseScene extends Document<null, SceneSchema>, fields.ModelPropsFromSchema<SceneSchema> {

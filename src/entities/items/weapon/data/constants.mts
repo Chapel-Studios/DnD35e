@@ -1,21 +1,42 @@
-const WEAPON_TYPES = [
-  'D35E.WeaponTypeSimple',
-  'D35E.WeaponTypeMartial',
-  'D35E.WeaponTypeExotic',
-  'D35E.Misc',
-] as const;
-type WeaponType = (typeof WEAPON_TYPES)[number];
+import { SelectOption } from '@vc/Fields/index.mjs';
 
-const WEAPON_SUBTYPES = [
-  'D35E.WeaponPropLight',
-  'D35E.WeaponPropOneHanded',
-  'D35E.WeaponPropTwoHanded',
-  'D35E.WeaponSubtypeRanged',
-  // 'Thrown',
-] as const;
-type WeaponSubtype = (typeof WEAPON_SUBTYPES)[number];
+const WEAPON_TYPES = new Set([
+  'simple',
+  'martial',
+  'exotic',
+  'misc',
+] as const);
+type WeaponType = SetElement<typeof WEAPON_TYPES>;
+const WEAPON_TYPE_LOCALIZED: Record<WeaponType, string> = {
+  'simple': 'D35E.WeaponTypeSimple',
+  'martial': 'D35E.WeaponTypeMartial',
+  'exotic': 'D35E.WeaponTypeExotic',
+  'misc': 'D35E.WeaponTypeMisc',
+} as const;
+const weaponTypeSelectOptions = Object.entries(WEAPON_TYPE_LOCALIZED)
+  .map(([value, label]) => ({ value, label } as SelectOption<WeaponType>));
 
-const WEAPOON_BASE_TYPES = [
+
+const WEAPON_SUBTYPES = new Set([
+  'unarmed',
+  'light',
+  'oneHanded',
+  'twoHanded',
+  'ranged',
+  // 'thrown',
+] as const);
+type WeaponSubtype = SetElement<typeof WEAPON_SUBTYPES>;
+const WEAPON_SUBTYPE_LOCALIZED: Record<WeaponSubtype, string> = {
+  'unarmed': 'D35E.WeaponPropUnarmed',
+  'light': 'D35E.WeaponPropLight',
+  'oneHanded': 'D35E.WeaponPropOneHanded',
+  'twoHanded': 'D35E.WeaponPropTwoHanded',
+  'ranged': 'D35E.WeaponSubtypeRanged',
+} as const;
+const weaponSubtypeSelectOptions = Object.entries(WEAPON_SUBTYPE_LOCALIZED)
+  .map(([value, label]) => ({ value, label } as SelectOption<WeaponSubtype>));
+
+const WEAPON_BASE_TYPES = [
   '',
   'bastard sword',
   'battleaxe',
@@ -87,16 +108,20 @@ const WEAPOON_BASE_TYPES = [
   'warhammer',
   'whip',
 ] as const;
-type WeaponBaseType = (typeof WEAPOON_BASE_TYPES)[number];
+type WeaponBaseType = (typeof WEAPON_BASE_TYPES)[number];
 
 export type {
-  WeaponType,
-  WeaponSubtype,
   WeaponBaseType,
+  WeaponSubtype,
+  WeaponType,
 };
 
 export {
-  WEAPON_TYPES,
+  WEAPON_BASE_TYPES,
+  WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,
-  WEAPOON_BASE_TYPES,
+  WEAPON_TYPE_LOCALIZED,
+  WEAPON_TYPES,
+  weaponSubtypeSelectOptions,
+  weaponTypeSelectOptions,
 };

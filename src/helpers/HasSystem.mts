@@ -1,3 +1,7 @@
-export interface HasSystem<TSystem> {
+interface HasSystem<TSystem> {
   system: TSystem;
 }
+
+export type {
+  HasSystem,
+};

@@ -1,44 +1,59 @@
-import { ItemSystemModelBase } from '@items/baseItem/index.mjs';
-import { WEAPON_SUBTYPES, WEAPON_TYPES, WEAPOON_BASE_TYPES } from './constants.mjs';
 import { DAMAGE_TYPES } from '@constants/attacks/damageTypes.mjs';
 import {
   optionalStringField,
   requiredBooleanField,
-  requiredNullableNumberField,
   requiredNullableStringField,
-  requiredNumberField,
-  requiredStringField,
-  requiredTypedStringField,
 } from '@helpers/fieldBuilders.mjs';
-import { applyEquippableSchema } from '@items/components/Equippable/index.mjs';
+import { Dnd35eField } from '@helpers/fields/index.mjs';
+import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
+import { EquippableItemSystemModel } from '@items/components/Equippable/index.mjs';
+import { WEAPON_BASE_TYPES,WEAPON_SUBTYPES, WEAPON_TYPES } from '@items/weapon/index.mjs';
 
 const {
   fields: {
+    NumberField,
     SchemaField,
+    StringField,
   },
 } = foundry.data;
 
-class WeaponSystemModel extends ItemSystemModelBase {
+class WeaponSystemModel extends EquippableItemSystemModel {
   static override defineSchema () {
     const schema = super.defineSchema();
 
-    applyEquippableSchema(schema);
+    // Declare Owner context on inherited nameFormula (access inner FormulaField via .fields.value)
+    (schema.nameFormula.fields.value as FormulaField).formulaContexts = [
+      { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
+    ];
 
-    schema.isMasterwork = requiredBooleanField(false);
-    schema.weaponType = requiredTypedStringField(WEAPON_TYPES, 'D35E.WeaponTypeSimple');
-    schema.weaponSubtype = requiredTypedStringField(WEAPON_SUBTYPES, 'D35E.WeaponPropLight');
-    schema.weaponBaseType = requiredTypedStringField(WEAPOON_BASE_TYPES, '', true);
+    schema.isMasterwork = requiredBooleanField('D35E.IsMasterwork', 'D35E.IsMasterworkHint', false);
+    schema.weaponType = new Dnd35eField(
+      StringField, 
+      { 
+        choices: [
+          ...WEAPON_TYPES,
+        ],
+        initial: 'simple',
+        required: true,
+      },
+      {
+        label: 'Weapon Type',
+        hint: 'The general type of this weapon, which may affect which characters can use it and how it interacts with certain effects.',
+        familiar: { aliases: ['type'] },
+      });
+    schema.weaponSubtype = new Dnd35eField(StringField, { choices: [...WEAPON_SUBTYPES], initial: 'light', required: true }, { label: 'Weapon Subtype', hint: 'The specific subtype of this weapon, which may affect its properties and usage.', familiar: { aliases: ['subtype'] } });
+    schema.weaponBaseType = new Dnd35eField(StringField, { choices: [...WEAPON_BASE_TYPES], initial: '', required: true, blank: true }, { label: 'Base Type', hint: 'The base type of this weapon, which may affect its characteristics and interactions.' });
     schema.weaponDamage = new SchemaField({
-      damageRoll: requiredNullableStringField(),
-      damageType: requiredTypedStringField(DAMAGE_TYPES, 'D35E.DRSlashing'),
-      critRange: requiredStringField('20'),
-      critMultiplier: requiredNumberField(2),
-      rangeIncrement: requiredNullableNumberField(),
-      attackFormula: optionalStringField(),
-      damageFormula: optionalStringField(),
+      damageRoll: new Dnd35eField(StringField, { initial: '', required: true, blank: true }, { label: 'Damage Roll', hint: 'The roll used to determine the damage dealt by this weapon.', familiar: { aliases: ['roll', 'dice'] } }),
+      damageType: new Dnd35eField(StringField, { choices: [...DAMAGE_TYPES], initial: 'D35E.DRSlashing', required: true }, { label: 'Damage Type', hint: 'The type of damage this weapon deals, which may affect resistances and vulnerabilities.', familiar: { aliases: ['type'] } }),
+      critRange: new Dnd35eField(StringField, { required: true, initial: '20' }, { label: 'Critical Range', hint: 'The range of dice rolls that result in a critical hit.', familiar: { aliases: ['range', 'threat'] } }),
+      critMultiplier: new Dnd35eField(NumberField, { required: true, nullable: false, initial: 2 }, { label: 'Critical Multiplier', hint: 'The multiplier applied to damage on a critical hit.', familiar: { aliases: ['multiplier', 'mult'] } }),
+      rangeIncrement: new Dnd35eField(NumberField, { required: true, nullable: true }, { label: 'Range Increment', hint: 'The distance at which the weapon\'s range increment applies.' }),
+      attackFormula: optionalStringField('D35E.AttackFormula', 'D35E.AttackFormulaHint'),
+      damageFormula: optionalStringField('D35E.DamageFormula', 'D35E.DamageFormulaHint'),
     });
-    schema.attackNotes = requiredNullableStringField();
-    schema.damageNotes = requiredNullableStringField();
+    schema.attackNotes = requiredNullableStringField('D35E.AttackNotes', 'D35E.AttackNotesHint');
+    schema.damageNotes = requiredNullableStringField('D35E.DamageNotes', 'D35E.DamageNotesHint');
 
     return schema;
   }

@@ -29,20 +29,23 @@
     "module": "ESNext",                                /* Specify what module code is generated. */
     "rootDir": ".",                                  /* Specify the root folder within your source files. */
     "moduleResolution": "bundler",                     /* Specify how TypeScript looks up a file from a given module specifier. */
-    "baseUrl": "./",                                  /* Specify the base directory to resolve non-relative module names. */
     "paths": {
       "@canvas/*": ["./src/canvas/*"],
       "@constants/*": ["./src/constants/*"],
       "@helpers/*": ["./src/helpers/*"],
-      "@items/*": ["./src/entities/items/*"],
-      "@actors/*": ["./src/entities/actors/*"],
-      "@entities/*": ["./src/entities/*"],
       "@scene/*": ["./src/scene/*"],
-      "@vc/*": ["./src/vue/*"],
-      "@source/*": ["./src/*"],
+      "@settings/*": ["./src/settings/*"],
+      "@vc/*": ["./src/vue/components/*"],
+      "@vueApps/*": ["./src/vue/apps/*"],
+      "@vueStores/*": ["./src/vue/stores/*"],
       "@common/*": ["./types/foundry/common/*"],
       "@client/*": ["./types/foundry/client/*"],
+      "@items/*": ["./src/entities/items/*"],
+      "@actors/*": ["./src/entities/actors/*"],
       "@effects/*": ["./src/entities/activeEffects/*"],
+      "@ec/*": ["./src/entities/components/*"],
+      "@entities/*": ["./src/entities/*"],
+      "@source/*": ["./src/*"],
     },                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     "typeRoots": [

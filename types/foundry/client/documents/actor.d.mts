@@ -1,5 +1,5 @@
 import Token from '@client/canvas/placeables/token.mjs';
-import { DocumentConstructionContext } from '@common/_types.mjs';
+import type { DocumentConstructionContext } from '../../common/_types.mjs';
 import {
   DatabaseCreateOperation,
   DatabaseDeleteOperation,
@@ -13,6 +13,7 @@ import ActorSheet from '../appv1/sheets/actor-sheet.mjs';
 import { ActiveEffect, ActorUUID, BaseActor, Combat, Item, Scene, TokenDocument } from './_module.mjs';
 import { ClientDocument, ClientDocumentStatic } from './abstract/client-document.mjs';
 import Actors from './collections/actors.mjs';
+import EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 
 interface ClientBaseActorStatic extends Omit<typeof BaseActor, 'new'>, ClientDocumentStatic {}
 
@@ -45,16 +46,22 @@ declare interface ClientBaseActor<TParent extends TokenDocument | null>
  * let actor = game.actors.get(actorId);
  * ```
  */
-declare class Actor<TParent extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TParent> {
+declare class Actor<TToken extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TToken> {
   protected override _configure(options?: object): void;
 
   protected override _initializeSource(source: Record<string, unknown>, options?: object): this['_source'];
 
   /** An object that tracks which tracks the changes to the data model which were applied by active effects */
-  overrides: Omit<DeepPartial<this['_source']>, 'prototypeToken'>;
+  overrides: ActorOverrides;
 
   /** The statuses that are applied to this actor by active effects */
   statuses: Set<string>;
+
+  /**
+   * Track completed core ActiveEffect application phases.
+   * @internal
+   */
+  _completedActiveEffectPhases: Set<string>;
 
   /* -------------------------------------------- */
   /*  Properties                                  */
@@ -76,7 +83,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
   get temporaryEffects(): ActiveEffect<Actor | Item>[];
 
   /** Return a reference to the TokenDocument which owns this Actor as a synthetic override */
-  get token(): TParent;
+  get token(): TToken;
 
   /** Whether the Actor has at least one Combatant in the active Combat that represents it. */
   get inCombat(): boolean;
@@ -92,7 +99,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
   /* -------------------------------------------- */
 
   /** Apply any transformations to the Actor data which are caused by ActiveEffects. */
-  applyActiveEffects(): void;
+  applyActiveEffects(phase: ActiveEffectPhase): void;
 
   /**
          * Retrieve an Array of active tokens which represent this Actor in the current canvas Scene.
@@ -114,7 +121,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
      * If CONFIG.ActiveEffect.legacyTransferral is false, this will also return all the transferred ActiveEffects on any
      * of the Actor's owned Items.
      */
-  allApplicableEffects(): Generator<ActiveEffect<this>, void, void>;
+  allApplicableEffects(): Generator<ActiveEffect<this | Item<this>>, void, void>;
 
   /** Prepare a data object which defines the data schema used by dice roll commands against this Actor */
   getRollData(): Record<string, unknown>;
@@ -128,7 +135,7 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
   getTokenDocument(
         data?: DeepPartial<foundry.documents.TokenSource>,
         options?: Partial<DocumentConstructionContext<this>>,
-    ): Promise<NonNullable<TParent>>;
+    ): Promise<NonNullable<TToken>>;
 
   /** Get an Array of Token images which could represent this Actor */
   getTokenImages(): Promise<(ImageFilePath | VideoFilePath)[]>;
@@ -203,30 +210,30 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
      * @param [options.linked] Limit the results to tokens that are linked to the actor.
      */
   getDependentTokens(options?: {
-        scenes?: NonNullable<NonNullable<TParent>['parent']> | NonNullable<NonNullable<TParent>['parent']>[];
+        scenes?: NonNullable<NonNullable<TToken>['parent']> | NonNullable<NonNullable<TToken>['parent']>[];
         linked?: boolean;
-    }): NonNullable<TParent>[];
+    }): NonNullable<TToken>[];
 
   /**
      * Register a token as a dependent of this actor.
      * @param token  The token.
      * @internal
      */
-  _registerDependentToken(token: NonNullable<TParent>): void;
+  _registerDependentToken(token: NonNullable<TToken>): void;
 
   /**
      * Remove a token from this actor's dependents.
      * @param token The token.
      * @internal
      */
-  _unregisterDependentToken(token: NonNullable<TParent>): void;
+  _unregisterDependentToken(token: NonNullable<TToken>): void;
 
   /**
      * Prune a whole scene from this actor's dependent tokens.
      * @param scene The scene.
      * @internal
      */
-  _unregisterDependentScene(scene: NonNullable<NonNullable<TParent>['parent']>): void;
+  _unregisterDependentScene(scene: NonNullable<NonNullable<TToken>['parent']>): void;
 
   /* -------------------------------------------- */
   /*  Event Handlers                              */
@@ -275,13 +282,13 @@ declare class Actor<TParent extends TokenDocument | null = TokenDocument | null>
      */
   protected _updateDependentTokens(
         update?: Record<string, unknown>,
-        options?: DatabaseUpdateOperation<TParent>,
+        options?: DatabaseUpdateOperation<TToken>,
     ): void;
 }
 
-declare interface Actor<TParent extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TParent> {
-    // readonly effects: EmbeddedCollection<ActiveEffect<this>>;
-    // readonly items: EmbeddedCollection<Item<this>>;
+declare interface Actor<TToken extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TToken> {
+    readonly effects: EmbeddedCollection<ActiveEffect<this>>;
+    readonly items: EmbeddedCollection<Item<this>>;
 
     get sheet(): ActorSheet<Actor>;
 
@@ -291,6 +298,19 @@ declare interface Actor<TParent extends TokenDocument | null = TokenDocument | n
 declare namespace Actor {
     const implementation: typeof Actor;
 }
+
+export declare const ActiveEffectPhase: {
+  readonly INITIAL: "initial";
+  readonly FINAL: "final";
+};
+
+export type ActiveEffectPhase = typeof ActiveEffectPhase[keyof typeof ActiveEffectPhase];
+
+/**
+ * Simplified type for Actor overrides applied by active effects
+ * Excludes prototypeToken from deep partial source data
+ */
+export type ActorOverrides = Omit<DeepPartial<foundry.documents.ActorSource>, 'prototypeToken'>;
 
 export default Actor;
 

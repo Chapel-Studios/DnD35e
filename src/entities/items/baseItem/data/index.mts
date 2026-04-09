@@ -1,5 +1,5 @@
-import type { ItemSystemSource, ItemSystemData } from './ItemSystemData.mjs';
+import type { ItemSystemData, ItemSystemSource } from './ItemSystemData.mjs';
 import { ItemSystemModelBase } from './ItemSystemModelBase.mjs';
 
-export type { ItemSystemSource, ItemSystemData };
+export type { ItemSystemData, ItemSystemSource };
 export { ItemSystemModelBase };

@@ -20,17 +20,17 @@ type OneToTen = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 type TwoToThree = 2 | 3;
 
 export type {
-  ZeroToTwo,
-  ZeroToThree,
+  OneToFive,
+  OneToFour,
+  OneToSix,
+  OneToTen,
   OneToThree,
   TwoToThree,
-  ZeroToFour,
-  OneToFour,
-  ZeroToFive,
-  OneToFive,
-  ZeroToSix,
-  OneToSix,
-  ZeroToTen,
-  OneToTen,
   ZeroToEleven,
+  ZeroToFive,
+  ZeroToFour,
+  ZeroToSix,
+  ZeroToTen,
+  ZeroToThree,
+  ZeroToTwo,
 };

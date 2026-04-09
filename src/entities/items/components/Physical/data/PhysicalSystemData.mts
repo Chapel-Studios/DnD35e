@@ -1,30 +1,44 @@
 import { Size } from '@constants/sizes.mjs';
-import { IdentifiableItemSystemData } from '@items/components/Identifiable/index.mjs';
+import { IdentifiableDocumentSystemData } from '@entities/components/Identifiable/index.mjs';
+import type { Dnd35eFieldData } from '@helpers/fields/index.mjs';
+import type { ItemSystemSource } from '@items/baseItem/index.mjs';
+import type { PriceSource } from '@settings/currency/index.mjs';
+import type { PriceData } from '@settings/currency/index.mjs';
 
 interface PhysicalItemSystemSource {
-  quantity: number;
-  weight: number | null;
+  quantity: Dnd35eFieldData<number>;
+  weight: Dnd35eFieldData<number | null>;
   // isWeightlessInContainer: boolean;
-  // isWeightlessWhenCarried: boolean;
+  // isWeightlessWhenEquipped: boolean;
   isCarried: boolean;
-  size: Size;
+  size: Dnd35eFieldData<Size>;
   hp: {
-      value: number;
-      max: number;
+      value: Dnd35eFieldData<number>;
+      max: Dnd35eFieldData<number>;
   };
-  hardness: number;
-  // Price
-  price: number;
-  resalePrice: number | null;
-  brokenResalePrice: number | null;
+  hardness: Dnd35eFieldData<number>;
+  // Price - EmbeddedDataField wrapping PriceData with coin stacks
+  price: Dnd35eFieldData<PriceSource>;
+  resalePrice: PriceSource | null;
+  brokenResalePrice: PriceSource | null;
   isBroken: boolean;
   // Container
   containerId: string | null;
 }
 
-interface PhysicalItemSystemData extends PhysicalItemSystemSource, IdentifiableItemSystemData {}
+interface PhysicalItemSystemData extends ItemSystemSource, PhysicalItemSystemSource,
+  IdentifiableDocumentSystemData {
+    // Prepared price fields are PriceData instances (with methods like .consolidate())
+    price: Dnd35eFieldData<PriceData>;
+    resalePrice: PriceData | null;
+    brokenResalePrice: PriceData | null;
+    effectiveWeight: number;
+    // Material might apply these
+    magicEquivalency?: number;
+    damageReductionTypes?: string[];
+  }
 
 export type {
-  PhysicalItemSystemSource,
   PhysicalItemSystemData,
+  PhysicalItemSystemSource,
 };

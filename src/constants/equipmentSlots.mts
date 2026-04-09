@@ -1,4 +1,6 @@
-export const EQUIP_SLOTS = [
+import { MultiSelectOption } from '@vc/Fields/FormGroups/types.mjs';
+
+const EQUIP_SLOTS = [
   'head',
   'face',
   'neck',
@@ -13,9 +15,21 @@ export const EQUIP_SLOTS = [
   'feet',
 ] as const;
 
-export type EquipSlot = (typeof EQUIP_SLOTS)[number];
+type EquipSlot = (typeof EQUIP_SLOTS)[number];
 
-export const EQUIP_SLOT_SELECT_OPTIONS: { value: EquipSlot | null; label: string }[] = [
-  { value: null, label: game.i18n.localize('D35E.None') },
+// TODO: The 'none' sentinel is a placeholder. An empty selection already means "no slot",
+// so this option is redundant for multiselect. If equippedSlotIds becomes a single-select
+// nullable field, replace this with value: null and widen the schema type accordingly.
+const EQUIP_SLOT_SELECT_OPTIONS: MultiSelectOption<EquipSlot | 'none'>[] = [
+  { value: 'none', label: game.i18n.localize('D35E.None') },
   ...EQUIP_SLOTS.map(slot => ({ value: slot, label: game.i18n.localize(`D35E.EquipSlot.${slot}`) })),
 ];
+
+export {
+  EQUIP_SLOT_SELECT_OPTIONS,
+  EQUIP_SLOTS,
+};
+
+export type {
+  EquipSlot,
+};

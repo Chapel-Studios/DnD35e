@@ -1,0 +1,32 @@
+{
+  // ── ESLint ────────────────────────────────────────────────────────────────
+  "eslint.enable": true,
+  "eslint.useFlatConfig": true,
+  "eslint.validate": ["javascript", "typescript", "vue"],
+
+  // ── Format / Fix on Save ──────────────────────────────────────────────────
+  "editor.formatOnSave": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
+  "js/ts.format.enabled": false,
+
+  // ── Indentation ───────────────────────────────────────────────────────────
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "editor.indentSize": "tabSize",
+  "[handlebars]": { "editor.tabSize": 2, "editor.insertSpaces": true },
+  "[typescript]": { "editor.tabSize": 2, "editor.insertSpaces": true },
+  "[vue]": { "editor.tabSize": 2, "editor.insertSpaces": true },
+  "[typescriptreact]": { "editor.tabSize": 2, "editor.insertSpaces": true },
+
+  // ── Language preferences ──────────────────────────────────────────────────
+  "js/ts.preferences.quoteStyle": "single",
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+
+  // ── File associations ─────────────────────────────────────────────────────
+  "files.associations": {
+    "*.mts": "typescript",
+    "*.hbs": "handlebars"
+  }
+}

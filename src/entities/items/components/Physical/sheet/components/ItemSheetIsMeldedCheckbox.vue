@@ -1,26 +1,27 @@
 <template>
-  <FormGroup
-    :editable="isEditable"
+  <CheckBoxFormGroup
+    :editable="isEditViewMode"
     label="Is Carried"
     :value="isCarried"
-    @update="updater"
-    type="checkbox"
+    :on-update="updater"
+    field-path="system.isCarried"
   />
 </template>
 <script setup lang="ts">
-  import { FormGroup } from '@vc/Fields/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
-  import { PhysicalItemSheetStore } from '@items/components/Physical/index.mjs';
 
+  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    isEditable,
-    physicalItemGetters: {
+    documentGetters: {
       isCarried,
     },
     documentActions: {
-      getFieldUpdater,
+      getDirectFieldUpdater,
     },
-  } = inject('itemSheetStore') as PhysicalItemSheetStore;
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
-  const updater = getFieldUpdater('system.isCarried');
+  const updater = getDirectFieldUpdater('system.isCarried');
 </script>
