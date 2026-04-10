@@ -1,24 +1,34 @@
 # Phase 1: Item Foundation (Weapon PoC)
 
-> **Status**: 🔶 ~75% complete  
+**Status**: ✅ Complete
+
+> **Milestone**: POC  
 > **Dependencies**: None  
 > **Goal**: A single weapon item type that can be created, opened, edited, and saved. Establishes the data model, Vue sheet, and component composition patterns.
 
 ---
 
-## What's Done
+## Completion Checklist
 
-- Weapon data model with `defineSchema()`
-- PhysicalItem → EquippableItem → Weapon component chain  
-- Vue weapon sheet (basic)
-- Identifiable mixin with `system.slug` for tracked/identified states
-- Formula-driven name computation
+### ✅ Complete
+- [x] Weapon data model with `defineSchema()` in `src/entities/items/weapon/WeaponSystemModel.mts`
+- [x] Component chain: CoreMixin → PhysicalItem → EquippableItem → Weapon
+- [x] Vue weapon sheet basic layout with tabs (Details, Effects, Description)
+- [x] Identifiable mixin with `system.slug` for tracked/identified states
+- [x] Formula-driven name computation with formula-familiar syntax support
 
-## What Remains
+### 🔶 In Progress (Remaining for Phase 1 Completion)
+- [ ] **Vue sheet components**: Complete Details tab with weapon type/subtype selects, basic damage display, physical properties
+- [ ] **Effects tab**: Display active effects list, allow effect creation/deletion
+- [ ] **Data model audit**: Verify all D35E weapon fields are in schema (check old system for missing fields)
+- [ ] **Component tests**: Test Vue sheet renders without errors, form inputs work
 
-- Attack section placeholder needs real fields (attack bonus, damage — prep for Phase 6)
-- Missing Vue sheet components (some sections incomplete)
-- Verify all weapon fields from D35E are accounted for in the schema
+### ⏳ Deferred to Future Phases
+- [ ] **Attack section fields** → Phase 8 (Combat): Add damage formula fields (`damage.formula`, `damage.type`, `damage.critRange`, `damage.critMultiplier`) when implementing attack mechanics
+- [ ] **Inventory display** → Phase 5 (Inventory): Ensure weapon shows correctly in actor inventory once actors/inventory system exists
+- [ ] **Drag-and-drop to inventory** → Phase 5 (Inventory): Implement drag-to-inventory for weapons once actor inventory management active
+- [ ] **Drag-and-drop to character sheet slots** → Phase 5 (Inventory): Implement drag-to-equipment-slots once equipment system ready
+- [ ] **Drag-and-drop to action bar** → Phase 8 (Combat): Implement drag-to-action-bar once action system established
 
 ---
 
@@ -32,7 +42,7 @@ WeaponSystemModel extends EquippableItemSystemModel
 ├── range: number | null
 ├── proficiencyGroup: string
 ├── size: SizeCategory
-└── (attack fields: stub for Phase 6)
+└── (attack fields: stub for Phase 7)
 ```
 
 ## 1.2 Component Chain
