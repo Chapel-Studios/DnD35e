@@ -1,6 +1,6 @@
 <template>
   <DocumentDetails>
-    <div class="weapon-details-container">
+    <div class="armor-details-container">
       <ItemPrice />
       <ItemHP />
       <ItemQuantity />
@@ -43,7 +43,7 @@
 
 <style scoped lang="scss">
   .view-mode {
-    .weapon-details-container {
+    .armor-details-container {
       :deep(.form-group-label) {
         flex-direction: row;
       }
@@ -52,7 +52,7 @@
   .magic-eq-effect {
     grid-column: span 2;
   }
-  .weapon-details-container {
+  .armor-details-container {
     grid-column: span 2;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

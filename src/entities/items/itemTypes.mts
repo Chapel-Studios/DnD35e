@@ -1,9 +1,12 @@
 
 const weaponItemType = 'weapon';
 type WeaponItemType = typeof weaponItemType;
+const armorItemType = 'armor';
+type ArmorItemType = typeof armorItemType;
 
 const EQUIPPABLE_ITEM_TYPES = new Set([
   weaponItemType,
+  armorItemType,
 ] as const);
 type EquippableItemType = SetElement<typeof EQUIPPABLE_ITEM_TYPES>;
 
@@ -17,6 +20,7 @@ type ItemType = PhysicalItemType;
 
 const ITEM_TYPES_LOCALIZED = {
   [weaponItemType]: 'TYPES.Item.weapon',
+  [armorItemType]: 'TYPES.Item.armor',
   // equipment: "D35E.ItemTypeEquipment",
   // loot: "D35E.ItemTypeLoot",
   // Consumable: "D35E.ItemTypeConsumable",
@@ -33,6 +37,7 @@ export {
   ITEM_TYPES_LOCALIZED,
   PHYSICAL_ITEM_TYPES,
   weaponItemType,
+  armorItemType,
 };
 
 export type {
@@ -41,4 +46,5 @@ export type {
   ItemTypeLocalizationValues,
   PhysicalItemType,
   WeaponItemType,
+  ArmorItemType,
 };

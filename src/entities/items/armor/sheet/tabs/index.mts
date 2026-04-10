@@ -1,15 +1,15 @@
 import type { SheetTab } from '@ec/CoreMixin/index.mjs';
 
-import WeaponDetails from './ArmorDetails.vue';
+import ArmorDetails from './ArmorDetails.vue';
 
-const weaponDetailsTab: SheetTab = {
+const armorDetailsTab: SheetTab = {
   id: 'details',
-  label: 'TYPES.Item.weaponDetails',
-  component: WeaponDetails,
+  label: 'TYPES.Item.armorDetails',
+  component: ArmorDetails,
   order: 40,
 };
 
 export {
-  WeaponDetails,
-  weaponDetailsTab,
+  ArmorDetails,
+  armorDetailsTab,
 };

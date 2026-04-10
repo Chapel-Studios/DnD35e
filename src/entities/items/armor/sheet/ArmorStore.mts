@@ -4,13 +4,13 @@ import type { EquippableItemGetters, EquippableItemLike, EquippableItemStore, Eq
 import { useEquippableItemStore } from '@items/components/Equippable/index.mjs';
 import { EquippableItemActions } from '@items/components/Equippable/sheet/EquippableItemStore.mjs';
 import { physicalItemEffectsTab } from '@items/components/Physical/index.mjs';
-import type { Weapon } from '@items/weapon/index.mjs';
-import { weaponDetailsTab } from '@items/weapon/index.mjs';
+import type { Armor } from '@items/armor/index.mjs';
+import { armorDetailsTab } from '@items/armor/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
 
-const useWeaponStore = (context: VueApplicationContext<Weapon>) => {
+const useArmorStore = (context: VueApplicationContext<Armor>) => {
   const baseStore = useItemSheetStore(context);
 
   const equippableStore = useEquippableItemStore(
@@ -20,19 +20,19 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>) => {
 
   const { replaceTabs } = baseStore._storeUtils.tabStore;
   replaceTabs([
-    weaponDetailsTab,
+    armorDetailsTab,
     physicalItemEffectsTab,
   ]);
   const document = baseStore._storeUtils.document;
 
-  const documentGetters: WeaponGetters = {
+  const documentGetters: ArmorGetters = {
     ...baseStore.documentGetters,
     ...equippableStore.documentGetters,
-    weaponType: computed(() => game.i18n.localize(document.value.system.weaponType.value)),
-    weaponSubtype: computed(() => game.i18n.localize(document.value.system.weaponSubtype.value)),
+    armorType: computed(() => game.i18n.localize(document.value.system.armorType.value)),
+    armorSubtype: computed(() => game.i18n.localize(document.value.system.armorSubtype.value)),
   };
 
-  const _storeUtils: weaponStoreUtils = {
+  const _storeUtils: armorStoreUtils = {
     ...baseStore._storeUtils,
     ...equippableStore._storeUtils,
   };
@@ -52,20 +52,20 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>) => {
   };
 };
 
-interface WeaponGetters extends EquippableItemGetters, ItemDocumentGetters {
-  weaponType: ComputedRef<string>;
-  weaponSubtype: ComputedRef<string>;
+interface ArmorGetters extends EquippableItemGetters, ItemDocumentGetters {
+  armorType: ComputedRef<string>;
+  armorSubtype: ComputedRef<string>;
 }
 
-interface weaponStoreUtils extends EquippableItemStoreUtils, ItemSheetStoreUtils<Weapon> {}
+interface armorStoreUtils extends EquippableItemStoreUtils, ItemSheetStoreUtils<Armor> {}
 
-interface WeaponActions extends EquippableItemActions, ItemDocumentActions<Weapon> {}
+interface ArmorActions extends EquippableItemActions, ItemDocumentActions<Armor> {}
 
-interface WeaponStore extends EquippableItemStore, ItemSheetStore<Weapon> {
-  documentGetters: WeaponGetters;
-  _storeUtils: weaponStoreUtils;
-  documentActions: WeaponActions;
+interface ArmorStore extends EquippableItemStore, ItemSheetStore<Armor> {
+  documentGetters: ArmorGetters;
+  _storeUtils: armorStoreUtils;
+  documentActions: ArmorActions;
 }
 
-export { useWeaponStore };
-export type { WeaponStore };
+export { useArmorStore };
+export type { ArmorStore };

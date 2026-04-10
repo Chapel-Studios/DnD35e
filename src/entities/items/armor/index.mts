@@ -53,7 +53,7 @@ export {
 
 export type {
   ArmorBaseType,
-  ArmorDamage,
+  //ArmorDamage,
   ArmorSheetConfig,
   ArmorSheetRenderContext,
   ArmorStore,

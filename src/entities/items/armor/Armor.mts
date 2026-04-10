@@ -1,16 +1,16 @@
 import { EquippableItem } from '@items/components/Equippable/index.mjs';
 import type { PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
-import { WeaponItemType } from '@items/itemTypes.mjs';
+import { ArmorItemType } from '@items/itemTypes.mjs';
 
-import { WeaponSystemData, WeaponSystemSource } from './index.mjs';
+import { ArmorSystemData, ArmorSystemSource } from './index.mjs';
 
-type WeaponSource = Omit<foundry.documents.ItemSource, 'system'>
+type ArmorSource = Omit<foundry.documents.ItemSource, 'system'>
   & Omit<PhysicalItemSourceProps, 'system'>
-  & { system: WeaponSystemSource; };
+  & { system: ArmorSystemSource; };
 
-class Weapon extends EquippableItem {
-  declare system: WeaponSystemData;
-  declare type: WeaponItemType;
+class Armor extends EquippableItem {
+  declare system: ArmorSystemData;
+  declare type: ArmorItemType;
 
   override prepareBaseData (): void {
     super.prepareBaseData();
@@ -27,13 +27,13 @@ class Weapon extends EquippableItem {
   // }
 }
 
-type WeaponType = Weapon;
+type ArmorType = Armor;
 
 export {
-  Weapon,
+  Armor,
 };
 
 export type {
-  WeaponSource,
-  WeaponType,
+  ArmorSource,
+  ArmorType,
 };

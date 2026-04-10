@@ -11,7 +11,7 @@ const ARMOR_TYPE_LOCALIZED: Record<ArmorType, string> = {
   'heavy': 'D35E.ArmorTypeHeavy',
   'misc': 'D35E.ArmorTypeMisc',
 } as const;
-const armorTypeSelectOptions = Object.entries(ARMOR_TYPE_LOCALIZED)
+const ArmorTypeSelectOptions = Object.entries(ARMOR_TYPE_LOCALIZED)
   .map(([value, label]) => ({ value, label }));
 
 
@@ -31,7 +31,7 @@ const ARMOR_SUBTYPE_LOCALIZED: Record<ArmorSubtype, string> = {
   'steel': 'D35E.ArmorPropSteel',
   'exotic': 'D35E.ArmorSubtypeExotic',
 } as const;
-const armorSubtypeSelectOptions = Object.entries(ARMOR_SUBTYPE_LOCALIZED)
+const ArmorSubtypeSelectOptions = Object.entries(ARMOR_SUBTYPE_LOCALIZED)
   .map(([value, label]) => ({ value, label }));
 
 const ARMOR_BASE_TYPES = [
@@ -71,6 +71,6 @@ export {
   ARMOR_SUBTYPES,
   ARMOR_TYPE_LOCALIZED,
   ARMOR_TYPES,
-  armorSubtypeSelectOptions,
-  armorTypeSelectOptions,
+  ArmorSubtypeSelectOptions,
+  ArmorTypeSelectOptions,
 };

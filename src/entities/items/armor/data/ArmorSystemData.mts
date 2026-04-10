@@ -15,7 +15,7 @@ type armorDamage = {
   damageFormula: string;
 };
 
-interface armorSystemSource {
+interface ArmorSystemSource {
   isMasterwork: boolean;
   armorType: Dnd35eFieldData<ArmorType>;
   armorSubtype: Dnd35eFieldData<ArmorSubtype>;
@@ -25,12 +25,12 @@ interface armorSystemSource {
   //damageNotes: string;
 }
 
-type armorSystemData = armorSystemSource
+type ArmorSystemData = ArmorSystemSource
   & ItemSystemData
   & EquippableItemSystemData;
 
 export type {
   armorDamage,
-  armorSystemData,
-  armorSystemSource,
+  ArmorSystemData,
+  ArmorSystemSource,
 };

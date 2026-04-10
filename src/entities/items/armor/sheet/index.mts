@@ -1,7 +1,7 @@
 import ArmorSummary from './components/Armor/Summary.vue';
 import {
   ArmorDetails,
-  ArmorDetailsTab,
+  armorDetailsTab,
 } from './tabs/index.mjs';
 import type {
   ArmorSheetConfig,
@@ -15,7 +15,7 @@ import { useArmorStore } from './ArmorStore.mjs';
 export {
   useArmorStore,
   ArmorDetails,
-  ArmorDetailsTab,
+  armorDetailsTab,
   ArmorSheet,
   ArmorSheetVue,
   ArmorSummary,
