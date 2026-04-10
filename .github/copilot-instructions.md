@@ -248,3 +248,81 @@ The skill will analyze, propose consolidations, and provide exact edits.
 - Full roadmap: `docs/migration-plan/README.md`
 - Specific phase: `docs/migration-plan/phase-NN-*.md`
 - Quick reference: Each phase has completion checklist and status
+
+---
+
+## Knowledge Base Curation
+
+After completing work sessions, maintain the knowledge base by updating documentation and detecting outdated patterns. The KB curator agent helps with this.
+
+### Custom KB Curator Agent
+Use `@kb-curator` to review a session and update AI files:
+
+```
+@kb-curator Review this session and update KB appropriately
+```
+
+**What it does**:
+- Analyzes session work to identify patterns worth documenting
+- Suggests updates to instruction files with specific examples
+- Proposes new skills for workflows that emerged
+- Validates documentation accuracy against current codebase
+- Detects gaps in KB coverage and redundant documentation
+- Checks terminology consistency and cross-reference validity
+- Updates phase progress and repository memory
+
+**When to use**:
+- **End of session** (light curation): 1-2 file updates
+- **After feature complete** (deep audit): Multiple files, cross-references
+- **Before phase start** (validation): Check prerequisite docs are current
+- **Targeted audit** (specific check): `@kb-curator Is vue-sheet-patterns complete?`
+
+### Knowledge Base Structure
+
+**Instruction Files** (`.github/instructions/`):
+- Auto-load when you edit matching files (via `applyTo` glob)
+- Deep reference material with 3+ examples, thorough coverage
+- Update when: you repeat a pattern 2+ times in a session
+
+**Skills** (`.github/skills/`):
+- On-demand workflows with step-by-step checklists
+- Multiple approaches with tradeoffs and decision factors
+- Update when: complete workflow proves valuable and reusable
+
+**Planning Documentation** (`docs/migration-plan/`):
+- Phase specifications with goals, design, completion checklist
+- Track what's implemented vs. planned, scope changes, deferred work
+- Update when: significant progress made, decisions finalized
+
+**AGENTS.md** (`.github/AGENTS.md`):
+- Discovery hub showing when to use each agent/skill
+- Clear problem statements and related tools
+- Update when: new agents/skills created or significantly enhanced
+
+**Repository Memory** (`/memories/repo/`):
+- Codebase-specific facts, conventions, verified practices
+- Persists across sessions for this workspace
+- Create when: "We verified this works this way" or "Our convention is..."
+
+### Quality Standards
+
+**Instruction files**: 80+ lines, 3+ code examples, thorough coverage, cross-referenced
+
+**Skills**: 50+ lines, step-by-step sections, multiple approaches with tradeoffs
+
+**Phase docs**: Completion checklist, clear rationale, dependency notes, current status
+
+**AGENTS.md**: Clear when to use, what problems it solves, related tools suggested
+
+**All files**: Examples tested, links valid, terminology consistent, "Related" sections complete
+
+### Design Approach
+
+The KB curator combines:
+- **Pattern recognition** from session analysis
+- **Documentation standards** for consistency (Diataxis framework)
+- **Knowledge management** best practices (atomic notes, wiki linking)
+- **Code review rigor** for accuracy and completeness
+- **User-centric perspective** ("would future developers find this?")
+
+See `.github/KB-CURATOR-DESIGN.md` for detailed design rationale and inspiration sources.

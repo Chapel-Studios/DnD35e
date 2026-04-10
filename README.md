@@ -47,6 +47,50 @@ There is an automatic workflow in `.github/workflows/update-version.yml` that:
 - Runs `npm run update:version`
 - Commits and pushes changes to `version.yaml` if it changed
 
+## AI Tooling (GitHub Copilot)
+
+This project includes custom GitHub Copilot agents, skills, and instruction files to assist with development. These live under `.github/` and are automatically discovered by Copilot Chat in VS Code.
+
+### Agents
+
+Invoke by typing `@agent-name` in Copilot Chat.
+
+| Agent | Purpose |
+|-------|---------|
+| `@planning` | Design new phases, refine architecture, make cross-phase decisions |
+| `@kb-curator` | End-of-session documentation review, pattern extraction, KB maintenance |
+
+### Skills
+
+Invoke by typing `/skill-name` in Copilot Chat.
+
+| Skill | Purpose |
+|-------|---------|
+| `/phase-reference` | Look up which phase covers a feature, track progress, check dependencies |
+| `/phase-planning` | Improve planning docs — consolidate, update checklists, extract patterns |
+| `/foundry-reference` | Query Foundry VTT v14 API, data structures, hooks, and common patterns |
+| `/system-comparison` | Compare how 5e, PF2e, and 3.5e handle similar mechanics |
+| `/implementation-guide` | Step-by-step workflows for adding item types, mechanics, or compendium entries |
+
+### Instruction Files
+
+These auto-load when you edit matching files — no invocation needed.
+
+| File | Triggers On | Covers |
+|------|-------------|--------|
+| `foundry-data-fields` | DataModel/Schema files | Field types, hierarchy, options |
+| `dnd35e-patterns` | Component/DataModel files | Composition chains, data models, formulas, AEs |
+| `dnd35e-field` | Dnd35eField files | Compound field shape, value access, type patterns |
+| `vue-sheet-patterns` | `.vue` files | Sheet view modes, EditValue, FormGroups |
+| `form-groups` | FormGroup components | FormGroup variants, API, layout patterns |
+| `formula-familiar` | Formula/Familiar files | FormulaFamiliar autocomplete system |
+
+### Discovery
+
+For the full list with detailed capabilities, see [.github/AGENTS.md](.github/AGENTS.md).
+
+---
+
 ## License
 
 This system is licensed under **CC BY-NC-ND 4.0**.

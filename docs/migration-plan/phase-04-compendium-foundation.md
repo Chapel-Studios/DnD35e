@@ -919,15 +919,96 @@ Masterwork changes use `bonusType: 'masterwork'` — resolved independently from
 
 ---
 
-## 4.11 Documentation Stubs (Ongoing)
+## 4.11 Documentation Stubs: Workflow Journals (Compendium Foundation)
 
-Starting in Phase 4, create **journal entries in the dev world** that document each system component as it lands:
+### Rationale
 
-- **Material Pattern**: "Items and active effects, material subtypes, how multi-material stacking works"
-- **Compendium System**: "Where SRD content lives, how to author new items for compendiums, origin tracking"
-- **Bonus Type Stacking**: "How bonuses interact, why certain bonus types can't stack with each other"
+Starting in Phase 4, establish **journal compendiums** to house workflow documentation and operational guidance. These stubs evolve throughout development as each phase adds complexity. The intent is to give end users and DMs accessible reference material early, embedded in their Foundry workspace. Final documentation hardening happens in Phase 28 (Documentation Finalization).
 
-These stubs are **rough and evolve** as subsequent phases add more complexity (action system, spells, enhancements, etc.). The intent is to give beta testers *something* to reference early, not polished final docs. Full documentation hardening happens in Phase 28.
+### Journal Compendium Structure
+
+Create a new compendium pack: `d35e-docs-workflows` (production) and `d35e-docs-workflows-dev` (dev-only).
+
+```
+packs/_source/
+  journals/
+    01-material-pattern.json
+    02-compendium-system.json
+    03-bonus-stacking.json
+    04-how-to-create-material.json
+    05-how-to-create-weapon.json
+```
+
+Each journal entry follows Foundry's journal structure with:
+- `name`: Clear workflow title
+- `type`: "JournalEntry"
+- `system.content`: HTML (generated from markdown templates)
+- `system.pages[]`: Organized as individual pages within entries
+- `flags.origin`: Metadata tracking which phase introduced/updated this entry
+
+### Phase 4 Documentation Stubs
+
+**4.11.1: Material Pattern** (`01-material-pattern.json`)
+- Overview of items, active effects, and material subtypes
+- Explanation of `materialSubtype` field (established Phase 2)
+- How `prepareDerivedData()` generates dynamic AE changes
+- Broken vs Masterwork distinction
+- Internal reference: Phase 2 §2.6, Phase 4 §4.8
+
+**4.11.2: Compendium System** (`02-compendium-system.json`)
+- What are compendiums and where SRD content lives
+- How the system stores materials, weapons, and other items
+- Overview of how items are sourced from compendiums
+- Internal reference: Phase 4 §4.3, §4.4
+
+**4.11.3: Bonus Type Stacking** (`03-bonus-stacking.json`)
+- Which bonus types can stack (racial, {size}, enhancement, {untyped})
+- Which cannot (ability score, nat armor, {insight}, etc.)
+- Highest-wins resolution for conflicting bonuses
+- Examples with weapons and materials
+- Internal reference: Phase 2 §2.5
+
+**4.11.4: How to Create a Material** (`04-how-to-create-material.json`)
+- Step-by-step guide for DMs to add custom materials
+- Overview of material subtypes: Standard, Broken, Masterwork
+- How materials modify weapon properties
+- Basic examples (Mithral, Adamantite, etc.)
+- **Important note**: "These workflows will change frequently as the system evolves. For complex or batch creation, consider using an AI assistant to generate items — it will save significant time during this early phase. All content will be refined and hardened in Phase 28."
+- Internal reference: Phase 4 §4.8
+
+**4.11.5: How to Create a Weapon** (`05-how-to-create-weapon.json`)
+- Step-by-step guide for DMs to add custom weapons
+- Creating a simple weapon from scratch
+- Applying materials and enchantments to weapons
+- Testing weapon properties and bonuses
+- **Important note**: Same as above — AI-assisted creation encouraged for saving time during early development phases.
+- Internal reference: Phase 2 §2.6
+
+### Implementation Details
+
+**Source Format**: Journal entries stored as JSON in `packs/_source/journals/` matching Foundry's `JournalEntry` schema. Markdown content converted to HTML in the transformation step.
+
+**Build Integration**: The Vite pack compilation plugin treats journal packs like any other compendium — compiles from `_source/` into LevelDB packs.
+
+**Versioning & Evolution**:
+- Each journal entry includes a `flags.phase` field tracking first implementation
+- Updates from later phases append version markers (e.g., "Updated Phase 7: Feats System")
+- Never delete entries; instead mark as deprecated with migration notes
+- Enables reliable end-user reference material throughout development
+
+**Dev World Integration**: 
+- The `dev/` world (Data/worlds/dev/) automatically loads both production and `*-dev` packs
+- Documentation available immediately upon opening the dev world
+- Content emphasizes rough early-stage nature with clear warnings about future changes
+
+### Deferred to Phase 28
+
+- Full markdown → HTML generation with metadata extraction
+- Rich journal search integration with index configuration
+- Comments / discussion features on documentation entries
+- Version history and changelog rollup
+- Localization (Phase 3 infrastructure ready; content translation deferred)
+- Content hardening and stabilization
 
 ---
 
@@ -997,6 +1078,19 @@ Everything listed here is deferred to Phase 26 (Compendium Browser & Management)
 - [ ] Integration: Call resolver in `ready` hook
 - [ ] Test: Version field populated on existing Phase 1-3 documents
 - [ ] Test: Migration can patch old documents
+
+**Documentation Stubs: Workflow Journals**:
+- [ ] Create `packs/_source/journals/` directory structure
+- [ ] Create journal entry: Material Pattern (01-material-pattern.json)
+- [ ] Create journal entry: Compendium System (02-compendium-system.json)
+- [ ] Create journal entry: Bonus Type Stacking (03-bonus-stacking.json)
+- [ ] Create journal entry: How to Create a Material (04-how-to-create-material.json)
+- [ ] Create journal entry: How to Create a Weapon (05-how-to-create-weapon.json)
+- [ ] Register `d35e-docs-workflows` pack in system.json (production)
+- [ ] Register `d35e-docs-workflows-dev` pack in system.json (dev-only, conditional)
+- [ ] Verify journals compile into pack during build
+- [ ] Test: Journals load and display correctly in dev world
+- [ ] Add `flags.phase` and versioning metadata to each entry
 
 **Pack Metadata in system.json:**
 - [ ] Add `packs` array to `system.json`:
