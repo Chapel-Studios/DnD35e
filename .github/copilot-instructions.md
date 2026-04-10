@@ -186,3 +186,65 @@ The `.field-control-btn` class provides: transparent background, no border, 0.5 
 - All field helpers (`requiredNumberField`, `optionalStringField`, etc.) return plain fields, NOT Dnd35eField-wrapped
 - `Dnd35eField` wrapping is always explicit via `new Dnd35eField(InnerFieldClass, innerOptions, wrapperOptions)`
 - Active Effect changes on Dnd35eField-wrapped fields are auto-routed to the `.value` sub-field
+
+---
+
+## System Planning & Architecture
+
+### Overview
+The system is being built in phases, each with documented goals, design, and completion criteria. See `docs/migration-plan/` for specifications.
+
+**Current Status**: Phase 4 (Compendium Foundation) PLANNED ✅ | Phases 5+ Next
+
+### Planning Resources
+- **Custom Planning Agent**: Use `@planning` to design new phases or refine existing ones
+- **Planning Maintenance Skill**: Use `/phase-planning` to improve documentation
+- **Full Roadmap**: `docs/migration-plan/README.md` (phases 1-28)
+- **Phase Specifications**: `docs/migration-plan/phase-NN-*.md` (detailed spec per phase)
+- **Custom Agents & Skills**: `.github/AGENTS.md` (discovery and usage)
+
+### Phase Completion Status
+| Phase | Name | Status |
+|-------|------|--------|
+| 1 | Core Architecture | ✅ COMPLETE |
+| 2 | Material System & AE Foundation | ✅ COMPLETE |
+| 3 | Grants System Infrastructure | ✅ COMPLETE |
+| 4 | Compendium Foundation | 📋 PLANNED |
+| 5+ | Feats, Races, Classes, Spells, etc. | ⏳ Pending |
+
+### Established Patterns (Reuse)
+
+**Build System**:
+- Template-based config: `system.json.template` → build script generates `system.json` with expansions
+- Vite mode: `vite dev` vs `vite build` determines dev/prod environment (not manual env vars)
+- Conditional packs: Dev-only packs included when building with `--mode dev`
+- Pack compilation: Vite plugin in `writeBundle()` hook using `@foundryvtt/foundryvtt-cli`
+
+**Content Authoring**:
+- **Standard Workflow** (replicated each phase): CSV baseline → Dev Macro → Unpack JSON → Transform Script → Commit → Build
+- **Alternative**: Manual UI creation for single items
+- Used for: Phase 4 (Broken/Masterwork), Phase 5+ (feats, races, classes), Phase 27 (migration)
+
+**Infrastructure**:
+- **Origin Tracking** (Phase 4): Compendium source UUID + hash for update detection
+- **UUID Helpers** (Phase 4): Type-safe resolution with generics
+- **Migration Version** (Phase 4): Every document tracks version for safe upgrades
+
+### Planning Workflow
+
+**To plan a new phase**:
+```
+@planning Design Phase 5: I want to add feat support with SRD content
+```
+The agent will synthesize dependencies, ask clarifying questions, and produce a comprehensive spec.
+
+**To improve planning documentation**:
+```
+/phase-planning Section 4.2 repeats section 4.8, consolidate them
+```
+The skill will analyze, propose consolidations, and provide exact edits.
+
+**To check system status**:
+- Full roadmap: `docs/migration-plan/README.md`
+- Specific phase: `docs/migration-plan/phase-NN-*.md`
+- Quick reference: Each phase has completion checklist and status
