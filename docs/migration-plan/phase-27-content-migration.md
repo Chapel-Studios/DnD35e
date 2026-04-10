@@ -7,8 +7,107 @@
 > **Goal**: Migration tools for D35E world data and compendiums. Automated transforms for all document types.
 
 ---
+## Critical Context: Non-Destructive User-Facing Migration
 
-## 24.1 Data Transform Map
+**Key Technical Constraint**: Users **cannot** open existing D35E worlds in the new dnd35e system directly. The data models are fundamentally different (item names, field structures, effect representation, compendium organization). This is a **one-way migration** from old system to new, not an in-place upgrade.
+
+### High-Level User Migration Workflow
+
+Users will follow this workflow to migrate their D35E worlds:
+
+1. **Backup Old World** (Standard Foundry Backup)
+   - User opens their D35E world in Foundry
+   - User creates a backup using Foundry's built-in backup system (Game Settings → Manage → Create Backup)
+   - Foundry generates a `.zip` file containing all world data
+   - User downloads backup to their computer (or accesses from Foundry data folder)
+
+2. **Transform World Data** (Migration tool reads backup)
+   - User runs migration tool (UI-based, no CLI required)
+   - Points tool at the `.zip` backup file from D35E world
+   - Tool extracts data from backup, validates it, shows preview of transform results
+   - Example preview: "300 items found → 280 items will transform (weapon, spell, feat, etc.), 15 will be custom, 5 skipped"
+   - Tool generates dnd35e-compatible JSON output file (dnd35e-world-import.json)
+   - User can review transformations, make corrections if needed (JSON editor optional)
+
+3. **Import into New World** (dnd35e system)
+   - User creates a new blank world using dnd35e system
+   - User opens the import UI, selects their transformed JSON file
+   - System imports actors, items, scenes into the new world
+   - User reviews results in-game, makes any manual adjustments
+
+**Why this workflow**: 
+- Uses Foundry's proven backup mechanism (no custom export tool needed)
+- Keeps users out of CLI/command-line
+- Allows data review/correction between transform and import steps
+- Preserves old world intact and backed up for reference
+- Leverages existing infrastructure users already trust
+
+---
+
+## 27.1 User-Facing Migration Strategy
+
+### Design Principals
+
+- **Leverage existing Foundry backups**: Use Foundry's built-in backup system instead of custom exports. Backups are already tested, validated, and trusted by users.
+- **No CLI required**: UI-based tools only. Maximum file-system operation is selecting a backup ZIP file.
+- **Non-destructive**: Preserve originals at every step. Backup never modified. Transformation generates new output file.
+- **Transparent**: Show users what's being transformed, what's being dropped, what might need manual review (ambiguous item types, unsupported features).
+- **Gradual**: Migrated data is usable immediately, but users can manually refine as they discover issues in play.
+
+### Migration Backup Extraction (Phase 27.1a - Tool Implementation Deferred)
+
+**What Foundry backup contains:**
+- All actors (characters, NPCs)
+- All items in all collections (actor-owned items, world items, compendiums)
+- All scenes, tiles, tokens, drawings, lights, sounds, videos
+- All journal entries, tables, macros
+- All world settings and configuration
+- Asset references (images, audio, etc.)
+
+**How we read the backup:**
+- User provides a `.zip` file from Foundry's backup system
+- Tool extracts the ZIP to temporary directory
+- Tool reads world.json and related object databases/JSON files
+- Tool validates data integrity
+- Tool builds transformation inputs from extracted backup data
+- Tool cleans up temporary directory after processing
+
+**Backup extraction validation:**
+- Check ZIP structure (must contain `worlds/{worldName}/` directory)
+- Validate world.json schema
+- Verify all referenced documents present
+- Check for data corruption or truncation
+- Report any issues clearly to user before proceeding
+
+### Migration Transform (Phase 27.1b - Detailed Mapping Deferred)
+
+**High-level transformation tasks** (implementation details deferred until final item models exist):
+- Validate source data (check for null fields, truncated docs, etc.)
+- Map item types (D35E item types → dnd35e item types, assign to loot/ignored where needed)
+- Transform field names (D35E: `system.weaponType` → dnd35e: `system.weaponCategory`, etc.)
+- Convert buff/enhancement/material items → Active Effects (most complex step)
+- Normalize bonus types (D35E system structures → dnd35e stacking engine)
+- Update compendium references (old pack UUIDs → new pack UUIDs where SRD matches)
+- Flag ambiguous data for manual review (custom item types, unsupported features)
+
+**Transformation does NOT include** (deferred to Phase 28 or later):
+- Full D35E content SRD matching (e.g., matching "my custom Fireball to the Fireball from SRD compendium")
+- Character art/portrait migration (art references not portable)
+- Macros & script fragments (d35e-specific D&D formulas won't work in dnd35e)
+- Spell animations, special Foundry extensions (system-specific)
+
+### Migration Import (Phase 27.1c - Foundry Integration)
+
+**User-facing import interface** (in-Foundry UI running on dnd35e system):
+- UI shows transformed JSON file selection
+- Preview of what will be imported (actor count, item count, scenes, etc.)
+- Import progress (with rollback if critical error)
+- Post-import report: successful imports vs failed imports with reasons
+- Drag-and-drop to reorder actor placement if desired
+
+---
+
+## 27.2 Data Transform Map
 
 | D35E Source | dnd35e Target |
 |-------------|---------------|
@@ -31,7 +130,7 @@
 | Card item | Defer or drop |
 | Valuable item | Loot subtype |
 
-## 24.2 World Migration
+## 27.3 In-World Version Migration
 
 ```
 migrateWorld()
@@ -48,14 +147,21 @@ migrateWorld()
 └── Update system.migration.version
 ```
 
-## 24.3 Files to Create/Modify
+## 27.4 Files to Create/Modify
 
 | Action | Path |
 |--------|------|
-| Create | `src/migration/d35eToJson.mts` — transformer pipeline |
+| Create | `src/migration/backup/BackupExtractor.mts` — extract & validate Foundry backup ZIP files |
+| Create | `src/migration/transform/D35ETransformer.mts` — transform extracted backup data to dnd35e format |
+| Create | `src/migration/import/Dnd35eImporter.mts` — import dnd35e-world-import.json into world |
+| Create | `src/apps/MigrationTransformDialog.vue` — transform UI (select backup, preview, run transform) |
+| Create | `src/apps/MigrationImportDialog.vue` — import UI (select JSON, preview, run import) |
+| Create | `src/migration/d35eToJson.mts` — transformer pipeline (detailed implementation) |
 | Create | `src/migration/world/WorldMigrator.mts` — world data transform |
 | Create | `src/migration/compendiums/CompendiumMigrator.mts` — pack transform |
 | Use | `src/apps/CompendiumBrowser.mts` (from Phase 26) |
+| Create | `docs/MIGRATION_GUIDE.md` — user-facing step-by-step guide |
+| Create | `docs/MIGRATION_MAP.md` — D35E → dnd35e type/field reference |
 
 ---
 
@@ -65,6 +171,156 @@ migrateWorld()
 - (None — Phase 27 has not started)
 
 ### ❌ Not Started (All Tasks for Phase 27)
+
+**Backup Extraction & Validation (Phase 27.1a):**
+- [ ] Design backup file selector UI
+  - File picker: Allow user to select .zip file from Foundry backup
+  - Show file info: backup date, world name, file size
+  - Validation button: "Validate Backup" to check ZIP structure before proceeding
+  - Clear error messages if backup is invalid (wrong format, corrupted, etc.)
+- [ ] Implement backup ZIP extraction
+  - Read .zip file safely (no path traversal vulnerabilities)
+  - Extract to temporary directory
+  - Validate directory structure (must contain worlds/{worldName}/ at minimum)
+  - Read world.json to extract metadata
+  - List all document types found (actors, items, scenes, etc.) with counts
+  - Store extracted data in temp cache for next phase
+- [ ] Data validation after extraction
+  - Check world.json valid JSON schema
+  - Verify all referenced actor/item/scene documents exist
+  - Check for data corruption (truncated JSON, missing fields)
+  - Report validation results: "✓ Valid" or detailed error list
+  - Flag suspicious data for user review (e.g., negative quantities, missing UUIDs)
+- [ ] Clean temp files
+  - On success: clean temp directory after data loaded into tool state
+  - On error: preserve temp directory for debugging (user can clean manually)
+  - Provide clear messaging when temp space is freed
+- [ ] Testing:
+  - Extract test Foundry backup successfully
+  - Validate valid backup ZIP passes checks
+  - Reject invalid/corrupted ZIPs with clear errors
+  - Verify all data types extracted correctly
+  - Check temp file cleanup works
+
+**User-Facing Migration Transform Tool (Phase 27.1b):**
+- [ ] Design transform UI (reads extracted backup)
+  - Show summary of extracted data: "Found X actors, Y items, Z scenes"
+  - Preview mode: Show transform summary before running
+    - "300 items found"
+    - "280 items will transform (weapon, spell, feat, etc.)"
+    - "15 items will be created as custom (unknown type)"
+    - "5 items will be skipped (unsupported, no equivalent type)"
+  - Transform button: Run full transformation
+  - Progress indicator with per-step details (transforming actors, items, scenes, etc.)
+  - Post-transform report:
+    - Items transformed successfully
+    - Items created as custom (list of names for review)
+    - Items skipped (list + reason)
+    - Any errors with error details
+  - Output file: Save dnd35e-world-import.json to user's downloads or Foundry data folder
+  - Option to review/edit output JSON if desired
+- [ ] Implement D35E → dnd35e transformation runner
+  - Load extracted backup data
+  - For each actor: apply actor transform logic
+  - For each item: apply item type transform + field mappings
+  - For each scene/token: preserve or adapt scene data as needed
+  - Compile output to dnd35e-compatible JSON
+  - Save to dnd35e-world-import.json
+  - Generate transformation report
+- [ ] Error handling & recovery
+  - Catch and log transformation errors without stopping whole process
+  - Mark problematic items for manual review
+  - Provide user-friendly error messages (not stack traces)
+  - Allow retry on individual items if needed
+- [ ] Data validation:
+  - Check all items have required fields post-transform
+  - Verify compendium UUID format where applicable
+  - Check schema compliance (all items match dnd35e schemas)
+  - Generate warnings/errors if validation fails
+- [ ] Testing:
+  - Transform extracted backup successfully
+  - Output JSON is dnd35e schema-compliant
+  - Error handling works on corrupt data
+  - Performance acceptable (100-item transform < 10 seconds)
+
+**User-Facing Migration Import Tool (Phase 27.1c - Foundry Integration):**
+- [ ] Create in-Foundry import UI (imported by dnd35e system)
+  - New world option: "Import from D35E Migration" (alongside blank world)
+  - Or menu option in new/existing dnd35e world: "Import... → D35E World Migration"
+  - File selector: User points to dnd35e-world-import.json from previous step
+  - Preview:
+    - Actor count to import
+    - Item count to import
+    - Scene count to import
+    - Estimated import time
+    - Compatibility warnings if any
+  - Import progress bar
+  - Post-import report:
+    - Actors imported: count, list
+    - Items imported: count grouped by type
+    - Scenes imported: count
+    - Any import errors with item name & reason
+    - "Migration Complete" success message
+- [ ] Implement import logic
+  - Parse dnd35e-world-import.json
+  - For each actor: create Foundry actor document
+  - For each item: create Foundry item document (owned or world)
+  - For each scene: create scene with tokens
+  - Update actor.system.migration.version to current
+  - Update item.system.migration.version to current
+  - Log all imports
+- [ ] Rollback capability
+  - If critical error occurs during import, provide "Undo" option
+  - Store pre-import state, allow user to revert
+  - Preserve all newly-created documents for potential cleanup
+- [ ] Integration with Phase 26 Compendium Browser
+  - After import, user can browse compendiums
+  - "Find compendium match" button on custom items created during migration
+  - Manual linking of custom items to compendium sources
+  - Tools for replacing custom items with compendium equivalents
+- [ ] Testing:
+  - Import test JSON into empty dnd35e world successfully
+  - All actors, items, scenes created
+  - Versions updated to current
+  - No console errors during import
+  - Performance acceptable (100-item import < 10 seconds)
+
+**Migration Documentation & User Guide:**
+- [ ] Create user-facing guide: "Migrating Your D35E World"
+  - Step 1: Create backup of D35E world using Foundry's backup system (screenshot showing how)
+  - Step 2: Run migration transform tool, select backup ZIP file (with screenshots)
+  - Step 3: Review transform preview, approve transformation (with screenshots)
+  - Step 4: Import transformed JSON into dnd35e system (with screenshots)
+  - Troubleshooting: Common issues & solutions
+  - FAQ: What data is preserved? What's lost? What becomes custom?
+  - FAQ: Where do I find my backup file?
+  - FAQ: Can I restore to D35E if something goes wrong? (Yes, backup is safe)
+- [ ] Document data preservation:
+  - Actor names, ability scores, HP, BAB preserved
+  - Item names preserved (with type changes noted)
+  - Scene layouts preserved (may need token art updates)
+  - Chat log entries imported (reference only)
+  - Notes/journals imported where possible
+- [ ] Document data loss/limitation:
+  - D35E-specific macros/scripts won't work (need rewrite)
+  - Art/portraits: references preserved but may need path updates
+  - Unsupported item types become custom items
+  - Complex homebrew may need manual adjustment
+- [ ] Document data transformation:
+  - Buff items → Buff Active Effects (automatically created)
+  - Material items → Material Active Effects (linked to items)
+  - Enhancement items → Enhancement Active Effects
+  - Feat changes → Active Effect changes
+  - Custom fields → Custom properties or dropped (documented per type)
+- [ ] Migration map reference document
+  - D35E item type → dnd35e item type mapping table
+  - Field-by-field mapping for common item types
+  - Examples of transformed items
+  - Decision flow: "Is my item X supported?"
+- [ ] Localization:
+  - All UI strings localized (en.json, other languages as available)
+  - User guide available in system languages
+  - Error messages helpful and translated
 
 **D35E Item Type Transform Map (Authorization):**
 - [ ] Define transform map: D35E item type → dnd35e item type

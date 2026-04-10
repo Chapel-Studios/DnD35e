@@ -103,7 +103,7 @@
 | 1 | [Item Foundation (Weapon PoC)](phase-01-item-foundation.md) | ✅ Complete | — | POC |
 | 2 | [Active Effect on Item (Material)](phase-02-active-effect-on-item.md) | 🔶 In Progress (50%) | Phase 1 | POC |
 | 3 | [Localization Pattern](phase-03-localization.md) | 🔶 In Progress (50%) | — | POC |
-| 4 | [Compendium Foundation](phase-04-compendium-foundation.md) | 📋 Outlined | Phase 1, 2, 3 | POC |
+| 4 | [Compendium Foundation](phase-04-compendium-foundation.md) | � Planned | Phase 1, 2, 3 | POC |
 | 5 | [Actor Foundation](phase-05-actor-foundation.md) | � Outlined | Phase 1, 3 | POC |
 | 6 | [Token & Scene](phase-06-token-scene.md) | 📖 Rough Sketch | Phase 5 | POC |
 | 7 | [Roll Formulas & Custom Rolls](phase-07-roll-formulas.md) | � Outlined | Phase 5 | POC |
