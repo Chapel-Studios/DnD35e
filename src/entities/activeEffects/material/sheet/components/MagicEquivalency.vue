@@ -1,6 +1,5 @@
 <template>
   <NumberFormGroup
-    label="D35E.MagicEquivalent"
     :value="magicEquivalency"
     field-path="system.magicEquivalency"
     :read-only="props.readOnly"

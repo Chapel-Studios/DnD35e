@@ -21,29 +21,31 @@ const IdentifiableItemSystemModel = IdentifiableSchemaMixin(ItemSystemModelBase)
  * weight, HP, hardness, price, and container fields.
  */
 abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
+  static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.PHYSICAL_ITEM'];
+
   static override defineSchema (): Record<string, any> {
     const schema = super.defineSchema();
 
     // Physical
     schema.hp = new Dnd35eSectionField({
-      current: new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'HP', hint: 'The current HP of this item.' }),
-      max: new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Max HP', hint: 'The maximum HP of this item.' }),
+      current: new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }),
+      max: new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }),
     });
-    schema.hardness = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Hardness', hint: 'The hardness of this item.' });
-    schema.quantity = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Quantity', hint: 'The quantity of this item.' });
-    schema.weight = new Dnd35eField(NumberField, { required: false, nullable: true, initial: 0 }, { label: 'Weight', hint: 'The weight of this item.' });
+    schema.hardness = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 });
+    schema.quantity = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 });
+    schema.weight = new Dnd35eField(NumberField, { required: false, nullable: true, initial: 0 });
     // schema.isWeightlessInContainer = requiredBooleanField(false);
     // schema.isWeightlessWhenCarried = requiredBooleanField(false);
-    schema.isCarried = requiredBooleanField('D35E.IsCarried', 'D35E.IsCarriedHint', true);
-    schema.size = new Dnd35eField(StringField, { choices: SIZES, initial: 'tiny', required: true }, { label: 'Size', hint: 'The size of this item.' });
+    schema.isCarried = requiredBooleanField(true);
+    schema.size = new Dnd35eField(StringField, { choices: SIZES, initial: 'tiny', required: true });
     // Price - EmbeddedDataField wrapping PriceData with coin stacks
-    schema.price = new Dnd35eField(PriceField, {}, { label: 'Price', hint: 'The price of this item.' });
+    schema.price = new Dnd35eField(PriceField, {});
     schema.resalePrice = new PriceField({ nullable: true, initial: null });
     schema.brokenResalePrice = new PriceField({ nullable: true, initial: null });
-    schema.isBroken = requiredBooleanField('D35E.IsBroken', 'D35E.IsBrokenHint', false);
+    schema.isBroken = requiredBooleanField(false);
 
     // Container
-    schema.containerId = optionalStringField('D35E.ContainerId', 'D35E.ContainerIdHint');
+    schema.containerId = optionalStringField();
 
     return schema;
   }

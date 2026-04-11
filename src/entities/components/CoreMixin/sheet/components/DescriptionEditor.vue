@@ -1,7 +1,7 @@
 <template>
   <RichTextEditorFormGroup 
     field="system.description.value" 
-    label="D35E.Description"
+    label="dnd35e.COMMON.Description"
     class="description-editor"
     placeholder="Enter a description..."
   />

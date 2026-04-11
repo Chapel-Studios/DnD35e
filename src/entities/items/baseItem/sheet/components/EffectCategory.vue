@@ -16,7 +16,7 @@
           <button
             type="button"
             class="effect-control"
-            :title="createLocalizedComputed('D35E.EffectEdit').value"
+            :title="createLocalizedComputed('dnd35e.EFFECT.Edit').value"
             @click="handleEdit(effect)"
           >
             <i class="fas fa-edit" />
@@ -33,7 +33,7 @@
           <button
             type="button"
             class="effect-control delete"
-            :title="createLocalizedComputed('D35E.EffectDelete').value"
+            :title="createLocalizedComputed('dnd35e.EFFECT.Delete').value"
             :disabled="!canEdit"
             @click="handleDelete(effect)"
           >
@@ -69,8 +69,8 @@
     },
   } = inject(DocumentSheetStoreSymbol) as ItemSheetStore;
   const effectEnablementTitle = (effect: DnD35eActiveEffect) => effect.disabled
-    ? createLocalizedComputed('D35E.EffectEnable')
-    : createLocalizedComputed('D35E.EffectDisable');
+    ? createLocalizedComputed('dnd35e.EFFECT.Enable')
+    : createLocalizedComputed('dnd35e.EFFECT.Disable');
 
   const handleDelete = async (effect: DnD35eActiveEffect) => {
     await removeEffect(effect.id);

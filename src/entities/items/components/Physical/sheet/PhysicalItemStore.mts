@@ -62,7 +62,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     maxHp: computed(() => getViewAwareFieldValue('system.hp.max') || 0),
     possibleContainers: computed(() => {
       // TODO: build this out after implementing containers 
-      return [{ value: null, label: game.i18n.localize('D35E.None') }];
+      return [{ value: null, label: game.i18n.localize('dnd35e.COMMON.None') }];
     }),
     hardness: computed(() => getViewAwareFieldValue('system.hardness') ?? 0),
     // currentContainerId: computed(() => document.value.system.containerId),

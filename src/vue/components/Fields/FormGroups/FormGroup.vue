@@ -2,8 +2,8 @@
   <div class="form-group" :class="formGroupClasses" :hidden="!isFieldVisible">
     <div v-if="hasLabel" class="form-group-label">
       <label>
-        <i v-if="showUnidentifiedIndicator" class="fas fa-low-vision unidentified-indicator" :title="localize('D35E.UnidentifiedValueHint')"></i>
-        {{ localize(props.label!) }}
+        <i v-if="showUnidentifiedIndicator" class="fas fa-low-vision unidentified-indicator" :title="localize('dnd35e.IDENTIFIABLE.UnidentifiedValueHint')"></i>
+        {{ resolvedLabel }}
       </label>
       <!-- GM permission controls next to label -->
       <FieldControls
@@ -21,7 +21,7 @@
     <slot v-else name="readonly">{{ props.value }}</slot>
 
     <!-- Hint text -->
-    <p v-if="props.hint" class="hint">
+    <p v-if="hasHint" class="hint">
       <!-- GM permission controls before content when no label -->
       <FieldControls
         v-if="!hasLabel"
@@ -31,12 +31,12 @@
       >
         <slot name="controls" :editable="isFieldEditable" />
       </FieldControls>
-      {{ props.localizeHint === false ? props.hint : localize(props.hint) }}
+      {{ resolvedHint }}
     </p>
 
     <!-- Standalone controls when no label and no hint -->
     <FieldControls
-      v-if="!hasLabel && !props.hint"
+      v-if="!hasLabel && !hasHint"
       :field-path="props.fieldPath"
       :default-editability="props.defaultEditability"
       :default-visibility="props.defaultVisibility"
@@ -78,8 +78,6 @@
     return game.i18n.localize(key);
   }
 
-  const hasLabel = !!props.label;
-  
   const {
     documentGetters: {
       getIsFieldVisible,
@@ -89,8 +87,35 @@
       resolveVisibility,
       resolveEditability,
       resolveFieldMeta,
+      getSchemaField,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  // Schema field for this path (pre-localized by Foundry's LOCALIZATION_PREFIXES)
+  const schemaField = getSchemaField(props.fieldPath);
+
+  /**
+   * Resolve label: explicit prop (localization key) > schema field label (already localized)
+   * When explicit, the value is a localization key that needs localize().
+   * When from schema, field.label is already localized text.
+   */
+  const resolvedLabel = computed(() => {
+    if (props.label) return localize(props.label);
+    return schemaField?.options?.label ?? '';
+  });
+
+  const hasLabel = computed(() => !!resolvedLabel.value);
+
+  /**
+   * Resolve hint: explicit prop > schema field hint (already localized)
+   */
+  const resolvedHint = computed(() => {
+    if (props.hint) return props.localizeHint === false ? props.hint : localize(props.hint);
+    return schemaField?.options?.hint ?? '';
+  });
+
+  const hasHint = computed(() => !!resolvedHint.value);
+
   const { isIdentifiedViewMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   // Get effective visibility: override > prop > schema default > 'everyone'
@@ -110,7 +135,7 @@
 
   // Form group classes
   const formGroupClasses = computed(() => ({
-    'with-hint': !!props.hint,
+    'with-hint': hasHint.value,
     'restricted-visibility': isVisibilityRestricted.value,
     'restricted-editability': isEditabilityRestricted.value,
   }));

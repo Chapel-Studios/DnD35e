@@ -10,7 +10,7 @@ import { DEFAULT_HEALTH_CONFIG,HEALTH_KEY } from './constants.mjs';
  */
 function registerHealthSettings(): void {
   game.settings.register(SYSTEM_ID, HEALTH_KEY, {
-    name: 'DND35E.Settings.Health.Name',
+    name: 'dnd35e.SETTINGS.Health.Name',
     scope: 'world',
     config: false,
     type: Object,

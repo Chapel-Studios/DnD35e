@@ -1,38 +1,72 @@
 {
-  "D35E.Misc": "Miscellaneous",
-  "D35E.MiscShort": "Misc",
-  "D35E.Yes": "Yes",
-  "D35E.No": "No",
-  "D35E.YesShort": "Y",
-  "D35E.NoShort": "N",
-  "D35E.IdentifiedShort": "Id.",
-  "D35E.Other": "Other",
-  "D35E.Generate": "Generate",
-  
-  "D35E.Name": "Name",
-  "D35E.Description": "Description",
-  "D35E.DescriptionHint": "The description of this document.",
-  "D35E.DescriptionPlaceholder": "Enter a description here...",
-
-  "D35E.Slug": "Unique ID",
-  "D35E.SlugHint": "A unique identifier (slug) for this document, used for cross-referencing.",
-
-  "D35E.NameFormula": "Name Formula",
-  "D35E.NameFormulaHint": "Formula used to compute the displayed name of this document.",
-  "D35E.Details": "Details",
-
-  "D35E.SystemProperties": "System Properties",
-
-  "D35E.SheetModeEdit": "Editing",
-  "D35E.SheetModePlay": "Viewing",
-
-  "DND35E.Add": "Add",
-  "DND35E.Delete": "Delete",
-  "DND35E.Enable": "Enable",
-  "DND35E.Disable": "Disable",
-
-  "D35E.Version": "System Version",
-  "D35E.VersionHint": "Internal version of the document's system data schema.",
-  "D35E.DerivedName": "Derived Name",
-  "D35E.DerivedNameHint": "The computed name of this document, resolved from the name formula if set."
+  "dnd35e": {
+    "COMMON": {
+      "None": "None",
+      "Misc": "Miscellaneous",
+      "MiscShort": "Misc",
+      "Yes": "Yes",
+      "No": "No",
+      "True": "True",
+      "False": "False",
+      "YesShort": "Y",
+      "NoShort": "N",
+      "IdentifiedShort": "Id.",
+      "Other": "Other",
+      "Generate": "Generate",
+      "GenerateUID": "Generate UID",
+      "Name": "Name",
+      "Details": "Details",
+      "Description": "Description",
+      "Item": "Item",
+      "Material": "Material",
+      "Materials": "Materials",
+      "SystemProperties": "System Properties",
+      "SheetModeEdit": "Editing",
+      "SheetModePlay": "Viewing",
+      "Show": "Show",
+      "Hide": "Hide",
+      "Default": "Default",
+      "Discard": "Discard",
+      "Add": "Add",
+      "Delete": "Delete",
+      "Enable": "Enable",
+      "Disable": "Disable",
+      "NoColor": "No Color",
+      "RollMode": "Roll Mode",
+      "Attack": "Attack",
+      "ApplyDamage": "Apply Damage",
+      "SavingThrow": "Saving Throw",
+      "Skill": "Skill",
+      "Grapple": "Grapple",
+      "HitPoints": "Hit Points",
+      "ActorTypeCharacter": "Character",
+      "ActorTypeNPC": "NPC",
+      "ActorTypeTrap": "Trap"
+    },
+    "DOCUMENT": {
+      "FIELDS": {
+        "version": {
+          "label": "System Version",
+          "hint": "Internal version of the document's system data schema."
+        },
+        "slug": {
+          "label": "Unique ID",
+          "hint": "A unique identifier (slug) for this document, used for cross-referencing."
+        },
+        "derivedName": {
+          "label": "Derived Name",
+          "hint": "The computed name of this document, resolved from the name formula if set."
+        },
+        "nameFormula": {
+          "label": "Name Formula",
+          "hint": "Formula used to compute the displayed name of this document."
+        },
+        "description": {
+          "label": "Description",
+          "hint": "The description of this document.",
+          "placeholder": "Enter a description here..."
+        }
+      }
+    }
+  }
 }

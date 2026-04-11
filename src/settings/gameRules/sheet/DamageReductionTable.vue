@@ -1,14 +1,14 @@
 <template>
   <div class="damage-reduction-settings">
-    <p class="notes">{{ localize('DND35E.Settings.DamageReductionTypes.Hint') }}</p>
+    <p class="notes">{{ localize('dnd35e.SETTINGS.DamageReductionTypes.Hint') }}</p>
 
     <SettingsTable
       :items="tableItems"
       :id-config="{ customPrefix: 'custom_' }"
-      id-header="DND35E.Settings.DamageReductionTypes.IdColumn"
-      label-header="DND35E.Settings.DamageReductionTypes.LabelColumn"
-      add-tooltip="DND35E.Add"
-      empty-label="DND35E.Settings.DamageReductionTypes.None"
+      id-header="dnd35e.SETTINGS.DamageReductionTypes.IdColumn"
+      label-header="dnd35e.SETTINGS.DamageReductionTypes.LabelColumn"
+      add-tooltip="dnd35e.COMMON.Add"
+      empty-label="dnd35e.SETTINGS.DamageReductionTypes.None"
       @add="addType"
       @update-item="updateType"
       @delete-item="removeType"

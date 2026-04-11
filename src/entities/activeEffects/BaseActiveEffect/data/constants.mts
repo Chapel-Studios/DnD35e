@@ -5,7 +5,7 @@ type ActiveEffectTarget = EffectTarget;
 // | 'Actor';
 
 const ACTIVE_EFFECT_TARGETS = {
-  [EFFECT_TARGET]: 'D35E.Item',
+  [EFFECT_TARGET]: 'dnd35e.COMMON.Item',
 } as const satisfies Record<ActiveEffectTarget, string>;
 
 type ActiveEffectTargetLocalizationValues = typeof ACTIVE_EFFECT_TARGETS[keyof typeof ACTIVE_EFFECT_TARGETS];
@@ -21,8 +21,8 @@ const EFFECT_CHANGE_TARGET = {
 type EffectChangeTarget = typeof EFFECT_CHANGE_TARGET[keyof typeof EFFECT_CHANGE_TARGET];
 
 const EFFECT_CHANGE_TARGETS = {
-  [EFFECT_CHANGE_TARGET.ITEM]: 'D35E.EffectChangeTarget.Item',
-  [EFFECT_CHANGE_TARGET.ACTOR]: 'D35E.EffectChangeTarget.Actor',
+  [EFFECT_CHANGE_TARGET.ITEM]: 'dnd35e.EFFECT.ChangeTarget.Item',
+  [EFFECT_CHANGE_TARGET.ACTOR]: 'dnd35e.EFFECT.ChangeTarget.Actor',
 } as const satisfies Record<EffectChangeTarget, string>;
 
 /**
@@ -37,8 +37,8 @@ const EFFECT_CHANGE_TARGET_FIELD = {
 type EffectChangeTargetField = typeof EFFECT_CHANGE_TARGET_FIELD[keyof typeof EFFECT_CHANGE_TARGET_FIELD];
 
 const EFFECT_CHANGE_TARGET_FIELDS = {
-  [EFFECT_CHANGE_TARGET_FIELD.VALUE]: 'D35E.EffectChangeTargetField.Value',
-  [EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED]: 'D35E.EffectChangeTargetField.Unidentified',
+  [EFFECT_CHANGE_TARGET_FIELD.VALUE]: 'dnd35e.EFFECT.ChangeTargetField.Value',
+  [EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED]: 'dnd35e.EFFECT.ChangeTargetField.Unidentified',
 } as const satisfies Record<EffectChangeTargetField, string>;
 
 /**

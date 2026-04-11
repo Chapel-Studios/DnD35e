@@ -1,7 +1,7 @@
 <template>
   <!-- <NumberFormGroup
     :editable="isEditViewMode"
-    label="D35E.ResalePrice"
+    label="dnd35e.PHYSICAL_ITEM.ResalePrice"
     :value="resalePrice"
     :on-update="updater"
     field-path="system.resalePrice"

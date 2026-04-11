@@ -8,10 +8,10 @@ const WEAPON_TYPES = new Set([
 ] as const);
 type WeaponType = SetElement<typeof WEAPON_TYPES>;
 const WEAPON_TYPE_LOCALIZED: Record<WeaponType, string> = {
-  'simple': 'D35E.WeaponTypeSimple',
-  'martial': 'D35E.WeaponTypeMartial',
-  'exotic': 'D35E.WeaponTypeExotic',
-  'misc': 'D35E.WeaponTypeMisc',
+  'simple': 'dnd35e.WEAPON.Type.simple',
+  'martial': 'dnd35e.WEAPON.Type.martial',
+  'exotic': 'dnd35e.WEAPON.Type.exotic',
+  'misc': 'dnd35e.WEAPON.Type.misc',
 } as const;
 const weaponTypeSelectOptions = Object.entries(WEAPON_TYPE_LOCALIZED)
   .map(([value, label]) => ({ value, label } as SelectOption<WeaponType>));
@@ -27,11 +27,11 @@ const WEAPON_SUBTYPES = new Set([
 ] as const);
 type WeaponSubtype = SetElement<typeof WEAPON_SUBTYPES>;
 const WEAPON_SUBTYPE_LOCALIZED: Record<WeaponSubtype, string> = {
-  'unarmed': 'D35E.WeaponPropUnarmed',
-  'light': 'D35E.WeaponPropLight',
-  'oneHanded': 'D35E.WeaponPropOneHanded',
-  'twoHanded': 'D35E.WeaponPropTwoHanded',
-  'ranged': 'D35E.WeaponSubtypeRanged',
+  'unarmed': 'dnd35e.WEAPON.Subtype.unarmed',
+  'light': 'dnd35e.WEAPON.Subtype.light',
+  'oneHanded': 'dnd35e.WEAPON.Subtype.oneHanded',
+  'twoHanded': 'dnd35e.WEAPON.Subtype.twoHanded',
+  'ranged': 'dnd35e.WEAPON.Subtype.ranged',
 } as const;
 const weaponSubtypeSelectOptions = Object.entries(WEAPON_SUBTYPE_LOCALIZED)
   .map(([value, label]) => ({ value, label } as SelectOption<WeaponSubtype>));

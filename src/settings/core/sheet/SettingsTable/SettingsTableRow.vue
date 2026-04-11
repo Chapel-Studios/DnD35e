@@ -73,7 +73,7 @@
         type="button"
         class="status-btn"
         :class="{ enabled: state.enabled }"
-        :title="state.enabled ? localize('DND35E.Disable') : localize('DND35E.Enable')"
+        :title="state.enabled ? localize('dnd35e.COMMON.Disable') : localize('dnd35e.COMMON.Enable')"
         @click="toggleEnabled"
       >
         <i :class="state.enabled ? 'fas fa-check-circle' : 'fas fa-times-circle'" />
@@ -82,7 +82,7 @@
         v-else
         type="button" 
         class="delete-btn" 
-        :title="localize('DND35E.Delete')"
+        :title="localize('dnd35e.COMMON.Delete')"
         @click="onDelete"
       >
         <i class="fas fa-trash" />

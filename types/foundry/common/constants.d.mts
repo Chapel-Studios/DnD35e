@@ -45,6 +45,13 @@ export const ACTIVE_EFFECT_CHANGE_TYPES: Readonly<{
     ADD: 'add';
 
     /**
+     * Subtracts a numeric effect value from a numeric base value
+     * @example
+     * 5 (base value) - 3 (effect value) = 2 (derived value)
+     */
+    SUBTRACT: 'subtract';
+
+    /**
      * Keeps the lower value of the base value and the effect value
      * @example
      * 2 (base value), 0 (effect value) = 0 (derived value)

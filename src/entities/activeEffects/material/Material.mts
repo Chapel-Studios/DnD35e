@@ -40,7 +40,7 @@ class Material extends IdentifiableEffectBase {
   }
 
   override get localizedType (): string {
-    return game.i18n.localize('D35E.Material');
+    return game.i18n.localize('dnd35e.COMMON.Material');
   }
 }
 

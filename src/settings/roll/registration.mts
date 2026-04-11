@@ -10,7 +10,7 @@ import { DEFAULT_ROLL_CONFIG,ROLL_KEY } from './constants.mjs';
  */
 function registerRollSettings(): void {
   game.settings.register(SYSTEM_ID, ROLL_KEY, {
-    name: 'DND35E.Settings.RollConfig',
+    name: 'dnd35e.SETTINGS.RollConfig',
     scope: 'world',
     config: false,
     type: Object,

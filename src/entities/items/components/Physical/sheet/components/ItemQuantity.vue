@@ -1,6 +1,5 @@
 <template>
   <NumberFormGroup
-    label="Quantity"
     field-path="system.quantity"
     :value="quantity"
     :default-visibility="everyoneVisibility"
