@@ -4,7 +4,6 @@
       <ItemHardness />
       <!-- HP per Inch -->
       <NumberFormGroup
-        label="dnd35e.ITEM.BonusHp"
         :value="bonusHp"
         field-path="system.bonusHp"
       />

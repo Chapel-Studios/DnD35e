@@ -3,7 +3,7 @@
     <div v-if="hasLabel" class="form-group-label">
       <label>
         <i v-if="showUnidentifiedIndicator" class="fas fa-low-vision unidentified-indicator" :title="localize('dnd35e.IDENTIFIABLE.UnidentifiedValueHint')"></i>
-        {{ localize(props.label!) }}
+        {{ localize(resolvedLabel) }}
       </label>
       <!-- GM permission controls next to label -->
       <FieldControls
@@ -78,12 +78,11 @@
     return game.i18n.localize(key);
   }
 
-  const hasLabel = !!props.label;
-  
   const {
     documentGetters: {
       getIsFieldVisible,
       getIsFieldEditable,
+      type: documentType,
     },
     _storeUtils: {
       resolveVisibility,
@@ -91,6 +90,27 @@
       resolveFieldMeta,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  // Resolve label: explicit prop > auto-derived from field-path
+  const resolvedLabel = computed(() => {
+    if (props.label) return props.label;
+
+    // Auto-derive label from field-path using document schema
+    const docType = documentType.value?.toUpperCase() ?? '';
+    const fieldName = props.fieldPath.split('.').pop();
+    const derivedKey = `dnd35e.${docType}.FIELDS.${fieldName}.label`;
+
+    return derivedKey;
+  });
+
+  // Check if we have a valid label (either explicit or auto-derived that exists)
+  const hasLabel = computed(() => {
+    if (props.label) return true; // Explicit label always has label
+    // For derived labels, check if they exist in i18n
+    const localized = game.i18n.localize(resolvedLabel.value);
+    return localized !== resolvedLabel.value; // If unchanged, the key doesn't exist
+  });
+
   const { isIdentifiedViewMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   // Get effective visibility: override > prop > schema default > 'everyone'

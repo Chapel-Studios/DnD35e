@@ -1,6 +1,5 @@
 <template>
   <NumberFormGroup
-    label="Hardness"
     :value="hardness"
     field-path="system.hardness"
     :direct-update="props.directUpdate"

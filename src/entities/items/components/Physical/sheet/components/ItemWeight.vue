@@ -1,6 +1,5 @@
 <template>
   <NumberFormGroup
-    label="Weight"
     :value="weight"
     :on-update="weightUpdater"
     field-path="system.weight"
