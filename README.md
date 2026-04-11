@@ -47,6 +47,57 @@ There is an automatic workflow in `.github/workflows/update-version.yml` that:
 - Runs `npm run update:version`
 - Commits and pushes changes to `version.yaml` if it changed
 
+## AI Tooling (GitHub Copilot)
+
+This project includes custom instruction files, skills, and agents to provide domain-specific guidance for GitHub Copilot Chat. These are defined in configuration files under `.github/` and integrate with VS Code's Copilot Chat.
+
+**Setup**: VS Code Copilot Chat discovers and loads custom instructions from `.github/copilot-instructions.md` and related configuration files. No additional setup is required beyond opening the workspace in VS Code.
+
+**Invocation**: 
+- Custom agents: Use `@agent-name` syntax in Copilot Chat (e.g. `@planning`, `@kb-curator`)
+- Custom skills: Use `/skill-name` syntax in Copilot Chat (e.g. `/phase-reference`)
+- Instruction files: Load automatically — no user action needed (see below)
+
+### Agents
+
+| Agent | Purpose |
+|-------|---------|
+| `@planning` | Design new phases, refine architecture, make cross-phase decisions |
+| `@kb-curator` | End-of-session documentation review, pattern extraction, KB maintenance |
+
+Full list: see [`.github/AGENTS.md`](.github/AGENTS.md)
+
+### Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `/phase-reference` | Look up which phase covers a feature, track progress, check dependencies |
+| `/phase-planning` | Improve planning docs — consolidate, update checklists, extract patterns |
+| `/foundry-reference` | Query Foundry VTT v14 API, data structures, hooks, and common patterns |
+| `/system-comparison` | Compare how 5e, PF2e, and 3.5e handle similar mechanics |
+| `/implementation-guide` | Step-by-step workflows for adding item types, mechanics, or compendium entries |
+
+Full list: see [`.github/AGENTS.md`](.github/AGENTS.md)
+
+### Instruction Files
+
+Context-specific instructions stored in `.github/instructions/`. Each file has frontmatter with a `description` used for contextual matching. Files with an `applyTo` glob auto-load when editing matching files; files without it are included by Copilot when it determines they are relevant to the current task.
+
+| File | Loading | Covers |
+|------|---------|--------|
+| `vue-sheet-patterns` | Auto-loads on `src/**/*.vue` | Sheet view modes, EditValue, FormGroups |
+| `foundry-data-fields` | By relevance | Field types, hierarchy, options |
+| `dnd35e-patterns` | By relevance | Composition chains, data models, formulas, AEs |
+| `dnd35e-field` | By relevance | Compound field shape, value access, type patterns |
+| `form-groups` | By relevance | FormGroup variants, API, layout patterns |
+| `formula-familiar` | By relevance | FormulaFamiliar autocomplete system |
+
+### Discovery
+
+For the full list with detailed capabilities, see [.github/AGENTS.md](.github/AGENTS.md).
+
+---
+
 ## License
 
 This system is licensed under **CC BY-NC-ND 4.0**.
