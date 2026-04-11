@@ -1,4 +1,5 @@
 ---
+name: system-comparison
 description: "Compare how different D&D 5e, Pathfinder 2e, and D&D 3.5e handle similar mechanics, spells, items, and features."
 ---
 

@@ -10,7 +10,7 @@
 
 ---
 
-## 12.1 Race Item Type
+## 11.1 Race Item Type
 
 ```
 RaceSystemModel extends ItemSystemModelBase
@@ -25,7 +25,7 @@ RaceSystemModel extends ItemSystemModelBase
 └── source: string
 ```
 
-## 12.2 Grant System (First Implementation)
+## 11.2 Grant System (First Implementation)
 
 Needed here and reused by classes in Phase 14.
 
@@ -48,7 +48,7 @@ interface GrantedFeature {
 
 **Racial ability adjustments + size + speed:** Generated as AE changes (Material pattern), applied during actor data prep.
 
-## 12.3 Files to Create/Modify
+## 11.3 Files to Create/Modify
 
 | Action | Path |
 |--------|------|

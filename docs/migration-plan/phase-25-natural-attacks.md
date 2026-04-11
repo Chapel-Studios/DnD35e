@@ -1,6 +1,6 @@
 # Phase 25: Natural & Special Attacks
 
-**Status**: � Rough Sketch (350+ item checklist, iterative attacks, TWF)
+**Status**: 📖 Rough Sketch (350+ item checklist, iterative attacks, TWF)
 
 > **Milestone**: Beta  
 > **Dependencies**: Phase 8 (Action System)  

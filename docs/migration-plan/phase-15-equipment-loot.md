@@ -1,6 +1,6 @@
 # Phase 15: Equipment, Loot & Bonus Stacking
 
-**Status**: � Rough Sketch (250+ item checklist, AC calculations, equipment slots)
+**Status**: 📖 Rough Sketch (250+ item checklist, AC calculations, equipment slots)
 
 > **Milestone**: Beta  
 > **Dependencies**: Phase 5, Phase 7  

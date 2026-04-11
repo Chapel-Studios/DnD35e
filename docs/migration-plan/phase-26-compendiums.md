@@ -1,6 +1,6 @@
 # Phase 26: Compendium Browser & Management
 
-**Status**: � Rough Sketch (200+ item checklist, compendium browser, version tracking)
+**Status**: 📖 Rough Sketch (200+ item checklist, compendium browser, version tracking)
 
 > **Milestone**: Release  
 > **Dependencies**: Phase 4 (Compendium Foundation), Phase 15+  
@@ -10,7 +10,7 @@
 
 ---
 
-## 24.1 Amalgamated Compendium Browser
+## 26.1 Amalgamated Compendium Browser
 
 **The "click a button and browse all materials" feature:**
 
@@ -34,7 +34,7 @@ class CompendiumBrowser {
 - On actor spellbook: "Browse Spells" button → filtered by class & level
 - Module compendiums included automatically — no manual registration needed
 
-## 24.2 Rich Index Configuration
+## 26.2 Rich Index Configuration
 
 Expand the minimal index fields from Phase 4 to support full-text search and filter facets:
 
@@ -48,7 +48,7 @@ const RICH_INDEX_FIELDS = {
 };
 ```
 
-## 24.3 End-User Compendium Management
+## 26.3 End-User Compendium Management
 
 - Track compendium source versions (which version of the system pack an item came from)
 - "Check for updates" feature: compare user's compendium items against source packs
@@ -56,7 +56,7 @@ const RICH_INDEX_FIELDS = {
 - One-click update for items that haven't been customized
 - Diff view for items that have local changes
 
-## 24.4 Schema Migration Runner
+## 26.4 Schema Migration Runner
 
 The migration **runner** infrastructure. The version **field** exists from Phase 4.
 
@@ -73,7 +73,7 @@ const MIGRATIONS: Migration[] = [
 - Compendium items also get migrated when opened or on system update
 - Migration from D35E pack tool: script to convert D35E JSON exports → dnd35e JSON format
 
-## 24.5 Files to Create
+## 26.5 Files to Create
 
 | Action | Path |
 |--------|------|

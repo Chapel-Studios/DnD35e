@@ -1,6 +1,6 @@
 # Phase 20: Buffs & Conditions (Full)
 
-**Status**: � Rough Sketch (500+ item checklist, 27 bonus types, all conditions)
+**Status**: 📖 Rough Sketch (500+ item checklist, 27 bonus types, all conditions)
 
 > **Milestone**: Beta  
 > **Dependencies**: Phase 13 (Conditions POC), Phase 15 (Equipment)  

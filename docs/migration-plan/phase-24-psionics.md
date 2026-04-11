@@ -1,6 +1,6 @@
 # Phase 24: Psionics
 
-**Status**: � Rough Sketch (250+ item checklist, power points, augmentation)
+**Status**: 📖 Rough Sketch (250+ item checklist, power points, augmentation)
 
 > **Milestone**: Beta  
 > **Dependencies**: Phase 16 (Spells)  

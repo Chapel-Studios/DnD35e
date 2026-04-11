@@ -1,6 +1,6 @@
 # Phase 23: Enhancements
 
-**Status**: � Rough Sketch (350+ item checklist, weapon & armor enhancements)
+**Status**: 📖 Rough Sketch (350+ item checklist, weapon & armor enhancements)
 
 > **Milestone**: Beta  
 > **Dependencies**: Phase 15 (Equipment)  

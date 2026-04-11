@@ -1,4 +1,5 @@
 ---
+name: foundry-reference
 description: "Look up Foundry VTT API, data structures, and patterns. Find classes, methods, events, and configuration options."
 ---
 

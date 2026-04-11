@@ -1,6 +1,6 @@
 # Phase 21: Consumables
 
-**Status**: � Rough Sketch (300+ item checklist, consumable types, use chains)
+**Status**: 📖 Rough Sketch (300+ item checklist, consumable types, use chains)
 
 > **Milestone**: Beta  
 > **Dependencies**: Phase 8 (Action System)  

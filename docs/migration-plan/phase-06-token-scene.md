@@ -1,6 +1,6 @@
 # Phase 6: Token & Scene
 
-**Status**: 📝 Rough Sketch (Straightforward Foundry wrappers)
+**Status**: 📖 Rough Sketch (Straightforward Foundry wrappers)
 
 > **Milestone**: POC  
 > **Dependencies**: Phase 5  
@@ -8,7 +8,7 @@
 
 ---
 
-## 5.1 Token Document
+## 6.1 Token Document
 
 - Extend `TokenDocumentDnd35e` beyond a type alias
 - Support linked vs unlinked tokens (Foundry built-in, just ensure it works)
@@ -16,18 +16,18 @@
 - Token name from actor name
 - Override `update()` for Pinia store refresh
 
-## 5.2 Canvas Token
+## 6.2 Canvas Token
 
 - Extend `tokenDnd35e` class
 - Add HUD actions (placeholder for Phase 7)
 - Vision/light based on actor senses — stub now, implement with actor senses later
 
-## 5.3 Scene Document
+## 6.3 Scene Document
 
 - `SceneDnd35e` — verify grid measurement works (5ft squares = standard D&D 3.5)
 - Region behaviors already stubbed (environment, difficult terrain)
 
-## 5.4 Files to Create/Modify
+## 6.4 Files to Create/Modify
 
 | Action | Path |
 |--------|------|

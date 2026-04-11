@@ -1,4 +1,5 @@
 ---
+name: phase-reference
 description: "Look up planning phases, track progress, and understand phase dependencies. Find which phase covers a feature or system."
 ---
 
@@ -18,81 +19,68 @@ This skill helps you:
 - **Understand dependencies** between feature areas
 - **Plan implementation** based on phase roadmap
 
-## Quick Phase Overview
+## Source of Truth
 
-### Foundation & Infrastructure (1-4)
-- **Phase 1**: Data model foundation, item/actor schemas
-- **Phase 2**: Core mechanics (abilities, skills, feats)
-- **Phase 3**: Combat system (attacks, AC, saves)
-- **Phase 4**: Compendium foundation, data packing
+**For the dnd35e system**, all phase information lives in **[docs/migration-plan/README.md](../../docs/migration-plan/README.md)**.
 
-### Magic & Special Abilities (5-10)
-- **Phase 5**: Spellcasting basics, spell slots, prepared spells
-- **Phase 6**: Spell effects and application
-- **Phase 7**: Magical items and item properties
-- **Phase 8**: Active effects, condition system
-- **Phase 9**: Special abilities, class features
-- **Phase 10**: Monster/NPC special attacks
+This is the authoritative reference for:
+- All 32 phases (POC, Beta, Release, Post-Release)
+- Current status and completion percentages
+- Dependencies and milestones
+- Detailed specs in `phase-NN-*.md` files
 
-### Advanced Features (11-16)
-- **Phase 11**: Multiclassing & prestige classes
-- **Phase 12**: Experience & leveling
-- **Phase 13**: Companion animals, cohorts, followers
-- **Phase 14**: Crafting & enchanting
-- **Phase 15**: Scripted events & automation
-- **Phase 16**: Encumbrance & inventory management
+This skill provides guidance on *how to use* phases to plan work. Don't copy phase names or status from here — **always check docs/migration-plan/ for the canonical list**.
 
-### Content & Balance (17-22)
-- **Phase 17**: Expanded content (creatures, NPCs)
-- **Phase 18**: Campaign tools (encounter builders)
-- **Phase 19**: Rules variants & optional mechanics
-- **Phase 20**: Monster manual compendium completion
-- **Phase 21**: Spell compendium completion
-- **Phase 22**: Item compendium completion
+## Quick Concept: How Phases Work
 
-### Polish & Integration (23-28)
-- **Phase 23**: Performance optimization
-- **Phase 24**: Module integration
-- **Phase 25**: Migration tools for existing campaigns
-- **Phase 26**: Accessibility features
-- **Phase 27**: Theming & customization
-- **Phase 28**: Documentation & tutorials
+The dnd35e roadmap breaks D&D 3.5e system implementation into major deliverables:
 
-### Release & Maintenance (29-32)
-- **Phase 29**: Beta testing & community feedback
-- **Phase 30**: Release candidate & final bugs
-- **Phase 31**: Official v1.0 release
-- **Phase 32**: Post-release maintenance
+**Early phases** build POC fundamentals:
+- Foundation (weapons, active effects, i18n)
+- Core mechanics (actors, tokens, rolls, actions)
+- Combat & validation
 
-## Phase Status
+**Mid phases** expand to coverage:
+- All item types (equipment, spells, consumables, natural attacks)
+- All actor types (advanced NPCs, companions)
+- Full spell/psionics/enhancement systems
 
-| Range | Status |
-|-------|--------|
-| 1-4 | **COMPLETE** ✅ |
-| 5-10 | **PLANNED** ⏳ |
-| 11-32 | **NOT STARTED** ⏵ |
+**Late phases** polish & release:
+- Compendium management & browser
+- Content migration from legacy system
+- Community hardening & documentation
+- 3rd-party integration
 
 ## Finding a Feature's Phase
 
-**Example**: "Where should I add channel resistance for undead?"
+**Step 1**: Open [docs/migration-plan/README.md](../../docs/migration-plan/README.md) (single source of truth)
 
-→ Look in planning phase documents for "undead" or "resistance"
-→ Likely in Phase 7-8 (Magic/Special Abilities) or Phase 10 (Monster Features)
-→ Check `phase-XX-*.md` files for details
+**Step 2**: Use Ctrl+F to search the phase table for your feature name. Example: "Where should I add channel resistance for undead?"
+
+→ Search "resistance" or "undead" in the table
+→ Found in Phase 20 (Buffs & Conditions Full) or Phase 25 (Natural & Special Attacks)
+→ Read the detailed spec in the corresponding `phase-NN-*.md` file
+
+**Step 3**: Check dependencies (also in README.md) to understand prerequisites
 
 ## Phase Document Structure
 
-Each phase has:
-- **Goals**: What gets done
-- **Features**: Specific items, mechanics, data models
-- **Dependencies**: What must be done first
-- **Implementation notes**: How to build it
+Each phase in `docs/migration-plan/` has:
 
-Example: `phase-05-spellcasting.md` covers:
-- Spell slot system
-- Spell preparation
-- Spell casting mechanics
-- Spell effects application
+**In README.md table**:
+- Phase number and name
+- Current status (✅ Complete, 🔶 In Progress %, 📋 Outlined, 📖 Rough Sketch)
+- Dependencies (which phases must be done first)
+- Milestone (POC / Beta / Release / Post-Release)
+
+**In phase-NN-*.md file** (detailed spec):
+- **Goals**: What the phase accomplishes
+- **Features**: Specific mechanics, data models, item types
+- **Dependencies**: Prerequisite phases with rationale
+- **Implementation notes**: Architecture decisions and patterns
+- **Scope notes**: What's included vs. deferred
+
+**Dependency graph**: README.md includes a DAG showing which phases unlock which. Plan parallel work by following this graph.
 
 ## Related Skills
 

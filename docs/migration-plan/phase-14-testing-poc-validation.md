@@ -1,6 +1,6 @@
 # Phase 14: Testing & POC Validation
 
-**Status**: 📝 Rough Sketch (Unit/integration/smoke testing framework)
+**Status**: 📖 Rough Sketch (Unit/integration/smoke testing framework)
 
 > **Milestone**: POC  
 > **Dependencies**: Phases 9–13  

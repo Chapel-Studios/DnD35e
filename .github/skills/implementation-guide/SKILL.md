@@ -1,4 +1,5 @@
 ---
+name: implementation-guide
 description: "Step-by-step workflows for adding new item types, mechanics, compendium entries, and features from planning to code."
 ---
 
@@ -27,7 +28,7 @@ This skill helps you:
 
 ```typescript
 import { ItemDataModel } from './_item-data-model.mjs';
-import { formuLaFamiliar, Dnd35eField } from '...fields/index.mjs';
+import { FormulaFamiliar, Dnd35eField } from '...fields/index.mjs';
 
 class SpecialWeapon extends ItemDataModel {
   static defineSchema() {
@@ -147,7 +148,7 @@ const handleUpdate = (path, value) => {
       "properties": {
         "specialAbility": "frost",
         "saveDC": 15,
-        "specialEffect": "2d6 + @enhancement"
+        "specialEffect": "2d6 + #context.enhancement"
       }
     }
   }
@@ -164,7 +165,7 @@ const item = await Item.create({
     properties: {
       specialAbility: "frost",
       saveDC: 15,
-      specialEffect: "2d6 + @enhancement"
+      specialEffect: "2d6 + #context.enhancement"  // #context.X syntax resolves from evaluation scope
     }
   }
 });

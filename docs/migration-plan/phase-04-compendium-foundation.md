@@ -1,6 +1,6 @@
 # Phase 4: Compendium Foundation
 
-**Status**: � Planned (pack pipeline, origin tracking, authoring workflow, Foundry integration)
+**Status**: 📋 Planned (pack pipeline, origin tracking, authoring workflow, Foundry integration)
 
 > **Milestone**: POC  
 > **Dependencies**: Phase 1, Phase 2, Phase 3  

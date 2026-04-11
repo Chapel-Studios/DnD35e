@@ -10,7 +10,7 @@
 
 ---
 
-## 6.1 Roll Data Assembly
+## 7.1 Roll Data Assembly
 
 Define the canonical shape of roll data at each level:
 
@@ -39,7 +39,7 @@ interface ItemRollData extends ActorRollData {
 }
 ```
 
-## 6.2 Formula Resolution Pipeline
+## 7.2 Formula Resolution Pipeline
 
 1. **Author time**: User writes formula in a field (e.g., `"#self.abilities.str.mod + #self.bab"`)
 2. **FormulaFamiliar**: Schema walker provides autocomplete for `#context.property` paths
@@ -47,7 +47,7 @@ interface ItemRollData extends ActorRollData {
 4. **Roll time**: `Roll.fromTerms()` resolves remaining formulas with full roll data context (including `#target.*` added at execution time)
 5. **Error handling**: Invalid formulas surface warnings via the preparation warning system (not blocking)
 
-## 6.3 FormulaFamiliar Context Declarations
+## 7.3 FormulaFamiliar Context Declarations
 
 Establish the canonical formula contexts used throughout the system:
 
@@ -70,7 +70,7 @@ Dnd35eDocumentMixin.registerFormulaContexts("Item", "weapon", {
 });
 ```
 
-## 6.4 Consistent Formula Paths
+## 7.4 Consistent Formula Paths
 
 Establish and document the canonical `#context.property` paths:
 
@@ -89,7 +89,7 @@ Establish and document the canonical `#context.property` paths:
 | `#target.attributes.ac.normal` | Target's AC (at execution time) |
 | `#action.attackBonus` | Action's computed attack bonus |
 
-## 6.5 Custom Roll Classes
+## 7.5 Custom Roll Classes
 
 These replace Foundry's base `Roll` class for system-specific rolling:
 
@@ -128,7 +128,7 @@ class DamageRoll extends Roll {
 
 > **Note**: These classes were originally planned in the old Phase 7 (Basic Combat), which has been merged. The simple `weapon.rollAttack()` concept is superseded by Phase 8's action chains — but D20Roll and DamageRoll remain as the low-level roll infrastructure the execution engine uses.
 
-## 6.6 Formula Error Surfacing
+## 7.6 Formula Error Surfacing
 
 - `FormulaFormGroup` handles field-level validation in Vue sheets
 - System-level formula evaluation errors in `prepareDerivedData()` need a collection mechanism
@@ -143,7 +143,7 @@ this._preparationWarnings.push({
 });
 ```
 
-## 6.7 Files to Create/Modify
+## 7.7 Files to Create/Modify
 
 | Action | Path |
 |--------|------|

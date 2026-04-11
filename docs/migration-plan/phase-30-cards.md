@@ -1,6 +1,6 @@
 # Phase 30: Cards
 
-**Status**: � Rough Sketch (200+ item checklist, card types, counter mechanics)
+**Status**: 📖 Rough Sketch (200+ item checklist, card types, counter mechanics)
 
 > **Milestone**: Post-Release  
 > **Dependencies**: Phase 8 (Action System)  

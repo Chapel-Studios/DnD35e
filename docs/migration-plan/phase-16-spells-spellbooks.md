@@ -1,6 +1,6 @@
 # Phase 16: Spells & Spellbooks (POC)
 
-**Status**: � Rough Sketch (200+ item checklist, spellbooks, spell slots)
+**Status**: 📖 Rough Sketch (200+ item checklist, spellbooks, spell slots)
 
 > **Milestone**: Beta  
 > **Dependencies**: Phase 7 (Roll Formulas), Phase 8 (Action System)  

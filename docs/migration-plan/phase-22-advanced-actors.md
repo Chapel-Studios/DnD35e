@@ -1,6 +1,6 @@
 # Phase 22: Advanced Actor Types
 
-**Status**: � Rough Sketch (300+ item checklist, NPC/Trap/Object types)
+**Status**: 📖 Rough Sketch (300+ item checklist, NPC/Trap/Object types)
 
 > **Milestone**: Beta  
 > **Dependencies**: Phase 5  

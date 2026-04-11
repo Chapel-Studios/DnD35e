@@ -10,7 +10,7 @@
 
 ---
 
-## 11.1 Feat Item Type
+## 10.1 Feat Item Type
 
 ```
 FeatSystemModel extends ItemSystemModelBase
@@ -22,7 +22,7 @@ FeatSystemModel extends ItemSystemModelBase
 └── (passive bonuses generated as AE changes in prepareDerivedData)
 ```
 
-## 11.2 Feat as Effect Source
+## 10.2 Feat as Effect Source
 
 When a feat is on an actor, its passive bonuses follow the Material pattern:
 - Feat's `prepareDerivedData()` generates system changes targeting the ACTOR
@@ -32,7 +32,7 @@ When a feat is on an actor, its passive bonuses follow the Material pattern:
 
 **Conditional bonuses** (e.g., "+2 attack when flanking") are stored but flagged with a condition. These are **not applied during data prep** — they're checked at roll time in the attack dialog. This is a precursor to the predicate system that may evolve later.
 
-## 11.3 Files to Create/Modify
+## 10.3 Files to Create/Modify
 
 | Action | Path |
 |--------|------|

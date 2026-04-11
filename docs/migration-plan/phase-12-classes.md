@@ -10,7 +10,7 @@
 
 ---
 
-## 13.1 Class Item Type
+## 12.1 Class Item Type
 
 ```
 ClassSystemModel extends ItemSystemModelBase
@@ -26,7 +26,7 @@ ClassSystemModel extends ItemSystemModelBase
 └── source: string
 ```
 
-## 13.2 Multi-Classing
+## 12.2 Multi-Classing
 
 - Actor can have multiple class items
 - Total character level = sum of all class levels
@@ -34,7 +34,7 @@ ClassSystemModel extends ItemSystemModelBase
 - Saves = sum of per-class save progressions
 - HP = sum of per-class HD rolls or averages (configurable via health settings)
 
-## 13.3 Level-Up Flow
+## 12.3 Level-Up Flow
 
 1. Player increases a class item's level (or adds a new class at level 1)
 2. System checks `grantedFeatures` for any at the new level that aren't yet granted
@@ -43,7 +43,7 @@ ClassSystemModel extends ItemSystemModelBase
 5. Skill points added: `skillPointsPerLevel + INT mod`
 6. BAB, saves recalculated in `prepareDerivedData()`
 
-## 13.4 Skills System (Expanded)
+## 12.4 Skills System (Expanded)
 
 Now that classes define class skills and skill points:
 
@@ -58,7 +58,7 @@ SkillData:
 └── total: number (derived: ranks + ability mod + (classSkill && ranks > 0 ? 3 : 0) + misc - ACP)
 ```
 
-## 13.5 Files to Create/Modify
+## 12.5 Files to Create/Modify
 
 | Action | Path |
 |--------|------|

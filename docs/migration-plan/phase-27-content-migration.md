@@ -1,6 +1,6 @@
 # Phase 27: Content Migration
 
-**Status**: � Rough Sketch (300+ item checklist, D35E→dnd35e migration, world transformer)
+**Status**: 📖 Rough Sketch (300+ item checklist, D35E→dnd35e migration, world transformer)
 
 > **Milestone**: Release  
 > **Dependencies**: Phase 26 (Compendium Browser)  

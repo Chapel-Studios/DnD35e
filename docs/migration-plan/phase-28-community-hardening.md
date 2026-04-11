@@ -1,6 +1,6 @@
 # Phase 28: Community Hardening
 
-**Status**: � Rough Sketch (300+ item checklist, feedback collection, balance tuning)
+**Status**: 📖 Rough Sketch (300+ item checklist, feedback collection, balance tuning)
 
 > **Milestone**: Post-Release  
 > **Dependencies**: Phase 27 (Content Migration)  

@@ -1,6 +1,6 @@
 # Phase 19: Full Spells
 
-**Status**: � Rough Sketch (400+ item checklist, spell resistance, concentration, counterspelling)
+**Status**: 📖 Rough Sketch (400+ item checklist, spell resistance, concentration, counterspelling)
 
 > **Milestone**: Beta  
 > **Dependencies**: Phase 17 (Metamagic), Phase 18 (Area Effects & Auras)
