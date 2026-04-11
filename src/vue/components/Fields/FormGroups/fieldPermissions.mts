@@ -83,13 +83,7 @@ const FIELD_OVERRIDES_FLAG = 'fieldOverrides';
  */
 const encodeFieldPath = (fieldPath: string): string => fieldPath.replace(/\./g, '__');
 
-/**
- * Decode a stored flag key back to the original field path.
- */
-const decodeFieldPath = (encodedPath: string): string => encodedPath.replace(/__/g, '.');
-
 export {
-  decodeFieldPath,
   encodeFieldPath,
   everyoneVisibility,
   FIELD_EDITABILITIES,

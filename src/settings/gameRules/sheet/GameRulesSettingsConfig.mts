@@ -34,7 +34,7 @@ class GameRulesSettingsConfig extends VueSettingsBase {
         height: 'auto',
       },
       window: {
-        title: 'DND35E.Settings.GameRules.Title',
+        title: 'dnd35e.SETTINGS.GameRules.Title',
         icon: 'fas fa-list-check',
         resizable: true,
       },
@@ -49,79 +49,79 @@ class GameRulesSettingsConfig extends VueSettingsBase {
   static SECTIONS: SettingsSection[] = [
     // {
     //   key: 'movement',
-    //   label: 'DND35E.Settings.GameRules.Movement',
+    //   label: 'dnd35e.SETTINGS.GameRules.Movement',
     //   fields: [
     //     {
     //       key: GAME_RULES_KEYS.DIAGONAL_MOVEMENT,
-    //       label: 'DND35E.Settings.DiagonalMovement.Name',
-    //       hint: 'DND35E.Settings.DiagonalMovement.Hint',
+    //       label: 'dnd35e.SETTINGS.DiagonalMovement.Name',
+    //       hint: 'dnd35e.SETTINGS.DiagonalMovement.Hint',
     //       type: 'string',
     //       choices: [
-    //         { value: '555', label: 'DND35E.Settings.DiagonalMovement.555' },
-    //         { value: '5105', label: 'DND35E.Settings.DiagonalMovement.5105' },
-    //         { value: 'EUCL', label: 'DND35E.Settings.DiagonalMovement.EUCL' },
+    //         { value: '555', label: 'dnd35e.SETTINGS.DiagonalMovement.555' },
+    //         { value: '5105', label: 'dnd35e.SETTINGS.DiagonalMovement.5105' },
+    //         { value: 'EUCL', label: 'dnd35e.SETTINGS.DiagonalMovement.EUCL' },
     //       ],
     //     },
     //     {
     //       key: GAME_RULES_KEYS.MEASURE_STYLE,
-    //       label: 'DND35E.Settings.MeasureStyle.Name',
-    //       hint: 'DND35E.Settings.MeasureStyle.Hint',
+    //       label: 'dnd35e.SETTINGS.MeasureStyle.Name',
+    //       hint: 'dnd35e.SETTINGS.MeasureStyle.Hint',
     //       type: 'string',
     //       choices: [
-    //         { value: 'center', label: 'DND35E.Settings.MeasureStyle.Center' },
-    //         { value: 'gridSpaces', label: 'DND35E.Settings.MeasureStyle.GridSpaces' },
+    //         { value: 'center', label: 'dnd35e.SETTINGS.MeasureStyle.Center' },
+    //         { value: 'gridSpaces', label: 'dnd35e.SETTINGS.MeasureStyle.GridSpaces' },
     //       ],
     //     },
     //   ],
     // },
     // {
     //   key: 'experience',
-    //   label: 'DND35E.Settings.GameRules.Experience',
+    //   label: 'dnd35e.SETTINGS.GameRules.Experience',
     //   fields: [
     //     {
     //       key: GAME_RULES_KEYS.EXPERIENCE_RATE,
-    //       label: 'DND35E.Settings.ExperienceRate.Name',
-    //       hint: 'DND35E.Settings.ExperienceRate.Hint',
+    //       label: 'dnd35e.SETTINGS.ExperienceRate.Name',
+    //       hint: 'dnd35e.SETTINGS.ExperienceRate.Hint',
     //       type: 'string',
     //       choices: [
-    //         { value: 'slow', label: 'DND35E.Settings.ExperienceRate.Slow' },
-    //         { value: 'medium', label: 'DND35E.Settings.ExperienceRate.Medium' },
-    //         { value: 'fast', label: 'DND35E.Settings.ExperienceRate.Fast' },
+    //         { value: 'slow', label: 'dnd35e.SETTINGS.ExperienceRate.Slow' },
+    //         { value: 'medium', label: 'dnd35e.SETTINGS.ExperienceRate.Medium' },
+    //         { value: 'fast', label: 'dnd35e.SETTINGS.ExperienceRate.Fast' },
     //       ],
     //     },
-    //     { key: GAME_RULES_KEYS.DISABLE_EXPERIENCE_TRACKING, label: 'DND35E.Settings.DisableExperienceTracking.Name', hint: 'DND35E.Settings.DisableExperienceTracking.Hint', type: 'boolean' },
+    //     { key: GAME_RULES_KEYS.DISABLE_EXPERIENCE_TRACKING, label: 'dnd35e.SETTINGS.DisableExperienceTracking.Name', hint: 'dnd35e.SETTINGS.DisableExperienceTracking.Hint', type: 'boolean' },
     //   ],
     // },
     {
       key: 'optionalRules',
-      label: 'DND35E.Settings.GameRules.OptionalRules',
+      label: 'dnd35e.SETTINGS.GameRules.OptionalRules',
       fields: [
-        // { key: GAME_RULES_KEYS.USE_FRACTIONAL_BASE_BONUSES, label: 'DND35E.Settings.UseFractionalBaseBonuses.Name', hint: 'DND35E.Settings.UseFractionalBaseBonuses.Hint', type: 'boolean' },
-        // { key: GAME_RULES_KEYS.ALLOW_BACKGROUND_SKILLS, label: 'DND35E.Settings.AllowBackgroundSkills.Name', hint: 'DND35E.Settings.AllowBackgroundSkills.Hint', type: 'boolean' },
-        // { key: GAME_RULES_KEYS.PSIONICS_ARE_DIFFERENT, label: 'DND35E.Settings.PsionicsAreDifferent.Name', hint: 'DND35E.Settings.PsionicsAreDifferent.Hint', type: 'boolean' },
+        // { key: GAME_RULES_KEYS.USE_FRACTIONAL_BASE_BONUSES, label: 'dnd35e.SETTINGS.UseFractionalBaseBonuses.Name', hint: 'dnd35e.SETTINGS.UseFractionalBaseBonuses.Hint', type: 'boolean' },
+        // { key: GAME_RULES_KEYS.ALLOW_BACKGROUND_SKILLS, label: 'dnd35e.SETTINGS.AllowBackgroundSkills.Name', hint: 'dnd35e.SETTINGS.AllowBackgroundSkills.Hint', type: 'boolean' },
+        // { key: GAME_RULES_KEYS.PSIONICS_ARE_DIFFERENT, label: 'dnd35e.SETTINGS.PsionicsAreDifferent.Name', hint: 'dnd35e.SETTINGS.PsionicsAreDifferent.Hint', type: 'boolean' },
       ],
     },
     // {
     //   key: 'vision',
-    //   label: 'DND35E.Settings.GameRules.Vision',
+    //   label: 'dnd35e.SETTINGS.GameRules.Vision',
     //   fields: [
     //     {
     //       key: GAME_RULES_KEYS.LOW_LIGHT_VISION_MODE,
-    //       label: 'DND35E.Settings.LowLightVisionMode.Name',
-    //       hint: 'DND35E.Settings.LowLightVisionMode.Hint',
+    //       label: 'dnd35e.SETTINGS.LowLightVisionMode.Name',
+    //       hint: 'dnd35e.SETTINGS.LowLightVisionMode.Hint',
     //       type: 'string',
     //       choices: [
-    //         { value: 'dim', label: 'DND35E.Settings.LowLightVisionMode.Dim' },
-    //         { value: 'bright', label: 'DND35E.Settings.LowLightVisionMode.Bright' },
+    //         { value: 'dim', label: 'dnd35e.SETTINGS.LowLightVisionMode.Dim' },
+    //         { value: 'bright', label: 'dnd35e.SETTINGS.LowLightVisionMode.Bright' },
     //       ],
     //     },
     //   ],
     // },
     // {
     //   key: 'sheets',
-    //   label: 'DND35E.Settings.GameRules.Sheets',
+    //   label: 'dnd35e.SETTINGS.GameRules.Sheets',
     //   fields: [
-    //     { key: GAME_RULES_KEYS.USE_COMBAT_CHARACTER_SHEET, label: 'DND35E.Settings.UseCombatCharacterSheet.Name', hint: 'DND35E.Settings.UseCombatCharacterSheet.Hint', type: 'boolean' },
+    //     { key: GAME_RULES_KEYS.USE_COMBAT_CHARACTER_SHEET, label: 'dnd35e.SETTINGS.UseCombatCharacterSheet.Name', hint: 'dnd35e.SETTINGS.UseCombatCharacterSheet.Hint', type: 'boolean' },
     //   ],
     // },
   ];
@@ -176,11 +176,11 @@ class GameRulesSettingsConfig extends VueSettingsBase {
         }
       }
 
-      ui.notifications.info(game.i18n.localize('DND35E.Settings.ChangesSaved'));
+      ui.notifications.info(game.i18n.localize('dnd35e.SETTINGS.ChangesSaved'));
       await this.close();
     } catch (error) {
       console.error('Failed to save game rules settings:', error);
-      ui.notifications.error(game.i18n.localize('DND35E.Settings.SaveError'));
+      ui.notifications.error(game.i18n.localize('dnd35e.SETTINGS.SaveError'));
     }
   }
 }

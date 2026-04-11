@@ -30,7 +30,7 @@ class CurrencySettingsConfig extends VueSettingsBase {
         height: 'auto',
       },
       window: {
-        title: 'DND35E.Settings.CurrencyConfig.Title',
+        title: 'dnd35e.SETTINGS.CurrencyConfig.Title',
         icon: 'fas fa-coins',
         resizable: true,
       },
@@ -86,10 +86,10 @@ class CurrencySettingsConfig extends VueSettingsBase {
     // try {
     //   await game.settings.set(SYSTEM_ID, CURRENCY_KEY, data);
 
-    //   ui.notifications.info(game.i18n.localize('DND35E.Settings.ChangesSaved'));
+    //   ui.notifications.info(game.i18n.localize('dnd35e.SETTINGS.ChangesSaved'));
     // } catch (error) {
     //   console.error('Failed to save currency settings:', error);
-    //   ui.notifications.error(game.i18n.localize('DND35E.Settings.SaveError'));
+    //   ui.notifications.error(game.i18n.localize('dnd35e.SETTINGS.SaveError'));
     // }
     await this.close();
   }

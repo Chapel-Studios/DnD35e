@@ -84,7 +84,7 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
     },
     createEffect: async () => {
       const effectData = {
-        name: game.i18n.localize('D35E.EffectNew'),
+        name: game.i18n.localize('dnd35e.EFFECT.New'),
         img: 'icons/svg/aura.svg',
         origin: document.value.uuid,
         disabled: false,

@@ -17,7 +17,7 @@
 
     <!-- Skill Visibility Tab -->
     <section v-show="activeTab === 'visibility'" class="tab" data-group="primary" data-tab="visibility">
-      <p class="notes">{{ localize('DND35E.Settings.SkillSettings.VisibilityInstructions') }}</p>
+      <p class="notes">{{ localize('dnd35e.SETTINGS.SkillSettings.VisibilityInstructions') }}</p>
 
       <div class="skills-grid">
         <div v-for="(skillName, skillKey) in systemSkills" :key="skillKey" class="form-group">
@@ -26,8 +26,8 @@
             :value="context.data.skills[skillKey] || ''"
             @change="onUpdate(`skills.${skillKey}`, ($event.target as HTMLSelectElement).value)"
           >
-            <option value="">{{ localize('DND35E.Show') }}</option>
-            <option value="hide">{{ localize('DND35E.Hide') }}</option>
+            <option value="">{{ localize('dnd35e.COMMON.Show') }}</option>
+            <option value="hide">{{ localize('dnd35e.COMMON.Hide') }}</option>
           </select>
         </div>
       </div>
@@ -35,18 +35,18 @@
 
     <!-- Custom Skills Tab -->
     <section v-show="activeTab === 'custom'" class="tab" data-group="primary" data-tab="custom">
-      <p class="notes">{{ localize('DND35E.Settings.SkillSettings.CustomSkillsInstructions') }}</p>
+      <p class="notes">{{ localize('dnd35e.SETTINGS.SkillSettings.CustomSkillsInstructions') }}</p>
 
       <!-- Custom Skills Table -->
       <div class="skills-table">
         <!-- Header -->
         <div class="table-header">
-          <span class="col-name">{{ localize('DND35E.Settings.SkillSettings.Name') }}</span>
-          <span class="col-ability">{{ localize('DND35E.Settings.SkillSettings.Ability') }}</span>
-          <span class="col-training">{{ localize('DND35E.Settings.SkillSettings.RequiresTraining') }}</span>
-          <span class="col-acp">{{ localize('DND35E.Settings.SkillSettings.ArmorCheckPenalty') }}</span>
+          <span class="col-name">{{ localize('dnd35e.SETTINGS.SkillSettings.Name') }}</span>
+          <span class="col-ability">{{ localize('dnd35e.SETTINGS.SkillSettings.Ability') }}</span>
+          <span class="col-training">{{ localize('dnd35e.SETTINGS.SkillSettings.RequiresTraining') }}</span>
+          <span class="col-acp">{{ localize('dnd35e.SETTINGS.SkillSettings.ArmorCheckPenalty') }}</span>
           <span class="col-actions">
-            <button type="button" class="add-btn" @click="addCustomSkill" :title="localize('DND35E.Add')">
+            <button type="button" class="add-btn" @click="addCustomSkill" :title="localize('dnd35e.COMMON.Add')">
               <i class="fas fa-plus" />
             </button>
           </span>
@@ -74,19 +74,19 @@
             :value="skill.requiresTraining.toString()"
             @change="updateCustomSkill(index, 'requiresTraining', ($event.target as HTMLSelectElement).value === 'true')"
           >
-            <option value="true">{{ localize('DND35E.True') }}</option>
-            <option value="false">{{ localize('DND35E.False') }}</option>
+            <option value="true">{{ localize('dnd35e.COMMON.True') }}</option>
+            <option value="false">{{ localize('dnd35e.COMMON.False') }}</option>
           </select>
           <select
             class="col-acp"
             :value="skill.armorCheckPenalty.toString()"
             @change="updateCustomSkill(index, 'armorCheckPenalty', ($event.target as HTMLSelectElement).value === 'true')"
           >
-            <option value="true">{{ localize('DND35E.True') }}</option>
-            <option value="false">{{ localize('DND35E.False') }}</option>
+            <option value="true">{{ localize('dnd35e.COMMON.True') }}</option>
+            <option value="false">{{ localize('dnd35e.COMMON.False') }}</option>
           </select>
           <span class="col-actions">
-            <button type="button" class="delete-btn" @click="removeCustomSkill(index)" :title="localize('DND35E.Delete')">
+            <button type="button" class="delete-btn" @click="removeCustomSkill(index)" :title="localize('dnd35e.COMMON.Delete')">
               <i class="fas fa-minus" />
             </button>
           </span>
@@ -94,7 +94,7 @@
 
         <!-- Empty state -->
         <div v-if="customSkills.length === 0" class="table-empty">
-          {{ localize('DND35E.Settings.SkillSettings.NoCustomSkills') }}
+          {{ localize('dnd35e.SETTINGS.SkillSettings.NoCustomSkills') }}
         </div>
       </div>
     </section>
@@ -103,11 +103,11 @@
     <footer class="form-footer">
       <button type="button" class="reset-btn" @click="onReset">
         <i class="fas fa-undo" />
-        {{ localize('DND35E.Settings.Reset') }}
+        {{ localize('dnd35e.SETTINGS.Reset') }}
       </button>
       <button type="submit" class="save-btn">
         <i class="fas fa-save" />
-        {{ localize('DND35E.Settings.Save') }}
+        {{ localize('dnd35e.SETTINGS.Save') }}
       </button>
     </footer>
   </form>
@@ -138,8 +138,8 @@
   const activeTab = ref('visibility');
 
   const tabs: TabInfo[] = [
-    { id: 'visibility', label: 'DND35E.Settings.SkillSettings.Visibility', icon: 'fas fa-eye' },
-    { id: 'custom', label: 'DND35E.Settings.SkillSettings.CustomSkills', icon: 'fas fa-plus-circle' },
+    { id: 'visibility', label: 'dnd35e.SETTINGS.SkillSettings.Visibility', icon: 'fas fa-eye' },
+    { id: 'custom', label: 'dnd35e.SETTINGS.SkillSettings.CustomSkills', icon: 'fas fa-plus-circle' },
   ];
 
   // todo: these should come from config

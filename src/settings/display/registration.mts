@@ -19,8 +19,8 @@ import {
  */
 function registerDisplayWorldSettings(): void {
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.UNITS, {
-    name: 'DND35E.Settings.Units.Name',
-    hint: 'DND35E.Settings.Units.Hint',
+    name: 'dnd35e.SETTINGS.Units.Name',
+    hint: 'dnd35e.SETTINGS.Units.Hint',
     scope: 'world',
     config: false,
     type: String,
@@ -37,8 +37,8 @@ function registerDisplayWorldSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.PLAYERS_NO_DAMAGE_DETAILS, {
-    name: 'DND35E.Settings.PlayersNoDamageDetails.Name',
-    hint: 'DND35E.Settings.PlayersNoDamageDetails.Hint',
+    name: 'dnd35e.SETTINGS.PlayersNoDamageDetails.Name',
+    hint: 'dnd35e.SETTINGS.PlayersNoDamageDetails.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -46,8 +46,8 @@ function registerDisplayWorldSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.PLAYERS_NO_DC_DETAILS, {
-    name: 'DND35E.Settings.PlayersNoDCDetails.Name',
-    hint: 'DND35E.Settings.PlayersNoDCDetails.Hint',
+    name: 'dnd35e.SETTINGS.PlayersNoDCDetails.Name',
+    hint: 'dnd35e.SETTINGS.PlayersNoDCDetails.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -55,8 +55,8 @@ function registerDisplayWorldSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.ALLOW_PLAYERS_APPLY_ACTIONS, {
-    name: 'DND35E.Settings.AllowPlayersApplyActions.Name',
-    hint: 'DND35E.Settings.AllowPlayersApplyActions.Hint',
+    name: 'dnd35e.SETTINGS.AllowPlayersApplyActions.Name',
+    hint: 'dnd35e.SETTINGS.AllowPlayersApplyActions.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -64,8 +64,8 @@ function registerDisplayWorldSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.PLAYERS_SHOW_CONTEXT_NOTES, {
-    name: 'DND35E.Settings.PlayersShowContextNotes.Name',
-    hint: 'DND35E.Settings.PlayersShowContextNotes.Hint',
+    name: 'dnd35e.SETTINGS.PlayersShowContextNotes.Name',
+    hint: 'dnd35e.SETTINGS.PlayersShowContextNotes.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -74,8 +74,8 @@ function registerDisplayWorldSettings(): void {
 
   // Token & Vision World Settings
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.GLOBAL_DISABLE_TOKEN_LIGHT, {
-    name: 'DND35E.Settings.GlobalDisableTokenLight.Name',
-    hint: 'DND35E.Settings.GlobalDisableTokenLight.Hint',
+    name: 'dnd35e.SETTINGS.GlobalDisableTokenLight.Name',
+    hint: 'dnd35e.SETTINGS.GlobalDisableTokenLight.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -83,8 +83,8 @@ function registerDisplayWorldSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.GLOBAL_DISABLE_TOKEN_VISION, {
-    name: 'DND35E.Settings.GlobalDisableTokenVision.Name',
-    hint: 'DND35E.Settings.GlobalDisableTokenVision.Hint',
+    name: 'dnd35e.SETTINGS.GlobalDisableTokenVision.Name',
+    hint: 'dnd35e.SETTINGS.GlobalDisableTokenVision.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -92,8 +92,8 @@ function registerDisplayWorldSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.HIDE_TOKEN_CONDITIONS, {
-    name: 'DND35E.Settings.HideTokenConditions.Name',
-    hint: 'DND35E.Settings.HideTokenConditions.Hint',
+    name: 'dnd35e.SETTINGS.HideTokenConditions.Name',
+    hint: 'dnd35e.SETTINGS.HideTokenConditions.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -101,8 +101,8 @@ function registerDisplayWorldSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.CORE_EFFECTS, {
-    name: 'DND35E.Settings.CoreEffects.Name',
-    hint: 'DND35E.Settings.CoreEffects.Hint',
+    name: 'dnd35e.SETTINGS.CoreEffects.Name',
+    hint: 'dnd35e.SETTINGS.CoreEffects.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -113,8 +113,8 @@ function registerDisplayWorldSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.SHARED_VISION_MODE, {
-    name: 'DND35E.Settings.SharedVisionMode.Name',
-    hint: 'DND35E.Settings.SharedVisionMode.Hint',
+    name: 'dnd35e.SETTINGS.SharedVisionMode.Name',
+    hint: 'dnd35e.SETTINGS.SharedVisionMode.Hint',
     scope: 'world',
     config: false,
     type: String,
@@ -127,8 +127,8 @@ function registerDisplayWorldSettings(): void {
 
   // Items & Shopping
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.CHANGE_SCROLL_ICON, {
-    name: 'DND35E.Settings.ChangeScrollIcon.Name',
-    hint: 'DND35E.Settings.ChangeScrollIcon.Hint',
+    name: 'dnd35e.SETTINGS.ChangeScrollIcon.Name',
+    hint: 'dnd35e.SETTINGS.ChangeScrollIcon.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -136,8 +136,8 @@ function registerDisplayWorldSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.BUY_CHAT, {
-    name: 'DND35E.Settings.BuyChat.Name',
-    hint: 'DND35E.Settings.BuyChat.Hint',
+    name: 'dnd35e.SETTINGS.BuyChat.Name',
+    hint: 'dnd35e.SETTINGS.BuyChat.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -145,8 +145,8 @@ function registerDisplayWorldSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.CLEAR_INVENTORY, {
-    name: 'DND35E.Settings.ClearInventory.Name',
-    hint: 'DND35E.Settings.ClearInventory.Hint',
+    name: 'dnd35e.SETTINGS.ClearInventory.Name',
+    hint: 'dnd35e.SETTINGS.ClearInventory.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -159,8 +159,8 @@ function registerDisplayWorldSettings(): void {
  */
 function registerDisplayClientSettings(): void {
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.SHOW_PARTY_HUD, {
-    name: 'DND35E.Settings.PartyHud.Name',
-    hint: 'DND35E.Settings.PartyHud.Hint',
+    name: 'dnd35e.SETTINGS.PartyHud.Name',
+    hint: 'dnd35e.SETTINGS.PartyHud.Hint',
     scope: 'client',
     config: false,
     type: String,
@@ -172,8 +172,8 @@ function registerDisplayClientSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.SHOW_PARTY_HUD_TOKEN_IMAGE, {
-    name: 'DND35E.Settings.PartyHudTokenImage.Name',
-    hint: 'DND35E.Settings.PartyHudTokenImage.Hint',
+    name: 'dnd35e.SETTINGS.PartyHudTokenImage.Name',
+    hint: 'dnd35e.SETTINGS.PartyHudTokenImage.Hint',
     scope: 'client',
     config: false,
     type: Boolean,
@@ -184,8 +184,8 @@ function registerDisplayClientSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.CUSTOM_SKIN, {
-    name: 'DND35E.Settings.CustomSkin.Name',
-    hint: 'DND35E.Settings.CustomSkin.Hint',
+    name: 'dnd35e.SETTINGS.CustomSkin.Name',
+    hint: 'dnd35e.SETTINGS.CustomSkin.Hint',
     scope: 'client',
     config: false,
     type: Boolean,
@@ -196,8 +196,8 @@ function registerDisplayClientSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.COLORBLIND_COLORS, {
-    name: 'DND35E.Settings.ColorblindColors.Name',
-    hint: 'DND35E.Settings.ColorblindColors.Hint',
+    name: 'dnd35e.SETTINGS.ColorblindColors.Name',
+    hint: 'dnd35e.SETTINGS.ColorblindColors.Hint',
     scope: 'client',
     config: false,
     type: Boolean,
@@ -208,8 +208,8 @@ function registerDisplayClientSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.TRANSPARENT_SIDEBAR, {
-    name: 'DND35E.Settings.TransparentSidebar.Name',
-    hint: 'DND35E.Settings.TransparentSidebar.Hint',
+    name: 'dnd35e.SETTINGS.TransparentSidebar.Name',
+    hint: 'dnd35e.SETTINGS.TransparentSidebar.Hint',
     scope: 'client',
     config: false,
     type: Boolean,
@@ -220,8 +220,8 @@ function registerDisplayClientSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.AUTO_COLLAPSE_ITEM_CARDS, {
-    name: 'DND35E.Settings.AutoCollapseItemCards.Name',
-    hint: 'DND35E.Settings.AutoCollapseItemCards.Hint',
+    name: 'dnd35e.SETTINGS.AutoCollapseItemCards.Name',
+    hint: 'dnd35e.SETTINGS.AutoCollapseItemCards.Hint',
     scope: 'client',
     config: false,
     type: Boolean,
@@ -232,8 +232,8 @@ function registerDisplayClientSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.CLASS_FEATURES_IN_TABS, {
-    name: 'DND35E.Settings.ClassFeaturesInTabs.Name',
-    hint: 'DND35E.Settings.ClassFeaturesInTabs.Hint',
+    name: 'dnd35e.SETTINGS.ClassFeaturesInTabs.Name',
+    hint: 'dnd35e.SETTINGS.ClassFeaturesInTabs.Hint',
     scope: 'client',
     config: false,
     type: Boolean,
@@ -241,8 +241,8 @@ function registerDisplayClientSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.HIDE_SPELL_DESCRIPTIONS, {
-    name: 'DND35E.Settings.HideSpellDescriptions.Name',
-    hint: 'DND35E.Settings.HideSpellDescriptions.Hint',
+    name: 'dnd35e.SETTINGS.HideSpellDescriptions.Name',
+    hint: 'dnd35e.SETTINGS.HideSpellDescriptions.Hint',
     scope: 'client',
     config: false,
     type: Boolean,
@@ -250,8 +250,8 @@ function registerDisplayClientSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.HIDE_SPELL_DESCRIPTIONS_IF_HAS_ACTION, {
-    name: 'DND35E.Settings.HideSpellDescriptionsIfHasAction.Name',
-    hint: 'DND35E.Settings.HideSpellDescriptionsIfHasAction.Hint',
+    name: 'dnd35e.SETTINGS.HideSpellDescriptionsIfHasAction.Name',
+    hint: 'dnd35e.SETTINGS.HideSpellDescriptionsIfHasAction.Hint',
     scope: 'client',
     config: false,
     type: Boolean,
@@ -262,8 +262,8 @@ function registerDisplayClientSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.SAVE_ATTACK_WINDOW, {
-    name: 'DND35E.Settings.SaveAttackWindow.Name',
-    hint: 'DND35E.Settings.SaveAttackWindow.Hint',
+    name: 'dnd35e.SETTINGS.SaveAttackWindow.Name',
+    hint: 'dnd35e.SETTINGS.SaveAttackWindow.Hint',
     scope: 'client',
     config: false,
     type: Boolean,
@@ -271,8 +271,8 @@ function registerDisplayClientSettings(): void {
   });
 
   game.settings.register(SYSTEM_ID, DISPLAY_CLIENT_KEYS.HIDE_PLAYERS_LIST, {
-    name: 'DND35E.Settings.HidePlayersList.Name',
-    hint: 'DND35E.Settings.HidePlayersList.Hint',
+    name: 'dnd35e.SETTINGS.HidePlayersList.Name',
+    hint: 'dnd35e.SETTINGS.HidePlayersList.Hint',
     scope: 'client',
     config: false,
     type: Boolean,

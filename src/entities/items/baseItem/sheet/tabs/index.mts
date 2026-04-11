@@ -4,7 +4,7 @@ import Effects from './Effects.vue';
 
 const defaultEffectsTab: SheetTab = {
   id: 'effects',
-  label: 'D35E.Effects',
+  label: 'dnd35e.EFFECT.Effects',
   component: Effects,
   order: 100,
   icon: 'fas fa-bolt',

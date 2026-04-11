@@ -10,7 +10,7 @@ import { CURRENCY_KEY, DEFAULT_CURRENCY_CONFIG } from './constants.mjs';
  */
 function registerCurrencySettings(): void {
   game.settings.register(SYSTEM_ID, CURRENCY_KEY, {
-    name: 'DND35E.Settings.CurrencyConfig',
+    name: 'dnd35e.SETTINGS.CurrencyConfig',
     scope: 'world',
     config: false,
     type: Object,

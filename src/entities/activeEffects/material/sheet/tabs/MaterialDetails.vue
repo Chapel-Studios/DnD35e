@@ -4,7 +4,6 @@
       <ItemHardness />
       <!-- HP per Inch -->
       <NumberFormGroup
-        label="D35E.bonusHp"
         :value="bonusHp"
         field-path="system.bonusHp"
       />
@@ -15,17 +14,17 @@
     <template #outer-append>
       <div class="material-details-container grid-full-row">
         <!-- 
-        <h3 class="form-header">{{ localize("D35E.MagicEquivalent") }}</h3>
+        <h3 class="form-header">{{ localize("dnd35e.ITEM.MagicEquivalent") }}</h3>
 
         <NumberFormGroup
-          label="D35E.MagicEquivalent"
+          label="dnd35e.ITEM.MagicEquivalent"
           :value="magicEquivalency"
           field-path="system.magicEquivalency"
           direct-update
         />
 
         <span class="notes">
-          <em>{{ localize("D35E.MagicEquivalentDescription") }}</em>
+          <em>{{ localize("dnd35e.ITEM.MagicEquivalentDescription") }}</em>
         </span>
         -->
       </div>
@@ -33,14 +32,14 @@
       <!-- Hardness -->
       <!--
       <NumberFormGroup
-        label="D35E.Hardness"
+        label="dnd35e.ITEM.Hardness"
         :value="bonusHardness"
         field-path="system.bonusHardness"
         direct-update
       /> -->
 
       <!-- <NumberFormGroup
-        label="D35E.HpPerInch"
+        label="dnd35e.ITEM.HpPerInch"
         :value="bonusHpPerInch"
         field-path="system.bonusHpPerInch"
         direct-update
@@ -48,18 +47,18 @@
       -->
 
       <!--
-      <h3 class="form-header">{{ localize("D35E.MagicEquivalent") }}</h3>
+      <h3 class="form-header">{{ localize("dnd35e.ITEM.MagicEquivalent") }}</h3>
 
 
 
       <span class="notes">
-        <em>{{ localize("D35E.MagicEquivalentDescription") }}</em>
+        <em>{{ localize("dnd35e.ITEM.MagicEquivalentDescription") }}</em>
       </span>
       -->
 
       <!-- GM‑Only Section -->
       <!-- <template v-if="userIsGM">
-        <h3 class="form-header">{{ localize("D35E.SystemProperties") }}</h3>
+        <h3 class="form-header">{{ localize("dnd35e.COMMON.SystemProperties") }}</h3>
         <UniqueId />
       </template> -->
     </template>

@@ -9,17 +9,19 @@ const {
 } = foundry.data.fields;
 
 abstract class ItemSystemModelBase extends Dnd35eDocumentSystemModel<foundry.documents.Item> {
+  static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.ITEM'];
+
   static override defineSchema (): Record<string, any> {
     const superSchema = super.defineSchema();
     const schema = {
       origin: new SchemaField({
-        originId: requiredStringField('D35E.OriginId', 'D35E.OriginIdHint'),
-        originVersion: requiredStringField('D35E.OriginVersion', 'D35E.OriginVersionHint'),
-        originPack: requiredStringField('D35E.OriginPack', 'D35E.OriginPackHint'),
+        originId: requiredStringField(),
+        originVersion: requiredStringField(),
+        originPack: requiredStringField(),
       }, { required: false, nullable: true }),
 
-      isPsionic: requiredBooleanField('D35E.IsPsionic', 'D35E.IsPsionicHint'),
-      isEpic: requiredBooleanField('D35E.IsEpic', 'D35E.IsEpicHint'),
+      isPsionic: requiredBooleanField(),
+      isEpic: requiredBooleanField(),
     };
         
     return foundry.utils.mergeObject(superSchema, schema);

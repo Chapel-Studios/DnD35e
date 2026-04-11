@@ -17,6 +17,7 @@ const IdentifiableEffectSystemModel = IdentifiableSchemaMixin(ActiveEffectSystem
 
 class MaterialSystemModel extends IdentifiableEffectSystemModel {
   static override targetContexts: TargetContexts = { item: ['weapon'] };
+  static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.MATERIAL'];
 
   static override defineSchema () {
     const schema = super.defineSchema();
@@ -26,10 +27,10 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
       { contextName: 'Item', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['Parent'] },
     ];
 
-    schema.price = new Dnd35eField(PriceField, {}, { label: 'Price', hint: 'The price modifier for this material.' });
-    schema.magicEquivalency = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Magic Equivalency', hint: 'The magic equivalency of this material.' });
-    schema.hardness = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Hardness', hint: 'The hardness of this material.' });
-    schema.bonusHp = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Bonus HP', hint: 'The bonus HP provided by this material.' });
+    schema.price = new Dnd35eField(PriceField, {});
+    schema.magicEquivalency = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 });
+    schema.hardness = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 });
+    schema.bonusHp = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 });
     schema.damageReductionTypes = new foundry.data.fields.SetField(
       new foundry.data.fields.StringField({ required: true }),
       { initial: [] }

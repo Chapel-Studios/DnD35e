@@ -33,7 +33,7 @@ class SkillSettingsConfig extends VueSettingsBase {
         height: 500,
       },
       window: {
-        title: 'DND35E.Settings.SkillSettings.Title',
+        title: 'dnd35e.SETTINGS.SkillSettings.Title',
         icon: 'fas fa-book-open',
         resizable: true,
       },
@@ -85,11 +85,11 @@ class SkillSettingsConfig extends VueSettingsBase {
     try {
       await game.settings.set(SYSTEM_ID, SKILLS_KEY, data);
 
-      ui.notifications.info(game.i18n.localize('DND35E.Settings.ChangesSaved'));
+      ui.notifications.info(game.i18n.localize('dnd35e.SETTINGS.ChangesSaved'));
       await this.close();
     } catch (error) {
       console.error('Failed to save skill settings:', error);
-      ui.notifications.error(game.i18n.localize('DND35E.Settings.SaveError'));
+      ui.notifications.error(game.i18n.localize('dnd35e.SETTINGS.SaveError'));
     }
   }
 
@@ -98,10 +98,10 @@ class SkillSettingsConfig extends VueSettingsBase {
    */
   async #onReset(): Promise<void> {
     const confirmed = await foundry.applications.api.DialogV2.confirm({
-      window: { title: game.i18n.localize('DND35E.Settings.ResetConfirm.Title') },
-      content: `<p>${game.i18n.localize('DND35E.Settings.ResetConfirm.Content')}</p>`,
+      window: { title: game.i18n.localize('dnd35e.SETTINGS.ResetConfirm.Title') },
+      content: `<p>${game.i18n.localize('dnd35e.SETTINGS.ResetConfirm.Content')}</p>`,
       yes: {
-        label: game.i18n.localize('DND35E.Settings.Reset'),
+        label: game.i18n.localize('dnd35e.SETTINGS.Reset'),
         icon: 'fas fa-undo',
       },
       no: {

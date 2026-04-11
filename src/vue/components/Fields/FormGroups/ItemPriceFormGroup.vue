@@ -13,7 +13,7 @@
         v-if="editable && !isDisabled"
         type="button"
         class="field-control-btn add-stack-btn"
-        :title="localize('DND35E.Currency.AddCoinStack')"
+        :title="localize('dnd35e.Currency.AddCoinStack')"
         @click="addCoinStack"
       >
         <i class="fas fa-plus" />
@@ -22,7 +22,7 @@
         v-if="editable && !isDisabled && hasEditStacks"
         type="button"
         class="field-control-btn consolidate-btn"
-        :title="localize('DND35E.Currency.Consolidate')"
+        :title="localize('dnd35e.Currency.Consolidate')"
         @click="consolidatePrice"
       >
         <i class="fas fa-compress-arrows-alt" />
@@ -58,7 +58,7 @@
           v-if="!isDisabled"
           type="button"
           class="remove-stack-btn"
-          :title="localize('DND35E.Currency.RemoveCoinStack')"
+          :title="localize('dnd35e.Currency.RemoveCoinStack')"
           @click="removeCoinStack(index)"
         >
           <i class="fas fa-times" />

@@ -30,8 +30,8 @@ abstract class Dnd35eActiveEffectConfig extends VueActiveEffectConfig {
     if (incompleteIndices.length > 0) {
       const confirmed = await foundry.applications.api.DialogV2.confirm({
         window: { title: game.i18n.localize('EFFECT.TABS.changes') },
-        content: `<p>${game.i18n.localize('DND35E.Effects.IncompleteChangesWarning')}</p>`,
-        yes: { label: game.i18n.localize('DND35E.Discard') },
+        content: `<p>${game.i18n.localize('dnd35e.EFFECT.IncompleteChangesWarning')}</p>`,
+        yes: { label: game.i18n.localize('dnd35e.COMMON.Discard') },
         no: { label: game.i18n.localize('Cancel') },
       });
 

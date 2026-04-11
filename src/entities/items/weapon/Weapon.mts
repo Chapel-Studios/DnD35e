@@ -23,7 +23,7 @@ class Weapon extends EquippableItem {
 
   //   return this.system.isEquipped
   //     ? 'D35E.Equipped'
-  //     : 'D35E.NotEquipped';
+  //     : 'dnd35e.COMMON.NotEquipped';
   // }
 }
 

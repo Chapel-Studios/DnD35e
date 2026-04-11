@@ -5,8 +5,8 @@ const registerUnitOfMeasure = (): void => {
    * System of Units
    */
   game.settings.register(SYSTEM_ID, UNIT_SETTINGS_KEY, {
-    name: 'DND35E.Settings.MeasurementUnitsN',
-    hint: 'DND35E.Settings.MeasurementUnitsL',
+    name: 'dnd35e.SETTINGS.MeasurementUnitsN',
+    hint: 'dnd35e.SETTINGS.MeasurementUnitsL',
     scope: 'world',
     config: true,
     default: imperialUnitOfMeasure,

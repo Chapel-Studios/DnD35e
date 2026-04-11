@@ -156,7 +156,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   
   get localizedType (): string {
     return ITEM_TYPES_LOCALIZED[this.type] ??
-      'D35E.Item';
+      'dnd35e.COMMON.Item';
   }
 
   get _displayName (): string {

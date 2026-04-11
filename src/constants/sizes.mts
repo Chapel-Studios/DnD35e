@@ -5,7 +5,7 @@ type Size = (typeof SIZES)[number];
 
 const SIZE_SELECT_OPTIONS: SelectOption<Size>[] = SIZES.map(size => ({
   value: size,
-  label: `D35E.Size.${size}`,
+  label: `dnd35e.SIZE.${size}`,
 }));
 
 export {

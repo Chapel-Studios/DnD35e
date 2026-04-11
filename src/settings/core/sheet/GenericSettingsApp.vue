@@ -50,7 +50,7 @@
     <footer class="form-footer">
       <button type="submit" class="save-btn">
         <i class="fas fa-save" />
-        {{ localize('DND35E.Settings.Save') }}
+        {{ localize('dnd35e.SETTINGS.Save') }}
       </button>
     </footer>
   </form>

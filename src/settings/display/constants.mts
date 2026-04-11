@@ -55,23 +55,23 @@ export const DISPLAY_MENU = 'displayConfig';
  * Unit choices
  */
 export const UNIT_CHOICES = {
-  imperial: 'DND35E.Settings.Units.Imperial',
-  metric: 'DND35E.Settings.Units.Metric',
+  imperial: 'dnd35e.SETTINGS.Units.Imperial',
+  metric: 'dnd35e.SETTINGS.Units.Metric',
 } as const;
 
 /**
  * Party HUD choices
  */
 export const PARTY_HUD_CHOICES = {
-  full: 'DND35E.Settings.PartyHud.Full',
-  narrow: 'DND35E.Settings.PartyHud.Narrow',
-  none: 'DND35E.Settings.PartyHud.None',
+  full: 'dnd35e.SETTINGS.PartyHud.Full',
+  narrow: 'dnd35e.SETTINGS.PartyHud.Narrow',
+  none: 'dnd35e.SETTINGS.PartyHud.None',
 } as const;
 
 /**
  * Shared vision mode choices
  */
 export const SHARED_VISION_MODE_CHOICES = {
-  '0': 'DND35E.Settings.SharedVision.WithoutSelection',
-  '1': 'DND35E.Settings.SharedVision.WithSelection',
+  '0': 'dnd35e.SETTINGS.SharedVision.WithoutSelection',
+  '1': 'dnd35e.SETTINGS.SharedVision.WithSelection',
 } as const;
