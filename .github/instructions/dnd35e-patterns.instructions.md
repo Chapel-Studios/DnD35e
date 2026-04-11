@@ -114,6 +114,20 @@ Resolution: when multiple AEs apply same field, only highest value in each `bonu
 
 See `vue-sheet-patterns.instructions.md` for sheet-specific patterns.
 
+## Localization Architecture
+
+All field labels/hints are auto-localized via Foundry's `LOCALIZATION_PREFIXES` system. See `foundry-data-fields.instructions.md` for details.
+
+**Key conventions:**
+- Every DataModel declares `static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.MODEL_NAME']`
+- Language files use nested `dnd35e.MODEL_NAME.FIELDS.fieldName.label/.hint` structure
+- Split source files (`src/lang/en/*.json`) are deep-merged at build time into one `dist/lang/en.json`
+- `field.options.label` is **pre-localized text** after startup (not a key)
+- FormGroup auto-derives labels from schema — no explicit `label` prop needed
+- Explicit `label`/`hint` props are treated as localization keys (passed through `game.i18n.localize()`)
+- Non-field strings (enum values, headings, buttons) use `game.i18n.localize('dnd35e.DOMAIN.Key')`
+- All keys use `dnd35e.*` namespace (not `DND35E.*` or `D35E.*`)
+
 ## Dnd35eField Compound Wrapping
 
 See `dnd35e-field.instructions.md` for field wrapping and usage.

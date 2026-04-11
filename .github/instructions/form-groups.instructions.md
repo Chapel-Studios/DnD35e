@@ -8,19 +8,18 @@ description: "Use when building form components, FormGroup variants, or sheet-le
 
 All form inputs inherit from `FormGroup.vue` base component. It provides:
 
+- **Auto-derived labels & hints** from schema fields (via `LOCALIZATION_PREFIXES`)
 - **View/Edit mode toggle** (sheet-level)
 - **Field permissions** (visibility, editability)
-- **Label & description** rendering
 - **Slot system** (edit, readonly, controls)
 
 ```vue
+<!-- Label auto-derived from schema — no explicit label needed -->
 <FormGroup 
-  label="Hardness" 
   :value="hardnessValue"
   field-path="system.hardness"
   :default-visibility="'everyone'"
   :default-editability="'normal'"
-  @update="updateField"
 >
   <!-- Slot: edit mode input -->
   <input v-model="editValue" type="number" />
@@ -35,66 +34,63 @@ All form inputs inherit from `FormGroup.vue` base component. It provides:
 </FormGroup>
 ```
 
-## Props & Emits
+## Label & Hint Auto-Derivation
 
-### Inherited by All FormGroups
+FormGroup **auto-derives labels and hints from the schema** using Foundry's `LOCALIZATION_PREFIXES`. No explicit `label` prop is needed in most cases.
 
-```vue
-<script>
-export default {
-  props: {
-    // Core value
-    value: { required: true },  // Effective (view-aware) value
-    
-    // Field metadata
-    label: String,              // Form label
-    description: String,        // Help text
-    fieldPath: String,          // Document field path (e.g., "system.hardness")
-    
-    // Sheet integration
-    editDerived: Boolean,       // Edit effective value (not source)
-    defaultVisibility: String,  // Fallback permission
-    defaultEditability: String,
-    
-    // Styling
-    asInline: Boolean,          // Display inline vs stacked
-    labelWidth: String,         // Custom label width
-  },
-  
-  emits: ['update'],  // Emitted when field changes
-};
-</script>
+### How It Works
+
+1. Each DataModel declares `static LOCALIZATION_PREFIXES` (e.g., `['dnd35e.WEAPON']`)
+2. Language files have `dnd35e.WEAPON.FIELDS.fieldName.label` / `.hint` entries
+3. At startup, Foundry's `localizeDataModel()` sets `field.options.label` and `field.options.hint` as **pre-localized text**
+4. `FormGroup` reads `schemaField.options.label` directly — no `localize()` call needed
+
+### Resolution Logic
+
+```typescript
+// resolvedLabel computed:
+if (props.label)  → game.i18n.localize(props.label)   // explicit = localization key
+else              → schemaField?.options?.label ?? ''   // auto = pre-localized text
+
+// resolvedHint computed:
+if (props.hint)   → game.i18n.localize(props.hint)    // explicit = localization key  
+else              → schemaField?.options?.hint ?? ''    // auto = pre-localized text
 ```
 
-### Example: Custom FormGroup
+### Schema Field Lookup
+
+`getSchemaField(fieldPath)` from `FieldOverridesStore` traverses `document.system.schema._getField()`. This correctly resolves inherited fields — e.g., `system.weight` on a Weapon sheet resolves to `PhysicalItemSystemModel`'s weight field, reading `dnd35e.PHYSICAL_ITEM.FIELDS.weight.label`.
+
+### When to Use Explicit Labels
+
+Only pass a `label` prop when the field **doesn't have a schema entry** or you need to **override** the schema label:
 
 ```vue
-<script setup>
-// Inherit all FormGroup props except custom ones
-const props = defineProps({
-  // FormGroup base props (inherited)
-  value: { required: true },
-  label: String,
-  fieldPath: String,
-  // ... other FormGroup props
-  
-  // Custom for this component
-  step: { type: Number, default: 1 },
-  max: Number,
-});
+<!-- ✅ Auto-derived (preferred) -->
+<NumberFormGroup :value="hardness" field-path="system.hardness" />
 
-const editValue = computed({
-  get: () => props.value,
-  set: (val) => emit('update', val),
-});
-</script>
+<!-- ✅ Explicit override (localization key) -->
+<NumberFormGroup label="dnd35e.COMMON.CustomLabel" :value="val" field-path="system.field" />
 
-<template>
-  <FormGroup :value="value" :label="label" v-bind="props" @update="$emit('update', $event)">
-    <input v-model.number="editValue" type="number" :step="step" :max="max" />
-    <template #readonly>{{ value }}</template>
-  </FormGroup>
-</template>
+<!-- ❌ WRONG: Hardcoded English -->
+<NumberFormGroup label="Hardness" :value="hardness" field-path="system.hardness" />
+```
+
+## Props
+
+### FormGroup Base Props
+
+```typescript
+{
+  label?: string;              // Localization key (optional — auto-derives from schema)
+  hint?: string;               // Localization key (optional — auto-derives from schema)
+  localizeHint?: boolean;      // Default: true. Set false if hint is already localized text.
+  value?: string | number | null;  // Effective (view-aware) value
+  fieldPath: string;           // Document field path (e.g., "system.hardness")
+  defaultVisibility?: FieldVisibility;   // Fallback visibility permission
+  defaultEditability?: FieldEditability; // Fallback editability permission
+  readOnly?: boolean;          // Force readonly display
+}
 ```
 
 ## FormGroupSection
@@ -102,10 +98,11 @@ const editValue = computed({
 Groups related FormGroups under a section heading with section-level controls:
 
 ```vue
+<!-- Labels auto-derived from schema FIELDS entries -->
 <FormGroupSection label="Hit Points" field-path="system.hp">
-  <NumberFormGroup label="Current" :value="currentHp" field-path="system.hp.value" />
-  <NumberFormGroup label="Maximum" :value="maxHp" field-path="system.hp.max" />
-  <NumberFormGroup label="Temporary" :value="tempHp" field-path="system.hp.temp" />
+  <NumberFormGroup :value="currentHp" field-path="system.hp.value" />
+  <NumberFormGroup :value="maxHp" field-path="system.hp.max" />
+  <NumberFormGroup :value="tempHp" field-path="system.hp.temp" />
 </FormGroupSection>
 ```
 
@@ -161,26 +158,21 @@ Groups related FormGroups under a section heading with section-level controls:
 For numeric input fields:
 
 ```vue
+<!-- Label auto-derived from schema -->
 <NumberFormGroup 
-  label="Hardness"
   :value="hardness"
   field-path="system.hardness"
-  :min="0"
-  :max="20"
-  :step="0.5"
 />
 ```
 
-### StringFormGroup
+### TextFormGroup
 
 For text input:
 
 ```vue
-<StringFormGroup 
-  label="Description"
+<TextFormGroup 
   :value="description"
   field-path="system.description"
-  as-inline
 />
 ```
 
@@ -190,7 +182,6 @@ For dropdowns/select:
 
 ```vue
 <SelectFormGroup 
-  label="Rarity"
   :value="rarity"
   field-path="system.rarity"
   :options="{ common: 'Common', rare: 'Rare', unique: 'Unique' }"
@@ -203,7 +194,6 @@ For HTML content:
 
 ```vue
 <RichTextFormGroup 
-  label="Special Rules"
   :value="rules"
   field-path="system.rules"
   :minimal="false"
@@ -216,7 +206,6 @@ For arrays of tags:
 
 ```vue
 <TagsFormGroup 
-  label="Keywords"
   :value="keywords"
   field-path="system.keywords"
   :allowed="['fire', 'cold', 'electricity', 'sonic']"
@@ -237,8 +226,8 @@ For arrays of tags:
     
     <div class="tab" :class="{ active: activeTab === 'basics' }">
       <FormGroupSection label="Identity" field-path="system.identity">
-        <StringFormGroup label="Name" />
-        <StringFormGroup label="Type" />
+        <TextFormGroup :value="name" field-path="system.name" />
+        <SelectFormGroup :value="type" field-path="system.type" />
       </FormGroupSection>
     </div>
     
@@ -278,21 +267,21 @@ For arrays of tags:
   <div class="sheet-body">
     <!-- Always shown -->
     <FormGroupSection label="Basic Info" field-path="system.basic">
-      <StringFormGroup label="Name" />
+      <TextFormGroup :value="name" field-path="system.name" />
     </FormGroupSection>
     
     <!-- Type-specific sections -->
     <template v-if="itemType === 'weapon'">
       <FormGroupSection label="Combat" field-path="system.combat">
-        <DiceFormGroup label="Damage" />
-        <NumberFormGroup label="Critical" />
+        <TextFormGroup :value="damage" field-path="system.weaponDamage.damageRoll" />
+        <NumberFormGroup :value="critical" field-path="system.weaponDamage.critMultiplier" />
       </FormGroupSection>
     </template>
     
     <template v-else-if="itemType === 'armor'">
       <FormGroupSection label="Protection" field-path="system.protection">
-        <NumberFormGroup label="AC Bonus" />
-        <NumberFormGroup label="Max Dex" />
+        <NumberFormGroup :value="acBonus" field-path="system.acBonus" />
+        <NumberFormGroup :value="maxDex" field-path="system.maxDex" />
       </FormGroupSection>
     </template>
   </div>
@@ -311,7 +300,7 @@ FormGroups **auto-hide** when field is invisible to current user (respects `visi
   :default-visibility="'gm'"  <!-- Fallback: GMs only -->
 >
   <!-- Auto-hides for non-GMs -->
-  <StringFormGroup label="Secret" />
+  <TextFormGroup :value="secret" field-path="system.secret.value" />
 </FormGroupSection>
 ```
 

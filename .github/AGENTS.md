@@ -249,7 +249,9 @@ Use Case Examples:
 
 ## Status
 
-- Phase 1-4: ✅ Complete
+- Phase 1-2: ✅ Complete
+- Phase 3 (Localization): 🟡 75% — LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels done; CONFIG pre-localization & hardcoded string audit remain
+- Phase 4: ✅ Complete
 - Phase 5-32: 📋 Planned (see `docs/migration-plan/README.md`)
 - Instruction Files: 6 ✅ (foundry-data-fields, dnd35e-patterns, vue-sheet-patterns, formula-familiar, dnd35e-field, form-groups)
 - Skills: 5 ✅ (phase-planning, phase-reference, foundry-reference, system-comparison, implementation-guide)

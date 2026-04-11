@@ -191,44 +191,14 @@ The `.field-control-btn` class provides: transparent background, no border, 0.5 
 
 ## System Planning & Architecture
 
-### Overview
-The system is being built in phases, each with documented goals, design, and completion criteria. See `docs/migration-plan/` for specifications.
-
-**Current Status**: Phase 4 (Compendium Foundation) PLANNED ✅ | Phases 5+ Next
+Phase specifications, status tracking, and the full roadmap live in `docs/migration-plan/`. Do not duplicate status here.
 
 ### Planning Resources
+- **Full Roadmap & Status**: `docs/migration-plan/README.md` (single source of truth for phase status)
+- **Phase Specifications**: `docs/migration-plan/phase-NN-*.md` (detailed spec per phase)
 - **Custom Planning Agent**: Use `@planning` to design new phases or refine existing ones
 - **Planning Maintenance Skill**: Use `/phase-planning` to improve documentation
-- **Full Roadmap**: `docs/migration-plan/README.md` (phases 1-28)
-- **Phase Specifications**: `docs/migration-plan/phase-NN-*.md` (detailed spec per phase)
 - **Custom Agents & Skills**: `.github/AGENTS.md` (discovery and usage)
-
-### Phase Completion Status
-| Phase | Name | Status |
-|-------|------|--------|
-| 1 | Core Architecture | ✅ COMPLETE |
-| 2 | Material System & AE Foundation | ✅ COMPLETE |
-| 3 | Grants System Infrastructure | ✅ COMPLETE |
-| 4 | Compendium Foundation | 📋 PLANNED |
-| 5+ | Feats, Races, Classes, Spells, etc. | ⏳ Pending |
-
-### Established Patterns (Reuse)
-
-**Build System**:
-- Template-based config: `system.json.template` → build script generates `system.json` with expansions
-- Vite mode: `vite dev` vs `vite build` determines dev/prod environment (not manual env vars)
-- Conditional packs: Dev-only packs included when building with `--mode dev`
-- Pack compilation: Vite plugin in `writeBundle()` hook using `@foundryvtt/foundryvtt-cli`
-
-**Content Authoring**:
-- **Standard Workflow** (replicated each phase): CSV baseline → Dev Macro → Unpack JSON → Transform Script → Commit → Build
-- **Alternative**: Manual UI creation for single items
-- Used for: Phase 4 (Broken/Masterwork), Phase 5+ (feats, races, classes), Phase 27 (migration)
-
-**Infrastructure**:
-- **Origin Tracking** (Phase 4): Compendium source UUID + hash for update detection
-- **UUID Helpers** (Phase 4): Type-safe resolution with generics
-- **Migration Version** (Phase 4): Every document tracks version for safe upgrades
 
 ### Planning Workflow
 

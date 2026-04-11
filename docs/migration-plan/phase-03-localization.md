@@ -1,133 +1,162 @@
 # Phase 3: Localization Pattern
 
-**Status**: 🔶 In Progress (50% - i18n framework, CONFIG pre-localization)
+**Status**: 🔶 In Progress (75% — infrastructure complete, FormGroup auto-labels working, schema-driven localization active)
 
 > **Milestone**: POC  
 > **Dependencies**: None  
-> **Goal**: Establish the i18n pattern before building real UI. All subsequent phases use localized strings exclusively. Pre-localize CONFIG objects at init time.
+> **Goal**: Establish the i18n pattern before building real UI. All subsequent phases use localized strings exclusively. Leverage Foundry's `LOCALIZATION_PREFIXES` for automatic field label/hint localization.
 
 ---
 
-## 3.1 What to Set Up
+## Architecture (Implemented)
 
-- Verify the Vite lang merge plugin works correctly (merges `src/lang/en/*.json` → `dist/lang/en.json`)
-- Establish key naming conventions: `DND35E.{Category}.{Subcategory}.{Key}`
-- Create foundational lang files:
-  - `common.json` — shared terms (save, cancel, edit, etc.)
-  - `abilities.json` — STR, DEX, CON, INT, WIS, CHA and their full names
-  - `actors.json` — actor type labels, sheet labels
-  - `ui.json` — sheet chrome (tabs, buttons, headers)
-- Ensure Vue components use `game.i18n.localize()` or `game.i18n.format()` — no hardcoded strings
-- Audit existing weapon/material/effect sheets for hardcoded strings and replace with i18n keys
+### Foundry `LOCALIZATION_PREFIXES` + `FIELDS` Pattern
 
-## 3.2 Pre-localization of CONFIG
+At startup, Foundry's `Localization.localizeDataModel()` walks every DataModel's schema and **mutates** each field's `.label`, `.hint`, and `.placeholder` from the language file. This is the canonical Foundry v14 mechanism — no manual `game.i18n.localize()` calls needed for DataModel field labels.
 
-Pre-localize CONFIG objects at system init time so Vue templates can use them directly without repeated `game.i18n.localize()` calls:
+**How it works:**
+1. Each DataModel declares `static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, "dnd35e.MODEL_NAME"]`
+2. The language file has a `dnd35e.MODEL_NAME.FIELDS` section with nested objects matching field paths
+3. Foundry walks the schema, matches field paths to FIELDS entries, and sets `field.options.label` / `field.options.hint` as **pre-localized text**
+4. FormGroup components read the pre-localized text directly — no `localize()` call needed
 
-```typescript
-// In system init hook
-Hooks.once('i18nInit', () => {
-  _preLocalizeConfig(CONFIG.DND35E);
-});
+### Namespace Convention
 
-function _preLocalizeConfig(config: Record<string, any>) {
-  // Walk CONFIG.DND35E and replace i18n keys with localized strings
-  // e.g., CONFIG.DND35E.abilities.str.label = game.i18n.localize("DND35E.Ability.Str.Label")
-}
+All keys use the `dnd35e` namespace prefix with nested hierarchical structure:
+```
+dnd35e.MODEL_NAME.FIELDS.fieldName.label   — auto-localized field labels
+dnd35e.MODEL_NAME.FIELDS.fieldName.hint    — auto-localized field hints
+dnd35e.MODEL_NAME.EnumName.value           — enum display values (manual localize)
+dnd35e.COMMON.*                            — shared UI strings (manual localize)
+dnd35e.SETTINGS.*                          — system settings (Foundry auto-localizes)
 ```
 
-This follows the dnd5e pattern. CONFIG objects like `abilities`, `skills`, `sizes`, `damageTypes`, `weaponTypes`, etc. are all pre-localized once, then referenced directly in Vue components and select dropdowns.
+### FormGroup Auto-Label Derivation
 
-## 3.3 Conventions
+`FormGroup.vue` auto-derives labels and hints from the schema:
 
-```
-DND35E.Ability.Str.Label        = "Strength"
-DND35E.Ability.Str.Abbr         = "STR"
-DND35E.Item.Weapon.Label        = "Weapon"
-DND35E.Item.Weapon.Fields.Damage = "Damage"
-DND35E.Sheet.Tab.Details        = "Details"
-DND35E.Sheet.Tab.Effects        = "Effects"
-DND35E.Sheet.Action.Edit        = "Edit"
-DND35E.Sheet.Action.Delete      = "Delete"
-```
+- **`resolvedLabel`**: If explicit `label` prop → `game.i18n.localize(label)`. Otherwise → `schemaField.options.label` (pre-localized text).
+- **`resolvedHint`**: If explicit `hint` prop → `game.i18n.localize(hint)`. Otherwise → `schemaField.options.hint` (pre-localized text).
+- Schema field lookup via `getSchemaField(fieldPath)` from `FieldOverridesStore`, which traverses `document.system.schema._getField()` — correctly resolves inherited fields through the model hierarchy.
 
-## 3.4 Files to Create/Modify
+This means most FormGroup consumers need **no explicit label or hint** — just a `fieldPath` is sufficient.
 
-| Action | Path |
-|--------|------|
-| Create | `src/lang/en/abilities.json` |
-| Create | `src/lang/en/actors.json` |
-| Create | `src/lang/en/ui.json` |
-| Create | Pre-localization utility function |
-| Audit | All existing Vue components — replace hardcoded strings |
-| Verify | Vite lang merge plugin output |
+### Deep Merge Vite Plugin
+
+The Vite build plugin uses `deepmerge` to combine split `src/lang/en/*.json` files into a single `dist/lang/en.json`. Nested FIELDS objects from different files merge correctly.
+
+---
+
+## 3.1 LOCALIZATION_PREFIXES Hierarchy (Implemented)
+
+All DataModels have `LOCALIZATION_PREFIXES` with additive cascade:
+
+| Model | Prefix | Fields Localized |
+|-------|--------|-----------------|
+| `Dnd35eDocumentSystemModel` | `dnd35e.DOCUMENT` | version, slug, derivedName, nameFormula, description |
+| `ItemSystemModelBase` | `dnd35e.ITEM` | origin, isPsionic, isEpic |
+| `IdentifiableItemSystemModel` | `dnd35e.IDENTIFIABLE` | isIdentifiable, isIdentified |
+| `PhysicalItemSystemModel` | `dnd35e.PHYSICAL_ITEM` | hp, hardness, quantity, weight, price, size, etc. |
+| `EquippableItemSystemModel` | `dnd35e.EQUIPPABLE` | isEquipped, isMelded, designedForSize, etc. |
+| `WeaponSystemModel` | `dnd35e.WEAPON` | isMasterwork, weaponType, weaponSubtype, weaponDamage, etc. |
+| `ActiveEffectSystemModelBase` | `dnd35e.EFFECT` | (effect fields) |
+| `MaterialSystemModel` | `dnd35e.MATERIAL` | bonusHp, magicEquivalency, etc. |
+
+Prefix resolution is left-to-right; later prefixes override earlier ones for the same field path.
+
+## 3.2 Language Files (Implemented)
+
+Current split files under `src/lang/en/`:
+
+| File | Namespace | Content |
+|------|-----------|---------|
+| `common.json` | `dnd35e.COMMON` | Shared UI strings |
+| `items.json` | `TYPES.Item.*`, `dnd35e.ITEM`, `dnd35e.PHYSICAL_ITEM`, `dnd35e.EQUIPPABLE` | Item type labels + field labels/hints |
+| `weapons.json` | `dnd35e.WEAPON` | Weapon field labels/hints + enum values (Type, Subtype, Property) |
+| `attacks.json` | `dnd35e.ATTACK` | Damage types, DR types |
+| `effects.json` | `dnd35e.EFFECT`, `dnd35e.MATERIAL` | Effect + material field labels/hints |
+| `settings.json` | `dnd35e.SETTINGS` | System settings names/hints |
+
+## 3.3 FormGroup Consumers (Current Status)
+
+All FormGroup wrapper components (`NumberFormGroup`, `SelectFormGroup`, `TextFormGroup`, `CheckBoxFormGroup`, `ToggleSwitchFormGroup`, `ColorFormGroup`, `MultiSelectFormGroup`, `RichTextEditorFormGroup`, `ItemPriceFormGroup`, `FormulaFormGroup`) delegate to `FormGroup.vue`, which handles auto-derivation.
+
+**All current consumers rely on auto-derived labels** — explicit `label` props have been removed from:
+- `MaterialDetails.vue` — bonusHp
+- `MagicEquivalency.vue` — magicEquivalency  
+- `ItemHardness.vue` — hardness
+- `ItemWeight.vue` — weight
+- `ItemQuantity.vue` — quantity
+- `WeaponSummary.vue` — weaponType, weaponSubtype
+- `EffectDuration.vue` — duration fields
+- `HealthSettingsApp.vue` — health setting fields
+- `UniqueId.vue` — slug
+- `ItemSize.vue` — size
+- `ItemPrice.vue` — price
+- `DisableEffect.vue` — disabled toggle
+- `Tint.vue` — tint color
 
 ---
 
 ## Completion Checklist
 
 ### ✅ Complete
-- (None — Phase 3 has not started)
 
-### ❌ Not Started (All Tasks for Phase 3)
-- [ ] **Core Language Files**:
-  - [ ] Create `src/lang/en/abilities.json` with ability names/abbreviations (Strength, STR; Dexterity, DEX; etc.)
-  - [ ] Create `src/lang/en/actors.json` with actor type labels (Character, NPC, Monster), sheet chrome labels
-  - [ ] Create `src/lang/en/common.json` with shared UI strings (Save, Cancel, Edit, Delete, Confirm, etc.)
-  - [ ] Create `src/lang/en/ui.json` with sheet tabs and common UI labels (Details, Effects, Description, etc.)
-  
-- [ ] **Phase 1-2 Component Audit & Replacement**:
-  - [ ] Audit weapon sheet Vue components for hardcoded strings
-  - [ ] Replace all hardcoded labels with i18n keys (e.g., "Weapon Type" → `DND35E.Item.Weapon.Fields.Type`)
-  - [ ] Audit Material AE sheet for hardcoded strings
-  - [ ] Replace all hardcoded labels with i18n keys in effect sheet
-  - [ ] Verify no hardcoded strings remain in Phase 1-2 files
-  
-- [ ] **Pre-Localization CONFIG Setup**:
-  - [ ] Create pre-localization utility function in `src/helpers/preLocalize.mts`
-  - [ ] Function walks CONFIG object recursively and replaces i18n keys with localized strings
+- [x] **Foundry LOCALIZATION_PREFIXES Infrastructure**:
+  - [x] All 8 DataModels have `static LOCALIZATION_PREFIXES` with additive cascade
+  - [x] Labels/hints removed from field constructor calls — Foundry auto-localizes from lang files
+  - [x] Prefix hierarchy verified: fields resolve correctly through inheritance chain
+
+- [x] **Nested Language Files (Deep Merge)**:
+  - [x] Vite lang merge plugin upgraded to deep merge (uses `deepmerge` library)
+  - [x] All lang files converted from flat keys to nested `dnd35e.*` hierarchy
+  - [x] `common.json` — `dnd35e.COMMON.*`
+  - [x] `items.json` — `TYPES.Item.*`, `dnd35e.ITEM.FIELDS.*`, `dnd35e.PHYSICAL_ITEM.FIELDS.*`, `dnd35e.EQUIPPABLE.FIELDS.*`
+  - [x] `weapons.json` — `dnd35e.WEAPON.FIELDS.*`, `dnd35e.WEAPON.Type.*`, `dnd35e.WEAPON.Property.*`
+  - [x] `attacks.json` — `dnd35e.ATTACK.*`
+  - [x] `effects.json` — `dnd35e.EFFECT.FIELDS.*`, `dnd35e.MATERIAL.FIELDS.*`
+  - [x] `settings.json` — `dnd35e.SETTINGS.*`
+  - [x] UTF-8 BOM removed from all lang JSON files
+
+- [x] **FormGroup Auto-Label Derivation**:
+  - [x] `FormGroup.vue` auto-derives label from `schemaField.options.label` (pre-localized)
+  - [x] `FormGroup.vue` auto-derives hint from `schemaField.options.hint` (pre-localized)
+  - [x] Explicit `label`/`hint` props still supported as overrides (treated as localization keys)
+  - [x] `getSchemaField()` exposed from `FieldOverridesStore` as public utility
+  - [x] Schema traversal correctly resolves inherited fields (e.g., `weight` on weapon resolves to `PHYSICAL_ITEM`)
+
+- [x] **Dead Code / Cleanup**:
+  - [x] Deleted `unidentifiedOverrides.mts` (dead code — all references commented out)
+  - [x] Removed `decodeFieldPath` export from `fieldPermissions.mts` (only consumer was deleted file)
+
+- [x] **Naming Convention**:
+  - [x] Standardized on `dnd35e.*` namespace (not `DND35E.*` or `D35E.*`)
+  - [x] `LOCALIZATION_PLAN.md` documents full key hierarchy and conventions
+
+### ❌ Remaining Tasks
+
+- [ ] **Pre-Localization of CONFIG Objects**:
+  - [ ] Create pre-localization utility (follows dnd5e pattern)
   - [ ] Register hook: `Hooks.once('i18nInit', () => _preLocalizeConfig(CONFIG.DND35E))`
-  - [ ] Pre-localize CONFIG.DND35E.abilities (with abbreviations)
-  - [ ] Pre-localize CONFIG.DND35E.skills
-  - [ ] Pre-localize CONFIG.DND35E.sizes (Fine, Diminutive, Tiny, Small, Medium, Large, Huge, Gargantuan)
-  - [ ] Pre-localize CONFIG.DND35E.damageTypes (Bludgeoning, Piercing, Slashing, etc.)
-  - [ ] Pre-localize CONFIG.DND35E.damageReductionTypes
-  - [ ] Pre-localize CONFIG.DND35E.weaponTypes (Simple, Martial, Exotic, Natural, Firearm)
-  - [ ] Pre-localize CONFIG.DND35E.armorTypes
-  - [ ] Pre-localize CONFIG.DND35E.materialTypes (Steel, Mithral, Adamantite, etc.)
-  
-- [ ] **Vite Plugin Verification**:
-  - [ ] Verify Vite lang merge plugin is configured correctly
-  - [ ] Test build pipeline: `src/lang/en/*.json` → `dist/lang/en.json`
-  - [ ] Verify merged lang file includes all language keys
-  - [ ] Test system loads language file correctly after build
-  - [ ] Test fallback to English if language file missing
-  
-- [ ] **Naming Convention Documentation**:
-  - [ ] Document i18n key naming pattern: `DND35E.{Category}.{Subcategory}.{Key}`
-  - [ ] Examples: `DND35E.Ability.Str.Label`, `DND35E.Item.Weapon.Label`, `DND35E.Sheet.Action.Edit`
-  - [ ] Add style guide to docs for future translators
-  - [ ] Ensure all keys follow PascalCase convention
-  
-- [ ] **Testing & Validation**:
-  - [ ] Unit test: Pre-localization function correctly replaces keys
-  - [ ] Unit test: CONFIG.DND35E.abilities[0].label is localized string, not i18n key
-  - [ ] Integration test: Weapon sheet displays all labels from i18n
-  - [ ] Integration test: Material AE sheet displays all labels from i18n
-  - [ ] Smoke test: Load system in Foundry, verify no missing translation warnings
-  - [ ] Test: Change system language in Foundry settings, verify UI updates
-  
-- [ ] **Future-Proofing**:
-  - [ ] Document how translators should structure new language files
-  - [ ] Create template: `src/lang/en/` structure for community translators
-  - [ ] Leave TODO comment about German/French/Spanish translations (future post-release work)
-  - [ ] Create `TRANSLATION.md` guide for contributors
+  - [ ] Pre-localize CONFIG.DND35E.abilities, skills, sizes, damageTypes, weaponTypes, armorTypes, materialTypes, damageReductionTypes
+
+- [ ] **Remaining Hardcoded String Audit**:
+  - [ ] Audit all Vue components for remaining hardcoded English strings not covered by FormGroup auto-labels
+  - [ ] Audit section headings, button labels, notification messages, chat messages
+  - [ ] Replace with `game.i18n.localize('dnd35e.COMMON.*')` or domain-specific keys
+
+### Deferred to Other Phases
+
+- **Additional Language Files** (`abilities.json`, `actors.json`, `ui.json`, etc.) — created as cross-cuts when each domain phase needs them (e.g., abilities.json when Phase 5 actor foundation is built)
+- **Testing & Validation** — deferred until testing infrastructure is in place (Phase 14)
+- **Contributor Documentation** (`TRANSLATION.md`, translator guide) — deferred to community hardening phase (Phase 28)
 
 ---
 
 **This Phase Completes Before**: Phase 4 and all subsequent phases, which will use localized strings throughout
 
 **This Phase Enables**: 
-- All Vue components in later phases can use i18n immediately
-- Compendium content (Phase 4) can be localized
+- All Vue components in later phases get field labels/hints automatically from schema
+- New DataModels just need `LOCALIZATION_PREFIXES` + lang file entries — no component-level label wiring
 - Multi-language support foundation is in place
+- Compendium content (Phase 4) can be localized

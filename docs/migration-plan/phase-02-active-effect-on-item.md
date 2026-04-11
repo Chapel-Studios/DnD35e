@@ -24,7 +24,7 @@
   - [ ] Implement interfaces: `ResolvedChanges`, `ChangeHistory`, `ChangeApplication`, `ChangeIgnored`
   - [ ] Implement stacking rules: untyped always stacks, dodge always stacks, named types highest-wins, penalties always apply
   - [ ] Write history tracking logic that captures applied/ignored bonuses with reasons
-  - [ ] Export `BonusType` enum with initial types: 'material' | 'broken' | 'masterwork' | 'enhancement' | 'dodge' | 'untyped' | 'penalty'
+  - [ ] Export `BonusType` with initial types: 'material' | 'broken' | 'masterwork' (add new types only when a consumer exists)
   
 - [ ] **Material Subtype Field**:
   - [ ] Add `materialSubtype: 'standard' | 'broken' | 'masterwork'` to MaterialSystemModel schema
@@ -37,8 +37,8 @@
   - [ ] Separate penalties from bonuses
   - [ ] Call `resolveActiveEffectChanges(bonuses, penalties)` 
   - [ ] Apply resolved values to `this.system` fields
-  - [ ] Store history in `this.system._stackingHistory`
-  - [ ] Verify history persists across save/load cycles
+  - [ ] Enrich `this.overrides` entries with stacking metadata (bonusType, stackResult, stackReason)
+  - [ ] Verify overrides repopulate correctly every preparation cycle (derived data, not persisted)
   
 - [ ] **System Setting for Single-Material Enforcement**:
   - [ ] Create `dnd35e.combat.enforceSingleMaterial` boolean setting (default: true)
@@ -51,10 +51,11 @@
   - [ ] Test Material AE creation workflow end-to-end
   - [ ] Verify Material AE updates propagate immediately to weapon stats
   
-- [ ] **Stacking History Display (Prep for Phase 8)**:
-  - [ ] Verify `system._stackingHistory` structure matches interfaces
-  - [ ] Write example chat message template showing expanded history (Phase 8 will use this)
-  - [ ] Document how Phase 8 will consume this history
+- [ ] **Override Enrichment (Stacking Metadata)**:
+  - [ ] Extend `Override` type with optional `bonusType`, `stackResult`, `stackReason` fields
+  - [ ] After stacking resolution, enrich `this.overrides` entries with stacking metadata
+  - [ ] Update `HasActiveEffectsNotification.vue` to display enriched stacking info in tooltip
+  - [ ] Verify overrides are cleared and repopulated every preparation cycle (derived data, never persisted)
   
 - [ ] **Test Coverage**:
   - [ ] Unit tests for `resolveActiveEffectChanges()` with multiple bonus types
@@ -153,16 +154,26 @@ Bonus type assignments (all hidden from UI for Material AEs):
 
 Bonus type for other AE types is handled per-phase as those types are designed.
 
-Start with this enum:
+Start with only the bonus types that have a consumer in this phase:
 
 ```typescript
-type BonusType = 'material' | 'broken' | 'masterwork' | 'enhancement' | 'dodge' | 'untyped' | 'penalty';
-// Phase 15 adds: 'armor' | 'shield' | 'natural' | 'deflection' | ...
+type BonusType = 'material' | 'broken' | 'masterwork';
+// Add new types only when a phase introduces a consumer:
+// Phase 10 (Feats): 'dodge' | 'untyped'
+// Phase 15 (Equipment): 'armor' | 'shield' | 'natural' | 'deflection' | 'enhancement'
+// etc.
 ```
+
+**Principle**: Only add a bonus type when there's an implementation that uses it. No speculative types.
 
 ### 2.5.1 Stacking Algorithm Implementation with History Tracking
 
-The `resolveActiveEffectChanges()` function is a generic utility that not only resolves bonuses but **tracks detailed history** of what was applied, what was ignored, and why. This history is passed to chat cards and action logs so players can verify the math.
+The `resolveActiveEffectChanges()` function resolves bonuses and **tracks detailed history** of what was applied, what was ignored, and why. This history serves two consumers:
+
+1. **Item/Actor `overrides`** — enriched with stacking detail so field controls can show *why* a field has its current value (which effects contributed, which were rejected). The existing `Override` type on `ItemDnd35e` is extended to include stacking metadata.
+2. **Chat cards** — when an action is executed (Phase 8), the stacking resolution for that specific calculation is passed to the chat card builder. Foundry preserves chat cards, so history is durable without persisting it on the document.
+
+**No separate `_stackingHistory` property.** The existing `overrides` property on `ItemDnd35e` (and later `ActorDnd35e`) is the single source of truth for "what effects are currently modifying this field." We enrich it, not duplicate it.
 
 ```typescript
 // src/helpers/stacking.mts
@@ -341,72 +352,52 @@ The `stacking.history` array is attached to the action result and rendered by th
 
 ### 2.5.3 Integration into Item.applyActiveEffects()
 
-The weapon's preparation cycle calls `applyActiveEffects()` and now preserves history for later display:
+The existing `applyActiveEffects()` on `ItemDnd35e` already collects changes, applies them via `ActiveEffect.applyChange()`, and populates `this.overrides`. Phase 2 enriches this:
+
+1. After standard Foundry change application, run stacking resolution on the collected changes
+2. Write enriched `Override` entries (with `bonusType`, `stackResult`, `stackReason`) into `this.overrides`
+3. The resolved values are already applied by Foundry's `applyChange()` — stacking resolution provides the *history* that enriches `overrides`
 
 ```typescript
-// src/entities/items/weapon/WeaponDnd35e.mts
-override applyActiveEffects() {
-  // Collect all active effects' changes
-  const changes = this._flattenActiveEffects();
-  
-  // Separate penalties from bonuses
-  const penalties = changes.filter(c => c.bonusType === 'penalty');
-  const bonuses = changes.filter(c => c.bonusType !== 'penalty');
+// In ItemDnd35e.applyActiveEffects() — after existing change application loop:
 
-  // Resolve (now returns { values, history })
-  const { values: resolved, history } = resolveActiveEffectChanges(bonuses, penalties);
+// Run stacking resolution for history tracking
+const { history } = resolveActiveEffectChanges(bonusChanges, penaltyChanges);
 
-  // Apply resolved values to item data
-  for (const [field, value] of Object.entries(resolved)) {
-    foundry.utils.setProperty(this.system, field, value);
+// Enrich overrides with stacking metadata
+for (const entry of history) {
+  const existing = this.overrides[entry.field] ?? [];
+  for (const override of existing) {
+    const applied = entry.applied.find(a => a.source === override.effectName);
+    const ignored = entry.ignored.find(i => i.source === override.effectName);
+    if (applied) {
+      override.bonusType = applied.bonusType;
+      override.stackResult = 'applied';
+      override.stackReason = applied.reason;
+    } else if (ignored) {
+      override.bonusType = ignored.bonusType;
+      override.stackResult = 'ignored';
+      override.stackReason = ignored.reason;
+    }
   }
-
-  // Store history for later use (Phase 8 will attach to action results)
-  this.system._stackingHistory = history;
 }
+```
 
-private _flattenActiveEffects(): Dnd35eEffectChangeData[] {
-  const all: Dnd35eEffectChangeData[] = [];
-
-  // 1. System-generated changes from Material AE buildChanges()
-  for (const effect of this.effects) {
-    if (effect.data.disabled) continue;
-    const changes = effect.system.buildChanges?.();
-    if (changes) all.push(...changes);
-  }
-
-  // 2. User-added AE changes (if any — not used yet, but extensible for Phase 20+)
-  for (const effect of this.effects) {
-    if (effect.data.disabled) continue;
-    if (effect.system.changes) all.push(...effect.system.changes);
-  }
-
-  return all;
-}
+**Note**: The actual resolved values are applied by Foundry's `ActiveEffect.applyChange()` (which handles ADD, MULTIPLY, OVERRIDE, UPGRADE, DOWNGRADE modes). The stacking engine's `resolveActiveEffectChanges()` runs *in parallel* to produce history — it doesn't replace Foundry's application logic.
 ```
 
 ### 2.5.4 Actor Integration (Phase 5)
 
-Actors use the same stacking engine and preserve history identically — the `resolveActiveEffectChanges()` function is entirely generic and knows nothing about whether it's being called by an item or an actor.
+Actors use the same stacking engine. Foundry's `Actor.applyActiveEffects()` already populates `actor.overrides` — Phase 5 enriches it with the same `bonusType`/`stackResult`/`stackReason` metadata, using the same pattern as items.
 
 ```typescript
 // src/entities/actor/ActorDnd35e.mts (Phase 5)
-override applyActiveEffects() {
-  const { resolveActiveEffectChanges } = await import('@helpers/stacking.mts');
-  const allChanges = this._collectActiveEffectChanges();
-  const penalties = allChanges.filter(c => c.bonusType === 'penalty');
-  const bonuses = allChanges.filter(c => c.bonusType !== 'penalty');
-
-  const { values: resolved, history } = resolveActiveEffectChanges(bonuses, penalties);
-
-  for (const [field, value] of Object.entries(resolved)) {
-    foundry.utils.setProperty(this.system, field, value);
-  }
-
-  // Store for Phase 9 (Combat) to attach to turn results
-  this.system._stackingHistory = history;
-}
+// After Foundry's standard applyActiveEffects() populates this.overrides:
+const { history } = resolveActiveEffectChanges(bonusChanges, penaltyChanges);
+// Enrich this.overrides entries with stacking metadata (same pattern as ItemDnd35e)
 ```
+
+The `resolveActiveEffectChanges()` function is entirely generic — it knows nothing about whether it's being called by an item or an actor.
 
 ## 2.6 Material Subtypes
 
@@ -460,23 +451,179 @@ The `resolveActiveEffectChanges()` utility (§2.5.1) lives in `src/helpers/stack
 | Action | Path |
 |--------|------|
 | Verify | `src/entities/activeEffects/material/` — completeness |
-| Create | `src/helpers/stacking.mts` — `resolveActiveEffectChanges()` utility returning both `values` and `history`; interfaces: `ResolvedChanges`, `ChangeHistory`, `ChangeApplication`, `ChangeIgnored` |
-| Create | `src/types/stacking.d.ts` — Type definitions for stacking history structures |
-| Implement | Bonus type stacking resolution in `ItemDnd35e.applyActiveEffects()` — call `resolveActiveEffectChanges()` and store history in `system._stackingHistory` |
+| Create | `src/helpers/stacking.mts` — `resolveActiveEffectChanges()` utility returning `{ values, history }`; interfaces: `ResolvedChanges`, `ChangeHistory`, `ChangeApplication`, `ChangeIgnored` |
+| Modify | `src/entities/items/baseItem/ItemDnd35e.mts` — extend `Override` type with `bonusType?`, `stackResult?`, `stackReason?`; enrich `overrides` in `applyActiveEffects()` with stacking metadata |
 | Modify | `src/entities/activeEffects/material/data/MaterialSystemModel.mts` — add `materialSubtype` field; ensure `buildChanges()` includes source labels for history tracking |
 | Modify | All effect sheets — **NEVER expose `bonusType` field to UI for Material AEs**, auto-set it based on subtype |
-| Create | `src/constants/bonusTypes.mts` — BonusType enum/constants; document that bonus type is an internal system detail |
+| Create | `src/constants/bonusTypes.mts` — BonusType with only `'material' | 'broken' | 'masterwork'`; add new types only when a consumer exists |
 | Create | System setting `dnd35e.combat.enforceSingleMaterial` |
+| Modify | `HasActiveEffectsNotification.vue` — display enriched stacking info (bonusType, stackResult, stackReason) in tooltip |
 | Verify | Effect sheet Vue components |
 | Test | Unit tests for `resolveActiveEffectChanges()` — verify correct application/rejection of bonuses per stacking rules; validate history accuracy |
-| Document | The Material pattern for reuse in later phases; note that Material AE bonus types are system-internal and not exposed to UI; explain that **stacking history will be displayed in chat cards by Phase 8** (Action System) |
+| Document | The Material pattern for reuse in later phases; note that Material AE bonus types are system-internal and not exposed to UI |
 
 ---
 
 **Phase 5 will add**:
-- `ActorDnd35e.applyActiveEffects()` — import and call the same `resolveActiveEffectChanges()` utility; store history in `system._stackingHistory`
+- Enrich `ActorDnd35e.overrides` with same stacking metadata pattern
 - Actor-level AE rendering and collection logic
 
 **Phase 8 (Action System) will consume**:
-- Stacking history from `item.system._stackingHistory` and `actor.system._stackingHistory`
-- Display history in action chat cards with collapsible breakdowns of applied/ignored bonuses
+- `resolveActiveEffectChanges()` at action time to compute per-action stacking history
+- Pass `ChangeHistory[]` to chat card builder function
+- Chat card HTML embeds the breakdown — Foundry preserves chat messages, history is durable
+- Does NOT read from `overrides` — computes fresh for each action
+
+---
+
+## 2.9 Execution Plan
+
+Routed task decomposition and parallelization tracks for the remaining Phase 2 work.
+
+### Track A: Stacking Engine (Lead dev)
+
+```yaml
+task_A1:
+  name: "Create src/helpers/stacking.mts with interfaces"
+  routing: Lead dev
+  blocking: [A2]
+  verify: "File exports ResolvedChanges, ChangeHistory, ChangeApplication, ChangeIgnored interfaces; compiles clean"
+
+task_A2:
+  name: "Implement resolveActiveEffectChanges() with stacking rules"
+  routing: Lead dev
+  depends_on: [A1]
+  blocking: [C1]
+  verify: "3 changes same bonusType same field → only highest returned; untyped changes sum; penalties always apply; history tracks applied + ignored with reasons"
+
+task_A3:
+  name: "Create src/constants/bonusTypes.mts"
+  routing: Flexible
+  blocking: [B2]
+  verify: "Exports BonusType = 'material' | 'broken' | 'masterwork' only — no speculative types"
+```
+
+### Track B: Material Subtype (Jr dev, parallel with A)
+
+```yaml
+task_B1:
+  name: "Add materialSubtype field to MaterialSystemModel schema"
+  routing: Jr dev
+  blocking: [B2]
+  verify: "MaterialSystemModel has materialSubtype: 'standard' | 'broken' | 'masterwork' with initial 'standard'; field exists in schema"
+
+task_B2:
+  name: "Map materialSubtype → bonusType in buildChanges()"
+  routing: Jr dev
+  depends_on: [B1, A3]
+  blocking: [C1]
+  verify: "buildChanges() output includes bonusType matching subtype; changes include source label (effect name) for history"
+
+task_B3:
+  name: "Verify bonusType hidden from Material AE sheet UI"
+  routing: Flexible
+  depends_on: [B2]
+  verify: "Effect sheet shows materialSubtype dropdown; bonusType field not visible anywhere in Material AE UI"
+```
+
+### Track C: Integration (Lead dev, after A+B merge)
+
+```yaml
+task_C1:
+  name: "Extend Override type + enrich overrides in applyActiveEffects()"
+  routing: Lead dev
+  depends_on: [A2, B2]
+  blocking: [C2, C3]
+  verify: "After applyActiveEffects(), this.overrides entries include bonusType, stackResult, stackReason; Override type updated in ItemDnd35e.mts"
+
+task_C2:
+  name: "Update HasActiveEffectsNotification.vue for enriched tooltips"
+  routing: Jr dev
+  depends_on: [C1]
+  verify: "Tooltip shows bonusType and stack result; ignored effects shown dimmed or with rejection reason"
+
+task_C3:
+  name: "Create single-material enforcement setting"
+  routing: Jr dev
+  depends_on: [C1]
+  verify: "Setting dnd35e.combat.enforceSingleMaterial exists; when enabled, adding second standard Material AE shows validation warning; broken/masterwork always allowed"
+```
+
+### Track D: Testing & Documentation (Flexible, after C)
+
+```yaml
+task_D1:
+  name: "Unit tests for resolveActiveEffectChanges()"
+  routing: Jr dev or Pair
+  depends_on: [A2]
+  verify: "Tests cover: same-type highest-wins, untyped stacking, penalty always-apply, history accuracy, zero-value exclusion"
+
+task_D2:
+  name: "Integration tests for material stacking"
+  routing: Jr dev or Pair
+  depends_on: [C1]
+  verify: "Single material applies; two materials → highest-wins per field; standard + broken + masterwork all apply (different bonus types); overrides enriched correctly"
+
+task_D3:
+  name: "Document Material pattern for reuse"
+  routing: Flexible
+  depends_on: [C1]
+  verify: "Documentation covers: AE → buildChanges() → applyActiveEffects() → enriched overrides flow; bonus type is internal; Phase 5 reuse instructions"
+```
+
+### Parallelization Diagram
+
+```
+TRACK A: Stacking Engine     TRACK B: Material Subtype
+────────────────────────      ────────────────────────
+A1: Interfaces                B1: materialSubtype field
+A2: Stacking rules            B2: subtype → bonusType mapping
+A3: BonusType constants       B3: UI verification
+        │                          │
+        └──────────┬───────────────┘
+                   ▼
+        TRACK C: Integration
+        ────────────────────
+        C1: Enrich overrides in applyActiveEffects()
+        C2: Update HasActiveEffectsNotification.vue
+        C3: Single-material enforcement setting
+                   │
+                   ▼
+        TRACK D: Testing & Docs
+        ───────────────────────
+        D1: Unit tests (can start after A2)
+        D2: Integration tests
+        D3: Documentation
+```
+
+**What can run in parallel:**
+- Tracks A and B are **fully independent** — stacking engine knows nothing about material subtypes
+- D1 (unit tests) can start as soon as A2 completes, parallel with Track B
+- C2 and C3 are independent after C1
+
+**Routing summary:**
+- **Lead dev**: A1, A2, C1
+- **Jr dev**: B1, B2, C2, C3, D1, D2
+- **Flexible**: A3, B3, D3
+
+---
+
+## 2.10 Risks & Blockers
+
+```yaml
+risk_1:
+  name: "Stacking resolution runs parallel to Foundry's applyChange(), not replacing it"
+  impact: "Foundry's ActiveEffect.applyChange() handles the actual value application (ADD/MULTIPLY/OVERRIDE/UPGRADE/DOWNGRADE). Our stacking engine produces history metadata only — it must not conflict with or duplicate Foundry's resolution."
+  mitigation: "Stacking engine runs after Foundry's change application loop. It reads the same changes but only produces enrichment data for overrides. Values are applied by Foundry, history is applied by us."
+  status: "Design validated — applyActiveEffects() already applies changes via Foundry, we append metadata after."
+
+risk_2:
+  name: "Override enrichment must not break HasActiveEffectsNotification.vue"
+  impact: "Adding new optional fields (bonusType, stackResult, stackReason) to Override could break existing UI if it expects only the current 4 fields"
+  mitigation: "Fields are optional (?). Existing UI reads effectName, value, type — new fields are additive. HasActiveEffectsNotification.vue updated in task C2 to display them."
+
+risk_3:
+  name: "BonusType enum extensibility"
+  impact: "Starting with 3 types. Later phases add more. Stacking engine must handle unknown types gracefully."
+  mitigation: "Default stacking rule for any named bonusType is highest-wins. New types don't need stacking engine changes unless they have special rules (like dodge stacking). Add types to the union when a consumer exists."
+```

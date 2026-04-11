@@ -207,14 +207,13 @@ item.updateSource({
 
 ## FormGroup Integration
 
-Always use the **EditValue pattern** with Dnd35eField:
+FormGroups auto-derive labels from schema — no explicit label needed:
 
 ```vue
+<!-- Label comes from dnd35e.PHYSICAL_ITEM.FIELDS.hardness.label -->
 <FormGroup 
-  label="Hardness" 
   :value="viewAwareValue"
   field-path="system.hardness"
-  @update="updateField"
 >
   <!-- Edit: show source.value in identified, effective in unidentified -->
   <input v-model="editValue" type="number" />

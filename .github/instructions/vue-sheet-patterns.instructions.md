@@ -82,14 +82,13 @@ override > prop > fieldMeta > hardcoded default
 
 ## FormGroup Base Component
 
-All form inputs inherit from `FormGroup.vue`:
+All form inputs inherit from `FormGroup.vue`. Labels and hints are **auto-derived from schema** via `LOCALIZATION_PREFIXES` — no explicit label prop needed:
 
 ```vue
+<!-- Label auto-derived from dnd35e.PHYSICAL_ITEM.FIELDS.hardness.label -->
 <FormGroup 
-  label="Hardness" 
   :value="hardness"
   field-path="system.hardness"
-  @update="updateField"
 >
   <!-- Edit slot -->
   <input v-model="editValue" type="number" />
@@ -105,6 +104,10 @@ All form inputs inherit from `FormGroup.vue`:
   </template>
 </FormGroup>
 ```
+
+Explicit `label` prop is only needed to override the schema label (value is a localization key).
+
+See `form-groups.instructions.md` for full auto-derivation details.
 
 ## Control Button Styling
 
@@ -130,9 +133,10 @@ All custom buttons in `#controls` slots **MUST use `.field-control-btn` class** 
 Groups related FormGroups under shared section-level controls:
 
 ```vue
+<!-- Child labels auto-derived from schema -->
 <FormGroupSection label="HP" field-path="system.hp">
-  <NumberFormGroup label="Current" :value="currentHp" field-path="system.hp.value" />
-  <NumberFormGroup label="Max" :value="maxHp" field-path="system.hp.max" />
+  <NumberFormGroup :value="currentHp" field-path="system.hp.value" />
+  <NumberFormGroup :value="maxHp" field-path="system.hp.max" />
 </FormGroupSection>
 ```
 

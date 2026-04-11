@@ -16,7 +16,8 @@ Specialist for decomposing system phases into concrete tasks, identifying parall
 - **Parallelization**: What can multiple people work on simultaneously
 - **Skill routing**: Which tasks fit lead dev, which fit jr devs, which need pairing
 - **Dependencies**: What must finish before something else starts
-- **Constraints**: Team size, skill mix, experience level
+- **Open decisions**: Some questions can't be answered until hands-on exploration at phase start
+- **No time estimates**: Plans define order and structure, never timelines — it's done when it's done
 
 ## Planning Approach
 
@@ -80,16 +81,6 @@ task_I1: Implement Mechanics
 - Track B starts early on independent work
 - Everyone converges at integration/testing
 
-**Visual example**:
-```
-Monday:       task_R1 (Lead)         task_R2 (Jr)            [idle]
-Tuesday:      ─ Design (Lead) ──     ─ Setup (Jr) ──        [idle]
-Wednesday:    ────── Implement ──    ─── Tests ───          [idle]
-Thursday:     [waiting for I1]       [waiting for I1]    task_Q1 (Lead)
-
-Result: 3 parallel tracks, merged into quality gate
-```
-
 ## Skill-Based Routing
 
 ### Lead Dev Tasks
@@ -149,6 +140,31 @@ task_R2 (Setup infrastructure)
 task_T1 (Unit tests) helps with task_Q1 (Quality), but Q1 can start while T1 in progress
 ```
 
+## Open Decisions (Explore-at-Phase-Start)
+
+Some design questions intentionally stay unresolved until the phase begins. These are decisions that require hands-on experimentation, prototyping, or "toying with something" before committing. Do NOT flag these as planning gaps — they are deliberate.
+
+**Characteristics of open decisions:**
+- Require hands-on exploration to answer (can't be resolved from reading docs alone)
+- Multiple valid options exist; the best choice depends on feel, ergonomics, or runtime behavior
+- The decision scope is bounded — it won't block the entire phase, just specific tasks
+- A default/fallback exists so other tasks can proceed while exploration happens
+
+**How to handle in plans:**
+- Mark as `type: "Explore-at-phase-start"` in risks section
+- Identify which tasks are blocked by the decision vs which can proceed with a default assumption
+- Document the fallback: "If no decision by task X, proceed with [default]"
+- Never pressure a resolution — the decision is made when the developer is ready
+
+**Example:**
+```yaml
+risk_5:
+  name: "Open decision: JSON vs YAML source format"
+  impact: "Build pipeline and transform scripts depend on format choice"
+  mitigation: "Proceed with JSON as default assumption. If YAML chosen after exploration, delta is small: add parser dep, change CLI flags."
+  type: "Explore-at-phase-start"
+```
+
 ## Decomposition Strategy for D&D 3.5e
 
 ### Add Content Type (Feats, Spells, etc.)
@@ -199,12 +215,12 @@ Release (Lead):
 ```
 
 **Parallelization**: 
-- Day 1: D1 + D2 + S1 + T1 + T2 (all independent of each other)
-- Day 2: I1 + I2 (depends on Day 1 designs)
-- Day 3: C1 (content population) while I1/I2 finalize
-- Day 4: Q1 merge and release
+- D1 + D2 + S1 can start independently
+- I1 + I2 start after designs complete (parallel tracks)
+- C1 starts after implementation, can overlap with T1/T2
+- Q1 is the final gate after all tracks merge
 
-**Team Assignment** (3-person team: 1 lead, 2 jr):
+**Team Assignment**:
 - Lead: task_R1 → task_D1 → task_I1 → code review → task_Q1
 - Jr-1: task_D2 → task_I2 → task_T1/T2 → content support
 - Jr-2: task_S1 → task_C1 (bulk of content) → task_T1/T2 support
@@ -253,11 +269,11 @@ Documentation (Flexible):
 ```
 
 **Parallelization**:
-- Day 1: Research (task_R1 + task_R2)
-- Day 2: Design (task_D1)
-- Day 3: Implementation (task_I1)
-- Day 4: Testing in parallel (task_T1 + task_T2 while task_M1 runs if needed) + docs (task_D2)
-- Day 5: Integration test (task_T3) + final merge
+- R1 + R2 start together (both research)
+- D1 after research completes
+- I1 after design completes
+- T1 + T2 + M1 + D2 all start after implementation (parallel)
+- T3 is the final gate after all tracks merge
 
 ---
 
@@ -301,11 +317,12 @@ Documentation & Rollback (Lead):
 ```
 
 **Parallelization**: 
-- Day 1: Research + prototype (task_R1 + task_R2)
-- Day 2: Design (task_D1)
-- Day 3: Implementation (task_I1 + task_I2 in parallel) + early tests (task_T1)
-- Day 4: Full integration (task_T2) + docs (task_D2)
-- Day 5: Rollback + performance (task_Q1)
+- R1 + R2 start together (research + spike)
+- D1 after spike validates approach
+- I1 + I2 in parallel after design
+- T1 starts as soon as implementation is testable
+- T2 + D2 after full implementation
+- Q1 is the final gate
 
 ## Established Patterns (Reuse)
 
@@ -349,6 +366,24 @@ When planning a feature or phase, answer:
 **Acceptance**:
 - How do we verify each task is done?
 - What's the success signal?
+
+**Open Decisions**:
+- Are there questions that require hands-on exploration to answer?
+- What's the default/fallback if the decision isn't made yet?
+- Which tasks are blocked by the decision vs which can proceed?
+
+**Risks**:
+- What prior phases must be further along before specific tasks can start?
+- What external dependencies (tools, APIs, libraries) need verification?
+- What technical assumptions could be wrong?
+
+## Planning Constraints
+
+**No time estimates**: Plans never include day counts, timelines, sprint assignments, or delivery dates. Define ordering, dependencies, and parallelization — never "how long."
+
+**No scope pressure**: If a phase is large, that's fine. Plans structure the work, they don't shrink it. Scope creep is acceptable during POC milestones.
+
+**Open decisions are fine**: Not every question needs answering before work begins. Mark explore-at-phase-start decisions explicitly and identify what can proceed in parallel with the exploration.
 
 ## Invocation
 

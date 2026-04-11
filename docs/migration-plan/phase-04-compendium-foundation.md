@@ -53,6 +53,16 @@ Phase 4 establishes the canonical source format for all compendium content. This
 
 4. **Transformation scripts**: If scripts must process source files frequently, JSON is simpler. YAML requires parsing overhead. _Favors JSON._
 
+### Exploration Tool: Foundry CLI
+
+The `@foundryvtt/foundryvtt-cli` supports both JSON and YAML extraction via flags (`--yaml`). At phase start, use the CLI to extract a sample pack in both formats and compare:
+- Diff readability (git diff on a field change)
+- Round-trip fidelity (extract → edit → compile → extract again)
+- File sizes and nesting depth
+- How transformation scripts interact with each format
+
+This hands-on comparison will inform the final decision. See §4.15 risk_5 for how the plan proceeds while this remains open.
+
 ### Deferred Flexibility
 
 - The decision is not permanent — conversion infrastructure can be added in Phase 26 (Compendium Browser) if team consensus shifts.
@@ -1210,6 +1220,289 @@ Everything listed here is deferred to Phase 26 (Compendium Browser & Management)
   - Show how to call macro from dev world
 - [ ] Create journal entry stub in dev world: "Compendium System"
 - [ ] Create journal entry stub in dev world: "Material Pattern & Stacking"
+
+---
+
+## 4.14 Execution Plan
+
+Routed task decomposition, parallelization tracks, and acceptance criteria for Phase 4. Tasks are grouped into parallel tracks where possible.
+
+### Track A: Build Pipeline (Lead dev)
+
+```yaml
+task_A1:
+  name: "Create directory structure (packs/, packs/_source/, subdirs)"
+  routing: Flexible
+  blocking: [A2, A3, A5]
+  verify: "Directories exist: packs/_source/materials/, weapons/, feats/, races/, classes/, macros-dev/, journals/"
+
+task_A2:
+  name: "Implement vite-plugin-compile-packs.ts"
+  routing: Lead dev
+  depends_on: [A1]
+  blocking: [A4]
+  verify: "Plugin compiles packs/_source/materials/ → packs/materials/ when running vite build"
+
+task_A3:
+  name: "Create system.json.template + build-system-json.mjs"
+  routing: Lead dev
+  depends_on: [A1]
+  blocking: [A4]
+  verify: "npm run build:system-json generates system.json with correct packs array; dev mode includes macros-dev, prod excludes it"
+
+task_A4:
+  name: "Wire up package.json scripts + vite.config.ts integration"
+  routing: Lead dev
+  depends_on: [A2, A3]
+  verify: "npm run build compiles all packs (prod); npm run build:dev includes dev packs; npm run dev starts dev server"
+
+task_A5:
+  name: "Create packs/.gitignore + root .gitignore updates"
+  routing: Flexible
+  depends_on: [A1]
+  verify: "git status shows no compiled LevelDB files; system.json excluded; .env.local excluded"
+```
+
+### Track B: Infrastructure (Lead dev + Jr dev parallel)
+
+```yaml
+task_B1:
+  name: "Implement origin tracking schema + auto-population"
+  routing: Lead dev
+  blocking: [C3, D1]
+  verify: "Import weapon from compendium → origin.sourceId populated; modify it → isModified returns true"
+
+task_B2:
+  name: "Create src/helpers/uuid.mts (type-safe UUID helpers)"
+  routing: Jr dev or Pair
+  blocking: [C3, D1]
+  verify: "fromCompendiumUuid() resolves a compendium doc; resolveUuids() batch-resolves; invalid UUID returns null without throwing"
+
+task_B3:
+  name: "Add migration.version field to all DataModel defineSchema() methods"
+  routing: Jr dev
+  verify: "New documents auto-populate system.migration.version = game.system.version; existing Phase 1-3 docs get version on next update"
+
+task_B4:
+  name: "Create AJV validation script (npm run validate:packs)"
+  routing: Jr dev
+  blocking: [C2]
+  verify: "validate:packs catches: missing _id, wrong _id format (not 16-char alphanumeric), missing required fields; passes on valid source JSON"
+```
+
+### Track C: Content Creation (Jr dev, after A+B merge point)
+
+```yaml
+task_C1:
+  name: "Create Broken/Masterwork materials in-game via dev world"
+  routing: Jr dev
+  depends_on: [A4]
+  blocking: [C2]
+  verify: "4 Material AEs exist in dev world: broken-weapon, broken-armor, masterwork-weapon, masterwork-armor; each has correct materialSubtype and changes"
+
+task_C2:
+  name: "Unpack materials to source JSON + validate"
+  routing: Jr dev
+  depends_on: [C1, B4]
+  blocking: [C3]
+  verify: "4 JSON files in packs/_source/materials/ with Foundry-generated _ids; npm run validate:packs passes"
+
+task_C3:
+  name: "Create src/constants/compendiumUuids.mts with Broken/Masterwork UUIDs"
+  routing: Jr dev
+  depends_on: [C2, B1, B2]
+  blocking: [D1]
+  verify: "Constants file exports BROKEN_WEAPON_UUID, BROKEN_ARMOR_UUID, MASTERWORK_WEAPON_UUID, MASTERWORK_ARMOR_UUID; UUIDs match source JSON _ids"
+```
+
+### Track D: Sync Logic (Lead dev, after C completes)
+
+```yaml
+task_D1:
+  name: "Add isBroken field to PhysicalItemSystemModel + Broken AE sync"
+  routing: Lead dev
+  depends_on: [C3, B1, B2]
+  blocking: [D3]
+  verify: "Create weapon → Broken AE auto-attached disabled. Toggle isBroken=true → AE enables. Toggle isBroken=false → AE disables. Manual AE enable → isBroken syncs to true."
+
+task_D2:
+  name: "Implement Masterwork AE sync logic"
+  routing: Lead dev
+  depends_on: [C3, B1, B2]
+  blocking: [D3]
+  verify: "Toggle isMasterwork=true → Masterwork AE created from compendium. Toggle isMasterwork=false → system-added AE removed. Custom masterwork AE survives checkbox toggle. Manual masterwork AE add → isMasterwork syncs to true."
+
+task_D3:
+  name: "Add isBroken/isMasterwork toggles to item sheet UI"
+  routing: Jr dev
+  depends_on: [D1, D2]
+  verify: "Weapon sheet shows both toggles; toggling each fires sync logic; effects visible in AE list on sheet"
+```
+
+### Track E: Content Authoring Tooling (Jr dev, parallel with D)
+
+```yaml
+task_E1:
+  name: "Create dev macro: import-csv-items.json"
+  routing: Jr dev
+  depends_on: [A4]
+  verify: "Run macro in dev world with sample CSV → items created with valid Foundry _ids and slug fields"
+
+task_E2:
+  name: "Create transformation scripts (transform-weapons.mjs, transform-materials.mjs)"
+  routing: Jr dev or Pair
+  depends_on: [A4]
+  verify: "Run transform-weapons with sample old export + new source → output JSON has transformed fields with correct schema"
+
+task_E3:
+  name: "Create CSV baseline templates in docs/csv-templates/"
+  routing: Flexible
+  verify: "CSV files exist for weapons, feats, races, classes with name,slug columns and README"
+```
+
+### Track F: Documentation & Journals (Flexible, parallel with D+E)
+
+```yaml
+task_F1:
+  name: "Create 5 journal entry stubs in packs/_source/journals/"
+  routing: Flexible
+  depends_on: [A1]
+  verify: "5 journal JSON files exist; each has name, type, content stub, and flags.phase metadata; build compiles them into pack"
+
+task_F2:
+  name: "Register journal packs in system.json.template (prod + dev)"
+  routing: Flexible
+  depends_on: [A3, F1]
+  verify: "system.json includes d35e-docs-workflows pack; dev build also includes d35e-docs-workflows-dev"
+
+task_F3:
+  name: "Create AUTHORING.md for contributors"
+  routing: Flexible
+  depends_on: [E1, E2]
+  verify: "AUTHORING.md documents CSV→Macro→Unpack→Script→Commit→Build workflow with step-by-step instructions"
+
+task_F4:
+  name: "Create TRANSFORMATION.md for developers"
+  routing: Flexible
+  depends_on: [E2]
+  verify: "TRANSFORMATION.md covers how to create transform scripts for new content types"
+```
+
+### Track G: Testing & QA (Lead dev, final gate)
+
+```yaml
+task_G1:
+  name: "Build pipeline end-to-end test"
+  routing: Flexible
+  depends_on: [A4, C2]
+  verify: "npm run build succeeds; packs/materials/ compiled exists with content; npm run build:dev includes macros-dev; npm run build excludes macros-dev"
+
+task_G2:
+  name: "Origin tracking + UUID integration tests"
+  routing: Jr dev or Pair
+  depends_on: [B1, B2, D1]
+  verify: "Import from compendium → origin stamped; UUID helpers resolve docs; invalid UUIDs handled gracefully"
+
+task_G3:
+  name: "Broken/Masterwork sync integration tests"
+  routing: Jr dev or Pair
+  depends_on: [D1, D2, D3]
+  verify: "Full cycle: create weapon → broken AE disabled → toggle on/off → masterwork toggle on/off → custom masterwork survives toggle → effects apply correctly"
+
+task_G4:
+  name: "Smoke test: full system load"
+  routing: Lead dev
+  depends_on: [G1, G2, G3]
+  verify: "System loads without console warnings about missing packs/UUIDs; compendium tab shows all packs; dev world loads journals"
+```
+
+### Parallelization Diagram
+
+```
+TRACK A: Build Pipeline     TRACK B: Infrastructure     TRACK E: Authoring     TRACK F: Docs
+────────────────────────     ────────────────────────     ──────────────────     ─────────────
+A1: Dir structure ─────┐     B1: Origin tracking          E1: Dev macro          F1: Journal stubs
+A5: .gitignore         │     B2: UUID helpers              E2: Transform scripts  F3: AUTHORING.md
+A2: Vite plugin        │     B3: Migration version         E3: CSV templates      F4: TRANSFORM.md
+A3: system.json tmpl   │     B4: AJV validation                                   F2: Register packs
+A4: Wire up scripts ◄──┘         │                             │
+        │                        │                             │
+        └──────────┬─────────────┘                             │
+                   ▼                                           │
+        TRACK C: Content Creation                              │
+        ─────────────────────────                              │
+        C1: Create materials in-game                           │
+        C2: Unpack to source JSON                              │
+        C3: Compendium UUID constants                          │
+                   │                                           │
+                   ▼                                           │
+        TRACK D: Sync Logic              ◄─────────────────────┘
+        ──────────────────
+        D1: isBroken sync
+        D2: isMasterwork sync
+        D3: Sheet UI toggles
+                   │
+                   ▼
+        TRACK G: Testing & QA
+        ─────────────────────
+        G1: Build pipeline test
+        G2: Origin + UUID tests
+        G3: Sync integration tests
+        G4: Smoke test (final gate)
+```
+
+**What can run in parallel:**
+- Tracks A, B, E, F are all **fully independent** — up to 4 people could work simultaneously
+- Track C merges A + B (needs build pipeline working + infrastructure ready)
+- Track D merges C (needs content + constants)
+- Track E and F can continue in parallel with D
+- Track G is the final sequential gate
+
+**Routing summary:**
+- **Lead dev**: A2, A3, A4, B1, D1, D2, G4
+- **Jr dev**: B3, B4, C1, C2, C3, D3, E1, G2, G3
+- **Jr dev or Pair**: B2, E2
+- **Flexible**: A1, A5, E3, F1, F2, F3, F4, G1
+
+---
+
+## 4.15 Risks & Blockers
+
+### Hard Blockers
+
+```yaml
+risk_1:
+  name: "Phase 2 at 50% — Broken/Masterwork sync blocked"
+  impact: "Track D (sync logic) depends on MaterialSystemModel and buildChanges() from Phase 2"
+  mitigation: "Tracks A, B, E, F can proceed in full. Track C can create the material JSON files. Only Track D is blocked."
+  status: "Phase 2 must reach ~90% (MaterialSystemModel complete) before D1/D2 can start"
+
+risk_2:
+  name: "Phase 3 at 50% — Journal stubs need i18n keys"
+  impact: "Track F journal stubs should use i18n keys, not hardcoded English"
+  mitigation: "Create journal stubs with placeholder i18n keys; update when Phase 3 completes. Low risk — content is stubs anyway."
+```
+
+### Technical Risks
+
+```yaml
+risk_3:
+  name: "Foundry CLI V14 compatibility"
+  impact: "@foundryvtt/foundryvtt-cli may not support V14 LevelDB format yet"
+  mitigation: "Verify CLI works with V14 early in Track A (task A2). If incompatible, fall back to direct LevelDB API or pin CLI version."
+  check: "npm install @foundryvtt/foundryvtt-cli && run compilePack() on a test pack"
+
+risk_4:
+  name: "Vite plugin hook ordering"
+  impact: "writeBundle runs after Vue compilation — if source JSON is also generated during build, pack compilation may see stale files"
+  mitigation: "Source JSON is static (committed to repo), not generated at build time. writeBundle hook is correct. Only system.json is generated, and that's a separate pre-build step."
+
+risk_5:
+  name: "Open decision: JSON vs YAML source format (§4.2)"
+  impact: "Build pipeline, CLI commands, and transformation scripts all depend on format choice"
+  mitigation: "Decision intentionally deferred to phase start — needs hands-on exploration. Tracks A-B can proceed with JSON as the default assumption since CLI defaults to JSON. If YAML is chosen after exploration, the delta is: add yaml parser dep, change CLI flags, update transform scripts."
+  type: "Explore-at-phase-start"
+```
 
 ---
 
