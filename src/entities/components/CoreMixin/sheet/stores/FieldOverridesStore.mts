@@ -115,6 +115,8 @@ type FieldOverridesStoreUtils = {
   getIsVisible: (fieldPath: string, currentVisibility: FieldVisibility, additionalRestriction?: FieldVisibility) => boolean;
   resolveEditability: (fieldPath: string, additionalRestriction?: FieldEditability) => FieldEditability;
   getIsEditable: (fieldPath: string, currentEditability: FieldEditability, additionalRestriction?: FieldEditability) => boolean;
+  /** Look up a schema field by its system-relative path. */
+  getSchemaField: (fieldPath: string) => DataField | undefined;
 };
 
 type FieldOverridesStoreActions = {
@@ -319,6 +321,7 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
       getIsVisible,
       resolveEditability,
       getIsEditable,
+      getSchemaField,
     },
     fieldOverridesActions: {
       setFieldOverride,

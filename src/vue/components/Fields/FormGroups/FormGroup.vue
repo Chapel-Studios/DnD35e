@@ -3,7 +3,7 @@
     <div v-if="hasLabel" class="form-group-label">
       <label>
         <i v-if="showUnidentifiedIndicator" class="fas fa-low-vision unidentified-indicator" :title="localize('dnd35e.IDENTIFIABLE.UnidentifiedValueHint')"></i>
-        {{ localize(resolvedLabel) }}
+        {{ resolvedLabel }}
       </label>
       <!-- GM permission controls next to label -->
       <FieldControls
@@ -21,7 +21,7 @@
     <slot v-else name="readonly">{{ props.value }}</slot>
 
     <!-- Hint text -->
-    <p v-if="props.hint" class="hint">
+    <p v-if="hasHint" class="hint">
       <!-- GM permission controls before content when no label -->
       <FieldControls
         v-if="!hasLabel"
@@ -31,12 +31,12 @@
       >
         <slot name="controls" :editable="isFieldEditable" />
       </FieldControls>
-      {{ props.localizeHint === false ? props.hint : localize(props.hint) }}
+      {{ resolvedHint }}
     </p>
 
     <!-- Standalone controls when no label and no hint -->
     <FieldControls
-      v-if="!hasLabel && !props.hint"
+      v-if="!hasLabel && !hasHint"
       :field-path="props.fieldPath"
       :default-editability="props.defaultEditability"
       :default-visibility="props.defaultVisibility"
@@ -82,34 +82,39 @@
     documentGetters: {
       getIsFieldVisible,
       getIsFieldEditable,
-      type: documentType,
     },
     _storeUtils: {
       resolveVisibility,
       resolveEditability,
       resolveFieldMeta,
+      getSchemaField,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  // Resolve label: explicit prop > auto-derived from field-path
+  // Schema field for this path (pre-localized by Foundry's LOCALIZATION_PREFIXES)
+  const schemaField = getSchemaField(props.fieldPath);
+
+  /**
+   * Resolve label: explicit prop (localization key) > schema field label (already localized)
+   * When explicit, the value is a localization key that needs localize().
+   * When from schema, field.label is already localized text.
+   */
   const resolvedLabel = computed(() => {
-    if (props.label) return props.label;
-
-    // Auto-derive label from field-path using document schema
-    const docType = documentType.value?.toUpperCase() ?? '';
-    const fieldName = props.fieldPath.split('.').pop();
-    const derivedKey = `dnd35e.${docType}.FIELDS.${fieldName}.label`;
-
-    return derivedKey;
+    if (props.label) return localize(props.label);
+    return schemaField?.options?.label ?? '';
   });
 
-  // Check if we have a valid label (either explicit or auto-derived that exists)
-  const hasLabel = computed(() => {
-    if (props.label) return true; // Explicit label always has label
-    // For derived labels, check if they exist in i18n
-    const localized = game.i18n.localize(resolvedLabel.value);
-    return localized !== resolvedLabel.value; // If unchanged, the key doesn't exist
+  const hasLabel = computed(() => !!resolvedLabel.value);
+
+  /**
+   * Resolve hint: explicit prop > schema field hint (already localized)
+   */
+  const resolvedHint = computed(() => {
+    if (props.hint) return props.localizeHint === false ? props.hint : localize(props.hint);
+    return schemaField?.options?.hint ?? '';
   });
+
+  const hasHint = computed(() => !!resolvedHint.value);
 
   const { isIdentifiedViewMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
@@ -130,7 +135,7 @@
 
   // Form group classes
   const formGroupClasses = computed(() => ({
-    'with-hint': !!props.hint,
+    'with-hint': hasHint.value,
     'restricted-visibility': isVisibilityRestricted.value,
     'restricted-editability': isEditabilityRestricted.value,
   }));
