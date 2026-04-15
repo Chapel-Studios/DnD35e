@@ -261,6 +261,77 @@ The `resolveActiveEffectChanges()` function resolves bonuses and **tracks detail
 
 **No separate `_stackingHistory` property.** The existing `overrides` property on `ItemDnd35e` (and later `ActorDnd35e`) is the single source of truth for "what effects are currently modifying this field." We enrich it, not duplicate it.
 
+### 2.5.2 Dual-Stack Resolution (Real vs. Player-Perceived)
+
+When an item has **masked effects** (e.g., a hidden +2 enhancement the player doesn't know about), the stacking engine must run **twice** to produce two independent resolutions:
+
+1. **Real stack** — includes ALL bonuses (visible + hidden). Used for the **actual die roll** that determines mechanical outcomes.
+2. **Masked stack** — includes only bonuses the player **knows about**. Used for the **chat card display** shown to non-GM players.
+
+This is not just cosmetic filtering — the two stacks can produce **different winners** in highest-wins resolution:
+
+**Example**: Sword with hidden +2 enhancement. Player casts Magic Weapon (+1 enhancement).
+
+| | Real Stack | Player-Perceived Stack |
+|---|---|---|
+| Hidden +2 enhancement | **+2 (applied)** | *(invisible — not in this stack)* |
+| Magic Weapon +1 enhancement | +1 (suppressed — same type, lower) | **+1 (applied — only enhancement source)** |
+| **Enhancement total** | +2 | +1 |
+
+The player sees "+1 enhancement from Magic Weapon" in their chat card. The actual roll uses +2. The player's character doesn't understand why they hit more often.
+
+**Implementation**: The `resolveActiveEffectChanges()` function accepts an optional `excludeEffectIds` set. The ExecutionEngine calls it twice when masked effects exist:
+
+```typescript
+// Real resolution — all effects, used for the actual roll
+const realResult = resolveActiveEffectChanges(allChanges, allPenalties);
+
+// Masked resolution — excluding hidden effects, used for player chat card
+const maskedChanges = allChanges.filter(c => !hiddenEffectIds.has(c.effectId));
+const maskedPenalties = allPenalties.filter(p => !hiddenEffectIds.has(p.effectId));
+const maskedResult = resolveActiveEffectChanges(maskedChanges, maskedPenalties);
+```
+
+**What "hidden" means**: An effect is hidden from the player when its source item `isIdentifiable && !isIdentified`. The set of hidden effect IDs is derived from the item's identification state — not from individual change rows.
+
+**Chat card rendering**:
+- **Player view**: Shows `maskedResult.history` — they see only the bonuses they know about, with correct stacking among those bonuses.
+- **GM view**: Shows `realResult.history` — full transparency, plus indicators marking which bonuses are hidden from the player.
+- **Die result**: Always uses `realResult.values` — the actual mechanical outcome. The die total reflects reality.
+- **The gap is intentional**: When the player's perceived total doesn't match the die result, that's working as designed. The character genuinely doesn't know why the sword seems to perform better than expected.
+
+**Where this gets stored**: Both `realResult` and `maskedResult` are stored in the chat message's `flags.dnd35e.stackingHistory` so the card can re-render for either audience. The message itself is visible to all, but the render function checks `game.user.isGM` to pick which history to display.
+
+> **Post-Release evolution**: When a player with edit permission modifies a masked field, the edit is routed into a **Player Edit Secret** AE at higher priority than the mask (see Phase 28 §28.10). The real stack ignores it; the masked stack treats it as the highest-priority override. This prevents player edits from destroying the GM's hidden data.
+
+### 2.5.3 Dual-Stack in Sheet UI (HasActiveEffectsNotification & Overrides)
+
+The dual-stack pattern extends beyond chat cards — it also affects the **sheet field UI**. The `HasActiveEffectsNotification` component (sparkle icon + tooltip showing which effects modify a field) and the `getEffectsForField` / `hasEffectsForField` store getters must be **view-mode-aware**:
+
+- **GM (or identified view)**: Sees all effect overrides for the field, including those from unidentified sources. Hidden effects are marked with a `[hidden]` indicator so the GM knows the player can't see them.
+- **Player (or unidentified view)**: Sees only effect overrides from **identified** sources. If the only modifier on a field comes from an unidentified effect, the sparkle icon doesn't appear at all — the player has no reason to suspect the field is being modified.
+
+**Implementation path**: The `ItemSheetStore.getEffectsForField()` currently reads raw from `document.value.overrides[fieldPath]`. It needs to filter based on the `RenderModeStore.isIdentifiedViewMode` and the source effect's identification state:
+
+```typescript
+// Current: returns all overrides (no filtering)
+const getEffectsForField = (fieldPath: string) => computed(() =>
+  document.value.overrides?.[fieldPath] ?? []
+);
+
+// Updated: filters by identification state when in unidentified view mode
+const getEffectsForField = (fieldPath: string) => computed(() => {
+  const overrides = document.value.overrides?.[fieldPath] ?? [];
+  if (isGM.value || isIdentifiedViewMode.value) return overrides;
+  // In unidentified view: exclude overrides from unidentified effect sources
+  return overrides.filter(o => !hiddenEffectIds.value.has(o.effectId));
+});
+```
+
+This means `hasEffectsForField` (which derives from `getEffectsForField`) automatically returns `false` when all modifiers on a field come from hidden sources — the sparkle icon vanishes for non-GM players.
+
+**UX consequence**: A player looking at their sword's stats sees no sparkle, no hint of hidden bonuses. They cast Magic Weapon and now the sparkle appears showing "+1 enhancement from Magic Weapon." Meanwhile the GM's view shows both the hidden +2 and the suppressed Magic Weapon +1.
+
 ```typescript
 // src/helpers/stacking.mts
 

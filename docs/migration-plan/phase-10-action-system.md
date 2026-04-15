@@ -89,6 +89,15 @@ const actionFormulaContexts: FormulaContext[] = [
     aliases: [],
     // Exposes: #target.ac, #target.touchAc, #target.saves.fort.total, etc.
   },
+  {
+    contextName: 'TargetItem',
+    resolvePath: 'runtime',             // Resolved at execution time from item picker selection
+    documentType: 'Item',
+    fallbackSubtypes: ['weapon', 'equipment'],
+    aliases: [],
+    // Exposes: #targetItem.enhancement, #targetItem.material, etc.
+    // Only available when effect.target is 'item-on-creature'
+  },
 ];
 
 // === Schema Registration ===
@@ -145,7 +154,11 @@ class ActionDataModel extends foundry.abstract.DataModel {
       effect: new SchemaField({
         effectUuid: new StringField(),                // AE to apply (buff, debuff, condition)
         duration: new SchemaField({ /* DurationData */ }),
-        target: new StringField({ choices: ['self', 'target', 'area'] }),
+        target: new StringField({ choices: ['self', 'creature', 'area', 'item-on-creature'] }),
+        itemTargetFilter: new SchemaField({            // Only used when target is 'item-on-creature'
+          itemTypes: new ArrayField(new StringField()), // e.g. ['weapon'] for Magic Weapon
+          equippedOnly: new BooleanField({ initial: true }), // Filter to equipped items
+        }, { required: false }),
       }, { required: false }),
 
       // --- CHAIN LINKS ---
@@ -195,6 +208,7 @@ Items auto-populate default actions when created. Users can customize.
 | **Weapon** | `attack` (check vs AC) → `onSuccess` → `damage`, `onCrit` → `critConfirm` → `critDamage` |
 | **Spell (attack)** | `spellAttack` (check vs AC/touch) → `onSuccess` → `spellDamage` |
 | **Spell (save)** | `castSpell` → `always` → `targetSave` → `onFailure` → `applyEffect` |
+| **Spell (item-buff)** | `castSpell` (item-on-creature target) → `always` → `applyItemBuff` |
 | **Consumable** | `use` (utility) |
 | **Natural Attack** | Same as weapon |
 | **Combat Maneuver** | Composed from check + effect primitives (see §18.7) |
@@ -666,6 +680,7 @@ interface ActionContext {
   item?: ItemDnd35e;
   targets: Token[];
   currentTarget?: Token;              // For per-attack targeting
+  targetItem?: ItemDnd35e;            // For item-on-creature targeting (Magic Weapon, etc.)
   rollData: Record<string, any>;      // Assembled @ variables
   turnBudget: TurnActionBudget;       // Current turn state
   previousResults: StepResult[];      // Results from earlier chain steps
@@ -690,6 +705,33 @@ interface StepResult {
 
 The action availability UI lives across multiple surfaces:
 
+### Item Sheet — Actions Tab
+
+Every item type that can bear actions gets a dedicated **Actions tab** on its sheet. This is the primary interface for configuring what an item *does*.
+
+**Layout**:
+- **"Add Action" button** at the top of the tab. Clicking it appends a new collapsible action section.
+- Each action is a **collapsible section** with a header showing the action name, type badge, and activation type. Sections can be reordered via drag handles.
+- Inside each section:
+  - Name (text input)
+  - Type selector (check, attack, damage, heal, effect, utility)
+  - Activation cost (standard, move, swift, free, fullRound, immediate, passive, aoo)
+  - Type-specific fields that appear/hide based on type selection:
+    - **check/attack**: formula (FormulaFormGroup with autocomplete), defense target, DC formula
+    - **damage**: formula, damage type, crit range, crit multiplier
+    - **heal**: formula
+    - **effect**: effect UUID picker, duration, target mode (`self`, `creature`, `area`, `item-on-creature`), item target filter (when `item-on-creature` selected)
+  - **Chain links** area at the bottom: a list of chain entries, each with a trigger selector (onSuccess, onFailure, onCrit, onKill, always, onChoice) and a target action dropdown (references other actions on the same item by ID). An "Add Chain Link" button appends a new entry.
+- **Delete action** button (with confirmation) on each section header.
+- Weapons auto-populate with default attack/damage/crit actions on creation, but these can be edited or replaced.
+
+**Item-on-Creature Target Mode UI**:
+When an action's effect target is set to `item-on-creature`:
+- An **item filter** panel appears with:
+  - Item type checkboxes (weapon, equipment, etc.)
+  - "Equipped only" toggle (default: on)
+- At **execution time**, after the caster selects the target creature token, an **Item Picker Dialog** appears showing a filtered list of that creature's inventory. The picker shows item name, icon, equipped status, and any existing enhancement bonuses. Single-select; click confirms.
+
 ### Token HUD (Primary)
 
 Extends Foundry's built-in Token HUD with a combat action panel:
@@ -708,20 +750,23 @@ The combat tracker sidebar shows:
 ### Actor Sheet (Combat Tab)
 
 Full list of all actions available to the character:
-- All item actions grouped by item
-- Actor-level actions (combat maneuvers, special abilities)
-- Action editing interface for customization
+- All item actions grouped by source item (read-only summary — edit via the item's own Actions tab)
+- Actor-level actions (combat maneuvers, special abilities) with inline editing
+- Action editing interface for actor-level action customization
 
 ### Vue Architecture Integration
 
 All action UI follows the established Vue patterns from PR-weapon-base §6:
 
-**Action Editor Components** (embedded in item/actor sheets):
+**Action Editor Components** (item sheet Actions tab):
 - Built as Vue SFCs under `src/vue/components/actions/`
+- The Actions tab is a full-tab component (`ActionTabPanel.vue`) included in every action-bearing item sheet
+- Each action renders as a collapsible `ActionSection.vue` with drag handle for reordering
+- "Add Action" button at tab top creates a new section with default values
 - Formula inputs (attack formula, damage formula, DC formula) use **FormulaFormGroup** — the same contenteditable component with syntax highlighting and autocomplete used for material name formulas
 - Numeric fields wrapped in `Dnd35eField` (critRange, critMultiplier) use **NumberFormGroup** with view-aware field access via `useDocumentSheetStore.getViewAwareFieldValue()`
-- Chain link editing uses a list component with drag-to-reorder and trigger type selectors
-- The action editor reads formula contexts from the `ActionDataModel`'s `formulaContexts` declarations to populate autocomplete with actor stats (`#self.bab`, `#self.abilities.str.mod`), item properties (`#Item.enhancement`), and target defenses (`#target.ac`)
+- Chain link editing uses a list component with drag-to-reorder and trigger type selectors, nested at the bottom of each action section
+- The action editor reads formula contexts from the `ActionDataModel`'s `formulaContexts` declarations to populate autocomplete with actor stats (`#self.bab`, `#self.abilities.str.mod`), item properties (`#Item.enhancement`), target defenses (`#target.ac`), and target item properties (`#targetItem.enhancement`)
 
 **PreRollDialog** (situational modifier / Power Attack dialog):
 - Extends `VueAppBaseMixin(ApplicationV2)` — follows the same mixin chain as item sheets and AE configs
@@ -848,6 +893,20 @@ export function renderAttackCard(data: AttackCardData): string {
 | `ManeuverCard` | Combat maneuver (trip, grapple, etc.) | Phase 8 |
 | `SpellCard` | Spell cast with save/SR/effects | Phase 16 |
 
+### Dual-Stack Resolution for Masked Items
+
+When the wielded weapon (or any bonus source) has **unidentified effects**, the ExecutionEngine runs `resolveActiveEffectChanges()` **twice** per roll:
+
+1. **Real stack** — all bonuses (visible + hidden). Determines the **actual die roll**.
+2. **Masked stack** — only bonuses the player knows about, stacked independently. Determines the **player-visible breakdown**.
+
+Both histories are stored in `flags.dnd35e.stackingHistory` on the chat message (`{ real: ChangeHistory[], masked: ChangeHistory[] }`). The render function checks `game.user.isGM`:
+
+- **Player**: Sees `masked` history. Their breakdown may not add up to the die total — this is correct. The character doesn't know why the sword performs better than expected.
+- **GM**: Sees `real` history with `[hidden]` markers on bonuses from unidentified sources, plus the suppression chain (e.g., "Magic Weapon +1 suppressed by hidden +2 enhancement").
+
+See [Phase 2 §2.5.2](phase-02-active-effect-on-item.md) for the dual-stack algorithm.
+
 ### Attack Chat Card Contents
 
 ```
@@ -928,6 +987,7 @@ AoO uses the same `ActionDataModel` with `activation: 'aoo'`. The weapon's attac
 - Default "Cast" action with `activation` matching the spell's casting time
 - Attack spells: → action chain to attack roll → damage
 - Save spells: → action chain to save → effect application
+- **Item-buff spells**: `effect.target: 'item-on-creature'` with `itemTargetFilter` — e.g., Magic Weapon targets one equipped weapon. Flow: select target token → item picker dialog (filtered to equipped weapons) → apply buff AE to selected item.
 - Spell failure check: Pre-chain step for arcane casters in armor
 - Concentration checks: Triggered by AoO during casting (if auto-detect enabled)
 - Touch spells: Cast action → hold charge → melee touch attack on subsequent turn(s)
@@ -990,8 +1050,11 @@ AoO uses the same `ActionDataModel` with `activation: 'aoo'`. The weapon's attac
 | Create | `src/actions/templates/` | Default action templates by item type |
 | Create | `src/actions/maneuvers/` | Combat maneuver action definitions |
 | Create | `src/vue/components/actions/ActionEditor.vue` | Action list + editing panel, uses FormulaFormGroup for formula inputs |
+| Create | `src/vue/components/actions/ActionTabPanel.vue` | Full Actions tab component for item sheets (Add Action button, section list) |
+| Create | `src/vue/components/actions/ActionSection.vue` | Collapsible single-action editor section with drag handle |
 | Create | `src/vue/components/actions/ActionChainEditor.vue` | Chain link list with drag-to-reorder |
 | Create | `src/vue/components/actions/ActionListItem.vue` | Single action display in editor/HUD |
+| Create | `src/vue/components/actions/ItemPickerDialog.vue` | Filtered inventory picker for item-on-creature targeting |
 | Create | `src/vue/components/combat/ActionHUD.vue` | Token HUD action panel (via VueAppBaseMixin) |
 | Create | `src/vue/components/combat/TurnBudgetDisplay.vue` | Combat tracker budget widget |
 | Create | `src/vue/components/combat/PreRollDialog.vue` | Situational modifier dialog (extends VueAppBaseMixin(ApplicationV2)) |
@@ -1022,11 +1085,12 @@ AoO uses the same `ActionDataModel` with `activation: 'aoo'`. The weapon's attac
 - [ ] Implement ActionDataModel.check schema field: formula (FormulaField), against (StringField with choices), againstFormula (FormulaField)
 - [ ] Implement ActionDataModel.damage schema field: formula (FormulaField), type (StringField for DamageType), critRange (Dnd35eField wrapping NumberField), critMultiplier (Dnd35eField wrapping NumberField)
 - [ ] Implement ActionDataModel.healing schema field: formula (FormulaField)
-- [ ] Implement ActionDataModel.effect schema field: effectUuid (StringField), duration (SchemaField with duration data), target (StringField with choices: 'self', 'target', 'area')
+- [ ] Implement ActionDataModel.effect schema field: effectUuid (StringField), duration (SchemaField with duration data), target (StringField with choices: 'self', 'creature', 'area', 'item-on-creature')
+- [ ] Implement ActionDataModel.effect.itemTargetFilter schema field: itemTypes (ArrayField), equippedOnly (BooleanField, default true) — only active when target is 'item-on-creature'
 - [ ] Implement ActionDataModel.chain field: ArrayField of EmbeddedDataField(ActionChainLinkModel)
 - [ ] Attach formulaContexts to all FormulaField instances in ActionDataModel via static _initializeFormulaContexts()
-- [ ] Define formulaContexts array for action formulas: Actor ('#self'), Item ('#Item'), Target ('#target')
-- [ ] Test: ActionDataModel instantiation, schema validation, embedded chain links
+- [ ] Define formulaContexts array for action formulas: Actor ('#self'), Item ('#Item'), Target ('#target'), TargetItem ('#targetItem')
+- [ ] Test: ActionDataModel instantiation, schema validation, embedded chain links, itemTargetFilter validation
 - [ ] Create `src/actions/ActionChainLinkModel.mts` extending DataModel
 - [ ] Implement chain link schema: trigger (StringField with choices from TriggerEvent), actionId (StringField), description (StringField for UI label)
 - [ ] Test: Chain links can be created and linked to parent action
@@ -1036,7 +1100,8 @@ AoO uses the same `ActionDataModel` with `activation: 'aoo'`. The weapon's attac
 - [ ] Implement actor formula context: provides #self.bab, #self.abilities.*, #self.attributes.*, #self.size.*, #self.saves.*
 - [ ] Implement item formula context: provides #Item.enhancement, #Item.dc, #Item.type, size modifiers
 - [ ] Implement target formula context (runtime): provides #target.ac, #target.touchAc, #target.flatFootedAc, #target.saves.*, #target.cmd, #target.size.*
-- [ ] Implement runtime context injection: ActionExecutionEngine injects target context at execution time from selected token
+- [ ] Implement targetItem formula context (runtime): provides #targetItem.enhancement, #targetItem.material, etc. — injected when effect.target is 'item-on-creature'
+- [ ] Implement runtime context injection: ActionExecutionEngine injects target context at execution time from selected token, and targetItem context from item picker selection
 - [ ] Test: Formula context autocomplete works in action editor
 
 **Turn Action Budget State Machine:**
@@ -1097,6 +1162,7 @@ AoO uses the same `ActionDataModel` with `activation: 'aoo'`. The weapon's attac
 - [ ] For 'damage' type: roll formula with crit multiplier if applicable
 - [ ] For 'save' type: roll save check, compare vs DC
 - [ ] For 'effect' type: create/apply AE from effectUuid
+- [ ] For 'effect' with target 'item-on-creature': apply AE to context.targetItem (not context.currentTarget actor). AE gets `transfer: true` to flow bonuses up to the actor.
 - [ ] For 'heal' type: roll formula, apply positive damage
 - [ ] For 'utility' type: execute free action (open door, draw weapon, etc.)
 - [ ] Populate StepResult: action, roll, total, success boolean, isCrit, isFumble, isKill, damage, effectApplied
@@ -1157,6 +1223,7 @@ AoO uses the same `ActionDataModel` with `activation: 'aoo'`. The weapon's attac
 - [ ] Dim/gray out unavailable actions with reason tooltip: "Move action already spent"
 - [ ] Bind click handler to each action button: executeAction(action, event)
 - [ ] Show target selection UI: "Select target (Ctrl for multi)" before executing targeted actions
+- [ ] For item-on-creature actions: after target token selected, show ItemPickerDialog filtered by action's itemTargetFilter
 - [ ] Update HUD reactively as TurnActionBudget state changes (Pinia subscription)
 - [ ] Implement movement button: click triggers ruler for movement tracking
 - [ ] Implement 5-foot step button: click moves token exactly 5 ft (or shows mini-ruler for precise placement)
@@ -1179,6 +1246,36 @@ AoO uses the same `ActionDataModel` with `activation: 'aoo'`. The weapon's attac
 - [ ] Test: Budget updates as actions taken
 - [ ] Test: Undo reverts last action
 - [ ] Test: New turn resets budget
+
+**Item Picker Dialog (item-on-creature targeting):**
+- [ ] Create `src/vue/components/actions/ItemPickerDialog.vue` extending VueAppBaseMixin(ApplicationV2)
+- [ ] Accept filter props: itemTypes (string[]), equippedOnly (boolean)
+- [ ] Query target actor's items, filter by type and equipped status
+- [ ] Render filtered list: item icon, name, equipped badge, existing enhancement info
+- [ ] Single-select click confirms selection, resolves dialog promise with selected item
+- [ ] Cancel button closes dialog and aborts action execution
+- [ ] Test: Dialog opens with target actor's inventory filtered to equipped weapons
+- [ ] Test: Selecting an item resolves and passes itemId to execution engine
+- [ ] Test: Cancel aborts the action chain cleanly
+
+**Action Tab Panel (Item Sheet):**
+- [ ] Create `src/vue/components/actions/ActionTabPanel.vue` — full tab component
+- [ ] Implement "Add Action" button at top: appends new ActionDataModel to item's actions array
+- [ ] Render each action as collapsible `ActionSection.vue` with drag handle for reorder
+- [ ] Create `src/vue/components/actions/ActionSection.vue` — collapsible editor for one action
+- [ ] Implement action section: name input, type selector, activation selector
+- [ ] Implement type-specific field panels that show/hide based on type (check, attack, damage, heal, effect, utility)
+- [ ] For effect target 'item-on-creature': show itemTargetFilter sub-panel (item type checkboxes, equipped-only toggle)
+- [ ] Implement chain link area at bottom of each section: trigger selector + target action dropdown + "Add Chain Link" button
+- [ ] Implement delete action button with confirmation dialog
+- [ ] Implement drag-to-reorder between action sections
+- [ ] Add Actions tab to weapon sheet, spell sheet, and all action-bearing item sheets
+- [ ] Auto-populate default actions on new weapon/spell creation
+- [ ] Test: Add action → new section appears
+- [ ] Test: Delete action → section removed after confirmation
+- [ ] Test: Reorder actions → order persists on save
+- [ ] Test: Chain link references valid action IDs from same item
+- [ ] Test: item-on-creature filter panel appears only when effect target is 'item-on-creature'
 
 **Combat Maneuver Templates:**
 - [ ] Create `src/actions/maneuvers/Trip.mts` with complete action set
@@ -1310,8 +1407,8 @@ AoO uses the same `ActionDataModel` with `activation: 'aoo'`. The weapon's attac
 **Integration with Existing Systems:**
 - [ ] Modify weapon ItemDataModel: add `system.actions: EmbeddedDataField(ActionDataModel)[]`
 - [ ] Modify actor ActorSystemModel: add `system.actions: EmbeddedDataField(ActionDataModel)[]` for actor-level actions
-- [ ] Modify weapon sheet: add Action tab or panel for editing weapon actions
-- [ ] Modify actor sheet: add Actions panel in Features tab for managing actor-level actions (maneuvers, special abilities)
+- [ ] Modify weapon sheet: add Actions tab using ActionTabPanel component
+- [ ] Modify actor sheet: add Actions panel in Features tab for managing actor-level actions (maneuvers, special abilities) — read-only summary of item actions, inline editing for actor-level actions
 - [ ] Register FormulaFamiliar contexts for action formulas on weapons
 - [ ] Modify Combat Tracker UI: extend to show TurnBudgetDisplay
 - [ ] Modify Token HUD: extend to mount ActionHUD Vue component
@@ -1346,6 +1443,10 @@ AoO uses the same `ActionDataModel` with `activation: 'aoo'`. The weapon's attac
 - [ ] Edge case: Immediate action off-turn → consumes next turn's swift
 - [ ] Edge case: Rapid Shot with ranged weapon → extra iterative appears with -2 penalty
 - [ ] Edge case: Mounted combat with mount movement > 5ft → rider restricted to single melee OR full ranged
+- [ ] Integration test: Item-on-creature targeting: cast item-buff spell → select target token → item picker shows equipped weapons → select weapon → buff AE created on weapon with transfer: true
+- [ ] Integration test: Item picker filters correctly: equippedOnly=true hides unequipped items, itemTypes=['weapon'] hides non-weapons
+- [ ] Integration test: Item picker cancel aborts action chain without consuming spell slot
+- [ ] Integration test: Action tab on weapon sheet: add action → edit formula → add chain link → save → reload → actions persist
 - [ ] Smoke test: Complete combat round with 3 combatants taking full attacks, no console errors
 - [ ] Smoke test: Switch between multiple encounters, turn budgets track independently
 - [ ] Performance test: 10+ iteratives computed in <100ms

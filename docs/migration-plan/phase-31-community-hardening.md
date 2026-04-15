@@ -523,6 +523,8 @@ Example:
   - "Issues resolved vs. deferred"
 - [ ] Test: All 100+ feedback items categorized and decisions tracked
 
+---
+
 **Community Hardening Results Report:**
 - [ ] Create final report: `docs/COMMUNITY_HARDENING_RESULTS.md`
 - [ ] Sections:
@@ -637,3 +639,4 @@ Upgrade from 2-state (hidden/identified) to 3-state (unknown / known-unidentifie
 - Full user guide (waits for Phase 28 feedback)
 - Balanced feat recommendations (after Phase 28 balance data)
 - Optimized default settings (after Phase 28 tuning)
+- Player Edit Secrets for Masked Fields → moved to [Phase 45](phase-45-player-edit-secrets.md)

@@ -2,7 +2,7 @@
 name: planning
 model: 'claude-3-5-sonnet-20241022'
 description: "D&D 3.5e planning specialist for task decomposition, parallelization, and team allocation. Break phases into atomic tasks, identify which can run in parallel, and route work to lead dev vs. jr devs based on complexity and skill requirements."
-tools: [search, read, vscode_listCodeUsages, vscode_memory]
+tools: [search, read, vscode_listCodeUsages, agent, todo, edit, vscode.mermaid-chat-features/renderMermaidDiagram, vscode/askQuestions, execute/runInTerminal]
 ---
 
 # D&D 3.5e System Planning Agent

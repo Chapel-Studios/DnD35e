@@ -10,7 +10,7 @@ The Action System is the central combat resolution engine. Every mechanical inte
 
 ### ActionDataModel
 
-Actions are embedded data, not documents. They live on items as `EmbeddedDataField` instances — a weapon owns its attack action, a spell owns its cast action.
+Actions are embedded data, not documents. They live on items as `EmbeddedDataField` instances — a weapon owns its attack action, a spell owns its cast action. Every action-bearing item type gets a dedicated **Actions tab** on its sheet where users can add, edit, reorder, and chain any number of actions.
 
 ```typescript
 interface ActionDataModel {
@@ -77,6 +77,7 @@ interface ActionExecutionContext {
   actor: Dnd35eActor;
   item: Dnd35eItem;
   target: Dnd35eActor | null;
+  targetItem: Dnd35eItem | null;       // for item-on-creature targeting (Magic Weapon, etc.)
   roll: Roll;
   isCritical: boolean;
   appliedModifiers: Modifier[];
@@ -242,14 +243,64 @@ interface EffectTrigger {
 interface TriggerEffect {
   type: 'grantExtraAttack' | 'applyCondition' | 'addDamage' | 'grantAction';
   value?: string | number;
-  target?: 'self' | 'target' | 'adjacent';
+  target?: 'self' | 'creature' | 'area' | 'item-on-creature';
 }
 ```
 
 **Examples:**
-- **Cleave**: `{ event: 'onKill', effect: { type: 'grantExtraAttack', target: 'adjacent' } }`
+- **Cleave**: `{ event: 'onKill', effect: { type: 'grantExtraAttack', target: 'creature' } }`
 - **Weapon Focus**: Passive — no trigger, just an AE change to attack bonus
 - **Power Attack**: Toggle — PreRollDialog slider modifies attack/damage formulas
+
+---
+
+## Item-on-Creature Targeting
+
+Some spells and effects target **items**, not creatures. D&D 3.5e has a whole class of these:
+
+| Spell | Targets | Effect |
+|-------|---------|--------|
+| Magic Weapon / Greater | One weapon | Enhancement bonus AE on weapon |
+| Magic Vestment | Armor or shield | Enhancement bonus AE on armor |
+| Keen Edge | Slashing/piercing weapon | Keen property AE on weapon |
+| Align Weapon | One weapon | Alignment property AE on weapon |
+
+### Target Mode
+
+Actions declare `effect.target: 'item-on-creature'` with an `itemTargetFilter`:
+
+```typescript
+effect: {
+  target: 'item-on-creature',
+  itemTargetFilter: {
+    itemTypes: ['weapon'],              // Magic Weapon: weapons only
+    equippedOnly: true,                 // Filter to equipped items (default)
+  },
+}
+```
+
+### Execution Flow
+
+1. Player clicks "Cast Magic Weapon"
+2. Standard target selection: click target creature's token
+3. **Item Picker Dialog** appears showing the target's inventory, filtered by `itemTargetFilter`
+4. Player selects the weapon to enchant
+5. Buff AE created on that weapon with `transfer: true` → enhancement bonus flows to actor's attack/damage
+
+### Formula Context
+
+When targeting an item-on-creature, both contexts are available:
+
+- `#target` → the Actor (creature holding the item) — backward compatible
+- `#targetItem` → the specific Item selected via the picker
+
+### Dual-Stack Interaction
+
+Item-buff spells interact directly with the dual-stack system. If a player casts Magic Weapon (+1 enhancement) on a secretly +2 enhanced sword:
+- **Real stack**: hidden +2 wins, Magic Weapon +1 suppressed (same bonus type, lower value)
+- **Masked stack**: Magic Weapon +1 applied (only visible enhancement source)
+
+The player sees "+1 enhancement from Magic Weapon" in their chat card. The actual roll uses +2.
 
 ---
 
@@ -264,16 +315,39 @@ Each card shows:
 - Damage with type
 - Triggered effects (Cleave activated, condition applied)
 - Expandable detail sections for complex rolls
+### Dual-Stack Rendering (Masked Items)
 
+When a weapon or item has **unidentified effects** (e.g., a hidden +2 enhancement the player doesn't know about), the chat card stores **two stacking histories** in `flags.dnd35e.stackingHistory`:
+
+- **`real`**: All bonuses including hidden ones — used for the actual die roll.
+- **`masked`**: Only bonuses the player knows about — stacking resolved independently among visible bonuses only.
+
+The render function checks `game.user.isGM` to pick which history to display:
+
+```
+Player sees:                          GM sees:
+┌───────────────────────────────┐   ┌───────────────────────────────┐
+│ Attack: d20 + 1 = 14        │   │ Attack: d20 + 2 = 15        │
+│ • Magic Weapon +1 (enh)    │   │ • Sword +2 (enh) [hidden]   │
+│                             │   │ • Magic Weapon +1 (enh)     │
+│                             │   │   └─ suppressed (lower)      │
+└───────────────────────────────┘   └───────────────────────────────┘
+```
+
+The die result (15 in the example) reflects reality. The player sees it rolled 15 but their breakdown only adds up to 14 — the character doesn't understand why the sword performs better than expected. This is intentional and correct.
+
+See [Phase 2 §2.5.2](../migration-plan/phase-02-active-effect-on-item.md) for the dual-stack resolution algorithm.
+
+The dual-stack pattern also extends to the **item sheet UI**: the `HasActiveEffectsNotification` sparkle icon and the `getEffectsForField` store getter must filter out hidden effect overrides for non-GM viewers. If the only modifier on a field comes from a hidden source, the sparkle icon doesn't appear — the player has no reason to suspect the field is being modified. See [Phase 2 §2.5.3](../migration-plan/phase-02-active-effect-on-item.md) for the field UI design.
 ---
 
 ## Integration Points
 
 | System | Integration |
 |---|---|
-| [Bonus Stacking](bonus-stacking.md) | Action rolls collect all applicable bonuses and run stacking resolution |
+| [Bonus Stacking](bonus-stacking.md) | Action rolls collect all applicable bonuses and run stacking resolution. When masked effects exist, runs **dual-stack**: real (all bonuses) for the roll, masked (visible only) for the player’s chat card. |
 | [Active Effects](active-effect-lifecycle.md) | `action.*` phase effects apply at roll time, not during prep |
-| [Formula System](architecture-overview.md#3-formulafamiliar--schema-driven-formula-autocomplete) | Action formulas use `#context.property` syntax with FormulaFamiliar |
+| [Formula System](architecture-overview.md#3-formulafamiliar--schema-driven-formula-autocomplete) | Action formulas use `#context.property` syntax with FormulaFamiliar. `#target` resolves to target actor; `#targetItem` resolves to the selected item when `effect.target` is `item-on-creature`. |
 | [Conditions](condition-system.md) | Actions can apply/remove conditions; conditions modify action bonuses |
 | [Progression](progression-system.md) | BAB from level history feeds iterative attack generation |
 | [Area Effects](area-effects.md) | AoE spells create Regions that trigger damage actions per-turn |

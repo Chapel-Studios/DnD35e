@@ -19,6 +19,8 @@ SpellSystemModel extends ItemSystemModelBase
 ├── castingTime: string
 ├── range: string
 ├── area/effect/target: string | null
+├── targetMode: 'creature' | 'area' | 'item-on-creature' | 'self' | null
+├── itemTargetFilter: { itemTypes, equippedOnly } | null
 ├── duration: string
 ├── savingThrow: { type, harmless, dc: formula }
 ├── spellResistance: boolean
@@ -86,6 +88,8 @@ SpellbookData:
 - [ ] Define schema: area (StringField or null, e.g., "15-ft radius", "30-ft line")
 - [ ] Define schema: effect (StringField or null, distinct from area, e.g., "one object")
 - [ ] Define schema: target (StringField or null, e.g., "one creature", "up to 6 creatures")
+- [ ] Define schema: targetMode (StringField with choices: 'creature', 'area', 'item-on-creature', 'self', or null — typed targeting mode that drives the execution pipeline. Distinct from the free-text SRD `target` field above.)
+- [ ] Define schema: itemTargetFilter (SchemaField or null with itemTypes: ArrayField, equippedOnly: BooleanField — active when targetMode is 'item-on-creature')
 - [ ] Define schema: duration (StringField, e.g., "1 minute", "1 hour", "1 round per level", "instantaneous", "permanent until dispelled")
 - [ ] Define schema: savingThrow (SchemaField with type: 'fort'|'ref'|'will', harmless: boolean, dc: FormulaField)
 - [ ] Define schema: spellResistance (BooleanField, true if SR applies)
@@ -278,10 +282,21 @@ SpellbookData:
   - Touch range
   - Instantaneous duration
   - Harmless save (target doesn't object to being healed)
+- [ ] Create Magic Weapon spell: level 1, transmutation — **item-targeting POC**
+  - Target: one weapon (effect.target: 'item-on-creature', itemTargetFilter: { itemTypes: ['weapon'], equippedOnly: true })
+  - Duration: "1 min/level"
+  - Effect: creates a buff AE on the target weapon with +1 enhancement bonus to attack and damage
+  - AE uses `bonusType: 'enhancement'`, `transfer: true` (flows to actor's attacks)
+  - No save, no SR
+  - Proves the full item-on-creature targeting pipeline: cast → select token → item picker (equipped weapons) → AE on weapon
+  - Proves dual-stack interaction: if weapon has hidden enhancement, Magic Weapon's +1 is suppressed in real stack but visible in masked stack (see Phase 2 §2.5.2)
 - [ ] Test: Add Wizard with these spells
 - [ ] Test: Prepare spell → can cast
 - [ ] Test: Cast Magic Missile → damage roll, hit applied
 - [ ] Test: Cast Cure Light Wounds → healing applied
+- [ ] Test: Cast Magic Weapon → select target token → item picker shows equipped weapons → select weapon → +1 enhancement AE applied to weapon
+- [ ] Test: Magic Weapon AE transfers to actor: attack bonus includes +1 enhancement
+- [ ] Test: Magic Weapon on secretly +2 weapon: real stack uses +2 (hidden wins), masked stack shows +1 (player's Magic Weapon)
 
 **POC Spell Content - Cantrip No-Slot Rule:**
 - [ ] Implement special rule: level 0 spells don't consume slots

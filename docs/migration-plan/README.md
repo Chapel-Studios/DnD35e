@@ -476,6 +476,12 @@ This proves the stacking engine resolves per-field, not per-source — the same 
 ### Stacking History & Transparency
 The stacking engine tracks detailed history of which bonuses were applied and which were rejected (and why). Stored as `system._stackingHistory`, consumed by the Action System for chat card display. Players can expand/collapse calculations. Every bonus type that uses highest-wins resolution **must track the losers**.
 
+### Dual-Stack Resolution (Masked Effects)
+When items have **unidentified effects** (e.g., a hidden +2 enhancement), the stacking engine runs **twice** — once with all bonuses (real stack, used for the actual die roll) and once with only player-visible bonuses (masked stack, used for the player's chat card breakdown). The two stacks can produce **different winners** in highest-wins resolution: if the player casts Magic Weapon (+1 enhancement) on a secretly +2 sword, the player sees "+1 enhancement" in their breakdown, but the real roll uses +2 (the hidden enhancement suppresses Magic Weapon). The gap between the player's perceived total and the die result is intentional — the character doesn't know why the sword performs better than expected. Both histories are stored in chat message flags so the card can re-render for either audience. See Phase 2 §2.5.2 for the algorithm.
+
+### Player Edit Secrets
+When a player with edit permission modifies a field that is masked by the identification system, the edit is intercepted and routed into a **Player Edit Secret** — a system-managed Active Effect at higher priority than the mask. This prevents the player from overwriting the GM's hidden data while still letting the player's edit appear in the masked (player-visible) stack. The Player Edit Secret is system-managed but **GM-deletable**, accumulates all masked-field edits into a single AE per item, and is excluded from the real stack. No match-checking is performed against the underlying mask value. See Phase 28 §28.10 for the full design.
+
 ### Formula Evaluation & Error Surfacing
 The `FormulaFormGroup` component handles field-level formula validation. System-level formula evaluation errors during `prepareDerivedData()` need surfacing via a preparation warning system.
 
@@ -526,6 +532,9 @@ Specialized AE generator establishing a relationship between two documents. The 
 
 ### Damage Types as Config Data
 `fire`, `cold`, `slashing`, etc. are config constants with system setting overrides for homebrew — NOT a Foundry item type.
+
+### Item-on-Creature Targeting
+Some spells and effects target **items**, not creatures (Magic Weapon, Magic Vestment, Keen Edge, Align Weapon). The action system supports this via `effect.target: 'item-on-creature'` with an `itemTargetFilter` that restricts the picker by item type and equipped status. Execution flow: select target token → Item Picker Dialog (filtered inventory list) → apply AE to the selected item with `transfer: true`. The `#targetItem` formula context provides autocomplete for the target item's properties. Proven in Phase 16 via Magic Weapon. Actions are configured on each item's dedicated **Actions tab** — every action-bearing item sheet has an Actions tab where users can add, edit, reorder, and chain any number of actions.
 
 ---
 
