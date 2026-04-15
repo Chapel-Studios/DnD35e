@@ -97,7 +97,54 @@ Check for **internal consistency** across documentation:
 - **Accuracy**: Do examples still work with current code state?
 - **Thoroughness**: Are "Related Skills/Instructions" sections complete?
 
-### 5. Gap Analysis
+### 5. AI Tooling Usage Review
+
+At the end of each session, review how effectively the user leveraged the project's AI tooling and provide **specific, actionable coaching**. This is not about shaming — it's about helping the user get more value from tools they may not know about or may have forgotten.
+
+#### What to Analyze
+- **Missed agent opportunities**: Did the user manually do work that an agent could have handled? (e.g., hand-planning tasks instead of using `@planning`, manually auditing docs instead of `@kb-curator`)
+- **Missed skill opportunities**: Did the user search for information that a skill provides directly? (e.g., grepping for phase info instead of `/phase-reference`, looking up Foundry API by hand instead of `/foundry-reference`)
+- **Underused instruction files**: Did the user ask questions or make mistakes that an instruction file already covers? (e.g., incorrect Dnd35eField access when `dnd35e-field.instructions.md` documents the pattern)
+- **Workflow shortcuts**: Could the user have combined agents/skills for a faster workflow? (e.g., `@planning` → `/implementation-guide` pipeline for new features)
+
+#### Available AI Tooling Inventory
+Reference this when analyzing missed opportunities:
+
+| Type | Name | Best For |
+|------|------|----------|
+| Agent | `@planning` | Phase decomposition, task breakdown, parallelization |
+| Agent | `@kb-curator` | End-of-session review, documentation maintenance |
+| Agent | `@planning-researcher` | Deep-dive codebase pattern analysis |
+| Agent | `@planning-decomposer` | Dependency graphs, task ordering |
+| Agent | `@planning-validator` | Risk analysis, plan validation |
+| Skill | `/phase-reference` | Look up which phase covers a feature |
+| Skill | `/phase-planning` | Improve planning docs |
+| Skill | `/foundry-reference` | Foundry VTT API lookup |
+| Skill | `/system-comparison` | Compare 5e/PF2e/3.5e mechanics |
+| Skill | `/implementation-guide` | Step-by-step feature implementation |
+| Auto | `dnd35e-field` | Compound field patterns (loads by relevance) |
+| Auto | `dnd35e-patterns` | Architecture, composition chains (loads by relevance) |
+| Auto | `vue-sheet-patterns` | Sheet UI patterns (auto-loads on `.vue` files) |
+| Auto | `form-groups` | FormGroup component patterns (loads by relevance) |
+| Auto | `formula-familiar` | FormulaFamiliar autocomplete (loads by relevance) |
+| Auto | `foundry-data-fields` | DataField types and options (loads by relevance) |
+
+#### How to Coach
+1. **Identify 1-3 concrete moments** where a tool would have helped (don't overwhelm)
+2. **Show the exact invocation** the user could have used (e.g., `@planning Break down Phase 5 into tasks`)
+3. **Explain the benefit** — what time/effort/mistakes it would have saved
+4. **Be encouraging** — frame as "next time, try..." not "you should have..."
+
+#### Example Coaching Output
+> **AI Tooling Tips for Next Session:**
+>
+> 1. **Use `@planning` for task breakdown** — You manually listed implementation steps for the new item type. Next time, try: `@planning Break down armor implementation into parallel tasks`. It generates dependency graphs and identifies what can run simultaneously.
+>
+> 2. **Use `/foundry-reference` for API questions** — You searched the Foundry docs site for `ActiveEffect` hooks. The `/foundry-reference` skill can answer those directly: `/foundry-reference How do ActiveEffect hooks work in v14?`
+>
+> 3. **Instruction files had the answer** — The Dnd35eField access error you hit is documented in `dnd35e-field.instructions.md`. These load automatically when Copilot detects relevance, but you can also ask about them directly.
+
+### 6. Gap Analysis
 
 Identify **missing documentation** that would help future work:
 
@@ -107,7 +154,7 @@ Identify **missing documentation** that would help future work:
 - **System quirks**: Did you discover unintuitive behavior specific to dnd35e?
 - **Build system**: Do changes to build system need KB updates?
 
-### 6. Curation Workflows
+### 7. Curation Workflows
 
 #### Workflow: Review & Update Existing File
 ```
@@ -184,6 +231,7 @@ When invoked at session end:
 - [ ] Scan for patterns emerging from work
 - [ ] Note gaps exposed during work
 - [ ] Cross-reference with existing KB to identify overlaps
+- [ ] Identify moments where AI tooling could have helped (agents, skills, instructions)
 
 ### Phase 2: Recommendations (Propose)
 - [ ] **Instruction Files**: Suggest sections to add/update with specific examples
@@ -193,6 +241,7 @@ When invoked at session end:
 - [ ] **Repository Memory**: Capture verified codebase facts
 - [ ] **Consistency**: Flag documentation that needs updating for consistency
 - [ ] **Gaps**: Highlight missing documentation with proposed solutions
+- [ ] **AI Tooling Coaching**: 1-3 specific tips on agents/skills the user could have used
 
 ### Phase 3: Feedback
 - [ ] Prioritize recommendations (high-impact first)
@@ -209,11 +258,28 @@ When invoked at session end:
 
 ## How to Invoke
 
-**End of Session** (light curation):
+**Quick Command** — full session review in one phrase:
+```
+@kb-curator curate the kb
+```
+This is the canonical shorthand. When you see this phrase, perform the **complete end-of-session workflow**:
+1. Analyze the full session (patterns, gaps, accomplishments)
+2. Propose KB updates (instruction files, skills, phase docs, memory)
+3. Coach the user on AI tooling they could have used
+4. Prioritize and present recommendations
+5. Implement changes if the user approves
+
+**End of Session** (explicit):
 ```
 @kb-curator Review this session and update KB appropriately
 ```
-Analyzes work, identifies 2-3 key updates, proposes specific changes with examples.
+Same as quick command — analyzes work, proposes updates, and provides AI tooling coaching tips.
+
+**AI Tooling Coaching** (standalone):
+```
+@kb-curator How could I have used our AI tools better this session?
+```
+Reviews session for missed agent/skill/instruction opportunities and suggests exact invocations for next time.
 
 **Specific Instruction File** (quick check):
 ```

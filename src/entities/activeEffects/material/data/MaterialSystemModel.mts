@@ -60,7 +60,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
       changes.push(this.buildBonusHardnessChange());
     }
     if (this.bonusHp.value !== 0) {
-      changes.push(this.buildBonusHpPerInchChange());
+      changes.push(this.buildBonusHpChange());
     }
     for (const drType of this.damageReductionTypes) {
       changes.push(this.buildDamageReductionTypeChange(drType));
@@ -77,7 +77,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
       changes.push(this.buildBonusHardnessChange(EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED));
     }
     if (this.bonusHp.unidentifiedValue != null && this.bonusHp.unidentifiedValue !== 0) {
-      changes.push(this.buildBonusHpPerInchChange(EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED));
+      changes.push(this.buildBonusHpChange(EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED));
     }
 
     return changes;
@@ -114,9 +114,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     );
   }
 
-  // TODO: how should this actually work? Items just have HP, not HP-per-inch.
-  // We should relook at how we handle item HP, perhaps add thickness and calculate HP based on that?
-  buildBonusHpPerInchChange(
+  buildBonusHpChange(
     targetField: EffectChangeTargetField = EFFECT_CHANGE_TARGET_FIELD.VALUE
   ): Dnd35eEffectChangeData {
     const existing = this.changes.find(change => change.key === 'system.hp.max' && change.isSystem && change.targetField === targetField);
@@ -152,8 +150,6 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     );
   }
 
-  // TODO: This key doesn't currently exist,
-  // we need to determine how to handle these equivalencies in the system.
   buildMagicEquivalentChange(
     targetField: EffectChangeTargetField = EFFECT_CHANGE_TARGET_FIELD.VALUE
   ): Dnd35eEffectChangeData {

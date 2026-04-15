@@ -15,7 +15,9 @@ class Weapon extends EquippableItem {
   override prepareBaseData (): void {
     super.prepareBaseData();
   }
-  // This needs to go to equippable
+  // [1.G] Move to EquippableItem as a real getter. Two header status components:
+  //   - PhysicalItemHeaderStatus.vue: checks isCarried, shows "Carried" badge
+  //   - EquippableHeaderStatus.vue: overrides physical, checks isEquipped (priority) + isCarried
   // get equippedStatusLabel() {
   //   if (!this.parent) {
   //     return '';

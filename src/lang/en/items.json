@@ -57,7 +57,7 @@
       "ToggleToIdentified": "Toggle to Identified View",
       "ToggleToUnidentified": "Toggle to Unidentified View",
       "Hardness": "Hardness",
-      "HpPerInch": "HP per inch",
+      "BonusHp": "Bonus HP",
       "MagicEquivalent": "Magic Enhancement Equivalent",
       "MagicEquivalentDescription": "Material Magic Equivalent is used then determining minimum Enhancement bonus to weapon if a character has a Damage Reduction set to X/Material",
       "MaterialAlchemicalSilverEquivalent": "Alchemical Silver Equivalent",

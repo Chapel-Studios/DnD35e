@@ -61,7 +61,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     currentHp: computed(() => getViewAwareFieldValue('system.hp.current') || 0),
     maxHp: computed(() => getViewAwareFieldValue('system.hp.max') || 0),
     possibleContainers: computed(() => {
-      // TODO: build this out after implementing containers 
+      // TODO(Phase 6): build this out after implementing containers (§C2)
       return [{ value: null, label: game.i18n.localize('dnd35e.COMMON.None') }];
     }),
     hardness: computed(() => getViewAwareFieldValue('system.hardness') ?? 0),
@@ -74,7 +74,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
 
     // Identifiable props: use effective value to allow overrides when viewing as unidentified
     price: computed(() => getViewAwareFieldValue('system.price') || createDefaultPrice()),
-    // Todo: These need to be reassessed as material effects
+    // TODO(Phase 5): These need to be reassessed as material effects (broken/masterwork AE content)
     // resalePrice: computed(() => getViewAwareFieldValue('system.resalePrice') ?? null),
     // brokenResalePrice: computed(() => getViewAwareFieldValue('system.brokenResalePrice') ?? null),
     // isBroken: computed(() => getViewAwareFieldValue('system.isBroken') || false),

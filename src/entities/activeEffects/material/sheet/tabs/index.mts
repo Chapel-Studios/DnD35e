@@ -4,7 +4,7 @@ import MaterialDetails from './MaterialDetails.vue';
 
 const materialDetailsTab: SheetTab = {
   id: 'details',
-  // TODO find this actual label, like D35E.Name
+  // TODO(Phase 3/5): replace with game.i18n.localize('dnd35e.MATERIAL.Tab.Details')
   label: 'Details',
   component: MaterialDetails,
   order: 10,

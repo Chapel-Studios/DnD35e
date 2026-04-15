@@ -17,7 +17,7 @@ const EQUIP_SLOTS = [
 
 type EquipSlot = (typeof EQUIP_SLOTS)[number];
 
-// TODO: The 'none' sentinel is a placeholder. An empty selection already means "no slot",
+// TODO(Phase 6): The 'none' sentinel is a placeholder. An empty selection already means "no slot",
 // so this option is redundant for multiselect. If equippedSlotIds becomes a single-select
 // nullable field, replace this with value: null and widen the schema type accordingly.
 const EQUIP_SLOT_SELECT_OPTIONS: MultiSelectOption<EquipSlot | 'none'>[] = [
