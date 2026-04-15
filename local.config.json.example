@@ -1,4 +1,4 @@
 {
   "_comment": "Copy this file to local.config.json and customize for your environment. local.config.json is git-ignored.",
-  "foundrySystemDir": "C:/path/to/Foundry/Data/systems/dnd35e"
+  "foundrySystemDir": "C:/path/to/Foundry/Data/systems"
 }

@@ -2,15 +2,33 @@
 
 * the Foundry Types were originally created by the PFE2 team. original credit to them.
 
+## Development Setup
+
+1. Install dependencies:
+   ```sh
+   npm ci
+   ```
+
+2. Copy the local config template and set your Foundry systems path:
+   ```sh
+   cp local.config.json.example local.config.json
+   ```
+   Edit `local.config.json` and set `foundrySystemDir` to your Foundry `Data/systems` directory (not the `dnd35e` subfolder — the build creates that automatically):
+   ```json
+   {
+     "foundrySystemDir": "C:/Foundry/V14/Data/systems"
+   }
+   ```
+
+3. Build:
+   ```sh
+   npm run build          # production build
+   npm run dev:watch      # development watch build
+   ```
+
+Build output is written to `<foundrySystemDir>/dnd35e/`. If `foundrySystemDir` is not configured, the build will fail with an error.
+
 ## Build & Release Process
-
-### Local build
-
-- Install dependencies: `npm ci`
-- Production build: `npm run build`
-- Development watch build: `npm run watch`
-
-Build output is written to `dist/`.
 
 ### CI (GitHub Actions)
 

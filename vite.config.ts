@@ -12,7 +12,7 @@ const localConfig: { foundrySystemDir?: string } = fs.existsSync(localConfigPath
   ? fs.readJsonSync(localConfigPath)
   : {};
 const foundrySystemDir = localConfig.foundrySystemDir;
-const buildOutDir = foundrySystemDir ?? 'dist';
+const buildOutDir = foundrySystemDir ? path.join(foundrySystemDir, 'dnd35e') : 'dist';
 
 // Copy static files to build output (system.json handled by build-system-json.mjs)
 function copyStaticFiles (): Plugin {

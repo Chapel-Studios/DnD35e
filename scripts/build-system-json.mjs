@@ -30,7 +30,7 @@ const localConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
 const foundrySystemDir = localConfig.foundrySystemDir;
 if (!foundrySystemDir) {
   console.error('❌ foundrySystemDir is not set in local.config.json.');
-  console.error('   Set it to your Foundry Data/systems/dnd35e path.');
+  console.error('   Set it to your Foundry Data/systems path.');
   process.exit(1);
 }
 if (!fs.existsSync(foundrySystemDir)) {
@@ -74,6 +74,10 @@ fs.writeFileSync(outputPath, content);
 console.log(`✅ Generated system.json (version: ${version})`);
 
 // --- Copy to Foundry system directory ---
-const destPath = path.join(foundrySystemDir, 'system.json');
+const systemDir = path.join(foundrySystemDir, 'dnd35e');
+if (!fs.existsSync(systemDir)) {
+  fs.mkdirSync(systemDir, { recursive: true });
+}
+const destPath = path.join(systemDir, 'system.json');
 fs.copyFileSync(outputPath, destPath);
 console.log(`✅ Copied system.json → ${destPath}`);
