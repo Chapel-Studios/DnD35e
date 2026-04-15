@@ -34,7 +34,7 @@ class ArmorSystemModel extends EquippableItemSystemModel {
         choices: [
           ...ARMOR_TYPES,
         ],
-        initial: 'simple',
+        initial: 'medium',
         required: true,
       },
       {
@@ -43,8 +43,8 @@ class ArmorSystemModel extends EquippableItemSystemModel {
         familiar: { aliases: ['type'] },
       });
 
-    schema.armorSubtype = new Dnd35eField(StringField, { choices: [...ARMOR_SUBTYPES], initial: 'light', required: true }, { label: 'Weapon Subtype', hint: 'The specific subtype of this armor, which may affect its properties and usage.', familiar: { aliases: ['subtype'] } });
-    schema.armorBaseType = new Dnd35eField(StringField, { choices: [...ARMOR_BASE_TYPES], initial: '', required: true, blank: true }, { label: 'Base Type', hint: 'The base type of this armor, which may affect its characteristics and interactions.' });
+    schema.armorSubtype = new Dnd35eField(StringField, { choices: [...ARMOR_SUBTYPES], initial: 'cloth', required: true }, { label: 'Armor Subtype', hint: 'The specific subtype of this armor, which may affect its properties and usage.', familiar: { aliases: ['subtype'] } });
+    //schema.armorBaseType = new Dnd35eField(StringField, { choices: [...ARMOR_BASE_TYPES], initial: '', required: true, blank: true }, { label: 'Base Type', hint: 'The base type of this armor, which may affect its characteristics and interactions.' });
 
     schema.attackNotes = requiredNullableStringField('D35E.AttackNotes', 'D35E.AttackNotesHint');
     schema.damageNotes = requiredNullableStringField('D35E.DamageNotes', 'D35E.DamageNotesHint');

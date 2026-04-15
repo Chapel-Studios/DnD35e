@@ -3,12 +3,16 @@ import { ensureNameFormulaOnCreate, NameFormulaDocument } from '@ec/CoreMixin/in
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
 import { ItemProxyDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
 import { weaponItemType } from '@items/itemTypes.mjs';
-import { WeaponSheet, WeaponSystemModel } from '@items/weapon/index.mjs';
+import { WeaponSheet, WeaponSystemModel, Weapon } from '@items/weapon/index.mjs';
+import { armorItemType } from '@items/itemTypes.mjs';
+import { ArmorSheet, ArmorSystemModel, Armor } from '@items/armor/index.mjs';
+import { LogHelper } from '@helpers/logHelper.mjs';
 
 const registerItemSheets = () => {
   foundry.documents.collections.Items.unregisterSheet('core', foundry.appv1.sheets.ItemSheet);
   const itemSheets = [
     [weaponItemType, WeaponSheet],
+    [armorItemType, ArmorSheet],
   ] as const;
 
   for (const [type, Sheet] of itemSheets) {
@@ -25,10 +29,12 @@ export const registerItems = () => {
     CONFIG.Item.documentClass = ItemProxyDnd35e;
     Object.assign(CONFIG.Item.dataModels, {
       [weaponItemType]: WeaponSystemModel,
+      [armorItemType]: ArmorSystemModel,
     });
 
     // Register familiar schemas for formula resolution
-    registerFamiliarSchema('Item', weaponItemType, (ctx?) => gatherAspectsFromSchema(WeaponSystemModel, ctx));
+    //registerFamiliarSchema('Item', weaponItemType, (ctx?) => gatherAspectsFromSchema(WeaponSystemModel, ctx));
+    registerFamiliarSchema('Item', armorItemType, (ctx?) => gatherAspectsFromSchema(ArmorSystemModel, ctx));
   });
 
   foundry.helpers.Hooks.once('setup', () => {

@@ -1,0 +1,16 @@
+{
+    "D35E.ArmorType": "Armor Type",
+    "D35E.ArmorTypeLight": "Light",
+    "D35E.ArmorTypeMedium": "Medium",
+    "D35E.ArmorTypeHeavy": "Heavy",
+    "D35E.ArmorTypeShield": "Shield",
+
+    "D35E.ArmorSubtype": "Armor Subtype",
+    "D35E.ArmorPropLight": "Light",
+    "D35E.ArmorPropOneHanded": "One-handed",
+    "D35E.ArmorPropTwoHanded": "Two-handed",
+    "D35E.ArmorSubtypeRanged": "Ranged",
+
+    "D35E.IsMasterwork": "Is Masterwork",
+    "D35E.IsMasterworkHint": "Whether this armor is of masterwork quality, providing a +1 bonus to AC."
+}

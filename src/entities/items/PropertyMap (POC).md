@@ -111,6 +111,20 @@ erDiagram
         string damageNotes
     }
 
+    Armor {
+        rollup BaseItem
+        rollup Physical
+        rollup HasMaterials
+
+        boolean isMasterwork
+        string armorType
+        string armorSubtype
+        string armorBaseType
+        string attackNotes
+        string damageNotes
+    }
+
+
     %% Composition relationships
     Origin          ||--o{ BaseItem   : "rollup"
     ItemDescription ||--o{ BaseItem   : "rollup"

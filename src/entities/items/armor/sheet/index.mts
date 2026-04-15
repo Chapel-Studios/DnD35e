@@ -1,4 +1,4 @@
-import ArmorSummary from './components/Armor/Summary.vue';
+import ArmorSummary from './components/ArmorSummary.vue';
 import {
   ArmorDetails,
   armorDetailsTab,

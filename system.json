@@ -32,7 +32,8 @@
   },
   "documentTypes": {
     "Item": {
-      "weapon": {}
+      "weapon": {},
+      "armor": {}
     },
     "ActiveEffect": {
       "material": {}

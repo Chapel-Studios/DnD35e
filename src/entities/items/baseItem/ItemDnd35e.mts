@@ -176,9 +176,10 @@ const ItemProxyDnd35e = new Proxy(ItemDnd35e, {
     const [source] = args;
     const type = source?.type;
     const ItemClass = CONFIG.dnd35e.item.documentClasses[type] as unknown as typeof ItemDnd35e;
-    // const ItemClass: typeof ItemDnd35e = CONFIG.Dnd35e.item.documentClasses[type];
-    if (!ItemClass) {
-      LogHelper.error(`Item type ${type} does not exist or is not properly supported for ItemProxyDnd35e`);
+    LogHelper.debug('ItemProxyDnd35e.construct', { type, ItemClass, typeofItemClass: typeof ItemClass, prototypeName: ItemClass?.prototype?.constructor?.name });
+    if (!ItemClass || typeof ItemClass !== 'function') {
+      LogHelper.error(`ItemProxyDnd35e: Item type ${type} is not registered or is not a constructor. Falling back to base ItemDnd35e.`, ItemClass, (new Error()).stack?.split('\n').slice(2,6));
+      return new ItemDnd35e(...args);
     }
     return new ItemClass(...args);
   },

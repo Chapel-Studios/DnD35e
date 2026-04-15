@@ -1,8 +1,6 @@
-import { Weapon } from '@items/weapon/index.mjs';
-
+// Defer assigning concrete document classes to avoid circular import
 const ItemConfig = {
   documentClasses: {
-    weapon: Weapon,
   },
 };
 

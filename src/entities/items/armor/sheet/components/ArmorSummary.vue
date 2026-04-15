@@ -3,7 +3,7 @@
     <li>
       <SelectFormGroup
         :value="armorType"
-        :options="armorTypeSelectOptions"
+        :options="ArmorTypeSelectOptions"
         :on-update="armorTypeUpdater"
         field-path="system.armorType"
       />
@@ -11,7 +11,7 @@
     <li>
       <SelectFormGroup
         :value="armorSubtype"
-        :options="armorSubtypeSelectOptions"
+        :options="ArmorSubtypeSelectOptions"
         :on-update="armorSubtypeUpdater"
         field-path="system.armorSubtype"
       />
