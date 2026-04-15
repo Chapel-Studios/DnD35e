@@ -1,6 +1,6 @@
 # Phase 3: Localization Pattern
 
-**Status**: 🔶 In Progress (75% — infrastructure complete, FormGroup auto-labels working, schema-driven localization active)
+**Status**: ✅ Approved
 
 > **Milestone**: POC  
 > **Dependencies**: None  
@@ -144,6 +144,8 @@ All FormGroup wrapper components (`NumberFormGroup`, `SelectFormGroup`, `TextFor
   - [ ] Audit all Vue components for remaining hardcoded English strings not covered by FormGroup auto-labels
   - [ ] Audit section headings, button labels, notification messages, chat messages
   - [ ] Replace with `game.i18n.localize('dnd35e.COMMON.*')` or domain-specific keys
+  - [ ] Fix Material details tab hardcoded label (`material/sheet/tabs/index.mts:7`): replace `'Details'` with `game.i18n.localize('dnd35e.MATERIAL.Tab.Details')` and add key to `effects.json` (cross-tracked with Phase 5 codebase TODO notes)
+  - [ ] Evaluate `localizeHint` prop on `FormGroup.vue` (`FormGroup.vue:66`): prop may be unnecessary since hints are pre-localized via LOCALIZATION_PREFIXES — remove if no consumer needs raw unhinted strings
 
 ### Deferred to Other Phases
 

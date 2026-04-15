@@ -4,8 +4,9 @@
       <WeaponSummary />
     </template>
     <template #header-status>
-      <!-- EquipableHeaderStatus
-        is carried and is equipped status indicators will go here after character inventory POC is complete
+      <!-- [1.G] Two header status components needed:
+        - PhysicalItemHeaderStatus.vue: checks isCarried, shows "Carried" badge (reusable for all physical items)
+        - EquippableHeaderStatus.vue: overrides physical, checks isEquipped (priority) + isCarried (reusable for all equippables)
        -->
     </template>
   </PhysicalItemSheet>

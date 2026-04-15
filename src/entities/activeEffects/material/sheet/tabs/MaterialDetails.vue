@@ -39,9 +39,9 @@
       /> -->
 
       <!-- <NumberFormGroup
-        label="dnd35e.ITEM.HpPerInch"
-        :value="bonusHpPerInch"
-        field-path="system.bonusHpPerInch"
+        label="dnd35e.ITEM.BonusHp"
+        :value="bonusHp"
+        field-path="system.bonusHp"
         direct-update
       />
       -->

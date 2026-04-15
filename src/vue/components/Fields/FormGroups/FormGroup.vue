@@ -63,7 +63,7 @@
   const props = defineProps<{
     label?: string; // localization key
     hint?: string; // localization key for hint text, or raw string if localizeHint=false
-    // TODO: when would I ever want to not localize the hint? Probably should be removed
+    // TODO(Phase 3): evaluate removing localizeHint — hints are pre-localized via LOCALIZATION_PREFIXES
     localizeHint?: boolean; // whether to localize hint (default: true)
     value?: string | number | null;
     // Field permissions

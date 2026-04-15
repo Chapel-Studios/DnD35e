@@ -89,7 +89,7 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
         origin: document.value.uuid,
         disabled: false,
       };
-      // TODO: fix type definitions
+      // TODO(Phase 7): fix type definitions — add createDialog static method signature to DnD35eActiveEffect
       await (DnD35eActiveEffect as any).createDialog(effectData, {
         parent: document.value,
       });

@@ -1,4 +1,4 @@
-// TODO: remove this placeholder with actual actor types when implemented.
+// TODO(Phase 6 → Phase 23): remove placeholder. Phase 6 verifies character-only scope; Phase 23 adds NPC/Trap/Object.
 const characterActorType = 'character';
 type CharacterActorType = typeof characterActorType;// | 'npc' | 'trap'; 
 

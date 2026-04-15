@@ -47,6 +47,48 @@ interface ItemRollData extends ActorRollData {
 4. **Roll time**: `Roll.fromTerms()` resolves remaining formulas with full roll data context (including `#target.*` added at execution time)
 5. **Error handling**: Invalid formulas surface warnings via the preparation warning system (not blocking)
 
+### FormulaFamiliar ↔ Foundry Roll Data Bridge
+
+Two formula syntaxes coexist in the system:
+- **`@attr`** — Foundry's native syntax. Evaluated by `Roll.replaceFormulaData()` and `NumberField._castChangeDelta()`. Used in initiative formulas, standard AE change values, inline rolls.
+- **`#context.property`** — FormulaFamiliar syntax. Evaluated by `FormulaFamiliar.resolve()`. Used in the formula editor UI, cross-document references, FormulaField values.
+
+Both resolve to the same underlying data. The bridge ensures they never drift:
+
+```typescript
+// Resolution pipeline (Phase 7)
+function resolveFormula(formula: string, familiar: FamiliarSchema, rollData: Record<string, any>): string {
+  // Step 1: Resolve #context.property tokens via FormulaFamiliar
+  let resolved = FormulaFamiliar.resolve(formula, familiar);
+  // Step 2: Remaining @attr tokens resolved by Foundry's Roll.replaceFormulaData()
+  resolved = Roll.replaceFormulaData(resolved, rollData);
+  return resolved;
+}
+```
+
+**`getRollData()` generated from schema metadata**: Phase 5's `getRollData()` and FormulaFamiliar's schema walker should derive their structures from the same source to prevent drift. The schema walker already traverses `defineSchema()` — extend it to generate the `getRollData()` shape as well.
+
+### Custom AE Change Type: `familiar`
+
+The `familiar` change type (registered in Phase 2, handler implemented here) bridges FormulaFamiliar into AE change values:
+
+```typescript
+// Handler implementation for CONFIG.ActiveEffect.changeTypes.familiar
+CONFIG.ActiveEffect.changeTypes.familiar = {
+  label: 'DND35E.EFFECT.CHANGE_TYPE.familiar',
+  defaultPriority: 25,
+  handler: (targetDoc, change, options) => {
+    const familiar = buildDocumentFamiliar(targetDoc);
+    const resolved = FormulaFamiliar.resolve(change.value, familiar);
+    const delta = Number(resolved) || 0;
+    const current = foundry.utils.getProperty(targetDoc, change.key) ?? 0;
+    foundry.utils.setProperty(targetDoc, change.key, current + delta);
+  }
+};
+```
+
+Users authoring AE changes via our Vue sheet can choose `familiar` as the change type and write `#self.abilities.str.mod` in the value field. Standard `add`/`override`/etc. change types continue to use `@attr` syntax — evaluated by Foundry's native `NumberField._castChangeDelta()` for free.
+
 ## 7.3 FormulaFamiliar Context Declarations
 
 Establish the canonical formula contexts used throughout the system:
@@ -143,17 +185,130 @@ this._preparationWarnings.push({
 });
 ```
 
-## 7.7 Files to Create/Modify
+## 7.7 Group Change Targets
+
+### Problem
+
+Some AE changes need to target multiple fields simultaneously — e.g., "all saving throws" or "all Dexterity-based skills." These targets don't correspond to a single schema field. D35E solved this with `getChangeFlat()` + `buffTargets`, a tightly-coupled central expansion function. We need the same capability integrated seamlessly with the Formula Familiar and AE apply pipeline, without requiring individual field registration.
+
+### Design Principles
+
+1. **Minimal registration** — Only groups are registered. Individual field targets are discovered automatically by the schema walker and FormulaFamiliar context (§7.3). A phase adds a few group entries; it never catalogs every field.
+2. **Seamless UX** — Group targets appear in the Formula Familiar picker alongside real fields. The user picks "All Saving Throws"; the system stores a group key; the user never sees the raw key or knows it differs from a real field path.
+3. **Transparent expansion** — At AE apply time, group keys expand to concrete field paths. The apply loop handles each expanded path identically to a direct-targeted change.
+
+### API Sketch
+
+```typescript
+/** A group of related AE change targets that expand to concrete field paths. */
+interface ChangeTargetGroup {
+  /** Unique key stored on the AE change, e.g. "group:allSaves". */
+  key: string;
+  /** i18n label shown in Formula Familiar picker. */
+  label: string;
+  /** Category header in the FF picker dropdown. */
+  category: string;
+  /** Expand to concrete field paths on a live actor. */
+  expand(actor: Dnd35eActor): string[];
+}
+
+/** Registry — populated by later phases as data models land. */
+const changeTargetGroups = new Map<string, ChangeTargetGroup>();
+
+function registerChangeTargetGroup(group: ChangeTargetGroup): void {
+  changeTargetGroups.set(group.key, group);
+}
+
+/**
+ * Resolve a change key to one or more concrete field paths.
+ * If the key is a registered group, expands it. Otherwise returns it unchanged.
+ */
+function resolveChangeTargets(key: string, actor: Dnd35eActor): string[] {
+  const group = changeTargetGroups.get(key);
+  return group ? group.expand(actor) : [key];
+}
+```
+
+### Key Convention
+
+Group keys use a `group:` prefix (e.g., `group:allSaves`, `group:dexSkills`) to avoid collision with real field paths (which start with `system.` or a root field name). The prefix is an internal convention — users never see it; the Formula Familiar picker shows only the friendly label.
+
+### AE Apply Integration
+
+In the change-application loop (customised in Phase 2), expand each change's key before applying:
+
+```typescript
+for (const change of sortedChanges) {
+  const targets = resolveChangeTargets(change.key, actor);
+  for (const targetPath of targets) {
+    applyChangeToPath(actor, { ...change, key: targetPath });
+  }
+}
+```
+
+This is a ~5-line insertion into the existing apply loop. Changes targeting individual fields pass through `resolveChangeTargets()` unchanged — it returns `[key]` for unregistered keys.
+
+### Formula Familiar Integration
+
+The FF context builder (§7.3) already walks schemas to discover `friendlyName → fieldPath` entries. Group targets are appended under their category headers:
+
+```typescript
+// After schema-derived entries are built:
+for (const [key, group] of changeTargetGroups) {
+  familiarContext.addEntry({
+    label: game.i18n.localize(group.label),
+    path: key,                // the group key, e.g. "group:allSaves"
+    category: group.category, // groups under this heading
+    isGroup: true,            // visual hint in picker (e.g., italic or icon)
+  });
+}
+```
+
+Group targets only appear in the AE change key picker (where expansion makes sense). They do not appear in formula value contexts (where a single numeric value is needed, e.g., `#self.saves.fort.total` in a formula string). This is a natural boundary: the FF already separates "what can be targeted by an AE change" from "what can be referenced in a formula."
+
+### Expected Groups
+
+Registered by later phases as their data models land:
+
+| Registering Phase | Group Key | Label | Expands To |
+|-------------------|-----------|-------|------------|
+| Phase 9 | `group:allSaves` | "All Saving Throws" | `system.saves.fort.value`, `.ref.value`, `.will.value` |
+| Phase 9 | `group:allSkills` | "All Skills" | Every `system.skills.<key>.value` |
+| Phase 9 | `group:strSkills` | "Strength Skills" | Skills keyed to Str |
+| Phase 9 | `group:dexSkills` | "Dexterity Skills" | Skills keyed to Dex |
+| Phase 9 | `group:intSkills` | "Intelligence Skills" | Skills keyed to Int |
+| Phase 9 | `group:wisSkills` | "Wisdom Skills" | Skills keyed to Wis |
+| Phase 9 | `group:chaSkills` | "Charisma Skills" | Skills keyed to Cha |
+
+Additional groups (e.g., `group:allAC`, `group:allSpeeds`) can be registered by later phases without modifying core infrastructure.
+
+> **Proof-of-concept recommendation**: Start with `group:allSaves` (3 fields, 1 group, trivial `expand()` function). Add skills groups immediately after in the same phase.
+
+### What This Replaces
+
+D35E's `getChangeFlat()` + `buffTargets` config served the same purpose but was tightly coupled to the actor model — every group was hard-coded in a central switch statement. This design decouples registration: each phase registers its own groups when its data models land.
+
+### Relationship to Dnd35eSectionField
+
+This system is orthogonal to `Dnd35eSectionField`. SectionField carried permission metadata for schema field groups on item sheets (e.g., the `hp` section). Group Change Targets are about AE targeting — expanding a single AE change across multiple fields at runtime. SectionField's permission concerns are addressed by `useDnd35eField()` on individual child fields (Phase 1 items 1.O–1.V). Neither system depends on the other; SectionField removal is not blocked by this plan.
+
+## 7.8 Files to Create/Modify
 
 | Action | Path |
 |--------|------|
 | Create | `src/dice/D20Roll.mts` — d20 roll with crit/fumble detection |
 | Create | `src/dice/DamageRoll.mts` — damage roll with crit multiplier and types |
+| Create | `src/dice/index.mts` — register `CONFIG.Dice.rolls` with `[D20Roll, DamageRoll]` |
 | Create | `src/helpers/rollData.mts` — roll data assembly utilities |
+| Create | `src/helpers/formulaBridge.mts` — `resolveFormula()` pipeline bridging `#context.property` and `@attr` |
 | Create | `src/constants/rollVariables.mts` — canonical formula path documentation |
-| Expand | Actor `getRollData()` — structured roll data assembly |
+| Create | `src/helpers/changeTargetGroups.mts` — `ChangeTargetGroup` interface, registry, `registerChangeTargetGroup()`, `resolveChangeTargets()` |
+| Expand | Actor `getRollData()` — structured roll data assembly (generate from schema walker metadata) |
 | Expand | Item `getRollData()` — inherit actor data + add item fields |
 | Expand | FormulaFamiliar context registrations per document type |
+| Expand | FormulaFamiliar picker — append group targets from registry under category headers |
+| Expand | AE change-application loop — call `resolveChangeTargets()` before applying each change |
+| Implement | `CONFIG.ActiveEffect.changeTypes.familiar.handler` — FormulaFamiliar AE change evaluation |
 | Create | Preparation warnings infrastructure on base document classes |
 
 ---
@@ -215,6 +370,17 @@ this._preparationWarnings.push({
 - [ ] Document context inheritance hierarchy (actor → item → action)
 - [ ] Update README/docs with formula examples for users
 
+**FormulaFamiliar ↔ Foundry Roll Data Bridge:**
+- [ ] Implement `resolveFormula()` pipeline: Step 1 resolves `#context.property` via FormulaFamiliar, Step 2 resolves `@attr` via `Roll.replaceFormulaData()`
+- [ ] Verify `getRollData()` paths mirror FormulaFamiliar schema paths (e.g., `@abilities.str.mod` ↔ `#self.abilities.str.mod`)
+- [ ] Generate `getRollData()` structure from schema walker metadata (same source as FormulaFamiliar contexts)
+- [ ] Implement `familiar` custom change type handler in `CONFIG.ActiveEffect.changeTypes.familiar` (registration done in Phase 2)
+- [ ] Test: AE change with type `familiar` and value `#self.abilities.str.mod` correctly resolves and applies
+- [ ] Test: AE change with type `add` and value `@abilities.str.mod` correctly resolves via Foundry's native `_castChangeDelta`
+- [ ] Test: Both syntax styles resolve to the same numeric value for the same field
+- [ ] Test: Invalid `#context.property` in familiar change type produces warning, not crash
+- [ ] Document when to use `@attr` vs `#context.property` for system authors
+
 **D20Roll Custom Class** in `src/dice/D20Roll.mts`:
 - [ ] Extend Foundry's `Roll` class
 - [ ] Implement `isCriticalThreat` getter: true if die result is natural 20
@@ -240,6 +406,42 @@ this._preparationWarnings.push({
 - [ ] Test: Critical multiplier applied to dice only
 - [ ] Test: Flat bonuses not multiplied
 - [ ] Test: Damage types tagged correctly
+
+**Roll Class Registration** via `CONFIG.Dice.rolls`:
+- [ ] Register `D20Roll` and `DamageRoll` in `CONFIG.Dice.rolls` array during `init` hook
+  - Without registration, Foundry cannot deserialize these roll subclasses from chat message data
+  - `CONFIG.Dice.rolls = [D20Roll, DamageRoll]`
+- [ ] Verify `Roll.fromData()` correctly reconstructs `D20Roll` and `DamageRoll` from serialized chat messages
+- [ ] Test: Create a D20Roll, send to chat, reload page — roll is still a D20Roll instance (not base Roll)
+- [ ] Test: Same for DamageRoll
+
+**Text Enrichers** via `CONFIG.TextEditor.enrichers`:
+- [ ] Register custom enrichers in `init` hook for inline rolls and checks in journal entries and item descriptions:
+  ```typescript
+  CONFIG.TextEditor.enrichers.push(
+    { pattern: /\[\[\/check (?<config>[^\]]+)\]\](?:\{(?<label>[^}]+)\})?/gi,
+      enricher: enrichCheckLink, onRender: attachCheckListener },
+    { pattern: /\[\[\/save (?<config>[^\]]+)\]\](?:\{(?<label>[^}]+)\})?/gi,
+      enricher: enrichSaveLink, onRender: attachSaveListener },
+    { pattern: /\[\[\/damage (?<config>[^\]]+)\]\](?:\{(?<label>[^}]+)\})?/gi,
+      enricher: enrichDamageLink, onRender: attachDamageListener },
+  );
+  ```
+- [ ] Implement enricher functions that return clickable `<a>` elements with `data-action` attributes
+- [ ] Implement `onRender` listener functions that attach click handlers to enriched elements
+- [ ] Supported inline syntax:
+  - `[[/check reflex dc=15]]` → clickable Reflex save check
+  - `[[/save fort]]` → clickable Fortitude save
+  - `[[/damage 2d6+3 fire]]` → clickable damage roll
+  - Custom label: `[[/check bluff]]{Lie convincingly}` → uses label text
+- [ ] Test: Enriched text renders as clickable elements in journal entries
+- [ ] Test: Clicking enriched element triggers the correct roll
+- [ ] Test: Enriched elements render correctly in item descriptions and chat messages
+
+**Codebase TODO Notes (Landing Here):**
+- [ ] **Remove `ActiveEffect._shimChanges` compat shim** (`ItemDnd35e.mts:131`): The `_shimChanges(changes)` call is explicitly marked `// todo remove in v16`. When Phase 7 implements the formula-familiar change type handler and the full AE change pipeline is proven, verify whether the shim is still needed. If v16 migration transforms old AE data, remove the shim call and its TODO comment. If the shim is still required for pre-migration data, keep it but update the comment with the specific migration that will obsolete it.
+- [ ] **Integrate Hooks.onError pattern into LogHelper** (`ItemDnd35e.mts:93`): The `applyActiveEffects()` method uses `LogHelper.error()` as a substitute for Foundry's `Hooks.onError()` pattern. Evaluate whether `LogHelper` should wrap `Hooks.onError()` for consistency with Foundry's error surfacing (e.g., error hooks that modules can listen to), or if the current direct logging is sufficient.
+- [ ] **Fix `DnD35eActiveEffect.createDialog` type cast** (`ItemSheetStore.mts:92`): `createDialog` is called via `(DnD35eActiveEffect as any).createDialog(...)` because the type definitions don't expose it. Add proper type declaration for `createDialog` on `DnD35eActiveEffect` (either via interface merge or by adding the static method signature to the class).
 
 **Preparation Warnings Infrastructure:**
 - [ ] Add `_preparationWarnings: PreparationWarning[]` to `Dnd35eDocumentMixin`
@@ -268,9 +470,26 @@ this._preparationWarnings.push({
 - [ ] Show autocomplete dropdown on `#` key press
 - [ ] Show validation status (green = valid, red = invalid)
 - [ ] Show contextual help: "Formula must start with #self, #item, #action, or #target"
+- [ ] Evaluate `HeaderNameField.vue` refactor (`HeaderNameField.vue:25`): Component uses its own display mode to hide formula hints when not editing. Assess whether this should be folded into `FormulaFormGroup` as a `displayMode` prop or slot, or kept as a separate wrapper. The TODO also notes styling concerns with a read-only slot that were deferred.
 - [ ] Test: Autocomplete works
 - [ ] Test: Validation works
 - [ ] Test: Complex formulas with operators work
+
+**Group Change Targets (§7.7):**
+- [ ] Create `src/helpers/changeTargetGroups.mts`:
+  - `ChangeTargetGroup` interface (key, label, category, expand function)
+  - `changeTargetGroups` registry (Map)
+  - `registerChangeTargetGroup()` — add a group to the registry
+  - `resolveChangeTargets(key, actor)` — expand group key or pass through direct path
+- [ ] Integrate `resolveChangeTargets()` into AE change-application loop (Phase 2's customised apply path)
+- [ ] Integrate group targets into Formula Familiar picker:
+  - Append registered groups under category headers after schema-derived entries
+  - Mark group entries with `isGroup: true` for visual distinction
+  - Restrict group entries to AE change key picker only (not formula value contexts)
+- [ ] Test: Direct field path passes through `resolveChangeTargets()` unchanged → `[key]`
+- [ ] Test: Registered group key expands to concrete paths
+- [ ] Test: Group entries appear in FF picker under correct category
+- [ ] Test: Group entries do NOT appear in formula value autocomplete
 
 **Integration Testing:**
 - [ ] Unit test: Roll data assembly for all document types
