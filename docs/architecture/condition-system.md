@@ -1,6 +1,6 @@
 # Condition System
 
-> Source phases: 13, 20
+> Source phases: 14, 21
 
 Conditions in D&D 3.5e (Blinded, Prone, Fatigued, etc.) are predefined Active Effect templates stored in CONFIG constants. A `ConditionManager` handles application, removal, and interaction rules. Conditions are never custom AEs created from scratch — they are always instantiated from the predefined template set.
 

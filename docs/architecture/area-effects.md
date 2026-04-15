@@ -1,6 +1,6 @@
 # Area Effects & Region System
 
-> Source phase: 18
+> Source phase: 24 (Area Effects & Auras)
 
 Area effects — auras, AoE spells, persistent zones — use Foundry V14's native Region system with custom behaviors. Regions handle shape definition, token proximity detection, and event hooks. The system adds three custom behaviors for D&D 3.5e mechanics.
 
