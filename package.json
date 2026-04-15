@@ -2,11 +2,11 @@
   "name": "dnd35e",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "lint": "eslint . --fix",
     "build:system-json": "node scripts/build-system-json.mjs",
-    "prebuild": "npm run lint && npm run build:system-json",
+    "typecheck": "vue-tsc --noEmit",
+    "prebuild": "npm run lint && npm run typecheck && npm run build:system-json",
     "build": "vite build --mode production",
     "dev:watch": "npm run build:system-json && vite build --watch --mode development",
     "update:version": "node scripts/update-version-yaml.mjs"
@@ -43,13 +43,13 @@
     "vite": "^7.1.5",
     "vite-tsconfig-paths": "^5.1.4",
     "vue-eslint-parser": "^10.2.0",
-    "vue-tsc": "^3.2.2"
-  },
-  "dependencies": {
+    "vue-tsc": "^3.2.2",
     "handlebars": "^4.7.7",
     "pixi.js": "^7.4.3",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "dependencies": {
     "vue": "^3.5.26"
   }
 }

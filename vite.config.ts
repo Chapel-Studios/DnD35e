@@ -4,7 +4,7 @@ import fg from 'fast-glob';
 import fs from 'fs-extra';
 import path from 'path';
 import { defineConfig, Plugin } from 'vite';
-import tsconfigPaths, { PluginOptions } from 'vite-tsconfig-paths';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 // Read local developer config (git-ignored) for per-machine paths
 const localConfigPath = path.resolve(__dirname, 'local.config.json');
@@ -15,7 +15,7 @@ const foundrySystemDir = localConfig.foundrySystemDir;
 const buildOutDir = foundrySystemDir ?? 'dist';
 
 // Copy static files to build output (system.json handled by build-system-json.mjs)
-function copyStaticFiles (_opts?: PluginOptions | undefined): Plugin {
+function copyStaticFiles (): Plugin {
   return {
     name: 'copy-static-files',
     apply: 'build',
@@ -30,7 +30,7 @@ function copyStaticFiles (_opts?: PluginOptions | undefined): Plugin {
 
 // Copy .hbs templates into dist/hbsTemplates
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function copyHbsFiles (_opts?: PluginOptions | undefined): Plugin {
+function copyHbsFiles (): Plugin {
   return {
     name: 'copy-hbs-files',
     apply: 'build',
@@ -46,7 +46,7 @@ function copyHbsFiles (_opts?: PluginOptions | undefined): Plugin {
   };
 }
 
-function logBuildTimestamp (_opts?: PluginOptions | undefined): Plugin {
+function logBuildTimestamp (): Plugin {
   return {
     name: 'log-build-timestamp',
     apply: 'build',
@@ -64,7 +64,7 @@ function logBuildTimestamp (_opts?: PluginOptions | undefined): Plugin {
 }
 
 // Glob lang files
-function bundleLangFiles () {
+function bundleLangFiles (): Plugin {
   return {
     name: 'bundle-lang-files',
     async closeBundle () {
@@ -138,19 +138,11 @@ export default defineConfig(({ command }) => {
     ],
     build: {
       outDir: buildOutDir,
-      emptyOutDir: false,
+      emptyOutDir: true,
       sourcemap: true,
       ssr: false,
       minify: false,
       cssMinify: false,
-      // minify: mode === 'production',
-      // ...(mode === 'development'
-      //   ? {
-      //     watch: {
-      //       clearScreen: false,
-      //     },
-      //   }
-      //   : {}),
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'src/main.mts'),
@@ -167,11 +159,6 @@ export default defineConfig(({ command }) => {
             const normalized = assetInfo.names[0]?.replace(/\\/g, '/');
             if (!normalized) return '[name][extname]';
 
-            // // CSS bundle
-            // if (normalized.endsWith('.css')) {
-            //   return 'core[extname]';
-            // }
-
             // Default: strip src/ if present
             if (normalized.startsWith('src/')) {
               return normalized.slice('src/'.length);
@@ -182,6 +169,5 @@ export default defineConfig(({ command }) => {
         },
       },
     },
-    css: {},
   });
 });
