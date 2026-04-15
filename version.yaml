@@ -4,7 +4,7 @@
 # Keep VERSION in sync with system.json when preparing a release.
 
 version:
-  current: "13.0.0-dev.1"
+  current: "14.0.0-dev.1"
   current_milestone: "14.0.0-alpha.1 - Item PoC"
 
 milestones:

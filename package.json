@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint . --fix",
-    "prebuild": "npm run lint",
+    "build:system-json": "node scripts/build-system-json.mjs",
+    "prebuild": "npm run lint && npm run build:system-json",
     "build": "vite build --mode production",
-    "dev:watch": "vite build --watch --mode development",
+    "dev:watch": "npm run build:system-json && vite build --watch --mode development",
     "update:version": "node scripts/update-version-yaml.mjs"
   },
   "keywords": [],

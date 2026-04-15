@@ -6,18 +6,23 @@ import path from 'path';
 import { defineConfig, Plugin } from 'vite';
 import tsconfigPaths, { PluginOptions } from 'vite-tsconfig-paths';
 
-// Copy Foundry system + static files
+// Read local developer config (git-ignored) for per-machine paths
+const localConfigPath = path.resolve(__dirname, 'local.config.json');
+const localConfig: { foundrySystemDir?: string } = fs.existsSync(localConfigPath)
+  ? fs.readJsonSync(localConfigPath)
+  : {};
+const foundrySystemDir = localConfig.foundrySystemDir;
+const buildOutDir = foundrySystemDir ?? 'dist';
+
+// Copy static files to build output (system.json handled by build-system-json.mjs)
 function copyStaticFiles (_opts?: PluginOptions | undefined): Plugin {
   return {
     name: 'copy-static-files',
     apply: 'build',
     async closeBundle () {
-      const staticFiles = [
-        'system.json',
-        'README.md',
-      ];
+      const staticFiles = ['README.md'];
       for (const file of staticFiles) {
-        await fs.copy(file, `dist/${file}`);
+        await fs.copy(file, path.join(buildOutDir, file));
       }
     },
   };
@@ -47,12 +52,13 @@ function logBuildTimestamp (_opts?: PluginOptions | undefined): Plugin {
     apply: 'build',
     enforce: 'post',
     closeBundle () {
-      console.log(`Finished at ${new Date().toLocaleTimeString('en-US', {
+      const time = new Date().toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
         second: '2-digit',
         hour12: true,
-      })}`);
+      });
+      console.log(`Finished at ${time} → ${path.resolve(buildOutDir)}`);
     },
   };
 }
@@ -63,7 +69,7 @@ function bundleLangFiles () {
     name: 'bundle-lang-files',
     async closeBundle () {
       const srcRoot = path.resolve(__dirname, 'src/lang');
-      const distRoot = path.resolve(__dirname, 'dist/lang');
+      const distRoot = path.resolve(__dirname, buildOutDir, 'lang');
 
       // Find all language directories
       const langDirs = await fs.readdir(srcRoot);
@@ -96,78 +102,86 @@ function bundleLangFiles () {
   };
 }
 
-export default defineConfig(() => ({
-  resolve: {
-    alias: {
-      '@vueApps': path.resolve(__dirname, 'src/vue/apps'),
-      '@vueStores': path.resolve(__dirname, 'src/vue/stores'),
-      '@vc': path.resolve(__dirname, 'src/vue/components'),
-      '@canvas': path.resolve(__dirname, 'src/canvas'),
-      '@constants': path.resolve(__dirname, 'src/constants'),
-      '@helpers': path.resolve(__dirname, 'src/helpers'),
-      '@items': path.resolve(__dirname, 'src/entities/items'),
-      '@actors': path.resolve(__dirname, 'src/entities/actors'),
-      '@entities': path.resolve(__dirname, 'src/entities'),
-      '@scene': path.resolve(__dirname, 'src/scene'),
-      '@settings': path.resolve(__dirname, 'src/settings'),
-      '@source': path.resolve(__dirname, 'src'),
-      '@effects': path.resolve(__dirname, 'src/entities/activeEffects'),
-      '@ec': path.resolve(__dirname, 'src/entities/components'),
-    },
-  },
-  plugins: [
-    tsconfigPaths(),
-    copyStaticFiles(),
-    // copyHbsFiles(),
-    bundleLangFiles(),
-    vue(),
-    logBuildTimestamp(),
-  ],
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-    sourcemap: true,
-    ssr: false,
-    minify: false,
-    cssMinify: false,
-    // minify: mode === 'production',
-    // ...(mode === 'development'
-    //   ? {
-    //     watch: {
-    //       clearScreen: false,
-    //     },
-    //   }
-    //   : {}),
-    rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'src/main.mts'),
+export default defineConfig(({ command }) => {
+  if (command === 'build' && !foundrySystemDir) {
+    throw new Error(
+      'foundrySystemDir is not configured. Copy local.config.json.example → local.config.json and set the path.'
+    );
+  }
+
+  return ({
+    resolve: {
+      alias: {
+        '@vueApps': path.resolve(__dirname, 'src/vue/apps'),
+        '@vueStores': path.resolve(__dirname, 'src/vue/stores'),
+        '@vc': path.resolve(__dirname, 'src/vue/components'),
+        '@canvas': path.resolve(__dirname, 'src/canvas'),
+        '@constants': path.resolve(__dirname, 'src/constants'),
+        '@helpers': path.resolve(__dirname, 'src/helpers'),
+        '@items': path.resolve(__dirname, 'src/entities/items'),
+        '@actors': path.resolve(__dirname, 'src/entities/actors'),
+        '@entities': path.resolve(__dirname, 'src/entities'),
+        '@scene': path.resolve(__dirname, 'src/scene'),
+        '@settings': path.resolve(__dirname, 'src/settings'),
+        '@source': path.resolve(__dirname, 'src'),
+        '@effects': path.resolve(__dirname, 'src/entities/activeEffects'),
+        '@ec': path.resolve(__dirname, 'src/entities/components'),
       },
-      output: {
-        entryFileNames: (chunkInfo) => {
+    },
+    plugins: [
+      tsconfigPaths(),
+      copyStaticFiles(),
+      // copyHbsFiles(),
+      bundleLangFiles(),
+      vue(),
+      logBuildTimestamp(),
+    ],
+    build: {
+      outDir: buildOutDir,
+      emptyOutDir: false,
+      sourcemap: true,
+      ssr: false,
+      minify: false,
+      cssMinify: false,
+      // minify: mode === 'production',
+      // ...(mode === 'development'
+      //   ? {
+      //     watch: {
+      //       clearScreen: false,
+      //     },
+      //   }
+      //   : {}),
+      rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, 'src/main.mts'),
+        },
+        output: {
+          entryFileNames: (chunkInfo) => {
           // Strip "src/" from TS output
-          return chunkInfo.name.replace(/^src[\\/]/, '') + '.mjs';
-        },
-        chunkFileNames: (chunkInfo) => {
-          return chunkInfo.name.replace(/^src[\\/]/, '') + '.mjs';
-        },
-        assetFileNames: (assetInfo) => {
-          const normalized = assetInfo.names[0]?.replace(/\\/g, '/');
-          if (!normalized) return '[name][extname]';
+            return chunkInfo.name.replace(/^src[\\/]/, '') + '.mjs';
+          },
+          chunkFileNames: (chunkInfo) => {
+            return chunkInfo.name.replace(/^src[\\/]/, '') + '.mjs';
+          },
+          assetFileNames: (assetInfo) => {
+            const normalized = assetInfo.names[0]?.replace(/\\/g, '/');
+            if (!normalized) return '[name][extname]';
 
-          // // CSS bundle
-          // if (normalized.endsWith('.css')) {
-          //   return 'core[extname]';
-          // }
+            // // CSS bundle
+            // if (normalized.endsWith('.css')) {
+            //   return 'core[extname]';
+            // }
 
-          // Default: strip src/ if present
-          if (normalized.startsWith('src/')) {
-            return normalized.slice('src/'.length);
-          }
+            // Default: strip src/ if present
+            if (normalized.startsWith('src/')) {
+              return normalized.slice('src/'.length);
+            }
 
-          return '[name][extname]';
+            return '[name][extname]';
+          },
         },
       },
     },
-  },
-  css: {},
-}));
+    css: {},
+  });
+});
