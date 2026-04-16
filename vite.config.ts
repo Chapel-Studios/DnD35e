@@ -14,15 +14,18 @@ const localConfig: { foundrySystemDir?: string } = fs.existsSync(localConfigPath
 const foundrySystemDir = localConfig.foundrySystemDir;
 const buildOutDir = foundrySystemDir ? path.join(foundrySystemDir, 'dnd35e') : 'dist';
 
-// Copy static files to build output (system.json handled by build-system-json.mjs)
+// Copy static files to build output after Vite clears the directory
 function copyStaticFiles (): Plugin {
   return {
     name: 'copy-static-files',
     apply: 'build',
     async closeBundle () {
-      const staticFiles = ['README.md'];
+      const staticFiles = ['README.md', 'system.json'];
       for (const file of staticFiles) {
-        await fs.copy(file, path.join(buildOutDir, file));
+        const src = path.resolve(__dirname, file);
+        if (await fs.pathExists(src)) {
+          await fs.copy(src, path.join(buildOutDir, file));
+        }
       }
     },
   };
