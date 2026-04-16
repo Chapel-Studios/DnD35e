@@ -49,6 +49,34 @@ Custom agents and skills for D&D 3.5e system planning, architecture, and knowled
 
 **See also**: `.github/agents/kb-curator.agent.md` for "Curation in Action" concrete example
 
+### silversmith
+**When to use**: Implement a phase from the migration plan — one checklist item at a time with approval gates between each section. Design-focused, D35E-aware, and pattern-matching.
+
+**Workflow**: Discuss-then-build. At phase start, SilverSmith reads the spec, asks design questions, and agrees on scope. Then executes one checklist item at a time: implement → build clean → report → wait for your Foundry testing → approval → next item.
+
+**Capabilities**:
+- **Phase onboarding**: Reads spec + dependencies, surfaces ambiguities, proposes execution order
+- **Section execution**: One checklist item per cycle with mandatory `npm run build` verification
+- **Design focus**: Visual/UX, component architecture, and data model design equally
+- **D35E awareness**: References legacy D35E source for migration decisions (reads via `local.config.json` paths)
+- **Pattern matching**: Studies existing codebase patterns before writing new code — asks when patterns conflict
+- **Homebrew thinking**: Designs for extensibility — "how would a homebrewer add to this?"
+- **Token efficiency**: Delegates to `@kb-curator` to cache discovered Foundry/D35E patterns in compressed-for-AI KB files
+- **Subagent delegation**: Uses `@Explore` for codebase research, `@kb-curator` for knowledge capture
+- **Progress tracking**: Updates phase checklists and session memory after each approved section
+
+**Invoke**:
+- Start a phase: `@silversmith Let's start Phase 6 — Actor Foundation`
+- Resume work: `@silversmith Where were we?`
+- Continue after approval: `@silversmith Approved, next section`
+
+**Boundary system**:
+- **Always do**: Read spec, match patterns, build clean, stop for approval
+- **Ask first**: Pattern conflicts, architecture decisions, scope questions, modifying code outside current section
+- **Never do**: Skip approval, scope creep, hardcode English, add unplanned features, modify KB files directly
+
+**See also**: `.github/agents/silversmith.agent.md` for full workflow, communication modes, and design principles
+
 ---
 
 ## Planning Subagents (Optional Deep Dives)

@@ -511,17 +511,117 @@ this.parent.events.on('death', (e) => {
 
 ### Default Events
 
-Three built-in events ship with Phase 6. More are added as phases introduce consumers.
+Phase 6 ships the event infrastructure and registers all well-known event types. Events are wired to emit as their triggering systems land in later phases.
 
-| Event | Emitted by | Payload | Phase introduced |
-|-------|-----------|---------|-----------------|
-| `instantiate` | `ItemDnd35e._onCreate()` | `{ actor: ActorDnd35e }` | Phase 6 |
-| `death` | `ActorDnd35e` (when HP reaches 0 or below) | `{ cause?: string, attackerId?: string, damage?: number }` | Phase 6 |
-| `revealSecret` | Secret AE system | `{ secretAeId: string, field: string, previousValue: unknown, revealedValue: unknown }` | Phase 6 (infrastructure), wired in Secret AE phase |
+#### Actor Events
+
+| Event | Payload | Emitted when | Example use case |
+|-------|---------|-------------|-----------------|
+| `instantiate` | `{ actor: ActorDnd35e }` | Item added to actor (`_onCreate`) | Axe: register formulas. Gem: apply passive bonus |
+| `takeDamage` | `{ amount: number, damageType: string, source?: string, attackerId?: string }` | Damage applied to actor HP | Bloodied effects (4e retrofit), damage-reactive abilities |
+| `dying` | `{ previousHp: number, currentHp: number, cause?: string, attackerId?: string }` | Actor HP drops to ≤ 0 but above death threshold | Stabilization checks, bleeding out |
+| `death` | `{ previousHp: number, currentHp: number, cause?: string, attackerId?: string, damage?: number }` | Actor HP drops to ≤ death threshold (default −10) | Draconian death throes, Rage ends, Contingency fires |
+| `preUseAction` | `UseActionContext & { cancel: () => void }` | Before an action executes — calling `cancel()` aborts it | Silence preventing spells, exhaustion blocking actions, curse gates |
+| `postUseAction` | `UseActionContext & { result: ActionResult }` | After an action completes successfully | Curse of the Magi (backlash after casting), resource tracking |
+| `dealDamage` | `{ amount: number, damageType: string, target: ActorDnd35e, context?: UseActionContext }` | Actor deals damage to another actor | Cleave trigger, life-drain effects, vampiric abilities |
+| `revealSecret` | `{ secretAeId: string, field: string, previousValue: unknown, revealedValue: unknown }` | Secret AE is disabled (revealed) | Chat notification, journal updates, identification macro triggers |
+
+#### Item Events
+
+| Event | Payload | Emitted when | Example use case |
+|-------|---------|-------------|-----------------|
+| `instantiate` | `{ actor: ActorDnd35e }` | Item added to actor (`_onCreate`) | Already defined — item setup on creation |
+| `takeDamage` | `{ amount: number, damageType: string, source?: string }` | Damage applied to item HP (sunder, AoE, etc.) | Item durability tracking, shatter effects |
+| `destroyed` | `{ previousHp: number, cause?: string }` | Item HP drops to ≤ 0 | Item breaks, special effects on destruction (cursed items) |
+| `revealSecret` | `{ secretAeId: string, field: string, previousValue: unknown, revealedValue: unknown }` | Secret AE on item is revealed | Same as actor — identification reveals |
+
+#### Damage → Death Cascade
+
+`takeDamage` is the root event. Death/dying are **sub-events** emitted from the same damage-application flow — not separate subscriptions a consumer needs to wire independently:
+
+```
+actor.applyDamage(amount, type, source)
+  → emit 'takeDamage' { amount, damageType, source }
+  → if actor HP ≤ 0 and > deathThreshold:
+      emit 'dying' { previousHp, currentHp, cause }
+  → if actor HP ≤ deathThreshold (default −10):
+      emit 'death' { previousHp, currentHp, cause, damage }
+
+item.applyDamage(amount, type, source)
+  → emit 'takeDamage' { amount, damageType, source }
+  → if item HP ≤ 0:
+      emit 'destroyed' { previousHp, cause }
+```
+
+The death threshold is configurable per actor (most creatures die at −10; some die at 0; constructs/undead die at 0). Items always use 0.
+
+#### UseActionContext
+
+Action events carry a self-contained `UseActionContext` — everything a macro or module needs to evaluate the action locally without re-resolving references:
+
+```typescript
+interface UseActionContext {
+  actor: ActorDnd35e;          // The actor executing the action
+  item: ItemDnd35e;             // The source item that declared the action
+  action: ActionDataModel;      // The full resolved action data model
+  itemId: string;               // Convenience — item.id
+  actionId: string;             // Convenience — action.id
+  params: unknown[];            // Additional parameters passed at invocation
+}
+```
+
+The context is built once at the start of `actor.useAction()` and passed through the entire lifecycle: `preUseAction` → execution → `postUseAction`. Macros receive this as a single object and can inspect `context.action.type`, read `context.item.system`, check `context.actor.system.hp`, etc. — no lookups needed.
+
+#### preUseAction Cancellation Pattern
+
+`preUseAction` supports cancellation via a `cancel()` callback merged into the context. If any subscriber calls `cancel()`, the action execution is aborted and the action budget is not consumed. The emitter checks a cancelled flag after all callbacks run:
+
+```typescript
+// In actor.useAction(itemId, actionId, ...params):
+const item = this.items.get(itemId);
+const action = item.system.actions.get(actionId);
+const context: UseActionContext = { actor: this, item, action, itemId, actionId, params };
+
+const cancelled = { value: false };
+const payload = { ...context, cancel: () => { cancelled.value = true; } };
+await this.events.emit('preUseAction', payload, this);
+if (cancelled.value) return; // Action aborted — budget not consumed
+
+// ... execute the action
+const result = await action.execute(context);
+
+await this.events.emit('postUseAction', { ...context, result }, this);
+```
+
+Multiple subscribers can call `cancel()` — it's idempotent. The cancellation reason is not tracked in the base implementation (subscribers should post their own chat messages explaining why the action was blocked).
+
+#### Action Invocation Model
+
+Actions are always executed in the context of the owning actor. The actor maintains an array of available actions (sourced from owned items, class features, racial abilities, etc.). Invocation follows the pattern:
+
+```typescript
+actor.useAction(itemId: string, actionId: string, ...params: unknown[])
+```
+
+The actor looks up the item by `itemId`, finds the action by `actionId` on that item, builds a `UseActionContext` with all resolved references, then executes it. The `preUseAction` / `postUseAction` events fire on the actor — not on the item — because the actor is the execution context. Subscribers attach once on the actor and see all actions. They can filter by `context.action.type`, `context.itemId`, or any property on the resolved data model.
+
+The exact signature and dispatch mechanism is an explore-at-phase-start decision for Phase 10. Phase 6 defines the `UseActionContext` interface and event payloads so subscribers have a stable contract.
 
 **`instantiate`** fires when an item is first added to an actor (in `_onCreate` if the item has a parent actor). It does NOT fire on world-level item creation or on data preparation cycles — only on the initial creation event. Items use this to run one-time setup: register additional formulas, create companion effects, or initialize state.
 
-**`death`** fires when an actor's HP drops to 0 or below (the threshold is configurable — some creatures die at negative CON, some at 0). The exact trigger point is in the HP setter or the damage application method. It fires once per death transition (HP above threshold → HP at/below threshold), not on every update while already dead.
+**`takeDamage`** fires on every damage application — both actor and item. This is the root event for damage-reactive abilities. Subscribers see the raw damage amount, type, and source. The `dying`, `death`, and `destroyed` sub-events fire from the same flow when HP thresholds are crossed.
+
+**`death`** fires when an actor's HP drops to the death threshold or below (default −10, configurable per actor). It fires once per death transition (HP above threshold → HP at/below threshold), not on every update while already dead.
+
+**`dying`** fires when an actor's HP drops to 0 or below but remains above the death threshold. This represents the bleeding-out state in D&D 3.5e. It fires once per transition into the dying range.
+
+**`preUseAction`** fires before any action executes on the actor. The payload is a full `UseActionContext` plus `cancel()`. Subscribers can inspect `context.action` (the resolved data model), `context.item`, `context.actor`, or any nested property — then call `cancel()` to abort. Fires for all action types — attacks, spells, abilities, item uses. The action system (Phase 10) wires the emission point.
+
+**`postUseAction`** fires after an action completes successfully (not fired if cancelled). The payload is `UseActionContext` plus `result: ActionResult`. Macros can read the full action context alongside the outcome. The action system (Phase 10) wires the emission point.
+
+**`dealDamage`** fires on the actor that dealt the damage (not the target). Optionally carries `context: UseActionContext` when the damage came from an action (absent for environmental or effect-based damage). This is the hook point for on-hit abilities that care about dealing damage (Cleave, vampiric touch, life drain). Distinct from the `EffectTrigger` system (Phase 10) which handles combat-specific triggers like `onKill` and `onCrit` — `dealDamage` is broader and fires on all damage sources.
+
+**`destroyed`** fires when an item's HP drops to 0 or below. This is the item equivalent of `death` — items have a single threshold at 0.
 
 **`revealSecret`** fires when a Secret AE is disabled (revealed). The payload includes the Secret AE id, the field path that was masked, the display value (what was shown), and the real value (what is now revealed). This is the hook point for chat notifications ("The sword reveals itself to be a +2 Flaming Longsword!"), journal updates, and macro triggers.
 
@@ -555,17 +655,51 @@ static registerEventType(type: string, meta: { label: string; description: strin
 Registered at system init:
 
 ```typescript
-DocumentEventEmitter.registerEventType('death', {
-  label: 'Death',
-  description: 'Fires when a creature\'s HP drops to the death threshold.',
-});
+// Actor events
 DocumentEventEmitter.registerEventType('instantiate', {
   label: 'Instantiate',
   description: 'Fires when an item is first added to an actor.',
+  appliesTo: ['actor', 'item'],
+});
+DocumentEventEmitter.registerEventType('takeDamage', {
+  label: 'Take Damage',
+  description: 'Fires when damage is applied to the document\'s HP.',
+  appliesTo: ['actor', 'item'],
+});
+DocumentEventEmitter.registerEventType('dying', {
+  label: 'Dying',
+  description: 'Fires when an actor\'s HP drops to ≤ 0 but above death threshold.',
+  appliesTo: ['actor'],
+});
+DocumentEventEmitter.registerEventType('death', {
+  label: 'Death',
+  description: 'Fires when an actor\'s HP drops to the death threshold (default −10).',
+  appliesTo: ['actor'],
+});
+DocumentEventEmitter.registerEventType('destroyed', {
+  label: 'Destroyed',
+  description: 'Fires when an item\'s HP drops to ≤ 0.',
+  appliesTo: ['item'],
+});
+DocumentEventEmitter.registerEventType('preUseAction', {
+  label: 'Pre-Use Action',
+  description: 'Fires before an action executes. Calling cancel() aborts the action.',
+  appliesTo: ['actor'],
+});
+DocumentEventEmitter.registerEventType('postUseAction', {
+  label: 'Post-Use Action',
+  description: 'Fires after an action completes successfully.',
+  appliesTo: ['actor'],
+});
+DocumentEventEmitter.registerEventType('dealDamage', {
+  label: 'Deal Damage',
+  description: 'Fires on the actor that dealt damage to another actor.',
+  appliesTo: ['actor'],
 });
 DocumentEventEmitter.registerEventType('revealSecret', {
   label: 'Reveal Secret',
   description: 'Fires when a Secret AE is disabled (revealed), exposing the real value.',
+  appliesTo: ['actor', 'item'],
 });
 ```
 
@@ -583,12 +717,23 @@ Modules extend: `DocumentEventEmitter.registerEventType('myModule.stunned', { la
 - [ ] Export `DocumentEvent<T>` and `DocumentEventCallback<T>` types
 - [ ] Add `readonly events: DocumentEventEmitter` to `Dnd35eDocumentMixin`
 - [ ] Wire `events.clear()` in document `_onDelete()` cleanup
+- [ ] Implement static `wellKnownEvents` registry on `DocumentEventEmitter` with `registerEventType()` method and `appliesTo` metadata
+- [ ] Register all well-known events at system init: `instantiate`, `takeDamage`, `dying`, `death`, `destroyed`, `preUseAction`, `postUseAction`, `dealDamage`, `revealSecret`
+- [ ] Define typed payload interfaces for each event (e.g., `TakeDamageEvent`, `DeathEvent`, `PreUseActionEvent`)
 - [ ] Emit `instantiate` in `ItemDnd35e._onCreate()` when item has a parent actor
-- [ ] Emit `death` in `ActorDnd35e` when HP crosses the death threshold (exact trigger location TBD — depends on damage application flow)
+- [ ] Implement `takeDamage` → `dying` / `death` cascade in actor damage application method (threshold-based sub-event emission)
+- [ ] Implement `takeDamage` → `destroyed` cascade in item damage application method (HP ≤ 0)
+- [ ] Implement `preUseAction` cancellation pattern with `cancel()` callback (emission wired in Phase 10 action system)
+- [ ] Define `postUseAction`, `dealDamage` event payload interfaces (emission wired in Phase 10 action system)
 - [ ] Define `revealSecret` event type and payload interface (emission wired during Secret AE phase)
-- [ ] Implement static `wellKnownEvents` registry on `DocumentEventEmitter` with `registerEventType()` method
-- [ ] Register `death`, `instantiate`, `revealSecret` as well-known events at system init
-- [ ] Test: Subscribe to `death` on actor, reduce HP to 0, callback fires with payload
+- [ ] Test: Subscribe to `takeDamage` on actor, apply damage, callback fires with amount/type
+- [ ] Test: `takeDamage` → `dying` fires when HP drops to 0 but above −10
+- [ ] Test: `takeDamage` → `death` fires when HP drops to −10 or below
+- [ ] Test: `death` threshold is configurable per actor (constructs/undead die at 0)
+- [ ] Test: `death` fires once per transition, not on every update while dead
+- [ ] Test: Item `takeDamage` → `destroyed` fires when item HP drops to 0
+- [ ] Test: `preUseAction` cancel() prevents action execution (wired in Phase 10)
+- [ ] Test: Subscribe to `death` on actor, reduce HP to −10, callback fires with payload
 - [ ] Test: `instantiate` fires once on item creation, not on subsequent updates
 - [ ] Test: `events.clear()` removes all listeners, subsequent emit is no-op
 - [ ] Test: Failing callback logs error via `Hooks.onError` but doesn't block other callbacks

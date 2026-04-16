@@ -81,6 +81,7 @@ This project includes custom instruction files, skills, and agents to provide do
 | Agent | Purpose |
 |-------|---------|
 | `@planning` | Design new phases, refine architecture, make cross-phase decisions |
+| `@silversmith` | Implement phases one checklist item at a time — discuss, build, test, approve |
 | `@kb-curator` | End-of-session documentation review, pattern extraction, KB maintenance |
 
 > **Tip**: At the end of every session, type **`@kb-curator curate the kb`** — it reviews your session, proposes documentation updates, and coaches you on AI tools you could have used.
