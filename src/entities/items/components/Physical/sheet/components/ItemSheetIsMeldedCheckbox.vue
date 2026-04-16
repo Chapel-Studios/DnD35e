@@ -8,7 +8,8 @@
   />
 </template>
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';

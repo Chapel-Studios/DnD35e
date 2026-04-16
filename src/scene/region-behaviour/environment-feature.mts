@@ -1,6 +1,6 @@
 import { RegionBehaviorDnd35e } from './RegionBehaviorDnd35e.mjs';
 import fields = foundry.data.fields;
-import { ZeroToTwo } from '@constants/numericTypes.mjs';
+import type { ZeroToTwo } from '@constants/numericTypes.mjs';
 
 type EnvironmentFeatureTypeSchema = {
     terrain: fields.SchemaField<{

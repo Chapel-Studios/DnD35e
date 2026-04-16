@@ -8,11 +8,12 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { EffectCategory } from '@items/baseItem/index.mjs';
   import { inject } from 'vue';
 
-  import { PhysicalDocumentStore } from '../PhysicalItemStore.mjs';
+  import type { PhysicalDocumentStore } from '../PhysicalItemStore.mjs';
 
   const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {

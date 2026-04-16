@@ -6,7 +6,8 @@ import type {
   SheetTab,
 } from '@ec/CoreMixin/index.mjs';
 import { defaultDetailsTab, useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import { DnD35eActiveEffect, EffectType } from '@effects/index.mjs';
+import type { EffectType } from '@effects/index.mjs';
+import { DnD35eActiveEffect } from '@effects/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';

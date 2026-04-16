@@ -1,16 +1,15 @@
-import { ActorType } from '@actors/actorTypes.mjs';
-import Actor from '@client/documents/actor.mjs';
-import { DocumentConstructionContext } from '@common/_types.mjs';
-import EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
+import type { ActorType } from '@actors/actorTypes.mjs';
+import type { DocumentConstructionContext } from '@common/_types.mjs';
+import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import type { DnD35eActiveEffect, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
-import { TokenDocumentDnd35e } from '@scene/token-document/TokenDocumentDnd35e.mjs';
+import type { TokenDocumentDnd35e } from '@scene/token-document/TokenDocumentDnd35e.mjs';
 
-import { ActorSystemData } from './index.mjs';
+import type { ActorSystemData } from './index.mjs';
 
 interface AppliedActorEffectChange extends Dnd35eEffectChangeData {
   effect: DnD35eActiveEffect;

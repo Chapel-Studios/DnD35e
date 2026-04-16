@@ -1,7 +1,8 @@
-import { BaseItemSheetRenderContext } from '@items/baseItem/index.mjs';
-import { EquippableItem, EquippableItemLike } from '@items/components/Equippable/index.mjs';
-import { PhysicalItemSheetRenderContext } from '@items/components/Physical/index.mjs';
-import { EquippableItemType } from '@items/index.mjs';
+import type { BaseItemSheetRenderContext } from '@items/baseItem/index.mjs';
+import type { EquippableItemLike } from '@items/components/Equippable/index.mjs';
+import { EquippableItem } from '@items/components/Equippable/index.mjs';
+import type { PhysicalItemSheetRenderContext } from '@items/components/Physical/index.mjs';
+import type { EquippableItemType } from '@items/index.mjs';
 
 type EquippableItemSheetRenderContext = BaseItemSheetRenderContext<EquippableItemType, EquippableItemLike>
   & PhysicalItemSheetRenderContext

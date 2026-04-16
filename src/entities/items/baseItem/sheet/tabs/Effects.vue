@@ -57,7 +57,8 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol, TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { RenderModeStore, TabStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { ItemSheetStore } from '@items/baseItem/index.mjs';
   import { computed, inject } from 'vue';
 

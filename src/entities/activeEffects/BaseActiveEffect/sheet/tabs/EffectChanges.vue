@@ -69,7 +69,8 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol, TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { RenderModeStore, TabStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE, EffectChangeValue } from '@effects/BaseActiveEffect/index.mjs';
   import { UNIDENTIFIED } from '@helpers/formulae/types.mjs';

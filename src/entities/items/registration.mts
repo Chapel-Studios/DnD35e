@@ -1,7 +1,9 @@
 import { ItemConfig } from '@constants/config/item.mjs';
-import { ensureNameFormulaOnCreate, NameFormulaDocument } from '@ec/CoreMixin/index.mjs';
+import type { NameFormulaDocument } from '@ec/CoreMixin/index.mjs';
+import { ensureNameFormulaOnCreate } from '@ec/CoreMixin/index.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
-import { ItemProxyDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
+import type { ItemSheetStore } from '@items/baseItem/index.mjs';
+import { ItemProxyDnd35e } from '@items/baseItem/index.mjs';
 import { weaponItemType } from '@items/itemTypes.mjs';
 import { WeaponSheet, WeaponSystemModel } from '@items/weapon/index.mjs';
 

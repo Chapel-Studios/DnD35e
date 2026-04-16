@@ -1,9 +1,11 @@
-import { ActiveEffectSource } from '@common/documents/active-effect.mjs';
+import type { ActiveEffectSource } from '@common/documents/active-effect.mjs';
 import { Dnd35eDocumentMixin } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import type { Dnd35eDocumentFlags } from '@ec/CoreMixin/index.mjs';
+import type {
+  IdentifiableDocumentSourceProps,
+} from '@ec/Identifiable/index.mjs';
 import {
   IdentifiableDocumentMixin,
-  IdentifiableDocumentSourceProps,
 } from '@ec/Identifiable/index.mjs';
 import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
 

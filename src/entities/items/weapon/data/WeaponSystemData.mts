@@ -1,8 +1,8 @@
 import type { Dnd35eFieldData } from '@helpers/fields/index.mjs';
-import { ItemSystemData } from '@items/baseItem/index.mjs';
-import { EquippableItemSystemData } from '@items/components/Equippable/index.mjs';
+import type { ItemSystemData } from '@items/baseItem/index.mjs';
+import type { EquippableItemSystemData } from '@items/components/Equippable/index.mjs';
 
-import { WeaponBaseType, WeaponSubtype, WeaponType } from './index.mjs';
+import type { WeaponBaseType, WeaponSubtype, WeaponType } from './index.mjs';
 
 type WeaponDamage = {
   damageRoll: Dnd35eFieldData<string>;

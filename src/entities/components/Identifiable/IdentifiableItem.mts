@@ -1,12 +1,13 @@
-import { Dnd35eDocumentProperties } from '@ec/CoreMixin/Dnd35eDocument.mjs';
-import { EvaluationDocument, FormulaRegistration } from '@ec/CoreMixin/index.mjs';
+import type { Dnd35eDocumentProperties } from '@ec/CoreMixin/Dnd35eDocument.mjs';
+import type { EvaluationDocument, FormulaRegistration } from '@ec/CoreMixin/index.mjs';
 import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
-import { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
-import { ItemType } from '@items/index.mjs';
+import type { ItemSourceDnd35e } from '@items/baseItem/index.mjs';
+import { ItemDnd35e } from '@items/baseItem/index.mjs';
+import type { ItemType } from '@items/index.mjs';
 
-import { IdentifiableDocumentSystemData, IdentifiableDocumentSystemSource } from './index.mjs';
+import type { IdentifiableDocumentSystemData, IdentifiableDocumentSystemSource } from './index.mjs';
 
 type IdentifiableDocumentSourceProps = {
   system: IdentifiableDocumentSystemSource;

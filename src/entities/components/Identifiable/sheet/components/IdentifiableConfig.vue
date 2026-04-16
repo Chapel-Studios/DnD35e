@@ -18,8 +18,9 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
+  import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
   import ToggleSwitch from '@vc/Fields/ToggleSwitch.vue';
   import { computed, inject } from 'vue';
 

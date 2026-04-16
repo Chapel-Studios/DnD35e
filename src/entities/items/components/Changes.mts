@@ -48,11 +48,11 @@ const defineChangesSchema = (): ChangesPropertySetSchema => ({
 
 export {
   CHANGE_FLAGS,
-  ChangeFlagKey,
   defineChangesSchema,
 };
 
 export type {
+  ChangeFlagKey,
   ChangesPropertySet,
   ChangesPropertySetSchema,
 };

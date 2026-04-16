@@ -1,6 +1,7 @@
 import { escapeRegex } from '@helpers/stringHelpers.mjs';
 
-import { CoinageDefinition, USER_COIN_PREFIX } from '../constants.mjs';
+import type { CoinageDefinition } from '../constants.mjs';
+import { USER_COIN_PREFIX } from '../constants.mjs';
 
 const AUTO_ID_PREFIX = '$!auto!$';
 

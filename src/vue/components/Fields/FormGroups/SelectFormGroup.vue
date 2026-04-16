@@ -29,14 +29,14 @@
   </FormGroup>
 </template>
 
-<script setup lang="ts" generic="TValue extends string">
+<script setup lang="ts" generic="TValue extends string | number">
   import type { DocumentSheetStore, RenderModeStore } from '@ec/CoreMixin/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
   import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
-  import { SelectOption } from './types.mjs';
+  import type { SelectOption } from './types.mjs';
 
   const props = defineProps<{
     label?: string;
@@ -88,6 +88,7 @@
   }
 
   function onChange(val: string) {
-    fieldUpdater(val as TValue);
+    const parsed = typeof props.value === 'number' ? Number(val) : val;
+    fieldUpdater(parsed as TValue);
   }
 </script>

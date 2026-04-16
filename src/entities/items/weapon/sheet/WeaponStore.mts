@@ -2,7 +2,7 @@ import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemShee
 import { useItemSheetStore } from '@items/baseItem/index.mjs';
 import type { EquippableItemGetters, EquippableItemLike, EquippableItemStore, EquippableItemStoreUtils } from '@items/components/Equippable/index.mjs';
 import { useEquippableItemStore } from '@items/components/Equippable/index.mjs';
-import { EquippableItemActions } from '@items/components/Equippable/sheet/EquippableItemStore.mjs';
+import type { EquippableItemActions } from '@items/components/Equippable/sheet/EquippableItemStore.mjs';
 import { physicalItemEffectsTab } from '@items/components/Physical/index.mjs';
 import type { Weapon } from '@items/weapon/index.mjs';
 import { weaponDetailsTab } from '@items/weapon/index.mjs';

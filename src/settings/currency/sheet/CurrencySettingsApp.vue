@@ -70,7 +70,8 @@
 
 <script setup lang="ts">
   import { stripSpecialCharacters } from '@helpers/stringHelpers.mjs';
-  import { SettingsStore, SettingsStoreSymbol } from '@settings/core/sheet/settingsStore.mjs';
+  import type { SettingsStore } from '@settings/core/sheet/settingsStore.mjs';
+  import { SettingsStoreSymbol } from '@settings/core/sheet/settingsStore.mjs';
   import { SYSTEM_ID } from '@settings/shared.mjs';
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
   import { computed, inject, ref, watch } from 'vue';

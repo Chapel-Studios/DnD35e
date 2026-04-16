@@ -1,6 +1,6 @@
 import { EquippableItem } from '@items/components/Equippable/index.mjs';
 import type { PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
-import { WeaponItemType } from '@items/itemTypes.mjs';
+import type { WeaponItemType } from '@items/itemTypes.mjs';
 
 import type { WeaponSystemData, WeaponSystemSource } from './data/WeaponSystemData.mjs';
 

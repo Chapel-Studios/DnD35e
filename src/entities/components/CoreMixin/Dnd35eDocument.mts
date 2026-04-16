@@ -1,9 +1,9 @@
 import type { ClientDocument } from '@client/documents/abstract/_module.mjs';
-import { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
+import type { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 
-import { Dnd35eDocumentFlags, EvaluationDocument, FormulaRegistration } from './index.mjs';
+import type { Dnd35eDocumentFlags, EvaluationDocument, FormulaRegistration } from './index.mjs';
 
 interface Dnd35eDocumentProperties {
   readonly localizedType: string;

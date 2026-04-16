@@ -26,7 +26,8 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStore, DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { DocumentSheetStore, RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
   import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';

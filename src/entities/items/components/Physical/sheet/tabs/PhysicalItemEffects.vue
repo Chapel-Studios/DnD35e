@@ -4,7 +4,7 @@
   import { inject } from 'vue';
 
   import MaterialsList from '../components/MaterialsList.vue';
-  import { PhysicalDocumentStore } from '../PhysicalItemStore.mjs';
+  import type { PhysicalDocumentStore } from '../PhysicalItemStore.mjs';
 
   const {
     documentGetters: {

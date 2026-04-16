@@ -9,7 +9,7 @@
 </template>
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import { ItemPriceFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 

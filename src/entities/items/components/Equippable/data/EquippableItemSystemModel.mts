@@ -1,10 +1,10 @@
-import { EquipSlot } from '@constants/equipmentSlots.mjs';
+import type { EquipSlot } from '@constants/equipmentSlots.mjs';
 import { SIZES } from '@constants/sizes.mjs';
 import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
 import { Dnd35eField } from '@helpers/fields/index.mjs';
 import { PhysicalItemSystemModel } from '@items/components/Physical/data/PhysicalItemSystemModel.mjs';
 
-import { EquippableItemSystemData } from './EquippableItemSystemData.mjs';
+import type { EquippableItemSystemData } from './EquippableItemSystemData.mjs';
 
 const { fields: { ArrayField, StringField } } = foundry.data;
 

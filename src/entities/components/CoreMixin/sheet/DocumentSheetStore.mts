@@ -6,10 +6,12 @@ import { buildDocumentFamiliar } from '@helpers/formulae/index.mjs';
 import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
-import {
-  everyoneVisibility,
+import type {
   FieldEditability,
   FieldVisibility,
+} from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+import {
+  everyoneVisibility,
   gmOnlyEditability,
   gmOnlyVisibility,
   normalEditability,

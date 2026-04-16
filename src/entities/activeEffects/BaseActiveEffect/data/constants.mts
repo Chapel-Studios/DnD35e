@@ -1,4 +1,4 @@
-import { EffectTarget } from '@effects/effectTypes.mjs';
+import type { EffectTarget } from '@effects/effectTypes.mjs';
 import { EFFECT_TARGET } from '@effects/effectTypes.mjs';
 
 type ActiveEffectTarget = EffectTarget;

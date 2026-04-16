@@ -6,7 +6,7 @@ import { Dnd35eField } from '@helpers/fields/Dnd35eField.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { DocumentContext } from '@helpers/formulae/registry.mjs';
 
-import { BaseDnd35eSystemData } from './BaseDnd35eSystemData.mjs';
+import type { BaseDnd35eSystemData } from './BaseDnd35eSystemData.mjs';
 
 const {
   HTMLField,

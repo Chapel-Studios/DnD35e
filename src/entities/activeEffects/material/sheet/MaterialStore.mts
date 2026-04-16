@@ -1,4 +1,4 @@
-import { DocumentSheetStore, DocumentSheetStoreUtils } from '@ec/CoreMixin/index.mjs';
+import type { DocumentSheetStore, DocumentSheetStoreUtils } from '@ec/CoreMixin/index.mjs';
 import type { IdentifiableDocumentActions, IdentifiableDocumentGetters, IdentifiableDocumentStoreUtils, IdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
 import type { ActiveEffectConfigStore, ActiveEffectConfigStoreDocumentActions, ActiveEffectConfigStoreDocumentGetters } from '@effects/BaseActiveEffect/index.mjs';
@@ -6,13 +6,14 @@ import {
   getDefaultActiveEffectTabs,
   useActiveEffectConfigStore,
 } from '@effects/BaseActiveEffect/index.mjs';
-import { Material, materialDetailsTab, MaterialType } from '@effects/material/index.mjs';
+import type { MaterialType } from '@effects/material/index.mjs';
+import { Material, materialDetailsTab } from '@effects/material/index.mjs';
 import { PriceData } from '@settings/currency/index.mjs';
 import type { DamageReductionTypesConfig } from '@settings/gameRules/_types.mjs';
 import { GAME_RULES_KEYS } from '@settings/gameRules/constants.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { MultiSelectOption } from '@vc/Fields/FormGroups/types.mjs';
-import { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
+import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
 

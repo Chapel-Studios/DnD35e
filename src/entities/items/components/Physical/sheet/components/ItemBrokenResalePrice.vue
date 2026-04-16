@@ -10,10 +10,13 @@
 </template>
 <script setup lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { NumberFormGroup } from '@vc/Fields/index.mjs';
-  import { computed, inject } from 'vue';
+  // WIP stub - all code commented out until template is ready
+  // import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  // import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  // import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  // import { NumberFormGroup } from '@vc/Fields/index.mjs';
+  // import { computed, inject } from 'vue';
+
 
   // const {
   //   isEditable,
@@ -27,18 +30,18 @@
   //     getViewAwareFieldUpdater,
   //   },
   // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
-  const {
-    documentGetters: {
-      getViewAwareFieldValue,
-    },
-    documentActions: {
-      getViewAwareFieldUpdater,
-    },
-  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  // const {
+  //   documentGetters: {
+  //     getViewAwareFieldValue,
+  //   },
+  //   documentActions: {
+  //     getViewAwareFieldUpdater,
+  //   },
+  // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
+  // const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
-  const effectiveBrokenResalePrice = computed(() =>
-    getViewAwareFieldValue('system.brokenResalePrice')
-  );
-  const updater = getViewAwareFieldUpdater('system.brokenResalePrice');
+  // const effectiveBrokenResalePrice = computed(() =>
+  //   getViewAwareFieldValue('system.brokenResalePrice')
+  // );
+  // const updater = getViewAwareFieldUpdater('system.brokenResalePrice');
 </script>

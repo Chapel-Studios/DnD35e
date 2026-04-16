@@ -19,11 +19,12 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import ItemWeight from '@items/components/Physical/sheet/components/ItemWeight.vue';
   import { inject } from 'vue';
 
-  import { EquippableDocumentStore } from '../EquippableItemStore.mjs';
+  import type { EquippableDocumentStore } from '../EquippableItemStore.mjs';
 
   const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {

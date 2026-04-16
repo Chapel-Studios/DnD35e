@@ -11,8 +11,9 @@
   /**
    * @deprecated This component is currently unused. Slated for refactoring or removal.
    */
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import LandingPad from '@vc/components/LandingPad.vue';
   import { inject } from 'vue';
 

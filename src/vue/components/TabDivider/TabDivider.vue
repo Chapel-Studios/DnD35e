@@ -18,7 +18,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { TabStore } from '@ec/CoreMixin/index.mjs';
+  import { TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import { computed, inject } from 'vue';
 
   const {
