@@ -18,22 +18,23 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 
-// --- Read local config (REQUIRED, git-ignored) ---
+// --- Read local config (git-ignored, optional for CI) ---
 const localConfigPath = path.join(root, 'local.config.json');
-if (!fs.existsSync(localConfigPath)) {
-  console.error('❌ local.config.json not found.');
-  console.error('   Copy local.config.json.example → local.config.json and set foundrySystemDir.');
-  process.exit(1);
+let localConfig = {};
+if (fs.existsSync(localConfigPath)) {
+  try {
+    localConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
+  } catch (err) {
+    console.error('❌ local.config.json contains invalid JSON.');
+    console.error('   See local.config.json.example for the expected shape.');
+    process.exit(1);
+  }
+} else {
+  console.warn('⚠️  local.config.json not found — generating system.json in-repo only (CI mode).');
 }
-const localConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
 
 const foundrySystemDir = localConfig.foundrySystemDir;
-if (!foundrySystemDir) {
-  console.error('❌ foundrySystemDir is not set in local.config.json.');
-  console.error('   Set it to your Foundry Data/systems path.');
-  process.exit(1);
-}
-if (!fs.existsSync(foundrySystemDir)) {
+if (foundrySystemDir && !fs.existsSync(foundrySystemDir)) {
   console.error(`❌ foundrySystemDir does not exist: ${foundrySystemDir}`);
   console.error('   Create the directory or fix local.config.json.');
   process.exit(1);
@@ -73,11 +74,15 @@ const outputPath = path.join(root, 'system.json');
 fs.writeFileSync(outputPath, content);
 console.log(`✅ Generated system.json (version: ${version})`);
 
-// --- Copy to Foundry system directory ---
-const systemDir = path.join(foundrySystemDir, 'dnd35e');
-if (!fs.existsSync(systemDir)) {
-  fs.mkdirSync(systemDir, { recursive: true });
+// --- Copy to Foundry system directory (skip in CI when foundrySystemDir is absent) ---
+if (foundrySystemDir) {
+  const systemDir = path.join(foundrySystemDir, 'dnd35e');
+  if (!fs.existsSync(systemDir)) {
+    fs.mkdirSync(systemDir, { recursive: true });
+  }
+  const destPath = path.join(systemDir, 'system.json');
+  fs.copyFileSync(outputPath, destPath);
+  console.log(`✅ Copied system.json → ${destPath}`);
+} else {
+  console.log('ℹ️  Skipping copy to Foundry directory (no foundrySystemDir configured).');
 }
-const destPath = path.join(systemDir, 'system.json');
-fs.copyFileSync(outputPath, destPath);
-console.log(`✅ Copied system.json → ${destPath}`);

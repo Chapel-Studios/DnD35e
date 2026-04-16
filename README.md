@@ -26,7 +26,7 @@
    npm run dev:watch      # development watch build
    ```
 
-Build output is written to `<foundrySystemDir>/dnd35e/`. If `foundrySystemDir` is not configured, the build will fail with an error.
+Build output is written to `<foundrySystemDir>/dnd35e/` when `local.config.json` is present. Without it (e.g. CI), the build falls back to `dist/` automatically.
 
 ## Build & Release Process
 

@@ -8,9 +8,17 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 // Read local developer config (git-ignored) for per-machine paths
 const localConfigPath = path.resolve(__dirname, 'local.config.json');
-const localConfig: { foundrySystemDir?: string } = fs.existsSync(localConfigPath)
-  ? fs.readJsonSync(localConfigPath)
-  : {};
+let localConfig: { foundrySystemDir?: string } = {};
+if (fs.existsSync(localConfigPath)) {
+  try {
+    localConfig = fs.readJsonSync(localConfigPath);
+  } catch {
+    throw new Error(
+      'Failed to read local.config.json — ensure it contains valid JSON.\n' +
+      'See local.config.json.example for the expected shape.'
+    );
+  }
+}
 const foundrySystemDir = localConfig.foundrySystemDir;
 const buildOutDir = foundrySystemDir ? path.join(foundrySystemDir, 'dnd35e') : 'dist';
 
@@ -107,8 +115,9 @@ function bundleLangFiles (): Plugin {
 
 export default defineConfig(({ command }) => {
   if (command === 'build' && !foundrySystemDir) {
-    throw new Error(
-      'foundrySystemDir is not configured. Copy local.config.json.example → local.config.json and set the path.'
+    console.warn(
+      '⚠️  foundrySystemDir is not configured — building to dist/ (CI mode).\n' +
+      '   For local development, copy local.config.json.example → local.config.json and set the path.'
     );
   }
 
