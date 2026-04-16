@@ -1,16 +1,44 @@
+// Individual damage type constants
+const DAMAGE_TYPE_PIERCING = 'dnd35e.DAMAGE_TYPES.Piercing' as const;
+const DAMAGE_TYPE_BLUDGEONING = 'dnd35e.DAMAGE_TYPES.Bludgeoning' as const;
+const DAMAGE_TYPE_SLASHING = 'dnd35e.DAMAGE_TYPES.Slashing' as const;
+const DAMAGE_TYPE_FIRE = 'dnd35e.DAMAGE_TYPES.Fire' as const;
+const DAMAGE_TYPE_COLD = 'dnd35e.DAMAGE_TYPES.Cold' as const;
+const DAMAGE_TYPE_ELECTRICITY = 'dnd35e.DAMAGE_TYPES.Electricity' as const;
+const DAMAGE_TYPE_ACID = 'dnd35e.DAMAGE_TYPES.Acid' as const;
+const DAMAGE_TYPE_SONIC = 'dnd35e.DAMAGE_TYPES.Sonic' as const;
+const DAMAGE_TYPE_FORCE = 'dnd35e.DAMAGE_TYPES.Force' as const;
+const DAMAGE_TYPE_POSITIVE = 'dnd35e.DAMAGE_TYPES.Positive' as const;
+const DAMAGE_TYPE_NEGATIVE = 'dnd35e.DAMAGE_TYPES.Negative' as const;
+
+// Array of all damage types for form choices
 const DAMAGE_TYPES = [
-  'dnd35e.DAMAGE_TYPES.Piercing',
-  'dnd35e.DAMAGE_TYPES.Bludgeoning',
-  'dnd35e.DAMAGE_TYPES.Slashing',
-  'dnd35e.DAMAGE_TYPES.Fire',
-  'dnd35e.DAMAGE_TYPES.Cold',
-  'dnd35e.DAMAGE_TYPES.Electricity',
-  'dnd35e.DAMAGE_TYPES.Acid',
-  'dnd35e.DAMAGE_TYPES.Sonic',
-  'dnd35e.DAMAGE_TYPES.Force',
-  'dnd35e.DAMAGE_TYPES.Positive',
-  'dnd35e.DAMAGE_TYPES.Negative',
+  DAMAGE_TYPE_PIERCING,
+  DAMAGE_TYPE_BLUDGEONING,
+  DAMAGE_TYPE_SLASHING,
+  DAMAGE_TYPE_FIRE,
+  DAMAGE_TYPE_COLD,
+  DAMAGE_TYPE_ELECTRICITY,
+  DAMAGE_TYPE_ACID,
+  DAMAGE_TYPE_SONIC,
+  DAMAGE_TYPE_FORCE,
+  DAMAGE_TYPE_POSITIVE,
+  DAMAGE_TYPE_NEGATIVE,
 ];
 type DamageType = (typeof DAMAGE_TYPES)[number];
 
-export { DAMAGE_TYPES, type DamageType };
+export {
+  DAMAGE_TYPE_ACID,
+  DAMAGE_TYPE_BLUDGEONING,
+  DAMAGE_TYPE_COLD,
+  DAMAGE_TYPE_ELECTRICITY,
+  DAMAGE_TYPE_FIRE,
+  DAMAGE_TYPE_FORCE,
+  DAMAGE_TYPE_NEGATIVE,
+  DAMAGE_TYPE_PIERCING,
+  DAMAGE_TYPE_POSITIVE,
+  DAMAGE_TYPE_SLASHING,
+  DAMAGE_TYPE_SONIC,
+  DAMAGE_TYPES,
+  type DamageType,
+};
