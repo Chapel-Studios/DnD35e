@@ -1,4 +1,4 @@
-import { DocumentSheetConfiguration, DocumentSheetRenderOptions } from '@client/applications/api/document-sheet.mjs';
+import type { DocumentSheetConfiguration, DocumentSheetRenderOptions } from '@client/applications/api/document-sheet.mjs';
 import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
 import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
 import type { EditorViewMode } from '@helpers/formulae/types.mjs';

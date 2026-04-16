@@ -1,4 +1,4 @@
-import {
+import type {
   ApplicationConfiguration,
   ApplicationFormConfiguration,
   ApplicationRenderContext,
@@ -8,10 +8,11 @@ import {
 import ApplicationV2 from '@client/applications/api/application.mjs';
 import Actor from '@client/documents/actor.mjs';
 import TokenDocument from '@client/documents/token.mjs';
-import { DataSchema } from '@common/abstract/_types.mjs';
+import type { DataSchema } from '@common/abstract/_types.mjs';
 import { PrototypeToken } from '@common/data/_module.mjs';
 
-import HandlebarsApplicationMixin, {
+import HandlebarsApplicationMixin from '../../api/handlebars-application.mjs';
+import type {
   HandlebarsRenderOptions,
   HandlebarsTemplatePart,
 } from '../../api/handlebars-application.mjs';

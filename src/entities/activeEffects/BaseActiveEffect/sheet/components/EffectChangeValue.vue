@@ -9,8 +9,9 @@
 </template>
 
 <script setup lang="ts">
-  import { RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
+  import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
+  import { RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
   import { inject } from 'vue';
   
   defineProps<{

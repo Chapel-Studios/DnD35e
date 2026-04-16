@@ -50,7 +50,7 @@
   import type { DnD35eActiveEffect } from '@effects/index.mjs';
   import { inject } from 'vue';
 
-  import { ItemSheetStore } from '../ItemSheetStore.mjs';
+  import type { ItemSheetStore } from '../ItemSheetStore.mjs';
 
   defineProps<{
     label: string;

@@ -8,12 +8,12 @@
  * Structure: documentType (Item / ActiveEffect / Actor) → subtype (weapon / material / npc) → builder
  */
 
-import { ActorType } from '@actors/actorTypes.mjs';
-import { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
-import { EffectType } from '@effects/effectTypes.mjs';
-import { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
-import { ItemType } from '@items/itemTypes.mjs';
+import type { ActorType } from '@actors/actorTypes.mjs';
+import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
+import type { DnD35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
+import type { EffectType } from '@effects/effectTypes.mjs';
+import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
+import type { ItemType } from '@items/itemTypes.mjs';
 
 import type { AspectGroup, FamiliarContext, FamiliarSchema, FormulaFieldData } from './types.mjs';
 import { mergeAspectGroups } from './utils.mjs';

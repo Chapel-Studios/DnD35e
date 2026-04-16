@@ -75,7 +75,7 @@
 
   import DamageReductionTypes from '../components/DamageReductionTypes.vue';
   import MagicEquivalency from '../components/MagicEquivalency.vue';
-  import { MaterialStore } from '../MaterialStore.mjs';
+  import type { MaterialStore } from '../MaterialStore.mjs';
 
   const {
     documentGetters: {

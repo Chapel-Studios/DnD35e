@@ -41,10 +41,13 @@ export {
   equippableHeaderStatus,
   EquippableItem,
   EquippableItemSheet,
-  EquippableItemStoreUtils,
   EquippableItemSystemModel,
   EquippableItemWeight,
   ItemIsMelded,
   ItemIsWeightlessWhenEquipped,
   useEquippableItemStore,
+};
+
+export type {
+  EquippableItemStoreUtils,
 };

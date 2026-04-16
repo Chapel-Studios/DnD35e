@@ -1,5 +1,5 @@
 import type { IdentifiableDocumentSystemData, IdentifiableDocumentSystemSource } from '@ec/Identifiable/index.mjs';
-import { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
+import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
 import type { Dnd35eFieldData } from '@helpers/fields/index.mjs';
 import type { Price, PriceSource } from '@settings/index.mjs';
 import type { PriceData } from '@settings/index.mjs';

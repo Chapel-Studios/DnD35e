@@ -3,10 +3,11 @@ import type { DocumentConstructionContext } from '@common/_types.mjs';
 import { getDisplayName } from '@ec/CoreMixin/index.mjs';
 import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/index.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/index.mjs';
-import { BASE_EFFECT_TYPE, EffectType } from '@effects/index.mjs';
+import type { EffectType } from '@effects/index.mjs';
+import { BASE_EFFECT_TYPE } from '@effects/index.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
-import { ItemType } from '@items/itemTypes.mjs';
+import type { ItemType } from '@items/itemTypes.mjs';
 
 type DnD35eActiveEffectFlags<T extends object = Record<string, unknown>> = Record<string, Record<string, unknown>> & {
   dnd35e: T;

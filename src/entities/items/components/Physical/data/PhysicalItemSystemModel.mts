@@ -8,7 +8,7 @@ import { Dnd35eField, Dnd35eSectionField } from '@helpers/fields/index.mjs';
 import { ItemSystemModelBase } from '@items/baseItem/index.mjs';
 import { PriceField } from '@settings/currency/index.mjs';
 
-import { PhysicalItemSystemData } from './PhysicalSystemData.mjs';
+import type { PhysicalItemSystemData } from './PhysicalSystemData.mjs';
 
 const { fields: { NumberField, StringField } } = foundry.data;
 

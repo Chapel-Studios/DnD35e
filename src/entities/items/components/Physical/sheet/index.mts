@@ -1,4 +1,4 @@
-import { IdentifiableDocumentSheetRenderContext } from '@ec/Identifiable/index.mjs';
+import type { IdentifiableDocumentSheetRenderContext } from '@ec/Identifiable/index.mjs';
 import type { PhysicalItem } from '@items/components/Physical/index.mjs';
 
 import ItemHardness from './components/ItemHardness.vue';

@@ -1,5 +1,6 @@
 import { EffectConfig } from '@constants/config/activeEffect.mjs';
-import { ensureNameFormulaOnCreate, NameFormulaDocument } from '@ec/CoreMixin/index.mjs';
+import type { NameFormulaDocument } from '@ec/CoreMixin/index.mjs';
+import { ensureNameFormulaOnCreate } from '@ec/CoreMixin/index.mjs';
 import { ActiveEffectProxyDnd35e } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
 import { materialEffectType } from '@effects/material/index.mjs';
 import { MaterialSheet, MaterialSystemModel } from '@effects/material/index.mjs';

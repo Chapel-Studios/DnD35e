@@ -4,7 +4,8 @@
  */
 import type { FormulaDataSource } from './FormulaData.mjs';
 import { FormulaData } from './FormulaData.mjs';
-import { buildContextFromFormula, DocumentContext } from './registry.mjs';
+import type { DocumentContext } from './registry.mjs';
+import { buildContextFromFormula } from './registry.mjs';
 import type {
   AspectGroup,
   AutocompleteOption,

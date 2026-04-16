@@ -1,7 +1,7 @@
-import { IdentifiableDocumentSystemData } from '@ec/Identifiable/index.mjs';
-import { ActiveEffectSystemData } from '@effects/BaseActiveEffect/index.mjs';
+import type { IdentifiableDocumentSystemData } from '@ec/Identifiable/index.mjs';
+import type { ActiveEffectSystemData } from '@effects/BaseActiveEffect/index.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
-import { ItemSystemData } from '@items/baseItem/index.mjs';
+import type { ItemSystemData } from '@items/baseItem/index.mjs';
 
 type NameFormulaDocument = {
   name: string | null;

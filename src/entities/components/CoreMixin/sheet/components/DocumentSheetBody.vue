@@ -33,15 +33,17 @@
 </template>
 
 <script lang="ts" setup>
+  import type {
+    RenderModeStore,
+    SheetMode,
+    TabStore,
+  } from '@ec/CoreMixin/index.mjs';
   import {
     DocumentArt,
     DocumentHeader,
     DocumentSheetStoreSymbol,
     HeaderNameField,
-    RenderModeStore,
     RenderModeStoreSymbol,
-    SheetMode,
-    TabStore,
     TabStoreSymbol,
   } from '@ec/CoreMixin/index.mjs';
   import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';

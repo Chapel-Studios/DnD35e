@@ -1,4 +1,5 @@
-import { EditorViewMode, IDENTIFIED, UNIDENTIFIED } from '@helpers/formulae/types.mjs';
+import type { EditorViewMode } from '@helpers/formulae/types.mjs';
+import { IDENTIFIED, UNIDENTIFIED } from '@helpers/formulae/types.mjs';
 import type { ComputedRef } from 'vue';
 import { computed, reactive } from 'vue';
 

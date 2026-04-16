@@ -59,7 +59,7 @@ export default [
         Note: 'readonly',
         Drawing: 'readonly',
         Tile: 'readonly',
-        Measured: 'readonly',
+        MeasuredTemplate: 'readonly',
         Macro: 'readonly',
         RollTable: 'readonly',
       },
@@ -73,6 +73,7 @@ export default [
 
     // Flat config doesn't support "extends" the same way,
     // so we spread semistandard's rules manually.
+    // TODO: Review semistandard integration — consider migrating to @eslint/js + typescript-eslint flat config
     rules: {
       ...semistandard.rules,
 
@@ -99,6 +100,7 @@ export default [
 
       'new-cap': ['error', { newIsCap: true, capIsNew: false }],
       'func-call-spacing': 'off',
+      '@typescript-eslint/func-call-spacing': ['error', 'never'],
 
       'vue/script-indent': ['error', 2, { baseIndent: 1 }],
       'vue/html-indent': ['error', 2, { baseIndent: 1 }],

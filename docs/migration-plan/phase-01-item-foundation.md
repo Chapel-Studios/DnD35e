@@ -96,7 +96,29 @@
   2. **`WeaponStore.mts` line 48** — commented-out `...equippableStore.documentActions` spread with note "no specific actions in equippable yet, but they will come". Leave as-is until equippable actions are implemented.
   3. **`WeaponSheet.vue` line 7** — HTML comment placeholder for `EquipableHeaderStatus`. Update to describe the two-component design: `PhysicalItemHeaderStatus.vue` (carried badge) overridden by `EquippableHeaderStatus.vue` (equipped takes priority). Reference work item 1.G.
 - [ ] **1.M — Damage Type Constants**: `damageTypes.mts` currently defines only 3 physical types (`bludgeoning`, `piercing`, `slashing`). Add energy types needed for weapon damage: `fire`, `cold`, `electricity`, `acid`, `sonic`, `force`, `positive`, `negative`. These are needed even in Phase 1 because magical weapons can deal energy damage via AEs, and the `damageType` select needs the full list.
-- [ ] **1.N — Investigate `derivedName` Redundancy**: `FormulaData` already stores a `resolvedValue` after formula evaluation. `derivedName` on `Dnd35eDocumentSystemModel` is a separate plain string that gets overwritten with the same value during `prepareDerivedData()`. Investigate whether `derivedName` can be removed entirely in favor of `nameFormula.resolvedValue`, or whether it should be hidden from the user and kept only as an internal fallback. This overlaps with the Secret AE redesign of the identifiable system (see Phase 2 §2.7).
+- [ ] **1.N — Remove `derivedName` (redundant with `nameFormula.resolvedValue`)**: Investigation complete — `derivedName` is always identical to `nameFormula.value.resolvedValue` after `prepareDerivedData()`. Remove it entirely. Replacement mapping:
+
+  **Schema & types** (task 1):
+  - `Dnd35eDocumentSystemModel.mts` — delete `derivedName: requiredStringField()` from `defineSchema()`
+  - `BaseDnd35eSystemData.mts` — remove `derivedName: string` from Source & Data types
+  - `EvaluationDocument` in `types.mts` — remove `derivedName: string`
+
+  **prepareDerivedData** (task 2):
+  - `Dnd35eDocumentSystemModel.mts` — delete the `this.derivedName = ...` write; change the `resolve()` fallback from `this.derivedName` to `this.parent.name`
+
+  **Formula registrations — base** (task 3):
+  - `Dnd35eDocument.mts` `defaultDerivedNameRegistration`: change `impactedField` from `'system.derivedName'` to `'system.nameFormula.value.resolvedValue'`; change evaluate fallback from `document.system.derivedName` to `document.name`
+  - `Dnd35eDocument.mts` `defaultNameRegistration`: read `document.system.nameFormula?.value?.resolvedValue || document.name` instead of `document.system.derivedName`
+
+  **Formula registrations — identifiable** (task 4):
+  - `IdentifiableItem.mts` `identifiableNameRegistration`: identified path returns `nameFormula?.value?.resolvedValue || document.name`; unidentified path returns `nameFormula?.unidentifiedValue?.resolvedValue || nameFormula?.value?.resolvedValue || document.name`
+
+  **Cleanup** (task 5):
+  - `ensureNameFormula.mts` — remove commented-out `derivedName` line
+  - `IdentifiableDocumentStore.mts` — remove commented-out `derivedName` computed
+  - `common.json` — remove derivedName label/hint
+
+  **No DB migration needed** — Foundry drops unknown source fields automatically; `resolvedValue` is already populated.
 
 #### Dnd35eField Replacement → `useDnd35eField()`
 
@@ -195,6 +217,31 @@
   - `IdentifiableDocumentStore.mts` — remove/update compound path normalization stubs
 
 - [ ] **1.V — Remove `Dnd35eField` class**: Delete `src/helpers/fields/Dnd35eField.mts`. Remove all imports. Verify no remaining references.
+
+#### License Review
+
+- [ ] **1.W — Review and update project license** *(non-blocking)*: The current CC BY-NC-ND 4.0 license is too restrictive — the ND (No Derivatives) clause prevents third-party module authors from creating add-on modules that hook into this system, which is counter to the FoundryVTT ecosystem's culture of interoperable modules. Goals:
+  - Allow third-party modules to extend/integrate with this system
+  - Prevent wholesale forks that rebrand the system without meaningful contribution
+  - Evaluate alternatives: GPL family (copyleft forces forks to stay open), LGPL (allows proprietary modules linking to it), custom clause on a permissive base, or a more permissive CC variant (CC BY-NC-SA allows derivatives if shared alike)
+  - Update LICENSE, README attribution section, and NOTICE file
+  - Ensure the new license is compatible with any dependencies (Vue MIT, Foundry API terms)
+
+  > **Not a dev blocker.** Current license does not impede development. This is a community/ecosystem concern to resolve before public release. **Must be resolved before 1.X** — the license outcome may determine whether the `types/` folder needs a full rewrite or can be retained under compatible terms.
+
+#### Foundry Type Definitions Rebuild
+
+- [ ] **1.X — Rebuild `types/` folder from scratch** *(May workload, pending 1.W outcome)*: The current `types/foundry/` directory is branched from a different project under a potentially incompatible license. Whether a full rewrite is needed depends on the license chosen in 1.W — if the new license is compatible with the upstream types' license, a rewrite may be unnecessary. If incompatible, the entire folder must be replaced with freshly authored type declarations. Scope (if rewrite needed):
+  - Delete all existing files in `types/foundry/`
+  - Author new Foundry VTT v14 type declarations from scratch, covering only the API surface this system actually uses
+  - Use `verbatimModuleSyntax`-compliant imports from the start
+  - Ensure `@common/`, `@client/` path aliases resolve correctly
+  - Prioritize types for: `Document`, `DataModel`, `DataField` hierarchy, `ApplicationV2`, `HandlebarsApplicationMixin`, `ChatMessage`, `Actor`, `Item`, `ActiveEffect`, `TokenDocument`, `Canvas`, `Game`, `Hooks`, `Collection`
+  - Secondary: `Roll`, `Dialog`, `ContextMenu`, `DragDrop`, `Settings`, `Compendium`
+  - Stub or `any`-type the rest until needed
+  - Document the authoring approach so future Foundry version bumps have a clear update path
+
+  > **Not a dev blocker.** The existing types work at build time. All other Phase 1 work items proceed independently and the phase will still complete on schedule.
 
 ---
 

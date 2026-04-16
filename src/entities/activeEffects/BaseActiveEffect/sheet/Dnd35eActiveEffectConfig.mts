@@ -1,6 +1,6 @@
 import { VueActiveEffectConfig } from '@vueApps/index.mjs';
 
-import { Dnd35eEffectChangeData } from '../index.mjs';
+import type { Dnd35eEffectChangeData } from '../index.mjs';
 
 
 abstract class Dnd35eActiveEffectConfig extends VueActiveEffectConfig {

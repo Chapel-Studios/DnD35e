@@ -123,10 +123,12 @@
 
 <script setup lang="ts">
   import { stripSpecialCharacters } from '@helpers/stringHelpers.mjs';
-  import { SettingsStore, SettingsStoreSymbol } from '@settings/core/sheet/settingsStore.mjs';
+  import type { SettingsStore } from '@settings/core/sheet/settingsStore.mjs';
+  import { SettingsStoreSymbol } from '@settings/core/sheet/settingsStore.mjs';
   import { computed, inject, reactive, ref, watch } from 'vue';
 
-  import { CoinageDefinition, CoinageVisibility, coinageVisibilityEveryone, coinageVisibilityGmOnly, coinageVisibilityGmSelect } from '../_types.mjs';
+  import type { CoinageDefinition, CoinageVisibility } from '../_types.mjs';
+  import { coinageVisibilityEveryone, coinageVisibilityGmOnly, coinageVisibilityGmSelect } from '../_types.mjs';
   import { USER_COIN_PREFIX } from '../constants.mjs';
   import { isAutoId } from './idFieldUtils.mjs';
 

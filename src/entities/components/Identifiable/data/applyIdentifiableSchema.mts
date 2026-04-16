@@ -1,4 +1,4 @@
-import { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSystemModel.mjs';
+import type { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSystemModel.mjs';
 import {
   requiredBooleanField,
 } from '@helpers/fieldBuilders.mjs';

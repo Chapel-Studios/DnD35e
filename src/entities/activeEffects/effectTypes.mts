@@ -1,4 +1,4 @@
-import { MaterialEffectType } from './material/Material.mjs';
+import type { MaterialEffectType } from './material/Material.mjs';
 
 const EFFECT_TARGET = 'item';
 type EffectTarget = typeof EFFECT_TARGET;

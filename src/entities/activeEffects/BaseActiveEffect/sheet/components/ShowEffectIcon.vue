@@ -13,7 +13,7 @@
   import { SelectFormGroup } from '@vc/Fields/index.mjs';
   import { inject } from 'vue';
 
-  import { ActiveEffectConfigStore } from '../ActiveEffectConfigStore.mjs';
+  import type { ActiveEffectConfigStore } from '../ActiveEffectConfigStore.mjs';
 
   const {
     documentGetters: {

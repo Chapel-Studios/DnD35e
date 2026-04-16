@@ -3,7 +3,7 @@
 //
 // type ItemGrantDeleteAction = 'cascade' | 'detach' | 'restrict';
 
-import { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
+import type { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
 
 
 // interface ItemGrantSource {

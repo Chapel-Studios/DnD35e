@@ -1,4 +1,4 @@
-import { SheetTab } from '../DocumentSheetStore.mjs';
+import type { SheetTab } from '../DocumentSheetStore.mjs';
 import DocumentDetails from './DocumentDetails.vue';
 
 const defaultDetailsTab: SheetTab = {

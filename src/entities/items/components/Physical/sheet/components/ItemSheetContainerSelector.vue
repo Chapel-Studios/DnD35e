@@ -10,20 +10,21 @@
 </template>
 <script setup lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { inject } from 'vue';
+  // WIP stub - all code commented out until template is ready
+  // import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  // import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  // import { inject } from 'vue';
 
-  const {
-    // documentGetters: {
-    //   possibleContainers,
-    //   // currentContainerId,
-    //   hasOwner,
-    // },
-    documentActions: {
-      getDirectFieldUpdater,
-    },
-  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
+  // const {
+  //   documentGetters: {
+  //     possibleContainers,
+  //     // currentContainerId,
+  //     hasOwner,
+  //   },
+  //   documentActions: {
+  //     getDirectFieldUpdater,
+  //   },
+  // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
-  const updater = getDirectFieldUpdater('system.containerId');
+  // const updater = getDirectFieldUpdater('system.containerId');
 </script>

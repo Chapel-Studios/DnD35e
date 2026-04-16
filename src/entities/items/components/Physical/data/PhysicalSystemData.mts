@@ -1,5 +1,5 @@
-import { Size } from '@constants/sizes.mjs';
-import { IdentifiableDocumentSystemData } from '@entities/components/Identifiable/index.mjs';
+import type { Size } from '@constants/sizes.mjs';
+import type { IdentifiableDocumentSystemData } from '@entities/components/Identifiable/index.mjs';
 import type { Dnd35eFieldData } from '@helpers/fields/index.mjs';
 import type { ItemSystemSource } from '@items/baseItem/index.mjs';
 import type { PriceSource } from '@settings/currency/index.mjs';

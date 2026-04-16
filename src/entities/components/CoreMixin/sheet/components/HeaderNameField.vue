@@ -32,7 +32,8 @@
   import { FormulaFormGroup } from '@helpers/formulae/index.mjs';
   import { computed, inject } from 'vue';
 
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '../index.mjs';
+  import type { RenderModeStore } from '../index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '../index.mjs';
   import DocumentName from './DocumentName.vue';
 
   const fieldPath = 'system.nameFormula';

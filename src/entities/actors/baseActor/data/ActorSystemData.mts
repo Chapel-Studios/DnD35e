@@ -1,4 +1,4 @@
-import { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
+import type { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
 
 interface ActorSystemSource extends BaseDnd35eSystemData {
 

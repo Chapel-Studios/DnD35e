@@ -65,8 +65,10 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol, RenderModeStore, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
+  import type { RenderModeStore } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
+  import { RenderModeStoreSymbol } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
   import FamiliarDropdown from '@vc/FamiliarDropdown.vue';
   import FormGroup from '@vc/Fields/FormGroups/FormGroup.vue';
   import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, useSlots, watch } from 'vue';
@@ -292,7 +294,11 @@
 
   function commitValue() {
     if (typeof props.onUpdate === 'function') {
-      props.onUpdate(localValue.value);
+      // Only persist if the value actually changed from the source
+      const current = effectiveFormula.value || '';
+      if (localValue.value !== current) {
+        props.onUpdate(localValue.value);
+      }
     }
   }
 
@@ -416,6 +422,7 @@
   });
 
   onUnmounted(() => {
+    isUserEditing = false;
     dismissFamiliar();
   });
 </script>

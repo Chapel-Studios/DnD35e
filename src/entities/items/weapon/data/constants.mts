@@ -1,4 +1,4 @@
-import { SelectOption } from '@vc/Fields/index.mjs';
+import type { SelectOption } from '@vc/Fields/index.mjs';
 
 const WEAPON_TYPES = new Set([
   'simple',

@@ -24,7 +24,8 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol, TabStore, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { TabStore } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
   import { NumberFormGroup, SelectFormGroup } from '@vc/Fields/index.mjs';
   import { computed, inject } from 'vue';

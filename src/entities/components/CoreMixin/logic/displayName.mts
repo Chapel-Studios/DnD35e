@@ -1,5 +1,5 @@
-import { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
-import { buildDocumentDataMap } from '@helpers/formulae/index.mjs';
+import type { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
+import { buildDocumentDataMap } from '@helpers/formulae/utils.mjs';
 
 const getDisplayName = <TSystemData extends BaseDnd35eSystemData = BaseDnd35eSystemData> (documentName: string, systemData: TSystemData, conversionContext: any): string => {
   const identifiedFormula = systemData.nameFormula?.value;

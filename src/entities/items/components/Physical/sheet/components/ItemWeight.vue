@@ -15,8 +15,9 @@
 </template>
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { SettingsStore, SettingsStoreSymbol } from '@settings/core/sheet/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import type { SettingsStore } from '@settings/core/sheet/index.mjs';
+  import { SettingsStoreSymbol } from '@settings/core/sheet/index.mjs';
   import { NumberFormGroup } from '@vc/Fields/index.mjs';
   import { inject, useSlots } from 'vue';
 

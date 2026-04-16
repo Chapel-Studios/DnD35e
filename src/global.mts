@@ -4,15 +4,16 @@ import type CompendiumDirectory from '@client/applications/sidebar/tabs/compendi
 import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type Config from '@client/config.mjs';
-import { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
+import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
 import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
-import { ItemType } from '@items/itemTypes.mjs';
+import type { ItemSheetStore } from '@items/baseItem/index.mjs';
+import { ItemDnd35e } from '@items/baseItem/index.mjs';
+import type { ItemType } from '@items/itemTypes.mjs';
 
-import { CanvasDnd35e } from './canvas/CanvasDnd35e.mjs';
+import type { CanvasDnd35e } from './canvas/CanvasDnd35e.mjs';
 import { RegionDocumentDnd35e } from './scene/region-document/RegionDocumentDnd35e.mjs';
 import { SceneDnd35e } from './scene/SceneDnd35e.mjs';
-import { TokenDocumentDnd35e } from './scene/token-document/index.mjs';
+import type { TokenDocumentDnd35e } from './scene/token-document/index.mjs';
 
 type GameDnd35e = Game<
   ActorDnd35e<null>,

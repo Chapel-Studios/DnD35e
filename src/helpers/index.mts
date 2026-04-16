@@ -17,7 +17,6 @@ import { createTag } from './stringHelpers.mjs';
 export {
   buildDocumentDataMap,
   createTag,
-  HasSystem,
   LogHelper,
   optionalHtmlField,
   optionalNumberField,
@@ -29,4 +28,8 @@ export {
   requiredStringField,
   requiredTypedStringField,
   resolveFormulaField,
+};
+
+export type {
+  HasSystem,
 };

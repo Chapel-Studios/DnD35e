@@ -35,7 +35,7 @@
   import { DmControl, UniqueId } from '@vc/index.mjs';
   import { inject } from 'vue';
 
-  import { WeaponStore } from '../WeaponStore.mjs';
+  import type { WeaponStore } from '../WeaponStore.mjs';
 
   const {
     documentGetters: { hasEffectsForField },
