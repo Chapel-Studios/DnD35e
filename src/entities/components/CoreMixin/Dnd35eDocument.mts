@@ -46,7 +46,7 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
 
     protected readonly defaultNameRegistration: FormulaRegistration = {
       impactedField: 'name',
-      formulaField: 'system.nameFormula.value.resolvedValue',
+      formulaField: 'system.nameFormula',
       evaluate: (document: EvaluationDocument, _contexts: Record<string, EvaluationDocument>) => {
         return document.system.nameFormula?.value?.resolvedValue || document.name;
       },
