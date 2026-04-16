@@ -17,7 +17,7 @@ import type {
 } from './sheet/index.mjs';
 import {
   DesignedForSize,
-  equippableHeaderStatus,
+  EquippableHeaderStatus,
   EquippableItemSheet,
   EquippableItemWeight,
   ItemIsMelded,
@@ -38,7 +38,7 @@ export type {
 };
 export {
   DesignedForSize,
-  equippableHeaderStatus,
+  EquippableHeaderStatus,
   EquippableItem,
   EquippableItemSheet,
   EquippableItemSystemModel,

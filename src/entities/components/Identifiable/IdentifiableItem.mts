@@ -72,9 +72,9 @@ const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase)
       impactedField: 'name',
       formulaField: 'system.isIdentified',
       evaluate: (document: EvaluationDocument, _contexts: Record<string, EvaluationDocument>) => {
-        const { isIdentified, derivedName, nameFormula } = document.system;
-        if (isIdentified) return derivedName;
-        return nameFormula?.unidentifiedValue?.resolvedValue || derivedName || '';
+        const { isIdentified, nameFormula } = document.system;
+        if (isIdentified) return nameFormula?.value?.resolvedValue || document.name;
+        return nameFormula?.unidentifiedValue?.resolvedValue || nameFormula?.value?.resolvedValue || document.name;
       },
     };
 

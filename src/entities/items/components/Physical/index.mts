@@ -33,6 +33,7 @@ import {
   ItemWeight,
   PhysicalItemEffects,
   physicalItemEffectsTab,
+  PhysicalItemHeaderStatus,
   PhysicalItemSheet,
   usePhysicalItemStore,
 } from './sheet/index.mjs';
@@ -50,6 +51,7 @@ export {
   PhysicalItem,
   PhysicalItemEffects,
   physicalItemEffectsTab,
+  PhysicalItemHeaderStatus,
   PhysicalItemSheet,
   PhysicalItemSystemModel,
   usePhysicalItemStore,

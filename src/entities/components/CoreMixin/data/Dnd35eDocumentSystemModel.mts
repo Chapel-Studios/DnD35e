@@ -30,7 +30,6 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
     const schema = {
       version: requiredStringField('14.0.0'),
       slug: optionalStringField(),
-      derivedName: requiredStringField(),
       nameFormula: new Dnd35eField(FormulaField, {
         expectedType: 'string',
         canVisibilityBeChanged: false,
@@ -63,8 +62,7 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
 
     const identifiedFormula = nameFormulaCompound?.value;
     if (identifiedFormula?.formula) {
-      identifiedFormula.resolvedValue = identifiedFormula.resolve(dataMap, this.derivedName, excluded);
-      this.derivedName = identifiedFormula.resolvedValue;
+      identifiedFormula.resolvedValue = identifiedFormula.resolve(dataMap, (this.parent as any).name, excluded);
     }
 
     const unidentifiedFormula = nameFormulaCompound?.unidentifiedValue;

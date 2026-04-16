@@ -28,6 +28,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
       { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
     ];
 
+    schema.isBaseWeaponType = requiredBooleanField(false);
     schema.isMasterwork = requiredBooleanField(false);
     schema.weaponType = new Dnd35eField(
       StringField, 
@@ -54,6 +55,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
     });
     schema.attackNotes = requiredNullableStringField();
     schema.damageNotes = requiredNullableStringField();
+    schema.noAmmoRequired = requiredBooleanField(false);
 
     return schema;
   }

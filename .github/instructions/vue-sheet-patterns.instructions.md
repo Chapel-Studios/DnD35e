@@ -178,3 +178,54 @@ this.sheetState = {
   editorViewMode: doc.system.isIdentified ? 'identified' : 'unidentified'  // Use doc's actual state
 };
 ```
+
+## Test Coverage & Phase Boundaries
+
+Not all sheet features can be tested in the phase they're implemented. Some require downstream phases to provide supporting systems.
+
+### Phase Boundaries
+
+| Feature | Implemented | Fully Testable | Why |
+|---------|-------------|----------------|-----|
+| Weapon schema + sheet | Phase 1 | Phase 6+ | Needs actors/inventory to test isCarried/isEquipped |
+| Item effects tab | Phase 2 | Phase 2 | AE system self-contained |
+| Actor sheet + attributes | Phase 6 | Phase 6 | Can test attribute derivation without full rules |
+| Skill rolls + bonuses | Phase 9+ | Phase 10+ | Needs action system for full roll mechanics |
+| Spell casting | Phase 17 | Phase 20+ | Needs spellbooks (Phase 20) for full casting workflow |
+
+### Documentation Strategy
+
+When a phase implements untestable features:
+
+1. **Mark in phase spec**: Add "Phase X: Bootstrap Only" vs "Phase X: Full Test" to checklist items
+2. **Document the gap**: Why can't this be tested? Which phase provides the missing system?
+3. **Accept the boundary**: Phase 1 code is still good code; testing is just deferred
+4. **Plan Phase X test**: Add a testing task to the downstream phase that *will* have full context
+
+**Example** (Phase 1):
+```markdown
+### 1.G — Physical item header status badges (Equipped/Carried)
+- ✅ COMPLETE: Badges render when store properties exist
+- ⚠️ PHASE 1 BOOTSTRAP ONLY: isCarried and isEquipped cannot be tested without actors/inventory system
+- 🔄 FULL TESTING: Phase 6 (when actors exist) + Phase 6.X (test badge states with actor inventory)
+```
+
+This tells future developers: "This code works now but we're intentionally deferring full verification."
+
+### Common Bootstrap Scenarios
+
+**Item-only features** (testable in Phase 1):
+- Schema fields and their defaults
+- Identified/unidentified formula switching
+- AE application to field values
+
+**Item-actor bridge features** (deferred to Phase 6+):
+- isCarried state (needs inventory)
+- isEquipped state (needs equipment slots)
+- Bonus stacking (needs actor bonus tracking)
+- Skill modifications (needs actor skill list)
+
+**Game-system features** (deferred to Phase 10+):
+- Roll mechanics (needs action system)
+- Combat resolution (needs combat tracker)
+- Spell casting (needs full spell framework)

@@ -110,6 +110,55 @@ schema.bonusType = new fields.StringField({
 
 Resolution: when multiple AEs apply same field, only highest value in each `bonusType` slot applies.
 
+## Component Placement Strategy
+
+**Principle**: Component homes follow domain boundaries, not generality. This prevents friction during refactoring and makes intent clear.
+
+### Entity-Domain Components
+Sheet components belong in their entity-type folder:
+
+```
+src/entities/items/
+  components/
+    Physical/
+      sheet/components/
+        PhysicalItemHeaderStatus.vue        ← Physical item badges
+        PhysicalItemWeight.vue             ← Physical item weight display
+    Equippable/
+      sheet/components/
+        EquippableHeaderStatus.vue         ← Equippable-specific (equipped/carried state)
+        EquippableItemSlot.vue             ← Slot selection dropdown
+    Weapon/
+      sheet/components/
+        WeaponDamage.vue                   ← Weapon damage form group
+```
+
+**Why**: When Physical and Equippable item sheets need different behavior (e.g. badges show different state), having separate component homes makes changes safer. Updates to one entity type don't accidentally affect unrelated types. Search for "PhysicalItemHeaderStatus" finds exactly what you need, not 5 false positives in generic folders.
+
+### Generic Reusable Components
+Generic components stay in `src/vue/components/` **only when** they are truly cross-domain:
+
+```
+src/vue/components/
+  Fields/
+    FormGroups/
+      FormGroup.vue                     ← Used by all entity types, all sheets
+      NumberFormGroup.vue               ← Generic number input
+      SelectFormGroup.vue               ← Generic select dropdown
+  Layout/
+    TabView.vue                         ← Generic tab container
+```
+
+Test: "Is this used by Physical items AND Weapons AND Actors AND Effects?" If yes, generic folder. If "just items," put it in `src/entities/items/components/`.
+
+### Anti-Pattern: Catch-All Folders
+Don't create folders like `HeaderComponents/`, `StatusBadges/`, `EditControls/`. These catch-alls:
+- Hide domain intent (why is *this* status badge different from that one?)
+- Make refactoring painful ("update all status badges" requires hunting across folders)
+- Violate single-responsibility (folder should have a *reason* to exist)
+
+**Learned**: Phase 1 initially placed HeaderStatus in generic `src/vue/components/HeaderStatus/`, then moved to entity domains when two different types needed two different components. Established domain-first placement avoids rework.
+
 ## Vue Sheet Patterns
 
 See `vue-sheet-patterns.instructions.md` for sheet-specific patterns.

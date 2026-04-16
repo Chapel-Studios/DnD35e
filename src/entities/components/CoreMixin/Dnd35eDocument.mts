@@ -32,23 +32,23 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
     }
 
     protected readonly defaultDerivedNameRegistration: FormulaRegistration = {
-      impactedField: 'system.derivedName',
+      impactedField: 'system.nameFormula.value.resolvedValue',
       formulaField: 'system.nameFormula',
       evaluate: (document: EvaluationDocument, contexts: Record<string, EvaluationDocument>) => {
         const identifiedFormula = document.system.nameFormula?.value;
-        if (!identifiedFormula?.formula) return document.system.derivedName;
+        if (!identifiedFormula?.formula) return document.name;
         const nameFormulaDnd35e = (this as any).system?.schema?.fields?.nameFormula;
         const innerField = nameFormulaDnd35e?.fields?.value as FormulaField | undefined;
         const excluded = innerField?.excludedFields ?? [];
-        return FormulaData.resolveSource(identifiedFormula, { self: document, ...contexts }, document.system.derivedName, excluded);
+        return FormulaData.resolveSource(identifiedFormula, { self: document, ...contexts }, document.name, excluded);
       },
     };
 
     protected readonly defaultNameRegistration: FormulaRegistration = {
       impactedField: 'name',
-      formulaField: 'system.isIdentified',
+      formulaField: 'system.nameFormula.value.resolvedValue',
       evaluate: (document: EvaluationDocument, _contexts: Record<string, EvaluationDocument>) => {
-        return document.system.derivedName;
+        return document.system.nameFormula?.value?.resolvedValue || document.name;
       },
     };
 

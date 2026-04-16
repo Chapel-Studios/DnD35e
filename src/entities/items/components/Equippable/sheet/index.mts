@@ -1,5 +1,5 @@
 import DesignedForSize from './components/DesignedForSize.vue';
-import equippableHeaderStatus from './components/EquippableHeaderStatus.vue';
+import EquippableHeaderStatus from './components/EquippableHeaderStatus.vue';
 import EquippableItemWeight from './components/EquippableItemWeight.vue';
 import ItemIsMelded from './components/ItemIsMelded.vue';
 import ItemIsWeightlessWhenEquipped from './components/ItemIsWeightlessWhenEquipped.vue';
@@ -15,7 +15,7 @@ import { useEquippableItemStore } from './EquippableItemStore.mjs';
 
 export {
   DesignedForSize,
-  equippableHeaderStatus,
+  EquippableHeaderStatus,
   EquippableItemSheet,
   EquippableItemWeight,
   ItemIsMelded,

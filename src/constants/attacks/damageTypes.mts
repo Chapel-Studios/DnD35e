@@ -1,7 +1,15 @@
 const DAMAGE_TYPES = [
-  'D35E.DRPiercing',
-  'D35E.DRBludgeoning',
-  'D35E.DRSlashing',
+  'dnd35e.DAMAGE_TYPES.Piercing',
+  'dnd35e.DAMAGE_TYPES.Bludgeoning',
+  'dnd35e.DAMAGE_TYPES.Slashing',
+  'dnd35e.DAMAGE_TYPES.Fire',
+  'dnd35e.DAMAGE_TYPES.Cold',
+  'dnd35e.DAMAGE_TYPES.Electricity',
+  'dnd35e.DAMAGE_TYPES.Acid',
+  'dnd35e.DAMAGE_TYPES.Sonic',
+  'dnd35e.DAMAGE_TYPES.Force',
+  'dnd35e.DAMAGE_TYPES.Positive',
+  'dnd35e.DAMAGE_TYPES.Negative',
 ];
 type DamageType = (typeof DAMAGE_TYPES)[number];
 
