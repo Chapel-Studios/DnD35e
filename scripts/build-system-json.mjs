@@ -2,7 +2,7 @@
  * Build script: generates system.json from system.json.template.
  *
  * Reads local.config.json (git-ignored) for per-developer settings:
- *   { "foundrySystemDir": "C:/path/to/Foundry/Data/systems/dnd35e" }
+ *   { "foundrySystemDir": "C:/path/to/Foundry/Data/systems" }
  *
  * Substitutes {{VERSION}} from version.yaml.
  * Requires foundrySystemDir — fails if not configured.
