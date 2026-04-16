@@ -19,7 +19,11 @@ if (fs.existsSync(localConfigPath)) {
     );
   }
 }
-const foundrySystemDir = localConfig.foundrySystemDir;
+// Normalize: strip trailing /dnd35e if the developer included it
+let foundrySystemDir = localConfig.foundrySystemDir;
+if (foundrySystemDir && path.basename(foundrySystemDir) === 'dnd35e') {
+  foundrySystemDir = path.dirname(foundrySystemDir);
+}
 const buildOutDir = foundrySystemDir ? path.join(foundrySystemDir, 'dnd35e') : 'dist';
 
 // Copy static files to build output after Vite clears the directory

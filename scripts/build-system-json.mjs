@@ -2,10 +2,14 @@
  * Build script: generates system.json from system.json.template.
  *
  * Reads local.config.json (git-ignored) for per-developer settings:
- *   { "foundrySystemDir": "C:/path/to/Foundry/Data/systems/dnd35e" }
+ *   { "foundrySystemDir": "C:/path/to/Foundry/Data/systems" }
+ *
+ * foundrySystemDir should point to the Foundry Data/systems directory
+ * (not the dnd35e subfolder — the script appends that automatically).
+ * If the path ends with /dnd35e, it is normalized to the parent.
  *
  * Substitutes {{VERSION}} from version.yaml.
- * Requires foundrySystemDir — fails if not configured.
+ * Without local.config.json, runs in CI mode (generates in-repo, skips copy).
  *
  * Usage:
  *   node scripts/build-system-json.mjs
@@ -33,7 +37,11 @@ if (fs.existsSync(localConfigPath)) {
   console.warn('⚠️  local.config.json not found — generating system.json in-repo only (CI mode).');
 }
 
-const foundrySystemDir = localConfig.foundrySystemDir;
+// Normalize: strip trailing /dnd35e if the developer included it
+let foundrySystemDir = localConfig.foundrySystemDir;
+if (foundrySystemDir && path.basename(foundrySystemDir) === 'dnd35e') {
+  foundrySystemDir = path.dirname(foundrySystemDir);
+}
 if (foundrySystemDir && !fs.existsSync(foundrySystemDir)) {
   console.error(`❌ foundrySystemDir does not exist: ${foundrySystemDir}`);
   console.error('   Create the directory or fix local.config.json.');
