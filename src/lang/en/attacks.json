@@ -1,10 +1,18 @@
 {
-  "D35E": {
-    "DRSlashing": "Slashing",
-    "DRPiercing": "Piercing",
-    "DRBludgeoning": "Bludgeoning"
-  },
   "dnd35e": {
+    "DAMAGE_TYPES": {
+      "Piercing": "Piercing",
+      "Bludgeoning": "Bludgeoning",
+      "Slashing": "Slashing",
+      "Fire": "Fire",
+      "Cold": "Cold",
+      "Electricity": "Electricity",
+      "Acid": "Acid",
+      "Sonic": "Sonic",
+      "Force": "Force",
+      "Positive": "Positive",
+      "Negative": "Negative"
+    },
     "ATTACK": {
       "DR": "DR",
       "DamageType": "Damage Type",

@@ -1,4 +1,4 @@
-import { DAMAGE_TYPES } from '@constants/attacks/damageTypes.mjs';
+import { DAMAGE_TYPE_SLASHING,DAMAGE_TYPES } from '@constants/attacks/damageTypes.mjs';
 import {
   optionalStringField,
   requiredBooleanField,
@@ -28,6 +28,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
       { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
     ];
 
+    schema.isBaseWeaponType = requiredBooleanField(false);
     schema.isMasterwork = requiredBooleanField(false);
     schema.weaponType = new Dnd35eField(
       StringField, 
@@ -45,7 +46,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
     schema.weaponBaseType = new Dnd35eField(StringField, { choices: [...WEAPON_BASE_TYPES], initial: '', required: true, blank: true });
     schema.weaponDamage = new SchemaField({
       damageRoll: new Dnd35eField(StringField, { initial: '', required: true, blank: true }, { familiar: { aliases: ['roll', 'dice'] } }),
-      damageType: new Dnd35eField(StringField, { choices: [...DAMAGE_TYPES], initial: 'D35E.DRSlashing', required: true }, { familiar: { aliases: ['type'] } }),
+      damageType: new Dnd35eField(StringField, { choices: [...DAMAGE_TYPES], initial: DAMAGE_TYPE_SLASHING, required: true }, { familiar: { aliases: ['type'] } }),
       critRange: new Dnd35eField(StringField, { required: true, initial: '20' }, { familiar: { aliases: ['range', 'threat'] } }),
       critMultiplier: new Dnd35eField(NumberField, { required: true, nullable: false, initial: 2 }, { familiar: { aliases: ['multiplier', 'mult'] } }),
       rangeIncrement: new Dnd35eField(NumberField, { required: true, nullable: true }),
@@ -54,6 +55,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
     });
     schema.attackNotes = requiredNullableStringField();
     schema.damageNotes = requiredNullableStringField();
+    schema.noAmmoRequired = requiredBooleanField(false);
 
     return schema;
   }

@@ -53,10 +53,6 @@
           "label": "Unique ID",
           "hint": "A unique identifier (slug) for this document, used for cross-referencing."
         },
-        "derivedName": {
-          "label": "Derived Name",
-          "hint": "The computed name of this document, resolved from the name formula if set."
-        },
         "nameFormula": {
           "label": "Name Formula",
           "hint": "Formula used to compute the displayed name of this document."

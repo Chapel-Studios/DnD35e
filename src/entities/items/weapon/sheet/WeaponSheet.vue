@@ -4,16 +4,14 @@
       <WeaponSummary />
     </template>
     <template #header-status>
-      <!-- [1.G] Two header status components needed:
-        - PhysicalItemHeaderStatus.vue: checks isCarried, shows "Carried" badge (reusable for all physical items)
-        - EquippableHeaderStatus.vue: overrides physical, checks isEquipped (priority) + isCarried (reusable for all equippables)
-       -->
+      <EquippableHeaderStatus />
     </template>
   </PhysicalItemSheet>
 </template>
 
 <script lang="ts" setup>
   import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { EquippableHeaderStatus } from '@items/components/Equippable/index.mjs';
   import { PhysicalItemSheet } from '@items/components/Physical/index.mjs';
   import { useWeaponStore, WeaponSummary } from '@items/weapon/index.mjs';
   import { provide } from 'vue';

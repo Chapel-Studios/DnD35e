@@ -9,6 +9,7 @@ import ItemSheetContainerSelector from './components/ItemSheetContainerSelector.
 import ItemSheetIsCarriedCheckbox from './components/ItemSheetIsCarriedCheckbox.vue';
 import ItemSize from './components/ItemSize.vue';
 import ItemWeight from './components/ItemWeight.vue';
+import PhysicalItemHeaderStatus from './components/PhysicalItemHeaderStatus.vue';
 import PhysicalItemSheet from './PhysicalItemSheet.vue';
 import type { 
   PhysicalDocumentStore,
@@ -34,6 +35,7 @@ export {
   ItemWeight,
   PhysicalItemEffects,
   physicalItemEffectsTab,
+  PhysicalItemHeaderStatus,
   PhysicalItemSheet,
   usePhysicalItemStore,
 };

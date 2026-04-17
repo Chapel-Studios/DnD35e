@@ -15,6 +15,7 @@ type WeaponDamage = {
 };
 
 interface WeaponSystemSource {
+  isBaseWeaponType: boolean;
   isMasterwork: boolean;
   weaponType: Dnd35eFieldData<WeaponType>;
   weaponSubtype: Dnd35eFieldData<WeaponSubtype>;
@@ -22,6 +23,7 @@ interface WeaponSystemSource {
   weaponDamage: WeaponDamage;
   attackNotes: string;
   damageNotes: string;
+  noAmmoRequired: boolean;
 }
 
 type WeaponSystemData = WeaponSystemSource

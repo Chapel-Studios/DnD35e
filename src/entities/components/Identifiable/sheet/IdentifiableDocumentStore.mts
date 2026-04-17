@@ -153,12 +153,6 @@ const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(
     documentGetters: {
       isIdentifiable,
       isIdentified,
-      // Display names are derived/computed by the system, not direct overrides
-      // identifiedDisplayName: computed(() => (document.value.system as unknown as Record<string, unknown>).derivedName as string || ''),
-      // unidentifiedDisplayName: computed(() => {
-      //   const nf = (document.value.system as unknown as Record<string, unknown>).nameFormula as Record<string, unknown> | null;
-      //   return (nf?.unidentifiedResolvedValue as string) || '';
-      // }),
     },
     _storeUtils: {},
     documentActions: editorViewActions,

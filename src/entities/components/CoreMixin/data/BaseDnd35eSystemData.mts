@@ -8,7 +8,6 @@ type ItemDescription = {
 type BaseDnd35eSystemSource = {
     version: string;
     slug?: string;
-    derivedName: string;
     nameFormula: Dnd35eFieldData<FormulaData>;
     description: ItemDescription;
 };

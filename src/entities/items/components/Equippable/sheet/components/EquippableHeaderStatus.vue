@@ -1,13 +1,49 @@
 <template>
-  <div>
-    <span class="item-status">{{equippedStatusLabel}}</span>
+  <div 
+    v-if="isEquippedOrCarried"
+    class="header-status-badge"
+    :class="{ 'is-e-or-c': isEquippedOrCarried }"
+  >
+    <i :class="equippedIcon" />
+    {{ statusLabel }}
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { EquippableItemStore } from '@items/components/Equippable/index.mjs';
+  import { computed, inject } from 'vue';
 
-  const props = defineProps<{
-    equippedStatusLabel: string;
-  }>();
-  const equippedStatusLabel = game.i18n.localize(props.equippedStatusLabel);
+  const store = inject(DocumentSheetStoreSymbol) as EquippableItemStore;
+
+  const { isEquipped, isCarried } = store.documentGetters;
+  const isEquippedOrCarried = computed(() => isEquipped.value || isCarried.value);
+  const equippedIcon = computed(() => isEquipped.value ? 'fas fa-shield-alt' : 'fas fa-bag-check');
+  const statusLabel = computed(() => isEquipped.value ? 'Equipped' : 'Carried');
 </script>
+
+<style scoped lang="scss">
+  .header-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+    background: var(--color-shadow);
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.25rem;
+
+    i {
+      opacity: 0.8;
+    }
+
+    &.is-e-or-c {
+      background: rgba(102, 204, 0, 0.2);
+      color: #66cc00;
+
+      i {
+        opacity: 1;
+      }
+    }
+  }
+</style>
