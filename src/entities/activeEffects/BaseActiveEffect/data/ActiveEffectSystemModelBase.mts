@@ -4,7 +4,7 @@ import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
 import { ensureNameFormula } from '@helpers/formulae/index.mjs';
 import type { TargetContexts } from '@helpers/formulae/registry.mjs';
 
-import { ACTIVE_EFFECT_TARGETS, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TARGET_FIELDS, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE } from './constants.mjs';
+import { ACTIVE_EFFECT_TARGETS, CORE_EFFECT_CHANGE_PHASE, EFFECT_CHANGE_PHASES, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TARGET_FIELDS, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE } from './constants.mjs';
 
 const {
   ArrayField,
@@ -39,8 +39,8 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
           priority: new NumberField({ required: true, initial: 0 }),
           phase: new StringField({
             required: true,
-            choices: ['initial', 'final'],
-            initial: 'initial',
+            choices: EFFECT_CHANGE_PHASES,
+            initial: CORE_EFFECT_CHANGE_PHASE,
           }),
           target: new StringField({
             required: true,
@@ -53,6 +53,8 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
             initial: EFFECT_CHANGE_TARGET_FIELD.VALUE,
           }),
           isSystem: requiredBooleanField(false),
+          bonusType: new StringField({ required: false, nullable: true, initial: null }),
+          condition: new StringField({ required: false, nullable: true, initial: null }),
         }),
         { initial: [] }
       ),
