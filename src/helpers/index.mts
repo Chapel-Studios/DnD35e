@@ -12,7 +12,7 @@ import {
 import { buildDocumentDataMap, resolveFormulaField } from './formulae/index.mjs';
 import type { HasSystem } from './HasSystem.mjs';
 import { LogHelper } from './logHelper.mjs';
-import { resolveActiveEffectChanges } from './stacking.mjs';
+import { parseNumericChangeValue, resolveActiveEffectChanges, STACK_RESULT_APPLIED, STACK_RESULT_IGNORED } from './stacking.mjs';
 import { createTag } from './stringHelpers.mjs';
 
 export {
@@ -22,6 +22,7 @@ export {
   optionalHtmlField,
   optionalNumberField,
   optionalStringField,
+  parseNumericChangeValue,
   requiredBooleanField,
   requiredNullableNumberField,
   requiredNullableStringField,
@@ -30,6 +31,8 @@ export {
   requiredTypedStringField,
   resolveActiveEffectChanges,
   resolveFormulaField,
+  STACK_RESULT_APPLIED,
+  STACK_RESULT_IGNORED,
 };
 
 export type {

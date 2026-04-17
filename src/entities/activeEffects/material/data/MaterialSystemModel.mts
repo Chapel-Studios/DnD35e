@@ -1,7 +1,6 @@
 import type { EffectPhases } from '@common/documents/active-effect.mjs';
-import type { BonusType } from '@constants/bonusTypes.mjs';
 import { IdentifiableSchemaMixin } from '@ec/Identifiable/index.mjs';
-import type { Dnd35eEffectChangeData, EffectChangeTarget, EffectChangeTargetField, EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
+import type { Dnd35eEffectChangeData, EffectChangeTarget, EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
 import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
@@ -57,7 +56,6 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     const changes: Dnd35eEffectChangeData[] = [
       ...this.changes.filter(change => !change.isSystem),
     ];
-    const bonusType = MATERIAL_SUBTYPE_BONUS_MAP[this.materialSubtype];
 
     // Identified value changes
     if (!this.price.value.isEmpty) {
@@ -111,6 +109,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
       targetField: EFFECT_CHANGE_TARGET_FIELD.VALUE,
       effect: null,
       isSystem: true,
+      bonusType: MATERIAL_SUBTYPE_BONUS_MAP[this.materialSubtype],
     };
   }
 

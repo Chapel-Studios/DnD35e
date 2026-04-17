@@ -1,3 +1,32 @@
+import type { EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
+
+const STACK_RESULT_APPLIED = 'applied' as const;
+const STACK_RESULT_IGNORED = 'ignored' as const;
+
+type StackResult = typeof STACK_RESULT_APPLIED | typeof STACK_RESULT_IGNORED;
+
+interface Override {
+  fieldPath: string;
+  value: unknown;
+  effectName: string;
+  type: EffectChangeType;
+  bonusType?: BonusType;
+  stackResult?: StackResult;
+  stackReason?: string;
+}
+
+/**
+ * Parse a change value into a numeric value for stacking resolution.
+ * Returns NaN for values that cannot be meaningfully stacked (formulas, objects, etc.).
+ */
+function parseNumericChangeValue(value: unknown): number {
+  if (typeof value === 'number') return value;
+  if (typeof value !== 'string') return NaN;
+  const trimmed = value.trim();
+  if (trimmed === '') return NaN;
+  return Number(trimmed);
+}
+
 /**
  * Bonus type stacking resolution engine.
  *
@@ -115,7 +144,7 @@ interface StackingChange {
  * // result.winners = [{ value: 10, source: 'Steel', reason: 'highest' }]
  * // result.history = [applied: true, applied: false (rejected: 'material type, lower value')]
  */
-export function resolveActiveEffectChanges(
+function resolveActiveEffectChanges(
   changes: StackingChange[],
   excludeEffectIds?: Set<string>
 ): ResolvedChanges {
@@ -266,4 +295,18 @@ export function resolveActiveEffectChanges(
   return { winners, history };
 }
 
-export type { ChangeApplication, ChangeHistory, ResolvedChanges, StackingChange };
+export {
+  parseNumericChangeValue,
+  resolveActiveEffectChanges,
+  STACK_RESULT_APPLIED,
+  STACK_RESULT_IGNORED,
+};
+
+export type {
+  ChangeApplication,
+  ChangeHistory,
+  Override,
+  ResolvedChanges,
+  StackingChange,
+  StackResult,
+};

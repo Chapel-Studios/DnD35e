@@ -3,23 +3,18 @@ import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import { getDisplayName } from '@ec/CoreMixin/logic/index.mjs';
-import type { EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
+import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE } from '@effects/BaseActiveEffect/index.mjs';
 import type { DnD35eActiveEffect } from '@effects/index.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
+import type { ChangeHistory, Override, StackingChange } from '@helpers/stacking.mjs';
+import { parseNumericChangeValue, resolveActiveEffectChanges, STACK_RESULT_APPLIED, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
 import type { ItemType } from '@items/index.mjs';
 import { ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
 
 import type { ItemSystemData, ItemSystemSource } from './index.mjs';
 
 type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
-
-type Override = {
-  fieldPath: string;
-  value: unknown;
-  effectName: string;
-  type: EffectChangeType;
-};
 
 class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<TParent> {
   constructor(source: PreCreate<ItemSourceDnd35e<TItemType>>, context?: DocumentConstructionContext<TParent>) {
@@ -132,14 +127,61 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     // TODO(Phase 7): remove in v16, this is for backwards compatibility with older active effects
     ActiveEffect._shimChanges(changes);
 
-    // Apply all changes
-    // const overrides: Record<string, Override[]> = {};
+    // Build StackingChange[] for the stacking engine
+    const stackingChanges: StackingChange[] = changes.map((change, index) => {
+      const dnd35eChange = change as unknown as Dnd35eEffectChangeData;
+      const numericValue = parseNumericChangeValue(change.value);
+      return {
+        index,
+        field: change.key,
+        bonusType: dnd35eChange.bonusType,
+        value: numericValue,
+        source: change.effect.displayName,
+        effectId: change.effect.id ?? undefined,
+        isPenalty: !isNaN(numericValue) && numericValue < 0,
+      };
+    });
+
+    // Resolve stacking — only numeric, typed changes participate
+    const numericStackable = stackingChanges.filter(sc => !isNaN(sc.value) && sc.bonusType !== undefined);
+    const { winners, history } = resolveActiveEffectChanges(numericStackable);
+    const winnerIndices = new Set(winners.map((w: { changeIndex: number }) => w.changeIndex));
+    const historyByIndex = new Map<number, ChangeHistory>();
+    for (const h of history) historyByIndex.set(h.changeIndex, h);
+    const winnerByIndex = new Map(winners.map((w: { changeIndex: number; reason: string }) => [w.changeIndex, w]));
+
+    // Apply winning changes + all non-stackable changes (untyped or non-numeric)
     const replacementData = this.getRollData() as Record<string, unknown>;
-    for (const change of changes) {
+    for (let i = 0; i < changes.length; i++) {
+      const change = changes[i];
+      const sc = stackingChanges[i];
+      const isStackable = !isNaN(sc.value) && sc.bonusType !== undefined;
+      const isWinner = winnerIndices.has(i);
+
+      if (isStackable && !isWinner) {
+        // Stacking loser — record in overrides but don't apply
+        const historyEntry = historyByIndex.get(i);
+        this.overrides[change.key] = [
+          ...(this.overrides[change.key] ?? []),
+          {
+            fieldPath: change.key,
+            value: change.value,
+            effectName: change.effect.name,
+            type: change.type,
+            bonusType: sc.bonusType,
+            stackResult: STACK_RESULT_IGNORED,
+            stackReason: historyEntry?.rejection ?? 'stacking resolution',
+          },
+        ];
+        continue;
+      }
+
+      // Apply the change (winner or non-stackable)
       const EffectClass = change.effect.constructor as typeof ActiveEffect;
       const result = (ActiveEffect.CHANGE_TYPES[change.type].handler?.(this, change)
         ?? EffectClass.applyChange(this, change, { replacementData }) ?? {}) as Record<string, unknown>;
       for (const fieldPath of Object.keys(result)) {
+        const winner = isStackable ? winnerByIndex.get(i) : undefined;
         this.overrides[fieldPath] = [
           ...(this.overrides[fieldPath] ?? []),
           {
@@ -147,12 +189,13 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
             value: change.value,
             effectName: change.effect.name,
             type: change.type,
-          }];
+            bonusType: sc.bonusType,
+            stackResult: isStackable ? STACK_RESULT_APPLIED : undefined,
+            stackReason: (winner as { reason: string } | undefined)?.reason,
+          },
+        ];
       }
     }
-
-    // Expand the set of final overrides
-    //foundry.utils.mergeObject(this.overrides, foundry.utils.expandObject(overrides));
   }
   
   get localizedType (): string {
