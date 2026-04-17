@@ -13,7 +13,7 @@ import BaseActiveEffect, {
   EffectDurationData,
 } from '@common/documents/active-effect.mjs';
 import { Actor, BaseActor, BaseItem, BaseUser, Item } from './_module.mjs';
-import { ClientDocument } from './abstract/client-document.mjs';
+import { ClientDocument, ClientDocumentStatic } from './abstract/client-document.mjs';
 
 /**
  * A function to render a stringified HTMLLIElement in the changes tab of ActiveEffectConfig
@@ -44,9 +44,11 @@ interface ActiveEffectChangeTypeConfig {
   render?: ActiveEffectChangeRenderer | null;
 }
 
-declare const ClientBaseActiveEffect: new <TParent extends BaseActor | BaseItem | null>(
-    ...args: any
-) => BaseActiveEffect<TParent> & ClientDocument<TParent>;
+interface ClientBaseActiveEffectStatic extends Omit<typeof BaseActiveEffect, 'new'>, ClientDocumentStatic {}
+
+declare const ClientBaseActiveEffect: {
+    new <TParent extends BaseActor | BaseItem | null>(...args: any): BaseActiveEffect<TParent> & ClientDocument<TParent>;
+} & ClientBaseActiveEffectStatic;
 
 /**
  * The ActiveEffect embedded document within an Actor or Item document which extends the BaseRollTable abstraction.
