@@ -17,8 +17,11 @@ Custom agents and skills for D&D 3.5e system planning, architecture, and knowled
 **Invoke**: 
 - Basic planning: `@planning Plan Phase 5 Feats`
 - Decompose with analysis: `@planning Break down feat content authoring into parallel tracks`
+- Phase execution: `@planning Review Phase 2 spec and decompose into atomic tasks`
 
 **Output**: Task breakdown with parallelization diagram, dependency map, and skill routing recommendations
+
+**Real-world example** (Phase 2): Planning agent created 12-track decomposition with 3 concurrent streams, skill routing (lead dev 8 tracks, jr dev 4), and critical path identification in one invocation. Output: `phase-02-task-decomposition.md`.
 
 **See also**: 
 - `.github/agents/planning-researcher.agent.md` for codebase pattern analysis (optional deep dive)

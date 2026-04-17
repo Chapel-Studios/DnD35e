@@ -1,5 +1,10 @@
 {
   "dnd35e": {
+    "BONUS_TYPES": {
+      "Material": "Material",
+      "Broken": "Broken",
+      "Masterwork": "Masterwork"
+    },
     "EFFECT": {
       "Effects": "Effects",
       "Create": "Create Effect",

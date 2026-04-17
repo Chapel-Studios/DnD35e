@@ -6,6 +6,8 @@
 > **Dependencies**: Phase 1  
 > **Goal**: A Material active effect that lives on a weapon and modifies the weapon's data. Establishes the "Material pattern" (items/effects generate AE changes dynamically in `prepareDerivedData()`), the **bonus type stacking engine** (per-field highest-wins resolution), and the `materialSubtype` field that distinguishes standard materials from broken and masterwork effects. Broken and masterwork AE **content and sync logic** are deferred to Phase 5 (Compendium Foundation) because they pull defaults from compendium packs.
 
+**For execution planning**, see [Phase 2 Task Decomposition](phase-02-task-decomposition.md) — documents the 12-track breakdown with parallelization analysis and skill routing.
+
 ---
 
 ## Completion Checklist
