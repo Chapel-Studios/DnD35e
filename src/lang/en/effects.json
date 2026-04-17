@@ -54,7 +54,16 @@
         },
         "bonusHp": {
           "label": "Bonus HP",
-          "hint": "The bonus HP provided by this material."
+          "hint": "The bonus max HP provided by this material."
+        },
+        "materialSubtype": {
+          "label": "Subtype",
+          "hint": "What type of material is this?",
+          "choices": {
+            "standard": "Standard",
+            "broken": "Broken",
+            "masterwork": "Masterwork"
+          }
         }
       }
     }
