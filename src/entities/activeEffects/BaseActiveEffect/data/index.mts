@@ -7,11 +7,11 @@ import { ActiveEffectSystemModelBase } from './ActiveEffectSystemModelBase.mjs';
 import type {
   ActiveEffectTarget,
   ActiveEffectTargetLocalizationValues,
+  Dnd35eChangeType,
   EffectChangePhase,
   EffectChangeTarget,
   EffectChangeTargetField,
   EffectChangeType,
-  SystemChangeType,
 } from './constants.mjs';
 import {
   ACTIVE_EFFECT_TARGETS,
@@ -47,10 +47,10 @@ export type {
   ActiveEffectTarget,
   ActiveEffectTargetLocalizationValues,
   Dnd35eActiveEffectSystemSource,
+  Dnd35eChangeType,
   Dnd35eEffectChangeData,
   EffectChangePhase,
   EffectChangeTarget,
   EffectChangeTargetField,
   EffectChangeType,
-  SystemChangeType,
 };

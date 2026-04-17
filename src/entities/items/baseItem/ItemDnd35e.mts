@@ -6,6 +6,7 @@ import { getDisplayName } from '@ec/CoreMixin/logic/index.mjs';
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
 import type { DnD35eActiveEffect } from '@effects/index.mjs';
+import { secretEffectType } from '@effects/secret/index.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ChangeHistory, Override, StackingChange } from '@helpers/stacking.mjs';
 import { parseNumericChangeValue, resolveActiveEffectChanges, STACK_RESULT_APPLIED, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
@@ -29,10 +30,14 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 
   _completedActiveEffectPhases: Set<string>;
 
+  /** Runtime masks dictionary built from active Secret AE MASK changes. Keyed by field path. */
+  _masks: Record<string, unknown> = {};
+
   override prepareBaseData (): void {
     super.prepareBaseData();
     this._completedActiveEffectPhases = new Set();
     this.overrides = {};
+    this._masks = {};
   }
 
   /**
@@ -49,8 +54,31 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
    */
   override prepareDerivedData (): void {
     super.prepareDerivedData();
+    this._buildMasks();
     this._prepareDerivedItemData();
     this.applyActiveEffects(FINAL_EFFECT_CHANGE_PHASE);
+  }
+
+  /**
+   * Build the _masks dictionary from active Secret AE MASK changes.
+   * Highest-priority Secret wins per field path.
+   */
+  private _buildMasks (): void {
+    this._masks = {};
+    const secrets = [...this.effects]
+      .filter(e => e.type === secretEffectType && e.active)
+      .sort((a, b) => {
+        const aPriority = a.system.changes[0]?.priority ?? 0;
+        const bPriority = b.system.changes[0]?.priority ?? 0;
+        return bPriority - aPriority;
+      });
+    for (const secret of secrets) {
+      for (const change of secret.system.changes) {
+        if (change.type !== SYSTEM_CHANGE_TYPE.MASK) continue;
+        if (!change.key || change.key in this._masks) continue;
+        this._masks[change.key] = change.value;
+      }
+    }
   }
 
   /** Override this in subclasses for derived data calculations that should run before final active effects. */
@@ -112,7 +140,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
         const changeTarget = change.target ?? EFFECT_CHANGE_TARGET.ACTOR;
         if ( !change.key || (change.phase !== phase) || (changeTarget !== EFFECT_CHANGE_TARGET.ITEM) ) continue;
         // MASK changes are not applied via stacking — they define masked values read at prep time
-        if ( (change.type as string) === SYSTEM_CHANGE_TYPE.MASK ) continue;
+        if (change.type === SYSTEM_CHANGE_TYPE.MASK) continue;
         const copy = foundry.utils.deepClone(change) as unknown as AppliedItemEffectChange;
         copy.effect = effect;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;

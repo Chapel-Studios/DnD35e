@@ -277,6 +277,15 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       // In edit mode, always get from source to avoid Active Effect overrides
       getFromSource = true;
     }
+
+    // In unidentified view, check the document's _masks dictionary first
+    if (!isIdentifiedViewMode.value) {
+      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+      if (masks && fieldPath in masks) {
+        return masks[fieldPath] as T;
+      }
+    }
+
     const usableFieldPath = getFromSource ? `_source.${fieldPath}` : `${fieldPath}`;
     const raw = foundry.utils.getProperty(document.value, usableFieldPath);
     if (isDnd35eFieldShape(raw)) {
