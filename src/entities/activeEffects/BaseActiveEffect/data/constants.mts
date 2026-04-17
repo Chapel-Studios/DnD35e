@@ -55,6 +55,17 @@ const EFFECT_CHANGE_TYPE = {
   OVERRIDE: 'override',
 } as const;
 
+/**
+ * System-registered change types beyond Foundry's built-in set.
+ * These are registered in CONFIG.ActiveEffect.changeTypes at init.
+ */
+const SYSTEM_CHANGE_TYPE = {
+  /** FormulaFamiliar change type — provides autocomplete context, not value changes. */
+  FAMILIAR: 'familiar',
+  /** MASK change type — defines masked (fake) values for Secret AEs. Not applied via stacking. */
+  MASK: 'mask',
+} as const;
+
 const INITIAL_EFFECT_CHANGE_PHASE = 'initial';
 const FINAL_EFFECT_CHANGE_PHASE = 'final';
 const CORE_EFFECT_CHANGE_PHASE = 'core';
@@ -66,6 +77,7 @@ const EFFECT_CHANGE_PHASES = [
 ] as const;
 
 type EffectChangeType = typeof EFFECT_CHANGE_TYPE[keyof typeof EFFECT_CHANGE_TYPE];
+type SystemChangeType = typeof SYSTEM_CHANGE_TYPE[keyof typeof SYSTEM_CHANGE_TYPE];
 type EffectChangePhase = typeof EFFECT_CHANGE_PHASES[number];
 
 export {
@@ -79,6 +91,7 @@ export {
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
   INITIAL_EFFECT_CHANGE_PHASE,
+  SYSTEM_CHANGE_TYPE,
 };
 
 export type {
@@ -88,4 +101,5 @@ export type {
   EffectChangeTarget,
   EffectChangeTargetField,
   EffectChangeType,
+  SystemChangeType,
 };

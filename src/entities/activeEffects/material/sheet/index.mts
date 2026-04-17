@@ -11,6 +11,8 @@ import MaterialSheetVue from './MaterialSheet.vue';
 import type { MaterialStore } from './MaterialStore.mjs';
 import { useMaterialStore } from './MaterialStore.mjs';
 import { 
+  MaterialChanges,
+  materialChangesTab,
   MaterialDetails,
   materialDetailsTab,
 } from './tabs/index.mjs';
@@ -18,6 +20,8 @@ import {
 export {
   DamageReductionTypes,
   MagicEquivalency,
+  MaterialChanges,
+  materialChangesTab,
   MaterialDetails,
   materialDetailsTab,
   MaterialSheet,

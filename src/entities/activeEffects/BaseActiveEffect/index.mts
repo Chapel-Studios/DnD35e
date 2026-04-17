@@ -20,6 +20,7 @@ import {
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
   INITIAL_EFFECT_CHANGE_PHASE,
+  SYSTEM_CHANGE_TYPE,
 } from './data/index.mjs';
 import type {
   DnD35eActiveEffectFlags,
@@ -84,5 +85,6 @@ export {
   FINAL_EFFECT_CHANGE_PHASE,
   getDefaultActiveEffectTabs,
   INITIAL_EFFECT_CHANGE_PHASE,
+  SYSTEM_CHANGE_TYPE,
   useActiveEffectConfigStore,
 };

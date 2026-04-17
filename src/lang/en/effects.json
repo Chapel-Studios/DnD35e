@@ -17,6 +17,15 @@
       "Passive": "Passive Effects",
       "Inactive": "Inactive Effects",
       "None": "No effects on this item.",
+      "StackResult": {
+        "Applied": "Applied",
+        "Ignored": "Ignored"
+      },
+      "EnforceSingleMaterialError": "This item already has a standard Material effect. Only one is allowed when Enforce Single Material is enabled.",
+      "BonusType": {
+        "Label": "Bonus Type",
+        "None": "None"
+      },
       "IncompleteChangesWarning": "This effect has incomplete changes that will not be applied.",
       "ChangeTarget": {
         "Target": "Target",
@@ -27,6 +36,13 @@
         "TargetField": "Target Field",
         "Value": "Identified",
         "Unidentified": "Unidentified"
+      },
+      "ChangeMode": {
+        "Familiar": "Formula Familiar",
+        "Mask": "Mask"
+      },
+      "Secret": {
+        "Type": "Secret"
       },
       "FIELDS": {
         "changes": {

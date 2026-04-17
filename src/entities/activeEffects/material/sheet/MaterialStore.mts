@@ -7,7 +7,7 @@ import {
   useActiveEffectConfigStore,
 } from '@effects/BaseActiveEffect/index.mjs';
 import type { MaterialType } from '@effects/material/index.mjs';
-import { Material, materialDetailsTab } from '@effects/material/index.mjs';
+import { Material, materialChangesTab, materialDetailsTab } from '@effects/material/index.mjs';
 import { PriceData } from '@settings/currency/index.mjs';
 import type { DamageReductionTypesConfig } from '@settings/gameRules/_types.mjs';
 import { GAME_RULES_KEYS } from '@settings/gameRules/constants.mjs';
@@ -27,7 +27,8 @@ const useMaterialStore = (context: VueApplicationContext<Material>): MaterialSto
   replaceTabs([
     materialDetailsTab,
     ...getDefaultActiveEffectTabs()
-      .filter(tab => tab.id !== 'details'),
+      .filter(tab => tab.id !== 'details' && tab.id !== 'changes'),
+    materialChangesTab,
   ]);
 
   const {

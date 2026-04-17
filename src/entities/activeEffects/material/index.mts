@@ -22,6 +22,8 @@ import type {
 import {
   DamageReductionTypes,
   MagicEquivalency,
+  MaterialChanges,
+  materialChangesTab,
   MaterialDetails,
   materialDetailsTab,
   MaterialSheet,
@@ -33,6 +35,8 @@ export {
   DamageReductionTypes,
   MagicEquivalency,
   Material,
+  MaterialChanges,
+  materialChangesTab,
   MaterialDetails,
   materialDetailsTab,
   materialEffectType,

@@ -6,6 +6,8 @@ import { ActiveEffectProxyDnd35e } from '@effects/BaseActiveEffect/DnD35eActiveE
 import { GENERAL_EFFECT_TYPE, GeneralSystemModel } from '@effects/general/index.mjs';
 import { materialEffectType } from '@effects/material/index.mjs';
 import { MaterialSheet, MaterialSystemModel } from '@effects/material/index.mjs';
+import { validateSingleMaterial } from '@effects/material/Material.mjs';
+import { secretEffectType, SecretSystemModel } from '@effects/secret/index.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
 
 const registerEffectSheets = () => {
@@ -41,23 +43,41 @@ export const registerEffects = () => {
     // Default new AEs to 'general' type instead of 'base'
     CONFIG.ActiveEffect.defaultType = GENERAL_EFFECT_TYPE;
 
+    // Register FormulaFamiliar change type (handler deferred to Phase 7)
+    const changeTypes = ((CONFIG.ActiveEffect as Record<string, unknown>).changeTypes ??= {}) as Record<string, unknown>;
+    changeTypes.familiar = {
+      label: 'dnd35e.EFFECT.ChangeMode.Familiar',
+      defaultPriority: 50,
+      handler: null,
+    };
+    // MASK change type — Secret AEs use this to define masked values. Not applied via applyChange().
+    changeTypes.mask = {
+      label: 'dnd35e.EFFECT.ChangeMode.Mask',
+      defaultPriority: 100,
+      handler: null,
+    };
+
     // Register system AE data models
     Object.assign(CONFIG.ActiveEffect.dataModels, {
       [GENERAL_EFFECT_TYPE]: GeneralSystemModel,
       [materialEffectType]: MaterialSystemModel,
+      [secretEffectType]: SecretSystemModel,
     });
 
     // Register familiar schemas for formula resolution
     registerFamiliarSchema('ActiveEffect', GENERAL_EFFECT_TYPE, (context?) => gatherAspectsFromSchema(GeneralSystemModel, context));
     registerFamiliarSchema('ActiveEffect', materialEffectType, (context?) => gatherAspectsFromSchema(MaterialSystemModel, context));
+    registerFamiliarSchema('ActiveEffect', secretEffectType, (context?) => gatherAspectsFromSchema(SecretSystemModel, context));
   });
 
   foundry.helpers.Hooks.once('setup', () => {
     registerEffectSheets();
   });
 
-  Hooks.on('preCreateActiveEffect', (document, _data, _options, _userId) => {
+  Hooks.on('preCreateActiveEffect', (document, _data, _options, _userId): false | void => {
     ensureNameFormulaOnCreate(document as NameFormulaDocument);
+
+    if (validateSingleMaterial(document) === false) return false;
   });
 };
 

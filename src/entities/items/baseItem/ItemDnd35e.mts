@@ -4,7 +4,7 @@ import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import { getDisplayName } from '@ec/CoreMixin/logic/index.mjs';
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE } from '@effects/BaseActiveEffect/index.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
 import type { DnD35eActiveEffect } from '@effects/index.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ChangeHistory, Override, StackingChange } from '@helpers/stacking.mjs';
@@ -111,6 +111,8 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
         // Only apply item-targeted changes (default to actor for compatibility with base ActiveEffect change data structure)
         const changeTarget = change.target ?? EFFECT_CHANGE_TARGET.ACTOR;
         if ( !change.key || (change.phase !== phase) || (changeTarget !== EFFECT_CHANGE_TARGET.ITEM) ) continue;
+        // MASK changes are not applied via stacking — they define masked values read at prep time
+        if ( (change.type as string) === SYSTEM_CHANGE_TYPE.MASK ) continue;
         const copy = foundry.utils.deepClone(change) as unknown as AppliedItemEffectChange;
         copy.effect = effect;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;

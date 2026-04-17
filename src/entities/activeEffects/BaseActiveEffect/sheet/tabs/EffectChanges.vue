@@ -41,6 +41,19 @@
             :index="index"
           />
           <select
+            v-if="showBonusType"
+            :name="`system.changes.${index}.bonusType`"
+            :value="change.bonusType ?? ''"
+            :disabled="!isEditViewMode || change.isSystem"
+            class="bonus-type-select"
+            :title="bonusTypeLabel"
+          >
+            <option value="">{{ noneLabel }}</option>
+            <option v-for="bt in bonusTypeOptions" :key="bt.value" :value="bt.value">
+              {{ bt.label }}
+            </option>
+          </select>
+          <select
             :name="`system.changes.${index}.target`"
             :value="change.target ?? 'item'"
             :disabled="!isEditViewMode || change.isSystem"
@@ -69,6 +82,7 @@
 </template>
 
 <script setup lang="ts">
+  import { BONUS_TYPES } from '@constants/bonusTypes.mjs';
   import type { RenderModeStore, TabStore } from '@ec/CoreMixin/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
@@ -76,6 +90,12 @@
   import { UNIDENTIFIED } from '@helpers/formulae/types.mjs';
   import AspectPicker from '@vc/Fields/FormGroups/AspectPicker.vue';
   import { computed, inject } from 'vue';
+
+  const props = withDefaults(defineProps<{
+    showBonusType?: boolean;
+  }>(), {
+    showBonusType: true,
+  });
 
   const { isEditViewMode, identifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;
@@ -97,6 +117,8 @@
   const addLabel = game.i18n.localize('EFFECT.AddChange');
   const keyPlaceholder = game.i18n.localize('EFFECT.ChangeKey');
   const targetLabel = game.i18n.localize('dnd35e.EFFECT.ChangeTarget.Target');
+  const bonusTypeLabel = game.i18n.localize('dnd35e.EFFECT.BonusType.Label');
+  const noneLabel = game.i18n.localize('dnd35e.EFFECT.BonusType.None');
 
   const changeTypes = computed(() => {
     const types: Record<string, string> = {};
@@ -113,6 +135,13 @@
     }
     return targets;
   });
+
+  const bonusTypeOptions = computed(() =>
+    BONUS_TYPES.map((bt) => ({
+      value: bt,
+      label: game.i18n.localize(bt),
+    }))
+  );
 
   const getDefaultPriority = (type: string): string => {
     const config = ActiveEffect.CHANGE_TYPES[type] as { defaultPriority?: number } | undefined;
@@ -184,6 +213,10 @@
     align-items: center;
   }
 
+  .change-row:has(.bonus-type-select) .form-fields {
+    grid-template-columns: 1fr max-content max-content max-content max-content auto 100px;
+  }
+
   .change-row input[type="text"] {
     flex: 1;
   }
@@ -194,6 +227,10 @@
 
   .target-select {
     width: 80px;
+  }
+
+  .bonus-type-select {
+    width: 100px;
   }
 
   .priority-input {

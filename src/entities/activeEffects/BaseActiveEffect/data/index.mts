@@ -11,6 +11,7 @@ import type {
   EffectChangeTarget,
   EffectChangeTargetField,
   EffectChangeType,
+  SystemChangeType,
 } from './constants.mjs';
 import {
   ACTIVE_EFFECT_TARGETS,
@@ -23,6 +24,7 @@ import {
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
   INITIAL_EFFECT_CHANGE_PHASE,
+  SYSTEM_CHANGE_TYPE,
 } from './constants.mjs';
 
 export {
@@ -37,6 +39,7 @@ export {
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
   INITIAL_EFFECT_CHANGE_PHASE,
+  SYSTEM_CHANGE_TYPE,
 };
 
 export type {
@@ -49,4 +52,5 @@ export type {
   EffectChangeTarget,
   EffectChangeTargetField,
   EffectChangeType,
+  SystemChangeType,
 };
