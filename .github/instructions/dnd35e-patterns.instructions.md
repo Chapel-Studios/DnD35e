@@ -120,15 +120,15 @@ Sheet components belong in their entity-type folder:
 ```
 src/entities/items/
   components/
-    Physical/
+    physical/
       sheet/components/
         PhysicalItemHeaderStatus.vue        ← Physical item badges
-        PhysicalItemWeight.vue             ← Physical item weight display
-    Equippable/
+        ...                                ← Other physical-item-only sheet components
+    equippable/
       sheet/components/
         EquippableHeaderStatus.vue         ← Equippable-specific (equipped/carried state)
-        EquippableItemSlot.vue             ← Slot selection dropdown
-    Weapon/
+        ...                               ← Other equippable-item-only sheet components
+    weapon/
       sheet/components/
         WeaponDamage.vue                   ← Weapon damage form group
 ```
