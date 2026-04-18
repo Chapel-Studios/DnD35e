@@ -12,14 +12,13 @@
   import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
   import { provide } from 'vue';
 
-  import { Material } from '../index.mjs';
-  import { useMaterialStore } from './index.mjs';
+  import type { Secret } from '../Secret.mjs';
+  import { useSecretStore } from './SecretStore.mjs';
 
   const props = defineProps<{
-    context: VueApplicationContext<Material>;
+    context: VueApplicationContext<Secret>;
   }>();
 
-  const store = useMaterialStore(props.context);
+  const store = useSecretStore(props.context);
   provide(DocumentSheetStoreSymbol, store);
-
 </script>

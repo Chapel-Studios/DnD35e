@@ -4,44 +4,32 @@
       class="identify-toggle"
       :class="{ 'is-identified': isIdentified }"
     >
-      <!-- Edit mode: show toggle -->
-      <template v-if="isEditViewMode">
-        <ToggleSwitch
-          name="system.isIdentified"
-          :checked="isIdentified"
-          @update="handleToggleUpdate"
-        >
-          <template #false>
-            <i class="fa-solid fa-question-circle identify-icon identify-icon--unknown" :title="unidentifiedLabel"></i>
-          </template>
-          <template #true>
-            <i class="fa-solid fa-scroll identify-icon identify-icon--identified" :title="identifiedLabel"></i>
-          </template>
-        </ToggleSwitch>
-      </template>
-      <!-- Readonly mode: show current state icon only -->
-      <template v-else>
+      <!-- Identified state: show identified icon -->
+      <template v-if="isIdentified">
         <i 
-          v-if="isIdentified" 
           class="fa-solid fa-scroll identify-icon identify-icon--identified" 
           :title="identifiedLabel"
         ></i>
-        <i 
-          v-else 
-          class="fa-solid fa-question-circle identify-icon identify-icon--unknown" 
-          :title="unidentifiedLabel"
-        ></i>
+      </template>
+      <!-- Unidentified state: show Reveal All button -->
+      <template v-else>
+        <button 
+          type="button" 
+          class="reveal-all-btn"
+          :title="revealAllHint"
+          @click="handleRevealAll"
+        >
+          <i class="fa-solid fa-eye"></i>
+          {{ revealAllLabel }}
+        </button>
       </template>
     </div>
   </DmControl>
 </template>
 
 <script setup lang="ts">
-  import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
-  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
-  import { IDENTIFIED, UNIDENTIFIED } from '@helpers/formulae/types.mjs';
-  import { ToggleSwitch } from '@vc/Fields/index.mjs';
   import { DmControl } from '@vc/index.mjs';
   import { computed, inject } from 'vue';
 
@@ -50,17 +38,16 @@
       isIdentified,
     },
     documentActions: {
-      getDirectFieldUpdater,
+      revealAllSecrets,
     },
   } = inject(DocumentSheetStoreSymbol) as IdentifiableDocumentStore;
-  const { isEditViewMode, updateIdentifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const identifiedLabel = computed(() => game.i18n.localize('dnd35e.IDENTIFIABLE.Identified'));
-  const unidentifiedLabel = computed(() => game.i18n.localize('dnd35e.IDENTIFIABLE.Unidentified'));
+  const revealAllLabel = computed(() => game.i18n.localize('dnd35e.EFFECT.Secret.RevealAll'));
+  const revealAllHint = computed(() => game.i18n.localize('dnd35e.EFFECT.Secret.RevealAllHint'));
 
-  const handleToggleUpdate = (value: boolean) => {
-    getDirectFieldUpdater('system.isIdentified')(value);
-    updateIdentifiedViewMode(value ? IDENTIFIED : UNIDENTIFIED);
+  const handleRevealAll = async () => {
+    await revealAllSecrets();
   };
 </script>
 
@@ -81,16 +68,6 @@
     opacity 0.25s ease,
     text-shadow 0.25s ease,
     transform 0.25s ease;
-}
-
-.identify-icon--unknown {
-  color: var(--identify-unknown-color, #9a8f7a);
-}
-
-.identify-toggle:not(.is-identified) .identify-icon--unknown {
-  opacity: 1;
-  text-shadow: 0 0 4px rgba(154, 143, 122, 0.4);
-  transform: scale(1.05);
 }
 
 .identify-icon--identified {
@@ -123,5 +100,28 @@
 
 .identify-toggle.is-identified .identify-icon--identified {
   animation: identify-reveal 0.35s ease-out;
+}
+
+.reveal-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(128, 0, 128, 0.12);
+  border: 1px solid rgba(128, 0, 128, 0.3);
+  border-radius: 3px;
+  color: var(--color-text-primary, #191813);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    background: rgba(128, 0, 128, 0.2);
+    border-color: rgba(128, 0, 128, 0.5);
+  }
+
+  i {
+    font-size: 0.7rem;
+  }
 }
 </style>

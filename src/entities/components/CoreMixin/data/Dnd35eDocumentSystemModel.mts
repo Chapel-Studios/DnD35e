@@ -1,6 +1,7 @@
 import {
   optionalStringField,
   requiredStringField,
+  withFamiliar,
 } from '@helpers/fieldBuilders.mjs';
 import { Dnd35eField } from '@helpers/fields/Dnd35eField.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
@@ -28,8 +29,8 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
 
   static override defineSchema(): Record<string, any> {
     const schema = {
-      version: requiredStringField('14.0.0'),
-      slug: optionalStringField(),
+      version: withFamiliar(requiredStringField('14.0.0'), { formulaVisible: false }),
+      slug: withFamiliar(optionalStringField(), { formulaVisible: false }),
       nameFormula: new Dnd35eField(FormulaField, {
         expectedType: 'string',
         canVisibilityBeChanged: false,
@@ -48,6 +49,7 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
         familiar: { formulaVisible: false },
       }),
     };
+
     return schema;
   }
 

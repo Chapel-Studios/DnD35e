@@ -56,12 +56,12 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
 
       // Create shared reactive state for header controls
       // Initialize editorViewMode based on the document's actual identification state
-      const system = this.#document.system as { isIdentifiable?: boolean; isIdentified?: boolean } | undefined;
+      const doc = this.#document as { isIdentifiable?: boolean; isIdentified?: boolean };
 
       this.renderModeStore = useRenderModeStore(
         this.#document.testUserPermission(game.user, 'OWNER'),
-        system?.isIdentified ?? true,
-        system?.isIdentifiable ?? false
+        doc.isIdentified ?? true,
+        doc.isIdentifiable ?? false
       );
 
       this.context = {

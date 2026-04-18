@@ -1,7 +1,7 @@
 import type { GeneralEffectType } from '@effects/general/index.mjs';
 
-import type { MaterialEffectType } from './material/Material.mjs';
-import type { SecretEffectType } from './secret/Secret.mjs';
+import type { MaterialEffectType } from './material/materialEffectType.mjs';
+import type { SecretEffectType } from './secret/secretEffectType.mjs';
 
 const EFFECT_TARGET = 'item';
 type EffectTarget = typeof EFFECT_TARGET;

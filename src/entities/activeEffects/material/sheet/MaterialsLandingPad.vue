@@ -17,7 +17,7 @@
   import LandingPad from '@vc/components/LandingPad.vue';
   import { inject } from 'vue';
 
-  import { materialEffectType } from '../index.mjs';
+  import { materialEffectType } from '../materialEffectType.mjs';
   const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {

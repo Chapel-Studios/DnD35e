@@ -1,34 +1,26 @@
 import type { ActiveEffectSource } from '@common/documents/active-effect.mjs';
 import { Dnd35eDocumentMixin } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import type { Dnd35eDocumentFlags } from '@ec/CoreMixin/index.mjs';
-import type {
-  IdentifiableDocumentSourceProps,
-} from '@ec/Identifiable/index.mjs';
-import {
-  IdentifiableDocumentMixin,
-} from '@ec/Identifiable/index.mjs';
-import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
+import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
 import { LogHelper } from '@helpers/index.mjs';
 import { COMBAT_KEYS } from '@settings/combat/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { MaterialSystemData, MaterialSystemSource } from './data/index.mjs';
 import { MATERIAL_SUBTYPE_STANDARD } from './data/index.mjs';
+import type { MaterialEffectType } from './materialEffectType.mjs';
+import { materialEffectType } from './materialEffectType.mjs';
 
-const materialEffectType = 'material';
-type MaterialEffectType = typeof materialEffectType;
-
-type MaterialSource = ActiveEffectSource<MaterialEffectType, MaterialSystemSource>
-  & Omit<IdentifiableDocumentSourceProps, 'system'>;
+type MaterialSource = ActiveEffectSource<MaterialEffectType, MaterialSystemSource>;
 
 interface MaterialEffectFlags {
   // Add material-specific flags here as needed
 }
 
-/** Pre-composed: DnD35eActiveEffect → Dnd35eDocumentMixin → IdentifiableDocumentMixin */
-const IdentifiableEffectBase = IdentifiableDocumentMixin(Dnd35eDocumentMixin(DnD35eActiveEffect));
+/** Pre-composed: DnD35eActiveEffect → Dnd35eDocumentMixin */
+const MaterialBase = Dnd35eDocumentMixin(DnD35eActiveEffect);
 
-class Material extends IdentifiableEffectBase {
+class Material extends MaterialBase {
   declare type: MaterialEffectType;
   declare system: MaterialSystemData;
   declare flags: Dnd35eDocumentFlags<MaterialEffectFlags>;

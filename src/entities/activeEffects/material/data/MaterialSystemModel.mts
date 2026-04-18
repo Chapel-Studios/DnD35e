@@ -1,8 +1,8 @@
 import type { EffectPhases } from '@common/documents/active-effect.mjs';
-import { IdentifiableSchemaMixin } from '@ec/Identifiable/index.mjs';
-import type { Dnd35eEffectChangeData, EffectChangeTarget, EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
-import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs';
+import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModelBase.mjs';
+import type { EffectChangeTarget, EffectChangeType } from '@effects/BaseActiveEffect/data/constants.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
 import { Dnd35eField } from '@helpers/fields/index.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
@@ -15,10 +15,7 @@ import { MATERIAL_SUBTYPE_BONUS_MAP, MATERIAL_SUBTYPE_STANDARD, MATERIAL_SUBTYPE
 
 const { fields: { NumberField, StringField } } = foundry.data;
 
-/** Pre-composed: ActiveEffectSystemModelBase + identifiable schema fields. */
-const IdentifiableEffectSystemModel = IdentifiableSchemaMixin(ActiveEffectSystemModelBase);
-
-class MaterialSystemModel extends IdentifiableEffectSystemModel {
+class MaterialSystemModel extends ActiveEffectSystemModelBase {
   static override targetContexts: TargetContexts = { item: ['weapon'] };
   static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.MATERIAL'];
 

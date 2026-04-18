@@ -9,6 +9,8 @@ import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import { EquippableItemSystemModel } from '@items/components/Equippable/index.mjs';
 import { WEAPON_BASE_TYPES,WEAPON_SUBTYPES, WEAPON_TYPES } from '@items/weapon/index.mjs';
 
+import type { WeaponSystemData } from './WeaponSystemData.mjs';
+
 const {
   fields: {
     NumberField,
@@ -60,5 +62,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
     return schema;
   }
 }
+
+interface WeaponSystemModel extends WeaponSystemData {}
 
 export { WeaponSystemModel };

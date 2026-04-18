@@ -1,10 +1,10 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import { getDisplayName } from '@ec/CoreMixin/index.mjs';
-import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/index.mjs';
-import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/index.mjs';
-import type { EffectType } from '@effects/index.mjs';
-import { GENERAL_EFFECT_TYPE } from '@effects/index.mjs';
+import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/data/constants.mjs';
+import type { EffectType } from '@effects/effectTypes.mjs';
+import { GENERAL_EFFECT_TYPE } from '@effects/effectTypes.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';

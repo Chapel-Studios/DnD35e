@@ -19,10 +19,10 @@
     </div>
     <template #readonly>
       <span v-if="value" class="true toggle-value">
-        {{ trueLabel }}
+        {{ localizedTrueLabel }}
       </span>
       <span v-else class="false toggle-value">
-        {{ falseLabel }}
+        {{ localizedFalseLabel }}
       </span>
     </template>
   </FormGroup>
@@ -68,6 +68,9 @@
     if (props.disabled) return true;
     return !isEditViewMode.value;
   });
+
+  const localizedTrueLabel = computed(() => props.trueLabel ? game.i18n.localize(props.trueLabel) : '');
+  const localizedFalseLabel = computed(() => props.falseLabel ? game.i18n.localize(props.falseLabel) : '');
 
   const fieldUpdater = props.onUpdate ?? (
     props.directUpdate

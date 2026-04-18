@@ -1,4 +1,6 @@
-import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs';
+import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModelBase.mjs';
+
+import type { GeneralSystemData } from './GeneralSystemData.mjs';
 
 /**
  * General active effect system model — the standard effect type for dnd35e.
@@ -7,5 +9,7 @@ import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/index.mjs
 class GeneralSystemModel extends ActiveEffectSystemModelBase {
   static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.EFFECT.General'];
 }
+
+interface GeneralSystemModel extends GeneralSystemData {}
 
 export { GeneralSystemModel };

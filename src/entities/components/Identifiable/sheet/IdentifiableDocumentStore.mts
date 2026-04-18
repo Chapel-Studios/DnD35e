@@ -1,5 +1,5 @@
 import { type DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import type { WithIdentifiableComponent } from '@ec/Identifiable/index.mjs';
+import type { IdentifiableDocumentLike } from '@ec/Identifiable/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -9,7 +9,7 @@ import { computed } from 'vue';
  * This modifies the base store's behavior via setters and returns only identifiable-specific properties.
  * The base store's documentGetters/documentActions are automatically enhanced.
  */
-const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(
+const useIdentifiableStore = <TDocument extends IdentifiableDocumentLike>(
   _context: VueApplicationContext<TDocument>,
   baseStore: DocumentSheetStore<TDocument>
 ): IdentifiableStore => {
@@ -26,13 +26,11 @@ const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(
 
   // ===== IDENTIFIABLE STATE =====
   const isIdentifiable = computed(() => {
-    const system = document.value.system as { isIdentifiable?: boolean };
-    return system?.isIdentifiable === true;
+    return (document.value as unknown as { isIdentifiable?: boolean })?.isIdentifiable === true;
   });
 
   const isIdentified = computed(() => {
-    const system = document.value.system as { isIdentified?: boolean };
-    return system?.isIdentified ?? true; // default to identified if field doesn't exist
+    return (document.value as unknown as { isIdentified?: boolean })?.isIdentified ?? true;
   });
 
   // // ===== SCHEMA-AWARE HELPERS =====
@@ -147,6 +145,12 @@ const useIdentifiableStore = <TDocument extends WithIdentifiableComponent>(
     //     context.sheetState.editorViewMode = context.sheetState.editorViewMode === 'identified' ? 'unidentified' : 'identified';
     //   }
     // },
+    revealAllSecrets: async (): Promise<void> => {
+      const doc = document.value;
+      if ('revealAllSecrets' in doc && typeof doc.revealAllSecrets === 'function') {
+        await doc.revealAllSecrets();
+      }
+    },
   };
 
   return {
@@ -169,7 +173,9 @@ type IdentifiableDocumentGetters = {
   // unidentifiedDisplayName: ComputedRef<string>;
 };
 
-type IdentifiableDocumentActions = Record<string, unknown>;
+type IdentifiableDocumentActions = {
+  revealAllSecrets: () => Promise<void>;
+};
 type IdentifiableDocumentStoreUtils = Record<string, unknown>;
 
 interface IdentifiableStore {
@@ -178,7 +184,7 @@ interface IdentifiableStore {
   _storeUtils: IdentifiableDocumentStoreUtils;
 }
 
-type IdentifiableDocumentStore = DocumentSheetStore<WithIdentifiableComponent> & IdentifiableStore;
+type IdentifiableDocumentStore = DocumentSheetStore<IdentifiableDocumentLike> & IdentifiableStore;
 
 export {
   useIdentifiableStore,

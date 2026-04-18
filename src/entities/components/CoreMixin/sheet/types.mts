@@ -16,10 +16,10 @@ type EvaluationDocument = {
       value: FormulaDataSource;
       unidentifiedValue: FormulaDataSource | null;
     };
-    isIdentified?: boolean;
-    isIdentifiable?: boolean;
     [key: string]: unknown;
   };
+  isIdentified?: boolean;
+  isIdentifiable?: boolean;
   [key: string]: unknown;
 }
 

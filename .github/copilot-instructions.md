@@ -21,8 +21,12 @@ The autocomplete/context system for formulas is branded **FormulaFamiliar** (not
 - **AspectGroup** — tree of properties
 - **FamiliarSchema** — full schema for a document type
 - **FamiliarContext** — resolved context with properties + aliases
-- Option key on fields: `familiar` (e.g. `{ familiar: { formulaVisible: false } }` to opt out)
-- Dnd35eField has `static isFamiliarField = true` — the schema walker auto-includes all Dnd35eField instances in formula autocomplete unless `familiar.formulaVisible === false`
+- Schema walker **includes all fields by default** (opt-out model, not opt-in)
+- Opt out with `withFamiliar(field, { formulaVisible: false })` from `fieldBuilders.mts`
+- Two static constructor markers control recursion behavior:
+  - `isFamiliarField = true` — compound leaf with `.value` access path (Dnd35eField backward compat)
+  - `isFamiliarLeaf = true` — opaque leaf, not recursed into (PriceField, FormulaField)
+- SchemaFields without markers are recursed into; all other fields are simple leaves
 
 ## Component Architecture
 - Composition chain: CoreMixin → Identifiable → PhysicalItem → EquippableItem → Weapon

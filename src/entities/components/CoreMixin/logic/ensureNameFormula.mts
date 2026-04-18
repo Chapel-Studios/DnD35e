@@ -1,4 +1,3 @@
-import type { IdentifiableDocumentSystemData } from '@ec/Identifiable/index.mjs';
 import type { ActiveEffectSystemData } from '@effects/BaseActiveEffect/index.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import type { ItemSystemData } from '@items/baseItem/index.mjs';
@@ -24,12 +23,12 @@ const ensureNameFormulaOnCreate = (document: NameFormulaDocument): void => {
   let hasUpdate = false;
   const system = document.system as ItemSystemData | ActiveEffectSystemData | undefined;
   if (!system?.nameFormula?.value?.formula && document.name) {
-    const iSystem = system as unknown as IdentifiableDocumentSystemData | undefined;
+    const iDoc = document as unknown as { isIdentifiable?: boolean };
     updateData.system.nameFormula = {
       value: FormulaData.toSource(document.name, {
         resolvedValue: document.name,
       }),
-      unidentifiedValue: iSystem?.isIdentifiable
+      unidentifiedValue: iDoc.isIdentifiable
         ? FormulaData.toSource(document.name, {
           resolvedValue: document.name,
         })

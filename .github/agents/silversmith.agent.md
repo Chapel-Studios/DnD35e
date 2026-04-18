@@ -48,15 +48,24 @@ When starting a new phase, perform a **full onboarding conversation**:
 2. **Read dependency phases** — understand what's already built and available
 3. **Read relevant architecture docs** — `docs/architecture/*.md` as needed
 4. **Scan the current codebase** — understand existing patterns via `@Explore` subagent
-5. **Present a summary** to the user:
+5. **Understand the UI/UX design** — For every user-facing feature in the phase, ask the user:
+   - What does the user see? (layout, components, visual states)
+   - What can they do? (actions, toggles, drag-and-drop, keyboard shortcuts)
+   - Who sees what? (GM-only, player-visible, permission-gated)
+   - What's the interaction feel? (inline editing vs. dialog, tabs vs. sections, compact vs. spacious)
+   - Are there reference UIs to match? (other sheets in this system, other VTT systems, D35E legacy)
+   
+   **Do NOT proceed to implementation planning until you have a shared understanding of the design.** If the user doesn't have strong opinions, propose options with tradeoffs and agree on one.
+6. **Present a summary** to the user:
    - Phase goals (in your own words — prove you understand)
    - Key design decisions already made in the spec
+   - **UI/UX design summary** — restate what you understood about how each feature looks and feels
    - Ambiguities or open questions you spotted
    - Proposed execution order through the checklist items
    - Content authoring scope (if applicable — what needs JSON data, what's code-only)
    - **Build feasibility per section** — flag any checklist items that can't produce a clean `npm run build` on their own (e.g., a type file that references a model not yet created, or a store that imports a component from the next section). Propose grouping those into a single execution cycle so every stop-point is buildable.
-6. **Discuss** — ask 3-5 targeted questions about anything unclear. Present options where possible (A/B/C with tradeoffs).
-7. **Agree on scope** — confirm section groupings and the first unit of work to implement. The user may redefine how many checklist items to bundle per cycle based on build feasibility.
+7. **Discuss** — ask 3-5 targeted questions about anything unclear. Present options where possible (A/B/C with tradeoffs).
+8. **Agree on scope** — confirm section groupings and the first unit of work to implement. The user may redefine how many checklist items to bundle per cycle based on build feasibility.
 
 Do NOT write any code during Phase 0. This is discussion only.
 
@@ -90,12 +99,15 @@ Each checklist item from the phase spec is one execution cycle:
          │
 ┌─ Post-Approval ────────────────────────────┐
 │ 11. Update phase checklist (mark complete)  │
+│     ⚠️ MANDATORY — never skip this step    │
 │ 12. Update session memory with progress     │
 │ 13. Move to next checklist item             │
 └─────────────────────────────────────────────┘
 ```
 
 **Critical rule**: NEVER proceed to the next checklist item without explicit user approval.
+
+**Critical rule**: After approval, ALWAYS update the phase doc checklist (`docs/migration-plan/phase-NN-*.md`) by changing `[ ]` to `[x]` on completed items BEFORE moving to the next section. The checklist is the single source of truth — if it's not checked off, it didn't happen. This includes sub-items. When multiple items were completed in a single cycle, check them ALL off.
 
 ### Phase 2: Section Completion (when user says "complete")
 
@@ -182,11 +194,13 @@ Delegate when a section reveals knowledge worth caching for future sections:
 
 ### Always Do
 - Read the phase spec before implementing
+- **Understand UI/UX design before coding** — for user-facing features, ensure design is agreed upon during Phase 0
 - Study existing code patterns before writing new code
 - Run `npm run build` after every section — must pass clean
 - Match existing naming conventions, file structure, import patterns
 - Use Dnd35eField for fields that need identified/unidentified support
 - Localize all user-facing strings (use `dnd35e` namespace)
+- **Register all new document subtypes** in `system.json.template`, `registration.mts`, and creation dialog config (see `/memories/repo/system-json-registration.md`)
 - Stop and present work for approval after each checklist item
 - Track progress in session memory
 

@@ -1,9 +1,8 @@
-import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
+import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
 
 import type { SecretSystemData } from './data/index.mjs';
-
-const secretEffectType = 'secret';
-type SecretEffectType = typeof secretEffectType;
+import type { SecretEffectType } from './secretEffectType.mjs';
+import { secretEffectType } from './secretEffectType.mjs';
 
 /**
  * Secret active effect — masks item/actor field values from non-GM users.

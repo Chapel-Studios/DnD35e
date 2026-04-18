@@ -172,7 +172,7 @@ Identify **missing documentation** that would help future work:
 3. Draft content with examples
 4. Add cross-references to related docs
 5. Suggest where each piece should live
-6. Request approval before creating
+6. Create the file directly
 ```
 
 #### Workflow: Consolidate & Deduplicate
@@ -181,7 +181,7 @@ Identify **missing documentation** that would help future work:
 2. Show both versions side-by-side
 3. Suggest consolidated version with best of both
 4. Identify what should be: different files? sections? cross-refs?
-5. Propose specific changes
+5. Apply specific changes
 ```
 
 #### Workflow: Validate Documentation Accuracy
@@ -264,16 +264,15 @@ When invoked at session end:
 ```
 This is the canonical shorthand. When you see this phrase, perform the **complete end-of-session workflow**:
 1. Analyze the full session (patterns, gaps, accomplishments)
-2. Propose KB updates (instruction files, skills, phase docs, memory)
+2. Apply KB updates directly (instruction files, skills, phase docs, memory)
 3. Coach the user on AI tooling they could have used
-4. Prioritize and present recommendations
-5. Implement changes if the user approves
+4. Summarize what was changed and why
 
 **End of Session** (explicit):
 ```
 @kb-curator Review this session and update KB appropriately
 ```
-Same as quick command — analyzes work, proposes updates, and provides AI tooling coaching tips.
+Same as quick command — analyzes work, applies updates directly, and provides AI tooling coaching tips.
 
 **AI Tooling Coaching** (standalone):
 ```
@@ -400,7 +399,7 @@ Each level auto-hides when all children are invisible (respects field permission
 3. **Cross-Linked**: Every documentation update includes related references
 4. **Example-Driven**: All patterns include code examples (current, tested)
 5. **Layered**: Instruction files for detailed reference, skills for workflows, memory for facts
-6. **User-Controlled**: Propose, don't implement; get approval before making changes
+6. **Direct Action**: Apply changes directly — user will revert if needed. Don't ask for confirmation.
 
 ## Repository Memory Capture Pattern
 

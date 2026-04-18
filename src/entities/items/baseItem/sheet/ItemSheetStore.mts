@@ -6,8 +6,9 @@ import type {
   SheetTab,
 } from '@ec/CoreMixin/index.mjs';
 import { defaultDetailsTab, useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import type { EffectType } from '@effects/index.mjs';
-import { DnD35eActiveEffect } from '@effects/index.mjs';
+import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
+import type { EffectType } from '@effects/effectTypes.mjs';
+import { EFFECT_TYPES } from '@effects/effectTypes.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
@@ -93,6 +94,8 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
       // TODO(Phase 7): fix type definitions — add createDialog static method signature to DnD35eActiveEffect
       await (DnD35eActiveEffect as any).createDialog(effectData, {
         parent: document.value,
+      }, {
+        types: Object.keys(EFFECT_TYPES),
       });
       // const createData = DnD35eActiveEffect.createDialog(effectData);
       // await document.value.createEmbeddedDocuments('ActiveEffect', [createData]);

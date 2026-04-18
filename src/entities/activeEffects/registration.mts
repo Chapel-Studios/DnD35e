@@ -4,15 +4,19 @@ import { ensureNameFormulaOnCreate } from '@ec/CoreMixin/index.mjs';
 import { EFFECT_CHANGE_PHASES } from '@effects/BaseActiveEffect/data/index.mjs';
 import { ActiveEffectProxyDnd35e } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
 import { GENERAL_EFFECT_TYPE, GeneralSystemModel } from '@effects/general/index.mjs';
-import { materialEffectType } from '@effects/material/index.mjs';
-import { MaterialSheet, MaterialSystemModel } from '@effects/material/index.mjs';
+import { MaterialSystemModel } from '@effects/material/data/MaterialSystemModel.mjs';
 import { validateSingleMaterial } from '@effects/material/Material.mjs';
-import { secretEffectType, SecretSystemModel } from '@effects/secret/index.mjs';
+import { materialEffectType } from '@effects/material/materialEffectType.mjs';
+import { MaterialSheet } from '@effects/material/sheet/MaterialSheet.mjs';
+import { SecretSystemModel } from '@effects/secret/data/SecretSystemModel.mjs';
+import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
+import { SecretSheet } from '@effects/secret/sheet/SecretSheet.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
 
 const registerEffectSheets = () => {
   const effectSheets = [
     [materialEffectType, MaterialSheet],
+    [secretEffectType, SecretSheet],
   ] as const;
 
   for (const [effectType, Sheet] of effectSheets) {

@@ -1,8 +1,10 @@
 import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
 import type { IdentifiableDocumentActions, IdentifiableDocumentGetters, IdentifiableDocumentStoreUtils, IdentifiableStore } from '@ec/Identifiable/index.mjs';
 import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
-import type { MaterialType } from '@effects/material/index.mjs';
-import { materialEffectType } from '@effects/material/index.mjs';
+import type { MaterialType } from '@effects/material/Material.mjs';
+import { materialEffectType } from '@effects/material/materialEffectType.mjs';
+import type { SecretType } from '@effects/secret/Secret.mjs';
+import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
 import { physicalItemEffectsTab, type PhysicalItemLike } from '@items/components/Physical/index.mjs';
 import type { SettingsStore } from '@settings/core/sheet/settingsStore.mjs';
@@ -40,7 +42,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     context,
   baseStore as DocumentSheetStore<TDocument>
   );
-  updateHiddenEffects([materialEffectType]);
+  updateHiddenEffects([materialEffectType, secretEffectType]);
   // const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const { replaceTabs, tabs } = baseStore._storeUtils.tabStore;
   replaceTabs([
@@ -72,6 +74,9 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     materials: computed(() => 
       [...document.value.effects].filter((effect) => effect.type === materialEffectType) as unknown as MaterialType[]
     ),
+    secrets: computed(() =>
+      [...document.value.effects].filter((effect) => effect.type === secretEffectType) as unknown as SecretType[]
+    ),
 
     // Identifiable props: use effective value to allow overrides when viewing as unidentified
     price: computed(() => getViewAwareFieldValue('system.price') || createDefaultPrice()),
@@ -94,9 +99,23 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     }),
   };
 
+  const documentActions: PhysicalItemActions = {
+    ...identifiableStore.documentActions,
+    createSecret: async () => {
+      await document.value.createEmbeddedDocuments('ActiveEffect', [{
+        name: game.i18n.localize('dnd35e.EFFECT.Secret.New'),
+        img: 'icons/svg/eye.svg',
+        type: secretEffectType,
+        origin: document.value.uuid,
+        disabled: false,
+      }]);
+    },
+  };
+
   return {
     ...identifiableStore,
     documentGetters,
+    documentActions,
   };
 };
 
@@ -116,6 +135,7 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   isCarried: ComputedRef<boolean>;
   size: ComputedRef<string>;
   materials: ComputedRef<MaterialType[]>;
+  secrets: ComputedRef<SecretType[]>;
   magicEquivalency: ComputedRef<number | null>;
   damageReductionTypes: ComputedRef<string[]>;
   damageReductionTypeOptions: ComputedRef<MultiSelectOption<string>[]>;
@@ -123,17 +143,20 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
 
 interface PhysicalItemStoreUtils extends IdentifiableDocumentStoreUtils {}
 
-interface PhysicalItemActions extends IdentifiableDocumentActions {}
+interface PhysicalItemActions extends IdentifiableDocumentActions {
+  createSecret: () => Promise<void>;
+}
 
 interface PhysicalItemStore extends IdentifiableStore {
     documentGetters: PhysicalItemGetters;
+    documentActions: PhysicalItemActions;
     _storeUtils: PhysicalItemStoreUtils;
 }
 
 interface PhysicalDocumentStore extends PhysicalItemStore, ItemSheetStore<PhysicalItemLike> {
   _storeUtils: PhysicalItemStoreUtils & ItemSheetStoreUtils<PhysicalItemLike>;
   documentGetters: PhysicalItemGetters & ItemDocumentGetters;
-  documentActions: ItemDocumentActions<PhysicalItemLike>;
+  documentActions: ItemDocumentActions<PhysicalItemLike> & PhysicalItemActions;
 }
 
 export { usePhysicalItemStore };

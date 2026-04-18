@@ -73,14 +73,6 @@
       "Unidentified": "Unidentified",
       "UnidentifiedValueHint": "Editing unidentified value",
       "FIELDS": {
-        "isIdentifiable": {
-          "label": "Is Identifiable",
-          "hint": "Whether this item can be identified or unidentified."
-        },
-        "isIdentified": {
-          "label": "Is Identified",
-          "hint": "Whether this item is currently identified."
-        }
       }
     },
     "PHYSICAL_ITEM": {

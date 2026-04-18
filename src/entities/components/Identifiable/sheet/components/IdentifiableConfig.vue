@@ -29,7 +29,7 @@
       isIdentified,
     },
     documentActions: {
-      getDirectFieldUpdater,
+      revealAllSecrets,
     },
   } = inject(DocumentSheetStoreSymbol) as IdentifiableDocumentStore;
   const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
@@ -40,7 +40,9 @@
       : game.i18n.localize('dnd35e.IDENTIFIABLE.Unidentified')
   );
 
-  const handleToggleUpdate = (value: boolean) => getDirectFieldUpdater('system.isIdentified')(value);
+  const handleToggleUpdate = async (value: boolean) => {
+    if (value) await revealAllSecrets();
+  };
 </script>
 
 <style lang="scss" scoped>

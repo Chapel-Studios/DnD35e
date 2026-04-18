@@ -54,7 +54,7 @@ class EquippableItemSystemModel extends PhysicalItemSystemModel {
 
 ## Formula Resolution
 
-FormulaFamiliar enables `#context.property` syntax in formulas. Schema walker auto-discovers formula-eligible fields.
+FormulaFamiliar enables `#context.property` syntax in formulas. Schema walker **includes all fields by default** (opt-out via `familiar: { formulaVisible: false }`).
 
 ```typescript
 // In schema definition

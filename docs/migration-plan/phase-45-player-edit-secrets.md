@@ -44,7 +44,7 @@ Player Edit Secret AE:
   changes:
     - { key: "system.name.unidentifiedValue", mode: OVERRIDE, value: "My Cool Sword" }
   priority: MASK_PRIORITY + 1
-  flags.dnd35e.isPlayerEditSecret: true
+  system.isPlayerEditSecret: true  // SecretSystemModel schema field
   flags.dnd35e.isDeletableByGM: true
 
 Real stack:    ignores Player Edit Secret → name = "Longsword +2 Keen"
@@ -56,7 +56,7 @@ Masked stack:  Player Edit Secret wins   → name = "My Cool Sword"
 ## 45.5 Implementation Notes
 
 - **Intercept point**: The item's `_preUpdate()` hook (or the sheet store's save handler) detects when a non-GM user is writing to a field that has a mask. Instead of writing to `system.fieldPath.value`, it creates/updates the Player Edit Secret AE.
-- **AE flags**: `flags.dnd35e.isPlayerEditSecret: true` marks the AE for identification by the system. `flags.dnd35e.isDeletableByGM: true` enables the GM delete exception.
+- **Schema field**: `system.isPlayerEditSecret: true` (boolean on SecretSystemModel) marks the AE for identification by the system. `flags.dnd35e.isDeletableByGM: true` enables the GM delete exception.
 - **UI**: The GM's effect list shows the Player Edit Secret with a distinct icon/label (e.g., "Player Override" with a pencil icon). Players never see it as an AE.
 - **Deletion cascade**: If the item is fully identified (mask removed), Player Edit Secrets could optionally be cleaned up — but this is a stretch goal, not required.
 
@@ -65,7 +65,7 @@ Masked stack:  Player Edit Secret wins   → name = "My Cool Sword"
 ## 45.6 Completion Checklist
 
 - [ ] Detect masked-field edits from non-GM users in `_preUpdate()` or sheet store save
-- [ ] Create/update Player Edit Secret AE with `flags.dnd35e.isPlayerEditSecret: true`
+- [ ] Create/update Player Edit Secret AE with `system.isPlayerEditSecret: true`
 - [ ] Assign priority above identification mask
 - [ ] Accumulate all masked-field edits into a single AE per item
 - [ ] Ensure real stack ignores Player Edit Secret (filter by flag)

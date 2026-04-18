@@ -1,7 +1,7 @@
 import type { ActiveEffectSystemSource, EffectChangeData } from '@common/documents/active-effect.mjs';
 import type { BonusType } from '@constants/bonusTypes.mjs';
 import type { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
-import type { EffectChangeTarget, EffectChangeTargetField } from '@effects/BaseActiveEffect/index.mjs';
+import type { EffectChangeTarget, EffectChangeTargetField } from '@effects/BaseActiveEffect/data/constants.mjs';
 
 type ActiveEffectTarget = 'actor' | 'item';
 
@@ -22,10 +22,12 @@ interface Dnd35eEffectChangeData extends EffectChangeData {
 
 interface Dnd35eActiveEffectSystemSource extends BaseDnd35eSystemData, Omit<ActiveEffectSystemSource, 'changes'> {
   target: ActiveEffectTarget;
+  isHidden: boolean;
   changes: Dnd35eEffectChangeData[];
 }
 
-type ActiveEffectSystemData = Dnd35eActiveEffectSystemSource;
+interface ActiveEffectSystemData extends Dnd35eActiveEffectSystemSource {
+}
 
 export type {
   ActiveEffectSystemData,

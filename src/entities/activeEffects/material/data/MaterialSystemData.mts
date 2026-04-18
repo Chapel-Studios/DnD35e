@@ -1,5 +1,4 @@
-import type { IdentifiableDocumentSystemData, IdentifiableDocumentSystemSource } from '@ec/Identifiable/index.mjs';
-import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
+import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import type { Dnd35eFieldData } from '@helpers/fields/index.mjs';
 import type { Price, PriceSource } from '@settings/index.mjs';
 import type { PriceData } from '@settings/index.mjs';
@@ -19,11 +18,11 @@ interface MaterialEffectChangeData extends Dnd35eEffectChangeData {
   value: string | number | Price;
 }
 
-interface MaterialSystemSource extends MaterialSystemStats, IdentifiableDocumentSystemSource, Dnd35eActiveEffectSystemSource {
+interface MaterialSystemSource extends MaterialSystemStats, Dnd35eActiveEffectSystemSource {
   changes: MaterialEffectChangeData[];
 }
 
-interface MaterialSystemData extends MaterialSystemStats, IdentifiableDocumentSystemData, ActiveEffectSystemData {
+interface MaterialSystemData extends MaterialSystemStats, ActiveEffectSystemData {
   price: Dnd35eFieldData<PriceData>;
 }
 

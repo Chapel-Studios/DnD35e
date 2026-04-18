@@ -4,6 +4,7 @@ import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
 import { ensureNameFormula } from '@helpers/formulae/index.mjs';
 import type { TargetContexts } from '@helpers/formulae/registry.mjs';
 
+import type { ActiveEffectSystemData } from './ActiveEffectSystemData.mjs';
 import { ACTIVE_EFFECT_TARGETS, CORE_EFFECT_CHANGE_PHASE, EFFECT_CHANGE_PHASES, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TARGET_FIELDS, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE } from './constants.mjs';
 
 const {
@@ -31,6 +32,7 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
         choices: ACTIVE_EFFECT_TARGETS,
         initial: EFFECT_TARGET,
       }),
+      isHidden: requiredBooleanField(false),
       changes: new ArrayField(
         new SchemaField({
           key: new StringField({ required: true }),
@@ -76,6 +78,8 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
     ensureNameFormula(this, parentName);
   }
 }
+
+interface ActiveEffectSystemModelBase extends ActiveEffectSystemData {}
 
 export {
   ActiveEffectSystemModelBase,

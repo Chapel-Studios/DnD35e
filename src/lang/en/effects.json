@@ -13,6 +13,8 @@
       "Delete": "Delete Effect",
       "Enable": "Enable Effect",
       "Disable": "Disable Effect",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
       "Temporary": "Temporary Effects",
       "Passive": "Passive Effects",
       "Inactive": "Inactive Effects",
@@ -42,7 +44,18 @@
         "Mask": "Mask"
       },
       "Secret": {
-        "Type": "Secret"
+        "Type": "Secret",
+        "Secrets": "Secrets",
+        "New": "New Secret",
+        "AddSecret": "Add Secret",
+        "RevealAll": "Reveal All",
+        "RevealAllHint": "Disable all Secret effects, revealing the item's true properties",
+        "MasksTab": "Masks",
+        "Masks": "Field Masks",
+        "AddMask": "Add Mask",
+        "EmptyMasks": "No masks defined. Add a mask to hide a field value from players.",
+        "FieldPlaceholder": "Field path…",
+        "ValuePlaceholder": "Displayed value…"
       },
       "FIELDS": {
         "changes": {

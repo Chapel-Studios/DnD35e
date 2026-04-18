@@ -36,9 +36,13 @@
               {{ label }}
             </option>
           </select>
-          <EffectChangeValue
-            :change="change"
-            :index="index"
+          <FormulaFormGroup
+            class="change-value"
+            :value="String(change.value ?? '')"
+            :field-path="`system.changes.${index}.value`"
+            :on-update="(val: string) => updateChangeField(index, 'value', val)"
+            :disabled="!isEditViewMode || change.isSystem"
+            :contexts="getContextsForTarget(change.target ?? 'item')"
           />
           <select
             v-if="showBonusType"
@@ -85,9 +89,11 @@
   import { BONUS_TYPES } from '@constants/bonusTypes.mjs';
   import type { RenderModeStore, TabStore } from '@ec/CoreMixin/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol, TabStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-  import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE, EffectChangeValue } from '@effects/BaseActiveEffect/index.mjs';
+  import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
+  import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
+  import FormulaFormGroup from '@helpers/formulae/FormulaFormGroup.vue';
   import { UNIDENTIFIED } from '@helpers/formulae/types.mjs';
+  import type { FamiliarSchema } from '@helpers/formulae/types.mts';
   import AspectPicker from '@vc/Fields/FormGroups/AspectPicker.vue';
   import { computed, inject } from 'vue';
 
@@ -119,6 +125,12 @@
   const targetLabel = game.i18n.localize('dnd35e.EFFECT.ChangeTarget.Target');
   const bonusTypeLabel = game.i18n.localize('dnd35e.EFFECT.BonusType.Label');
   const noneLabel = game.i18n.localize('dnd35e.EFFECT.BonusType.None');
+
+  function getContextsForTarget (target: string): FamiliarSchema | undefined {
+    const ctx = store.documentGetters.getTargetFamiliarContext(target);
+    if (!ctx) return undefined;
+    return { [target]: ctx };
+  }
 
   const changeTypes = computed(() => {
     const types: Record<string, string> = {};

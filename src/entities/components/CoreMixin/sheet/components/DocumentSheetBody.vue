@@ -46,7 +46,7 @@
     RenderModeStoreSymbol,
     TabStoreSymbol,
   } from '@ec/CoreMixin/index.mjs';
-  import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
+  import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
   import { useItemSheetStore } from '@items/baseItem/index.mjs';
   import TabDivider from '@vc/TabDivider/TabDivider.vue';
   import { inject, provide } from 'vue';

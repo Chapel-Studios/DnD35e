@@ -5,14 +5,16 @@ Custom agents and skills for D&D 3.5e system planning, architecture, and knowled
 ## Core Agents
 
 ### planning
-**When to use**: Break down phases into concrete tasks, identify what work can happen in parallel, and route tasks by skill level (lead dev, jr dev, pair).
+**When to use**: Break down phases into concrete deliverables (user-facing stories), identify what work can happen in parallel, and route tasks by skill level (lead dev, jr dev, pair).
 
 **Capabilities**:
-- **Task decomposition**: Break phases into atomic, bounded, verifiable tasks
-- **Parallelization analysis**: Show which tasks are independent and can run simultaneously
+- **Deliverable-oriented decomposition**: Group work by user-visible stories, not technical layers
+- **UI/UX design inquiry**: Asks about and understands the design before decomposing work
+- **Parallelization analysis**: Show which stories are independent and can run simultaneously
 - **Skill-based routing**: Recommend whether a task is good for lead dev, jr dev, pair, or flexible
 - **Dependency mapping**: Clarify what must complete before what
-- **Acceptance criteria**: Define how to verify each task is done
+- **Registration awareness**: Ensures new document subtypes are wired into system.json, registration, and creation dialog
+- **Acceptance criteria**: Define how to verify each deliverable is done
 
 **Invoke**: 
 - Basic planning: `@planning Plan Phase 5 Feats`
@@ -55,7 +57,7 @@ Custom agents and skills for D&D 3.5e system planning, architecture, and knowled
 ### silversmith
 **When to use**: Implement a phase from the migration plan — one checklist item at a time with approval gates between each section. Design-focused, D35E-aware, and pattern-matching.
 
-**Workflow**: Discuss-then-build. At phase start, SilverSmith reads the spec, asks design questions, and agrees on scope. Then executes one checklist item at a time: implement → build clean → report → wait for your Foundry testing → approval → next item.
+**Workflow**: Discuss-then-build. At phase start, SilverSmith reads the spec, **asks about UI/UX design for every user-facing feature**, agrees on design and scope. Then executes one checklist item at a time: implement → build clean → report → wait for your Foundry testing → approval → next item.
 
 **Capabilities**:
 - **Phase onboarding**: Reads spec + dependencies, surfaces ambiguities, proposes execution order

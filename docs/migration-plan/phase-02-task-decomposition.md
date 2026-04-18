@@ -749,13 +749,11 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
      - Buttons have proper opacity based on active state
      - Clicking switches modes
 
-3. **Update `canEdit` logic for non-GM + active Secrets**
-   - If non-GM owner AND item has active Secrets: hide Edit button
-   - Player is "locked" to play mode (sees masked values unknowingly)
-   - When all Secrets revealed: Edit button reappears
+3. **Update `canEdit` logic — players always have Edit**
+   - Non-GM owners always see the Edit button (Player Edit Secrets protect masked data)
+   - O3 decision superseded: no longer hide Edit when Secrets active
    - ✅ **Verify**:
-     - Non-GM sees Edit+Play when no Secrets
-     - Non-GM sees Play-only when Secrets active
+     - Non-GM sees Edit+Play always (with or without Secrets)
      - GM always sees all buttons (unless read-only)
 
 4. **Remove FormGroup `isIdentifiedViewMode` short-circuits**
@@ -795,9 +793,77 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
 **Acceptance Criteria**:
 - 3-state model is simpler and clearer
 - Button bar UI is usable and visually consistent
-- Non-GM players with Secrets are silently locked to masked view (acceptable trade-off)
+- Non-GM players with owner permissions always have Edit button; Player Edit Secrets (Track 14) protect masked data
 - All sheets work with new model
 - No regressions in existing view-mode behavior
+
+---
+
+### TRACK 14: Player Edit Secrets [LEAD DEV]
+
+**Goal**: Intercept non-GM writes to masked fields and route them into a system-managed Player Edit Secret AE, preserving the GM's real data.
+
+**Rationale**: Replaces the O3 approach (hiding Edit button when Secrets active) with a more elegant solution. Players always have edit access, masked fields are silently protected, and the GM retains full control.
+
+**Depends on**: Track 10 (masks dictionary), Track 13 (RenderModeStore — players always have Edit)
+
+**Tasks**:
+
+1. **Define Player Edit Secret constants**
+   - `isPlayerEditSecret`: boolean field on `SecretSystemModel` schema (default `false`)
+   - Priority: 200 (above regular Secret priority of 100)
+   - Localization keys: `dnd35e.EFFECT.Secret.PlayerOverride`
+   - ✅ **Verify**: Constants exported and localization key in effects.json
+
+2. **Implement `findOrCreatePlayerEditSecret(item)` helper**
+   - Find existing Player Edit Secret AE on item (by `system.isPlayerEditSecret === true`)
+   - If none, create one with correct type (`'secret'`), flag, priority, name ("Player Override"), icon (`icons/svg/pencil.svg`)
+   - ✅ **Verify**: Creates or reuses single Player Edit Secret AE; correct priority, name, flag
+
+3. **Implement `addOrUpdatePlayerEditMask(ae, fieldPath, value)` helper**
+   - If AE already has a MASK change for this fieldPath: update its value
+   - If not: add a new MASK change with priority 200
+   - ✅ **Verify**: Changes accumulate on single AE; updating same field overwrites value
+
+4. **Wire interception into `viewModeAwareUpdateDocument()`**
+   - For each field in update data:
+     - If `!game.user.isGM && field in document._masks` → route to Player Edit Secret
+     - Else → normal document write
+   - Mixed updates: split into masked (→ AE route) and non-masked (→ document write)
+   - Await both paths
+   - ✅ **Verify**:
+     - Player edits masked field → AE created, real data untouched
+     - Player edits non-masked field → normal write
+     - Mixed update → correctly split
+
+5. **Verify `_buildMasks()` priority resolution**
+   - Player Edit Secret at priority 200 naturally wins over regular Secret at 100
+   - After player edits a masked field, subsequent reads return player's value (not GM's mask)
+   - ✅ **Verify**: Player override value shown in masked view; GM real values unaffected in identified view
+
+6. **GM UI: distinguish Player Edit Secrets in Secrets list**
+   - Pencil icon (`fa-solid fa-pencil`) instead of regular eye icon
+   - "Player Override" label
+   - Standard delete button works (GM can remove to reset overrides)
+   - Enable/disable toggle works
+   - ✅ **Verify**: Player Edit Secret visually distinct in GM's Secrets list
+
+7. **`revealAllSecrets()` includes Player Edit Secrets**
+   - Existing `revealAllSecrets()` disables all Secret AEs — Player Edit Secrets are Secrets, so they're included automatically
+   - ✅ **Verify**: Reveal All disables Player Edit Secrets too
+
+8. **Dual-stack exclusion**
+   - Real stack: filter out Player Edit Secrets by `system.isPlayerEditSecret` field
+   - Masked stack: Player Edit Secrets participate at highest priority
+   - ✅ **Verify**: Real values unaffected; player view shows their edits
+
+**Acceptance Criteria**:
+- Non-GM player can edit items with active Secrets without destroying GM data
+- Masked-field edits are intercepted and stored in Player Edit Secret AE
+- Non-masked field edits go through normally
+- GM sees Player Edit Secrets with distinct icon and label
+- GM can delete Player Edit Secrets to reset player overrides
+- _buildMasks() correctly resolves Player Edit at higher priority
 
 ---
 
@@ -842,7 +908,10 @@ STREAM B: Secret AE Foundation
  WEEK 3-4
  ├─ TRACK 12: AE Visibility/Secrets UI [JR]
  │
- └─ TRACK 13: RenderModeStore 3-state [LEAD]
+ ├─ TRACK 13: RenderModeStore 3-state [LEAD]
+ │
+ └─ TRACK 14: Player Edit Secrets [LEAD]
+     (depends on Track 10 masks dict + Track 13 canEdit)
 
 
 SYNC POINTS
@@ -852,7 +921,7 @@ SYNC POINTS
 
  After TRACK 5+6: Material subsystem ready for testing
 
- After TRACK 13: Both subsystems ready for Phase 5 actors
+ After TRACK 13+14: Both subsystems ready for Phase 5 actors
 
 
 PARALLEL WORK ZONES
@@ -862,11 +931,13 @@ PARALLEL WORK ZONES
  ✓ TRACK 5 (stacking integration) ← only needs TRACK 1
  ✓ TRACK 6 (Material UI) ← independent of Secrets (TRACK 8+)
  ✓ TRACK 9+10 (MASK + masks dict) ← parallel after TRACK 8
+ ✓ TRACK 14 (Player Edit Secrets) ← after TRACK 10+13
 
  SEQUENTIAL (hard blocks)
  ✗ TRACK 4 must finish before TRACK 8 (pattern established)
  ✗ TRACK 8 must finish before TRACK 9+10 (type must exist)
  ✗ TRACK 10 must finish before TRACK 12+13 (infrastructure)
+ ✗ TRACK 10+13 must finish before TRACK 14 (masks + canEdit)
 ```
 
 ---
@@ -887,12 +958,35 @@ PARALLEL WORK ZONES
 | **10: isIdentified & Reveal** | Lead dev | Derived getters, effects integration — lead dev responsibility |
 | **11: AE Visibility UI** | Jr dev | UI components, toggles, filtering — Jr dev can handle |
 | **12: RenderModeStore 3-state** | Lead dev | Large refactor across stores and components — leads refactors, jrs might help |
+| **13: Player Edit Secrets** | Lead dev | Core interception logic, AE creation, dual-stack interaction — deep system knowledge required |
 
 **Pairing Opportunities**:
 - **Lead + Jr**: Track 6 (Material UI) — Jr dev builds UI components, lead dev reviews stacking logic integration
 - **Lead + Jr**: Track 11 (AE Visibility) — Jr dev builds components, lead dev guides Secret AE interaction design
 - **Jr + Jr**: Track 2 (BonusType) — parallel low-risk tasks
 - **Flexible**: Track 2, part of Track 6 — good for newer contributors or when lead/jr availability shifts
+
+---
+
+## Resolved Design Decisions
+
+### D1: Schema Walker — Default-Include with Opt-Out
+
+**Decision**: The FormulaFamiliar schema walker includes **all fields by default**. Fields opt out with `familiar: { formulaVisible: false }`. This replaces the previous opt-in model where only fields with `isFamiliarField === true` or explicit `formulaVisible: true` were included.
+
+**Rationale**: The walker captures the full data shape. Consumers (autocomplete, formula resolution, `getRollData()`) subscribe to what they need. This eliminates the need to register every new field for formula visibility — it's automatic.
+
+**Implementation** (completed):
+- `schemaWalker.mts`: `walkFields()` treats non-opted-out, non-SchemaField fields as simple leaves
+- Two static markers recognized on field constructors:
+  - `isFamiliarField = true` → compound leaf with `.value` access path (Dnd35eField — backward compat)
+  - `isFamiliarLeaf = true` → opaque leaf, not recursed into (PriceField, FormulaField)
+- Opt-out: `slug` field in `Dnd35eDocumentSystemModel` uses `familiar: { formulaVisible: false }`
+- Fields that already opt out: `nameFormula`, `description` (via Dnd35eField wrapper options)
+
+**Opaque leaf fields** (handle their own inner structure):
+- **PriceField** — renders via `PriceData.toString()`; inner stacks/srdEquivalent hidden from walker
+- **FormulaField** — the formula string is an implementation detail; future phases surface `resolvedValue`
 
 ---
 
@@ -929,20 +1023,13 @@ Questions that require hands-on exploration at phase start (not blockers, just "
 
 ---
 
-### O3: Non-GM Player Edit Restriction with Active Secrets
+### O3: Non-GM Player Edit Restriction with Active Secrets — **RESOLVED**
 
 **Question**: When a non-GM player owns an item with active Secrets, should they lose the Edit button?
 
-**Current spec**: Yes — Edit button hidden to prevent bypassing masks.
+**Resolution**: **Superseded by Player Edit Secrets (§2.7.10, Track 14).** Players always have Edit access. Writes to masked fields are intercepted and routed to a system-managed Player Edit Secret AE. The GM's real data is never touched. This eliminates the UX concern of players noticing a missing Edit button.
 
-**Trade-off**: Hints that a secret exists (player notices button disappeared).
-
-**Exploration**:
-- Phase 2 implements as spec'd
-- Phase 31 (Community Hardening) may gather feedback
-- Is this UX acceptable? Do players feel locked out? Better alternative?
-
-**Default assumption**: Edit button hidden; acceptable trade-off for now
+**Previous spec**: Edit button hidden. **New spec**: Edit always shown; masked-field writes intercepted.
 
 ---
 

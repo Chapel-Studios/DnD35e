@@ -39,8 +39,7 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>) => {
 
   const documentActions = {
     ...baseStore.documentActions,
-    // no specific actions in equippable yet, but they will come
-    //...equippableStore.documentActions,
+    ...equippableStore.documentActions,
   };
 
   return {
