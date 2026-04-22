@@ -110,6 +110,15 @@ function registerCombatSettings(): void {
     type: Boolean,
     default: false,
   });
+
+  game.settings.register(SYSTEM_ID, COMBAT_KEYS.ENFORCE_SINGLE_MATERIAL, {
+    name: 'dnd35e.SETTINGS.EnforceSingleMaterial.Name',
+    hint: 'dnd35e.SETTINGS.EnforceSingleMaterial.Hint',
+    scope: 'world',
+    config: false,
+    type: Boolean,
+    default: true,
+  });
 }
 
 export {

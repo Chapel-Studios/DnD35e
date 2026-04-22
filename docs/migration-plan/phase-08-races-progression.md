@@ -167,7 +167,7 @@ Granted items receive a `grantedBy: { sourceId, level }` field on the owned item
 - [ ] Define schema: grantSchedule (ArrayField of GrantScheduleEntry — racial traits, feats)
 - [ ] Define schema: progression (EmbeddedDataField of ProgressionData or null — null for standard races)
 - [ ] Define schema: source (StringField for book reference)
-- [ ] Add `identifiedName` and `unidentifiedName` fields (Dnd35eField pattern)
+- [ ] Add secret-aware display naming fields/patterns as needed (no wrapper fields)
 - [ ] Test: RaceSystemModel instantiation with valid data
 - [ ] Test: Schema validation (size must be in enum, speed numbers must be ≥ 0, etc.)
 - [ ] Test: Race with no progression (Human) validates correctly

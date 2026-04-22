@@ -841,6 +841,35 @@ export function renderFormulaHTML(
     .join('');
 }
 
+export function renderFormulaDisplayHTML(
+  formula: string,
+  familiarSchema?: FamiliarSchema
+): string {
+  const tokens = parseFormula(formula);
+
+  return tokens
+    .map(token => {
+      if (token.type === 'text') {
+        return escapeHTML(token.value);
+      }
+
+      if (token.partial) {
+        return `<span class="formula-variable is-warning">${escapeHTML(token.value)}</span>`;
+      }
+
+      const body = token.value.substring(1);
+      const { context, path } = parseVariableSegments(body);
+      if (!familiarSchema || path.length === 0) {
+        return `<span class="formula-variable">${escapeHTML(token.value)}</span>`;
+      }
+
+      const value = getPropertyValue(familiarSchema, context, path);
+      const displayValue = value !== null && value !== undefined ? String(value) : token.value;
+      return `<span class="formula-variable">${escapeHTML(displayValue)}</span>`;
+    })
+    .join('');
+}
+
 /**
  * Find a token at a specific position in the formula
  */

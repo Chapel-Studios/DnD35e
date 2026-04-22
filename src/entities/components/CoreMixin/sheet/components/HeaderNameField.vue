@@ -1,7 +1,7 @@
 <template>
   <div v-if="showEditor" class="name-field">
     <!--  see display node memo bellow -->
-    <div v-if="!isEditViewMode" class="flexrow">
+    <div v-if="!isEditMode" class="flexrow">
       <div class="flexcol">
         <DocumentName :value="displayValue" />
       </div>
@@ -39,23 +39,14 @@
   const fieldPath = 'system.nameFormula';
   const {
     documentActions: { getViewAwareFieldUpdater },
-    documentGetters: { name, getIsFieldVisible },
-    _storeUtils: { getProperty },
+    documentGetters: { name, getIsFieldVisible, getViewAwareFieldValue },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
   const {
-    isEditViewMode,
-    isIdentifiedViewMode,
+    isEditMode,
   } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
-  // Dnd35eField compound: { value: FormulaData, unidentifiedValue: FormulaData | null }
-  const nameFormulaCompound = getProperty<{ value: FormulaData | null; unidentifiedValue: FormulaData | null }>(fieldPath);
-
-  /** Pick the correct FormulaData instance based on view mode. */
-  const formulaData = computed(() => {
-    const compound = nameFormulaCompound?.value;
-    if (!compound) return null;
-    return isIdentifiedViewMode.value ? compound.value : compound.unidentifiedValue;
-  });
+  /** The FormulaData instance for the name formula. */
+  const formulaData = computed(() => getViewAwareFieldValue<FormulaData | null>(fieldPath) ?? null);
 
   const displayValue = computed(() => name.value || '—');
   const showEditor = computed((): boolean => {
@@ -63,8 +54,7 @@
   });
 
   /**
-   * Save the formula string. The view-aware updater automatically routes to
-   * .value.formula or .unidentifiedValue.formula based on view mode.
+   * Save the formula string.
    */
   const onUpdate = (formula: string) => {
     return getViewAwareFieldUpdater(`${fieldPath}.formula`)(formula || null);

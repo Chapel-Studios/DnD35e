@@ -199,7 +199,7 @@ This is a unique infrastructure challenge that may be pushed to post-release dep
 - [ ] Define schema: speed30 (NumberField, movement when base speed is 30 ft)
 - [ ] Define schema: speed20 (NumberField, movement when base speed is 20 ft)
 - [ ] Define schema: enhancement (NumberField, magic enhancement bonus — defaults to 0, applied in Phase 23)
-- [ ] Add `identifiedName` and `unidentifiedName` fields (Dnd35eField for identified vs unidentified gear)
+- [ ] Add secret-aware display naming fields/patterns as needed (no wrapper fields)
 - [ ] Test: EquipmentSystemModel instantiation
 - [ ] Test: Schema validation (armorBonus 0-10, etc.)
 

@@ -8,12 +8,11 @@ import {
 import type {
   IdentifiableDocument,
   IdentifiableDocumentConstructor,
+  IdentifiableDocumentCtor,
   IdentifiableDocumentLike,
   IdentifiableDocumentProperties,
   IdentifiableDocumentSource,
   IdentifiableDocumentSourceProps,
-  ItemOrEffectCtor,
-  WithIdentifiableComponent,
 } from './IdentifiableItem.mjs';
 import {
   IdentifiableDocumentMixin,
@@ -36,6 +35,7 @@ export type {
   IdentifiableDocument,
   IdentifiableDocumentActions,
   IdentifiableDocumentConstructor,
+  IdentifiableDocumentCtor,
   IdentifiableDocumentGetters,
   IdentifiableDocumentLike,
   IdentifiableDocumentProperties,
@@ -47,8 +47,6 @@ export type {
   IdentifiableDocumentSystemData,
   IdentifiableDocumentSystemSource,
   IdentifiableStore,
-  ItemOrEffectCtor,
-  WithIdentifiableComponent,
 };
 export {
   IdentifiableDocumentMixin,

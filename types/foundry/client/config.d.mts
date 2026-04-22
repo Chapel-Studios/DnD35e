@@ -411,6 +411,19 @@ export default interface Config<
             ): TActiveEffect;
         };
         dataModels: Record<string, ConstructorOf<TypeDataModel<documents.ActiveEffect, DataSchema>>>;
+        /** The default type for newly created ActiveEffects. */
+        defaultType?: string;
+        /**
+         * Array of valid phase identifiers for effect changes.
+         * Custom phases for dnd35e: core, initial, final.
+         * @remarks dnd35e system-specific property
+         */
+        phases?: readonly string[];
+        /**
+         * Whether to use legacy ActiveEffect transferral behavior.
+         * dnd35e disables legacy transferral in favor of explicit transfer settings.
+         */
+        legacyTransferral?: boolean;
     };
 
     /** Configuration for the ActorDelta embedded document type. */

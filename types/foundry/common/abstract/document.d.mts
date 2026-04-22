@@ -717,6 +717,7 @@ export interface DocumentMetadata {
     coreTypes: readonly string[];
     embedded: Record<string, string>;
     hasTypeData: boolean;
+    baseTypeAllowed: boolean;
     indexed: boolean;
     compendiumIndexFields: string[];
     permissions: {

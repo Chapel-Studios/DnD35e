@@ -10,7 +10,7 @@
       label="Current"
       :value="currentHp"
       :on-update="updateCurrentHp"
-      field-path="system.hp.value"
+      field-path="system.hp.current"
       :default-visibility="ownerPlusVisibility"
       :default-editability="gmOnlyEditability"
       direct-update
@@ -24,7 +24,7 @@
       :default-editability="gmOnlyEditability"
     />
     <template #readonly>
-      <span class="hp-display">{{ currentHp }}<HasActiveEffectsNotification :field-path="'system.hp.value'" /> / {{ maxHp }}<HasActiveEffectsNotification :field-path="'system.hp.max'" /></span>
+      <span class="hp-display">{{ currentHp }}<HasActiveEffectsNotification :field-path="'system.hp.current'" /> / {{ maxHp }}<HasActiveEffectsNotification :field-path="'system.hp.max'" /></span>
     </template>
   </FormGroupSection>
 </template>
@@ -48,7 +48,7 @@
   } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
   // Current HP is state - always write directly
-  const updateCurrentHp = getDirectFieldUpdater('system.hp.value');
+  const updateCurrentHp = getDirectFieldUpdater('system.hp.current');
 
   // Max HP is identifiable - view-aware updater
   const maxHpUpdater = getViewAwareFieldUpdater('system.hp.max');

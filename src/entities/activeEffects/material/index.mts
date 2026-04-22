@@ -6,14 +6,18 @@ import {
   MaterialSystemModel,
 } from './data/index.mjs';
 import type {
-  MaterialEffectType,
   MaterialSource,
   MaterialType,
 } from './Material.mjs';
 import {
   Material,
-  materialEffectType,
 } from './Material.mjs';
+import type {
+  MaterialEffectType,
+} from './materialEffectType.mjs';
+import {
+  materialEffectType,
+} from './materialEffectType.mjs';
 import type {
   MaterialSheetConfig,
   MaterialSheetRenderContext,
@@ -22,6 +26,8 @@ import type {
 import {
   DamageReductionTypes,
   MagicEquivalency,
+  MaterialChanges,
+  materialChangesTab,
   MaterialDetails,
   materialDetailsTab,
   MaterialSheet,
@@ -33,6 +39,8 @@ export {
   DamageReductionTypes,
   MagicEquivalency,
   Material,
+  MaterialChanges,
+  materialChangesTab,
   MaterialDetails,
   materialDetailsTab,
   materialEffectType,

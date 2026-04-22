@@ -5,7 +5,7 @@
  * Settings-specific Vue components are in their respective settings folders.
  */
 
-import type { EditorViewMode } from '@helpers/formulae/types.mjs';
+import type { ViewMode } from '@helpers/formulae/types.mjs';
 
 import { VueActiveEffectConfig } from './VueActiveEffectConfig.mjs';
 import type { VueAppBaseMembers, VueAppBaseMixin } from './VueAppBaseMixin.mjs';
@@ -37,8 +37,8 @@ export {
 };
 
 export type {
-  EditorViewMode,
   SheetState,
+  ViewMode,
   VueAppBaseMembers,
   VueAppBaseMixin,
   VueApplicationConfiguration,

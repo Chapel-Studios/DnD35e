@@ -21,6 +21,8 @@ import { PriceData } from './PriceData.mjs';
 const { EmbeddedDataField } = foundry.data.fields;
 
 class PriceField extends EmbeddedDataField {
+  static isFamiliarLeaf = true;
+
   constructor(options: Record<string, unknown> = {}) {
     super(PriceData, options);
   }

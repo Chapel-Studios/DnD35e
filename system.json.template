@@ -35,7 +35,9 @@
       "weapon": {}
     },
     "ActiveEffect": {
-      "material": {}
+      "general": {},
+      "material": {},
+      "secret": {}
     }
   }
 }

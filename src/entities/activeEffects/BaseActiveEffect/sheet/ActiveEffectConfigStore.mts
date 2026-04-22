@@ -1,22 +1,27 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type Color from '@common/utils/color.mjs';
 import type { DocumentSheetStore, DocumentSheetStoreDocumentActions, DocumentSheetStoreDocumentGetters } from '@ec/CoreMixin/index.mjs';
-import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
-import { RenderModeStoreSymbol, useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import type { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/data/index.mjs';
-import type { DnD35eActiveEffect, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
-import { EFFECT_CHANGE_TARGET_FIELD } from '@effects/BaseActiveEffect/index.mjs';
+import { useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModelBase.mjs';
+import type { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
 import { buildMergedFamiliarContext, getFamiliarBuilder } from '@helpers/formulae/index.mjs';
 import type { ContextDocumentType, TargetContexts } from '@helpers/formulae/registry.mjs';
 import type { FamiliarContext } from '@helpers/formulae/types.mjs';
-import { IDENTIFIED } from '@helpers/formulae/types.mjs';
-import type { ItemDnd35e } from '@items/baseItem/index.mjs';
+import type { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
 import type { MultiSelectOption, SelectOption } from '@vc/Fields/FormGroups/types.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
-import { computed, inject } from 'vue';
+import { computed } from 'vue';
 
 import { getDefaultActiveEffectTabs } from './tabs/index.mjs';
+
+const syncOpenSheetTitle = (sheet: { rendered?: boolean; title?: string; window?: { title?: HTMLElement } } | null | undefined): void => {
+  if (!sheet?.rendered) return;
+  if (sheet.window?.title instanceof HTMLElement) {
+    sheet.window.title.textContent = sheet.title ?? '';
+  }
+};
 
 const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
   context: VueApplicationContext<TDocument>
@@ -27,13 +32,32 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
   });
 
   const document = baseStore._storeUtils.document;
-  const { identifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   baseStore._storeUtils.setGetFreshDocument(async (uuid: string) => {
     const doc = await foundry.utils.fromUuid(uuid);
     return doc as TDocument | null;
   });
 
   const hasOwner = computed(() => !!document.value.parent);
+
+  const refreshOwningItem = async (): Promise<void> => {
+    const parent = document.value.parent;
+    if (!parent || parent.documentName !== 'Item') return;
+
+    const item = await foundry.utils.fromUuid(parent.uuid) as ItemDnd35e | null ?? parent as ItemDnd35e;
+    item.prepareData();
+
+    if (item.id && game.dnd35e?.stores?.Item?.[item.id]) {
+      await (game.dnd35e.stores.Item[item.id] as ItemSheetStore<any>)?._storeUtils.refreshDocument?.(item);
+    }
+
+    syncOpenSheetTitle(item.sheet);
+    await item.parent?.sheet?.render(true);
+
+    if (!item.parent) {
+      game.documentIndex?.replaceDocument(item as unknown as foundry.abstract.Document);
+      (globalThis as typeof globalThis & { ui?: { items?: { render: (force?: boolean) => void } } }).ui?.items?.render(true);
+    }
+  };
 
   /**
    * Resolve a FamiliarContext for a single target key ('item' or 'actor').
@@ -53,7 +77,12 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
       if (parent && 'documentName' in parent && (parent as any).documentName === 'Item') {
         const item = parent as ItemDnd35e;
         const builder = getFamiliarBuilder('Item', item.type as ContextDocumentType);
-        if (builder) return { properties: builder(item) };
+        if (builder) {
+          return {
+            properties: builder(item),
+            aliases: ['item'],
+          };
+        }
       }
       // Fallback: merge all declared item subtypes
       const subtypes = targetContexts.item;
@@ -73,7 +102,12 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
       }
       if (actor) {
         const builder = getFamiliarBuilder('Actor', actor.type as ContextDocumentType);
-        if (builder) return { properties: builder(actor) };
+        if (builder) {
+          return {
+            properties: builder(actor),
+            aliases: ['actor'],
+          };
+        }
       }
       // Fallback: merge all declared actor subtypes
       const subtypes = targetContexts.actor;
@@ -87,6 +121,27 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
   // Pre-computed contexts — one per target. Recomputes only when the document changes.
   const itemFamiliarContext = computed(() => resolveTargetContext('item'));
   const actorFamiliarContext = computed(() => resolveTargetContext('actor'));
+
+  function getTargetFamiliarContextName(target: string): string {
+    const parent = document.value.parent;
+
+    if (target === 'item' && parent && 'documentName' in parent && (parent as any).documentName === 'Item') {
+      return (parent as ItemDnd35e).type;
+    }
+
+    if (target === 'actor' && parent && 'documentName' in parent) {
+      if ((parent as any).documentName === 'Actor') {
+        return (parent as ActorDnd35e).type;
+      }
+
+      if ((parent as any).documentName === 'Item') {
+        const actor = (parent as ItemDnd35e).parent as ActorDnd35e | null;
+        if (actor) return actor.type;
+      }
+    }
+
+    return target;
+  }
 
   function getTargetFamiliarContext(target: string): FamiliarContext | null {
     if (target === 'item') return itemFamiliarContext.value;
@@ -128,21 +183,10 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
     }),
     origin: computed(() => document.value.origin ?? ''),
     changes: computed(() => document.value.system?.changes ?? []),
-    /**
-     * Changes filtered by the current identified/unidentified view mode.
-     * In identified view: shows only changes targeting .value (identified).
-     * In unidentified view: shows only changes targeting .unidentifiedValue.
-     */
-    visibleChanges: computed(() => {
-      const allChanges = document.value.system?.changes ?? [];
-      const targetField = identifiedViewMode.value === IDENTIFIED
-        ? EFFECT_CHANGE_TARGET_FIELD.VALUE
-        : EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED;
-      return allChanges.filter(
-        (c: Dnd35eEffectChangeData) => (c.targetField ?? EFFECT_CHANGE_TARGET_FIELD.VALUE) === targetField
-      );
-    }),
+    /** All effect changes. */
+    visibleChanges: computed(() => document.value.system?.changes ?? []),
     getTargetFamiliarContext,
+    getTargetFamiliarContextName,
   };
 
   const documentActions: ActiveEffectConfigStoreDocumentActions<TDocument> = {
@@ -151,24 +195,28 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
       if (!('changes' in document.value.system)) return false;
       const changes = document.value.system.changes || [];
       const updatedChanges = [...changes, changeData];
-      return await baseStore._storeUtils.updateDocument(
+      const updated = await baseStore._storeUtils.updateDocument(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
         {
           diff: false,
         }
       );
+      if (updated) await refreshOwningItem();
+      return updated;
     },
     removeChange: async (index: number) => {
       if (!('changes' in document.value.system)) return false;
       const changes = document.value.system.changes || [];
       const updatedChanges = [...changes];
       updatedChanges.splice(index, 1);
-      return await baseStore._storeUtils.updateDocument(
+      const updated = await baseStore._storeUtils.updateDocument(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
         {
           diff: false,
         }
       );
+      if (updated) await refreshOwningItem();
+      return updated;
     },
     updateChangeField: async (index: number, field: string, value: unknown) => {
       if (!('changes' in document.value.system)) return false;
@@ -176,12 +224,14 @@ const useActiveEffectConfigStore = <TDocument extends DnD35eActiveEffect>(
       const updatedChanges = changes.map((c: any, i: number) =>
         i === index ? { ...c, [field]: value } : c
       );
-      return await baseStore._storeUtils.updateDocument(
+      const updated = await baseStore._storeUtils.updateDocument(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
         {
           diff: false,
         }
       );
+      if (updated) await refreshOwningItem();
+      return updated;
     },
     updateDurationValue: async (value: number | null) => {
       return await baseStore._storeUtils.updateDocument(
@@ -214,11 +264,13 @@ type ActiveEffectConfigStoreDocumentGetters = DocumentSheetStoreDocumentGetters 
   showIconOptions: ComputedRef<SelectOption<number>[]>;
   origin: ComputedRef<string>;
   changes: ComputedRef<any[]>;
-  /** Changes filtered by view mode — hides unidentified-targeted changes in identified view. */
+  /** All effect changes. */
   visibleChanges: ComputedRef<any[]>;
   hasOwner: ComputedRef<boolean>;
   /** Build a FamiliarContext for the given change target ('item' or 'actor'). */
   getTargetFamiliarContext: (target: string) => FamiliarContext | null;
+  /** Resolve the preferred context name for the given target using the live parent document subtype when available. */
+  getTargetFamiliarContextName: (target: string) => string;
 };
 
 type ActiveEffectConfigStoreDocumentActions<TDocument extends DnD35eActiveEffect> = DocumentSheetStoreDocumentActions<TDocument> & {

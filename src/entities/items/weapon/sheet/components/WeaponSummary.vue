@@ -48,7 +48,6 @@
     grid-template: auto / 1fr 1fr;
     justify-items: center;
     font-size: 1.25rem;
-    height: 60px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -56,11 +55,14 @@
     li {
       color: #4b4a44;
       padding: 0.5rem 1rem;
+      display: grid;
+      height: 100%;
     }
 
     :deep(select) {
       width: 100%;
       font-size: 1rem;
+      align-self: end;
     }
   }
 </style>

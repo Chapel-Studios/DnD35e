@@ -4,7 +4,7 @@ A unified reference for all active effect components, compositions, and concrete
 
 > **Legend**: ✅ = Implemented &nbsp;|&nbsp; 🔲 = Planned (not yet in codebase)
 >
-> Fields wrapped with `Dnd35eField` are marked with `🔷` — they store data as `{ value, unidentifiedValue, overrides }`, not scalars.
+> Fields decorated with field metadata are marked with `🔷`.
 >
 > **Note**: Material was migrated from an Item type to an Active Effect type.
 

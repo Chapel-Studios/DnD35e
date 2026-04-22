@@ -37,7 +37,7 @@ import { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema } from './schemaWalker.
 import type {
   AspectGroup,
   AutocompleteOption,
-  EditorViewMode,
+  DisplayMode,
   FamiliarContext,
   FamiliarSchema,
   FieldAspect,
@@ -49,10 +49,13 @@ import type {
   FormulaToken,
   FormulaVariable,
   ValidationError,
+  ViewMode,
 } from './types.mjs';
-import { IDENTIFIED, isFieldAspect, UNIDENTIFIED } from './types.mjs';
+import { EDIT, isFieldAspect, PLAY, TRUE } from './types.mjs';
 import type { FamiliarKeyDownResult, UseFamiliarOptions } from './useFamiliar.mjs';
 import { measureTextOffset, useFamiliar } from './useFamiliar.mjs';
+import type { FamiliarOverlayInputApi, OverlayAutocompleteArgs } from './useFamiliarOverlayInput.mjs';
+import { useFamiliarOverlayInput } from './useFamiliarOverlayInput.mjs';
 import type { AspectLookupResult, GetAutocompleteOptionsConfig } from './utils.mjs';
 import {
   buildDocumentDataMap,
@@ -73,6 +76,7 @@ import {
   mergeAspectGroups,
   nameToFormulaData,
   parseFormula,
+  renderFormulaDisplayHTML,
   renderFormulaHTML,
   resolveFormula,
   resolveFormulaField,
@@ -85,6 +89,7 @@ export {
   buildDocumentFamiliar,
   buildMergedFamiliarContext,
   DOCUMENT_LEVEL_ASPECTS,
+  EDIT,
   ensureNameFormula,
   extractVariableAtPosition,
   extractVariables,
@@ -105,19 +110,21 @@ export {
   getTokenAtPosition,
   getVariableTokenIndex,
   getVariableTokens,
-  IDENTIFIED,
   insertAtCursor,
   isFieldAspect,
   measureTextOffset,
   mergeAspectGroups,
   nameToFormulaData,
   parseFormula,
+  PLAY,
   registerFamiliarSchema,
+  renderFormulaDisplayHTML,
   renderFormulaHTML,
   resolveFormula,
   resolveFormulaField,
-  UNIDENTIFIED,
+  TRUE,
   useFamiliar,
+  useFamiliarOverlayInput,
   validateFormula,
 };
 
@@ -126,10 +133,11 @@ export type {
   AspectLookupResult,
   AutocompleteOption,
   ContextDocumentType,
+  DisplayMode,
   DocumentContext,
-  EditorViewMode,
   FamiliarContext,
   FamiliarKeyDownResult,
+  FamiliarOverlayInputApi,
   FamiliarSchema,
   FieldAspect,
   FormulaContextBinding,
@@ -143,7 +151,9 @@ export type {
   FormulaVariable,
   GetAutocompleteOptionsConfig,
   NonNullDocumentContext,
+  OverlayAutocompleteArgs,
   TargetContexts,
   UseFamiliarOptions,
   ValidationError,
+  ViewMode,
 };

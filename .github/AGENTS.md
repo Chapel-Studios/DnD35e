@@ -5,20 +5,25 @@ Custom agents and skills for D&D 3.5e system planning, architecture, and knowled
 ## Core Agents
 
 ### planning
-**When to use**: Break down phases into concrete tasks, identify what work can happen in parallel, and route tasks by skill level (lead dev, jr dev, pair).
+**When to use**: Break down phases into concrete deliverables (user-facing stories), identify what work can happen in parallel, and route tasks by skill level (lead dev, jr dev, pair).
 
 **Capabilities**:
-- **Task decomposition**: Break phases into atomic, bounded, verifiable tasks
-- **Parallelization analysis**: Show which tasks are independent and can run simultaneously
+- **Deliverable-oriented decomposition**: Group work by user-visible stories, not technical layers
+- **UI/UX design inquiry**: Asks about and understands the design before decomposing work
+- **Parallelization analysis**: Show which stories are independent and can run simultaneously
 - **Skill-based routing**: Recommend whether a task is good for lead dev, jr dev, pair, or flexible
 - **Dependency mapping**: Clarify what must complete before what
-- **Acceptance criteria**: Define how to verify each task is done
+- **Registration awareness**: Ensures new document subtypes are wired into system.json, registration, and creation dialog
+- **Acceptance criteria**: Define how to verify each deliverable is done
 
 **Invoke**: 
 - Basic planning: `@planning Plan Phase 5 Feats`
 - Decompose with analysis: `@planning Break down feat content authoring into parallel tracks`
+- Phase execution: `@planning Review Phase 2 spec and decompose into atomic tasks`
 
 **Output**: Task breakdown with parallelization diagram, dependency map, and skill routing recommendations
+
+**Real-world example** (Phase 2): Planning agent created 12-track decomposition with 3 concurrent streams, skill routing (lead dev 8 tracks, jr dev 4), and critical path identification in one invocation. Output: `phase-02-task-decomposition.md`.
 
 **See also**: 
 - `.github/agents/planning-researcher.agent.md` for codebase pattern analysis (optional deep dive)
@@ -37,6 +42,9 @@ Custom agents and skills for D&D 3.5e system planning, architecture, and knowled
 - Review KB assets (instruction files, skills, agents) for consistency
 - Detect gaps in KB coverage
 - Check consistency of terminology, cross-references, examples
+- Run terminology drift audits against runtime constants/types before final docs
+- Add regression guardrails from session mistakes (root cause -> prevention rule)
+- Enforce platform-safe command guidance in curation notes (PowerShell vs Unix utilities)
 - Consolidate redundant documentation
 - Capture verified codebase knowledge in repository memory
 - Suggest phase-specific audits before starting new work
@@ -52,7 +60,7 @@ Custom agents and skills for D&D 3.5e system planning, architecture, and knowled
 ### silversmith
 **When to use**: Implement a phase from the migration plan — one checklist item at a time with approval gates between each section. Design-focused, D35E-aware, and pattern-matching.
 
-**Workflow**: Discuss-then-build. At phase start, SilverSmith reads the spec, asks design questions, and agrees on scope. Then executes one checklist item at a time: implement → build clean → report → wait for your Foundry testing → approval → next item.
+**Workflow**: Discuss-then-build. At phase start, SilverSmith reads the spec, **asks about UI/UX design for every user-facing feature**, agrees on design and scope. Then executes one checklist item at a time: implement → build clean → report → wait for your Foundry testing → approval → next item.
 
 **Capabilities**:
 - **Phase onboarding**: Reads spec + dependencies, surfaces ambiguities, proposes execution order
@@ -118,6 +126,7 @@ These specialized agents can be invoked directly for specific planning tasks:
 - Update completion checklists to match progress
 - Extract reusable patterns across phases
 - Add cross-references between phases
+- Run anti-regression checks for terminology drift and claim accuracy after implementation-heavy sessions
 
 **Invoke**: Type `/phase-planning` or describe the documentation improvement needed
 
@@ -176,21 +185,21 @@ Instruction files auto-load when you edit matching files, providing quick refere
 
 **Covers**: Field types (NumberField, StringField, etc), hierarchy, options, common patterns
 
-**Quick mental model**: Foundry fields are hierarchical validators + storage. Understand SchemaField nesting, Dnd35eField wrapping, and special field types (FormulaFamiliar, etc).
+**Quick mental model**: Foundry fields are hierarchical validators + storage. Understand SchemaField nesting, `useDnd35eField()` override defaults, `withFamiliar()` familiar metadata, and special field types (PriceField, FormulaField, etc).
 
 ### dnd35e-patterns
 **Auto-loads on**: Component or DataModel files in d35e system
 
-**Covers**: Component composition chains, data model organization, formula resolution, Active Effects, Identified/Unidentified pattern, bonus stacking
+**Covers**: Component composition chains, data model organization, formula resolution, Active Effects, identifiable/secret display behavior, bonus stacking
 
 **Quick mental model**: Build features by composing mixins → DataModel → Store → Sheet. Each layer handles one responsibility.
 
 ### vue-sheet-patterns
 **Auto-loads on**: `.vue` files
 
-**Covers**: Sheet view modes (edit/view + identified/unidentified), EditValue pattern, field permissions, FormGroup base, control button styling
+**Covers**: Sheet view modes (`edit`/`play`/`true`), EditValue pattern, field permissions, FormGroup base, control button styling
 
-**Quick mental model**: Sheets have two independent axes. Store getters handle view mode logic. FormGroups accept effective values, know about source values for editing.
+**Quick mental model**: Sheets use a unified 3-state mode model. Store getters handle view-aware values. FormGroups use source values only in edit mode.
 
 ### formula-familiar
 **Auto-loads on**: Formula-related files
@@ -200,11 +209,11 @@ Instruction files auto-load when you edit matching files, providing quick refere
 **Quick mental model**: FormulaFamiliar stores formula strings that parse once then evaluate with scope. Never cache results—formulas are already cached internally.
 
 ### dnd35e-field
-**Auto-loads on**: Compound field or Dnd35eField usage
+**Auto-loads on**: Field permissions, view-aware getters, or field override usage
 
-**Covers**: Dnd35eField structure, unidentified overrides, field permissions (visibility/editability), view-aware getters, FormGroup integration
+**Covers**: Field permissions (visibility/editability), field override cascade, view-aware getters, FormGroup integration
 
-**Quick mental model**: Dnd35eField wraps values with metadata (real + override values, permissions). Store getters handle view mode logic. Always use getViewAwareFieldValue for display.
+**Quick mental model**: Field permissions live in `flags.dnd35e.fieldOverrides` and cascade parent-to-child with most-restrictive-wins. Use store getters (`getViewAwareFieldValue`, `getSourceProperty`) for all field access in sheet components.
 
 ### form-groups
 **Auto-loads on**: FormGroup or sheet component files

@@ -4,6 +4,8 @@ import {
   requiredStringField,
 } from '@helpers/fieldBuilders.mjs';
 
+import type { ItemSystemData } from './ItemSystemData.mjs';
+
 const {
   SchemaField,
 } = foundry.data.fields;
@@ -27,6 +29,8 @@ abstract class ItemSystemModelBase extends Dnd35eDocumentSystemModel<foundry.doc
     return foundry.utils.mergeObject(superSchema, schema);
   }
 }
+
+interface ItemSystemModelBase extends ItemSystemData {}
 
 export {
   ItemSystemModelBase,

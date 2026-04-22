@@ -1,13 +1,13 @@
 <template>
-  <IdentifiableDocumentSheetVue mode="effect">
+  <DocumentSheetBody>
     <template #header-summary>
       <DisableEffect />
     </template>
-  </IdentifiableDocumentSheetVue>
+  </DocumentSheetBody>
 </template>
 <script lang="ts" setup>
   import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { IdentifiableDocumentSheetVue } from '@ec/Identifiable/index.mjs';
+  import { DocumentSheetBody } from '@ec/CoreMixin/index.mjs';
   import DisableEffect from '@effects/BaseActiveEffect/sheet/components/DisableEffect.vue';
   import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
   import { provide } from 'vue';

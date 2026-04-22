@@ -1,5 +1,5 @@
 ---
-description: "Use when building Vue sheets, form components, or working on sheet UI. Covers EditValue pattern, dual-axis view modes, field permissions, and component patterns."
+description: "Use when building Vue sheets, form components, or working on sheet UI. Covers EditValue pattern, 3-state view modes, field permissions, and component patterns."
 applyTo: "src/**/*.vue"
 ---
 
@@ -7,20 +7,15 @@ applyTo: "src/**/*.vue"
 
 ## Sheet View Modes
 
-Sheets have **two independent axes**:
+Sheets use a **single 3-state mode model**:
 
-| Axis | Controls | User Control |
-|------|----------|--------------|
-| **Edit/View** | Fields editable or read-only | Lock icon (header) — only visible if editable |
-| **Identified/Unidentified** | Identifies or override values shown | Eye icon (header) — GMs only, identifiable items only |
+| Mode | Meaning | Access |
+|------|---------|--------|
+| `edit` | Authoring mode (editable fields) | Owners + GMs |
+| `play` | Player-visible mode (masks/effective values) | Everyone with sheet access |
+| `true` | GM-only true-value play view (unmasked) | GMs only |
 
-### View Mode Grid
-
-```
-                  Edit Mode           View Mode (locked)
-Identified        Real values         Real values (readonly)
-Unidentified      Override values     Override values (readonly)
-```
+`play` carries the "unidentified/masked" behavior. `true` is the explicit GM-only unmasked mode.
 
 ### Store Getters for View Mode
 
@@ -28,10 +23,11 @@ Unidentified      Override values     Override values (readonly)
 // In any FormGroup or component using useDocumentSheetStore()
 const store = useDocumentSheetStore();
 
-store.isEditMode               // true = edit, false = view
+store.viewMode                 // 'edit' | 'play' | 'true'
+store.isEditMode               // true only in edit mode
+store.isPlayMode               // true only in player-visible mode
+store.isTrueMode               // true only in GM true-value mode
 store.isEditable               // true = user can edit (has perm AND edit mode)
-store.editorViewMode           // 'identified' | 'unidentified'
-store.isViewingAsUnidentified  // true if in unidentified view
 ```
 
 ## EditValue Pattern (Required in All FormGroups)
@@ -41,19 +37,20 @@ Every FormGroup computes an `editValue` that respects view mode:
 ```typescript
 // In FormGroup component
 const sourceValue = store.documentGetters.getSourceProperty<T>(props.fieldPath);
-const editorViewMode = store.editorViewMode;
+const viewMode = store.viewMode;
 
 const editValue = computed(() => {
   if (props.editDerived || !sourceValue) return props.value;  // use effective value
-  if (editorViewMode.value === 'unidentified') return props.value;  // use override
+  if (viewMode.value !== 'edit') return props.value;  // play/true use effective value
   return sourceValue.value as T;  // use real value
 });
 ```
 
 **Logic**:
-- **Identified edit mode** → show `sourceValue` (user edits real data)
-- **Unidentified edit mode** → show `props.value` (effective/override value)
-- **Any view mode** → show `props.value` (effective value) but readonly
+- **Edit mode** → show `sourceValue` (user edits real data)
+- **Play mode** → show `props.value` (effective/masked value)
+- **True mode** → show `props.value` (effective unmasked value for GM)
+- **Readonly slots** → always display `props.value`
 
 ## Field Permissions & Overrides
 
@@ -142,29 +139,29 @@ Groups related FormGroups under shared section-level controls:
 
 Auto-hides when all children are invisible (respects field permissions).
 
-## Compound FormGroup (Dnd35eField)
+## Compound Field Compatibility
 
-When a field is `Dnd35eField(InnerType)`, the store automatically handles `.value` unwrapping:
+Some legacy fields may still be compound-shaped. The store handles unwrapping:
 
 ```typescript
 // In store computeProperty
-getSourceProperty('system.hardness')  // If Dnd35eField(NumberField), returns { value, unidentifiedValue, ... }
+getSourceProperty('system.hardness')  // For compound values, returns object with `value`
 getViewAwareFieldValue('system.hardness')  // Already unwrapped to just the number
 ```
 
 **In FormGroup**:
 - Use `props.value` (already unwrapped via `getViewAwareFieldValue`)
-- Read `sourceValue.value` when in identified edit mode
-- Reference `props.value` when unidentified or view mode
+- Read `sourceValue.value` in edit mode when source is compound
+- Reference `props.value` in play/true modes
 
 ## Sheet Header
 
-Header renders edit/view toggle and identified/unidentified toggle (GMs only):
+Header renders a unified mode bar:
 
 ```typescript
-// _renderEditModeButton / _renderIdentifiedViewButton (imperative DOM)
-// Only render lock button if `this.isEditable`
-// Only render eye button if `isIdentifiable && game.user.isGM`
+// renderViewModeBar() (imperative DOM)
+// GM: edit + play + true (identifiable), edit + play (non-identifiable)
+// Non-GM: edit + play
 ```
 
 **Never auto-reset view mode on re-render** — GM's toggle choice persists.
@@ -173,10 +170,12 @@ Header renders edit/view toggle and identified/unidentified toggle (GMs only):
 
 ```typescript
 // In VueDocumentSheetMixin constructor
-this.sheetState = {
-  editMode: true,                              // Start in edit mode
-  editorViewMode: doc.system.isIdentified ? 'identified' : 'unidentified'  // Use doc's actual state
-};
+const initialMode = game.user.isGM ? EDIT : PLAY;
+this.renderModeStore = useRenderModeStore(
+  this.#document.testUserPermission(game.user, 'OWNER'),
+  hasSecrets,
+  initialMode
+);
 ```
 
 ## Test Coverage & Phase Boundaries
@@ -216,7 +215,7 @@ This tells future developers: "This code works now but we're intentionally defer
 
 **Item-only features** (testable in Phase 1):
 - Schema fields and their defaults
-- Identified/unidentified formula switching
+- Play-mode masking and true-mode value presentation
 - AE application to field values
 
 **Item-actor bridge features** (deferred to Phase 6+):

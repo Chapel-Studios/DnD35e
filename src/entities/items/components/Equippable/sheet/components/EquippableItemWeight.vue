@@ -1,6 +1,6 @@
 <template>
   <ItemWeight>
-    <template v-if="isEditViewMode" #controls>
+    <template v-if="isEditMode" #controls>
       <button
         class="field-control-btn weightless-toggle"
         type="button"
@@ -26,7 +26,7 @@
 
   import type { EquippableDocumentStore } from '../EquippableItemStore.mjs';
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
       isWeightlessWhenEquipped,

@@ -55,21 +55,22 @@ This document defines the localization patterns for the dnd35e system, informed 
 
 **Current (wrong):**
 ```typescript
-schema.weaponType = new Dnd35eField(StringField,
-  { choices: [...WEAPON_TYPES], initial: 'simple' },
-  { label: 'Weapon Type', hint: 'The general type...' }  // ❌ Hardcoded!
-);
+schema.weaponType = new StringField({
+  choices: [...WEAPON_TYPES],
+  initial: 'simple',
+  label: 'Weapon Type',  // ❌ Hardcoded!
+  hint: 'The general type...'
+});
 ```
 
 **New (correct):**
 ```typescript
-schema.weaponType = new Dnd35eField(StringField,
-  { choices: [...WEAPON_TYPES], initial: 'simple' },
-  { /* no label/hint - comes from LOCALIZATION_PREFIXES */ }
-);
+schema.weaponType = new StringField({
+  choices: [...WEAPON_TYPES],
+  initial: 'simple',
+  required: true,
+});
 ```
-
-**Exception:** The `Dnd35eField` wrapper needs to propagate localization to its inner `.value` field correctly. This may require making `Dnd35eField` properly participate in the schema walk (see Implementation section).
 
 ---
 
@@ -362,26 +363,20 @@ static defineSchema() {
   // Simple fields - NO label/hint, Foundry gets them from lang files
   schema.isMasterwork = new BooleanField({ required: true, initial: false });
 
-  // Dnd35eField wrapping - NO label/hint in wrapper options
-  schema.weaponType = new Dnd35eField(StringField,
-    { choices: [...WEAPON_TYPES], initial: 'simple', required: true },
-    { familiar: { aliases: ['type'] } }  // Only non-localization options
-  );
+  // Plain fields - NO label/hint in schema options
+  schema.weaponType = withFamiliar(new StringField({
+    choices: [...WEAPON_TYPES], initial: 'simple', required: true,
+  }), { aliases: ['type'] });
 
   // Nested SchemaField - field paths auto-resolve
   // e.g. "weaponDamage.damageRoll" matches FIELDS.weaponDamage.damageRoll
   schema.weaponDamage = new SchemaField({
-    damageRoll: new Dnd35eField(StringField,
-      { initial: '', required: true, blank: true },
-      { familiar: { aliases: ['roll', 'dice'] } }
-    ),
-    damageType: new Dnd35eField(StringField,
-      { choices: [...DAMAGE_TYPES], initial: 'slashing', required: true },
-      {}
-    ),
-    critRange: new Dnd35eField(StringField, { required: true, initial: '20' }, {}),
-    critMultiplier: new Dnd35eField(NumberField, { required: true, initial: 2 }, {}),
-    rangeIncrement: new Dnd35eField(NumberField, { required: true, nullable: true }, {}),
+    damageRoll: withFamiliar(new StringField({ initial: '', required: true, blank: true }),
+      { aliases: ['roll', 'dice'] }),
+    damageType: new StringField({ choices: [...DAMAGE_TYPES], initial: 'slashing', required: true }),
+    critRange: new StringField({ required: true, initial: '20' }),
+    critMultiplier: new NumberField({ required: true, initial: 2 }),
+    rangeIncrement: new NumberField({ required: true, nullable: true }),
   });
 
   return schema;
@@ -390,21 +385,9 @@ static defineSchema() {
 
 ---
 
-## Dnd35eField Integration
+## Wrapper Note (Superseded)
 
-The custom `Dnd35eField` class creates a compound schema (`{ value, unidentifiedValue }`). For `LOCALIZATION_PREFIXES` to work, Foundry's schema walker needs to see the inner fields. Since `Dnd35eField` extends `SchemaField`, the walker should traverse into it automatically. The FIELDS entry at `weaponType` will match the `Dnd35eField` at that path, and Foundry will set the label/hint on the `Dnd35eField` instance itself.
-
-**Verify:** The `Dnd35eField` class should accept `label` and `hint` properties (inherited from `DataField._defaults`). If it overrides `_defaults`, ensure `label` and `hint` are preserved.
-
-**If Dnd35eField doesn't participate in localization correctly,** add this to the class:
-
-```typescript
-class Dnd35eField extends SchemaField {
-  // Ensure LOCALIZATION_PREFIXES can set our label/hint
-  // The parent SchemaField handles apply() traversal, which is what
-  // Localization.localizeSchema() uses.
-}
-```
+Earlier POC notes referenced a custom wrapper field. That approach was removed. Localization now relies on plain Foundry fields plus `LOCALIZATION_PREFIXES` traversal.
 
 ---
 
@@ -525,7 +508,6 @@ Each file contributes its own branch of the nested tree. The deep merge combines
 
 - [ ] Upgrade vite lang merge to deep merge
 - [ ] Switch lang file type from `Record<string, string>` to `Record<string, any>`
-- [ ] Verify `Dnd35eField` participates correctly in `Localization.localizeSchema()` traversal
 - [ ] Add `LOCALIZATION_PREFIXES` to base `Dnd35eDocumentSystemModel` (if it has localizable fields)
 
 ### Phase 2: Restructure Language Files
@@ -544,7 +526,6 @@ Each file contributes its own branch of the nested tree. The deep merge combines
 - [ ] Add to `EquippableItemSystemModel` → `[...super, "dnd35e.EQUIPPABLE"]`
 - [ ] Add to `WeaponSystemModel` → `[...super, "dnd35e.WEAPON"]`
 - [ ] Remove label/hint from field builder calls for auto-localized fields
-- [ ] Remove label/hint from `Dnd35eField` constructor calls
 - [ ] Update `fieldBuilders.mts` — make label/hint optional (they were required params)
 
 ### Phase 4: Update Components/Templates

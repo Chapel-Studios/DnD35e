@@ -2,8 +2,10 @@ import type { ActorType } from '@actors/actorTypes.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
-import type { DnD35eActiveEffect, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
+import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
+import type { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
+import { resolveActiveEffectChange } from '@effects/BaseActiveEffect/resolveChangeValue.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
@@ -53,7 +55,7 @@ class ActorDnd35e<
         // Only apply actor-targeted changes (default to actor for backwards compatibility with base Foundry effects)
         const changeTarget = change.target ?? EFFECT_CHANGE_TARGET.ACTOR;
         if ( !change.key || (change.phase !== phase) || (changeTarget !== EFFECT_CHANGE_TARGET.ACTOR) ) continue;
-        const copy = foundry.utils.deepClone(change) as AppliedActorEffectChange;
+        const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as AppliedActorEffectChange;
         copy.effect = effect as DnD35eActiveEffect;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
         copy.priority ??= 0;

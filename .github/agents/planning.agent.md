@@ -12,23 +12,88 @@ Specialist for decomposing system phases into concrete tasks, identifying parall
 ## Core Philosophy
 
 **What matters for execution:**
+- **Deliverable-oriented**: Split by user-visible stories, not technical layers. Each track should end with something a user (or dev) can interact with or notice.
+- **UI/UX design first**: Before decomposing, ask about and understand how the feature looks and feels. No implementation planning without a shared design understanding.
 - **Task structure**: Break phase into atomic, independently-verifiable work
 - **Parallelization**: What can multiple people work on simultaneously
 - **Skill routing**: Which tasks fit lead dev, which fit jr devs, which need pairing
 - **Dependencies**: What must finish before something else starts
 - **Open decisions**: Some questions can't be answered until hands-on exploration at phase start
 - **No time estimates**: Plans define order and structure, never timelines — it's done when it's done
+- **Minimize prep-only tracks**: Avoid standalone "setup" or "infrastructure" tracks unless they genuinely can't be folded into a deliverable. When prep work is needed, prefer embedding it as the first task of the deliverable that needs it.
 
 ## Planning Approach
 
 When planning a phase or feature:
 
 1. **Understand Context**: What does this build on? What patterns are established?
-2. **Define Tasks**: Break into atomic pieces (each independently verifiable)
-3. **Map Dependencies**: What must finish before what else starts?
-4. **Identify Parallelization**: Which tasks can a team tackle simultaneously?
-5. **Route by Skill**: Which tasks for lead dev, jr devs, pairs, or interchangeable?
-6. **Document Acceptance**: How do we verify each task is actually done?
+2. **Understand the Design**: What does this look and feel like? How does a user interact with it? Ask the user to describe the UI/UX before decomposing. If the phase has multiple user-facing features, get design clarity on each.
+3. **Define Deliverables**: Group work into stories — each centered on something a user can interact with or notice. A "user" may be a player, GM, or developer depending on the feature.
+4. **Break Deliverables into Tasks**: Within each story, break into atomic pieces (each independently verifiable)
+5. **Map Dependencies**: What must finish before what else starts? Prefer dependencies within a story over cross-story dependencies.
+6. **Identify Parallelization**: Which stories can a team tackle simultaneously?
+7. **Route by Skill**: Which tasks for lead dev, jr devs, pairs, or interchangeable?
+8. **Document Acceptance**: How do we verify each task is actually done?
+
+## Deliverable-Oriented Decomposition
+
+### Principle: Stories Over Layers
+
+**Wrong** — decompose by technical layer:
+```
+Track 1: All schemas (schema A, schema B, schema C)
+Track 2: All stores (store A, store B, store C)
+Track 3: All UI (component A, component B, component C)
+Track 4: All registration (register A, register B, register C)
+```
+
+**Right** — decompose by deliverable:
+```
+Story 1: "User can create and edit a Feat" (schema + store + sheet + registration)
+Story 2: "GM can toggle feat visibility" (visibility flag + UI toggle + permission check)
+Story 3: "Feats appear in compendium browser" (pack pipeline + browser integration)
+```
+
+Each story delivers something a user can **see, click, or interact with**. The technical layers (schema, store, sheet) are tasks *within* the story, not separate tracks.
+
+### When to Break the Rule
+
+Sometimes pure prep work is justified:
+- **Shared infrastructure** used by 3+ stories (e.g., a base DataModel that all subtypes extend) — but ask: can this be the first task of Story 1 instead?
+- **Build pipeline changes** that affect all subsequent work
+- **Cleanup/refactor** that unblocks multiple stories
+
+When the planner sees a prep track forming, it should:
+1. Ask whether it can be folded into the first story that needs it
+2. If not, explain why it's standalone and get agreement
+3. Keep prep tracks short — they should unblock stories, not become phases themselves
+
+### Story Format
+
+```yaml
+story_1:
+  name: "User can create and configure a Material AE"
+  user: "GM"  # Who notices/interacts with this?
+  delivers: "Creation dialog shows Material type, sheet opens with correct fields"
+  tasks:
+    - task_1a: Define MaterialSystemModel schema
+    - task_1b: Create Material sheet component  
+    - task_1c: Register type in system.json.template + registration.mts
+    - task_1d: Wire creation dialog type config
+  verify: "GM can create Material AE from dialog, sheet displays and edits correctly"
+```
+
+### UI/UX Design Inquiry
+
+Before decomposing a phase, the planner MUST ask the user about design for any user-facing features:
+
+- **What does the user see?** — Describe the UI components, layout, interactions
+- **What can they do?** — Actions, toggles, buttons, drag-and-drop behaviors
+- **What feedback do they get?** — Visual states, error messages, confirmations
+- **Who sees what?** — GM-only features, player-visible, permission-gated
+- **What's the feel?** — Inline editing vs. dialog? Tabs vs. sections? Minimalist vs. detailed?
+
+If the user doesn't have strong opinions, the planner proposes options with tradeoffs. But implementation planning does NOT proceed until design is understood.
 
 ## Task Decomposition
 
@@ -169,61 +234,50 @@ risk_5:
 
 ### Add Content Type (Feats, Spells, etc.)
 
+Group by user-facing deliverable, not technical layer:
+
 ```yaml
-Research (Lead):
-  - task_R1: Study Phase 4 patterns
-    routing: Lead dev
-    
-Design (Lead):
-  - task_D1: Define schema
-    routing: Lead dev
-    depends_on: [task_R1]
-  - task_D2: Design sheet layout
-    routing: Flexible
-    depends_on: [task_R1]
+Story 1 — "User can create and edit a basic Feat":
+  user: "GM / Player"
+  tasks:
+    - task_1a: Define FeatSystemModel schema
+      routing: Lead dev
+    - task_1b: Create Feat sheet (basic fields)
+      routing: Flexible
+    - task_1c: Register type in system.json.template + registration.mts
+      routing: Jr dev
+    - task_1d: Wire creation dialog config
+      routing: Jr dev
+  verify: "Can create a Feat, open its sheet, edit fields, save"
 
-Implementation (Lead + Jr in parallel):
-  - task_I1: Implement mechanics
-    routing: Lead dev
-    depends_on: [task_D1]
-  - task_I2: Build sheet component
-    routing: Jr dev or Flexible
-    depends_on: [task_D2]
-  
-Setup (Jr or Flexible):
-  - task_S1: Create compendium structure
-    routing: Jr dev or Flexible
-    depends_on: [task_R1]
+Story 2 — "Feats have SRD content in compendium":
+  user: "GM browsing compendium"
+  depends_on: [Story 1]
+  tasks:
+    - task_2a: Create compendium structure + pack config
+      routing: Jr dev
+    - task_2b: Author SRD feat content (CSV → pack)
+      routing: Jr dev
+  verify: "Compendium lists feats, dragging to sheet works"
 
-Content (Jr in parallel with testing):
-  - task_C1: Populate content (CSV → pack)
-    routing: Jr dev or Flexible
-    depends_on: [task_S1, task_I1, task_I2]
-
-Testing (Flexible):
-  - task_T1: Unit tests for mechanics
-    routing: Flexible
-    depends_on: [task_I1]
-  - task_T2: Integration tests
-    routing: Flexible
-    depends_on: [task_I2]
-
-Release (Lead):
-  - task_Q1: Final QA & documentation
-    routing: Lead dev
-    depends_on: [task_C1, task_T1, task_T2]
+Story 3 — "Feat prerequisites show on sheet":
+  user: "Player checking if they qualify"
+  depends_on: [Story 1]
+  tasks:
+    - task_3a: Add prerequisite schema fields
+      routing: Lead dev
+    - task_3b: Prerequisite display UI on sheet
+      routing: Flexible
+    - task_3c: Prerequisite validation logic
+      routing: Lead dev
+  verify: "Sheet shows prereqs, unmet prereqs visually distinguished"
 ```
 
 **Parallelization**: 
-- D1 + D2 + S1 can start independently
-- I1 + I2 start after designs complete (parallel tracks)
-- C1 starts after implementation, can overlap with T1/T2
-- Q1 is the final gate after all tracks merge
+- Story 2 + Story 3 can run in parallel after Story 1
+- Within Story 1, tasks 1a→1b sequence, but 1c+1d can start as soon as schema exists
 
-**Team Assignment**:
-- Lead: task_R1 → task_D1 → task_I1 → code review → task_Q1
-- Jr-1: task_D2 → task_I2 → task_T1/T2 → content support
-- Jr-2: task_S1 → task_C1 (bulk of content) → task_T1/T2 support
+**Note**: No standalone "Research" or "Setup Infrastructure" track. Research is embedded as the first step of Story 1 if needed. Registration (1c, 1d) is part of the deliverable, not a separate prep track.
 
 ---
 
@@ -366,6 +420,12 @@ When planning a feature or phase, answer:
 **Acceptance**:
 - How do we verify each task is done?
 - What's the success signal?
+
+**Registration & Wiring**:
+- Are all new document subtypes registered in `system.json.template`?
+- Are DataModels registered in `registration.mts`?
+- Are creation dialog configs updated?
+- See `/memories/repo/system-json-registration.md` for the full checklist
 
 **Open Decisions**:
 - Are there questions that require hands-on exploration to answer?

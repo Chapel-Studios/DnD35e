@@ -19,10 +19,10 @@
     </div>
     <template #readonly>
       <span v-if="value" class="true toggle-value">
-        {{ trueLabel }}
+        {{ localizedTrueLabel }}
       </span>
       <span v-else class="false toggle-value">
-        {{ falseLabel }}
+        {{ localizedFalseLabel }}
       </span>
     </template>
   </FormGroup>
@@ -58,16 +58,20 @@
     flip?: boolean;
   }>();
 
-  const { isEditViewMode, isIdentifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
+    documentGetters: { hasMaskForField },
     documentActions: { getDirectFieldUpdater, getViewAwareFieldUpdater },
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;
-    return !isEditViewMode.value;
+    return !isEditMode.value;
   });
+
+  const localizedTrueLabel = computed(() => props.trueLabel ? game.i18n.localize(props.trueLabel) : '');
+  const localizedFalseLabel = computed(() => props.falseLabel ? game.i18n.localize(props.falseLabel) : '');
 
   const fieldUpdater = props.onUpdate ?? (
     props.directUpdate
@@ -78,7 +82,7 @@
   const sourceValue = getSourceProperty<boolean>(props.fieldPath);
   const editValue = computed(() => {
     if (props.editDerived || !sourceValue) return props.value;
-    if (!isIdentifiedViewMode.value) return props.value;
+    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return props.value;
     return sourceValue.value as boolean;
   });
 

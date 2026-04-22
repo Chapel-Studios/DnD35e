@@ -4,7 +4,7 @@
     :name="`system.changes.${index}.value`"
     :value="String(change.value ?? '')"
     :placeholder="valuePlaceholder"
-    :disabled="!isEditViewMode || change.isSystem"
+    :disabled="!isEditMode || change.isSystem"
   />
 </template>
 
@@ -19,7 +19,7 @@
     index: number;
   }>();
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const valuePlaceholder = game.i18n.localize('EFFECT.ChangeValue');
 </script>

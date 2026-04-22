@@ -203,6 +203,10 @@
         "Name": "Randomize HP",
         "Hint": "Randomize NPC hit points."
       },
+      "EnforceSingleMaterial": {
+        "Name": "Enforce Single Material",
+        "Hint": "Prevent items from having multiple standard Material effects. Broken and Masterwork subtypes are always allowed."
+      },
       "UseAutoAmmoRecovery": {
         "Name": "Auto Ammo Recovery",
         "Hint": "Automatically recover ammunition after combat."

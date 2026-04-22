@@ -69,7 +69,7 @@ When a feat is on an actor, its passive bonuses follow the Material pattern:
 - [ ] Define schema: uses (SchemaField with value, max, per: 'day'|'encounter'|'week'|'unlimited', or null for unlimited)
 - [ ] Define schema: prerequisites (StringField, human-readable text e.g. "Str 15, Cleave")
 - [ ] Define schema: source (StringField, book reference e.g. "PHB p. 92")
-- [ ] Add `identifiedName` and `unidentifiedName` fields (Dnd35eField pattern, though feats are always identified)
+- [ ] Add secret-aware display naming fields/patterns as needed (though feats are always identified)
 - [ ] Add flag: conditional bonuses (array) for future predicates — store conditions like "flanking" without applying in prep
 - [ ] Add field: feat components/tags for filtering: ['weapon', 'combat', 'teamwork', 'leadership'] (stub, optional)
 - [ ] Test: FeatSystemModel instantiation

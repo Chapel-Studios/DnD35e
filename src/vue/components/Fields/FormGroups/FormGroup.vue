@@ -1,12 +1,15 @@
 <template>
   <div class="form-group" :class="formGroupClasses" :hidden="!isFieldVisible">
     <div v-if="hasLabel" class="form-group-label">
-      <label>
-        <i v-if="showUnidentifiedIndicator" class="fas fa-low-vision unidentified-indicator" :title="localize('dnd35e.IDENTIFIABLE.UnidentifiedValueHint')"></i>
+      <label :title="labelTooltip">
         {{ resolvedLabel }}
+        <span v-if="showMaskedBadge" class="masked-badge" :title="maskedBadgeTooltip" :aria-label="maskedBadgeTooltip">
+          <i class="fa-solid fa-mask" aria-hidden="true" />
+        </span>
       </label>
       <!-- GM permission controls next to label -->
       <FieldControls
+        v-if="props.showFieldControls !== false"
         :field-path="props.fieldPath"
         :default-editability="props.defaultEditability"
         :default-visibility="props.defaultVisibility"
@@ -20,26 +23,17 @@
     <slot v-if="isFieldEditable"></slot>
     <slot v-else name="readonly">{{ props.value }}</slot>
 
-    <!-- Hint text -->
     <p v-if="hasHint" class="hint">
-      <!-- GM permission controls before content when no label -->
-      <FieldControls
-        v-if="!hasLabel"
-        :field-path="props.fieldPath"
-        :default-editability="props.defaultEditability"
-        :default-visibility="props.defaultVisibility"
-      >
-        <slot name="controls" :editable="isFieldEditable" />
-      </FieldControls>
       {{ resolvedHint }}
     </p>
 
-    <!-- Standalone controls when no label and no hint -->
+    <!-- Standalone controls when no label -->
     <FieldControls
-      v-if="!hasLabel && !hasHint"
+      v-if="!hasLabel && props.showFieldControls !== false"
       :field-path="props.fieldPath"
       :default-editability="props.defaultEditability"
       :default-visibility="props.defaultVisibility"
+      :read-only="props.readOnly"
     >
       <slot name="controls" :editable="isFieldEditable" />
     </FieldControls>
@@ -60,7 +54,7 @@
     gmOnlyEditability,
   } from './fieldPermissions.mjs';
 
-  const props = defineProps<{
+  const props = withDefaults(defineProps<{
     label?: string; // localization key
     hint?: string; // localization key for hint text, or raw string if localizeHint=false
     // TODO(Phase 3): evaluate removing localizeHint — hints are pre-localized via LOCALIZATION_PREFIXES
@@ -72,7 +66,12 @@
     defaultEditability?: FieldEditability; // defaults to 'normal'
     /** When true, forces the readonly display. */
     readOnly?: boolean;
-  }>();
+    /** When false, suppress the built-in FieldControls for this field wrapper. */
+    showFieldControls?: boolean;
+  }>(), {
+    localizeHint: true,
+    showFieldControls: true,
+  });
   
   function localize(key: string): string {
     return game.i18n.localize(key);
@@ -82,17 +81,16 @@
     documentGetters: {
       getIsFieldVisible,
       getIsFieldEditable,
+      getMaskForField,
+      hasMaskForField,
     },
     _storeUtils: {
+      getFieldHint,
+      getFieldLabel,
       resolveVisibility,
       resolveEditability,
-      resolveFieldMeta,
-      getSchemaField,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
-
-  // Schema field for this path (pre-localized by Foundry's LOCALIZATION_PREFIXES)
-  const schemaField = getSchemaField(props.fieldPath);
 
   /**
    * Resolve label: explicit prop (localization key) > schema field label (already localized)
@@ -101,22 +99,25 @@
    */
   const resolvedLabel = computed(() => {
     if (props.label) return localize(props.label);
-    return schemaField?.options?.label ?? '';
+    return getFieldLabel(props.fieldPath);
   });
 
   const hasLabel = computed(() => !!resolvedLabel.value);
 
   /**
-   * Resolve hint: explicit prop > schema field hint (already localized)
+   * Resolve explicit inline helper text only.
+   * Schema field hints stay on the label tooltip.
    */
   const resolvedHint = computed(() => {
-    if (props.hint) return props.localizeHint === false ? props.hint : localize(props.hint);
-    return schemaField?.options?.hint ?? '';
+    if (!props.hint) return '';
+    return props.localizeHint === false ? props.hint : localize(props.hint);
   });
 
   const hasHint = computed(() => !!resolvedHint.value);
+  const fieldHint = computed(() => getFieldHint(props.fieldPath));
+  const labelTooltip = computed(() => fieldHint.value || undefined);
 
-  const { isIdentifiedViewMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   // Get effective visibility: override > prop > schema default > 'everyone'
   const isFieldVisible = getIsFieldVisible(props.fieldPath, props.defaultVisibility);
@@ -127,11 +128,28 @@
   const isVisibilityRestricted = computed(() => resolveVisibility(props.fieldPath, props.defaultVisibility) !== everyoneVisibility);
   const isEditabilityRestricted = computed(() => resolveEditability(props.fieldPath, props.defaultEditability) === gmOnlyEditability);
 
-  // Unidentified value indicator: GM-only, unidentified view, field has identifiable unidentified value
-  const fieldIdentifiable = resolveFieldMeta(props.fieldPath)?.identifiable ?? false;
-  const showUnidentifiedIndicator = computed(() =>
-    fieldIdentifiable && isGM.value && !isIdentifiedViewMode.value
-  );
+  const showMaskedBadge = computed(() => isGM.value && hasMaskForField(props.fieldPath).value);
+  const maskValue = getMaskForField(props.fieldPath);
+
+  const formatMaskValue = (value: unknown): string => {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean' || value === null) return String(value);
+    if (value && typeof value === 'object') {
+      const objectValue = value as { toString?: () => string };
+      if (typeof objectValue.toString === 'function' && objectValue.toString !== Object.prototype.toString) {
+        return objectValue.toString();
+      }
+    }
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  };
+
+  const maskedBadgeTooltip = computed(() => game.i18n.format('dnd35e.IDENTIFIABLE.MaskedValueHint', {
+    value: formatMaskValue(maskValue.value),
+  }));
 
   // Form group classes
   const formGroupClasses = computed(() => ({
@@ -165,41 +183,28 @@
 
   .form-group-label label {
     margin: 0;
+    cursor: help;
   }
 
-  .unidentified-indicator {
-    color: var(--color-level-warning);
-    font-size: var(--font-size-11);
-    opacity: 0.8;
-  }
-
-  .form-group.with-hint {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 0.25rem 0.5rem;
+  .masked-badge {
+    display: inline-flex;
     align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--color-border);
+    justify-content: center;
+    margin-left: 0.35rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-level-warning) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-level-warning) 40%, transparent);
+    color: var(--color-level-warning);
+    font-size: var(--font-size-10);
+    font-weight: 600;
+    line-height: 1.2;
+    vertical-align: middle;
   }
 
-  .form-group.with-hint:last-child {
-    border-bottom: none;
-  }
-
-  .form-group.with-hint label {
-    font-weight: 500;
-  }
-
-  /* When no label, let slotted content span full grid width */
-  .form-group.with-hint :slotted(:first-child:last-of-type) {
-    grid-column: 1 / -1;
-  }
-
-  .form-group.with-hint :slotted(input),
-  .form-group.with-hint :slotted(select),
-  .form-group.with-hint :slotted(.form-fields) {
-    justify-self: end;
+  .masked-badge i {
+    font-size: 0.65rem;
   }
 
   .form-group.with-hint :slotted(.hint) {

@@ -4,8 +4,8 @@
     :value="isDisabled"
     :on-update="getDirectFieldUpdater('disabled')"
     field-path="disabled"
-    true-label="EFFECT.Disabled"
-    false-label="EFFECT.Enabled"
+    true-label="dnd35e.EFFECT.Disabled"
+    false-label="dnd35e.EFFECT.Enabled"
     flip
   />
 </template>

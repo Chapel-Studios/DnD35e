@@ -28,8 +28,8 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>) => {
   const documentGetters: WeaponGetters = {
     ...baseStore.documentGetters,
     ...equippableStore.documentGetters,
-    weaponType: computed(() => game.i18n.localize(document.value.system.weaponType.value)),
-    weaponSubtype: computed(() => game.i18n.localize(document.value.system.weaponSubtype.value)),
+    weaponType: computed(() => game.i18n.localize(document.value.system.weaponType)),
+    weaponSubtype: computed(() => game.i18n.localize(document.value.system.weaponSubtype)),
   };
 
   const _storeUtils: weaponStoreUtils = {
@@ -39,8 +39,7 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>) => {
 
   const documentActions = {
     ...baseStore.documentActions,
-    // no specific actions in equippable yet, but they will come
-    //...equippableStore.documentActions,
+    ...equippableStore.documentActions,
   };
 
   return {

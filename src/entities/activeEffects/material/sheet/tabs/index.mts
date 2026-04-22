@@ -1,5 +1,6 @@
 import type { SheetTab } from '@ec/CoreMixin/index.mjs';
 
+import MaterialChanges from './MaterialChanges.vue';
 import MaterialDetails from './MaterialDetails.vue';
 
 const materialDetailsTab: SheetTab = {
@@ -10,7 +11,17 @@ const materialDetailsTab: SheetTab = {
   order: 10,
 };
 
+const materialChangesTab: SheetTab = {
+  id: 'changes',
+  label: 'EFFECT.TABS.changes',
+  component: MaterialChanges,
+  order: 30,
+  icon: 'fa-solid fa-gears',
+};
+
 export {
+  MaterialChanges,
+  materialChangesTab,
   MaterialDetails,
   materialDetailsTab,
 };

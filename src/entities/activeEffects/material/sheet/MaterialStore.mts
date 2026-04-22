@@ -1,13 +1,10 @@
-import type { DocumentSheetStore, DocumentSheetStoreUtils } from '@ec/CoreMixin/index.mjs';
-import type { IdentifiableDocumentActions, IdentifiableDocumentGetters, IdentifiableDocumentStoreUtils, IdentifiableStore } from '@ec/Identifiable/index.mjs';
-import { useIdentifiableStore } from '@ec/Identifiable/index.mjs';
-import type { ActiveEffectConfigStore, ActiveEffectConfigStoreDocumentActions, ActiveEffectConfigStoreDocumentGetters } from '@effects/BaseActiveEffect/index.mjs';
-import {
-  getDefaultActiveEffectTabs,
-  useActiveEffectConfigStore,
-} from '@effects/BaseActiveEffect/index.mjs';
-import type { MaterialType } from '@effects/material/index.mjs';
-import { Material, materialDetailsTab } from '@effects/material/index.mjs';
+import type { DocumentSheetStoreUtils } from '@ec/CoreMixin/index.mjs';
+import type { ActiveEffectConfigStoreDocumentActions, ActiveEffectConfigStoreDocumentGetters } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
+import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
+import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
+import { getDefaultActiveEffectTabs } from '@effects/BaseActiveEffect/sheet/tabs/index.mjs';
+import type { MaterialType } from '@effects/material/Material.mjs';
+import { Material } from '@effects/material/Material.mjs';
 import { PriceData } from '@settings/currency/index.mjs';
 import type { DamageReductionTypesConfig } from '@settings/gameRules/_types.mjs';
 import { GAME_RULES_KEYS } from '@settings/gameRules/constants.mjs';
@@ -17,17 +14,16 @@ import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
 
+import { materialChangesTab, materialDetailsTab } from './tabs/index.mjs';
+
 const useMaterialStore = (context: VueApplicationContext<Material>): MaterialStore => {
   const baseStore = useActiveEffectConfigStore<MaterialType>(context);
-  const identifiableStore = useIdentifiableStore(
-    context,
-    baseStore as DocumentSheetStore<MaterialType>
-  );
   const { replaceTabs } = baseStore._storeUtils.tabStore;
   replaceTabs([
     materialDetailsTab,
     ...getDefaultActiveEffectTabs()
-      .filter(tab => tab.id !== 'details'),
+      .filter(tab => tab.id !== 'details' && tab.id !== 'changes'),
+    materialChangesTab,
   ]);
 
   const {
@@ -36,7 +32,6 @@ const useMaterialStore = (context: VueApplicationContext<Material>): MaterialSto
 
   const documentGetters: MaterialGetters = {
     ...baseStore.documentGetters,
-    ...identifiableStore.documentGetters,
     price: computed(() => getViewAwareFieldValue('system.price') || new PriceData({})),
     hardness: computed(() => getViewAwareFieldValue('system.hardness') ?? 0),
     bonusHp: computed(() => getViewAwareFieldValue('system.bonusHp') ?? 0),
@@ -55,23 +50,19 @@ const useMaterialStore = (context: VueApplicationContext<Material>): MaterialSto
 
   const _storeUtils: MaterialStoreUtils = {
     ...baseStore._storeUtils,
-    ...identifiableStore._storeUtils,
   };
 
   return {
     ...baseStore,
-    ...identifiableStore,
     documentGetters,
     _storeUtils,
     documentActions: {
       ...baseStore.documentActions,
-      ...identifiableStore.documentActions,
     },
   };
 };
 
-interface MaterialGetters extends ActiveEffectConfigStoreDocumentGetters,
-  IdentifiableDocumentGetters
+interface MaterialGetters extends ActiveEffectConfigStoreDocumentGetters
 {
   price: ComputedRef<PriceData>;
   hardness: ComputedRef<number>;
@@ -81,14 +72,11 @@ interface MaterialGetters extends ActiveEffectConfigStoreDocumentGetters,
   damageReductionTypeOptions: ComputedRef<MultiSelectOption<string>[]>;
 }
 
-interface MaterialStoreUtils extends DocumentSheetStoreUtils<MaterialType>, 
-  IdentifiableDocumentStoreUtils {}
+interface MaterialStoreUtils extends DocumentSheetStoreUtils<MaterialType> {}
 
-interface MaterialActions extends ActiveEffectConfigStoreDocumentActions<MaterialType>,
-  IdentifiableDocumentActions {}
+interface MaterialActions extends ActiveEffectConfigStoreDocumentActions<MaterialType> {}
 
-interface MaterialStore extends IdentifiableStore,
-  ActiveEffectConfigStore<MaterialType>
+interface MaterialStore extends ActiveEffectConfigStore<MaterialType>
 {
   documentGetters: MaterialGetters;
   _storeUtils: MaterialStoreUtils;

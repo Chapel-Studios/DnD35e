@@ -10,7 +10,7 @@ dnd35e uses **mixin composition** rather than deep inheritance. Each layer adds 
 
 ```
 CoreMixin
-  └── Identifiable (tracked/identified dual-view)
+  └── Identifiable (tracked state + secret-aware display behavior)
         └── PhysicalItem (weight, price, hardness, HP)
               └── EquippableItem (equipment slots, equipped state)
                     └── Weapon
@@ -50,11 +50,11 @@ class EquippableItemSystemModel extends PhysicalItemSystemModel {
 | **Store** | `*Store.mts` | Pinia store with computed properties |
 | **Document** | `*.mts` (Item/Actor class) | Document lifecycle hooks |
 
-**All use Dnd35eField for wrapped data** — see `dnd35e-field.instructions.md`.
+**Legacy fields may still be compound-shaped** — see `dnd35e-field.instructions.md` for compatibility rules.
 
 ## Formula Resolution
 
-FormulaFamiliar enables `#context.property` syntax in formulas. Schema walker auto-discovers formula-eligible fields.
+FormulaFamiliar enables `#context.property` syntax in formulas. Schema walker **includes all fields by default** (opt-out via `familiar: { formulaVisible: false }`).
 
 ```typescript
 // In schema definition
@@ -77,25 +77,22 @@ Two-phase application:
 1. **Initial phase** (`prepareEmbeddedDocuments()`) — AEs created, unrelated to document state
 2. **Final phase** (`prepareDerivedData()`) — AEs applied to item/actor, document state used
 
-**In Dnd35eField context**: Changes on a wrapped field are auto-routed to `.value` sub-field.
+## Identifiable + ViewMode Model
 
-```typescript
-// If schema.hardness is Dnd35eField(NumberField)
-// An AE adding 5 to "system.hardness" actually modifies system.hardness.value
-```
-
-## Identified/Unidentified Duality
-
-The `Identifiable` mixin enables tracked/identified states with formula-driven names and dual view modes (Edit/View, Identified/Unidentified).
+The `Identifiable` mixin provides tracked/identified state, while sheet presentation is controlled by `ViewMode` (`edit` / `play` / `true`).
 
 ```typescript
 interface Identifiable {
   system.isIdentified: boolean;
   system.slug: string;  // Stable ID used by formulas
-  system.name: FormulaData;  // Formula-driven display name
-  system.nameUnidentified: FormulaData | null;  // Override when unidentified
+  system.nameFormula: FormulaData;  // Formula-driven display name source
 }
 ```
+
+In practice:
+- `play` mode is player-visible and applies mask/effective logic
+- `true` mode is GM-only unmasked play view
+- `edit` mode is authoring mode (raw editable source semantics)
 
 ## Bonus Type Stacking (Material Pattern)
 
@@ -120,17 +117,17 @@ Sheet components belong in their entity-type folder:
 ```
 src/entities/items/
   components/
-    physical/
+    Physical/
       sheet/components/
-        PhysicalItemHeaderStatus.vue        ← Physical item badges
+        PhysicalItemHeaderStatus.vue       ← Physical item badges
         ...                                ← Other physical-item-only sheet components
-    equippable/
+    Equippable/
       sheet/components/
         EquippableHeaderStatus.vue         ← Equippable-specific (equipped/carried state)
-        ...                               ← Other equippable-item-only sheet components
-    weapon/
-      sheet/components/
-        WeaponDamage.vue                   ← Weapon damage form group
+        ...                                ← Other equippable-item-only sheet components
+  Weapon/
+    sheet/components/
+      WeaponDamage.vue                     ← Weapon damage form group
 ```
 
 **Why**: When Physical and Equippable item sheets need different behavior (e.g. badges show different state), having separate component homes makes changes safer. Updates to one entity type don't accidentally affect unrelated types. Search for "PhysicalItemHeaderStatus" finds exactly what you need, not 5 false positives in generic folders.
@@ -177,6 +174,6 @@ All field labels/hints are auto-localized via Foundry's `LOCALIZATION_PREFIXES` 
 - Non-field strings (enum values, headings, buttons) use `game.i18n.localize('dnd35e.DOMAIN.Key')`
 - All keys use `dnd35e.*` namespace (not `DND35E.*` or `D35E.*`)
 
-## Dnd35eField Compound Wrapping
+## Field Permissions & Overrides
 
-See `dnd35e-field.instructions.md` for field wrapping and usage.
+See `dnd35e-field.instructions.md` for field override cascade, view-aware getters, and permission defaults.

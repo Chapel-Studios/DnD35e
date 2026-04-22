@@ -2,6 +2,7 @@ import UniqueId from '@items/baseItem/sheet/components/UniqueId.vue';
 
 import CheckBoxFormGroup from './FormGroups/CheckBoxFormGroup.vue';
 import ColorFormGroup from './FormGroups/ColorFormGroup.vue';
+import FamiliarOverlayInput from './FormGroups/FamiliarOverlayInput.vue';
 import type { FieldEditability, FieldVisibility } from './FormGroups/fieldPermissions.mjs';
 import {
   everyoneVisibility,
@@ -34,6 +35,7 @@ export {
   CheckBoxFormGroup,
   ColorFormGroup,
   everyoneVisibility,
+  FamiliarOverlayInput,
   FIELD_EDITABILITIES,
   FIELD_VISIBILITIES,
   FormGroup,

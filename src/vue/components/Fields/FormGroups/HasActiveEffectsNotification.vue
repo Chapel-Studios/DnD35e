@@ -2,9 +2,18 @@
   <div v-if="hasActiveEffects" class="effect-tooltip">
     <i class="fas fa-sparkles"></i>
     <div class="effect-tooltip-popup">
-      <div v-for="(effect, index) in typedEffects" :key="index" class="effect-tooltip-entry">
+      <div
+        v-for="(effect, index) in typedEffects"
+        :key="index"
+        class="effect-tooltip-entry"
+        :class="{ 'is-ignored': effect.stackResult === STACK_RESULT_IGNORED }"
+      >
         <span class="effect-name">{{ effect.effectName }}</span>
         <span class="effect-detail">{{ formatMode(effect.type) }} {{ effect.value }}</span>
+        <span v-if="effect.bonusTypeLabel" class="effect-bonus-type">[{{ effect.bonusTypeLabel }}]</span>
+        <span v-if="effect.stackResult === STACK_RESULT_IGNORED" class="effect-rejected">
+          {{ effect.stackReason ?? ignoredLabel }}
+        </span>
       </div>
     </div>
   </div>
@@ -17,7 +26,9 @@
   // See Phase 2 §2.5.3 for the design. Blocked on RenderModeStore injection + getEffectsForField filtering.
   import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
   import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/index.mjs';
+  import { EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
+  import type { Override } from '@helpers/stacking.mjs';
+  import { STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
   import { computed, inject } from 'vue';
 
   const props = defineProps<{
@@ -31,8 +42,19 @@
   const activeEffects = getEffectsForField(props.fieldPath);
   const hasActiveEffects = hasEffectsForField(props.fieldPath);
 
-  type EffectOverride = { fieldPath: string; value: unknown; effectName: string; type: string };
-  const typedEffects = computed(() => activeEffects.value as EffectOverride[]);
+  const formatBonusType = (bonusType?: string): string | undefined => {
+    const trimmed = bonusType?.trim();
+    return trimmed ? game.i18n.localize(trimmed) : undefined;
+  };
+
+  const typedEffects = computed(() =>
+    (activeEffects.value as Override[]).map((effect) => ({
+      ...effect,
+      bonusTypeLabel: formatBonusType(effect.bonusType),
+    }))
+  );
+
+  const ignoredLabel = game.i18n.localize('dnd35e.EFFECT.StackResult.Ignored');
 
   const formatMode = (mode: string): string => {
     switch (mode) {
@@ -87,6 +109,22 @@
 
     .effect-detail {
       opacity: 0.85;
+    }
+
+    .effect-bonus-type {
+      opacity: 0.65;
+      font-size: var(--font-size-10);
+      font-style: italic;
+    }
+
+    .effect-rejected {
+      color: var(--color-level-error, #cc3333);
+      font-size: var(--font-size-10);
+    }
+
+    &.is-ignored {
+      opacity: 0.5;
+      text-decoration: line-through;
     }
   }
 </style>

@@ -1,50 +1,22 @@
 ---
-description: "Use when working with Dnd35eField compound fields, unidentified values, or field overrides. Covers structure, view-aware getters, and permissions."
+description: "Use when working with field permission overrides, masks/effective values, or view-aware getters. Covers visibility/editability, store helpers, and FormGroup integration."
 ---
 
-# Dnd35eField & Compound Field Patterns
+# Field Permissions, Overrides & View-Aware Getters
 
-## Dnd35eField Structure
+Schema fields are plain Foundry `DataField` instances. Masking (showing different values per mode) is done via Secret AEs + `_masks`. Per-field permission overrides (who can see/edit) live at runtime in `flags.dnd35e.fieldOverrides` and are accessed through `useDocumentSheetStore`.
 
-`Dnd35eField(InnerType)` is a **compound field that wraps a value with metadata**:
-
-```typescript
-// Definition
-const hardnessField = new Dnd35eField(new NumberField({
-  min: 0,
-  initial: 10,
-}));
-
-// Storage
-{
-  value: 10,
-  unidentifiedValue: 5,      // Override when unidentified
-  visibility: 'everyone',     // Who can see real value
-  editability: 'normal',      // Who can edit
-}
-```
-
-## Why Dnd35eField?
-
-Enables **per-field unidentified view overrides** and **granular permissions**:
-
-| Field | Shows | Real Value | Unidentified Override |
-|-------|-------|------------|----------------------|
-| Hardness | Identified | 10 (hardness) | 5 (default) |
-| Hardness | Unidentified (view) | 5 override | 5 override |
-| Special | Missing override | 999 | 999 (fallback to real) |
-
-## Accessing Dnd35eField Values
+## View-Aware Field Access
 
 ### Two Contexts
 
 **1. FormGroup (Sheet UI)**:
 - Use store getters to get view-aware values
-- Never directly access `.value` or `.unidentifiedValue`
+- Never reach into raw document properties for display
 
-**2. Business Logic (Systems/Modules)**:
-- Use `system.getViewAwareFieldValue(path)` when showing data to any user
-- Use `system.getSourceProperty(path).value` only when you own the data
+**2. Business Logic (DataModels)**:
+- Use `getViewAwareFieldValue(path)` when showing data to any user
+- Use `getSourceProperty(path)` only when you own the raw data (e.g., preparing derived data)
 
 ### Store Getters (In FormGroup/Sheet Components)
 
@@ -52,85 +24,75 @@ Enables **per-field unidentified view overrides** and **granular permissions**:
 // In FormGroup component
 const store = useDocumentSheetStore();
 
-// Gets unwrapped value based on view mode
+// Gets value respecting current mode (masks applied in play mode)
 const effectiveValue = computed(() => store.documentGetters.getViewAwareFieldValue('system.hardness'));
 
-// Gets raw Dnd35eField for edit mode
+// Gets raw source value (unmasked, from DB)
 const sourceValue = computed(() => store.documentGetters.getSourceProperty('system.hardness'));
 
-// In EditValue pattern (see vue-sheet-patterns.md)
+// EditValue pattern — respects 3-state view mode
 const editValue = computed(() => {
-  if (props.editDerived || !sourceValue) return effectiveValue;  // Already unwrapped
-  if (editorViewMode === 'unidentified') return effectiveValue;  // Use override
-  return sourceValue.value;  // Real value in identified edit mode
+  if (props.editDerived || !sourceValue) return props.value;
+  if (store.viewMode.value !== 'edit') return props.value;  // play/true use effective value
+  return sourceValue.value as T;
 });
 ```
 
-### System Getters (In Business Logic)
+### Business Logic Getters
 
 ```typescript
 class MyItem extends ItemDataModel {
-  // ✅ Correct: Gets view-aware value for display
-  getDisplayHardness(forViewer = game.user) {
-    // Respects unidentified view mode
+  // ✅ Display: respects play/true masking
+  getDisplayHardness() {
     return this.getViewAwareFieldValue('system.hardness');
   }
   
-  // ✅ Correct: Gets real data in identified edit context
+  // ✅ Internal: raw source value, bypasses masking
   getRealHardness() {
-    // Direct access to .value, skipping unidentified override
-    return this.system.getSourceProperty('system.hardness').value;
+    return this.getSourceProperty('system.hardness');
   }
   
-  // ❌ WRONG: Ignores unidentified view mode
+  // ❌ Wrong: no view-mode awareness
   getBadHardness() {
-    return this.system.hardness;  // No context aware logic
+    return this.system.hardness;
   }
 }
 ```
 
-## Dnd35eField Metadata
+## Field Permission Overrides
 
 ### visibility
 
-Controls **who can see the real value** (not the override):
+Controls **who can see the field** (merged through override cascade):
 
 ```typescript
-// In field override
-{
-  visibility: 'everyone',      // All users see real value
-  visibility: 'gm',            // Only GMs see real value, others see fake
-  visibility: 'private',       // Only owner sees real value
-  visibility: 'observer',      // Observers see real value (default for characters)
-}
+// Values
+'everyone'   // All users can see
+'ownerPlus'  // Owner + GM
+'gmOnly'     // GM only
 ```
 
-**Interaction with unidentified**:
-- If `visibility: 'gm'` and item is unidentified:
-  - **GMs** see real value
-  - **Players** see override value
-- If `visibility: 'everyone'`:
-  - **All users** see real value (override unused)
+**Interaction with modes**:
+- `play` mode applies mask/effective logic after permission checks
+- `true` mode is GM-only unmasked view
+- `edit` mode shows editable source values (when allowed)
 
 ### editability
 
 Controls **who can edit the field**:
 
 ```typescript
-{
-  editability: 'normal',       // Sheet owner (players their own, GMs all)
-  editability: 'gm',           // Only GMs can edit
-  editability: 'locked',       // No one can edit (read-only)
-}
+'normal'   // Sheet owner (players their own sheets, GMs all sheets)
+'gmOnly'   // Only GMs can edit
 ```
 
 ## Field Override Cascade
 
-Permissions are set in **sheets** via override system. Priority:
+Overrides are resolved with **most-restrictive-wins** semantics across the ancestor chain. Priority within each node:
 
 1. **Explicit override** (`store.getFieldOverride('path')`)
 2. **Component prop** (`defaultVisibility`, `defaultEditability`)
-3. **Schema metadata** (field definition)
+3. **Schema metadata** (`useDnd35eField()` defaults)
 4. **Global default** (`'everyone'` / `'normal'`)
 
 ```typescript
@@ -144,70 +106,33 @@ const editability = override?.editability
   ?? 'normal';
 ```
 
-## Using getViewAwareFieldValue
+**Parent cascades to children**: a section locked to `gmOnly` locks all child fields regardless of their own settings.
 
-This is the **primary entry point** for displaying data:
+Two store getters for different purposes:
+- `getFieldOverride(path)` — full cascade, most-restrictive-wins (used by FormGroup/FormGroupSection)
+- `getOwnFieldOverride(path)` — only this field's own override (used by FieldControls icons)
+
+## getViewAwareFieldValue
+
+Primary entry point for mode-aware display:
 
 ```typescript
-/**
- * Get field value respecting unidentified view mode and permissions.
- * @param path - Field path (e.g., "system.hardness")
- * @returns Unwrapped value
- */
-getViewAwareFieldValue(path) {
-  const sourceProperty = this.getSourceProperty(path);
-  
-  // Not a Dnd35eField, return as-is
-  if (sourceProperty?.value === undefined) return sourceProperty;
-  
-  // Dnd35eField: check view mode
-  const editorViewMode = this.sheet?.sheetState?.editorViewMode ?? 'identified';
-  
-  if (editorViewMode === 'identified') {
-    return sourceProperty.value;  // Real value
-  } else {
-    // Unidentified: prefer override, fallback to real
-    return sourceProperty.unidentifiedValue !== undefined 
-      ? sourceProperty.unidentifiedValue 
-      : sourceProperty.value;
+// In DocumentSheetStore
+getViewAwareFieldValue(path: string) {
+  // play mode: check _masks first, then effective value
+  // true mode: skip masks, return effective value
+  // edit mode: return source value
+  const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+  if (viewMode === PLAY && masks && path in masks) {
+    return masks[path];
   }
+  return getSourceProperty(path);
 }
-```
-
-## Setting Dnd35eField Values
-
-### From Documents
-```typescript
-// Setting via document property
-item.system.hardness = 10;  // Auto-wraps in Dnd35eField
-
-// Via updateSource
-item.updateSource({ 'system.hardness': 10 });
-
-// Via structured update
-item.update({
-  'system.hardness': 10,
-  'system.-=oldField': null,  // Delete old field
-});
-```
-
-### Unidentified Overrides
-```typescript
-// Set override value (shown when unidentified)
-item.updateSource({
-  'system.hardness.unidentifiedValue': 5,
-});
-
-// Set permissions
-item.updateSource({
-  'system.hardness.visibility': 'gm',
-  'system.hardness.editability': 'locked',
-});
 ```
 
 ## FormGroup Integration
 
-FormGroups auto-derive labels from schema — no explicit label needed:
+FormGroups auto-derive labels from localization schema — no explicit label needed:
 
 ```vue
 <!-- Label comes from dnd35e.PHYSICAL_ITEM.FIELDS.hardness.label -->
@@ -215,70 +140,53 @@ FormGroups auto-derive labels from schema — no explicit label needed:
   :value="viewAwareValue"
   field-path="system.hardness"
 >
-  <!-- Edit: show source.value in identified, effective in unidentified -->
   <input v-model="editValue" type="number" />
-  
-  <!-- Readonly: show effective value -->
+
   <template #readonly>{{ value }}</template>
-  
-  <!-- Controls: only in edit mode -->
+
   <template #controls="{ editable }">
-    <button v-if="editable && sourceValue" @click="setOverride">
-      <i class="fas fa-icon"></i>
+    <button v-if="editable" class="field-control-btn" @click="setOverride">
+      <i class="fas fa-lock"></i>
     </button>
   </template>
 </FormGroup>
 ```
 
-Where:
-- `value` = unwrapped from Dnd35eField via store getter
-- `editValue` = respects view mode (identified → real, unidentified → override)
-- `sourceValue` = raw Dnd35eField metadata object
-
 ## Patterns
 
-### Pattern: Unidentified Armor Class
+### Pattern: Play-Mode Masking
 
 ```typescript
-class Armor extends ItemDataModel {
-  // AC doesn't need override; always show real value
-  // Set visibility: 'everyone' to skip unidentified logic
-}
-
-// In FormGroup
-const armor = item.system;
-const ac = armor.getViewAwareFieldValue('system.ac');  // Always real value
+// In sheet component — always use store getters for display
+const ac = store.documentGetters.getViewAwareFieldValue('system.ac');
+// → masked value in play mode, real value in edit/true mode
 ```
 
-### Pattern: Cursed Item Detection
+### Pattern: Setting Field Permissions at Schema Definition
 
 ```typescript
-class CursedItem extends ItemDataModel {
-  // Curse status hidden from non-GMs until identified
-  get curse() {
-    return this.getSourceProperty('system.curse').value;  // Real data
-  }
-  
-  getDisplayCurse() {
-    // Only GMs see curse when unidentified (visibility: 'gm')
-    return this.getViewAwareFieldValue('system.curse');
-  }
-}
+// In defineSchema()
+schema.hardness = useDnd35eField(requiredNumberField(0), {
+  defaultVisibility: 'ownerPlus',
+  defaultEditability: 'gmOnly',
+});
 ```
 
-### Pattern: Price & Rarity (Different Rules)
+### Pattern: GM-Only Field
 
 ```typescript
-// Price always shown (universal rule)
-priceFormula: new Dnd35eField(new FormulaFamiliar({ visibility: 'everyone' }));
+// Schema: field hidden from players by default
+schema.curseStrength = useDnd35eField(requiredNumberField(0), {
+  defaultVisibility: 'gmOnly',
+});
 
-// Rarity hidden from players until identified
-rarityField: new Dnd35eField(new StringField({ visibility: 'gm' }));
+// Sheet: FormGroup picks up the default automatically
+// No explicit defaultVisibility prop needed unless overriding
 ```
 
-## Related Patterns
+## Related
 
-See also:
-- [Vue Sheet Patterns](./vue-sheet-patterns.instructions.md) — EditValue pattern, view modes
-- [FormulaFamiliar](./formula-familiar.instructions.md) — Formulas wrapped in Dnd35eField
-- [Foundry Data Fields](./foundry-data-fields.instructions.md) — DataField types and hierarchy
+- [Vue Sheet Patterns](./vue-sheet-patterns.instructions.md) — EditValue pattern, 3-state view modes
+- [Form Groups](./form-groups.instructions.md) — FormGroup, FormGroupSection, FieldControls
+- [Foundry Data Fields](./foundry-data-fields.instructions.md) — DataField types and `withFamiliar()`
+- [FormulaFamiliar](./formula-familiar.instructions.md) — Schema walker and `isFamiliarField` marker

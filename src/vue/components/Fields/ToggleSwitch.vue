@@ -51,7 +51,7 @@
     (e: 'update', value: boolean): void;
   }>();
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   function localize(key: string): string {
     return game.i18n.localize(key);
@@ -66,7 +66,7 @@
   // Compute whether the field is disabled
   const isDisabled = computed(() => {
     if (props.disabled) return true;
-    return !isEditViewMode.value;
+    return !isEditMode.value;
   });
 
   function onToggle (event: Event) {

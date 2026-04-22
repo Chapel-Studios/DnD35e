@@ -67,6 +67,8 @@ type FormulaFieldOptions = BaseFormulaFieldOptions
  * Wraps {@link FormulaData} DataModel.
  */
 class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
+  static isFamiliarLeaf = true;
+
   constructor(options: FormulaFieldOptions = {
     canEditabilityBeChanged: true,
     canVisibilityBeChanged: true,

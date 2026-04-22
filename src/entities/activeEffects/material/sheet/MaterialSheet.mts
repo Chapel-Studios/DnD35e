@@ -1,12 +1,11 @@
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
-import type { IdentifiableDocumentSheetRenderContext } from '@ec/Identifiable/index.mjs';
-import { Dnd35eActiveEffectConfig } from '@effects/BaseActiveEffect/index.mjs';
-import { Material } from '@effects/material/index.mjs';
+import { Dnd35eActiveEffectConfig } from '@effects/BaseActiveEffect/sheet/Dnd35eActiveEffectConfig.mjs';
+import { Material } from '@effects/material/Material.mjs';
 
-import { MaterialSheetVue } from './index.mjs';
+import MaterialSheetVue from './MaterialSheet.vue';
 
 type MaterialSheetConfig = DocumentSheetConfiguration<Material>;
-type MaterialSheetRenderContext = IdentifiableDocumentSheetRenderContext & {
+type MaterialSheetRenderContext = {
   document: Material;
 };
 

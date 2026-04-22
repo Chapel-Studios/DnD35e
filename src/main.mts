@@ -1,5 +1,6 @@
 import './styles/core.scss';
 
+import { Dnd35eSystemConfig } from '@constants/config/system.mjs';
 import { registerEffects } from '@entities/activeEffects/registration.mjs';
 import { registerActors } from '@entities/actors/registration.mjs';
 
@@ -12,22 +13,7 @@ import { registerSettings } from './settings/index.mjs';
 // globalThis.fh = foundry.helpers;
 // globalThis.fu = foundry.utils;
 
-// TODO(Phase 2): move this to a dedicated config module (e.g., src/constants/config/system.mts)
-CONFIG.dnd35e = {
-  VERSION: '13.0.0-dev.1',
-  item: {
-    documentClasses: {
-    },
-  },
-  activeEffect: {
-    documentClasses: {
-    },
-  },
-  actor: {
-    documentClasses: {
-    },
-  },
-};
+CONFIG.dnd35e = Dnd35eSystemConfig;
 
 // Register system settings (must happen during init)
 Hooks.once('init', () => {

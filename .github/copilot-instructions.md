@@ -6,14 +6,8 @@ FoundryVTT v14 game system for D&D 3.5e. TypeScript 5.9, Vue 3.5, Vite, Pinia.
 ## Import Sorting
 **Do NOT manually sort imports.** The project uses `eslint-plugin-simple-import-sort` which auto-fixes on file save. Its ordering is not strictly alphabetical — it groups by external packages first, then path-aliased imports (`@helpers/`, `@items/`, etc.), then relative imports (`./`), with `type`-only imports sorted separately within each group. If eslint reports a sort error, run `npx eslint --fix <file>` rather than hand-sorting.
 
-## Dnd35eField Compound Shape
-Fields wrapped with `Dnd35eField` store data as `{ value, unidentifiedValue, overrides }` — NOT as scalars. When accessing these fields at runtime:
-- Read the inner value: `document.system.hardness.value` (not `document.system.hardness`)
-- Nested compounds (e.g. `hp.value` is itself a Dnd35eField): `document.system.hp.value.value`
-- The `useDocumentSheetStore` utilities (`getSourceProperty`, `getDirectFieldUpdater`, `getViewAwareFieldUpdater`) auto-detect compound shapes and handle `.value` unwrapping/path adjustment
-
 ## Type Definitions
-`*SystemData.mts` files define the runtime data shape. When a schema field is wrapped in `Dnd35eField`, its corresponding type must use `Dnd35eFieldData<T>` (imported from `@helpers/fields/index.mjs`), not the bare scalar type.
+`*SystemData.mts` files define the runtime data shape. Use current schema helpers (`requiredNumberField`, `optionalStringField`, etc.). Do not introduce new wrapper-only shapes.
 
 ## FormulaFamiliar System
 The autocomplete/context system for formulas is branded **FormulaFamiliar** (not "intellisense" — that's trademarked). Key terminology:
@@ -21,51 +15,39 @@ The autocomplete/context system for formulas is branded **FormulaFamiliar** (not
 - **AspectGroup** — tree of properties
 - **FamiliarSchema** — full schema for a document type
 - **FamiliarContext** — resolved context with properties + aliases
-- Option key on fields: `familiar` (e.g. `{ familiar: { formulaVisible: false } }` to opt out)
-- Dnd35eField has `static isFamiliarField = true` — the schema walker auto-includes all Dnd35eField instances in formula autocomplete unless `familiar.formulaVisible === false`
+- Schema walker **includes all fields by default** (opt-out model, not opt-in)
+- Opt out with `withFamiliar(field, { formulaVisible: false })` from `fieldBuilders.mts`
+- Two static constructor markers control recursion behavior:
+  - `isFamiliarField = true` — compound leaf; schema walker exposes `.value` access path
+  - `isFamiliarLeaf = true` — opaque leaf, not recursed into (PriceField, FormulaField)
+- SchemaFields without markers are recursed into; all other fields are simple leaves
 
 ## Component Architecture
 - Composition chain: CoreMixin → Identifiable → PhysicalItem → EquippableItem → Weapon
 - Each layer has: `*SystemModel.mts` (schema), `*SystemData.mts` (types), `*Store.mts` (Vue store), components
-- Store computed properties that read Dnd35eField-wrapped data must access `.value`
-- `prepareDerivedData()` in system models also must use `.value` on compound fields
 
 ## Sheet View Mode Architecture
-Document sheets have two independent axes controlled by header buttons:
+Document sheets use a unified 3-state mode model rendered via a header mode bar:
 
-### Edit / View axis (lock icon)
-- **Edit mode**: fields are editable. **View mode**: fields are read-only.
-- Controlled by `sheetState.editMode` (boolean).
-- The header lock button is rendered only when `this.isEditable` (user has edit permission).
-- Non-editable users are locked to view mode; they never see the button.
+### Modes
+- `edit`: editable authoring mode
+- `play`: player-visible mode (masked/effective values)
+- `true`: GM-only true-value mode (unmasked play view)
 
-### Identified / Unidentified axis (eye icon) — identifiable items only
-- **Identified view**: shows real field values. **Unidentified view**: shows override values from flags.
-- Controlled by `sheetState.editorViewMode` (`'identified' | 'unidentified'`).
-- **Only GMs** can toggle this. The eye header button has `shouldShow = isIdentifiable && game.user.isGM`.
-- Non-GM users are "secretly stuck" — their view is determined by the document's actual `system.isIdentified` state. If the item type isn't identifiable (`!system.isIdentifiable`), they're always in identified view.
-- `editorViewMode` is initialized in the `VueDocumentSheetMixin` constructor from the document's actual `isIdentified` state, NOT hardcoded to `'identified'`.
-- **Never auto-reset `editorViewMode` on re-render.** The GM's manual toggle choice must survive header button re-renders and `_onRender` cycles.
-
-### Resulting view matrix
-| User | Identifiable? | Available modes |
-|------|---------------|-----------------|
-| GM | Yes | edit+identified, edit+unidentified, view+identified, view+unidentified |
-| GM | No | edit, view |
-| Non-GM editor | Yes | edit, view (stuck on document's isIdentified state) |
-| Non-GM editor | No | edit, view |
-| Non-editor | Yes | view only (stuck on document's isIdentified state) |
-| Non-editor | No | view only |
+### Access model
+- GM on identifiable docs: `edit`, `play`, `true`
+- GM on non-identifiable docs: `edit`, `play`
+- Non-GM users: `edit`/`play` according to permissions; `true` is hidden
 
 ### Key implementation details
-- `IdentifiableDocumentStore.showBoth`: `game.user.isGM` — gates the Vue `IdentifiedViewToggle` and `editorViewActions`
-- `IdentifiableDocumentStore.isViewingAsUnidentified`: GM uses `editorViewMode`; non-GM uses `!isIdentified`
-- `useDocumentSheetStore.isEditable`: `state.isEditable && isEditMode` — true only when user CAN edit AND is in edit mode
-- `useDocumentSheetStore.isEditMode`: reads `context.sheetState.editMode` — the raw toggle state
-- Header buttons are imperative DOM (`_renderEditModeButton`, `_renderIdentifiedViewButton`) in `VueDocumentSheetMixin`
+- Runtime type is `ViewMode = 'edit' | 'play' | 'true'`
+- `RenderModeStore` owns mode state and renders `renderViewModeBar()`
+- Initial mode is role-based in `VueDocumentSheetMixin`: GM starts in `edit`, non-GM starts in `play`
+- `useDocumentSheetStore.isEditable`: true only when user can edit and mode is `edit`
+- `getViewAwareFieldValue()` applies mask/effective logic for `play`; true-value behavior is available only in `true`
 
 ## FormGroup Components (`src/vue/components/Fields/FormGroups/`)
-All form input components share a common `editValue` pattern that must respect the identified/unidentified view mode.
+All form input components share a common `editValue` pattern that must respect `ViewMode` (`edit`/`play`/`true`).
 
 ### Complete list
 | Component | Input type | Source value type |
@@ -82,16 +64,17 @@ All form input components share a common `editValue` pattern that must respect t
 Every FormGroup reads a `sourceValue` from `store.documentGetters.getSourceProperty(fieldPath)` and computes an `editValue` for the input element. The `props.value` prop carries the **effective** value (already run through `getViewAwareFieldValue`). The `editValue` must respect view mode:
 ```ts
 const sourceValue = store.documentGetters.getSourceProperty<T>(props.fieldPath);
-const editorViewMode = store.editorViewMode;
+const viewMode = store.viewMode;
 const editValue = computed(() => {
   if (props.editDerived || !sourceValue) return props.value;
-  if (editorViewMode.value === 'unidentified') return props.value;  // use effective value
+  if (viewMode.value !== 'edit') return props.value;  // play/true use effective value
   return sourceValue.value as T;  // use raw source value
 });
 ```
-- **Identified edit mode**: shows `sourceValue` (raw DB value) — so users edit the real data.
-- **Unidentified edit mode**: shows `props.value` (effective/override value) — so GMs edit the unidentified override.
-- **View mode** (readonly slot): always shows `props.value` (effective value).
+- **Edit mode**: shows source value (real editable data)
+- **Play mode**: shows `props.value` (effective/masked value)
+- **True mode**: shows `props.value` (effective true-value view for GM)
+- **Readonly slot**: always shows `props.value`
 
 ### FormGroup wrapper
 `FormGroup.vue` is the base wrapper. It handles:
@@ -101,7 +84,7 @@ const editValue = computed(() => {
 - It does NOT manage `editValue` — each typed FormGroup is responsible for that.
 
 ### Field Permission Overrides (Visibility & Editability)
-GMs can per-field override who sees and who edits each field. Overrides are stored inline in `Dnd35eField.overrides` (for schema fields) or in document flags (for group paths like `system.hp` and non-schema fields like `name`/`img`).
+GMs can per-field override who sees and who edits each field. Overrides are stored in document flags (`flags.dnd35e.fieldOverrides`) for all fields, including group paths like `system.hp` and non-schema fields like `name`/`img`.
 
 **Two getter functions** in `useDocumentSheetStore`:
 - `getFieldOverride(path)` — merged, most-restrictive-wins cascade across the whole ancestor chain. Used by `FormGroup` and `FormGroupSection` for actual visibility/editability behavior.
@@ -183,9 +166,8 @@ The `.field-control-btn` class provides: transparent background, no border, 0.5 
 
 ## Key Conventions
 - File extensions: `.mts` for TypeScript source, `.mjs` for import paths (path aliases resolve `.mts` → `.mjs`)
-- All field helpers (`requiredNumberField`, `optionalStringField`, etc.) return plain fields, NOT Dnd35eField-wrapped
-- `Dnd35eField` wrapping is always explicit via `new Dnd35eField(InnerFieldClass, innerOptions, wrapperOptions)`
-- Active Effect changes on Dnd35eField-wrapped fields are auto-routed to the `.value` sub-field
+- All field helpers (`requiredNumberField`, `optionalStringField`, etc.) return plain Foundry DataFields
+- Field masking is handled via Secret AEs + `_masks`; never store dual values in the schema shape
 
 ---
 

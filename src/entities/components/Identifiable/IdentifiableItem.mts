@@ -1,8 +1,5 @@
 import type { Dnd35eDocumentProperties } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import type { EvaluationDocument, FormulaRegistration } from '@ec/CoreMixin/index.mjs';
-import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
-import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/index.mjs';
@@ -23,14 +20,28 @@ interface IdentifiableDocument {
 
 type IdentifiableDocumentLike = ItemDnd35e<ItemType> & IdentifiableDocument;
 
-type IdentifiableEffectLike = DnD35eActiveEffect & IdentifiableDocument;
+// ─── Mixin constraint ───────────────────────────────────────────────────────
 
-type WithIdentifiableComponent = IdentifiableDocumentLike | IdentifiableEffectLike;
+/** Minimal effect shape needed for identifiable state derivation. */
+interface IdentifiableEffect {
+  type: string;
+  active: boolean;
+  disabled: boolean;
+  id: string | null;
+}
 
-type Dnd35eDocumentCtor = AbstractConstructorOf<Dnd35eDocumentProperties>;
-type ItemOrEffectCtor = Dnd35eDocumentCtor & (
-  AbstractConstructorOf<ItemDnd35e<ItemType>> | AbstractConstructorOf<DnD35eActiveEffect>
-);
+/**
+ * Structural constraint for documents that can host the identifiable mixin.
+ * Satisfied by Items (now) and Actors (Phase 6+) — both have `effects` collections.
+ * Excludes ActiveEffects which lack embedded effect collections.
+ */
+interface IdentifiableHostDocument extends Dnd35eDocumentProperties {
+  effects: Iterable<IdentifiableEffect>;
+  prepareDerivedData(): void;
+  updateEmbeddedDocuments(embeddedName: string, updates: Record<string, unknown>[]): Promise<unknown>;
+}
+
+type IdentifiableDocumentCtor = AbstractConstructorOf<IdentifiableHostDocument>;
 
 // ─── Concrete return types ──────────────────────────────────────────────────
 
@@ -38,53 +49,101 @@ type ItemOrEffectCtor = Dnd35eDocumentCtor & (
  * Public properties added by {@link IdentifiableDocumentMixin}.
  * Extends Dnd35eDocumentProperties so the mixin chain's shape is flat for TS.
  */
-interface IdentifiableDocumentProperties extends Dnd35eDocumentProperties {}
+interface IdentifiableDocumentProperties extends Dnd35eDocumentProperties {
+  /** Whether this document has any Secret AEs (even disabled). */
+  readonly isIdentifiable: boolean;
+  /** Whether all Secret AEs are disabled/absent — derived in prepareDerivedData. */
+  isIdentified: boolean;
+  /** Disable all active Secret AEs, revealing the document's true properties. */
+  revealAllSecrets(): Promise<void>;
+}
 
 /** Constructor type returned by the mixin – avoids deep type inference. */
-type IdentifiableDocumentConstructor<TBase extends ItemOrEffectCtor> =
+type IdentifiableDocumentConstructor<TBase extends IdentifiableDocumentCtor> =
   (abstract new (...args: ConstructorParameters<TBase>) => InstanceType<TBase> & IdentifiableDocumentProperties) & { [K in keyof TBase]: TBase[K] };
 
 // ─── Mixin ──────────────────────────────────────────────────────────────────
 
-const IdentifiableDocumentMixin = <TBase extends ItemOrEffectCtor> (Base: TBase): IdentifiableDocumentConstructor<TBase> => {
-  // Interface merging: gives access to public Dnd35eDocumentProperties
-  interface IdentifiableDocument extends Dnd35eDocumentProperties {}
+const IdentifiableDocumentMixin = <TBase extends IdentifiableDocumentCtor> (Base: TBase): IdentifiableDocumentConstructor<TBase> => {
+  // Local interface merge: exposes `system` for formula registrations without
+  // adding it to the constructor constraint (which would conflict with concrete system types).
+  interface IdentifiableDocument {
+    system: Record<string, unknown>;
+  }
 
   abstract class IdentifiableDocument extends Base {
     // Protected members can't be in interfaces - must declare separately
     declare protected readonly defaultDerivedNameRegistration: FormulaRegistration;
     declare protected readonly defaultNameRegistration: FormulaRegistration;
 
-    protected readonly unidentifiedDerivedNameRegistration: FormulaRegistration = {
-      impactedField: 'system.nameFormula.unidentifiedValue.resolvedValue',
-      formulaField: 'system.nameFormula',
-      evaluate: (document: EvaluationDocument, contexts: Record<string, EvaluationDocument>) => {
-        const unidentifiedFormula = document.system.nameFormula?.unidentifiedValue;
-        if (!unidentifiedFormula?.formula) return null;
-        const nameFormulaDnd35e = (this as any).system?.schema?.fields?.nameFormula;
-        const innerField = nameFormulaDnd35e?.fields?.value as FormulaField | undefined;
-        const excluded = innerField?.excludedFields ?? [];
-        return FormulaData.resolveSource(unidentifiedFormula, { self: document, ...contexts }, document.name || '', excluded);
-      },
-    };
-
     protected readonly identifiableNameRegistration: FormulaRegistration = {
       impactedField: 'name',
       formulaField: 'system.isIdentified',
       evaluate: (document: EvaluationDocument, _contexts: Record<string, EvaluationDocument>) => {
-        const { isIdentified, nameFormula } = document.system;
-        if (isIdentified) return nameFormula?.value?.resolvedValue || document.name;
-        return nameFormula?.unidentifiedValue?.resolvedValue || nameFormula?.value?.resolvedValue || document.name;
+        return document.system.nameFormula?.resolvedValue || document.name;
       },
     };
+
+    /**
+     * Whether this document has any Secret AEs (even disabled ones).
+     * Derived in prepareDerivedData from the effects collection.
+     */
+    isIdentifiable: boolean = false;
+
+    /**
+     * Whether all Secret AEs are disabled or absent.
+     * Derived in prepareDerivedData from the effects collection.
+     */
+    isIdentified: boolean = true;
 
     constructor (...args: any[]) {
       super(...args);
       // Replace the base name registration with identifiable-aware version
-      // and add unidentified name formula registration
       this.registeredFormulas.delete(this.defaultNameRegistration);
-      this.registeredFormulas.add(this.unidentifiedDerivedNameRegistration);
       this.registeredFormulas.add(this.identifiableNameRegistration);
+    }
+
+    override prepareDerivedData (): void {
+      this._deriveIdentifiableState();
+      super.prepareDerivedData();
+    }
+
+    /**
+     * Derive isIdentifiable and isIdentified from Secret AEs.
+     */
+    private _deriveIdentifiableState (): void {
+      const secrets = [...this.effects].filter(
+        e => e.type === 'secret'
+      );
+      this.isIdentifiable = secrets.length > 0;
+      this.isIdentified = !secrets.some(e => e.active);
+    }
+
+    /**
+     * Reveal all secrets by disabling every active Secret AE on this document.
+     * Also unhides non-secret hidden effects so a fully revealed item exposes
+     * its regular effect list to players again.
+     * After the update, `isIdentified` will derive to `true` and `_masks` will be empty.
+     */
+    async revealAllSecrets (): Promise<void> {
+      const updates: Record<string, unknown>[] = [];
+
+      for (const effect of this.effects) {
+        const effectId = effect.id;
+        if (!effectId) continue;
+
+        if (effect.type === 'secret' && !effect.disabled) {
+          updates.push({ _id: effectId, disabled: true });
+          continue;
+        }
+
+        if (effect.type !== 'secret' && 'system' in effect && (effect as { system?: { isHidden?: boolean } }).system?.isHidden) {
+          updates.push({ _id: effectId, 'system.isHidden': false });
+        }
+      }
+
+      if (!updates.length) return;
+      await this.updateEmbeddedDocuments('ActiveEffect', updates);
     }
   }
   return IdentifiableDocument as unknown as IdentifiableDocumentConstructor<TBase>;
@@ -97,11 +156,9 @@ export {
 export type {
   IdentifiableDocument,
   IdentifiableDocumentConstructor,
+  IdentifiableDocumentCtor,
   IdentifiableDocumentLike,
   IdentifiableDocumentProperties,
   IdentifiableDocumentSource,
   IdentifiableDocumentSourceProps,
-  IdentifiableEffectLike,
-  ItemOrEffectCtor,
-  WithIdentifiableComponent,
 };

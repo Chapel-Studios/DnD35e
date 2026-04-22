@@ -50,12 +50,12 @@
 
 Actions are **nested `DataModel` instances** on items/actors using `EmbeddedDataField`. They are not separate Foundry Documents.
 
-### FormulaFamiliar & Dnd35eField Integration
+### FormulaFamiliar & Field Architecture Integration
 
 Action formulas participate in the established FormulaFamiliar pipeline (see PR-weapon-base §3):
 
 - **FormulaField** instances in the action schema carry `formulaContexts` declarations so the autocomplete system knows which `@` variables are available (actor stats, target defenses, item properties).
-- **Dnd35eField** wrappers are used for fields that may need identified/unidentified duality (e.g., action `name` — an unidentified wand's action might show "Use Wand" instead of "Cast Fireball").
+- Action display fields should use the current view-aware/mask architecture (`ViewMode` + Secret masks). Legacy compound wrappers may appear for compatibility, but new action designs should not depend on introducing wrapper-only shapes.
 - **Schema registration**: Action-bearing item types register an augmented familiar schema that includes action formula paths, so `FormulaFormGroup` provides autocomplete when editing attack/damage formulas.
 
 ```typescript
@@ -116,7 +116,7 @@ class ActionDataModel extends foundry.abstract.DataModel {
   static defineSchema() {
     return {
       id: new StringField({ required: true }),
-      name: new Dnd35eField(StringField, {},          // Dnd35eField for identified/unidentified name
+      name: new StringField({                         // View-aware display behavior handled by sheet/store mask logic
         { label: 'Action Name' }),
       type: new StringField({                         // Determines what the action does
         choices: ['check', 'attack', 'save', 'damage', 'heal', 'effect', 'utility']
@@ -139,12 +139,10 @@ class ActionDataModel extends foundry.abstract.DataModel {
       damage: new SchemaField({
         formula: new FormulaField(),                  // e.g. "1d8 + #self.abilities.str.mod"
         type: new StringField(),                      // DamageType
-        critRange: new Dnd35eField(NumberField,       // Dnd35eField — AE-modifiable by feats
-          { initial: 20 },                            // (Improved Critical, Keen)
-          { label: 'Threat Range' }),
-        critMultiplier: new Dnd35eField(NumberField,  // Dnd35eField — AE-modifiable
-          { initial: 2 },
-          { label: 'Critical Multiplier' }),
+        critRange: new NumberField({                  // AE-modifiable by feats (Improved Critical, Keen)
+          initial: 20 }),
+        critMultiplier: new NumberField({             // AE-modifiable
+          initial: 2 }),
       }, { required: false }),
 
       healing: new SchemaField({
@@ -764,7 +762,7 @@ All action UI follows the established Vue patterns from PR-weapon-base §6:
 - Each action renders as a collapsible `ActionSection.vue` with drag handle for reordering
 - "Add Action" button at tab top creates a new section with default values
 - Formula inputs (attack formula, damage formula, DC formula) use **FormulaFormGroup** — the same contenteditable component with syntax highlighting and autocomplete used for material name formulas
-- Numeric fields wrapped in `Dnd35eField` (critRange, critMultiplier) use **NumberFormGroup** with view-aware field access via `useDocumentSheetStore.getViewAwareFieldValue()`
+- Numeric fields (critRange, critMultiplier) use **NumberFormGroup** with view-aware field access via `useDocumentSheetStore.getViewAwareFieldValue()`
 - Chain link editing uses a list component with drag-to-reorder and trigger type selectors, nested at the bottom of each action section
 - The action editor reads formula contexts from the `ActionDataModel`'s `formulaContexts` declarations to populate autocomplete with actor stats (`#self.bab`, `#self.abilities.str.mod`), item properties (`#Item.enhancement`), target defenses (`#target.ac`), and target item properties (`#targetItem.enhancement`)
 
@@ -1081,9 +1079,9 @@ AoO uses the same `ActionDataModel` with `activation: 'aoo'`. The weapon's attac
 - [ ] Create `src/actions/ActionTypes.mts` with enums: ActionType ('check', 'attack', 'save', 'damage', 'heal', 'effect', 'utility'), ActivationType ('standard', 'move', 'swift', 'free', 'fullRound', 'immediate', 'passive', 'aoo'), TriggerEvent ('onSuccess', 'onFailure', 'onCrit', 'onFumble', 'onKill', 'always', 'onChoice')
 - [ ] Create interfaces: AttackRecord, ActionAvailability, ActionContext, StepResult, ExecutionOptions
 - [ ] Create `src/actions/ActionDataModel.mts` extending DataModel
-- [ ] Implement ActionDataModel schema: id (StringField, required), name (Dnd35eField), type (StringField with choices), activation (StringField with choices), provokesAoO (BooleanField)
+- [ ] Implement ActionDataModel schema: id (StringField, required), name (StringField), type (StringField with choices), activation (StringField with choices), provokesAoO (BooleanField)
 - [ ] Implement ActionDataModel.check schema field: formula (FormulaField), against (StringField with choices), againstFormula (FormulaField)
-- [ ] Implement ActionDataModel.damage schema field: formula (FormulaField), type (StringField for DamageType), critRange (Dnd35eField wrapping NumberField), critMultiplier (Dnd35eField wrapping NumberField)
+- [ ] Implement ActionDataModel.damage schema field: formula (FormulaField), type (StringField for DamageType), critRange (NumberField), critMultiplier (NumberField)
 - [ ] Implement ActionDataModel.healing schema field: formula (FormulaField)
 - [ ] Implement ActionDataModel.effect schema field: effectUuid (StringField), duration (SchemaField with duration data), target (StringField with choices: 'self', 'creature', 'area', 'item-on-creature')
 - [ ] Implement ActionDataModel.effect.itemTargetFilter schema field: itemTypes (ArrayField), equippedOnly (BooleanField, default true) — only active when target is 'item-on-creature'

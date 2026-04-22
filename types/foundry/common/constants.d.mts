@@ -77,7 +77,15 @@ export const ACTIVE_EFFECT_CHANGE_TYPES: Readonly<{
     OVERRIDE: 'override';
 }>;
 
-export type ActiveEffectChangeType = (typeof ACTIVE_EFFECT_CHANGE_TYPES)[keyof typeof ACTIVE_EFFECT_CHANGE_TYPES];
+/**
+ * Registry interface for system-registered active effect change types.
+ * Systems may augment this interface to add custom change types that
+ * are registered at runtime via CONFIG.ActiveEffect.changeTypes.
+ */
+export interface SystemActiveEffectChangeTypes {}
+
+export type ActiveEffectChangeType = (typeof ACTIVE_EFFECT_CHANGE_TYPES)[keyof typeof ACTIVE_EFFECT_CHANGE_TYPES]
+  | SystemActiveEffectChangeTypes[keyof SystemActiveEffectChangeTypes];
 
 /**
  * Time-based units in which an ActiveEffect's duration can be expressed

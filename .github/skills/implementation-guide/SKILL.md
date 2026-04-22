@@ -28,15 +28,15 @@ This skill helps you:
 
 ```typescript
 import { ItemDataModel } from './_item-data-model.mjs';
-import { FormulaFamiliar, Dnd35eField } from '...fields/index.mjs';
+import { FormulaFamiliar } from '...fields/index.mjs';
 
 class SpecialWeapon extends ItemDataModel {
   static defineSchema() {
     return foundry.utils.mergeObject(super.defineSchema(), {
       // Add custom properties
       properties: new SchemaField({
-        specialAbility: new Dnd35eField(new StringField({ initial: 'none' })),
-        saveDC: new Dnd35eField(new NumberField({ min: 0, initial: 10 })),
+        specialAbility: new StringField({ initial: 'none' }),
+        saveDC: new NumberField({ min: 0, initial: 10 }),
         specialEffect: new FormulaFamiliar({ label: "Effect Formula" }),
       }),
     });
@@ -52,7 +52,7 @@ class SpecialWeapon extends ItemDataModel {
 **Checklist**:
 - [ ] Extend from appropriate parent model
 - [ ] Override `defineSchema()` call super first
-- [ ] Compound fields wrapped in `Dnd35eField`
+- [ ] Use plain Foundry DataFields and fieldBuilders helpers
 - [ ] Formulas use `FormulaFamiliar`
 - [ ] All fields have `initial` or `required: false`
 
@@ -258,9 +258,7 @@ class Character extends ActorDataModel {
   static defineSchema() {
     return foundry.utils.mergeObject(super.defineSchema(), {
       defenses: new SchemaField({
-        defensiveStance: new Dnd35eField(
-          new BooleanField({ initial: false })
-        ),
+        defensiveStance: new BooleanField({ initial: false }),
       }),
     });
   }

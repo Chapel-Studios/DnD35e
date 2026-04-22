@@ -1,8 +1,9 @@
 <template>
   <div
+    class="document-sheet-body"
     :class="{
-      'edit-mode': isEditViewMode,
-      'view-mode': !isEditViewMode,
+      'edit-mode': isEditMode,
+      'view-mode': !isEditMode,
     }"
   >
     <DocumentHeader>
@@ -24,6 +25,7 @@
     <div
       v-for="tab in tabList"
       :key="tab.id"
+      v-show="tab.id === activeTabId"
       class="sheet-tab"
     >
       <component :is="tab.component" />
@@ -46,7 +48,7 @@
     RenderModeStoreSymbol,
     TabStoreSymbol,
   } from '@ec/CoreMixin/index.mjs';
-  import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
+  import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
   import { useItemSheetStore } from '@items/baseItem/index.mjs';
   import TabDivider from '@vc/TabDivider/TabDivider.vue';
   import { inject, provide } from 'vue';
@@ -66,14 +68,29 @@
     provide(DocumentSheetStoreSymbol, store);
   }
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
-  const { tabs: tabList } = inject(TabStoreSymbol) as TabStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { activeTabId, tabs: tabList } = inject(TabStoreSymbol) as TabStore;
 </script>
 
 <style lang="scss">
+  .document-sheet-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    height: 100%;
+  }
+
   .sheet-tab {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
     padding: 0.5rem 0.5rem 0 0;
-    overflow: auto;
+    overflow: visible;
+  }
+
+  .sheet-tab > * {
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   .name-and-art {

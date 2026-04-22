@@ -21,7 +21,8 @@
 
 <script setup lang="ts">
   import { DocumentDetails, DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { DamageReductionTypes, MagicEquivalency } from '@effects/material/index.mjs';
+  import DamageReductionTypes from '@effects/material/sheet/components/DamageReductionTypes.vue';
+  import MagicEquivalency from '@effects/material/sheet/components/MagicEquivalency.vue';
   import { DesignedForSize, EquippableItemWeight } from '@items/components/Equippable/index.mjs';
   import {
     ItemHardness,
@@ -71,6 +72,11 @@
       grid-auto-flow: column;
       align-items: center;
       grid-gap: 0.33rem;
+    }
+
+    :deep(.form-group.item-price.price-form-group) {
+      grid-auto-flow: row;
+      justify-items: center;
     }
 
     :deep(.form-group-section) {

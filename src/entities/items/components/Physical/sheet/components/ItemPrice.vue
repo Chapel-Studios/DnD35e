@@ -24,12 +24,4 @@
     },
   } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 </script>
-<style lang="scss" scoped>
-  .view-mode .form-group.item-price.price-form-group {
-    grid-template-columns: minmax(max-content, 2fr) 5fr;
-  }
-  // .item-price {
-  //   grid-column: 1 / -1;
-  //   display: flex !important;
-  // }
-</style>
+<!-- Styles live in src/styles/core.scss — see price form group comment there for why. -->

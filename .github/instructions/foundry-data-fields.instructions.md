@@ -97,10 +97,10 @@ class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
 
 ```typescript
 // ✅ Correct: label/hint from LOCALIZATION_PREFIXES
-schema.hardness = new Dnd35eField(NumberField, { required: true, initial: 0, min: 0 });
+schema.hardness = requiredNumberField(0, { min: 0 });
 
 // ❌ Wrong: hardcoded label
-schema.hardness = new Dnd35eField(NumberField, { required: true, initial: 0, label: 'Hardness' });
+schema.hardness = new fields.NumberField({ required: true, initial: 0, label: 'Hardness' });
 ```
 
 ## Basic Fields
@@ -181,3 +181,71 @@ Use `.clean()` to validate and prepare:
 const field = new fields.NumberField({ min: 0, max: 10 });
 field.clean(15);  // Throws if validation fails
 ```
+
+## Constants Pattern: Type-Safe Enums
+
+**Problem**: Magic strings scattered at use sites (localization keys, choices arrays, etc.) are hard to refactor and prone to typos.
+
+**Solution**: Export individual `const` values + a combined array, ensuring single point of change and type safety.
+
+### Pattern Structure
+
+```typescript
+// src/constants/attacks/damageTypes.mts
+// Individual constants with literal types
+const DAMAGE_TYPE_PIERCING = 'dnd35e.DAMAGE_TYPES.Piercing' as const;
+const DAMAGE_TYPE_SLASHING = 'dnd35e.DAMAGE_TYPES.Slashing' as const;
+const DAMAGE_TYPE_FIRE = 'dnd35e.DAMAGE_TYPES.Fire' as const;
+// ... more constants
+
+// Array built from constants (not repeated strings)
+const DAMAGE_TYPES = [
+  DAMAGE_TYPE_PIERCING,
+  DAMAGE_TYPE_SLASHING,
+  DAMAGE_TYPE_FIRE,
+  // ...
+];
+
+// Type derived from array
+type DamageType = (typeof DAMAGE_TYPES)[number];
+
+// Export all
+export {
+  DAMAGE_TYPE_PIERCING,
+  DAMAGE_TYPE_SLASHING,
+  DAMAGE_TYPE_FIRE,
+  DAMAGE_TYPES,
+  type DamageType,
+};
+```
+
+### Usage in Schema
+
+```typescript
+// In WeaponSystemModel
+schema.damageType = new fields.StringField({
+  choices: DAMAGE_TYPES,  // Array used here
+  initial: DAMAGE_TYPE_SLASHING,  // Individual const used here
+  required: true
+});
+```
+
+### Benefits
+
+- **Zero magic strings**: All values sourced from exports
+- **Single point of change**: Update `DAMAGE_TYPE_PIERCING` once, impacts everywhere
+- **Type safety**: `DamageType` is `'dnd35e.DAMAGE_TYPES.Piercing' | 'dnd35e.DAMAGE_TYPES.Slashing' | ...`
+- **Validation at compile time**: TypeScript catches typos; schema validation catches invalid choices
+- **Refactoring safe**: Rename constant → IDE finds all usages
+
+### When to Use
+
+- Localization keys (damage types, skills, bonus types, effect types, etc.)
+- Enum-like choices (subtypes, modes, categories)
+- Any value that appears in multiple schema definitions
+
+### When NOT to Use
+
+- Transient values (temporary UI state, calculated values)
+- Single-use strings (component IDs, labels that appear once)
+- Developer-facing constants that users never see

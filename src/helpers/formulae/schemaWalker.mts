@@ -4,13 +4,12 @@
  * Replaces the hand-written familiar builder files (physicalFamiliar, weaponFamiliar, etc.)
  * by reading field metadata directly from schema declarations.
  *
- * Field handling:
- * - Field whose constructor has `isFamiliarField === true` (e.g. Dnd35eField) → auto-leaf
- *   - Can be explicitly excluded with `familiar: { formulaVisible: false }`
- *   - For compound wrappers (SchemaField with a `value` sub-field): accessPath targets `.value`
- * - Field with `options.familiar.formulaVisible === true` → manual opt-in leaf
- * - SchemaField without the above → recurse into children (grouping node)
- * - All other fields → skipped
+ * Field handling (all fields are **included by default** — opt-out via `formulaVisible: false`):
+ * - Field with `options.familiar.formulaVisible === false` → excluded (opt-out)
+ * - Field whose constructor has `isFamiliarLeaf === true` (e.g. PriceField, FormulaField) → opaque leaf
+ *   - Treated as a single value; inner fields are NOT recursed into
+ * - SchemaField without the above marker → recurse into children (grouping node)
+ * - All other fields (NumberField, StringField, BooleanField, etc.) → included as simple leaves
  *
  * @module
  */
@@ -70,7 +69,41 @@ function resolveValue(
 }
 
 /**
+ * Add a leaf entry to an AspectGroup.
+ */
+function addLeafToGroup(
+  field: foundry.data.fields.DataField,
+  meta: FormulaFieldMeta | undefined,
+  key: string,
+  accessPath: string,
+  context: DocumentContext | undefined,
+  output: AspectGroup
+): void {
+  const type = meta?.aspectType ?? inferFieldType(field);
+  const aspectKey = meta?.aspectKey ?? key;
+
+  const prop: FieldAspect = {
+    display: (field.options as Record<string, unknown>).label as string ?? key,
+    type,
+    accessPath,
+  };
+
+  if (meta?.aliases?.length) {
+    prop.aliases = meta.aliases;
+  }
+
+  if (context) {
+    const resolved = resolveValue(context, accessPath, type);
+    if (resolved !== undefined) prop.value = resolved;
+  }
+
+  output[aspectKey] = prop;
+}
+
+/**
  * Recursively walk a record of DataField instances, building an AspectGroup.
+ *
+ * All fields are included by default. Fields opt out with `familiar: { formulaVisible: false }`.
  *
  * @param fields      The fields to walk (e.g. from defineSchema() or SchemaField.fields)
  * @param context     Optional live document for resolving property values
@@ -86,37 +119,18 @@ function walkFields(
   for (const [key, field] of Object.entries(fields)) {
     const meta = (field.options as Record<string, unknown>).familiar as FormulaFieldMeta | undefined;
     const currentPath = pathPrefix ? `${pathPrefix}.${key}` : key;
-    const isAutoEligible = (field.constructor as unknown as Record<string, unknown>).isFamiliarField === true;
 
     if (meta?.formulaVisible === false) {
       // ── Explicit opt-out — skip this field entirely ──
       continue;
-    } else if (isAutoEligible || meta?.formulaVisible) {
-      // ── Leaf: auto-eligible field type or explicitly opted in ──
-      const type = meta?.aspectType ?? inferFieldType(field);
-      const aspectKey = meta?.aspectKey ?? key;
+    }
 
-      // For compound wrappers (Dnd35eField), the real data lives at .value
-      const isCompound = field instanceof SchemaField
-        && 'value' in ((field as foundry.data.fields.SchemaField).fields ?? {});
-      const accessPath = isCompound ? `${currentPath}.value` : currentPath;
+    const ctor = field.constructor as unknown as Record<string, unknown>;
+    const isOpaqueLeaf = ctor.isFamiliarLeaf === true;
 
-      const prop: FieldAspect = {
-        display: (field.options as Record<string, unknown>).label as string ?? key,
-        type,
-        accessPath,
-      };
-
-      if (meta?.aliases?.length) {
-        prop.aliases = meta.aliases;
-      }
-
-      if (context) {
-        const resolved = resolveValue(context, accessPath, type);
-        if (resolved !== undefined) prop.value = resolved;
-      }
-
-      output[aspectKey] = prop;
+    if (isOpaqueLeaf) {
+      // ── Opaque leaf (PriceField, FormulaField) — single value, no recursion ──
+      addLeafToGroup(field, meta, key, currentPath, context, output);
     } else if (field instanceof SchemaField) {
       // ── Branch: recurse into nested SchemaField children ──
       const childFields = (field as foundry.data.fields.SchemaField).fields as
@@ -124,23 +138,24 @@ function walkFields(
       if (childFields) {
         const branch: AspectGroup = {};
         walkFields(childFields, context, currentPath, branch);
-        // Only add the branch if it has any visible children
         if (Object.keys(branch).length > 0) {
           output[key] = branch;
         }
       }
+    } else {
+      // ── Default: include as simple leaf ──
+      addLeafToGroup(field, meta, key, currentPath, context, output);
     }
-    // else: plain field without familiar → skip
   }
 }
 
 /**
  * Build an AspectGroup from a DataModel class's schema.
  *
- * Walks `ModelClass.defineSchema()` and collects all auto-eligible fields
- * (those whose constructor has `isFamiliarField === true`, e.g. Dnd35eField)
- * plus fields with explicit `familiar.formulaVisible === true`,
- * plus standard document-level fields.
+ * Walks `ModelClass.defineSchema()` and collects all fields by default.
+ * Fields opt out with `familiar: { formulaVisible: false }`. Opaque leaves
+ * (PriceField, FormulaField, `isFamiliarLeaf`) are recognized by a static
+ * marker on their constructors.
  *
  * @param ModelClass  A DataModel class (or any object with a static `defineSchema()`)
  * @param context     Optional live Foundry document – when provided, property values are resolved inline

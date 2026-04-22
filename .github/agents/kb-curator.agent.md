@@ -104,7 +104,7 @@ At the end of each session, review how effectively the user leveraged the projec
 #### What to Analyze
 - **Missed agent opportunities**: Did the user manually do work that an agent could have handled? (e.g., hand-planning tasks instead of using `@planning`, manually auditing docs instead of `@kb-curator`)
 - **Missed skill opportunities**: Did the user search for information that a skill provides directly? (e.g., grepping for phase info instead of `/phase-reference`, looking up Foundry API by hand instead of `/foundry-reference`)
-- **Underused instruction files**: Did the user ask questions or make mistakes that an instruction file already covers? (e.g., incorrect Dnd35eField access when `dnd35e-field.instructions.md` documents the pattern)
+- **Underused instruction files**: Did the user ask questions or make mistakes that an instruction file already covers? (e.g., wrong field permission values when `dnd35e-field.instructions.md` documents the override cascade)
 - **Workflow shortcuts**: Could the user have combined agents/skills for a faster workflow? (e.g., `@planning` → `/implementation-guide` pipeline for new features)
 
 #### Available AI Tooling Inventory
@@ -122,7 +122,7 @@ Reference this when analyzing missed opportunities:
 | Skill | `/foundry-reference` | Foundry VTT API lookup |
 | Skill | `/system-comparison` | Compare 5e/PF2e/3.5e mechanics |
 | Skill | `/implementation-guide` | Step-by-step feature implementation |
-| Auto | `dnd35e-field` | Compound field patterns (loads by relevance) |
+| Auto | `dnd35e-field` | Field permissions, override cascade, view-aware getters (loads by relevance) |
 | Auto | `dnd35e-patterns` | Architecture, composition chains (loads by relevance) |
 | Auto | `vue-sheet-patterns` | Sheet UI patterns (auto-loads on `.vue` files) |
 | Auto | `form-groups` | FormGroup component patterns (loads by relevance) |
@@ -142,7 +142,7 @@ Reference this when analyzing missed opportunities:
 >
 > 2. **Use `/foundry-reference` for API questions** — You searched the Foundry docs site for `ActiveEffect` hooks. The `/foundry-reference` skill can answer those directly: `/foundry-reference How do ActiveEffect hooks work in v14?`
 >
-> 3. **Instruction files had the answer** — The Dnd35eField access error you hit is documented in `dnd35e-field.instructions.md`. These load automatically when Copilot detects relevance, but you can also ask about them directly.
+> 3. **Instruction files had the answer** — The field permission cascade you got wrong is documented in `dnd35e-field.instructions.md`. These load automatically when Copilot detects relevance, but you can also ask about them directly.
 
 ### 6. Gap Analysis
 
@@ -155,6 +155,43 @@ Identify **missing documentation** that would help future work:
 - **Build system**: Do changes to build system need KB updates?
 
 ### 7. Curation Workflows
+
+### 8. Regression Learning Protocol (Mandatory)
+
+When a session includes rework, false starts, or terminology drift, convert it into explicit guardrails.
+
+#### A. Terminology Drift Audit
+- Derive canonical runtime terms from code constants/types before writing docs.
+- For sheet modes, verify against `ViewMode` in `src/helpers/formulae/types.mts` and store usage in `RenderModeStore`.
+- If docs use old terms (for example `unidentified` mode name after migration to `true`), patch all occurrences in one pass.
+
+#### B. Claim Verification Discipline
+- Any PR/phase summary claim about behavior must be backed by code evidence.
+- Before writing final wording, verify with:
+   - `git diff --stat` for scope
+   - targeted file reads for key behavior files
+   - at least one implementation-level check for each major bullet
+- If confidence is partial, mark the section explicitly as partial/deferred.
+
+#### C. Platform-Safe Command Usage
+- Prefer shell-portable commands for the active OS.
+- On Windows PowerShell, avoid Unix utilities like `head`; use `Select-Object -First N`.
+- Capture command pitfalls discovered in session and add them to agent guidance when repeated.
+
+#### D. Root-Cause-First Retrospective
+- For each notable mistake, document:
+   1. Symptom
+   2. Root cause
+   3. Detection signal
+   4. Prevention rule
+- Store durable prevention rules in instruction/agent files, not only in transient PR notes.
+
+#### E. Cross-File Consistency Sweep
+- After updating terminology or architecture guidance, update all impacted KB layers:
+   - Agent file (`.github/agents/*.agent.md`)
+   - Instruction files (`.github/instructions/*.instructions.md`)
+   - Discovery hub (`.github/AGENTS.md`) when capabilities changed
+   - README AI tooling table only if inventory changed (add/remove/rename)
 
 #### Workflow: Review & Update Existing File
 ```
@@ -172,7 +209,7 @@ Identify **missing documentation** that would help future work:
 3. Draft content with examples
 4. Add cross-references to related docs
 5. Suggest where each piece should live
-6. Request approval before creating
+6. Create the file directly
 ```
 
 #### Workflow: Consolidate & Deduplicate
@@ -181,7 +218,7 @@ Identify **missing documentation** that would help future work:
 2. Show both versions side-by-side
 3. Suggest consolidated version with best of both
 4. Identify what should be: different files? sections? cross-refs?
-5. Propose specific changes
+5. Apply specific changes
 ```
 
 #### Workflow: Validate Documentation Accuracy
@@ -242,6 +279,7 @@ When invoked at session end:
 - [ ] **Consistency**: Flag documentation that needs updating for consistency
 - [ ] **Gaps**: Highlight missing documentation with proposed solutions
 - [ ] **AI Tooling Coaching**: 1-3 specific tips on agents/skills the user could have used
+- [ ] **Regression Guardrails**: Convert session mistakes into explicit prevention rules in KB files
 
 ### Phase 3: Feedback
 - [ ] Prioritize recommendations (high-impact first)
@@ -255,6 +293,7 @@ When invoked at session end:
 - [ ] Update cross-references in related files
 - [ ] Validate changes for consistency
 - [ ] Document what was changed and why
+- [ ] Run terminology sweep for renamed runtime concepts (constants, enums, mode names)
 
 ## How to Invoke
 
@@ -264,16 +303,15 @@ When invoked at session end:
 ```
 This is the canonical shorthand. When you see this phrase, perform the **complete end-of-session workflow**:
 1. Analyze the full session (patterns, gaps, accomplishments)
-2. Propose KB updates (instruction files, skills, phase docs, memory)
+2. Apply KB updates directly (instruction files, skills, phase docs, memory)
 3. Coach the user on AI tooling they could have used
-4. Prioritize and present recommendations
-5. Implement changes if the user approves
+4. Summarize what was changed and why
 
 **End of Session** (explicit):
 ```
 @kb-curator Review this session and update KB appropriately
 ```
-Same as quick command — analyzes work, proposes updates, and provides AI tooling coaching tips.
+Same as quick command — analyzes work, applies updates directly, and provides AI tooling coaching tips.
 
 **AI Tooling Coaching** (standalone):
 ```
@@ -400,7 +438,7 @@ Each level auto-hides when all children are invisible (respects field permission
 3. **Cross-Linked**: Every documentation update includes related references
 4. **Example-Driven**: All patterns include code examples (current, tested)
 5. **Layered**: Instruction files for detailed reference, skills for workflows, memory for facts
-6. **User-Controlled**: Propose, don't implement; get approval before making changes
+6. **Direct Action**: Apply changes directly — user will revert if needed. Don't ask for confirmation.
 
 ## Repository Memory Capture Pattern
 
@@ -422,7 +460,7 @@ When KB curator identifies verified codebase knowledge worth capturing, use this
 
 **Examples** (from this codebase):
 - FormGroupSection auto-hide behavior (layout management quirk)
-- Dnd35eField.value access pattern (data layer convention)
+- Field permission override cascade pattern (data layer convention)
 - EditValue pattern (component pattern)
 - Bonus stacking by type (system-specific rule)
 - UUID helper generics (infrastructure pattern)

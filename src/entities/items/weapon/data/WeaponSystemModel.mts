@@ -3,11 +3,13 @@ import {
   optionalStringField,
   requiredBooleanField,
   requiredNullableStringField,
+  useDnd35eField,
 } from '@helpers/fieldBuilders.mjs';
-import { Dnd35eField } from '@helpers/fields/index.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import { EquippableItemSystemModel } from '@items/components/Equippable/index.mjs';
 import { WEAPON_BASE_TYPES,WEAPON_SUBTYPES, WEAPON_TYPES } from '@items/weapon/index.mjs';
+
+import type { WeaponSystemData } from './WeaponSystemData.mjs';
 
 const {
   fields: {
@@ -23,33 +25,32 @@ class WeaponSystemModel extends EquippableItemSystemModel {
   static override defineSchema () {
     const schema = super.defineSchema();
 
-    // Declare Owner context on inherited nameFormula (access inner FormulaField via .fields.value)
-    (schema.nameFormula.fields.value as FormulaField).formulaContexts = [
+    // Declare Owner context on inherited nameFormula (it's now a plain FormulaField)
+    (schema.nameFormula as FormulaField).formulaContexts = [
       { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
     ];
 
     schema.isBaseWeaponType = requiredBooleanField(false);
     schema.isMasterwork = requiredBooleanField(false);
-    schema.weaponType = new Dnd35eField(
-      StringField, 
-      { 
+    schema.weaponType = useDnd35eField(
+      new StringField({ 
         choices: [
           ...WEAPON_TYPES,
         ],
         initial: 'simple',
         required: true,
-      },
+      }),
       {
         familiar: { aliases: ['type'] },
       });
-    schema.weaponSubtype = new Dnd35eField(StringField, { choices: [...WEAPON_SUBTYPES], initial: 'light', required: true }, { familiar: { aliases: ['subtype'] } });
-    schema.weaponBaseType = new Dnd35eField(StringField, { choices: [...WEAPON_BASE_TYPES], initial: '', required: true, blank: true });
+    schema.weaponSubtype = useDnd35eField(new StringField({ choices: [...WEAPON_SUBTYPES], initial: 'light', required: true }), { familiar: { aliases: ['subtype'] } });
+    schema.weaponBaseType = useDnd35eField(new StringField({ choices: [...WEAPON_BASE_TYPES], initial: '', required: true, blank: true }));
     schema.weaponDamage = new SchemaField({
-      damageRoll: new Dnd35eField(StringField, { initial: '', required: true, blank: true }, { familiar: { aliases: ['roll', 'dice'] } }),
-      damageType: new Dnd35eField(StringField, { choices: [...DAMAGE_TYPES], initial: DAMAGE_TYPE_SLASHING, required: true }, { familiar: { aliases: ['type'] } }),
-      critRange: new Dnd35eField(StringField, { required: true, initial: '20' }, { familiar: { aliases: ['range', 'threat'] } }),
-      critMultiplier: new Dnd35eField(NumberField, { required: true, nullable: false, initial: 2 }, { familiar: { aliases: ['multiplier', 'mult'] } }),
-      rangeIncrement: new Dnd35eField(NumberField, { required: true, nullable: true }),
+      damageRoll: useDnd35eField(new StringField({ initial: '', required: true, blank: true }), { familiar: { aliases: ['roll', 'dice'] } }),
+      damageType: useDnd35eField(new StringField({ choices: [...DAMAGE_TYPES], initial: DAMAGE_TYPE_SLASHING, required: true }), { familiar: { aliases: ['type'] } }),
+      critRange: useDnd35eField(new StringField({ required: true, initial: '20' }), { familiar: { aliases: ['range', 'threat'] } }),
+      critMultiplier: useDnd35eField(new NumberField({ required: true, nullable: false, initial: 2 }), { familiar: { aliases: ['multiplier', 'mult'] } }),
+      rangeIncrement: useDnd35eField(new NumberField({ required: true, nullable: true })),
       attackFormula: optionalStringField(),
       damageFormula: optionalStringField(),
     });
@@ -60,5 +61,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
     return schema;
   }
 }
+
+interface WeaponSystemModel extends WeaponSystemData {}
 
 export { WeaponSystemModel };

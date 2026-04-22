@@ -1,65 +1,43 @@
 <template>
   <FormGroup
     :label="props.label"
-    :hint="dynamicHint"
+    :hint="displayHint"
     :localize-hint="false"
     :field-path="props.fieldPath"
     :default-visibility="props.defaultVisibility"
     :default-editability="props.defaultEditability"
+    :show-field-controls="props.showFieldControls"
   >
     <template #readonly>
-      <slot v-if="!slots.readonly" />
-      <div
-        v-else
-        class="formula-display"
-        :class="{ 'has-error': formulaErrors.length > 0 }"
-      >
-        <template v-if="formulaErrors.length > 0">
-          <span class="error-indicator" title="Formula has errors">⚠</span>
-          <span class="formula-result error">{{ formulaError }}</span>
-        </template>
-        <template v-else>
-          <span class="formula-result">{{ props.value || '—' }}</span>
-        </template>
+      <slot v-if="slots.readonly" name="readonly" />
+      <div v-else class="formula-display">
+        <span v-if="!readonlyDisplayHtml" class="formula-result">—</span>
+        <span v-else class="formula-result" v-html="readonlyDisplayHtml" />
       </div>
     </template>
     <div class="formula-form-group">
-      <div class="formula-input-wrapper">
-        <div class="formula-edit-container">
-          <!-- Real input: transparent text, user types here -->
-          <input
-            ref="formulaInput"
-            type="text"
-            class="formula-input"
-            :class="{ 'has-error': formulaErrors.length > 0 }"
-            :value="localValue"
-            @input="onInput"
-            @blur="onBlur"
-            @keydown="onKeyDown"
-            @focus="onFocus"
-            @scroll="syncScroll"
-            spellcheck="false"
-            placeholder="Enter name or formula (e.g. #self.name)"
-          />
-
-          <!-- Highlight layer: purely visual, all mouse events pass through to input -->
-          <div
-            ref="highlightLayer"
-            class="highlight-layer"
-            v-html="highlightedHTML"
-          ></div>
-        </div>
-
-        <!-- Familiar autocomplete menu -->
-        <FamiliarDropdown
-          ref="familiarDropdownRef"
-          :show="showFamiliar"
-          :options="familiarOptions"
-          :selected-index="familiarIndex"
-          :position="familiarPosition"
-          @select="onFamiliarSelect"
-        />
-      </div>
+      <FamiliarOverlayInput
+        ref="overlayRef"
+        :model-value="localValue"
+        :disabled="!isEditable"
+        placeholder="Enter name or formula (e.g. #self.name)"
+        input-class="formula-input"
+        highlight-class="highlight-layer"
+        input-wrapper-class="formula-input-wrapper"
+        edit-container-class="formula-edit-container"
+        :input-state-classes="{ 'has-error': formulaErrors.length > 0 }"
+        :highlighted-html="highlightedHTML"
+        :show-familiar="showFamiliar"
+        :familiar-options="familiarOptions"
+        :familiar-index="familiarIndex"
+        :familiar-position="familiarPosition"
+        @input="onInput"
+        @blur="onBlur"
+        @keydown="onKeyDown"
+        @focus="onFocus"
+        @scroll="syncScroll"
+        @select="onFamiliarSelect"
+      />
     </div>
   </FormGroup>
 </template>
@@ -69,17 +47,18 @@
   import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
   import type { RenderModeStore } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
   import { RenderModeStoreSymbol } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
-  import FamiliarDropdown from '@vc/FamiliarDropdown.vue';
+  import FamiliarOverlayInput from '@vc/Fields/FormGroups/FamiliarOverlayInput.vue';
   import FormGroup from '@vc/Fields/FormGroups/FormGroup.vue';
   import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, useSlots, watch } from 'vue';
 
   import type { FormulaData } from './FormulaData.mjs';
   import type { FormulaField } from './FormulaField.mjs';
   import type { AutocompleteOption, FamiliarSchema, ValidationError } from './types.mts';
-  import { measureTextOffset, useFamiliar } from './useFamiliar.mjs';
+  import { useFamiliarOverlayInput } from './useFamiliarOverlayInput.mjs';
   import {
     filterExcludedFields,
     parseFormula,
+    renderFormulaDisplayHTML,
     renderFormulaHTML,
     validateFormula,
   } from './utils.mjs';
@@ -100,10 +79,11 @@
     fieldPath: { type: String, required: true },
     defaultVisibility: { type: String as PropType<'everyone' | 'ownerPlus' | 'gmOnly'>, default: undefined },
     defaultEditability: { type: String as PropType<'normal' | 'gmOnly'>, default: undefined },
+    showFieldControls: { type: Boolean, default: true },
     /** FormulaData instance for formula/unidentified formula access. */
     formulaData: { type: Object as PropType<FormulaData | null>, default: undefined },
   });
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   // Effective formula — from FormulaData, or legacy value prop
   const effectiveFormula = computed(() => {
@@ -114,18 +94,8 @@
   });
 
   // Resolve the FormulaField schema entry for this field path to read excludedFields
-  // If the field is wrapped in Dnd35eField, navigate to the inner FormulaField via .fields.value
   const formulaField = computed((): FormulaField | undefined => {
-    const doc = (sheetStore as any)?.document?.value;
-    if (!doc?.system?.schema?.fields) return undefined;
-    // fieldPath is e.g. 'system.nameFormula' — strip 'system.' prefix to get the schema key
-    const schemaKey = props.fieldPath.startsWith('system.') ? props.fieldPath.slice(7) : props.fieldPath;
-    const field = doc.system.schema.fields[schemaKey];
-    // Unwrap Dnd35eField compound if present (isFamiliarField marker)
-    if ((field?.constructor as any)?.isFamiliarField && field?.fields?.value) {
-      return field.fields.value as FormulaField;
-    }
-    return field as FormulaField | undefined;
+    return sheetStore?._storeUtils?.getSchemaField?.(props.fieldPath) as FormulaField | undefined;
   });
 
   // Effective contexts — explicit prop > store schema > FormulaData bindings > empty
@@ -149,9 +119,11 @@
   });
 
   // Refs
-  const formulaInput = ref<HTMLInputElement>();
-  const highlightLayer = ref<HTMLDivElement>();
-  const familiarDropdownRef = ref<InstanceType<typeof FamiliarDropdown>>();
+  const overlayRef = ref<InstanceType<typeof FamiliarOverlayInput>>();
+
+  const getInputElement = (): HTMLInputElement | undefined => overlayRef.value?.getInputElement();
+  const getHighlightElement = (): HTMLDivElement | undefined => overlayRef.value?.getHighlightElement();
+  const getDropdownMenuElement = (): HTMLElement | undefined => overlayRef.value?.getDropdownMenuElement();
 
   // Familiar composable — manages autocomplete state, keyboard nav, positioning
   const {
@@ -159,11 +131,11 @@
     showFamiliar,
     familiarIndex,
     familiarPosition,
-    updateOptions: updateFamiliarOptions,
-    handleKeyDown: handleFamiliarKeyDown,
-    scrollSelectedIntoView,
-    dismiss: dismissFamiliar,
-  } = useFamiliar();
+    dismissFamiliar,
+    handleNavigationKey,
+    syncScroll: syncOverlayScroll,
+    updateAutocomplete,
+  } = useFamiliarOverlayInput();
 
   // Local state
   const localValue = ref(effectiveFormula.value || '');
@@ -176,12 +148,7 @@
   const sheetStore = inject(DocumentSheetStoreSymbol, null) as DocumentSheetStore | null;
   const isEditable = computed(() => {
     if (props.disabled) return false;
-    return isEditViewMode.value;
-  });
-
-  const formulaError = computed(() => {
-    if (formulaErrors.value.length === 0) return '';
-    return formulaErrors.value.map((e: ValidationError) => e.error).join('; ');
+    return isEditMode.value;
   });
 
   /** Auto-generate hint from context keys, e.g. "Available Contexts: [Self, Owner]" */
@@ -191,6 +158,15 @@
     if (keys.length === 0) return '';
     const capitalized = keys.map(k => k.charAt(0).toUpperCase() + k.slice(1));
     return `Available Contexts: [${capitalized.join(', ')}]`;
+  });
+
+  const displayHint = computed(() => isEditMode.value ? dynamicHint.value : (props.hint ?? ''));
+
+  const readonlyDisplayHtml = computed(() => {
+    if (!effectiveFormula.value) {
+      return props.formulaData?.resolvedValue ?? props.value ?? '';
+    }
+    return renderFormulaDisplayHTML(effectiveFormula.value, contexts.value);
   });
 
   /**
@@ -237,9 +213,7 @@
 
   /** Sync scroll position between the real input and the highlight layer */
   function syncScroll() {
-    if (formulaInput.value && highlightLayer.value) {
-      highlightLayer.value.scrollLeft = formulaInput.value.scrollLeft;
-    }
+    syncOverlayScroll(getInputElement(), getHighlightElement());
   }
 
   // Sync external value changes into local state (but not during active editing)
@@ -304,15 +278,7 @@
 
   function onKeyDown(event: KeyboardEvent) {
     // Delegate autocomplete navigation to the Familiar composable
-    const result = handleFamiliarKeyDown(event);
-    if (result.handled) {
-      event.preventDefault();
-      if (result.selectedOption) {
-        selectAutocomplete(result.selectedOption);
-      } else {
-        // Arrow key nav — scroll the selected item into view
-        scrollSelectedIntoView(familiarDropdownRef.value?.menuRef);
-      }
+    if (handleNavigationKey(event, selectAutocomplete, getDropdownMenuElement())) {
       return;
     }
 
@@ -321,7 +287,7 @@
       event.preventDefault();
       isUserEditing = false;
       commitValue();
-      formulaInput.value?.blur();
+      getInputElement()?.blur();
       return;
     }
 
@@ -330,7 +296,7 @@
       // Revert to prop value
       localValue.value = props.value || '';
       isUserEditing = false;
-      formulaInput.value?.blur();
+      getInputElement()?.blur();
       event.preventDefault();
     }
   }
@@ -354,29 +320,27 @@
 
     const partialVariable = beforeCursor.substring(lastHashIndex);
 
-    // Compute dropdown position anchored to the '#' or last '.' in the variable
-    let position = { top: 0, left: 0 };
-    if (formulaInput.value) {
-      const inputRect = formulaInput.value.getBoundingClientRect();
-      const wrapperRect = formulaInput.value.closest('.formula-input-wrapper')?.getBoundingClientRect();
-      if (wrapperRect) {
-        const lastDotIndex = partialVariable.lastIndexOf('.');
-        const anchorOffset = lastHashIndex + (lastDotIndex !== -1 ? lastDotIndex + 1 : 0);
-        const anchorLeft = measureTextOffset(formulaInput.value, anchorOffset);
-        position = {
-          top: inputRect.bottom - wrapperRect.top + 2,
-          left: anchorLeft,
-        };
-      }
-    }
+    const inputEl = getInputElement();
+    if (!inputEl) return;
+    const lastDotIndex = partialVariable.lastIndexOf('.');
+    const anchorOffset = lastHashIndex + (lastDotIndex !== -1 ? lastDotIndex + 1 : 0);
 
-    updateFamiliarOptions(partialVariable, position, contexts.value);
+    void updateAutocomplete({
+      text: partialVariable,
+      context: contexts.value,
+      inputEl,
+      wrapperEl: inputEl.closest('.formula-input-wrapper') as HTMLElement | null,
+      anchorIndex: anchorOffset,
+      verticalGap: 2,
+      dropdownEl: getDropdownMenuElement(),
+    });
   }
 
   function selectAutocomplete(option: AutocompleteOption) {
-    if (!formulaInput.value) return;
+    const inputEl = getInputElement();
+    if (!inputEl) return;
 
-    const caretPos = formulaInput.value.selectionStart ?? localValue.value.length;
+    const caretPos = inputEl.selectionStart ?? localValue.value.length;
     const beforeCursor = localValue.value.substring(0, caretPos);
     const lastHashIndex = beforeCursor.lastIndexOf('#');
 
@@ -391,11 +355,12 @@
     // Restore cursor position after the inserted text
     const newCursorPos = lastHashIndex + option.fullPath.length;
     nextTick(() => {
-      if (formulaInput.value) {
-        formulaInput.value.value = newValue;
-        formulaInput.value.setSelectionRange(newCursorPos, newCursorPos);
-        formulaInput.value.focus();
-        scrollToCursor(formulaInput.value, newCursorPos);
+      const currentInput = getInputElement();
+      if (currentInput) {
+        currentInput.value = newValue;
+        currentInput.setSelectionRange(newCursorPos, newCursorPos);
+        currentInput.focus();
+        scrollToCursor(currentInput, newCursorPos);
       }
 
       // If the selected option is a branch (context or object), immediately
@@ -416,8 +381,8 @@
   onMounted(() => {
     localValue.value = effectiveFormula.value || '';
     updateValidation();
-    if (isEditable.value && formulaInput.value) {
-      nextTick(() => formulaInput.value?.focus());
+    if (isEditable.value && getInputElement()) {
+      nextTick(() => getInputElement()?.focus());
     }
   });
 
@@ -442,41 +407,10 @@
   user-select: none;
   word-break: break-word;
   white-space: pre-wrap;
-
-  &.has-error {
-    background: rgba(255, 100, 100, 0.08);
-    border-color: rgba(255, 100, 100, 0.25);
-  }
-
-  .error-indicator {
-    display: inline-block;
-    margin-right: 0.5rem;
-    color: #ff6b6b;
-    font-weight: bold;
-    animation: pulse 1.5s ease-in-out infinite;
-  }
-
-  .formula-result {
-    &.error {
-      color: #ff8b8b;
-    }
-  }
 }
 
 // Default slot content wrapper
 .formula-form-group {
-  .formula-input-wrapper {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .formula-edit-container {
-    position: relative;
-    width: 100%;
-  }
-
   // Shared font metrics for perfect alignment between input and highlight layer
   %formula-font {
     font-family: 'Courier New', 'Consolas', monospace;
@@ -488,60 +422,13 @@
 
   .highlight-layer {
     @extend %formula-font;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
     padding: 0.65rem;
     border: 1px solid transparent; // match input border width for alignment
-    box-sizing: border-box;
-    pointer-events: none; // purely visual — input sits on top and handles all interaction
-    white-space: pre;
-    overflow: hidden;
-    z-index: 1; // below input — colors show through input's transparent text
     color: #d4d4d4; // plain text visible — variables override with their own color
-
-    :deep(.formula-variable) {
-      background: rgba(102, 166, 255, 0.18);
-      color: #66b3ff;
-      border-radius: 2px;
-      padding: 1px 0;
-
-      &.is-error {
-        background: rgba(255, 100, 100, 0.2);
-        color: #ff9999;
-        text-decoration: wavy underline rgba(255, 100, 100, 0.6);
-        text-underline-offset: 3px;
-      }
-
-      &.is-warning {
-        background: rgba(255, 200, 50, 0.15);
-        color: #e6c44d;
-        text-decoration: wavy underline rgba(255, 200, 50, 0.5);
-        text-underline-offset: 3px;
-      }
-
-      // Nested spans for split highlighting (e.g. blue prefix + red/yellow suffix)
-      .is-error {
-        color: #ff9999;
-        text-decoration: wavy underline rgba(255, 100, 100, 0.6);
-        text-underline-offset: 3px;
-      }
-
-      .is-warning {
-        color: #e6c44d;
-        text-decoration: wavy underline rgba(255, 200, 50, 0.5);
-        text-underline-offset: 3px;
-      }
-    }
   }
 
   .formula-input {
     @extend %formula-font;
-    position: relative;
-    z-index: 2; // on top of highlight layer — receives all mouse and keyboard events directly
-    width: 100%;
     padding: 0.65rem;
     min-height: 2.5rem;
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -549,8 +436,6 @@
     background: transparent;
     color: transparent; // text invisible — highlight layer provides all coloring
     caret-color: #d4d4d4; // cursor remains visible
-    outline: none;
-    box-sizing: border-box;
     transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
                 box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -585,10 +470,4 @@
 
 }
 
-/* Animations */
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
-}
 </style>
