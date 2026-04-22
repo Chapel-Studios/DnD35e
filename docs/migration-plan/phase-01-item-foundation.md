@@ -54,7 +54,7 @@
 
 - [x] Schema mixin (`isIdentifiable`, `isIdentified`)
 - [x] Document mixin (name formula switching for identified/unidentified)
-- [x] Vue sheet components: `IdentifiableDocumentSheet`, `IsIdentifiedToggle`, `IdentifiableConfig`
+- [x] Vue sheet components: `IdentifiableDocumentSheet`, `IsIdentifiedToggle`
 
 ### 🔶 Remaining Work Items
 

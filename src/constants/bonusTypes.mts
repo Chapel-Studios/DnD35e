@@ -29,7 +29,7 @@ const BONUS_TYPE_MASTERWORK = 'dnd35e.BONUS_TYPES.Masterwork' as const;
  * Array of all bonus types for form choices and validation.
  * Built from individual constants to ensure consistency.
  */
-const BONUS_TYPES = [BONUS_TYPE_MATERIAL, BONUS_TYPE_BROKEN, BONUS_TYPE_MASTERWORK];
+const BONUS_TYPES = [BONUS_TYPE_MATERIAL, BONUS_TYPE_BROKEN, BONUS_TYPE_MASTERWORK] as const;
 
 /**
  * Union of all valid bonus types in the system.
