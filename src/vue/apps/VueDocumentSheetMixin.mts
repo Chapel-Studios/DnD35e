@@ -139,6 +139,9 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       options: ApplicationRenderOptions
     ): Promise<void> {
       await super._onRender(context, options);
+      const liveDoc = this.document as unknown as { effects?: Iterable<{ type?: string }> };
+      const hasSecrets = !!liveDoc.effects && [...liveDoc.effects].some(effect => effect.type === secretEffectType);
+      this.renderModeStore.setHasSecrets(hasSecrets);
       this.#syncWindowTitle();
       const header = this.element?.querySelector('.window-header');
       if (header) {

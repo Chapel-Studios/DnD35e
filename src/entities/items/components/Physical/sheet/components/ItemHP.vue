@@ -24,7 +24,7 @@
       :default-editability="gmOnlyEditability"
     />
     <template #readonly>
-      <span class="hp-display">{{ currentHp }}<HasActiveEffectsNotification :field-path="'system.hp.value'" /> / {{ maxHp }}<HasActiveEffectsNotification :field-path="'system.hp.max'" /></span>
+      <span class="hp-display">{{ currentHp }}<HasActiveEffectsNotification :field-path="'system.hp.current'" /> / {{ maxHp }}<HasActiveEffectsNotification :field-path="'system.hp.max'" /></span>
     </template>
   </FormGroupSection>
 </template>

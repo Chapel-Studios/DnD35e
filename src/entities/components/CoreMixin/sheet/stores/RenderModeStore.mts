@@ -10,6 +10,8 @@ type RenderModeStore = {
   isTrueMode: ComputedRef<boolean>;
   isOwnerOrGM: ComputedRef<boolean>;
   isGM: ComputedRef<boolean>;
+  hasSecrets: ComputedRef<boolean>;
+  setHasSecrets: (hasSecrets: boolean) => void;
   setViewMode: (newMode: ViewMode) => void;
   /** Set or update the header element reference and isEditable flag, then render the view mode bar. */
   setHeaderElement: (header: Element, isEditable: boolean) => void;
@@ -26,6 +28,7 @@ const useRenderModeStore = (
     viewMode: initialMode as ViewMode,
     isOwner,
     isGM: game.user.isGM,
+    hasSecrets,
   });
 
   // Header button management — set via setHeaderElement after DOM is ready
@@ -34,6 +37,10 @@ const useRenderModeStore = (
 
   const isGM = computed(() => {
     return game.user.isGM;
+  });
+
+  const hasSecretsRef = computed(() => {
+    return state.hasSecrets;
   });
 
   const isOwnerOrGM = computed(() => {
@@ -75,7 +82,7 @@ const useRenderModeStore = (
       mode: TRUE,
       icon: 'fa-solid fa-eye',
       tooltipKey: 'dnd35e.COMMON.SheetModeTrue',
-      visible: () => hasSecrets && game.user.isGM,
+      visible: () => state.hasSecrets && game.user.isGM,
     },
     {
       mode: EDIT,
@@ -126,7 +133,16 @@ const useRenderModeStore = (
     if (state.viewMode === EDIT && !editable) {
       state.viewMode = PLAY;
     }
-    if (state.viewMode === TRUE && !hasSecrets) {
+    if (state.viewMode === TRUE && !state.hasSecrets) {
+      state.viewMode = PLAY;
+    }
+    renderViewModeBar();
+  };
+
+  const setHasSecrets = (hasSecrets: boolean): void => {
+    if (state.hasSecrets === hasSecrets) return;
+    state.hasSecrets = hasSecrets;
+    if (state.viewMode === TRUE && !state.hasSecrets) {
       state.viewMode = PLAY;
     }
     renderViewModeBar();
@@ -136,7 +152,7 @@ const useRenderModeStore = (
 
   const setViewMode = (newMode: ViewMode): void => {
     // Don't allow True Mode when there are no secrets or the user isn't a GM.
-    if (newMode === TRUE && (!hasSecrets || !game.user.isGM)) return;
+    if (newMode === TRUE && (!state.hasSecrets || !game.user.isGM)) return;
     // Don't allow edit for non-editable
     if (newMode === EDIT && !editable) return;
 
@@ -153,6 +169,8 @@ const useRenderModeStore = (
     isTrueMode,
     isOwnerOrGM,
     isGM,
+    hasSecrets: hasSecretsRef,
+    setHasSecrets,
     setViewMode,
     setHeaderElement,
     renderViewModeBar,
