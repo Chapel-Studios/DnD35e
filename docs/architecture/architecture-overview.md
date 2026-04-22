@@ -3,21 +3,21 @@
 **Branch:** `feature/weapon_base` → `dev`
 
 > This branch began as a base weapon‑item pass — establishing the weapon as a minimal shell of an item type, ready to house combat actions, and using it to clarify how existing Material Items were meant to interact with Weapon Items. Material already existed in the system as an item type, and the plan was to apply it to weapons. But once the interaction between material and weapon wiring was examined, the flaw in the concept became evident. Material doesn’t exist independently — it only modifies something else. It belongs on the Active Effect layer.
-> That pivot is what blew the scope open. Moving Material to an ActiveEffect meant we needed a proper AE framework. Wiring AEs to items meant we had to settle how items and effects interact at the data layer. Settling the data layer exposed a separate problem: the old approach of storing unidentified values in flags completely falls apart for complex types like prices — you can't put a validated `PriceData` model in a flag. That forced a retrofit: `Dnd35eField`, a compound wrapper that stores both `value` and `unidentifiedValue` inline in the schema where Foundry's full data pipeline can reach them. As a bonus, the compound wrapper gave us a clean marker (`isFamiliarField`) that the FormulaFamiliar schema walker could use to auto-discover formula-eligible fields. 
-> With scope already blown open, this became the moment to tackle a long-deferred priority: replacing Handlebars with Vue and building a proper dual-axis view mode system (play/edit and identified/unidentified operating independently). HBS is imperative — every HTML mutation and reactive response has to be spelled out by hand, which makes ambitious UI a grind. Vue removes that friction; it's what made something like FormulaFamiliar's live syntax highlighting and autocomplete worth attempting in the first place. `Dnd35eField` then slotted naturally into the new sheet framework, giving it something concrete to route both view axes through and and various metadata settings like visibility and editibility override defaults.
+> That pivot is what blew the scope open. Moving Material to an ActiveEffect meant we needed a proper AE framework. Wiring AEs to items meant we had to settle how items and effects interact at the data layer. Settling the data layer exposed a separate problem: the old approach of storing unidentified values in flags completely falls apart for complex types like prices — you can't put a validated `PriceData` model in a flag. The current architecture solves masking through Secret AEs + `_masks` dictionary, keeping schema fields plain while mask logic lives entirely in the effect layer.
+> With scope already blown open, this became the moment to tackle a long-deferred priority: replacing Handlebars with Vue and building a proper unified ViewMode system (`edit` / `play` / `true`). HBS is imperative — every HTML mutation and reactive response has to be spelled out by hand, which makes ambitious UI a grind. Vue removes that friction; it's what made something like FormulaFamiliar's live syntax highlighting and autocomplete worth attempting in the first place. Field permission metadata (visibility, editability) slots into the new sheet framework via `useDnd35eField()` defaults and the `FieldOverridesStore` at runtime.
 > So this branch is really three things at once:
 > • Weapon as the first base item
 > • Material as the first base ActiveEffect
 > • The foundational architecture that lets them communicate correctly
-> Everything here — compound fields, formula resolution, dual‑view sheets, the AE change pipeline — is groundwork that every document type will build on from this point forward.
+> Everything here — field permission defaults, formula resolution, mode-aware sheets, and the AE change pipeline — is groundwork that every document type builds on.
 > Each of these documents is an incomplete prototype meant to showcase unique behaviors and how we can pattern them. Many fields may still be missing in the data layer, the Vue sheet layer, or elsewhere. There are probably still switches that need to be added to settings, and some UI clutter will need to be addressed (possibly via a context menu).
 
 ---
 
 ## Table of Contents
 
-1. [Dnd35eField — The Compound Data Field](#1-dnd35efield--the-compound-data-field)
-2. [Identifiable System — Dual-View Documents](#2-identifiable-system--dual-view-documents)
+1. [Field Architecture — Plain Fields + Masks](#1-field-architecture--plain-fields--masks)
+2. [Identifiable System — Secret-Aware Display](#2-identifiable-system--secret-aware-display)
 3. [FormulaFamiliar — Schema-Driven Formula Autocomplete](#3-formulafamiliar--schema-driven-formula-autocomplete)
 4. [Materials as Active Effects](#4-materials-as-active-effects)
 5. [Dnd35eDocument Mixin — Document-Level Formula Resolution](#5-dnd35edocument-mixin--document-level-formula-resolution)
@@ -27,121 +27,90 @@
 
 ---
 
-## 1. Dnd35eField — The Compound Data Field
+## 1. Field Architecture — Plain Fields + Masks
 
-`Dnd35eField` is a generic wrapper that extends Foundry's `SchemaField`. It wraps **any** inner Foundry `DataField` into a compound shape that natively supports identified/unidentified duality and field-level permission overrides.
+Schema fields are **plain Foundry DataFields** — `NumberField`, `StringField`, `SchemaField`, etc. — defined via `fieldBuilders.mts` helpers (`requiredNumberField`, `optionalStringField`, etc.). No compound wrappers are used.
 
-> **⚠️ Transitional**: The `Dnd35eField` class is being **removed** in Phase 1 (work items 1.O–1.W). The compound `{ value, unidentifiedValue }` pattern is replaced by the **Secret AE** system (Phase 2, §2.7) where a MASK change mode overlays display values without mutating real data. The non-identifiable capabilities (FormulaFamiliar integration, field permission defaults) are preserved via `useDnd35eField()` — a helper function that stamps metadata onto any plain Foundry `DataField`'s options bag. Root-level fields (`name`, `img`) use a small static registry. See Phase 1 checklist items 1.O–1.W for the full migration plan.
+Masking (showing players different values than stored) is handled entirely by the Secret AE + `_masks` layer, not by field shape.
 
-> For how Dnd35eField interacts with Active Effects and the `targetField` routing, see [Active Effect Lifecycle](active-effect-lifecycle.md). For how `.value` preparation works in the broader pipeline, see [Data Preparation Pipeline](data-preparation-pipeline.md).
-
-### Compound Shape
+### Defining Fields
 
 ```ts
-{
-  value: T,                    // The real/identified value — primary storage
-  unidentifiedValue: T | null, // Override value shown when viewing as unidentified
-}
-```
-
-This replaces the old approach of storing unidentified data in document flags. Flags didn't work well for complex data types like `PriceData` (coin stacks) because they bypass Foundry's DataModel validation and preparation pipeline entirely. By making unidentified storage a first-class part of the schema, both values go through the same validation, initialization, and Active Effect pipeline.
-
-### How to Define
-
-```ts
-schema.hardness = new Dnd35eField(NumberField,
-  { required: true, nullable: false, initial: 0 },  // inner field options
-  { label: 'Hardness', hint: 'Material hardness' }  // wrapper options
-);
-```
-
-The first argument is the inner field **class** (not an instance), the second is options passed to the inner field constructor, and the third is wrapper-level options (label, hint, familiar config, permission defaults).
-
-### How to Access at Runtime
-
-Because the stored shape is `{ value, unidentifiedValue }`, runtime access always goes through `.value`:
-
-```ts
-// Reading
-const hardness = document.system.hardness.value;       // number
-const unidHardness = document.system.hardness.unidentifiedValue; // number | null
-
-// Nested compounds (hp.value is itself a Dnd35eField)
-const currentHp = document.system.hp.value.value;
-```
-
-### Active Effect Integration
-
-Dnd35eField automatically routes Active Effect changes to the correct sub-field based on the change's `targetField` property:
-
-- `targetField: 'value'` → applies change to the identified value
-- `targetField: 'unidentifiedValue'` → applies change to the unidentified override
-
-The wrapper delegates to the inner field's own change methods (`_applyChangeAdd`, `_applyChangeMultiply`, etc.), so complex inner types like `PriceField` can define their own AE behaviors.
-
-### FormulaFamiliar Integration
-
-`Dnd35eField` has a static `isFamiliarField = true` marker. The schema walker auto-includes all Dnd35eField instances in formula autocomplete. Fields can opt out:
-
-```ts
-new Dnd35eField(HTMLField, {}, {
-  familiar: { formulaVisible: false }  // exclude from autocomplete
-});
+// Plain field — always the pattern
+schema.hardness = requiredNumberField(0);
+schema.price = new PriceField();          // special composite type
+schema.nameFormula = new FormulaField();  // formula-specific type
 ```
 
 ### Field Permission Defaults
 
-Schema authors can set permission defaults at definition time:
+Schema authors attach permission defaults via `useDnd35eField()` and FormulaFamiliar metadata via `withFamiliar()`:
 
 ```ts
-new Dnd35eField(NumberField, { initial: 0 }, {
+schema.hardness = useDnd35eField(requiredNumberField(0), {
   defaultVisibility: 'ownerPlus',    // 'everyone' | 'ownerPlus' | 'gmOnly'
   defaultEditability: 'gmOnly',       // 'normal' | 'gmOnly'
-  canVisibilityBeChanged: true,       // GM can override at runtime
-  canEditabilityBeChanged: true,
 });
+
+// Opt a field out of formula autocomplete
+schema.description = withFamiliar(htmlField(), { formulaVisible: false });
 ```
 
-Runtime GM overrides are stored in `flags.dnd35e.fieldOverrides` on the document, not in the schema.
+Runtime GM overrides are stored in `flags.dnd35e.fieldOverrides` on the document.
+
+### FormulaFamiliar Integration
+
+The schema walker uses static markers on field constructors to control recursion:
+
+- `isFamiliarField = true` — compound leaf; schema walker exposes `.value` access path
+- `isFamiliarLeaf = true` — opaque leaf; no recursion (used by `PriceField`, `FormulaField`)
+- No marker on a `SchemaField` → walker recurses into children
+- No marker on other field types → simple scalar leaf
+
+Opt out individual fields via `withFamiliar(field, { formulaVisible: false })`.
+
+> For how Active Effect `targetField` routing works, see [Active Effect Lifecycle](active-effect-lifecycle.md). For value preparation in the broader pipeline, see [Data Preparation Pipeline](data-preparation-pipeline.md).
 
 ---
 
-## 2. Identifiable System — Dual-View Documents
+## 2. Identifiable System — Secret-Aware Display
 
-> **⚠️ Transitional**: This system is being replaced by the **Secret AE** architecture (Phase 2, §2.7). Under the new design, `isIdentified` is derived from whether any active Secret AEs exist on the item, and the dual-view is powered by a masks dictionary built from Secret AE change rows rather than `Dnd35eField.unidentifiedValue` sub-fields. The `IdentifiableSchemaMixin` (`isIdentifiable`/`isIdentified` booleans), `IdentifiableDocumentMixin` (name formula registrations), and `RenderModeStore` (view mode axis) will be redesigned.
+The identifiable system is now secret-aware: `isIdentified` is derived from active Secret AEs, and display masking is driven by `_masks` plus `ViewMode`.
 
-The identifiable system enables items and effects to present two different faces: one for identified viewing (real values) and one for unidentified viewing (GM-controlled overrides). This is core to D&D 3.5e where players may not know what a magic weapon actually does.
+In practice:
+- `play` shows player-visible values (masked when Secrets are active)
+- `true` shows unmasked effective values (GM-only)
+- `edit` is authoring mode for editable source values
 
 ### Architecture
 
 The system is built as two composable mixins that stack independently:
 
 **Schema Mixin** (`IdentifiableSchemaMixin`) adds two boolean fields to the data model:
-- `isIdentifiable` — whether this document type supports dual-view at all
+- `isIdentifiable` — whether this document type supports secret-aware display behavior
 - `isIdentified` — current identification state
 
 **Document Mixin** (`IdentifiableDocumentMixin`) extends `Dnd35eDocumentMixin` with:
-- Additional formula registrations that evaluate both identified and unidentified name formulas
-- A name resolution registration that picks between derived names based on `isIdentified` state
+- Name/formula behaviors that cooperate with derived `isIdentified`
+- Display resolution behavior aligned with mask-aware view modes
 
 ### Storage: No More Flags
 
 Previously, unidentified data lived in document flags — a flat key-value store outside the schema. This caused problems with structured data types, Foundry's data preparation pipeline, and Active Effect routing.
 
-Now, every `Dnd35eField`-wrapped field stores its unidentified override inline in the `.unidentifiedValue` sub-field. Both values pass through the same DataModel lifecycle (validation, `_initializeSource`, `prepareDerivedData`).
+Current masking is generated from Secret AEs into `_masks` at prep time. Legacy `.unidentifiedValue` fields may still exist for compatibility, but view-aware getters are the canonical read path.
 
 ### Sheet View Modes
 
-Document sheets have two independent toggle axes, controlled by header buttons:
+Document sheets use a unified 3-state mode model:
 
-| Axis | Button | Who Can Toggle |
-|------|--------|-------|
-| Edit / View | Lock icon | Any user with edit permission |
-| Identified / Unidentified | Eye icon | GM only |
+| Mode | Who Can Use | Behavior |
+|------|-------------|----------|
+| `edit` | User with edit permission | Editable source values |
+| `play` | Everyone with sheet access | Player-visible values (mask/effective aware) |
+| `true` | GM only | Unmasked effective values |
 
-Non-GM users are "secretly stuck" — their view follows the document's actual `isIdentified` state. They never see the eye button.
-
-The `useDocumentSheetStore` provides view-aware getters (`getViewAwareFieldValue`, `getViewAwareFieldUpdater`) that automatically read from or write to the correct sub-field based on the current view mode.
+`useDocumentSheetStore` view-aware getters (`getViewAwareFieldValue`, `getViewAwareFieldUpdater`) route reads/writes according to mode + masking rules.
 
 ---
 
@@ -175,7 +144,7 @@ Documents frequently need computed names, descriptions, or values that reference
 
 The schema walker (`schemaWalker.mts`) introspects any DataModel's `defineSchema()` output to auto-build the property tree:
 
-- Fields with `isFamiliarField === true` (all Dnd35eField instances) are auto-included
+- Fields with `isFamiliarField === true` are auto-included as compound leaves
 - Fields can explicitly opt in via `familiar: { formulaVisible: true }`
 - SchemaFields without markers are treated as branches — the walker recurses into children
 - Document-level fields (`name`) are merged into every context
@@ -249,7 +218,7 @@ In D&D 3.5e, a material (like Adamantine or Cold Iron) modifies the properties o
 
 - Modifications are handled by Foundry's AE pipeline instead of custom code
 - Materials compose naturally — a weapon can have multiple material effects
-- The same material effect can declare different modifications for identified vs unidentified views
+- Material display behavior integrates with play/true modes through Secret mask infrastructure
 - Materials benefit from the existing AE UI (enable/disable, priority, phases)
 
 ### Class Composition
@@ -257,7 +226,7 @@ In D&D 3.5e, a material (like Adamantine or Cold Iron) modifies the properties o
 ```
 DnD35eActiveEffect
   → Dnd35eDocumentMixin    (formula resolution, registeredFormulas)
-  → IdentifiableDocumentMixin  (dual-view name formulas)
+  → IdentifiableDocumentMixin  (secret-aware name/display behavior)
   = Material
 ```
 
@@ -270,7 +239,7 @@ DnD35eActiveEffect
 - Each `damageReductionTypes` entry → generates a DR type change
 - Changes are marked `isSystem: true` so they don't appear in the user-editable changes list
 
-For identifiable materials, separate changes are emitted for `.unidentifiedValue` fields with `targetField: 'unidentifiedValue'`, so the Dnd35eField wrapper routes them correctly.
+Material display/masking behavior is handled by Secret AEs + ViewMode. Material changes contribute effective values, while player-facing masked presentation is resolved in play mode.
 
 ### Name Formulas with Context
 
@@ -310,7 +279,7 @@ interface FormulaRegistration {
 }
 ```
 
-The base mixin registers two: `defaultDerivedNameRegistration` (resolves the name formula) and `defaultNameRegistration` (copies derivedName to the document name). `IdentifiableDocumentMixin` replaces these with versions that also handle unidentified name formulas.
+The base mixin registers two: `defaultDerivedNameRegistration` (resolves the name formula) and `defaultNameRegistration` (copies derivedName to the document name). `IdentifiableDocumentMixin` extends this behavior for secret-aware display/name resolution.
 
 ### Resolution Triggers
 
@@ -347,11 +316,12 @@ All form inputs inherit from `FormGroup.vue`, which handles:
 - **Field permission** controls (visibility, editability overrides)
 - **View-mode awareness** via the `editValue` pattern
 
-Each typed FormGroup (Number, Text, Select, Checkbox, Toggle, Color, MultiSelect, RichTextEditor, ItemPrice) computes an `editValue` that respects the identified/unidentified view mode:
+Each typed FormGroup (Number, Text, Select, Checkbox, Toggle, Color, MultiSelect, RichTextEditor, ItemPrice) computes an `editValue` that respects the 3-state ViewMode:
 
-- **Identified edit mode**: shows `sourceValue` (raw DB value) — user edits the real data
-- **Unidentified edit mode**: shows `props.value` (effective value) — GM edits the override
-- **View mode** (readonly): always shows effective value
+- **Edit mode**: shows `sourceValue` (raw DB value) — user edits the real data
+- **Play mode**: shows `props.value` (effective/masked value)
+- **True mode**: shows `props.value` (effective unmasked value for GM)
+- **Readonly mode**: always shows effective value
 
 ### FieldControls
 
@@ -365,15 +335,15 @@ Overrides cascade parent-to-child with most-restrictive-wins semantics. A sectio
 
 `useDocumentSheetStore` is the central composable providing:
 - `getViewAwareFieldValue(path)` — returns the right value for the current view mode
-- `getDirectFieldUpdater(path)` / `getViewAwareFieldUpdater(path)` — update functions that auto-route to `.value` or `.unidentifiedValue`
-- `getSourceProperty(path)` — raw DB value with automatic Dnd35eField `.value` unwrapping
+- `getDirectFieldUpdater(path)` / `getViewAwareFieldUpdater(path)` — mode-aware update functions (including mask-aware routing)
+- `getSourceProperty(path)` — raw DB value at the given path
 - `getFieldOverride(path)` — merged permission cascade for a field path
 - `viewModeAwareUpdateDocument(data)` — bulk update respecting current view mode
 
 ### Sub-Stores
 
 The document sheet decomposes into focused stores:
-- **RenderModeStore** — edit mode toggle, identified view toggle, header button rendering
+- **RenderModeStore** — unified `edit`/`play`/`true` mode state, header mode bar rendering
 - **FieldOverridesStore** — GM field permission overrides, cascade resolution
 - **TabStore** — tab state management, active tab tracking
 
@@ -443,7 +413,7 @@ Delta casting accepts multiple formats: JSON arrays, `PriceData` instances, shor
 
 **Why this matters**: Material effects generate price modifier changes. A Mithral material might add `[{ coinId: 'srd_gp', count: 1000 }]` to a weapon's price. Because `PriceField` handles its own AE change modes, this works through the standard Foundry AE pipeline — no special-case code needed.
 
-The **ItemPriceFormGroup** Vue component renders a multi-denomination coin editor in item sheets, reading from the world's currency settings to know which coins to display. It respects the identified/unidentified view mode, so GMs can set a different price for the unidentified view.
+The **ItemPriceFormGroup** Vue component renders a multi-denomination coin editor in item sheets, reading from the world's currency settings to know which coins to display. It respects ViewMode semantics so play mode can display masked/effective values while true mode shows unmasked values for GMs.
 
 ### Settings UI
 

@@ -154,7 +154,7 @@ Every implementation decision should pass the test: **"How does a player or GM a
 - DataModel schemas with `defineSchema()` layering
 - Vue stores with Pinia
 - FormGroup components with the EditValue pattern
-- Dnd35eField compound fields with view-aware getters
+- Field permission overrides with view-aware getters
 - Active Effect material pattern with phase system
 
 When you see a pattern, follow it. When you're unsure if a pattern applies, **stop and ask**.
@@ -198,7 +198,7 @@ Delegate when a section reveals knowledge worth caching for future sections:
 - Study existing code patterns before writing new code
 - Run `npm run build` after every section — must pass clean
 - Match existing naming conventions, file structure, import patterns
-- Use Dnd35eField for fields that need identified/unidentified support
+- For legacy compound fields, use store helpers/view-aware getters; do not introduce new wrapper-only shapes unless required
 - Localize all user-facing strings (use `dnd35e` namespace)
 - **Register all new document subtypes** in `system.json.template`, `registration.mts`, and creation dialog config (see `/memories/repo/system-json-registration.md`)
 - Stop and present work for approval after each checklist item
@@ -310,8 +310,8 @@ SilverSmith: [Reads phase-06-actor-foundation.md, dependency phases 1-5,
   - Phase 5 compendium foundation exists ✓ (pack pipeline, UUIDs)
 
   Key design decisions already in the spec:
-  - Six ability scores as Dnd35eField-wrapped NumberFields
-  - HP uses current/max/temp compound field
+  - Six ability scores as plain NumberFields
+  - HP uses current/max/temp fields
   - AC is a shell (flat numbers) — full equipment AC is Phase 19
 
   Questions:

@@ -104,8 +104,8 @@ The legacy `master` field is replaced by the **Bond Pattern**: a non-transfer AE
 ### Level History as Source of Truth
 Characters track an immutable ledger of every level gained: `system.levelHistory: LevelRecord[]`. Each record captures the progression source, HP breakdown (die size — `null` for levels with HD overridden to 0, roll result, CON mod at that time), skill point breakdown (base, INT mod at that time, allocated skills — all 0 for HD-overridden levels), ability score increase choice (at total HD milestones 4/8/12/16/20), grants created, and choices made. The level history is the source of truth for auditing. BAB, saves, and total HP are ***derived*** from the history + progression schedules in `prepareDerivedData()` — never stored. `totalHD` = count of entries where `hp.dieSize !== null` (excludes levels where the progression's `hdOverride` set HD to 0). Soft validation: edits that break downstream prerequisites produce derived warnings but are not prevented. See Phase 12 for edit rules.
 
-### Identifiable Redesign Needed ⚠️
-Identifiable needs a system-wide rethink covering: partial identification tiers, interaction with Foundry permission levels (LIMITED → unidentified?), per-field identification via `Dnd35eField`, community feedback on identification workflow. This is a **cross-cutting mini-phase** that affects items (Phase 1 hardening), actors (Advanced Actors), and active effects. Not solved here — flagged for dedicated planning.
+### Identifiable Architecture (Secrets)
+Identifiable redesign has landed via the Secret AE architecture. Player-visible masking is driven by Secret AE `_masks` plus `ViewMode` (`edit` / `play` / `true`), with per-field visibility/editability handled by `flags.dnd35e.fieldOverrides`. This remains a cross-cutting concern across items, actors, and active effects, but the core model is established.
 
 ---
 
@@ -515,16 +515,16 @@ Special case. Needs INT/WIS/CHA but not STR/DEX/CON. Has ego score, communicatio
 
 ## Cross-Cutting Concerns
 
-### Identifiable ⚠️ REDESIGN NEEDED
-Current binary `isIdentifiable`/`isIdentified` is insufficient. Needs:
-- Partial identification tiers (you know it's a trap, but not what kind)
-- Per-field identification via existing `Dnd35eField` infrastructure (`{value, unidentifiedValue}`)
-- Interaction with Foundry permission levels (`LIMITED` → always unidentified?)
-- System-wide consistency: items, actors, active effects
-- Community feedback on identification workflow
-- **Flagged for dedicated mini-phase** — not solved in actor PropertyMap
+### Identifiable (Current State)
+Current architecture uses Secret AEs for masking and `ViewMode` for presentation:
+- `play` mode shows player-visible masked/effective values
+- `true` mode shows unmasked effective values (GM-only)
+- Field-level visibility/editability uses override metadata + `flags.dnd35e.fieldOverrides`
+- System behavior is shared across items, actors, and active effects
 
-Applies to: NPC ✅, Object ✅, Trap ✅, Character ❌, Companion ❌
+Future enhancements (if desired):
+- Partial identification tiers beyond masked/unmasked
+- Additional UX refinements based on community feedback
 
 ### Skills
 Not on any actor model until the dedicated Skills phase (after Phase 12 Classes). Basic skill checks (d20 + ability mod) introduced in Phase 8 as an example of actor-owned actions. Full skill system (ranks, class skills, synergies, 36+ skills) in Skills phase.

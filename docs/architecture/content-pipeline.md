@@ -197,4 +197,4 @@ Cross-linking is data-driven: feats link to related feats and prerequisite chain
 |---|---|
 | [Progression](progression-system.md) | Grant system references compendium UUIDs for class/race features |
 | [Active Effects](active-effect-lifecycle.md) | Migrated AEs need bonusType and phase fields added |
-| [Architecture Overview](architecture-overview.md) | Dnd35eField schema validates compendium data at build time |
+| [Architecture Overview](architecture-overview.md) | Plain DataField schemas validate compendium data at build time |

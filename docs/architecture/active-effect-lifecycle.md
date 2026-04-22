@@ -37,7 +37,7 @@ interface Dnd35eEffectChangeData extends EffectChangeData {
   phase: 'core' | 'initial' | 'final' | string;  // string for action.* namespaces
   bonusType: BonusType;
   operator: OperationType;
-  // targetField removed — Dnd35eField compound replaced by useDnd35eField() (Phase 1, 1.O–1.V)
+  // targetField removed — legacy compound wrapper replaced by field metadata helpers (Phase 1, 1.O–1.V)
 }
 ```
 
@@ -162,4 +162,4 @@ interface AEGeneratorConfig {
 | [Conditions](condition-system.md) | Conditions are predefined AE templates |
 | [Area Effects](area-effects.md) | Regions apply/remove AEs on token enter/exit |
 | [Progression](progression-system.md) | Class/race features generate AE changes via the Material pattern |
-| [Architecture Overview](architecture-overview.md) | `useDnd35eField()` stamps familiar/permission metadata on plain fields; Secret AEs (Phase 2 §2.7) handle display masking via MASK change mode |
+| [Architecture Overview](architecture-overview.md) | Field metadata helpers stamp familiar/permission metadata on plain fields; Secret AEs (Phase 2 §2.7) handle display masking via MASK change mode |

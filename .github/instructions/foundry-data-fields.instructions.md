@@ -97,10 +97,10 @@ class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
 
 ```typescript
 // ✅ Correct: label/hint from LOCALIZATION_PREFIXES
-schema.hardness = new Dnd35eField(NumberField, { required: true, initial: 0, min: 0 });
+schema.hardness = requiredNumberField(0, { min: 0 });
 
 // ❌ Wrong: hardcoded label
-schema.hardness = new Dnd35eField(NumberField, { required: true, initial: 0, label: 'Hardness' });
+schema.hardness = new fields.NumberField({ required: true, initial: 0, label: 'Hardness' });
 ```
 
 ## Basic Fields
@@ -223,7 +223,7 @@ export {
 
 ```typescript
 // In WeaponSystemModel
-schema.damageType = new Dnd35eField(StringField, {
+schema.damageType = new fields.StringField({
   choices: DAMAGE_TYPES,  // Array used here
   initial: DAMAGE_TYPE_SLASHING,  // Individual const used here
   required: true

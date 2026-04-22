@@ -187,4 +187,4 @@ Warnings are displayed on the character sheet as an expandable panel. They never
 | [Bonus Stacking](bonus-stacking.md) | Stacking engine runs during `prepareDerivedData()` |
 | [Progression](progression-system.md) | Level history feeds BAB/save/HP derivation |
 | [Action System](action-system.md) | `action.*` effects deferred to roll time, not resolved during prep |
-| [Architecture Overview](architecture-overview.md) | Dnd35eField compound shape routes AE targeting |
+| [Architecture Overview](architecture-overview.md) | Plain-field architecture and Secret AE masks drive display targeting |

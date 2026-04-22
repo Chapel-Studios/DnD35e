@@ -4,7 +4,7 @@
  * Overrides are stored in document flags (`flags.dnd35e.fieldOverrides`).
  * Field *defaults* (defaultVisibility, defaultEditability, canVisibilityBeChanged,
  * canEditabilityBeChanged) come from the schema field options set at definition time
- * (useDnd35eField / FormulaField constructor options).
+ * (useDnd35eField / withFamiliar / FormulaField constructor options).
  *
  * Follows the same composable pattern as {@link TabStore}.
  *
@@ -31,7 +31,7 @@ type DataField = foundry.data.fields.DataField;
 type SchemaField = foundry.data.fields.SchemaField;
 
 /**
- * Custom options stashed on fields via useDnd35eField / Dnd35eSectionField / FormulaField at schema definition time.
+ * Custom options stashed on fields via useDnd35eField / withFamiliar / FormulaField at schema definition time.
  * Foundry preserves unknown keys in `field.options`; this interface describes the ones we read back.
  */
 interface Dnd35eOverrideOptions {
@@ -247,7 +247,7 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
 
   /**
    * Resolve schema field metadata for visibility/editability defaults.
-   * Reads field options set at schema definition time (useDnd35eField / FormulaField / Dnd35eSectionField).
+    * Reads field options set at schema definition time (useDnd35eField / withFamiliar / FormulaField).
    * Returns null for non-schema fields (name, img, etc.).
    */
   const resolveFieldMeta = (fieldPath: string): FieldMeta | null => {

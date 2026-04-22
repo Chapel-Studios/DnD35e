@@ -562,7 +562,7 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
      - Player always sees masked (if Secrets active) or real (if no Secrets)
 
 3. **Integrate with DocumentSheetStore**
-   - Replace existing `getViewAwareFieldValue()` which calls `Dnd35eField.getEffective()`
+  - Replace existing `getViewAwareFieldValue()` legacy wrapper logic
    - New version reads from store getter above
    - ✅ **Verify**: Form fields show correct values based on view mode
 
@@ -706,7 +706,7 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
 
 ### TRACK 13: RenderModeStore 3-State Model [LEAD DEV]
 
-**Goal**: Replace 2-axis (Edit/Play × Identified/Unidentified) with single 3-state enum (Edit/Identified/Unidentified); update button-bar UI; remove FormGroup short-circuits.
+**Goal**: Replace 2-axis (Edit/Play × Identified/Unidentified) with single 3-state enum (Edit/Play/True); update button-bar UI; remove FormGroup short-circuits.
 
 **Rationale**: Cleaner architecture. Edit/Unidentified is an impossible state (you always edit real data). 3-state eliminates it.
 
@@ -719,14 +719,14 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
 **Tasks**:
 
 1. **Create 3-state `ViewMode` type in `RenderModeStore`**
-   - Type: `ViewMode = 'edit' | 'identified' | 'unidentified'`
+  - Type: `ViewMode = 'edit' | 'play' | 'true'`
    - Replace state properties:
      - Old: `isEditViewMode: boolean`, `identifiedViewMode: 'identified' | 'unidentified'`
      - New: `viewMode: ViewMode` (single source of truth)
    - Add computed properties for backward compatibility:
      - `isEditMode = computed(() => viewMode === 'edit')`
-     - `isIdentifiedViewMode = computed(() => viewMode === 'identified')`
-     - `isUnidentifiedViewMode = computed(() => viewMode === 'unidentified')`
+     - `isPlayMode = computed(() => viewMode === 'play')`
+     - `isTrueMode = computed(() => viewMode === 'true')`
    - ✅ **Verify**: Existing code that reads old properties still works via computed getters
 
 2. **Update button-bar rendering (`renderViewModeBar()`)**
@@ -736,9 +736,9 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
      ```
      buttons = []
      if canEdit:   buttons.push({ mode: 'edit', icon: 'lock-open' })
-     buttons.push(               { mode: 'identified', icon: 'play' })
+     buttons.push(               { mode: 'play', icon: 'play' })
      if isGM && isIdentifiable:
-       buttons.push(             { mode: 'unidentified', icon: 'eye-slash' })
+       buttons.push(             { mode: 'true', icon: 'eye' })
      
      Render as horizontal bar:
      - Active button: full opacity
@@ -786,8 +786,8 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
    - ✅ **Verify**: Initial state computed correctly from caller params
 
 6. **Document state transitions**
-   - Edit → Identified/Unidentified (exit edit mode)
-   - Identified ↔ Unidentified (toggle between play modes, GM only)
+  - Edit → Play/True (exit edit mode)
+  - Play ↔ True (GM only)
    - No Edit ↔ anything direct; must go via Play mode
    - ✅ **Verify**: State machine is documented
 
@@ -1074,10 +1074,10 @@ PARALLEL WORK ZONES
 **Implementation** (completed):
 - `schemaWalker.mts`: `walkFields()` treats non-opted-out, non-SchemaField fields as simple leaves
 - Two static markers recognized on field constructors:
-  - `isFamiliarField = true` → compound leaf with `.value` access path (Dnd35eField — backward compat)
+  - `isFamiliarField = true` → compound leaf with `.value` access path
   - `isFamiliarLeaf = true` → opaque leaf, not recursed into (PriceField, FormulaField)
 - Opt-out: `slug` field in `Dnd35eDocumentSystemModel` uses `familiar: { formulaVisible: false }`
-- Fields that already opt out: `nameFormula`, `description` (via Dnd35eField wrapper options)
+- Fields that already opt out: `nameFormula`, `description` (via `withFamiliar(..., { formulaVisible: false })`)
 
 **Opaque leaf fields** (handle their own inner structure):
 - **PriceField** — renders via `PriceData.toString()`; inner stacks/srdEquivalent hidden from walker
@@ -1260,12 +1260,12 @@ risk_8:
 - ✅ Secrets List visible to GMs only, per-Secret toggles work
 - ✅ "Add Secret" button (GM-only) creates Secret AEs
 - ✅ Non-GM + active Secrets: Edit button hidden (player locked to masked view)
-- ✅ RenderModeStore 3-state works: Edit/Identified/Unidentified
+- ✅ RenderModeStore 3-state works: Edit/Play/True
 - ✅ Button bar renders correctly, modes switch correctly
 
 **Architecture**:
 - ✅ Stacking algorithm is generic (reusable in Phase 5 for actors)
-- ✅ No Dnd35eField unidentifiedValue wrappers needed; masks replace them
+- ✅ No wrapper-based `unidentifiedValue` storage needed; masks replace it
 - ✅ CONFIG setup pattern established for future effect types
 - ✅ Both subsystems tested manually (Phase 4 will add unit/integration tests)
 

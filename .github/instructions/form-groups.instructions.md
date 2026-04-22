@@ -339,17 +339,17 @@ All FormGroups implement the **EditValue pattern** (see [Vue Sheet Patterns](./v
 ```typescript
 const editValue = computed({
   get() {
-    // If viewing unidentified, use override value
-    if (store.editorViewMode === 'unidentified' && !props.editDerived) {
-      return props.value;  // Already unwrapped by store
-    }
-    
     // If editing derived value, use effective value
     if (props.editDerived) {
       return props.value;
     }
+
+    // Play/true modes use effective value from store
+    if (store.viewMode !== 'edit') {
+      return props.value;  // Already view-aware/unwrapped by store
+    }
     
-    // Identified edit mode: use source value if available
+    // Edit mode: use source value if available
     if (sourceValue.value) {
       return sourceValue.value;
     }
@@ -366,4 +366,4 @@ const editValue = computed({
 
 See also:
 - [Vue Sheet Patterns](./vue-sheet-patterns.instructions.md) — Sheet view modes, EditValue pattern
-- [Dnd35eField Pattern](./dnd35e-field.instructions.md) — Compound fields with overrides
+- [Field Permissions & View-Aware Access](./dnd35e-field.instructions.md) — Field overrides and mode-aware access

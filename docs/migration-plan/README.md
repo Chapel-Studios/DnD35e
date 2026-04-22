@@ -753,6 +753,6 @@ Track `system.migration.version` on every actor/item. Field established in Phase
 ### Action System Integration
 All combat-related data feeds the Action System:
 - Stats that action formulas reference → register in FormulaFamiliar schema (Phase 7)
-- Modifiers of action behavior → AE change targeting `Dnd35eField` (Phase 10)
+- Modifiers of action behavior → AE changes targeting action schema fields (Phase 10)
 - Grants/modifies available actions → EffectTrigger (Phase 10)
 - Changes turn economy → TurnActionBudget state modification (Phase 14)

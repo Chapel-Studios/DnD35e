@@ -41,6 +41,27 @@ Helps maintain and improve phase planning documentation throughout the system li
 - **Forward reference**: Explain why deferred work is deferred
 - **Traceability**: Cross-reference related sections
 - **Testability**: Completion checklists use verifiable criteria
+- **Terminology fidelity**: Verify runtime terms against constants/types before final wording
+
+## Anti-Regression Checks (After Major Implementation)
+
+When planning docs are updated after heavy implementation, run these checks:
+
+1. **Canonical term check**
+	- Confirm mode names/enums against source constants (example: `ViewMode` in `src/helpers/formulae/types.mts`)
+	- Replace deprecated names globally in the doc (for example `unidentified` mode name -> `true`)
+
+2. **Behavior-evidence check**
+	- Each major claim in summary/checklist must map to at least one code location
+	- If behavior is only partially verified, mark as `partial`/`deferred`
+
+3. **Platform command check**
+	- Use shell commands that work on the active platform (PowerShell vs Unix tools)
+	- Avoid documenting commands that fail on contributor default shells
+
+4. **Retrospective capture check**
+	- For mistakes found during phase work, record: symptom -> root cause -> prevention rule
+	- Feed prevention rules into agent/instruction files, not only phase notes
 
 ## Common Tasks
 

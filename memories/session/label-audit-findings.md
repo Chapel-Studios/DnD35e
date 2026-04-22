@@ -56,8 +56,8 @@ Many components in WeaponDetails tab are missing their labels. We transitioned f
 ## TODO — Still Need to Investigate
 - The user said "many" labels are missing. Only MagicEquivalency is provably broken via auto-derivation failure. Need to **test in Foundry** to confirm which labels are actually missing visually.
 - Possible that Foundry's `localizeSchema()` isn't running or the prefixes aren't chaining correctly at runtime — would cause ALL auto-derived labels to be empty. This would explain "many" missing.
-- Check if `_getField()` on Dnd35eField-wrapped fields returns the inner field or the wrapper — label might be on the wrong level.
-- The `useDnd35eField()` function in `fieldBuilders.mts` decorates `field.options` but doesn't touch `label` — label comes from `localizeSchema()` at Foundry boot time.
+- Check if `_getField()` on metadata-decorated fields returns the expected localized field node — label might be on the wrong level.
+- The field metadata helper in `fieldBuilders.mts` decorates `field.options` but doesn't touch `label` — label comes from `localizeSchema()` at Foundry boot time.
 
 ## Next Steps
 1. Check if `localizeSchema()` is being called for weapon models (maybe missing from registration?)

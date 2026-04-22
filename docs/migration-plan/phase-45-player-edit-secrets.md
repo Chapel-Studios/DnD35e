@@ -8,7 +8,7 @@
 
 ## 45.1 Overview
 
-When a player with edit permission modifies a field that has been **masked** by the identification system (i.e. the field has a hidden value behind a `Dnd35eField.unidentifiedValue`), the edit must not obliterate the GM's mask. Instead, the system intercepts the edit and routes it into a **Player Edit Secret** — a system-managed Active Effect that sits at a **higher priority** than the identification mask.
+When a player with edit permission modifies a field that has been **masked** by the identification system (i.e. a field value overridden by Secret AE mask data), the edit must not obliterate the GM's mask. Instead, the system intercepts the edit and routes it into a **Player Edit Secret** — a system-managed Active Effect that sits at a **higher priority** than the identification mask.
 
 ---
 

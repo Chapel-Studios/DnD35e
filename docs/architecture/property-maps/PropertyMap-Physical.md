@@ -4,7 +4,7 @@ Tangible objects that exist in the game world — weapons, armor, shields, gear,
 
 > **Legend**: ✅ = Implemented | 🔲 = Planned | 📋 = Deferred | ⛔ = Removed
 >
-> Fields wrapped with `Dnd35eField` are marked with `🔷` — they store data as `{ value, unidentifiedValue, overrides }`, not scalars.
+> Fields decorated with field metadata are marked with `🔷`.
 
 ---
 

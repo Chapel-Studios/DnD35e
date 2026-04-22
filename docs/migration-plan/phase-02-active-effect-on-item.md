@@ -107,13 +107,13 @@
   - [x] Effect list bucketing: type-based sections (Material, Secret) with fallback general list for everything else
 
 - [x] **RenderModeStore Update — 3-State Model (§2.7.7)** — Track 13:
-  - [x] Replace 2-axis model with 3-state `ViewMode`: `'edit' | 'identified' | 'unidentified'`
+  - [x] Replace 2-axis model with 3-state `ViewMode`: `'edit' | 'play' | 'true'`
   - [x] Button-bar UI: all mode buttons in horizontal bar at sheet header; active = full opacity, inactive = dimmed
-  - [x] GM sees: Edit + Play + Unidentified (identifiable) or Edit + Play (non-identifiable)
+  - [x] GM sees: Edit + Play + True (identifiable) or Edit + Play (non-identifiable)
   - [x] Player sees: Edit + Play (always — Player Edit Secrets protect masked data)
-  - [x] "Unidentified" button hidden from non-GM users entirely
+  - [x] "True" button hidden from non-GM users entirely
   - [x] Replace `renderEditModeButton()` + `renderIdentifiedViewButton()` with single `renderViewModeBar()`
-  - [x] `DocumentSheetStore.getViewAwareFieldValue()` reads `_masks` dictionary instead of `Dnd35eField.getEffective()`
+  - [x] `DocumentSheetStore.getViewAwareFieldValue()` reads `_masks` dictionary instead of legacy wrapper effective-value logic
   - [x] Remove `isIdentifiedViewMode` short-circuit from all FormGroup components (store handles it)
 
 - [ ] **Player Edit Secrets (§2.7.10)** — Track 14:
@@ -629,9 +629,9 @@ The actual broken/masterwork **content** (default compendium entries), **sync lo
 
 ## 2.7 Secret Active Effect Type
 
-The Secret AE type replaces the `Dnd35eField` `{ value, unidentifiedValue }` compound system. Instead of every field carrying its own unidentified value, items store only real values in plain fields. A GM-authored Secret AE **masks** specific fields at the display layer.
+The Secret AE type replaces the old `{ value, unidentifiedValue }` compound system. Instead of every field carrying its own unidentified value, items store only real values in plain fields. A GM-authored Secret AE **masks** specific fields at the display layer.
 
-> **Schema walker update**: The FormulaFamiliar schema walker now includes **all fields by default** (opt-out via `formulaVisible: false`). When `Dnd35eField` wrappers are removed and fields become plain, no re-registration is needed — the walker already captures them. Fields like `slug` that shouldn't appear in autocomplete opt out explicitly. PriceField and FormulaField are treated as **opaque leaves** (`isFamiliarLeaf = true`), preventing the walker from recursing into their internal structure. See task decomposition §D1.
+> **Schema walker update**: The FormulaFamiliar schema walker now includes **all fields by default** (opt-out via `formulaVisible: false`). With plain fields, no re-registration is needed — the walker already captures them. Fields like `slug` that shouldn't appear in autocomplete opt out explicitly. PriceField and FormulaField are treated as **opaque leaves** (`isFamiliarLeaf = true`), preventing the walker from recursing into their internal structure. See task decomposition §D1.
 
 ### 2.7.1 Core Concept
 
@@ -744,10 +744,10 @@ The existing 2-axis model (Edit/Play × Identified/Unidentified) is replaced by 
 | State | Label | Who sees the button | What it shows |
 |-------|-------|---------------------|---------------|
 | **EDIT** | "Edit" | Owners (GM always; non-GM only when no active Secrets) | Source data — always the real/identified values |
-| **IDENTIFIED** | "Play" | Everyone | Real values — the item as it truly is |
-| **UNIDENTIFIED** | "Unidentified" | GM only | Masked values from `_masks` dictionary (§2.7.4) — GM preview of what players see |
+| **PLAY** | "Play" | Everyone | Player-visible values (masked when active Secrets exist) |
+| **TRUE** | "True" | GM only | Unmasked effective values — GM true-value preview |
 
-The two old booleans (`isEditViewMode`, `identifiedViewMode`) collapse into one `viewMode: ViewMode` where `ViewMode = 'edit' | 'identified' | 'unidentified'`.
+The two old booleans (`isEditViewMode`, `identifiedViewMode`) collapse into one `viewMode: ViewMode` where `ViewMode = 'edit' | 'play' | 'true'`.
 
 **Why 3-state?** There is no "edit unidentified" mode. Secrets handle masking at the display layer — you always edit the real data. Combining edit and play identity into one axis eliminates an impossible state.
 
@@ -755,12 +755,12 @@ The two old booleans (`isEditViewMode`, `identifiedViewMode`) collapse into one 
 
 All view-mode buttons are rendered in a **horizontal button bar** at the top of the sheet header. The active button uses full opacity; non-active buttons are **dimmed** (reduced opacity / muted styling). Clicking a dimmed button switches to that mode.
 
-**GM sees** (identifiable item): three buttons — `[Edit] [Play] [Unidentified]`
+**GM sees** (identifiable item): three buttons — `[Edit] [Play] [True]`
 **GM sees** (non-identifiable item): two buttons — `[Edit] [Play]`
 **Player-owner sees**: two buttons — `[Edit] [Play]` (always — Player Edit Secrets protect masked data)
 **Non-owner sees**: one button — `[Play]` (or no bar at all)
 
-Players never see the "Unidentified" button. They see "Play" and "Edit." They don't know whether "Play" is showing them identified or unidentified data — it's just the item as they know it. The system decides: if active Secrets exist, "Play" returns masked values; if not, real values.
+Players never see the "True" button. They see "Play" and (if permitted) "Edit." They don't need to understand mask internals — "Play" is simply the player-visible view. The system decides: if active Secrets exist, "Play" returns masked values; if not, real values.
 
 **Player Edit Secrets replace edit-mode locking**: Previously, non-GM owners with active Secrets would lose the Edit button (O3). This hinted at the secret's existence and felt heavy-handed. Instead, players always have Edit access, and any writes to masked fields are intercepted and routed into a Player Edit Secret AE (§2.7.10). The GM's real data is never overwritten.
 
@@ -776,9 +776,9 @@ Players never see the "Unidentified" button. They see "Play" and "Edit." They do
 renderViewModeBar():
   buttons = []
   if canEdit:   buttons.push({ mode: 'edit',         label: 'Edit',         icon: 'fa-lock-open' })
-  buttons.push(               { mode: 'identified',   label: 'Play',         icon: 'fa-play' })
+  buttons.push(               { mode: 'play',         label: 'Play',         icon: 'fa-play' })
   if isGM && isIdentifiable:
-    buttons.push(             { mode: 'unidentified', label: 'Unidentified', icon: 'fa-eye-slash' })
+    buttons.push(             { mode: 'true',         label: 'True',         icon: 'fa-eye' })
 
   for each button:
     active = (button.mode === viewMode)
@@ -792,17 +792,17 @@ renderViewModeBar():
 
 - Replace `isEditViewMode: boolean` + `identifiedViewMode: EditorViewMode` → `viewMode: ViewMode`
 - `isEditViewMode` becomes `computed(() => viewMode === 'edit')`
-- `isIdentifiedViewMode` becomes `computed(() => viewMode === 'identified')`
-- Add `isUnidentifiedViewMode: computed(() => viewMode === 'unidentified')`
+- `isPlayMode` becomes `computed(() => viewMode === 'play')`
+- Add `isTrueMode: computed(() => viewMode === 'true')`
 - `updateIsEditViewMode()` → sets `viewMode = 'edit'` or back to previous play state
-- `updateIdentifiedViewMode()` → cycles IDENTIFIED ↔ UNIDENTIFIED (GM only, play modes only)
+- `updateIdentifiedViewMode()` / old identified toggle flow → replaced by explicit mode selection (`play`/`true`) in the mode bar
 - `renderEditModeButton()` + `renderIdentifiedViewButton()` → replaced by `renderViewModeBar()`
-- `DocumentSheetStore.getViewAwareFieldValue()` → reads `_masks` instead of `Dnd35eField.getEffective()`; returns masked value when `viewMode === 'unidentified'`, real value otherwise
+- `DocumentSheetStore.getViewAwareFieldValue()` → reads `_masks` instead of legacy wrapper effective-value lookup; returns masked value in `play`, unmasked value in `true`
 - FormGroup `isIdentifiedViewMode` short-circuits → removed; store gives correct value
 - Player "Play" mode: store internally checks `hasActiveSecrets` to decide whether to serve real or masked values — player is unaware
 
 ```typescript
-type ViewMode = 'edit' | 'identified' | 'unidentified';
+type ViewMode = 'edit' | 'play' | 'true';
 
 const useRenderModeStore = (
   isOwner: boolean,
@@ -972,7 +972,7 @@ The `resolveActiveEffectChanges()` utility (§2.5.1) lives in `src/helpers/stack
 | Modify | Item sheet — add GM-only "Secrets List" (separate from standard AE list, wrapped in `GmOnly`), "Add Secret" button (GM-only), replace "Identify" toggle with "Reveal All" button |
 | Modify | Standard AE list — add per-AE `isHidden` toggle button (GM-only) |
 | Modify | `RenderModeStore.mts` — replace 2-axis model with 3-state `ViewMode` (`'edit'`/`'identified'`/`'unidentified'`); keep `updateIsViewIdentified` (DocumentStore pushes); players always have Edit (Player Edit Secrets protect masked data) |
-| Modify | `DocumentSheetStore.mts` — replace `getViewAwareFieldValue()` (remove `Dnd35eField.getEffective()` call); store reads `_masks` based on `identifiedViewMode`; intercept masked-field writes from non-GM users in `viewModeAwareUpdateDocument()` → route to Player Edit Secret |
+| Modify | `DocumentSheetStore.mts` — replace legacy `getViewAwareFieldValue()` effective-value lookup; store reads `_masks` based on `identifiedViewMode`; intercept masked-field writes from non-GM users in `viewModeAwareUpdateDocument()` → route to Player Edit Secret |
 | Modify | All FormGroup components — remove `isIdentifiedViewMode` short-circuit (store handles value selection) |
 | Modify | `HasActiveEffectsNotification.vue` — display enriched stacking info (bonusType, stackResult, stackReason) in tooltip |
 | Create | Player Edit Secret helpers — `findOrCreatePlayerEditSecret(item)`, `addOrUpdatePlayerEditMask(ae, fieldPath, value)` |

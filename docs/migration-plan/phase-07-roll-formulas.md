@@ -288,9 +288,9 @@ Additional groups (e.g., `group:allAC`, `group:allSpeeds`) can be registered by 
 
 D35E's `getChangeFlat()` + `buffTargets` config served the same purpose but was tightly coupled to the actor model — every group was hard-coded in a central switch statement. This design decouples registration: each phase registers its own groups when its data models land.
 
-### Relationship to Dnd35eSectionField
+### Relationship to Field Permission Metadata
 
-This system is orthogonal to `Dnd35eSectionField`. SectionField carried permission metadata for schema field groups on item sheets (e.g., the `hp` section). Group Change Targets are about AE targeting — expanding a single AE change across multiple fields at runtime. SectionField's permission concerns are addressed by `useDnd35eField()` on individual child fields (Phase 1 items 1.O–1.V). Neither system depends on the other; SectionField removal is not blocked by this plan.
+This system is orthogonal to field permission metadata for schema field groups on item sheets (e.g., the `hp` section). Group Change Targets are about AE targeting — expanding a single AE change across multiple fields at runtime. Field permission concerns are handled by schema metadata (`useDnd35eField()` defaults) plus runtime overrides in `flags.dnd35e.fieldOverrides`. Neither system depends on the other.
 
 ## 7.8 Files to Create/Modify
 

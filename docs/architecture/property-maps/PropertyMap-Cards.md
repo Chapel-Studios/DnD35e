@@ -4,7 +4,7 @@ Cards — deck-based abilities used by card-casting classes.
 
 > **Legend**: ✅ = Implemented &nbsp;|&nbsp; 🔲 = Planned (not yet in codebase)
 >
-> Fields wrapped with `Dnd35eField` are marked with `🔷` — they store data as `{ value, unidentifiedValue, overrides }`, not scalars.
+> Fields decorated with field metadata are marked with `🔷`.
 >
 > Shared base components (BaseItem, Identifiable, Activatable, Action, etc.) are defined in [PropertyMap-Physical.md](./PropertyMap-Physical.md).
 

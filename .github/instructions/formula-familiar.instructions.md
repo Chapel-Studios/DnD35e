@@ -299,5 +299,5 @@ async evaluateFormula(path, scope) {
 ## Related Patterns
 
 See also:
-- [Dnd35eField Pattern](./dnd35e-field.instructions.md) — For compound formula fields with override values
+- [Field Permissions & View-Aware Access](./dnd35e-field.instructions.md) — For field override cascade and mode-aware getters
 - [DataModel & Schema](./foundry-data-fields.instructions.md) — FormulaFamiliar field definition

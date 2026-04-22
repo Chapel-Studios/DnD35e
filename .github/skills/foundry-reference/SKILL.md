@@ -58,7 +58,7 @@ DataModel (Item's system field)
       ├── NumberField (stats)
       ├── StringField (text)
       ├── SchemaField (nested objects)
-      └── Dnd35eField (wraps value + metadata)
+  └── Specialized fields (PriceField, FormulaField)
 ```
 
 ## Common API Patterns
