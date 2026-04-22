@@ -117,17 +117,17 @@ Sheet components belong in their entity-type folder:
 ```
 src/entities/items/
   components/
-    physical/
+    Physical/
       sheet/components/
-        PhysicalItemHeaderStatus.vue        ← Physical item badges
+        PhysicalItemHeaderStatus.vue       ← Physical item badges
         ...                                ← Other physical-item-only sheet components
-    equippable/
+    Equippable/
       sheet/components/
         EquippableHeaderStatus.vue         ← Equippable-specific (equipped/carried state)
-        ...                               ← Other equippable-item-only sheet components
-    weapon/
-      sheet/components/
-        WeaponDamage.vue                   ← Weapon damage form group
+        ...                                ← Other equippable-item-only sheet components
+  Weapon/
+    sheet/components/
+      WeaponDamage.vue                     ← Weapon damage form group
 ```
 
 **Why**: When Physical and Equippable item sheets need different behavior (e.g. badges show different state), having separate component homes makes changes safer. Updates to one entity type don't accidentally affect unrelated types. Search for "PhysicalItemHeaderStatus" finds exactly what you need, not 5 false positives in generic folders.

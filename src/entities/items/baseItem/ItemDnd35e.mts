@@ -233,10 +233,12 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     const stackingChanges: StackingChange[] = changes.map((change, index) => {
       const dnd35eChange = change as unknown as Dnd35eEffectChangeData;
       const numericValue = parseNumericChangeValue(change.value);
+      const bonusType = dnd35eChange.bonusType || undefined;
+      
       return {
         index,
         field: change.key,
-        bonusType: dnd35eChange.bonusType,
+        bonusType,
         value: numericValue,
         source: change.effect.displayName,
         effectId: change.effect.id ?? undefined,

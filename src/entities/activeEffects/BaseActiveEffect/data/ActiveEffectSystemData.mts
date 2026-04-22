@@ -13,9 +13,9 @@ interface Dnd35eEffectChangeData extends EffectChangeData {
   target: EffectChangeTarget;
   isSystem: boolean;
   /** Optional bonus type for stacking resolution. Only set when stacking applies (Phase 2+). */
-  bonusType?: BonusType;
+  bonusType?: BonusType | null;
   /** Optional formula-familiar condition for action-phase changes. Phase 8+. */
-  condition?: string;
+  condition?: string | null;
 }
 
 interface Dnd35eActiveEffectSystemSource extends BaseDnd35eSystemData, Omit<ActiveEffectSystemSource, 'changes'> {

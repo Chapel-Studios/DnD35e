@@ -161,6 +161,7 @@ function resolveActiveEffectChange(
 ): Dnd35eEffectChangeData {
   const resolvedValue = resolveActiveEffectChangeValue(effect, change);
   if (resolvedValue === change.value) return change;
+
   return {
     ...change,
     value: resolvedValue,

@@ -10,7 +10,7 @@
       >
         <span class="effect-name">{{ effect.effectName }}</span>
         <span class="effect-detail">{{ formatMode(effect.type) }} {{ effect.value }}</span>
-        <span v-if="effect.bonusType" class="effect-bonus-type">[{{ effect.bonusType }}]</span>
+        <span v-if="effect.bonusTypeLabel" class="effect-bonus-type">[{{ effect.bonusTypeLabel }}]</span>
         <span v-if="effect.stackResult === STACK_RESULT_IGNORED" class="effect-rejected">
           {{ effect.stackReason ?? ignoredLabel }}
         </span>
@@ -42,7 +42,17 @@
   const activeEffects = getEffectsForField(props.fieldPath);
   const hasActiveEffects = hasEffectsForField(props.fieldPath);
 
-  const typedEffects = computed(() => activeEffects.value as Override[]);
+  const formatBonusType = (bonusType?: string): string | undefined => {
+    const trimmed = bonusType?.trim();
+    return trimmed ? game.i18n.localize(trimmed) : undefined;
+  };
+
+  const typedEffects = computed(() =>
+    (activeEffects.value as Override[]).map((effect) => ({
+      ...effect,
+      bonusTypeLabel: formatBonusType(effect.bonusType),
+    }))
+  );
 
   const ignoredLabel = game.i18n.localize('dnd35e.EFFECT.StackResult.Ignored');
 
