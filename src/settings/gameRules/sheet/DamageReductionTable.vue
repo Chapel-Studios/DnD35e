@@ -37,14 +37,16 @@
   const autoIdCounter = ref(0);
 
   /** Convert the Record-based config to the flat items array the table expects */
-  const tableItems = computed((): SettingsTableItem[] =>
-    Object.entries(config.value).map(([key, entry]) => ({
+  const tableItems = computed((): SettingsTableItem[] => {
+    const systemDefaults = (CONFIG.dnd35e.gameRules.damageReductionTypes ?? {}) as Record<string, { label: string }>;
+    return Object.entries(config.value).map(([key, entry]) => ({
       id: key,
-      label: entry.label,
+      // Use pre-localized CONFIG label for system entries; stored label for custom
+      label: systemDefaults[key]?.label ?? entry.label,
       enabled: entry.enabled,
       isSystem: entry.isSystem,
-    }))
-  );
+    }));
+  });
 
   function emitUpdate(): void {
     emit('update:modelValue', foundry.utils.deepClone(config.value));

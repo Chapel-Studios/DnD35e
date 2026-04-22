@@ -10,7 +10,7 @@
 
 ## 28.1 Why Community Hardening First
 
-Release (Phase 27) is technically complete but not battle-tested at scale. Defaults might be wrong. GMs might want visibility controls we didn't anticipate. Players might find combinations that break balance. Phase 28 is about:
+Release (Phase 27) is technically complete but not battle-tested at scale. Defaults might be wrong. GMs might want visibility controls we didn't anticipate. Players might find combinations that break balance. Phase 31 is about:
 - **Collecting feedback** from real GMs running real campaigns
 - **Tuning defaults** — ability modifiers, action economy values, feat balance
 - **Documenting field overrides** — which stats should GMs be able to hide/show/edit?
@@ -191,6 +191,7 @@ Example:
 | Create | `docs/FIELD_OVERRIDE_GUIDE.md` — per-field visibility/editability rationale |
 | Modify | `system.json` — add visibility/editability settings based on feedback |
 | Create | Visibility/editability override system in character sheet components |
+| Create | `docs/LOCALIZATION_ITEM_CONTENT_WORKFLOW.md` — workflow for localization team to localize item content post-release (deferred from Phase 3) |
 | Document | Known issues from community testing |
 
 ---
@@ -200,7 +201,11 @@ Example:
 ### ✅ Complete
 - (None — Phase 28 has not started)
 
-### ❌ Not Started (All Tasks for Phase 28)
+### ❌ Not Started (All Tasks for Phase 31)
+
+**Localization Workflow (Deferred from Phase 3):**
+- [ ] Create `docs/LOCALIZATION_ITEM_CONTENT_WORKFLOW.md` that defines how localization contributors localize item content post-release (inputs, file locations, review/merge handoff).
+- [ ] Keep this as a Phase 31 documentation workflow; no Phase 3 implementation changes.
 
 **Feedback Collection Infrastructure:**
 - [ ] Create `docs/COMMUNITY_FEEDBACK_SURVEY.md`:

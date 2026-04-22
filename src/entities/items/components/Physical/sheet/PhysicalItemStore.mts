@@ -96,11 +96,12 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     damageReductionTypes: computed(() => [...(document.value.system.damageReductionTypes ?? [])]),
     damageReductionTypeOptions: computed<MultiSelectOption<string>[]>(() => {
       const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.DAMAGE_REDUCTION_TYPES) as DamageReductionTypesConfig;
+      const systemDefaults = (CONFIG.dnd35e.gameRules.damageReductionTypes ?? {}) as Record<string, { label: string }>;
       return Object.entries(config)
         .filter(([, entry]) => entry.enabled)
         .map(([key, entry]) => ({
           value: key,
-          label: entry.label,
+          label: systemDefaults[key]?.label ?? entry.label,
         }));
     }),
   };

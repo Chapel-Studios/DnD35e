@@ -61,7 +61,10 @@ const registerEffectSheets = () => {
 };
 
 export const registerEffects = () => {
-  CONFIG.dnd35e.activeEffect = EffectConfig;
+  CONFIG.dnd35e.activeEffect = {
+    ...CONFIG.dnd35e.activeEffect,
+    ...EffectConfig,
+  };
 
   foundry.helpers.Hooks.once('init', () => {
     CONFIG.ActiveEffect.documentClass = ActiveEffectProxyDnd35e;
