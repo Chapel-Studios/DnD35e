@@ -20,6 +20,18 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
 **Jr dev effort**: ~40% (Tracks 2, 3, 6, 11)  
 **Pair opportunities**: Testing, documentation, data validation
 
+### Progress Snapshot (2026-04-22)
+
+Completed in current implementation pass:
+
+- Track 3 parity fix: `bonusType` / `condition` now typed to match schema reality (`null` allowed in persisted change rows).
+- Track 6 boundary fix: stacking bridge normalizes "untyped" bonus values (`null`/`''` -> `undefined`) before grouping/history.
+- Track 7 tooltip UX fix: effect bonus types are localized for display; empty values render nothing.
+- Track 13 render-mode sync fix: `hasSecrets` is no longer constructor-captured only; RenderModeStore now supports live secret-state updates and the sheet syncs from the live document on render.
+- Data-layer boundary cleanup: Secret system data now imports base AE data types directly from the data module (not barrel exports).
+
+Phase 2 remains in progress; several implementation tracks are still open and can be delegated.
+
 ---
 
 ## Work Tracks
@@ -125,16 +137,16 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
 **Tasks**:
 
 1. **Update `Dnd35eEffectChangeData` TypeScript interface**
-   - Add `bonusType?: BonusType` (optional, not all changes have a type)
-   - Add `condition?: string` (optional, action phases only — Phase 8)
+  - Add `bonusType?: BonusType | null` (optional; persisted rows may carry `null`)
+  - Add `condition?: string | null` (optional; action phases only — Phase 8)
    - Verify `phase` already exists in interface (it's in schema, may be missing from TS interface)
    - ✅ **Verify**: Interface compiles, extends foundry.EffectChangeData correctly
 
 2. **Update `ActiveEffectSystemModelBase` schema**
    - Add `bonusType` as optional `new StringField()` (allow null for legacy)
    - Add `condition` as optional `new StringField()` (Phase 8 will add validation)
-   - No constraints needed in Phase 2 — values are set at collection time
-   - ✅ **Verify**: Schema compiles, field initializes to undefined if not set
+  - No constraints needed in Phase 2 — values are set at collection time
+  - ✅ **Verify**: Schema compiles; field may persist as `null`/`''` in legacy/UI paths and is normalized at runtime where needed
 
 3. **Verify schema → TS interface parity**
    - Both have bonusType and condition (or neither)
@@ -305,10 +317,12 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
      4. Call `resolveActiveEffectChanges(bonuses, penalties)` → get `{ winners, history }`
      5. Only pass **winners** to `ActiveEffect.applyChange()`
      6. Record losers in overrides with rejection reason
+     7. Normalize `bonusType` to stacking semantics at boundary (`null`/`''` => `undefined`) before grouping
    - ✅ **Verify**:
      - Two materials both add +10, +20 hardness → only +20 applied (not +30)
      - Penalties still applied (always apply rule)
      - Untyped bonuses stack
+     - Null/blank bonusType does not create fake typed groups
      - History is produced and captured
 
 2. **Extend `Override` type with stacking metadata**
@@ -374,7 +388,8 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
      - Rejection reason (new) — from override.stackReason (if ignored)
    - Display ignored effects dimmed or with a "rejected" badge
    - ✅ **Verify**:
-     - Tooltip shows bonusType for enriched overrides
+     - Tooltip shows localized bonusType label for enriched overrides
+     - Empty/null bonusType is hidden
      - Ignored effects display rejection reason
      - Tooltip is readable and helpful
 
@@ -749,6 +764,7 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
      - Button bar renders correctly
      - Buttons have proper opacity based on active state
      - Clicking switches modes
+     - Secret presence is refreshed from the live document while the sheet stays open (True button appears/disappears without reopening)
 
 3. **Update `canEdit` logic — players always have Edit**
    - Non-GM owners always see the Edit button (Player Edit Secrets protect masked data)
@@ -1293,11 +1309,16 @@ No Phase 2 code needs rewriting. Phase 5 adds actor-specific integration.
 | **Create** | `src/constants/bonusTypes.mts` | Track 2 |
 | **Modify** | `src/entities/activeEffects/BaseActiveEffect/data/ActiveEffectSystemData.mts` | Track 3 |
 | **Modify** | `src/entities/activeEffects/BaseActiveEffect/data/ActiveEffectSystemModelBase.mts` | Track 3, Track 11 |
+| **Modify** | `src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts` | Track 3 / Track 6 boundary normalization pass |
 | **Create** | `src/entities/activeEffects/general/` | Track 4 |
 | **Modify** | `src/entities/activeEffects/effectTypes.mts` | Track 4 |
 | **Modify** | `src/entities/activeEffects/BaseActiveEffect/DnD35eActiveEffect.mts` | Track 4 |
 | **Create** | `src/entities/activeEffects/registration.mts` (or extend existing) | Track 4, Track 8 |
 | **Modify** | `src/entities/items/baseItem/ItemDnd35e.mts` | Track 5 |
+| **Modify** | `src/vue/components/Fields/FormGroups/HasActiveEffectsNotification.vue` | Track 7 |
+| **Modify** | `src/entities/components/CoreMixin/sheet/stores/RenderModeStore.mts` | Track 13 |
+| **Modify** | `src/vue/apps/VueDocumentSheetMixin.mts` | Track 13 |
+| **Modify** | `src/entities/activeEffects/secret/data/SecretSystemData.mts` | Data-layer import boundary cleanup |
 | **Modify** | Item sheet components (vue) | Track 6, Track 10, Track 11, Track 12 |
 | **Modify** | `src/settings/` — settings registration | Track 6 |
 | **Modify** | `src/vue/components/Effects/HasActiveEffectsNotification.vue` | Track 6 |
