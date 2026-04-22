@@ -3,8 +3,14 @@ import type {
   SecretSystemSource,
 } from './data/index.mjs';
 import {
+  PLAYER_EDIT_MASK_PRIORITY,
+  SECRET_MASK_PRIORITY,
   SecretSystemModel,
 } from './data/index.mjs';
+import {
+  addOrUpdatePlayerEditMask,
+  findOrCreatePlayerEditSecret,
+} from './playerEditSecret.mjs';
 import type {
   SecretType,
 } from './Secret.mjs';
@@ -28,7 +34,11 @@ import {
 } from './sheet/index.mjs';
 
 export {
+  addOrUpdatePlayerEditMask,
+  findOrCreatePlayerEditSecret,
+  PLAYER_EDIT_MASK_PRIORITY,
   Secret,
+  SECRET_MASK_PRIORITY,
   secretEffectType,
   SecretSheet,
   SecretSystemModel,

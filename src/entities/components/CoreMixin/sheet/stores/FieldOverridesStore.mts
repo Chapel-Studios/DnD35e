@@ -4,7 +4,7 @@
  * Overrides are stored in document flags (`flags.dnd35e.fieldOverrides`).
  * Field *defaults* (defaultVisibility, defaultEditability, canVisibilityBeChanged,
  * canEditabilityBeChanged) come from the schema field options set at definition time
- * (Dnd35eField / FormulaField constructor options).
+ * (useDnd35eField / FormulaField constructor options).
  *
  * Follows the same composable pattern as {@link TabStore}.
  *
@@ -31,7 +31,7 @@ type DataField = foundry.data.fields.DataField;
 type SchemaField = foundry.data.fields.SchemaField;
 
 /**
- * Custom options stashed on Dnd35eField / Dnd35eSectionField / FormulaField at schema definition time.
+ * Custom options stashed on fields via useDnd35eField / Dnd35eSectionField / FormulaField at schema definition time.
  * Foundry preserves unknown keys in `field.options`; this interface describes the ones we read back.
  */
 interface Dnd35eOverrideOptions {
@@ -117,6 +117,12 @@ type FieldOverridesStoreUtils = {
   getIsEditable: (fieldPath: string, currentEditability: FieldEditability, additionalRestriction?: FieldEditability) => boolean;
   /** Look up a schema field by its system-relative path. */
   getSchemaField: (fieldPath: string) => DataField | undefined;
+  /** Resolve a localized field label/hint from schema or LOCALIZATION_PREFIXES fallback. */
+  getFieldLocalization: (fieldPath: string, kind: 'label' | 'hint') => string;
+  /** Resolve a localized field label. */
+  getFieldLabel: (fieldPath: string) => string;
+  /** Resolve a localized field hint. */
+  getFieldHint: (fieldPath: string) => string;
 };
 
 type FieldOverridesStoreActions = {
@@ -147,9 +153,36 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
   /** Look up a schema field by its system-relative path. */
   const getSchemaField = (fieldPath: string): DataField | undefined => {
     const systemPath = fieldPath.replace(/^system\./, '');
-    const schema = (document.value.system as foundry.abstract.DataModel | undefined)?.schema;
-    return schema?._getField(systemPath.split('.'));
+    const systemModel = document.value.system as foundry.abstract.DataModel | undefined;
+    const schema = ((systemModel?.constructor as { schema?: { _getField?: (path: string[]) => DataField | undefined } } | undefined)?.schema)
+        ?? systemModel?.schema;
+    return schema?._getField?.(systemPath.split('.'));
   };
+
+  const getFieldLocalization = (fieldPath: string, kind: 'label' | 'hint'): string => {
+    const schemaField = getSchemaField(fieldPath);
+    const schemaText = schemaField?.options?.[kind];
+    if (typeof schemaText === 'string' && schemaText.length > 0) return schemaText;
+
+    if (!fieldPath.startsWith('system.')) return '';
+
+    const systemPath = fieldPath.replace(/^system\./, '');
+    const systemModel = document.value.system as (foundry.abstract.DataModel & { constructor?: { LOCALIZATION_PREFIXES?: string[] } }) | undefined;
+    const prefixes = systemModel?.constructor?.LOCALIZATION_PREFIXES ?? [];
+
+    for (const prefix of [...prefixes].reverse()) {
+      const localizationKey = `${prefix}.FIELDS.${systemPath}.${kind}`;
+      if (game.i18n.has(localizationKey)) {
+        return game.i18n.localize(localizationKey);
+      }
+    }
+
+    return '';
+  };
+
+  const getFieldLabel = (fieldPath: string): string => getFieldLocalization(fieldPath, 'label');
+
+  const getFieldHint = (fieldPath: string): string => getFieldLocalization(fieldPath, 'hint');
 
   /** Read our custom override options from a DataField. */
   const getOverrideOptions = (field: DataField): Dnd35eOverrideOptions =>
@@ -214,7 +247,7 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
 
   /**
    * Resolve schema field metadata for visibility/editability defaults.
-   * Reads field options set at schema definition time (Dnd35eField / FormulaField / Dnd35eSectionField).
+   * Reads field options set at schema definition time (useDnd35eField / FormulaField / Dnd35eSectionField).
    * Returns null for non-schema fields (name, img, etc.).
    */
   const resolveFieldMeta = (fieldPath: string): FieldMeta | null => {
@@ -224,11 +257,18 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
     const opts = getOverrideOptions(field);
     const fields = (field as SchemaField).fields as Record<string, DataField> | undefined;
 
-    const isDnd35eField = (f: DataField): boolean => getOverrideOptions(f).identifiable !== undefined;
+    const supportsOverrides = (f: DataField): boolean => {
+      const fieldOpts = getOverrideOptions(f);
+      return fieldOpts.identifiable !== undefined
+        || fieldOpts.defaultVisibility !== undefined
+        || fieldOpts.defaultEditability !== undefined
+        || fieldOpts.canVisibilityBeChanged !== undefined
+        || fieldOpts.canEditabilityBeChanged !== undefined;
+    };
 
-    const hasOverrides = isDnd35eField(field)
+    const hasOverrides = supportsOverrides(field)
       || (fields
-        ? Object.values(fields).some(child => isDnd35eField(child))
+        ? Object.values(fields).some(child => supportsOverrides(child))
         : false);
 
     const identifiable = opts.identifiable
@@ -322,6 +362,9 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
       resolveEditability,
       getIsEditable,
       getSchemaField,
+      getFieldLocalization,
+      getFieldLabel,
+      getFieldHint,
     },
     fieldOverridesActions: {
       setFieldOverride,

@@ -2,7 +2,6 @@ import type {
   BaseDnd35eSystemData,
   Dnd35eBaseFlags,
   Dnd35eDocumentFlags,
-  ItemDescription,
 } from './data/index.mjs';
 import type {
   NameFormulaDocument,
@@ -95,7 +94,6 @@ export type {
   FieldOverridesStoreUtils,
   FieldOverrideValue,
   FormulaRegistration,
-  ItemDescription,
   NameFormulaDocument,
   RenderModeStore,
   SheetDocument,

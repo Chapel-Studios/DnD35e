@@ -1,4 +1,5 @@
 import type { FormulaFieldMeta } from '@helpers/formulae/types.mjs';
+import type { FieldEditability, FieldVisibility } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
 
 const {
   StringField,
@@ -83,7 +84,49 @@ function withFamiliar<T extends foundry.data.fields.DataField>(
   return field;
 }
 
+interface Dnd35eFieldMeta {
+  /** FormulaFamiliar schema walker metadata. */
+  familiar?: FormulaFieldMeta;
+  /** Whether this field supports identified/unidentified variants. Defaults to `true`. */
+  identifiable?: boolean;
+  /** Default visibility when no GM override is saved. */
+  defaultVisibility?: FieldVisibility;
+  /** Default editability when no GM override is saved. */
+  defaultEditability?: FieldEditability;
+  /** Whether the GM can change visibility on this field. */
+  canVisibilityBeChanged?: boolean;
+  /** Whether the GM can change editability on this field. */
+  canEditabilityBeChanged?: boolean;
+}
+
+/**
+ * Attach dnd35e field metadata to any DataField's options bag.
+ * Replaces the old `new Dnd35eField(InnerClass, innerOpts, wrapperOpts)` pattern.
+ *
+ * @example
+ * ```ts
+ * schema.hardness = useDnd35eField(requiredNumberField(0), {
+ *   defaultVisibility: 'ownerPlus',
+ *   familiar: { aliases: ['hp'] },
+ * });
+ * ```
+ */
+function useDnd35eField<T extends foundry.data.fields.DataField>(
+  field: T,
+  meta: Dnd35eFieldMeta = {}
+): T {
+  const opts = field.options as Record<string, unknown>;
+  opts.identifiable = meta.identifiable ?? true;
+  if (meta.familiar) opts.familiar = meta.familiar;
+  if (meta.defaultVisibility) opts.defaultVisibility = meta.defaultVisibility;
+  if (meta.defaultEditability) opts.defaultEditability = meta.defaultEditability;
+  if (meta.canVisibilityBeChanged !== undefined) opts.canVisibilityBeChanged = meta.canVisibilityBeChanged;
+  if (meta.canEditabilityBeChanged !== undefined) opts.canEditabilityBeChanged = meta.canEditabilityBeChanged;
+  return field;
+}
+
 export {
+  type Dnd35eFieldMeta,
   formulaField,
   nullableOptionalStringField,
   optionalHtmlField,
@@ -95,5 +138,6 @@ export {
   requiredNumberField,
   requiredStringField,
   requiredTypedStringField,
+  useDnd35eField,
   withFamiliar,
 };

@@ -51,8 +51,11 @@
     directUpdate?: boolean;
   }>();
 
-  const { isEditViewMode, isIdentifiedViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
+    documentGetters: {
+      hasMaskForField,
+    },
     documentActions: {
       getDirectFieldUpdater,
       getViewAwareFieldUpdater,
@@ -64,7 +67,7 @@
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;
-    return !isEditViewMode.value;
+    return !isEditMode.value;
   });
 
   const fieldUpdater = props.onUpdate ?? (
@@ -76,7 +79,7 @@
   const sourceValue = getSourceProperty<boolean>(props.fieldPath);
   const editValue = computed(() => {
     if (props.editDerived || !sourceValue) return props.value;
-    if (!isIdentifiedViewMode.value) return props.value;
+    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return props.value;
     return sourceValue.value as boolean;
   });
 

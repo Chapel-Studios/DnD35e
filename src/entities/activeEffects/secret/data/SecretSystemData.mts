@@ -2,13 +2,14 @@ import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@ef
 
 /**
  * Secret active effect system data — masks field values from non-GM users.
- * No additional fields; pure base AE schema.
- * will eventually add hooks for revealing secrets.
+ * `isPlayerEditSecret` marks secrets auto-created by player edits on masked fields.
  */
 interface SecretSystemSource extends Dnd35eActiveEffectSystemSource {
+  isPlayerEditSecret: boolean;
 }
 
 interface SecretSystemData extends ActiveEffectSystemData {
+  isPlayerEditSecret: boolean;
 }
 
 export type {

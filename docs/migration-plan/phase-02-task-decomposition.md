@@ -2,16 +2,17 @@
 
 **Milestone**: POC  
 **Phase Duration**: N/A (structure, no timeline)  
-**Total Complexity**: Large (⏱️ ~8-10 weeks estimated at current velocity)
+**Total Complexity**: Large
 
 ---
 
 ## Executive Summary
 
-Phase 2 decomposes into **12 work tracks** spanning two major subsystems:
+Phase 2 decomposes into **17 work tracks** spanning two major subsystems plus closeout follow-up work:
 
-1. **Material AE + Bonus Type Stacking** (~6 tracks): Core game mechanic
-2. **Secret AE + Identification System** (~6 tracks): Player masking / GM transparency
+1. **Material AE + Bonus Type Stacking**: Core game mechanic
+2. **Secret AE + Identification System**: Player masking / GM transparency
+3. **Phase 2 Closeout Follow-Ups**: Material dev testing, General AE cleanup, then deferred secret image work
 
 Tracks run in **3 concurrent streams** with carefully managed dependencies. The Material subsystem gates the Secret subsystem only at one synchronization point (GeneralSystemModel exists). Both subsystems enable Phase 5's actor-level integration.
 
@@ -478,7 +479,7 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
      ```typescript
      CONFIG.ActiveEffect.changeTypes['mask'] = {
        label: 'DND35E.ChangeMode.Mask',
-       defaultPriority: 100,
+       defaultPriority: 10,
        handler: null  // MASK changes are not applied via applyChange()
      };
      ```
@@ -811,7 +812,7 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
 
 1. **Define Player Edit Secret constants**
    - `isPlayerEditSecret`: boolean field on `SecretSystemModel` schema (default `false`)
-   - Priority: 200 (above regular Secret priority of 100)
+  - Priority: 3001 (above regular Secret priority of 10)
    - Localization keys: `dnd35e.EFFECT.Secret.PlayerOverride`
    - ✅ **Verify**: Constants exported and localization key in effects.json
 
@@ -822,7 +823,7 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
 
 3. **Implement `addOrUpdatePlayerEditMask(ae, fieldPath, value)` helper**
    - If AE already has a MASK change for this fieldPath: update its value
-   - If not: add a new MASK change with priority 200
+  - If not: add a new MASK change with priority 3001
    - ✅ **Verify**: Changes accumulate on single AE; updating same field overwrites value
 
 4. **Wire interception into `viewModeAwareUpdateDocument()`**
@@ -837,7 +838,7 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
      - Mixed update → correctly split
 
 5. **Verify `_buildMasks()` priority resolution**
-   - Player Edit Secret at priority 200 naturally wins over regular Secret at 100
+  - Player Edit Secret at priority 3001 naturally wins over regular Secret at 10
    - After player edits a masked field, subsequent reads return player's value (not GM's mask)
    - ✅ **Verify**: Player override value shown in masked view; GM real values unaffected in identified view
 
@@ -864,6 +865,100 @@ Tracks run in **3 concurrent streams** with carefully managed dependencies. The 
 - GM sees Player Edit Secrets with distinct icon and label
 - GM can delete Player Edit Secrets to reset player overrides
 - _buildMasks() correctly resolves Player Edit at higher priority
+
+---
+
+### TRACK 15: Material Dev Testing Follow-Up [FLEXIBLE]
+
+**Goal**: Run a deliberate dev-world validation pass on the Material workflow and close any Material-specific gaps while Phase 2 context is still fresh.
+
+**Rationale**: The Material architecture is in place, but the phase still needs a practical verification pass in the real dev environment. This is where subtype UX, propagation behavior, and stacking presentation gaps are most likely to surface.
+
+**Depends on**: Track 5, Track 6, Track 7
+
+**Blocking**: Track 17 (secret image work stays deferred until this and Track 16 are complete)
+
+**Tasks**:
+
+1. **Exercise Material authoring in the dev world**
+   - Create/edit Material AEs on real dev items
+   - Switch `materialSubtype` values and verify propagation
+   - ✅ **Verify**: Material AE editing works in normal sheet use, not just in isolated code paths
+
+2. **Verify live item propagation and stacking UX**
+   - Confirm item stats and sheet presentation update as expected
+   - Check whether stacking feedback is understandable to a developer/GM using the UI
+   - ✅ **Verify**: Material behavior is defensible from the live app, not only the implementation
+
+3. **Capture and resolve Material-specific polish issues**
+   - Fix or document any concrete Material workflow gaps found during dev testing
+   - ✅ **Verify**: Remaining Material issues are either resolved or explicitly documented for later phases
+
+**Acceptance Criteria**:
+- Material workflow has been exercised in the dev world end-to-end
+- Any remaining Material gaps are known, not accidental
+- Phase 2 can treat Material as practically verified, not only architecturally implemented
+
+---
+
+### TRACK 16: General AE Cleanup [LEAD DEV]
+
+**Goal**: Bring the `general` AE type onto the intended dnd35e sheet/tabs experience instead of leaving it on a default Foundry-like fallback path.
+
+**Rationale**: General AE is the baseline effect authoring surface for future phases. If it still behaves like a default fallback, later phases inherit that friction.
+
+**Depends on**: Track 4, Track 12, Track 13
+
+**Blocking**: Track 17 (secret image work remains deferred until General AE is cleaned up)
+
+**Tasks**:
+
+1. **Audit the current General AE sheet path**
+   - Confirm where it is still using default Foundry/Handlebars behavior or default tabs
+   - ✅ **Verify**: The fallback behavior is identified concretely, not just suspected
+
+2. **Move General AE onto the intended dnd35e sheet structure**
+   - Align tabs/layout/authoring flow with the system's sheet patterns
+   - ✅ **Verify**: General AE behaves like a first-class dnd35e effect type
+
+3. **Re-check standard change authoring on General AE**
+   - Confirm the shared change list, visibility controls, and related UX behave correctly there
+   - ✅ **Verify**: General AE is a clean baseline for future non-secret effect work
+
+**Acceptance Criteria**:
+- General AE no longer feels like a default fallback surface
+- Standard effect authoring works cleanly on the General AE sheet
+- Later phases can treat General AE as the canonical baseline effect type
+
+---
+
+### TRACK 17: Deferred Follow-Up — Secret Images [LEAD DEV]
+
+**Goal**: Revisit masked root-level image support after the Material dev-testing pass and General AE cleanup are complete.
+
+**Rationale**: The remaining work is image-specific, not just another field mask. It involves top-level refresh behavior, Foundry's expected file/image field handling, and the image-picker authoring story.
+
+**Depends on**: Track 15, Track 16
+
+**Tasks**:
+
+1. **Design masked `img` update flow**
+  - Account for root-level refresh behavior similar to name
+  - Account for Foundry's image/file field expectations
+  - ✅ **Verify**: Chosen update path is concrete and defensible
+
+2. **Resolve image-picker authoring story**
+  - Determine how masked image values are stored and edited from the secret sheet
+  - ✅ **Verify**: Secret image authoring UX is clear before implementation
+
+3. **Implement secret image masking when ready**
+  - Apply the same level of rigor used for special fields like name and price
+  - ✅ **Verify**: Secret image support works in both sheets and directory/sidebar-style consumers
+
+**Acceptance Criteria**:
+- `img` secret work is explicitly queued after the two closeout tracks
+- The problem is framed as image-specific authoring/storage/refresh work, not an undefined TODO
+- Phase 2 documentation makes the ordering explicit
 
 ---
 

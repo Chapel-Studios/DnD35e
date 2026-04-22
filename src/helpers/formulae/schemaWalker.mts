@@ -6,11 +6,9 @@
  *
  * Field handling (all fields are **included by default** — opt-out via `formulaVisible: false`):
  * - Field with `options.familiar.formulaVisible === false` → excluded (opt-out)
- * - Field whose constructor has `isFamiliarField === true` (e.g. Dnd35eField) → compound leaf
- *   - For compound wrappers (SchemaField with a `value` sub-field): accessPath targets `.value`
  * - Field whose constructor has `isFamiliarLeaf === true` (e.g. PriceField, FormulaField) → opaque leaf
  *   - Treated as a single value; inner fields are NOT recursed into
- * - SchemaField without the above markers → recurse into children (grouping node)
+ * - SchemaField without the above marker → recurse into children (grouping node)
  * - All other fields (NumberField, StringField, BooleanField, etc.) → included as simple leaves
  *
  * @module
@@ -128,16 +126,9 @@ function walkFields(
     }
 
     const ctor = field.constructor as unknown as Record<string, unknown>;
-    const isCompoundWrapper = ctor.isFamiliarField === true;
     const isOpaqueLeaf = ctor.isFamiliarLeaf === true;
 
-    if (isCompoundWrapper) {
-      // ── Compound wrapper (Dnd35eField) — access .value sub-field ──
-      const isCompound = field instanceof SchemaField
-        && 'value' in ((field as foundry.data.fields.SchemaField).fields ?? {});
-      const accessPath = isCompound ? `${currentPath}.value` : currentPath;
-      addLeafToGroup(field, meta, key, accessPath, context, output);
-    } else if (isOpaqueLeaf) {
+    if (isOpaqueLeaf) {
       // ── Opaque leaf (PriceField, FormulaField) — single value, no recursion ──
       addLeafToGroup(field, meta, key, currentPath, context, output);
     } else if (field instanceof SchemaField) {
@@ -162,9 +153,9 @@ function walkFields(
  * Build an AspectGroup from a DataModel class's schema.
  *
  * Walks `ModelClass.defineSchema()` and collects all fields by default.
- * Fields opt out with `familiar: { formulaVisible: false }`. Compound wrappers
- * (Dnd35eField, `isFamiliarField`) and opaque leaves (PriceField, FormulaField,
- * `isFamiliarLeaf`) are recognized by static markers on their constructors.
+ * Fields opt out with `familiar: { formulaVisible: false }`. Opaque leaves
+ * (PriceField, FormulaField, `isFamiliarLeaf`) are recognized by a static
+ * marker on their constructors.
  *
  * @param ModelClass  A DataModel class (or any object with a static `defineSchema()`)
  * @param context     Optional live Foundry document – when provided, property values are resolved inline

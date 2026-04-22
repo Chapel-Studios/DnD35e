@@ -19,6 +19,9 @@
       "Passive": "Passive Effects",
       "Inactive": "Inactive Effects",
       "None": "No effects on this item.",
+      "Hidden": "Hidden",
+      "HideEffect": "Hide from players",
+      "ShowEffect": "Show to players",
       "StackResult": {
         "Applied": "Applied",
         "Ignored": "Ignored"
@@ -28,25 +31,33 @@
         "Label": "Bonus Type",
         "None": "None"
       },
+      "Headers": {
+        "Actions": "Actions",
+        "BonusType": "Bonus",
+        "Field": "Field",
+        "Priority": "Priority",
+        "Type": "Type",
+        "Value": "Value"
+      },
       "IncompleteChangesWarning": "This effect has incomplete changes that will not be applied.",
       "ChangeTarget": {
         "Target": "Target",
         "Item": "Item",
         "Actor": "Actor"
       },
-      "ChangeTargetField": {
-        "TargetField": "Target Field",
-        "Value": "Identified",
-        "Unidentified": "Unidentified"
-      },
       "ChangeMode": {
         "Familiar": "Formula Familiar",
         "Mask": "Mask"
+      },
+      "General": {
+        "Type": "Effect"
       },
       "Secret": {
         "Type": "Secret",
         "Secrets": "Secrets",
         "New": "New Secret",
+        "PlayerEdit": "Player Edit",
+        "PlayerEditIndicator": "Player Override",
         "AddSecret": "Add Secret",
         "RevealAll": "Reveal All",
         "RevealAllHint": "Disable all Secret effects, revealing the item's true properties",
@@ -54,8 +65,14 @@
         "Masks": "Field Masks",
         "AddMask": "Add Mask",
         "EmptyMasks": "No masks defined. Add a mask to hide a field value from players.",
-        "FieldPlaceholder": "Field path…",
-        "ValuePlaceholder": "Displayed value…"
+        "FieldPlaceholder": "Field path\u2026",
+        "ValuePlaceholder": "Displayed value\u2026",
+        "FIELDS": {
+          "isPlayerEditSecret": {
+            "label": "Player Edit Secret",
+            "hint": "This secret was automatically created from a player's edit on a masked field."
+          }
+        }
       },
       "FIELDS": {
         "changes": {

@@ -75,11 +75,20 @@ export interface FormulaContextDeclaration {
 // View Mode
 // ============================================================================
 
-/** Whether the user is viewing the identified or unidentified version of a document. */
-export type EditorViewMode = 'identified' | 'unidentified';
+/**
+ * 3-state sheet mode model.
+ * Runtime values:
+ * - 'play' = Play Mode (player-visible, masks applied when present)
+ * - 'true' = True Mode (GM-only unmasked play view)
+ * - 'edit' = Edit Mode
+ */
+export type ViewMode = 'edit' | 'play' | 'true';
 
-export const IDENTIFIED: EditorViewMode = 'identified';
-export const UNIDENTIFIED: EditorViewMode = 'unidentified';
+export type DisplayMode = 'play' | 'true';
+
+export const EDIT: ViewMode = 'edit';
+export const PLAY: ViewMode = 'play';
+export const TRUE: ViewMode = 'true';
 
 /** Per-field permission overrides — nullable (null = use defaults). */
 export interface Dnd35eFieldOverrides {

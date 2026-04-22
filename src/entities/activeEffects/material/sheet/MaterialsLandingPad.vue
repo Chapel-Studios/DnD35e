@@ -2,7 +2,7 @@
   <LandingPad
     :uuids="materials"
     :acceptedTypes="[materialEffectType]"
-    :is-editable="isEditViewMode"
+    :is-editable="isEditMode"
     :onRemoveItem="removeMaterial"
   />
 </template>
@@ -18,7 +18,7 @@
   import { inject } from 'vue';
 
   import { materialEffectType } from '../materialEffectType.mjs';
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
       materials,

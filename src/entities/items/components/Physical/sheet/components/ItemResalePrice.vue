@@ -16,7 +16,7 @@
   // import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   // import { inject } from 'vue';
 
-  // const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  // const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   // const {
   //   documentGetters: {
   //     resalePrice,

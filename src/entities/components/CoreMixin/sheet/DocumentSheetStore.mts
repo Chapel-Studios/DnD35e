@@ -1,7 +1,7 @@
 import type { ActorType } from '@actors/actorTypes.mjs';
 import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type { DnD35eActiveEffect, EffectType } from '@effects/index.mjs';
-import { Dnd35eField, type Dnd35eFieldData } from '@helpers/fields/Dnd35eField.mjs';
+import { addOrUpdatePlayerEditMask, findOrCreatePlayerEditSecret } from '@effects/secret/playerEditSecret.mjs';
 import { buildDocumentFamiliar } from '@helpers/formulae/index.mjs';
 import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
@@ -60,6 +60,8 @@ type DocumentSheetStoreDocumentGetters = FieldOverridesStoreGetters & {
   getIsFieldVisible: (fieldPath: string, defaultVisibility?: FieldVisibility) => ComputedRef<boolean>;
   getIsFieldEditable: (fieldPath: string, defaultEditability?: FieldEditability) => ComputedRef<boolean>;
   getViewAwareFieldValue: <T>(fieldPath: string, getFromSource?: boolean) => T;
+  hasMaskForField: (fieldPath: string) => ComputedRef<boolean>;
+  getMaskForField: <T = unknown>(fieldPath: string) => ComputedRef<T | undefined>;
 
   type: ComputedRef<ItemType | ActorType | EffectType>;
   documentName: ComputedRef<foundry.CONST.DocumentType>;
@@ -96,15 +98,6 @@ type DocumentSheetStore<TDocument extends SheetDocument = SheetDocument> = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Check if a raw value looks like Dnd35eField compound data: `{ value, unidentifiedValue, … }`.
- * Used to transparently unwrap compound fields when reading source data
- * and to adjust update paths so writes target the inner `.value` sub-field.
- */
-function isDnd35eFieldShape(val: unknown): val is { value: unknown } {
-  return val !== null && typeof val === 'object' && 'value' in val && 'unidentifiedValue' in val;
-}
-
 interface BaseSheetState {
   isEditable: boolean;
   renderOptions: { isFirstRender?: boolean } | undefined;
@@ -114,6 +107,8 @@ const createBaseState = (): BaseSheetState => ({
   isEditable: false,
   renderOptions: undefined,
 });
+
+const { EmbeddedDataField } = foundry.data.fields;
 
 // ---------------------------------------------------------------------------
 // Composable
@@ -139,9 +134,8 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   });
 
   const {
-    isIdentifiedViewMode,
-    identifiedViewMode,
-    isEditViewMode,
+    isPlayMode,
+    isEditMode,
     isOwnerOrGM,
     isGM,
   } = inject(RenderModeStoreSymbol) as RenderModeStore;
@@ -193,48 +187,36 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     directUpdate: boolean = false
   ) => {
     if (directUpdate) return await updateDocument(data, options);
-    const valueTarget = isIdentifiedViewMode.value
-      ? 'value'
-      : 'unidentifiedValue';
 
-    const updateData = Object.fromEntries(
-      Object.entries(data).map(([key, value]) => {
-        // Check if this path points to a Dnd35eField compound shape in the source data
-        const raw = foundry.utils.getProperty(document.value._source, key);
-        if (isDnd35eFieldShape(raw)) {
-          // Path points at a compound — append the correct sub-field
-          return [`${key}.${valueTarget}`, value];
-        }
-
-        // Check if path already targets a compound sub-field (.value or .unidentifiedValue)
-        // e.g. "system.hardness.value" where "system.hardness" is a compound
-        if (key.endsWith('.value') || key.endsWith('.unidentifiedValue')) {
-          const suffix = key.endsWith('.value') ? '.value' : '.unidentifiedValue';
-          const basePath = key.slice(0, -suffix.length);
-          const parentRaw = foundry.utils.getProperty(document.value._source, basePath);
-          if (isDnd35eFieldShape(parentRaw)) {
-            // Re-route to the correct sub-field based on view mode
-            return [`${basePath}.${valueTarget}`, value];
+    // Player Edit Secret interception: non-GM writing to a masked field on an Item
+    if (!isGM.value && document.value.documentName === 'Item') {
+      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+      if (masks) {
+        const maskedFields: Record<string, unknown> = {};
+        const normalFields: Record<string, unknown> = {};
+        for (const [field, value] of Object.entries(data)) {
+          if (field in masks) {
+            maskedFields[field] = value;
+          } else {
+            normalFields[field] = value;
           }
         }
-
-        // Check if the path passes THROUGH a compound at an intermediate segment
-        // e.g. "system.nameFormula.formula" where "system.nameFormula" is { value, unidentifiedValue }
-        const segments = key.split('.');
-        for (let i = segments.length - 1; i >= 1; i--) {
-          const ancestorPath = segments.slice(0, i).join('.');
-          const ancestorRaw = foundry.utils.getProperty(document.value._source, ancestorPath);
-          if (isDnd35eFieldShape(ancestorRaw)) {
-            const remainder = segments.slice(i).join('.');
-            return [`${ancestorPath}.${valueTarget}.${remainder}`, value];
+        if (Object.keys(maskedFields).length > 0) {
+          const item = document.value as unknown as ItemDnd35e;
+          const secret = await findOrCreatePlayerEditSecret(item);
+          for (const [fieldPath, value] of Object.entries(maskedFields)) {
+            await addOrUpdatePlayerEditMask(secret, fieldPath, value);
           }
+          // If there are also non-masked fields, update those normally
+          if (Object.keys(normalFields).length > 0) {
+            return await updateDocument(normalFields as Record<string, unknown>, options);
+          }
+          return true;
         }
+      }
+    }
 
-        // Non-compound field — leave path as-is
-        return [key, value];
-      })
-    ) as Record<string, unknown>;
-    return await updateDocument(updateData, options);
+    return await updateDocument(data, options);
   };
 
   // --- Overridable implementations (replaced by extending stores via _storeUtils) ---
@@ -258,47 +240,68 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   );
 
   // --- Getters ---
-  // const viewModeAwareGetEffectiveFieldValue = <T,>(fieldPath: string): T => {
-  //   const raw = foundry.utils.getProperty(document.value._source, fieldPath);
-  //   const isDnd35eField = isDnd35eFieldShape(raw);
-  //   if (isDnd35eField) {
-  //     const field = raw as unknown as Dnd35eField;
-  //     return field.getViewModeAwareValue(identifiedViewMode.value) as T;
-  //   }
-
-  // }
 
   const getFlagValue = <T,>(flagPath: string): T => {
     return document.value.getFlag('dnd35e', flagPath) as T;
   };
 
+  const getSchemaField = (fieldPath: string): foundry.data.fields.DataField | undefined => {
+    if (!fieldPath.startsWith('system.')) return undefined;
+    const systemPath = fieldPath.replace(/^system\./, '');
+    const systemModel = document.value.system as foundry.abstract.DataModel | undefined;
+    const schema = ((systemModel?.constructor as {
+      schema?: { _getField?: (path: string[]) => foundry.data.fields.DataField | undefined };
+    } | undefined)?.schema) ?? systemModel?.schema;
+    return schema?._getField?.(systemPath.split('.'));
+  };
+
+  const normalizeMaskValue = <T,>(fieldPath: string, maskValue: unknown): T => {
+    const schemaField = getSchemaField(fieldPath);
+    if (!(schemaField instanceof EmbeddedDataField) || !maskValue || typeof maskValue !== 'object') {
+      return maskValue as T;
+    }
+
+    const currentValue = foundry.utils.getProperty(document.value, fieldPath) as { constructor?: Function } | undefined;
+    const rawCtor = currentValue?.constructor;
+    if (!rawCtor || rawCtor === Object) {
+      return maskValue as T;
+    }
+    const CurrentCtor = rawCtor as new (data: unknown) => T;
+
+    try {
+      return new CurrentCtor(maskValue);
+    } catch {
+      return maskValue as T;
+    }
+  };
+
   const getViewAwareFieldValue = <T,>(fieldPath: string, getFromSource = false): T => {
-    if (isEditViewMode.value) {
-      // In edit mode, always get from source to avoid Active Effect overrides
+    if (isEditMode.value && isGM.value) {
+      // GMs edit the real/source data directly. Players in edit mode should still
+      // see masked values so their edits route through Player Edit Secrets.
       getFromSource = true;
     }
 
-    // In unidentified view, check the document's _masks dictionary first
-    if (!isIdentifiedViewMode.value) {
+    // Apply masks in Play Mode, and also in player Edit Mode so non-GM owners
+    // do not see GM truth while editing masked fields.
+    if (isPlayMode.value || (!isGM.value && isEditMode.value)) {
       const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
       if (masks && fieldPath in masks) {
-        return masks[fieldPath] as T;
+        return normalizeMaskValue<T>(fieldPath, masks[fieldPath]);
       }
     }
 
     const usableFieldPath = getFromSource ? `_source.${fieldPath}` : `${fieldPath}`;
-    const raw = foundry.utils.getProperty(document.value, usableFieldPath);
-    if (isDnd35eFieldShape(raw)) {
-      return Dnd35eField.getEffective(raw as Dnd35eFieldData, identifiedViewMode.value) as T;
-    }
-    return raw as T;
-  };
+    const viewValue = foundry.utils.getProperty(document.value, usableFieldPath) as T | undefined;
 
-  // const getViewAwareFieldValue = <T,> (fieldPath: string, realValue: T): T => {
-  //   const raw = foundry.utils.getProperty(document.value._source, fieldPath);
-  //   const actualPath = isDnd35eFieldShape(raw) ? `${fieldPath}.value` : fieldPath;
-  //   return _getEffectiveFieldValueImpl.value(actualPath, realValue);
-  // };
+    // Some top-level document getters (notably img) can be undefined in non-source
+    // paths for certain sheet/view states. Fallback keeps display stable.
+    if (!getFromSource && viewValue === undefined) {
+      return foundry.utils.getProperty(document.value, `_source.${fieldPath}`) as T;
+    }
+
+    return viewValue as T;
+  };
 
   const getIsFieldVisible = (
     fieldPath: string,
@@ -323,7 +326,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     defaultEditability?: FieldEditability
   ): ComputedRef<boolean> =>
     computed(() => {
-      if (!isEditViewMode.value) return false;
+      if (!isEditMode.value) return false;
       const currentEditability = isGM.value ? gmOnlyEditability : normalEditability;
       return fieldOverridesUtils.getIsEditable(
         fieldPath,
@@ -332,11 +335,26 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       );
     });
 
+  const hasMaskForField = (fieldPath: string): ComputedRef<boolean> =>
+    computed(() => {
+      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+      return !!masks && fieldPath in masks;
+    });
+
+  const getMaskForField = <T = unknown,>(fieldPath: string): ComputedRef<T | undefined> =>
+    computed(() => {
+      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+      if (!masks || !(fieldPath in masks)) return undefined;
+      return normalizeMaskValue<T>(fieldPath, masks[fieldPath]);
+    });
+
   const documentGetters: DocumentSheetStoreDocumentGetters = {
     // Data access
     getIsFieldEditable,
     getIsFieldVisible,
     getViewAwareFieldValue,
+    hasMaskForField,
+    getMaskForField,
 
     // Document identity
     type: computed(() => document.value.type),
@@ -393,9 +411,8 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     getProperty: <T,>(path: string) => computed(() => foundry.utils.getProperty(document.value, path) as T),
     getSourceProperty: <T,>(path: string) => computed(() => {
       const raw = foundry.utils.getProperty(document.value._source, path);
-      const result = isDnd35eFieldShape(raw) ? raw.value : raw;
       // Clone objects so Vue's computed cache detects in-place mutations from Foundry's mergeObject
-      return (typeof result === 'object' && result !== null ? foundry.utils.deepClone(result) : result) as T;
+      return (typeof raw === 'object' && raw !== null ? foundry.utils.deepClone(raw) : raw) as T;
     }),
     getFlagValue,
 

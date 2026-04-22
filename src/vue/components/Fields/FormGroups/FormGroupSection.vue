@@ -1,7 +1,7 @@
 <template>
   <div v-if="isSectionVisible" class="form-group-section" :class="sectionClasses">
     <div class="form-group-section-header">
-      <label>{{ localize(props.label) }}</label>
+      <label :title="labelTooltip">{{ resolvedLabel }}</label>
       <FieldControls
         :field-path="props.fieldPath"
         :default-editability="props.defaultEditability"
@@ -39,26 +39,32 @@
     return game.i18n.localize(key);
   }
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
       getIsFieldVisible,
       getIsFieldEditable,
     },
     _storeUtils: {
+      getFieldHint,
       resolveVisibility,
       getProperty,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
+  const resolvedLabel = computed(() => localize(props.label));
+
+  const resolvedHint = computed(() => getFieldHint(props.fieldPath));
+
+  const labelTooltip = computed(() => resolvedHint.value || undefined);
+
   const isFieldVisible = getIsFieldVisible(props.fieldPath, props.defaultVisibility);
 
   // Check if ANY child field is visible (hide section when all children are hidden)
-  const INTERNAL_KEYS = new Set(['overrides', 'unidentifiedValue']);
   const hasVisibleChild = computed((): boolean => {
     const data = getProperty<Record<string, unknown> | null>(props.fieldPath).value;
     if (!data || typeof data !== 'object') return true;
-    const childKeys = Object.keys(data).filter(k => !INTERNAL_KEYS.has(k));
+    const childKeys = Object.keys(data);
     if (childKeys.length === 0) return true;
     return childKeys.some(key => {
       const childPath = `${props.fieldPath}.${key}`;
@@ -76,7 +82,7 @@
   }));
 
   const isSectionEditable = computed((): boolean => {
-    if (!isEditViewMode.value) return false;
+    if (!isEditMode.value) return false;
     return getIsFieldEditable(props.fieldPath, props.defaultEditability).value;
   });
 

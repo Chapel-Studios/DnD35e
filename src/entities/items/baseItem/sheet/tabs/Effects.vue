@@ -8,7 +8,7 @@
     <div class="effects-header">
       <h3>{{ localize('dnd35e.EFFECT.Effects') }}</h3>
       <button
-        v-if="isEditViewMode"
+        v-if="isEditMode"
         type="button"
         class="create-effect-btn"
         @click="createEffect"
@@ -27,7 +27,7 @@
         v-if="temporaryEffects.length"
         :label="localize('dnd35e.EFFECT.Temporary').value"
         :effects="temporaryEffects"
-        :can-edit="isEditViewMode"
+        :can-edit="isEditMode"
       />
 
       <!-- Passive Effects -->
@@ -35,7 +35,7 @@
         v-if="passiveEffects.length"
         :label="localize('dnd35e.EFFECT.Passive').value"
         :effects="passiveEffects"
-        :can-edit="isEditViewMode"
+        :can-edit="isEditMode"
       />
 
       <!-- Inactive Effects -->
@@ -43,7 +43,7 @@
         v-if="inactiveEffects.length"
         :label="localize('dnd35e.EFFECT.Inactive').value"
         :effects="inactiveEffects"
-        :can-edit="isEditViewMode"
+        :can-edit="isEditMode"
       />
 
       <slot name="effects-list-append" />
@@ -85,7 +85,7 @@
     },
   } = inject(DocumentSheetStoreSymbol) as ItemSheetStore;
   const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const isActiveTab = getIsTabOpen('effects');
 

@@ -1,5 +1,4 @@
 import type { ActiveEffectSource } from '@common/documents/active-effect.mjs';
-import { Dnd35eDocumentMixin } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import type { Dnd35eDocumentFlags } from '@ec/CoreMixin/index.mjs';
 import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
 import { LogHelper } from '@helpers/index.mjs';
@@ -17,10 +16,7 @@ interface MaterialEffectFlags {
   // Add material-specific flags here as needed
 }
 
-/** Pre-composed: DnD35eActiveEffect → Dnd35eDocumentMixin */
-const MaterialBase = Dnd35eDocumentMixin(DnD35eActiveEffect);
-
-class Material extends MaterialBase {
+class Material extends DnD35eActiveEffect {
   declare type: MaterialEffectType;
   declare system: MaterialSystemData;
   declare flags: Dnd35eDocumentFlags<MaterialEffectFlags>;

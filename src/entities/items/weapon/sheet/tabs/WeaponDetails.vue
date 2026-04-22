@@ -74,6 +74,11 @@
       grid-gap: 0.33rem;
     }
 
+    :deep(.form-group.item-price.price-form-group) {
+      grid-auto-flow: row;
+      justify-items: center;
+    }
+
     :deep(.form-group-section) {
       position: relative;
     }

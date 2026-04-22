@@ -21,7 +21,7 @@ class Secret extends DnD35eActiveEffect {
     return false;
   }
 
-  get localizedType (): string {
+  override get localizedType (): string {
     return game.i18n.localize('dnd35e.EFFECT.Secret.Type');
   }
 }

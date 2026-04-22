@@ -22,19 +22,10 @@ const ensureNameFormulaOnCreate = (document: NameFormulaDocument): void => {
   };
   let hasUpdate = false;
   const system = document.system as ItemSystemData | ActiveEffectSystemData | undefined;
-  if (!system?.nameFormula?.value?.formula && document.name) {
-    const iDoc = document as unknown as { isIdentifiable?: boolean };
-    updateData.system.nameFormula = {
-      value: FormulaData.toSource(document.name, {
-        resolvedValue: document.name,
-      }),
-      unidentifiedValue: iDoc.isIdentifiable
-        ? FormulaData.toSource(document.name, {
-          resolvedValue: document.name,
-        })
-        : null,
-    };
-    // updateData.system.derivedName = document.name;
+  if (!system?.nameFormula?.formula && document.name) {
+    updateData.system.nameFormula = FormulaData.toSource(document.name, {
+      resolvedValue: document.name,
+    });
     hasUpdate = true;
   }
   

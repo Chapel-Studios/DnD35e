@@ -53,7 +53,7 @@
     readOnly?: boolean;
   }>();
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     isGM,
     documentGetters: {
@@ -73,15 +73,22 @@
   // Resolve schema field metadata (null for non-schema fields)
   const fieldMeta = computed(() => resolveFieldMeta(props.fieldPath));
 
-  // Computed: should we show controls?
   // For schema fields: only show controls if the field supports overrides. For legacy fields: always show.
   const hasOverrides = computed(() => fieldMeta.value ? fieldMeta.value.hasOverrides : true);
-  const showGMControls = computed(() => isEditViewMode.value && isGM.value && !!props.fieldPath && !props.readOnly && hasOverrides.value);
+  const showGMControls = computed(() =>
+    isEditMode.value
+    && isGM.value
+    && !!props.fieldPath
+    && !props.readOnly
+    && hasOverrides.value
+  );
+
   // Visibility button: only for identifiable fields (or legacy fields where we default to showing it)
   const showVisibilityButton = computed(() => fieldMeta.value ? fieldMeta.value.identifiable : true);
+
   const hideEverything = computed(() => 
     (
-      !isEditViewMode.value
+      !isEditMode.value
       || (!showGMControls.value && !slots.default)
     )
     && !hasActiveEffects.value

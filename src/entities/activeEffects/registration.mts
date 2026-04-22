@@ -12,6 +12,34 @@ import { SecretSystemModel } from '@effects/secret/data/SecretSystemModel.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { SecretSheet } from '@effects/secret/sheet/SecretSheet.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
+import type { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
+
+const syncOpenSheetTitle = (sheet: { rendered?: boolean; title?: string; window?: { title?: HTMLElement } } | null | undefined): void => {
+  if (!sheet?.rendered) return;
+  if (sheet.window?.title instanceof HTMLElement) {
+    sheet.window.title.textContent = sheet.title ?? '';
+  }
+};
+
+const refreshOwningItemForSecret = (document: unknown): void => {
+  const effect = document as foundry.documents.ActiveEffect | null;
+  if (!effect || effect.type !== secretEffectType) return;
+  if (!effect.parent || effect.parent.documentName !== 'Item') return;
+
+  const item = effect.parent as ItemDnd35e;
+  item.prepareData();
+
+  // TODO: Revisit secret hook refresh coverage for masked top-level fields like img.
+  // Name is updated here today, but secret images and similar fields still need a
+  // deliberate refresh path for directories/sidebar-style consumers when we return to it.
+
+  if (item.id && game.dnd35e?.stores?.Item?.[item.id]) {
+    (game.dnd35e.stores.Item[item.id] as ItemSheetStore<any>)?._storeUtils.refreshDocument?.(item);
+  }
+
+  syncOpenSheetTitle(item.sheet);
+  item.parent?.sheet?.render(true);
+};
 
 const registerEffectSheets = () => {
   const effectSheets = [
@@ -57,7 +85,7 @@ export const registerEffects = () => {
     // MASK change type — Secret AEs use this to define masked values. Not applied via applyChange().
     changeTypes.mask = {
       label: 'dnd35e.EFFECT.ChangeMode.Mask',
-      defaultPriority: 100,
+      defaultPriority: 10,
       handler: null,
     };
 
@@ -82,6 +110,18 @@ export const registerEffects = () => {
     ensureNameFormulaOnCreate(document as NameFormulaDocument);
 
     if (validateSingleMaterial(document) === false) return false;
+  });
+
+  Hooks.on('createActiveEffect', (document) => {
+    refreshOwningItemForSecret(document);
+  });
+
+  Hooks.on('updateActiveEffect', (document) => {
+    refreshOwningItemForSecret(document);
+  });
+
+  Hooks.on('deleteActiveEffect', (document) => {
+    refreshOwningItemForSecret(document);
   });
 };
 

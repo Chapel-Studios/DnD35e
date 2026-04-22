@@ -76,7 +76,7 @@
     directUpdate?: boolean;
   }>();
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
       documentUuid,
@@ -117,7 +117,7 @@
     isEditing.value = true;
   }
 
-  const isEditButtonVisible = computed(() => !isEditing.value && isEditViewMode.value);
+  const isEditButtonVisible = computed(() => !isEditing.value && isEditMode.value);
 
   async function onSave(event: Event) {
     const target = event.target as HTMLElement & { value?: string };

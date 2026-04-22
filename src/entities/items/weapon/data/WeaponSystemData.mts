@@ -1,15 +1,14 @@
-import type { Dnd35eFieldData } from '@helpers/fields/index.mjs';
 import type { ItemSystemData } from '@items/baseItem/index.mjs';
 import type { EquippableItemSystemData } from '@items/components/Equippable/index.mjs';
 
 import type { WeaponBaseType, WeaponSubtype, WeaponType } from './index.mjs';
 
 type WeaponDamage = {
-  damageRoll: Dnd35eFieldData<string>;
-  damageType: Dnd35eFieldData<string>;
-  critRange: Dnd35eFieldData<string>;
-  critMultiplier: Dnd35eFieldData<number>;
-  rangeIncrement: Dnd35eFieldData<number>;
+  damageRoll: string;
+  damageType: string;
+  critRange: string;
+  critMultiplier: number;
+  rangeIncrement: number;
   attackFormula: string;
   damageFormula: string;
 };
@@ -17,9 +16,9 @@ type WeaponDamage = {
 interface WeaponSystemSource {
   isBaseWeaponType: boolean;
   isMasterwork: boolean;
-  weaponType: Dnd35eFieldData<WeaponType>;
-  weaponSubtype: Dnd35eFieldData<WeaponSubtype>;
-  weaponBaseType: Dnd35eFieldData<WeaponBaseType>;
+  weaponType: WeaponType;
+  weaponSubtype: WeaponSubtype;
+  weaponBaseType: WeaponBaseType;
   weaponDamage: WeaponDamage;
   attackNotes: string;
   damageNotes: string;

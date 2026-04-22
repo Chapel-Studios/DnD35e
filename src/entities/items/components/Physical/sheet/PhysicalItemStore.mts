@@ -33,6 +33,9 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     documentGetters: {
       getViewAwareFieldValue,
     },
+    documentActions: {
+      editEffect,
+    },
     _storeUtils: {
       document,
       updateHiddenEffects,
@@ -42,8 +45,8 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     context,
   baseStore as DocumentSheetStore<TDocument>
   );
+  const isGM = game.user.isGM;
   updateHiddenEffects([materialEffectType, secretEffectType]);
-  // const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const { replaceTabs, tabs } = baseStore._storeUtils.tabStore;
   replaceTabs([
     ...tabs.value.filter((tab) => 'effects' !== tab.id),
@@ -58,8 +61,8 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
   const documentGetters: PhysicalItemGetters = {
     ...identifiableStore.documentGetters,
     // static props: don't have an identifiable mode
-    quantity: computed(() => document.value.system.quantity.value),
-    actualWeight: computed(() => convertToLocalizedWeight(document.value.system.weight.value ?? 0) ?? 0),
+    quantity: computed(() => document.value.system.quantity),
+    actualWeight: computed(() => convertToLocalizedWeight(document.value.system.weight ?? 0) ?? 0),
     effectiveWeight: computed(() => convertToLocalizedWeight(document.value.system.effectiveWeight ?? 0) ?? 0),
     currentHp: computed(() => getViewAwareFieldValue('system.hp.current') || 0),
     maxHp: computed(() => getViewAwareFieldValue('system.hp.max') || 0),
@@ -71,19 +74,22 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     // currentContainerId: computed(() => document.value.system.containerId),
     isCarried: computed(() => document.value.system.isCarried),
     size: computed(() => getViewAwareFieldValue('system.size') ?? ''),
-    materials: computed(() => 
-      [...document.value.effects].filter((effect) => effect.type === materialEffectType) as unknown as MaterialType[]
-    ),
+    materials: computed(() => {
+      const all = [...document.value.effects].filter((effect) => effect.type === materialEffectType);
+      return (isGM ? all : all.filter(e => !e.system.isHidden)) as unknown as MaterialType[];
+    }),
     secrets: computed(() =>
-      [...document.value.effects].filter((effect) => effect.type === secretEffectType) as unknown as SecretType[]
+      ([...document.value.effects].filter((effect) => effect.type === secretEffectType) as unknown as SecretType[])
+        .sort((a, b) => (a.system.isPlayerEditSecret ? 0 : 1) - (b.system.isPlayerEditSecret ? 0 : 1))
     ),
 
     // Identifiable props: use effective value to allow overrides when viewing as unidentified
     price: computed(() => getViewAwareFieldValue('system.price') || createDefaultPrice()),
-    // TODO(Phase 5): These need to be reassessed as material effects (broken/masterwork AE content)
+    // TODO(Phase 5): This needs to be reassessed as material effects (broken/masterwork Material content)
+    // isBroken: computed(() => getViewAwareFieldValue('system.isBroken') || false),
+    // TODO(Phase ?): These need to be reassessed for merchants (advanced actors)
     // resalePrice: computed(() => getViewAwareFieldValue('system.resalePrice') ?? null),
     // brokenResalePrice: computed(() => getViewAwareFieldValue('system.brokenResalePrice') ?? null),
-    // isBroken: computed(() => getViewAwareFieldValue('system.isBroken') || false),
 
     // Material Effects support
     magicEquivalency: computed(() => document.value.system.magicEquivalency ?? 0),
@@ -102,13 +108,18 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
   const documentActions: PhysicalItemActions = {
     ...identifiableStore.documentActions,
     createSecret: async () => {
-      await document.value.createEmbeddedDocuments('ActiveEffect', [{
+      const createdSecrets = await document.value.createEmbeddedDocuments('ActiveEffect', [{
         name: game.i18n.localize('dnd35e.EFFECT.Secret.New'),
         img: 'icons/svg/eye.svg',
         type: secretEffectType,
         origin: document.value.uuid,
         disabled: false,
       }]);
+
+      const createdSecret = createdSecrets[0];
+      if (createdSecret?.id) {
+        editEffect(createdSecret.id);
+      }
     },
   };
 
@@ -124,8 +135,6 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   actualWeight: ComputedRef<number>;
   effectiveWeight: ComputedRef<number>;
   price: ComputedRef<PriceData>;
-  // resalePrice: ComputedRef<PriceData | null>;
-  // brokenResalePrice: ComputedRef<PriceData | null>;
   // isBroken: ComputedRef<boolean>;
   maxHp: ComputedRef<number>;
   currentHp: ComputedRef<number>;

@@ -72,6 +72,8 @@
       "Identified": "Identified",
       "Unidentified": "Unidentified",
       "UnidentifiedValueHint": "Editing unidentified value",
+      "MaskedBadge": "Masked",
+      "MaskedValueHint": "Masked value: {value}",
       "FIELDS": {
       }
     },
@@ -120,9 +122,7 @@
           "label": "Container ID",
           "hint": "The ID of the container this item is stored in, if any."
         }
-      },
-      "ResalePrice": "Resale Price",
-      "BrokenResalePrice": "Broken Resale Price"
+      }
     },
     "EQUIPPABLE": {
       "DesignedForSize": "Designed For Size",

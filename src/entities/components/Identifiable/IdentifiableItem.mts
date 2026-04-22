@@ -1,7 +1,5 @@
 import type { Dnd35eDocumentProperties } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import type { EvaluationDocument, FormulaRegistration } from '@ec/CoreMixin/index.mjs';
-import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
-import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/index.mjs';
@@ -78,26 +76,11 @@ const IdentifiableDocumentMixin = <TBase extends IdentifiableDocumentCtor> (Base
     declare protected readonly defaultDerivedNameRegistration: FormulaRegistration;
     declare protected readonly defaultNameRegistration: FormulaRegistration;
 
-    protected readonly unidentifiedDerivedNameRegistration: FormulaRegistration = {
-      impactedField: 'system.nameFormula.unidentifiedValue.resolvedValue',
-      formulaField: 'system.nameFormula',
-      evaluate: (document: EvaluationDocument, contexts: Record<string, EvaluationDocument>) => {
-        const unidentifiedFormula = document.system.nameFormula?.unidentifiedValue;
-        if (!unidentifiedFormula?.formula) return null;
-        const nameFormulaDnd35e = (this.system as any).schema?.fields?.nameFormula;
-        const innerField = nameFormulaDnd35e?.fields?.value as FormulaField | undefined;
-        const excluded = innerField?.excludedFields ?? [];
-        return FormulaData.resolveSource(unidentifiedFormula, { self: document, ...contexts }, document.name || '', excluded);
-      },
-    };
-
     protected readonly identifiableNameRegistration: FormulaRegistration = {
       impactedField: 'name',
       formulaField: 'system.isIdentified',
       evaluate: (document: EvaluationDocument, _contexts: Record<string, EvaluationDocument>) => {
-        const { nameFormula } = document.system;
-        if (document.isIdentified) return nameFormula?.value?.resolvedValue || document.name;
-        return nameFormula?.unidentifiedValue?.resolvedValue || nameFormula?.value?.resolvedValue || document.name;
+        return document.system.nameFormula?.resolvedValue || document.name;
       },
     };
 
@@ -116,9 +99,7 @@ const IdentifiableDocumentMixin = <TBase extends IdentifiableDocumentCtor> (Base
     constructor (...args: any[]) {
       super(...args);
       // Replace the base name registration with identifiable-aware version
-      // and add unidentified name formula registration
       this.registeredFormulas.delete(this.defaultNameRegistration);
-      this.registeredFormulas.add(this.unidentifiedDerivedNameRegistration);
       this.registeredFormulas.add(this.identifiableNameRegistration);
     }
 
@@ -140,14 +121,28 @@ const IdentifiableDocumentMixin = <TBase extends IdentifiableDocumentCtor> (Base
 
     /**
      * Reveal all secrets by disabling every active Secret AE on this document.
+     * Also unhides non-secret hidden effects so a fully revealed item exposes
+     * its regular effect list to players again.
      * After the update, `isIdentified` will derive to `true` and `_masks` will be empty.
      */
     async revealAllSecrets (): Promise<void> {
-      const secrets = [...this.effects].filter(
-        e => e.type === 'secret' && !e.disabled
-      );
-      if (!secrets.length) return;
-      const updates = secrets.map(e => ({ _id: e.id, disabled: true }));
+      const updates: Record<string, unknown>[] = [];
+
+      for (const effect of this.effects) {
+        const effectId = effect.id;
+        if (!effectId) continue;
+
+        if (effect.type === 'secret' && !effect.disabled) {
+          updates.push({ _id: effectId, disabled: true });
+          continue;
+        }
+
+        if (effect.type !== 'secret' && 'system' in effect && (effect as { system?: { isHidden?: boolean } }).system?.isHidden) {
+          updates.push({ _id: effectId, 'system.isHidden': false });
+        }
+      }
+
+      if (!updates.length) return;
       await this.updateEmbeddedDocuments('ActiveEffect', updates);
     }
   }

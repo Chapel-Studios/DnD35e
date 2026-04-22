@@ -38,7 +38,7 @@
   //     getViewAwareFieldUpdater,
   //   },
   // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
-  // const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  // const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   // const effectiveBrokenResalePrice = computed(() =>
   //   getViewAwareFieldValue('system.brokenResalePrice')

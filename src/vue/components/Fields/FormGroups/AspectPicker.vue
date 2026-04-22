@@ -1,38 +1,41 @@
 <template>
-  <div class="aspect-picker-wrapper">
-    <input
-      ref="inputRef"
-      type="text"
-      class="aspect-picker-input"
-      :class="{ 'is-disabled': props.disabled, 'no-context': !props.familiarContext }"
-      :value="displayValue"
-      :disabled="props.disabled"
-      :placeholder="props.placeholder"
-      :name="props.name"
-      @input="onInput"
-      @blur="onBlur"
-      @keydown="onKeyDown"
-      @focus="onFocus"
-      spellcheck="false"
-      autocomplete="off"
-    />
-
-    <FamiliarDropdown
-      ref="familiarDropdownRef"
-      :show="showFamiliar"
-      :options="familiarOptions"
-      :selected-index="familiarIndex"
-      :position="familiarPosition"
-      @select="onFamiliarSelect"
-    />
-  </div>
+  <FamiliarOverlayInput
+    ref="overlayRef"
+    :model-value="displayValue"
+    :disabled="props.disabled"
+    :placeholder="props.placeholder"
+    :name="props.name"
+    input-class="aspect-picker-input"
+    highlight-class="highlight-layer"
+    wrapper-class="aspect-picker-wrapper"
+    edit-container-class="aspect-picker-edit-container"
+    hint-class="aspect-picker-hint"
+    :input-state-classes="{
+      'has-error': validationErrors.length > 0,
+      'is-disabled': props.disabled,
+      'no-context': !props.familiarContext,
+    }"
+    :highlight-state-classes="{ 'no-context': !props.familiarContext }"
+    :highlighted-html="highlightedHTML"
+    :show-familiar="showFamiliar"
+    :familiar-options="familiarOptions"
+    :familiar-index="familiarIndex"
+    :familiar-position="familiarPosition"
+    :hint="displayHint"
+    @input="onInput"
+    @blur="onBlur"
+    @keydown="onKeyDown"
+    @focus="onFocus"
+    @scroll="syncScroll"
+    @select="onFamiliarSelect"
+  />
 </template>
 
 <script setup lang="ts">
-  import type { AutocompleteOption, FamiliarContext, FamiliarSchema } from '@helpers/formulae/types.mjs';
-  import { measureTextOffset, useFamiliar } from '@helpers/formulae/useFamiliar.mjs';
-  import { findAspectByAccessPath } from '@helpers/formulae/utils.mjs';
-  import FamiliarDropdown from '@vc/FamiliarDropdown.vue';
+  import type { AutocompleteOption, FamiliarContext, FamiliarSchema, ValidationError } from '@helpers/formulae/types.mjs';
+  import { useFamiliarOverlayInput } from '@helpers/formulae/useFamiliarOverlayInput.mjs';
+  import { findAspectByAccessPath, parseFormula, renderFormulaHTML, validateFormula } from '@helpers/formulae/utils.mjs';
+  import FamiliarOverlayInput from '@vc/Fields/FormGroups/FamiliarOverlayInput.vue';
   import { computed, nextTick, onUnmounted, type PropType, ref, watch } from 'vue';
 
   const props = defineProps({
@@ -54,8 +57,10 @@
     'update:modelValue': [value: string];
   }>();
 
-  const inputRef = ref<HTMLInputElement>();
-  const familiarDropdownRef = ref<InstanceType<typeof FamiliarDropdown>>();
+  const familiarVerticalGap = 2;
+
+  const overlayRef = ref<InstanceType<typeof FamiliarOverlayInput>>();
+  const validationErrors = ref<ValidationError[]>([]);
 
   // Familiar composable — manages autocomplete state
   const {
@@ -63,11 +68,15 @@
     showFamiliar,
     familiarIndex,
     familiarPosition,
-    updateOptions: updateFamiliarOptions,
-    handleKeyDown: handleFamiliarKeyDown,
-    scrollSelectedIntoView,
-    dismiss: dismissFamiliar,
-  } = useFamiliar();
+    dismissFamiliar,
+    handleNavigationKey,
+    syncScroll: syncOverlayScroll,
+    updateAutocomplete: updateOverlayAutocomplete,
+  } = useFamiliarOverlayInput();
+
+  const getInputElement = (): HTMLInputElement | undefined => overlayRef.value?.getInputElement();
+  const getHighlightElement = (): HTMLDivElement | undefined => overlayRef.value?.getHighlightElement();
+  const getDropdownMenuElement = (): HTMLElement | undefined => overlayRef.value?.getDropdownMenuElement();
 
   // Wrap the single context into FamiliarSchema for getAutocompleteOptions
   const wrappedSchema = computed((): FamiliarSchema => {
@@ -124,13 +133,55 @@
   // The display value shown in the input
   const displayValue = ref(rawToFamiliar(props.modelValue));
 
+  const highlightedHTML = computed(() => {
+    const value = displayValue.value;
+    if (!value) return '';
+    if (!props.familiarContext) return escapeHTML(value);
+    const tokens = parseFormula(value);
+    return renderFormulaHTML(value, tokens, validationErrors.value, wrappedSchema.value);
+  });
+
+  const dynamicHint = computed(() => {
+    if (!props.familiarContext) return '';
+    const contexts = [props.contextName].filter(Boolean);
+    if (contexts.length === 0) return '';
+    const capitalized = contexts.map(k => k.charAt(0).toUpperCase() + k.slice(1));
+    return `Available Contexts: [${capitalized.join(', ')}]`;
+  });
+
+  const displayHint = computed(() => props.disabled ? '' : dynamicHint.value);
+
   // Track whether user is actively editing
   let isUserEditing = false;
+
+  function escapeHTML(value: string): string {
+    return value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll('\'', '&#39;');
+  }
+
+  function updateValidation() {
+    if (!props.familiarContext || !displayValue.value) {
+      validationErrors.value = [];
+      return;
+    }
+
+    validationErrors.value = validateFormula(displayValue.value, wrappedSchema.value);
+  }
+
+  function syncScroll() {
+    syncOverlayScroll(getInputElement(), getHighlightElement());
+  }
 
   // Sync external modelValue changes into display (but not during active editing)
   watch(() => props.modelValue, (newRaw) => {
     if (!isUserEditing) {
       displayValue.value = rawToFamiliar(newRaw);
+      updateValidation();
+      nextTick(syncScroll);
     }
   });
 
@@ -138,6 +189,8 @@
   watch(() => props.familiarContext, () => {
     if (!isUserEditing) {
       displayValue.value = rawToFamiliar(props.modelValue);
+      updateValidation();
+      nextTick(syncScroll);
     }
   });
 
@@ -150,6 +203,8 @@
     // Strip spaces, commas, and other delimiters — single aspect only
     const value = target.value.replace(/[\s,;]/g, '');
     displayValue.value = value;
+    updateValidation();
+    nextTick(syncScroll);
 
     if (!props.familiarContext || !value) {
       dismissFamiliar();
@@ -158,7 +213,7 @@
 
     // Trigger autocomplete on every keystroke — auto-prefix with # if not present
     const searchText = value.startsWith('#') ? value : `#${value}`;
-    updateAutocomplete(searchText);
+    updateAutocompleteMenu(searchText);
   }
 
   function onBlur() {
@@ -168,18 +223,12 @@
         isUserEditing = false;
         commitValue();
       }
+      updateValidation();
     }, 200);
   }
 
   function onKeyDown(event: KeyboardEvent) {
-    const result = handleFamiliarKeyDown(event);
-    if (result.handled) {
-      event.preventDefault();
-      if (result.selectedOption) {
-        selectOption(result.selectedOption);
-      } else {
-        scrollSelectedIntoView(familiarDropdownRef.value?.menuRef);
-      }
+    if (handleNavigationKey(event, selectOption, getDropdownMenuElement())) {
       return;
     }
 
@@ -187,7 +236,7 @@
       event.preventDefault();
       isUserEditing = false;
       commitValue();
-      inputRef.value?.blur();
+      getInputElement()?.blur();
       return;
     }
 
@@ -196,31 +245,29 @@
       displayValue.value = rawToFamiliar(props.modelValue);
       isUserEditing = false;
       dismissFamiliar();
-      inputRef.value?.blur();
+      updateValidation();
+      getInputElement()?.blur();
       event.preventDefault();
     }
   }
 
-  function updateAutocomplete(text: string) {
-    if (!inputRef.value) return;
+  async function updateAutocompleteMenu(text: string) {
+    const inputEl = getInputElement();
+    if (!inputEl) return;
 
-    const inputRect = inputRef.value.getBoundingClientRect();
-    const wrapperRect = inputRef.value.closest('.aspect-picker-wrapper')?.getBoundingClientRect();
-    let position = { top: 0, left: 0 };
-    if (wrapperRect) {
-      // Anchor to the last '.' or the start of text
-      const lastDotIndex = text.lastIndexOf('.');
-      const anchorCharIndex = lastDotIndex !== -1 ? lastDotIndex + 1 : 0;
-      // Map to input value offset (display value may differ from search text by '#' prefix)
-      const displayOffset = displayValue.value.startsWith('#') ? anchorCharIndex : Math.max(0, anchorCharIndex - 1);
-      const anchorLeft = measureTextOffset(inputRef.value, displayOffset);
-      position = {
-        top: inputRect.bottom - wrapperRect.top + 2,
-        left: anchorLeft,
-      };
-    }
+    const lastDotIndex = text.lastIndexOf('.');
+    const anchorCharIndex = lastDotIndex !== -1 ? lastDotIndex + 1 : 0;
+    const displayOffset = displayValue.value.startsWith('#') ? anchorCharIndex : Math.max(0, anchorCharIndex - 1);
 
-    updateFamiliarOptions(text, position, wrappedSchema.value);
+    await updateOverlayAutocomplete({
+      text,
+      context: wrappedSchema.value,
+      inputEl,
+      wrapperEl: inputEl.closest('.aspect-picker-wrapper') as HTMLElement | null,
+      anchorIndex: displayOffset,
+      verticalGap: familiarVerticalGap,
+      dropdownEl: getDropdownMenuElement(),
+    });
   }
 
   function selectOption(option: AutocompleteOption) {
@@ -233,12 +280,13 @@
       emit('update:modelValue', rawPath);
       dismissFamiliar();
       isUserEditing = false;
+      updateValidation();
     } else {
       // Branch selected — show next level
       nextTick(() => {
         const searchText = option.fullPath.startsWith('#') ? option.fullPath : `#${option.fullPath}`;
-        updateAutocomplete(searchText);
-        inputRef.value?.focus();
+        updateAutocompleteMenu(searchText);
+        getInputElement()?.focus();
       });
     }
   }
@@ -263,7 +311,11 @@
     emit('update:modelValue', rawPath);
     // Normalize display after commit
     displayValue.value = rawToFamiliar(rawPath);
+    updateValidation();
+    nextTick(syncScroll);
   }
+
+  updateValidation();
 
   onUnmounted(() => {
     dismissFamiliar();
@@ -272,22 +324,29 @@
 
 <style scoped lang="scss">
   .aspect-picker-wrapper {
-    position: relative;
-    display: inline-flex;
+    width: 100%;
+  }
+
+  .aspect-picker-hint {
+    margin: 0.25rem 0 0;
+    font-size: var(--font-size-11);
+    color: var(--color-text-secondary);
+  }
+
+  .aspect-picker-edit-container {
     width: 100%;
   }
 
   .aspect-picker-input {
-    width: 100%;
     padding: 0.35rem 0.5rem;
     font-family: 'Courier New', 'Consolas', monospace;
     font-size: 0.85rem;
+    line-height: 1.5;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 3px;
     background: transparent;
-    color: #66b3ff;
-    outline: none;
-    box-sizing: border-box;
+    color: transparent;
+    caret-color: #66b3ff;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
     &::placeholder {
@@ -300,10 +359,23 @@
       box-shadow: 0 0 0 2px rgba(102, 166, 255, 0.1);
     }
 
+    &.has-error {
+      border-color: rgba(255, 100, 100, 0.45);
+      box-shadow: 0 0 0 1px rgba(255, 100, 100, 0.15);
+    }
+
     &.is-disabled {
       opacity: 0.7;
       cursor: not-allowed;
     }
+  }
+
+  .highlight-layer {
+    padding: 0.35rem 0.5rem;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #d4d4d4;
 
     &.no-context {
       color: #d4d4d4;

@@ -1,7 +1,7 @@
 <template>
   <img
     class="item-art"
-    :class="[props.class, { editable: isEditViewMode }]"
+    :class="[props.class, { editable: isEditMode }]"
     :src="currentImg"
     :title="props.title"
     @click="editImage"
@@ -19,7 +19,7 @@
     class?: string;
   }>();
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: { getViewAwareFieldValue },
     documentActions: { getViewAwareFieldUpdater },
@@ -31,7 +31,7 @@
   const updateField = getViewAwareFieldUpdater(props.field);
 
   async function editImage (event: MouseEvent) {
-    if (!isEditViewMode.value) return;
+    if (!isEditMode.value) return;
 
     event.preventDefault();
     event.stopPropagation();

@@ -37,13 +37,19 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
   });
 
   const hasOwner = computed(() => !!document.value.parent);
+  const isGM = game.user.isGM;
 
   // Item-specific document getters
   // Note: We spread the effects into a plain array to avoid Vue proxy conflicts
   // with Foundry's EmbeddedCollection proxy (non-configurable property error)
-  const hiddenEffectIds = ref<Set<string>>(new Set());
-  const effects = computed(() => [...(document.value.effects ?? [])]
-    .filter((effect: DnD35eActiveEffect) => !hiddenEffectIds.value.has(effect.type))
+  const hiddenEffectTypeIds = ref<Set<string>>(new Set());
+  const allEffects = computed(() => [...(document.value.effects ?? [])]
+    .filter((effect: DnD35eActiveEffect) => !hiddenEffectTypeIds.value.has(effect.type))
+  );
+  // Non-GM users cannot see effects with isHidden: true
+  const effects = computed(() => isGM
+    ? allEffects.value
+    : allEffects.value.filter((e: DnD35eActiveEffect) => !e.system.isHidden)
   );
   const getEffectsForField = (fieldPath: string) => computed(() => document.value.overrides?.[fieldPath]
     ? document.value.overrides?.[fieldPath] as []
@@ -101,13 +107,20 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
       // await document.value.createEmbeddedDocuments('ActiveEffect', [createData]);
       triggerRef(document);
     },
+    toggleEffectHidden: async (effectId: string) => {
+      const effect = document.value.effects.get(effectId);
+      if (!effect) return false;
+      await effect.update({ 'system.isHidden': !effect.system.isHidden });
+      triggerRef(document);
+      return true;
+    },
   };
 
   const itemStoreUtils = {
     ...baseStore._storeUtils,
     updateHiddenEffects: async (effectTypes: EffectType[]) => {
-      hiddenEffectIds.value = new Set([
-        ...hiddenEffectIds.value,
+      hiddenEffectTypeIds.value = new Set([
+        ...hiddenEffectTypeIds.value,
         ...effectTypes,
       ]);
     },
@@ -138,6 +151,7 @@ type ItemDocumentGetters = DocumentSheetStoreDocumentGetters & {
 type ItemDocumentActions<TDocument extends ItemDnd35e> = DocumentSheetStoreDocumentActions<TDocument> & {
   removeEffect: (effectId: string) => Promise<boolean>;
   toggleEffect: (effectId: string) => Promise<boolean>;
+  toggleEffectHidden: (effectId: string) => Promise<boolean>;
   editEffect: (effectId: string) => boolean;
   createEffect: () => Promise<void>;
 };

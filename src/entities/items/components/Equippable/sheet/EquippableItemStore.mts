@@ -17,7 +17,7 @@ const useEquippableItemStore = <TDocument extends EquippableItemLike> (context: 
     isEquipped: computed(() => document.value.system.isEquipped),
     equippedSlotIds: computed(() => document.value.system.equippedSlotIds),
     isMelded: computed(() => document.value.system.isMelded),
-    designedForSize: computed(() => document.value.system.designedForSize.value),
+    designedForSize: computed(() => document.value.system.designedForSize),
     isWeightlessWhenEquipped: computed(() => document.value.system.isWeightlessWhenEquipped),
   };
 

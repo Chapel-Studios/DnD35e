@@ -1,33 +1,45 @@
 <template>
-  <DmControl v-if="secrets.length || isEditViewMode">
+  <DmControl v-if="secrets.length || isEditMode">
     <div class="secrets-list">
       <EffectCategory
         v-if="secrets.length"
         :label="localize('dnd35e.EFFECT.Secret.Secrets').value"
         :effects="secrets"
-        :can-edit="isEditViewMode"
-      />
-      <div class="secrets-actions">
-        <button
-          v-if="isEditViewMode"
-          type="button"
-          class="create-secret-btn"
-          @click="createSecret"
-        >
-          <i class="fas fa-plus" />
-          {{ localize('dnd35e.EFFECT.Secret.AddSecret').value }}
-        </button>
-        <button
-          v-if="secrets.length"
-          type="button"
-          class="reveal-all-btn"
-          :disabled="!hasActiveSecrets"
-          @click="revealAllSecrets"
-        >
-          <i class="fas fa-eye" />
-          {{ localize('dnd35e.EFFECT.Secret.RevealAll').value }}
-        </button>
-      </div>
+        :can-edit="isEditMode"
+        :show-visibility-toggle="false"
+        default-collapsed
+      >
+        <template #effect-badge="{ effect }">
+          <i
+            v-if="(effect.system as any).isPlayerEditSecret"
+            class="fas fa-pencil player-edit-indicator"
+            :title="localize('dnd35e.EFFECT.Secret.PlayerEditIndicator').value"
+          />
+        </template>
+        <template #actions>
+          <div class="secrets-actions">
+            <button
+              v-if="isEditMode"
+              type="button"
+              class="create-secret-btn"
+              @click="createSecret"
+            >
+              <i class="fas fa-plus" />
+              {{ localize('dnd35e.EFFECT.Secret.AddSecret').value }}
+            </button>
+            <button
+              v-if="secrets.length"
+              type="button"
+              class="reveal-all-btn"
+              :disabled="!hasActiveSecrets"
+              @click="revealAllSecrets"
+            >
+              <i class="fas fa-eye" />
+              {{ localize('dnd35e.EFFECT.Secret.RevealAll').value }}
+            </button>
+          </div>
+        </template>
+      </EffectCategory>
     </div>
   </DmControl>
 </template>
@@ -41,7 +53,7 @@
 
   import type { PhysicalDocumentStore } from '../PhysicalItemStore.mjs';
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
       secrets,
@@ -90,5 +102,11 @@
         opacity: 0.4;
       }
     }
+  }
+
+  :deep(.player-edit-indicator) {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    color: var(--color-level-warning);
   }
 </style>

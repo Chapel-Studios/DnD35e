@@ -1,9 +1,10 @@
 import {
   optionalStringField,
   requiredStringField,
+  useDnd35eField,
   withFamiliar,
 } from '@helpers/fieldBuilders.mjs';
-import { Dnd35eField } from '@helpers/fields/Dnd35eField.mjs';
+import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { DocumentContext } from '@helpers/formulae/registry.mjs';
 
@@ -11,6 +12,7 @@ import type { BaseDnd35eSystemData } from './BaseDnd35eSystemData.mjs';
 
 const {
   HTMLField,
+  SchemaField,
 } = foundry.data.fields;
 
 interface Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataModel | null> extends foundry.abstract.TypeDataModel<
@@ -31,7 +33,7 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
     const schema = {
       version: withFamiliar(requiredStringField('14.0.0'), { formulaVisible: false }),
       slug: withFamiliar(optionalStringField(), { formulaVisible: false }),
-      nameFormula: new Dnd35eField(FormulaField, {
+      nameFormula: useDnd35eField(new FormulaField({
         expectedType: 'string',
         canVisibilityBeChanged: false,
         excludedFields: ['name'],
@@ -42,10 +44,10 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
           expectedType: 'string',
           resolvedValue: null,
         },
-      }, {
+      }), {
         familiar: { formulaVisible: false },
       }),
-      description: new Dnd35eField(HTMLField, {}, {
+      description: useDnd35eField(new HTMLField(), {
         familiar: { formulaVisible: false },
       }),
     };
@@ -55,21 +57,42 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
 
   override prepareDerivedData(): void {
     super.prepareDerivedData();
-    const nameFormulaCompound = this.nameFormula;
     const doc = this.parent as unknown as DocumentContext;
-    const nameFormulaDnd35e = (this.constructor as any).schema?.fields?.nameFormula;
-    const innerFormulaField = nameFormulaDnd35e?.fields?.value as FormulaField | undefined;
-    const dataMap = this._buildFormulaDataMap(doc, innerFormulaField?.formulaContexts ?? []);
-    const excluded = innerFormulaField?.excludedFields ?? [];
+    const schema = (this.constructor as any).schema?.fields as Record<string, foundry.data.fields.DataField> | undefined;
+    if (!schema) return;
+    this._evaluateFormulaFields(this as unknown as Record<string, unknown>, schema, doc);
+  }
 
-    const identifiedFormula = nameFormulaCompound?.value;
-    if (identifiedFormula?.formula) {
-      identifiedFormula.resolvedValue = identifiedFormula.resolve(dataMap, (this.parent as any).name, excluded);
-    }
+  protected _evaluateFormulaFields(
+    model: Record<string, unknown>,
+    fields: Record<string, foundry.data.fields.DataField>,
+    doc: DocumentContext
+  ): void {
+    for (const [key, field] of Object.entries(fields)) {
+      const currentValue = model[key] as Record<string, unknown> | undefined;
 
-    const unidentifiedFormula = nameFormulaCompound?.unidentifiedValue;
-    if (unidentifiedFormula?.formula) {
-      unidentifiedFormula.resolvedValue = unidentifiedFormula.resolve(dataMap, '', excluded);
+      if (field instanceof FormulaField) {
+        if (!currentValue || !('formula' in currentValue)) continue;
+        const dataMap = this._buildFormulaDataMap(doc, field.formulaContexts ?? []);
+        const excluded = field.excludedFields ?? [];
+        const formulaSource = currentValue as unknown as {
+          formula: string;
+          expectedType: 'string' | 'number';
+          resolvedValue: string | null;
+        };
+        formulaSource.resolvedValue = formulaSource.formula
+          ? FormulaData.resolveSource(formulaSource, dataMap, '', excluded)
+          : null;
+        continue;
+      }
+
+      if (field instanceof SchemaField && currentValue && typeof currentValue === 'object') {
+        this._evaluateFormulaFields(
+          currentValue,
+          (field.fields as Record<string, foundry.data.fields.DataField> | undefined) ?? {},
+          doc
+        );
+      }
     }
   }
 

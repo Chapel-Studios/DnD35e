@@ -1,5 +1,6 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
+import { Dnd35eDocumentMixin } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import { getDisplayName } from '@ec/CoreMixin/index.mjs';
 import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/data/constants.mjs';
@@ -18,12 +19,17 @@ type Dnd35eActiveEffectSource<
   TSystemSource extends Dnd35eActiveEffectSystemSource = Dnd35eActiveEffectSystemSource
 > = foundry.documents.ActiveEffectSource<TEffectType, TSystemSource>;
 
+// Apply mixin at runtime but cast to preserve generic parameter compatibility.
+// TypeScript mixins erase generics; this cast is safe because the mixin only adds
+// methods/properties and doesn't alter the constructor signature's generic behavior.
+const DnD35eActiveEffectBase = Dnd35eDocumentMixin(foundry.documents.ActiveEffect) as unknown as typeof foundry.documents.ActiveEffect;
+
 class DnD35eActiveEffect<
   TParent extends ActorDnd35e | ItemDnd35e<ItemType> | null = ActorDnd35e | ItemDnd35e<ItemType> | null,
   TEffectType extends EffectType = EffectType,
   TSystemData extends ActiveEffectSystemData = ActiveEffectSystemData
 >
-  extends foundry.documents.ActiveEffect<TParent> {
+  extends DnD35eActiveEffectBase<TParent> {
   declare flags: DnD35eActiveEffectFlags;
   declare system: TSystemData;
   declare type: TEffectType;
@@ -55,6 +61,10 @@ class DnD35eActiveEffect<
 
   get displayName (): string {
     return this._displayName;
+  }
+
+  get localizedType (): string {
+    return game.i18n.localize('dnd35e.EFFECT.General.Type');
   }
 }
 

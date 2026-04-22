@@ -96,36 +96,51 @@
 
 ### 🔶 In Progress (Remaining for Phase 2 Completion)
 
-- [ ] **AE Visibility & Secrets List (§2.7.6)** — Track 12:
-  - [ ] Add `isHidden: boolean` to `ActiveEffectSystemModelBase` schema (default: `false`)
-  - [ ] Secret AEs force `isHidden: true` in `prepareBaseData()`
-  - [ ] AE list components filter hidden AEs for non-GM users
-  - [ ] Secrets displayed in a **separate GM-only list** (wrapped in `DmControl`) on item sheets
-  - [ ] Per-Secret enable/disable toggle in the Secrets list
-  - [ ] Per-AE `isHidden` toggle button in the standard AE list (GM-only)
-  - [ ] "Add Secret" button on item sheet (GM-only)
-  - [ ] Effect list bucketing: type-based sections (Material, Secret) with fallback general list for everything else
+- [x] **AE Visibility & Secrets List (§2.7.6)** — Track 12:
+  - [x] Add `isHidden: boolean` to `ActiveEffectSystemModelBase` schema (default: `false`)
+  - [x] Secret AEs force `isHidden: true` in `prepareBaseData()`
+  - [x] AE list components filter hidden AEs for non-GM users
+  - [x] Secrets displayed in a **separate GM-only list** (wrapped in `DmControl`) on item sheets
+  - [x] Per-Secret enable/disable toggle in the Secrets list
+  - [x] Per-AE `isHidden` toggle button in the standard AE list (GM-only)
+  - [x] "Add Secret" button on item sheet (GM-only)
+  - [x] Effect list bucketing: type-based sections (Material, Secret) with fallback general list for everything else
 
-- [ ] **RenderModeStore Update — 3-State Model (§2.7.7)** — Track 13:
-  - [ ] Replace 2-axis model with 3-state `ViewMode`: `'edit' | 'identified' | 'unidentified'`
-  - [ ] Button-bar UI: all mode buttons in horizontal bar at sheet header; active = full opacity, inactive = dimmed
-  - [ ] GM sees: Edit + Play + Unidentified (identifiable) or Edit + Play (non-identifiable)
-  - [ ] Player sees: Edit + Play (always — Player Edit Secrets protect masked data)
-  - [ ] "Unidentified" button hidden from non-GM users entirely
-  - [ ] Replace `renderEditModeButton()` + `renderIdentifiedViewButton()` with single `renderViewModeBar()`
-  - [ ] `DocumentSheetStore.getViewAwareFieldValue()` reads `_masks` dictionary instead of `Dnd35eField.getEffective()`
-  - [ ] Remove `isIdentifiedViewMode` short-circuit from all FormGroup components (store handles it)
+- [x] **RenderModeStore Update — 3-State Model (§2.7.7)** — Track 13:
+  - [x] Replace 2-axis model with 3-state `ViewMode`: `'edit' | 'identified' | 'unidentified'`
+  - [x] Button-bar UI: all mode buttons in horizontal bar at sheet header; active = full opacity, inactive = dimmed
+  - [x] GM sees: Edit + Play + Unidentified (identifiable) or Edit + Play (non-identifiable)
+  - [x] Player sees: Edit + Play (always — Player Edit Secrets protect masked data)
+  - [x] "Unidentified" button hidden from non-GM users entirely
+  - [x] Replace `renderEditModeButton()` + `renderIdentifiedViewButton()` with single `renderViewModeBar()`
+  - [x] `DocumentSheetStore.getViewAwareFieldValue()` reads `_masks` dictionary instead of `Dnd35eField.getEffective()`
+  - [x] Remove `isIdentifiedViewMode` short-circuit from all FormGroup components (store handles it)
 
 - [ ] **Player Edit Secrets (§2.7.10)** — Track 14:
-  - [ ] Define constants: `isPlayerEditSecret` boolean field on SecretSystemModel, player edit priority (200), localization keys
-  - [ ] Implement `findOrCreatePlayerEditSecret(item)` helper — finds existing by flag or creates new
+  - [ ] Define constants: `isPlayerEditSecret` boolean field on SecretSystemModel (read-only in UI), player edit priority (3001), localization keys
+  - [ ] Implement `findOrCreatePlayerEditSecret(item)` helper — finds existing by flag or creates new; default name "Player Edit" (localized)
   - [ ] Implement `addOrUpdatePlayerEditMask(ae, fieldPath, value)` helper — adds/updates MASK change on AE
   - [ ] Wire interception into `viewModeAwareUpdateDocument()` — non-GM + field in `_masks` → route to Player Edit Secret; split mixed updates
-  - [ ] Verify `_buildMasks()` resolves Player Edit Secret at higher priority (200 > 100)
-  - [ ] GM UI: Player Edit Secrets show in Secrets list with pencil icon + "Player Override" label
+  - [ ] Verify `_buildMasks()` resolves Player Edit Secret at higher priority (3001 > 10)
+  - [ ] GM UI: Player Edit Secrets appear in normal Secrets list, sorted to top, with pencil icon indicator
+  - [ ] `isPlayerEditSecret` displayed as read-only boolean on Secret AE sheet (non-editable)
+  - [ ] GM can edit Player Edit Secret mask values like any normal Secret
   - [ ] GM can delete Player Edit Secret to reset player overrides
   - [ ] `revealAllSecrets()` also disables Player Edit Secrets
   - [ ] Player Edit Secrets excluded from real stack (filtered by `system.isPlayerEditSecret` field)
+
+- [ ] **Material Dev Testing Follow-Up**:
+  - [ ] Run a dedicated dev-world verification pass on Material AE authoring and propagation
+  - [ ] Verify subtype switching, stacking presentation, and live item updates in practical use
+  - [ ] Capture and resolve any Material-specific UX gaps found during that pass before calling Phase 2 closed
+
+- [ ] **General AE Cleanup Follow-Up**:
+  - [ ] Move General AE off the default Foundry-style fallback workflow and onto the intended dnd35e sheet/tabs flow
+  - [ ] Verify General AE is the clean baseline for standard change editing and future effect work
+
+- [ ] **Secret Images — Deferred Until After Phase 2 Follow-Ups**:
+  - [ ] Revisit masked `img` support after Material dev testing and General AE cleanup are complete
+  - [ ] Design the image-picker, root-field refresh, and Foundry file-field handling story before implementing secret images
 
 - [ ] **Documentation & Code Comments**:
   - [ ] Document Material pattern (AE → buildChanges() → applyActiveEffects() → history)
@@ -655,7 +670,7 @@ A GM can have **multiple Secret AEs** on one item. Priority controls which mask 
 // Registered in CONFIG.ActiveEffect.changeTypes
 CONFIG.ActiveEffect.changeTypes.mask = {
   label: 'DND35E.ChangeMode.Mask',
-  defaultPriority: 100,
+  defaultPriority: 10,
   handler: null, // MASK changes are NOT applied during applyActiveEffects()
 };
 ```
@@ -838,7 +853,7 @@ Without interception, a player editing a masked field would write directly to th
 #### Design Constraints
 
 1. **Schema-identified**: A Player Edit Secret is a regular Secret AE with `system.isPlayerEditSecret: true` (boolean field on SecretSystemModel). No new AE subtype or data model.
-2. **Higher priority**: Player Edit Secret MASK changes use priority 200 (vs 100 for regular Secrets). The existing `_buildMasks()` sorts by priority descending, so player edits naturally win per-field.
+2. **Higher priority**: Player Edit Secret MASK changes use priority 3001 (vs 10 for regular Secrets). The existing `_buildMasks()` sorts by priority descending, so player edits naturally win per-field while normal UI entry stays below the user-facing cap.
 3. **Single AE per item**: All player edits to masked fields on one item accumulate as MASK changes on **one** Player Edit Secret AE, not one AE per field.
 4. **Only masked fields**: If a field has no active mask (not in `_masks`), the player writes normally to the document. Interception only fires when the field is currently masked.
 5. **No match-checking**: We do not check whether the player's edit happens to match the real value. The override just stays.
@@ -879,7 +894,7 @@ The interception lives in `viewModeAwareUpdateDocument()` in the base `DocumentS
         key: 'system.hardness',    // the field path the player edited
         value: '15',               // the value the player typed
         type: 'mask',              // MASK change mode
-        priority: 200,             // above regular Secret priority (100)
+        priority: 3001,            // above regular Secret priority (10)
         target: 'item',
         targetField: 'value',
       },
@@ -962,7 +977,7 @@ The `resolveActiveEffectChanges()` utility (§2.5.1) lives in `src/helpers/stack
 | Modify | `HasActiveEffectsNotification.vue` — display enriched stacking info (bonusType, stackResult, stackReason) in tooltip |
 | Create | Player Edit Secret helpers — `findOrCreatePlayerEditSecret(item)`, `addOrUpdatePlayerEditMask(ae, fieldPath, value)` |
 | Modify | `SecretsList.vue` — distinguish Player Edit Secrets (pencil icon, "Player Override" label) |
-| Modify | `ItemDnd35e._buildMasks()` — already handles priority; Player Edit Secrets at priority 200 naturally win |
+| Modify | `ItemDnd35e._buildMasks()` — already handles priority; Player Edit Secrets at priority 3001 naturally win |
 | Modify | Localization (`effects.json`) — add `EFFECT.Secret.PlayerOverride` and tooltip strings |
 | Verify | Effect sheet Vue components |
 | Test | ~~Unit tests for `resolveActiveEffectChanges()`~~ — **deferred to Phase 4** (testing infrastructure) |
@@ -1157,7 +1172,7 @@ task_E9:
   routing: Lead dev
   depends_on: [E3, E8]
   blocking: [E7]
-  verify: "Non-GM editing masked field → Player Edit Secret AE created with flag; masked field write intercepted in viewModeAwareUpdateDocument(); non-masked fields write normally; mixed updates split correctly; Player Edit Secret at priority 200 wins over regular Secret (100); GM Secrets list shows Player Edit Secret with pencil icon and 'Player Override' label; GM can delete; revealAllSecrets() also disables Player Edit Secrets; real stack excludes Player Edit Secrets (filtered by system.isPlayerEditSecret field)"
+  verify: "Non-GM editing masked field → Player Edit Secret AE created with flag; masked field write intercepted in viewModeAwareUpdateDocument(); non-masked fields write normally; mixed updates split correctly; Player Edit Secret at priority 3001 wins over regular Secret (10); GM Secrets list shows Player Edit Secret with pencil icon and 'Player Override' label; GM can delete; revealAllSecrets() also disables Player Edit Secrets; real stack excludes Player Edit Secrets (filtered by system.isPlayerEditSecret field)"
 ```
 
 ### Parallelization Diagram
@@ -1258,4 +1273,33 @@ Features designed in Phase 2 but not implemented here. Each entry lists where it
 | Per-player knowledge ("Advanced Secrets") | **Bonus** | [Phase 23](phase-23-advanced-actors.md) | Different players see different mask states. Requires player-scoped AE visibility. Phase 23 already references Secret AE dependency for NPC/Object identifiability. |
 | 3-state AE visibility | **Deferred to beta** | [Phase 31](phase-31-community-hardening.md) | Upgrade from 2-state (hidden/identified) to 3-state (unknown/known-unidentified/identified). Community hardening is the natural fit for UX refinements. |
 | Player Edit Secret cleanup on reveal | **Stretch** | Phase 2 or Phase 31 | When GM reveals all Secrets, Player Edit Secrets become stale. Auto-delete is a stretch goal; GM can manually delete for now. |
+| Material dev testing follow-up | **Phase 2 closeout** | Phase 2 | Dedicated dev-world validation pass for Material authoring, subtype switching, propagation, and stacking UX before Phase 2 is considered fully closed. |
+| General AE cleanup follow-up | **Phase 2 closeout** | Phase 2 | Move General AE off the default Foundry fallback path and onto the intended dnd35e sheet/tabs flow. |
+| Secret images (`img`) | **Deferred after closeout** | Phase 2 follow-up after Material dev testing + General AE cleanup | Root-level image masking needs a focused pass for refresh behavior, image-picker UX, and Foundry file-field handling. |
 | ~~Player Edit Secrets~~ | **Absorbed into Phase 2** | §2.7.10 + Track 14 | Originally Phase 45. Pulled forward because player edit protection is essential for the identification system to work correctly. Phase 45 marked as absorbed. |
+
+### 2.12.1 Phase 2 Closeout Ordering
+
+Before Phase 2 is treated as fully complete, do the closeout work in this order:
+
+1. **Material dev testing follow-up** — practical validation of Material AE authoring and propagation in the dev world.
+2. **General AE cleanup** — remove the remaining default Foundry/fallback feel from the General AE sheet flow.
+3. **Secret images (`img`)** — come back to root-level image masking only after the two follow-ups above are done.
+
+The reasoning is deliberate: secret image work is not blocked on the core masking idea, but it is image-specific and will need focused handling for image-picker UX and Foundry's file-field expectations. That is easier to approach after the Material and General AE surfaces are cleaned up.
+
+### 2.12.2 Material Dev Testing Follow-Up
+
+This closeout pass is for practical validation, not new architecture. The goal is to run the Material workflow against real dev-world items and verify that authoring, subtype switching, propagation, and stacking presentation all behave the way the phase design expects.
+
+This is the right place to catch any remaining Material-specific UX rough edges before Phase 2 is declared done.
+
+### 2.12.3 General AE Cleanup Follow-Up
+
+The `general` effect type should be treated as the baseline effect-authoring surface for later phases. It still needs a cleanup pass so it no longer feels like a default Foundry fallback or default-tab path.
+
+That follow-up should align General AE with the intended dnd35e sheet/tabs experience and make sure ordinary change authoring is clean there.
+
+### 2.12.4 Secret Images (`img`) — After Closeout
+
+Secret image support stays after the two closeout tasks above. The remaining work is not just another field mask; it needs a deliberate answer for root-level refresh behavior, image-picker authoring, and Foundry's file/image field expectations.

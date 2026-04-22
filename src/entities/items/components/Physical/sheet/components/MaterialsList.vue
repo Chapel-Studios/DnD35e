@@ -3,7 +3,7 @@
     v-if="materials.length"
     :label="localize('dnd35e.COMMON.Materials').value"
     :effects="materials"
-    :can-edit="isEditViewMode"
+    :can-edit="isEditMode"
   />
 </template>
 
@@ -15,7 +15,7 @@
 
   import type { PhysicalDocumentStore } from '../PhysicalItemStore.mjs';
 
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
       materials,

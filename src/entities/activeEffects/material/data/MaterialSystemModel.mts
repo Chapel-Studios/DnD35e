@@ -2,9 +2,9 @@ import type { EffectPhases } from '@common/documents/active-effect.mjs';
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModelBase.mjs';
 import type { EffectChangeTarget, EffectChangeType } from '@effects/BaseActiveEffect/data/constants.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGET_FIELD, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
-import { Dnd35eField } from '@helpers/fields/index.mjs';
+import { requiredNumberField, useDnd35eField } from '@helpers/fieldBuilders.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { TargetContexts } from '@helpers/formulae/registry.mjs';
 import { PriceField } from '@settings/currency/index.mjs';
@@ -13,7 +13,7 @@ import type { PriceData } from '@settings/index.mjs';
 import type { MaterialSubtype } from './materialTypes.mjs';
 import { MATERIAL_SUBTYPE_BONUS_MAP, MATERIAL_SUBTYPE_STANDARD, MATERIAL_SUBTYPES } from './materialTypes.mjs';
 
-const { fields: { NumberField, StringField } } = foundry.data;
+const { fields: { StringField } } = foundry.data;
 
 class MaterialSystemModel extends ActiveEffectSystemModelBase {
   static override targetContexts: TargetContexts = { item: ['weapon'] };
@@ -22,15 +22,15 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
   static override defineSchema () {
     const schema = super.defineSchema();
 
-    // Declare Item context on inherited nameFormula (access inner FormulaField via .fields.value)
-    (schema.nameFormula.fields.value as FormulaField).formulaContexts = [
+    // Declare Item context on inherited nameFormula (it's now a plain FormulaField)
+    (schema.nameFormula as FormulaField).formulaContexts = [
       { contextName: 'Item', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['Parent'] },
     ];
 
-    schema.price = new Dnd35eField(PriceField, {});
-    schema.magicEquivalency = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 });
-    schema.hardness = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 });
-    schema.bonusHp = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 });
+    schema.price = useDnd35eField(new PriceField({}));
+    schema.magicEquivalency = useDnd35eField(requiredNumberField(0));
+    schema.hardness = useDnd35eField(requiredNumberField(0));
+    schema.bonusHp = useDnd35eField(requiredNumberField(0));
     schema.damageReductionTypes = new foundry.data.fields.SetField(
       new foundry.data.fields.StringField({ required: true }),
       { initial: [] }
@@ -55,34 +55,20 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
     ];
 
     // Identified value changes
-    if (!this.price.value.isEmpty) {
+    if (!this.price.isEmpty) {
       changes.push(this.buildPriceDifferenceChange());
     }
-    if (this.magicEquivalency.value !== 0) {
+    if (this.magicEquivalency !== 0) {
       changes.push(this.buildMagicEquivalentChange());
     }
-    if (this.hardness.value !== 0) {
+    if (this.hardness !== 0) {
       changes.push(this.buildBonusHardnessChange());
     }
-    if (this.bonusHp.value !== 0) {
+    if (this.bonusHp !== 0) {
       changes.push(this.buildBonusHpChange());
     }
     for (const drType of this.damageReductionTypes) {
       changes.push(this.buildDamageReductionTypeChange(drType));
-    }
-
-    // Unidentified value changes — emitted when the unidentifiedValue is explicitly set
-    if (this.price.unidentifiedValue != null && !this.price.unidentifiedValue.isEmpty) {
-      changes.push(this.buildPriceDifferenceChange());
-    }
-    if (this.magicEquivalency.unidentifiedValue != null && this.magicEquivalency.unidentifiedValue !== 0) {
-      changes.push(this.buildMagicEquivalentChange());
-    }
-    if (this.hardness.unidentifiedValue != null && this.hardness.unidentifiedValue !== 0) {
-      changes.push(this.buildBonusHardnessChange());
-    }
-    if (this.bonusHp.unidentifiedValue != null && this.bonusHp.unidentifiedValue !== 0) {
-      changes.push(this.buildBonusHpChange());
     }
 
     return changes;
@@ -103,7 +89,6 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
       phase,
       priority,
       target,
-      targetField: EFFECT_CHANGE_TARGET_FIELD.VALUE,
       effect: null,
       isSystem: true,
       bonusType: MATERIAL_SUBTYPE_BONUS_MAP[this.materialSubtype],
@@ -121,7 +106,7 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
 
   buildBonusHpChange(): Dnd35eEffectChangeData {
     const existing = this.changes.find(change => change.key === 'system.hp.max' && change.isSystem);
-    const fieldValue = this.bonusHp.value;
+    const fieldValue = this.bonusHp;
     return this._buildChange(
       'system.hp.max',
       fieldValue,
@@ -134,7 +119,7 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
 
   buildBonusHardnessChange(): Dnd35eEffectChangeData {
     const existing = this.changes.find(change => change.key === 'system.hardness' && change.isSystem);
-    const fieldValue = this.hardness.value;
+    const fieldValue = this.hardness;
     return this._buildChange(
       'system.hardness',
       fieldValue,
@@ -147,7 +132,7 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
 
   buildMagicEquivalentChange(): Dnd35eEffectChangeData {
     const existing = this.changes.find(change => change.key === 'system.magicEquivalency' && change.isSystem);
-    const fieldValue = this.magicEquivalency.value;
+    const fieldValue = this.magicEquivalency;
     return this._buildChange(
       'system.magicEquivalency',
       fieldValue,
@@ -160,7 +145,7 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
 
   buildPriceDifferenceChange(): Dnd35eEffectChangeData {
     const existing = this.changes.find(change => change.key === 'system.price' && change.isSystem);
-    const fieldValue = this.price.value;
+    const fieldValue = this.price;
     return this._buildChange(
       'system.price',
       fieldValue,

@@ -13,26 +13,45 @@ h3 {
   overflow: auto;
 }
 
-/* Header toggle buttons */
+/* View mode bar — 3-state button bar in sheet header */
 .window-header {
-  .edit-mode-btn,
-  .identified-view-btn {
+  .view-mode-bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
     flex: none;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0 4px;
-    margin: 0;
-    font-size: var(--font-size-14);
-    color: var(--color-text-light-6);
-    transition: color 0.2s;
+    margin-right: 4px;
+    background: color-mix(in srgb, var(--color-cool-5) 40%, transparent);
+    border-radius: 4px;
+    padding: 1px 2px;
 
-    &:hover {
-      color: var(--color-text-primary);
-    }
+    .view-mode-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      margin: 0;
+      font-size: var(--font-size-14);
+      color: var(--color-text-light-6);
+      opacity: 0.5;
+      border-radius: 3px;
+      transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+      line-height: 1;
 
-    i {
-      pointer-events: none;
+      &:hover {
+        opacity: 0.8;
+        background: color-mix(in srgb, var(--color-cool-5) 60%, transparent);
+      }
+
+      &.active {
+        opacity: 1;
+        color: var(--color-text-primary);
+        background: color-mix(in srgb, var(--color-cool-5) 80%, transparent);
+      }
+
+      i {
+        pointer-events: none;
+      }
     }
   }
 }
@@ -40,6 +59,183 @@ h3 {
 /* Helper classes */
 .grid-full-row {
   grid-column: 1 / -1;
+}
+
+/* Shared overlay input primitives (FormulaFormGroup + AspectPicker) */
+.familiar-overlay-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.familiar-overlay-input-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.familiar-overlay-edit-container {
+  position: relative;
+  width: 100%;
+}
+
+.familiar-overlay-input {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.familiar-overlay-highlight {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  box-sizing: border-box;
+  pointer-events: none;
+  white-space: pre;
+  overflow: hidden;
+}
+
+.familiar-overlay-hint {
+  margin: 0.25rem 0 0;
+  font-size: var(--font-size-11);
+  color: var(--color-text-secondary);
+}
+
+.familiar-overlay-highlight .formula-variable {
+  border-radius: 2px;
+  padding: 1px 0;
+}
+
+.familiar-overlay-highlight .formula-variable,
+.formula-display .formula-variable {
+  background: rgba(102, 166, 255, 0.18);
+  color: #66b3ff;
+  border-radius: 2px;
+  padding: 1px 0;
+}
+
+.familiar-overlay-highlight .formula-variable.is-error,
+.formula-display .formula-variable.is-error {
+  background: rgba(255, 100, 100, 0.2);
+  color: #ff9999;
+  text-decoration: wavy underline rgba(255, 100, 100, 0.6);
+  text-underline-offset: 3px;
+}
+
+.familiar-overlay-highlight .formula-variable.is-warning,
+.formula-display .formula-variable.is-warning {
+  background: rgba(255, 200, 50, 0.15);
+  color: #e6c44d;
+  text-decoration: wavy underline rgba(255, 200, 50, 0.5);
+  text-underline-offset: 3px;
+}
+
+.familiar-overlay-highlight .formula-variable .is-error,
+.formula-display .formula-variable .is-error {
+  color: #ff9999;
+  text-decoration: wavy underline rgba(255, 100, 100, 0.6);
+  text-underline-offset: 3px;
+}
+
+.familiar-overlay-highlight .formula-variable .is-warning,
+.formula-display .formula-variable .is-warning {
+  color: #e6c44d;
+  text-decoration: wavy underline rgba(255, 200, 50, 0.5);
+  text-underline-offset: 3px;
+}
+
+/**
+ * PRICE FORM GROUP — global styles required due to Vue scope ID chain breakage.
+ *
+ * Vue 3 does NOT propagate scope IDs through multi-level component-wrapping-component
+ * chains. When ComponentA wraps ComponentB wraps ComponentC, only the outermost and
+ * innermost scope IDs end up on DOM elements — the intermediate ones are dropped.
+ * Because ItemPrice (2d6ffab2) → ItemPriceFormGroup (9b8a259b) → FormGroup (4818b122),
+ * neither 9b8a259b nor 2d6ffab2 ever appear on DOM nodes. Scoped [data-v-xxx] selectors
+ * from both files silently fail in all browsers; it only appears to work in Chrome
+ * due to residual paint from prior navigations. Moving these styles here (unlayered
+ * global CSS) is the correct fix — identical to the field-control-btn workaround below.
+ */
+.price-form-group.form-group {
+  grid-auto-flow: row;
+  justify-items: center;
+
+  .form-group-label {
+    flex-direction: row;
+  }
+}
+
+// WeaponDetails applies `grid-auto-flow: column` to all .form-group in the container.
+// This selector intentionally has higher specificity so the Price group keeps row flow.
+.weapon-details-container .form-group.price-form-group.item-price,
+.form-group.price-form-group.item-price {
+  grid-auto-flow: row;
+  justify-items: center;
+}
+
+.view-mode .form-group.item-price.price-form-group {
+  grid-template-columns: minmax(max-content, 2fr) 5fr;
+}
+
+.price-form-group .coin-stacks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+
+  &.readonly {
+    font-size: var(--font-size-14);
+  }
+}
+
+.price-form-group .coin-stack {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--color-select-option-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  padding: 0.25rem;
+}
+
+.price-form-group .stack-count {
+  width: 60px;
+  text-align: right;
+}
+
+.price-form-group .stack-coin {
+  padding: 0.05rem;
+}
+
+.price-form-group .remove-stack-btn {
+  background: transparent;
+  border: none;
+  padding: 0.125rem 0.25rem;
+  cursor: pointer;
+  color: var(--color-level-error);
+  opacity: 0.6;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.price-form-group .empty-price {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.price-form-group .zero-value {
+  font-style: normal;
+}
+
+.price-form-group .coin-stack-display {
+  white-space: nowrap;
 }
 
 /**

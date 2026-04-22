@@ -9,7 +9,6 @@
       name="system.isIdentified"
       :label="toggleLabel"
       :checked="isIdentified"
-      :editable="isEditViewMode"
       @update="handleToggleUpdate"
     />
     
@@ -18,8 +17,7 @@
 </template>
 
 <script setup lang="ts">
-  import type { RenderModeStore } from '@ec/CoreMixin/index.mjs';
-  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
   import type { IdentifiableDocumentStore } from '@ec/Identifiable/index.mjs';
   import ToggleSwitch from '@vc/Fields/ToggleSwitch.vue';
   import { computed, inject } from 'vue';
@@ -32,7 +30,6 @@
       revealAllSecrets,
     },
   } = inject(DocumentSheetStoreSymbol) as IdentifiableDocumentStore;
-  const { isEditViewMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const toggleLabel = computed(() => 
     isIdentified.value 

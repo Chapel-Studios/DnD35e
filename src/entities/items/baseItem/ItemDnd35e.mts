@@ -6,7 +6,9 @@ import { getDisplayName } from '@ec/CoreMixin/logic/index.mjs';
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
 import type { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
+import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/BaseActiveEffect/resolveChangeValue.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
+import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ChangeHistory, Override, StackingChange } from '@helpers/stacking.mjs';
 import { parseNumericChangeValue, resolveActiveEffectChanges, STACK_RESULT_APPLIED, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
@@ -14,6 +16,12 @@ import type { ItemType } from '@items/index.mjs';
 import { ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
 
 import type { ItemSystemData, ItemSystemSource } from './index.mjs';
+
+type FormulaLikeSource = {
+  formula?: unknown;
+  resolvedValue?: unknown;
+  expectedType?: unknown;
+};
 
 type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
 
@@ -32,6 +40,64 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 
   /** Runtime masks dictionary built from active Secret AE MASK changes. Keyed by field path. */
   _masks: Record<string, unknown> = {};
+
+  private get _maskedNameFormula (): { formula: string; resolvedValue: string | null; expectedType: 'string' | 'number' } | null {
+    const directMask = this._masks['system.nameFormula'] as FormulaLikeSource | undefined;
+    if (directMask && typeof directMask === 'object') {
+      const formula = typeof directMask.formula === 'string' ? directMask.formula : null;
+      const resolvedValue = typeof directMask.resolvedValue === 'string' ? directMask.resolvedValue : null;
+      if (formula || resolvedValue) {
+        const effectiveText = resolvedValue ?? formula ?? '';
+        return FormulaData.toSource(formula ?? effectiveText, {
+          resolvedValue: effectiveText,
+          expectedType: 'string',
+        });
+      }
+    }
+
+    const formulaMask = typeof this._masks['system.nameFormula.formula'] === 'string'
+      ? this._masks['system.nameFormula.formula']
+      : null;
+    const resolvedMask = typeof this._masks['system.nameFormula.resolvedValue'] === 'string'
+      ? this._masks['system.nameFormula.resolvedValue']
+      : null;
+    const nameMask = typeof this._masks.name === 'string'
+      ? this._masks.name
+      : null;
+
+    const effectiveText = resolvedMask ?? formulaMask ?? nameMask;
+    if (!effectiveText) return null;
+
+    return FormulaData.toSource(formulaMask ?? effectiveText, {
+      resolvedValue: resolvedMask ?? effectiveText,
+      expectedType: 'string',
+    });
+  }
+
+  private _normalizeSpecialMasks (): void {
+    const maskedNameFormula = this._maskedNameFormula;
+    if (!maskedNameFormula) return;
+
+    this._masks['system.nameFormula'] = maskedNameFormula;
+    this._masks['system.nameFormula.formula'] = maskedNameFormula.formula;
+    this._masks['system.nameFormula.resolvedValue'] = maskedNameFormula.resolvedValue;
+    this._masks.name = maskedNameFormula.resolvedValue ?? maskedNameFormula.formula;
+  }
+
+  private _getMaskedTopLevelField<T extends string> (fieldPath: 'name' | 'img', rawValue: T, fallbackValue: T): T {
+    const identifiableState = this as unknown as { isIdentified?: boolean };
+    const baseValue = rawValue ?? fallbackValue;
+    if (identifiableState.isIdentified !== false) {
+      return baseValue;
+    }
+
+    const maskedValue = this._masks?.[fieldPath];
+    if (maskedValue === undefined || maskedValue === null) {
+      return baseValue;
+    }
+
+    return typeof maskedValue === 'string' ? maskedValue as T : baseValue;
+  }
 
   override prepareBaseData (): void {
     super.prepareBaseData();
@@ -61,24 +127,30 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 
   /**
    * Build the _masks dictionary from active Secret AE MASK changes.
-   * Highest-priority Secret wins per field path.
+   * Per-change priority resolution: highest priority wins per field path.
    */
   private _buildMasks (): void {
     this._masks = {};
-    const secrets = [...this.effects]
-      .filter(e => e.type === secretEffectType && e.active)
-      .sort((a, b) => {
-        const aPriority = a.system.changes[0]?.priority ?? 0;
-        const bPriority = b.system.changes[0]?.priority ?? 0;
-        return bPriority - aPriority;
-      });
-    for (const secret of secrets) {
-      for (const change of secret.system.changes) {
+    const maskCandidates: Array<{ key: string; value: unknown; priority: number }> = [];
+    for (const effect of this.effects) {
+      if (effect.type !== secretEffectType || !effect.active) continue;
+      for (const change of effect.system.changes) {
         if (change.type !== SYSTEM_CHANGE_TYPE.MASK) continue;
-        if (!change.key || change.key in this._masks) continue;
-        this._masks[change.key] = change.value;
+        if (!change.key) continue;
+        maskCandidates.push({
+          key: change.key,
+          value: resolveMaskedActiveEffectChangeValue(effect, change),
+          priority: change.priority ?? 0,
+        });
       }
     }
+    // Sort descending by priority — highest priority first
+    maskCandidates.sort((a, b) => b.priority - a.priority);
+    for (const { key, value } of maskCandidates) {
+      if (key in this._masks) continue;
+      this._masks[key] = value;
+    }
+    this._normalizeSpecialMasks();
   }
 
   /** Override this in subclasses for derived data calculations that should run before final active effects. */
@@ -141,7 +213,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
         if ( !change.key || (change.phase !== phase) || (changeTarget !== EFFECT_CHANGE_TARGET.ITEM) ) continue;
         // MASK changes are not applied via stacking — they define masked values read at prep time
         if (change.type === SYSTEM_CHANGE_TYPE.MASK) continue;
-        const copy = foundry.utils.deepClone(change) as unknown as AppliedItemEffectChange;
+        const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as unknown as AppliedItemEffectChange;
         copy.effect = effect;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
         copy.priority ??= 0;
@@ -233,8 +305,19 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
       'dnd35e.COMMON.Item';
   }
 
+  override get name (): string {
+    const fallbackName = (this._source?.name ?? '') as string;
+    return getDisplayName(fallbackName, this.system, this);
+  }
+
+  override get img (): foundry.documents.Item<TParent>['img'] {
+    const fallbackImg = super.img;
+    return this._getMaskedTopLevelField('img', super.img, fallbackImg);
+  }
+
   get _displayName (): string {
-    return getDisplayName(this.name, this.system, this);
+    const fallbackName = (this._source?.name ?? '') as string;
+    return getDisplayName(fallbackName, this.system, this);
   }
 
   get displayName (): string {
