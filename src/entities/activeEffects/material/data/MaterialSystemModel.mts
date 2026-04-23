@@ -30,6 +30,7 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     schema.magicEquivalency = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Magic Equivalency', hint: 'The magic equivalency of this material.' });
     schema.hardness = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Hardness', hint: 'The hardness of this material.' });
     schema.bonusHp = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Bonus HP', hint: 'The bonus HP provided by this material.' });
+    schema.ac = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 1 }, { label: 'AC', hint: 'The armor class of this armor.' });
     schema.damageReductionTypes = new foundry.data.fields.SetField(
       new foundry.data.fields.StringField({ required: true }),
       { initial: [] }
@@ -75,6 +76,9 @@ class MaterialSystemModel extends IdentifiableEffectSystemModel {
     if (this.hardness.unidentifiedValue != null && this.hardness.unidentifiedValue !== 0) {
       changes.push(this.buildBonusHardnessChange(EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED));
     }
+    //if (this.ac.unidentifiedValue != null && this.ac.unidentifiedValue !== 0) {
+    //  changes.push(this.buildBonusACChange(EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED));
+    //}
     if (this.bonusHp.unidentifiedValue != null && this.bonusHp.unidentifiedValue !== 0) {
       changes.push(this.buildBonusHpPerInchChange(EFFECT_CHANGE_TARGET_FIELD.UNIDENTIFIED));
     }

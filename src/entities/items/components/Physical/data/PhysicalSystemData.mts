@@ -17,6 +17,8 @@ interface PhysicalItemSystemSource {
       max: Dnd35eFieldData<number>;
   };
   hardness: Dnd35eFieldData<number>;
+  ac: Dnd35eFieldData<number>;
+
   // Price - EmbeddedDataField wrapping PriceData with coin stacks
   price: Dnd35eFieldData<PriceSource>;
   resalePrice: PriceSource | null;

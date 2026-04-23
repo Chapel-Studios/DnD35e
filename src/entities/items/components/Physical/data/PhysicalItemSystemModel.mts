@@ -30,6 +30,7 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
       max: new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Max HP', hint: 'The maximum HP of this item.' }),
     });
     schema.hardness = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Hardness', hint: 'The hardness of this item.' });
+    schema.ac = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 1 }, { label: 'AC', hint: 'The armor class of this item.' });
     schema.quantity = new Dnd35eField(NumberField, { required: true, nullable: false, initial: 0 }, { label: 'Quantity', hint: 'The quantity of this item.' });
     schema.weight = new Dnd35eField(NumberField, { required: false, nullable: true, initial: 0 }, { label: 'Weight', hint: 'The weight of this item.' });
     // schema.isWeightlessInContainer = requiredBooleanField(false);

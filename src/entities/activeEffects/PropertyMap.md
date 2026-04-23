@@ -52,6 +52,7 @@ erDiagram
         PriceData_D price
         number_D magicEquivalency
         number_D hardness
+        number_D ac
         number_D bonusHp
         string[] damageReductionTypes
     }
@@ -76,6 +77,7 @@ erDiagram
         %% price -> system.price ADD
         %% magicEquivalency -> system.magicEquivalency UPGRADE
         %% hardness -> system.hardness ADD
+        %% ac -> system.ac ADD
         %% bonusHp -> system.hp.max ADD
         %% damageReductionTypes -> system.damageReductionTypes ADD
     }
@@ -130,5 +132,6 @@ Each `Dnd35eEffectChangeData` has a `target` field that determines where the cha
 | `price` | `system.price` | `add` | `item` |
 | `magicEquivalency` | `system.magicEquivalency` | `upgrade` | `item` |
 | `hardness` | `system.hardness` | `add` | `item` |
+| `ac` | `system.ac` | `add` | `item` |
 | `bonusHp` | `system.hp.max` | `add` | `item` |
 | `damageReductionTypes` (each) | `system.damageReductionTypes` | `add` | `item` |

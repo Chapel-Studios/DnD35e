@@ -11,8 +11,32 @@ const ARMOR_TYPE_LOCALIZED: Record<ArmorType, string> = {
   'heavy': 'D35E.ArmorTypeHeavy',
   'misc': 'D35E.ArmorTypeMisc',
 } as const;
+
 const ArmorTypeSelectOptions = Object.entries(ARMOR_TYPE_LOCALIZED)
   .map(([value, label]) => ({ value, label }));
+
+
+const ARMOR_AC = new Set([
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+] as const);
+
+type ArmorAC = SetElement<typeof ARMOR_AC>;
+const ARMOR_AC_LOCALIZED: Record<ArmorAC, string> = {
+  '1': '1',
+  '2': '2',
+  '3': '3',
+  '4': '4',
+  '5': '5',
+} as const;
+
+const ArmorACSelectOptions = Object.entries(ARMOR_AC_LOCALIZED)
+  .map(([value, label]) => ({ value, label }));
+
+  
 
 
 const ARMOR_SUBTYPES = new Set([
@@ -31,6 +55,7 @@ const ARMOR_SUBTYPE_LOCALIZED: Record<ArmorSubtype, string> = {
   'steel': 'D35E.ArmorPropSteel',
   'exotic': 'D35E.ArmorSubtypeExotic',
 } as const;
+
 const ArmorSubtypeSelectOptions = Object.entries(ARMOR_SUBTYPE_LOCALIZED)
   .map(([value, label]) => ({ value, label }));
 
@@ -70,7 +95,9 @@ export {
   ARMOR_SUBTYPE_LOCALIZED,
   ARMOR_SUBTYPES,
   ARMOR_TYPE_LOCALIZED,
+  ARMOR_AC_LOCALIZED,
   ARMOR_TYPES,
   ArmorSubtypeSelectOptions,
   ArmorTypeSelectOptions,
+  ArmorACSelectOptions,
 };

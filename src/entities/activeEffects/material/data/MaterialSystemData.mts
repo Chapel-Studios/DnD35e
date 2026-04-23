@@ -8,6 +8,7 @@ type MaterialSystemStats = {
   price: Dnd35eFieldData<PriceSource>;
   magicEquivalency: Dnd35eFieldData<number>;
   hardness: Dnd35eFieldData<number>;
+  ac: Dnd35eFieldData<number>;
   bonusHp: Dnd35eFieldData<number>;
   damageReductionTypes: string[];
 }
