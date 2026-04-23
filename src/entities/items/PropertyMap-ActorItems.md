@@ -531,6 +531,7 @@ erDiagram
         boolean showInQuickbar
         boolean melded
 
+        string baseArmorType
         string baseWeaponType
         boolean nonLethal
 

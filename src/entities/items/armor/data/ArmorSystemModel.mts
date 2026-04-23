@@ -28,7 +28,7 @@ class ArmorSystemModel extends EquippableItemSystemModel {
     ];
 
     schema.isMasterwork = requiredBooleanField('D35E.IsMasterwork', 'D35E.IsMasterworkHint', false);
-    schema.weaponType = new Dnd35eField(
+    schema.armorType = new Dnd35eField(
       StringField, 
       { 
         choices: [
