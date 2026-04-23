@@ -11,6 +11,7 @@ import {
 } from './fieldBuilders.mjs';
 import { buildDocumentDataMap, resolveFormulaField } from './formulae/index.mjs';
 import type { HasSystem } from './HasSystem.mjs';
+import { preLocalizeConfig, registerConfigPreLocalization } from './localization/preLocalizeConfig.mjs';
 import { LogHelper } from './logHelper.mjs';
 import { parseNumericChangeValue, resolveActiveEffectChanges, STACK_RESULT_APPLIED, STACK_RESULT_IGNORED } from './stacking.mjs';
 import { createTag } from './stringHelpers.mjs';
@@ -23,6 +24,8 @@ export {
   optionalNumberField,
   optionalStringField,
   parseNumericChangeValue,
+  preLocalizeConfig,
+  registerConfigPreLocalization,
   requiredBooleanField,
   requiredNullableNumberField,
   requiredNullableStringField,

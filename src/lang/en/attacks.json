@@ -13,6 +13,24 @@
       "Positive": "Positive",
       "Negative": "Negative"
     },
+    "DAMAGE_REDUCTION_TYPES": {
+      "Acid": "Acid",
+      "Bludgeoning": "Bludgeoning",
+      "Cold": "Cold",
+      "Electricity": "Electricity",
+      "Fire": "Fire",
+      "Force": "Force",
+      "NegativeEnergy": "Negative Energy",
+      "Piercing": "Piercing",
+      "PositiveEnergy": "Positive Energy",
+      "Slashing": "Slashing",
+      "Sonic": "Sonic",
+      "Adamantine": "Adamantine",
+      "AlchemicalSilver": "Alchemical Silver",
+      "ColdIron": "Cold Iron",
+      "Epic": "Epic",
+      "Magic": "Magic"
+    },
     "ATTACK": {
       "DR": "DR",
       "DamageType": "Damage Type",

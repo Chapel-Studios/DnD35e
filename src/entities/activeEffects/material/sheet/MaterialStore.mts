@@ -39,11 +39,13 @@ const useMaterialStore = (context: VueApplicationContext<Material>): MaterialSto
     damageReductionTypes: computed(() => [...(getViewAwareFieldValue<string[]>('system.damageReductionTypes') ?? [])]),
     damageReductionTypeOptions: computed<MultiSelectOption<string>[]>(() => {
       const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.DAMAGE_REDUCTION_TYPES) as DamageReductionTypesConfig;
+      const systemDefaults = (CONFIG.dnd35e.gameRules.damageReductionTypes ?? {}) as Record<string, { label: string }>;
       return Object.entries(config)
         .filter(([, entry]) => entry.enabled)
         .map(([key, entry]) => ({
           value: key,
-          label: entry.label,
+          // Use pre-localized CONFIG label for system entries; stored label for custom
+          label: systemDefaults[key]?.label ?? entry.label,
         }));
     }),
   };

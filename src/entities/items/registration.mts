@@ -22,7 +22,10 @@ const registerItemSheets = () => {
 };
 
 export const registerItems = () => {
-  CONFIG.dnd35e.item = ItemConfig;
+  CONFIG.dnd35e.item = {
+    ...CONFIG.dnd35e.item,
+    ...ItemConfig,
+  };
   foundry.helpers.Hooks.once('init', () => {
     CONFIG.Item.documentClass = ItemProxyDnd35e;
     Object.assign(CONFIG.Item.dataModels, {

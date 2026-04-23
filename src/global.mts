@@ -63,10 +63,17 @@ declare global {
     dnd35e: {
       VERSION: string;
       item: {
+        enums: {
+          sizes: Record<string, { label: string }>;
+          weaponTypes: Record<string, { label: string }>;
+        };
         documentClasses: Record<string, new (...args: any[]) => ItemDnd35e>;
       },
       activeEffect: {
         documentClasses: Record<string, new (...args: any[]) => DnD35eActiveEffect>;
+      },
+      gameRules: {
+        damageReductionTypes: Record<string, { label: string }>;
       },
       actor: {
         documentClasses: Record<string, new (...args: any[]) => ActorDnd35e>;
