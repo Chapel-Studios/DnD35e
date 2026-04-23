@@ -96,7 +96,8 @@
         },
         "quantity": {
           "label": "Quantity",
-          "hint": "The number of this item in the stack."
+          "hint": "The number of this item in the stack.",
+          "IsInfinite": "Is Infinite"
         },
         "weight": {
           "label": "Weight",
@@ -142,6 +143,10 @@
         "isWeightlessWhenEquipped": {
           "label": "Weightless When Equipped",
           "hint": "If checked, this item does not contribute weight when equipped."
+        },
+        "equippedSlotIds": {
+          "label": "Equipped Slots",
+          "hint": "The equipment slots this item occupies when equipped."
         }
       },
       "EquipSlot": {

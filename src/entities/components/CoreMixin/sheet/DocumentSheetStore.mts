@@ -6,6 +6,7 @@ import { buildDocumentFamiliar } from '@helpers/formulae/index.mjs';
 import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
 import type {
   FieldEditability,
   FieldVisibility,
@@ -156,7 +157,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
   const updateFlag = async (key: string, value: unknown): Promise<boolean> => {
     try {
-      await document.value.setFlag('dnd35e', key, value);
+      await document.value.setFlag(SYSTEM_ID, key, value);
       triggerRef(document);
       return true;
     } catch (err) {
@@ -221,17 +222,6 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
   // --- Overridable implementations (replaced by extending stores via _storeUtils) ---
 
-  // type GetEffectiveFieldValueFn = <T>(fieldPath: string, realValue: T) => T;
-  // type GetViewAwareFieldUpdaterFn = (path: string) => (value: unknown) => Promise<boolean>;
-
-  // const _getEffectiveFieldValueImpl = ref<GetEffectiveFieldValueFn>(
-  //   <T,>(_fieldPath: string, realValue: T): T => realValue
-  // );
-  // const _getViewAwareFieldUpdaterImpl = ref<GetViewAwareFieldUpdaterFn>(
-  //   (path: string) => async (value: unknown) => {
-  //     return await updateDocument({ [path]: value } as Partial<TDocument>);
-  //   }
-  // );
   const _getFreshDocumentImpl = ref<(id: string) => Promise<TDocument | null>>(
     async (_id: string): Promise<TDocument | null> => {
       console.error('getFreshDocument is not implemented for this store');
@@ -242,7 +232,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   // --- Getters ---
 
   const getFlagValue = <T,>(flagPath: string): T => {
-    return document.value.getFlag('dnd35e', flagPath) as T;
+    return document.value.getFlag(SYSTEM_ID, flagPath) as T;
   };
 
   const getSchemaField = (fieldPath: string): foundry.data.fields.DataField | undefined => {

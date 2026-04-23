@@ -2,6 +2,7 @@
  * Vue-based Roll Settings Configuration Dialog
  */
 
+import { SETTINGS_CONFIG_CLASS, VUE_APP_CLASS } from '@constants/cssClasses.mjs';
 import type { VueSettingsRenderOptions } from '@vueApps/index.mjs';
 import { useVueSettingsMixin } from '@vueApps/index.mjs';
 import type { Component } from 'vue';
@@ -27,7 +28,7 @@ class RollSettingsConfig extends VueSettingsBase {
     {
       id: 'dnd35e-roll-config',
       tag: 'div',
-      classes: ['dnd35e', 'vueApp', 'settings-config'],
+      classes: [SYSTEM_ID, VUE_APP_CLASS, SETTINGS_CONFIG_CLASS],
       position: {
         width: 540,
         height: 'auto',

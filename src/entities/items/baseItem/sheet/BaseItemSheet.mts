@@ -1,6 +1,8 @@
 import type { DocumentSheetRenderContext } from '@client/applications/api/document-sheet.mjs';
+import { ITEM_SHEET_CLASS } from '@constants/cssClasses.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { VueApplicationConfiguration, VueRenderOptions } from '@vueApps/index.mjs';
 import { VueItemSheet } from '@vueApps/index.mjs';
 
@@ -17,7 +19,7 @@ abstract class ItemSheetDnd35e<
   
   static override get DEFAULT_OPTIONS (): VueApplicationConfiguration<ItemDnd35e> {
     return {
-      classes: ['dnd35e', 'item-sheet'],
+      classes: [SYSTEM_ID, ITEM_SHEET_CLASS],
       position: {
         width: 560,
         height: 650,

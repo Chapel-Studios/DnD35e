@@ -161,9 +161,9 @@ Phase 3 Completion decomposed into three parallel tracks:
 
 | Task | Routing | Blocking | Details |
 |------|---------|----------|---------|
-| **2.1: Audit codebase for magic strings** | Jr dev or flexible | 2.2 | Grep for hardcoded patterns that appear 2+ times or represent an enum/type. Document 10+ magic strings grouped by category. Success: Comprehensive list of candidates with locations. |
-| **2.2: Extract magic strings to constants** | Jr dev | 2.3 | Create constants files as needed (`src/constants/colors.mts`, `src/constants/viewModes.mts`, `src/constants/states.mts`). Move strings into named constants. Update exports in `src/constants/index.mts`. Success: All magic strings have a home, no duplication. |
-| **2.3: Update code to import & use constants** | Jr dev or flexible | None | Replace hardcoded strings with imported constants across codebase. Verify no regressions in build/tests. Success: All magic strings replaced exhaustively. |
+| **2.1: Audit codebase for magic strings** | Jr dev or flexible | 2.2 | ✅ Complete. Groups A–D documented. |
+| **2.2: Extract magic strings to constants** | Jr dev | 2.3 | ✅ Complete. Created `src/constants/cssClasses.mts` (VUE_APP_CLASS, ITEM_SHEET_CLASS, SETTINGS_CONFIG_CLASS). Exported from `src/constants/index.mts`. |
+| **2.3: Update code to import & use constants** | Jr dev or flexible | None | ✅ Complete. All 4 groups replaced: SYSTEM_ID (14 locations), CSS classes (9 files), secretEffectType (3 locations), DEFAULT_COLOR (ColorFormGroup.vue). |
 
 ---
 
@@ -176,10 +176,10 @@ Phase 3 Completion decomposed into three parallel tracks:
 | Task | Routing | Blocking | Details |
 |------|---------|----------|---------|
 | **3.1: Formula Familiar dropdown — prop names → localized labels** | Lead dev | 3.4 | Locate formula familiar dropdown component displaying property names. Add mapping from prop names to localization keys. Update lang files with `dnd35e.FORMULA_FAMILIAR.PROPERTIES.*` entries. Update component to use `game.i18n.localize(key)` for display. Success: Dropdown shows human-readable localized labels, not raw prop names. |
-| **3.2: Sheet UI text audit — section headers, tabs, group labels** | Jr dev (lead review) | 3.4 | Search all `src/vue/**/*.vue` components for hardcoded text in section headings (`<h3>`, `<h4>`, `<legend>`), tab labels, group labels, form section titles. Document each location (file + line) and current text. Identify which should use auto-derived labels vs. new keys. Success: Comprehensive list of 20+ hardcoded UI strings. |
-| **3.3: Button labels & action messages audit** | Jr dev | 3.4 | Search for hardcoded text in: `<button>` labels/titles, `.textContent`/`.innerText` in templates, notification messages (toasts, dialogs), chat messages. Document locations and current text. Success: List of button/message strings (10+). |
-| **3.4: Add localization keys to lang files** | Jr dev or flexible | 3.5 | Create/update lang file sections for all strings identified in 3.2 + 3.3. Organize by domain: `dnd35e.UI.*`, `dnd35e.MESSAGES.*`, `dnd35e.BUTTONS.*`, `dnd35e.FORMULA_FAMILIAR.*`. Ensure keys are descriptive and reusable. Success: All keys from 3.2 + 3.3 have entries. |
-| **3.5: Wire localization into components** | Jr dev (lead reviews) | 3.6 | Update all components with hardcoded text to use `game.i18n.localize()`. Replace direct text with computed/rendered localized values. Handle dynamic text (interpolation) if needed. Success: No hardcoded English strings visible to user, all replaced with localization calls. |
+| **3.2: Sheet UI text audit — section headers, tabs, group labels** | Jr dev (lead review) | 3.4 | ✅ Complete. 8 raw label props + 3 inline strings identified and documented. |
+| **3.3: Button labels & action messages audit** | Jr dev | 3.4 | ✅ Complete. 2 raw button/aria strings found; deprecated LandingPad deferred. |
+| **3.4: Add localization keys to lang files** | Jr dev or flexible | 3.5 | ✅ Complete. Added `equippedSlotIds` to EQUIPPABLE.FIELDS, `IsInfinite` to quantity, `dnd35e.UI.EditField` and `dnd35e.UI.Content` to common.json. |
+| **3.5: Wire localization into components** | Jr dev (lead reviews) | 3.6 | ✅ Complete. Removed 8 raw label props (auto-derive from schema), fixed 3 inline strings, fixed 2 button/aria strings. Build clean. |
 | **3.6: Verify user-visible localization exhaustively** | Lead dev | None | Run dev build. Manually test all sheets (items, weapons, effects, materials). Check: section headers, tabs, buttons, dropdowns, tooltips all show localized text. Switch language in settings (test with another language if available). Success: Zero hardcoded English text visible in UI. |
 
 ---

@@ -1,6 +1,5 @@
 <template>
   <MultiSelectFormGroup
-    label="Equipped Slots"
     :value="equippedSlotIds"
     :on-update="updater"
     :options="EQUIP_SLOT_SELECT_OPTIONS"

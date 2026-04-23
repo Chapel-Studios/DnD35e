@@ -13,7 +13,7 @@
         class="field-control-btn"
         type="button"
         :class="{ 'is-active': isInfinite }"
-        :title="'Is Infinite'"
+        :title="isInfiniteTitle"
         @click="toggleInfinite"
       >
         <i class="fas fa-infinity" />
@@ -46,4 +46,5 @@
   const isInfinite = computed(() => quantity.value === -1);
 
   const toggleInfinite = () => updater(isInfinite.value ? 0 : -1);
+  const isInfiniteTitle = game.i18n.localize('dnd35e.PHYSICAL_ITEM.FIELDS.quantity.IsInfinite');
 </script>

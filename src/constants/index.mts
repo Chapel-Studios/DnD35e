@@ -7,6 +7,7 @@ import {
   type BonusType,
 } from './bonusTypes.mjs';
 import { EffectConfig, ItemConfig } from './config/index.mjs';
+import { ITEM_SHEET_CLASS, SETTINGS_CONFIG_CLASS, VUE_APP_CLASS } from './cssClasses.mjs';
 import { devConfig } from './devConfig.mjs';
 import { EQUIP_SLOT_SELECT_OPTIONS,EQUIP_SLOTS } from './equipmentSlots.mjs';
 import { defaultGameSettings } from './gameSettings/index.mjs';
@@ -29,11 +30,14 @@ export {
   EQUIP_SLOTS,
   hbsTemplatePath,
   isAttackAction,
+  ITEM_SHEET_CLASS,
   ItemConfig,
   LogLevel,
+  SETTINGS_CONFIG_CLASS,
   SIZE_SELECT_OPTIONS,
   SIZES,
   systemPath,
+  VUE_APP_CLASS,
 };
 
 export type { BonusType };

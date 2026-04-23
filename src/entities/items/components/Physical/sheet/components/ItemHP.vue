@@ -1,13 +1,12 @@
 <template>
   <FormGroupSection
-    label="HP"
+    label="dnd35e.PHYSICAL_ITEM.FIELDS.hp.label"
     field-path="system.hp"
     :default-visibility="ownerPlusVisibility"
     :default-editability="gmOnlyEditability"
     class="item-hp-section"
   >
     <NumberFormGroup
-      label="Current"
       :value="currentHp"
       :on-update="updateCurrentHp"
       field-path="system.hp.current"
@@ -16,7 +15,6 @@
       direct-update
     />
     <NumberFormGroup
-      label="Max"
       :value="maxHp"
       :on-update="maxHpUpdater"
       field-path="system.hp.max"

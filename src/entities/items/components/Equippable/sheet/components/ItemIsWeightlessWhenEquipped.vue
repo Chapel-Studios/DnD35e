@@ -1,6 +1,5 @@
 <template>
   <CheckBoxFormGroup
-    label="Is Weightless When Equipped"
     :value="isWeightlessWhenEquipped"
     :on-update="updater"
     field-path="system.isWeightlessWhenEquipped"

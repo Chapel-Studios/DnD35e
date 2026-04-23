@@ -13,6 +13,7 @@ import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { SecretSheet } from '@effects/secret/sheet/SecretSheet.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
 import type { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
 
 const syncOpenSheetTitle = (sheet: { rendered?: boolean; title?: string; window?: { title?: HTMLElement } } | null | undefined): void => {
   if (!sheet?.rendered) return;
@@ -50,7 +51,7 @@ const registerEffectSheets = () => {
   for (const [effectType, Sheet] of effectSheets) {
     foundry.applications.apps.DocumentSheetConfig.registerSheet(
       foundry.documents.ActiveEffect,
-      'dnd35e',
+      SYSTEM_ID,
       Sheet,
       {
         types: [effectType],

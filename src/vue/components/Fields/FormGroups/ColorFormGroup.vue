@@ -9,14 +9,14 @@
   >
     <input
       type="color"
-      :value="editValue ?? '#ffffff'"
+      :value="editValue ?? DEFAULT_COLOR"
       :disabled="isDisabled"
       @change="onChange(($event.target as HTMLInputElement).value)"
     />
     <template #readonly>
       <div
         class="color-display"
-        :style="{ backgroundColor: value ?? '#ffffff' }"
+        :style="{ backgroundColor: value ?? DEFAULT_COLOR }"
       ></div>
       {{ value ?? localize('dnd35e.COMMON.NoColor') }}
     </template>
@@ -81,6 +81,8 @@
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return props.value;
     return sourceValue.value as string | null;
   });
+
+  const DEFAULT_COLOR = '#ffffff';
 
   function onChange(val: string) {
     fieldUpdater(val);
