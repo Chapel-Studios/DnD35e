@@ -174,6 +174,56 @@ All field labels/hints are auto-localized via Foundry's `LOCALIZATION_PREFIXES` 
 - Non-field strings (enum values, headings, buttons) use `game.i18n.localize('dnd35e.DOMAIN.Key')`
 - All keys use `dnd35e.*` namespace (not `DND35E.*` or `D35E.*`)
 
+### CONFIG Enum Pre-Localization
+
+CONFIG-registered enums (sizes, weapon types, DR types, etc.) use a two-step pre-localization pattern so they stay current across language switches without DB migration.
+
+**Step 1 — Register at module scope** (in the config file that defines the enum):
+```typescript
+// src/constants/config/system.mts
+registerConfigPreLocalization('item.enums.sizes', { key: 'label' });
+registerConfigPreLocalization('gameRules.damageReductionTypes', { key: 'label' });
+```
+
+**Step 2 — Wire once in main.mts** (already done — do not add a duplicate):
+```typescript
+Hooks.once('i18nInit', () => {
+  preLocalizeConfig(CONFIG.dnd35e as unknown as Record<string, unknown>);
+});
+```
+
+At `i18nInit`, `preLocalizeConfig` walks all registered paths and replaces i18n keys with localized text in-place. Utility lives in `src/helpers/localization/preLocalizeConfig.mts`.
+
+**i18n key naming** — enum default entries use `dnd35e.DOMAIN_UPPER.EntryName` (e.g. `dnd35e.DAMAGE_REDUCTION_TYPES.Acid`, `dnd35e.SIZES.Medium`).
+
+### Live-Merge Pattern
+
+When a setting stores user-customizable entries that overlap with CONFIG defaults (e.g. damage reduction types), **merge at read-time** rather than duplicating labels in the DB. This makes language switching transparent:
+
+```typescript
+const systemDefaults = CONFIG.dnd35e.gameRules.damageReductionTypes as Record<string, { label: string }>;
+return Object.entries(config).map(([key, entry]) => ({
+  value: key,
+  label: systemDefaults[key]?.label ?? entry.label,  // CONFIG label for system entries
+}));
+```
+
+System entries use the CONFIG pre-localized label; custom entries fall back to their stored label.
+
+### CONFIG Registration Spread Merge
+
+When populating CONFIG from entity registration files, **always spread-merge** — bare assignment wipes anything registered earlier:
+
+```typescript
+// ✅ Correct — preserves pre-registered enums
+CONFIG.dnd35e.item = { ...CONFIG.dnd35e.item, ...ItemConfig };
+
+// ❌ Wrong — wipes enums registered before this file runs
+CONFIG.dnd35e.item = ItemConfig;
+```
+
+Registration order is not guaranteed. Multiple files populate the same CONFIG object.
+
 ## Field Permissions & Overrides
 
 See `dnd35e-field.instructions.md` for field override cascade, view-aware getters, and permission defaults.

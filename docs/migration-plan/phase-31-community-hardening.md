@@ -8,7 +8,7 @@
 
 ---
 
-## 28.1 Why Community Hardening First
+## 31.1 Why Community Hardening First
 
 Release (Phase 27) is technically complete but not battle-tested at scale. Defaults might be wrong. GMs might want visibility controls we didn't anticipate. Players might find combinations that break balance. Phase 31 is about:
 - **Collecting feedback** from real GMs running real campaigns
@@ -19,7 +19,7 @@ Release (Phase 27) is technically complete but not battle-tested at scale. Defau
 
 ---
 
-## 28.2 Feedback Collection
+## 31.2 Feedback Collection
 
 Target **100+ active campaign reports** across 4-8 weeks:
 
@@ -44,7 +44,7 @@ This gives comparable data: "In 50 test runs, combat took X minutes on average."
 
 ---
 
-## 28.3 Default Value Tuning
+## 31.3 Default Value Tuning
 
 ### Ability Modifier Formula
 Current: `floor((score - 10) / 2)`  
@@ -69,7 +69,7 @@ Possible tuning:
 
 ---
 
-## 28.4 Visibility/Editability Survey
+## 31.4 Visibility/Editability Survey
 
 Create a **sheet layout questionnaire**:
 
@@ -94,7 +94,7 @@ Create a **sheet layout questionnaire**:
 
 ---
 
-## 28.5 Community Settings Migration
+## 31.5 Community Settings Migration
 
 Based on feedback, create `system.json` settings:
 
@@ -128,7 +128,7 @@ Each setting has a rationale from community feedback.
 
 ---
 
-## 28.6 Balance Report
+## 31.6 Balance Report
 
 Publish findings:
 - **Encounter Time**: "Average encounters took X minutes. Outliers: Y."
@@ -140,7 +140,7 @@ Use this to justify any Phase 29+ changes.
 
 ---
 
-## 28.7 Documentation of Field Overrides
+## 31.7 Documentation of Field Overrides
 
 Create a reference document:
 
@@ -166,7 +166,7 @@ This becomes the foundation for Phase 29 (Documentation) field-by-field breakdow
 
 ---
 
-## 28.8 Known Issues Log
+## 31.8 Known Issues Log
 
 If issues are found:
 - **Critical** (breaks core functionality): Fix immediately, don't wait for Phase 29
@@ -182,7 +182,7 @@ Example:
 
 ---
 
-## 28.9 Files to Create/Modify
+## 31.9 Files to Create/Modify
 
 | Action | Path |
 |--------|------|
@@ -199,7 +199,7 @@ Example:
 ## Completion Checklist
 
 ### ✅ Complete
-- (None — Phase 28 has not started)
+- (None — Phase 31 has not started)
 
 ### ❌ Not Started (All Tasks for Phase 31)
 
@@ -607,7 +607,7 @@ Example:
 
 ---
 
-## 28.10 Success Criteria
+## 31.10 Success Criteria
 
 ✅ **100+ reports** from active campaigns  
 ✅ **Canonical test scenario** completed by 50+ testers with timing data  
@@ -619,7 +619,7 @@ Example:
 
 ---
 
-## 28.11 Timeline
+## 31.11 Timeline
 
 - **Week 1**: Release survey + canonical test scenario
 - **Weeks 2-6**: Active collection + spot-check reports
@@ -629,7 +629,7 @@ Example:
 
 ---
 
-## 28.12 3-State AE Visibility (from Phase 2 §2.12)
+## 31.12 3-State AE Visibility (from Phase 2 §2.12)
 
 Upgrade from 2-state (hidden/identified) to 3-state (unknown / known-unidentified / identified). Community hardening is the natural fit for UX refinements informed by beta feedback.
 
@@ -639,7 +639,7 @@ Upgrade from 2-state (hidden/identified) to 3-state (unknown / known-unidentifie
 
 ---
 
-## 28.13 Deferred to Phase 29
+## 31.13 Deferred to Phase 29
 
 - Full user guide (waits for Phase 28 feedback)
 - Balanced feat recommendations (after Phase 28 balance data)

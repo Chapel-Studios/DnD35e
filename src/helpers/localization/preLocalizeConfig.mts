@@ -16,8 +16,8 @@ function registerConfigPreLocalization(
   configKeyPath: string,
   { key, keys = [] }: { key?: string; keys?: string[] } = {}
 ): void {
-  if (key) keys.unshift(key);
-  preLocalizationRegistrations[configKeyPath] = { keys };
+  const keysToStore = key ? [key, ...keys] : [...keys];
+  preLocalizationRegistrations[configKeyPath] = { keys: keysToStore };
 }
 
 /**
