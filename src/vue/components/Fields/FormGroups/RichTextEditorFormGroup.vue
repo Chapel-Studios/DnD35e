@@ -85,6 +85,7 @@
     documentActions: { getViewAwareFieldUpdater, getDirectFieldUpdater },
     _storeUtils: {
       getSourceProperty,
+      getSchemaField,
       createLocalizedComputed: localize,
       enrichHTML,
     },
@@ -118,7 +119,13 @@
   }
 
   const isEditButtonVisible = computed(() => !isEditing.value && isEditMode.value);
-  const editAriaLabel = computed(() => game.i18n.format('dnd35e.UI.EditField', { field: props.label || game.i18n.localize('dnd35e.UI.Content') }));
+  const editAriaLabel = computed(() => {
+    const localizedLabel = props.label
+      ? game.i18n.localize(props.label)
+      : (getSchemaField(props.field)?.options?.label as string | undefined)
+        ?? game.i18n.localize('dnd35e.UI.Content');
+    return game.i18n.format('dnd35e.UI.EditField', { field: localizedLabel });
+  });
 
   async function onSave(event: Event) {
     const target = event.target as HTMLElement & { value?: string };
