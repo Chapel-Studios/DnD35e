@@ -1,6 +1,5 @@
 <template>
   <CheckBoxFormGroup
-    label="Is Carried"
     :value="isCarried"
     :on-update="updater"
     field-path="system.isCarried"

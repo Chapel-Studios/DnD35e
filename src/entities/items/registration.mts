@@ -6,6 +6,7 @@ import type { ItemSheetStore } from '@items/baseItem/index.mjs';
 import { ItemProxyDnd35e } from '@items/baseItem/index.mjs';
 import { weaponItemType } from '@items/itemTypes.mjs';
 import { WeaponSheet, WeaponSystemModel } from '@items/weapon/index.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
 
 const registerItemSheets = () => {
   foundry.documents.collections.Items.unregisterSheet('core', foundry.appv1.sheets.ItemSheet);
@@ -14,7 +15,7 @@ const registerItemSheets = () => {
   ] as const;
 
   for (const [type, Sheet] of itemSheets) {
-    foundry.documents.collections.Items.registerSheet('dnd35e', Sheet, {
+    foundry.documents.collections.Items.registerSheet(SYSTEM_ID, Sheet, {
       types: [type],
       makeDefault: true,
     });

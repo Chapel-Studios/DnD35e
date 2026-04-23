@@ -1,5 +1,6 @@
 import type { Dnd35eDocumentProperties } from '@ec/CoreMixin/Dnd35eDocument.mjs';
 import type { EvaluationDocument, FormulaRegistration } from '@ec/CoreMixin/index.mjs';
+import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import type { ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/index.mjs';
@@ -113,7 +114,7 @@ const IdentifiableDocumentMixin = <TBase extends IdentifiableDocumentCtor> (Base
      */
     private _deriveIdentifiableState (): void {
       const secrets = [...this.effects].filter(
-        e => e.type === 'secret'
+        e => e.type === secretEffectType
       );
       this.isIdentifiable = secrets.length > 0;
       this.isIdentified = !secrets.some(e => e.active);
@@ -132,12 +133,12 @@ const IdentifiableDocumentMixin = <TBase extends IdentifiableDocumentCtor> (Base
         const effectId = effect.id;
         if (!effectId) continue;
 
-        if (effect.type === 'secret' && !effect.disabled) {
+        if (effect.type === secretEffectType && !effect.disabled) {
           updates.push({ _id: effectId, disabled: true });
           continue;
         }
 
-        if (effect.type !== 'secret' && 'system' in effect && (effect as { system?: { isHidden?: boolean } }).system?.isHidden) {
+        if (effect.type !== secretEffectType && 'system' in effect && (effect as { system?: { isHidden?: boolean } }).system?.isHidden) {
           updates.push({ _id: effectId, 'system.isHidden': false });
         }
       }

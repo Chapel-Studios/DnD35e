@@ -1,7 +1,7 @@
 <template>
   <div v-if="isCarried" class="header-status-badge">
     <i class="fas fa-bag-check" />
-    Carried
+    {{ carriedLabel }}
   </div>
 </template>
 
@@ -13,6 +13,7 @@
   const store = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
   const { isCarried } = store.documentGetters;
+  const carriedLabel = game.i18n.localize('dnd35e.PHYSICAL_ITEM.FIELDS.isCarried.label');
 </script>
 
 <style scoped lang="scss">

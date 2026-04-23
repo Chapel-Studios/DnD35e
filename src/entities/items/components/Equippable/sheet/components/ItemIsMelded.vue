@@ -1,6 +1,5 @@
 <template>
   <CheckBoxFormGroup
-    label="Is Melded"
     :value="isMelded"
     :on-update="updater"
     field-path="system.isMelded"

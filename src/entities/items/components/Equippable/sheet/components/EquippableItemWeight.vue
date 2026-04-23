@@ -5,7 +5,7 @@
         class="field-control-btn weightless-toggle"
         type="button"
         @click="isWeightlessWhenEquippedUpdater(!isWeightlessWhenEquipped)"
-        :title="'Is Weightless When Equipped'"
+        :title="weightlessTitle"
       >
         <i class="fas fa-weight-hanging icon-off" v-if="!isWeightlessWhenEquipped"></i>
 
@@ -27,6 +27,7 @@
   import type { EquippableDocumentStore } from '../EquippableItemStore.mjs';
 
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const weightlessTitle = game.i18n.localize('dnd35e.EQUIPPABLE.FIELDS.isWeightlessWhenEquipped.label');
   const {
     documentGetters: {
       isWeightlessWhenEquipped,

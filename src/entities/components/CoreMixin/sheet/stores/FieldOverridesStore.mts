@@ -11,6 +11,7 @@
  * @module
  */
 
+import { SYSTEM_ID } from '@settings/shared.mjs';
 import type {
   FieldEditability,
   FieldOverride,
@@ -143,7 +144,7 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
   const { document, updateFlag } = options;
 
   const fieldOverrides = computed((): FieldOverrides => {
-    return (document.value.getFlag('dnd35e', FIELD_OVERRIDES_FLAG) as FieldOverrides | undefined) ?? {};
+    return (document.value.getFlag(SYSTEM_ID, FIELD_OVERRIDES_FLAG) as FieldOverrides | undefined) ?? {};
   });
 
   // ---------------------------------------------------------------------------

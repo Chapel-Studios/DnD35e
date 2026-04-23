@@ -19,7 +19,9 @@
   const { isEquipped, isCarried } = store.documentGetters;
   const isEquippedOrCarried = computed(() => isEquipped.value || isCarried.value);
   const equippedIcon = computed(() => isEquipped.value ? 'fas fa-shield-alt' : 'fas fa-bag-check');
-  const statusLabel = computed(() => isEquipped.value ? 'Equipped' : 'Carried');
+  const statusLabel = computed(() => isEquipped.value
+    ? game.i18n.localize('dnd35e.EQUIPPABLE.FIELDS.isEquipped.label')
+    : game.i18n.localize('dnd35e.PHYSICAL_ITEM.FIELDS.isCarried.label'));
 </script>
 
 <style scoped lang="scss">

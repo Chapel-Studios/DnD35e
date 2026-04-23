@@ -15,7 +15,7 @@
         v-if="editable && isEditButtonVisible"
         type="button"
         class="field-control-btn edit-button"
-        :aria-label="`Edit ${label || 'content'}`"
+        :aria-label="editAriaLabel"
         @click="startEditing"
       >
         <i class="fas fa-feather" />
@@ -118,6 +118,7 @@
   }
 
   const isEditButtonVisible = computed(() => !isEditing.value && isEditMode.value);
+  const editAriaLabel = computed(() => game.i18n.format('dnd35e.UI.EditField', { field: props.label || game.i18n.localize('dnd35e.UI.Content') }));
 
   async function onSave(event: Event) {
     const target = event.target as HTMLElement & { value?: string };
