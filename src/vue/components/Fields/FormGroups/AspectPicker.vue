@@ -34,7 +34,7 @@
 <script setup lang="ts">
   import type { AutocompleteOption, FamiliarContext, FamiliarSchema, ValidationError } from '@helpers/formulae/types.mjs';
   import { useFamiliarOverlayInput } from '@helpers/formulae/useFamiliarOverlayInput.mjs';
-  import { findAspectByAccessPath, parseFormula, renderFormulaHTML, validateFormula } from '@helpers/formulae/utils.mjs';
+  import { canonicalizeFormula, findAspectByAccessPath, localizeFormula, parseFormula, renderFormulaHTML, validateFormula } from '@helpers/formulae/utils.mjs';
   import FamiliarOverlayInput from '@vc/Fields/FormGroups/FamiliarOverlayInput.vue';
   import { computed, nextTick, onUnmounted, type PropType, ref, watch } from 'vue';
 
@@ -85,14 +85,15 @@
   });
 
   /**
-   * Translate a stored raw accessPath to familiar display syntax.
-   * e.g. 'system.hardness.value' → '#item.hardness'
+   * Translate a stored raw accessPath to familiar display syntax (localized).
+   * e.g. 'system.hardness' → '#item.Hardness' (English) / '#item.Twardość' (Polish)
    */
   function rawToFamiliar(rawPath: string): string {
     if (!rawPath || !props.familiarContext) return rawPath;
     const result = findAspectByAccessPath(props.familiarContext.properties, rawPath);
     if (result) {
-      return `#${props.contextName}.${result.treePath.join('.')}`;
+      const canonical = `#${props.contextName}.${result.treePath.join('.')}`;
+      return localizeFormula(canonical, wrappedSchema.value);
     }
     // Unresolvable — show raw path as-is
     return rawPath;
@@ -100,17 +101,21 @@
 
   /**
    * Translate familiar display syntax back to raw accessPath.
-   * e.g. '#item.hardness' → 'system.hardness.value'
+   * Handles both localized (#item.Twardość) and canonical (#item.hardness) input.
    *
-   * Walks the context tree following the path segments to find the leaf FieldAspect.
+   * Canonicalizes first so localized display names map to canonical tree keys,
+   * then walks the tree to find the leaf FieldAspect's accessPath.
    */
   function familiarToRaw(familiarPath: string): string {
     if (!props.familiarContext) return familiarPath;
 
+    // Canonicalize: e.g. '#item.Twardość' → '#item.hardness'
+    const canonical = canonicalizeFormula(familiarPath, wrappedSchema.value);
+
     // Strip the '#contextName.' prefix
     const prefix = `#${props.contextName}.`;
-    if (!familiarPath.startsWith(prefix)) return familiarPath;
-    const innerPath = familiarPath.slice(prefix.length);
+    if (!canonical.startsWith(prefix)) return familiarPath;
+    const innerPath = canonical.slice(prefix.length);
     if (!innerPath) return familiarPath;
 
     // Walk the context tree
@@ -143,10 +148,9 @@
 
   const dynamicHint = computed(() => {
     if (!props.familiarContext) return '';
-    const contexts = [props.contextName].filter(Boolean);
-    if (contexts.length === 0) return '';
-    const capitalized = contexts.map(k => k.charAt(0).toUpperCase() + k.slice(1));
-    return `Available Contexts: [${capitalized.join(', ')}]`;
+    const ctx = wrappedSchema.value[props.contextName];
+    const displayName = ctx?.display ?? (props.contextName.charAt(0).toUpperCase() + props.contextName.slice(1));
+    return `Available Contexts: [${displayName}]`;
   });
 
   const displayHint = computed(() => props.disabled ? '' : dynamicHint.value);

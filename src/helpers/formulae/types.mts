@@ -120,10 +120,24 @@ export function isFieldAspect(value: unknown): value is FieldAspect {
 }
 
 /**
- * Represents a nested structure of properties (can be leaf or branch)
+ * Represents a nested structure of properties (can be leaf or branch).
+ *
+ * Branch nodes (SchemaField groups) may carry metadata properties prefixed
+ * with `_` (skipped during autocomplete traversal):
+ *   - `_display`: pre-localized label for the group (e.g. "Hit Points")
+ *   - `_aliases`: schema key(s) that also resolve to this branch
+ *     (e.g. `['hp']` when the branch's primary key is the localized form)
  */
 export interface AspectGroup {
-  [propertyPath: string]: FieldAspect | AspectGroup;
+  /** Pre-localized display label for this group node. Set by the schema walker. */
+  _display?: string;
+  /**
+   * Alternative keys that resolve to this branch node.
+   * Populated when the primary key is a localized label and the schema field
+   * name differs (e.g. primary key `hitPoints`, alias `hp`).
+   */
+  _aliases?: string[];
+  [propertyPath: string]: FieldAspect | AspectGroup | string[] | string | undefined;
 }
 
 /**
@@ -133,6 +147,11 @@ export interface AspectGroup {
 export interface FamiliarContext {
   properties: AspectGroup;
   aliases?: string[];  // e.g., ["item", "weapon"] — alternative names that also resolve to this context
+  /**
+   * Localized display label shown in the autocomplete dropdown instead of the raw key.
+   * e.g. key='self', display='Self' (or 'Siebie' in Polish).
+   */
+  display?: string;
 }
 
 /**

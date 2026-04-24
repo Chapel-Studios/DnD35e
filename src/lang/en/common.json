@@ -48,6 +48,11 @@
       "EditField": "Edit {field}",
       "Content": "content"
     },
+    "Formula": {
+      "Context": {
+        "Self": "Self"
+      }
+    },
     "DOCUMENT": {
       "FIELDS": {
         "version": {

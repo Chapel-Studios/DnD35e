@@ -56,7 +56,9 @@
   import type { AutocompleteOption, FamiliarSchema, ValidationError } from './types.mts';
   import { useFamiliarOverlayInput } from './useFamiliarOverlayInput.mjs';
   import {
+    canonicalizeFormula,
     filterExcludedFields,
+    localizeFormula,
     parseFormula,
     renderFormulaDisplayHTML,
     renderFormulaHTML,
@@ -137,8 +139,9 @@
     updateAutocomplete,
   } = useFamiliarOverlayInput();
 
-  // Local state
-  const localValue = ref(effectiveFormula.value || '');
+  // Local state — stored as localized display form (e.g. #Self.Hardness)
+  // canonicalizeFormula is applied on commit; localizeFormula on every sync from external
+  const localValue = ref('');
   const formulaErrors = ref<ValidationError[]>([]);
 
   // Track whether the user is actively editing to avoid feedback loops
@@ -156,8 +159,8 @@
     if (props.hint) return props.hint;
     const keys = Object.keys(contexts.value);
     if (keys.length === 0) return '';
-    const capitalized = keys.map(k => k.charAt(0).toUpperCase() + k.slice(1));
-    return `Available Contexts: [${capitalized.join(', ')}]`;
+    const names = Object.entries(contexts.value).map(([k, ctx]) => ctx.display ?? (k.charAt(0).toUpperCase() + k.slice(1)));
+    return `Available Contexts: [${names.join(', ')}]`;
   });
 
   const displayHint = computed(() => isEditMode.value ? dynamicHint.value : (props.hint ?? ''));
@@ -219,7 +222,15 @@
   // Sync external value changes into local state (but not during active editing)
   watch(effectiveFormula, (newValue) => {
     if (!isUserEditing) {
-      localValue.value = newValue || '';
+      localValue.value = localizeFormula(newValue || '', contexts.value);
+      updateValidation();
+    }
+  });
+
+  // Re-localize when the schema loads or locale changes (e.g. initial load, context switch)
+  watch(contexts, () => {
+    if (!isUserEditing) {
+      localValue.value = localizeFormula(effectiveFormula.value || '', contexts.value);
       updateValidation();
     }
   });
@@ -268,10 +279,11 @@
 
   function commitValue() {
     if (typeof props.onUpdate === 'function') {
-      // Only persist if the value actually changed from the source
+      // Canonicalize before saving (e.g. #Self.Hardness → #self.hardness)
+      const canonical = canonicalizeFormula(localValue.value, contexts.value);
       const current = effectiveFormula.value || '';
-      if (localValue.value !== current) {
-        props.onUpdate(localValue.value);
+      if (canonical !== current) {
+        props.onUpdate(canonical);
       }
     }
   }
@@ -293,8 +305,8 @@
 
     // Escape = cancel editing (Familiar already handled its own Escape above)
     if (event.key === 'Escape') {
-      // Revert to prop value
-      localValue.value = props.value || '';
+      // Revert to localized form of stored value
+      localValue.value = localizeFormula(effectiveFormula.value || '', contexts.value);
       isUserEditing = false;
       getInputElement()?.blur();
       event.preventDefault();
@@ -379,7 +391,7 @@
 
   // Initialize
   onMounted(() => {
-    localValue.value = effectiveFormula.value || '';
+    localValue.value = localizeFormula(effectiveFormula.value || '', contexts.value);
     updateValidation();
     if (isEditable.value && getInputElement()) {
       nextTick(() => getInputElement()?.focus());

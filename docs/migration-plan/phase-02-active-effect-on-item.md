@@ -1,6 +1,6 @@
 # Phase 2: Active Effect on Item (Material)
 
-**Status**: ✅ Approved
+**Status**: 🔶 In Progress
 
 > **Milestone**: POC  
 > **Dependencies**: Phase 1  

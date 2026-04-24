@@ -15,7 +15,7 @@
  */
 
 import type { DocumentContext } from './registry.mjs';
-import type { AspectGroup, FieldAspect,FormulaFieldMeta } from './types.mjs';
+import type { AspectGroup, FieldAspect, FormulaFieldMeta } from './types.mjs';
 
 const {
   NumberField,
@@ -23,8 +23,41 @@ const {
 } = foundry.data.fields;
 
 /**
+ * Convert a display label into a valid formula-variable identifier segment.
+ * Strips non-letter/non-digit characters (Unicode-aware) and PascalCases the result.
+ * Used by `localizeFormula` / `canonicalizeFormula` to map between typed variable
+ * names and localized display labels — NOT used for AspectGroup keys (those are
+ * always the canonical schema field name).
+ *
+ * Examples (English): "Hit Points" → "HitPoints", "Hardness" → "Hardness"
+ * Examples (Polish):   "Twardość"  → "Twardość", "Punkty Wytrzymałości" → "PunktyWytrzymałości"
+ *
+ * Returns `undefined` when the label is empty or produces no word segments.
+ *
+ * @todo Community hardening: PascalCasing is inappropriate for some languages.
+ *   Japanese has no concept of letter casing (passthrough — no spaces to strip either).
+ *   German capitalizes only nouns. Arabic, Hebrew, Thai, and CJK scripts have no uppercase.
+ *   Planned fix: `CONFIG.dnd35e.localization[locale].normalizeIdentifier(label)` hook.
+ *   System ships with the EN implementation (current behavior). Mods / locale packs
+ *   can override per locale. Changing the function for a locale is a storage-breaking
+ *   migration for any formula that used localized identifiers in that locale.
+ *   Tracked: docs/migration-plan/phase-31-community-hardening.md
+ */
+export function normalizeLabel(label: string | undefined): string | undefined {
+  if (!label) return undefined;
+  // \p{L} = any Unicode letter, \p{N} = any Unicode digit
+  const words = label.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  if (!words.length) return undefined;
+  // PascalCase: capitalize first letter of every word, preserve the rest
+  return words
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join('');
+}
+
+/**
  * Document-level fields that live outside `system` but should appear in familiar.
  * These are merged into the top level of every AspectGroup.
+ * The `display` is intentionally a plain key — localized at call time in gatherAspectsFromSchema.
  */
 const DOCUMENT_LEVEL_ASPECTS: Record<string, Omit<FieldAspect, 'value'>> = {
   name: { display: 'Name', type: 'string', accessPath: 'name' },
@@ -70,6 +103,13 @@ function resolveValue(
 
 /**
  * Add a leaf entry to an AspectGroup.
+ *
+ * Key: always the canonical schema field name (`key`), or `meta.aspectKey` when
+ * explicitly overridden. Localized display labels live in `FieldAspect.display`;
+ * they are never used as tree keys.
+ *
+ * `accessPath` is always the raw Foundry document path used internally at
+ * resolution time — users never see it.
  */
 function addLeafToGroup(
   field: foundry.data.fields.DataField,
@@ -80,16 +120,21 @@ function addLeafToGroup(
   output: AspectGroup
 ): void {
   const type = meta?.aspectType ?? inferFieldType(field);
+  // field.label is set by Foundry's localizeDataModel (via LOCALIZATION_PREFIXES) after i18nInit.
+  // field.options.label is only set when explicitly passed in the constructor.
+  const label = (field as unknown as { label?: string }).label
+    ?? (field.options as Record<string, unknown>).label as string | undefined;
   const aspectKey = meta?.aspectKey ?? key;
 
   const prop: FieldAspect = {
-    display: (field.options as Record<string, unknown>).label as string ?? key,
+    display: label ?? key,
     type,
     accessPath,
   };
 
-  if (meta?.aliases?.length) {
-    prop.aliases = meta.aliases;
+  const aliases: string[] = [...(meta?.aliases ?? [])];
+  if (aliases.length) {
+    prop.aliases = aliases;
   }
 
   if (context) {
@@ -137,8 +182,11 @@ function walkFields(
         Record<string, foundry.data.fields.DataField> | undefined;
       if (childFields) {
         const branch: AspectGroup = {};
+        const branchLabel = (field as unknown as { label?: string }).label
+          ?? (field.options as Record<string, unknown>).label as string | undefined;
+        if (branchLabel) branch._display = branchLabel;
         walkFields(childFields, context, currentPath, branch);
-        if (Object.keys(branch).length > 0) {
+        if (Object.keys(branch).filter(k => !k.startsWith('_')).length > 0) {
           output[key] = branch;
         }
       }
@@ -152,12 +200,13 @@ function walkFields(
 /**
  * Build an AspectGroup from a DataModel class's schema.
  *
- * Walks `ModelClass.defineSchema()` and collects all fields by default.
+ * Uses `ModelClass.schema.fields` (the cached, LOCALIZATION_PREFIXES-mutated schema)
+ * rather than `ModelClass.defineSchema()` (which creates fresh unlabeled instances).
  * Fields opt out with `familiar: { formulaVisible: false }`. Opaque leaves
  * (PriceField, FormulaField, `isFamiliarLeaf`) are recognized by a static
  * marker on their constructors.
  *
- * @param ModelClass  A DataModel class (or any object with a static `defineSchema()`)
+ * @param ModelClass  A TypeDataModel class whose `schema.fields` holds localized field metadata
  * @param context     Optional live Foundry document – when provided, property values are resolved inline
  * @returns           An AspectGroup ready for use in FormulaFormGroup
  *
@@ -171,24 +220,31 @@ function walkFields(
  * ```
  */
 function gatherAspectsFromSchema(
-  ModelClass: { defineSchema(): Record<string, foundry.data.fields.DataField> },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ModelClass: { schema?: { fields: Record<string, any> }; defineSchema(): Record<string, foundry.data.fields.DataField> },
   context?: DocumentContext
 ): AspectGroup {
-  const schema = ModelClass.defineSchema();
+  // Prefer the cached schema (fields have localized labels from LOCALIZATION_PREFIXES).
+  // Fall back to defineSchema() only if schema is not yet available (e.g. unit tests).
+  const fields = (ModelClass.schema?.fields) ?? ModelClass.defineSchema();
   const result: AspectGroup = {};
 
   // Walk system-level fields (all schema fields live under document.system)
-  walkFields(schema, context, 'system', result);
+  walkFields(fields, context, 'system', result);
 
-  // Merge document-level fields (name, img, etc.)
-  for (const [key, meta] of Object.entries(DOCUMENT_LEVEL_ASPECTS)) {
-    const prop: FieldAspect = { ...meta };
-    if (context) {
-      const resolved = resolveValue(context, meta.accessPath, meta.type);
-      if (resolved !== undefined) prop.value = resolved;
-    }
-    result[key] = prop;
+  // Merge document-level fields (name, img, etc.) with localized display labels.
+  // The tree key is ALWAYS the canonical 'name' — storage must be locale-independent.
+  // The localized PascalCase label (e.g. 'Name' in EN, 'Naam' in NL) is added as an alias
+  // so users can type either form; localizeFormula() will render the display form on output.
+  const nameLabel = (game as { i18n?: { localize?(k: string): string } }).i18n?.localize?.('Name') ?? 'Name';
+  const nameProp: FieldAspect = { display: nameLabel, type: 'string', accessPath: 'name' };
+  const localizedNameKey = normalizeLabel(nameLabel);
+  if (localizedNameKey && localizedNameKey !== 'name') nameProp.aliases = [localizedNameKey];
+  if (context) {
+    const resolved = resolveValue(context, 'name', 'string');
+    if (resolved !== undefined) nameProp.value = resolved;
   }
+  result['name'] = nameProp;
 
   return result;
 }
