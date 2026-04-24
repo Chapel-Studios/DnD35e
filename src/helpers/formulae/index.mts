@@ -33,7 +33,7 @@ import {
   getFamiliarBuilder,
   registerFamiliarSchema,
 } from './registry.mjs';
-import { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema } from './schemaWalker.mjs';
+import { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema, normalizeLabel } from './schemaWalker.mjs';
 import type {
   AspectGroup,
   AutocompleteOption,
@@ -59,6 +59,7 @@ import { useFamiliarOverlayInput } from './useFamiliarOverlayInput.mjs';
 import type { AspectLookupResult, GetAutocompleteOptionsConfig } from './utils.mjs';
 import {
   buildDocumentDataMap,
+  canonicalizeFormula,
   ensureNameFormula,
   extractVariableAtPosition,
   extractVariables,
@@ -73,6 +74,7 @@ import {
   getVariableTokenIndex,
   getVariableTokens,
   insertAtCursor,
+  localizeFormula,
   mergeAspectGroups,
   nameToFormulaData,
   parseFormula,
@@ -88,6 +90,7 @@ export {
   buildDocumentDataMap,
   buildDocumentFamiliar,
   buildMergedFamiliarContext,
+  canonicalizeFormula,
   DOCUMENT_LEVEL_ASPECTS,
   EDIT,
   ensureNameFormula,
@@ -112,9 +115,11 @@ export {
   getVariableTokens,
   insertAtCursor,
   isFieldAspect,
+  localizeFormula,
   measureTextOffset,
   mergeAspectGroups,
   nameToFormulaData,
+  normalizeLabel,
   parseFormula,
   PLAY,
   registerFamiliarSchema,

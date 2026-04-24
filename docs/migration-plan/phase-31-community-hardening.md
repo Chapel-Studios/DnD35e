@@ -207,6 +207,13 @@ Example:
 - [ ] Create `docs/LOCALIZATION_ITEM_CONTENT_WORKFLOW.md` that defines how localization contributors localize item content post-release (inputs, file locations, review/merge handoff).
 - [ ] Keep this as a Phase 31 documentation workflow; no Phase 3 implementation changes.
 
+**Formula Familiar — Locale-Aware Identifier Normalization (Deferred from Phase 3):**
+- [ ] Implement `CONFIG.dnd35e.localization[locale].normalizeIdentifier(label: string): string` hook.
+  - System ships with a default EN implementation: strips spaces, PascalCases each word segment (current `normalizeLabel()` behavior).
+  - Mods or locale packs can override per locale — e.g. Japanese is a straight passthrough (no spaces, no casing concept); German may want to preserve noun capitalization rather than forcing all-caps word starts.
+  - `normalizeLabel()` in `schemaWalker.mts` and `utils.mts` delegates to this hook when available, falling back to the built-in EN logic.
+  - Must not break stored formulas — any change to identifier generation requires a storage migration for affected locales.
+
 **Feedback Collection Infrastructure:**
 - [ ] Create `docs/COMMUNITY_FEEDBACK_SURVEY.md`:
   - Section 1: Demographic data (campaign type, player count, campaign length)

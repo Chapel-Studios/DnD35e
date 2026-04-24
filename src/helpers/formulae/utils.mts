@@ -6,6 +6,7 @@ import type { FormulaDataSource } from './FormulaData.mjs';
 import { FormulaData } from './FormulaData.mjs';
 import type { DocumentContext } from './registry.mjs';
 import { buildContextFromFormula } from './registry.mjs';
+import { normalizeLabel } from './schemaWalker.mjs';
 import type {
   AspectGroup,
   AutocompleteOption,
@@ -41,6 +42,9 @@ export function filterExcludedFields(
     const props = { ...ctx.properties };
     for (const key of excludedFields) {
       delete props[key];
+      // Also delete the PascalCase-normalized form in case keys have been localized
+      const normalized = normalizeLabel(key);
+      if (normalized && normalized !== key) delete props[normalized];
     }
     filtered[ctxName] = { ...ctx, properties: props };
   }
@@ -58,7 +62,8 @@ export function filterExcludedFields(
  *
  * Uses a negative lookbehind so `\#` is treated as a literal `#`, not a variable.
  */
-const VARIABLE_REGEX = /(?<!\\)#\w+(?:\.(?:'[^']*'|'[^ ']*|\w+))*/g;
+// Unicode-aware: \p{L} = any letter, \p{N} = any digit — allows Polish/Czech/etc variable names
+const VARIABLE_REGEX = /(?<!\\)#[\p{L}\p{N}_]+(?:\.(?:'[^']*'|'[^ ']*|[\p{L}\p{N}_]+))*/gu;
 
 /**
  * Parse a formula into tokens (text and variables)
@@ -66,7 +71,7 @@ const VARIABLE_REGEX = /(?<!\\)#\w+(?:\.(?:'[^']*'|'[^ ']*|\w+))*/g;
  */
 export function parseFormula(formula: string): FormulaToken[] {
   const tokens: FormulaToken[] = [];
-  const regex = new RegExp(VARIABLE_REGEX.source, 'g');
+  const regex = new RegExp(VARIABLE_REGEX.source, 'gu');
   let lastIndex = 0;
   let match;
 
@@ -159,7 +164,7 @@ function parseVariableSegments(body: string): { context: string; path: string[];
  * @returns Array of found variables
  */
 export function extractVariables(formula: string): FormulaVariable[] {
-  const regex = new RegExp(VARIABLE_REGEX.source, 'g');
+  const regex = new RegExp(VARIABLE_REGEX.source, 'gu');
   const variables: FormulaVariable[] = [];
   let match;
 
@@ -204,7 +209,31 @@ export function resolveFormula(
   // Process in reverse order to maintain string indices
   for (let i = variables.length - 1; i >= 0; i--) {
     const variable = variables[i];
-    const docData = documentDataMap[variable.context];
+
+    // Resolve context data: direct lookup first, then via familiarSchema alias
+    let docData = documentDataMap[variable.context];
+    if (!docData) {
+      // variable.context may be a localized alias (e.g. 'Self') while documentDataMap
+      // uses the internal key ('self'). Use the familiarSchema to bridge them.
+      const ctxEntry = familiarSchema[variable.context]
+        ? { key: variable.context, ctx: familiarSchema[variable.context] }
+        : (() => {
+          const found = Object.entries(familiarSchema).find(([, ctx]) =>
+            ctx.aliases?.includes(variable.context)
+          );
+          return found ? { key: found[0], ctx: found[1] } : null;
+        })();
+      if (ctxEntry) {
+        // Try the primary FamiliarSchema key in documentDataMap
+        docData = documentDataMap[ctxEntry.key];
+        if (!docData) {
+          // Try each alias of that context in documentDataMap
+          for (const alias of (ctxEntry.ctx.aliases ?? [])) {
+            if (documentDataMap[alias]) { docData = documentDataMap[alias]; break; }
+          }
+        }
+      }
+    }
     if (!docData) continue;
 
     // Custom quoted path — use the raw path directly as the accessPath
@@ -296,12 +325,33 @@ function getFieldAspect(context: FamiliarSchema, contextName: string, path: stri
     if (key in obj) {
       current = obj[key];
     } else {
-      // Alias fallback
-      const aliasMatch = Object.entries(obj).find(([, v]) =>
+      // Leaf alias fallback (FieldAspect.aliases)
+      const leafAlias = Object.entries(obj).find(([, v]) =>
         isFieldAspect(v) && v.aliases?.includes(key)
       );
-      if (aliasMatch) {
-        current = aliasMatch[1];
+      if (leafAlias) {
+        current = leafAlias[1];
+        continue;
+      }
+      // Branch alias fallback (AspectGroup._aliases)
+      const branchAlias = Object.entries(obj).find(([, v]) =>
+        typeof v === 'object' && v !== null && !isFieldAspect(v)
+        && (v as { _aliases?: string[] })._aliases?.includes(key)
+      );
+      if (branchAlias) {
+        current = branchAlias[1];
+        continue;
+      }
+      // Localized display name fallback
+      const localDisplay = Object.entries(obj).find(([k, v]) => {
+        if (k.startsWith('_')) return false;
+        const localKey = isFieldAspect(v)
+          ? normalizeLabel((v as FieldAspect).display)
+          : normalizeLabel((v as AspectGroup)._display);
+        return localKey === key;
+      });
+      if (localDisplay) {
+        current = localDisplay[1];
       } else {
         return null;
       }
@@ -379,6 +429,125 @@ export function mergeAspectGroups(...groups: AspectGroup[]): AspectGroup {
 }
 
 /**
+ * Translate a formula from canonical storage form to the current locale's display form.
+ *
+ * - `#self.hardness`  →  `#Self.Hardness`   (English)
+ * - `#self.hardness`  →  `#Siebie.Twardość` (Polish)
+ *
+ * Context and property names are normalized with `normalizeLabel` (PascalCase,
+ * spaces removed) so multi-word labels like "Hit Points" become `HitPoints`.
+ * Custom quoted paths (`#self.'raw.path'`) are left unchanged.
+ * Segments that cannot be resolved are left as-is.
+ */
+export function localizeFormula(formula: string, schema: FamiliarSchema): string {
+  const variables = extractVariables(formula);
+  if (!variables.length) return formula;
+
+  let result = formula;
+  // Process in reverse order to preserve string indices
+  for (let i = variables.length - 1; i >= 0; i--) {
+    const v = variables[i];
+    if (v.customAccessPath !== undefined) continue;
+
+    // Find context entry: direct key or alias
+    const ctxEntry = Object.entries(schema).find(([k, ctx]) =>
+      k === v.context || ctx.aliases?.includes(v.context)
+    );
+    if (!ctxEntry) continue;
+    const [, ctx] = ctxEntry;
+    const localCtx = normalizeLabel(ctx.display) ?? v.context;
+
+    // Walk path, translating each canonical key to its localized display name
+    let current: unknown = ctx.properties;
+    const localPath: string[] = [];
+    for (const seg of v.path) {
+      if (typeof current !== 'object' || current === null) { localPath.push(seg); continue; }
+      const obj = current as Record<string, unknown>;
+      const entry = obj[seg];
+      if (entry === undefined) { localPath.push(seg); break; }
+      if (isFieldAspect(entry)) {
+        localPath.push(normalizeLabel(entry.display) ?? seg);
+        current = null;
+      } else {
+        const branch = entry as AspectGroup;
+        localPath.push(normalizeLabel(branch._display) ?? seg);
+        current = branch;
+      }
+    }
+
+    const localized = localPath.length ? `#${localCtx}.${localPath.join('.')}` : `#${localCtx}`;
+    result = result.substring(0, v.startIndex) + localized + result.substring(v.endIndex);
+  }
+  return result;
+}
+
+/**
+ * Translate a formula from localized display form back to canonical storage form.
+ *
+ * - `#Self.Hardness`   →  `#self.hardness`  (English)
+ * - `#Siebie.Twardość` →  `#self.hardness`  (Polish)
+ *
+ * Matches each segment against `normalizeLabel(entry.display)`. Falls through
+ * to the canonical key if no display match is found, so this is safe to call
+ * on formulas that are already canonical.
+ */
+export function canonicalizeFormula(formula: string, schema: FamiliarSchema): string {
+  const variables = extractVariables(formula);
+  if (!variables.length) return formula;
+
+  let result = formula;
+  for (let i = variables.length - 1; i >= 0; i--) {
+    const v = variables[i];
+    if (v.customAccessPath !== undefined) continue;
+
+    // Find canonical context key: direct match, localized display match, or alias
+    const ctxKV = Object.entries(schema).find(([k, ctx]) =>
+      k === v.context
+      || (normalizeLabel(ctx.display) ?? k) === v.context
+      || ctx.aliases?.includes(v.context)
+    );
+    if (!ctxKV) continue;
+    const [canonCtx, ctxSchema] = ctxKV;
+
+    // Walk path, mapping each localized segment back to its canonical key
+    let current: unknown = ctxSchema.properties;
+    const canonPath: string[] = [];
+    for (const seg of v.path) {
+      if (typeof current !== 'object' || current === null) { canonPath.push(seg); break; }
+      const obj = current as Record<string, unknown>;
+
+      // 1. Direct key match (already canonical or same-locale)
+      if (seg in obj) {
+        const entry = obj[seg];
+        canonPath.push(seg);
+        current = isFieldAspect(entry) ? null : (entry as AspectGroup);
+        continue;
+      }
+
+      // 2. Localized display name → canonical key
+      let matched = false;
+      for (const [k, v2] of Object.entries(obj)) {
+        if (k.startsWith('_')) continue;
+        const localKey = isFieldAspect(v2)
+          ? (normalizeLabel((v2 as FieldAspect).display) ?? k)
+          : (normalizeLabel((v2 as AspectGroup)._display) ?? k);
+        if (localKey === seg) {
+          canonPath.push(k);
+          current = isFieldAspect(v2) ? null : (v2 as AspectGroup);
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) { canonPath.push(seg); break; }
+    }
+
+    const canonical = canonPath.length ? `#${canonCtx}.${canonPath.join('.')}` : `#${canonCtx}`;
+    result = result.substring(0, v.startIndex) + canonical + result.substring(v.endIndex);
+  }
+  return result;
+}
+
+/**
  * Validate all variables in a formula
  * @param formula The formula string
  * @param context The familiar context
@@ -422,8 +591,11 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
   let contextSchema = context[variable.context];
 
   if (!contextSchema) {
-    // Try to find by alias
-    const foundKey = Object.keys(context).find(k => context[k].aliases?.includes(variable.context));
+    // Try to find by alias or localized display name
+    const foundKey = Object.keys(context).find(k =>
+      context[k].aliases?.includes(variable.context)
+      || (normalizeLabel(context[k].display) ?? '') === variable.context
+    );
     if (foundKey) {
       contextSchema = context[foundKey];
     }
@@ -471,21 +643,41 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
     if (key in obj) {
       current = obj[key];
     } else {
-      // Alias fallback — check if any sibling FieldAspect has this as an alias
-      const aliasMatch = Object.entries(obj).find(([, v]) =>
+      // Alias fallback — check leaf aliases then branch _aliases
+      const leafAlias = Object.entries(obj).find(([, v]) =>
         isFieldAspect(v) && v.aliases?.includes(key)
       );
-      if (aliasMatch) {
-        current = aliasMatch[1];
+      if (leafAlias) {
+        current = leafAlias[1];
       } else {
-        return {
-          variable: variable.variable,
-          context: variable.context,
-          path: variable.path,
-          error: `Property '${key}' not found on ${variable.context}${pathTraversed.length > 0 ? '.' + pathTraversed.join('.') : ''}`,
-          severity: 'error',
-          index: variable.startIndex,
-        };
+        const branchAlias = Object.entries(obj).find(([, v]) =>
+          typeof v === 'object' && v !== null && !isFieldAspect(v)
+          && (v as { _aliases?: string[] })._aliases?.includes(key)
+        );
+        if (branchAlias) {
+          current = branchAlias[1];
+        } else {
+          // Localized display name fallback
+          const localDisplay = Object.entries(obj).find(([k, v]) => {
+            if (k.startsWith('_')) return false;
+            const localKey = isFieldAspect(v)
+              ? normalizeLabel((v as FieldAspect).display)
+              : normalizeLabel((v as AspectGroup)._display);
+            return localKey === key;
+          });
+          if (localDisplay) {
+            current = localDisplay[1];
+          } else {
+            return {
+              variable: variable.variable,
+              context: variable.context,
+              path: variable.path,
+              error: `Property '${key}' not found on ${variable.context}${pathTraversed.length > 0 ? '.' + pathTraversed.join('.') : ''}`,
+              severity: 'error',
+              index: variable.startIndex,
+            };
+          }
+        }
       }
     }
     pathTraversed.push(key);
@@ -543,21 +735,27 @@ export function getAutocompleteOptions(
     const seenOptions = new Set<string>();
 
     for (const [name, schema] of Object.entries(context)) {
-      // Check if partial input matches the primary name or any alias
-      const matchesPrimary = !contextName || name.toLowerCase().startsWith(contextName.toLowerCase());
+      // Check if partial input matches the primary name, display label, or any alias
+      const displayName = schema.display ?? name;
+      const matchesPrimary = !contextName
+        || name.toLowerCase().startsWith(contextName.toLowerCase())
+        || displayName.toLowerCase().startsWith(contextName.toLowerCase());
       const matchesAlias = !matchesPrimary && schema.aliases?.some(
         alias => alias.toLowerCase().startsWith(contextName.toLowerCase())
       );
 
       if (matchesPrimary || matchesAlias) {
         if (!seenOptions.has(name)) {
-          const aliasHint = schema.aliases?.length ? ` (${schema.aliases.join(', ')})` : '';
+          // Show all aliases EXCEPT the display name itself to avoid redundancy
+          const otherAliases = schema.aliases?.filter(a => a !== displayName) ?? [];
+          const aliasHint = otherAliases.length ? ` (${otherAliases.join(', ')})` : '';
+          const insertCtx = normalizeLabel(displayName) ?? name;
           options.push({
-            path: name,
-            display: `${name}${aliasHint}`,
+            path: insertCtx,
+            display: `${displayName}${aliasHint}`,
             value: null,
             isLeaf: false,
-            fullPath: formatFull(name, '', ''),
+            fullPath: formatFull(insertCtx, '', ''),
           });
           seenOptions.add(name);
         }
@@ -575,10 +773,12 @@ export function getAutocompleteOptions(
     });
   }
 
-  // Find the context (or its alias)
+  // Find the context: direct key, localized display name, or alias
   let contextSchema = context[contextName];
   if (!contextSchema) {
-    const foundContext = Object.entries(context).find(([, schema]) => schema.aliases?.includes(contextName));
+    const foundContext = Object.entries(context).find(([, sch]) =>
+      sch.aliases?.includes(contextName) || (normalizeLabel(sch.display) ?? '') === contextName
+    );
     if (foundContext) {
       contextSchema = foundContext[1];
     }
@@ -593,10 +793,31 @@ export function getAutocompleteOptions(
 
   for (let i = 0; i < partialPath.length - 1; i++) {
     const key = partialPath[i];
-    if (typeof currentObj !== 'object' || currentObj === null || !(key in currentObj)) {
-      return [];
+    if (typeof currentObj !== 'object' || currentObj === null) return [];
+    const obj = currentObj as Record<string, unknown>;
+    if (key in obj) {
+      currentObj = obj[key];
+    } else {
+      // Leaf alias fallback
+      const leafMatch = Object.entries(obj).find(([, v]) => isFieldAspect(v) && v.aliases?.includes(key));
+      if (leafMatch) { currentObj = leafMatch[1]; continue; }
+      // Branch alias fallback
+      const branchMatch = Object.entries(obj).find(([, v]) =>
+        typeof v === 'object' && v !== null && !isFieldAspect(v)
+        && (v as { _aliases?: string[] })._aliases?.includes(key)
+      );
+      if (branchMatch) { currentObj = branchMatch[1]; continue; }
+      // Localized display name fallback
+      const localMatch = Object.entries(obj).find(([k, v]) => {
+        if (k.startsWith('_')) return false;
+        const localKey = isFieldAspect(v)
+          ? normalizeLabel((v as FieldAspect).display)
+          : normalizeLabel((v as AspectGroup)._display);
+        return localKey === key;
+      });
+      if (localMatch) { currentObj = localMatch[1]; }
+      else { return []; }
     }
-    currentObj = (currentObj as Record<string, unknown>)[key];
   }
 
   if (typeof currentObj !== 'object' || currentObj === null) {
@@ -617,8 +838,13 @@ export function getAutocompleteOptions(
     // Skip private properties
     if (key.startsWith('_')) continue;
 
-    // Match partial key against property name or aliases (case-insensitive)
-    const matchesKey = key.toLowerCase().startsWith(partialKey.toLowerCase());
+    // Compute the localized name for this entry (what gets inserted into the formula)
+    const localKey = isFieldAspect(value)
+      ? (normalizeLabel((value as FieldAspect).display) ?? key)
+      : (normalizeLabel((value as AspectGroup)._display) ?? key);
+    // Match partial key against canonical key, localized name, or leaf aliases (case-insensitive)
+    const matchesKey = key.toLowerCase().startsWith(partialKey.toLowerCase())
+      || localKey.toLowerCase().startsWith(partialKey.toLowerCase());
     const matchesAlias = !matchesKey && isFieldAspect(value) && value.aliases?.some(
       alias => alias.toLowerCase().startsWith(partialKey.toLowerCase())
     );
@@ -627,21 +853,22 @@ export function getAutocompleteOptions(
     if (isFieldAspect(value)) {
       const aliasHint = value.aliases?.length ? ` (${value.aliases.join(', ')})` : '';
       options.push({
-        path: key,
+        path: localKey,
         display: (value.display || key) + aliasHint,
         value: value.value ?? null,
         isLeaf: true,
-        fullPath: buildFullPath(key),
+        fullPath: buildFullPath(localKey),
         accessPath: value.accessPath,
       });
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       // It's a branch object
+      const branchDisplay = (value as { _display?: string })._display ?? key;
       options.push({
-        path: key,
-        display: key,
+        path: localKey,
+        display: branchDisplay,
         value: null,
         isLeaf: false,
-        fullPath: buildFullPath(key) + '.',
+        fullPath: buildFullPath(localKey) + '.',
       });
     }
   }
@@ -707,12 +934,18 @@ function hasPartialAspectMatch(context: FamiliarSchema, contextName: string, pat
     if (path[i] in obj) {
       current = obj[path[i]];
     } else {
-      // Alias fallback
-      const aliasMatch = Object.entries(obj).find(([, v]) =>
+      // Leaf alias fallback
+      const leafAlias = Object.entries(obj).find(([, v]) =>
         isFieldAspect(v) && v.aliases?.includes(path[i])
       );
-      if (aliasMatch) {
-        current = aliasMatch[1];
+      if (leafAlias) { current = leafAlias[1]; continue; }
+      // Branch alias fallback
+      const branchAlias = Object.entries(obj).find(([, v]) =>
+        typeof v === 'object' && v !== null && !isFieldAspect(v)
+        && (v as { _aliases?: string[] })._aliases?.includes(path[i])
+      );
+      if (branchAlias) {
+        current = branchAlias[1];
       } else {
         return false;
       }

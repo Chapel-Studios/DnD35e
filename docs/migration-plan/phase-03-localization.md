@@ -1,6 +1,6 @@
 # Phase 3: Localization Pattern
 
-**Status**: ✅ Approved
+**Status**: ✅ Complete
 
 > **Milestone**: POC  
 > **Dependencies**: None  
@@ -145,9 +145,9 @@ Phase 3 Completion decomposed into three parallel tracks:
 
 | Task | Routing | Blocking | Details |
 |------|---------|----------|---------|
-| **1.1: Create pre-localization utility** | Lead dev | 1.2 | Create `src/helpers/localization/preLocalizeConfig.mts` following dnd5e pattern. Recursively pre-localizes nested CONFIG objects, handles arrays, sets `.label` property on enum entries. Success: Function exists with JSDoc, handles nested structures. |
-| **1.2: Register i18nInit hook + add CONFIG keys to lang files** | Lead dev | 1.3 | Add `Hooks.once('i18nInit', () => preLocalizeConfig(CONFIG.DND35E))` to `main.mts`. Add localization keys to `src/lang/en/common.json` for: `dnd35e.CONFIG.Abilities.*`, `dnd35e.CONFIG.Skills.*`, `dnd35e.CONFIG.Sizes.*`, `dnd35e.CONFIG.DamageTypes.*`, `dnd35e.CONFIG.WeaponTypes.*`, `dnd35e.CONFIG.ArmorTypes.*`, `dnd35e.CONFIG.MaterialTypes.*`, `dnd35e.CONFIG.DamageReductionTypes.*`. Success: Hook registered, keys added, build succeeds. |
-| **1.3: Verify pre-localization at runtime** | Lead dev | None | Test in dev mode that CONFIG.DND35E enums have `.label` properties after i18nInit. Can log `CONFIG.DND35E.abilities.str.label` and see localized text. Success: Pre-localized values visible and correct. |
+| **1.1: Create pre-localization utility** | Lead dev | 1.2 | ✅ Complete. `src/helpers/localization/preLocalizeConfig.mts` created with `registerConfigPreLocalization()` and `preLocalizeConfig()`. |
+| **1.2: Register i18nInit hook + add CONFIG keys to lang files** | Lead dev | 1.3 | ✅ Complete. `Hooks.once('i18nInit', ...)` in `main.mts`; `SIZES_CONFIG`, `WEAPON_TYPES_CONFIG`, `DAMAGE_REDUCTION_TYPES_CONFIG` added to CONFIG; lang keys added to `attacks.json`. |
+| **1.3: Verify pre-localization at runtime** | Lead dev | None | ✅ Complete. Live-merge pattern verified in MaterialStore, PhysicalItemStore, DamageReductionTable. |
 
 ---
 
@@ -175,7 +175,7 @@ Phase 3 Completion decomposed into three parallel tracks:
 
 | Task | Routing | Blocking | Details |
 |------|---------|----------|---------|
-| **3.1: Formula Familiar dropdown — prop names → localized labels** | Lead dev | 3.4 | Locate formula familiar dropdown component displaying property names. Add mapping from prop names to localization keys. Update lang files with `dnd35e.FORMULA_FAMILIAR.PROPERTIES.*` entries. Update component to use `game.i18n.localize(key)` for display. Success: Dropdown shows human-readable localized labels, not raw prop names. |
+| **3.1: Formula Familiar dropdown — prop names → localized labels** | Lead dev | 3.4 | ✅ Complete. Full locale-transparent formula system implemented: (1) `gatherAspectsFromSchema` uses `ModelClass.schema.fields` (cached, localized via `LOCALIZATION_PREFIXES`) — `field.label` carries pre-localized text. `AspectGroup` keys remain canonical schema field names; `FieldAspect.display` carries the localized label. (2) `normalizeLabel()` converts display labels to PascalCase identifiers for use in `localizeFormula`/`canonicalizeFormula` — never used for tree keys. (3) `VARIABLE_REGEX` updated to `[\p{L}\p{N}_]+` (Unicode-aware) so Polish/Czech/etc names are recognized in stored formulas. (4) `localizeFormula(stored, schema)` translates `#self.hardness` → `#Self.Hardness` (en) / `#Siebie.Twardość` (pl) for display. (5) `canonicalizeFormula(display, schema)` reverses this: `#Siebie.Twardość` → `#self.hardness` for storage. (6) `FormulaFormGroup` and `AspectPicker` wired: display uses `localizeFormula`, save uses `canonicalizeFormula`. Autocomplete matches and inserts localized names; `fullPath` is the localized insertion text. (7) `buildDocumentFamiliar` derives localized context display names (`dnd35e.Formula.Context.Self`) and stores them in `FamiliarContext.display`. Result: stored formula is always canonical (`#self.hardness`); user sees and types localized form (`#Self.Hardness` / `#Siebie.Twardość`). |
 | **3.2: Sheet UI text audit — section headers, tabs, group labels** | Jr dev (lead review) | 3.4 | ✅ Complete. 8 raw label props + 3 inline strings identified and documented. |
 | **3.3: Button labels & action messages audit** | Jr dev | 3.4 | ✅ Complete. 2 raw button/aria strings found; deprecated LandingPad deferred. |
 | **3.4: Add localization keys to lang files** | Jr dev or flexible | 3.5 | ✅ Complete. Added `equippedSlotIds` to EQUIPPABLE.FIELDS, `IsInfinite` to quantity, `dnd35e.UI.EditField` and `dnd35e.UI.Content` to common.json. |

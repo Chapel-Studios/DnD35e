@@ -167,9 +167,9 @@ The plan is organized into **layers**. Each layer builds on the one before it. W
 
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
-| 1 | [Item Foundation (Weapon PoC)](phase-01-item-foundation.md) | ✅ Approved | — | Weapon DataModel, mixin chain, Vue sheet, Identifiable |
-| 2 | [Active Effect on Item (Material)](phase-02-active-effect-on-item.md) | ✅ Approved | Phase 1 | Material AE, phase system, stacking engine, proxy dispatcher, GeneralSystemModel |
-| 3 | [Localization](phase-03-localization.md) | ✅ Approved | — | LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels |
+| 1 | [Item Foundation (Weapon PoC)](phase-01-item-foundation.md) | ✅ Complete | — | Weapon DataModel, mixin chain, Vue sheet, Identifiable |
+| 2 | [Active Effect on Item (Material)](phase-02-active-effect-on-item.md) | 🔶 In Progress | Phase 1 | Material AE, phase system, stacking engine, proxy dispatcher, GeneralSystemModel |
+| 3 | [Localization](phase-03-localization.md) | ✅ Complete | — | LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels |
 
 **What Layer 1 proves**: Items exist with schemas. AEs modify items. Stacking works. i18n works.
 
