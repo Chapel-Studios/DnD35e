@@ -451,3 +451,17 @@ When planning a feature or phase, answer:
 @planning Plan [feature/phase]
 → Produces task breakdown, dependency map, parallelization analysis, skill routing
 ```
+
+## Phase Status Transitions
+
+When a phase changes status, **both** of these locations must be updated:
+
+1. **Phase doc header** (`docs/migration-plan/phase-NN-*.md`): `**Status**: 🔶 In Progress`
+2. **Roadmap table** (`docs/migration-plan/README.md`): matching row in the phase table
+
+Status progression (from the README legend):
+```
+📄 Stub → 📖 Rough Sketch → 📋 Outlined → 📝 Planned → ✅ Approved → 🔶 In Progress → ✅ Complete → 🔒 Hardened
+```
+
+The planning agent does not implement, but when producing a plan that moves a phase from `✅ Approved` → `🔶 In Progress`, note this in your output and remind the user to update both locations (or do it directly if asked).
