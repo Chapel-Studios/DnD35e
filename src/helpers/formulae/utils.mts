@@ -524,7 +524,28 @@ export function canonicalizeFormula(formula: string, schema: FamiliarSchema): st
         continue;
       }
 
-      // 2. Localized display name → canonical key
+      // 2. Leaf alias fallback (FieldAspect.aliases)
+      const leafAlias = Object.entries(obj).find(([, v2]) =>
+        isFieldAspect(v2) && v2.aliases?.includes(seg)
+      );
+      if (leafAlias) {
+        canonPath.push(leafAlias[0]);
+        current = null;
+        continue;
+      }
+
+      // 3. Branch alias fallback (AspectGroup._aliases)
+      const branchAlias = Object.entries(obj).find(([, v2]) =>
+        typeof v2 === 'object' && v2 !== null && !isFieldAspect(v2)
+        && (v2 as { _aliases?: string[] })._aliases?.includes(seg)
+      );
+      if (branchAlias) {
+        canonPath.push(branchAlias[0]);
+        current = branchAlias[1] as AspectGroup;
+        continue;
+      }
+
+      // 4. Localized display name → canonical key
       let matched = false;
       for (const [k, v2] of Object.entries(obj)) {
         if (k.startsWith('_')) continue;
@@ -749,7 +770,10 @@ export function getAutocompleteOptions(
           // Show all aliases EXCEPT the display name itself to avoid redundancy
           const otherAliases = schema.aliases?.filter(a => a !== displayName) ?? [];
           const aliasHint = otherAliases.length ? ` (${otherAliases.join(', ')})` : '';
-          const insertCtx = normalizeLabel(displayName) ?? name;
+          // Only PascalCase when display is explicitly set — inserting a normalized canonical
+          // key (e.g. 'Weapon' from 'weapon') produces a token that context resolution can't
+          // find back when display is undefined.
+          const insertCtx = schema.display ? (normalizeLabel(schema.display) ?? name) : name;
           options.push({
             path: insertCtx,
             display: `${displayName}${aliasHint}`,

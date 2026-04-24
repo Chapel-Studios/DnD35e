@@ -232,17 +232,19 @@ function gatherAspectsFromSchema(
   // Walk system-level fields (all schema fields live under document.system)
   walkFields(fields, context, 'system', result);
 
-  // Merge document-level fields (name, img, etc.) with localized keys
-  // Use game.i18n for the label so it works in all locales (lazy call — always after i18nInit)
+  // Merge document-level fields (name, img, etc.) with localized display labels.
+  // The tree key is ALWAYS the canonical 'name' — storage must be locale-independent.
+  // The localized PascalCase label (e.g. 'Name' in EN, 'Naam' in NL) is added as an alias
+  // so users can type either form; localizeFormula() will render the display form on output.
   const nameLabel = (game as { i18n?: { localize?(k: string): string } }).i18n?.localize?.('Name') ?? 'Name';
-  const nameKey = normalizeLabel(nameLabel) ?? 'name';
   const nameProp: FieldAspect = { display: nameLabel, type: 'string', accessPath: 'name' };
-  if (nameKey !== 'name') nameProp.aliases = ['name'];
+  const localizedNameKey = normalizeLabel(nameLabel);
+  if (localizedNameKey && localizedNameKey !== 'name') nameProp.aliases = [localizedNameKey];
   if (context) {
     const resolved = resolveValue(context, 'name', 'string');
     if (resolved !== undefined) nameProp.value = resolved;
   }
-  result[nameKey] = nameProp;
+  result['name'] = nameProp;
 
   return result;
 }
