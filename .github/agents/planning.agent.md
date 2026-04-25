@@ -1,6 +1,5 @@
 ---
 name: planning
-model: 'claude-3-5-sonnet-20241022'
 description: "D&D 3.5e planning specialist for task decomposition, parallelization, and team allocation. Break phases into atomic tasks, identify which can run in parallel, and route work to lead dev vs. jr devs based on complexity and skill requirements."
 tools: [search, read, vscode_listCodeUsages, agent, todo, edit, vscode.mermaid-chat-features/renderMermaidDiagram, vscode/askQuestions, execute/runInTerminal]
 ---
@@ -457,7 +456,7 @@ When planning a feature or phase, answer:
 When a phase changes status, **both** of these locations must be updated:
 
 1. **Phase doc header** (`docs/migration-plan/phase-NN-*.md`): `**Status**: 🔶 In Progress`
-2. **Roadmap table** (`docs/migration-plan/README.md`): matching row in the phase table
+2. **Roadmap table** (`docs/migration-plan/roadmap.md`): matching row in the phase table
 
 Status progression (from the README legend):
 ```

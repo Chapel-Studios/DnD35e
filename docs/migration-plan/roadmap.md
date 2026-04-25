@@ -1,0 +1,696 @@
+﻿# D35E ΓåÆ dnd35e Migration Plan
+
+> Rebuild of the legacy D35E system into a modern Foundry VTT v14 system using TypeScript, Vue 3, Vite, and modern data model patterns.
+
+---
+
+## Table of Contents
+
+- [Architecture Principles](#architecture-principles)
+- [Milestones](#milestones)
+  - [POC — Proof of Concept](#poc--proof-of-concept)
+  - [Alpha — Paladin vs Dragon](#alpha--paladin-vs-dragon)
+  - [Beta — Full System Coverage](#beta--full-system-coverage)
+  - [Release — Migration & Content](#release--migration--content)
+  - [Post-Release — Hardening & Bonus Features](#post-release--hardening--bonus-features)
+- [Current State](#current-state)
+- [Status Legend](#status-legend)
+- [Phase Overview](#phase-overview)
+  - [Wave: POC — Proof of Concept](#wave-poc--proof-of-concept)
+  - [Wave: Alpha — Paladin vs Dragon](#wave-alpha--paladin-vs-dragon)
+  - [Wave: Beta — Full System Coverage](#wave-beta--full-system-coverage)
+  - [Wave: Release — Migration & Content](#wave-release--migration--content)
+  - [Wave: Post-Release — Hardening & Bonus Features](#wave-post-release--hardening--bonus-features)
+- [Dependency Graph](#dependency-graph)
+
+---
+
+## Architecture Principles
+
+| Principle | Description |
+|-----------|-------------|
+| **One type at a time** | Add one representative of each document type, get it working end-to-end, then expand |
+| **Active Effects over embedded logic** | Anything that *modifies* another document's data should be an Active Effect type, not baked-in item logic. Items that grant bonuses dynamically generate AE changes in `prepareDerivedData()` (the Material pattern). |
+| **Component composition** | Use the existing mixin/component pattern (`PhysicalItem ΓåÆ EquippableItem ΓåÆ Weapon`) rather than deep inheritance |
+| **Vue 3 + Pinia sheets** | All sheets are Vue SFC apps with Pinia stores (already established) |
+| **Type-safe schemas** | `DataModel` subclasses with `defineSchema()` for every document type |
+| **Formula system** | Leverage FormulaFamiliar with `#context.property` syntax for all computed values |
+| **Two-phase effect application** | Initial phase (during `prepareEmbeddedDocuments`) and Final phase (during `prepareDerivedData`) |
+| **Actions live on items** | Items own their actions via the Action System; actions can be checks, attacks, spell casts, and can be chained into sequences |
+| **Localize early** | All user-facing strings use i18n keys ΓÇö no hardcoded English. Pre-localize CONFIG objects at init time. |
+| **Compendium as source of truth** | All SRD content stored as JSON in source, built to Foundry packs. Compendium browsers provide amalgamated cross-pack search. |
+| **Bonus type stacking** | Stacking engine with `bonusType` field. Highest-wins resolution (except dodge/untyped/circumstance ΓÇö always stack). Penalties always apply. |
+| **Document store refresh on update** | Override `update()` on all document classes to refresh active Pinia stores, ensuring Vue reactivity stays in sync with Foundry's data layer |
+| **Build toward the Action System** | Every phase that touches combat data (BAB, saves, AC, feats, conditions) is designed knowing its output will feed the ActionDataModel, TurnActionBudget, and ExecutionEngine. No throwaway combat code. |
+| **Building-block phases** | Each phase produces a testable building block that unlocks the next. Phases are layered by *system dependency*, not by item type. |
+| **Combat state on `system` fields** | Turn economy (TurnActionBudget) and other combat runtime state is persisted via `Combatant.system` using a `TypeDataModel` schema ΓÇö not in-memory Maps or transient class properties. Foundry stores Combat/Combatant documents in LevelDB (`combats.db`), so all combat state survives server restarts. Players can update their own combatant's `system` data per Foundry's permission model. |
+
+---
+
+## Milestones
+
+### POC — Proof of Concept
+
+**Goal**: Foundation, data infrastructure, and testing patterns ΓÇö every building block exists in isolation before being composed. Items, Active Effects, actors, tokens, rolls, compendium foundations, and the test framework all work independently.
+
+**What POC includes**:
+- Weapon item with full DataModel, mixin chain, Vue sheet, Identifiable mixin
+- Material AE with phase system, stacking engine, proxy dispatcher
+- Localization infrastructure (LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels)
+- Testing infrastructure (Vitest, integration harness, mock helpers, CI pipeline) ΓÇö patterns established early so every subsequent phase includes tests
+- Compendium foundation (pack pipeline, origin tracking, UUID helpers, migration version field)
+- Actor foundation (Character actor: abilities, AC shell, HP, saves, skills, inventory, tokens, equipment slots)
+- Roll formulas (D20Roll, DamageRoll, FormulaFamiliar roll data, formula paths)
+
+**What POC does NOT include**: Classes, races, feats, combat, spells, conditions, or any gameplay logic.
+
+**POC exit criteria**: A Character actor exists on a scene with derived ability scores, saves, HP, and skills. Weapons can be created, identified, and equipped. Material AEs modify item stats with correct stacking. Roll formulas resolve with FormulaFamiliar context. Compendium items can be imported with origin tracking. All strings are localized. Test framework is in place with unit/integration test examples covering poc.1–poc.3.
+
+---
+
+### Alpha — Paladin vs Dragon
+
+**Goal**: A playable combat scenario proving "one of everything" ΓÇö every building block composed end-to-end. A level 5 Paladin (Human) with a +1 longsword and a Young Adult Black Dragon fight on a grid. The Paladin proves class features, spellcasting (RAW), enhancement stacking, and morale bonus collision. The Dragon proves natural attacks, breath weapon, monster class progression, and frightful presence.
+
+**What Alpha includes**:
+- Two races: Human (simple) and Black Dragon (monster class progression, locked levels, natural armor, breath weapon, flight, immunities)
+- One class: Paladin (Med BAB, Good Fort, level-up, class features via grant schedule)
+- Class features: Divine Grace (CHA ΓåÆ saves), Smite Evil (per-day toggle), Lay on Hands (pool-based healing), Aura of Courage (+4 morale vs fear)
+- RAW Paladin spellcasting: 1st-level spells (Bless, Protection from Evil, Divine Favor, Cure Light Wounds)
+- +1 longsword (enhancement AE on weapon, +1 enhancement to attack/damage)
+- Three feat archetypes: passive (Weapon Focus), toggle (Power Attack), trigger (Cleave)
+  - Level 1 character feat: Power Attack (STR 13 Γ£ô)
+  - Level 1 Human bonus feat: Weapon Focus (Longsword) (BAB +1 Γ£ô)
+  - Level 3 character feat: Cleave (requires Power Attack Γ£ô)
+- Action System: ActionDataModel, chains, execution engine, combat maneuvers (trip, grapple, bull rush)
+- Natural attacks: bite, claw, wing, tail ΓÇö primary/secondary rules, multi-attack
+- Combat tracker with initiative, turns, TurnActionBudget state machine, progressive full attack
+- Breath weapon: 80ft line of acid, Reflex save, area template (line/cone)
+- Conditions: Prone (trip pipeline), Frightful Presence ΓåÆ Shaken/Frightened (fear track stub)
+- Per-attack chat cards with stacking history showing bonus type collision resolution
+- **Stacking proof**: Aura of Courage (+4 morale) vs Bless (+1 morale) on saves vs fear ΓÇö engine picks +4, rejects +1, chat card shows suppression reason
+
+**What Alpha does NOT include**: Equipment AC (flat numbers only), full spellbook system (only Paladin 1st-level), psionics, consumables, NPC actor type (Dragon is a Character with progression), full enhancements (+2 through +5, special abilities), auras affecting allies, full condition set, data migration.
+
+**Alpha exit criteria**: A GM can create a level 5 Paladin (Human) with a +1 longsword and a Young Adult Black Dragon (built via monster class progression), enter combat, roll initiative, take turns with the progressive full attack state machine, apply Power Attack per-attack, get a Cleave bonus attack on kill, activate Smite Evil via PreRollDialog, use Lay on Hands to heal, cast Bless and Divine Favor (RAW spell slots), see morale stacking collision on fear saves (Aura of Courage +4 suppresses Bless +1), trip an enemy to apply Prone, use a breath weapon (line template with Reflex save), trigger Frightful Presence (Will save vs fear with Aura of Courage granting +4 morale), see natural attacks use primary/secondary rules, see +1 enhancement bonus from longsword in stacking breakdown, and view all results in per-attack chat cards.
+
+---
+
+### Beta — Full System Coverage
+
+**Goal**: Expand from one-of-everything to complete D&D 3.5e system coverage. All item types, NPC/Object/Trap actor types, full condition/buff system, full spellcasting, equipment with AC, full enhancements, companions, psionics.
+
+**Progression philosophy**: Alpha built the engine and proved the architecture handles real D&D complexity. Beta puts more content through it ΓÇö more item types, more conditions, more feat patterns, full spellcasting. Each new content type proves a variation of the existing architecture, not a new architecture.
+
+> **≡ƒôî Milestone placement notes**:
+> - **Epic Level Rules**: Post-Release ΓÇö epic is SRD content and exists in D35E.
+> - **Psionics**: Beta (foundation) + Post-Release (full). SRD OGC content, exists in D35E.
+> - **Cards**: Post-Release. Card decks exist in D35E ΓÇö small utility, can wait.
+> - **Post-Release (Bonus)**: Features that do NOT exist in D35E (Sight/Concealment, Stat Block, Vigor/Wound, Environmental Hazards, Random Treasure Gen, Variant Rules, Divine Rules).
+
+---
+
+### Release — Migration & Content
+
+**Goal**: Migrate existing D35E worlds and content to the new system. Compendium browser & management, SRD content packs, world migration tools.
+
+---
+
+### Post-Release — Hardening & Bonus Features
+
+**Goal**: Community hardening, documentation, third-party integrations, and bonus features. Epic level rules, full psionics, cards, divine rules, variant rules, and features that don't exist in D35E.
+
+---
+
+## Current State
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Weapon** item type | ∩┐╜ Planned | Data model done. Vue sheet details, effects tab, tests remaining. |
+| **Material** active effect | Γ£à Approved | Material AE pattern established. Stacking engine, GeneralSystemModel, v14 CONFIG setup, integration designed. |
+| **PhysicalItem / EquippableItem** chain | ∩┐╜ Planned | Weight, price, hardness, HP, equipment slots ΓÇö schema done, tests remaining |
+| **Identifiable document** mixin | ∩┐╜ Planned | Tracked/identified states with formula-driven names. Uses `system.slug` |
+| **Actor (character)** type shell | Γ£à Exists | Shell only ΓÇö no meaningful system data yet |
+| **Token / Scene** type wrappers | Γ£à Exists | Type aliases, no custom logic |
+| **Active Effect phase system** | Γ£à Approved | Phase system, stacking engine, GeneralSystemModel designed in poc.2. v14 CONFIG integration planned. |
+| **Settings framework** | Γ£à Complete | Combat, display, health, roll, skills, currency, game rules categories |
+| **FormulaFamiliar system** | Γ£à Complete | Schema-driven autocomplete with `#context.property` syntax |
+| **Build pipeline** | Γ£à Complete | Vite + Vue SFC + SASS + lang merge |
+
+---
+
+## Status Legend
+
+| Symbol | Meaning | Description |
+|--------|---------|-------------|
+| ≡ƒôä Stub | Stub | It's an idea ΓÇö no ideation done. Phase file is just loose notes. |
+| ≡ƒôû Rough Sketch | Rough Sketch | Fleshed-out ideas exist, but major design questions remain. |
+| ≡ƒôï Outlined | Outlined | Well thought out ΓÇö maybe a couple of open questions. |
+| ≡ƒô¥ Planned | Planned | Confident enough to execute independently without design issues. |
+| Γ£à Approved | Approved | Reached Planned, then confirmed by the user. |
+| ≡ƒö╢ In Progress | In Progress | Approved and actively being implemented. |
+| Γ£à Complete | Complete | All work items finished. |
+| ≡ƒöÆ Hardened | Hardened | Tested by users and considered bug-free. |
+
+---
+
+## Phase Overview
+
+Phases are organized by **wave**. Each wave maps to a subfolder (`poc/`, `alpha/`, `beta/`, `release/`, `post-release/`) and phases restart at `01` within each wave. This means adding a phase to an earlier wave never renumbers a later one.
+
+Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
+
+---
+
+### Wave: POC â€” Proof of Concept
+
+`docs/migration-plan/poc/` | poc.1â€“poc.7
+
+**Goal**: Foundation, data infrastructure, and testing patterns. Every building block exists in isolation before being composed.
+
+| # | Phase | Status | Dependencies | Notes |
+|---|-------|--------|--------------|-------|
+| 1 | [Item Foundation](poc/phase-01-item-foundation.md) | âœ… Complete | â€” | Weapon DataModel, mixin chain, Vue sheet, Identifiable |
+| 2 | [Active Effect on Item](poc/phase-02-active-effect-on-item.md) | ðŸ”¶ In Progress | poc.1 | Material AE, phase system, stacking engine, proxy dispatcher, GeneralSystemModel |
+| 3 | [Localization](poc/phase-03-localization.md) | âœ… Complete | â€” | LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels |
+| 4 | [Testing Infrastructure](poc/phase-04-testing-infrastructure.md) | ðŸ“ Planned | poc.1 | Vitest, Foundry mocks, coverage tooling â€” establishes test patterns; back-fills poc.1â€“3 tests |
+| 5 | [Compendium Foundation](poc/phase-05-compendium-foundation.md) | ðŸ“ Planned | poc.1, poc.2, poc.3 | Pack pipeline, origin tracking, UUID helpers, migration version field |
+| 6 | [Actor Foundation](poc/phase-06-actor-foundation.md) | ðŸ“‹ Outlined | poc.1, poc.3 | Character actor: abilities, AC shell, HP, saves, skills, inventory, tokens, equipment slots |
+| 7 | [Roll Formulas & Custom Rolls](poc/phase-07-roll-formulas.md) | ðŸ“‹ Outlined | poc.6 | D20Roll, DamageRoll, FormulaFamiliar roll data, formula paths |
+
+**Exit criteria**: A Character actor exists on a scene with derived ability scores, saves, HP, and skills. Weapons can be created, identified, and equipped. Material AEs modify item stats with correct stacking. Roll formulas resolve with FormulaFamiliar context. Compendium items can be imported with origin tracking. All strings are localized. Test framework is in place with unit/integration test examples covering poc.1â€“3.
+
+> **Phase 6 includes Token & Scene**: Token placement, size derivation, Pinia token store, and actor â†” token linking are part of getting actors visible on the table. TargetingManager stub and movement/action economy integration remain in alpha.7.
+
+---
+
+### Wave: Alpha â€” Paladin vs Dragon
+
+`docs/migration-plan/alpha/` | alpha.1â€“alpha.11
+
+**Goal**: A playable combat scenario proving "one of everything." A level 5 Paladin (Human) with a +1 longsword vs a Young Adult Black Dragon.
+
+| # | Phase | Status | Dependencies | Notes |
+|---|-------|--------|--------------|-------|
+| 1 | [Races & Progression](alpha/phase-01-races-progression.md) | ðŸ“‹ Outlined | poc.5, poc.7 | Race item, creature types, Progression component, grant system, monster class progression, natural armor, senses, Human + Black Dragon |
+| 2 | [Classes & Level History](alpha/phase-02-classes-level-history.md) | ðŸ“‹ Outlined | alpha.1 | Class item, level-up flow, BAB/save aggregation, skills, milestones, multiclass, Paladin |
+| 3 | [Action System](alpha/phase-03-action-system.md) | ðŸ“‹ Outlined | poc.7, alpha.2 | ActionDataModel, execution engine, attack/damage, chat cards, combat maneuvers (trip, grapple, bull rush), stacking history display |
+| 4 | [Feats](alpha/phase-04-feats.md) | ðŸ“‹ Outlined | poc.6, alpha.3 | Feat item, 3 archetypes: passive (Weapon Focus), toggle (Power Attack), trigger (Cleave). PreRollDialog. Conditional bonuses. |
+| 5 | [Natural & Special Attacks](alpha/phase-05-natural-attacks.md) | ðŸ“‹ Outlined | alpha.3 | Natural attack item type, primary/secondary, multi-attack full-attack generation, TWF iteratives, bite/claw/wing/tail |
+| 6 | [Class Features](alpha/phase-06-class-features.md) | ðŸ“‹ Outlined | alpha.2, alpha.3, alpha.4 | Paladin: Divine Grace (CHAâ†’saves), Smite Evil (per-day toggle), Lay on Hands (pool healing), Aura of Courage (+4 morale vs fear) |
+| 7 | [Combat Tracker & Turn Economy](alpha/phase-07-combat-tracker.md) | ðŸ“‹ Outlined | alpha.3 | Initiative, TurnActionBudget state machine, progressive full attack, token movement with action cost, turn hooks, flat-footed |
+| 8 | [Conditions](alpha/phase-08-conditions.md) | ðŸ“‹ Outlined | alpha.3 | Prone (trip pipeline), Frightful Presence â†’ Shaken/Frightened (fear track stub), condition manager, token icons, stand-up action |
+| 9 | [Breath Weapon & Area Templates](alpha/phase-09-breath-weapon.md) | ðŸ“‹ Outlined | alpha.3, alpha.7 | Line and cone MeasuredTemplate placement, Reflex save workflow, area damage application, breath weapon recharge |
+| 10 | [Spells](alpha/phase-10-spells.md) | ðŸ“‹ Outlined | poc.6, poc.7, alpha.3 | Spell item type, Paladin spellbook, 1st-level slots, cast action, Bless/Protection from Evil/Divine Favor/Cure Light Wounds |
+| 11 | [Enhancement](alpha/phase-11-enhancements.md) | ðŸ“‹ Outlined | poc.1, poc.2 | +1 longsword: minimal EnhancementSystemModel, one AE with +1 enhancement to attack/damage |
+
+**Exit criteria**: A GM can create a level 5 Paladin (Human) with a +1 longsword and a Young Adult Black Dragon, enter combat, roll initiative, take turns with the progressive full attack state machine, apply Power Attack per-attack, get a Cleave bonus attack on kill, activate Smite Evil via PreRollDialog, use Lay on Hands to heal, cast Bless and Divine Favor (RAW spell slots), see morale stacking collision on fear saves (Aura of Courage +4 suppresses Bless +1), trip an enemy to apply Prone, use a breath weapon (line template with Reflex save), trigger Frightful Presence (Will save vs fear with Aura of Courage granting +4 morale), see natural attacks use primary/secondary rules, and view all results in per-attack chat cards.
+
+> **Races and Classes share the Progression component.** alpha.1 builds it; alpha.2 reuses it. Classes depend on Races because both use the same grant scheduling and level history infrastructure.
+
+> **Action System stays monolithic.** Combat maneuvers (trip, grapple, bull rush, disarm, sunder, overrun) live here because Trip â†’ Prone is an Alpha exit criterion.
+
+---
+
+### Wave: Beta â€” Full System Coverage
+
+`docs/migration-plan/beta/` | beta.1â€“beta.10
+
+**Goal**: Expand from one-of-everything to complete D&D 3.5e system coverage. All item types, NPC/Object/Trap actor types, full condition/buff system, full spellcasting, equipment with AC, full enhancements, companions, psionics.
+
+| # | Phase | Status | Dependencies | Notes |
+|---|-------|--------|--------------|-------|
+| 1 | [Equipment & Loot](beta/phase-01-equipment-loot.md) | ðŸ“– Rough Sketch | poc.6, poc.7 | Armor, Shield, Equipment, Loot, Container, Ammo. Full AC calculation. ACP, spell failure, encumbrance. |
+| 2 | [Spells & Spellbooks (Full)](beta/phase-02-spells-spellbooks.md) | ðŸ“– Rough Sketch | poc.7, alpha.3, alpha.10 | All caster types, all spell levels, SR, concentration, counterspelling stubs. Multiple spellbooks. |
+| 3 | [Buffs & Conditions (Full)](beta/phase-03-buffs-conditions.md) | ðŸ“– Rough Sketch | alpha.8, beta.1 | All 25+ conditions, BuffSystemModel AE, ability damage/drain, energy drain, fast healing, regeneration, disease, full fear track |
+| 4 | [Consumables](beta/phase-04-consumables.md) | ðŸ“– Rough Sketch | alpha.3 | Potion, scroll, wand, poison. Action snapshot pattern. Charges/uses. Splash weapons. |
+| 5 | [Advanced Actors](beta/phase-05-advanced-actors.md) | ðŸ“– Rough Sketch | poc.6, alpha.1, alpha.2 | NPC, Trap, Object actor types. Companion bond system (familiar, animal companion, mount, summon, cohort). Portrait Bar (Party HUD). |
+| 6 | [Area Effects & Auras (Full)](beta/phase-06-area-effects-auras.md) | ðŸ“– Rough Sketch | alpha.9, beta.2 | Foundry V14 Region behaviors, persistent auras, AE delivery, duration tracking, DoT. Aura of Courage expands to affect allies in 10ft. |
+| 7 | [Enhancements (Full)](beta/phase-07-enhancements.md) | ðŸ“– Rough Sketch | alpha.11, beta.1 | +1 through +5, special weapon/armor abilities, cursed items (minimal). Magic Weapon spell stacking proof. |
+| 8 | [Metamagic](beta/phase-08-metamagic.md) | ðŸ“– Rough Sketch | alpha.4, beta.2 | Metamagic feats, spell level adjustment, prepared vs spontaneous timing. |
+| 9 | [Full Spells](beta/phase-09-full-spells.md) | ðŸ“– Rough Sketch | beta.6, beta.8 | SR, concentration, counterspelling, all delivery types, AoE spell chains. |
+| 10 | [Psionics](beta/phase-10-psionics.md) | ðŸ“– Rough Sketch | beta.2 | Power item, power points, augmentation, psionic disciplines, manifester level. |
+
+---
+
+### Wave: Release â€” Migration & Content
+
+`docs/migration-plan/release/` | release.1â€“release.2
+
+**Goal**: Migrate existing D35E worlds and content to the new system.
+
+| # | Phase | Status | Dependencies | Notes |
+|---|-------|--------|--------------|-------|
+| 1 | [Compendium Browser & Management](release/phase-01-compendium-browser.md) | ðŸ“– Rough Sketch | poc.5, beta.1+ | Cross-compendium search, rich indexing, schema migration runner, diff view |
+| 2 | [Content Migration](release/phase-02-content-migration.md) | ðŸ“– Rough Sketch | release.1 | D35E â†’ dnd35e transforms, backup/validate/import workflow, world migration runner |
+
+---
+
+### Wave: Post-Release â€” Hardening & Bonus Features
+
+`docs/migration-plan/post-release/` | post.1â€“post.14
+
+**Goal**: Community hardening, documentation, third-party integrations, and bonus features that don't exist in D35E.
+
+| # | Phase | Status | Dependencies | Notes |
+|---|-------|--------|--------------|-------|
+| 1 | [Community Hardening](post-release/phase-01-community-hardening.md) | ðŸ“– Rough Sketch | release.2 | Playtesting feedback, balance tuning, default value adjustments |
+| 2 | [Documentation & SRD](post-release/phase-02-documentation-srd.md) | ðŸ“– Rough Sketch | post.1 | User guide, SRD journal housing, tutorials, FAQ |
+| 3 | [3rd Party Art Module Support](post-release/phase-03-art-module-support.md) | ðŸ“– Rough Sketch | poc.5, release.1 | Art module lookup, GM configurator, per-item art override |
+| 4 | [Module Integration Testing](post-release/phase-04-module-integration.md) | ðŸ“– Rough Sketch | release.2 | Compatibility matrix, integration helpers, per-module testing |
+| 5 | [Epic Level Rules](post-release/phase-05-epic-level-rules.md) | ðŸ“– Rough Sketch | alpha.2, alpha.4, beta.2 | Epic BAB/saves, epic feats, epic spellcasting, epic DR (SRD content, exists in D35E) |
+| 6 | [Psionic Rules (Full)](post-release/phase-06-psionic-rules-full.md) | ðŸ“– Rough Sketch | beta.10, beta.7, post.5 | Full psionic expansion: prestige classes, psi-spell transparency, psionic items, feats |
+| 7 | [Cards](post-release/phase-07-cards.md) | ðŸ“– Rough Sketch | alpha.3 | Card item for tracking abilities, conditions, resources. Counters with rest resets. |
+| 8 | [Sight Distance / Concealment](post-release/phase-08-sight-concealment.md) | ðŸ“„ Stub | beta.6 | Concealment as region behavior |
+| 9 | [Stat Block Sheet (NPC alternate view)](post-release/phase-09-stat-block-sheet.md) | ðŸ“„ Stub | beta.5 | Read-only stat block layout |
+| 10 | [Vigor/Wound Variant HP](post-release/phase-10-vigor-wound-hp.md) | ðŸ“„ Stub | poc.6 | Variant HP system (does not exist in D35E) |
+| 11 | [Environmental Hazards & Overland Travel](post-release/phase-11-environmental-hazards.md) | ðŸ“„ Stub | poc.6, beta.3 | Falling, drowning, heat/cold, forced march (does not exist in D35E) |
+| 12 | [Divine Rules (Divine Ranks & Powers)](post-release/phase-12-divine-rules.md) | ðŸ“„ Stub | beta.5 | Divine ranks, salient abilities |
+| 13 | [Variant Rules (Unearthed Arcana OGC)](post-release/phase-13-variant-rules.md) | ðŸ“„ Stub | post.1 | Gestalt, flaws, traits (does not exist in D35E) |
+| 14 | [Random Treasure Generation](post-release/phase-14-random-treasure.md) | ðŸ“„ Stub | beta.1 | Treasure by CR tables |
+
+---
+
+## Dependency Graph
+
+```mermaid
+flowchart TD
+    subgraph POC["ðŸ”· POC â€” Proof of Concept"]
+        P1["poc.1 Weapon"]
+        P2["poc.2 Material AE"]
+        P3["poc.3 i18n"]
+        P4["poc.4 Testing"]
+        P5["poc.5 Compendium"]
+        P6["poc.6 Actor + Token"]
+        P7["poc.7 Roll Formulas"]
+        P1 --> P2
+    end
+    P1 --> P4
+    P1 --> P5
+    P2 --> P5
+    P3 --> P5
+    P1 --> P6
+    P3 --> P6
+    P6 --> P7
+
+    subgraph ALPHA["ðŸ”¶ Alpha â€” Paladin vs Dragon"]
+        A1["alpha.1 Races"]
+        A2["alpha.2 Classes"]
+        A3["alpha.3 Action System"]
+        A4["alpha.4 Feats"]
+        A5["alpha.5 Natural Attacks"]
+        A6["alpha.6 Class Features"]
+        A7["alpha.7 Combat Tracker"]
+        A8["alpha.8 Conditions"]
+        A9["alpha.9 Breath Weapon"]
+        A10["alpha.10 Spells"]
+        A11["alpha.11 Enhancement"]
+        A1 --> A2
+        A2 --> A3
+        A3 --> A4
+        A3 --> A5
+        A3 --> A6
+        A4 --> A6
+        A2 --> A6
+        A3 --> A7
+        A3 --> A8
+        A3 --> A9
+        A7 --> A9
+        A3 --> A10
+    end
+    P5 --> A1
+    P7 --> A1
+    P6 --> A4
+    P6 --> A10
+    P7 --> A10
+    P1 --> A11
+    P2 --> A11
+
+    subgraph BETA["ðŸŸ¡ Beta â€” Full System Coverage"]
+        B1["beta.1 Equipment"]
+        B2["beta.2 Spells Full"]
+        B3["beta.3 Buffs/Conditions"]
+        B4["beta.4 Consumables"]
+        B5["beta.5 Advanced Actors"]
+        B6["beta.6 Area Effects"]
+        B7["beta.7 Enhancements"]
+        B8["beta.8 Metamagic"]
+        B9["beta.9 Full Spells"]
+        B10["beta.10 Psionics"]
+    end
+    P6 --> B1
+    P7 --> B1
+    P7 --> B2
+    A3 --> B2
+    A10 --> B2
+    A8 --> B3
+    B1 --> B3
+    A3 --> B4
+    P6 --> B5
+    A1 --> B5
+    A2 --> B5
+    A9 --> B6
+    B2 --> B6
+    A11 --> B7
+    B1 --> B7
+    A4 --> B8
+    B2 --> B8
+    B6 --> B9
+    B8 --> B9
+    B2 --> B10
+
+    subgraph REL["ðŸŸ¢ Release"]
+        R1["release.1 Compendium Browser"]
+        R2["release.2 Content Migration"]
+        R1 --> R2
+    end
+    P5 --> R1
+    B1 --> R1
+
+    subgraph POST["âšª Post-Release"]
+        PR1["post.1 Community Hardening"]
+        PR2["post.2 Documentation"]
+        PR3["post.3 Art Module"]
+        PR5["post.5 Epic Level"]
+        PR6["post.6 Psionics Full"]
+        PR7["post.7 Cards"]
+    end
+    R2 --> PR1
+    PR1 --> PR2
+    P5 --> PR3
+    R1 --> PR3
+    A2 --> PR5
+    A4 --> PR5
+    B2 --> PR5
+    B10 --> PR6
+    A3 --> PR7
+```
+
+---
+## Cross-Cutting Concerns
+
+These apply across multiple phases and should be kept in mind throughout.
+
+### Bonus Type Stacking
+The `Dnd35eEffectChangeData` is extended with a `bonusType` field that determines stacking resolution. During `applyActiveEffects()`, bonuses of the same type to the same field only apply the highest value (except dodge, untyped, and circumstance ΓÇö which always stack). Penalties always apply. For Material AEs, bonus type is auto-set based on subtype and never exposed to the UI. How bonus type is exposed for other AE types is determined per-phase.
+
+**Alpha stacking proof** ΓÇö Paladin attacking with a +1 longsword under Bless + Divine Favor + Aura of Courage:
+
+*Attack roll bonuses*:
+- +3 BAB (base)
+- +STR (ability, untyped ΓÇö always stacks)
+- +1 enhancement (longsword ΓÇö enhancement type)
+- +1 morale (Bless ΓÇö morale type, only morale on attack, applies)
+- +1 luck (Divine Favor ΓÇö luck type, applies)
+
+*Save vs fear (e.g., Dragon's Frightful Presence)*:
+- +base save + ability mod + CHA via Divine Grace (untyped)
+- +4 morale (Aura of Courage) ΓÇö **APPLIED** (higher morale)
+- +1 morale (Bless) ΓÇö **REJECTED** (same type, lower value)
+- Chat card: "Bless (+1 morale) ΓÇö suppressed by Aura of Courage (+4 morale)"
+
+This proves the stacking engine resolves per-field, not per-source ΓÇö the same Bless spell applies its morale bonus to attack rolls (where it's the only morale source) but gets suppressed on fear saves (where Aura of Courage provides a higher morale bonus).
+
+### Stacking History & Transparency
+The stacking engine tracks detailed history of which bonuses were applied and which were rejected (and why). Stored as `system._stackingHistory`, consumed by the Action System for chat card display. Players can expand/collapse calculations. Every bonus type that uses highest-wins resolution **must track the losers**.
+
+### Dual-Stack Resolution (Masked Effects)
+When items have **unidentified effects** (e.g., a hidden +2 enhancement), the stacking engine runs **twice** ΓÇö once with all bonuses (real stack, used for the actual die roll) and once with only player-visible bonuses (masked stack, used for the player's chat card breakdown). The two stacks can produce **different winners** in highest-wins resolution: if the player casts Magic Weapon (+1 enhancement) on a secretly +2 sword, the player sees "+1 enhancement" in their breakdown, but the real roll uses +2 (the hidden enhancement suppresses Magic Weapon). The gap between the player's perceived total and the die result is intentional ΓÇö the character doesn't know why the sword performs better than expected. Both histories are stored in chat message flags so the card can re-render for either audience. See Phase 2 ┬º2.5.2 for the algorithm.
+
+### Player Edit Secrets
+When a player with edit permission modifies a field that is masked by the identification system, the edit is intercepted and routed into a **Player Edit Secret** ΓÇö a system-managed Active Effect at higher priority than the mask. This prevents the player from overwriting the GM's hidden data while still letting the player's edit appear in the masked (player-visible) stack. The Player Edit Secret is system-managed but **GM-deletable**, accumulates all masked-field edits into a single AE per item, and is excluded from the real stack. No match-checking is performed against the underlying mask value. See Phase 28 ┬º28.10 for the full design.
+
+### Formula Evaluation & Error Surfacing
+The `FormulaFormGroup` component handles field-level formula validation. System-level formula evaluation errors during `prepareDerivedData()` need surfacing via a preparation warning system.
+
+### Document Store Refresh
+All document classes override `update()` to refresh active Pinia stores. Pattern established from Phase 1 and maintained for every new document type.
+
+### Pre-localization
+CONFIG objects (abilities, skills, sizes, damage types, etc.) are pre-localized at system init time. Established in Phase 3.
+
+### Grant System
+First built in Phase 8 (Races & Progression), reused in Phase 9 (Classes). Flat array of entries, each specifying a level threshold and a grant action:
+- **Auto-grant**: `{ at: level, type: "grant", uuid }` ΓÇö instantiates a compendium item.
+- **Choice from list**: `{ at: level, type: "choice", from: [uuid, ...] }` ΓÇö player picks.
+- **Choice from filter**: `{ at: level, type: "choice", filter: { type, featType, ... } }` ΓÇö filtered compendium browser.
+
+Granted items receive `grantedBy: { sourceId, level }` provenance. Level-down removes matching items.
+
+### Schedule System (Value Scaling)
+Features own their own scaling via `system.schedules`. Each entry targets a field path and defines a threshold table keyed on a formula reference (e.g., `@classes.rogue.level`). Replaces D35E's nested ternary patterns.
+
+### Progression Component
+Shared data structure in both **Class** and **Race** items. Contains HD size, BAB rate, save progression, skill points per level, and grant schedule. The level-up system aggregates all progressions ΓÇö no distinction between class and racial HD. Standard races (Human) have no progression. Monstrous races (Dragon) embed progressions that appear alongside class progressions.
+
+BAB and save progressions use standardized rates (High/Med/Low BAB, Good/Poor saves). Creature type determines defaults via lookup table ΓÇö "Dragon" auto-fills d12 HD, Good BAB, Good Fort/Ref/Will.
+
+### Level History
+Characters track an immutable ledger: `system.levelHistory: LevelRecord[]`. Each record captures progression source, HP breakdown (die size, roll, permanent CON mod), skill allocation, ability score increase, grants, and choices. BAB, saves, and total HP are **derived** from history + schedules in `prepareDerivedData()` ΓÇö never stored.
+
+Monster class progressions break creature abilities into a class-like progression starting at 1 HD. Specific levels can override HD to 0 via `hdOverride` ΓÇö these grant racial abilities but no HP/skills/milestone.
+
+### Soft Validation (Edit Rules)
+No hard locks. Warnings are computed in `prepareDerivedData()` and stored as `derived.levelWarnings` ΓÇö never persisted, always recomputed.
+
+### Advancement: Milestones vs XP
+Default: milestone. Optional XP mode via `advancementMode` setting with GM-defined XP table. Party level-up scene control button (GM-only).
+
+### Central Prerequisite Registry
+During `prepareDerivedData()`, actor scans all items with prerequisites and builds `derived.prerequisiteRegistry`. Provides single validation point, sheet display, and level history integration.
+
+### Action/Effect Eligibility Per Item Type
+Each item type declares `canGrantActions` and `canAcceptEffects` booleans ΓÇö per-type constants controlling sheet UI and drag-drop.
+
+### AE Generator Pattern
+Items that exist to generate Active Effects. Store configuration, produce AE when triggered. Examples: Power Attack (slider), Illuminable items (light settings).
+
+### Bond Pattern
+Specialized AE generator establishing a relationship between two documents. The AE *is* the relationship. Bond types: `container`, `familiar`, `animalCompanion`, `mount`, `summon`, `cohort`, `commanded`.
+
+### Damage Types as Config Data
+`fire`, `cold`, `slashing`, etc. are config constants with system setting overrides for homebrew ΓÇö NOT a Foundry item type.
+
+### Item-on-Creature Targeting
+Some spells and effects target **items**, not creatures (Magic Weapon, Magic Vestment, Keen Edge, Align Weapon). The action system supports this via `effect.target: 'item-on-creature'` with an `itemTargetFilter` that restricts the picker by item type and equipped status. Execution flow: select target token ΓåÆ Item Picker Dialog (filtered inventory list) ΓåÆ apply AE to the selected item with `transfer: true`. The `#targetItem` formula context provides autocomplete for the target item's properties. Proven in Phase 16 via Magic Weapon. Actions are configured on each item's dedicated **Actions tab** ΓÇö every action-bearing item sheet has an Actions tab where users can add, edit, reorder, and chain any number of actions.
+
+---
+
+## Item Type ΓåÆ Active Effect Decision Guide
+
+| Question | If YES ΓåÆ | If NO ΓåÆ |
+|----------|----------|---------|
+| Does it exist independently? (compendium, traded, sold) | **Item** | Probably AE |
+| Does it primarily *modify* another document's data? | **Active Effect** | Probably Item |
+| Does it have its own sheets/UI that users edit? | **Item** (with AE generation) | **Active Effect** |
+| Is it temporary / has a duration? | **Active Effect** | Depends |
+| Does it transfer to the parent's parent? (item ΓåÆ actor) | **Active Effect** with `transfer: true` | AE with `transfer: false` |
+
+### D35E Item ΓåÆ dnd35e Type Mapping
+
+| D35E Type | dnd35e Type | Phase | Notes |
+|-----------|-------------|-------|-------|
+| Weapon | Weapon item | 1 Γ£à | Field renames |
+| Equipment | Equipment item | 19 | Armor, shield, wondrous |
+| Loot | Loot item | 19 | Generic items |
+| Consumable | Consumable item | 22 | Potions, scrolls, wands |
+| Class | Class item | 9 | Restructured progression |
+| Spell | Spell item | 17 (Alpha), 20 (Full) | Restructured |
+| Feat | Feat item | 11 | combatChanges ΓåÆ AE pattern |
+| Buff | **Buff Active Effect** | 21 | Item ΓåÆ AE migration |
+| Attack | Attack item | 10 | Actions via Action System |
+| Race | Race item | 8 | Restructured with grants |
+| Enhancement | **Enhancement Active Effect** | 18 (Alpha), 25 (Full) | Item ΓåÆ AE |
+| Material | **Material Active Effect** | 2 Γ£à | Done |
+| Aura | **Aura Active Effect** | 24 | Item ΓåÆ AE |
+| Alignment | Actor property | ΓÇö | Dropped as type |
+| Damage-type | Config constant | ΓÇö | Dropped as type |
+| Full-attack | Action Chain | 10 | Dropped as type ΓÇö computed |
+| Card | Card item | 37 | Post-Release |
+| Valuable | Loot subtype | 19 | Merged into loot |
+
+---
+
+## D35E ΓåÆ dnd35e Full Coverage Audit
+
+Every D35E feature, every SRD rule area, accounted for. Nothing dropped.
+
+### D35E Actor Types (4) ΓåÆ dnd35e
+
+| D35E Type | dnd35e Type | Phase |
+|-----------|-------------|-------|
+| character | Character actor | 6 |
+| npc | NPC actor | 23 |
+| trap | Trap actor | 6 (TrapSystemModel shell), 23 (full) |
+| object | Object actor | 23 |
+
+### D35E Item Types (18) ΓåÆ dnd35e
+
+| D35E Type | dnd35e Type | Phase | Notes |
+|-----------|-------------|-------|-------|
+| weapon | Weapon item | 1 Γ£à | Field renames |
+| equipment | Equipment item | 19 | Armor, shield, wondrous |
+| loot | Loot item | 19 | Generic items |
+| consumable | Consumable item | 22 | Potions, scrolls, wands |
+| class | Class item | 9 | Restructured progression |
+| spell | Spell item | 17 (Alpha), 20 (Full) | Restructured |
+| feat | Feat item | 11 | combatChanges ΓåÆ AE pattern |
+| buff | **Buff Active Effect** | 21 | Item ΓåÆ AE migration |
+| attack | Natural Attack item | 12 | Actions via Action System |
+| race | Race item | 8 | Restructured with grants |
+| enhancement | **Enhancement Active Effect** | 18 (Alpha), 25 (Full) | Item ΓåÆ AE |
+| material | **Material Active Effect** | 2 Γ£à | Done |
+| aura | **Aura Active Effect** | 24 | Item ΓåÆ AE |
+| alignment | Actor property | ΓÇö | Dropped as type |
+| damage-type | Config constant | ΓÇö | Dropped as type |
+| full-attack | Action Chain | 10 | Dropped as type ΓÇö computed |
+| card | Card item | 37 | Post-Release |
+| valuable | Loot subtype | 19 | Merged into loot |
+
+### D35E combatChanges ΓåÆ dnd35e AE Action-Phase Changes
+
+| D35E combatChange itemType | dnd35e Equivalent | Phase |
+|----------------------------|-------------------|-------|
+| `all` / `allOptional` | AE change with `phase: 'action.*'` | 10, 11 |
+| `attack` / `attackOptional` | AE change with `phase: 'action.attack'` | 10, 11 |
+| `spell` / `spellOptional` | AE change with `phase: 'action.spell'` | 20 |
+| `defense` / `defenseOptional` | AE change with `phase: 'initial'` targeting AC | 6, 19 |
+| `savingThrow` / `savingThrowOptional` | AE change with `phase: 'action.save'` | 10 |
+| `grapple` / `grappleOptional` | AE change with `phase: 'action.check'` targeting CMB | 10 |
+| `skill` / `skillOptional` | AE change with `phase: 'action.check'` targeting skills | 6, 7 |
+| `resistance` / `resistanceOptional` | AE change with `phase: 'action.spell'` targeting SR | 20, 21 |
+
+### D35E Condition Indicators (25) ΓåÆ dnd35e
+
+| D35E Condition | Phase | Status |
+|----------------|-------|--------|
+| blind | 21 | Planned |
+| dazzled | 21 | Planned |
+| deaf | 21 | Planned |
+| entangled | 21 | Planned |
+| fatigued | 21 | Planned |
+| exhausted | 21 | Planned |
+| grappled | 10 | Planned |
+| helpless | 21 | Planned |
+| paralyzed | 21 | Planned |
+| pinned | 10 | Planned |
+| fear (shaken/frightened/panicked) | 15 (stub), 21 (full) | Planned ΓÇö 3-tier track, stub in Alpha for Frightful Presence |
+| sickened | 21 | Planned |
+| stunned | 21 | Planned |
+| polymorphed | 21 | Planned |
+| wildshaped | 21 | Planned |
+| prone | 15 | Planned (Alpha) |
+| dead | 6/21 | Planned |
+| dying | 6/21 | Planned |
+| disabled | 21 | Planned |
+| stable | 21 | Planned |
+| unconscious | 21 | Planned |
+| staggered | 21 | Planned |
+| invisible | 21 | Planned |
+| banished | 21 | Planned |
+
+### D35E Bonus Types (21) ΓåÆ dnd35e
+
+| D35E Type | Stacking Rule | Phase |
+|-----------|--------------|-------|
+| untyped | Always stacks | 2 Γ£à |
+| base | Replace (BAB) | 2 Γ£à |
+| enh (enhancement) | Highest wins | 2 Γ£à |
+| dodge | Always stacks | 2 Γ£à |
+| inherent | Highest wins | 2 |
+| deflection | Highest wins | 2 |
+| morale | Highest wins | 2 |
+| luck | Highest wins | 2 |
+| sacred | Highest wins | 2 |
+| insight | Highest wins | 2 |
+| resist (resistance) | Highest wins | 2 |
+| profane | Highest wins | 2 |
+| trait | Highest wins | 2 |
+| racial | Highest wins | 2 Γ£à |
+| size | Highest wins | 2 Γ£à |
+| competence | Highest wins | 2 |
+| circumstance | Always stacks | 2 |
+| alchemical | Highest wins | 2 |
+| penalty | Always applies | 2 Γ£à |
+| replace | Override | 2 Γ£à |
+| shield | Highest wins | 2 |
+
+### SRD Rules ΓåÆ Phase Coverage
+
+| SRD Rule Area | Phase | Status |
+|---------------|-------|--------|
+| **Core Mechanic** (d20 + mod vs DC) | 7 | Designed |
+| **Ability Scores** | 6 | Designed |
+| **Races** (7 core + monstrous) | 8 | Designed |
+| **Base Classes** (11 classes) | 9, 13 | Designed |
+| **Prestige Classes** (14 SRD) | 9 | Designed |
+| **NPC Classes** (5 classes) | 23 | Designed |
+| **Multiclassing** | 9 | Designed |
+| **Skills** | 6, 7 | Designed |
+| **Feats** | 11, 26 | Designed |
+| **Equipment** | 1, 19 | Designed |
+| **Special Materials** | 2 Γ£à | Done |
+| **Magic Items** | 19, 22, 25 | Designed |
+| **Combat: Initiative** | 14 | Designed |
+| **Combat: Attack/Damage** | 10 | Designed |
+| **Combat: AC & Saves** | 6, 10 | Designed |
+| **Combat: Actions** | 10, 14 | Designed |
+| **Combat: AoO** | 10 | Designed |
+| **Combat: Full Attack** | 10 | Designed |
+| **Combat: Special Attacks** (Bull Rush, Charge, Disarm, Grapple, Trip, etc.) | 10, 15 | Designed |
+| **Combat: Mounted Combat** | 10 | Designed |
+| **Combat: TWF** | 12 | Designed |
+| **Combat: Cover** | 10 | Designed |
+| **Combat: Flanking** | 11 | Designed |
+| **Combat: Injury & Death** | 6, 21 | Designed |
+| **Combat: Movement** | 14 | Designed |
+| **Special Abilities** (Ex/Su/Sp, senses, DR, SR, etc.) | 8, 12, 13, 21 | Designed |
+| **Magic** (spells, metamagic, counterspelling) | 17, 20, 26, 27 | Designed |
+| **Monsters** (types, advancement, templates) | 8, 23 | Designed |
+| **Conditions** (25+) | 15, 21 | Designed |
+| **Epic Rules** | 35 | Post-Release |
+| **Psionics** | 28, 36 | Beta / Post-Release |
+| **Divine Rules** | 42 | Post-Release |
+| **Variant Rules** | 43 | Post-Release |
+
+### D35E Feature Coverage ΓÇö Subsystem Mapping
+
+| D35E Feature | Phase | Notes |
+|--------------|-------|-------|
+| combatChanges system | 10, 11 | ΓåÆ AE action-phase changes + PreRollDialog |
+| combatChangesRange sliders | 11 | ΓåÆ AE Generator slider config |
+| specialActions (26 commands) | 10, 9, 21 | ΓåÆ Action System + Grant System + AE lifecycle |
+| 4 spellbooks per actor | 20 | ΓåÆ Spellbook sub-documents |
+| 2 card decks | 37 | ΓåÆ Card items |
+| Companion/Minion system | 23 | ΓåÆ Bond AE pattern |
+| Treasure generator | 44 | Post-Release |
+| Encounter generator | 44 | Post-Release |
+| Point buy calculator | 6 | ΓåÆ Settings-based character creation |
+| Rest dialog | 21 | ΓåÆ Rest action with configurable rules |
+| Party HUD / Portrait bar | 23 | ΓåÆ TopPortraitBar equivalent |
+| Stat block alternate sheet | 39 | Post-Release |
+| Custom currency | 6 | ΓåÆ Config-based currency system |
+| Fortification % | 19 | ΓåÆ Actor AC deferred field |
+| Concealment % | 21 | ΓåÆ Actor AC deferred field |
+| Arcane spell failure % | 19, 20 | ΓåÆ Equipment AE + caster check |
+| Sneak attack dice | 11 | ΓåÆ Feat-generated precision damage |
+
+---
+
+## Open Architecture Sessions
+
+### Alignment System ΓÇö RESOLVED
+Actor alignment is a strongly-typed tuple `[LawAxis, MoralAxis]`. Weapon alignment (Holy/Unholy/Axiomatic/Anarchic) is an enhancement AE. Alignment DR uses the same keywords. Full details in Metaphysical PropertyMap.
+
+### DR & Energy Resistance Extensibility
+DR system handles complex RAW interactions while remaining user-friendly and homebrew-extensible. Core data structures in place. Remaining: damage pipeline resolution in Phase 10 and enhancement threshold rules in Phase 25.
+
+### Migration Versioning
+Track `system.migration.version` on every actor/item. Field established in Phase 5. Runner in Phase 30.
+
+### Action System Integration
+All combat-related data feeds the Action System:
+- Stats that action formulas reference ΓåÆ register in FormulaFamiliar schema (Phase 7)
+- Modifiers of action behavior ΓåÆ AE changes targeting action schema fields (Phase 10)
+- Grants/modifies available actions ΓåÆ EffectTrigger (Phase 10)
+- Changes turn economy ΓåÆ TurnActionBudget state modification (Phase 14)

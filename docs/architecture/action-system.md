@@ -336,9 +336,9 @@ Player sees:                          GM sees:
 
 The die result (15 in the example) reflects reality. The player sees it rolled 15 but their breakdown only adds up to 14 — the character doesn't understand why the sword performs better than expected. This is intentional and correct.
 
-See [Phase 2 §2.5.2](../migration-plan/phase-02-active-effect-on-item.md) for the dual-stack resolution algorithm.
+See [Phase 2 §2.5.2](../migration-plan/poc/phase-02-active-effect-on-item.md) for the dual-stack resolution algorithm.
 
-The dual-stack pattern also extends to the **item sheet UI**: the `HasActiveEffectsNotification` sparkle icon and the `getEffectsForField` store getter must filter out hidden effect overrides for non-GM viewers. If the only modifier on a field comes from a hidden source, the sparkle icon doesn't appear — the player has no reason to suspect the field is being modified. See [Phase 2 §2.5.3](../migration-plan/phase-02-active-effect-on-item.md) for the field UI design.
+The dual-stack pattern also extends to the **item sheet UI**: the `HasActiveEffectsNotification` sparkle icon and the `getEffectsForField` store getter must filter out hidden effect overrides for non-GM viewers. If the only modifier on a field comes from a hidden source, the sparkle icon doesn't appear — the player has no reason to suspect the field is being modified. See [Phase 2 §2.5.3](../migration-plan/poc/phase-02-active-effect-on-item.md) for the field UI design.
 ---
 
 ## Integration Points
