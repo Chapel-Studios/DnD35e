@@ -39,21 +39,21 @@
     { "wave": "beta",    "number": "10", "title": "Psionics",                         "file": "beta/phase-10-psionics.md",                          "status": "rough-sketch" },
 
     { "wave": "release", "number": "01", "title": "Compendium Browser",               "file": "release/phase-01-compendium-browser.md",             "status": "rough-sketch" },
-    { "wave": "release", "number": "02", "title": "Content Migration",                "file": "release/phase-02-content-migration.md",              "status": "rough-sketch" },
+    { "wave": "release", "number": "02", "title": "Documentation & SRD",              "file": "release/phase-02-documentation-srd.md",              "status": "rough-sketch" },
+    { "wave": "release", "number": "03", "title": "Epic Level Rules",                 "file": "release/phase-03-epic-level-rules.md",               "status": "rough-sketch" },
+    { "wave": "release", "number": "04", "title": "Psionic Rules Full",               "file": "release/phase-04-psionic-rules-full.md",             "status": "rough-sketch" },
+    { "wave": "release", "number": "05", "title": "Cards",                            "file": "release/phase-05-cards.md",                          "status": "rough-sketch" },
+    { "wave": "release", "number": "06", "title": "Content Migration",                "file": "release/phase-06-content-migration.md",              "status": "rough-sketch" },
+    { "wave": "release", "number": "07", "title": "Community Hardening",              "file": "release/phase-07-community-hardening.md",            "status": "rough-sketch" },
 
-    { "wave": "post",    "number": "01", "title": "Community Hardening",              "file": "post-release/phase-01-community-hardening.md",       "status": "rough-sketch" },
-    { "wave": "post",    "number": "02", "title": "Documentation & SRD",              "file": "post-release/phase-02-documentation-srd.md",         "status": "rough-sketch" },
-    { "wave": "post",    "number": "03", "title": "Art Module Support",               "file": "post-release/phase-03-art-module-support.md",        "status": "rough-sketch" },
-    { "wave": "post",    "number": "04", "title": "Module Integration Testing",       "file": "post-release/phase-04-module-integration.md",        "status": "rough-sketch" },
-    { "wave": "post",    "number": "05", "title": "Epic Level Rules",                 "file": "post-release/phase-05-epic-level-rules.md",          "status": "rough-sketch" },
-    { "wave": "post",    "number": "06", "title": "Psionic Rules Full",               "file": "post-release/phase-06-psionic-rules-full.md",        "status": "rough-sketch" },
-    { "wave": "post",    "number": "07", "title": "Cards",                            "file": "post-release/phase-07-cards.md",                     "status": "rough-sketch" },
-    { "wave": "post",    "number": "08", "title": "Sight & Concealment",              "file": "post-release/phase-08-sight-concealment.md",         "status": "stub"         },
-    { "wave": "post",    "number": "09", "title": "Stat Block Sheet",                 "file": "post-release/phase-09-stat-block-sheet.md",          "status": "stub"         },
-    { "wave": "post",    "number": "10", "title": "Vigor & Wound HP",                 "file": "post-release/phase-10-vigor-wound-hp.md",            "status": "stub"         },
-    { "wave": "post",    "number": "11", "title": "Environmental Hazards",            "file": "post-release/phase-11-environmental-hazards.md",     "status": "stub"         },
-    { "wave": "post",    "number": "12", "title": "Divine Rules",                     "file": "post-release/phase-12-divine-rules.md",              "status": "stub"         },
-    { "wave": "post",    "number": "13", "title": "Variant Rules",                    "file": "post-release/phase-13-variant-rules.md",             "status": "stub"         },
-    { "wave": "post",    "number": "14", "title": "Random Treasure",                  "file": "post-release/phase-14-random-treasure.md",           "status": "stub"         }
+    { "wave": "post",    "number": "01", "title": "Art Module Support",               "file": "post-release/phase-01-art-module-support.md",        "status": "rough-sketch" },
+    { "wave": "post",    "number": "02", "title": "Module Integration Testing",       "file": "post-release/phase-02-module-integration.md",        "status": "rough-sketch" },
+    { "wave": "post",    "number": "03", "title": "Sight & Concealment",              "file": "post-release/phase-03-sight-concealment.md",         "status": "stub"         },
+    { "wave": "post",    "number": "04", "title": "Stat Block Sheet",                 "file": "post-release/phase-04-stat-block-sheet.md",          "status": "stub"         },
+    { "wave": "post",    "number": "05", "title": "Vigor & Wound HP",                 "file": "post-release/phase-05-vigor-wound-hp.md",            "status": "stub"         },
+    { "wave": "post",    "number": "06", "title": "Environmental Hazards",            "file": "post-release/phase-06-environmental-hazards.md",     "status": "stub"         },
+    { "wave": "post",    "number": "07", "title": "Divine Rules",                     "file": "post-release/phase-07-divine-rules.md",              "status": "stub"         },
+    { "wave": "post",    "number": "08", "title": "Variant Rules",                    "file": "post-release/phase-08-variant-rules.md",             "status": "stub"         },
+    { "wave": "post",    "number": "09", "title": "Random Treasure",                  "file": "post-release/phase-09-random-treasure.md",           "status": "stub"         }
   ]
 }

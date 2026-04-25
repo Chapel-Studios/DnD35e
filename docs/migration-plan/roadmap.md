@@ -103,22 +103,24 @@
 **Progression philosophy**: Alpha built the engine and proved the architecture handles real D&D complexity. Beta puts more content through it — more item types, more conditions, more feat patterns, full spellcasting. Each new content type proves a variation of the existing architecture, not a new architecture.
 
 > **📌 Milestone placement notes**:
-> - **Epic Level Rules**: Post-Release — epic is SRD content and exists in D35E.
-> - **Psionics**: Beta (foundation) + Post-Release (full). SRD OGC content, exists in D35E.
-> - **Cards**: Post-Release. Card decks exist in D35E — small utility, can wait.
-> - **Post-Release (Bonus)**: Features that do NOT exist in D35E (Sight/Concealment, Stat Block, Vigor/Wound, Environmental Hazards, Random Treasure Gen, Variant Rules, Divine Rules).
+> - **Epic Level Rules**: Release — SRD content that exists in D35E. Lands in the release wave alongside other SRD-completion phases.
+> - **Psionics**: Beta (foundation) + Release (full). SRD OGC content, exists in D35E.
+> - **Cards**: Release. Card decks exist in D35E — small utility, but bundled with the SRD-completion wave.
+> - **Documentation & SRD**: Release — technical docs grow alongside development; the release-wave phase is the user-facing polish pass against the feature-complete system.
+> - **Community Hardening**: Release — final tuning pass after content migration is shipped.
+> - **Post-Release (Bonus)**: Features that do NOT exist in D35E (Sight/Concealment, Stat Block, Vigor/Wound, Environmental Hazards, Random Treasure Gen, Variant Rules, Divine Rules) plus 3rd-party module integration work.
 
 ---
 
 ### Release — Migration & Content
 
-**Goal**: Migrate existing D35E worlds and content to the new system. Compendium browser & management, SRD content packs, world migration tools.
+**Goal**: Round out remaining SRD content (Epic, Psionics, Cards), migrate existing D35E worlds, write user-facing docs against the feature-complete system, and harden through community feedback.
 
 ---
 
 ### Post-Release — Hardening & Bonus Features
 
-**Goal**: Community hardening, documentation, third-party integrations, and bonus features. Epic level rules, full psionics, cards, divine rules, variant rules, and features that don't exist in D35E.
+**Goal**: Third-party module integrations and bonus features that don't exist in D35E.
 
 ---
 
@@ -235,39 +237,39 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 
 ### Wave: Release — Migration & Content
 
-`docs/migration-plan/release/` | release.1–release.2
+`docs/migration-plan/release/` | release.1–release.7
 
-**Goal**: Migrate existing D35E worlds and content to the new system.
+**Goal**: Round out the system with remaining SRD content (Epic, Psionics, Cards), then migrate existing D35E worlds and harden through community feedback. User-friendly documentation is written here against the feature-complete system.
 
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
 | 1 | [Compendium Browser & Management](release/phase-01-compendium-browser.md) | 📖 Rough Sketch | poc.5, beta.1+ | Cross-compendium search, rich indexing, schema migration runner, diff view |
-| 2 | [Content Migration](release/phase-02-content-migration.md) | 📖 Rough Sketch | release.1 | D35E → dnd35e transforms, backup/validate/import workflow, world migration runner |
+| 2 | [Documentation & SRD](release/phase-02-documentation-srd.md) | 📖 Rough Sketch | beta.10 | User guide polish (technical docs grow alongside development), SRD journal housing, tutorials, FAQ |
+| 3 | [Epic Level Rules](release/phase-03-epic-level-rules.md) | 📖 Rough Sketch | alpha.2, alpha.4, beta.2 | Epic BAB/saves, epic feats, epic spellcasting, epic DR (SRD content, exists in D35E) |
+| 4 | [Psionic Rules (Full)](release/phase-04-psionic-rules-full.md) | 📖 Rough Sketch | beta.10, beta.7, release.3 | Full psionic expansion: prestige classes, psi-spell transparency, psionic items, feats |
+| 5 | [Cards](release/phase-05-cards.md) | 📖 Rough Sketch | alpha.3 | Card item for tracking abilities, conditions, resources. Counters with rest resets. |
+| 6 | [Content Migration](release/phase-06-content-migration.md) | 📖 Rough Sketch | release.1 | D35E → dnd35e transforms, backup/validate/import workflow, world migration runner |
+| 7 | [Community Hardening](release/phase-07-community-hardening.md) | 📖 Rough Sketch | release.6 | Playtesting feedback, balance tuning, default value adjustments. Documentation gets a refresh pass after this lands. |
 
 ---
 
 ### Wave: Post-Release — Hardening & Bonus Features
 
-`docs/migration-plan/post-release/` | post.1–post.14
+`docs/migration-plan/post-release/` | post.1–post.9
 
-**Goal**: Community hardening, documentation, third-party integrations, and bonus features that don't exist in D35E.
+**Goal**: Third-party integrations and bonus features that don't exist in D35E.
 
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
-| 1 | [Community Hardening](post-release/phase-01-community-hardening.md) | 📖 Rough Sketch | release.2 | Playtesting feedback, balance tuning, default value adjustments |
-| 2 | [Documentation & SRD](post-release/phase-02-documentation-srd.md) | 📖 Rough Sketch | post.1 | User guide, SRD journal housing, tutorials, FAQ |
-| 3 | [3rd Party Art Module Support](post-release/phase-03-art-module-support.md) | 📖 Rough Sketch | poc.5, release.1 | Art module lookup, GM configurator, per-item art override |
-| 4 | [Module Integration Testing](post-release/phase-04-module-integration.md) | 📖 Rough Sketch | release.2 | Compatibility matrix, integration helpers, per-module testing |
-| 5 | [Epic Level Rules](post-release/phase-05-epic-level-rules.md) | 📖 Rough Sketch | alpha.2, alpha.4, beta.2 | Epic BAB/saves, epic feats, epic spellcasting, epic DR (SRD content, exists in D35E) |
-| 6 | [Psionic Rules (Full)](post-release/phase-06-psionic-rules-full.md) | 📖 Rough Sketch | beta.10, beta.7, post.5 | Full psionic expansion: prestige classes, psi-spell transparency, psionic items, feats |
-| 7 | [Cards](post-release/phase-07-cards.md) | 📖 Rough Sketch | alpha.3 | Card item for tracking abilities, conditions, resources. Counters with rest resets. |
-| 8 | [Sight Distance / Concealment](post-release/phase-08-sight-concealment.md) | 📄 Stub | beta.6 | Concealment as region behavior |
-| 9 | [Stat Block Sheet (NPC alternate view)](post-release/phase-09-stat-block-sheet.md) | 📄 Stub | beta.5 | Read-only stat block layout |
-| 10 | [Vigor/Wound Variant HP](post-release/phase-10-vigor-wound-hp.md) | 📄 Stub | poc.6 | Variant HP system (does not exist in D35E) |
-| 11 | [Environmental Hazards & Overland Travel](post-release/phase-11-environmental-hazards.md) | 📄 Stub | poc.6, beta.3 | Falling, drowning, heat/cold, forced march (does not exist in D35E) |
-| 12 | [Divine Rules (Divine Ranks & Powers)](post-release/phase-12-divine-rules.md) | 📄 Stub | beta.5 | Divine ranks, salient abilities |
-| 13 | [Variant Rules (Unearthed Arcana OGC)](post-release/phase-13-variant-rules.md) | 📄 Stub | post.1 | Gestalt, flaws, traits (does not exist in D35E) |
-| 14 | [Random Treasure Generation](post-release/phase-14-random-treasure.md) | 📄 Stub | beta.1 | Treasure by CR tables |
+| 1 | [3rd Party Art Module Support](post-release/phase-01-art-module-support.md) | 📖 Rough Sketch | poc.5, release.1 | Art module lookup, GM configurator, per-item art override |
+| 2 | [Module Integration Testing](post-release/phase-02-module-integration.md) | 📖 Rough Sketch | release.6 | Compatibility matrix, integration helpers, per-module testing |
+| 3 | [Sight Distance / Concealment](post-release/phase-03-sight-concealment.md) | 📄 Stub | beta.6 | Concealment as region behavior |
+| 4 | [Stat Block Sheet (NPC alternate view)](post-release/phase-04-stat-block-sheet.md) | 📄 Stub | beta.5 | Read-only stat block layout |
+| 5 | [Vigor/Wound Variant HP](post-release/phase-05-vigor-wound-hp.md) | 📄 Stub | poc.6 | Variant HP system (does not exist in D35E) |
+| 6 | [Environmental Hazards & Overland Travel](post-release/phase-06-environmental-hazards.md) | 📄 Stub | poc.6, beta.3 | Falling, drowning, heat/cold, forced march (does not exist in D35E) |
+| 7 | [Divine Rules (Divine Ranks & Powers)](post-release/phase-07-divine-rules.md) | 📄 Stub | beta.5 | Divine ranks, salient abilities |
+| 8 | [Variant Rules (Unearthed Arcana OGC)](post-release/phase-08-variant-rules.md) | 📄 Stub | release.7 | Gestalt, flaws, traits (does not exist in D35E) |
+| 9 | [Random Treasure Generation](post-release/phase-09-random-treasure.md) | 📄 Stub | beta.1 | Treasure by CR tables |
 
 ---
 
@@ -361,29 +363,34 @@ flowchart TD
 
     subgraph REL["🟛 Release"]
         R1["release.1 Compendium Browser"]
-        R2["release.2 Content Migration"]
-        R1 --> R2
+        R2["release.2 Documentation & SRD"]
+        R3["release.3 Epic Level"]
+        R4["release.4 Psionics Full"]
+        R5["release.5 Cards"]
+        R6["release.6 Content Migration"]
+        R7["release.7 Community Hardening"]
+        R1 --> R6
+        R6 --> R7
     end
     P5 --> R1
     B1 --> R1
+    B10 --> R2
+    A2 --> R3
+    A4 --> R3
+    B2 --> R3
+    B10 --> R4
+    R3 --> R4
+    A3 --> R5
 
     subgraph POST["⚦ Post-Release"]
-        PR1["post.1 Community Hardening"]
-        PR2["post.2 Documentation"]
-        PR3["post.3 Art Module"]
-        PR5["post.5 Epic Level"]
-        PR6["post.6 Psionics Full"]
-        PR7["post.7 Cards"]
+        PR1["post.1 Art Module"]
+        PR2["post.2 Module Integration"]
+        PR8["post.8 Variant Rules"]
     end
-    R2 --> PR1
-    PR1 --> PR2
-    P5 --> PR3
-    R1 --> PR3
-    A2 --> PR5
-    A4 --> PR5
-    B2 --> PR5
-    B10 --> PR6
-    A3 --> PR7
+    P5 --> PR1
+    R1 --> PR1
+    R6 --> PR2
+    R7 --> PR8
 ```
 
 ---

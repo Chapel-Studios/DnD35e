@@ -224,7 +224,7 @@ Phase 3 Completion decomposed into three parallel tracks:
 
 - **Additional Language Files** (`abilities.json`, `actors.json`, `ui.json`, etc.) — created as cross-cuts when each domain phase needs them (e.g., abilities.json when Phase 5 actor foundation is built)
 - **Testing & Validation** — deferred until testing infrastructure is in place (Phase 14)
-- **Contributor Documentation** (`TRANSLATION.md`, translator guide) — deferred to Community Hardening (Phase 31; see `phase-31-community-hardening.md`)
+- **Contributor Documentation** (`TRANSLATION.md`, translator guide) — deferred to Community Hardening (`release/phase-07-community-hardening.md`)
 - **Localization Team Workflow for Item Content** — deferred to Community Hardening (Phase 31) as a separate workflow where localization contributors can localize item content; explicitly out of Phase 3 implementation scope.
 
 ---

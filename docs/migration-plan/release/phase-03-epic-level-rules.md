@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Status** | � Rough Sketch |
+| **Status** | 📖 Rough Sketch |
 | **Milestone** | Post-Release |
 | **Dependencies** | Phase 9 (Classes & Level History), Phase 11 (Feats), Phase 20 (Spells & Spellbooks Full) |
 | **Goal** | Level 21+ support: epic BAB/save progression, epic feats, epic spellcasting, and epic DR/enhancement rules. Exists in D35E — SRD OGC content. |
