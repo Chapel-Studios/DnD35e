@@ -236,8 +236,8 @@ All planning agents and skills understand:
 
 ## Planning Documents
 
-- **Roadmap**: `docs/migration-plan/README.md` — Full system roadmap through Phase 28
-- **Phase Specs**: `docs/migration-plan/phase-NN-*.md` — Individual phase specifications with checklist
+- **Roadmap**: `docs/migration-plan/roadmap.md` — Full system roadmap through Phase 28
+- **Phase Specs**: `docs/migration-plan/<wave>/phase-NN-*.md` — Individual phase specifications with checklist
 - **Quick Reference**: At-a-glance status and common planning questions (in progress)
 
 ---
@@ -289,7 +289,7 @@ Use Case Examples:
 - Phase 1-2: ✅ Complete
 - Phase 3 (Localization): 🟡 75% — LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels done; CONFIG pre-localization & hardcoded string audit remain
 - Phase 4: ✅ Complete
-- Phase 5-32: 📋 Planned (see `docs/migration-plan/README.md`)
+- Phase 5-32: 📋 Planned (see `docs/migration-plan/roadmap.md`)
 - Instruction Files: 6 ✅ (foundry-data-fields, dnd35e-patterns, vue-sheet-patterns, formula-familiar, dnd35e-field, form-groups)
 - Skills: 5 ✅ (phase-planning, phase-reference, foundry-reference, system-comparison, implementation-guide)
 - Agents: 2 ✅ (planning, kb-curator)

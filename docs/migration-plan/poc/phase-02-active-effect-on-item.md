@@ -1268,10 +1268,10 @@ Features designed in Phase 2 but not implemented here. Each entry lists where it
 | Feature | Status | Landing | Notes |
 |---------|--------|---------|-------|
 | `revealSecret` document event emission | **Phase 6** | [Phase 6 §5.9](phase-06-actor-foundation.md) (L520+) | Event type, payload, and registration already documented there |
-| Identify via Spellcraft / Identify spell | **Phase 25** | [Phase 25](phase-25-enhancements.md) (L63, L310) | `identificationType` field + DC-based skill check gating |
-| Per-Secret reveal hooks | **Bonus** | [Phase 25](phase-25-enhancements.md) | Each Secret can define a hook/event that fires on reveal. Natural fit alongside enchantment identification (Spellcraft/Identify). |
-| Per-player knowledge ("Advanced Secrets") | **Bonus** | [Phase 23](phase-23-advanced-actors.md) | Different players see different mask states. Requires player-scoped AE visibility. Phase 23 already references Secret AE dependency for NPC/Object identifiability. |
-| 3-state AE visibility | **Deferred to beta** | [Phase 31](phase-31-community-hardening.md) | Upgrade from 2-state (hidden/identified) to 3-state (unknown/known-unidentified/identified). Community hardening is the natural fit for UX refinements. |
+| Identify via Spellcraft / Identify spell | **Phase 25** | [beta.7 Enhancements](../beta/phase-07-enhancements.md) (L63, L310) | `identificationType` field + DC-based skill check gating |
+| Per-Secret reveal hooks | **Bonus** | [beta.7 Enhancements](../beta/phase-07-enhancements.md) | Each Secret can define a hook/event that fires on reveal. Natural fit alongside enchantment identification (Spellcraft/Identify). |
+| Per-player knowledge ("Advanced Secrets") | **Bonus** | [beta.5 Advanced Actors](../beta/phase-05-advanced-actors.md) | Different players see different mask states. Requires player-scoped AE visibility. Phase 23 already references Secret AE dependency for NPC/Object identifiability. |
+| 3-state AE visibility | **Deferred to beta** | [release.7 Community Hardening](../release/phase-07-community-hardening.md) | Upgrade from 2-state (hidden/identified) to 3-state (unknown/known-unidentified/identified). Community hardening is the natural fit for UX refinements. |
 | Player Edit Secret cleanup on reveal | **Stretch** | Phase 2 or Phase 31 | When GM reveals all Secrets, Player Edit Secrets become stale. Auto-delete is a stretch goal; GM can manually delete for now. |
 | Material dev testing follow-up | **Phase 2 closeout** | Phase 2 | Dedicated dev-world validation pass for Material authoring, subtype switching, propagation, and stacking UX before Phase 2 is considered fully closed. |
 | General AE cleanup follow-up | **Phase 2 closeout** | Phase 2 | Move General AE off the default Foundry fallback path and onto the intended dnd35e sheet/tabs flow. |

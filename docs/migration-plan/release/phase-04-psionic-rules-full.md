@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Status** | � Rough Sketch |
+| **Status** | 📖 Rough Sketch |
 | **Milestone** | Post-Release |
 | **Dependencies** | Phase 28 (Psionics), Phase 25 (Enhancements Full), Phase 35 (Epic Level Rules) |
 | **Goal** | Full psionic expansion: all SRD powers, psionic prestige classes, psionic items, psionic feats, psi-spell transparency, and epic psionics. Exists in D35E — SRD OGC content. |

@@ -176,8 +176,8 @@ The `.field-control-btn` class provides: transparent background, no border, 0.5 
 Phase specifications, status tracking, and the full roadmap live in `docs/migration-plan/`. Do not duplicate status here.
 
 ### Planning Resources
-- **Full Roadmap & Status**: `docs/migration-plan/README.md` (single source of truth for phase status)
-- **Phase Specifications**: `docs/migration-plan/phase-NN-*.md` (detailed spec per phase)
+- **Full Roadmap & Status**: `docs/migration-plan/roadmap.md` (single source of truth for phase status)
+- **Phase Specifications**: `docs/migration-plan/<wave>/phase-NN-*.md` (detailed spec per phase)
 - **Custom Planning Agent**: Use `@planning` to design new phases or refine existing ones
 - **Planning Maintenance Skill**: Use `/phase-planning` to improve documentation
 - **Custom Agents & Skills**: `.github/AGENTS.md` (discovery and usage)
@@ -197,8 +197,8 @@ The agent will synthesize dependencies, ask clarifying questions, and produce a 
 The skill will analyze, propose consolidations, and provide exact edits.
 
 **To check system status**:
-- Full roadmap: `docs/migration-plan/README.md`
-- Specific phase: `docs/migration-plan/phase-NN-*.md`
+- Full roadmap: `docs/migration-plan/roadmap.md`
+- Specific phase: `docs/migration-plan/<wave>/phase-NN-*.md`
 - Quick reference: Each phase has completion checklist and status
 
 ---

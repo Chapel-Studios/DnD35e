@@ -44,7 +44,7 @@ Build clean ✓. Ready for your testing.
 
 When starting a new phase, perform a **full onboarding conversation**:
 
-1. **Read the phase spec** — `docs/migration-plan/phase-NN-*.md`
+1. **Read the phase spec** — `docs/migration-plan/<wave>/phase-NN-*.md`
 2. **Read dependency phases** — understand what's already built and available
 3. **Read relevant architecture docs** — `docs/architecture/*.md` as needed
 4. **Scan the current codebase** — understand existing patterns via `@Explore` subagent
@@ -107,20 +107,20 @@ Each checklist item from the phase spec is one execution cycle:
 
 **Critical rule**: NEVER proceed to the next checklist item without explicit user approval.
 
-**Critical rule**: After approval, ALWAYS update the phase doc checklist (`docs/migration-plan/phase-NN-*.md`) by changing `[ ]` to `[x]` on completed items BEFORE moving to the next section. The checklist is the single source of truth — if it's not checked off, it didn't happen. This includes sub-items. When multiple items were completed in a single cycle, check them ALL off.
+**Critical rule**: After approval, ALWAYS update the phase doc checklist (`docs/migration-plan/<wave>/phase-NN-*.md`) by changing `[ ]` to `[x]` on completed items BEFORE moving to the next section. The checklist is the single source of truth — if it's not checked off, it didn't happen. This includes sub-items. When multiple items were completed in a single cycle, check them ALL off.
 
 **Critical rule**: When a phase transitions to a new status (e.g., first item begins → `🔶 In Progress`; all items complete → `✅ Complete`), update the status in **both**:
 1. The phase doc header: `**Status**: 🔶 In Progress` (or the new status)
-2. The roadmap table: `docs/migration-plan/README.md` — the matching row in the phase table
+2. The roadmap table: `docs/migration-plan/roadmap.md` — the matching row in the phase table
 
-Use the Status Legend in `README.md` (Stub → Rough Sketch → Outlined → Planned → Approved → In Progress → Complete → Hardened) to pick the correct symbol.
+Use the Status Legend in `docs/migration-plan/roadmap.md` (Stub → Rough Sketch → Outlined → Planned → Approved → In Progress → Complete → Hardened) to pick the correct symbol.
 
 ### Phase 2: Section Completion (when user says "complete")
 
 When the user confirms a section is complete:
 
 1. **Update the phase doc** — check off the completed item, make any notes about changes to the phase or implementation, ensure phase doc is accurate to implmentation so far
-2. **Update phase status if changed** — if the phase status has changed (first item started → `🔶 In Progress`; all items complete → `✅ Complete`), update `**Status**:` in the phase doc header AND the matching row in `docs/migration-plan/README.md`
+2. **Update phase status if changed** — if the phase status has changed (first item started → `🔶 In Progress`; all items complete → `✅ Complete`), update `**Status**:` in the phase doc header AND the matching row in `docs/migration-plan/roadmap.md`
 3. **Update session memory** — record what was completed and any decisions made
 4. **Identify knowledge worth caching** — if Foundry API patterns, D35E migration patterns, or architectural decisions were discovered during this section, delegate to `@kb-curator` to capture them in compressed-for-AI format in the appropriate KB files
 5. **Present the next checklist item** —review where we are in the plan and present a brief description of what's coming next, ask if ready to proceed
@@ -128,8 +128,8 @@ When the user confirms a section is complete:
 ## Reference Material Access
 
 ### Project Planning
-- **Phase specs**: `docs/migration-plan/phase-NN-*.md` — the source of truth for what to build
-- **Roadmap**: `docs/migration-plan/README.md` — milestones, dependency graph, current state
+- **Phase specs**: `docs/migration-plan/<wave>/phase-NN-*.md` — the source of truth for what to build
+- **Roadmap**: `docs/migration-plan/roadmap.md` — milestones, dependency graph, current state
 - **Architecture**: `docs/architecture/*.md` — system design documents
 - **SRD reference**: `docs/reference/` — D&D 3.5e rules content (near-complete SRD copy)
 

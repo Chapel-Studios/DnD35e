@@ -8,24 +8,19 @@
 
 - [Architecture Principles](#architecture-principles)
 - [Milestones](#milestones)
-  - [POC — Proof of Concept (Phases 1–7)](#poc--proof-of-concept-phases-17)
-  - [Alpha — Paladin vs Dragon (Phases 8–18)](#alpha--paladin-vs-dragon-phases-818)
-  - [Beta — Full System Coverage (Phases 19–28)](#beta--full-system-coverage-phases-1928)
-  - [Release — Migration & Content (Phases 29–30)](#release--migration--content-phases-2930)
-  - [Post-Release — Hardening & Bonus Features (Phases 31+)](#post-release--hardening--bonus-features-phases-31)
+  - [POC — Proof of Concept](#poc--proof-of-concept)
+  - [Alpha — Paladin vs Dragon](#alpha--paladin-vs-dragon)
+  - [Beta — Full System Coverage](#beta--full-system-coverage)
+  - [Release — Migration & Content](#release--migration--content)
+  - [Post-Release — Hardening & Bonus Features](#post-release--hardening--bonus-features)
 - [Current State](#current-state)
 - [Status Legend](#status-legend)
 - [Phase Overview](#phase-overview)
-  - [Layer 1: Foundation](#layer-1-foundation)
-  - [Layer 2: Testing & Data Infrastructure](#layer-2-testing--data-infrastructure)
-  - [Layer 3: Character Building — Alpha](#layer-3-character-building--alpha)
-  - [Layer 4: Action & Combat Core — Alpha](#layer-4-action--combat-core--alpha)
-  - [Layer 5: Combat Loop — Alpha](#layer-5-combat-loop--alpha)
-  - [Layer 6: Spells & Enhancement — Alpha](#layer-6-spells--enhancement--alpha)
-  - [Layer 7: Beta — Equipment & Magic](#layer-7-beta--equipment--magic)
-  - [Layer 8: Beta — Advanced Systems](#layer-8-beta--advanced-systems)
-  - [Layer 9: Release — Migration & Content](#layer-9-release--migration--content)
-  - [Layer 10: Post-Release](#layer-10-post-release)
+  - [Wave: POC — Proof of Concept](#wave-poc--proof-of-concept)
+  - [Wave: Alpha — Paladin vs Dragon](#wave-alpha--paladin-vs-dragon)
+  - [Wave: Beta — Full System Coverage](#wave-beta--full-system-coverage)
+  - [Wave: Release — Migration & Content](#wave-release--migration--content)
+  - [Wave: Post-Release — Hardening & Bonus Features](#wave-post-release--hardening--bonus-features)
 - [Dependency Graph](#dependency-graph)
 
 ---
@@ -54,7 +49,7 @@
 
 ## Milestones
 
-### POC — Proof of Concept (Phases 1–7)
+### POC — Proof of Concept
 
 **Goal**: Foundation, data infrastructure, and testing patterns — every building block exists in isolation before being composed. Items, Active Effects, actors, tokens, rolls, compendium foundations, and the test framework all work independently.
 
@@ -69,11 +64,11 @@
 
 **What POC does NOT include**: Classes, races, feats, combat, spells, conditions, or any gameplay logic.
 
-**POC exit criteria**: A Character actor exists on a scene with derived ability scores, saves, HP, and skills. Weapons can be created, identified, and equipped. Material AEs modify item stats with correct stacking. Roll formulas resolve with FormulaFamiliar context. Compendium items can be imported with origin tracking. All strings are localized. Test framework is in place with unit/integration test examples covering Phases 1–3.
+**POC exit criteria**: A Character actor exists on a scene with derived ability scores, saves, HP, and skills. Weapons can be created, identified, and equipped. Material AEs modify item stats with correct stacking. Roll formulas resolve with FormulaFamiliar context. Compendium items can be imported with origin tracking. All strings are localized. Test framework is in place with unit/integration test examples covering poc.1–poc.3.
 
 ---
 
-### Alpha — Paladin vs Dragon (Phases 8–18)
+### Alpha — Paladin vs Dragon
 
 **Goal**: A playable combat scenario proving "one of everything" — every building block composed end-to-end. A level 5 Paladin (Human) with a +1 longsword and a Young Adult Black Dragon fight on a grid. The Paladin proves class features, spellcasting (RAW), enhancement stacking, and morale bonus collision. The Dragon proves natural attacks, breath weapon, monster class progression, and frightful presence.
 
@@ -101,29 +96,31 @@
 
 ---
 
-### Beta — Full System Coverage (Phases 19–28)
+### Beta — Full System Coverage
 
 **Goal**: Expand from one-of-everything to complete D&D 3.5e system coverage. All item types, NPC/Object/Trap actor types, full condition/buff system, full spellcasting, equipment with AC, full enhancements, companions, psionics.
 
 **Progression philosophy**: Alpha built the engine and proved the architecture handles real D&D complexity. Beta puts more content through it — more item types, more conditions, more feat patterns, full spellcasting. Each new content type proves a variation of the existing architecture, not a new architecture.
 
 > **📌 Milestone placement notes**:
-> - **Epic Level Rules**: Post-Release — epic is SRD content and exists in D35E.
-> - **Psionics**: Beta (foundation) + Post-Release (full). SRD OGC content, exists in D35E.
-> - **Cards**: Post-Release. Card decks exist in D35E — small utility, can wait.
-> - **Post-Release (Bonus)**: Features that do NOT exist in D35E (Sight/Concealment, Stat Block, Vigor/Wound, Environmental Hazards, Random Treasure Gen, Variant Rules, Divine Rules).
+> - **Epic Level Rules**: Release — SRD content that exists in D35E. Lands in the release wave alongside other SRD-completion phases.
+> - **Psionics**: Beta (foundation) + Release (full). SRD OGC content, exists in D35E.
+> - **Cards**: Release. Card decks exist in D35E — small utility, but bundled with the SRD-completion wave.
+> - **Documentation & SRD**: Release — technical docs grow alongside development; the release-wave phase is the user-facing polish pass against the feature-complete system.
+> - **Community Hardening**: Release — final tuning pass after content migration is shipped.
+> - **Post-Release (Bonus)**: Features that do NOT exist in D35E (Sight/Concealment, Stat Block, Vigor/Wound, Environmental Hazards, Random Treasure Gen, Variant Rules, Divine Rules) plus 3rd-party module integration work.
 
 ---
 
-### Release — Migration & Content (Phases 29–30)
+### Release — Migration & Content
 
-**Goal**: Migrate existing D35E worlds and content to the new system. Compendium browser & management, SRD content packs, world migration tools.
+**Goal**: Round out remaining SRD content (Epic, Psionics, Cards), migrate existing D35E worlds, write user-facing docs against the feature-complete system, and harden through community feedback.
 
 ---
 
-### Post-Release — Hardening & Bonus Features (Phases 31+)
+### Post-Release — Hardening & Bonus Features
 
-**Goal**: Community hardening, documentation, third-party integrations, and bonus features. Epic level rules, full psionics, cards, divine rules, variant rules, and features that don't exist in D35E.
+**Goal**: Third-party module integrations and bonus features that don't exist in D35E.
 
 ---
 
@@ -131,13 +128,13 @@
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| **Weapon** item type | � Planned | Data model done. Vue sheet details, effects tab, tests remaining. |
+| **Weapon** item type | 📝 Planned | Data model done. Vue sheet details, effects tab, tests remaining. |
 | **Material** active effect | ✅ Approved | Material AE pattern established. Stacking engine, GeneralSystemModel, v14 CONFIG setup, integration designed. |
-| **PhysicalItem / EquippableItem** chain | � Planned | Weight, price, hardness, HP, equipment slots — schema done, tests remaining |
-| **Identifiable document** mixin | � Planned | Tracked/identified states with formula-driven names. Uses `system.slug` |
+| **PhysicalItem / EquippableItem** chain | 📝 Planned | Weight, price, hardness, HP, equipment slots — schema done, tests remaining |
+| **Identifiable document** mixin | 📝 Planned | Tracked/identified states with formula-driven names. Uses `system.slug` |
 | **Actor (character)** type shell | ✅ Exists | Shell only — no meaningful system data yet |
 | **Token / Scene** type wrappers | ✅ Exists | Type aliases, no custom logic |
-| **Active Effect phase system** | ✅ Approved | Phase system, stacking engine, GeneralSystemModel designed in Phase 2. v14 CONFIG integration planned. |
+| **Active Effect phase system** | ✅ Approved | Phase system, stacking engine, GeneralSystemModel designed in poc.2. v14 CONFIG integration planned. |
 | **Settings framework** | ✅ Complete | Combat, display, health, roll, skills, currency, game rules categories |
 | **FormulaFamiliar system** | ✅ Complete | Schema-driven autocomplete with `#context.property` syntax |
 | **Build pipeline** | ✅ Complete | Vite + Vue SFC + SASS + lang merge |
@@ -161,173 +158,134 @@
 
 ## Phase Overview
 
-The plan is organized into **layers**. Each layer builds on the one before it. Within a layer, phases may run in parallel where dependencies allow.
+Phases are organized by **wave**. Each wave maps to a subfolder (`poc/`, `alpha/`, `beta/`, `release/`, `post-release/`) and phases restart at `01` within each wave. This means adding a phase to an earlier wave never renumbers a later one.
 
-### Layer 1: Foundation
-
-| # | Phase | Status | Dependencies | Notes |
-|---|-------|--------|--------------|-------|
-| 1 | [Item Foundation (Weapon PoC)](phase-01-item-foundation.md) | ✅ Complete | — | Weapon DataModel, mixin chain, Vue sheet, Identifiable |
-| 2 | [Active Effect on Item (Material)](phase-02-active-effect-on-item.md) | 🔶 In Progress | Phase 1 | Material AE, phase system, stacking engine, proxy dispatcher, GeneralSystemModel |
-| 3 | [Localization](phase-03-localization.md) | ✅ Complete | — | LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels |
-
-**What Layer 1 proves**: Items exist with schemas. AEs modify items. Stacking works. i18n works.
+Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 
 ---
 
-### Layer 2: Testing & Data Infrastructure
+### Wave: POC — Proof of Concept
+
+`docs/migration-plan/poc/` | poc.1–poc.7
+
+**Goal**: Foundation, data infrastructure, and testing patterns. Every building block exists in isolation before being composed.
 
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
-| 4 | [Testing Infrastructure](phase-04-testing-infrastructure.md) | � Planned | 1 | Vitest, Foundry mocks, coverage tooling — establishes test patterns; back-fills Phase 1–3 tests |
-| 5 | [Compendium Foundation](phase-05-compendium-foundation.md) | 📝 Planned | 1, 2, 3 | Pack pipeline, origin tracking, UUID helpers, migration version field |
-| 6 | [Actor Foundation](phase-06-actor-foundation.md) | 📋 Outlined | 1, 3 | Character actor: abilities, AC shell, HP, saves, skills, inventory, tokens, equipment slots |
+| 1 | [Item Foundation](poc/phase-01-item-foundation.md) | ✅ Complete | — | Weapon DataModel, mixin chain, Vue sheet, Identifiable |
+| 2 | [Active Effect on Item](poc/phase-02-active-effect-on-item.md) | 🔶 In Progress | poc.1 | Material AE, phase system, stacking engine, proxy dispatcher, GeneralSystemModel |
+| 3 | [Localization](poc/phase-03-localization.md) | ✅ Complete | — | LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels |
+| 4 | [Testing Infrastructure](poc/phase-04-testing-infrastructure.md) | 📝 Planned | poc.1 | Vitest, Foundry mocks, coverage tooling — establishes test patterns; back-fills poc.1–3 tests |
+| 5 | [Compendium Foundation](poc/phase-05-compendium-foundation.md) | 📝 Planned | poc.1, poc.2, poc.3 | Pack pipeline, origin tracking, UUID helpers, migration version field |
+| 6 | [Actor Foundation](poc/phase-06-actor-foundation.md) | 📋 Outlined | poc.1, poc.3 | Character actor: abilities, AC shell, HP, saves, skills, inventory, tokens, equipment slots |
+| 7 | [Roll Formulas & Custom Rolls](poc/phase-07-roll-formulas.md) | 📋 Outlined | poc.6 | D20Roll, DamageRoll, FormulaFamiliar roll data, formula paths |
 
-**What Layer 2 proves**: The test framework is in place with patterns every phase will follow. Actors exist with derived stats. Compendium items can be sourced. Tokens appear on scenes.
+**Exit criteria**: A Character actor exists on a scene with derived ability scores, saves, HP, and skills. Weapons can be created, identified, and equipped. Material AEs modify item stats with correct stacking. Roll formulas resolve with FormulaFamiliar context. Compendium items can be imported with origin tracking. All strings are localized. Test framework is in place with unit/integration test examples covering poc.1–3.
 
-> **Phase 6 includes Token & Scene**: Token placement, size derivation, Pinia token store, and actor ↔ token linking are part of getting actors visible on the table. The TargetingManager stub and movement/action economy integration remain in Phase 14 (Combat Tracker).
+> **Phase 6 includes Token & Scene**: Token placement, size derivation, Pinia token store, and actor ↔ token linking are part of getting actors visible on the table. TargetingManager stub and movement/action economy integration remain in alpha.7.
 
 ---
 
-### Layer 3: Character Building — Alpha
+### Wave: Alpha — Paladin vs Dragon
+
+`docs/migration-plan/alpha/` | alpha.1–alpha.11
+
+**Goal**: A playable combat scenario proving "one of everything." A level 5 Paladin (Human) with a +1 longsword vs a Young Adult Black Dragon.
 
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
-| 7 | [Roll Formulas & Custom Rolls](phase-07-roll-formulas.md) | 📋 Outlined | 6 | D20Roll, DamageRoll, FormulaFamiliar roll data, formula paths |
-| 8 | [Races & Progression](phase-08-races-progression.md) | 📋 Outlined | 5, 7 | Race item, creature types, Progression component, grant system, monster class progression, natural armor, senses, Human + Black Dragon |
-| 9 | [Classes & Level History](phase-09-classes-level-history.md) | 📋 Outlined | 8 | Class item, level-up flow, BAB/save aggregation, skills, milestones, multiclass, Paladin |
+| 1 | [Races & Progression](alpha/phase-01-races-progression.md) | 📋 Outlined | poc.5, poc.7 | Race item, creature types, Progression component, grant system, monster class progression, natural armor, senses, Human + Black Dragon |
+| 2 | [Classes & Level History](alpha/phase-02-classes-level-history.md) | 📋 Outlined | alpha.1 | Class item, level-up flow, BAB/save aggregation, skills, milestones, multiclass, Paladin |
+| 3 | [Action System](alpha/phase-03-action-system.md) | 📋 Outlined | poc.7, alpha.2 | ActionDataModel, execution engine, attack/damage, chat cards, combat maneuvers (trip, grapple, bull rush), stacking history display |
+| 4 | [Feats](alpha/phase-04-feats.md) | 📋 Outlined | poc.6, alpha.3 | Feat item, 3 archetypes: passive (Weapon Focus), toggle (Power Attack), trigger (Cleave). PreRollDialog. Conditional bonuses. |
+| 5 | [Natural & Special Attacks](alpha/phase-05-natural-attacks.md) | 📋 Outlined | alpha.3 | Natural attack item type, primary/secondary, multi-attack full-attack generation, TWF iteratives, bite/claw/wing/tail |
+| 6 | [Class Features](alpha/phase-06-class-features.md) | 📋 Outlined | alpha.2, alpha.3, alpha.4 | Paladin: Divine Grace (CHA→saves), Smite Evil (per-day toggle), Lay on Hands (pool healing), Aura of Courage (+4 morale vs fear) |
+| 7 | [Combat Tracker & Turn Economy](alpha/phase-07-combat-tracker.md) | 📋 Outlined | alpha.3 | Initiative, TurnActionBudget state machine, progressive full attack, token movement with action cost, turn hooks, flat-footed |
+| 8 | [Conditions](alpha/phase-08-conditions.md) | 📋 Outlined | alpha.3 | Prone (trip pipeline), Frightful Presence → Shaken/Frightened (fear track stub), condition manager, token icons, stand-up action |
+| 9 | [Breath Weapon & Area Templates](alpha/phase-09-breath-weapon.md) | 📋 Outlined | alpha.3, alpha.7 | Line and cone MeasuredTemplate placement, Reflex save workflow, area damage application, breath weapon recharge |
+| 10 | [Spells](alpha/phase-10-spells.md) | 📋 Outlined | poc.6, poc.7, alpha.3 | Spell item type, Paladin spellbook, 1st-level slots, cast action, Bless/Protection from Evil/Divine Favor/Cure Light Wounds |
+| 11 | [Enhancement](alpha/phase-11-enhancements.md) | 📋 Outlined | poc.1, poc.2 | +1 longsword: minimal EnhancementSystemModel, one AE with +1 enhancement to attack/damage |
 
-**What Layer 3 proves**: A Human Paladin can be leveled to 5. A Black Dragon can be built via monster class progression. Both have BAB, saves, HP, skills, and granted feats — all derived from the level history ledger. Rolls work with proper modifiers.
+**Exit criteria**: A GM can create a level 5 Paladin (Human) with a +1 longsword and a Young Adult Black Dragon, enter combat, roll initiative, take turns with the progressive full attack state machine, apply Power Attack per-attack, get a Cleave bonus attack on kill, activate Smite Evil via PreRollDialog, use Lay on Hands to heal, cast Bless and Divine Favor (RAW spell slots), see morale stacking collision on fear saves (Aura of Courage +4 suppresses Bless +1), trip an enemy to apply Prone, use a breath weapon (line template with Reflex save), trigger Frightful Presence (Will save vs fear with Aura of Courage granting +4 morale), see natural attacks use primary/secondary rules, and view all results in per-attack chat cards.
 
-> **Races and Classes share the Progression component**. Both phases use the same Progression data structure. Phase 8 builds it; Phase 9 reuses it. Classes depend on Races because both use the same grant scheduling and level history infrastructure.
+> **Races and Classes share the Progression component.** alpha.1 builds it; alpha.2 reuses it. Classes depend on Races because both use the same grant scheduling and level history infrastructure.
+
+> **Action System stays monolithic.** Combat maneuvers (trip, grapple, bull rush, disarm, sunder, overrun) live here because Trip → Prone is an Alpha exit criterion.
 
 ---
 
-### Layer 4: Action & Combat Core — Alpha
+### Wave: Beta — Full System Coverage
+
+`docs/migration-plan/beta/` | beta.1–beta.10
+
+**Goal**: Expand from one-of-everything to complete D&D 3.5e system coverage. All item types, NPC/Object/Trap actor types, full condition/buff system, full spellcasting, equipment with AC, full enhancements, companions, psionics.
 
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
-| 10 | [Action System](phase-10-action-system.md) | 📋 Outlined | 7, 9 | ActionDataModel, execution engine, attack/damage, chat cards, combat maneuvers (trip, grapple, bull rush), per-attack chat cards, stacking history display |
-| 11 | [Feats (Alpha)](phase-11-feats-alpha.md) | 📋 Outlined | 6, 10 | Feat item, 3 archetypes: passive (Weapon Focus), toggle (Power Attack), trigger (Cleave). PreRollDialog. Conditional bonuses. |
-| 12 | [Natural & Special Attacks](phase-12-natural-attacks.md) | 📋 Outlined | 10 | Natural attack item type, primary/secondary, multi-attack full-attack generation, TWF iteratives, bite/claw/wing/tail for Dragon |
-| 13 | [Class Features (Alpha)](phase-13-class-features-alpha.md) | 📋 Outlined | 9, 10, 11 | Paladin: Divine Grace (CHA→saves), Smite Evil (per-day toggle), Lay on Hands (pool healing), Aura of Courage (+4 morale vs fear) |
-
-**What Layer 4 proves**: The Paladin can attack with a longsword, apply Power Attack, and Cleave on kill. Divine Grace adds CHA to saves. Smite Evil toggles via PreRollDialog. Lay on Hands heals. Aura of Courage provides +4 morale on fear saves. The Dragon can full-attack with bite + 2 claws + 2 wings + tail. Trip applies Prone. All results appear in chat cards with stacking breakdowns.
-
-> **Action System stays monolithic**: Combat maneuvers (trip, grapple, bull rush, disarm, sunder, overrun) live here because Trip → Prone is an Alpha exit criterion. The engine is large but cohesive — splitting it would create artificial seams.
-
-> **Natural Attacks are Alpha**: The Dragon cannot exist without natural attacks. Primary/secondary attack classification, multi-attack full attacks, and the iterative attack generator are required for the Alpha combat scenario.
-
-> **Class Features are a separate phase**: Phase 9 builds the progression infrastructure (BAB, saves, HD, skills). Phase 13 implements what the progression grants — the Paladin's class features that use the Action System and AE Generator pattern.
+| 1 | [Equipment & Loot](beta/phase-01-equipment-loot.md) | 📖 Rough Sketch | poc.6, poc.7 | Armor, Shield, Equipment, Loot, Container, Ammo. Full AC calculation. ACP, spell failure, encumbrance. |
+| 2 | [Spells & Spellbooks (Full)](beta/phase-02-spells-spellbooks.md) | 📖 Rough Sketch | poc.7, alpha.3, alpha.10 | All caster types, all spell levels, SR, concentration, counterspelling stubs. Multiple spellbooks. |
+| 3 | [Buffs & Conditions (Full)](beta/phase-03-buffs-conditions.md) | 📖 Rough Sketch | alpha.8, beta.1 | All 25+ conditions, BuffSystemModel AE, ability damage/drain, energy drain, fast healing, regeneration, disease, full fear track |
+| 4 | [Consumables](beta/phase-04-consumables.md) | 📖 Rough Sketch | alpha.3 | Potion, scroll, wand, poison. Action snapshot pattern. Charges/uses. Splash weapons. |
+| 5 | [Advanced Actors](beta/phase-05-advanced-actors.md) | 📖 Rough Sketch | poc.6, alpha.1, alpha.2 | NPC, Trap, Object actor types. Companion bond system (familiar, animal companion, mount, summon, cohort). Portrait Bar (Party HUD). |
+| 6 | [Area Effects & Auras (Full)](beta/phase-06-area-effects-auras.md) | 📖 Rough Sketch | alpha.9, beta.2 | Foundry V14 Region behaviors, persistent auras, AE delivery, duration tracking, DoT. Aura of Courage expands to affect allies in 10ft. |
+| 7 | [Enhancements (Full)](beta/phase-07-enhancements.md) | 📖 Rough Sketch | alpha.11, beta.1 | +1 through +5, special weapon/armor abilities, cursed items (minimal). Magic Weapon spell stacking proof. |
+| 8 | [Metamagic](beta/phase-08-metamagic.md) | 📖 Rough Sketch | alpha.4, beta.2 | Metamagic feats, spell level adjustment, prepared vs spontaneous timing. |
+| 9 | [Full Spells](beta/phase-09-full-spells.md) | 📖 Rough Sketch | beta.6, beta.8 | SR, concentration, counterspelling, all delivery types, AoE spell chains. |
+| 10 | [Psionics](beta/phase-10-psionics.md) | 📖 Rough Sketch | beta.2 | Power item, power points, augmentation, psionic disciplines, manifester level. |
 
 ---
 
-### Layer 5: Combat Loop — Alpha
+### Wave: Release — Migration & Content
+
+`docs/migration-plan/release/` | release.1–release.7
+
+**Goal**: Round out the system with remaining SRD content (Epic, Psionics, Cards), then migrate existing D35E worlds and harden through community feedback. User-friendly documentation is written here against the feature-complete system.
 
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
-| 14 | [Combat Tracker & Turn Economy](phase-14-combat-tracker.md) | 📋 Outlined | 10 | Initiative, TurnActionBudget state machine, progressive full attack, token movement with action cost, turn hooks, flat-footed |
-| 15 | [Conditions (Alpha)](phase-15-conditions-alpha.md) | 📋 Outlined | 10 | Prone (trip pipeline), Frightful Presence → Shaken/Frightened (fear track stub), condition manager, token icons, stand-up action |
-| 16 | [Breath Weapon & Area Templates](phase-16-breath-weapon.md) | 📋 Outlined | 10, 14 | Line and cone MeasuredTemplate placement, Reflex save workflow, area damage application, breath weapon recharge. Minimal — just enough for Black Dragon's 80ft acid line. |
-
-**What Layer 5 proves**: Full combat loop works. Initiative → turns → actions → movement → end turn. The Paladin takes a full attack, the Dragon uses breath weapon (line template, Reflex save), Frightful Presence triggers on approach (Will save with Aura of Courage granting +4 morale), Trip → Prone works end-to-end, TurnActionBudget tracks action economy.
-
-> **Breath Weapon is minimal**: Only implements line and cone templates with Reflex saves — no aura regions, no persistent effects, no duration tracking. This is the minimum to make the Dragon's breath weapon work. Full area effects (Phase 24) are Beta.
+| 1 | [Compendium Browser & Management](release/phase-01-compendium-browser.md) | 📖 Rough Sketch | poc.5, beta.1+ | Cross-compendium search, rich indexing, schema migration runner, diff view |
+| 2 | [Documentation & SRD](release/phase-02-documentation-srd.md) | 📖 Rough Sketch | beta.10 | User guide polish (technical docs grow alongside development), SRD journal housing, tutorials, FAQ |
+| 3 | [Epic Level Rules](release/phase-03-epic-level-rules.md) | 📖 Rough Sketch | alpha.2, alpha.4, beta.2 | Epic BAB/saves, epic feats, epic spellcasting, epic DR (SRD content, exists in D35E) |
+| 4 | [Psionic Rules (Full)](release/phase-04-psionic-rules-full.md) | 📖 Rough Sketch | beta.10, beta.7, release.3 | Full psionic expansion: prestige classes, psi-spell transparency, psionic items, feats |
+| 5 | [Cards](release/phase-05-cards.md) | 📖 Rough Sketch | alpha.3 | Card item for tracking abilities, conditions, resources. Counters with rest resets. |
+| 6 | [Content Migration](release/phase-06-content-migration.md) | 📖 Rough Sketch | release.1 | D35E → dnd35e transforms, backup/validate/import workflow, world migration runner |
+| 7 | [Community Hardening](release/phase-07-community-hardening.md) | 📖 Rough Sketch | release.6 | Playtesting feedback, balance tuning, default value adjustments. Documentation gets a refresh pass after this lands. |
 
 ---
 
-### Layer 6: Spells & Enhancement — Alpha
+### Wave: Post-Release — Hardening & Bonus Features
+
+`docs/migration-plan/post-release/` | post.1–post.9
+
+**Goal**: Third-party integrations and bonus features that don't exist in D35E.
 
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
-| 17 | [Spells (Alpha)](phase-17-spells-alpha.md) | 📋 Outlined | 6, 7, 10 | Spell item type, Paladin spellbook, 1st-level slots, cast action, Bless/Protection from Evil/Divine Favor/Cure Light Wounds |
-| 18 | [Enhancement (Alpha)](phase-18-enhancement-alpha.md) | 📋 Outlined | 1, 2 | +1 longsword: minimal EnhancementSystemModel, one AE with +1 enhancement to attack/damage |
+| 1 | [3rd Party Art Module Support](post-release/phase-01-art-module-support.md) | 📖 Rough Sketch | poc.5, release.1 | Art module lookup, GM configurator, per-item art override |
+| 2 | [Module Integration Testing](post-release/phase-02-module-integration.md) | 📖 Rough Sketch | release.6 | Compatibility matrix, integration helpers, per-module testing |
+| 3 | [Sight Distance / Concealment](post-release/phase-03-sight-concealment.md) | 📄 Stub | beta.6 | Concealment as region behavior |
+| 4 | [Stat Block Sheet (NPC alternate view)](post-release/phase-04-stat-block-sheet.md) | 📄 Stub | beta.5 | Read-only stat block layout |
+| 5 | [Vigor/Wound Variant HP](post-release/phase-05-vigor-wound-hp.md) | 📄 Stub | poc.6 | Variant HP system (does not exist in D35E) |
+| 6 | [Environmental Hazards & Overland Travel](post-release/phase-06-environmental-hazards.md) | 📄 Stub | poc.6, beta.3 | Falling, drowning, heat/cold, forced march (does not exist in D35E) |
+| 7 | [Divine Rules (Divine Ranks & Powers)](post-release/phase-07-divine-rules.md) | 📄 Stub | beta.5 | Divine ranks, salient abilities |
+| 8 | [Variant Rules (Unearthed Arcana OGC)](post-release/phase-08-variant-rules.md) | 📄 Stub | release.7 | Gestalt, flaws, traits (does not exist in D35E) |
+| 9 | [Random Treasure Generation](post-release/phase-09-random-treasure.md) | 📄 Stub | beta.1 | Treasure by CR tables |
 
-**What Layer 6 proves**: Paladin casts RAW spells from prepared slots (not class-feature workarounds). Bless (+1 morale) collides with Aura of Courage (+4 morale) on fear saves — stacking engine picks +4 and shows suppression in chat card. Enhancement bonus type works on weapons. Multiple bonus types stack correctly on attack rolls: BAB (base) + STR (ability) + enhancement (longsword) + morale (Bless) + luck (Divine Favor).
-
-> **Spells are RAW**: The Paladin at level 5 is a divine prepared caster with 1 + WIS bonus 1st-level spell slots. This is the simplest possible spellcasting system to implement — one caster type, one spell level, small spell list. Beta Phase 20 expands to full spellcasting.
-
-> **Enhancement is minimal**: One enhancement AE on one weapon. No +2 through +5, no special abilities, no armor enhancements. Beta Phase 25 expands to the full enhancement system.
-
----
-
-### Layer 7: Beta — Equipment & Magic
-
-| # | Phase | Status | Dependencies | Notes |
-|---|-------|--------|--------------|-------|
-| 19 | [Equipment & Loot](phase-19-equipment-loot.md) | 📖 Rough Sketch | 6, 7 | Armor, Shield, Equipment, Loot, Container, Ammo. Full AC calculation. ACP, spell failure, encumbrance. |
-| 20 | [Spells & Spellbooks (Full)](phase-20-spells-spellbooks.md) | 📖 Rough Sketch | 7, 10, 17 | Expands Alpha spells to all caster types, all spell levels, SR, concentration, counterspelling stubs. Multiple spellbooks. |
-| 21 | [Buffs & Conditions (Full)](phase-21-buffs-conditions-full.md) | 📖 Rough Sketch | 15, 19 | All 25+ conditions, BuffSystemModel AE, ability damage/drain, energy drain, fast healing, regeneration, disease, fear track (full) |
-| 22 | [Consumables](phase-22-consumables.md) | 📖 Rough Sketch | 10 | Potion, scroll, wand, poison. Action snapshot pattern. Charges/uses. Splash weapons. |
-
-**What Layer 7 proves**: Full equipment pipeline with proper AC calculation. Full magic system expanding Alpha's spell foundation. Complete condition coverage. Consumable items work.
-
----
-
-### Layer 8: Beta — Advanced Systems
-
-| # | Phase | Status | Dependencies | Notes |
-|---|-------|--------|--------------|-------|
-| 23 | [Advanced Actor Types](phase-23-advanced-actors.md) | 📖 Rough Sketch | 6, 8, 9 | NPC, Trap, Object actor types. Companion bond system (familiar, animal companion, mount, summon, cohort). Stat derivation. Portrait Bar (Party HUD). |
-| 24 | [Area Effects & Auras (Full)](phase-24-area-effects-auras.md) | 📖 Rough Sketch | 16, 20 | Foundry V14 Region behaviors, persistent auras, AE delivery, duration tracking, DoT. Extends Alpha breath weapon templates. Aura of Courage expands to affect allies in 10ft. |
-| 25 | [Enhancements (Full)](phase-25-enhancements.md) | 📖 Rough Sketch | 18, 19 | Expands Alpha +1 to +1 through +5, special weapon/armor abilities, cursed items (minimal). Magic Weapon spell stacking proof. |
-| 26 | [Metamagic](phase-26-metamagic.md) | 📖 Rough Sketch | 11, 20 | Metamagic feats, spell level adjustment, prepared vs spontaneous timing. |
-| 27 | [Full Spells](phase-27-full-spells.md) | 📖 Rough Sketch | 24, 26 | SR, concentration, counterspelling (if Ready is done), all delivery types, AoE spell chains. |
-| 28 | [Psionics](phase-28-psionics.md) | 📖 Rough Sketch | 20 | Power item, power points, augmentation, psionic disciplines, manifester level. |
-
-**What Layer 8 proves**: The system handles all D&D 3.5e content types. NPC actors with CR. Companions with stat derivation. Full spell system with metamagic and area effects. Aura of Courage reaches allies. Enhancement stacking proven (Magic Weapon vs +1 weapon). Psionics foundation.
-
----
-
-### Layer 9: Release — Migration & Content
-
-| # | Phase | Status | Dependencies | Notes |
-|---|-------|--------|--------------|-------|
-| 29 | [Compendium Browser & Management](phase-29-compendium-browser.md) | 📖 Rough Sketch | 5, 19+ | Cross-compendium search, rich indexing, schema migration runner, diff view |
-| 30 | [Content Migration](phase-30-content-migration.md) | 📖 Rough Sketch | 29 | D35E → dnd35e transforms, backup/validate/import workflow, world migration runner |
-
----
-
-### Layer 10: Post-Release
-
-| # | Phase | Status | Dependencies | Notes |
-|---|-------|--------|--------------|-------|
-| 31 | [Community Hardening](phase-31-community-hardening.md) | 📖 Rough Sketch | 30 | Playtesting feedback, balance tuning, default value adjustments |
-| 32 | [Documentation & SRD](phase-32-documentation-srd.md) | 📖 Rough Sketch | 31 | User guide, SRD journal housing, tutorials, FAQ |
-| 33 | [3rd Party Art Module Support](phase-33-art-module-support.md) | 📖 Rough Sketch | 5, 29 | Art module lookup, GM configurator, per-item art override |
-| 34 | [Module Integration Testing](phase-34-module-integration.md) | 📖 Rough Sketch | 30 | Compatibility matrix, integration helpers, per-module testing |
-| 35 | [Epic Level Rules](phase-35-epic-level-rules.md) | � Rough Sketch | 9, 11, 20 | Epic BAB/saves, epic feats, epic spellcasting, epic DR (exists in D35E, SRD content) |
-| 36 | [Psionic Rules (Full)](phase-36-psionic-rules-full.md) | 📖 Rough Sketch | 28, 25, 35 | Full psionic expansion: prestige classes, psi-spell transparency, psionic items, feats (exists in D35E, SRD content) |
-| 37 | [Cards](phase-37-cards.md) | 📖 Rough Sketch | 10 | Card item for tracking abilities, conditions, resources. Counters with rest resets. |
-
-### Post-Release Bonus
-
-| # | Phase | Status | Dependencies | Notes |
-|---|-------|--------|--------------|-------|
-| 38 | [Sight Distance / Concealment (Regions)](phase-38-sight-concealment.md) | 📄 Stub | 24 | Concealment as region behavior |
-| 39 | [Stat Block Sheet (NPC alternate view)](phase-39-stat-block-sheet.md) | 📄 Stub | 23 | Read-only stat block layout |
-| 40 | [Vigor/Wound Variant HP](phase-40-vigor-wound-hp.md) | 📄 Stub | 6 | Variant HP system (does not exist in D35E) |
-| 41 | [Environmental Hazards & Overland Travel](phase-41-environmental-hazards.md) | 📄 Stub | 6, 21 | Falling, drowning, heat/cold, forced march (does not exist in D35E) |
-| 42 | [Divine Rules (Divine Ranks & Powers)](phase-42-divine-rules.md) | 📄 Stub | 23 | Divine ranks, salient abilities |
-| 43 | [Variant Rules (Unearthed Arcana OGC)](phase-43-variant-rules.md) | 📄 Stub | 31 | Gestalt, flaws, traits (does not exist in D35E) |
-| 44 | [Random Treasure Generation](phase-44-random-treasure.md) | 📄 Stub | 19 | Treasure by CR tables |
 ---
 
 ## Dependency Graph
 
 ```mermaid
 flowchart TD
-    subgraph L1["🔷 Layer 1: Foundation — POC"]
-        P1["1 Weapon"]
-        P2["2 Material AE"]
-        P3["3 i18n"]
+    subgraph POC["🔷 POC — Proof of Concept"]
+        P1["poc.1 Weapon"]
+        P2["poc.2 Material AE"]
+        P3["poc.3 i18n"]
+        P4["poc.4 Testing"]
+        P5["poc.5 Compendium"]
+        P6["poc.6 Actor + Token"]
+        P7["poc.7 Roll Formulas"]
         P1 --> P2
-    end
-
-    subgraph L2["🔷 Layer 2: Testing & Data Infrastructure — POC"]
-        P4["4 Testing Infrastructure"]
-        P5["5 Compendium Foundation"]
-        P6["6 Actor + Token"]
     end
     P1 --> P4
     P1 --> P5
@@ -335,120 +293,107 @@ flowchart TD
     P3 --> P5
     P1 --> P6
     P3 --> P6
-
-    subgraph L3["🔷 Layer 3: Character Building — Alpha"]
-        P7["7 Roll Formulas"]
-        P8["8 Races & Progression"]
-        P9["9 Classes & Level History"]
-        P7 --> P8
-        P8 --> P9
-    end
     P6 --> P7
-    P5 --> P8
 
-    subgraph L4["🔷 Layer 4: Action & Combat Core — Alpha"]
-        P10["10 Action System"]
-        P11["11 Feats"]
-        P12["12 Natural Attacks"]
-        P13["13 Class Features"]
-        P10 --> P11
-        P10 --> P12
-        P10 --> P13
-        P11 --> P13
+    subgraph ALPHA["🔶 Alpha — Paladin vs Dragon"]
+        A1["alpha.1 Races"]
+        A2["alpha.2 Classes"]
+        A3["alpha.3 Action System"]
+        A4["alpha.4 Feats"]
+        A5["alpha.5 Natural Attacks"]
+        A6["alpha.6 Class Features"]
+        A7["alpha.7 Combat Tracker"]
+        A8["alpha.8 Conditions"]
+        A9["alpha.9 Breath Weapon"]
+        A10["alpha.10 Spells"]
+        A11["alpha.11 Enhancement"]
+        A1 --> A2
+        A2 --> A3
+        A3 --> A4
+        A3 --> A5
+        A3 --> A6
+        A4 --> A6
+        A2 --> A6
+        A3 --> A7
+        A3 --> A8
+        A3 --> A9
+        A7 --> A9
+        A3 --> A10
     end
-    P7 --> P10
-    P9 --> P10
-    P6 --> P11
-    P9 --> P13
+    P5 --> A1
+    P7 --> A1
+    P6 --> A4
+    P6 --> A10
+    P7 --> A10
+    P1 --> A11
+    P2 --> A11
 
-    subgraph L5["🔷 Layer 5: Combat Loop — Alpha"]
-        P14["14 Combat Tracker"]
-        P15["15 Conditions Alpha"]
-        P16["16 Breath Weapon"]
+    subgraph BETA["🟭 Beta — Full System Coverage"]
+        B1["beta.1 Equipment"]
+        B2["beta.2 Spells Full"]
+        B3["beta.3 Buffs/Conditions"]
+        B4["beta.4 Consumables"]
+        B5["beta.5 Advanced Actors"]
+        B6["beta.6 Area Effects"]
+        B7["beta.7 Enhancements"]
+        B8["beta.8 Metamagic"]
+        B9["beta.9 Full Spells"]
+        B10["beta.10 Psionics"]
     end
-    P10 --> P14
-    P10 --> P15
-    P10 --> P16
-    P14 --> P16
+    P6 --> B1
+    P7 --> B1
+    P7 --> B2
+    A3 --> B2
+    A10 --> B2
+    A8 --> B3
+    B1 --> B3
+    A3 --> B4
+    P6 --> B5
+    A1 --> B5
+    A2 --> B5
+    A9 --> B6
+    B2 --> B6
+    A11 --> B7
+    B1 --> B7
+    A4 --> B8
+    B2 --> B8
+    B6 --> B9
+    B8 --> B9
+    B2 --> B10
 
-    subgraph L6["🔷 Layer 6: Spells & Enhancement — Alpha"]
-        P17["17 Spells Alpha"]
-        P18["18 Enhancement Alpha"]
+    subgraph REL["🟛 Release"]
+        R1["release.1 Compendium Browser"]
+        R2["release.2 Documentation & SRD"]
+        R3["release.3 Epic Level"]
+        R4["release.4 Psionics Full"]
+        R5["release.5 Cards"]
+        R6["release.6 Content Migration"]
+        R7["release.7 Community Hardening"]
+        R1 --> R6
+        R6 --> R7
     end
-    P6 --> P17
-    P7 --> P17
-    P10 --> P17
-    P1 --> P18
-    P2 --> P18
+    P5 --> R1
+    B1 --> R1
+    B10 --> R2
+    A2 --> R3
+    A4 --> R3
+    B2 --> R3
+    B10 --> R4
+    R3 --> R4
+    A3 --> R5
 
-    subgraph L7["🔷 Layer 7: Equipment & Magic — Beta"]
-        P19["19 Equipment & Loot"]
-        P20["20 Spells Full"]
-        P21["21 Buffs & Conditions Full"]
-        P22["22 Consumables"]
+    subgraph POST["⚦ Post-Release"]
+        PR1["post.1 Art Module"]
+        PR2["post.2 Module Integration"]
+        PR8["post.8 Variant Rules"]
     end
-    P6 --> P19
-    P7 --> P19
-    P7 --> P20
-    P10 --> P20
-    P17 --> P20
-    P15 --> P21
-    P19 --> P21
-    P10 --> P22
-
-    subgraph L8["🔷 Layer 8: Advanced Systems — Beta"]
-        P23["23 Advanced Actors"]
-        P24["24 Area Effects Full"]
-        P25["25 Enhancements Full"]
-        P26["26 Metamagic"]
-        P27["27 Full Spells"]
-        P28["28 Psionics"]
-    end
-    P6 --> P23
-    P8 --> P23
-    P9 --> P23
-    P16 --> P24
-    P20 --> P24
-    P18 --> P25
-    P19 --> P25
-    P11 --> P26
-    P20 --> P26
-    P24 --> P27
-    P26 --> P27
-    P20 --> P28
-
-    subgraph L9["🔷 Layer 9: Release"]
-        P29["29 Compendium Browser"]
-        P30["30 Content Migration"]
-        P29 --> P30
-    end
-    P5 --> P29
-    P19 --> P29
-
-    subgraph L10["🔷 Layer 10: Post-Release"]
-        P31["31 Community Hardening"]
-        P32["32 Documentation"]
-        P33["33 3rd Party Art"]
-        P34["34 Module Integration"]
-        P35["35 Epic Level Rules"]
-        P36["36 Psionics Full"]
-        P37["37 Cards"]
-        P38["38–44 Bonus Features"]
-    end
-    P30 --> P31
-    P31 --> P32
-    P5 --> P33
-    P29 --> P33
-    P30 --> P34
-    P9 --> P35
-    P11 --> P35
-    P20 --> P35
-    P28 --> P36
-    P10 --> P37
+    P5 --> PR1
+    R1 --> PR1
+    R6 --> PR2
+    R7 --> PR8
 ```
 
 ---
-
 ## Cross-Cutting Concerns
 
 These apply across multiple phases and should be kept in mind throughout.
