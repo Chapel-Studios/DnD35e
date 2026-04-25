@@ -1,0 +1,242 @@
+# GitHub Issue Labels
+#
+# Source of truth for all labels in this repository.
+# Synced to GitHub automatically on push to dev via sync-labels.yml.
+# To add/rename/recolor a label, edit this file and push — the workflow applies the changes.
+#
+# Label name format for phases: "phase: NN — Short Title"
+
+# ──────────────────────────────────────────
+# Type labels
+# ──────────────────────────────────────────
+- name: "type: feature"
+  color: "0075ca"
+  description: "New functionality"
+
+- name: "type: bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "type: enhancement"
+  color: "a2eeef"
+  description: "Improvement to existing functionality"
+
+- name: "type: chore"
+  color: "e4e669"
+  description: "Maintenance, refactoring, or tooling"
+
+- name: "type: docs"
+  color: "0075ca"
+  description: "Documentation only"
+
+- name: "type: test"
+  color: "f9d0c4"
+  description: "Test coverage"
+
+# ──────────────────────────────────────────
+# Status labels
+# ──────────────────────────────────────────
+- name: "status: needs review"
+  color: "fbca04"
+  description: "Awaiting code review"
+
+- name: "status: blocked"
+  color: "e11d48"
+  description: "Blocked by another issue or external dependency"
+
+- name: "status: good first issue"
+  color: "7057ff"
+  description: "Good for new contributors"
+
+- name: "status: wontfix"
+  color: "ffffff"
+  description: "Will not be addressed"
+
+- name: "status: duplicate"
+  color: "cfd3d7"
+  description: "Already reported"
+
+# BEGIN GENERATED PHASE LABELS — do not edit manually, run: node scripts/generate-labels.mjs
+
+# POC — Proof of Concept (poc.1–poc.7)
+- name: "poc: 01 — Item Foundation"
+  color: "bfd4f2"
+  description: "poc.1 — Item Foundation"
+
+- name: "poc: 02 — Active Effects on Items"
+  color: "bfd4f2"
+  description: "poc.2 — Active Effects on Items"
+
+- name: "poc: 03 — Localization"
+  color: "bfd4f2"
+  description: "poc.3 — Localization"
+
+- name: "poc: 04 — Testing Infrastructure"
+  color: "bfd4f2"
+  description: "poc.4 — Testing Infrastructure"
+
+- name: "poc: 05 — Compendium Foundation"
+  color: "bfd4f2"
+  description: "poc.5 — Compendium Foundation"
+
+- name: "poc: 06 — Actor Foundation"
+  color: "bfd4f2"
+  description: "poc.6 — Actor Foundation"
+
+- name: "poc: 07 — Roll Formulas"
+  color: "bfd4f2"
+  description: "poc.7 — Roll Formulas"
+
+# Alpha — Paladin vs Dragon (alpha.1–alpha.11)
+- name: "alpha: 01 — Races & Progression"
+  color: "c2e0c6"
+  description: "alpha.1 — Races & Progression"
+
+- name: "alpha: 02 — Classes & Level History"
+  color: "c2e0c6"
+  description: "alpha.2 — Classes & Level History"
+
+- name: "alpha: 03 — Action System"
+  color: "c2e0c6"
+  description: "alpha.3 — Action System"
+
+- name: "alpha: 04 — Feats"
+  color: "c2e0c6"
+  description: "alpha.4 — Feats"
+
+- name: "alpha: 05 — Natural & Special Attacks"
+  color: "c2e0c6"
+  description: "alpha.5 — Natural & Special Attacks"
+
+- name: "alpha: 06 — Class Features"
+  color: "c2e0c6"
+  description: "alpha.6 — Class Features"
+
+- name: "alpha: 07 — Combat Tracker & Turn Economy"
+  color: "c2e0c6"
+  description: "alpha.7 — Combat Tracker & Turn Economy"
+
+- name: "alpha: 08 — Conditions"
+  color: "c2e0c6"
+  description: "alpha.8 — Conditions"
+
+- name: "alpha: 09 — Breath Weapon & Area Templates"
+  color: "c2e0c6"
+  description: "alpha.9 — Breath Weapon & Area Templates"
+
+- name: "alpha: 10 — Spells"
+  color: "c2e0c6"
+  description: "alpha.10 — Spells"
+
+- name: "alpha: 11 — Enhancement"
+  color: "c2e0c6"
+  description: "alpha.11 — Enhancement"
+
+# Beta — Full System Coverage (beta.1–beta.10)
+- name: "beta: 01 — Equipment & Loot"
+  color: "ffd580"
+  description: "beta.1 — Equipment & Loot"
+
+- name: "beta: 02 — Spells & Spellbooks"
+  color: "ffd580"
+  description: "beta.2 — Spells & Spellbooks"
+
+- name: "beta: 03 — Buffs & Conditions"
+  color: "ffd580"
+  description: "beta.3 — Buffs & Conditions"
+
+- name: "beta: 04 — Consumables"
+  color: "ffd580"
+  description: "beta.4 — Consumables"
+
+- name: "beta: 05 — Advanced Actors"
+  color: "ffd580"
+  description: "beta.5 — Advanced Actors"
+
+- name: "beta: 06 — Area Effects & Auras"
+  color: "ffd580"
+  description: "beta.6 — Area Effects & Auras"
+
+- name: "beta: 07 — Enhancements"
+  color: "ffd580"
+  description: "beta.7 — Enhancements"
+
+- name: "beta: 08 — Metamagic"
+  color: "ffd580"
+  description: "beta.8 — Metamagic"
+
+- name: "beta: 09 — Full Spells"
+  color: "ffd580"
+  description: "beta.9 — Full Spells"
+
+- name: "beta: 10 — Psionics"
+  color: "ffd580"
+  description: "beta.10 — Psionics"
+
+# Release — Migration & Content (release.1–release.2)
+- name: "release: 01 — Compendium Browser"
+  color: "d4c5f9"
+  description: "release.1 — Compendium Browser"
+
+- name: "release: 02 — Content Migration"
+  color: "d4c5f9"
+  description: "release.2 — Content Migration"
+
+# Post-Release — Hardening & Bonus Features (post.1–post.14)
+- name: "post: 01 — Community Hardening"
+  color: "e1e4e8"
+  description: "post.1 — Community Hardening"
+
+- name: "post: 02 — Documentation & SRD"
+  color: "e1e4e8"
+  description: "post.2 — Documentation & SRD"
+
+- name: "post: 03 — Art Module Support"
+  color: "e1e4e8"
+  description: "post.3 — Art Module Support"
+
+- name: "post: 04 — Module Integration Testing"
+  color: "e1e4e8"
+  description: "post.4 — Module Integration Testing"
+
+- name: "post: 05 — Epic Level Rules"
+  color: "e1e4e8"
+  description: "post.5 — Epic Level Rules"
+
+- name: "post: 06 — Psionic Rules Full"
+  color: "e1e4e8"
+  description: "post.6 — Psionic Rules Full"
+
+- name: "post: 07 — Cards"
+  color: "e1e4e8"
+  description: "post.7 — Cards"
+
+- name: "post: 08 — Sight & Concealment"
+  color: "e1e4e8"
+  description: "post.8 — Sight & Concealment"
+
+- name: "post: 09 — Stat Block Sheet"
+  color: "e1e4e8"
+  description: "post.9 — Stat Block Sheet"
+
+- name: "post: 10 — Vigor & Wound HP"
+  color: "e1e4e8"
+  description: "post.10 — Vigor & Wound HP"
+
+- name: "post: 11 — Environmental Hazards"
+  color: "e1e4e8"
+  description: "post.11 — Environmental Hazards"
+
+- name: "post: 12 — Divine Rules"
+  color: "e1e4e8"
+  description: "post.12 — Divine Rules"
+
+- name: "post: 13 — Variant Rules"
+  color: "e1e4e8"
+  description: "post.13 — Variant Rules"
+
+- name: "post: 14 — Random Treasure"
+  color: "e1e4e8"
+  description: "post.14 — Random Treasure"
+
+# END GENERATED PHASE LABELS

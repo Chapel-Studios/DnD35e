@@ -22,48 +22,73 @@
 
 3. Build:
    ```sh
-   npm run build          # production build
+   npm run build          # production build (runs lint + typecheck + system.json generation first)
    npm run dev:watch      # development watch build
    ```
 
-Build output is written to `<foundrySystemDir>/dnd35e/` when `local.config.json` is present. Without it (e.g. CI), the build falls back to `dist/` automatically.
+   `npm run build` automatically runs these steps in order:
+   - `eslint --fix` (lint)
+   - `vue-tsc --noEmit` (typecheck)
+   - `vite build` — compiles TypeScript + Vue → `dist/`, then the `copy-static-files` plugin runs and generates `system.json` directly into `dist/` from `system.json.template` using the version in `package.json`
+
+   Build output is written to `<foundrySystemDir>/dnd35e/` when `local.config.json` is present. Without it (e.g. CI), output goes to `dist/`. Either way, `system.json` is never written to the repo root — it lives only in the build output.
 
 ## Build & Release Process
 
-### CI (GitHub Actions)
+### Local build
 
-This repo ships a GitHub Actions workflow at `.github/workflows/build.yml`.
+See the setup steps above. `npm run build` is the only command needed — it covers lint, typecheck, `system.json` generation, and the Vite compile in one step.
 
-- Trigger: pushing a SemVer tag matching `v*.*.*` (example: `v0.1.0`)
-- Steps: `npm ci` then `npm run build`
-- Artifact: `dnd35e-dist-<tag>.zip` (example: `dnd35e-dist-v0.1.0.zip`) containing a top-level `dist/` folder (source maps excluded)
-- Delivery: the zip is uploaded to the corresponding GitHub Release
+To push an updated `system.json` to your local Foundry directory without a full build (e.g. after bumping the version):
+```sh
+npm run build:system-json
+```
+This writes directly to `<foundrySystemDir>/dnd35e/system.json`. Requires `local.config.json` to be configured.
 
-Node is pinned via `.nvmrc` and used by CI.
+### Releasing
 
-## Version metadata automation
+Releases are fully automated — no manual version bump or `system.json` commit needed. The tag is the single trigger:
 
-This repo maintains a `version.yaml` file that tracks the current system version and GitHub milestone mapping.
+1. Merge your branch to `main`
+2. Tag the commit and push:
+   ```sh
+   git tag v14.0.0-alpha.1
+   git push origin v14.0.0-alpha.1
+   ```
+3. The `build.yml` workflow fires automatically and:
+   - Sets `package.json` version from the tag
+   - Runs `npm run build` (full prebuild chain including `system.json` generation with correct `manifest`/`download` URLs)
+   - Packages `dist/` as `dnd35e-dist-v14.0.0-alpha.1.zip`
+   - Uploads both `system.json` and the zip as release assets
+   - Marks the release as a pre-release if the tag contains `-alpha.` or `-beta.`
 
-### Local update
+Foundry users install or update via:
+```
+https://github.com/Chapel-Studios/DnD35e/releases/latest/download/system.json
+```
 
-Run the updater script to refresh `version.yaml` from GitHub milestones:
+### Tag naming
 
-- `npm run update:version`
+| Tag format | Example | Release type |
+|---|---|---|
+| `vX.Y.Z-alpha.N` | `v14.0.0-alpha.1` | Pre-release |
+| `vX.Y.Z-beta.N` | `v14.0.0-beta.1` | Pre-release |
+| `vX.Y.Z` | `v14.0.0` | Stable release |
+
+## Version metadata
+
+This repo maintains a `version.yaml` file that tracks GitHub milestone names and IDs. The version itself lives in `package.json` — that is the single source of truth.
+
+To sync `version.yaml` with the current GitHub milestones:
+```sh
+npm run update:version
+```
 
 Optional environment variables:
+- `GITHUB_TOKEN` — recommended to avoid API rate limits
+- `GITHUB_REPOSITORY` or `--repo=owner/name` — override the default repo
 
-- `GITHUB_TOKEN` (recommended to avoid API rate limits)
-- `GITHUB_REPOSITORY` or `--repo=owner/name` (override the default repo)
-
-### CI updater
-
-There is an automatic workflow in `.github/workflows/update-version.yml` that:
-
-- Runs daily on a schedule (06:00 UTC) and via manual dispatch
-- Uses `.nvmrc` + `npm ci`
-- Runs `npm run update:version`
-- Commits and pushes changes to `version.yaml` if it changed
+There is also a manual-dispatch workflow at `.github/workflows/update-version.yml` to run this in CI when needed.
 
 ## AI Tooling (GitHub Copilot)
 

@@ -26,13 +26,22 @@ if (foundrySystemDir && path.basename(foundrySystemDir) === 'dnd35e') {
 }
 const buildOutDir = foundrySystemDir ? path.join(foundrySystemDir, 'dnd35e') : 'dist';
 
-// Copy static files to build output after Vite clears the directory
+// Copy static files to build output after Vite clears the directory,
+// and generate system.json from system.json.template with version substitution.
 function copyStaticFiles (): Plugin {
   return {
     name: 'copy-static-files',
     apply: 'build',
     async closeBundle () {
-      const staticFiles = ['README.md', 'system.json'];
+      // Generate system.json from template
+      const pkg = await fs.readJSON(path.resolve(__dirname, 'package.json'));
+      const version: string = pkg.version ?? '0.0.0';
+      const template = await fs.readFile(path.resolve(__dirname, 'system.json.template'), 'utf8');
+      const generated = template.replaceAll('{{VERSION}}', version);
+      await fs.writeFile(path.join(buildOutDir, 'system.json'), generated);
+
+      // Copy other static files
+      const staticFiles = ['README.md'];
       for (const file of staticFiles) {
         const src = path.resolve(__dirname, file);
         if (await fs.pathExists(src)) {

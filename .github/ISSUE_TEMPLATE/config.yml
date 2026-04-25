@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & Discussion
+    url: https://github.com/Chapel-Studios/DnD35e/discussions
+    about: Ask a question, propose an idea, or chat with the community.
+  - name: Legacies of the Dragon Discord (D&D 3.5e on Foundry)
+    url: https://discord.gg/7Av7K9jtjt
+    about: Real-time community support for D&D 3.5e on Foundry VTT.
+  - name: Foundry VTT Discord
+    url: https://discord.gg/foundryvtt
+    about: Real-time community support on the official Foundry Discord.
