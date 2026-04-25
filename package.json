@@ -1,15 +1,17 @@
 {
   "name": "dnd35e",
-  "version": "1.0.0",
+  "version": "14.0.0-poc.3.1",
   "description": "",
   "scripts": {
     "lint": "eslint . --fix",
     "build:system-json": "node scripts/build-system-json.mjs",
     "typecheck": "vue-tsc --noEmit",
-    "prebuild": "npm run lint && npm run typecheck && npm run build:system-json",
+    "prebuild": "npm run generate:labels && npm run lint && npm run typecheck",
     "build": "vite build --mode production",
+    "test": "echo \"No tests yet — Vitest landing in poc.4 (Testing Infrastructure)\" && exit 0",
     "dev:watch": "npm run build:system-json && vite build --watch --mode development",
-    "update:version": "node scripts/update-version-yaml.mjs"
+    "sync:milestones": "node scripts/sync-milestones.mjs",
+    "generate:labels": "node scripts/generate-labels.mjs"
   },
   "keywords": [],
   "author": "",

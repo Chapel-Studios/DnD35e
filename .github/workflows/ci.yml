@@ -1,0 +1,39 @@
+name: CI
+
+# PR gate. Fails the PR if the build is broken.
+# `npm run build` runs lint + typecheck + Vite build via the prebuild chain.
+# `npm test` is currently a stub — wired in now so poc.4 (Testing Infrastructure)
+# can replace the stub with a real Vitest run without touching this workflow.
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Lint, typecheck, build, test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build (lint + typecheck + Vite)
+        run: npm run build
+
+      - name: Test
+        run: npm test

@@ -1,0 +1,24 @@
+# CODEOWNERS — required reviewers
+#
+# Syntax: <pattern> <owner1> <owner2> ...
+# Last matching pattern wins. Patterns match PATHS in the repo, not branches.
+# Branch-level enforcement (which branches require review) is a branch
+# protection rule configured in the GitHub UI — see docs/github-repo-setup.md §6.
+
+# Default owner for everything not matched below.
+*                                   @ChapelStudios @chapel-studios/d-d-3-5e-architects
+
+# CI/CD, repo config, and release infrastructure
+/.github/                           @ChapelStudios @chapel-studios/d-d-3-5e-architects
+/scripts/                           @ChapelStudios @chapel-studios/d-d-3-5e-architects
+/system.json.template               @ChapelStudios @chapel-studios/d-d-3-5e-architects
+/package.json                       @ChapelStudios @chapel-studios/d-d-3-5e-architects
+/vite.config.ts                     @ChapelStudios @chapel-studios/d-d-3-5e-architects
+/tsconfig.json                      @ChapelStudios @chapel-studios/d-d-3-5e-architects
+/eslint.config.js                   @ChapelStudios @chapel-studios/d-d-3-5e-architects
+
+# Planning & architecture docs
+/docs/migration-plan/                @ChapelStudios @chapel-studios/d-d-3-5e-architects
+/docs/architecture/                  @ChapelStudios @chapel-studios/d-d-3-5e-architects
+/docs/branching-strategy.md          @ChapelStudios @chapel-studios/d-d-3-5e-architects
+/docs/github-repo-setup.md           @ChapelStudios @chapel-studios/d-d-3-5e-architects

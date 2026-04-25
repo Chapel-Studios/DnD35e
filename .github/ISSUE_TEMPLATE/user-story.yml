@@ -1,0 +1,59 @@
+name: User Story
+description: Plan a unit of work with clear acceptance criteria
+title: "[Story] "
+labels: ["type: feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for planned work — features, enhancements, chores. For defects, use the **Bug Report** template instead.
+        Don't forget to add a **wave label** (e.g. `poc: 04 — Testing Infrastructure`) and assign the matching **milestone**.
+
+  - type: textarea
+    id: story
+    attributes:
+      label: User Story
+      description: One-sentence statement of the value.
+      placeholder: |
+        As a **GM**, I want **to lock individual fields on a sheet** so that **players can't edit them**.
+      value: |
+        As a **[user type]**, I want **[goal]** so that **[reason]**.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Given/when/then format. Each criterion must be independently verifiable.
+      value: |
+        - [ ] Given **[context]**, when **[action]**, then **[expected outcome]**
+        - [ ] 
+    validations:
+      required: true
+
+  - type: textarea
+    id: subtasks
+    attributes:
+      label: Subtasks
+      description: Optional breakdown of implementation steps.
+      value: |
+        - [ ] 
+        - [ ] 
+
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: Definition of Done
+      value: |
+        - [ ] All acceptance criteria met
+        - [ ] Tests written and passing (or stubbed if pre-poc.4)
+        - [ ] Documentation updated
+        - [ ] Reviewed and approved
+        - [ ] Wave label and milestone assigned
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Design considerations, links to related issues, screenshots, etc.

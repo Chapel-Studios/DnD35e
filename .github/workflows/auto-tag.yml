@@ -1,0 +1,84 @@
+name: Auto-tag on version bump
+
+# When a commit lands on main that changes package.json's version field,
+# automatically create and push the matching v<version> tag. The tag push
+# triggers build.yml which produces the actual release.
+#
+# Only fires on main. Skips if the tag already exists. Skips if the version
+# didn't actually change (e.g. unrelated edits to package.json).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+
+permissions:
+  contents: write  # needed to push the tag
+
+jobs:
+  tag:
+    name: Tag release if version bumped
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # need previous commit to diff package.json
+
+      - name: Read current version
+        id: current
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Current version: $VERSION"
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ steps.current.outputs.version }}"
+          # Allowed: MAJOR.MINOR.PATCH optionally followed by -<channel>.N(.N)*
+          # where <channel> is poc, alpha, beta, or rc.
+          # Examples: 14.0.0, 14.0.0-poc.1, 14.0.0-poc.3.1, 14.0.0-alpha.2, 14.1.0-rc.1
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(poc|alpha|beta|rc)(\.[0-9]+)+)?$ ]]; then
+            echo "::error::Invalid version format: '$VERSION'"
+            echo "Expected: MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-<poc|alpha|beta|rc>.N(.N)*"
+            echo "Examples: 14.0.0, 14.0.0-poc.1, 14.0.0-poc.3.1, 14.0.0-alpha.2, 14.0.0-rc.1"
+            exit 1
+          fi
+          echo "Version format OK: $VERSION"
+
+      - name: Read previous version
+        id: previous
+        run: |
+          PREV=$(git show HEAD~1:package.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).version))")
+          echo "version=$PREV" >> "$GITHUB_OUTPUT"
+          echo "Previous version: $PREV"
+
+      - name: Skip if version unchanged
+        if: steps.current.outputs.version == steps.previous.outputs.version
+        run: |
+          echo "Version did not change — no tag to create."
+          exit 0
+
+      - name: Skip if tag already exists
+        id: tag-check
+        if: steps.current.outputs.version != steps.previous.outputs.version
+        run: |
+          TAG="v${{ steps.current.outputs.version }}"
+          if git ls-remote --tags origin "$TAG" | grep -q "$TAG"; then
+            echo "Tag $TAG already exists — nothing to do."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.current.outputs.version != steps.previous.outputs.version && steps.tag-check.outputs.exists == 'false'
+        run: |
+          TAG="v${{ steps.current.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "Pushed tag $TAG — build.yml will now produce the release."

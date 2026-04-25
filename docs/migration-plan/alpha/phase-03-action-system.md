@@ -903,7 +903,7 @@ Both histories are stored in `flags.dnd35e.stackingHistory` on the chat message 
 - **Player**: Sees `masked` history. Their breakdown may not add up to the die total — this is correct. The character doesn't know why the sword performs better than expected.
 - **GM**: Sees `real` history with `[hidden]` markers on bonuses from unidentified sources, plus the suppression chain (e.g., "Magic Weapon +1 suppressed by hidden +2 enhancement").
 
-See [Phase 2 §2.5.2](phase-02-active-effect-on-item.md) for the dual-stack algorithm.
+See [Phase 2 §2.5.2](../poc/phase-02-active-effect-on-item.md) for the dual-stack algorithm.
 
 ### Attack Chat Card Contents
 

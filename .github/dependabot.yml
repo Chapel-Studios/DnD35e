@@ -1,0 +1,19 @@
+version: 2
+
+updates:
+  # Keep GitHub Actions versions current. npm scope is intentionally deferred
+  # until the codebase stabilizes (post.1) — see ci-cd-pipeline.md §6.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    labels:
+      - "type: chore"
+    commit-message:
+      prefix: "chore(actions)"
+    groups:
+      actions-minor-and-patch:
+        update-types:
+          - minor
+          - patch

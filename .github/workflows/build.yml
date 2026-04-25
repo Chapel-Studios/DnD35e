@@ -9,48 +9,53 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
+  release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Extract version from tag
+        id: tag
+        run: |
+          ref="${GITHUB_REF#refs/tags/}"
+          version="${ref#v}"
+          echo "tag=$ref" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # Semver: anything with a `-` suffix (e.g. -poc.1, -alpha.1, -beta.2, -rc.1)
+          # is a prerelease. Stable releases are bare MAJOR.MINOR.PATCH.
+          if [[ "$version" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: 'package-lock.json'
 
-      - name: Install
-        run: npm ci
+      - run: npm ci
 
-      - name: Check version.yaml freshness (non-blocking)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm run update:version
-          if git diff --quiet -- version.yaml; then
-            echo "version.yaml is up to date."
-          else
-            echo "WARNING: version.yaml is out of date with GitHub milestones."
-            git checkout -- version.yaml
-          fi
+      - name: Set version from tag
+        run: npm pkg set version="${{ steps.tag.outputs.version }}"
 
       - name: Build
         run: npm run build
+        # prebuild automatically runs: lint, typecheck, build-system-json
+        # build-system-json reads version from package.json and generates system.json
 
       - name: Package dist
-        env:
-          DIST_ZIP: dnd35e-dist-${{ github.ref_name }}.zip
         run: |
           test -d dist
-          zip -r "$DIST_ZIP" dist -x "dist/**/*.map"
+          cd dist && zip -r "../dnd35e-dist-${{ steps.tag.outputs.tag }}.zip" . -x "**/*.map"
 
-      - name: Create GitHub Release and upload dist
-        uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2
         with:
-          files: dnd35e-dist-${{ github.ref_name }}.zip
+          files: |
+            dnd35e-dist-${{ steps.tag.outputs.tag }}.zip
+            dist/system.json
           fail_on_unmatched_files: true
           generate_release_notes: true
+          prerelease: ${{ steps.tag.outputs.prerelease }}
