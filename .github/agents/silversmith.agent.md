@@ -113,7 +113,7 @@ Each checklist item from the phase spec is one execution cycle:
 1. The phase doc header: `**Status**: 🔶 In Progress` (or the new status)
 2. The roadmap table: `docs/migration-plan/roadmap.md` — the matching row in the phase table
 
-Use the Status Legend in `README.md` (Stub → Rough Sketch → Outlined → Planned → Approved → In Progress → Complete → Hardened) to pick the correct symbol.
+Use the Status Legend in `docs/migration-plan/roadmap.md` (Stub → Rough Sketch → Outlined → Planned → Approved → In Progress → Complete → Hardened) to pick the correct symbol.
 
 ### Phase 2: Section Completion (when user says "complete")
 
