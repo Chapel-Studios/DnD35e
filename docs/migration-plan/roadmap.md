@@ -166,7 +166,7 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 
 ### Wave: POC — Proof of Concept
 
-`docs/migration-plan/poc/` | poc.1–poc.7
+`docs/migration-plan/poc/` | poc.1–poc.8
 
 **Goal**: Foundation, data infrastructure, and testing patterns. Every building block exists in isolation before being composed.
 
@@ -175,10 +175,11 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 | 1 | [Item Foundation](poc/phase-01-item-foundation.md) | ✅ Complete | — | Weapon DataModel, mixin chain, Vue sheet, Identifiable |
 | 2 | [Active Effect on Item](poc/phase-02-active-effect-on-item.md) | 🔶 In Progress | poc.1 | Material AE, phase system, stacking engine, proxy dispatcher, GeneralSystemModel |
 | 3 | [Localization](poc/phase-03-localization.md) | ✅ Complete | — | LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels |
-| 4 | [Testing Infrastructure](poc/phase-04-testing-infrastructure.md) | 📝 Planned | poc.1 | Vitest, Foundry mocks, coverage tooling — establishes test patterns; back-fills poc.1–3 tests |
+| 4 | [Testing Infrastructure](poc/phase-04-testing-infrastructure.md) | ✅ Approved | poc.1, poc.2, poc.3 | Vitest, Foundry mocks, coverage tooling — establishes test patterns; back-fills poc.1–3 tests |
 | 5 | [Compendium Foundation](poc/phase-05-compendium-foundation.md) | 📝 Planned | poc.1, poc.2, poc.3 | Pack pipeline, origin tracking, UUID helpers, migration version field |
 | 6 | [Actor Foundation](poc/phase-06-actor-foundation.md) | 📋 Outlined | poc.1, poc.3 | Character actor: abilities, AC shell, HP, saves, skills, inventory, tokens, equipment slots |
 | 7 | [Roll Formulas & Custom Rolls](poc/phase-07-roll-formulas.md) | 📋 Outlined | poc.6 | D20Roll, DamageRoll, FormulaFamiliar roll data, formula paths |
+| 8 | [Pipeline & Branching](poc/phase-08-pipeline-and-branching.md) | 🔶 In Progress | — | Branching model, PR gate (`test.yml`), release pipeline (`build.yml`), `phases.json` sync. Independent of POC content; can land any time before POC closes. |
 
 **Exit criteria**: A Character actor exists on a scene with derived ability scores, saves, HP, and skills. Weapons can be created, identified, and equipped. Material AEs modify item stats with correct stacking. Roll formulas resolve with FormulaFamiliar context. Compendium items can be imported with origin tracking. All strings are localized. Test framework is in place with unit/integration test examples covering poc.1–3.
 
@@ -216,7 +217,7 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 
 ### Wave: Beta — Full System Coverage
 
-`docs/migration-plan/beta/` | beta.1–beta.10
+`docs/migration-plan/beta/` | beta.1–beta.11
 
 **Goal**: Expand from one-of-everything to complete D&D 3.5e system coverage. All item types, NPC/Object/Trap actor types, full condition/buff system, full spellcasting, equipment with AC, full enhancements, companions, psionics.
 
@@ -225,13 +226,14 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 | 1 | [Equipment & Loot](beta/phase-01-equipment-loot.md) | 📖 Rough Sketch | poc.6, poc.7 | Armor, Shield, Equipment, Loot, Container, Ammo. Full AC calculation. ACP, spell failure, encumbrance. |
 | 2 | [Spells & Spellbooks (Full)](beta/phase-02-spells-spellbooks.md) | 📖 Rough Sketch | poc.7, alpha.3, alpha.10 | All caster types, all spell levels, SR, concentration, counterspelling stubs. Multiple spellbooks. |
 | 3 | [Buffs & Conditions (Full)](beta/phase-03-buffs-conditions.md) | 📖 Rough Sketch | alpha.8, beta.1 | All 25+ conditions, BuffSystemModel AE, ability damage/drain, energy drain, fast healing, regeneration, disease, full fear track |
-| 4 | [Consumables](beta/phase-04-consumables.md) | 📖 Rough Sketch | alpha.3 | Potion, scroll, wand, poison. Action snapshot pattern. Charges/uses. Splash weapons. |
-| 5 | [Advanced Actors](beta/phase-05-advanced-actors.md) | 📖 Rough Sketch | poc.6, alpha.1, alpha.2 | NPC, Trap, Object actor types. Companion bond system (familiar, animal companion, mount, summon, cohort). Portrait Bar (Party HUD). |
-| 6 | [Area Effects & Auras (Full)](beta/phase-06-area-effects-auras.md) | 📖 Rough Sketch | alpha.9, beta.2 | Foundry V14 Region behaviors, persistent auras, AE delivery, duration tracking, DoT. Aura of Courage expands to affect allies in 10ft. |
-| 7 | [Enhancements (Full)](beta/phase-07-enhancements.md) | 📖 Rough Sketch | alpha.11, beta.1 | +1 through +5, special weapon/armor abilities, cursed items (minimal). Magic Weapon spell stacking proof. |
-| 8 | [Metamagic](beta/phase-08-metamagic.md) | 📖 Rough Sketch | alpha.4, beta.2 | Metamagic feats, spell level adjustment, prepared vs spontaneous timing. |
-| 9 | [Full Spells](beta/phase-09-full-spells.md) | 📖 Rough Sketch | beta.6, beta.8 | SR, concentration, counterspelling, all delivery types, AoE spell chains. |
-| 10 | [Psionics](beta/phase-10-psionics.md) | 📖 Rough Sketch | beta.2 | Power item, power points, augmentation, psionic disciplines, manifester level. |
+| 4 | [Advanced Classes](beta/phase-04-advanced-classes.md) | 📄 Stub | alpha.2 | Prestige classes, NPC classes, racial paragon, substitution levels. Stub — design not started. |
+| 5 | [Consumables](beta/phase-05-consumables.md) | 📖 Rough Sketch | alpha.3 | Potion, scroll, wand, poison. Action snapshot pattern. Charges/uses. Splash weapons. |
+| 6 | [Advanced Actors](beta/phase-06-advanced-actors.md) | 📖 Rough Sketch | poc.6, alpha.1, alpha.2 | NPC, Trap, Object actor types. Companion bond system (familiar, animal companion, mount, summon, cohort). Portrait Bar (Party HUD). |
+| 7 | [Area Effects & Auras (Full)](beta/phase-07-area-effects-auras.md) | 📖 Rough Sketch | alpha.9, beta.2 | Foundry V14 Region behaviors, persistent auras, AE delivery, duration tracking, DoT. Aura of Courage expands to affect allies in 10ft. |
+| 8 | [Enhancements (Full)](beta/phase-08-enhancements.md) | 📖 Rough Sketch | alpha.11, beta.1 | +1 through +5, special weapon/armor abilities, cursed items (minimal). Magic Weapon spell stacking proof. |
+| 9 | [Metamagic](beta/phase-09-metamagic.md) | 📖 Rough Sketch | alpha.4, beta.2 | Metamagic feats, spell level adjustment, prepared vs spontaneous timing. |
+| 10 | [Full Spells](beta/phase-10-full-spells.md) | 📖 Rough Sketch | beta.7, beta.9 | SR, concentration, counterspelling, all delivery types, AoE spell chains. |
+| 11 | [Psionics](beta/phase-11-psionics.md) | 📖 Rough Sketch | beta.2 | Power item, power points, augmentation, psionic disciplines, manifester level. |
 
 ---
 
@@ -244,9 +246,9 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
 | 1 | [Compendium Browser & Management](release/phase-01-compendium-browser.md) | 📖 Rough Sketch | poc.5, beta.1+ | Cross-compendium search, rich indexing, schema migration runner, diff view |
-| 2 | [Documentation & SRD](release/phase-02-documentation-srd.md) | 📖 Rough Sketch | beta.10 | User guide polish (technical docs grow alongside development), SRD journal housing, tutorials, FAQ |
+| 2 | [Documentation & SRD](release/phase-02-documentation-srd.md) | 📖 Rough Sketch | beta.11 | User guide polish (technical docs grow alongside development), SRD journal housing, tutorials, FAQ |
 | 3 | [Epic Level Rules](release/phase-03-epic-level-rules.md) | 📖 Rough Sketch | alpha.2, alpha.4, beta.2 | Epic BAB/saves, epic feats, epic spellcasting, epic DR (SRD content, exists in D35E) |
-| 4 | [Psionic Rules (Full)](release/phase-04-psionic-rules-full.md) | 📖 Rough Sketch | beta.10, beta.7, release.3 | Full psionic expansion: prestige classes, psi-spell transparency, psionic items, feats |
+| 4 | [Psionic Rules (Full)](release/phase-04-psionic-rules-full.md) | 📖 Rough Sketch | beta.11, beta.8, release.3 | Full psionic expansion: prestige classes, psi-spell transparency, psionic items, feats |
 | 5 | [Cards](release/phase-05-cards.md) | 📖 Rough Sketch | alpha.3 | Card item for tracking abilities, conditions, resources. Counters with rest resets. |
 | 6 | [Content Migration](release/phase-06-content-migration.md) | 📖 Rough Sketch | release.1 | D35E → dnd35e transforms, backup/validate/import workflow, world migration runner |
 | 7 | [Community Hardening](release/phase-07-community-hardening.md) | 📖 Rough Sketch | release.6 | Playtesting feedback, balance tuning, default value adjustments. Documentation gets a refresh pass after this lands. |
@@ -285,9 +287,12 @@ flowchart TD
         P5["poc.5 Compendium"]
         P6["poc.6 Actor + Token"]
         P7["poc.7 Roll Formulas"]
+        P8["poc.8 Pipeline"]
         P1 --> P2
     end
     P1 --> P4
+    P2 --> P4
+    P3 --> P4
     P1 --> P5
     P2 --> P5
     P3 --> P5
@@ -332,13 +337,14 @@ flowchart TD
         B1["beta.1 Equipment"]
         B2["beta.2 Spells Full"]
         B3["beta.3 Buffs/Conditions"]
-        B4["beta.4 Consumables"]
-        B5["beta.5 Advanced Actors"]
-        B6["beta.6 Area Effects"]
-        B7["beta.7 Enhancements"]
-        B8["beta.8 Metamagic"]
-        B9["beta.9 Full Spells"]
-        B10["beta.10 Psionics"]
+        B4["beta.4 Advanced Classes"]
+        B5["beta.5 Consumables"]
+        B6["beta.6 Advanced Actors"]
+        B7["beta.7 Area Effects"]
+        B8["beta.8 Enhancements"]
+        B9["beta.9 Metamagic"]
+        B10["beta.10 Full Spells"]
+        B11["beta.11 Psionics"]
     end
     P6 --> B1
     P7 --> B1
@@ -347,19 +353,20 @@ flowchart TD
     A10 --> B2
     A8 --> B3
     B1 --> B3
-    A3 --> B4
-    P6 --> B5
-    A1 --> B5
-    A2 --> B5
-    A9 --> B6
-    B2 --> B6
-    A11 --> B7
-    B1 --> B7
-    A4 --> B8
-    B2 --> B8
-    B6 --> B9
-    B8 --> B9
-    B2 --> B10
+    A2 --> B4
+    A3 --> B5
+    P6 --> B6
+    A1 --> B6
+    A2 --> B6
+    A9 --> B7
+    B2 --> B7
+    A11 --> B8
+    B1 --> B8
+    A4 --> B9
+    B2 --> B9
+    B7 --> B10
+    B9 --> B10
+    B2 --> B11
 
     subgraph REL["🟛 Release"]
         R1["release.1 Compendium Browser"]
@@ -374,11 +381,11 @@ flowchart TD
     end
     P5 --> R1
     B1 --> R1
-    B10 --> R2
+    B11 --> R2
     A2 --> R3
     A4 --> R3
     B2 --> R3
-    B10 --> R4
+    B11 --> R4
     R3 --> R4
     A3 --> R5
 
@@ -571,30 +578,30 @@ Every D35E feature, every SRD rule area, accounted for. Nothing dropped.
 
 | D35E Condition | Phase | Status |
 |----------------|-------|--------|
-| blind | 21 | Planned |
-| dazzled | 21 | Planned |
-| deaf | 21 | Planned |
-| entangled | 21 | Planned |
-| fatigued | 21 | Planned |
-| exhausted | 21 | Planned |
-| grappled | 10 | Planned |
-| helpless | 21 | Planned |
-| paralyzed | 21 | Planned |
-| pinned | 10 | Planned |
+| blind | 21 | 📝 Planned |
+| dazzled | 21 | 📝 Planned |
+| deaf | 21 | 📝 Planned |
+| entangled | 21 | 📝 Planned |
+| fatigued | 21 | 📝 Planned |
+| exhausted | 21 | 📝 Planned |
+| grappled | 10 | 📝 Planned |
+| helpless | 21 | 📝 Planned |
+| paralyzed | 21 | 📝 Planned |
+| pinned | 10 | 📝 Planned |
 | fear (shaken/frightened/panicked) | 15 (stub), 21 (full) | Planned — 3-tier track, stub in Alpha for Frightful Presence |
-| sickened | 21 | Planned |
-| stunned | 21 | Planned |
-| polymorphed | 21 | Planned |
-| wildshaped | 21 | Planned |
+| sickened | 21 | 📝 Planned |
+| stunned | 21 | 📝 Planned |
+| polymorphed | 21 | 📝 Planned |
+| wildshaped | 21 | 📝 Planned |
 | prone | 15 | Planned (Alpha) |
-| dead | 6/21 | Planned |
-| dying | 6/21 | Planned |
-| disabled | 21 | Planned |
-| stable | 21 | Planned |
-| unconscious | 21 | Planned |
-| staggered | 21 | Planned |
-| invisible | 21 | Planned |
-| banished | 21 | Planned |
+| dead | 6/21 | 📝 Planned |
+| dying | 6/21 | 📝 Planned |
+| disabled | 21 | 📝 Planned |
+| stable | 21 | 📝 Planned |
+| unconscious | 21 | 📝 Planned |
+| staggered | 21 | 📝 Planned |
+| invisible | 21 | 📝 Planned |
+| banished | 21 | 📝 Planned |
 
 ### D35E Bonus Types (21) → dnd35e
 

@@ -1,6 +1,6 @@
 # Phase 1: Item Foundation (Weapon PoC)
 
-**Status**: ✅ **COMPLETE** (April 16, 2026)
+**Status**: **COMPLETE** (April 16, 2026)
 
 > **Milestone**: POC  
 > **Dependencies**: None  

@@ -1,11 +1,11 @@
 # Phase 4: Testing Infrastructure
 
 
-**Status**: 📋 Planned
+**Status**: ✅ Approved
 
-> **Milestone**: POC  
-> **Dependencies**: Phase 1  
-> **Goal**: Stand up the test runner, shared mocks, and coverage tooling, then back-fill tests for Phase 1–3 deliverables. Every subsequent phase owns its own tests — Phase 4 establishes the patterns and proves them out. Phase 4 also wires tests into the PR and release pipeline: PRs must pass tests, coverage must not regress, and the overall release flow is simplified.
+> **Milestone**: POC
+> **Dependencies**: poc.1, poc.2, poc.3 (backfill targets — Story 1 infrastructure setup can start as soon as poc.1 is complete; Stories 2–6 gate on the relevant backfill phase being far enough along that its surface is stable)
+> **Goal**: Stand up the test runner, shared mocks, and coverage tooling, then back-fill tests for poc.1–poc.3 deliverables. Every subsequent phase owns its own tests — Phase 4 establishes the patterns and proves them out. CI/CD pipeline integration lives in **poc.8 (Pipeline & Branching)**; Phase 4's only obligation to the pipeline is that `npm run test` and `npm run test:ci` exit 0 cleanly so poc.8 can hook them into `test.yml` and `build.yml`.
 
 ---
 
@@ -28,48 +28,141 @@
 
 | Area | File | What to Test |
 |------|------|--------------|
-| **Bonus-type stacking engine** | `tests/unit/effects/stacking-engine.test.mts` | Same-type highest-wins, untyped always stacks, penalties always apply, mixed scenario, history tracking, dual-stack exclusion |
-| **Secret AE masking** | `tests/unit/effects/secret-ae.test.mts` | MASK produces masked value, disable restores real value, priority ordering, `isIdentified` derivation, MASK excluded from stacking |
-| **WeaponSystemModel schema** | `tests/unit/models/weapon.model.test.mts` | Field presence, defaults, crit range/multiplier validation. DataModel stub strategy decided explore-at-start (see §4.3). |
-| **FormGroup permission cascade** | `tests/unit/components/FormGroup.test.mts` | `gmOnly` override → non-GM sees nothing; GM sees field. Owns the cascade — other FormGroup variants trust this. |
-| **NumberFormGroup passthrough** | `tests/unit/components/NumberFormGroup.test.mts` | `#controls` slot renders; `editable` slot prop correctly reflects FormGroup result. Smoke test only — verifies wiring, not logic. |
+| **Bonus-type stacking engine** | `tests/unit/effects/stacking-engine.test.mts` | Highest-wins, untyped stacks, penalties, dual-stack exclusion, per-field independence, untyped + named coexistence, empty input, numeric edge cases, MASK changes not stacked |
+| **Identifiable derivation** | `tests/unit/effects/identifiable-state.test.mts` | `deriveIdentifiableState(effects)` pure helper (extracted from `IdentifiableItem._deriveIdentifiableState`) — `isIdentifiable` / `isIdentified` from secret AE state |
+| **Secret AE value resolution** | `tests/unit/effects/secret-ae.test.mts` | `resolveActiveEffectChangeValue` numeric / boolean / string coercion; `getEffectContexts` item-vs-actor target selection |
+| **WeaponSystemModel schema** | `tests/unit/models/weapon.model.test.mts` | Field presence, declared defaults, validator presence, sub-schema wiring — via the `createSchemaTester(Model)` factory in `tests/helpers/schemaTester.mts` (see §4.3) |
+| **Schema-tester factory** | `tests/unit/helpers/schemaTester.test.mts` | Factory itself — walks a synthetic schema; covers `fieldKeys`, `field`, `assertField`, `assertFieldType`, `assertDefault` |
+| **Field-override cascade** | `tests/unit/sheets/field-override-cascade.test.mts` | Most-restrictive-wins merge across the ancestor chain; visibility and editability merge independently per property |
+| **FormGroup smoke** | `tests/unit/components/FormGroup.test.mts` | `gmOnly` override → non-GM sees nothing; GM sees field. Wiring-only — cascade logic is covered separately. |
+| **NumberFormGroup passthrough** | `tests/unit/components/NumberFormGroup.test.mts` | `#controls` slot renders; `editable` slot prop correctly reflects FormGroup result. Smoke test only. |
 
-**Material AE integration tests** (material bonus applies to weapon, masterwork flag, broken penalty) are deferred to **Phase 5** — they depend on compendium-sourced content and require more Foundry infrastructure than Phase 4 establishes.
+**Material AE integration tests** (material bonus applies to weapon, masterwork flag, broken penalty) are deferred to **poc.5** — they depend on compendium-sourced content and require more Foundry infrastructure than Phase 4 establishes.
 
 > Tests for actors, feats, races, classes, formulas, combat, and conditions live in their owning phases (see §4.7).
 
-## 4.3 DataModel Stub Strategy (Explore-at-Start)
+## 4.3 DataModel Schema Inspection — Reusable Test Factory
 
-WeaponSystemModel extends Foundry's `DataModel`. Two approaches:
+**Decided**: Schema inspection only. WeaponSystemModel tests call `WeaponSystemModel.defineSchema()` and inspect field definitions directly without instantiating. No `foundry.abstract.DataModel` instance is constructed.
 
-| Option | Approach | When to use |
-|--------|----------|-------------|
-| **A — Full stub** | Mock `foundry.abstract.DataModel` with a minimal class that runs `defineSchema()` and populates fields. Lets validation and default tests work. | Default — attempt this first. |
-| **B — Schema inspection** | Call `WeaponSystemModel.defineSchema()` and inspect field definitions directly, without instantiating. | Fallback if Option A proves too brittle. Document clearly; add `// TODO(test):` note that runtime validation is covered by E2E. |
+Rationale: defining schema fields is pure logic that doesn't need a runtime DataModel. Runtime validation (defaults applied on construction, validators rejecting bad input) is verified by Playwright E2E tests against a real Foundry instance. Keeping the unit suite focused on schema shape avoids a fragile mock surface that would need to grow every time Foundry's DataModel changes.
 
-The stub pattern established here becomes the template all future phases use for their own DataModel tests.
+### Reusable schema-tester factory
 
-## 4.4 Integration and E2E Approach
+Many document types (Actor, Race, Class, Feat, Spell, Condition, …) will need the same kind of schema unit tests. Phase 4 builds a **factory** so each test is self-contained, parallel-safe, and consistent.
 
-Phase 4 establishes both Vitest integration patterns and the Playwright scaffold. The **first real E2E test** is written here — Secret AE masking — because it's tricky behaviour with a non-obvious failure mode that unit tests alone cannot fully prove.
+**Location**: `tests/helpers/schemaTester.mts`
 
-All subsequent E2E tests are owned by the phase that builds the feature.
+**Shape** (illustrative — finalised during implementation):
+
+```ts
+interface SchemaTester<T extends typeof foundry.abstract.DataModel> {
+  /** All top-level field keys. */
+  fieldKeys (): string[];
+  /** Returns the field at a dotted path, or undefined. */
+  field (path: string): foundry.data.fields.DataField | undefined;
+  /** Asserts a field exists. */
+  assertField (path: string): foundry.data.fields.DataField;
+  /** Asserts a field is an instance of a given Foundry field class. */
+  assertFieldType (path: string, expected: new (...args: any[]) => foundry.data.fields.DataField): void;
+  /** Asserts the declared `initial` value (or option-derived default) for a field. */
+  assertDefault (path: string, expected: unknown): void;
+  /** Asserts the field has a validator function attached. */
+  assertHasValidator (path: string): void;
+  /** Asserts the field allows the listed choices (for fields with `choices`). */
+  assertChoices (path: string, expected: readonly unknown[]): void;
+}
+
+function createSchemaTester<T extends typeof foundry.abstract.DataModel> (Model: T): SchemaTester<T>;
+```
+
+**Why a factory and not a class with shared state**: each test file calls `createSchemaTester(Model)` to get its own walker over `Model.defineSchema()`. No module-level state, no cross-test pollution — safe to run all schema tests in parallel via Vitest's default worker pool.
+
+**Reuse**: poc.6 (Actor), alpha.1 (Race), alpha.2 (Class), alpha.4 (Feat), alpha.10 (Spell), beta.4 (Consumables), etc. all import this helper. Each phase contributes its model-specific test file using `createSchemaTester(MyModel)`. No phase needs to re-derive how to inspect a Foundry schema.
+
+**Open at-implementation**: confirm on Foundry v14 whether `field.options.initial` and validator presence are introspectable as currently assumed. If not, the factory's `assertDefault` / `assertHasValidator` either fall back to inspecting the export (when validator functions are exported and unit-testable directly) or are documented as E2E-only on a per-field basis. The factory shape stays the same; only the implementation behind those two methods may shift.
+
+This is the template all future phases use for their DataModel unit tests.
+
+## 4.4 E2E Approach
+
+Phase 4 establishes the Playwright scaffold and lands the first two E2E specs. All subsequent E2E tests are owned by the phase that builds the feature, but they reuse the helpers and conventions defined here.
+
+### Interaction pattern: programmatic setup, UI assertion
+
+**Decided**. Tests use `page.evaluate(() => { /* call game.X.create(…) */ })` to set up state programmatically, and exercise the **UI** for assertions — visible text, rendered values, button enable/disable, mode-bar state. This matches D35E's pattern and keeps tests fast.
+
+Exceptions: when a feature **is** the UI (creation dialog flow, drag-drop, sheet interactions), exercise it through the UI. Don't fake what you're testing.
+
+### Test world: pristine snapshot per run
+
+**Decided**. A known-good world lives at `tests/e2e/fixtures/test-world/` (committed to source). Before each Playwright run, the fixture is copied into a temp directory used as Foundry's data dir; after the run it's discarded. Hermetic, parallel-safe, easy to reset by deleting and rebuilding the fixture.
+
+The fixture contains the bare minimum: a GM user, a player user, an empty scene. Per-test setup builds whatever else the test needs via `page.evaluate`.
+
+### User session model: multi-context
+
+Tests that need both GM and player perspectives (e.g. Secret AE) use Playwright's standard multi-context pattern: one `BrowserContext` per user, independent cookies, independent Foundry sessions. The `loginAs(context, role)` helper handles login flow.
+
+### Reusable E2E helpers
+
+Same factory contract as the unit helpers: parallel-safe, no module-level state. Located in `tests/e2e/helpers/`.
+
+| Helper | Purpose |
+|--------|---------|
+| `loginAs(context, role)` | Logs the given browser context in as `'gm'` or `'player'`. Returns the authenticated `Page`. |
+| `withTestWorld()` | Playwright fixture providing a clean world for the test (copies snapshot, sets up Foundry data dir, tears down after). |
+| `createItem(page, type, data)` | Programmatic item creation via `page.evaluate(() => game.items.create(…))`. Returns the created item's UUID. |
+| `createActiveEffect(page, parentUuid, data)` | Programmatic AE creation on a target document. |
+| `evaluateInGame<T>(page, fn)` | Typed wrapper around `page.evaluate` that gives access to `game`, `CONFIG`, `foundry` with proper TypeScript types. |
+
+New phases should add helpers here when they introduce a new pattern (e.g. `placeToken`, `rollAttack`) rather than duplicating it inline.
+
+### Phase 4 E2E specs
+
+**Two specs ship in Phase 4** to keep infrastructure failures distinguishable from feature failures:
+
+1. `tests/e2e/smoke.spec.ts` — GM context logs in, sees the world UI; player context logs in, sees the player view. Pure infrastructure check: if this fails, no other E2E result is meaningful.
+2. `tests/e2e/secret-ae.spec.ts` — the actual masking round-trip. Depends on smoke passing.
+
+### CI integration (decided in poc.8)
+
+E2E does **not** run on every PR — too slow, requires Foundry license on the runner. Instead:
+
+- **Nightly scheduled run against `dev`** on a self-hosted runner with Foundry license. Catches drift early without blocking developer flow.
+- **Dev → main promotion PR** runs the full E2E suite as a required check. No promotion to `main` on broken E2E.
+- **Release tag (`build.yml`)** runs E2E before cutting the GitHub Release. No bad release ships.
+
+Local devs run `npm run test:e2e` on demand. Detailed workflow files live in [poc.8](phase-08-pipeline-and-branching.md).
 
 ## 4.5 Test Organization
 
 ```
 tests/
+├── helpers/           — reusable unit test factories (parallel-safe, no shared state)
+│   └── schemaTester.mts — createSchemaTester(Model) for any DataModel
 ├── unit/
-│   ├── models/        — DataModel schema tests (weapon for now)
-│   ├── effects/       — stacking engine, Secret AE masking
-│   └── components/    — Vue component tests (happy-dom environment)
-│       └── setup.ts   — shared mock store factories
+│   ├── helpers/        — tests for the test helpers themselves
+│   ├── models/         — DataModel schema tests (weapon for now)
+│   ├── effects/        — stacking engine, identifiable derivation, secret-AE value resolution
+│   ├── sheets/         — sheet-level pure logic (field-override cascade)
+│   └── components/     — Vue component tests (happy-dom environment)
+│       └── setup.ts    — mock store factories
 ├── e2e/               — Playwright tests (run against live Foundry)
-│   └── secret-ae.spec.ts
+│   ├── helpers/        — loginAs, withTestWorld, createItem, createActiveEffect, evaluateInGame
+│   ├── fixtures/
+│   │   └── test-world/ — committed pristine world snapshot (GM user, player user, empty scene)
+│   ├── smoke.spec.ts
+│   ├── secret-ae.spec.ts
+│   ├── formula-familiar-weapon-name.spec.ts
+│   ├── material-details-changes-tab.spec.ts
+│   ├── material-aspect-picker.spec.ts
+│   ├── material-single-per-type.spec.ts
+│   └── field-permissions.spec.ts
 └── setup.mts          — shared Foundry global stubs (game, foundry.utils, CONFIG)
 ```
 
-Other directories (`tests/unit/preparation/`, etc.) are created by the phases that need them.
+Reusable factories follow the same contract on both sides: `createXTester(input)` for unit, `withX(…)` / `xHelper(…)` for E2E — self-contained, no module-level state, parallel-safe.
 
 ## 4.6 Test Conventions
 
@@ -77,7 +170,7 @@ Other directories (`tests/unit/preparation/`, etc.) are created by the phases th
 - Unit test naming: `<subject>.test.mts` (e.g. `stacking-engine.test.mts`). E2E naming: `<subject>.spec.ts`.
 - Shared Foundry stubs live in `tests/setup.mts`. Shared Vue component mock factories live in `tests/unit/components/setup.ts`. Phase-specific fixtures go next to the test file.
 - Vue component test files declare `// @vitest-environment happy-dom` at the top. All other test files use the default `node` environment.
-- Tests run via `npm test` (watch) and `npm run test:ci` (single-run + coverage). E2E runs via `npx playwright test`.
+- Tests run via `npm test` (watch) and `npm run test:ci` (single-run + coverage). E2E runs via `npm run test:e2e` (which calls `npx playwright test`).
 - `npm run test:ui` opens the Vitest browser UI (analogous to VS Test Explorer).
 - Target coverage for **complex logic and decision-making code** — stacking rules, masking, derivation formulas, permission cascades. No blanket percentage thresholds.
 - When skipping a test because it's expected to change or isn't a concern yet, add a `// TODO(test):` comment explaining what should be tested once the design stabilises.
@@ -86,19 +179,78 @@ Other directories (`tests/unit/preparation/`, etc.) are created by the phases th
 
 | Action | Path | Notes |
 |--------|------|-------|
-| Modify | `package.json` | Add `test`, `test:ci`, `test:ui`, `coverage` scripts; add `vitest`, `@vitest/coverage-v8`, `@vitest/ui`, `@vue/test-utils`, `happy-dom`, `@playwright/test` devDependencies |
+| Modify | `package.json` | Add `test`, `test:ci`, `test:ui`, `test:e2e`, `coverage` scripts; add `vitest`, `@vitest/coverage-v8`, `@vitest/ui`, `@vue/test-utils`, `happy-dom`, `@playwright/test` devDependencies |
 | Modify | `vite.config.ts` | Add `test` block: `environment: 'node'`, `include: ['tests/**/*.test.mts']`, `setupFiles: ['tests/setup.mts']` |
-| Create | `playwright.config.ts` | Basic Playwright config pointing at live Foundry instance |
-| Create | `tests/setup.mts` | Foundry global stubs: `game`, `foundry.utils`, `foundry.abstract.DataModel` (minimal), `CONFIG` |
-| Create | `tests/unit/effects/stacking-engine.test.mts` | Full stacking-rule coverage (7 cases) |
-| Create | `tests/unit/effects/secret-ae.test.mts` | Secret AE unit cases (5 cases) |
-| Create | `tests/unit/models/weapon.model.test.mts` | Schema, defaults, validation |
+| Create | `playwright.config.ts` | Playwright config: `tests/e2e/**`, multi-context support, `webServer` (or fixture) launching Foundry against the snapshot world |
+| Create | `tests/e2e/fixtures/test-world/` | Committed pristine world snapshot (GM user, player user, empty scene). README documents how to rebuild. |
+| Create | `tests/e2e/helpers/loginAs.mts` | `loginAs(context, role: 'gm' \| 'player')` |
+| Create | `tests/e2e/helpers/withTestWorld.mts` | Playwright fixture: copy snapshot → launch Foundry → teardown |
+| Create | `tests/e2e/helpers/createItem.mts` | Programmatic item creation via `page.evaluate` |
+| Create | `tests/e2e/helpers/createActiveEffect.mts` | Programmatic AE creation via `page.evaluate` |
+| Create | `tests/e2e/helpers/evaluateInGame.mts` | Typed `page.evaluate` wrapper exposing `game`, `CONFIG`, `foundry` |
+| Create | `tests/e2e/smoke.spec.ts` | Smoke: GM context logs in, player context logs in, both reach the world |
+| Create | `tests/e2e/secret-ae.spec.ts` | Secret AE masking round-trip (multi-context) |
+| Create | `tests/e2e/formula-familiar-weapon-name.spec.ts` | FormulaFamiliar in weapon name field: dropdown opens, suggested contexts are correct, evaluated name reflects in sheet title (Story 6) |
+| Create | `tests/e2e/material-details-changes-tab.spec.ts` | Material AE: properties added in Details tab appear correctly in Changes tab (Story 6) |
+| Create | `tests/e2e/material-aspect-picker.spec.ts` | Material aspect picker behaviour with a parent material and without (Story 6) |
+| Create | `tests/e2e/material-single-per-type.spec.ts` | `ENFORCE_SINGLE_MATERIAL` setting blocks duplicate STANDARD materials on a weapon (Story 6 — see scope note) |
+| Create | `tests/e2e/field-permissions.spec.ts` | Single end-to-end example of field visibility / editability override applied by GM and observed by player; depth covered in Story 5 unit tests (Story 6) |
+| Create | `tests/setup.mts` | Foundry global stubs: `game` (`user.isGM`, `i18n.localize()` passthrough), `foundry.utils` (`getProperty`, `mergeObject`), `Roll.safeEval`, constructor-only stubs for `foundry.data.fields.{NumberField, BooleanField, EmbeddedDataField}`. No `foundry.abstract.DataModel` stub — schema tests use inspection (see §4.3). |
+| Create | `tests/helpers/schemaTester.mts` | `createSchemaTester(Model)` factory — reusable across all DataModel schema tests |
+| Create | `tests/unit/helpers/schemaTester.test.mts` | Tests for the factory itself (synthetic schema) |
+| Create | `tests/unit/effects/stacking-engine.test.mts` | Stacking-rule coverage (extended cases — see Story 2 checklist) |
+| Create | `tests/unit/effects/identifiable-state.test.mts` | `deriveIdentifiableState(effects)` pure helper |
+| Create | `tests/unit/effects/secret-ae.test.mts` | `resolveActiveEffectChangeValue` + `getEffectContexts` units |
+| Create | `tests/unit/models/weapon.model.test.mts` | Weapon schema via `createSchemaTester(WeaponSystemModel)` |
+| Create | `tests/unit/sheets/field-override-cascade.test.mts` | Most-restrictive-wins merge function |
 | Create | `tests/unit/components/setup.ts` | `createMockDocumentStore()` + `createMockRenderModeStore()` factories |
-| Create | `tests/unit/components/FormGroup.test.mts` | Permission cascade test (`// @vitest-environment happy-dom`) |
+| Create | `tests/unit/components/FormGroup.test.mts` | Permission cascade smoke test (`// @vitest-environment happy-dom`) |
 | Create | `tests/unit/components/NumberFormGroup.test.mts` | Passthrough smoke test (`// @vitest-environment happy-dom`) |
-| Create | `tests/e2e/secret-ae.spec.ts` | First Playwright E2E: Secret AE masking round-trip |
-| Create | `.github/workflows/test.yml` | PR gate: runs `npm run test:ci` on every PR to `dev`+ |
-| Modify | `.github/workflows/build.yml` | Add `npm run test:ci` step before build so tags cannot be cut on broken code |
+| Modify | `src/entities/components/Identifiable/IdentifiableItem.mts` | Extract `deriveIdentifiableState(effects)` pure helper; `_deriveIdentifiableState()` becomes a one-liner that calls it (Story 3 prep refactor) |
+
+> CI workflow files (`test.yml`, `build.yml` updates, nightly E2E, promotion E2E) and branch protection are owned by **poc.8 (Pipeline & Branching)**. Phase 4's contribution is making `npm run test`, `npm run test:ci`, and `npm run test:e2e` exit 0 cleanly so poc.8 can wire them in.
+
+---
+
+## 4.8 Tests Relocated to Owning Phases
+
+The following test areas were originally drafted here but belong to the phase that builds the feature. Each phase should include a **Tests** section in its checklist.
+
+| Test area | Destination phase |
+|-----------|------------------|
+| `material-ae.test.mts` — bonus applies to weapon, masterwork flag, broken penalty | **poc.5** (Compendium Foundation) — depends on compendium-sourced content |
+| `actor.model.test.mts` — schema, defaults, AC=10 | **poc.6** (Actor Foundation) |
+| `abilities.test.mts` — ability mods, size modifiers | **poc.6** |
+| `ac.test.mts` — base AC, touch, flat-footed | **poc.6** |
+| `saves.test.mts` — Fort/Ref/Will + ability mods | **poc.6** |
+| `skills.test.mts` — ranks, class skill +3, ACP | **poc.6** |
+| `bab.test.mts` — BAB by class/level, multi-class | **poc.6** |
+| `hp.test.mts` — HD, CON mod, min 1 | **poc.6** |
+| `actor-creation.test.mts` — actor lifecycle integration | **poc.6** |
+| `actor-with-items.test.mts` — actor + embedded items | **poc.6** |
+| `formula-evaluation.test.mts` — attack/damage formulas, context resolution | **poc.7** (Roll Formulas) |
+| `race.model.test.mts` — size, speed, ability adjustments | **alpha.1** (Races & Progression) |
+| `class.model.test.mts` — classType, level, BAB, saves | **alpha.2** (Classes & Level History) |
+| `feat-ae.test.mts` — Weapon Focus, Power Attack, Cleave trigger | **alpha.4** (Feats) |
+| `initiative.test.mts` — initiative formula, sort order | **alpha.7** (Combat Tracker) |
+| `condition-ae.test.mts` — Prone creation, stat changes, removal | **alpha.8** (Conditions) |
+| Full-attack / Power Attack / Cleave / Trip / Turn-budget scenarios | **alpha.3+** (Action System / Combat) |
+| Expanded E2E scenarios (character creation, combat encounter) | Phase that builds the feature — E2E scaffold is in place from Phase 4 |
+
+---
+
+## Skill Routing
+
+| Story | Routing | Notes |
+|-------|---------|-------|
+| 1 — Test infrastructure setup | Lead dev | First-time tooling setup; sets patterns reused everywhere |
+| 2 — Stacking engine tests | Lead dev | Stacking rules are tricky; lead dev wrote them |
+| 3 — Secret AE & Identifiable | Lead dev | Includes a small refactor (extract `deriveIdentifiableState`); masking semantics are non-obvious; first Playwright E2E |
+| 4 — Schema-tester factory + Weapon schema | Lead dev (factory) + Flexible (Weapon tests) | Factory is reusable across all future doc-type phases; pair the factory build with one consumer to validate ergonomics |
+| 5 — Field-override cascade + Vue smoke tests | Pair (Lead + Flexible) | Cascade merge is logic-heavy; component smoke tests are wiring-only |
+| 6 — E2E backfill for poc.1 & poc.2 features | Pair (Lead + Flexible) per spec | Each spec exercises a real feature surface (FormulaFamiliar, Material AE, field permissions). Lead pairs on the first spec to lock the pattern; remaining specs are flexible. Depends on Story 1 (E2E infra) + Story 3 Layer C helpers being in place. |
+
+Stories 2–5 are independent after Story 1 completes — a small team can run them in parallel. Story 6 picks up once Story 3 Layer C has wired the real E2E helpers.
 
 ---
 
@@ -112,136 +264,108 @@ _(None — Phase 4 has not started)_
 **Story 1 — Test Infrastructure Setup**
 - [ ] Install devDependencies: `vitest`, `@vitest/coverage-v8`, `@vitest/ui`, `@vue/test-utils`, `happy-dom`, `@playwright/test`
 - [ ] Add `test` block to `vite.config.ts`: `environment: 'node'`, `include: ['tests/**/*.test.mts']`, `setupFiles: ['tests/setup.mts']`
-- [ ] Add scripts to `package.json`: `"test": "vitest"`, `"test:ci": "vitest run"`, `"test:ui": "vitest --ui"`, `"coverage": "vitest run --coverage"`
+- [ ] Add scripts to `package.json`: `"test": "vitest"`, `"test:ci": "vitest run"`, `"test:ui": "vitest --ui"`, `"test:e2e": "playwright test"`, `"coverage": "vitest run --coverage"`
 - [ ] Create `tests/setup.mts` with placeholder; trivial `describe/it` block passes
-- [ ] Create `playwright.config.ts`; create `tests/e2e/` directory; run `npx playwright install`
-- [ ] Verify: `npm test` starts Vitest watch; `npm run test:ui` opens browser UI; `npx playwright test` runs (0 tests, exits 0)
+- [ ] Create `playwright.config.ts`; create `tests/e2e/`, `tests/e2e/helpers/`, `tests/e2e/fixtures/` directories; run `npx playwright install`
+- [ ] Build the pristine `tests/e2e/fixtures/test-world/` snapshot: GM user, player user, empty scene; document rebuild steps in a sibling README
+- [ ] Create E2E helpers: `loginAs`, `withTestWorld`, `createItem`, `createActiveEffect`, `evaluateInGame` (skeletons OK — Stories 2, 4, 5 don't depend on them; Story 3 Layer C wires them up properly, and Story 6 reuses them)
+- [ ] Verify: `npm test` starts Vitest watch; `npm run test:ui` opens browser UI; `npm run test:e2e` runs (0 tests, exits 0)
+- [ ] Verify: `npm run test:ci` exits 0 on a fresh checkout (so poc.8's `test.yml` PR gate can call it cleanly)
+- [ ] Verify: `npm run test:e2e` exits 0 on a fresh checkout against the committed test world (so poc.8's promotion / nightly / build E2E jobs can call it cleanly)
 
 **Story 2 — Stacking Engine Tests (`tests/unit/effects/stacking-engine.test.mts`)**
+
+Target: pure function `resolveActiveEffectChanges(changes, excludeEffectIds?)` in [src/helpers/stacking.mts](../../../src/helpers/stacking.mts). No Foundry globals required.
+
 - [ ] Same-type bonus: highest value wins; lower value recorded in history as ignored with reason
 - [ ] Untyped bonus: all instances stack (sum)
 - [ ] Penalty: all penalties apply regardless of bonus type on same field
 - [ ] Mixed scenario: multiple bonus types + penalty on same field → correct final totals
 - [ ] History tracking: every change has an entry with `applied: true/false` and rejection reason when ignored
 - [ ] `excludeEffectIds` dual-stack: same field resolves differently when an effect is excluded
+- [ ] **Per-field independence**: two changes to *different* fields with the same `bonusType` do not interfere
+- [ ] **Untyped + named on same field coexist**: untyped sums separately, named picks highest, both apply
+- [ ] **Empty input**: `resolveActiveEffectChanges([])` → empty `winners`, empty `history`
+- [ ] **`parseNumericChangeValue` edge cases** (covered via public function): string numbers (`"5"`, `" 3 "`) parse correctly; empty string and formula-like strings (`"1d6"`) are rejected from numeric stacking and surface in history with a rejection reason
+- [ ] **MASK changes are not stacked as bonuses** (was previously listed under Story 3): MASK-mode changes passed through the engine are not treated as bonuses on the field
 
-**Story 3 — Secret AE Tests**
+> Skipped for now: `dodge` bonus type stacking is added in alpha.4 (Feats). Add `// TODO(test):` placeholder.
 
-*Explore-at-start*: Before writing tests, identify the testable unit — is masking logic in a pure helper or entangled with `Document`? This informs which stubs are needed.
+**Story 3 — Secret AE & Identifiable Tests**
 
-- [ ] Populate `tests/setup.mts` with minimal `game` stub (`user.isGM`, `i18n.localize()` passthrough) and `foundry.utils` stub (`getProperty`, `mergeObject`)
-- [ ] Unit (`tests/unit/effects/secret-ae.test.mts`): MASK change on field → masked value returned; underlying data unchanged
-- [ ] Unit: Disable Secret AE → real value returned
-- [ ] Unit: Multiple Secrets with different priorities → highest-priority mask wins per field
-- [ ] Unit: `isIdentified` derivation — no active Secrets → `true`; active Secret present → `false`
-- [ ] Unit: MASK changes excluded from stacking engine (not treated as bonuses, not resolved by `resolveActiveEffectChanges`)
-- [ ] E2E (`tests/e2e/secret-ae.spec.ts`): GM creates weapon with Secret AE masking name → player sees masked name; GM disables Secret → player sees real name; GM view toggle works correctly
+The original "Secret AE" surface splits into three layers, each tested at the lowest tractable level. Document round-trip behaviour stays in the Playwright E2E.
+
+*Pre-work — small refactor for testability*: extract the body of `IdentifiableItem._deriveIdentifiableState()` into a pure helper `deriveIdentifiableState(effects)` returning `{ isIdentifiable, isIdentified }`. The mixin method becomes a one-liner that calls the helper and assigns. Mirrors the pattern already used in `resolveChangeValue.mts`. Same approach should be used for any future "derive X from Y" mixin logic.
+
+*Layer A — pure helpers (unit, no Foundry mounting)*
+
+- [ ] Refactor: extract `deriveIdentifiableState(effects)` helper from [IdentifiableItem.mts](../../../src/entities/components/Identifiable/IdentifiableItem.mts) `_deriveIdentifiableState()`
+- [ ] Unit (`tests/unit/effects/identifiable-state.test.mts`): no secrets → `{ isIdentifiable: false, isIdentified: true }`
+- [ ] Unit: one disabled Secret AE → `{ isIdentifiable: true, isIdentified: true }`
+- [ ] Unit: one active Secret AE → `{ isIdentifiable: true, isIdentified: false }`
+- [ ] Unit: mixed (active + disabled) → `{ isIdentifiable: true, isIdentified: false }`
+- [ ] Unit: non-secret effects only → `{ isIdentifiable: false, isIdentified: true }`
+
+*Layer B — narrow value-resolution units*
+
+Target: pure-ish helpers in [resolveChangeValue.mts](../../../src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts). Pre-stub `Roll.safeEval`, `foundry.utils.getProperty`, `foundry.data.fields.{NumberField, BooleanField, EmbeddedDataField}` constructors in `tests/setup.mts`.
+
+- [ ] Unit (`tests/unit/effects/secret-ae.test.mts`): `resolveActiveEffectChangeValue` returns numeric values when target field is `NumberField`
+- [ ] Unit: returns booleans when target field is `BooleanField` and value is `'true'` / `'false'`
+- [ ] Unit: returns string passthrough when target field is neither (default branch)
+- [ ] Unit: `getEffectContexts` selects `item` target when `change.target === ITEM`, `actor` target otherwise (uses hand-rolled effect/parent stubs)
+
+*Layer C — round-trip masking (E2E only)*
+
+Masking the value via `EmbeddedDataField._castChangeDelta` + `_applyChangeOverride` is too entangled with Foundry field internals to mock cleanly. The full round-trip is verified end-to-end via the multi-context pattern (GM context + player context, see §4.4).
+
+- [ ] Smoke (`tests/e2e/smoke.spec.ts`): GM context logs in via `loginAs(gmContext, 'gm')` → sees world UI; player context logs in via `loginAs(playerContext, 'player')` → sees player view. (Pure infra check; isolates failures.)
+- [ ] E2E (`tests/e2e/secret-ae.spec.ts`): GM creates weapon via `createItem` → attaches Secret AE masking name via `createActiveEffect` → player context shows masked name; GM disables Secret → player context shows real name; GM view-mode toggle (`play` ↔ `true`) works correctly
+- [ ] E2E: multiple Secret AEs on the same field → highest-priority mask wins for the player view
+
+> Setup support: populate `tests/setup.mts` with minimal `game` stub (`user.isGM`, `i18n.localize()` passthrough), `foundry.utils` stub (`getProperty`, `mergeObject`), and constructor-only stubs for the field classes the helpers test against (`NumberField`, `BooleanField`, `EmbeddedDataField`).
 
 **Story 4 — WeaponSystemModel Schema Tests (`tests/unit/models/weapon.model.test.mts`)**
 
-*Explore-at-start*: Attempt Option A (full `DataModel` stub). If too brittle, fall back to Option B (schema inspection via `defineSchema()` without instantiation). Document chosen approach with inline comments.
+Uses the **reusable `createSchemaTester(Model)` factory** from `tests/helpers/schemaTester.mts` (see §4.3). Story 4 both proves out the factory and lands Weapon's schema tests; future phases reuse the factory unchanged.
 
-- [ ] Populate `tests/setup.mts` with DataModel stub (or document fallback approach)
-- [ ] Schema defines all expected top-level fields
-- [ ] Default values apply correctly on construction (or via `defineSchema()` inspection)
-- [ ] Critical range validation: accepts 20, rejects 25
-- [ ] Critical multiplier validation: accepts 2, rejects 0
-- [ ] Material sub-schema (`weaponDamage`) attaches without error
+- [ ] Create `tests/helpers/schemaTester.mts` exporting `createSchemaTester(Model)` per the shape in §4.3
+- [ ] Unit (`tests/unit/helpers/schemaTester.test.mts`): tester correctly walks a small synthetic schema (use `new SchemaField({ a: new NumberField({ initial: 1 }), … })`) — covers `fieldKeys`, `field`, `assertField`, `assertFieldType`, `assertDefault`
+- [ ] Weapon schema declares all expected top-level fields (via `assertField`)
+- [ ] Weapon schema declared defaults match expected values (via `assertDefault`)
+- [ ] Weapon `criticalRange` and `criticalMultiplier` have validators attached (via `assertHasValidator`); if validator inspection isn't viable on Foundry v14 (see open question in §4.3), fall back to importing and unit-testing the validator function directly
+- [ ] Weapon `weaponDamage` sub-schema is wired in correctly (via `assertFieldType` against `EmbeddedDataField` or `SchemaField` as appropriate)
 
-**Story 5 — Vue Component Tests**
-- [ ] Create `tests/unit/components/setup.ts` with `createMockDocumentStore()` and `createMockRenderModeStore()` factories (only properties the tested components actually touch)
-- [ ] `FormGroup` permission cascade (`tests/unit/components/FormGroup.test.mts`, `// @vitest-environment happy-dom`): given `getFieldOverride` returns `gmOnly` visibility, non-GM user does not see the field; GM does
-- [ ] `NumberFormGroup` passthrough smoke test (`tests/unit/components/NumberFormGroup.test.mts`, `// @vitest-environment happy-dom`): `#controls` slot content renders; `editable` scoped slot prop reflects the FormGroup override result
+**Story 5 — Field Override Cascade & Vue Component Smoke Tests**
 
-**Story 6 — CI/CD Pipeline & PR Gates**
+The field-override cascade (most-restrictive-wins merge across the ancestor chain) is the highest-value piece to unit test in this story. The component tests stay deliberately small.
 
-- [ ] Create `.github/workflows/test.yml`: triggers on `pull_request` to `dev` and `main`; runs `npm ci` → `npm run test:ci`
-- [ ] Configure branch protection on `dev`: require `test.yml` status check to pass before merge; require at least 1 approving review
-- [ ] Configure branch protection on `main`: same requirements as `dev`
-- [ ] Update `build.yml`: confirm tag-triggered build still works correctly; add `npm run test:ci` step before build so release tags cannot be cut on broken code
-- [ ] After all Phase 4 tests pass: run `npm run coverage`, record baseline numbers, set `test.coverage.thresholds` in `vite.config.ts` slightly below baseline, commit
-- [ ] Verify: open a draft PR to `dev` → `test.yml` status check appears and runs; failing test blocks merge; passing test allows merge
-- [ ] Verify: intentionally drop coverage below threshold → CI fails with coverage error
-- [ ] Verify: push a `v*.*.*` tag → `build.yml` runs tests, then builds and creates GitHub Release
+- [ ] Identify the cascade merge function in `useDocumentSheetStore` (or wherever `getFieldOverride` resolves) and, if needed, extract it into a pure helper `mergeFieldOverrides(overrides)` for testability — same refactor pattern as Story 3 Layer A
+- [ ] Unit (`tests/unit/sheets/field-override-cascade.test.mts`): no overrides → default `{ visibility: 'everyone', editability: 'normal' }`
+- [ ] Unit: parent `ownerPlus` + child `gmOnly` → `gmOnly` (more restrictive wins per property)
+- [ ] Unit: parent `gmOnly` editability + child `normal` editability → `gmOnly` (parent restriction propagates)
+- [ ] Unit: visibility and editability merge independently per property
+- [ ] Unit: deep ancestor chain (3+ levels) — most-restrictive across the whole chain wins
+- [ ] Create `tests/unit/components/setup.ts` with `createMockDocumentStore()` and `createMockRenderModeStore()` factories (only properties the tested components actually touch; factory shape parallels the schema-tester factory — self-contained, no shared state)
+- [ ] Smoke (`tests/unit/components/FormGroup.test.mts`, `// @vitest-environment happy-dom`): given `getFieldOverride` returns `gmOnly` visibility, non-GM user sees nothing; GM sees the field
+- [ ] Smoke (`tests/unit/components/NumberFormGroup.test.mts`, `// @vitest-environment happy-dom`): `#controls` slot content renders; `editable` scoped slot prop reflects the FormGroup override result
 
----
+**Story 6 — E2E Backfill for poc.1 & poc.2 Features**
 
-## 4.9 CI/CD Integration
+Beyond the Story 3 Layer C secret-AE round-trip, these specs cover real feature surfaces from poc.1 (FormulaFamiliar in document fields, field permissions) and poc.2 (Material AE Details/Changes tabs, aspect picker, single-material enforcement). Depends on Story 1 (E2E infra) and the helpers landed in Story 3.
 
-### PR Gate
+> **Scope note — material single-per-type**: the spec corresponds to the **current** behaviour of `validateSingleMaterial`, which only blocks duplicate **STANDARD-subtype** materials when the `ENFORCE_SINGLE_MATERIAL` setting is enabled. It does **not** enforce "one of each material type". A broader "one per type" rule is out of scope for Phase 4 — if that becomes the desired behaviour, raise it as a feature change in the relevant content phase and update the spec.
 
-Every PR targeting `dev` (or any protected branch) must pass the full unit test suite before merge. This is a GitHub Actions status check — not advisory.
-
-**New workflow**: `.github/workflows/test.yml`
-- Triggers on: `pull_request` (to `dev` and above)
-- Steps: install → lint + typecheck (existing `prebuild`) → `npm run test:ci`
-- Branch protection rule: require this status check to pass before merging
-
-### Release Pipeline & Branching Strategy
-
-**Decided branching model**: `feature/*` → `dev` → `main` → `release/*` → Foundry publish
-
-| Branch | Purpose |
-|--------|---------|
-| `feature/*` | All development work. Branched from `dev`, merged back via PR. |
-| `dev` | Integration branch. All features land here first. Acts as staging — power users who want bleeding-edge builds pull from here. Tests must pass before any PR merges. |
-| `main` | Pre-release staging. When `dev` is stable, a PR from `dev` → `main` promotes it. Power users can download from here before Foundry publish. Tests must pass. |
-| `release/*` | Tagged release branch cut from `main`. Published to Foundry package repository. Read-only after publish. |
-
-**No RC branches.**
-
-**Hotfix branches: not yet exercised.** When `dev` contains unreleased work and a critical bug must ship immediately, a `hotfix/*` branch off `main` (bypassing `dev`) is the right tool — with a mandatory backport PR to `dev` afterward. The scenario table and PR targets are defined in `docs/branching-strategy.md` §5. This path has not been used yet because we have not cut a real release.
-
-**Dev → main promotion**: PR-gated; tests must pass. Can be auto-merged by CI if all checks are green — decision deferred until we have enough release cadence to know whether manual review adds value at this step.
-
-**Release tagging**: A tag on `main` triggers `build.yml`, which builds, zips, and creates a GitHub Release. The tag is the canonical version marker — no separate read-only RC branches needed.
-
-> Full branching strategy reference: `docs/branching-strategy.md`
-
-### Coverage Monitoring
-
-**Decision**: Vitest built-in thresholds — fail CI if coverage drops below the floor.
-
-**Threshold-setting approach**: Thresholds are not set until after Phase 4 tests are written. After the test suite is complete, run `npm run coverage`, record the output, and commit thresholds set slightly below those numbers as the baseline. This prevents the thresholds from failing on day one while still catching future regressions.
-
-**Config location**: `vite.config.ts` under `test.coverage.thresholds`. Example shape (numbers filled in after Phase 4 baseline run):
-
-```ts
-coverage: {
-  provider: 'v8',
-  thresholds: {
-    lines: 0,      // fill in after baseline run
-    functions: 0,
-    branches: 0,
-  }
-}
-```
-
-Once set, any PR that drops a metric below its floor will fail the `test.yml` CI check.
+- [ ] `tests/e2e/formula-familiar-weapon-name.spec.ts`: GM opens a weapon sheet → focuses the name field → triggers FormulaFamiliar dropdown → verify the suggested context list contains the expected item-scoped properties (e.g. `system.weaponDamage.*`) and excludes opt-out fields → select a context → verify the resolved name updates in the field, persists to the document, and shows in the sheet header / window title
+- [ ] `tests/e2e/material-details-changes-tab.spec.ts`: GM creates a Material AE → on the Details tab, adds a property (e.g. damage bonus) via `createActiveEffect`-equivalent UI flow → switches to the Changes tab → verify the corresponding `change` row exists with the right key/value/mode and is in sync with the Details entry
+- [ ] `tests/e2e/material-aspect-picker.spec.ts`: with no parent material → aspect picker shows the full base set; with a parent material assigned → aspect picker filters/derives from the parent. Verify both branches produce the expected available-aspect list and that selection persists.
+- [ ] `tests/e2e/material-single-per-type.spec.ts`: with `ENFORCE_SINGLE_MATERIAL` setting **off**, two STANDARD materials can be added to a weapon; with the setting **on**, the second add is rejected and the first remains. Non-STANDARD subtypes are unaffected by the setting (positive control).
+- [ ] `tests/e2e/field-permissions.spec.ts`: GM applies a `gmOnly` visibility override to one field on a weapon → player context sees the field hidden; GM applies a `gmOnly` editability override → player context sees the field but cannot edit it; GM removes the override → player context returns to default visibility/editability. One field is enough — Story 5 covers the merge logic exhaustively.
 
 ---
 
-## 4.8 Tests Relocated to Owning Phases
+## Related
 
-The following test areas were originally drafted here but belong to the phase that builds the feature. Each phase should include a **Tests** section in its checklist.
+- [poc/phase-08-pipeline-and-branching.md](phase-08-pipeline-and-branching.md) — owns PR gate, branch protection, release pipeline, coverage thresholds
+- [docs/branching-strategy.md](../../branching-strategy.md)
 
-| Test area | Destination phase |
-|-----------|------------------|
-| `material-ae.test.mts` — bonus applies to weapon, masterwork flag, broken penalty | **Phase 5** (Compendium Foundation) — depends on compendium-sourced content |
-| `actor.model.test.mts` — schema, defaults, AC=10 | **Phase 6** (Actor Foundation) |
-| `abilities.test.mts` — ability mods, size modifiers | **Phase 6** |
-| `ac.test.mts` — base AC, touch, flat-footed | **Phase 6** |
-| `saves.test.mts` — Fort/Ref/Will + ability mods | **Phase 6** |
-| `skills.test.mts` — ranks, class skill +3, ACP | **Phase 6** |
-| `bab.test.mts` — BAB by class/level, multi-class | **Phase 6** |
-| `hp.test.mts` — HD, CON mod, min 1 | **Phase 6** |
-| `actor-creation.test.mts` — actor lifecycle integration | **Phase 6** |
-| `actor-with-items.test.mts` — actor + embedded items | **Phase 6** |
-| `formula-evaluation.test.mts` — attack/damage formulas, context resolution | **Phase 7** (Roll Formulas) |
-| `race.model.test.mts` — size, speed, ability adjustments | **Phase 8** (Races) |
-| `class.model.test.mts` — classType, level, BAB, saves | **Phase 9** (Classes) |
-| `feat-ae.test.mts` — Weapon Focus, Power Attack, Cleave trigger | **Phase 11** (Feats Alpha) |
-| `initiative.test.mts` — initiative formula, sort order | **Phase 14** (Combat Tracker) |
-| `condition-ae.test.mts` — Prone creation, stat changes, removal | **Phase 15** (Conditions Alpha) |
-| Full-attack / Power Attack / Cleave / Trip / Turn-budget scenarios | **Phase 10+** (Action System / Combat) |
-| Expanded E2E scenarios (character creation, combat encounter) | Phase that builds the feature — E2E scaffold is in place from Phase 4 |
