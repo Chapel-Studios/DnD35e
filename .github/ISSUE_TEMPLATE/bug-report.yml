@@ -1,0 +1,89 @@
+name: Bug Report
+description: Report something that's broken or behaving incorrectly
+title: "[Bug] "
+labels: ["type: bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill in as much as you can — the more we know, the faster we can fix it.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One-sentence description of the bug.
+      placeholder: "Weapon damage formula returns NaN when the weapon has no enhancement bonus."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal steps that consistently trigger the issue.
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happens. Include error messages, stack traces, or screenshots.
+    validations:
+      required: true
+
+  - type: input
+    id: system-version
+    attributes:
+      label: System Version
+      description: From the Foundry "Game Systems" tab, or `system.json` `version` field.
+      placeholder: "14.0.0-poc.4"
+    validations:
+      required: true
+
+  - type: input
+    id: foundry-version
+    attributes:
+      label: Foundry VTT Version
+      placeholder: "14.331"
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser / Client
+      description: e.g. "Chrome 124 on Windows 11", "Foundry desktop client on macOS 14"
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console Errors
+      description: Open the dev console (F12) and paste any red errors here.
+      render: shell
+
+  - type: textarea
+    id: modules
+    attributes:
+      label: Active Modules
+      description: List of active modules at time of bug, if relevant. Try disabling all modules to confirm the bug occurs in dnd35e alone.
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Context
+      description: Anything else — recent changes, suspected cause, related issues.

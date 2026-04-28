@@ -1,0 +1,54 @@
+name: Validate Merge Path
+
+# Enforce legal branch → target combinations to prevent accidental PRs
+# (e.g. opening a PR from a feature branch directly to main).
+#
+# Allowed:
+#   feature/* → dev
+#   hotfix/*  → dev   (backports)
+#   dev       → main
+#   hotfix/*  → main
+
+on:
+  pull_request:
+    branches: [dev, main]
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  validate:
+    name: Validate source → target
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check merge path
+        env:
+          SOURCE: ${{ github.head_ref }}
+          TARGET: ${{ github.base_ref }}
+        run: |
+          allowed=false
+
+          if [[ "$TARGET" == "dev" ]]; then
+            if [[ "$SOURCE" == feature/* || "$SOURCE" == hotfix/* || "$SOURCE" == release-prep/* ]]; then
+              allowed=true
+            fi
+          fi
+
+          if [[ "$TARGET" == "main" ]]; then
+            if [[ "$SOURCE" == "dev" || "$SOURCE" == hotfix/* ]]; then
+              allowed=true
+            fi
+          fi
+
+          if [[ "$allowed" == "true" ]]; then
+            echo "✅ Merge path allowed: $SOURCE → $TARGET"
+            exit 0
+          fi
+
+          echo "::error::Merge path NOT allowed: $SOURCE → $TARGET"
+          echo ""
+          echo "Allowed paths:"
+          echo "  feature/*       → dev"
+          echo "  hotfix/*        → dev    (backports)"
+          echo "  release-prep/*  → dev    (version bump PRs)"
+          echo "  dev             → main"
+          echo "  hotfix/*        → main"
+          exit 1

@@ -1,18 +1,12 @@
 /**
- * Build script: generates system.json from system.json.template.
+ * Standalone helper: generates system.json from system.json.template and copies
+ * it to your local Foundry systems directory.
  *
- * Reads local.config.json (git-ignored) for per-developer settings:
- *   { "foundrySystemDir": "C:/path/to/Foundry/Data/systems" }
+ * This script is NOT part of the main build pipeline — the Vite plugin in
+ * vite.config.ts handles system.json generation during `npm run build`.
+ * Use this only when you need to push an updated system.json to Foundry
+ * without running a full build (e.g. after changing version in package.json).
  *
- * foundrySystemDir should point to the Foundry Data/systems directory
- * (not the dnd35e subfolder — the script appends that automatically).
- * If the path ends with /dnd35e, it is normalized to the parent.
- *
- * Substitutes {{VERSION}} from version.yaml.
- * Without local.config.json, runs in CI mode (generates in-repo, skips copy).
- *
- * Usage:
- *   node scripts/build-system-json.mjs
  */
 
 import fs from 'fs';
@@ -48,14 +42,10 @@ if (foundrySystemDir && !fs.existsSync(foundrySystemDir)) {
   process.exit(1);
 }
 
-// --- Read version from version.yaml ---
-const versionYamlPath = path.join(root, 'version.yaml');
-let version = '0.0.0';
-if (fs.existsSync(versionYamlPath)) {
-  const yaml = fs.readFileSync(versionYamlPath, 'utf8');
-  const match = yaml.match(/current:\s*"([^"]+)"/);
-  if (match) version = match[1];
-}
+// --- Read version from package.json (single source of truth) ---
+const packageJsonPath = path.join(root, 'package.json');
+const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+const version = pkg.version ?? '0.0.0';
 
 // --- Read template ---
 const templatePath = path.join(root, 'system.json.template');
@@ -67,7 +57,7 @@ if (!fs.existsSync(templatePath)) {
 let content = fs.readFileSync(templatePath, 'utf8');
 
 // Substitute {{VERSION}}
-content = content.replace('{{VERSION}}', version);
+content = content.replaceAll('{{VERSION}}', version);
 
 // Validate result is valid JSON
 try {
@@ -77,20 +67,15 @@ try {
   process.exit(1);
 }
 
-// --- Write system.json to repo root ---
-const outputPath = path.join(root, 'system.json');
-fs.writeFileSync(outputPath, content);
-console.log(`✅ Generated system.json (version: ${version})`);
-
-// --- Copy to Foundry system directory (skip in CI when foundrySystemDir is absent) ---
+// --- Write directly to Foundry system directory ---
 if (foundrySystemDir) {
   const systemDir = path.join(foundrySystemDir, 'dnd35e');
   if (!fs.existsSync(systemDir)) {
     fs.mkdirSync(systemDir, { recursive: true });
   }
   const destPath = path.join(systemDir, 'system.json');
-  fs.copyFileSync(outputPath, destPath);
-  console.log(`✅ Copied system.json → ${destPath}`);
+  fs.writeFileSync(destPath, content);
+  console.log(`✅ Generated system.json (version: ${version}) → ${destPath}`);
 } else {
-  console.log('ℹ️  Skipping copy to Foundry directory (no foundrySystemDir configured).');
+  console.log('ℹ️  No foundrySystemDir configured — nothing to write (use npm run build for a full build).');
 }
