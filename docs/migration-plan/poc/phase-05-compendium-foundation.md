@@ -1,14 +1,14 @@
 # Phase 5: Compendium Foundation
 
-**Status**: 📝 Planned (pack pipeline, origin tracking, authoring workflow, Foundry integration)
+**Status**: ✅ Approved (pack pipeline, origin tracking, authoring workflow, Foundry integration)
 
 > **Milestone**: POC  
 > **Dependencies**: Phase 1, Phase 2, Phase 3  
-> **Goal**: Establish the compendium build pipeline (JSON source → LevelDB packs), origin tracking for items moving between compendiums and world, type-safe UUID helpers, migration version field on documents, and content authoring tooling. Proves the pipeline with **Broken and Masterwork material effects** — the first compendium-sourced auto-managed AEs. This phase does NOT include the amalgamated browser or end-user compendium management (Phase 26).
+> **Goal**: Establish the compendium build pipeline (JSON source → LevelDB packs), origin tracking for items moving between compendiums and world, type-safe UUID helpers, migration version field on documents, and content authoring tooling. Proves the pipeline with **Broken and Masterwork material effects** — the first compendium-sourced auto-managed AEs. This phase does NOT include the amalgamated browser or end-user compendium management (release.1 — Compendium Browser).
 
 ---
 
-## 4.1 Why Compendiums Early
+## 5.1 Why Compendiums Early
 
 The grant system (Phases 11–12, Races & Classes) references items by compendium UUID. If compendiums don't exist yet, grant UUIDs have nothing to resolve. Origin tracking must be established before actors start acquiring items, so every document knows where it came from.
 
@@ -16,11 +16,11 @@ Additionally, this gives us a solid content authoring workflow from the start �
 
 ---
 
-## 4.2 Source Format Decision: JSON vs YAML
+## 5.2 Source Format Decision: JSON vs YAML
 
 ### Decision Framework
 
-Phase 4 establishes the canonical source format for all compendium content. This choice affects:
+Phase 5 establishes the canonical source format for all compendium content. This choice affects:
 - Build pipeline complexity
 - Developer editing experience
 - Version control diffs
@@ -43,13 +43,13 @@ Phase 4 establishes the canonical source format for all compendium content. This
 
 ### Implementation Decision Required
 
-**Choose one format for Phase 4** and document your choice in this section with rationale. Considerations:
+**Choose one format for Phase 5** and document your choice in this section with rationale. Considerations:
 
-1. **Automation-first approach**: If Phase 4 relies on CSV → Macro → Script workflow (programmatic generation), manual editing overhead doesn't matter much. _Favors JSON._
+1. **Automation-first approach**: If Phase 5 relies on CSV → Macro → Script workflow (programmatic generation), manual editing overhead doesn't matter much. _Favors JSON._
 
 2. **Developer experience**: If team members will frequently hand-edit source files, readability and diff quality matter. _Favors YAML._
 
-3. **Build pipeline maturity**: JSON requires only default CLI behavior. YAML requires extra parser. _Favors JSON for Phase 4; YAML can be added in Phase 26._
+3. **Build pipeline maturity**: JSON requires only default CLI behavior. YAML requires extra parser. _Favors JSON for Phase 5; YAML can be added in the Compendium Browser phase (release.1)._
 
 4. **Transformation scripts**: If scripts must process source files frequently, JSON is simpler. YAML requires parsing overhead. _Favors JSON._
 
@@ -61,232 +61,239 @@ The `@foundryvtt/foundryvtt-cli` supports both JSON and YAML extraction via flag
 - File sizes and nesting depth
 - How transformation scripts interact with each format
 
-This hands-on comparison will inform the final decision. See §4.15 risk_5 for how the plan proceeds while this remains open.
+This hands-on comparison will inform the final decision. See §5.15 risk_5 for how the plan proceeds while this remains open.
 
 ### Deferred Flexibility
 
-- The decision is not permanent — conversion infrastructure can be added in Phase 26 (Compendium Browser) if team consensus shifts.
+- The decision is not permanent — conversion infrastructure can be added in release.1 (Compendium Browser) if team consensus shifts.
 - If JSON is chosen now, YAML export/import can be layered on top later without disrupting the core system.
 - If YAML is chosen now, JSON fallback can be supported for tooling that expects it.
 
 ---
 
-## 4.3 Source Data Structure
+## 5.3 Source Data Structure
 
-Compendium source data is stored as **one JSON file per document**, organized by pack:
+Compendium source data is stored as **one JSON file per document**, organized into a tree that reflects how the content will appear in Foundry's compendium sidebar. Foundry's sidebar has **two** independent grouping mechanisms and the on-disk layout mirrors both:
+
+1. **Pack folders** — sidebar folders that group whole compendium packs (declared via `packFolders` in `system.json`). See [§5.4.5 Pack Folders](#545-pack-folders-grouping-packs-in-the-sidebar).
+2. **In-pack folders** — folders *inside* a pack that group documents (declared as `_Folder.json` documents inside the pack). See [§5.5.4 In-Pack Folders](#554-in-pack-folders).
+
+### Canonical on-disk layout
 
 ```
 packs/
   _source/
-    weapons/
-      longsword.json
-      shortsword.json
-      ...
-    feats/
-      weapon-focus.json
-      power-attack.json
-      cleave.json
-      ...
-    races/
-      human.json
-      ...
-    classes/
-      fighter.json
-      ...
+    items/                                   # cosmetic: Foundry already groups packs by document type
+      Gear/                                  # sidebar pack-folder (declared in system.json packFolders)
+        Weapons/                             # the actual pack (system.json packs[] entry)
+          Simple/                            # in-pack folder (contains _Folder.json + documents)
+            _Folder.json
+            dagger.json
+            club.json
+          Martial/
+            _Folder.json
+            longsword.json
+            greatsword.json
+          Exotic/
+            _Folder.json
+            spiked-chain.json
+        Armor/                               # another pack inside the same Gear sidebar folder
+          _Folder.json                       # (optional) root-level in-pack folder
+          chainmail.json
+      Magic/                                 # another sidebar pack-folder
+        Spells/
+          spell-fireball.json
+    activeEffects/
+      Materials/                             # pack: materials
+        broken-weapon.json                   # flat: no in-pack folders
+        masterwork-weapon.json
 ```
 
-Each JSON file is a complete Foundry document with `_id`, `name`, `type`, and `system` data. The build pipeline compiles these into LevelDB packs.
+### What each level means to Foundry vs. the build pipeline
 
----
+| Path level | Example | Foundry sees it via | Pipeline behaviour |
+|---|---|---|---|
+| `_source/<docType>/` | `items/`, `activeEffects/` | Nothing — Foundry already auto-groups packs by `type` in the sidebar | Cosmetic on-disk grouping; pure organizational convenience |
+| `_source/<docType>/<sidebarFolder>/` | `items/Gear/` | `system.json` → `packFolders[]` entries | Build script reads `packFolders[]` from template; the directory name should match the folder's `name` for clarity but Foundry uses the metadata, not the path |
+| `_source/<docType>/<sidebarFolder>/<packName>/` | `items/Gear/Weapons/` | `system.json` → `packs[]` entry with matching `path` | The pack's source dir; build script invokes `compilePack(src, dest, { recursive: true })` |
+| `_source/.../<packName>/<inPackFolder>/` | `items/Gear/Weapons/Simple/` | `_Folder.json` document inside the pack | Documents in this directory carry `folder: "<folderId>"`; layout is preserved by the CLI's `extractPack({ folders: true })` |
+| `_source/.../<doc>.json` | `dagger.json` | The document itself | Standard Foundry document JSON with `_id`, `_key`, `name`, `type`, `system` |
 
-## 4.4 Pack Registration in system.json
+Every JSON file is a complete Foundry document (with `_id`, `_key`, `name`, `type`, `system`). `_Folder.json` files are Foundry **Folder** documents (see §5.5.4). The build pipeline compiles the per-pack subtrees into LevelDB packs and emits `packs[]` + `packFolders[]` into the final `system.json`.
 
-Each compendium pack is declared in `system.json` following Foundry's `PackageCompendiumData` structure (from `app/common/packages/_types.mjs`). **Phase 4 establishes conditional pack registration**: the build process generates `system.json` with pack declarations based on the build environment (dev vs production).
+## 5.4 Pack Registration in system.json
 
-### System Configuration Strategy
+Each compendium pack is declared in `system.json` following Foundry's `PackageCompendiumData` structure (from `app/common/packages/_types.mjs`). The build pipeline that generates `system.json` from a template **already exists** (it landed alongside Phase 1's build infrastructure). Phase 5 adds the `packs` array to that template and extends the build script to handle dev-only packs conditionally.
 
-**Problem**: 
-- Every pack must be registered in `system.json` for Foundry to load it
-- Dev packs (e.g., `macros-dev`) should only appear in dev builds, not production
-- Each developer has a different local Foundry system directory path
-- Manually editing `system.json` breaks the build process
+> **Implementation status**: The template, build script, version substitution, per-developer Foundry copy-out, and CI-mode fallback are **already in place**. What this phase adds is documented in [§5.4.3](#543-what-this-phase-adds).
 
-**Solution**:
-Create a build-time configuration system:
+### 5.4.1 What's Already Implemented
 
-1. **Dev settings file** (git ignored): Store per-developer local paths
-   ```bash
-   # .env.local (git ignored)
-   FOUNDRY_SYSTEM_DIR=/path/to/local/Foundry/Data/systems/dnd35e
-   ```
-
-2. **Build script** generates `system.json` from a template — Vite determines dev vs production based on the command used (`vite dev` vs `vite build`)
-
-3. **Pack declarations** are conditional:
-   - Production: weapons, feats, races, classes, materials
-   - Dev: weapons, feats, races, classes, materials, macros-dev
-
-### Template: system.json.template
-
-Store a minimal template in version control with only unique information per pack:
+#### `system.json.template`
+Lives at the repo root. Currently declares document types for Item and ActiveEffect, plus the `{{VERSION}}` placeholder:
 
 ```jsonc
-// system.json.template
+// system.json.template (current actual content)
 {
   "id": "dnd35e",
-  "title": "D&D 3.5e System",
+  "title": "Dungeons & Dragons 3.5 Edition SRD",
   "version": "{{VERSION}}",
-  "packs": [
-    { "name": "weapons", "label": "DND35E.CompendiumWeapons", "type": "Item" },
-    { "name": "feats", "label": "DND35E.CompendiumFeats", "type": "Item" },
-    { "name": "races", "label": "DND35E.CompendiumRaces", "type": "Item" },
-    { "name": "classes", "label": "DND35E.CompendiumClasses", "type": "Item" },
-    { "name": "materials", "label": "DND35E.CompendiumMaterials", "type": "ActiveEffect" }
-    {{#DEV_BUILD}}
-    ,{ "name": "macros-dev", "label": "DND35E.CompendiumMacrosDev", "type": "Macro" }
-    {{/DEV_BUILD}}
-  ]
-}
-```
-
-**Information stored**:
-- `name`: Canonical identifier (also used to generate pack path and UUID prefix)
-- `label`: i18n key for user-facing title in Compendium sidebar
-- `type`: Document class name (Item, ActiveEffect, Macro, etc.)
-
-**Automatically added by build script**:
-- `path`: Derived as `packs/{name}`
-- `system`: Always `dnd35e` (inferred from package context)
-- `banner` (optional): Can be added by build script if needed
-
-This makes the template compact and eliminates redundancy while keeping it maintainable.
-
-### Build Script: Generate system.json
-
-Create a build script that:
-1. Reads `.env.local` (dev settings, git ignored)
-2. Reads `system.json.template`
-3. Substitutes template variables (VERSION, etc.) based on Vite's mode
-4. Writes to `system.json`
-5. Copies compiled packs to developer's local Foundry system directory
-
-```bash
-# scripts/build-system-json.mjs
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const envPath = path.resolve(__dirname, '../.env.local');
-
-// Load .env.local if it exists
-if (fs.existsSync(envPath)) {
-  dotenv.config({ path: envPath });
-}
-
-// Vite passes the mode via VITE_INTERNAL_MODE environment variable during build
-// Or we can check process.argv or package.json scripts to infer mode
-// Most reliable: Use environment to determine mode (passed by package.json script)
-const isDev = process.env.VITE_DEV_MODE === 'true' || process.env.VITE_MODE === 'dev';
-const version = process.env.npm_package_version || '0.0.0';
-
-// Read template
-const templatePath = path.resolve(__dirname, '../system.json.template');
-let template = fs.readFileSync(templatePath, 'utf8');
-
-// Simple template substitution for VERSION
-template = template.replace('{{VERSION}}', version);
-
-// Remove/keep dev packs based on mode
-if (!isDev) {
-  // Remove dev pack section
-  template = template.replace(/\s*,?\s*{{#DEV_BUILD}}[\s\S]*?{{\/DEV_BUILD}}/g, '');
-} else {
-  // Remove conditional markers, keep dev packs
-  template = template.replace('{{#DEV_BUILD}}', '').replace('{{/DEV_BUILD}}', '');
-}
-
-// Parse as JSON (template now has no conditionals)
-let config = JSON.parse(template);
-
-// Expand pack declarations: add path and system to each pack
-config.packs = config.packs.map(pack => ({
-  ...pack,
-  path: pack.path || `packs/${pack.name}`,             // Default path
-  system: pack.system || 'dnd35e'                      // Default system
-}));
-
-// Write expanded system.json
-const outputPath = path.resolve(__dirname, '../system.json');
-fs.writeFileSync(outputPath, JSON.stringify(config, null, 2) + '\n');
-
-console.log(`✅ Generated system.json (${isDev ? 'DEV' : 'PROD'} build, ${config.packs.length} packs)`);
-
-// Optional: Copy to developer's Foundry system directory
-const foundrySystemDir = process.env.FOUNDRY_SYSTEM_DIR;
-if (foundrySystemDir && fs.existsSync(foundrySystemDir)) {
-  const destPath = path.join(foundrySystemDir, 'system.json');
-  fs.copyFileSync(outputPath, destPath);
-  console.log(`✅ Copied system.json to ${destPath}`);
-}
-```
-
-### Update package.json Scripts
-
-```json
-{
-  "scripts": {
-    "build": "npm run build:system-json && vite build",
-    "build:dev": "npm run build:system-json -- --dev && vite --mode dev build",
-    "dev": "npm run build:system-json -- --dev && vite --mode dev",
-    "build:system-json": "node scripts/build-system-json.mjs",
-    "validate:packs": "node scripts/validate-packs.mjs"
+  "compatibility": { "minimum": "14.354", "verified": "14.354" },
+  "esmodules": ["main.mjs"],
+  "styles": ["main.css"],
+  "languages": [{ "lang": "en", "path": "lang/en.json", "name": "English" }],
+  "documentTypes": {
+    "Item": { "weapon": {} },
+    "ActiveEffect": { "general": {}, "material": {}, "secret": {} }
   }
 }
 ```
 
-**Key changes:**
-- `build` (production) → Vite defaults to production mode (`vite build`)
-- `build:dev` (development) → Explicitly sets `--mode dev` for Vite
-- `dev` (dev server) → Sets `--mode dev` for `vite` (dev server command)
-- Vite automatically passes the mode to all plugins via the `env` object
+There is **no `packs` array yet** — adding it is part of this phase.
 
-### Dev Settings Template (.env.local.example)
+#### `scripts/build-system-json.mjs`
+- Reads `local.config.json` (git-ignored, **not** `.env.local`/dotenv) for the per-developer `foundrySystemDir` path
+- Normalizes `foundrySystemDir`: strips trailing `/dnd35e` if developer included it
+- Reads version from `version.yaml` (the canonical version source — see `scripts/update-version-yaml.mjs`), **not** `package.json`
+- Substitutes `{{VERSION}}` only — no conditional template syntax yet
+- Validates the result parses as JSON before writing
+- Writes to repo-root `system.json`
+- Copies to `<foundrySystemDir>/dnd35e/system.json` when configured (creates the directory if missing)
+- **CI mode**: when `local.config.json` is absent, warns and generates in-repo only (no copy)
 
-Store in version control as a reference (NOT `.env.local` itself):
+#### `local.config.json.example`
+Committed reference template. Single field:
 
-```bash
-# .env.local.example — Copy to .env.local and customize for your environment
-FOUNDRY_SYSTEM_DIR=/path/to/your/Foundry/Data/systems/dnd35e
+```jsonc
+{
+  "_comment": "Copy this file to local.config.json and customize for your environment. local.config.json is git-ignored.",
+  "foundrySystemDir": "C:/path/to/Foundry/Data/systems"
+}
 ```
 
-Add to `.gitignore`:
+Note the path points at the **`systems` parent directory**, not the `dnd35e` subfolder.
+
+#### `.gitignore`
+Already excludes `local.config.json`. The generated `system.json` is **not** gitignored (it's checked in as a build artifact for users who clone and run without npm). This differs from earlier planning notes — confirm whether this should change before Phase 5 ships any volatile content.
+
+#### `package.json` scripts (current)
+```json
+{
+  "build:system-json": "node scripts/build-system-json.mjs",
+  "prebuild": "npm run lint && npm run typecheck && npm run build:system-json",
+  "build": "vite build --mode production",
+  "dev:watch": "npm run build:system-json && vite build --watch --mode development"
+}
 ```
-.env.local
-system.json
+
+`prebuild` runs `build:system-json` automatically before `npm run build`. `dev:watch` runs it explicitly because npm's `pre*` hook chain doesn't cover watch mode.
+
+#### `vite.config.ts` integration
+- Reads the same `local.config.json` to resolve `buildOutDir` (Foundry path or `dist/` CI fallback)
+- The `copyStaticFiles` plugin copies `system.json` into the build output via `closeBundle`
+- `--mode production` / `--mode development` is what currently distinguishes builds at the **Vite** level — but the `build-system-json` script itself is mode-agnostic today
+
+### 5.4.2 Pack Field Schema
+
+When `packs` are added in Phase 5, each entry stores only the unique fields:
+- `name` — canonical identifier (also pack ID and UUID prefix)
+- `label` — i18n key for the user-facing title in the Compendium sidebar
+- `type` — document class (`Item`, `ActiveEffect`, `Macro`, `JournalEntry`, etc.)
+- `path` (optional in template) — if the pack lives somewhere other than `packs/{name}`, declare it explicitly. With the canonical layout (§5.3) this is usually `packs/<docType>/<sidebarFolder>/<packName>` (e.g. `packs/items/Gear/Weapons`).
+- `flags.dnd35e.indexFields` (optional) — extra index fields beyond Foundry's defaults; see [§5.6](#56-build--validation-setup)
+
+The build script will fill in defaults during expansion:
+- `path` → `packs/{name}` if absent
+- `system` → `dnd35e`
+
+### 5.4.3 What This Phase Adds
+
+- [ ] **Add a `packs` array to `system.json.template`** with the production packs (materials, weapons, feats, races, classes) plus the documentation packs (`d35e-docs-workflows`, `d35e-srd-reference`). Each entry includes an explicit `path` matching the on-disk layout in §5.3.
+- [ ] **Add a `packFolders` array to `system.json.template`** declaring the sidebar grouping (e.g. `Gear` containing `weapons` and `armor`); see [§5.4.5](#545-pack-folders-grouping-packs-in-the-sidebar)
+- [ ] **Extend `build-system-json.mjs` to expand pack entries**: fill in `path: packs/{name}` (when absent) and `system: 'dnd35e'`, so the template stays minimal
+- [ ] **Validate `packFolders[].packs` references**: every name listed in a folder's `packs` array must correspond to an entry in `packs[]`; fail the build if a folder references an unknown pack
+- [ ] **Add dev-mode awareness to `build-system-json.mjs`**: accept a `--dev` CLI flag (or read an env var set by the dev script) and conditionally include `macros-dev` and `d35e-docs-workflows-dev` (and any sidebar folder that contains only dev packs)
+- [ ] **Add dev-mode awareness to `build-system-json.mjs`**: accept a `--dev` CLI flag (or read an env var set by the dev script) and conditionally include `macros-dev` and `d35e-docs-workflows-dev`
+- [ ] **Update `package.json` scripts** to pass the dev flag to `build:system-json` from `dev:watch` and any future `build:dev` script
+- [ ] **Decide the conditional-template syntax**. Two viable options:
+  - **JSON-only**: keep the template valid JSON, store dev packs in a separate `_devPacks` array, and have the script merge them when `--dev` is set. Simplest; no parser surprises.
+  - **Mustache-style markers**: `{{#DEV_BUILD}}…{{/DEV_BUILD}}` blocks that the script strips. More expressive but the template stops being valid JSON until processed.
+
+  Recommend the JSON-only `_devPacks` approach unless conditional logic grows beyond pack lists.
+- [ ] **Verify generated `system.json` against Foundry's `PackageCompendiumData`** schema (covered by validation in [§5.6](#56-build--validation-setup))
+
+### 5.4.4 Decisions to Confirm Before Coding
+
+These were assumed in earlier drafts but contradict current state — confirm intent before implementing:
+
+1. **Should `system.json` be gitignored?** The earlier draft said yes; current `.gitignore` keeps it tracked. If it stays tracked, every `npm run build` will produce a dirty working tree. If it becomes ignored, downstream tooling that expects it (e.g. CI extracting metadata, manifest URLs) needs review.
+2. **Where should dev-mode detection live?** Two choices: (a) explicit `--dev` flag passed to `build-system-json` from npm scripts (matches current build-script style); (b) `process.env.NODE_ENV` (set automatically by Vite). Option (a) is more explicit and works whether or not Vite is involved.
+3. **Should the SRD reference journal pack be production-shipped or dev-only?** [§5.11](#511-documentation-stubs-workflow-journals-compendium-foundation) implies prod, but it carries the largest content cost; revisit once authoring is underway.
+
+### 5.4.5 Pack Folders (Grouping Packs in the Sidebar)
+
+Foundry's compendium sidebar groups packs in two ways: automatically by `type`, and (optionally) by user-defined **pack folders** declared at the top level of `system.json` via `packFolders`. This is what creates the "Gear" expand-collapse group in the sidebar that contains the `weapons` and `armor` packs.
+
+#### Schema (verified in our type defs)
+
+From [types/foundry/common/packages/base-package.d.mts](types/foundry/common/packages/base-package.d.mts#L60-L65):
+
+```typescript
+type PackageCompendiumFolderSchema = {
+  name: StringField<string, string, true, false, false>;       // sidebar label
+  sorting: StringField<'a' | 'm'>;                             // 'a' = alphabetical, 'm' = manual
+  color: ColorField;                                            // hex sidebar tag colour
+  packs: SetField<StringField<string, string, true, false, false>>;  // pack names belonging to this folder
+};
 ```
 
-**Note**: The build environment (dev vs production) is determined automatically by Vite based on the `vite dev` vs `vite build` command.
+Foundry v11+ runtime also supports a `folders: SetField<PackageCompendiumFolder>` field for nested pack folders, even though our local type defs don't yet reflect it. If the team wants nested sidebar folders later, the build script can emit them; for Phase 5 we keep it flat.
 
-### Implication
+#### Example: `system.json` excerpt
 
-**Every pack declaration goes into system.json.template** (production + dev packs all listed conditionally). The build process then:
-1. Detects the build mode from Vite (dev vs production)
-2. Strips out dev-only declarations if building for production
-3. Includes dev-only declarations if building for dev mode
-4. Outputs the final `system.json` with the correct set of pack registrations
+```jsonc
+{
+  // ... id, version, packs[] etc.
+  "packFolders": [
+    {
+      "name": "Gear",
+      "sorting": "a",
+      "color": "#7a4f1d",
+      "packs": ["weapons", "armor"]
+    },
+    {
+      "name": "Magic",
+      "sorting": "a",
+      "color": "#553388",
+      "packs": ["spells", "magic-items"]
+    },
+    {
+      "name": "Documentation",
+      "sorting": "a",
+      "color": "#3a3a3a",
+      "packs": ["d35e-docs-workflows", "d35e-srd-reference"]
+    }
+  ]
+}
+```
 
-This ensures:
-- ✅ All packs always registered (no manual edits needed)
-- ✅ Dev packs conditionally included/excluded based on Vite mode
-- ✅ Each developer can target their own Foundry system directory
-- ✅ `system.json` is never committed (build artifact)
-- ✅ Future phases can add new packs to the template without manual system.json edits
+#### `system.json.template` authoring rule
+
+`packFolders` lives in the template at the same level as `packs`. The build script's only responsibility is to:
+1. Validate every `packFolders[].packs[*]` matches a `packs[].name`.
+2. In dev builds, allow folder entries that contain dev-only packs to remain (or strip dev-only pack names from prod folders so the array doesn't reference unknown packs).
+3. Pass `packFolders` through unchanged to the final `system.json`.
+
+#### Mapping to on-disk layout
+
+The canonical layout in [§5.3](#53-source-data-structure) puts each pack inside a directory named after its sidebar folder (e.g. `packs/_source/items/Gear/Weapons/`). This is **convention only** — the build script does **not** auto-generate `packFolders[]` from the directory tree. Authors declare `packFolders` explicitly in the template; the on-disk layout is a human-readability mirror that should match.
+
+The pack's `path` field in `system.json` must reflect the on-disk location (e.g. `path: "packs/items/Gear/Weapons"`), or the build pipeline can derive `path` from a flat pack name if the pack source dir is at `packs/_source/{name}` instead. Recommend explicit `path` in the template once the canonical layout is adopted, to keep one obvious source of truth.
 
 ---
 
-## 4.5 Pack/Unpack Pipeline
+## 5.5 Pack/Unpack Pipeline
+
 
 ### Tooling & Dependencies
 
@@ -302,7 +309,7 @@ The official Foundry CLI provides `compilePack()` and `extractPack()` functions 
 
 ### Packing (Source → LevelDB)
 
-Create a custom Vite plugin that compiles packs during the build step:
+Create a custom Vite plugin that compiles packs during the build step. The plugin reads the generated `system.json` (produced by `build-system-json.mjs`) so the list of packs and their source paths are not duplicated in two places.
 
 ```typescript
 // vite-plugin-compile-packs.ts
@@ -310,29 +317,32 @@ import { compilePack } from "@foundryvtt/foundryvtt-cli";
 import path from "path";
 import fs from "fs";
 
-const PACKS = ["materials", "weapons", "feats", "races", "classes"];
-
 export function compilePacksPlugin() {
   return {
     name: "vite-plugin-compile-packs",
     apply: "build",
     async writeBundle() {
       console.log("🔨 Compiling compendium packs...");
-      for (const packName of PACKS) {
-        const src = path.resolve("packs/_source", packName);
-        const dest = path.resolve("packs", packName);
-        
-        // Skip if source dir doesn't exist
+      const systemJson = JSON.parse(fs.readFileSync("system.json", "utf8"));
+
+      for (const pack of systemJson.packs ?? []) {
+        // pack.path is e.g. "packs/items/Gear/Weapons" (canonical layout per §5.3)
+        // Source mirrors this under packs/_source/, dest is the path itself.
+        const src = path.resolve(pack.path.replace(/^packs\//, "packs/_source/"));
+        const dest = path.resolve(pack.path);
+
         if (!fs.existsSync(src)) {
-          console.log(`  ⏭️  Skipping ${packName} (no source directory)`);
+          console.log(`  ⏭️  Skipping ${pack.name} (no source dir at ${src})`);
           continue;
         }
-        
+
         try {
-          await compilePack(src, dest, { log: false });
-          console.log(`  ✅ Compiled ${packName}`);
+          // recursive: true is REQUIRED so the CLI walks subdirectories
+          // (in-pack folder hierarchy lives in subdirs; see §5.5.4)
+          await compilePack(src, dest, { log: false, recursive: true });
+          console.log(`  ✅ Compiled ${pack.name}`);
         } catch (err) {
-          console.error(`  ❌ Failed to compile ${packName}:`, err.message);
+          console.error(`  ❌ Failed to compile ${pack.name}:`, err.message);
           throw err; // Fail the build
         }
       }
@@ -362,7 +372,7 @@ export default defineConfig({
 **How it works:**
 - Runs as the `writeBundle` hook during `vite build` (after all other build steps complete)
 - Iterates through pack source directories (`packs/_source/{packName}`)
-- Calls `compilePack()` from `@foundryvtt/foundryvtt-cli` for each pack
+- Calls `compilePack()` from `@foundryvtt/foundryvtt-cli` for each pack with `recursive: true` so subdirectories are walked
 - Writes LevelDB files to `packs/{packName}/`
 - Fails the build if any pack compilation fails
 - Logs progress to console during build
@@ -371,12 +381,12 @@ No separate npm script needed — just run `npm run build` as normal.
 
 ### Unpacking (LevelDB → Source)
 
-Use the `extractPack()` function:
+Use the `extractPack()` function. Extracts always run with `folders: true` so the on-disk layout mirrors the in-Foundry folder hierarchy (see [§5.5.4](#554-folder-support)):
 
 ```typescript
 // CLI extraction
-fvtt package unpack "materials" --outputDirectory "packs/_source/materials"
-fvtt package unpack "weapons" --outputDirectory "packs/_source/weapons"
+fvtt package unpack "materials" --outputDirectory "packs/_source/materials" --folders
+fvtt package unpack "weapons"   --outputDirectory "packs/_source/weapons"   --folders
 ```
 
 **Programmatic usage**:
@@ -385,7 +395,8 @@ import { extractPack } from "@foundryvtt/foundryvtt-cli";
 
 await extractPack("packs/materials", "packs/_source/materials", {
   log: true,
-  folders: false, // Set to true if packs have folder structure
+  folders: true,        // mirror compendium folder hierarchy as nested directories
+  omitVolatile: true,   // strip _stats.modifiedTime etc. for clean diffs
 });
 ```
 
@@ -393,20 +404,95 @@ await extractPack("packs/materials", "packs/_source/materials", {
 - `nedb` (boolean) — For NeDB format (older Foundry); LevelDB assumed by default
 - `yaml` (boolean) — Export as YAML instead of JSON
 - `log` (boolean) — Log progress to console
-- `folders` (boolean) — Preserve folder structure in source
+- `folders` (boolean) — **Recommended `true`**: nests documents under directories named `<safeName>_<folderId>/` and writes a `_Folder.json` per folder. See §5.5.4.
 - `omitVolatile` (boolean) — Skip volatile fields like `_stats.modifiedTime` for cleaner diffs
 - `transformEntry()` — Custom function to filter/modify entries during extraction
 - `transformName()` — Custom filename generation per entry
+- `transformFolderName()` — Custom directory-name generation for folders (default: `<safeName>_<id>`)
 
 Useful for:
 - Importing existing D35E packs → source JSON
-- Round-tripping after in-game edits in Foundry UI
+- Round-tripping after in-game edits in Foundry UI (re-organize folders in Foundry, then unpack to commit the new layout)
 - Ensuring source JSON stays canonical via version control
 - Creating clean diffs for reviews
 
 ---
 
-## 4.6 Build & Validation Setup
+### 5.5.4 In-Pack Folders
+
+> **Scope:** This section covers folders **inside a pack** (grouping documents within the same compendium). For folders that group **whole packs in the sidebar**, see [§5.4.5 Pack Folders](#545-pack-folders-grouping-packs-in-the-sidebar) — they're a separate Foundry mechanism declared via `packFolders` in `system.json`.
+
+Foundry's compendium sidebar lets users group documents inside a pack into nested folders (e.g. weapons-by-category). The pack pipeline treats these as first-class so authors can organize SRD content and Foundry will display that organization out of the box.
+
+#### Foundry's folder model
+
+A folder is just another document inside the pack with `documentName: "Folder"`. Each folder has:
+- `_id` — 16-char alphanumeric, like any document
+- `name` — user-visible label
+- `type` — the document type the folder contains (`"Item"`, `"ActiveEffect"`, `"JournalEntry"`, etc.) — must match the pack's content type
+- `folder` — parent folder `_id`, or `null` for root-level folders
+- `sorting` — `"a"` (alphabetical) or `"m"` (manual)
+- `color` — optional hex color for the sidebar tag
+- `description`, `flags`, `_stats` — standard document fields
+
+Documents inside a folder reference it via their own `folder: "<folderId>"` field (`null` if not in a folder).
+
+#### CLI source convention (`folders: true`)
+
+When `extractPack()` runs with `folders: true`, the CLI's `buildFolderMap()` (verified in `@foundryvtt/foundryvtt-cli@3.0.3 lib/package.mjs`) produces this on-disk layout:
+
+- Each folder becomes a directory named `<safeName>_<folderId>/` (e.g. `martial-weapons_aB3kPq9XzQrM5tN8/`).
+- Inside each folder directory: a `_Folder.json` file containing the Folder document.
+- Documents that belong to the folder are placed in the same directory.
+- Nested folders produce nested directories.
+- The top-level `_source/<pack>/` directory holds documents and folders not assigned to any parent folder.
+
+Example (weapons pack, after `extractPack` with `folders: true`):
+
+```
+packs/_source/weapons/
+  simple-weapons_aB3kPq9XzQrM5tN8/
+    _Folder.json                    # { _id: "aB3kPq9XzQrM5tN8", name: "Simple Weapons", type: "Item", folder: null, ... }
+    dagger.json                     # { _id: "...", folder: "aB3kPq9XzQrM5tN8", ... }
+    club.json
+  martial-weapons_cD4mLs7YwTbN6vR2/
+    _Folder.json                    # folder: null
+    longsword.json                  # folder: "cD4mLs7YwTbN6vR2"
+    one-handed_eF5nMt8ZxUcO7wS3/
+      _Folder.json                  # folder: "cD4mLs7YwTbN6vR2" (nested under Martial)
+      rapier.json                   # folder: "eF5nMt8ZxUcO7wS3"
+```
+
+#### How `compilePack` consumes it
+
+`compileClassicLevel()` (LevelDB) and `compileNedb()` walk the source tree (with `recursive: true`) and read each JSON file. The CLI does **not** infer folder relationships from directory structure during compilation — it relies entirely on the `_key` and `folder` fields baked into each JSON file:
+
+- Folder docs carry `_key: "!folders!<id>"`.
+- Item docs carry `_key: "!items!<id>"` (or the appropriate collection prefix).
+- The `folder` field on each doc is what Foundry uses to render the tree.
+
+This means: **the directory layout on disk is cosmetic for compilation, but semantic for extraction and human authoring**. Round-tripping (extract → edit → compile → extract) is lossless because the CLI's extract step is the source of truth for the layout.
+
+#### What the dnd35e pipeline does
+
+1. **Authoring loop**: GM creates folders + documents in the dev world via Foundry UI → `npm run unpack:<pack>` runs `extractPack({ folders: true, omitVolatile: true })` → source tree gets rewritten with the canonical nested layout → commit the diff.
+2. **Compile loop**: `npm run build` invokes the Vite plugin → plugin calls `compilePack(src, dest, { recursive: true })` → every `*.json` (including `_Folder.json`) gets packed by `_key` → Foundry sees the folder hierarchy at world load.
+3. **Validation** ([§5.6](#56-build--validation-setup)) treats `_Folder.json` like any other document: requires `_id`, `_key: "!folders!<id>"`, `name`, `type` matching the pack's content type, and a `folder` parent reference that resolves to another folder in the same pack (or `null`).
+
+#### Authoring constraints
+
+- **Do not hand-craft folder IDs.** Use the dev world + unpack flow so Foundry generates them. This guarantees `_id` and `_key` are valid 16-char alphanumeric values.
+- **Do not rename `_Folder.json` files** — the CLI looks for that exact basename when packing.
+- **Folder type must match pack content type.** A `weapons` pack (`type: "Item"`) cannot contain `_Folder.json` whose `type` is `"ActiveEffect"`.
+- **Moving an item between folders** is a one-field edit: change `folder` to the new parent's `_id` (or `null`). The directory placement on disk matters only for human readability and for round-trips through unpack.
+
+#### Decision to confirm
+
+Whether each pack ships with a default folder structure is a content decision, not a pipeline decision. The pipeline supports folders unconditionally; whether `weapons`, `materials`, `feats`, etc. carry folders at v1.0 ships is left to the authoring tasks in Stories 1–3.
+
+---
+
+## 5.6 Build & Validation Setup
 
 **Build via Vite Plugin:**
 
@@ -433,36 +519,31 @@ When you run:
 
 **Build Configuration:**
 
-Vite determines dev vs production automatically via `command` and `mode`:
-```typescript
-// vite-plugin-compile-packs.ts
-const PACKS = ["materials", "weapons", "feats", "races", "classes"];
-const DEV_ONLY_PACKS = ["macros-dev"];
+Dev-vs-prod selection happens in `build-system-json.mjs` (which conditionally writes dev packs into `system.json`), so the Vite plugin doesn't need to know about modes at all — it simply compiles whatever packs the generated `system.json` declares. The plugin still reads Vite's `config.mode` only for logging purposes:
 
+```typescript
+// vite-plugin-compile-packs.ts (mode-aware logging only)
 export function compilePacksPlugin() {
-  let isDev = false;
-  
+  let mode = "production";
+
   return {
     name: "vite-plugin-compile-packs",
     apply: "build",
     configResolved(config) {
-      // Vite passes config object with mode: "dev" | "prod"
-      isDev = config.mode === "dev";
+      mode = config.mode;  // "production" | "development" | custom
     },
     async writeBundle() {
-      const packsToCompile = isDev ? [...PACKS, ...DEV_ONLY_PACKS] : PACKS;
-      console.log(`🔨 Compiling packs (${isDev ? "DEV" : "PROD"})...`);
-      // compile logic...
+      console.log(`🔨 Compiling packs (mode=${mode})...`);
+      // … iterate system.json packs[] as shown in §5.5
     }
   };
 }
 ```
 
-**How Vite determines mode:**
-- `vite dev` → `mode: "development"` by default
-- `vite build` → `mode: "production"` by default
-- `vite build --mode dev` → explicitly set mode to `"dev"` for testing
-- Plugins receive mode via `config.mode` in `configResolved()` hook
+**How dev vs prod packs are filtered:**
+- `npm run build` → `build-system-json.mjs` runs without `--dev` → `system.json` excludes `macros-dev`, `d35e-docs-workflows-dev` → Vite plugin only sees prod packs.
+- `npm run dev:watch` → `build-system-json.mjs --dev` → `system.json` includes dev packs → Vite plugin compiles them too.
+- Single source of truth: the generated `system.json`. The plugin never hard-codes pack names.
 
 **Validation Tech Stack:**
 
@@ -486,7 +567,7 @@ npm run validate:packs  # Must pass before commit
 
 ### Compendium Index Configuration
 
-Minimal index configuration for Phase 4. Rich search indexes are deferred to Phase 26 (amalgamated browser).
+Minimal index configuration for Phase 5. Rich search indexes are deferred to release.1 (amalgamated Compendium Browser).
 
 **Foundry Defaults:**
 
@@ -498,7 +579,7 @@ By default, Foundry indexes these fields on every compendium document:
 
 These enable basic sidebar search and sorting.
 
-**Phase 4 Custom Indexes:**
+**Phase 5 Custom Indexes:**
 
 We add one custom index field for materials pack. In the template, add flags to a pack entry:
 
@@ -533,18 +614,18 @@ During build expansion, the `path` and `system` fields are automatically added. 
 }
 ```
 
-This enables fast lookups when loading default Broken/Masterwork AEs during item creation. Full-text search and rich faceted browsing is deferred to Phase 26.
+This enables fast lookups when loading default Broken/Masterwork AEs during item creation. Full-text search and rich faceted browsing is deferred to release.1 (Compendium Browser).
 
 ---
 
-## 4.7 Content Authoring Tooling
+## 5.7 Content Authoring Tooling
 
 ### Canonical Workflow: CSV + Macro + Transformation Script
 
 ✅ **STANDARD FOR ALL PHASES**: This is the workflow pattern for:
 - Phase 5: Creating SRD content (Broken/Masterwork)
 - Phase 5+: Feats, races, classes, spells
-- Phase 27: Migrating old D35E data to new system
+- release.6 (Content Migration): Migrating old D35E data to new system
 
 **Overview:**  
 ```
@@ -653,7 +734,7 @@ npm run build  # Compiles packs (excludes dev macros)
 - ✅ Foundry generates IDs (guaranteed valid)
 - ✅ Transformation script is version-controlled, reproducible
 - ✅ JSON is canonical source
-- ✅ Same pattern for Phase 27 migration (swap CSV for old exports)
+- ✅ Same pattern for release.6 (Content Migration) when swapping CSV for old exports
 
 **About `_id` fields:**
 - **Required**: Yes, every document must have `_id`
@@ -679,7 +760,7 @@ Use when adding one or two items, or for quick prototyping.
 
 ---
 
-## 4.8 Foundation Infrastructure
+## 5.8 Foundation Infrastructure
 
 ### Origin Tracking
 
@@ -751,7 +832,7 @@ function computeHash(obj: object): string {
 - Non-destructive updates: If unmodified, update silently
 - Diffing: Show what fields changed
 - Re-import: Replace world document with latest compendium version
-- Content migration (Phase 27): Know origin for migration transforms
+- Content migration (release.6): Know origin for migration transforms
 
 ### Type-Safe UUID Helpers
 
@@ -787,7 +868,7 @@ Used by the grant system (Phases 11–12) when races/classes reference compendiu
 
 ### Migration Version Field
 
-Establish the migration version tracking field on every document. The actual migration **runner** (iterate all docs, execute transforms) is deferred to Phase 27.
+Establish the migration version tracking field on every document. The actual migration **runner** (iterate all docs, execute transforms) is deferred to release.6 (Content Migration).
 
 ```typescript
 // In Core Mixin's defineSchema()
@@ -807,7 +888,7 @@ Foundry's `DataModel` class provides built-in schema validation:
 - `SchemaField.initial` — Auto-populates new documents with `game.system.version`
 - `CompendiumDocument._preUpdateData()` — Can validate before packs write documents
 
-**Migration runner (Phase 27):**
+**Migration runner (release.6):**
 - Iterate all world documents
 - For each: compare `doc.system.migration.version < game.system.version`
 - Call version-specific migration transform
@@ -815,14 +896,14 @@ Foundry's `DataModel` class provides built-in schema validation:
 
 **Key facts:**
 - Every document tracks `system.migration.version`
-- Version field exists from Phase 4 onward (all docs have it)
+- Version field exists from Phase 5 onward (all docs have it)
 - On world load, documents with `migration.version < currentVersion` are upgrade candidates
 
 ---
 
-## 4.9 Broken & Masterwork Material Effects (Compendium Proof Case)
+## 5.9 Broken & Masterwork Material Effects (Compendium Proof Case)
 
-The first real content authored into compendium packs. Broken and Masterwork are `materialSubtype` values on the Material AE (schema field established in Phase 2, §2.6). Phase 4 creates the default compendium entries and implements the sync logic that pulls them onto items.
+The first real content authored into compendium packs. Broken and Masterwork are `materialSubtype` values on the Material AE (schema field established in Phase 2, §2.6). Phase 5 creates the default compendium entries and implements the sync logic that pulls them onto items.
 
 ### Default Compendium Entries
 
@@ -919,68 +1000,11 @@ The following TODO notes exist in the Phase 1/2 codebase and are tracked here fo
 - [ ] **`resalePrice` / `brokenResalePrice` / `isBroken` reassessment as material effects** (`PhysicalItemStore.mts:77`): These getters are commented out pending material effects redesign. Once Broken/Masterwork AE content is authored in this phase, determine whether resale pricing should be a derived value from the Broken material AE (computed from base price × broken multiplier) or remain as standalone schema fields. Resolve alongside the `isBroken` sync logic above.
 - [ ] **Material details tab hardcoded label** (`material/sheet/tabs/index.mts:7`): Tab label is hardcoded as `'Details'` instead of using a localization key like `dnd35e.MATERIAL.Tab.Details`. Replace with `game.i18n.localize('dnd35e.MATERIAL.Tab.Details')` and add the key to `effects.json`. (Cross-tracked with Phase 3 remaining hardcoded string audit.)
 
----
-
-## 4.11 GM Use Case: Random-Price Art Objects (Formula + Loot)
-
-This example demonstrates how a GM uses the **FormulaField** system combined with **compendium content** to create loot items that roll a random price when created.
-
-### The Scenario
-
-A GM prepares a compendium of art objects for random treasure. When a player loots a "Fine Tapestry", the price isn't fixed — it rolls `2d6 * 100` gp to determine the value. The GM drags the item from the compendium onto a character; the price resolves on creation and stays fixed from that point forward.
-
-### How It Works
-
-The `price` field on `PhysicalItemSystemModel` is a `PriceField` (not a `FormulaField`), so price itself doesn't support formulas directly. Instead, the item uses the **`_preCreate` formula resolution** that already exists on `Dnd35eDocumentMixin`:
-
-1. **Compendium source**: The art object's `system.price` is set to a placeholder value (e.g., `0 srd_gp`)
-2. **Price formula field**: Add a `priceFormula: FormulaField` to `PhysicalItemSystemModel` (or a `LootSystemModel` subclass) that holds a dice expression like `2d6 * 100`
-3. **Registration**: The item registers a `FormulaRegistration` that evaluates `priceFormula` and writes the result into `system.price`:
-   ```typescript
-   {
-     impactedField: 'system.price',
-     formulaField: 'system.priceFormula',
-     evaluate: (document, contexts) => {
-       const formula = document.system.priceFormula?.value?.formula;
-       if (!formula) return document.system.price;
-       const roll = new Roll(formula);
-       roll.evaluateSync();
-       return PriceData.fromNumber(roll.total); // Converts number → PriceData in gold
-     },
-   }
-   ```
-4. **On creation**: `Dnd35eDocumentMixin._preCreate()` iterates `registeredFormulas`, evaluates each, and calls `this.updateSource()` — the price is rolled and persisted before the item ever hits the database
-5. **Result**: The owned item on the character has a concrete price (e.g., `800 srd_gp`). The `priceFormula` stays on the item for reference ("this was rolled from `2d6 * 100`") but doesn't re-evaluate on updates
-
-### What This Proves (POC Value)
-
-- FormulaField → PriceField integration works end-to-end
-- `_preCreate` formula resolution handles dice rolls (not just string interpolation)
-- Compendium items can carry formulas that resolve on instantiation
-- The pattern extends to any field: random weight, random HP, random quantity
-
-### Implementation Notes
-
-- The `priceFormula` field is **optional** — most items have a fixed price and no formula
-- If `priceFormula` is empty/null, `_preCreate` skips it (existing behavior)
-- The formula uses `Roll.evaluateSync()` because `_preCreate` is async and can await, but sync evaluation is simpler for pure dice expressions with no context dependencies
-- This does NOT require a `loot` item type — any physical item can have a price formula. A weapon could roll its price too. But loot items are the primary use case
-- The `loot` item type (commented out in `itemTypes.mts`) would be a thin subclass of `PhysicalItemSystemModel` — no equip slots, no combat stats, just physical + identifiable + price formula
-- **GM workflow**: Author art objects in CSV → transform script → compendium JSON with `priceFormula: "2d6 * 100"` → build. GM drags onto character, price auto-rolls.
-
-### Checklist
-
-- [ ] Add optional `priceFormula: FormulaField` to `PhysicalItemSystemModel.defineSchema()` (nullable, no default formula)
-- [ ] Register `FormulaRegistration` for `priceFormula → price` on `PhysicalItemSystemModel` (or in the document mixin's constructor)
-- [ ] Handle `Roll.evaluateSync()` in the evaluate callback with proper error handling (invalid formula → keep placeholder price, log warning)
-- [ ] Author 3–5 sample art objects in `packs/_source/loot/` with price formulas: `1d6 * 10` (cheap trinket), `2d6 * 100` (fine tapestry), `3d6 * 1000` (rare gem)
-- [ ] Test: Drag art object from compendium → owned item has rolled price, not formula
-- [ ] Test: Two copies of same art object have different rolled prices
-- [ ] Test: Item with no priceFormula creates with its fixed price unchanged
+> **Moved out:** The "Random-Price Art Objects" GM use case (`priceFormula` → `_preCreate` formula resolution → `system.price`) was formerly section 4.11 of this phase. It has been relocated to [post-release/phase-09-random-treasure.md](../post-release/phase-09-random-treasure.md), which is its natural thematic home. The `_preCreate` formula resolution mechanism it relies on is already established in Phase 1 (`Dnd35eDocumentMixin`) — Phase 5 does not need to demonstrate it.
 
 ---
 
-## 4.10 Files to Create/Modify
+## 5.10 Files to Create/Modify
 
 | Action | Path |
 |--------|------|
@@ -1005,11 +1029,11 @@ The `price` field on `PhysicalItemSystemModel` is a `PriceField` (not a `Formula
 
 ---
 
-## 4.11 Documentation Stubs: Workflow Journals (Compendium Foundation)
+## 5.11 Documentation Stubs: Workflow Journals (Compendium Foundation)
 
 ### Rationale
 
-Starting in Phase 4, establish **journal compendiums** to house workflow documentation and operational guidance. These stubs evolve throughout development as each phase adds complexity. The intent is to give end users and DMs accessible reference material early, embedded in their Foundry workspace. Final documentation hardening happens in Phase 28 (Documentation Finalization).
+Starting in Phase 5, establish **journal compendiums** to house workflow documentation and operational guidance. These stubs evolve throughout development as each phase adds complexity. The intent is to give end users and DMs accessible reference material early, embedded in their Foundry workspace. Final documentation hardening happens in release.2 (Documentation & SRD).
 
 ### Journal Compendium Structure
 
@@ -1032,37 +1056,37 @@ Each journal entry follows Foundry's journal structure with:
 - `system.pages[]`: Organized as individual pages within entries
 - `flags.origin`: Metadata tracking which phase introduced/updated this entry
 
-### Phase 4 Documentation Stubs
+### Phase 5 Documentation Stubs
 
-**4.11.1: Material Pattern** (`01-material-pattern.json`)
+**5.11.1: Material Pattern** (`01-material-pattern.json`)
 - Overview of items, active effects, and material subtypes
 - Explanation of `materialSubtype` field (established Phase 2)
 - How `prepareDerivedData()` generates dynamic AE changes
 - Broken vs Masterwork distinction
-- Internal reference: Phase 2 §2.6, Phase 4 §4.8
+- Internal reference: Phase 2 §2.6, Phase 5 §5.8
 
-**4.11.2: Compendium System** (`02-compendium-system.json`)
+**5.11.2: Compendium System** (`02-compendium-system.json`)
 - What are compendiums and where SRD content lives
 - How the system stores materials, weapons, and other items
 - Overview of how items are sourced from compendiums
-- Internal reference: Phase 4 §4.3, §4.4
+- Internal reference: Phase 5 §5.3, §5.4
 
-**4.11.3: Bonus Type Stacking** (`03-bonus-stacking.json`)
+**5.11.3: Bonus Type Stacking** (`03-bonus-stacking.json`)
 - Which bonus types can stack (racial, {size}, enhancement, {untyped})
 - Which cannot (ability score, nat armor, {insight}, etc.)
 - Highest-wins resolution for conflicting bonuses
 - Examples with weapons and materials
 - Internal reference: Phase 2 §2.5
 
-**4.11.4: How to Create a Material** (`04-how-to-create-material.json`)
+**5.11.4: How to Create a Material** (`04-how-to-create-material.json`)
 - Step-by-step guide for DMs to add custom materials
 - Overview of material subtypes: Standard, Broken, Masterwork
 - How materials modify weapon properties
 - Basic examples (Mithral, Adamantite, etc.)
-- **Important note**: "These workflows will change frequently as the system evolves. For complex or batch creation, consider using an AI assistant to generate items — it will save significant time during this early phase. All content will be refined and hardened in Phase 28."
-- Internal reference: Phase 4 §4.8
+- **Important note**: "These workflows will change frequently as the system evolves. For complex or batch creation, consider using an AI assistant to generate items — it will save significant time during this early phase. All content will be refined and hardened in release.2 (Documentation & SRD)."
+- Internal reference: Phase 5 §5.8
 
-**4.11.5: How to Create a Weapon** (`05-how-to-create-weapon.json`)
+**5.11.5: How to Create a Weapon** (`05-how-to-create-weapon.json`)
 - Step-by-step guide for DMs to add custom weapons
 - Creating a simple weapon from scratch
 - Applying materials and enchantments to weapons
@@ -1089,9 +1113,9 @@ Each journal entry follows Foundry's journal structure with:
 
 ### SRD Reference Journal (from D35E)
 
-A user-translated SRD journal export exists at `fvtt-JournalEntry-3.5-srd-working-c3lf0RUqQVJ8Pm20.json` (exported from D35E 2.4.3). This multi-page journal covers: Table of Contents, The Core Mechanic, Races, Character Descriptions, Base Classes, Multiclass Characters, Prestige Classes, NPC Classes, Skills, Feats, and Magic Items. During Phase 4, import this into a `d35e-srd-reference` journal compendium as the system's built-in SRD reference. Pages will need schema updates (D35E → dnd35e field names) and any D35E-specific markup cleaned up.
+A user-translated SRD journal export exists at `fvtt-JournalEntry-3.5-srd-working-c3lf0RUqQVJ8Pm20.json` (exported from D35E 2.4.3). This multi-page journal covers: Table of Contents, The Core Mechanic, Races, Character Descriptions, Base Classes, Multiclass Characters, Prestige Classes, NPC Classes, Skills, Feats, and Magic Items. During Phase 5, import this into a `d35e-srd-reference` journal compendium as the system's built-in SRD reference. Pages will need schema updates (D35E → dnd35e field names) and any D35E-specific markup cleaned up.
 
-### Deferred to Phase 28
+### Deferred to release.2 (Documentation & SRD)
 
 - Full markdown → HTML generation with metadata extraction
 - Rich journal search integration with index configuration
@@ -1102,9 +1126,9 @@ A user-translated SRD journal export exists at `fvtt-JournalEntry-3.5-srd-workin
 
 ---
 
-## 4.12 Deferred to Phase 26
+## 5.12 Deferred to release.1 (Compendium Browser)
 
-Everything listed here is deferred to Phase 26 (Compendium Browser & Management):
+Everything listed here is deferred to release.1 (Compendium Browser & Management):
 - Amalgamated cross-compendium browser (search across all packs)
 - End-user compendium management (create/rename/delete user packs)
 - Rich index configuration (full-text search, filter facets)
@@ -1114,453 +1138,356 @@ Everything listed here is deferred to Phase 26 (Compendium Browser & Management)
 
 ---
 
-## 4.13 Completion Checklist
+## 5.13 Completion Checklist
 
-### ✅ Complete
-- (None — Phase 4 has not started)
+This is the **acceptance-gate** view of the phase. For task-level routing, dependencies, and parallelization, see [§5.14 Execution Plan](#514-execution-plan) — which is the source of truth for what work exists. Each gate below corresponds to a story in §5.14 and lists only the user-verifiable success signals.
 
-### ❌ Not Started (All Tasks for Phase 4)
+> Status: ❌ Not Started.
 
-**✅ COMMUNITY FEEDBACK RECEIVED & IMPLEMENTED:**
-- [ ] **Canonical workflow established**: CSV + Dev Macro + Transformation Script (standard for all phases)
-  - This is the primary approach for Phase 4, 5+, and Phase 27 migration
-  - Alternative: Manual UI creation (single items, quick prototyping)
-  - Dev tooling (macros) excluded from production builds
-  - Status: ✅ IMPLEMENTED
+### Gate 1 — Pipeline & Authoring Workflow Ship
 
-**Compendium Directory & Pipeline:**
-- [ ] Create `packs/` and `packs/_source/` directories
-- [ ] Create `packs/.gitignore` to exclude compiled packs
-- [ ] Create subdirectories: `_source/materials/`, `_source/weapons/`, `_source/feats/`, etc.
-- [ ] Create `vite-plugin-compile-packs.ts` Vite plugin at project root
-- [ ] Implement: custom Vite plugin with `writeBundle()` hook
-- [ ] Implement: loop through pack directories and call `compilePack()`
-- [ ] Integrate plugin into `vite.config.ts` (import and add to plugins array)
-- [ ] Test build: `npm run build` invokes plugin, produces compiled packs in `packs/<pack>/`
-- [ ] Verify `.gitignore` prevents compiled packs being committed
-- [ ] Verify plugin logs progress during build
+The compendium build pipeline works end-to-end, and the authoring tooling devs will use for the rest of the project is in place.
 
-**Origin Tracking:**
-- [ ] Add `system.origin` fields to all DataModels:
-  - `origin.sourceId: string` (compendium UUID)
-  - `origin.packId: string` (pack name)
-  - `origin.importedAt: number` (timestamp)
-- [ ] Implement auto-population when item imported from compendium
-- [ ] Create `getCompendiumSource(item)` helper
-- [ ] Create `isItemFromCompendium(item)` checker
-- [ ] Test: Imported items maintain origin tracking through save/load
+- [ ] `npm run build` (prod) and `npm run dev:watch` (dev, includes dev-only packs) both succeed; both produce a Foundry-loadable `system.json` plus compiled LevelDB packs (when `local.config.json` is configured, output lands in `<foundrySystemDir>/dnd35e/`; otherwise CI/`dist/` mode)
+- [ ] `system.json` is generated from `system.json.template` via the existing `scripts/build-system-json.mjs`; the `packs[]` array is populated from the template; dev-only packs (macros-dev, d35e-docs-workflows-dev) are conditionally included via a `--dev` flag (or equivalent)
+- [ ] `system.json` `packFolders[]` declares sidebar pack grouping (e.g. Gear / Magic / Documentation per §5.4.5); build fails when a `packFolders[].packs[]` entry references an unknown pack
+- [ ] Compiled LevelDB packs are git-ignored; sources in `packs/_source/` are committed; `local.config.json` remains git-ignored. (`system.json` gitignore decision recorded per §5.4.4.)
+- [ ] `npm run validate:packs` (AJV) catches malformed `_id`s and missing required fields, and validates `_Folder.json` files (folder type matches pack content type, parent folder reference resolves or is null)
+- [ ] **Folder round-trip works** at both layers (per §5.4.5 + §5.5.4): (a) sidebar pack folders declared in `packFolders[]` group whole packs in Foundry's sidebar; (b) in-pack folders authored in the dev world unpack to subdirectories with `_Folder.json` files using `extractPack({ folders: true })` and re-pack via `compilePack({ recursive: true })`; reloading the world shows the same hierarchy at both layers
+- [ ] Dev macro `import-csv-items` creates items with valid Foundry-generated `_id`s when run in the dev world
+- [ ] Transformation scripts (`transform-weapons.mjs`, `transform-materials.mjs`) run and produce schema-correct output, preserving the `folder` field on each doc
+- [ ] `AUTHORING.md` and `TRANSFORMATION.md` exist with the canonical CSV → Macro → Unpack (--folders) → Script → Commit → Build workflow, including the `_Folder.json` convention
+- [ ] CSV baseline templates exist in `docs/csv-templates/`
 
-**Type-Safe UUID Helpers** in `src/helpers/uuid.mts`:
-- [ ] Create `fromCompendiumUuid(uuid: string): Promise<Document>`
-- [ ] Create `toCompendiumUuid(doc: Document): string`
-- [ ] Create `resolveUuidSafe(uuid: string): Promise<Document | null>` (with error handling)
-- [ ]Create `isValidUuid(uuid: string): boolean`
-- [ ] Create `uuidToCompendiumRef(uuid: string): { packId, docId }`
-- [ ] Test: Resolve UUIDs bidirectionally
-- [ ] Test: Handle missing/invalid UUIDs gracefully
+### Gate 2 — Documents Remember Their Origin
 
-**Migration Version Field:**
-- [ ] Add `system.migration.version: string` to all DataModels
-- [ ] Auto-set during creation: `migration.version = game.system.version`
-- [ ] Create `src/migrations/migrationRunner.mts` with runner function
-- [ ] Implement: `migrateDocuments(docs[], fromVersion, toVersion)`
-- [ ] Implement: `migrateDocument(doc, fromVersion, toVersion)`
-- [ ] Integration: Call resolver in `ready` hook
-- [ ] Test: Version field populated on existing Phase 1-3 documents
-- [ ] Test: Migration can patch old documents
+Items and actors track where they came from and whether they've been changed; UUIDs resolve type-safely; documents stamp their migration version.
 
-**Documentation Stubs: Workflow Journals**:
-- [ ] Create `packs/_source/journals/` directory structure
-- [ ] Create journal entry: Material Pattern (01-material-pattern.json)
-- [ ] Create journal entry: Compendium System (02-compendium-system.json)
-- [ ] Create journal entry: Bonus Type Stacking (03-bonus-stacking.json)
-- [ ] Create journal entry: How to Create a Material (04-how-to-create-material.json)
-- [ ] Create journal entry: How to Create a Weapon (05-how-to-create-weapon.json)
-- [ ] Register `d35e-docs-workflows` pack in system.json (production)
-- [ ] Register `d35e-docs-workflows-dev` pack in system.json (dev-only, conditional)
-- [ ] Verify journals compile into pack during build
-- [ ] Test: Journals load and display correctly in dev world
-- [ ] Add `flags.phase` and versioning metadata to each entry
+- [ ] Importing a doc from a compendium populates `origin.sourceId` + `sourceHash`
+- [ ] Modifying an imported doc flips `isModified` (current hash diverges from source hash)
+- [ ] `fromCompendiumUuid<T>()` and batch `resolveUuids<T>()` resolve correctly; invalid UUIDs return `null` without throwing
+- [ ] `system.migration.version` is auto-populated to `game.system.version` on document creation
+- [ ] All POC.1–3 DataModels carry the `migration.version` field
 
-**Pack Metadata in system.json:**
-- [ ] Add `packs` array to `system.json`:
-  - `label`, `name`, `type`, `path` for each pack
-- [ ] Register `materials` pack at minimum
-- [ ] Verify Foundry loads packs on startup
-- [ ] Test: Compendium tab shows all packs
+### Gate 3 — Broken & Masterwork Work End-to-End
 
-**Content Authoring Setup:**
-- [ ] Create `packs/_source/macros-dev/` directory (bootstrap, dev-only, not in prod)
-- [ ] Create dev macro: `packs/_source/macros-dev/import-csv-items.json` (reads CSV, creates items)
-  - Test: Run macro in dev world, verify items created with valid Foundry `_id`
-- [ ] Create transformation scripts in `scripts/`:
-  - [ ] `scripts/transform-weapons.mjs` (old D35E → dnd35e schema)
-  - [ ] `scripts/transform-materials.mjs`
-  - [ ] Document: How to add transformations for Phase 5+
-- [ ] Update build system:
-  - [ ] Modify `vite-plugin-compile-packs.ts`: add `configResolved()` hook to detect Vite's build mode
-  - [ ] Update `package.json`: add `npm run build` (prod) vs `npm run build:dev` (dev) scripts
-  - [ ] Add `.gitignore`: `packs/macros-dev/` (compiled LevelDB, dev-only)
-- [ ] Test: `npm run build:dev` includes macros-dev ✅
-- [ ] Test: `npm run build` excludes macros-dev ✅
-- [ ] Test: Unpack macro-created items, verify JSON has Foundry `_id` + `slug`
-- [ ] Test: Run transformation script, verify output JSON correct
+The headline POC proof case: GMs and players can apply Broken or Masterwork to a weapon and see the effect on stats.
 
-**Validation & Build:**
-- [ ] Install `@foundryvtt/foundryvtt-cli` (for packing/unpacking)
-- [ ] Install `ajv` (for JSON schema validation)
-- [ ] Create validation script: `npm run validate:packs`
-  - Validates all `packs/_source/*/*.json` against schema
-  - Checks `_id` format (16-char alphanumeric, required, unique per pack)
-- [ ] Create npm scripts:
-  - [ ] `build` → `npm run build:system-json && vite build` (prod, excludes dev packs)
-  - [ ] `build:dev` → `npm run build:system-json -- --dev && vite build --mode dev` (dev, includes macros-dev)
-  - [ ] `dev` → `npm run build:system-json -- --dev && vite --mode dev` (dev server)
-  - [ ] `validate:packs` → validates all source JSON
-  - [ ] `transform:weapons` → runs transformation script
-- [ ] Test: `npm run build` succeeds, `packs/materials/` compiled exists
-- [ ] Test: `npm run validate:packs` catches invalid `_id` format
-- [ ] Test: CLI unpacking still works via `fvtt package unpack -n "materials"`
-- [ ] Verify `.gitignore` prevents compiled packs being committed
+- [ ] Four Material AEs exist in `packs/_source/materials/` (broken-weapon, broken-armor, masterwork-weapon, masterwork-armor) and compile into the materials pack
+- [ ] `src/constants/compendiumUuids.mts` exports the four UUIDs as named constants
+- [ ] Creating a new weapon auto-attaches a disabled Broken AE pulled from the compendium with origin tracking stamped
+- [ ] Toggling `isBroken` on the sheet enables/disables the Broken AE (bidirectional sync)
+- [ ] Toggling `isMasterwork` on creates the Masterwork AE from compendium; toggling off removes only the system-added one (custom Masterwork AEs are preserved)
+- [ ] Manually enabling/disabling either AE syncs the corresponding flag back
+- [ ] Effects visibly modify weapon stats per their `bonusType` (broken / masterwork stack independently from `material`)
 
-**Broken & Masterwork Material Content:**
-- [ ] Create Broken/Masterwork materials in-game first (following Workflow 2 CSV import or Workflow 3 manual UI)
-- [ ] Create `packs/_source/materials/broken-weapon.json` (AE, -2 attack/damage)
-  - Will have Foundry-generated 16-character `_id` from in-game creation
-  - Schema validation will verify `_id` format
-- [ ] Create `packs/_source/materials/broken-armor.json` (AE, halved AC, double ACP)
-  - Foundry-generated `_id`
-- [ ] Create `packs/_source/materials/masterwork-weapon.json` (AE, +1 attack/damage)
-  - Foundry-generated `_id`
-- [ ] Create `packs/_source/materials/masterwork-armor.json` (AE, -1 ACP)
-  - Foundry-generated `_id`
-- [ ] Each sets `materialSubtype` correctly (broken/masterwork)
-- [ ] After creation in-game, unpack using `fvtt package unpack -n "materials"` to get source JSON with valid IDs
-- [ ] Commit exported JSON files to version control
-- [ ] Add `src/constants/compendiumUuids.mts` with Broken/Masterwork UUIDs (read from compiled pack)
-- [ ] Test: Build compiles materials pack with all 4 entries
-- [ ] Test: Verify compiled pack contains correct AE documents
-- [ ] Test: Verify `_id` fields match unpacked source (consistent)
+### Gate 4 — Workflow Journals Visible in Dev World
 
-**Broken/Masterwork Sync Logic:**
-- [ ] Add `isBroken: boolean` field to `PhysicalItemSystemModel` schema
-- [ ] Add `isMasterwork: boolean` field (already exists, verify it's wired)
-- [ ] Implement `ItemDnd35e._onCreate()`:
-  - Get category (weapon/armor/etc.)
-  - Fetch Broken AE from compendium
-  - Create disabled copy on the item
-- [ ] Implement `WeaponDnd35e._onUpdate()`:
-  - If `isBroken` toggled on/off → enable/disable Broken AE
-  - If `isMasterwork` toggled → enable/disable Masterwork AE
-- [ ] Test: Toggling `isBroken` checkbox enables/disables broken effects
-- [ ] Test: Toggling `isMasterwork` checkbox enables/disables masterwork effects
-- [ ] Test: Effects apply correctly after sync
+Contributors and DMs see workflow documentation embedded in Foundry from the start.
 
-**Item Sheet UI Updates:**
-- [ ] Add `isBroken` toggle checkbox to weapon/armor sheets
-- [ ] Add `isMasterwork` toggle checkbox (already likely there, verify)
-- [ ] Verify toggles trigger sync logic
-- [ ] Test: UI changes sync effects on item
+- [ ] Five journal stub entries (`01-material-pattern` … `05-how-to-create-weapon`) compile into the `d35e-docs-workflows` pack
+- [ ] `d35e-docs-workflows` (prod) and `d35e-docs-workflows-dev` (dev-only) are registered via `system.json.template`
+- [ ] SRD reference journal imported into a `d35e-srd-reference` compendium with D35E → dnd35e schema cleanup
+- [ ] Each journal entry has `flags.phase` versioning metadata and uses i18n keys (Phase 3 is complete)
 
-**Testing:**
-- [ ] Build test: `npm run build` succeeds
-- [ ] Verification: `packs/materials/` (compiled) exists and has content
-- [ ] Integration: Create weapon → Broken AE auto-attached but disabled
-- [ ] Integration: Toggle `isBroken` → effect disabled/enabled
-- [ ] Integration: Toggle `isMasterwork` → effect disabled/enabled
-- [ ] UUID test: `fromCompendiumUuid()` retrieves documents correctly
-- [ ] Migration test: Old items/actors without migration version are patched
-- [ ] Smoke test: System loads without console warnings about missing packs/UUIDs
+### Gate 5 — Final Smoke Test
 
-**Documentation:**
-- [ ] Document compendium source folder structure
-- [ ] Document build process (source → compiled)
-- [ ] Document origin tracking API
-- [ ] Document UUID helper usage
-- [ ] Create AUTHORING.md for contributors:
-  - Emphasis: "CSV → Macro → Unpack → Script → Commit → Build"
-  - Step-by-step: How to prepare CSV files (name, slug)
-  - Step-by-step: How to run in-game macro
-  - Step-by-step: How to run transformation script
-  - How to extend transformation script for new fields
-  - Common patterns and troubleshooting
-- [ ] Create TRANSFORMATION.md for developers:
-  - Pattern: CSV + Macro + Script = Canonical workflow
-  - How to create transformation script for new content type
-  - How to map old UUID → new slug for Phase 27 migration
-  - JavaScript examples from scripts/transform-*.mjs
-- [ ] Create CSV baseline examples in `docs/csv-templates/`:
-  - `docs/csv-templates/weapons.csv` — baseline format (name, slug)
-  - `docs/csv-templates/feats.csv`
-  - `docs/csv-templates/races.csv`
-  - `docs/csv-templates/classes.csv`
-  - Include README explaining format
-- [ ] Document macro code:
-  - Store in `packs/_source/macros/import-csv-items.json` documentation
-  - Show how to call macro from dev world
-- [ ] Create journal entry stub in dev world: "Compendium System"
-- [ ] Create journal entry stub in dev world: "Material Pattern & Stacking"
+- [ ] System loads in Foundry with no console warnings about missing packs or UUIDs
+- [ ] Compendium sidebar lists all registered packs (prod build) and all + dev packs (dev build)
+- [ ] No regression on Phase 1/2 weapon-and-material flows
 
 ---
 
-## 4.14 Execution Plan
 
-Routed task decomposition, parallelization tracks, and acceptance criteria for Phase 4. Tasks are grouped into parallel tracks where possible.
+## 5.14 Execution Plan
 
-### Track A: Build Pipeline (Lead dev)
+Story-oriented decomposition. Each story delivers something a developer, GM, or player can interact with or notice. Within stories, tasks are atomic and routed by skill. Between stories, dependencies flow from foundation upward — but parallelization is generous because Stories 2 and 4 don't depend on each other.
 
-```yaml
-task_A1:
-  name: "Create directory structure (packs/, packs/_source/, subdirs)"
-  routing: Flexible
-  blocking: [A2, A3, A5]
-  verify: "Directories exist: packs/_source/materials/, weapons/, feats/, races/, classes/, macros-dev/, journals/"
+> **Open decision (Explore-at-phase-start):** JSON vs YAML source format (see §5.2 / §5.15 risk_5). The plan proceeds on JSON as the default; if YAML wins after exploration, the delta is small and confined to the pipeline tasks of Story 1.
 
-task_A2:
-  name: "Implement vite-plugin-compile-packs.ts"
-  routing: Lead dev
-  depends_on: [A1]
-  blocking: [A4]
-  verify: "Plugin compiles packs/_source/materials/ → packs/materials/ when running vite build"
+### Story 1 — Devs ship content through the pipeline
 
-task_A3:
-  name: "Create system.json.template + build-system-json.mjs"
-  routing: Lead dev
-  depends_on: [A1]
-  blocking: [A4]
-  verify: "npm run build:system-json generates system.json with correct packs array; dev mode includes macros-dev, prod excludes it"
+> **User**: Developer / content author
+> **Delivers**: Drop a JSON file into `packs/_source/<pack>/`, run `npm run build:dev`, and see the entry appear in Foundry's compendium sidebar. The full authoring toolchain (CSV → macro → unpack → transform → commit → build) is real and documented.
 
-task_A4:
-  name: "Wire up package.json scripts + vite.config.ts integration"
-  routing: Lead dev
-  depends_on: [A2, A3]
-  verify: "npm run build compiles all packs (prod); npm run build:dev includes dev packs; npm run dev starts dev server"
-
-task_A5:
-  name: "Create packs/.gitignore + root .gitignore updates"
-  routing: Flexible
-  depends_on: [A1]
-  verify: "git status shows no compiled LevelDB files; system.json excluded; .env.local excluded"
-```
-
-### Track B: Infrastructure (Lead dev + Jr dev parallel)
+This is foundational — every other story rides on it. Authoring tooling (dev macro, transformation scripts, CSV templates, AUTHORING.md, TRANSFORMATION.md) lives here because devs use those tools to do *this phase's own* content authoring in Story 3 and Story 4.
 
 ```yaml
-task_B1:
-  name: "Implement origin tracking schema + auto-population"
-  routing: Lead dev
-  blocking: [C3, D1]
-  verify: "Import weapon from compendium → origin.sourceId populated; modify it → isModified returns true"
+task_1a:
+  name: "Directory structure + .gitignore (packs/, packs/_source/<subdirs>, root .gitignore updates)"
+  routing: Flexible
+  blocking: [1b, 1c, 1f, 4a]
+  verify: "Directories exist for materials, weapons, feats, races, classes, macros-dev, journals; compiled LevelDB packs are git-ignored; local.config.json remains git-ignored. (system.json gitignore status — confirm per §5.4.4 decision.)"
 
-task_B2:
-  name: "Create src/helpers/uuid.mts (type-safe UUID helpers)"
+task_1b:
+  name: "Implement vite-plugin-compile-packs.ts (writeBundle hook, configResolved for dev/prod mode)"
+  routing: Lead dev
+  depends_on: [1a]
+  blocking: [1d]
+  verify: "Plugin compiles packs/_source/<pack>/ → packs/<pack>/ on vite build; honors dev vs prod mode for conditional packs (macros-dev)"
+
+task_1c:
+  name: "Extend system.json.template + scripts/build-system-json.mjs for packs (the script and template already exist — see §5.4.1; this task adds packs[] and packFolders[] to the template, expands path/system in the script, validates packFolders references, and adds a --dev flag for conditional dev packs)"
+  routing: Lead dev
+  depends_on: [1a]
+  blocking: [1d]
+  verify: "system.json.template carries the prod packs[] entries with explicit path values matching the canonical layout (§5.3); packFolders[] declares sidebar grouping (e.g. Gear, Magic, Documentation — §5.4.5); build:system-json --dev appends macros-dev + d35e-docs-workflows-dev; without --dev they are excluded; per-pack expansion fills path: packs/{name} (when absent) and system: 'dnd35e'; build fails when packFolders references an unknown pack; existing local.config.json copy-out and CI mode still work; version still sourced from version.yaml"
+
+task_1d:
+  name: "Wire package.json scripts to pass dev mode (extend dev:watch, add a build:dev if needed) + vite.config.ts plugin registration"
+  routing: Lead dev
+  depends_on: [1b, 1c]
+  blocking: [1f, 1g, 4b, 3a]
+  verify: "npm run build (prod) excludes dev packs; dev:watch (or build:dev) passes --dev to build:system-json AND --mode development to vite; pack-compile plugin runs as part of vite build; output lands in <foundrySystemDir>/dnd35e/ when local.config.json is set, dist/ otherwise"
+
+task_1e:
+  name: "AJV validation script (npm run validate:packs)"
+  routing: Jr dev
+  depends_on: [1a]
+  blocking: [3b]
+  verify: "validate:packs catches missing/malformed _id (not 16-char alphanumeric), missing required fields, duplicate _ids; passes on valid source JSON; recognizes _Folder.json files (requires _key starting with !folders!, type matching pack content type, valid parent folder reference or null)"
+
+task_1f:
+  name: "Dev macro: import-csv-items.json (reads CSV, creates items with Foundry-generated _ids)"
+  routing: Jr dev
+  depends_on: [1d]
+  blocking: [3a]
+  verify: "Run macro in dev world with sample CSV → items created with valid Foundry _ids and slug field; unpacking with --folders produces canonical nested JSON layout (see §5.5.4)"
+
+task_1g:
+  name: "Transformation scripts (scripts/transform-weapons.mjs, scripts/transform-materials.mjs)"
   routing: Jr dev or Pair
-  blocking: [C3, D1]
-  verify: "fromCompendiumUuid() resolves a compendium doc; resolveUuids() batch-resolves; invalid UUID returns null without throwing"
+  depends_on: [1d]
+  verify: "Run with sample old export + new source → output JSON has correctly transformed fields matching new schema; preserves folder field on each doc"
 
-task_B3:
-  name: "Add migration.version field to all DataModel defineSchema() methods"
-  routing: Jr dev
-  verify: "New documents auto-populate system.migration.version = game.system.version; existing Phase 1-3 docs get version on next update"
+task_1h:
+  name: "CSV baseline templates (docs/csv-templates/) for weapons/feats/races/classes + README"
+  routing: Flexible
+  verify: "CSV files exist with name,slug columns; README explains format and usage"
 
-task_B4:
-  name: "Create AJV validation script (npm run validate:packs)"
-  routing: Jr dev
-  blocking: [C2]
-  verify: "validate:packs catches: missing _id, wrong _id format (not 16-char alphanumeric), missing required fields; passes on valid source JSON"
+task_1i:
+  name: "Author AUTHORING.md and TRANSFORMATION.md"
+  routing: Flexible
+  depends_on: [1f, 1g]
+  verify: "AUTHORING.md documents CSV→Macro→Unpack(--folders)→Script→Commit→Build with step-by-step, including the _Folder.json convention from §5.5.4; TRANSFORMATION.md covers extending transform scripts and the release.6 migration mapping pattern"
+
+task_1j:
+  name: "Verify folder round-trip end-to-end (both layers: packFolders sidebar grouping AND in-pack folders)"
+  routing: Pair (Lead + Jr)
+  depends_on: [1b, 1d, 1f]
+  verify: "(a) Sidebar pack folders: system.json packFolders[] groups packs as declared (e.g. Gear contains weapons + armor) and Foundry's compendium sidebar shows the grouping. (b) In-pack folders: dev world has weapons in nested Simple/Martial/Exotic folders → npm run unpack:weapons writes _Folder.json files in subdirectories matching the hierarchy → npm run build compiles without warnings → reloading the world shows the same folder tree in the compendium sidebar with no orphaned docs."
 ```
 
-### Track C: Content Creation (Jr dev, after A+B merge point)
+**Story 1 acceptance**: A developer can author a single sample item in `packs/_source/`, run `npm run build:dev`, and see it in the Foundry compendium sidebar. CSV-driven workflow is documented and the macro generates valid IDs.
+
+---
+
+### Story 2 — Documents remember where they came from
+
+> **User**: Developer (POC scope) — the visible payoff comes in alpha races/classes when grant systems resolve UUIDs and content updates can be detected. POC value: it's the foundation Story 3 stamps onto its Broken AEs, and it unblocks alpha.1.
+> **Delivers**: Imported docs carry origin metadata; modifications flip `isModified`; UUIDs resolve type-safely; new docs auto-stamp `migration.version`.
+
+Independent of Story 1's pipeline (pure schema + helpers + lifecycle hooks), so it can run fully in parallel.
 
 ```yaml
-task_C1:
-  name: "Create Broken/Masterwork materials in-game via dev world"
-  routing: Jr dev
-  depends_on: [A4]
-  blocking: [C2]
-  verify: "4 Material AEs exist in dev world: broken-weapon, broken-armor, masterwork-weapon, masterwork-armor; each has correct materialSubtype and changes"
-
-task_C2:
-  name: "Unpack materials to source JSON + validate"
-  routing: Jr dev
-  depends_on: [C1, B4]
-  blocking: [C3]
-  verify: "4 JSON files in packs/_source/materials/ with Foundry-generated _ids; npm run validate:packs passes"
-
-task_C3:
-  name: "Create src/constants/compendiumUuids.mts with Broken/Masterwork UUIDs"
-  routing: Jr dev
-  depends_on: [C2, B1, B2]
-  blocking: [D1]
-  verify: "Constants file exports BROKEN_WEAPON_UUID, BROKEN_ARMOR_UUID, MASTERWORK_WEAPON_UUID, MASTERWORK_ARMOR_UUID; UUIDs match source JSON _ids"
-```
-
-### Track D: Sync Logic (Lead dev, after C completes)
-
-```yaml
-task_D1:
-  name: "Add isBroken field to PhysicalItemSystemModel + Broken AE sync"
+task_2a:
+  name: "Origin tracking schema (sourceId, sourceHash, currentHash) + auto-population in Dnd35eDocumentMixin._onCreate/_onUpdate"
   routing: Lead dev
-  depends_on: [C3, B1, B2]
-  blocking: [D3]
-  verify: "Create weapon → Broken AE auto-attached disabled. Toggle isBroken=true → AE enables. Toggle isBroken=false → AE disables. Manual AE enable → isBroken syncs to true."
+  blocking: [3c, 3d]
+  verify: "Import doc from compendium → origin.sourceId + sourceHash populated. Modify doc → currentHash diverges → isModified getter returns true. Round-trip survives save/load."
 
-task_D2:
-  name: "Implement Masterwork AE sync logic"
-  routing: Lead dev
-  depends_on: [C3, B1, B2]
-  blocking: [D3]
-  verify: "Toggle isMasterwork=true → Masterwork AE created from compendium. Toggle isMasterwork=false → system-added AE removed. Custom masterwork AE survives checkbox toggle. Manual masterwork AE add → isMasterwork syncs to true."
+task_2b:
+  name: "src/helpers/uuid.mts (fromCompendiumUuid<T>, resolveUuids<T>, isValidUuid, error-safe variants)"
+  routing: Jr dev or Pair
+  blocking: [3c, 3d]
+  verify: "fromCompendiumUuid resolves a real compendium doc with the typed return; batch resolveUuids handles a Map; invalid UUID returns null without throwing"
 
-task_D3:
-  name: "Add isBroken/isMasterwork toggles to item sheet UI"
+task_2c:
+  name: "Add system.migration.version to all DataModel defineSchema() (CoreMixin level — propagates to all docs)"
   routing: Jr dev
-  depends_on: [D1, D2]
-  verify: "Weapon sheet shows both toggles; toggling each fires sync logic; effects visible in AE list on sheet"
+  verify: "New documents auto-populate system.migration.version = game.system.version on creation; existing POC.1–3 docs receive the field without breaking schema validation"
 ```
 
-### Track E: Content Authoring Tooling (Jr dev, parallel with D)
+**Story 2 acceptance**: Integration test imports a weapon from a compendium → origin stamped, hash matches; modifying the weapon flips `isModified`; UUID helpers resolve and reject invalid input gracefully; new docs ship with a migration version.
+
+---
+
+### Story 3 — GMs apply Broken or Masterwork to a weapon
+
+> **User**: GM and Player
+> **Delivers**: The headline POC proof. Create a weapon → a disabled Broken AE is auto-attached from the compendium with origin metadata. Toggle `isBroken` or `isMasterwork` on the sheet → effects enable/disable with bidirectional sync. Stats visibly change.
+
+Depends on Story 1 (pipeline must compile materials) and Story 2 (origin stamps the auto-attached Broken AE; UUID helpers fetch the compendium source).
 
 ```yaml
-task_E1:
-  name: "Create dev macro: import-csv-items.json"
+task_3a:
+  name: "Author 4 Material AEs in dev world (broken-weapon, broken-armor, masterwork-weapon, masterwork-armor)"
   routing: Jr dev
-  depends_on: [A4]
-  verify: "Run macro in dev world with sample CSV → items created with valid Foundry _ids and slug fields"
+  depends_on: [1d, 1f]
+  blocking: [3b]
+  verify: "4 Material AEs exist in dev world with correct materialSubtype + bonusType ('broken' or 'masterwork') + change list; verified by exercising each in-game"
 
-task_E2:
-  name: "Create transformation scripts (transform-weapons.mjs, transform-materials.mjs)"
-  routing: Jr dev or Pair
-  depends_on: [A4]
-  verify: "Run transform-weapons with sample old export + new source → output JSON has transformed fields with correct schema"
+task_3b:
+  name: "Unpack materials to packs/_source/materials/ + validate"
+  routing: Jr dev
+  depends_on: [3a, 1e]
+  blocking: [3c]
+  verify: "4 JSON files committed under packs/_source/materials/ with stable Foundry-generated _ids; npm run validate:packs passes"
 
-task_E3:
-  name: "Create CSV baseline templates in docs/csv-templates/"
-  routing: Flexible
-  verify: "CSV files exist for weapons, feats, races, classes with name,slug columns and README"
-```
+task_3c:
+  name: "src/constants/compendiumUuids.mts with named UUID constants for the 4 default materials"
+  routing: Jr dev
+  depends_on: [3b, 2a, 2b]
+  blocking: [3d, 3e]
+  verify: "Constants exported (BROKEN_WEAPON_UUID, BROKEN_ARMOR_UUID, MASTERWORK_WEAPON_UUID, MASTERWORK_ARMOR_UUID); UUIDs match the source JSON _ids exactly"
 
-### Track F: Documentation & Journals (Flexible, parallel with D+E)
-
-```yaml
-task_F1:
-  name: "Create 5 journal entry stubs in packs/_source/journals/"
-  routing: Flexible
-  depends_on: [A1]
-  verify: "5 journal JSON files exist; each has name, type, content stub, and flags.phase metadata; build compiles them into pack"
-
-task_F2:
-  name: "Register journal packs in system.json.template (prod + dev)"
-  routing: Flexible
-  depends_on: [A3, F1]
-  verify: "system.json includes d35e-docs-workflows pack; dev build also includes d35e-docs-workflows-dev"
-
-task_F3:
-  name: "Create AUTHORING.md for contributors"
-  routing: Flexible
-  depends_on: [E1, E2]
-  verify: "AUTHORING.md documents CSV→Macro→Unpack→Script→Commit→Build workflow with step-by-step instructions"
-
-task_F4:
-  name: "Create TRANSFORMATION.md for developers"
-  routing: Flexible
-  depends_on: [E2]
-  verify: "TRANSFORMATION.md covers how to create transform scripts for new content types"
-```
-
-### Track G: Testing & QA (Lead dev, final gate)
-
-```yaml
-task_G1:
-  name: "Build pipeline end-to-end test"
-  routing: Flexible
-  depends_on: [A4, C2]
-  verify: "npm run build succeeds; packs/materials/ compiled exists with content; npm run build:dev includes macros-dev; npm run build excludes macros-dev"
-
-task_G2:
-  name: "Origin tracking + UUID integration tests"
-  routing: Jr dev or Pair
-  depends_on: [B1, B2, D1]
-  verify: "Import from compendium → origin stamped; UUID helpers resolve docs; invalid UUIDs handled gracefully"
-
-task_G3:
-  name: "Broken/Masterwork sync integration tests"
-  routing: Jr dev or Pair
-  depends_on: [D1, D2, D3]
-  verify: "Full cycle: create weapon → broken AE disabled → toggle on/off → masterwork toggle on/off → custom masterwork survives toggle → effects apply correctly"
-
-task_G4:
-  name: "Smoke test: full system load"
+task_3d:
+  name: "Add isBroken to PhysicalItemSystemModel + Broken AE auto-attach + bidirectional sync"
   routing: Lead dev
-  depends_on: [G1, G2, G3]
-  verify: "System loads without console warnings about missing packs/UUIDs; compendium tab shows all packs; dev world loads journals"
+  depends_on: [3c]
+  blocking: [3f]
+  verify: "New weapon → Broken AE auto-attached, disabled, with origin stamped. Toggle isBroken=true → AE enables. Toggle isBroken=false → AE disables. Manually enabling AE sets isBroken=true. Manually disabling AE sets isBroken=false."
+
+task_3e:
+  name: "Masterwork AE on-demand creation + sync (preserves custom Masterwork AEs)"
+  routing: Lead dev
+  depends_on: [3c]
+  blocking: [3f]
+  verify: "Toggle isMasterwork=true → default Masterwork AE created from compendium with origin. Toggle off → only system-added AE removed; custom Masterwork AEs survive. Custom Masterwork AE drag-in → isMasterwork auto-syncs true and default is NOT added."
+
+task_3f:
+  name: "isBroken / isMasterwork toggles on item sheet UI"
+  routing: Jr dev
+  depends_on: [3d, 3e]
+  blocking: [3g]
+  verify: "Weapon sheet shows both toggles; toggling fires sync; AE list reflects state changes; effects visible in derived weapon stats"
+
+task_3g:
+  name: "Integration tests: full Broken/Masterwork sync cycle"
+  routing: Jr dev or Pair
+  depends_on: [3f]
+  verify: "Tests cover: auto-attach on create, sheet toggle bidirectional sync, manual AE toggle reverse sync, custom MW preservation, broken+material+masterwork stacking with independent bonus types"
 ```
+
+**Story 3 acceptance**: All four material AEs ship in the compiled materials pack. Creating a weapon attaches Broken (disabled) automatically. Both toggles work end-to-end with origin tracking, bidirectional sync, and custom-AE preservation.
+
+---
+
+### Story 4 — Workflow journals appear in the dev world
+
+> **User**: Developer / GM browsing in-Foundry documentation
+> **Delivers**: Five workflow stub journals plus the SRD reference journal compile through the same pipeline as item packs and show up in the dev world's compendium sidebar.
+
+Depends on Story 1 (pipeline) only. Doubles as a real second consumer of the pipeline beyond materials, which strengthens Story 1's verification.
+
+```yaml
+task_4a:
+  name: "Author 5 journal stubs in packs/_source/journals/ (Material Pattern, Compendium System, Bonus Type Stacking, How to Create a Material, How to Create a Weapon)"
+  routing: Flexible
+  depends_on: [1a]
+  verify: "5 JSON files exist with name + JournalEntry type + page content stubs; each has flags.phase=5 metadata; uses i18n keys (Phase 3 is complete) — no hardcoded English content keys"
+
+task_4b:
+  name: "Register d35e-docs-workflows (prod) and d35e-docs-workflows-dev (dev-only) in system.json.template"
+  routing: Flexible
+  depends_on: [1c, 4a]
+  verify: "Generated system.json declares both packs in dev builds; only the prod one in prod builds; Foundry loads them on startup"
+
+task_4c:
+  name: "Import SRD reference journal (fvtt-JournalEntry-3.5-srd-working...) into d35e-srd-reference compendium with schema cleanup"
+  routing: Flexible
+  depends_on: [1d]
+  verify: "Journal imports cleanly; D35E-specific markup removed; pages render in dev world; pack registered in system.json.template"
+```
+
+**Story 4 acceptance**: Open the dev world, see three new journal compendiums (workflows + workflows-dev + srd-reference). Stubs use i18n keys and carry `flags.phase` for future incremental updates.
+
+---
+
+### Final Gate — Smoke test
+
+```yaml
+task_smoke:
+  name: "Full system load smoke test"
+  routing: Lead dev
+  depends_on: [3g, 4b]
+  verify: "System loads in Foundry with no console warnings about missing packs or UUIDs; sidebar lists all registered packs (prod + dev variants); Phase 1/2 weapon-and-material flows still pass; both build:dev and prod build succeed and produce loadable system.json"
+```
+
+---
 
 ### Parallelization Diagram
 
 ```
-TRACK A: Build Pipeline     TRACK B: Infrastructure     TRACK E: Authoring     TRACK F: Docs
-────────────────────────     ────────────────────────     ──────────────────     ─────────────
-A1: Dir structure ─────┐     B1: Origin tracking          E1: Dev macro          F1: Journal stubs
-A5: .gitignore         │     B2: UUID helpers              E2: Transform scripts  F3: AUTHORING.md
-A2: Vite plugin        │     B3: Migration version         E3: CSV templates      F4: TRANSFORM.md
-A3: system.json tmpl   │     B4: AJV validation                                   F2: Register packs
-A4: Wire up scripts ◄──┘         │                             │
-        │                        │                             │
-        └──────────┬─────────────┘                             │
-                   ▼                                           │
-        TRACK C: Content Creation                              │
-        ─────────────────────────                              │
-        C1: Create materials in-game                           │
-        C2: Unpack to source JSON                              │
-        C3: Compendium UUID constants                          │
-                   │                                           │
-                   ▼                                           │
-        TRACK D: Sync Logic              ◄─────────────────────┘
-        ──────────────────
-        D1: isBroken sync
-        D2: isMasterwork sync
-        D3: Sheet UI toggles
-                   │
-                   ▼
-        TRACK G: Testing & QA
-        ─────────────────────
-        G1: Build pipeline test
-        G2: Origin + UUID tests
-        G3: Sync integration tests
-        G4: Smoke test (final gate)
+STORY 1: Pipeline + Authoring         STORY 2: Origin & UUIDs
+─────────────────────────────         ───────────────────────
+1a: Dirs + .gitignore                  2a: Origin tracking (Lead)
+1b: Vite plugin (Lead)                 2b: UUID helpers (Jr/Pair)
+1c: system.json template (Lead)        2c: migration.version field (Jr)
+1d: package.json wiring (Lead)
+1e: AJV validation (Jr)
+1f: Dev macro (Jr)               (Story 2 fully independent of Story 1 — parallel)
+1g: Transform scripts (Jr/Pair)
+1h: CSV templates (Flexible)
+1i: AUTHORING + TRANSFORM docs (Flexible)
+                │
+                ├──────────────────────────────────────────┐
+                ▼                                          ▼
+   STORY 4: Workflow Journals          STORY 3: Broken & Masterwork
+   ────────────────────────────         ───────────────────────────────
+   4a: Stub journals (Flexible)         (needs Story 1 pipeline + Story 2 origin/UUID)
+   4b: Register journal packs           3a: Author materials in dev world (Jr)
+   4c: SRD reference import             3b: Unpack + validate (Jr)
+                │                       3c: compendiumUuids constants (Jr)
+                │                       3d: isBroken sync (Lead)
+                │                       3e: Masterwork sync (Lead)
+                │                       3f: Sheet UI toggles (Jr)
+                │                       3g: Integration tests (Jr/Pair)
+                │                                  │
+                └──────────────────┬───────────────┘
+                                   ▼
+                            FINAL GATE
+                            ──────────
+                            Full system smoke test (Lead)
 ```
 
-**What can run in parallel:**
-- Tracks A, B, E, F are all **fully independent** — up to 4 people could work simultaneously
-- Track C merges A + B (needs build pipeline working + infrastructure ready)
-- Track D merges C (needs content + constants)
-- Track E and F can continue in parallel with D
-- Track G is the final sequential gate
+### What can run in parallel
 
-**Routing summary:**
-- **Lead dev**: A2, A3, A4, B1, D1, D2, G4
-- **Jr dev**: B3, B4, C1, C2, C3, D3, E1, G2, G3
-- **Jr dev or Pair**: B2, E2
-- **Flexible**: A1, A5, E3, F1, F2, F3, F4, G1
+- **Stories 1 and 2 are fully independent** — start both at kickoff. Lead dev splits time between 1b/1c/1d (pipeline) and 2a (origin); Jr devs take 1e/1f/1g/1h (authoring tooling) and 2b/2c (UUID + migration version)
+- **Story 4 starts as soon as Story 1's `1d` lands** (need `system.json.template` and the build script), runs in parallel with Story 3
+- **Story 3 unblocks once Story 1's pipeline + Story 2's origin/UUID infrastructure are in place** — its content-creation tasks (3a, 3b) are gated on the dev macro (1f) and validation (1e), and its sync logic (3d, 3e) is gated on origin (2a) + UUID helpers (2b)
+- **Final gate** waits on all of Story 3 and Story 4 to land
+
+### Routing summary
+
+- **Lead dev**: 1b, 1c, 1d, 2a, 3d, 3e, smoke
+- **Jr dev**: 1e, 1f, 2c, 3a, 3b, 3c, 3f
+- **Jr dev or Pair**: 1g, 2b, 3g
+- **Pair (Lead + Jr)**: 1j
+- **Flexible**: 1a, 1h, 1i, 4a, 4b, 4c
+
+### Optional prep slot folded in
+
+There is no standalone "research" or "infrastructure setup" track. Build pipeline work *is* Story 1's deliverable; origin/UUID work *is* Story 2's deliverable. Authoring tooling lives in Story 1 because that's where it's first used to build content.
 
 ---
 
-## 4.15 Risks & Blockers
+## 5.15 Risks & Blockers
 
 ### Hard Blockers
 
 ```yaml
 risk_1:
-  name: "Phase 2 at 50% — Broken/Masterwork sync blocked"
+  name: "Phase 2 ~90% — Broken/Masterwork sync near-unblocked"
   impact: "Track D (sync logic) depends on MaterialSystemModel and buildChanges() from Phase 2"
-  mitigation: "Tracks A, B, E, F can proceed in full. Track C can create the material JSON files. Only Track D is blocked."
-  status: "Phase 2 must reach ~90% (MaterialSystemModel complete) before D1/D2 can start"
+  mitigation: "Phase 2 is approximately 90% complete (MaterialSystemModel landed). Tracks A, B, E, F can proceed in full. Track C can create the material JSON files. Track D should be safe to start once the final 10% of Phase 2 lands; verify before kickoff."
+  status: "Confirm remaining Phase 2 work does not affect MaterialSystemModel or buildChanges() before starting D1/D2."
 
 risk_2:
-  name: "Phase 3 at 50% — Journal stubs need i18n keys"
-  impact: "Track F journal stubs should use i18n keys, not hardcoded English"
-  mitigation: "Create journal stubs with placeholder i18n keys; update when Phase 3 completes. Low risk — content is stubs anyway."
+  name: "Phase 3 complete — i18n keys available"
+  impact: "Track F journal stubs use i18n keys, not hardcoded English"
+  mitigation: "Phase 3 is complete. Use proper i18n keys for all journal stubs from the start — no placeholder English needed."
+  status: "Resolved (Phase 3 done)."
 ```
 
 ### Technical Risks
@@ -1578,7 +1505,7 @@ risk_4:
   mitigation: "Source JSON is static (committed to repo), not generated at build time. writeBundle hook is correct. Only system.json is generated, and that's a separate pre-build step."
 
 risk_5:
-  name: "Open decision: JSON vs YAML source format (§4.2)"
+  name: "Open decision: JSON vs YAML source format (§5.2)"
   impact: "Build pipeline, CLI commands, and transformation scripts all depend on format choice"
   mitigation: "Decision intentionally deferred to phase start — needs hands-on exploration. Tracks A-B can proceed with JSON as the default assumption since CLI defaults to JSON. If YAML is chosen after exploration, the delta is: add yaml parser dep, change CLI flags, update transform scripts."
   type: "Explore-at-phase-start"
@@ -1589,4 +1516,4 @@ risk_5:
 **This Phase Enables**:
 - Phase 11 (Races) uses grant system with compendium UUIDs
 - Phase 12 (Classes) uses grant system with compendium UUIDs
-- Phase 26 (Compendium Browser) extends with end-user features
+- release.1 (Compendium Browser) extends with end-user features
