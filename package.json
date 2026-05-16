@@ -5,14 +5,16 @@
   "scripts": {
     "lint": "eslint . --fix",
     "build:system-json": "node scripts/build-system-json.mjs",
+    "build:test-world-json": "node scripts/build-test-world-json.mjs",
     "typecheck": "vue-tsc --noEmit",
-    "prebuild": "npm run lint && npm run typecheck && npm run build:system-json",
+    "prebuild": "npm run lint && npm run typecheck && npm run build:system-json && npm run build:test-world-json",
     "build": "vite build --mode production",
     "dev:watch": "npm run build:system-json && vite build --watch --mode development",
     "update:version": "node scripts/update-version-yaml.mjs",
     "test": "vitest",
     "test:ci": "npm run typecheck && vitest run",
     "test:ui": "vitest --ui",
+    "pretest:e2e": "npm run build:test-world-json",
     "test:e2e": "playwright test",
     "coverage": "vitest run --coverage"
   },

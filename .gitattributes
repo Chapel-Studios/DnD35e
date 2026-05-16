@@ -1,0 +1,5 @@
+# Force binary handling for the Foundry test-world LevelDB snapshot.
+# LevelDB files include text-looking sentinels (CURRENT, LOG, MANIFEST-*) and
+# binary tables (*.ldb, *.log). All of them must be byte-exact or Foundry
+# will refuse to open the world. Disable CRLF conversion across the snapshot.
+tests/e2e/fixtures/test-world/dnd35e-e2e/data/** binary

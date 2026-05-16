@@ -6,6 +6,7 @@ import { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/index.mjs';
 
 import type { IdentifiableDocumentSystemData, IdentifiableDocumentSystemSource } from './index.mjs';
+import { deriveIdentifiableState } from './logic/index.mjs';
 
 type IdentifiableDocumentSourceProps = {
   system: IdentifiableDocumentSystemSource;
@@ -111,13 +112,13 @@ const IdentifiableDocumentMixin = <TBase extends IdentifiableDocumentCtor> (Base
 
     /**
      * Derive isIdentifiable and isIdentified from Secret AEs.
+     * Delegates to {@link deriveIdentifiableState} so the logic can be unit
+     * tested without mounting the document.
      */
     private _deriveIdentifiableState (): void {
-      const secrets = [...this.effects].filter(
-        e => e.type === secretEffectType
-      );
-      this.isIdentifiable = secrets.length > 0;
-      this.isIdentified = !secrets.some(e => e.active);
+      const state = deriveIdentifiableState(this.effects);
+      this.isIdentifiable = state.isIdentifiable;
+      this.isIdentified = state.isIdentified;
     }
 
     /**
