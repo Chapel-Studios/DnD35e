@@ -1,0 +1,96 @@
+/**
+ * Vitest global setup. Stubs Foundry globals at the minimum level needed
+ * for unit tests. Expand as new tests touch new surfaces.
+ *
+ * Philosophy: only stub what tests actually call. Do NOT pre-populate the
+ * whole Foundry API. Story 1 ships placeholders only.
+ */
+
+import { vi } from 'vitest';
+
+// --- game ----------------------------------------------------------------
+const i18nLocalize = (key: string): string => key;
+const i18nFormat = (key: string, _data?: Record<string, unknown>): string => key;
+
+(globalThis as any).game = {
+  user: { isGM: false },
+  i18n: {
+    localize: vi.fn(i18nLocalize),
+    format: vi.fn(i18nFormat),
+  },
+  settings: {
+    get: vi.fn(),
+    set: vi.fn(),
+  },
+};
+
+// --- foundry.utils -------------------------------------------------------
+function getProperty (obj: any, path: string): unknown {
+  if (!path) return obj;
+  return path.split('.').reduce((acc, key) => (acc == null ? acc : acc[key]), obj);
+}
+
+function setProperty (obj: any, path: string, value: unknown): boolean {
+  if (!path) return false;
+  const parts = path.split('.');
+  const last = parts.pop()!;
+  const target = parts.reduce((acc, key) => {
+    if (acc[key] == null) acc[key] = {};
+    return acc[key];
+  }, obj);
+  target[last] = value;
+  return true;
+}
+
+function mergeObject<T extends Record<string, any>> (
+  target: T,
+  source: Partial<T> = {}
+): T {
+  for (const [k, v] of Object.entries(source)) {
+    if (
+      v !== null &&
+      typeof v === 'object' &&
+      !Array.isArray(v) &&
+      typeof target[k] === 'object' &&
+      target[k] !== null
+    ) {
+      mergeObject(target[k], v as any);
+    } else {
+      (target as any)[k] = v;
+    }
+  }
+  return target;
+}
+
+(globalThis as any).foundry = {
+  utils: {
+    getProperty,
+    setProperty,
+    mergeObject,
+    deepClone: <T,>(v: T): T => structuredClone(v),
+    duplicate: <T,>(v: T): T => JSON.parse(JSON.stringify(v)),
+  },
+  data: {
+    fields: {
+      // Constructor-only stubs. Tests that need real Foundry field behavior
+      // belong in E2E, not unit. These let imports resolve so pure helpers
+      // can be exercised without pulling Foundry's runtime.
+      NumberField: class { constructor (public options: any = {}) {} },
+      BooleanField: class { constructor (public options: any = {}) {} },
+      StringField: class { constructor (public options: any = {}) {} },
+      EmbeddedDataField: class { constructor (public model: any, public options: any = {}) {} },
+      SchemaField: class { constructor (public fields: any, public options: any = {}) {} },
+      ArrayField: class { constructor (public element: any, public options: any = {}) {} },
+      ObjectField: class { constructor (public options: any = {}) {} },
+    },
+  },
+};
+
+// --- Roll ----------------------------------------------------------------
+(globalThis as any).Roll = {
+  safeEval: vi.fn((expr: string) => {
+    // Minimal stub — tests that need real evaluation should override per-test.
+    const n = Number(expr);
+    return Number.isFinite(n) ? n : 0;
+  }),
+};

@@ -1,7 +1,7 @@
 # Phase 4: Testing Infrastructure
 
 
-**Status**: ✅ Approved
+**Status**: 🔶 In Progress
 
 > **Milestone**: POC
 > **Dependencies**: poc.1, poc.2, poc.3 (backfill targets — Story 1 infrastructure setup can start as soon as poc.1 is complete; Stories 2–6 gate on the relevant backfill phase being far enough along that its surface is stable)
@@ -257,21 +257,19 @@ Stories 2–5 are independent after Story 1 completes — a small team can run t
 ## Completion Checklist
 
 ### ✅ Complete
-_(None — Phase 4 has not started)_
+
+**Story 1 — Test Infrastructure Setup** (committed `0524f110`)
+- [x] Install devDependencies: `vitest`, `@vitest/coverage-v8`, `@vitest/ui`, `@vue/test-utils`, `happy-dom`, `@playwright/test`, `@pinia/testing`, `pinia`
+- [x] Add `vitest.config.ts` (separate from `vite.config.ts`): `environment: 'node'`, `include: ['tests/unit/**/*.test.mts']`, `setupFiles: ['tests/setup.mts']`, v8 coverage provider
+- [x] Add scripts to `package.json`: `test`, `test:ci`, `test:ui`, `test:e2e`, `coverage`
+- [x] Create `tests/setup.mts` with Foundry global stubs (game, foundry.utils, foundry.data.fields.* constructors, Roll.safeEval)
+- [x] Create `playwright.config.ts` reading license/paths from `local.config.json` (default port 31000 to avoid Foundry's default 30000); create `tests/e2e/`, `tests/e2e/helpers/`, `tests/e2e/fixtures/` directories; run `npx playwright install chromium`
+- [x] `tests/e2e/fixtures/test-world/` placeholder + rebuild README (snapshot creation deferred to Story 3 Layer C)
+- [x] E2E helper skeletons: `loginAs`, `withTestWorld`, `createItem`, `createActiveEffect`, `evaluateInGame` — throw a clear "owned by Story X" error until wired up
+- [x] Verify: `npm run test:ci` exits 0 (2/2 sanity tests pass); `npm run test:e2e` exits 0 (1/1 runner sanity passes); `npm run build` clean
+- [x] Update `local.config.json.example` with optional `foundryLicenseKey`, `foundryAppPath`, `foundryE2EDataDir`, `foundryE2EPort`
 
 ### ❌ Not Started
-
-**Story 1 — Test Infrastructure Setup**
-- [ ] Install devDependencies: `vitest`, `@vitest/coverage-v8`, `@vitest/ui`, `@vue/test-utils`, `happy-dom`, `@playwright/test`
-- [ ] Add `test` block to `vite.config.ts`: `environment: 'node'`, `include: ['tests/**/*.test.mts']`, `setupFiles: ['tests/setup.mts']`
-- [ ] Add scripts to `package.json`: `"test": "vitest"`, `"test:ci": "vitest run"`, `"test:ui": "vitest --ui"`, `"test:e2e": "playwright test"`, `"coverage": "vitest run --coverage"`
-- [ ] Create `tests/setup.mts` with placeholder; trivial `describe/it` block passes
-- [ ] Create `playwright.config.ts`; create `tests/e2e/`, `tests/e2e/helpers/`, `tests/e2e/fixtures/` directories; run `npx playwright install`
-- [ ] Build the pristine `tests/e2e/fixtures/test-world/` snapshot: GM user, player user, empty scene; document rebuild steps in a sibling README
-- [ ] Create E2E helpers: `loginAs`, `withTestWorld`, `createItem`, `createActiveEffect`, `evaluateInGame` (skeletons OK — Stories 2, 4, 5 don't depend on them; Story 3 Layer C wires them up properly, and Story 6 reuses them)
-- [ ] Verify: `npm test` starts Vitest watch; `npm run test:ui` opens browser UI; `npm run test:e2e` runs (0 tests, exits 0)
-- [ ] Verify: `npm run test:ci` exits 0 on a fresh checkout (so poc.8's `test.yml` PR gate can call it cleanly)
-- [ ] Verify: `npm run test:e2e` exits 0 on a fresh checkout against the committed test world (so poc.8's promotion / nightly / build E2E jobs can call it cleanly)
 
 **Story 2 — Stacking Engine Tests (`tests/unit/effects/stacking-engine.test.mts`)**
 

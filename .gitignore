@@ -16,6 +16,11 @@ logs/
 # Unit testing coverage reports
 coverage/
 
+# Playwright E2E artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
 # IDE and editor files
 .vscode/*
 !.vscode/settings.json
