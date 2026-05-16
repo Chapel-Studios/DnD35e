@@ -295,27 +295,39 @@ The original "Secret AE" surface splits into three layers, each tested at the lo
 
 *Pre-work — small refactor for testability*: extract the body of `IdentifiableItem._deriveIdentifiableState()` into a pure helper `deriveIdentifiableState(effects)` returning `{ isIdentifiable, isIdentified }`. The mixin method becomes a one-liner that calls the helper and assigns. Mirrors the pattern already used in `resolveChangeValue.mts`. Same approach should be used for any future "derive X from Y" mixin logic.
 
-*Layer A — pure helpers (unit, no Foundry mounting)*
+*Layer A — pure helpers (unit, no Foundry mounting)* ✅
 
-- [ ] Refactor: extract `deriveIdentifiableState(effects)` helper from [IdentifiableItem.mts](../../../src/entities/components/Identifiable/IdentifiableItem.mts) `_deriveIdentifiableState()`
-- [ ] Unit (`tests/unit/effects/identifiable-state.test.mts`): no secrets → `{ isIdentifiable: false, isIdentified: true }`
-- [ ] Unit: one disabled Secret AE → `{ isIdentifiable: true, isIdentified: true }`
-- [ ] Unit: one active Secret AE → `{ isIdentifiable: true, isIdentified: false }`
-- [ ] Unit: mixed (active + disabled) → `{ isIdentifiable: true, isIdentified: false }`
-- [ ] Unit: non-secret effects only → `{ isIdentifiable: false, isIdentified: true }`
+- [x] Refactor: extract `deriveIdentifiableState(effects)` helper from [IdentifiableItem.mts](../../../src/entities/components/Identifiable/IdentifiableItem.mts) `_deriveIdentifiableState()`
+- [x] Unit (`tests/unit/effects/identifiable-state.test.mts`): no secrets → `{ isIdentifiable: false, isIdentified: true }`
+- [x] Unit: one disabled Secret AE → `{ isIdentifiable: true, isIdentified: true }`
+- [x] Unit: one active Secret AE → `{ isIdentifiable: true, isIdentified: false }`
+- [x] Unit: mixed (active + disabled) → `{ isIdentifiable: true, isIdentified: false }`
+- [x] Unit: non-secret effects only → `{ isIdentifiable: false, isIdentified: true }`
 
-*Layer B — narrow value-resolution units*
+*Layer B — narrow value-resolution units* ✅
 
-Target: pure-ish helpers in [resolveChangeValue.mts](../../../src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts). Pre-stub `Roll.safeEval`, `foundry.utils.getProperty`, `foundry.data.fields.{NumberField, BooleanField, EmbeddedDataField}` constructors in `tests/setup.mts`.
+Target: pure helpers in [resolveChangeValue.mts](../../../src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts). Stubs for `Roll.safeEval`, `foundry.utils.getProperty`, `foundry.data.fields.{NumberField, BooleanField, StringField, EmbeddedDataField}` constructors live in `tests/setup.mts`. `@helpers/formulae` is mocked per-test so resolver coercion is exercised in isolation from formula evaluation correctness.
 
-- [ ] Unit (`tests/unit/effects/secret-ae.test.mts`): `resolveActiveEffectChangeValue` returns numeric values when target field is `NumberField`
-- [ ] Unit: returns booleans when target field is `BooleanField` and value is `'true'` / `'false'`
-- [ ] Unit: returns string passthrough when target field is neither (default branch)
-- [ ] Unit: `getEffectContexts` selects `item` target when `change.target === ITEM`, `actor` target otherwise (uses hand-rolled effect/parent stubs)
+- [x] Unit (`tests/unit/effects/secret-ae.test.mts`): `resolveActiveEffectChangeValue` returns numeric values when target field is `NumberField` (numeric string, formula via `Roll.safeEval`, un-evaluable fallback)
+- [x] Unit: returns booleans when target field is `BooleanField` and value is `'true'` / `'false'` (non-boolean string passthrough also covered)
+- [x] Unit: returns string passthrough when target field is `StringField` / non-coercing branch
+- [x] Unit: non-string `change.value` and orphan-effect (no contextMap) paths return raw value untouched
+- [x] Unit: `getEffectContexts` selects `item` target when `change.target === ITEM`, `actor` target otherwise (bare item, item-on-actor, both target combinations)
+- [x] Unit: `getEffectContexts` resolves `schemaField` via `system.constructor.schema._getField` when key starts with `system.`, undefined otherwise
 
-*Layer C — round-trip masking (E2E only)*
+*Layer B2 — masked value resolution units* ✅
 
-Masking the value via `EmbeddedDataField._castChangeDelta` + `_applyChangeOverride` is too entangled with Foundry field internals to mock cleanly. The full round-trip is verified end-to-end via the multi-context pattern (GM context + player context, see §4.4).
+Follow-up to Layer B covering [`resolveMaskedActiveEffectChangeValue`](../../../src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts) — the mask-merge layer atop the basic AE value resolver. Uses per-test `EmbeddedDataField` subclasses with `vi.fn`-wired `_castChangeDelta` / `_applyChangeOverride` hooks; no new stubs in `tests/setup.mts`.
+
+- [x] Unit (`tests/unit/effects/masked-ae.test.mts`): fallthrough — null targetDocument, undefined schemaField, non-EmbeddedDataField, EmbeddedDataField missing either AE hook → returns plain resolved value
+- [x] Unit: happy path — full pipeline calls `_castChangeDelta(value, rollData)` then `_applyChangeOverride(current, delta, model, change)` and returns its output
+- [x] Unit: `targetDocument` without `getRollData` → `replacementData` defaults to `{}`
+- [x] Unit: current value read via `foundry.utils.getProperty` from nested system path
+- [x] Unit: hooks throwing → catch swallows and falls back to plain resolved value
+
+*Layer C — Playwright smoke + E2E (round-trip masking)*
+
+The full mask round-trip across user contexts (GM identified view vs player masked view) is verified end-to-end against the committed test-world snapshot.
 
 - [ ] Smoke (`tests/e2e/smoke.spec.ts`): GM context logs in via `loginAs(gmContext, 'gm')` → sees world UI; player context logs in via `loginAs(playerContext, 'player')` → sees player view. (Pure infra check; isolates failures.)
 - [ ] E2E (`tests/e2e/secret-ae.spec.ts`): GM creates weapon via `createItem` → attaches Secret AE masking name via `createActiveEffect` → player context shows masked name; GM disables Secret → player context shows real name; GM view-mode toggle (`play` ↔ `true`) works correctly
