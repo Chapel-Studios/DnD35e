@@ -1,9 +1,9 @@
 {
   "_comment": "Copy this file to local.config.json and customize for your environment. local.config.json is git-ignored.",
-  "foundrySystemDir": "C:/path/to/Foundry/Data/systems",
+  "foundrySystemDir": "C:/Program Files/Foundry Virtual Tabletop/Data/systems",
   "_e2e_comment": "Optional — used only by Playwright E2E tests. Foundry's EULA allows multiple dev instances per license, so the test runner reuses your dev key. Leave defaults / omit if you don't run E2E locally.",
   "foundryLicenseKey": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
-  "foundryAppPath": "C:/Program Files/Foundry Virtual Tabletop/resources/app",
+  "foundryAppPath": "C:/Program Files/Foundry Virtual Tabletop/App/resources/app",
   "foundryE2EDataDir": "C:/temp/foundry-e2e-data",
   "foundryE2EPort": 31000
 }

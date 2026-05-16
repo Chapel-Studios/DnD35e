@@ -275,19 +275,19 @@ Stories 2–5 are independent after Story 1 completes — a small team can run t
 
 Target: pure function `resolveActiveEffectChanges(changes, excludeEffectIds?)` in [src/helpers/stacking.mts](../../../src/helpers/stacking.mts). No Foundry globals required.
 
-- [ ] Same-type bonus: highest value wins; lower value recorded in history as ignored with reason
-- [ ] Untyped bonus: all instances stack (sum)
-- [ ] Penalty: all penalties apply regardless of bonus type on same field
-- [ ] Mixed scenario: multiple bonus types + penalty on same field → correct final totals
-- [ ] History tracking: every change has an entry with `applied: true/false` and rejection reason when ignored
-- [ ] `excludeEffectIds` dual-stack: same field resolves differently when an effect is excluded
-- [ ] **Per-field independence**: two changes to *different* fields with the same `bonusType` do not interfere
-- [ ] **Untyped + named on same field coexist**: untyped sums separately, named picks highest, both apply
-- [ ] **Empty input**: `resolveActiveEffectChanges([])` → empty `winners`, empty `history`
-- [ ] **`parseNumericChangeValue` edge cases** (covered via public function): string numbers (`"5"`, `" 3 "`) parse correctly; empty string and formula-like strings (`"1d6"`) are rejected from numeric stacking and surface in history with a rejection reason
-- [ ] **MASK changes are not stacked as bonuses** (was previously listed under Story 3): MASK-mode changes passed through the engine are not treated as bonuses on the field
+- [x] Same-type bonus: highest value wins; lower value recorded in history as ignored with reason
+- [x] Untyped bonus: all instances stack (sum)
+- [x] Penalty: all penalties apply regardless of bonus type on same field
+- [x] Mixed scenario: multiple bonus types + penalty on same field → correct final totals
+- [x] History tracking: every change has an entry with `applied: true/false` and rejection reason when ignored
+- [x] `excludeEffectIds` dual-stack: same field resolves differently when an effect is excluded
+- [x] **Per-field independence**: two changes to *different* fields with the same `bonusType` do not interfere
+- [x] **Untyped + named on same field coexist**: untyped sums separately, named picks highest, both apply
+- [x] **Empty input**: `resolveActiveEffectChanges([])` → empty `winners`, empty `history`
+- [x] **`parseNumericChangeValue` edge cases** (covered via public function): string numbers (`"5"`, `" 3 "`) parse correctly; empty string and formula-like strings (`"1d6"`) are rejected from numeric stacking and surface in history with a rejection reason
+- [x] **MASK changes are not stacked as bonuses** (was previously listed under Story 3): MASK-mode changes passed through the engine are not treated as bonuses on the field
 
-> Skipped for now: `dodge` bonus type stacking is added in alpha.4 (Feats). Add `// TODO(test):` placeholder.
+> Skipped for now: `dodge` bonus type stacking is added in alpha.4 (Feats). `// TODO(test):` placeholder in the test file.
 
 **Story 3 — Secret AE & Identifiable Tests**
 

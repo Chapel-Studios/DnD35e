@@ -33,8 +33,8 @@ Quick-reference table for all D&D 3.5e bonus types implemented in the stacking e
 | Luck | Highest wins | Divine Fortune, Lucky items, Stone of Good Luck | Supernatural fortune |
 | Insight | Highest wins | True Strike, foresight, certain divination effects | Knowledge/prediction |
 | Competence | Highest wins | Skill-boosting spells (Guidance, Fox's Cunning for skills) | Rank/training effects |
-| Circumstance | Highest wins | Masterwork tools, favorable terrain, cover | Situational modifiers |
-| Racial | Highest wins | Racial traits (Dwarf +2 vs poison) | Built into race |
+| Circumstance | Always stacks | Masterwork tools, favorable terrain, cover | Situational modifiers; community-expert consensus treats as stacking |
+| Racial | Always stacks | Racial traits (Dwarf +2 vs poison) | Built into race; edge case where multiple racial bonuses overlap |
 | Inherent | Highest wins | Wish, Tome/Manual of +stat | Permanent; caps at +5 |
 | Trait | Highest wins | Character traits (if using trait rules) | Optional rule |
 | Material | Highest wins | Material properties (Mithral, Adamantine) | Each material subtype is distinct |

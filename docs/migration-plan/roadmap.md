@@ -620,7 +620,7 @@ Every D35E feature, every SRD rule area, accounted for. Nothing dropped.
 | resist (resistance) | Highest wins | 2 |
 | profane | Highest wins | 2 |
 | trait | Highest wins | 2 |
-| racial | Highest wins | 2 ✅ |
+| racial | Always stacks | 2 ✅ |
 | size | Highest wins | 2 ✅ |
 | competence | Highest wins | 2 |
 | circumstance | Always stacks | 2 |
