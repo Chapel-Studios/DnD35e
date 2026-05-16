@@ -10,8 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // (no concurrent user-facing copies), so the test runner can reuse the dev's key.
 const localConfigPath = path.resolve(__dirname, 'local.config.json');
 let localConfig: {
-  foundryLicenseKey?: string;
-  foundryAppPath?: string;
+  foundryRootPath?: string;
   foundryE2EDataDir?: string;
   foundryE2EPort?: number;
 } = {};
@@ -28,19 +27,49 @@ if (fs.existsSync(localConfigPath)) {
 const e2ePort = localConfig.foundryE2EPort ?? 31000;
 const baseURL = `http://localhost:${e2ePort}`;
 
+// Defaults match scripts/setup-e2e.mjs.
+const dataDir = localConfig.foundryE2EDataDir
+  ?? path.resolve(__dirname, 'tests', 'e2e', '.foundry-data');
+// App entrypoint is fixed under the install root.
+const foundryMainJs = localConfig.foundryRootPath
+  ? path.join(localConfig.foundryRootPath, 'App', 'resources', 'app', 'main.js')
+  : '';
+
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.spec.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // Foundry is a single shared process — serial execution prevents cross-test
+  // interference. clearWorld() helper resets state between tests.
   workers: 1,
   reporter: process.env.CI ? 'github' : 'list',
+  timeout: 60_000,
+
+  // Playwright spawns Foundry, health-checks /join, and kills on teardown.
+  // setup-e2e.mjs (run in pretest:e2e) provisions the data dir Foundry boots into.
+  // Set E2E_REUSE_SERVER=1 to attach to a manually-running Foundry locally
+  // (e.g. when iterating on a single failing spec — saves the boot cost).
+  webServer: foundryMainJs
+    ? {
+      command: `node "${foundryMainJs}" --dataPath="${dataDir}" --world=dnd35e-e2e --port=${e2ePort} --noupdate`,
+      url: `${baseURL}/join`,
+      reuseExistingServer: process.env.E2E_REUSE_SERVER === '1',
+      timeout: 90_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    }
+    : undefined,
+
+  globalSetup: './tests/e2e/global-setup.ts',
+
   use: {
     baseURL,
+    // Pre-authenticated as gm via global-setup. Tests that need a player view
+    // override this with `test.use({ storageState: { cookies: [], origins: [] } })`.
+    storageState: path.join(dataDir, '.auth.json'),
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  // webServer is configured per-spec via the withTestWorld fixture once a
-  // license + Foundry app path are wired in. Story 1 ships the scaffold only.
 });

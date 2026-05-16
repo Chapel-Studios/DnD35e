@@ -9,16 +9,17 @@
    npm ci
    ```
 
-2. Copy the local config template and set your Foundry systems path:
+2. Copy the local config template and set your Foundry install root:
    ```sh
    cp local.config.json.example local.config.json
    ```
-   Edit `local.config.json` and set `foundrySystemDir` to your Foundry `Data/systems` directory (not the `dnd35e` subfolder — the build creates that automatically):
+   Edit `local.config.json` and set `foundryRootPath` to your Foundry install root (everything else — systems dir, license, app entry — is derived from this):
    ```json
    {
-     "foundrySystemDir": "C:/Foundry/V14/Data/systems"
+     "foundryRootPath": "C:/Foundry/V14"
    }
    ```
+   Set `foundryDataPath` only if your Foundry data dir is not the default `<root>/Data` (i.e. you run Foundry with a custom `--dataPath`).
 
 3. Build:
    ```sh
@@ -26,7 +27,7 @@
    npm run dev:watch      # development watch build
    ```
 
-Build output is written to `<foundrySystemDir>/dnd35e/` when `local.config.json` is present. Without it (e.g. CI), the build falls back to `dist/` automatically.
+Build output is written to `<foundryRootPath>/Data/systems/dnd35e/` (or `<foundryDataPath>/systems/dnd35e/` if `foundryDataPath` is set) when `local.config.json` is present. Without it (e.g. CI), the build falls back to `dist/` automatically.
 
 ## Build & Release Process
 

@@ -14,7 +14,8 @@
     "test": "vitest",
     "test:ci": "npm run typecheck && vitest run",
     "test:ui": "vitest --ui",
-    "pretest:e2e": "npm run build:test-world-json",
+    "pretest:e2e": "npm run build && npm run build:test-world-json && npm run setup:e2e",
+    "setup:e2e": "node scripts/setup-e2e.mjs",
     "test:e2e": "playwright test",
     "coverage": "vitest run --coverage"
   },

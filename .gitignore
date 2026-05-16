@@ -43,6 +43,9 @@ system.json
 # Generated E2E test world manifest — produced from world.json.template
 tests/e2e/fixtures/test-world/dnd35e-e2e/world.json
 
+# Provisioned Foundry data dir for E2E runs — wiped + recreated by setup-e2e.mjs
+tests/e2e/.foundry-data/
+
 # Local developer config (per-machine paths)
 local.config.json
 

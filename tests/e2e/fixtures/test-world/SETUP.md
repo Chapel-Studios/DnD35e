@@ -111,8 +111,11 @@ The final layout under `tests/e2e/fixtures/test-world/` should look like:
 test-world/
 ├── README.md              (kept)
 ├── SETUP.md               (kept — this file)
-└── dnd35e-e2e/            (the world — directory name == world id)
-    ├── world.json         (manifest — confirm system: "dnd35e")
+├── world.json.template    (kept — durable template, lives outside the world dir
+│                           so snapshot rebuilds don't clobber it)
+└── dnd35e-e2e/            (the world — directory name == world id, wiped + replaced
+    │                       wholesale on snapshot rebuild)
+    ├── world.json         (generated from ../world.json.template, git-ignored)
     └── data/
         ├── users/         (LevelDB: *.ldb, *.log, CURRENT, MANIFEST-*, LOCK, LOG)
         ├── scenes/        (LevelDB: contains Test Scene)
@@ -131,7 +134,8 @@ The snapshot's manifest is **templated** so it tracks `version.yaml` rather than
 whatever version Foundry happened to write into the world the day you built the
 snapshot. The build script `scripts/build-test-world-json.mjs` (wired into
 `prebuild` and `pretest:e2e`) regenerates `dnd35e-e2e/world.json` from
-`dnd35e-e2e/world.json.template`, which is the only manifest committed.
+`world.json.template` (one level up from the world dir so it survives snapshot
+rebuilds), which is the only manifest committed.
 
 What this means for snapshot setup:
 
@@ -147,8 +151,9 @@ What this means for snapshot setup:
 
 2. **Sanity-check the other artifacts**:
 
-   - Confirm `dnd35e-e2e/world.json.template` shows `"system": "dnd35e"` and a
-     `"coreVersion"` matching the Foundry version you used.
+   - Confirm `world.json.template` (one level up from `dnd35e-e2e/`) shows
+     `"system": "dnd35e"` and a `"coreVersion"` matching the Foundry version
+     you used.
    - The `dnd35e-e2e/data/` LevelDB directories should be small (a few KB each).
      If anything is multi-MB, you captured more than intended — go back to
      step 5 and start over with a minimal scene.
@@ -174,7 +179,20 @@ What this means for snapshot setup:
 - **Rebuilding**: if the snapshot becomes corrupt or a Foundry upgrade breaks
   schema compatibility, redo steps 1–9. The world is intentionally minimal so
   rebuild is cheap.
-- **License key**: not stored in the snapshot. Playwright reads it from
-  `local.config.json` per developer (already wired in `playwright.config.ts`).
+- **License key**: not stored in the snapshot. `scripts/setup-e2e.mjs`
+  resolves it at provisioning time in this order:
+  1. `E2E_LICENSE_JSON` env var (CI — full contents of a signed
+     `license.json` stored as a secret)
+  2. `E2E_LICENSE_PATH` env var or `foundryLicenseFile` in `local.config.json`
+     (explicit override)
+  3. `<foundryRootPath>/Config/license.json` (default Foundry layout —
+     activate Foundry once locally and this populates automatically)
+
+  **CI setup**: Foundry's signed `license.json` is portable across machines.
+  Activate Foundry once (any world boot will do), copy the resulting
+  `Config/license.json` contents, and paste them into your CI provider as a
+  secret named `E2E_LICENSE_JSON`. The setup script writes it verbatim to the
+  provisioned data dir — no network call to Foundry's license server during
+  CI runs.
 - **Size**: the snapshot should be < 1 MB. If it's larger, something
   unintended got captured (modules, journal entries, scene tokens, etc.).

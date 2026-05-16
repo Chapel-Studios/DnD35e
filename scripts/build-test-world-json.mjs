@@ -32,15 +32,11 @@ if (fs.existsSync(versionYamlPath)) {
 }
 
 // --- Read template ---
-const templatePath = path.join(
-  root,
-  'tests',
-  'e2e',
-  'fixtures',
-  'test-world',
-  'dnd35e-e2e',
-  'world.json.template'
-);
+// Template lives one level above the world directory so it survives snapshot
+// rebuilds (the world dir gets wiped + recopied wholesale during snapshot
+// regeneration; the template is the durable, committed source of truth).
+const testWorldDir = path.join(root, 'tests', 'e2e', 'fixtures', 'test-world');
+const templatePath = path.join(testWorldDir, 'world.json.template');
 if (!fs.existsSync(templatePath)) {
   console.error(`❌ world.json.template not found at ${templatePath}`);
   process.exit(1);
@@ -57,7 +53,7 @@ try {
   process.exit(1);
 }
 
-// --- Write world.json next to the template ---
-const outputPath = path.join(path.dirname(templatePath), 'world.json');
+// --- Write world.json into the world directory ---
+const outputPath = path.join(testWorldDir, 'dnd35e-e2e', 'world.json');
 fs.writeFileSync(outputPath, content);
 console.log(`✅ Generated test-world world.json (version: ${version})`);
