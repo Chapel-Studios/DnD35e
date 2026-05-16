@@ -41,6 +41,86 @@ This repo ships a GitHub Actions workflow at `.github/workflows/build.yml`.
 
 Node is pinned via `.nvmrc` and used by CI.
 
+## Foundry Version Updates
+
+Foundry frequently changes its world data layout (LevelDB schema, manifest
+fields, migration touchpoints) between releases. Bumping the supported
+Foundry version is therefore **not just a metadata change** — the committed
+E2E test world snapshot must also be re-migrated and re-snapshotted, or
+Playwright runs will fail to launch the world on the new build.
+
+Follow these steps in order whenever the target Foundry version changes.
+
+### 1. Update manifest metadata
+
+Edit **`system.json.template`** (the committed template — `system.json` is
+generated):
+
+- `compatibility.minimum` — lowest Foundry version we still support
+- `compatibility.verified` — Foundry version this release is tested against
+
+Edit **`tests/e2e/fixtures/test-world/dnd35e-e2e/world.json.template`** to
+match:
+
+- `coreVersion` — the new full Foundry version (e.g. `"14.359"` → `"15.310"`)
+- `compatibility.minimum` / `compatibility.verified`
+
+Both templates feed generated, git-ignored manifests via
+`npm run build:system-json` and `npm run build:test-world-json`.
+
+### 2. Re-snapshot the E2E test world
+
+Foundry will migrate the LevelDB stores the first time it opens the world
+on a new version. The committed snapshot must be the **post-migration**
+state, otherwise every test run will trigger migration writes and our
+"hermetic copy" assumption breaks.
+
+1. Follow [`tests/e2e/fixtures/test-world/SETUP.md`](tests/e2e/fixtures/test-world/SETUP.md)
+   against the new Foundry version. Start from the committed snapshot —
+   copy `tests/e2e/fixtures/test-world/dnd35e-e2e/` into your scratch
+   Foundry data dir's `Data/worlds/`.
+2. Launch Foundry on the new version and open the `dnd35e-e2e` world. Let
+   it run the migration silently, then **exit cleanly** (do not force-quit
+   — LevelDB needs a clean shutdown to flush logs).
+3. Copy the migrated `Data/worlds/dnd35e-e2e/data/` directory back over
+   `tests/e2e/fixtures/test-world/dnd35e-e2e/data/`, replacing all files.
+4. Delete the Foundry-written `world.json` and let
+   `npm run build:test-world-json` regenerate it from the template
+   (already wired into `prebuild` and `pretest:e2e`).
+5. `git status` should show updates only inside
+   `tests/e2e/fixtures/test-world/dnd35e-e2e/data/`. The LevelDB files are
+   pinned to binary via `.gitattributes` so CRLF conversion cannot corrupt
+   them — do not override that.
+
+### 3. Validate
+
+```sh
+npm run build      # regenerates system.json and world.json
+npm test           # unit tests
+npm run test:e2e   # Playwright launches Foundry against the new snapshot
+```
+
+If the E2E suite cannot open the world, the migration didn't complete or
+the snapshot wasn't copied back cleanly — repeat step 2.
+
+### 4. Bump `.nvmrc` if required
+
+Major Foundry releases occasionally bump the required Node version. Check
+the Foundry release notes and update `.nvmrc` to match before opening the
+PR, so CI uses the same Node version as the new Foundry build.
+
+### 5. Commit
+
+One commit, scoped to the version bump:
+
+```
+chore(foundry): bump verified version to <X.Y.Z>
+
+- system.json.template + world.json.template: compatibility + coreVersion
+- tests/e2e/fixtures/test-world/dnd35e-e2e/data: re-migrated snapshot
+- .nvmrc: <only if Node version changed>
+```
+
 ## Version metadata automation
 
 This repo maintains a `version.yaml` file that tracks the current system version and GitHub milestone mapping.
