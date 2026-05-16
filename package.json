@@ -11,7 +11,7 @@
     "dev:watch": "npm run build:system-json && vite build --watch --mode development",
     "update:version": "node scripts/update-version-yaml.mjs",
     "test": "vitest",
-    "test:ci": "vitest run",
+    "test:ci": "npm run typecheck && vitest run",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
     "coverage": "vitest run --coverage"

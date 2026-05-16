@@ -242,7 +242,6 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
         value: numericValue,
         source: change.effect.displayName,
         effectId: change.effect.id ?? undefined,
-        isPenalty: !isNaN(numericValue) && numericValue < 0,
       };
     });
 
