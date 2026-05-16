@@ -28,6 +28,9 @@ import {
 import type { ComputedRef, ShallowRef } from 'vue';
 import { computed } from 'vue';
 
+import type { FieldOverrideValue } from './cascadeFieldOverride.mjs';
+import { cascadeFieldOverride, OVERRIDE_DEFAULTS, OVERRIDE_RANKS } from './cascadeFieldOverride.mjs';
+
 type DataField = foundry.data.fields.DataField;
 type SchemaField = foundry.data.fields.SchemaField;
 
@@ -44,43 +47,14 @@ interface Dnd35eOverrideOptions {
 }
 
 // ---------------------------------------------------------------------------
-// Per-key restrictiveness ranking — higher number = more restrictive
+// Per-key restrictiveness ranking imported from cascadeFieldOverride.mjs
 // ---------------------------------------------------------------------------
-
-/** Resolved (non-optional) value type for a given override key. */
-type FieldOverrideValue<K extends FieldOverrideKey> = NonNullable<FieldOverride[K]>;
-
-const OVERRIDE_RANKS: { [K in FieldOverrideKey]: Record<string, number> } = {
-  visibility: { everyone: 0, ownerPlus: 1, gmOnly: 2 },
-  editability: { normal: 0, gmOnly: 1 },
-};
-
-/** Default override values for each key (used for document-level properties). */
-const OVERRIDE_DEFAULTS: { [K in FieldOverrideKey]: FieldOverrideValue<K> } = {
-  visibility: everyoneVisibility,
-  editability: normalEditability,
-};
 
 /** Maps each override key to its corresponding schema default option name. */
 const SCHEMA_DEFAULT_KEYS: { [K in FieldOverrideKey]: keyof Dnd35eOverrideOptions } = {
   visibility: 'defaultVisibility',
   editability: 'defaultEditability',
 };
-
-/**
- * Pick the more restrictive of two values for a given override key.
- * Returns `undefined` only when both inputs are `undefined`.
- */
-function pickMoreRestrictive<K extends FieldOverrideKey>(
-  key: K,
-  a: FieldOverrideValue<K> | undefined,
-  b: FieldOverrideValue<K> | undefined
-): FieldOverrideValue<K> | undefined {
-  if (a == null) return b;
-  if (b == null) return a;
-  const ranks = OVERRIDE_RANKS[key];
-  return (ranks[a] ?? -1) >= (ranks[b] ?? -1) ? a : b;
-}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -219,22 +193,7 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
    * Cascades up the path tree (section → field), picking most-restrictive at each parent.
    */
   const getFieldOverride = <K extends FieldOverrideKey>(fieldPath: string, key: K): FieldOverrideValue<K> | undefined => {
-    let result = resolveAtPath(fieldPath, key);
-
-    // Only cascade within system.* paths
-    if (!fieldPath.startsWith('system.')) return result;
-
-    // Walk up parent paths down to (but not above) "system.", pick most-restrictive
-    const parts = fieldPath.split('.');
-    for (let i = parts.length - 1; i > 1; i--) {
-      const parentPath = parts.slice(0, i).join('.');
-      const parentValue = resolveAtPath(parentPath, key);
-      if (parentValue != null) {
-        result = pickMoreRestrictive(key, result, parentValue);
-      }
-    }
-
-    return result;
+    return cascadeFieldOverride(fieldPath, key, resolveAtPath);
   };
 
   /**
@@ -377,7 +336,6 @@ const FieldOverridesStoreSymbol = Symbol('FieldOverridesStore');
 
 export {
   FieldOverridesStoreSymbol,
-  pickMoreRestrictive,
   useFieldOverridesStore,
 };
 

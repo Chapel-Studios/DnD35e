@@ -360,15 +360,17 @@ Uses the **reusable `createSchemaTester(Model)` factory** from `tests/helpers/sc
 
 The field-override cascade (most-restrictive-wins merge across the ancestor chain) is the highest-value piece to unit test in this story. The component tests stay deliberately small.
 
-- [ ] Identify the cascade merge function in `useDocumentSheetStore` (or wherever `getFieldOverride` resolves) and, if needed, extract it into a pure helper `mergeFieldOverrides(overrides)` for testability — same refactor pattern as Story 3 Layer A
-- [ ] Unit (`tests/unit/sheets/field-override-cascade.test.mts`): no overrides → default `{ visibility: 'everyone', editability: 'normal' }`
-- [ ] Unit: parent `ownerPlus` + child `gmOnly` → `gmOnly` (more restrictive wins per property)
-- [ ] Unit: parent `gmOnly` editability + child `normal` editability → `gmOnly` (parent restriction propagates)
-- [ ] Unit: visibility and editability merge independently per property
-- [ ] Unit: deep ancestor chain (3+ levels) — most-restrictive across the whole chain wins
+- [x] Identify the cascade merge function in `useDocumentSheetStore` (or wherever `getFieldOverride` resolves) and, if needed, extract it into a pure helper `mergeFieldOverrides(overrides)` for testability — same refactor pattern as Story 3 Layer A
+- [x] Unit (`tests/unit/sheets/field-override-cascade.test.mts`): no overrides → default `{ visibility: 'everyone', editability: 'normal' }`
+- [x] Unit: parent `ownerPlus` + child `gmOnly` → `gmOnly` (more restrictive wins per property)
+- [x] Unit: parent `gmOnly` editability + child `normal` editability → `gmOnly` (parent restriction propagates)
+- [x] Unit: visibility and editability merge independently per property
+- [x] Unit: deep ancestor chain (3+ levels) — most-restrictive across the whole chain wins
 - [ ] Create `tests/unit/components/setup.ts` with `createMockDocumentStore()` and `createMockRenderModeStore()` factories (only properties the tested components actually touch; factory shape parallels the schema-tester factory — self-contained, no shared state)
 - [ ] Smoke (`tests/unit/components/FormGroup.test.mts`, `// @vitest-environment happy-dom`): given `getFieldOverride` returns `gmOnly` visibility, non-GM user sees nothing; GM sees the field
 - [ ] Smoke (`tests/unit/components/NumberFormGroup.test.mts`, `// @vitest-environment happy-dom`): `#controls` slot content renders; `editable` scoped slot prop reflects the FormGroup override result
+
+> **Refactor note (Story 5 cycle 1)**: The cascade was extracted into a new file [`cascadeFieldOverride.mts`](../../../src/entities/components/CoreMixin/sheet/stores/cascadeFieldOverride.mts) co-located with `FieldOverridesStore`. The store's `getFieldOverride` is now a one-liner calling `cascadeFieldOverride(path, key, resolveAtPath)`. The extracted helper takes a `ResolveAtPath` callback, so unit tests pass a synthetic table-driven resolver — no document, schema, or Vue reactivity needed. Same pattern as Story 3 Layer A's `deriveIdentifiableState` extraction.
 
 **Story 6 — E2E Backfill for poc.1 & poc.2 Features**
 
