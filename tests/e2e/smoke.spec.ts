@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { gotoGame } from './helpers/gotoGame.mjs';
+import { gotoGame } from './helpers/session.mjs';
 
 /**
  * Layer C1 smoke spec.

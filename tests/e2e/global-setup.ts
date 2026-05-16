@@ -20,6 +20,8 @@ import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { performJoin } from './helpers/session.mjs';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
@@ -48,26 +50,7 @@ export default async function globalSetup (): Promise<void> {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
-  await page.goto(`${baseUrl}/join`);
-
-  // Wait for the SPA-rendered join form before querying it.
-  await page.waitForSelector('select[name="userid"]', { timeout: 30_000 });
-
-  // Select the gm user (passwords are blank in the snapshot).
-  const gmOption = page.locator('select[name="userid"] option').filter({ hasText: /^gm$/i });
-  const gmValue = await gmOption.getAttribute('value');
-  if (!gmValue) {
-    throw new Error('[global-setup] Could not find gm user in /join dropdown. Check the snapshot users.');
-  }
-  await page.selectOption('select[name="userid"]', gmValue);
-  await page.click('button[name="join"]');
-
-  await page.waitForURL(`${baseUrl}/game`, { timeout: 30_000 });
-  await page.waitForFunction(
-    () => typeof (globalThis as any).game !== 'undefined' && (globalThis as any).game.ready === true,
-    null,
-    { timeout: 30_000 }
-  );
+  await performJoin(page, baseUrl, 'gm');
 
   const authPath = path.join(dataDir, '.auth.json');
   await page.context().storageState({ path: authPath });

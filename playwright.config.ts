@@ -27,6 +27,11 @@ if (fs.existsSync(localConfigPath)) {
 const e2ePort = localConfig.foundryE2EPort ?? 31000;
 const baseURL = `http://localhost:${e2ePort}`;
 
+// Export to env so global-setup, loginAs, and other helpers can resolve the
+// running Foundry without re-reading local.config.json.
+process.env.FOUNDRY_E2E_BASE_URL = baseURL;
+process.env.FOUNDRY_E2E_PORT = String(e2ePort);
+
 // Defaults match scripts/setup-e2e.mjs.
 const dataDir = localConfig.foundryE2EDataDir
   ?? path.resolve(__dirname, 'tests', 'e2e', '.foundry-data');

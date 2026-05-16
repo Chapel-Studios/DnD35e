@@ -137,6 +137,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   const {
     isPlayMode,
     isEditMode,
+    isTrueMode,
     isOwnerOrGM,
     isGM,
   } = inject(RenderModeStoreSymbol) as RenderModeStore;
@@ -266,9 +267,10 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   };
 
   const getViewAwareFieldValue = <T,>(fieldPath: string, getFromSource = false): T => {
-    if (isEditMode.value && isGM.value) {
-      // GMs edit the real/source data directly. Players in edit mode should still
-      // see masked values so their edits route through Player Edit Secrets.
+    if ((isEditMode.value || isTrueMode.value) && isGM.value) {
+      // GMs editing OR viewing True Mode see the real/source data directly.
+      // Players in edit mode should still see masked values so their edits
+      // route through Player Edit Secrets.
       getFromSource = true;
     }
 
