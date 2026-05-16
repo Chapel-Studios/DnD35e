@@ -116,18 +116,18 @@
   - [x] `DocumentSheetStore.getViewAwareFieldValue()` reads `_masks` dictionary instead of legacy wrapper effective-value logic
   - [x] Remove `isIdentifiedViewMode` short-circuit from all FormGroup components (store handles it)
 
-- [ ] **Player Edit Secrets (§2.7.10)** — Track 14:
-  - [ ] Define constants: `isPlayerEditSecret` boolean field on SecretSystemModel (read-only in UI), player edit priority (3001), localization keys
-  - [ ] Implement `findOrCreatePlayerEditSecret(item)` helper — finds existing by flag or creates new; default name "Player Edit" (localized)
-  - [ ] Implement `addOrUpdatePlayerEditMask(ae, fieldPath, value)` helper — adds/updates MASK change on AE
-  - [ ] Wire interception into `viewModeAwareUpdateDocument()` — non-GM + field in `_masks` → route to Player Edit Secret; split mixed updates
-  - [ ] Verify `_buildMasks()` resolves Player Edit Secret at higher priority (3001 > 10)
-  - [ ] GM UI: Player Edit Secrets appear in normal Secrets list, sorted to top, with pencil icon indicator
-  - [ ] `isPlayerEditSecret` displayed as read-only boolean on Secret AE sheet (non-editable)
-  - [ ] GM can edit Player Edit Secret mask values like any normal Secret
-  - [ ] GM can delete Player Edit Secret to reset player overrides
-  - [ ] `revealAllSecrets()` also disables Player Edit Secrets
-  - [ ] Player Edit Secrets excluded from real stack (filtered by `system.isPlayerEditSecret` field)
+- [x] **Player Edit Secrets (§2.7.10)** — Track 14:
+  - [x] Define constants: `isPlayerEditSecret` boolean field on SecretSystemModel (read-only in UI), player edit priority (3001), localization keys
+  - [x] Implement `findOrCreatePlayerEditSecret(item)` helper — finds existing by flag or creates new; default name "Player Edit" (localized)
+  - [x] Implement `addOrUpdatePlayerEditMask(ae, fieldPath, value)` helper — adds/updates MASK change on AE
+  - [x] Wire interception into `viewModeAwareUpdateDocument()` — non-GM + field in `_masks` → route to Player Edit Secret; split mixed updates
+  - [x] Verify `_buildMasks()` resolves Player Edit Secret at higher priority (3001 > 10)
+  - [x] GM UI: Player Edit Secrets appear in normal Secrets list, sorted to top, with pencil icon indicator
+  - [x] `isPlayerEditSecret` displayed as read-only boolean on Secret AE sheet (non-editable)
+  - [x] GM can edit Player Edit Secret mask values like any normal Secret
+  - [x] GM can delete Player Edit Secret to reset player overrides
+  - [x] `revealAllSecrets()` also disables Player Edit Secrets (they're regular Secret AEs)
+  - [x] Player Edit Secrets excluded from real stack (MASK changes skipped in `applyActiveEffects()`)
 
 - [ ] **Material Dev Testing Follow-Up**:
   - [ ] Run a dedicated dev-world verification pass on Material AE authoring and propagation
