@@ -70,6 +70,44 @@ function mergeObject<T extends Record<string, any>> (
     deepClone: <T,>(v: T): T => structuredClone(v),
     duplicate: <T,>(v: T): T => JSON.parse(JSON.stringify(v)),
   },
+  abstract: {
+    // Constructor-only stubs with the static surface schema layering relies on.
+    // Real DataModel behavior (validation, defaults applied on construction,
+    // source/value distinction) belongs in E2E.
+    DataModel: class {
+      static LOCALIZATION_PREFIXES: string[] = [];
+      static defineSchema (): Record<string, any> { return {}; }
+      constructor (..._args: any[]) {}
+      prepareDerivedData (): void {}
+    },
+    TypeDataModel: class {
+      static LOCALIZATION_PREFIXES: string[] = [];
+      static defineSchema (): Record<string, any> { return {}; }
+      constructor (..._args: any[]) {}
+      prepareDerivedData (): void {}
+    },
+  },
+  documents: {
+    // Constructor-only; only used as a generic type argument in source.
+    Item: class {},
+  },
+  applications: {
+    // Application classes pulled in via deep imports (e.g. settings menus
+    // reached through `@settings/currency`). Tests don't construct these;
+    // they just need the constructors to exist so `class Foo extends X {}`
+    // declarations evaluate at module load.
+    api: {
+      ApplicationV2: class { constructor (..._args: any[]) {} },
+      DialogV2: class {
+        static async confirm (..._args: any[]): Promise<boolean> { return false; }
+      },
+      HandlebarsApplicationMixin: <T extends new (...args: any[]) => any> (Base: T): T => Base,
+    },
+    sheets: {
+      ItemSheetV2: class { constructor (..._args: any[]) {} },
+      ActiveEffectConfig: class { constructor (..._args: any[]) {} },
+    },
+  },
   data: {
     fields: {
       // Constructor-only stubs. Tests that need real Foundry field behavior
@@ -78,6 +116,7 @@ function mergeObject<T extends Record<string, any>> (
       NumberField: class { constructor (public options: any = {}) {} },
       BooleanField: class { constructor (public options: any = {}) {} },
       StringField: class { constructor (public options: any = {}) {} },
+      HTMLField: class { constructor (public options: any = {}) {} },
       EmbeddedDataField: class { constructor (public model: any, public options: any = {}) {} },
       SchemaField: class { constructor (public fields: any, public options: any = {}) {} },
       ArrayField: class { constructor (public element: any, public options: any = {}) {} },

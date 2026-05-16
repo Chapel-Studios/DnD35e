@@ -195,7 +195,7 @@ Reusable factories follow the same contract on both sides: `createXTester(input)
 | Create | `tests/e2e/material-aspect-picker.spec.ts` | Material aspect picker behaviour with a parent material and without (Story 6) |
 | Create | `tests/e2e/material-single-per-type.spec.ts` | `ENFORCE_SINGLE_MATERIAL` setting blocks duplicate STANDARD materials on a weapon (Story 6 — see scope note) |
 | Create | `tests/e2e/field-permissions.spec.ts` | Single end-to-end example of field visibility / editability override applied by GM and observed by player; depth covered in Story 5 unit tests (Story 6) |
-| Create | `tests/setup.mts` | Foundry global stubs: `game` (`user.isGM`, `i18n.localize()` passthrough), `foundry.utils` (`getProperty`, `mergeObject`), `Roll.safeEval`, constructor-only stubs for `foundry.data.fields.{NumberField, BooleanField, EmbeddedDataField}`. No `foundry.abstract.DataModel` stub — schema tests use inspection (see §4.3). |
+| Create | `tests/setup.mts` | Foundry global stubs: `game` (`user.isGM`, `i18n.localize()` passthrough), `foundry.utils` (`getProperty`, `mergeObject`), `Roll.safeEval`, constructor-only stubs for `foundry.data.fields.*` (`NumberField`, `BooleanField`, `StringField`, `HTMLField`, `EmbeddedDataField`, `SchemaField`, `ArrayField`, `ObjectField`), `foundry.abstract.{DataModel,TypeDataModel}`, `foundry.documents.Item`, and `foundry.applications.{api,sheets}` constructors. Constructor-only — schema tests still use inspection (see §4.3); the abstract/applications stubs only prevent module-load failures from transitive imports. |
 | Create | `tests/helpers/schemaTester.mts` | `createSchemaTester(Model)` factory — reusable across all DataModel schema tests |
 | Create | `tests/unit/helpers/schemaTester.test.mts` | Tests for the factory itself (synthetic schema) |
 | Create | `tests/unit/effects/stacking-engine.test.mts` | Stacking-rule coverage (extended cases — see Story 2 checklist) |
@@ -329,9 +329,9 @@ Follow-up to Layer B covering [`resolveMaskedActiveEffectChangeValue`](../../../
 
 The full mask round-trip across user contexts (GM identified view vs player masked view) is verified end-to-end against the committed test-world snapshot.
 
-- [ ] Smoke (`tests/e2e/smoke.spec.ts`): GM context logs in via `loginAs(gmContext, 'gm')` → sees world UI; player context logs in via `loginAs(playerContext, 'player')` → sees player view. (Pure infra check; isolates failures.)
-- [ ] E2E (`tests/e2e/secret-ae.spec.ts`): GM creates weapon via `createItem` → attaches Secret AE masking name via `createActiveEffect` → player context shows masked name; GM disables Secret → player context shows real name; GM view-mode toggle (`play` ↔ `true`) works correctly
-- [ ] E2E: multiple Secret AEs on the same field → highest-priority mask wins for the player view
+- [x] Smoke (`tests/e2e/smoke.spec.ts`): GM context logs in via `loginAs(gmContext, 'gm')` → sees world UI; player context logs in via `loginAs(playerContext, 'player')` → sees player view. (Pure infra check; isolates failures.)
+- [x] E2E (`tests/e2e/secret-ae.spec.ts`): GM creates weapon via `createItem` → attaches Secret AE masking name via `createActiveEffect` → player context shows masked name; GM disables Secret → player context shows real name; GM view-mode toggle (`play` ↔ `true`) works correctly
+- [x] E2E: multiple Secret AEs on the same field → highest-priority mask wins for the player view
 
 > Setup support: populate `tests/setup.mts` with minimal `game` stub (`user.isGM`, `i18n.localize()` passthrough), `foundry.utils` stub (`getProperty`, `mergeObject`), and constructor-only stubs for the field classes the helpers test against (`NumberField`, `BooleanField`, `EmbeddedDataField`).
 
@@ -339,12 +339,22 @@ The full mask round-trip across user contexts (GM identified view vs player mask
 
 Uses the **reusable `createSchemaTester(Model)` factory** from `tests/helpers/schemaTester.mts` (see §4.3). Story 4 both proves out the factory and lands Weapon's schema tests; future phases reuse the factory unchanged.
 
-- [ ] Create `tests/helpers/schemaTester.mts` exporting `createSchemaTester(Model)` per the shape in §4.3
-- [ ] Unit (`tests/unit/helpers/schemaTester.test.mts`): tester correctly walks a small synthetic schema (use `new SchemaField({ a: new NumberField({ initial: 1 }), … })`) — covers `fieldKeys`, `field`, `assertField`, `assertFieldType`, `assertDefault`
-- [ ] Weapon schema declares all expected top-level fields (via `assertField`)
-- [ ] Weapon schema declared defaults match expected values (via `assertDefault`)
-- [ ] Weapon `criticalRange` and `criticalMultiplier` have validators attached (via `assertHasValidator`); if validator inspection isn't viable on Foundry v14 (see open question in §4.3), fall back to importing and unit-testing the validator function directly
-- [ ] Weapon `weaponDamage` sub-schema is wired in correctly (via `assertFieldType` against `EmbeddedDataField` or `SchemaField` as appropriate)
+- [x] Create `tests/helpers/schemaTester.mts` exporting `createSchemaTester(Model)` per the shape in §4.3
+- [x] Unit (`tests/unit/helpers/schemaTester.test.mts`): tester correctly walks a small synthetic schema (use `new SchemaField({ a: new NumberField({ initial: 1 }), … })`) — covers `fieldKeys`, `field`, `assertField`, `assertFieldType`, `assertDefault`
+- [x] Weapon schema declares all expected top-level fields (via `assertField`)
+- [x] Weapon schema declared defaults match expected values (via `assertDefault`)
+- [x] Weapon `criticalRange` and `criticalMultiplier` have validators attached (via `assertHasValidator`); if validator inspection isn't viable on Foundry v14 (see open question in §4.3), fall back to importing and unit-testing the validator function directly
+- [x] Weapon `weaponDamage` sub-schema is wired in correctly (via `assertFieldType` against `EmbeddedDataField` or `SchemaField` as appropriate)
+
+> **Note**: Per user direction, combat-related Weapon fields (damage formulas, crit semantics, attack resolution, range, ammo) are deferred to the combat phase. Eight `it.todo` placeholders remain in `weapon.model.test.mts` flagging the validator/semantic tests that combat phase will flesh out.
+
+> **Source-file narrowing (incidental to Story 4)**: To run schema tests in the `node` environment, the `WeaponSystemModel` import chain had to stop pulling Vue/sheet UI. Three production imports were narrowed to data-only subpaths (no behaviour change; net win for tree-shaking too):
+>
+> - [`PhysicalItemSystemModel.mts`](../../../src/entities/items/components/Physical/data/PhysicalItemSystemModel.mts) — `ItemSystemModelBase` from `@items/baseItem/data/index.mjs` (not `@items/baseItem/index.mjs`); `IdentifiableSchemaMixin` from `@ec/Identifiable/data/index.mjs`; `PriceField` from `@settings/currency/PriceField.mjs`
+> - [`WeaponSystemModel.mts`](../../../src/entities/items/weapon/data/WeaponSystemModel.mts) — `EquippableItemSystemModel` from `@items/components/Equippable/data/index.mjs`; weapon-type constants from sibling `./constants.mjs` (not the top-level barrel)
+> - [`MaterialSystemModel.mts`](../../../src/entities/activeEffects/material/data/MaterialSystemModel.mts) — `PriceField` from `@settings/currency/PriceField.mjs`
+>
+> Future data-model files should follow the same rule: **import schema/data dependencies from `.../data/index.mjs` subpaths, never from a component's top-level barrel** (which re-exports Vue stores and sheet UI).
 
 **Story 5 — Field Override Cascade & Vue Component Smoke Tests**
 

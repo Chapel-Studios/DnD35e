@@ -7,7 +7,7 @@ import type { MaterialSystemData } from '@effects/material/index.mjs';
 import { requiredNumberField, useDnd35eField } from '@helpers/fieldBuilders.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { TargetContexts } from '@helpers/formulae/registry.mjs';
-import { PriceField } from '@settings/currency/index.mjs';
+import { PriceField } from '@settings/currency/PriceField.mjs';
 import type { PriceData } from '@settings/index.mjs';
 
 import type { MaterialSubtype } from './materialTypes.mjs';
@@ -22,7 +22,7 @@ class MaterialSystemModel extends ActiveEffectSystemModelBase {
   static override defineSchema () {
     const schema = super.defineSchema();
 
-    // Declare Item context on inherited nameFormula (it's now a plain FormulaField)
+    // Declare Item context on inherited nameFormula
     (schema.nameFormula as FormulaField).formulaContexts = [
       { contextName: 'Item', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['Parent'] },
     ];
