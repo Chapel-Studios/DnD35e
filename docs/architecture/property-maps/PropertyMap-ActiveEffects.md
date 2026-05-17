@@ -54,17 +54,19 @@ These are the things that CREATE Active Effects in the system. Each needs consid
 
 ### 5. Buffs (AE type, not item type)
 - **Buff is a custom Active Effect type** — NOT an item type in dnd35e
-- D35E `buff` items are migrated to Buff AEs during data migration (Phase 27)
-- Buff AEs extend the standard AE schema with:
+- Implementation is **split across two phases**:
+  - **alpha.9 (Buff AE Core)** — minimum schema for Paladin alpha spells: `system.active`, `system.duration.{rounds, elapsed, deleteOnExpiry}`, `description`, plus inherited `changes[]` with `bonusType`. Combat-tracker turn-start tick, activation/deactivation, non-transferring placement on the target actor.
+  - **beta.3 (Buff AE Expansion & Conditions Full)** — full schema extensions (see below) and the D35E `buff` item → Buff AE data migration.
+- Buff AEs extend the standard AE schema. The **alpha core fields** are listed above; **beta expansion adds**:
   - `buffType`: "temp"\|"perm"\|"item"\|"shapechange"\|"misc"
-  - `timeline`: duration tracking (total rounds, elapsed, formula, deleteOnExpiry)
+  - `timeline.formula` — formula-driven durations (replaces / augments the alpha `duration.rounds`)
   - `damagePool`: max/current absorb (e.g. Stoneskin 150 HP pool)
   - `shapechange`: polymorph/wildshape data
   - `hideFromToken`: suppress icon display
-- Buff AEs are activated/deactivated (toggle on/off)
-- Timeline ticks down via combat tracker integration
-- When a spell creates a buff on a target, it creates a Buff AE directly on the target actor
-- Buff AEs appear in a dedicated "Buffs" section on the character sheet
+- Buff AEs are activated/deactivated (toggle on/off) — alpha.9.
+- Timeline ticks down via combat tracker integration — alpha.9 (round-based); beta.3 expands to formula-driven.
+- When a spell creates a buff on a target, it creates a Buff AE directly on the target actor.
+- Buff AEs appear in a dedicated "Buffs" section on the character sheet — beta.3. In alpha.9 they render in the generic effects list.
 
 ### 6. Spells
 - Cast spells may create buff items on targets, which in turn create AEs

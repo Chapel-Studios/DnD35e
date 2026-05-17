@@ -1,8 +1,8 @@
-# Phase 16: Breath Weapon & Area Templates
+# Alpha Phase 10: Breath Weapon & Area Templates
 
-> **Status**: Outlined
-> **Milestone**: POC (Layer 5 — Combat Loop)
-> **Dependencies**: Phase 9 (Action System), Phase 12 (Combat Tracker)
+> **Status**: 📋 Outlined
+> **Milestone**: Alpha
+> **Dependencies**: alpha.3 (Action System), alpha.7 (Combat Tracker & Turn Economy)
 
 ---
 

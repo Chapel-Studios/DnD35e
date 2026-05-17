@@ -20,7 +20,7 @@ Trip action chain (Phase 8)
   → Standing up = move action (TurnActionBudget cost)
 ```
 
-Phase 21 (Buffs & Conditions Full) builds on this foundation to implement all 25+ D&D 3.5e conditions.
+Beta Phase 3 (Buff AE Expansion & Conditions Full) builds on this foundation to implement all 25+ D&D 3.5e conditions.
 
 ---
 
@@ -72,7 +72,7 @@ await target.createEmbeddedDocuments("ActiveEffect", [{
 }]);
 ```
 
-**Key pattern**: Conditions are Active Effects, not items. They use the same AE pipeline established in Phase 2. The `isCondition` flag distinguishes them from duration buffs (Phase 21) and material effects (Phase 2).
+**Key pattern**: Conditions are Active Effects, not items. They use the same AE pipeline established in poc.2. The `isCondition` flag distinguishes them from duration buffs (Buff AE Core in alpha.9, expansion in beta.3) and material effects (poc.2).
 
 ---
 
@@ -136,15 +136,15 @@ No condition flags exist on the actor data schema — conditions are purely AE-d
 
 ---
 
-## 14.7 Deferred to Phase 21
+## 14.7 Deferred to Beta Phase 3
 
-Everything listed here is deferred to Phase 21 (Buffs & Conditions Full):
+Everything listed here is deferred to beta.3 (Buff AE Expansion & Conditions Full):
 - All other conditions (Blinded, Stunned, Paralyzed, Exhausted, etc.)
 - Condition stacking and interaction rules (e.g., Exhausted + Fatigued)
 - Ability damage/drain as condition-like effects
 - Fear track (Shaken → Frightened → Panicked)
 - Duration-based condition expiry
-- Buff item type and temporary enhancement bonuses
+- Buff AE expansion fields (`buffType` taxonomy, formula-driven timelines, damage pools, shapechange) — alpha.9 introduces the minimal Buff AE; beta.3 expands it
 
 ---
 

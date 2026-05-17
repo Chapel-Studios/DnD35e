@@ -1,9 +1,9 @@
-# Phase 18: Enhancement (Alpha)
+# Alpha Phase 12: Enhancement
 
 **Status**: 📋 Outlined
 
 > **Milestone**: Alpha
-> **Dependencies**: Phase 1 (Weapon), Phase 2 (Active Effect on Item — Material)
+> **Dependencies**: poc.1 (Weapon), poc.2 (Active Effect on Item — Material)
 > **Goal**: Minimal +1 longsword implementation. One enhancement AE on a weapon providing +1 enhancement bonus to attack and damage. Proves the enhancement bonus type exists and stacks correctly.
 
 ---

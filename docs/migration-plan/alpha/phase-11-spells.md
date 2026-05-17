@@ -1,9 +1,9 @@
-# Phase 17: Spells (Alpha)
+# Alpha Phase 11: Spells
 
 **Status**: 📋 Outlined
 
 > **Milestone**: Alpha
-> **Dependencies**: Phase 5 (Actor Foundation), Phase 6 (Roll Formulas), Phase 9 (Action System)
+> **Dependencies**: poc.6 (Actor Foundation), poc.7 (Roll Formulas), alpha.3 (Action System), alpha.9 (Buff AE Core — spell buffs are created as Buff AEs on the target actor)
 > **Goal**: Minimal spell system for Paladin spellcasting. Spell item type, one spellbook, 1st-level spell slots, cast action, and a small set of 1st-level Paladin spells. RAW implementation — Paladin is a divine prepared caster with a limited spell list.
 
 ---
@@ -19,7 +19,7 @@ The Paladin's spell system is the simplest possible test case for spellcasting:
 - No spontaneous casting, no arcane spell failure, no SR, no concentration
 - CL = Paladin level - 3 (minimum 1), so CL 2 at Paladin level 5
 
-Beta Phase 20 (Spells & Spellbooks Full) expands this to all caster types, all spell levels, SR, concentration, metamagic integration, and counterspelling.
+Beta Phase 2 (Spells & Spellbooks Full) expands this to all caster types, all spell levels, SR, concentration, metamagic integration, and counterspelling.
 
 ---
 
@@ -79,16 +79,17 @@ Casting a prepared spell is an action through the Action System (Phase 9):
 1. Player selects a prepared spell from the spellbook UI
 2. Cast action checks: spell slot available? Components met? (Alpha: no component enforcement)
 3. Spell effect resolves — type depends on the spell:
-   - **Bless**: Apply buff AE to self (and allies in range — Alpha: self only)
-   - **Protection from Evil**: Apply buff AE to touched target
-   - **Divine Favor**: Apply buff AE to self
+   - **Bless**: Apply Buff AE (alpha.9) to self (and allies in range — Alpha: self only)
+   - **Protection from Evil**: Apply Buff AE (alpha.9) to touched target
+   - **Divine Favor**: Apply Buff AE (alpha.9) to self
    - **Cure Light Wounds**: Roll 1d8 + CL healing, apply to touched target
 4. Slot marked as used
 5. Chat card shows: spell name, caster level, effect summary, any rolls
 
-**Buff application**: Spells that grant bonuses create temporary Active Effects with a duration. The AE includes:
-- `bonusType` for stacking resolution
-- `duration` for tracking (rounds/minutes — simplified in Alpha)
+**Buff application**: Spells that grant bonuses create Buff AEs (alpha.9 schema) on the target actor with a duration. The Buff AE includes:
+- `changes[]` with per-change `bonusType` for stacking resolution
+- `system.duration.{rounds, elapsed, deleteOnExpiry}` for tracking (alpha.9 uses simple round counts; beta.3 adds formula timelines)
+- `system.active: true` set at creation; toggle off to suppress without deletion
 - `flags.dnd35e.isSpellEffect: true` to distinguish from other AEs
 
 ---
@@ -134,7 +135,7 @@ Casting a prepared spell is an action through the Action System (Phase 9):
 
 ## 16.6 Alpha Scope Limitations
 
-What this phase does NOT implement (deferred to Beta Phase 20):
+What this phase does NOT implement (deferred to beta.2 Spells & Spellbooks Full):
 - Multiple spellbooks (Wizard/Cleric multiclass)
 - Spell levels 2-9
 - Arcane casting, spontaneous casting
