@@ -1,5 +1,5 @@
 <template>
-  <div class="form-group" :class="formGroupClasses" :hidden="!isFieldVisible">
+  <div class="form-group" :class="formGroupClasses" :hidden="!isFieldVisible" :data-field-path="props.fieldPath || undefined">
     <div v-if="hasLabel" class="form-group-label">
       <label :title="labelTooltip">
         {{ resolvedLabel }}
