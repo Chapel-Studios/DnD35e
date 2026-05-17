@@ -120,19 +120,18 @@ Initial mode is role-based: GM starts in `edit`, non-GM in `play`.
 ### Active state
 The currently selected button carries `.active`. Clicking another button moves `.active` to it synchronously (no re-render needed for value changes).
 
-### `hasSecrets` refresh semantics
-Two gotchas to remember when mutating Secret AEs in a test:
+### Secret AE removal — reactivity contract
+Two facts to remember when mutating Secret AEs in a test:
 
-1. **`hasSecrets` is sampled in `_onRender`, not Vue-reactive.** If you add or remove a Secret AE while a sheet is open, you must call `rerenderSheet(page, uuid)` for the True button to appear/disappear.
+1. **The True button updates automatically.** Creating, updating, or deleting a Secret AE on an Item fires the `createActiveEffect` / `updateActiveEffect` / `deleteActiveEffect` hook chain, which calls `item.sheet.render()` via `refreshOwningItemForSecret` (`src/entities/activeEffects/registration.mts`). `_onRender` re-samples `hasSecrets` and pushes it to the store, so the bar refreshes without any explicit `rerenderSheet` call. If you ever find yourself needing a manual rerender to surface a Secret-AE change, **that's a bug in the hook, not the test**.
 2. **Disabled Secret AEs still count as secrets.** The "does this doc have secrets?" check filters by `effect.type === 'secret'` only — it does not inspect `disabled`. To make the True button go away you must `.delete()` the AE (or change its type). Toggling `disabled` keeps it.
 
 ```ts
-// Correct: delete + force re-render to flip hasSecrets to false
+// Delete is sufficient — the hook chain triggers the sheet re-render for us.
 await page.evaluate(async (id) => {
   const ae = await (globalThis as any).fromUuid(id);
   await ae.delete();
 }, secretUuid);
-await rerenderSheet(page, weaponUuid);
 await expect.poll(() => trueBtn.count()).toBe(0);
 ```
 
