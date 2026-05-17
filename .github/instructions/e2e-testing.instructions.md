@@ -19,7 +19,6 @@ These tests drive a **real Foundry v14 instance** (started by `playwright.config
 | `familiarDropdown.mts` | `openFamiliar`, `selectFamiliarOption`, `readFamiliarOptionTitles`, `dismissFamiliar` |
 | `materialSheet.mts` | Material-specific sheet navigation (tab switching, changes-tab assertions) |
 | `setSystemSetting.mts` | Write a `game.settings` value through Foundry's API |
-| `withTestWorld.mts` | Higher-order wrapper for tests that need a fully-fresh world |
 
 **Rule**: If you find yourself writing `page.evaluate(...)` inline more than once for the same operation, lift it into a helper. The helper module owns the typing and the Foundry-side error messages.
 

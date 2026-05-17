@@ -20,7 +20,13 @@ export async function setFieldOverride (
   value: FieldVisibility | FieldEditability
 ): Promise<void> {
   const encoded = encodeFieldPath(fieldPath);
-  await page.evaluate(async ({ docUuid, encoded, key, value, flagKey }) => {
+  await page.evaluate(async ({ docUuid, encoded, key, value, flagKey }: {
+    docUuid: string;
+    encoded: string;
+    key: FieldOverrideKey;
+    value: FieldVisibility | FieldEditability;
+    flagKey: string;
+  }) => {
     const doc = await (globalThis as any).fromUuid(docUuid);
     if (!doc) throw new Error(`setFieldOverride: doc not found at ${docUuid}`);
     const flag = doc.getFlag('dnd35e', flagKey) ?? {};
@@ -41,7 +47,12 @@ export async function clearFieldOverride (
   key: FieldOverrideKey
 ): Promise<void> {
   const encoded = encodeFieldPath(fieldPath);
-  await page.evaluate(async ({ docUuid, encoded, key, flagKey }) => {
+  await page.evaluate(async ({ docUuid, encoded, key, flagKey }: {
+    docUuid: string;
+    encoded: string;
+    key: FieldOverrideKey;
+    flagKey: string;
+  }) => {
     const doc = await (globalThis as any).fromUuid(docUuid);
     if (!doc) throw new Error(`clearFieldOverride: doc not found at ${docUuid}`);
     const flag = doc.getFlag('dnd35e', flagKey) ?? {};
