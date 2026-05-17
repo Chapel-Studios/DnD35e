@@ -451,17 +451,15 @@ The view-mode bar is a cross-cutting UI primitive every sheet renders, owned by 
 
 *(Originally deferred at the end of Cycle G under the rationale "the phase that next touches the mode bar." Reviewed during phase closure: that's scope-leakage from cycle-level discipline into phase-level deferral. The mode bar is testing-infrastructure work; it belongs in Phase 4.)*
 
-- [x] `tests/e2e/view-mode-bar.spec.ts`: 6 tests against a weapon (identifiable, owner-permissioned). Tests select buttons by FontAwesome icon class (`i.fa-dice-d20` / `i.fa-eye` / `i.fa-pen-to-square`) for stability across localization.
+- [ ] `tests/e2e/view-mode-bar.spec.ts`: 6 tests against a weapon (identifiable, owner-permissioned). Tests select buttons by FontAwesome icon class (`i.fa-dice-d20` / `i.fa-eye` / `i.fa-pen-to-square`) for stability across localization.
   1. **GM, no secrets**: bar shows exactly the Edit and Play buttons; True button absent.
-  2. **GM, with Secret AE attached**: bar shows all three buttons (Edit, Play, True). Deleting the Secret AE + forcing a sheet re-render hides the True button.
+  2. **GM, with Secret AE attached**: bar shows all three buttons (Edit, Play, True). Removing the Secret AE (set `disabled: true`) re-renders the bar and removes the True button.
   3. **Player, owner permission**: bar shows Edit (owner can edit) and Play; True button absent regardless of secrets.
   4. **Player, observer-only permission**: bar shows Play only; Edit and True absent.
   5. **Active state**: the button matching the current mode carries `.active`; clicking another button moves `.active` to it.
   6. **HeaderNameField swap**: in `edit` mode the `system.nameFormula` FormulaFormGroup is in the DOM and `.item-name` is not; clicking Play swaps to `.item-name` + hides the FormulaFormGroup; clicking Edit swaps back.
 
   **Scope note**: Value-correctness across modes (masked play vs unmasked true) is already covered by `secret-ae.spec.ts`. This spec covers **bar presence, gating, and DOM-surface swap** only — the structural contract — not value resolution.
-
-  **Behaviour pinned by this spec**: (a) `hasSecrets` is sampled in `_onRender` (not Vue-reactive), so structural mode-bar updates require a sheet re-render; (b) disabled Secret AEs still count as secrets (intentional — GM can re-enable), so True only disappears on full deletion, not toggle.
 
 > **Deferred E2E** (intentionally out of scope for Story 6, recorded for the owning phase to pick up):
 > - Drag-drop AE onto Weapon (material application via drag rather than programmatic create) — deferred to **poc.5** (Compendium Foundation), which is where drag-from-pack flows first land
