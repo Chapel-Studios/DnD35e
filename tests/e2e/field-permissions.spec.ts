@@ -2,7 +2,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 import { clearWorld, createItem } from './helpers/documents.mjs';
-import { clearFieldOverride, setFieldOverride } from './helpers/fieldOverrides.mjs';
+import { clearFieldOverride, setFieldOverride, waitForFieldOverride } from './helpers/fieldOverrides.mjs';
 import { gotoGame, loginAs } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet, rerenderSheet } from './helpers/sheets.mjs';
 
@@ -102,6 +102,7 @@ test.describe('field-permissions round-trip', () => {
 
     // GM applies gmOnly editability; FormGroup switches to the readonly slot.
     await setFieldOverride(page, itemUuid, FIELD_PATH, 'editability', 'gmOnly');
+    await waitForFieldOverride(playerPage, itemUuid, FIELD_PATH, 'editability', 'gmOnly');
     await rerenderSheet(playerPage, itemUuid);
     await switchToEditMode(playerPage, playerSheet).catch(() => {});
     await expect.poll(() => quantityInput(playerPage, playerSheet).count()).toBe(0);
@@ -109,6 +110,7 @@ test.describe('field-permissions round-trip', () => {
 
     // Clear the override; the input comes back (edit mode is preserved).
     await clearFieldOverride(page, itemUuid, FIELD_PATH, 'editability');
+    await waitForFieldOverride(playerPage, itemUuid, FIELD_PATH, 'editability', null);
     await rerenderSheet(playerPage, itemUuid);
     await switchToEditMode(playerPage, playerSheet).catch(() => {});
     await expect.poll(() => quantityInput(playerPage, playerSheet).count()).toBe(1);
