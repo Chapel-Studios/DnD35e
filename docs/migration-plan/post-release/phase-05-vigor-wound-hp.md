@@ -1,4 +1,4 @@
-# Phase 40: Vigor/Wound Variant HP
+# Post-Release Phase 5: Vigor/Wound Variant HP
 
 | Field | Value |
 |-------|-------|

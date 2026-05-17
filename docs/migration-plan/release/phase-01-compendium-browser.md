@@ -1,4 +1,4 @@
-# Phase 29: Compendium Browser & Management
+# Release Phase 1: Compendium Browser & Management
 
 **Status**: 📖 Rough Sketch (200+ item checklist, compendium browser, version tracking)
 

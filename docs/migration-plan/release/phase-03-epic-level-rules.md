@@ -1,4 +1,4 @@
-# Phase 35: Epic Level Rules
+# Release Phase 3: Epic Level Rules
 
 | Field | Value |
 |-------|-------|
@@ -15,7 +15,7 @@ Characters beyond 20th level enter the **epic** tier. BAB and saves switch to a 
 
 ---
 
-## 35.1 Epic Level Detection
+## 3.1 Epic Level Detection
 
 The epic threshold is **total base + prestige class levels ≥ 21**. Racial HD do not count toward this threshold (matching SRD and D35E behavior).
 
@@ -30,7 +30,7 @@ The level-up flow (Phase 9 §8.6) needs no structural change — epic characters
 
 ---
 
-## 35.2 Epic BAB & Saves
+## 3.2 Epic BAB & Saves
 
 ### BAB
 
@@ -54,7 +54,7 @@ The class AE generation in `prepareDerivedData()` (Phase 9) splits at the epic t
 
 ---
 
-## 35.3 Epic Milestones
+## 3.3 Epic Milestones
 
 | Milestone | Non-Epic Schedule | Epic Schedule |
 |-----------|------------------|---------------|
@@ -67,7 +67,7 @@ The level-up flow detects epic feat milestones at `(totalClassLevels - 20) % 3 =
 
 ---
 
-## 35.4 Epic Feats
+## 3.4 Epic Feats
 
 Epic feats use the existing `FeatSystemModel` (Phase 11) with an `isEpic: true` flag — not a separate item type. This matches D35E's `itemDescription.epic` field approach.
 
@@ -90,7 +90,7 @@ The prerequisite registry (Phase 9) already supports all these check types — n
 
 ---
 
-## 35.5 Epic Spellcasting
+## 3.5 Epic Spellcasting
 
 Epic spells (level 10+) use the **Spellcraft DC** system, not standard spell slots.
 
@@ -120,7 +120,7 @@ Epic spells appear in a dedicated "Epic" section of the spellbook (matching D35E
 
 ---
 
-## 35.6 Epic Enhancements & DR
+## 3.6 Epic Enhancements & DR
 
 ### Epic Weapons for DR
 
@@ -132,7 +132,7 @@ A new DR type entry: `epic`. Only epic weapons bypass it. Fits into the existing
 
 ---
 
-## 35.7 D35E Migration Notes
+## 3.7 D35E Migration Notes
 
 | D35E Feature | dnd35e Equivalent |
 |--------------|-------------------|

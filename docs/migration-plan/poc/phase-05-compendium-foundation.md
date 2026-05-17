@@ -1,4 +1,4 @@
-# Phase 5: Compendium Foundation
+# POC Phase 5: Compendium Foundation
 
 **Status**: ✅ Approved (pack pipeline, origin tracking, authoring workflow, Foundry integration)
 

@@ -1,4 +1,4 @@
-# Phase 24: Area Effects & Auras
+# Beta Phase 7: Area Effects & Auras
 
 **Status**: 📖 Rough Sketch (350+ item checklist, AoE templates, aura proximity)
 

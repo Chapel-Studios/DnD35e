@@ -1,4 +1,4 @@
-# Phase 26: Metamagic
+# Beta Phase 9: Metamagic
 
 **Status**: 📖 Rough Sketch (200+ item checklist, metamagic feats, PreRollDialog)
 

@@ -1,4 +1,4 @@
-# Phase 14: Combat Tracker & Turn Economy
+# Alpha Phase 7: Combat Tracker & Turn Economy
 
 **Status**: 📋 Outlined (TurnActionBudget, action economy state machine)
 

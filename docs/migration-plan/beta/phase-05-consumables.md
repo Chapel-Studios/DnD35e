@@ -1,4 +1,4 @@
-# Phase 22: Consumables
+# Beta Phase 5: Consumables
 
 **Status**: 📖 Rough Sketch (300+ item checklist, consumable types, use chains)
 

@@ -1,4 +1,4 @@
-# Phase 30: Content Migration
+# Release Phase 6: Content Migration
 
 **Status**: 📖 Rough Sketch (300+ item checklist, D35E→dnd35e migration, world transformer)
 

@@ -1,4 +1,4 @@
-# Phase 44: Random Treasure Generation
+# Post-Release Phase 9: Random Treasure Generation
 
 | Field | Value |
 |-------|-------|

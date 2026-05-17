@@ -1,4 +1,4 @@
-# Phase 10: Action System
+# Alpha Phase 3: Action System
 
 **Status**: 📋 Outlined (ActionDataModel, execution engine, chains)
 

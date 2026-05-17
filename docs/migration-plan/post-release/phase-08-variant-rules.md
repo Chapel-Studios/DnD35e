@@ -1,4 +1,4 @@
-# Phase 43: Variant Rules (Unearthed Arcana OGC)
+# Post-Release Phase 8: Variant Rules (Unearthed Arcana OGC)
 
 | Field | Value |
 |-------|-------|

@@ -1,4 +1,4 @@
-# Phase 1: Item Foundation (Weapon PoC)
+# POC Phase 1: Item Foundation (Weapon PoC)
 
 **Status**: **COMPLETE** (April 16, 2026)
 

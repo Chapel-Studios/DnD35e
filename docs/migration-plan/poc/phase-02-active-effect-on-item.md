@@ -1,4 +1,4 @@
-# Phase 2: Active Effect on Item (Material)
+# POC Phase 2: Active Effect on Item (Material)
 
 **Status**: 🔶 In Progress
 

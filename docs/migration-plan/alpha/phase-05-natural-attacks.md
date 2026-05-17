@@ -1,4 +1,4 @@
-# Phase 12: Natural & Special Attacks
+# Alpha Phase 5: Natural & Special Attacks
 
 **Status**: 📖 Rough Sketch (350+ item checklist, iterative attacks, TWF)
 

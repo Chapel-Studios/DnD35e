@@ -1,4 +1,4 @@
-# Phase 20: Spells & Spellbooks (Full)
+# Beta Phase 2: Spells & Spellbooks (Full)
 
 **Status**: 📖 Rough Sketch (200+ item checklist, spellbooks, spell slots)
 

@@ -1,4 +1,4 @@
-# Phase 3: Localization Pattern
+# POC Phase 3: Localization Pattern
 
 **Status**: ✅ Complete
 

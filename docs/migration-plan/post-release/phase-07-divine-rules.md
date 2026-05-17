@@ -1,4 +1,4 @@
-# Phase 42: Divine Rules (Divine Ranks & Powers)
+# Post-Release Phase 7: Divine Rules (Divine Ranks & Powers)
 
 | Field | Value |
 |-------|-------|

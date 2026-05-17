@@ -1,4 +1,4 @@
-# Phase 19: Equipment, Loot & Bonus Stacking
+# Beta Phase 1: Equipment, Loot & Bonus Stacking
 
 **Status**: 📖 Rough Sketch (250+ item checklist, AC calculations, equipment slots)
 

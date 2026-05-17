@@ -1,4 +1,4 @@
-# Phase 32: User Guide & Documentation Finalization + SRD Housing
+# Release Phase 2: User Guide & Documentation Finalization + SRD Housing
 
 **Status**: 📖 Rough Sketch (350+ item checklist, user guide, SRD housing)
 

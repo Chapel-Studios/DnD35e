@@ -1,4 +1,4 @@
-# Phase 37: Cards
+# Release Phase 5: Cards
 
 **Status**: 📖 Rough Sketch (200+ item checklist, card types, counter mechanics)
 

@@ -1,4 +1,4 @@
-# Phase 11: Feats (Alpha)
+# Alpha Phase 4: Feats (Alpha)
 
 **Status**: 📋 Outlined (Feat types, EffectTriggers, passive/toggle/trigger patterns)
 
