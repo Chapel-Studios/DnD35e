@@ -384,10 +384,10 @@ Settings structural cleanup (Group 5f):
 Every numbered task ends with `npm run build` exit 0. Failures block the next task. Use `vscode_renameSymbol` for symbol renames where available (semantically safe), `git mv` for file/directory moves, `grep_search` + `replace_string_in_file` for stragglers.
 
 ### Group 1: Tab rename
-- [ ] G1.1 — `git mv src/entities/items/baseItem/sheet/tabs/Effects.vue ItemEffects.vue`
-- [ ] G1.2 — Update import in `src/entities/items/baseItem/sheet/tabs/index.mts`
-- [ ] G1.3 — Workspace `grep_search` for `Effects.vue`; fix any remaining references
-- [ ] G1.4 — `npm run build` clean; commit
+- [x] G1.1 — `git mv src/entities/items/baseItem/sheet/tabs/Effects.vue ItemEffects.vue`
+- [x] G1.2 — Update import in `src/entities/items/baseItem/sheet/tabs/index.mts`
+- [x] G1.3 — Workspace `grep_search` for `Effects.vue`; fix any remaining references
+- [x] G1.4 — `npm run build` clean; commit
 
 ### Group 2: `DnD` → `Dnd` casing
 - [ ] G2.1 — Rename file `DnD35eActiveEffect.mts` → `Dnd35eActiveEffect.mts` (use temp-name two-step on Windows)
