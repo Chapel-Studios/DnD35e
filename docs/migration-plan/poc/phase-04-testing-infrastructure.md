@@ -366,11 +366,13 @@ The field-override cascade (most-restrictive-wins merge across the ancestor chai
 - [x] Unit: parent `gmOnly` editability + child `normal` editability → `gmOnly` (parent restriction propagates)
 - [x] Unit: visibility and editability merge independently per property
 - [x] Unit: deep ancestor chain (3+ levels) — most-restrictive across the whole chain wins
-- [ ] Create `tests/unit/components/setup.ts` with `createMockDocumentStore()` and `createMockRenderModeStore()` factories (only properties the tested components actually touch; factory shape parallels the schema-tester factory — self-contained, no shared state)
-- [ ] Smoke (`tests/unit/components/FormGroup.test.mts`, `// @vitest-environment happy-dom`): given `getFieldOverride` returns `gmOnly` visibility, non-GM user sees nothing; GM sees the field
-- [ ] Smoke (`tests/unit/components/NumberFormGroup.test.mts`, `// @vitest-environment happy-dom`): `#controls` slot content renders; `editable` scoped slot prop reflects the FormGroup override result
+- [x] Create `tests/unit/components/setup.ts` with `createMockDocumentStore()` and `createMockRenderModeStore()` factories (only properties the tested components actually touch; factory shape parallels the schema-tester factory — self-contained, no shared state)
+- [x] Smoke (`tests/unit/components/FormGroup.test.mts`, `// @vitest-environment happy-dom`): given `getFieldOverride` returns `gmOnly` visibility, non-GM user sees nothing; GM sees the field
+- [x] Smoke (`tests/unit/components/NumberFormGroup.test.mts`, `// @vitest-environment happy-dom`): `#controls` slot content renders; `editable` scoped slot prop reflects the FormGroup override result
 
 > **Refactor note (Story 5 cycle 1)**: The cascade was extracted into a new file [`cascadeFieldOverride.mts`](../../../src/entities/components/CoreMixin/sheet/stores/cascadeFieldOverride.mts) co-located with `FieldOverridesStore`. The store's `getFieldOverride` is now a one-liner calling `cascadeFieldOverride(path, key, resolveAtPath)`. The extracted helper takes a `ResolveAtPath` callback, so unit tests pass a synthetic table-driven resolver — no document, schema, or Vue reactivity needed. Same pattern as Story 3 Layer A's `deriveIdentifiableState` extraction.
+
+> **Component test isolation (Story 5 cycle 2)**: Mounting any FormGroup variant transitively imports `@ec/CoreMixin/index.mjs` — a heavy barrel that pulls in document mixins, sheet stores, and Vue app classes that won't initialise cleanly under unit env stubs. Component tests `vi.mock` the CoreMixin barrel to expose only the two injection symbols (`DocumentSheetStoreSymbol`, `RenderModeStoreSymbol`) using `Symbol.for(...)` (the global registry). The `tests/unit/components/setup.ts` mock-store factories use the **same** registry keys so injected stores reach the components. `FieldControls` is replaced with a slot-rendering stub so `#controls` content survives. This isolation pattern is reusable for every future FormGroup variant test.
 
 **Story 6 — E2E Backfill for poc.1 & poc.2 Features**
 

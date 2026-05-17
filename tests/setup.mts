@@ -17,6 +17,7 @@ const i18nFormat = (key: string, _data?: Record<string, unknown>): string => key
   i18n: {
     localize: vi.fn(i18nLocalize),
     format: vi.fn(i18nFormat),
+    has: vi.fn((_key: string) => false),
   },
   settings: {
     get: vi.fn(),
