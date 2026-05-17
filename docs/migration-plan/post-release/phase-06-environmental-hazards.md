@@ -1,4 +1,4 @@
-# Phase 41: Environmental Hazards & Overland Travel
+# Post-Release Phase 6: Environmental Hazards & Overland Travel
 
 | Field | Value |
 |-------|-------|

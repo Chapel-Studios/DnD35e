@@ -1,4 +1,4 @@
-# Phase 4: Advanced Classes
+# Beta Phase 4: Advanced Classes
 
 **Status**: 📄 Stub
 

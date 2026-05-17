@@ -1,4 +1,4 @@
-# Phase 33: 3rd Party Art Module Support
+# Post-Release Phase 1: 3rd Party Art Module Support
 
 **Status**: 📖 Rough Sketch (300+ item checklist, art module lookup, GM config)
 

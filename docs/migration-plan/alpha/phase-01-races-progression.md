@@ -1,4 +1,4 @@
-# Phase 8: Races
+# Alpha Phase 1: Races
 
 **Status**: 📋 Outlined (Grant system, ability adjustments, racial traits, progression component)
 

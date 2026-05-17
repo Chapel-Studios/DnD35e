@@ -1,4 +1,4 @@
-# Phase 2 Task Decomposition: Active Effect on Item (Material)
+# POC Phase 2 Task Decomposition: Active Effect on Item (Material)
 
 **Milestone**: POC  
 **Phase Duration**: N/A (structure, no timeline)  

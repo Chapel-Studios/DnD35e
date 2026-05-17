@@ -1,4 +1,4 @@
-# Phase 7: Roll Formulas & Custom Rolls
+# POC Phase 7: Roll Formulas & Custom Rolls
 
 **Status**: 📋 Outlined (FormulaFamiliar system, action formulas)
 

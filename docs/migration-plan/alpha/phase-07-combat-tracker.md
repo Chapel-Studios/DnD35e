@@ -1,4 +1,4 @@
-# Phase 14: Combat Tracker & Turn Economy
+# Alpha Phase 7: Combat Tracker & Turn Economy
 
 **Status**: 📋 Outlined (TurnActionBudget, action economy state machine)
 
@@ -274,7 +274,7 @@ Per Phase 8 (§18.13), the combat tracker respects these settings:
 - [ ] Implement `startOfTurn(combatant)` hook
 - [ ] Reset `system.turnBudget` to fresh state via `combatant.update()` (persisted to DB)
 - [ ] Set `system.turnBudget.movementBudget` from actor speed: `combatant.actor.system.attributes.speed.land`
-- [ ] Process start-of-turn effects: duration countdowns, buff expirations (stub for Phase 20)
+- [ ] Process start-of-turn effects: duration countdowns, buff expirations (Buff AE tick implemented in alpha.9 — increment `system.duration.elapsed` and expire per `deleteOnExpiry`)
 - [ ] Set `system.turnBudget.flatFooted`: true if first turn
 - [ ] Emit 'phaseStartOfTurn' event for listeners (conditions, auras, etc.)
 - [ ] Implement `duringTurn(action)` hook for each action spent

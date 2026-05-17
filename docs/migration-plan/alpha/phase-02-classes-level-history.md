@@ -1,4 +1,4 @@
-# Phase 9: Classes & Level History
+# Alpha Phase 2: Classes & Level History
 
 **Status**: 📋 Outlined (Class progression, multiclass stacking, level history, edit rules)
 

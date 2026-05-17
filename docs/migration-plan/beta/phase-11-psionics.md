@@ -1,4 +1,4 @@
-# Phase 28: Psionics
+# Beta Phase 11: Psionics
 
 **Status**: 📖 Rough Sketch (250+ item checklist, power points, augmentation)
 

@@ -1,6 +1,10 @@
-# Phase 21: Buffs & Conditions (Full)
+# Beta Phase 3: Buff AE Expansion & Conditions (Full)
 
 **Status**: 📖 Rough Sketch (500+ item checklist, 27 bonus types, all conditions)
+
+> **Predecessors**: alpha.8 (Conditions — Prone, fear stub), alpha.9 (Buff AE Core — minimum Buff AE schema and lifecycle), beta.1 (Equipment & Loot).
+>
+> **Builds on alpha.9.** Alpha.9 introduced the minimum Buff AE surface (`system.active`, `system.duration.{rounds, elapsed, deleteOnExpiry}`, `description`, plus inherited `changes[]` with `bonusType`). This phase **extends** the same `BuffSystemModel` with the full schema: `buffType` taxonomy, formula-driven timelines, damage pools, shapechange, `hideFromToken`, and the dedicated "Buffs" section on the character sheet. It also performs the D35E `buff` item → Buff AE **data migration**.
 
 > **Milestone**: Beta  
 > **Dependencies**: Phase 13 (Conditions POC), Phase 15 (Equipment)  
@@ -10,7 +14,7 @@
 
 ## 16.1 Buff Active Effect Type
 
-**Buff is an Active Effect, not an Item.** D35E `buff` items are migrated to Buff AEs during data migration (Phase 27). The Buff AE carries its own timeline, damage pool, and activation state — no item→AE indirection.
+**Buff is an Active Effect, not an Item.** D35E `buff` items are migrated to Buff AEs during this phase's data migration. The Buff AE carries its own timeline, damage pool, and activation state — no item→AE indirection. Alpha.9 introduced the minimum Buff AE surface; this phase adds the full schema and migrates legacy data.
 
 ```
 BuffSystemModel extends Dnd35eActiveEffectSystemModel

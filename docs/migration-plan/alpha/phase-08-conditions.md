@@ -1,4 +1,4 @@
-# Phase 14 — Conditions (Minimal)
+# Alpha Phase 8 — Conditions (Minimal)
 
 **Status**: 📋 Outlined (Prone condition, condition system, maneuver→condition pipeline)
 
@@ -8,7 +8,7 @@
 
 ---
 
-## 14.1 Why Prone in POC
+## 8.1 Why Prone in POC
 
 The POC includes the Trip combat maneuver (Phase 8, §7.7). For trip to be meaningful, the Prone condition must exist and affect combat stats. This phase proves the full pipeline:
 
@@ -20,11 +20,11 @@ Trip action chain (Phase 8)
   → Standing up = move action (TurnActionBudget cost)
 ```
 
-Phase 21 (Buffs & Conditions Full) builds on this foundation to implement all 25+ D&D 3.5e conditions.
+Beta Phase 3 (Buff AE Expansion & Conditions Full) builds on this foundation to implement all 25+ D&D 3.5e conditions.
 
 ---
 
-## 14.2 Prone Condition Definition
+## 8.2 Prone Condition Definition
 
 ```typescript
 // src/module/config/conditions.ts
@@ -53,7 +53,7 @@ export const CONDITIONS = {
 
 ---
 
-## 14.3 Condition as Active Effect
+## 8.3 Condition as Active Effect
 
 Conditions are implemented as Active Effects with a `conditionType` flag:
 
@@ -72,11 +72,11 @@ await target.createEmbeddedDocuments("ActiveEffect", [{
 }]);
 ```
 
-**Key pattern**: Conditions are Active Effects, not items. They use the same AE pipeline established in Phase 2. The `isCondition` flag distinguishes them from duration buffs (Phase 21) and material effects (Phase 2).
+**Key pattern**: Conditions are Active Effects, not items. They use the same AE pipeline established in poc.2. The `isCondition` flag distinguishes them from duration buffs (Buff AE Core in alpha.9, expansion in beta.3) and material effects (poc.2).
 
 ---
 
-## 14.4 Standing Up Action
+## 8.4 Standing Up Action
 
 The recovery action is a generated action that appears in the character's available actions when they have the Prone condition:
 
@@ -101,7 +101,7 @@ This generates a "Stand Up" action available in the ActionHUD, costs a move acti
 
 ---
 
-## 14.5 Integration Points
+## 8.5 Integration Points
 
 | System | How Prone Integrates |
 |--------|---------------------|
@@ -114,7 +114,7 @@ This generates a "Stand Up" action available in the ActionHUD, costs a move acti
 
 ---
 
-## 14.6 Files to Create
+## 8.6 Files to Create
 
 | File | Purpose |
 |------|---------|
@@ -123,7 +123,7 @@ This generates a "Stand Up" action available in the ActionHUD, costs a move acti
 | `src/module/vue/components/combat/ConditionDisplay.vue` | Shows active conditions on actor sheet |
 | `lang/en/conditions.json` | Localization for condition names and descriptions |
 
-## 14.6.1 Actor Model Changes
+## 8.6.1 Actor Model Changes
 
 This phase adds condition tracking to the actor model. Phase 5's actor sheet already shows Active Effects (Effects tab), but condition-specific UI is introduced here:
 
@@ -136,15 +136,15 @@ No condition flags exist on the actor data schema — conditions are purely AE-d
 
 ---
 
-## 14.7 Deferred to Phase 21
+## 8.7 Deferred to Beta Phase 3
 
-Everything listed here is deferred to Phase 21 (Buffs & Conditions Full):
+Everything listed here is deferred to beta.3 (Buff AE Expansion & Conditions Full):
 - All other conditions (Blinded, Stunned, Paralyzed, Exhausted, etc.)
 - Condition stacking and interaction rules (e.g., Exhausted + Fatigued)
 - Ability damage/drain as condition-like effects
 - Fear track (Shaken → Frightened → Panicked)
 - Duration-based condition expiry
-- Buff item type and temporary enhancement bonuses
+- Buff AE expansion fields (`buffType` taxonomy, formula-driven timelines, damage pools, shapechange) — alpha.9 introduces the minimal Buff AE; beta.3 expands it
 
 ---
 

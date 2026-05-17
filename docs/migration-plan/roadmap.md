@@ -189,7 +189,7 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 
 ### Wave: Alpha — Paladin vs Dragon
 
-`docs/migration-plan/alpha/` | alpha.1–alpha.11
+`docs/migration-plan/alpha/` | alpha.1–alpha.12
 
 **Goal**: A playable combat scenario proving "one of everything." A level 5 Paladin (Human) with a +1 longsword vs a Young Adult Black Dragon.
 
@@ -203,9 +203,10 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 | 6 | [Class Features](alpha/phase-06-class-features.md) | 📋 Outlined | alpha.2, alpha.3, alpha.4 | Paladin: Divine Grace (CHA→saves), Smite Evil (per-day toggle), Lay on Hands (pool healing), Aura of Courage (+4 morale vs fear) |
 | 7 | [Combat Tracker & Turn Economy](alpha/phase-07-combat-tracker.md) | 📋 Outlined | alpha.3 | Initiative, TurnActionBudget state machine, progressive full attack, token movement with action cost, turn hooks, flat-footed |
 | 8 | [Conditions](alpha/phase-08-conditions.md) | 📋 Outlined | alpha.3 | Prone (trip pipeline), Frightful Presence → Shaken/Frightened (fear track stub), condition manager, token icons, stand-up action |
-| 9 | [Breath Weapon & Area Templates](alpha/phase-09-breath-weapon.md) | 📋 Outlined | alpha.3, alpha.7 | Line and cone MeasuredTemplate placement, Reflex save workflow, area damage application, breath weapon recharge |
-| 10 | [Spells](alpha/phase-10-spells.md) | 📋 Outlined | poc.6, poc.7, alpha.3 | Spell item type, Paladin spellbook, 1st-level slots, cast action, Bless/Protection from Evil/Divine Favor/Cure Light Wounds |
-| 11 | [Enhancement](alpha/phase-11-enhancements.md) | 📋 Outlined | poc.1, poc.2 | +1 longsword: minimal EnhancementSystemModel, one AE with +1 enhancement to attack/damage |
+| 9 | [Buff AE Core](alpha/phase-09-buff-ae-core.md) | 📖 Rough Sketch | poc.2, poc.6 | Buff AE subtype: `BuffSystemModel` (active, round-based duration, description), combat-tracker turn-start tick → expiry, deactivation suppression. Minimum surface for alpha.11 spell buffs. Stacking collision proof (Aura of Courage suppresses Bless on fear saves). |
+| 10 | [Breath Weapon & Area Templates](alpha/phase-10-breath-weapon.md) | 📋 Outlined | alpha.3, alpha.7 | Line and cone MeasuredTemplate placement, Reflex save workflow, area damage application, breath weapon recharge |
+| 11 | [Spells](alpha/phase-11-spells.md) | 📋 Outlined | poc.6, poc.7, alpha.3, alpha.9 | Spell item type, Paladin spellbook, 1st-level slots, cast action, Bless/Protection from Evil/Divine Favor/Cure Light Wounds |
+| 12 | [Enhancement](alpha/phase-12-enhancements.md) | 📋 Outlined | poc.1, poc.2 | +1 longsword: minimal EnhancementSystemModel, one AE with +1 enhancement to attack/damage |
 
 **Exit criteria**: A GM can create a level 5 Paladin (Human) with a +1 longsword and a Young Adult Black Dragon, enter combat, roll initiative, take turns with the progressive full attack state machine, apply Power Attack per-attack, get a Cleave bonus attack on kill, activate Smite Evil via PreRollDialog, use Lay on Hands to heal, cast Bless and Divine Favor (RAW spell slots), see morale stacking collision on fear saves (Aura of Courage +4 suppresses Bless +1), trip an enemy to apply Prone, use a breath weapon (line template with Reflex save), trigger Frightful Presence (Will save vs fear with Aura of Courage granting +4 morale), see natural attacks use primary/secondary rules, and view all results in per-attack chat cards.
 
@@ -224,13 +225,13 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
 | 1 | [Equipment & Loot](beta/phase-01-equipment-loot.md) | 📖 Rough Sketch | poc.6, poc.7 | Armor, Shield, Equipment, Loot, Container, Ammo. Full AC calculation. ACP, spell failure, encumbrance. |
-| 2 | [Spells & Spellbooks (Full)](beta/phase-02-spells-spellbooks.md) | 📖 Rough Sketch | poc.7, alpha.3, alpha.10 | All caster types, all spell levels, SR, concentration, counterspelling stubs. Multiple spellbooks. |
-| 3 | [Buffs & Conditions (Full)](beta/phase-03-buffs-conditions.md) | 📖 Rough Sketch | alpha.8, beta.1 | All 25+ conditions, BuffSystemModel AE, ability damage/drain, energy drain, fast healing, regeneration, disease, full fear track |
+| 2 | [Spells & Spellbooks (Full)](beta/phase-02-spells-spellbooks.md) | 📖 Rough Sketch | poc.7, alpha.3, alpha.11 | All caster types, all spell levels, SR, concentration, counterspelling stubs. Multiple spellbooks. |
+| 3 | [Buff AE Expansion & Conditions (Full)](beta/phase-03-buffs-conditions.md) | 📖 Rough Sketch | alpha.8, alpha.9, beta.1 | Buff AE expansion over alpha.9 (`buffType` taxonomy, timeline formulas, damage pools, shapechange, dedicated Buffs sheet section), all 25+ conditions, ability damage/drain, energy drain, fast healing, regeneration, disease, full fear track, D35E `buff` item → Buff AE data migration |
 | 4 | [Advanced Classes](beta/phase-04-advanced-classes.md) | 📄 Stub | alpha.2 | Prestige classes, NPC classes, racial paragon, substitution levels. Stub — design not started. |
 | 5 | [Consumables](beta/phase-05-consumables.md) | 📖 Rough Sketch | alpha.3 | Potion, scroll, wand, poison. Action snapshot pattern. Charges/uses. Splash weapons. |
 | 6 | [Advanced Actors](beta/phase-06-advanced-actors.md) | 📖 Rough Sketch | poc.6, alpha.1, alpha.2 | NPC, Trap, Object actor types. Companion bond system (familiar, animal companion, mount, summon, cohort). Portrait Bar (Party HUD). |
-| 7 | [Area Effects & Auras (Full)](beta/phase-07-area-effects-auras.md) | 📖 Rough Sketch | alpha.9, beta.2 | Foundry V14 Region behaviors, persistent auras, AE delivery, duration tracking, DoT. Aura of Courage expands to affect allies in 10ft. |
-| 8 | [Enhancements (Full)](beta/phase-08-enhancements.md) | 📖 Rough Sketch | alpha.11, beta.1 | +1 through +5, special weapon/armor abilities, cursed items (minimal). Magic Weapon spell stacking proof. |
+| 7 | [Area Effects & Auras (Full)](beta/phase-07-area-effects-auras.md) | 📖 Rough Sketch | alpha.10, beta.2 | Foundry V14 Region behaviors, persistent auras, AE delivery, duration tracking, DoT. Aura of Courage expands to affect allies in 10ft. |
+| 8 | [Enhancements (Full)](beta/phase-08-enhancements.md) | 📖 Rough Sketch | alpha.12, beta.1 | +1 through +5, special weapon/armor abilities, cursed items (minimal). Magic Weapon spell stacking proof. |
 | 9 | [Metamagic](beta/phase-09-metamagic.md) | 📖 Rough Sketch | alpha.4, beta.2 | Metamagic feats, spell level adjustment, prepared vs spontaneous timing. |
 | 10 | [Full Spells](beta/phase-10-full-spells.md) | 📖 Rough Sketch | beta.7, beta.9 | SR, concentration, counterspelling, all delivery types, AoE spell chains. |
 | 11 | [Psionics](beta/phase-11-psionics.md) | 📖 Rough Sketch | beta.2 | Power item, power points, augmentation, psionic disciplines, manifester level. |
@@ -309,9 +310,10 @@ flowchart TD
         A6["alpha.6 Class Features"]
         A7["alpha.7 Combat Tracker"]
         A8["alpha.8 Conditions"]
-        A9["alpha.9 Breath Weapon"]
-        A10["alpha.10 Spells"]
-        A11["alpha.11 Enhancement"]
+        A9["alpha.9 Buff AE Core"]
+        A10["alpha.10 Breath Weapon"]
+        A11["alpha.11 Spells"]
+        A12["alpha.12 Enhancement"]
         A1 --> A2
         A2 --> A3
         A3 --> A4
@@ -321,17 +323,20 @@ flowchart TD
         A2 --> A6
         A3 --> A7
         A3 --> A8
-        A3 --> A9
-        A7 --> A9
         A3 --> A10
+        A7 --> A10
+        A3 --> A11
+        A9 --> A11
     end
     P5 --> A1
     P7 --> A1
     P6 --> A4
-    P6 --> A10
-    P7 --> A10
-    P1 --> A11
-    P2 --> A11
+    P6 --> A11
+    P7 --> A11
+    P2 --> A9
+    P6 --> A9
+    P1 --> A12
+    P2 --> A12
 
     subgraph BETA["🟭 Beta — Full System Coverage"]
         B1["beta.1 Equipment"]
@@ -350,17 +355,18 @@ flowchart TD
     P7 --> B1
     P7 --> B2
     A3 --> B2
-    A10 --> B2
+    A11 --> B2
     A8 --> B3
+    A9 --> B3
     B1 --> B3
     A2 --> B4
     A3 --> B5
     P6 --> B6
     A1 --> B6
     A2 --> B6
-    A9 --> B7
+    A10 --> B7
     B2 --> B7
-    A11 --> B8
+    A12 --> B8
     B1 --> B8
     A4 --> B9
     B2 --> B9
@@ -511,7 +517,7 @@ Some spells and effects target **items**, not creatures (Magic Weapon, Magic Ves
 | Class | Class item | 9 | Restructured progression |
 | Spell | Spell item | 17 (Alpha), 20 (Full) | Restructured |
 | Feat | Feat item | 11 | combatChanges → AE pattern |
-| Buff | **Buff Active Effect** | 21 | Item → AE migration |
+| Buff | **Buff Active Effect** | alpha.9 (core), beta.3 (expansion + item→AE migration) | Alpha introduces the minimal AE subtype (active, round duration, changes via stacking engine); beta.3 adds buffType / timeline / damage pool / shapechange and migrates D35E `buff` items |
 | Attack | Attack item | 10 | Actions via Action System |
 | Race | Race item | 8 | Restructured with grants |
 | Enhancement | **Enhancement Active Effect** | 18 (Alpha), 25 (Full) | Item → AE |
@@ -549,7 +555,7 @@ Every D35E feature, every SRD rule area, accounted for. Nothing dropped.
 | class | Class item | 9 | Restructured progression |
 | spell | Spell item | 17 (Alpha), 20 (Full) | Restructured |
 | feat | Feat item | 11 | combatChanges → AE pattern |
-| buff | **Buff Active Effect** | 21 | Item → AE migration |
+| buff | **Buff Active Effect** | alpha.9 (core), beta.3 (expansion + item→AE migration) | Alpha introduces the minimal AE subtype; beta.3 adds the full schema and migrates D35E `buff` items |
 | attack | Natural Attack item | 12 | Actions via Action System |
 | race | Race item | 8 | Restructured with grants |
 | enhancement | **Enhancement Active Effect** | 18 (Alpha), 25 (Full) | Item → AE |

@@ -1,4 +1,4 @@
-# Phase 13: Class Features (Alpha)
+# Alpha Phase 6: Class Features (Alpha)
 
 **Status**: 📋 Outlined
 

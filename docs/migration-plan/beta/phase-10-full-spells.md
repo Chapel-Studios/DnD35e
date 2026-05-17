@@ -1,4 +1,4 @@
-# Phase 27: Full Spells
+# Beta Phase 10: Full Spells
 
 **Status**: 📖 Rough Sketch (400+ item checklist, spell resistance, concentration, counterspelling)
 

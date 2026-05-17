@@ -1,4 +1,4 @@
-# Phase 6: Actor Foundation
+# POC Phase 6: Actor Foundation
 
 **Status**: 📋 Outlined (Actor schema, multiclass stacking, ability scores)
 

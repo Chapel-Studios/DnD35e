@@ -1,4 +1,4 @@
-# Phase 8: Pipeline & Branching
+# POC Phase 8: Pipeline & Branching
 
 **Status**: 🔶 In Progress
 

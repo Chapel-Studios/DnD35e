@@ -1,4 +1,4 @@
-# Phase 38: Sight Distance / Concealment (Regions)
+# Post-Release Phase 3: Sight Distance / Concealment (Regions)
 
 | Field | Value |
 |-------|-------|

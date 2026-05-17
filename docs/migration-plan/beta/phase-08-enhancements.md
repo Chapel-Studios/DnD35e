@@ -1,4 +1,4 @@
-# Phase 25: Enhancements
+# Beta Phase 8: Enhancements
 
 **Status**: 📖 Rough Sketch (350+ item checklist, weapon & armor enhancements)
 

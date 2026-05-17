@@ -1,4 +1,4 @@
-# Phase 39: Stat Block Sheet (NPC Alternate View)
+# Post-Release Phase 4: Stat Block Sheet (NPC Alternate View)
 
 | Field | Value |
 |-------|-------|

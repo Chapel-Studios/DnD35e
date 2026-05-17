@@ -1,4 +1,4 @@
-# Phase 36: Psionic Rules (Full)
+# Release Phase 4: Psionic Rules (Full)
 
 | Field | Value |
 |-------|-------|
@@ -15,7 +15,7 @@ Phase 28 (Beta) builds the psionic foundation: power item type (`isPsionic` on S
 
 ---
 
-## 36.1 Psi-Spell Transparency
+## 4.1 Psi-Spell Transparency
 
 The SRD default: **psionics and magic are transparent to each other**. This is the most impactful architectural decision because it determines whether psionic effects interact with the existing spell infrastructure or need a parallel system.
 
@@ -49,7 +49,7 @@ With separate mode:
 
 ---
 
-## 36.2 Psionic Prestige Classes
+## 4.2 Psionic Prestige Classes
 
 Psionic prestige classes use the existing Class item with `isPsionic: true` on their progression. Key SRD psionic prestige classes:
 
@@ -78,7 +78,7 @@ The level-up flow prompts the player to select which arcane class and which psio
 
 ---
 
-## 36.3 Psionic Feats
+## 4.3 Psionic Feats
 
 Psionic feats use the existing `FeatSystemModel` with `isPsionic: true`. Key categories:
 
@@ -108,7 +108,7 @@ Regaining focus: Full-round action, Concentration check DC 20. The Psionic Medit
 
 ---
 
-## 36.4 Psionic Items
+## 4.4 Psionic Items
 
 Psionic items parallel magic item categories and use the existing Enhancement (Phase 25) and Consumable (Phase 22) infrastructure.
 
@@ -147,7 +147,7 @@ totalAvailablePP = spellbook.spellPoints.value + sum(equippedCognizanceCrystals.
 
 ---
 
-## 36.5 Full Power Compendium
+## 4.5 Full Power Compendium
 
 Phase 28 implements 3 POC powers. This phase packs all SRD psionic powers (approximately 200+) into compendium packs.
 
@@ -167,7 +167,7 @@ Each power's `system.school` field maps to a discipline when `isPsionic` is true
 
 ---
 
-## 36.6 Epic Psionics
+## 4.6 Epic Psionics
 
 Mirrors epic spellcasting (Phase 35 §35.5) for psionic manifesters. Requires Phase 35 to be implemented first.
 
@@ -180,7 +180,7 @@ Epic psionic items (e.g., Rings of Epic Psionics referenced in D35E's changelog)
 
 ---
 
-## 36.7 D35E Migration Notes
+## 4.7 D35E Migration Notes
 
 | D35E Feature | dnd35e Equivalent |
 |--------------|-------------------|

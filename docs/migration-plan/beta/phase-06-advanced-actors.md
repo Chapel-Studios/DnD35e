@@ -1,4 +1,4 @@
-# Phase 23: Advanced Actor Types
+# Beta Phase 6: Advanced Actor Types
 
 **Status**: 📖 Rough Sketch (300+ item checklist, NPC/Trap/Object types + Companion mixin)
 
