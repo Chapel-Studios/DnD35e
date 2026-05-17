@@ -36,6 +36,12 @@
 | **Field-override cascade** | `tests/unit/sheets/field-override-cascade.test.mts` | Most-restrictive-wins merge across the ancestor chain; visibility and editability merge independently per property |
 | **FormGroup smoke** | `tests/unit/components/FormGroup.test.mts` | `gmOnly` override → non-GM sees nothing; GM sees field. Wiring-only — cascade logic is covered separately. |
 | **NumberFormGroup passthrough** | `tests/unit/components/NumberFormGroup.test.mts` | `#controls` slot renders; `editable` slot prop correctly reflects FormGroup result. Smoke test only. |
+| **FormGroup variants** (Story 6 cycle A) | `tests/unit/components/{Text,CheckBox,ToggleSwitch,Color,Select,MultiSelect}FormGroup.test.mts` | Smoke per variant: input renders; `editable` slot prop / disabled state reflects FormGroup result. Mechanical fan-out of the Story 5 cycle 2 isolation pattern. |
+| **FormGroupSection** (Story 6 cycle B) | `tests/unit/components/FormGroupSection.test.mts` | Section auto-hides when all children invisible; section-level lock cascades to children. |
+| **View-aware field value** (Story 6 cycle B) | `tests/unit/sheets/view-aware-field-value.test.mts` | `getViewAwareFieldValue` returns source in `edit`, effective in `play`, unmasked true value in `true` (GM only). Pure helper extracted from the store if currently inline. |
+| **FormulaFamiliar schema walker** (Story 6 cycle C) | `tests/unit/familiar/schema-walker.test.mts` | Opt-out model; `formulaVisible: false` removes a field; `isFamiliarField` exposes `.value`; `isFamiliarLeaf` stops recursion; alias resolution. |
+| **PhysicalItem state derivation** (Story 6 cycle C) | `tests/unit/effects/physical-item-state.test.mts` | `derivePhysicalItemState(...)` effective weight/price from base + masks/effects. Pure helper extraction same pattern as Story 3 Layer A. |
+| **EquippableItem state derivation** (Story 6 cycle C) | `tests/unit/effects/equippable-item-state.test.mts` | `deriveEquippableItemState(...)` equipped flag controls whether item-level effects are active. |
 
 **Material AE integration tests** (material bonus applies to weapon, masterwork flag, broken penalty) are deferred to **poc.5** — they depend on compendium-sourced content and require more Foundry infrastructure than Phase 4 establishes.
 
@@ -248,9 +254,9 @@ The following test areas were originally drafted here but belong to the phase th
 | 3 — Secret AE & Identifiable | Lead dev | Includes a small refactor (extract `deriveIdentifiableState`); masking semantics are non-obvious; first Playwright E2E |
 | 4 — Schema-tester factory + Weapon schema | Lead dev (factory) + Flexible (Weapon tests) | Factory is reusable across all future doc-type phases; pair the factory build with one consumer to validate ergonomics |
 | 5 — Field-override cascade + Vue smoke tests | Pair (Lead + Flexible) | Cascade merge is logic-heavy; component smoke tests are wiring-only |
-| 6 — E2E backfill for poc.1 & poc.2 features | Pair (Lead + Flexible) per spec | Each spec exercises a real feature surface (FormulaFamiliar, Material AE, field permissions). Lead pairs on the first spec to lock the pattern; remaining specs are flexible. Depends on Story 1 (E2E infra) + Story 3 Layer C helpers being in place. |
+| 6 — Backfill expansion (units + E2E) | Mixed per cycle | Cycles A–C are unit work (FormGroup variants, view-aware getter, FormulaFamiliar walker, mixin state derivations) — flexible, parallel-safe. Cycles D–G are E2E specs against real feature surfaces (field permissions, Material AE pair, single-material setting, FormulaFamiliar dropdown). Lead pairs on Cycle D to lock the E2E page-object pattern; remaining E2E cycles are flexible. Depends on Story 1 (E2E infra) + Story 3 Layer C helpers being in place. |
 
-Stories 2–5 are independent after Story 1 completes — a small team can run them in parallel. Story 6 picks up once Story 3 Layer C has wired the real E2E helpers.
+Stories 2–5 are independent after Story 1 completes — a small team can run them in parallel. Story 6 picks up once Story 3 Layer C has wired the real E2E helpers; within Story 6, unit cycles A–C are independent of the E2E cycles and can run in parallel with them.
 
 ---
 
@@ -374,17 +380,71 @@ The field-override cascade (most-restrictive-wins merge across the ancestor chai
 
 > **Component test isolation (Story 5 cycle 2)**: Mounting any FormGroup variant transitively imports `@ec/CoreMixin/index.mjs` — a heavy barrel that pulls in document mixins, sheet stores, and Vue app classes that won't initialise cleanly under unit env stubs. Component tests `vi.mock` the CoreMixin barrel to expose only the two injection symbols (`DocumentSheetStoreSymbol`, `RenderModeStoreSymbol`) using `Symbol.for(...)` (the global registry). The `tests/unit/components/setup.ts` mock-store factories use the **same** registry keys so injected stores reach the components. `FieldControls` is replaced with a slot-rendering stub so `#controls` content survives. This isolation pattern is reusable for every future FormGroup variant test.
 
-**Story 6 — E2E Backfill for poc.1 & poc.2 Features**
+**Story 6 — Backfill Expansion (Units + E2E for poc.1 & poc.2 Features)**
 
-Beyond the Story 3 Layer C secret-AE round-trip, these specs cover real feature surfaces from poc.1 (FormulaFamiliar in document fields, field permissions) and poc.2 (Material AE Details/Changes tabs, aspect picker, single-material enforcement). Depends on Story 1 (E2E infra) and the helpers landed in Story 3.
+Story 5 closed out the field-override cascade and proved the FormGroup component-test isolation pattern. Story 6 broadens the unit coverage along the now-proven seams (FormGroup variants, view-aware getters, FormulaFamiliar schema walker, mixin state derivations) and then lands the E2E specs that cover poc.1 (FormulaFamiliar in document fields, field permissions) and poc.2 (Material AE Details/Changes tabs, aspect picker, single-material enforcement).
+
+The story is split into **six cycles**. Each cycle ends at a clean `npm run build` + green suite and is independently shippable. Cycles A–C are unit work and can run in any order. Cycle D establishes the E2E page-object pattern; E and F build on it.
 
 > **Scope note — material single-per-type**: the spec corresponds to the **current** behaviour of `validateSingleMaterial`, which only blocks duplicate **STANDARD-subtype** materials when the `ENFORCE_SINGLE_MATERIAL` setting is enabled. It does **not** enforce "one of each material type". A broader "one per type" rule is out of scope for Phase 4 — if that becomes the desired behaviour, raise it as a feature change in the relevant content phase and update the spec.
 
-- [ ] `tests/e2e/formula-familiar-weapon-name.spec.ts`: GM opens a weapon sheet → focuses the name field → triggers FormulaFamiliar dropdown → verify the suggested context list contains the expected item-scoped properties (e.g. `system.weaponDamage.*`) and excludes opt-out fields → select a context → verify the resolved name updates in the field, persists to the document, and shows in the sheet header / window title
+> **Pre-flight (before Cycle D)**: verify Story 1 E2E infra still works end-to-end — fixture world launches, `loginAs`/`createItem`/`createActiveEffect` helpers behave, `smoke.spec.ts` + `secret-ae.spec.ts` still green. Recent terminal log shows a Foundry launch exited 1; confirm fixture world health before stacking new specs.
+
+**Cycle A — FormGroup variant smoke tests (units)**
+
+Mechanical fan-out of the Story 5 cycle 2 isolation pattern across the remaining FormGroup variants. Each test mounts the component with the mock store factories and asserts the variant-specific surface (input element rendered, `editable` slot prop reflects cascade, readonly slot used when not editable). Naming mirrors `NumberFormGroup.test.mts`.
+
+- [x] `tests/unit/components/TextFormGroup.test.mts`: input renders; `#controls` `editable` slot prop reflects FormGroup result for true/false
+- [x] `tests/unit/components/CheckBoxFormGroup.test.mts`: checkbox renders; disabled/readonly state follows editability
+- [x] `tests/unit/components/ToggleSwitchFormGroup.test.mts`: toggle renders; disabled/readonly state follows editability
+- [x] `tests/unit/components/ColorFormGroup.test.mts`: color input renders; disabled state follows editability
+- [x] `tests/unit/components/SelectFormGroup.test.mts`: select renders with options; readonly slot used when not editable
+- [x] `tests/unit/components/MultiSelectFormGroup.test.mts`: multi-checkbox list renders; selected values reflected; readonly view when not editable
+
+**Cycle B — Composite form behaviours (units)**
+
+- [ ] `tests/unit/components/FormGroupSection.test.mts`: section renders children when at least one is visible; auto-hides when **all** children are invisible (per-field override cascade UX); section-level lock cascades to children via `#controls` `editable` slot prop
+- [ ] `tests/unit/sheets/view-aware-field-value.test.mts`: `getViewAwareFieldValue(path)` returns source value in `edit` mode; effective (masked) value in `play` mode; unmasked true value in `true` mode (GM only); falls back gracefully when no mask present. Extract the resolution logic to a pure helper if currently inline — same refactor pattern as Story 3 Layer A and Story 5 cycle 1.
+
+**Cycle C — Pure-logic backfill across poc.1/2 surfaces (units)**
+
+- [ ] `tests/unit/familiar/schema-walker.test.mts`: FormulaFamiliar schema walker — opt-out model (all fields included by default); `withFamiliar(field, { formulaVisible: false })` removes a field; `isFamiliarField` markers expose `.value` access path; `isFamiliarLeaf` markers stop recursion; alias resolution
+- [ ] `tests/unit/effects/physical-item-state.test.mts`: `derivePhysicalItemState(...)` — effective weight/price from base + masks/effects (extract pure helper if needed; mirror Story 3 Layer A)
+- [ ] `tests/unit/effects/equippable-item-state.test.mts`: `deriveEquippableItemState(...)` — equipped flag drives whether item-level effects are active in the resolution chain
+
+> Each unit cycle should follow the same extraction discipline used in Story 3/5: if the target logic is currently embedded in a store/mixin method, extract a pure helper alongside the consumer (one-liner call site) and unit-test the helper. No new Foundry surface invented for testability.
+
+**Cycle D — E2E pattern lock: field-permissions (one spec)**
+
+Lightest multi-context E2E flow, mirrors the existing `secret-ae.spec.ts` shape. Output: page-object pattern + per-field override helper that subsequent E2E specs reuse.
+
+- [ ] `tests/e2e/field-permissions.spec.ts`: GM applies a `gmOnly` visibility override to one field on a weapon → player context sees the field hidden; GM applies a `gmOnly` editability override → player context sees the field but cannot edit it; GM removes the override → player context returns to default visibility/editability. One field is enough — Story 5 covers the merge logic exhaustively.
+- [ ] Establish `tests/e2e/helpers/setFieldOverride.mts` (or equivalent page-object method) used by this spec and reused by later specs that need to flip overrides.
+
+**Cycle E — Material AE E2E pair (two specs, shared surface)**
+
+Both drive the same Material AE sheet → build a `materialSheet` page object once, use twice. Order within the cycle: Details/Changes first (more mechanical), aspect picker second (branching logic).
+
+- [ ] `tests/e2e/helpers/materialSheet.mts`: page object for the Material AE sheet (open, switch tabs, read change rows, select aspects, assert UI state)
 - [ ] `tests/e2e/material-details-changes-tab.spec.ts`: GM creates a Material AE → on the Details tab, adds a property (e.g. damage bonus) via `createActiveEffect`-equivalent UI flow → switches to the Changes tab → verify the corresponding `change` row exists with the right key/value/mode and is in sync with the Details entry
 - [ ] `tests/e2e/material-aspect-picker.spec.ts`: with no parent material → aspect picker shows the full base set; with a parent material assigned → aspect picker filters/derives from the parent. Verify both branches produce the expected available-aspect list and that selection persists.
+
+**Cycle F — Setting-driven validation E2E (one spec)**
+
+- [ ] `tests/e2e/helpers/setSystemSetting.mts`: typed wrapper around `game.settings.set(SYSTEM_ID, key, value)` via `page.evaluate`
 - [ ] `tests/e2e/material-single-per-type.spec.ts`: with `ENFORCE_SINGLE_MATERIAL` setting **off**, two STANDARD materials can be added to a weapon; with the setting **on**, the second add is rejected and the first remains. Non-STANDARD subtypes are unaffected by the setting (positive control).
-- [ ] `tests/e2e/field-permissions.spec.ts`: GM applies a `gmOnly` visibility override to one field on a weapon → player context sees the field hidden; GM applies a `gmOnly` editability override → player context sees the field but cannot edit it; GM removes the override → player context returns to default visibility/editability. One field is enough — Story 5 covers the merge logic exhaustively.
+
+**Cycle G — FormulaFamiliar dropdown E2E (one spec)**
+
+Most complex UI surface (autocomplete dropdown, suggestion filtering, sheet-header reflection) — saved for last so dropdown helper maturity benefits from earlier cycles.
+
+- [ ] `tests/e2e/helpers/familiarDropdown.mts`: page-object helpers for opening, reading, filtering, and selecting from the FormulaFamiliar dropdown
+- [ ] `tests/e2e/formula-familiar-weapon-name.spec.ts`: GM opens a weapon sheet → focuses the name field → triggers FormulaFamiliar dropdown → verify the suggested context list contains the expected item-scoped properties (e.g. `system.weaponDamage.*`) and excludes opt-out fields → select a context → verify the resolved name updates in the field, persists to the document, and shows in the sheet header / window title
+
+> **Deferred E2E** (intentionally out of scope for Story 6, recorded for the owning phase to pick up):
+> - View-mode bar (`edit`/`play`/`true`) — partial coverage today via `secret-ae.spec.ts`; broader sweep deferred to the phase that next touches the mode bar
+> - Drag-drop AE onto Weapon (material application via drag rather than programmatic create) — deferred to **poc.5** (Compendium Foundation), which is where drag-from-pack flows first land
+> - Compendium pack-load smoke (packed weapon imports cleanly with all fields preserved) — deferred to **poc.5**
 
 ---
 
