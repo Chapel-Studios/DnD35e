@@ -403,8 +403,8 @@ Mechanical fan-out of the Story 5 cycle 2 isolation pattern across the remaining
 
 **Cycle B — Composite form behaviours (units)**
 
-- [ ] `tests/unit/components/FormGroupSection.test.mts`: section renders children when at least one is visible; auto-hides when **all** children are invisible (per-field override cascade UX); section-level lock cascades to children via `#controls` `editable` slot prop
-- [ ] `tests/unit/sheets/view-aware-field-value.test.mts`: `getViewAwareFieldValue(path)` returns source value in `edit` mode; effective (masked) value in `play` mode; unmasked true value in `true` mode (GM only); falls back gracefully when no mask present. Extract the resolution logic to a pure helper if currently inline — same refactor pattern as Story 3 Layer A and Story 5 cycle 1.
+- [x] `tests/unit/components/FormGroupSection.test.mts`: section renders children when at least one is visible; auto-hides when **all** children are invisible (per-field override cascade UX); section-level lock cascades to children via `#controls` `editable` slot prop
+- [x] `tests/unit/sheets/view-aware-field-value.test.mts`: `getViewAwareFieldValue(path)` returns source value in `edit` mode; effective (masked) value in `play` mode; unmasked true value in `true` mode (GM only); falls back gracefully when no mask present. Extract the resolution logic to a pure helper if currently inline — same refactor pattern as Story 3 Layer A and Story 5 cycle 1.
 
 **Cycle C — Pure-logic backfill across poc.1/2 surfaces (units)**
 
@@ -445,6 +445,8 @@ Most complex UI surface (autocomplete dropdown, suggestion filtering, sheet-head
 > - View-mode bar (`edit`/`play`/`true`) — partial coverage today via `secret-ae.spec.ts`; broader sweep deferred to the phase that next touches the mode bar
 > - Drag-drop AE onto Weapon (material application via drag rather than programmatic create) — deferred to **poc.5** (Compendium Foundation), which is where drag-from-pack flows first land
 > - Compendium pack-load smoke (packed weapon imports cleanly with all fields preserved) — deferred to **poc.5**
+
+> **View-aware plan extraction (Story 6 cycle B)**: `getViewAwareFieldValue` is now a thin caller around a new pure helper [`resolveViewAwareFieldPlan(modes, getFromSource)`](../../../src/entities/components/CoreMixin/sheet/viewAwareFieldPlan.mts), which returns `{ readMode: 'source' | 'derived', checkMasks: boolean }`. The decision logic — GM-edit/true → source; GM-play → derived+masks; non-GM-edit/play → derived+masks; explicit `getFromSource` overrides — lives in the helper. The store handles only the actual `foundry.utils.getProperty` reads, mask normalization, and the undefined-derived fallback. Same extraction pattern as Story 3 Layer A's `deriveIdentifiableState` and Story 5 cycle 1's `cascadeFieldOverride`.
 
 ---
 

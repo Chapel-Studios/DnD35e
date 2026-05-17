@@ -118,6 +118,10 @@ export const createMockDocumentStore = (options: MockDocumentStoreOptions = {}):
     computed(() => sourceValues[path] as T)
   );
 
+  const getProperty = vi.fn(<T,>(path: string) =>
+    computed(() => sourceValues[path] as T)
+  );
+
   const getDirectFieldUpdater = vi.fn((_path: string) => vi.fn());
   const getViewAwareFieldUpdater = vi.fn((_path: string) => vi.fn());
 
@@ -138,6 +142,7 @@ export const createMockDocumentStore = (options: MockDocumentStoreOptions = {}):
       resolveVisibility,
       resolveEditability,
       getSourceProperty,
+      getProperty,
     },
   };
 };
