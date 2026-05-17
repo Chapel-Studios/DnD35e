@@ -443,10 +443,27 @@ Both drive the same Material AE sheet → build a `materialSheet` page object on
 Most complex UI surface (autocomplete dropdown, suggestion filtering, sheet-header reflection) — saved for last so dropdown helper maturity benefits from earlier cycles.
 
 - [x] `tests/e2e/helpers/familiarDropdown.mts`: page-object helpers for opening (`openFamiliar`), reading (`readFamiliarOptions` / `readFamiliarOptionTitles`), selecting (`selectFamiliarOption`), and dismissing (`dismissFamiliar`) the FormulaFamiliar dropdown. Selections key off each option's `title` attribute (carries `accessPath` for leaves, `fullPath` for root contexts) — stable across localization/label changes.
-- [x] `tests/e2e/formula-familiar-weapon-name.spec.ts`: 2 tests — (a) GM opens a weapon sheet → triggers FormulaFamiliar (`#`) on the name field → root dropdown exposes `Self` / `Owner` contexts → drilling into `Self` lists weapon-scoped schema fields (`system.weaponType`, `system.weaponSubtype`, `#Self.WeaponDamage.` branch) and excludes opt-out fields (`nameFormula`, `description`, `version`, `slug`) → drilling into `WeaponDamage` lists `damageRoll` / `damageType` / `critRange` / `critMultiplier` → selecting `damageRoll` closes the menu, inserts `#Self.WeaponDamage.DamageRoll` into the input, commits on Tab to canonical `#self.weaponDamage.damageRoll` on the document, and resolves `doc.name` to the underlying value (`1d8+1`); (b) Escape closes the dropdown without committing. **Scope note:** Sheet-header `.item-name` reflection is only rendered in play/true mode (HeaderNameField swaps to FormulaFormGroup in edit mode), so this spec asserts on `doc.name` directly — header-mode-switch coverage is deferred to the view-mode-bar E2E sweep.
+- [x] `tests/e2e/formula-familiar-weapon-name.spec.ts`: 2 tests — (a) GM opens a weapon sheet → triggers FormulaFamiliar (`#`) on the name field → root dropdown exposes `Self` / `Owner` contexts → drilling into `Self` lists weapon-scoped schema fields (`system.weaponType`, `system.weaponSubtype`, `#Self.WeaponDamage.` branch) and excludes opt-out fields (`nameFormula`, `description`, `version`, `slug`) → drilling into `WeaponDamage` lists `damageRoll` / `damageType` / `critRange` / `critMultiplier` → selecting `damageRoll` closes the menu, inserts `#Self.WeaponDamage.DamageRoll` into the input, commits on Tab to canonical `#self.weaponDamage.damageRoll` on the document, and resolves `doc.name` to the underlying value (`1d8+1`); (b) Escape closes the dropdown without committing. **Scope note:** Sheet-header `.item-name` reflection is only rendered in play/true mode (HeaderNameField swaps to FormulaFormGroup in edit mode), so this spec asserts on `doc.name` directly — cross-mode header-swap coverage lands in Cycle H below.
+
+**Cycle H — View-mode bar E2E sweep (one spec)**
+
+The view-mode bar is a cross-cutting UI primitive every sheet renders, owned by `RenderModeStore` and stable since Phase 2. Phase 4 incidentally clicks the buttons in `secret-ae.spec.ts` to drive masking assertions, but never directly asserts the bar's visibility matrix, role gating, transition guards, or the `HeaderNameField` swap behaviour. Cycle H closes that gap before Phase 4 ships — the surface is shipped production code, the gap is a real regression risk for every subsequent sheet-touching phase, and there is no upstream dependency to wait on.
+
+*(Originally deferred at the end of Cycle G under the rationale "the phase that next touches the mode bar." Reviewed during phase closure: that's scope-leakage from cycle-level discipline into phase-level deferral. The mode bar is testing-infrastructure work; it belongs in Phase 4.)*
+
+- [x] `tests/e2e/view-mode-bar.spec.ts`: 6 tests against a weapon (identifiable, owner-permissioned). Tests select buttons by FontAwesome icon class (`i.fa-dice-d20` / `i.fa-eye` / `i.fa-pen-to-square`) for stability across localization.
+  1. **GM, no secrets**: bar shows exactly the Edit and Play buttons; True button absent.
+  2. **GM, with Secret AE attached**: bar shows all three buttons (Edit, Play, True). Deleting the Secret AE + forcing a sheet re-render hides the True button.
+  3. **Player, owner permission**: bar shows Edit (owner can edit) and Play; True button absent regardless of secrets.
+  4. **Player, observer-only permission**: bar shows Play only; Edit and True absent.
+  5. **Active state**: the button matching the current mode carries `.active`; clicking another button moves `.active` to it.
+  6. **HeaderNameField swap**: in `edit` mode the `system.nameFormula` FormulaFormGroup is in the DOM and `.item-name` is not; clicking Play swaps to `.item-name` + hides the FormulaFormGroup; clicking Edit swaps back.
+
+  **Scope note**: Value-correctness across modes (masked play vs unmasked true) is already covered by `secret-ae.spec.ts`. This spec covers **bar presence, gating, and DOM-surface swap** only — the structural contract — not value resolution.
+
+  **Behaviour pinned by this spec**: (a) `hasSecrets` is sampled in `_onRender` (not Vue-reactive), so structural mode-bar updates require a sheet re-render; (b) disabled Secret AEs still count as secrets (intentional — GM can re-enable), so True only disappears on full deletion, not toggle.
 
 > **Deferred E2E** (intentionally out of scope for Story 6, recorded for the owning phase to pick up):
-> - View-mode bar (`edit`/`play`/`true`) — partial coverage today via `secret-ae.spec.ts`; broader sweep deferred to the phase that next touches the mode bar
 > - Drag-drop AE onto Weapon (material application via drag rather than programmatic create) — deferred to **poc.5** (Compendium Foundation), which is where drag-from-pack flows first land
 > - Compendium pack-load smoke (packed weapon imports cleanly with all fields preserved) — deferred to **poc.5**
 
