@@ -174,6 +174,18 @@ These specialized agents can be invoked directly for specific planning tasks:
 
 **Invoke**: Type `/implementation-guide` (e.g., "How do I add a new item type?")
 
+### e2e-testing
+**When to use**: Adding a new Playwright E2E spec, or deciding between unit and E2E coverage for a behavior.
+
+**Capabilities**:
+- Decision matrix for unit vs E2E test selection
+- Step-by-step workflow for writing a new spec (selectors → helpers → assertions → run)
+- Reference list of existing helpers and which pattern each demonstrates
+- Troubleshooting recipes for the three recurring pitfalls (overlay interception, blur commit, view-mode-conditional DOM)
+- Naming conventions for specs and helpers
+
+**Invoke**: Type `/e2e-testing` (e.g., "How do I add an E2E for the inventory drag-drop?")
+
 ---
 
 ## Instruction Files
@@ -222,6 +234,13 @@ Instruction files auto-load when you edit matching files, providing quick refere
 
 **Quick mental model**: All FormGroups inherit from base class. Sections auto-hide when invisible. Use EditValue pattern to handle view modes correctly.
 
+### e2e-testing
+**Auto-loads on**: `tests/e2e/**`
+
+**Covers**: Helper inventory, stable selector strategy (`data-field-path`, `title` attr, never localized text), world-isolation idioms (`clearWorld` + `closeAllSheets`), the three recurring pitfalls (overlay interception, `Tab`-not-`blur()` commits, view-mode-conditional DOM), authentication via `storageState`, programmatic document creation patterns, unit-test companion guidance.
+
+**Quick mental model**: Drive documents through Foundry's API, assert on stable hooks, never inline what a helper already does. Localized text and `input.blur()` are footguns; `dismissOverlays` + `data-field-path` + `Tab` + `expect.poll` are the idioms.
+
 ---
 
 ## Planning Context
@@ -256,6 +275,7 @@ Choose the right tool for your task:
 - Ask `/foundry-reference` for API help
 - Ask `/system-comparison` when porting from 5e/PF2e
 - Ask `/implementation-guide` for step-by-step workflows
+- Ask `/e2e-testing` when adding test coverage for a user-visible behavior
 
 ### End of Session (Knowledge Base Curation)
 ```
@@ -290,6 +310,6 @@ Use Case Examples:
 - Phase 3 (Localization): 🟡 75% — LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels done; CONFIG pre-localization & hardcoded string audit remain
 - Phase 4: ✅ Complete
 - Phase 5-32: 📋 Planned (see `docs/migration-plan/roadmap.md`)
-- Instruction Files: 6 ✅ (foundry-data-fields, dnd35e-patterns, vue-sheet-patterns, formula-familiar, dnd35e-field, form-groups)
-- Skills: 5 ✅ (phase-planning, phase-reference, foundry-reference, system-comparison, implementation-guide)
+- Instruction Files: 7 ✅ (foundry-data-fields, dnd35e-patterns, vue-sheet-patterns, formula-familiar, dnd35e-field, form-groups, e2e-testing)
+- Skills: 6 ✅ (phase-planning, phase-reference, foundry-reference, system-comparison, implementation-guide, e2e-testing)
 - Agents: 2 ✅ (planning, kb-curator)

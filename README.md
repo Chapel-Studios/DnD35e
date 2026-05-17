@@ -178,6 +178,7 @@ Full list: see [`.github/AGENTS.md`](.github/AGENTS.md)
 | `/foundry-reference` | Query Foundry VTT v14 API, data structures, hooks, and common patterns |
 | `/system-comparison` | Compare how 5e, PF2e, and 3.5e handle similar mechanics |
 | `/implementation-guide` | Step-by-step workflows for adding item types, mechanics, or compendium entries |
+| `/e2e-testing` | Add a Playwright E2E spec — selectors, helpers, isolation, pitfalls |
 
 Full list: see [`.github/AGENTS.md`](.github/AGENTS.md)
 
@@ -193,6 +194,7 @@ Context-specific instructions stored in `.github/instructions/`. Each file has f
 | `dnd35e-field` | By relevance | Compound field shape, value access, type patterns |
 | `form-groups` | By relevance | FormGroup variants, API, layout patterns |
 | `formula-familiar` | By relevance | FormulaFamiliar autocomplete system |
+| `e2e-testing` | Auto-loads on `tests/e2e/**` | Playwright selectors, helpers, isolation, blur/overlay/view-mode pitfalls |
 
 ### Discovery
 
