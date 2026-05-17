@@ -70,3 +70,39 @@ export async function clearFieldOverride (
     }
   }, { docUuid, encoded, key, flagKey: FIELD_OVERRIDES_FLAG });
 }
+
+/**
+ * Wait until a given page's view of the document's field-override flag matches
+ * the expected value (or absence). Use this on the player page after a GM-side
+ * setFieldOverride / clearFieldOverride so the websocket-propagated update has
+ * landed before forcing a sheet re-render.
+ *
+ * Pass `expected === null` to wait for the key to be absent.
+ */
+export async function waitForFieldOverride (
+  page: Page,
+  docUuid: string,
+  fieldPath: string,
+  key: FieldOverrideKey,
+  expected: FieldVisibility | FieldEditability | null,
+  timeoutMs = 3000
+): Promise<void> {
+  const encoded = encodeFieldPath(fieldPath);
+  await page.waitForFunction(
+    ({ docUuid, encoded, key, expected, flagKey }: {
+      docUuid: string;
+      encoded: string;
+      key: FieldOverrideKey;
+      expected: FieldVisibility | FieldEditability | null;
+      flagKey: string;
+    }) => {
+      const doc = (globalThis as any).fromUuidSync?.(docUuid);
+      if (!doc) return false;
+      const flag = doc.getFlag('dnd35e', flagKey) ?? {};
+      const actual = flag[encoded]?.[key] ?? null;
+      return actual === expected;
+    },
+    { docUuid, encoded, key, expected, flagKey: FIELD_OVERRIDES_FLAG },
+    { timeout: timeoutMs }
+  );
+}

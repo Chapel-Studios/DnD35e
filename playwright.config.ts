@@ -54,13 +54,14 @@ export default defineConfig({
 
   // Playwright spawns Foundry, health-checks /join, and kills on teardown.
   // setup-e2e.mjs (run in pretest:e2e) provisions the data dir Foundry boots into.
-  // Set E2E_REUSE_SERVER=1 to attach to a manually-running Foundry locally
-  // (e.g. when iterating on a single failing spec — saves the boot cost).
+  // `reuseExistingServer: true` means Playwright probes ${baseURL}/join first
+  // and attaches to any already-running Foundry on this port (saves the boot
+  // cost when iterating locally). Spawns a fresh instance otherwise.
   webServer: foundryMainJs
     ? {
       command: `node "${foundryMainJs}" --dataPath="${dataDir}" --world=dnd35e-e2e --port=${e2ePort} --noupdate`,
       url: `${baseURL}/join`,
-      reuseExistingServer: process.env.E2E_REUSE_SERVER === '1',
+      reuseExistingServer: true,
       timeout: 90_000,
       stdout: 'pipe',
       stderr: 'pipe',

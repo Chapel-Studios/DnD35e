@@ -15,14 +15,14 @@ import {
 } from './ItemSheetStore.mjs';
 import {
   defaultEffectsTab,
-  Effects,
+  ItemEffects,
 } from './tabs/index.mjs';
 
 export {
   defaultEffectsTab,
   EffectCategory,
-  Effects,
   getDefaultItemTabs,
+  ItemEffects,
   ItemSheetDnd35e,
   useItemSheetStore,
 };
