@@ -32,6 +32,7 @@ import type {
 } from './stores/index.mjs';
 import { RenderModeStoreSymbol, TabStoreSymbol, useFieldOverridesStore, useTabStore } from './stores/index.mjs';
 import type { EvaluationDocument, FormulaRegistration } from './types.mjs';
+import { resolveViewAwareFieldPlan } from './viewAwareFieldPlan.mjs';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -137,6 +138,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   const {
     isPlayMode,
     isEditMode,
+    isTrueMode,
     isOwnerOrGM,
     isGM,
   } = inject(RenderModeStoreSymbol) as RenderModeStore;
@@ -266,27 +268,32 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   };
 
   const getViewAwareFieldValue = <T,>(fieldPath: string, getFromSource = false): T => {
-    if (isEditMode.value && isGM.value) {
-      // GMs edit the real/source data directly. Players in edit mode should still
-      // see masked values so their edits route through Player Edit Secrets.
-      getFromSource = true;
-    }
+    const plan = resolveViewAwareFieldPlan(
+      {
+        isEditMode: isEditMode.value,
+        isPlayMode: isPlayMode.value,
+        isTrueMode: isTrueMode.value,
+        isGM: isGM.value,
+      },
+      getFromSource
+    );
 
     // Apply masks in Play Mode, and also in player Edit Mode so non-GM owners
     // do not see GM truth while editing masked fields.
-    if (isPlayMode.value || (!isGM.value && isEditMode.value)) {
+    if (plan.checkMasks) {
       const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
       if (masks && fieldPath in masks) {
         return normalizeMaskValue<T>(fieldPath, masks[fieldPath]);
       }
     }
 
-    const usableFieldPath = getFromSource ? `_source.${fieldPath}` : `${fieldPath}`;
+    const useSource = plan.readMode === 'source';
+    const usableFieldPath = useSource ? `_source.${fieldPath}` : `${fieldPath}`;
     const viewValue = foundry.utils.getProperty(document.value, usableFieldPath) as T | undefined;
 
     // Some top-level document getters (notably img) can be undefined in non-source
     // paths for certain sheet/view states. Fallback keeps display stable.
-    if (!getFromSource && viewValue === undefined) {
+    if (!useSource && viewValue === undefined) {
       return foundry.utils.getProperty(document.value, `_source.${fieldPath}`) as T;
     }
 

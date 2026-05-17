@@ -1,7 +1,7 @@
 # Phase 4: Testing Infrastructure
 
 
-**Status**: ✅ Approved
+**Status**: ✅ Complete
 
 > **Milestone**: POC
 > **Dependencies**: poc.1, poc.2, poc.3 (backfill targets — Story 1 infrastructure setup can start as soon as poc.1 is complete; Stories 2–6 gate on the relevant backfill phase being far enough along that its surface is stable)
@@ -36,6 +36,13 @@
 | **Field-override cascade** | `tests/unit/sheets/field-override-cascade.test.mts` | Most-restrictive-wins merge across the ancestor chain; visibility and editability merge independently per property |
 | **FormGroup smoke** | `tests/unit/components/FormGroup.test.mts` | `gmOnly` override → non-GM sees nothing; GM sees field. Wiring-only — cascade logic is covered separately. |
 | **NumberFormGroup passthrough** | `tests/unit/components/NumberFormGroup.test.mts` | `#controls` slot renders; `editable` slot prop correctly reflects FormGroup result. Smoke test only. |
+| **FormGroup variants** (Story 6 cycle A) | `tests/unit/components/{Text,CheckBox,ToggleSwitch,Color,Select,MultiSelect}FormGroup.test.mts` | Smoke per variant: input renders; `editable` slot prop / disabled state reflects FormGroup result. Mechanical fan-out of the Story 5 cycle 2 isolation pattern. |
+| **FormGroupSection** (Story 6 cycle B) | `tests/unit/components/FormGroupSection.test.mts` | Section auto-hides when all children invisible; section-level lock cascades to children. |
+| **View-aware field value** (Story 6 cycle B) | `tests/unit/sheets/view-aware-field-value.test.mts` | `getViewAwareFieldValue` returns source in `edit`, effective in `play`, unmasked true value in `true` (GM only). Pure helper extracted from the store if currently inline. |
+| **FormulaFamiliar schema walker** (Story 6 cycle C) | `tests/unit/familiar/schema-walker.test.mts` | Opt-out model; `formulaVisible: false` removes a field; `isFamiliarLeaf` stops recursion; `aspectKey` / `aspectType` / `aliases` overrides; SchemaField recursion with dotted access paths; document-level `name` always merged; live value resolution. |
+| **Material AE change emission** (Story 6 cycle C) | `tests/unit/effects/material-changes.test.mts` | `buildMaterialChanges` pure helper (extracted from `MaterialSystemModel.buildChanges`) — preserves non-system changes verbatim; emits one system change per non-zero/non-empty Details field (price, magicEquivalency, hardness, bonusHp, DR types); preserves user-customised change `type` on existing system changes; tags each with the subtype's `bonusType`. |
+| ~~PhysicalItem host-side state derivation~~ (deferred to poc.5) | `tests/unit/effects/physical-item-state.test.mts` | Deferred — material AE *emission* is covered above; host-side derivation that consumes those changes through the stacking engine (resolved effective weight/price/hardness on the parent item) is not wired yet. Lands with poc.5 once compendium-sourced materials drive end-to-end derivation. |
+| ~~EquippableItem state derivation~~ (deferred to poc.5) | `tests/unit/effects/equippable-item-state.test.mts` | Deferred — `isEquipped` is a plain schema boolean with no derivation; equipped-gates-effects behaviour is not wired yet. |
 
 **Material AE integration tests** (material bonus applies to weapon, masterwork flag, broken penalty) are deferred to **poc.5** — they depend on compendium-sourced content and require more Foundry infrastructure than Phase 4 establishes.
 
@@ -195,7 +202,7 @@ Reusable factories follow the same contract on both sides: `createXTester(input)
 | Create | `tests/e2e/material-aspect-picker.spec.ts` | Material aspect picker behaviour with a parent material and without (Story 6) |
 | Create | `tests/e2e/material-single-per-type.spec.ts` | `ENFORCE_SINGLE_MATERIAL` setting blocks duplicate STANDARD materials on a weapon (Story 6 — see scope note) |
 | Create | `tests/e2e/field-permissions.spec.ts` | Single end-to-end example of field visibility / editability override applied by GM and observed by player; depth covered in Story 5 unit tests (Story 6) |
-| Create | `tests/setup.mts` | Foundry global stubs: `game` (`user.isGM`, `i18n.localize()` passthrough), `foundry.utils` (`getProperty`, `mergeObject`), `Roll.safeEval`, constructor-only stubs for `foundry.data.fields.{NumberField, BooleanField, EmbeddedDataField}`. No `foundry.abstract.DataModel` stub — schema tests use inspection (see §4.3). |
+| Create | `tests/setup.mts` | Foundry global stubs: `game` (`user.isGM`, `i18n.localize()` passthrough), `foundry.utils` (`getProperty`, `mergeObject`), `Roll.safeEval`, constructor-only stubs for `foundry.data.fields.*` (`NumberField`, `BooleanField`, `StringField`, `HTMLField`, `EmbeddedDataField`, `SchemaField`, `ArrayField`, `ObjectField`), `foundry.abstract.{DataModel,TypeDataModel}`, `foundry.documents.Item`, and `foundry.applications.{api,sheets}` constructors. Constructor-only — schema tests still use inspection (see §4.3); the abstract/applications stubs only prevent module-load failures from transitive imports. |
 | Create | `tests/helpers/schemaTester.mts` | `createSchemaTester(Model)` factory — reusable across all DataModel schema tests |
 | Create | `tests/unit/helpers/schemaTester.test.mts` | Tests for the factory itself (synthetic schema) |
 | Create | `tests/unit/effects/stacking-engine.test.mts` | Stacking-rule coverage (extended cases — see Story 2 checklist) |
@@ -219,6 +226,8 @@ The following test areas were originally drafted here but belong to the phase th
 | Test area | Destination phase |
 |-----------|------------------|
 | `material-ae.test.mts` — bonus applies to weapon, masterwork flag, broken penalty | **poc.5** (Compendium Foundation) — depends on compendium-sourced content |
+| `physical-item-state.test.mts` — effective weight/price from base + masks/effects | **poc.5** — derivation only becomes non-trivial once material effects exist |
+| `equippable-item-state.test.mts` — equipped flag gating item-level effect activation | **poc.5** — gating behaviour is not wired today |
 | `actor.model.test.mts` — schema, defaults, AC=10 | **poc.6** (Actor Foundation) |
 | `abilities.test.mts` — ability mods, size modifiers | **poc.6** |
 | `ac.test.mts` — base AC, touch, flat-footed | **poc.6** |
@@ -248,48 +257,46 @@ The following test areas were originally drafted here but belong to the phase th
 | 3 — Secret AE & Identifiable | Lead dev | Includes a small refactor (extract `deriveIdentifiableState`); masking semantics are non-obvious; first Playwright E2E |
 | 4 — Schema-tester factory + Weapon schema | Lead dev (factory) + Flexible (Weapon tests) | Factory is reusable across all future doc-type phases; pair the factory build with one consumer to validate ergonomics |
 | 5 — Field-override cascade + Vue smoke tests | Pair (Lead + Flexible) | Cascade merge is logic-heavy; component smoke tests are wiring-only |
-| 6 — E2E backfill for poc.1 & poc.2 features | Pair (Lead + Flexible) per spec | Each spec exercises a real feature surface (FormulaFamiliar, Material AE, field permissions). Lead pairs on the first spec to lock the pattern; remaining specs are flexible. Depends on Story 1 (E2E infra) + Story 3 Layer C helpers being in place. |
+| 6 — Backfill expansion (units + E2E) | Mixed per cycle | Cycles A–C are unit work (FormGroup variants, view-aware getter, FormulaFamiliar walker, mixin state derivations) — flexible, parallel-safe. Cycles D–G are E2E specs against real feature surfaces (field permissions, Material AE pair, single-material setting, FormulaFamiliar dropdown). Lead pairs on Cycle D to lock the E2E page-object pattern; remaining E2E cycles are flexible. Depends on Story 1 (E2E infra) + Story 3 Layer C helpers being in place. |
 
-Stories 2–5 are independent after Story 1 completes — a small team can run them in parallel. Story 6 picks up once Story 3 Layer C has wired the real E2E helpers.
+Stories 2–5 are independent after Story 1 completes — a small team can run them in parallel. Story 6 picks up once Story 3 Layer C has wired the real E2E helpers; within Story 6, unit cycles A–C are independent of the E2E cycles and can run in parallel with them.
 
 ---
 
 ## Completion Checklist
 
 ### ✅ Complete
-_(None — Phase 4 has not started)_
+
+**Story 1 — Test Infrastructure Setup** (committed `0524f110`)
+- [x] Install devDependencies: `vitest`, `@vitest/coverage-v8`, `@vitest/ui`, `@vue/test-utils`, `happy-dom`, `@playwright/test`, `@pinia/testing`, `pinia`
+- [x] Add `vitest.config.ts` (separate from `vite.config.ts`): `environment: 'node'`, `include: ['tests/unit/**/*.test.mts']`, `setupFiles: ['tests/setup.mts']`, v8 coverage provider
+- [x] Add scripts to `package.json`: `test`, `test:ci`, `test:ui`, `test:e2e`, `coverage`
+- [x] Create `tests/setup.mts` with Foundry global stubs (game, foundry.utils, foundry.data.fields.* constructors, Roll.safeEval)
+- [x] Create `playwright.config.ts` reading license/paths from `local.config.json` (default port 31000 to avoid Foundry's default 30000); create `tests/e2e/`, `tests/e2e/helpers/`, `tests/e2e/fixtures/` directories; run `npx playwright install chromium`
+- [x] `tests/e2e/fixtures/test-world/` placeholder + rebuild README (snapshot creation deferred to Story 3 Layer C)
+- [x] E2E helper skeletons: `loginAs`, `withTestWorld`, `createItem`, `createActiveEffect`, `evaluateInGame` — throw a clear "owned by Story X" error until wired up
+- [x] Verify: `npm run test:ci` exits 0 (2/2 sanity tests pass); `npm run test:e2e` exits 0 (1/1 runner sanity passes); `npm run build` clean
+- [x] Update `local.config.json.example` with optional `foundryLicenseKey`, `foundryAppPath`, `foundryE2EDataDir`, `foundryE2EPort`
 
 ### ❌ Not Started
-
-**Story 1 — Test Infrastructure Setup**
-- [ ] Install devDependencies: `vitest`, `@vitest/coverage-v8`, `@vitest/ui`, `@vue/test-utils`, `happy-dom`, `@playwright/test`
-- [ ] Add `test` block to `vite.config.ts`: `environment: 'node'`, `include: ['tests/**/*.test.mts']`, `setupFiles: ['tests/setup.mts']`
-- [ ] Add scripts to `package.json`: `"test": "vitest"`, `"test:ci": "vitest run"`, `"test:ui": "vitest --ui"`, `"test:e2e": "playwright test"`, `"coverage": "vitest run --coverage"`
-- [ ] Create `tests/setup.mts` with placeholder; trivial `describe/it` block passes
-- [ ] Create `playwright.config.ts`; create `tests/e2e/`, `tests/e2e/helpers/`, `tests/e2e/fixtures/` directories; run `npx playwright install`
-- [ ] Build the pristine `tests/e2e/fixtures/test-world/` snapshot: GM user, player user, empty scene; document rebuild steps in a sibling README
-- [ ] Create E2E helpers: `loginAs`, `withTestWorld`, `createItem`, `createActiveEffect`, `evaluateInGame` (skeletons OK — Stories 2, 4, 5 don't depend on them; Story 3 Layer C wires them up properly, and Story 6 reuses them)
-- [ ] Verify: `npm test` starts Vitest watch; `npm run test:ui` opens browser UI; `npm run test:e2e` runs (0 tests, exits 0)
-- [ ] Verify: `npm run test:ci` exits 0 on a fresh checkout (so poc.8's `test.yml` PR gate can call it cleanly)
-- [ ] Verify: `npm run test:e2e` exits 0 on a fresh checkout against the committed test world (so poc.8's promotion / nightly / build E2E jobs can call it cleanly)
 
 **Story 2 — Stacking Engine Tests (`tests/unit/effects/stacking-engine.test.mts`)**
 
 Target: pure function `resolveActiveEffectChanges(changes, excludeEffectIds?)` in [src/helpers/stacking.mts](../../../src/helpers/stacking.mts). No Foundry globals required.
 
-- [ ] Same-type bonus: highest value wins; lower value recorded in history as ignored with reason
-- [ ] Untyped bonus: all instances stack (sum)
-- [ ] Penalty: all penalties apply regardless of bonus type on same field
-- [ ] Mixed scenario: multiple bonus types + penalty on same field → correct final totals
-- [ ] History tracking: every change has an entry with `applied: true/false` and rejection reason when ignored
-- [ ] `excludeEffectIds` dual-stack: same field resolves differently when an effect is excluded
-- [ ] **Per-field independence**: two changes to *different* fields with the same `bonusType` do not interfere
-- [ ] **Untyped + named on same field coexist**: untyped sums separately, named picks highest, both apply
-- [ ] **Empty input**: `resolveActiveEffectChanges([])` → empty `winners`, empty `history`
-- [ ] **`parseNumericChangeValue` edge cases** (covered via public function): string numbers (`"5"`, `" 3 "`) parse correctly; empty string and formula-like strings (`"1d6"`) are rejected from numeric stacking and surface in history with a rejection reason
-- [ ] **MASK changes are not stacked as bonuses** (was previously listed under Story 3): MASK-mode changes passed through the engine are not treated as bonuses on the field
+- [x] Same-type bonus: highest value wins; lower value recorded in history as ignored with reason
+- [x] Untyped bonus: all instances stack (sum)
+- [x] Penalty: all penalties apply regardless of bonus type on same field
+- [x] Mixed scenario: multiple bonus types + penalty on same field → correct final totals
+- [x] History tracking: every change has an entry with `applied: true/false` and rejection reason when ignored
+- [x] `excludeEffectIds` dual-stack: same field resolves differently when an effect is excluded
+- [x] **Per-field independence**: two changes to *different* fields with the same `bonusType` do not interfere
+- [x] **Untyped + named on same field coexist**: untyped sums separately, named picks highest, both apply
+- [x] **Empty input**: `resolveActiveEffectChanges([])` → empty `winners`, empty `history`
+- [x] **`parseNumericChangeValue` edge cases** (covered via public function): string numbers (`"5"`, `" 3 "`) parse correctly; empty string and formula-like strings (`"1d6"`) are rejected from numeric stacking and surface in history with a rejection reason
+- [x] **MASK changes are not stacked as bonuses** (was previously listed under Story 3): MASK-mode changes passed through the engine are not treated as bonuses on the field
 
-> Skipped for now: `dodge` bonus type stacking is added in alpha.4 (Feats). Add `// TODO(test):` placeholder.
+> Skipped for now: `dodge` bonus type stacking is added in alpha.4 (Feats). `// TODO(test):` placeholder in the test file.
 
 **Story 3 — Secret AE & Identifiable Tests**
 
@@ -297,31 +304,43 @@ The original "Secret AE" surface splits into three layers, each tested at the lo
 
 *Pre-work — small refactor for testability*: extract the body of `IdentifiableItem._deriveIdentifiableState()` into a pure helper `deriveIdentifiableState(effects)` returning `{ isIdentifiable, isIdentified }`. The mixin method becomes a one-liner that calls the helper and assigns. Mirrors the pattern already used in `resolveChangeValue.mts`. Same approach should be used for any future "derive X from Y" mixin logic.
 
-*Layer A — pure helpers (unit, no Foundry mounting)*
+*Layer A — pure helpers (unit, no Foundry mounting)* ✅
 
-- [ ] Refactor: extract `deriveIdentifiableState(effects)` helper from [IdentifiableItem.mts](../../../src/entities/components/Identifiable/IdentifiableItem.mts) `_deriveIdentifiableState()`
-- [ ] Unit (`tests/unit/effects/identifiable-state.test.mts`): no secrets → `{ isIdentifiable: false, isIdentified: true }`
-- [ ] Unit: one disabled Secret AE → `{ isIdentifiable: true, isIdentified: true }`
-- [ ] Unit: one active Secret AE → `{ isIdentifiable: true, isIdentified: false }`
-- [ ] Unit: mixed (active + disabled) → `{ isIdentifiable: true, isIdentified: false }`
-- [ ] Unit: non-secret effects only → `{ isIdentifiable: false, isIdentified: true }`
+- [x] Refactor: extract `deriveIdentifiableState(effects)` helper from [IdentifiableItem.mts](../../../src/entities/components/Identifiable/IdentifiableItem.mts) `_deriveIdentifiableState()`
+- [x] Unit (`tests/unit/effects/identifiable-state.test.mts`): no secrets → `{ isIdentifiable: false, isIdentified: true }`
+- [x] Unit: one disabled Secret AE → `{ isIdentifiable: true, isIdentified: true }`
+- [x] Unit: one active Secret AE → `{ isIdentifiable: true, isIdentified: false }`
+- [x] Unit: mixed (active + disabled) → `{ isIdentifiable: true, isIdentified: false }`
+- [x] Unit: non-secret effects only → `{ isIdentifiable: false, isIdentified: true }`
 
-*Layer B — narrow value-resolution units*
+*Layer B — narrow value-resolution units* ✅
 
-Target: pure-ish helpers in [resolveChangeValue.mts](../../../src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts). Pre-stub `Roll.safeEval`, `foundry.utils.getProperty`, `foundry.data.fields.{NumberField, BooleanField, EmbeddedDataField}` constructors in `tests/setup.mts`.
+Target: pure helpers in [resolveChangeValue.mts](../../../src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts). Stubs for `Roll.safeEval`, `foundry.utils.getProperty`, `foundry.data.fields.{NumberField, BooleanField, StringField, EmbeddedDataField}` constructors live in `tests/setup.mts`. `@helpers/formulae` is mocked per-test so resolver coercion is exercised in isolation from formula evaluation correctness.
 
-- [ ] Unit (`tests/unit/effects/secret-ae.test.mts`): `resolveActiveEffectChangeValue` returns numeric values when target field is `NumberField`
-- [ ] Unit: returns booleans when target field is `BooleanField` and value is `'true'` / `'false'`
-- [ ] Unit: returns string passthrough when target field is neither (default branch)
-- [ ] Unit: `getEffectContexts` selects `item` target when `change.target === ITEM`, `actor` target otherwise (uses hand-rolled effect/parent stubs)
+- [x] Unit (`tests/unit/effects/secret-ae.test.mts`): `resolveActiveEffectChangeValue` returns numeric values when target field is `NumberField` (numeric string, formula via `Roll.safeEval`, un-evaluable fallback)
+- [x] Unit: returns booleans when target field is `BooleanField` and value is `'true'` / `'false'` (non-boolean string passthrough also covered)
+- [x] Unit: returns string passthrough when target field is `StringField` / non-coercing branch
+- [x] Unit: non-string `change.value` and orphan-effect (no contextMap) paths return raw value untouched
+- [x] Unit: `getEffectContexts` selects `item` target when `change.target === ITEM`, `actor` target otherwise (bare item, item-on-actor, both target combinations)
+- [x] Unit: `getEffectContexts` resolves `schemaField` via `system.constructor.schema._getField` when key starts with `system.`, undefined otherwise
 
-*Layer C — round-trip masking (E2E only)*
+*Layer B2 — masked value resolution units* ✅
 
-Masking the value via `EmbeddedDataField._castChangeDelta` + `_applyChangeOverride` is too entangled with Foundry field internals to mock cleanly. The full round-trip is verified end-to-end via the multi-context pattern (GM context + player context, see §4.4).
+Follow-up to Layer B covering [`resolveMaskedActiveEffectChangeValue`](../../../src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts) — the mask-merge layer atop the basic AE value resolver. Uses per-test `EmbeddedDataField` subclasses with `vi.fn`-wired `_castChangeDelta` / `_applyChangeOverride` hooks; no new stubs in `tests/setup.mts`.
 
-- [ ] Smoke (`tests/e2e/smoke.spec.ts`): GM context logs in via `loginAs(gmContext, 'gm')` → sees world UI; player context logs in via `loginAs(playerContext, 'player')` → sees player view. (Pure infra check; isolates failures.)
-- [ ] E2E (`tests/e2e/secret-ae.spec.ts`): GM creates weapon via `createItem` → attaches Secret AE masking name via `createActiveEffect` → player context shows masked name; GM disables Secret → player context shows real name; GM view-mode toggle (`play` ↔ `true`) works correctly
-- [ ] E2E: multiple Secret AEs on the same field → highest-priority mask wins for the player view
+- [x] Unit (`tests/unit/effects/masked-ae.test.mts`): fallthrough — null targetDocument, undefined schemaField, non-EmbeddedDataField, EmbeddedDataField missing either AE hook → returns plain resolved value
+- [x] Unit: happy path — full pipeline calls `_castChangeDelta(value, rollData)` then `_applyChangeOverride(current, delta, model, change)` and returns its output
+- [x] Unit: `targetDocument` without `getRollData` → `replacementData` defaults to `{}`
+- [x] Unit: current value read via `foundry.utils.getProperty` from nested system path
+- [x] Unit: hooks throwing → catch swallows and falls back to plain resolved value
+
+*Layer C — Playwright smoke + E2E (round-trip masking)*
+
+The full mask round-trip across user contexts (GM identified view vs player masked view) is verified end-to-end against the committed test-world snapshot.
+
+- [x] Smoke (`tests/e2e/smoke.spec.ts`): GM context logs in via `loginAs(gmContext, 'gm')` → sees world UI; player context logs in via `loginAs(playerContext, 'player')` → sees player view. (Pure infra check; isolates failures.)
+- [x] E2E (`tests/e2e/secret-ae.spec.ts`): GM creates weapon via `createItem` → attaches Secret AE masking name via `createActiveEffect` → player context shows masked name; GM disables Secret → player context shows real name; GM view-mode toggle (`play` ↔ `true`) works correctly
+- [x] E2E: multiple Secret AEs on the same field → highest-priority mask wins for the player view
 
 > Setup support: populate `tests/setup.mts` with minimal `game` stub (`user.isGM`, `i18n.localize()` passthrough), `foundry.utils` stub (`getProperty`, `mergeObject`), and constructor-only stubs for the field classes the helpers test against (`NumberField`, `BooleanField`, `EmbeddedDataField`).
 
@@ -329,38 +348,124 @@ Masking the value via `EmbeddedDataField._castChangeDelta` + `_applyChangeOverri
 
 Uses the **reusable `createSchemaTester(Model)` factory** from `tests/helpers/schemaTester.mts` (see §4.3). Story 4 both proves out the factory and lands Weapon's schema tests; future phases reuse the factory unchanged.
 
-- [ ] Create `tests/helpers/schemaTester.mts` exporting `createSchemaTester(Model)` per the shape in §4.3
-- [ ] Unit (`tests/unit/helpers/schemaTester.test.mts`): tester correctly walks a small synthetic schema (use `new SchemaField({ a: new NumberField({ initial: 1 }), … })`) — covers `fieldKeys`, `field`, `assertField`, `assertFieldType`, `assertDefault`
-- [ ] Weapon schema declares all expected top-level fields (via `assertField`)
-- [ ] Weapon schema declared defaults match expected values (via `assertDefault`)
-- [ ] Weapon `criticalRange` and `criticalMultiplier` have validators attached (via `assertHasValidator`); if validator inspection isn't viable on Foundry v14 (see open question in §4.3), fall back to importing and unit-testing the validator function directly
-- [ ] Weapon `weaponDamage` sub-schema is wired in correctly (via `assertFieldType` against `EmbeddedDataField` or `SchemaField` as appropriate)
+- [x] Create `tests/helpers/schemaTester.mts` exporting `createSchemaTester(Model)` per the shape in §4.3
+- [x] Unit (`tests/unit/helpers/schemaTester.test.mts`): tester correctly walks a small synthetic schema (use `new SchemaField({ a: new NumberField({ initial: 1 }), … })`) — covers `fieldKeys`, `field`, `assertField`, `assertFieldType`, `assertDefault`
+- [x] Weapon schema declares all expected top-level fields (via `assertField`)
+- [x] Weapon schema declared defaults match expected values (via `assertDefault`)
+- [x] Weapon `criticalRange` and `criticalMultiplier` have validators attached (via `assertHasValidator`); if validator inspection isn't viable on Foundry v14 (see open question in §4.3), fall back to importing and unit-testing the validator function directly
+- [x] Weapon `weaponDamage` sub-schema is wired in correctly (via `assertFieldType` against `EmbeddedDataField` or `SchemaField` as appropriate)
+
+> **Note**: Per user direction, combat-related Weapon fields (damage formulas, crit semantics, attack resolution, range, ammo) are deferred to the combat phase. Eight `it.todo` placeholders remain in `weapon.model.test.mts` flagging the validator/semantic tests that combat phase will flesh out.
+
+> **Source-file narrowing (incidental to Story 4)**: To run schema tests in the `node` environment, the `WeaponSystemModel` import chain had to stop pulling Vue/sheet UI. Three production imports were narrowed to data-only subpaths (no behaviour change; net win for tree-shaking too):
+>
+> - [`PhysicalItemSystemModel.mts`](../../../src/entities/items/components/Physical/data/PhysicalItemSystemModel.mts) — `ItemSystemModelBase` from `@items/baseItem/data/index.mjs` (not `@items/baseItem/index.mjs`); `IdentifiableSchemaMixin` from `@ec/Identifiable/data/index.mjs`; `PriceField` from `@settings/currency/PriceField.mjs`
+> - [`WeaponSystemModel.mts`](../../../src/entities/items/weapon/data/WeaponSystemModel.mts) — `EquippableItemSystemModel` from `@items/components/Equippable/data/index.mjs`; weapon-type constants from sibling `./constants.mjs` (not the top-level barrel)
+> - [`MaterialSystemModel.mts`](../../../src/entities/activeEffects/material/data/MaterialSystemModel.mts) — `PriceField` from `@settings/currency/PriceField.mjs`
+>
+> Future data-model files should follow the same rule: **import schema/data dependencies from `.../data/index.mjs` subpaths, never from a component's top-level barrel** (which re-exports Vue stores and sheet UI).
 
 **Story 5 — Field Override Cascade & Vue Component Smoke Tests**
 
 The field-override cascade (most-restrictive-wins merge across the ancestor chain) is the highest-value piece to unit test in this story. The component tests stay deliberately small.
 
-- [ ] Identify the cascade merge function in `useDocumentSheetStore` (or wherever `getFieldOverride` resolves) and, if needed, extract it into a pure helper `mergeFieldOverrides(overrides)` for testability — same refactor pattern as Story 3 Layer A
-- [ ] Unit (`tests/unit/sheets/field-override-cascade.test.mts`): no overrides → default `{ visibility: 'everyone', editability: 'normal' }`
-- [ ] Unit: parent `ownerPlus` + child `gmOnly` → `gmOnly` (more restrictive wins per property)
-- [ ] Unit: parent `gmOnly` editability + child `normal` editability → `gmOnly` (parent restriction propagates)
-- [ ] Unit: visibility and editability merge independently per property
-- [ ] Unit: deep ancestor chain (3+ levels) — most-restrictive across the whole chain wins
-- [ ] Create `tests/unit/components/setup.ts` with `createMockDocumentStore()` and `createMockRenderModeStore()` factories (only properties the tested components actually touch; factory shape parallels the schema-tester factory — self-contained, no shared state)
-- [ ] Smoke (`tests/unit/components/FormGroup.test.mts`, `// @vitest-environment happy-dom`): given `getFieldOverride` returns `gmOnly` visibility, non-GM user sees nothing; GM sees the field
-- [ ] Smoke (`tests/unit/components/NumberFormGroup.test.mts`, `// @vitest-environment happy-dom`): `#controls` slot content renders; `editable` scoped slot prop reflects the FormGroup override result
+- [x] Identify the cascade merge function in `useDocumentSheetStore` (or wherever `getFieldOverride` resolves) and, if needed, extract it into a pure helper `mergeFieldOverrides(overrides)` for testability — same refactor pattern as Story 3 Layer A
+- [x] Unit (`tests/unit/sheets/field-override-cascade.test.mts`): no overrides → default `{ visibility: 'everyone', editability: 'normal' }`
+- [x] Unit: parent `ownerPlus` + child `gmOnly` → `gmOnly` (more restrictive wins per property)
+- [x] Unit: parent `gmOnly` editability + child `normal` editability → `gmOnly` (parent restriction propagates)
+- [x] Unit: visibility and editability merge independently per property
+- [x] Unit: deep ancestor chain (3+ levels) — most-restrictive across the whole chain wins
+- [x] Create `tests/unit/components/setup.ts` with `createMockDocumentStore()` and `createMockRenderModeStore()` factories (only properties the tested components actually touch; factory shape parallels the schema-tester factory — self-contained, no shared state)
+- [x] Smoke (`tests/unit/components/FormGroup.test.mts`, `// @vitest-environment happy-dom`): given `getFieldOverride` returns `gmOnly` visibility, non-GM user sees nothing; GM sees the field
+- [x] Smoke (`tests/unit/components/NumberFormGroup.test.mts`, `// @vitest-environment happy-dom`): `#controls` slot content renders; `editable` scoped slot prop reflects the FormGroup override result
 
-**Story 6 — E2E Backfill for poc.1 & poc.2 Features**
+> **Refactor note (Story 5 cycle 1)**: The cascade was extracted into a new file [`cascadeFieldOverride.mts`](../../../src/entities/components/CoreMixin/sheet/stores/cascadeFieldOverride.mts) co-located with `FieldOverridesStore`. The store's `getFieldOverride` is now a one-liner calling `cascadeFieldOverride(path, key, resolveAtPath)`. The extracted helper takes a `ResolveAtPath` callback, so unit tests pass a synthetic table-driven resolver — no document, schema, or Vue reactivity needed. Same pattern as Story 3 Layer A's `deriveIdentifiableState` extraction.
 
-Beyond the Story 3 Layer C secret-AE round-trip, these specs cover real feature surfaces from poc.1 (FormulaFamiliar in document fields, field permissions) and poc.2 (Material AE Details/Changes tabs, aspect picker, single-material enforcement). Depends on Story 1 (E2E infra) and the helpers landed in Story 3.
+> **Component test isolation (Story 5 cycle 2)**: Mounting any FormGroup variant transitively imports `@ec/CoreMixin/index.mjs` — a heavy barrel that pulls in document mixins, sheet stores, and Vue app classes that won't initialise cleanly under unit env stubs. Component tests `vi.mock` the CoreMixin barrel to expose only the two injection symbols (`DocumentSheetStoreSymbol`, `RenderModeStoreSymbol`) using `Symbol.for(...)` (the global registry). The `tests/unit/components/setup.ts` mock-store factories use the **same** registry keys so injected stores reach the components. `FieldControls` is replaced with a slot-rendering stub so `#controls` content survives. This isolation pattern is reusable for every future FormGroup variant test.
+
+**Story 6 — Backfill Expansion (Units + E2E for poc.1 & poc.2 Features)**
+
+Story 5 closed out the field-override cascade and proved the FormGroup component-test isolation pattern. Story 6 broadens the unit coverage along the now-proven seams (FormGroup variants, view-aware getters, FormulaFamiliar schema walker, mixin state derivations) and then lands the E2E specs that cover poc.1 (FormulaFamiliar in document fields, field permissions) and poc.2 (Material AE Details/Changes tabs, aspect picker, single-material enforcement).
+
+The story is split into **six cycles**. Each cycle ends at a clean `npm run build` + green suite and is independently shippable. Cycles A–C are unit work and can run in any order. Cycle D establishes the E2E page-object pattern; E and F build on it.
 
 > **Scope note — material single-per-type**: the spec corresponds to the **current** behaviour of `validateSingleMaterial`, which only blocks duplicate **STANDARD-subtype** materials when the `ENFORCE_SINGLE_MATERIAL` setting is enabled. It does **not** enforce "one of each material type". A broader "one per type" rule is out of scope for Phase 4 — if that becomes the desired behaviour, raise it as a feature change in the relevant content phase and update the spec.
 
-- [ ] `tests/e2e/formula-familiar-weapon-name.spec.ts`: GM opens a weapon sheet → focuses the name field → triggers FormulaFamiliar dropdown → verify the suggested context list contains the expected item-scoped properties (e.g. `system.weaponDamage.*`) and excludes opt-out fields → select a context → verify the resolved name updates in the field, persists to the document, and shows in the sheet header / window title
-- [ ] `tests/e2e/material-details-changes-tab.spec.ts`: GM creates a Material AE → on the Details tab, adds a property (e.g. damage bonus) via `createActiveEffect`-equivalent UI flow → switches to the Changes tab → verify the corresponding `change` row exists with the right key/value/mode and is in sync with the Details entry
-- [ ] `tests/e2e/material-aspect-picker.spec.ts`: with no parent material → aspect picker shows the full base set; with a parent material assigned → aspect picker filters/derives from the parent. Verify both branches produce the expected available-aspect list and that selection persists.
-- [ ] `tests/e2e/material-single-per-type.spec.ts`: with `ENFORCE_SINGLE_MATERIAL` setting **off**, two STANDARD materials can be added to a weapon; with the setting **on**, the second add is rejected and the first remains. Non-STANDARD subtypes are unaffected by the setting (positive control).
-- [ ] `tests/e2e/field-permissions.spec.ts`: GM applies a `gmOnly` visibility override to one field on a weapon → player context sees the field hidden; GM applies a `gmOnly` editability override → player context sees the field but cannot edit it; GM removes the override → player context returns to default visibility/editability. One field is enough — Story 5 covers the merge logic exhaustively.
+> **Pre-flight (before Cycle D)**: verify Story 1 E2E infra still works end-to-end — fixture world launches, `loginAs`/`createItem`/`createActiveEffect` helpers behave, `smoke.spec.ts` + `secret-ae.spec.ts` still green. Recent terminal log shows a Foundry launch exited 1; confirm fixture world health before stacking new specs.
+
+**Cycle A — FormGroup variant smoke tests (units)**
+
+Mechanical fan-out of the Story 5 cycle 2 isolation pattern across the remaining FormGroup variants. Each test mounts the component with the mock store factories and asserts the variant-specific surface (input element rendered, `editable` slot prop reflects cascade, readonly slot used when not editable). Naming mirrors `NumberFormGroup.test.mts`.
+
+- [x] `tests/unit/components/TextFormGroup.test.mts`: input renders; `#controls` `editable` slot prop reflects FormGroup result for true/false
+- [x] `tests/unit/components/CheckBoxFormGroup.test.mts`: checkbox renders; disabled/readonly state follows editability
+- [x] `tests/unit/components/ToggleSwitchFormGroup.test.mts`: toggle renders; disabled/readonly state follows editability
+- [x] `tests/unit/components/ColorFormGroup.test.mts`: color input renders; disabled state follows editability
+- [x] `tests/unit/components/SelectFormGroup.test.mts`: select renders with options; readonly slot used when not editable
+- [x] `tests/unit/components/MultiSelectFormGroup.test.mts`: multi-checkbox list renders; selected values reflected; readonly view when not editable
+
+**Cycle B — Composite form behaviours (units)**
+
+- [x] `tests/unit/components/FormGroupSection.test.mts`: section renders children when at least one is visible; auto-hides when **all** children are invisible (per-field override cascade UX); section-level lock cascades to children via `#controls` `editable` slot prop
+- [x] `tests/unit/sheets/view-aware-field-value.test.mts`: `getViewAwareFieldValue(path)` returns source value in `edit` mode; effective (masked) value in `play` mode; unmasked true value in `true` mode (GM only); falls back gracefully when no mask present. Extract the resolution logic to a pure helper if currently inline — same refactor pattern as Story 3 Layer A and Story 5 cycle 1.
+
+**Cycle C — Pure-logic backfill across poc.1/2 surfaces (units)**
+
+- [x] `tests/unit/familiar/schema-walker.test.mts`: FormulaFamiliar schema walker — opt-out model (all fields included by default); `formulaVisible: false` removes a field; `isFamiliarLeaf` markers stop recursion; `aspectKey` / `aspectType` / `aliases` overrides; SchemaField recursion with dotted access paths; document-level `name` always merged; live value resolution
+- [x] `tests/unit/effects/material-changes.test.mts`: `buildMaterialChanges` pure helper (extracted from `MaterialSystemModel.buildChanges`) — non-system user-authored changes preserved verbatim; one system change emitted per non-zero/non-empty Details field; existing system change `type` (ADD/UPGRADE) preserved when re-emitting; `bonusType` tag follows the chosen `materialSubtype`; empty/zero fields emit nothing
+- [~] ~~`tests/unit/effects/physical-item-state.test.mts`~~ — **deferred to poc.5 (Compendium Foundation)**. Material AE *emission* is covered by `material-changes.test.mts` above; the host-side derivation that *consumes* those changes through the stacking engine to produce resolved weight/price/hardness on the parent item is not wired yet. Add the unit once host-side resolution exists.
+- [~] ~~`tests/unit/effects/equippable-item-state.test.mts`~~ — **deferred to poc.5**. `isEquipped` is currently a schema boolean with no derivation; the proposed behaviour (equipped flag gating item-level effects in the resolution chain) is not yet wired. Add the unit when the gating actually exists.
+
+> Each unit cycle follows the same extraction discipline used in Story 3/5: if the target logic is currently embedded in a store/mixin method, extract a pure helper alongside the consumer (one-liner call site) and unit-test the helper. No new Foundry surface invented for testability.
+
+**Cycle D — E2E pattern lock: field-permissions (one spec)**
+
+Lightest multi-context E2E flow, mirrors the existing `secret-ae.spec.ts` shape. Output: page-object pattern + per-field override helper that subsequent E2E specs reuse.
+
+- [x] `tests/e2e/field-permissions.spec.ts`: GM applies a `gmOnly` visibility override to one field on a weapon → player context sees the field hidden; GM applies a `gmOnly` editability override → player context sees the field but cannot edit it; GM removes the override → player context returns to default visibility/editability. One field is enough — Story 5 covers the merge logic exhaustively. **Target field: `system.quantity` via `ItemQuantity` (`everyoneVisibility` / `normalEditability` defaults, present on every PhysicalItem sheet). FormGroup root now carries `data-field-path` for mode-independent selection.**
+- [x] Establish `tests/e2e/helpers/fieldOverrides.mts` page-object helper (`setFieldOverride` / `clearFieldOverride`) reusing `encodeFieldPath`, `FIELD_OVERRIDES_FLAG`, and the `FieldVisibility`/`FieldEditability` types from `fieldPermissions.mts`. `clearFieldOverride` uses Foundry's `-=` update prefix to actually delete the flag entry (not `setFlag`, which merges).
+
+**Cycle E — Material AE E2E pair (two specs, shared surface)**
+
+Both drive the same Material AE sheet → build a `materialSheet` page object once, use twice. Order within the cycle: Details/Changes first (more mechanical), aspect picker second (branching logic).
+
+- [x] `tests/e2e/helpers/materialSheet.mts`: page object for the Material AE sheet (open, switch tabs, read change rows). Aspect-selection helpers deferred with the aspect-picker spec below.
+- [x] `tests/e2e/material-details-changes-tab.spec.ts`: Material AE created via `createActiveEffect` with seeded Details-tab fields → activates Details tab (default) → switches to Changes tab → cross-checks DOM row count against `ae.system.changes`, asserts each row carries the subtype-derived bonus type (`dnd35e.BONUS_TYPES.Material` for `standard`), and that the Details values feed the change values verbatim (`system.hardness`, `system.hp.max`, `system.damageReductionTypes`).
+- [ ] **Deferred — pending parent-material composition.** `tests/e2e/material-aspect-picker.spec.ts`: "parent material" relationship is not yet implemented on `MaterialSystemModel`; the current AspectPicker derives suggestions from the target item context only (`registerFamiliarSchema('ActiveEffect', materialEffectType, …)`). Re-introduce when parent-material composition lands (likely **poc.5+**). The branching behaviour described in the original cycle (no parent → full base set; with parent → filtered) has no production surface to exercise today.
+
+**Cycle F — Setting-driven validation E2E (one spec)**
+
+- [x] `tests/e2e/helpers/setSystemSetting.mts`: typed `setSystemSetting` / `getSystemSetting` wrappers around `game.settings.set/get(SYSTEM_ID, key, value)` via `page.evaluate`.
+- [x] `tests/e2e/material-single-per-type.spec.ts`: 3 tests — (a) setting off → two standard Materials coexist on a weapon; (b) setting on → second standard Material is rejected by the `preCreateActiveEffect` hook, first remains; (c) setting on → non-standard subtypes (`broken`, `masterwork`) are unaffected (positive control). **Side fix:** uncommented `registerCombatSettings()` in `src/settings/core/registration.mts` — the setting was previously never registered, which would have thrown at runtime had the collision branch ever fired in production.
+
+**Cycle G — FormulaFamiliar dropdown E2E (one spec)**
+
+Most complex UI surface (autocomplete dropdown, suggestion filtering, sheet-header reflection) — saved for last so dropdown helper maturity benefits from earlier cycles.
+
+- [x] `tests/e2e/helpers/familiarDropdown.mts`: page-object helpers for opening (`openFamiliar`), reading (`readFamiliarOptions` / `readFamiliarOptionTitles`), selecting (`selectFamiliarOption`), and dismissing (`dismissFamiliar`) the FormulaFamiliar dropdown. Selections key off each option's `title` attribute (carries `accessPath` for leaves, `fullPath` for root contexts) — stable across localization/label changes.
+- [x] `tests/e2e/formula-familiar-weapon-name.spec.ts`: 2 tests — (a) GM opens a weapon sheet → triggers FormulaFamiliar (`#`) on the name field → root dropdown exposes `Self` / `Owner` contexts → drilling into `Self` lists weapon-scoped schema fields (`system.weaponType`, `system.weaponSubtype`, `#Self.WeaponDamage.` branch) and excludes opt-out fields (`nameFormula`, `description`, `version`, `slug`) → drilling into `WeaponDamage` lists `damageRoll` / `damageType` / `critRange` / `critMultiplier` → selecting `damageRoll` closes the menu, inserts `#Self.WeaponDamage.DamageRoll` into the input, commits on Tab to canonical `#self.weaponDamage.damageRoll` on the document, and resolves `doc.name` to the underlying value (`1d8+1`); (b) Escape closes the dropdown without committing. **Scope note:** Sheet-header `.item-name` reflection is only rendered in play/true mode (HeaderNameField swaps to FormulaFormGroup in edit mode), so this spec asserts on `doc.name` directly — cross-mode header-swap coverage lands in Cycle H below.
+
+**Cycle H — View-mode bar E2E sweep (one spec)**
+
+The view-mode bar is a cross-cutting UI primitive every sheet renders, owned by `RenderModeStore` and stable since Phase 2. Phase 4 incidentally clicks the buttons in `secret-ae.spec.ts` to drive masking assertions, but never directly asserts the bar's visibility matrix, role gating, transition guards, or the `HeaderNameField` swap behaviour. Cycle H closes that gap before Phase 4 ships — the surface is shipped production code, the gap is a real regression risk for every subsequent sheet-touching phase, and there is no upstream dependency to wait on.
+
+*(Originally deferred at the end of Cycle G under the rationale "the phase that next touches the mode bar." Reviewed during phase closure: that's scope-leakage from cycle-level discipline into phase-level deferral. The mode bar is testing-infrastructure work; it belongs in Phase 4.)*
+
+- [ ] `tests/e2e/view-mode-bar.spec.ts`: 6 tests against a weapon (identifiable, owner-permissioned). Tests select buttons by FontAwesome icon class (`i.fa-dice-d20` / `i.fa-eye` / `i.fa-pen-to-square`) for stability across localization.
+  1. **GM, no secrets**: bar shows exactly the Edit and Play buttons; True button absent.
+  2. **GM, with Secret AE attached**: bar shows all three buttons (Edit, Play, True). Removing the Secret AE (set `disabled: true`) re-renders the bar and removes the True button.
+  3. **Player, owner permission**: bar shows Edit (owner can edit) and Play; True button absent regardless of secrets.
+  4. **Player, observer-only permission**: bar shows Play only; Edit and True absent.
+  5. **Active state**: the button matching the current mode carries `.active`; clicking another button moves `.active` to it.
+  6. **HeaderNameField swap**: in `edit` mode the `system.nameFormula` FormulaFormGroup is in the DOM and `.item-name` is not; clicking Play swaps to `.item-name` + hides the FormulaFormGroup; clicking Edit swaps back.
+
+  **Scope note**: Value-correctness across modes (masked play vs unmasked true) is already covered by `secret-ae.spec.ts`. This spec covers **bar presence, gating, and DOM-surface swap** only — the structural contract — not value resolution.
+
+> **Deferred E2E** (intentionally out of scope for Story 6, recorded for the owning phase to pick up):
+> - Drag-drop AE onto Weapon (material application via drag rather than programmatic create) — deferred to **poc.5** (Compendium Foundation), which is where drag-from-pack flows first land
+> - Compendium pack-load smoke (packed weapon imports cleanly with all fields preserved) — deferred to **poc.5**
+
+> **View-aware plan extraction (Story 6 cycle B)**: `getViewAwareFieldValue` is now a thin caller around a new pure helper [`resolveViewAwareFieldPlan(modes, getFromSource)`](../../../src/entities/components/CoreMixin/sheet/viewAwareFieldPlan.mts), which returns `{ readMode: 'source' | 'derived', checkMasks: boolean }`. The decision logic — GM-edit/true → source; GM-play → derived+masks; non-GM-edit/play → derived+masks; explicit `getFromSource` overrides — lives in the helper. The store handles only the actual `foundry.utils.getProperty` reads, mask normalization, and the undefined-derived fallback. Same extraction pattern as Story 3 Layer A's `deriveIdentifiableState` and Story 5 cycle 1's `cascadeFieldOverride`.
 
 ---
 

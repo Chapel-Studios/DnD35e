@@ -1,3 +1,6 @@
+import {
+  pickMoreRestrictive,
+} from './cascadeFieldOverride.mjs';
 import type {
   FieldMeta,
   FieldOverridesStore,
@@ -9,7 +12,6 @@ import type {
 } from './FieldOverridesStore.mjs';
 import {
   FieldOverridesStoreSymbol,
-  pickMoreRestrictive,
   useFieldOverridesStore,
 } from './FieldOverridesStore.mjs';
 import type {

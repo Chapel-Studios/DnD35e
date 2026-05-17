@@ -6,9 +6,9 @@ import {
   useDnd35eField,
 } from '@helpers/fieldBuilders.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
-import { EquippableItemSystemModel } from '@items/components/Equippable/index.mjs';
-import { WEAPON_BASE_TYPES,WEAPON_SUBTYPES, WEAPON_TYPES } from '@items/weapon/index.mjs';
+import { EquippableItemSystemModel } from '@items/components/Equippable/data/index.mjs';
 
+import { WEAPON_BASE_TYPES, WEAPON_SUBTYPES, WEAPON_TYPES } from './constants.mjs';
 import type { WeaponSystemData } from './WeaponSystemData.mjs';
 
 const {

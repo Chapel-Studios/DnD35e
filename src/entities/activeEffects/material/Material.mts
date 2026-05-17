@@ -6,7 +6,6 @@ import { COMBAT_KEYS } from '@settings/combat/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { MaterialSystemData, MaterialSystemSource } from './data/index.mjs';
-import { MATERIAL_SUBTYPE_STANDARD } from './data/index.mjs';
 import type { MaterialEffectType } from './materialEffectType.mjs';
 import { materialEffectType } from './materialEffectType.mjs';
 
@@ -43,27 +42,29 @@ type MaterialType = Material;
 /**
  * Validates whether a new Material AE should be allowed on its parent.
  * Returns false to block creation when the enforce-single-material setting is on
- * and the parent already has a standard Material AE.
+ * and the parent already has a Material AE of the same subtype (`standard`,
+ * `broken`, or `masterwork`). Subtypes are evaluated independently — a parent
+ * may carry at most one of each.
  */
 function validateSingleMaterial(document: ActiveEffect): false | void {
   if (document.type !== materialEffectType || !document.parent) return;
 
-  const systemData = document.system as Record<string, unknown>;
-  if (systemData?.materialSubtype !== MATERIAL_SUBTYPE_STANDARD) return;
+  const incomingSubtype = (document.system as Record<string, unknown>)?.materialSubtype;
+  if (typeof incomingSubtype !== 'string') return;
 
-  const existingStandard = [...(document.parent.effects ?? [])].find(
+  const existingSameSubtype = [...(document.parent.effects ?? [])].find(
     (e: ActiveEffect) =>
       e.type === materialEffectType
-      && (e.system as Record<string, unknown>)?.materialSubtype === MATERIAL_SUBTYPE_STANDARD
+      && (e.system as Record<string, unknown>)?.materialSubtype === incomingSubtype
   );
-  if (!existingStandard) return;
+  if (!existingSameSubtype) return;
 
   const enforce = game.settings.get(SYSTEM_ID, COMBAT_KEYS.ENFORCE_SINGLE_MATERIAL) as boolean;
   if (enforce) {
     foundry.ui.notifications?.error('dnd35e.EFFECT.EnforceSingleMaterialError', { localize: true });
     return false;
   }
-  LogHelper.warn('Multiple standard Material effects on a single item. This may cause unexpected stacking behavior.');
+  LogHelper.warn(`Multiple ${incomingSubtype} Material effects on a single item. This may cause unexpected stacking behavior.`);
 }
 
 export {

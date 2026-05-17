@@ -59,11 +59,19 @@ E2E tests do **not** run on every PR — they require a live Foundry instance wi
 
 **Self-hosted runner requirements** (one-time admin setup, tracked separately as ops):
 - Linux host (or Windows if preferred)
-- Foundry installer + license file accessible to the runner user (mounted volume or secret)
+- Foundry v14 installed at a known root path; runner sets `FOUNDRY_ROOT_PATH` env (consumed by `scripts/setup-e2e.mjs` in lieu of `local.config.json`)
 - Node 20+, Playwright browsers installed (`npx playwright install`)
 - Repo `runs-on` label set to identify the runner (e.g. `[self-hosted, foundry]`)
 
-**Local dev**: `npm run test:e2e` runs against the developer's local Foundry. Same Playwright config; the helper `withTestWorld()` handles spinning up a hermetic copy of the test world.
+**License provisioning** (CI runs without a Foundry license at the default path):
+- Store the contents of a signed `Config/license.json` (from any activated Foundry install) as a GitHub Actions secret named `E2E_LICENSE_JSON`
+- `scripts/setup-e2e.mjs` writes it verbatim to the provisioned data dir — no network call to Foundry's license server
+- Signed payloads are portable across machines; the same secret works for nightly, promotion, and release workflows
+- Resolution order in the script: `E2E_LICENSE_JSON` env → `E2E_LICENSE_PATH`/`foundryLicenseFile` config → `<foundryRootPath>/Config/license.json` (local dev fallback)
+
+**Test world snapshot**: committed under `tests/e2e/fixtures/test-world/`. `world.json` is generated from `world.json.template` (sibling of the world dir) by `scripts/build-test-world-json.mjs`, wired into `pretest:e2e`. CI does not need to rebuild the snapshot — it's pristine in the repo and copied into the runner's data dir each run.
+
+**Local dev**: `npm run test:e2e` runs against the developer's local Foundry, configured via `local.config.json` (`foundryRootPath` canonical, `foundryDataPath`/`foundryLicenseFile` optional overrides). Same Playwright config as CI.
 
 E2E test scaffold and helpers are owned by **poc.4**. This phase only wires them into CI.
 
@@ -146,14 +154,24 @@ These files are created or modified in the in-flight PR. This section is a check
 
 Depends on poc.4 shipping `npm run test:e2e` and the test-world fixture. Self-hosted runner setup is tracked as ops work; this story wires the workflows once the runner is available.
 
-- [ ] Provision self-hosted runner with Foundry + license (ops; tracked outside the phase checklist)
-- [ ] Create `.github/workflows/e2e-nightly.yml`: scheduled nightly run on `dev`, self-hosted runner; failure opens / updates a tracking issue
-- [ ] Create `.github/workflows/e2e-promotion.yml`: triggers on `pull_request` to `main`; self-hosted; required status check
-- [ ] Update `.github/workflows/build.yml`: add `npm run test:e2e` step on the self-hosted runner before zip/release
+**Runner provisioning (ops, outside checklist)**
+- [ ] Self-hosted runner registered with label `[self-hosted, foundry]`
+- [ ] Foundry v14 installed at a known path; `FOUNDRY_ROOT_PATH` env exported for the runner user
+- [ ] Node 20+, `npx playwright install` complete
+- [ ] GitHub Actions secret `E2E_LICENSE_JSON` populated with a signed `license.json` payload (see §8.4)
+
+**Workflows**
+- [ ] Create `.github/workflows/e2e-nightly.yml`: scheduled nightly run on `dev`, `runs-on: [self-hosted, foundry]`; exports `E2E_LICENSE_JSON` from secrets; runs `npm ci && npm run test:e2e`; failure opens / updates a tracking issue
+- [ ] Create `.github/workflows/e2e-promotion.yml`: triggers on `pull_request` to `main`; self-hosted; same env wiring; required status check
+- [ ] Update `.github/workflows/build.yml`: add `npm run test:e2e` step on the self-hosted runner (same env wiring) before zip/release
+- [ ] Confirm all three workflows export `FOUNDRY_ROOT_PATH` (from runner env) and `E2E_LICENSE_JSON` (from secrets) to the test step — `scripts/setup-e2e.mjs` is the single consumer
 - [ ] Configure branch protection on `main`: require `e2e-promotion.yml` status check
+
+**Verification**
 - [ ] Verify: open a `dev` → `main` PR → `e2e-promotion.yml` runs; failing E2E blocks merge
 - [ ] Verify: nightly cron runs against latest `dev`; failing run produces a visible signal
 - [ ] Verify: tag-triggered `build.yml` runs E2E and blocks release on failure
+- [ ] Verify: license resolution works end-to-end on the runner (no leaked `E2E_LICENSE_JSON` in logs)
 
 ---
 

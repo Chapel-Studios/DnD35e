@@ -33,12 +33,25 @@ function parseNumericChangeValue(value: unknown): number {
  * The stacking engine is the foundational system for resolving which bonuses
  * apply when multiple Active Effects modify the same field.
  *
- * Stacking Rules:
- * - 'untyped' bonus type: ALWAYS stack (sum all untyped values)
- * - All other named types: HIGHEST-WINS per field per type (only highest value applies)
- * - Penalties: ALWAYS apply (never suppressed by stacking)
+ * Stacking Rules (D&D 3.5 SRD — "Stacking", glossary):
+ *   "In most cases, modifiers to a given check or roll stack if they come from
+ *    different sources and have different types (or no type at all), but do not
+ *    stack if they have the same type or come from the same source.
+ *    If the modifiers to a particular roll do not stack, only the best bonus and
+ *    worst penalty applies."
  *
- * Note: 'dodge' bonus type stacking is added in Phase 10 (Feats system).
+ * Per (field, bonusType) group:
+ * - Stacking types: sum ALL values (bonuses and penalties together).
+ *   Currently: 'untyped' (default type — also accepts `undefined`, normalized to untyped).
+ *   Project policy (per community expert consultation, RAW + common interpretation):
+ *   dodge, circumstance, and racial bonuses also stack (both bonuses and penalties).
+ *   Add each to STACKING_BONUS_TYPES when the phase that introduces the type lands.
+ * - Non-stacking named types: keep the BEST bonus (highest positive value) AND the
+ *   WORST penalty (lowest negative value). Both winners apply; other entries are
+ *   rejected as "lower bonus" / "less severe penalty".
+ *
+ * Bonus vs penalty is derived from value sign (`< 0` is a penalty), matching the
+ * SRD's positive-bonus / negative-penalty convention.
  *
  * History Tracking:
  * Every resolved bonus is tracked with metadata: which changes were applied, which were
@@ -61,6 +74,7 @@ function parseNumericChangeValue(value: unknown): number {
  */
 
 import type { BonusType } from '@constants/bonusTypes.mjs';
+import { BONUS_TYPE_UNTYPED } from '@constants/bonusTypes.mjs';
 
 /**
  * Result of stacking resolution: which changes win, and detailed history.
@@ -124,8 +138,31 @@ interface StackingChange {
   source: string;
   /** Optional: effect ID for masking (dual-stack exclusion) */
   effectId?: string;
-  /** Is this a penalty? (always apply) */
-  isPenalty?: boolean;
+}
+
+/**
+ * Bonus types whose group sums all values (bonuses + penalties together) instead
+ * of applying best-bonus + worst-penalty.
+ *
+ * Current: 'untyped' (the default type when no other applies).
+ *
+ * Future additions (project policy, add when the phase that introduces the type lands):
+ * - 'dodge'        — Phase 10 (Feats / Fighting Defensively). RAW: dodge bonuses stack.
+ * - 'circumstance' — community-expert consensus that circumstance bonuses and
+ *                    penalties stack with one another (not the literal SRD default of
+ *                    "highest wins", but the broadly-accepted table interpretation).
+ * - 'racial'       — edge case (one creature rarely has multiple racial bonuses to the
+ *                    same thing) but treated as stacking when overlap occurs.
+ *
+ * Note: `undefined` is normalized to BONUS_TYPE_UNTYPED at grouping time, so callers
+ * may pass either; both land in the same group.
+ */
+const STACKING_BONUS_TYPES: ReadonlySet<BonusType> = new Set<BonusType>([
+  BONUS_TYPE_UNTYPED,
+]);
+
+function isStackingType(bonusType: BonusType): boolean {
+  return STACKING_BONUS_TYPES.has(bonusType);
 }
 
 /**
@@ -158,7 +195,13 @@ function resolveActiveEffectChanges(
 
   // Group changes by field and bonus type
   for (const change of effectiveChanges) {
-    const groupKey = `${change.field}:${change.bonusType ?? 'undefined'}`;
+    // Defensive: skip non-numeric values (callers should pre-filter via
+    // parseNumericChangeValue, but a NaN here would break the reduce loops below).
+    if (Number.isNaN(change.value)) continue;
+
+    // Normalize undefined → BONUS_TYPE_UNTYPED so both conventions land in the same group.
+    const bonusType: BonusType = change.bonusType ?? BONUS_TYPE_UNTYPED;
+    const groupKey = `${change.field}:${bonusType}`;
 
     if (!applicationsMap.has(groupKey)) {
       applicationsMap.set(groupKey, []);
@@ -168,7 +211,7 @@ function resolveActiveEffectChanges(
     const application: ChangeApplication = {
       changeIndex: change.index,
       value: change.value,
-      bonusType: change.bonusType,
+      bonusType,
       source: change.source,
       reason: 'other', // Will be set by stacking rules
     };
@@ -181,42 +224,12 @@ function resolveActiveEffectChanges(
 
   for (const [groupKey, applications] of applicationsMap) {
     // Parse the groupKey
-    const [field, bonusTypeStr] = groupKey.split(':');
-    const bonusType = bonusTypeStr === 'undefined'
-      ? undefined
-      : (bonusTypeStr as BonusType);
+    const colonIdx = groupKey.indexOf(':');
+    const field = groupKey.slice(0, colonIdx);
+    const bonusType = groupKey.slice(colonIdx + 1) as BonusType;
 
-    // Check for penalties
-    const isPenaltyGroup = applications.some((a) => {
-      const originalChange = changes.find((c) => c.index === a.changeIndex);
-      return originalChange?.isPenalty;
-    });
-
-    // Rule 1: Penalties always apply
-    if (isPenaltyGroup) {
-      for (const app of applications) {
-        const originalChange = changes.find((c) => c.index === app.changeIndex);
-        if (originalChange?.isPenalty && originalChange.value !== 0) {
-          winners.push({
-            ...app,
-            reason: 'penalty',
-          });
-        }
-        history.push({
-          changeIndex: app.changeIndex,
-          field,
-          bonusType,
-          source: app.source,
-          value: app.value,
-          applied: originalChange?.isPenalty ?? false,
-          rejection: originalChange?.isPenalty ? undefined : 'not a penalty',
-        });
-      }
-      continue;
-    }
-
-    // Rule 2: Untyped bonuses always stack (sum all)
-    if (bonusType === undefined) {
+    // Rule 1: Stacking types (untyped, dodge in Phase 10+) sum ALL values
+    if (isStackingType(bonusType)) {
       const sum = applications.reduce((acc, a) => acc + a.value, 0);
       if (sum !== 0) {
         winners.push({
@@ -239,21 +252,29 @@ function resolveActiveEffectChanges(
       continue;
     }
 
-    // Rule 3: Named types use highest-wins
-    // (In Phase 2: 'material' | 'broken' | 'masterwork')
-    // Phase 10 adds 'dodge' which stacks instead of highest-wins
-    const highest = applications.reduce((max, app) => {
-      return app.value > max.value ? app : max;
-    });
+    // Rule 2: Non-stacking named types — best bonus + worst penalty both apply
+    // (SRD: "only the best bonus and worst penalty applies")
+    const bonuses = applications.filter((a) => a.value > 0);
+    const penalties = applications.filter((a) => a.value < 0);
 
-    winners.push({
-      ...highest,
-      reason: 'highest',
-    });
+    let bonusWinner: ChangeApplication | undefined;
+    let penaltyWinner: ChangeApplication | undefined;
 
-    // Record all in history
+    if (bonuses.length > 0) {
+      bonusWinner = bonuses.reduce((max, a) => (a.value > max.value ? a : max));
+      winners.push({ ...bonusWinner, reason: 'highest' });
+    }
+    if (penalties.length > 0) {
+      penaltyWinner = penalties.reduce((min, a) => (a.value < min.value ? a : min));
+      winners.push({ ...penaltyWinner, reason: 'penalty' });
+    }
+
+    // Record history for every application in the group
     for (const app of applications) {
-      if (app.changeIndex === highest.changeIndex) {
+      const isBonusWinner = bonusWinner !== undefined && app.changeIndex === bonusWinner.changeIndex;
+      const isPenaltyWinner = penaltyWinner !== undefined && app.changeIndex === penaltyWinner.changeIndex;
+
+      if (isBonusWinner || isPenaltyWinner) {
         history.push({
           changeIndex: app.changeIndex,
           field,
@@ -262,17 +283,29 @@ function resolveActiveEffectChanges(
           value: app.value,
           applied: true,
         });
-      } else {
-        history.push({
-          changeIndex: app.changeIndex,
-          field,
-          bonusType,
-          source: app.source,
-          value: app.value,
-          applied: false,
-          rejection: `${bonusType} type, lower value (${app.value} < ${highest.value})`,
-        });
+        continue;
       }
+
+      let rejection: string;
+      if (app.value > 0) {
+        rejection = `${bonusType} type, lower bonus (${app.value} < ${bonusWinner!.value})`;
+      }
+      else if (app.value < 0) {
+        rejection = `${bonusType} type, less severe penalty (${app.value} > ${penaltyWinner!.value})`;
+      }
+      else {
+        rejection = `${bonusType} type, zero value`;
+      }
+
+      history.push({
+        changeIndex: app.changeIndex,
+        field,
+        bonusType,
+        source: app.source,
+        value: app.value,
+        applied: false,
+        rejection,
+      });
     }
   }
 

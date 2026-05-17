@@ -45,6 +45,7 @@
   },
   "include": [
     "src/**/*",
+    "tests/**/*",
     "./types/foundry/global-external.d.mts",
     "./types/foundry/client/global-external.d.mts",
     "./types/foundry/common/global-external.d.mts",

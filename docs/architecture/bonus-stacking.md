@@ -34,8 +34,8 @@ The system defines 27+ bonus types. Each type has a stacking rule:
 | Luck | Highest wins | Divine Fortune, Lucky items |
 | Insight | Highest wins | True Strike, foresight effects |
 | Competence | Highest wins | Skill-boosting effects |
-| Circumstance | Highest wins | Situational modifiers |
-| Racial | Highest wins | Racial trait bonuses |
+| Circumstance | **Always stacks** | Situational modifiers (per community-expert consensus) |
+| Racial | **Always stacks** | Racial trait bonuses (edge case — rare overlap) |
 | Inherent | Highest wins | Wish, Tome of +stat |
 | Trait | Highest wins | Character trait bonuses |
 | Material | Highest wins | Material subtype bonuses |

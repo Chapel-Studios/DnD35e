@@ -1,5 +1,5 @@
 import { SIZES } from '@constants/sizes.mjs';
-import { IdentifiableSchemaMixin } from '@ec/Identifiable/index.mjs';
+import { IdentifiableSchemaMixin } from '@ec/Identifiable/data/index.mjs';
 import {
   optionalNumberField,
   optionalStringField,
@@ -8,8 +8,8 @@ import {
   useDnd35eField,
 } from '@helpers/fieldBuilders.mjs';
 import { Dnd35eSectionField } from '@helpers/fields/index.mjs';
-import { ItemSystemModelBase } from '@items/baseItem/index.mjs';
-import { PriceField } from '@settings/currency/index.mjs';
+import { ItemSystemModelBase } from '@items/baseItem/data/index.mjs';
+import { PriceField } from '@settings/currency/PriceField.mjs';
 
 import type { PhysicalItemSystemData } from './PhysicalSystemData.mjs';
 

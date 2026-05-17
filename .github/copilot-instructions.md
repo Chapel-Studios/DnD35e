@@ -3,6 +3,9 @@
 ## Project Overview
 FoundryVTT v14 game system for D&D 3.5e. TypeScript 5.9, Vue 3.5, Vite, Pinia.
 
+## Repo Memory
+Short, durable notes about verified codebase facts, conventions, and process rules live in [`.github/repo-memory/`](repo-memory/README.md). Consult before working on stacking, masks, ActiveEffect changes, FormulaFamiliar, type augmentation, phase docs, branching, or PowerShell command construction.
+
 ## Import Sorting
 **Do NOT manually sort imports.** The project uses `eslint-plugin-simple-import-sort` which auto-fixes on file save. Its ordering is not strictly alphabetical — it groups by external packages first, then path-aliased imports (`@helpers/`, `@items/`, etc.), then relative imports (`./`), with `type`-only imports sorted separately within each group. If eslint reports a sort error, run `npx eslint --fix <file>` rather than hand-sorting.
 

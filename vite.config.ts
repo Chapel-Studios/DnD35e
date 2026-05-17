@@ -8,7 +8,10 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 // Read local developer config (git-ignored) for per-machine paths
 const localConfigPath = path.resolve(__dirname, 'local.config.json');
-let localConfig: { foundrySystemDir?: string } = {};
+let localConfig: {
+  foundryRootPath?: string;
+  foundryDataPath?: string;
+} = {};
 if (fs.existsSync(localConfigPath)) {
   try {
     localConfig = fs.readJsonSync(localConfigPath);
@@ -19,11 +22,15 @@ if (fs.existsSync(localConfigPath)) {
     );
   }
 }
-// Normalize: strip trailing /dnd35e if the developer included it
-let foundrySystemDir = localConfig.foundrySystemDir;
-if (foundrySystemDir && path.basename(foundrySystemDir) === 'dnd35e') {
-  foundrySystemDir = path.dirname(foundrySystemDir);
-}
+// Derive systems dir from foundryDataPath (overridable) or foundryRootPath.
+// Standard Foundry layout: <root>/Data/systems — systems/ is fixed under data.
+const foundryDataPath = localConfig.foundryDataPath
+  ?? (localConfig.foundryRootPath
+    ? path.join(localConfig.foundryRootPath, 'Data')
+    : undefined);
+const foundrySystemDir = foundryDataPath
+  ? path.join(foundryDataPath, 'systems')
+  : undefined;
 const buildOutDir = foundrySystemDir ? path.join(foundrySystemDir, 'dnd35e') : 'dist';
 
 // Copy static files to build output after Vite clears the directory

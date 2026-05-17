@@ -4,6 +4,7 @@
 
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
+import { registerCombatSettings } from '../combat/index.mjs';
 import { registerCurrencySettings } from '../currency/index.mjs';
 import { registerDisplaySettings } from '../display/index.mjs';
 import { registerGameRulesSettings } from '../gameRules/index.mjs';
@@ -95,7 +96,7 @@ function registerSettings(): void {
   registerCoreSettings();
   registerSettingsMenus();
   registerGameRulesSettings();
-  // registerCombatSettings();
+  registerCombatSettings();
   registerDisplaySettings();
   // registerHealthSettings();
   // registerRollSettings();

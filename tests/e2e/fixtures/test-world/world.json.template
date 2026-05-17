@@ -1,0 +1,14 @@
+{
+  "title": "dnd35e E2E Test World",
+  "system": "dnd35e",
+  "description": "Pristine snapshot for Playwright E2E tests. Do not edit in-place.",
+  "id": "dnd35e-e2e",
+  "coreVersion": "14.359",
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "systemVersion": "{{VERSION}}",
+  "lastPlayed": "2025-04-01T00:07:00.000Z",
+  "flags": {}
+}

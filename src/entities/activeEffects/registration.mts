@@ -39,6 +39,13 @@ const refreshOwningItemForSecret = (document: unknown): void => {
   }
 
   syncOpenSheetTitle(item.sheet);
+  // Re-render the item's own sheet so view-mode-bar `hasSecrets` and other
+  // render-time samples (see VueDocumentSheetMixin#_onRender) refresh when a
+  // Secret AE is added, updated, or removed. `force: false` makes this a no-op
+  // when the sheet is closed.
+  if (item.sheet?.rendered) item.sheet.render(false);
+  // Also refresh the containing document (Actor sheet, sidebar) so embedded
+  // displays of this item update their masked surfaces.
   item.parent?.sheet?.render(true);
 };
 

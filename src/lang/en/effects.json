@@ -1,6 +1,7 @@
 {
   "dnd35e": {
     "BONUS_TYPES": {
+      "Untyped": "Untyped",
       "Material": "Material",
       "Broken": "Broken",
       "Masterwork": "Masterwork"
