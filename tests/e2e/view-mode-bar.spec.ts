@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 
 import { clearWorld, createActiveEffect, createItem } from './helpers/documents.mjs';
 import { gotoGame, loginAs } from './helpers/session.mjs';
-import { closeAllSheets, openDocumentSheet, rerenderSheet } from './helpers/sheets.mjs';
+import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
 
 /**
  * Structural E2E for the cross-cutting view-mode bar.
@@ -92,7 +92,7 @@ test.describe('view-mode bar', () => {
     await expect(btns.true).toHaveCount(0);
   });
 
-  test('GM with Secret AE sees all three; sheet re-render after Secret deletion hides True', async ({ page }) => {
+  test('GM with Secret AE sees all three; deleting the Secret hides True', async ({ page }) => {
     await gotoGame(page);
     const uuid = await createWeapon(page, OBSERVER);
     const secretUuid = await attachNameMask(page, uuid);
@@ -104,17 +104,15 @@ test.describe('view-mode bar', () => {
     await expect(btns.true).toHaveCount(1);
 
     // Delete the Secret AE. Note: disabling alone is not enough — the
-    // bar's `hasSecrets` check (in `_onRender`) tests
-    // `effects.some(e => e.type === 'secret')`, which counts disabled
-    // Secret AEs too. The True button stays available so a GM can
-    // re-enable. Deletion is the genuine "no more secrets" condition.
-    // Also: `hasSecrets` is sampled on full sheet render, not via Vue
-    // reactivity, so we force a re-render to surface the change.
+    // `hasSecrets` check tests `effects.some(e => e.type === 'secret')`,
+    // which counts disabled Secret AEs too. The True button stays available
+    // so a GM can re-enable. Deletion is the genuine "no more secrets"
+    // condition. The `deleteActiveEffect` hook auto-re-renders the parent
+    // item sheet so the bar updates without any explicit refresh here.
     await page.evaluate(async (aeUuid) => {
       const ae = await (globalThis as any).fromUuid(aeUuid);
       await ae.delete();
     }, secretUuid);
-    await rerenderSheet(page, uuid);
 
     await expect.poll(() => btns.true.count()).toBe(0);
     await expect(btns.edit).toHaveCount(1);
