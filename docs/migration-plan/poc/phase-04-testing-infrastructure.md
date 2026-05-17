@@ -1,7 +1,7 @@
 # Phase 4: Testing Infrastructure
 
 
-**Status**: 🔶 In Progress
+**Status**: ✅ Complete
 
 > **Milestone**: POC
 > **Dependencies**: poc.1, poc.2, poc.3 (backfill targets — Story 1 infrastructure setup can start as soon as poc.1 is complete; Stories 2–6 gate on the relevant backfill phase being far enough along that its surface is stable)
@@ -39,9 +39,10 @@
 | **FormGroup variants** (Story 6 cycle A) | `tests/unit/components/{Text,CheckBox,ToggleSwitch,Color,Select,MultiSelect}FormGroup.test.mts` | Smoke per variant: input renders; `editable` slot prop / disabled state reflects FormGroup result. Mechanical fan-out of the Story 5 cycle 2 isolation pattern. |
 | **FormGroupSection** (Story 6 cycle B) | `tests/unit/components/FormGroupSection.test.mts` | Section auto-hides when all children invisible; section-level lock cascades to children. |
 | **View-aware field value** (Story 6 cycle B) | `tests/unit/sheets/view-aware-field-value.test.mts` | `getViewAwareFieldValue` returns source in `edit`, effective in `play`, unmasked true value in `true` (GM only). Pure helper extracted from the store if currently inline. |
-| **FormulaFamiliar schema walker** (Story 6 cycle C) | `tests/unit/familiar/schema-walker.test.mts` | Opt-out model; `formulaVisible: false` removes a field; `isFamiliarField` exposes `.value`; `isFamiliarLeaf` stops recursion; alias resolution. |
-| **PhysicalItem state derivation** (Story 6 cycle C) | `tests/unit/effects/physical-item-state.test.mts` | `derivePhysicalItemState(...)` effective weight/price from base + masks/effects. Pure helper extraction same pattern as Story 3 Layer A. |
-| **EquippableItem state derivation** (Story 6 cycle C) | `tests/unit/effects/equippable-item-state.test.mts` | `deriveEquippableItemState(...)` equipped flag controls whether item-level effects are active. |
+| **FormulaFamiliar schema walker** (Story 6 cycle C) | `tests/unit/familiar/schema-walker.test.mts` | Opt-out model; `formulaVisible: false` removes a field; `isFamiliarLeaf` stops recursion; `aspectKey` / `aspectType` / `aliases` overrides; SchemaField recursion with dotted access paths; document-level `name` always merged; live value resolution. |
+| **Material AE change emission** (Story 6 cycle C) | `tests/unit/effects/material-changes.test.mts` | `buildMaterialChanges` pure helper (extracted from `MaterialSystemModel.buildChanges`) — preserves non-system changes verbatim; emits one system change per non-zero/non-empty Details field (price, magicEquivalency, hardness, bonusHp, DR types); preserves user-customised change `type` on existing system changes; tags each with the subtype's `bonusType`. |
+| ~~PhysicalItem host-side state derivation~~ (deferred to poc.5) | `tests/unit/effects/physical-item-state.test.mts` | Deferred — material AE *emission* is covered above; host-side derivation that consumes those changes through the stacking engine (resolved effective weight/price/hardness on the parent item) is not wired yet. Lands with poc.5 once compendium-sourced materials drive end-to-end derivation. |
+| ~~EquippableItem state derivation~~ (deferred to poc.5) | `tests/unit/effects/equippable-item-state.test.mts` | Deferred — `isEquipped` is a plain schema boolean with no derivation; equipped-gates-effects behaviour is not wired yet. |
 
 **Material AE integration tests** (material bonus applies to weapon, masterwork flag, broken penalty) are deferred to **poc.5** — they depend on compendium-sourced content and require more Foundry infrastructure than Phase 4 establishes.
 
@@ -225,6 +226,8 @@ The following test areas were originally drafted here but belong to the phase th
 | Test area | Destination phase |
 |-----------|------------------|
 | `material-ae.test.mts` — bonus applies to weapon, masterwork flag, broken penalty | **poc.5** (Compendium Foundation) — depends on compendium-sourced content |
+| `physical-item-state.test.mts` — effective weight/price from base + masks/effects | **poc.5** — derivation only becomes non-trivial once material effects exist |
+| `equippable-item-state.test.mts` — equipped flag gating item-level effect activation | **poc.5** — gating behaviour is not wired today |
 | `actor.model.test.mts` — schema, defaults, AC=10 | **poc.6** (Actor Foundation) |
 | `abilities.test.mts` — ability mods, size modifiers | **poc.6** |
 | `ac.test.mts` — base AC, touch, flat-footed | **poc.6** |
@@ -408,38 +411,39 @@ Mechanical fan-out of the Story 5 cycle 2 isolation pattern across the remaining
 
 **Cycle C — Pure-logic backfill across poc.1/2 surfaces (units)**
 
-- [ ] `tests/unit/familiar/schema-walker.test.mts`: FormulaFamiliar schema walker — opt-out model (all fields included by default); `withFamiliar(field, { formulaVisible: false })` removes a field; `isFamiliarField` markers expose `.value` access path; `isFamiliarLeaf` markers stop recursion; alias resolution
-- [ ] `tests/unit/effects/physical-item-state.test.mts`: `derivePhysicalItemState(...)` — effective weight/price from base + masks/effects (extract pure helper if needed; mirror Story 3 Layer A)
-- [ ] `tests/unit/effects/equippable-item-state.test.mts`: `deriveEquippableItemState(...)` — equipped flag drives whether item-level effects are active in the resolution chain
+- [x] `tests/unit/familiar/schema-walker.test.mts`: FormulaFamiliar schema walker — opt-out model (all fields included by default); `formulaVisible: false` removes a field; `isFamiliarLeaf` markers stop recursion; `aspectKey` / `aspectType` / `aliases` overrides; SchemaField recursion with dotted access paths; document-level `name` always merged; live value resolution
+- [x] `tests/unit/effects/material-changes.test.mts`: `buildMaterialChanges` pure helper (extracted from `MaterialSystemModel.buildChanges`) — non-system user-authored changes preserved verbatim; one system change emitted per non-zero/non-empty Details field; existing system change `type` (ADD/UPGRADE) preserved when re-emitting; `bonusType` tag follows the chosen `materialSubtype`; empty/zero fields emit nothing
+- [~] ~~`tests/unit/effects/physical-item-state.test.mts`~~ — **deferred to poc.5 (Compendium Foundation)**. Material AE *emission* is covered by `material-changes.test.mts` above; the host-side derivation that *consumes* those changes through the stacking engine to produce resolved weight/price/hardness on the parent item is not wired yet. Add the unit once host-side resolution exists.
+- [~] ~~`tests/unit/effects/equippable-item-state.test.mts`~~ — **deferred to poc.5**. `isEquipped` is currently a schema boolean with no derivation; the proposed behaviour (equipped flag gating item-level effects in the resolution chain) is not yet wired. Add the unit when the gating actually exists.
 
-> Each unit cycle should follow the same extraction discipline used in Story 3/5: if the target logic is currently embedded in a store/mixin method, extract a pure helper alongside the consumer (one-liner call site) and unit-test the helper. No new Foundry surface invented for testability.
+> Each unit cycle follows the same extraction discipline used in Story 3/5: if the target logic is currently embedded in a store/mixin method, extract a pure helper alongside the consumer (one-liner call site) and unit-test the helper. No new Foundry surface invented for testability.
 
 **Cycle D — E2E pattern lock: field-permissions (one spec)**
 
 Lightest multi-context E2E flow, mirrors the existing `secret-ae.spec.ts` shape. Output: page-object pattern + per-field override helper that subsequent E2E specs reuse.
 
-- [ ] `tests/e2e/field-permissions.spec.ts`: GM applies a `gmOnly` visibility override to one field on a weapon → player context sees the field hidden; GM applies a `gmOnly` editability override → player context sees the field but cannot edit it; GM removes the override → player context returns to default visibility/editability. One field is enough — Story 5 covers the merge logic exhaustively.
-- [ ] Establish `tests/e2e/helpers/setFieldOverride.mts` (or equivalent page-object method) used by this spec and reused by later specs that need to flip overrides.
+- [x] `tests/e2e/field-permissions.spec.ts`: GM applies a `gmOnly` visibility override to one field on a weapon → player context sees the field hidden; GM applies a `gmOnly` editability override → player context sees the field but cannot edit it; GM removes the override → player context returns to default visibility/editability. One field is enough — Story 5 covers the merge logic exhaustively. **Target field: `system.quantity` via `ItemQuantity` (`everyoneVisibility` / `normalEditability` defaults, present on every PhysicalItem sheet). FormGroup root now carries `data-field-path` for mode-independent selection.**
+- [x] Establish `tests/e2e/helpers/fieldOverrides.mts` page-object helper (`setFieldOverride` / `clearFieldOverride`) reusing `encodeFieldPath`, `FIELD_OVERRIDES_FLAG`, and the `FieldVisibility`/`FieldEditability` types from `fieldPermissions.mts`. `clearFieldOverride` uses Foundry's `-=` update prefix to actually delete the flag entry (not `setFlag`, which merges).
 
 **Cycle E — Material AE E2E pair (two specs, shared surface)**
 
 Both drive the same Material AE sheet → build a `materialSheet` page object once, use twice. Order within the cycle: Details/Changes first (more mechanical), aspect picker second (branching logic).
 
-- [ ] `tests/e2e/helpers/materialSheet.mts`: page object for the Material AE sheet (open, switch tabs, read change rows, select aspects, assert UI state)
-- [ ] `tests/e2e/material-details-changes-tab.spec.ts`: GM creates a Material AE → on the Details tab, adds a property (e.g. damage bonus) via `createActiveEffect`-equivalent UI flow → switches to the Changes tab → verify the corresponding `change` row exists with the right key/value/mode and is in sync with the Details entry
-- [ ] `tests/e2e/material-aspect-picker.spec.ts`: with no parent material → aspect picker shows the full base set; with a parent material assigned → aspect picker filters/derives from the parent. Verify both branches produce the expected available-aspect list and that selection persists.
+- [x] `tests/e2e/helpers/materialSheet.mts`: page object for the Material AE sheet (open, switch tabs, read change rows). Aspect-selection helpers deferred with the aspect-picker spec below.
+- [x] `tests/e2e/material-details-changes-tab.spec.ts`: Material AE created via `createActiveEffect` with seeded Details-tab fields → activates Details tab (default) → switches to Changes tab → cross-checks DOM row count against `ae.system.changes`, asserts each row carries the subtype-derived bonus type (`dnd35e.BONUS_TYPES.Material` for `standard`), and that the Details values feed the change values verbatim (`system.hardness`, `system.hp.max`, `system.damageReductionTypes`).
+- [ ] **Deferred — pending parent-material composition.** `tests/e2e/material-aspect-picker.spec.ts`: "parent material" relationship is not yet implemented on `MaterialSystemModel`; the current AspectPicker derives suggestions from the target item context only (`registerFamiliarSchema('ActiveEffect', materialEffectType, …)`). Re-introduce when parent-material composition lands (likely **poc.5+**). The branching behaviour described in the original cycle (no parent → full base set; with parent → filtered) has no production surface to exercise today.
 
 **Cycle F — Setting-driven validation E2E (one spec)**
 
-- [ ] `tests/e2e/helpers/setSystemSetting.mts`: typed wrapper around `game.settings.set(SYSTEM_ID, key, value)` via `page.evaluate`
-- [ ] `tests/e2e/material-single-per-type.spec.ts`: with `ENFORCE_SINGLE_MATERIAL` setting **off**, two STANDARD materials can be added to a weapon; with the setting **on**, the second add is rejected and the first remains. Non-STANDARD subtypes are unaffected by the setting (positive control).
+- [x] `tests/e2e/helpers/setSystemSetting.mts`: typed `setSystemSetting` / `getSystemSetting` wrappers around `game.settings.set/get(SYSTEM_ID, key, value)` via `page.evaluate`.
+- [x] `tests/e2e/material-single-per-type.spec.ts`: 3 tests — (a) setting off → two standard Materials coexist on a weapon; (b) setting on → second standard Material is rejected by the `preCreateActiveEffect` hook, first remains; (c) setting on → non-standard subtypes (`broken`, `masterwork`) are unaffected (positive control). **Side fix:** uncommented `registerCombatSettings()` in `src/settings/core/registration.mts` — the setting was previously never registered, which would have thrown at runtime had the collision branch ever fired in production.
 
 **Cycle G — FormulaFamiliar dropdown E2E (one spec)**
 
 Most complex UI surface (autocomplete dropdown, suggestion filtering, sheet-header reflection) — saved for last so dropdown helper maturity benefits from earlier cycles.
 
-- [ ] `tests/e2e/helpers/familiarDropdown.mts`: page-object helpers for opening, reading, filtering, and selecting from the FormulaFamiliar dropdown
-- [ ] `tests/e2e/formula-familiar-weapon-name.spec.ts`: GM opens a weapon sheet → focuses the name field → triggers FormulaFamiliar dropdown → verify the suggested context list contains the expected item-scoped properties (e.g. `system.weaponDamage.*`) and excludes opt-out fields → select a context → verify the resolved name updates in the field, persists to the document, and shows in the sheet header / window title
+- [x] `tests/e2e/helpers/familiarDropdown.mts`: page-object helpers for opening (`openFamiliar`), reading (`readFamiliarOptions` / `readFamiliarOptionTitles`), selecting (`selectFamiliarOption`), and dismissing (`dismissFamiliar`) the FormulaFamiliar dropdown. Selections key off each option's `title` attribute (carries `accessPath` for leaves, `fullPath` for root contexts) — stable across localization/label changes.
+- [x] `tests/e2e/formula-familiar-weapon-name.spec.ts`: 2 tests — (a) GM opens a weapon sheet → triggers FormulaFamiliar (`#`) on the name field → root dropdown exposes `Self` / `Owner` contexts → drilling into `Self` lists weapon-scoped schema fields (`system.weaponType`, `system.weaponSubtype`, `#Self.WeaponDamage.` branch) and excludes opt-out fields (`nameFormula`, `description`, `version`, `slug`) → drilling into `WeaponDamage` lists `damageRoll` / `damageType` / `critRange` / `critMultiplier` → selecting `damageRoll` closes the menu, inserts `#Self.WeaponDamage.DamageRoll` into the input, commits on Tab to canonical `#self.weaponDamage.damageRoll` on the document, and resolves `doc.name` to the underlying value (`1d8+1`); (b) Escape closes the dropdown without committing. **Scope note:** Sheet-header `.item-name` reflection is only rendered in play/true mode (HeaderNameField swaps to FormulaFormGroup in edit mode), so this spec asserts on `doc.name` directly — header-mode-switch coverage is deferred to the view-mode-bar E2E sweep.
 
 > **Deferred E2E** (intentionally out of scope for Story 6, recorded for the owning phase to pick up):
 > - View-mode bar (`edit`/`play`/`true`) — partial coverage today via `secret-ae.spec.ts`; broader sweep deferred to the phase that next touches the mode bar
