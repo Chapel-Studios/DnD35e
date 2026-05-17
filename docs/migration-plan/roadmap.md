@@ -225,13 +225,13 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 | # | Phase | Status | Dependencies | Notes |
 |---|-------|--------|--------------|-------|
 | 1 | [Equipment & Loot](beta/phase-01-equipment-loot.md) | 📖 Rough Sketch | poc.6, poc.7 | Armor, Shield, Equipment, Loot, Container, Ammo. Full AC calculation. ACP, spell failure, encumbrance. |
-| 2 | [Spells & Spellbooks (Full)](beta/phase-02-spells-spellbooks.md) | 📖 Rough Sketch | poc.7, alpha.3, alpha.10 | All caster types, all spell levels, SR, concentration, counterspelling stubs. Multiple spellbooks. |
+| 2 | [Spells & Spellbooks (Full)](beta/phase-02-spells-spellbooks.md) | 📖 Rough Sketch | poc.7, alpha.3, alpha.11 | All caster types, all spell levels, SR, concentration, counterspelling stubs. Multiple spellbooks. |
 | 3 | [Buff AE Expansion & Conditions (Full)](beta/phase-03-buffs-conditions.md) | 📖 Rough Sketch | alpha.8, alpha.9, beta.1 | Buff AE expansion over alpha.9 (`buffType` taxonomy, timeline formulas, damage pools, shapechange, dedicated Buffs sheet section), all 25+ conditions, ability damage/drain, energy drain, fast healing, regeneration, disease, full fear track, D35E `buff` item → Buff AE data migration |
 | 4 | [Advanced Classes](beta/phase-04-advanced-classes.md) | 📄 Stub | alpha.2 | Prestige classes, NPC classes, racial paragon, substitution levels. Stub — design not started. |
 | 5 | [Consumables](beta/phase-05-consumables.md) | 📖 Rough Sketch | alpha.3 | Potion, scroll, wand, poison. Action snapshot pattern. Charges/uses. Splash weapons. |
 | 6 | [Advanced Actors](beta/phase-06-advanced-actors.md) | 📖 Rough Sketch | poc.6, alpha.1, alpha.2 | NPC, Trap, Object actor types. Companion bond system (familiar, animal companion, mount, summon, cohort). Portrait Bar (Party HUD). |
-| 7 | [Area Effects & Auras (Full)](beta/phase-07-area-effects-auras.md) | 📖 Rough Sketch | alpha.9, beta.2 | Foundry V14 Region behaviors, persistent auras, AE delivery, duration tracking, DoT. Aura of Courage expands to affect allies in 10ft. |
-| 8 | [Enhancements (Full)](beta/phase-08-enhancements.md) | 📖 Rough Sketch | alpha.11, beta.1 | +1 through +5, special weapon/armor abilities, cursed items (minimal). Magic Weapon spell stacking proof. |
+| 7 | [Area Effects & Auras (Full)](beta/phase-07-area-effects-auras.md) | 📖 Rough Sketch | alpha.10, beta.2 | Foundry V14 Region behaviors, persistent auras, AE delivery, duration tracking, DoT. Aura of Courage expands to affect allies in 10ft. |
+| 8 | [Enhancements (Full)](beta/phase-08-enhancements.md) | 📖 Rough Sketch | alpha.12, beta.1 | +1 through +5, special weapon/armor abilities, cursed items (minimal). Magic Weapon spell stacking proof. |
 | 9 | [Metamagic](beta/phase-09-metamagic.md) | 📖 Rough Sketch | alpha.4, beta.2 | Metamagic feats, spell level adjustment, prepared vs spontaneous timing. |
 | 10 | [Full Spells](beta/phase-10-full-spells.md) | 📖 Rough Sketch | beta.7, beta.9 | SR, concentration, counterspelling, all delivery types, AoE spell chains. |
 | 11 | [Psionics](beta/phase-11-psionics.md) | 📖 Rough Sketch | beta.2 | Power item, power points, augmentation, psionic disciplines, manifester level. |
