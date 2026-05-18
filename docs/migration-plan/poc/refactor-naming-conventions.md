@@ -534,8 +534,8 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G6.7 — Workspace replace: `@ec/Identifiable/` → `@documents/identifiable/`
 - [x] G6.8 — Workspace replace: `@entities/` → `@documents/`
 - [x] G6.9 — Workspace replace in non-code files (docs, comments) of `src/entities/` → `src/documents/` and `entities/components/` → `documents/...` paths
-- [x] G6.10 — `grep_search` `@ec/` workspace-wide: zero matches expected (except in this planning doc and git history)
-- [x] G6.11 — `grep_search` `@entities/` workspace-wide: zero matches expected (same exceptions)
+- [x] G6.10 — `grep_search` `@ec/` workspace-wide: zero matches expected outside planning docs and git history
+- [x] G6.11 — `grep_search` `@entities/` workspace-wide: zero matches expected outside planning docs and git history
 - [x] G6.12 — Check `vitest.config.ts`, `playwright.config.ts`, `eslint.config.js`, `package.json` scripts for hardcoded paths
 - [x] G6.13 — `npm run build` clean; commit
 
