@@ -86,12 +86,12 @@ const ActiveEffectProxyDnd35e = new Proxy(ActiveEffectDnd35e, {
     if (type === GENERAL_EFFECT_TYPE) {
       return new ActiveEffectDnd35e(...args);
     }
-    const ItemClass = CONFIG.dnd35e.activeEffect.documentClasses[type] as unknown as typeof ActiveEffectDnd35e;
-    if (!ItemClass) {
+    const EffectClass = CONFIG.dnd35e.activeEffect.documentClasses[type] as unknown as typeof ActiveEffectDnd35e;
+    if (!EffectClass) {
       LogHelper.error(`ActiveEffect type ${type} does not exist or is not properly supported for ActiveEffectProxyDnd35e`);
       return new ActiveEffectDnd35e(...args);
     }
-    return new ItemClass(...args);
+    return new EffectClass(...args);
   },
 });
 
