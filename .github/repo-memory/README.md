@@ -22,7 +22,7 @@ If a note grows past ~50 lines or sprouts diagrams, promote it to `docs/architec
 - [config-prelocalization-pattern.md](config-prelocalization-pattern.md) — Two-step CONFIG enum localization + live-merge
 
 ### Conventions
-- [dnd35e-naming-convention.md](dnd35e-naming-convention.md) — `Dnd35e` prefix for our system, `System` reserved for Foundry
+- [dnd35e-naming-convention.md](dnd35e-naming-convention.md) — `Dnd35e` is a **suffix on Foundry collisions only**; bare names everywhere else
 - [type-safe-constants.md](type-safe-constants.md) — Individual `const` exports + combined array
 - [foundry-type-augmentation.md](foundry-type-augmentation.md) — Extending Foundry's closed unions via `declare module`
 - [vue-boolean-prop-defaults.md](vue-boolean-prop-defaults.md) — `withDefaults` for boolean props that default true
@@ -34,6 +34,8 @@ If a note grows past ~50 lines or sprouts diagrams, promote it to `docs/architec
 
 ### Process & workflow
 - [branching-convention.md](branching-convention.md) — Branch = phase, commit = story
+- [cross-cutting-refactor-strategy.md](cross-cutting-refactor-strategy.md) — Wave/group PR sequencing for repo-wide refactors
+- [identifier-rename-sweep.md](identifier-rename-sweep.md) — PowerShell `-creplace \b...\b` recipe + collision pre-check
 - [planning-doc-commit-pairing.md](planning-doc-commit-pairing.md) — Planning doc updates ship in the motivating commit
 - [phase-status-drift.md](phase-status-drift.md) — Verify checklist state against code, don't trust checkboxes
 - [phase-renumbering.md](phase-renumbering.md) — Renumber phase files highest-first with `git mv`

@@ -12,8 +12,8 @@ Foundry uses `system.json` → `documentTypes` to:
 
 ## Registration Locations
 1. `system.json.template` → `documentTypes.[DocumentClass].[typeName]: {}`
-2. `src/entities/.../registration.mts` → `Object.assign(CONFIG.Item.dataModels, ...)` etc.
-3. `src/entities/.../effectTypes.mts` (or equivalent) → creation dialog config (can exclude types from picker)
+2. `src/documents/.../registration.mts` → `Object.assign(CONFIG.Item.dataModels, ...)` etc.
+3. `src/documents/.../effectTypes.mts` (or equivalent) → creation dialog config (can exclude types from picker)
 
 ## Checklist (Every New Subtype)
 - [ ] Add to `system.json.template` → `documentTypes`
@@ -23,5 +23,5 @@ Foundry uses `system.json` → `documentTypes` to:
 
 ## Related
 - `scripts/build-system-json.mjs` — template expansion script
-- `src/entities/activeEffects/effectTypes.mts` — AE type picker config
-- `src/entities/activeEffects/registration.mts` — AE DataModel registration
+- `src/documents/activeEffects/effectTypes.mts` — AE type picker config
+- `src/documents/activeEffects/registration.mts` — AE DataModel registration

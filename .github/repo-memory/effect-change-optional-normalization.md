@@ -10,7 +10,7 @@
 
 ## Related
 
-- `src/entities/activeEffects/BaseActiveEffect/data/ActiveEffectSystemData.mts`
-- `src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts`
-- `src/entities/items/baseItem/ItemDnd35e.mts`
+- `src/documents/activeEffects/baseActiveEffect/data/ActiveEffectSystemData.mts`
+- `src/documents/activeEffects/baseActiveEffect/logic/resolveChangeValue.mts`
+- `src/documents/items/baseItem/ItemDnd35e.mts`
 - `familiar-field-patterns.md`

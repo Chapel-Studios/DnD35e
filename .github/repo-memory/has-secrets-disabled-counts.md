@@ -13,7 +13,7 @@
 
 **Locations**:
 - `VueDocumentSheetMixin#_onRender` — recomputes `hasSecrets` on render
-- The `secretEffectType` import in `src/entities/effects/` drives the type check
+- The `secretEffectType` import in `src/documents/activeEffects/` drives the type check
 
 **Pinned by**: `tests/e2e/view-mode-bar.spec.ts` test 2. The initial test
 draft used `disabled: true` and failed correctly — the bar did not hide
