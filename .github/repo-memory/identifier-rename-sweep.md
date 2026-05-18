@@ -50,7 +50,7 @@ Write-Host "---"
 npm run build 2>&1 | Select-Object -Last 5
 ```
 
-Then `npm test` for vitest. E2E only on the FV PR.
+Then `npx vitest run` for a non-interactive unit gate (the package's `npm test` script runs vitest in watch mode and won't exit). In a cross-cutting refactor sweep, also run `npx playwright test` per PR — mechanical renames only surface their regressions in E2E. See `cross-cutting-refactor-strategy.md` for the rationale.
 
 ## Common pitfalls
 

@@ -10,8 +10,8 @@
 1. **One planning doc** lists every rule and every group as numbered checklist items (e.g. `G5g.1`, `G6.4`, `G9.2`). The doc is the source of truth; status updates land in the same commit as the work.
 2. **One phase branch per PR**: `refactor/pr{NN}-{kebab-summary}`. PRs target `dev`, not `main`.
 3. **Mechanical groups go first, semantic groups last**. The 16-PR sweep ordered as: file moves → folder casing → file renames → helper-type renames → final validation. Keeping all renames-of-the-same-symbol inside one PR avoids cross-PR import churn.
-4. **Per-PR gates** (the user's standing policy): `tsc --noEmit` + `npm run build` + `vitest` must pass. **E2E is NOT run per PR** — it runs once on the Final Validation PR ("every story not every PR"). Doc-only PRs may skip the build gate.
-5. **Final Validation PR** (FV) is doc-only: grep audit for residual old names, full E2E, status badge flip to ✅ Complete, instruction-file docs caught up.
+4. **Per-PR gates** for a cross-cutting refactor: `tsc --noEmit` + `npm run build` + `vitest` + **full Playwright E2E**. The refactor is mechanical, so the only way regressions surface is in E2E — it runs per PR, not per story. (This is the exception to the project's general "E2E every story, not every PR" rule, which applies to feature-flavored phase work.) Doc-only PRs may skip the build and E2E gates.
+5. **Final Validation PR** (FV) is doc-only: grep audit for residual old names, one last full E2E sanity pass on merged `dev`, status badge flip to ✅ Complete, instruction-file docs caught up.
 
 ## Why per-group, not per-rule
 
