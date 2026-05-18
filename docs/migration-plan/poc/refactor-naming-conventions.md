@@ -593,9 +593,7 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 
 ## R.6 Truly-deferred items (not part of this refactor)
 
-- **`Dnd35eBuff` placeholder content**. The class body itself stays commented-out work-in-progress. Group 8 relocates the file from `items/Dnd35eBuff/Dnd35eBuff.mts` to `activeEffects/buff/Buff.mts` (Buff is an AE subtype in dnd35e, not an item type — see `PropertyMap-ActiveEffects.md` §5). Actual implementation lands in alpha.9 Buff AE Core (and expands in beta.3). This refactor does not uncomment or rewrite the placeholder body; it just parks it in the correct location.
-- **Sheet boilerplate helper**. Reconsider once 5+ item types exist and per-type `*Sheet.mts` wrappers feel repetitive.
-- unit tests around unit of measurement settings and currency settings
+- Unit tests around unit-of-measure (`src/settings/display/unitOfMeasure.mts`) and currency (`src/settings/currency/`) settings. Pure helpers + registration round-trips — owned by the next chore PR after this refactor sweep closes.
 
 ---
 
