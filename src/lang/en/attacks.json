@@ -1,16 +1,51 @@
 {
-    "D35E.DR": "DR",
-    "D35E.DRDamageType": "Damage Type",
-    "D35E.DRValue": "Value",
-    "D35E.DROr": "Or Damage Reduction",
-    "D35E.DROrDesc": "All Damage Resistances that have this checkbox checked will be evaluated at the same time, and if attacker can bypass either one of them, all will be bypasses.",
-    "D35E.DRNonPenetrable": "- (Non Penetrable)",
-    "D35E.DRMagic": "Magic",
-    "D35E.DRSlashing": "Slashing",
-    "D35E.DRPiercing": "Piercing",
-    "D35E.DRBludgeoning": "Bludgeoning",
-    "D35E.DREpic": "Epic",
-    "D35E.DRAdamantine": "Adamantine (or equivalent)",
-    "D35E.DRColdIron": "Cold Iron (or equivalent)",
-    "D35E.DRSilver": "Alchemical Silver (or quivalent)"
+  "dnd35e": {
+    "DAMAGE_TYPES": {
+      "Piercing": "Piercing",
+      "Bludgeoning": "Bludgeoning",
+      "Slashing": "Slashing",
+      "Fire": "Fire",
+      "Cold": "Cold",
+      "Electricity": "Electricity",
+      "Acid": "Acid",
+      "Sonic": "Sonic",
+      "Force": "Force",
+      "Positive": "Positive",
+      "Negative": "Negative"
+    },
+    "DAMAGE_REDUCTION_TYPES": {
+      "Acid": "Acid",
+      "Bludgeoning": "Bludgeoning",
+      "Cold": "Cold",
+      "Electricity": "Electricity",
+      "Fire": "Fire",
+      "Force": "Force",
+      "NegativeEnergy": "Negative Energy",
+      "Piercing": "Piercing",
+      "PositiveEnergy": "Positive Energy",
+      "Slashing": "Slashing",
+      "Sonic": "Sonic",
+      "Adamantine": "Adamantine",
+      "AlchemicalSilver": "Alchemical Silver",
+      "ColdIron": "Cold Iron",
+      "Epic": "Epic",
+      "Magic": "Magic"
+    },
+    "ATTACK": {
+      "DR": "DR",
+      "DamageType": "Damage Type",
+      "Value": "Value",
+      "Or": "Or Damage Reduction",
+      "OrDesc": "All Damage Resistances that have this checkbox checked will be evaluated at the same time, and if attacker can bypass either one of them, all will be bypasses.",
+      "NonPenetrable": "- (Non Penetrable)",
+      "Magic": "Magic",
+      "Slashing": "Slashing",
+      "Piercing": "Piercing",
+      "Bludgeoning": "Bludgeoning",
+      "Epic": "Epic",
+      "Adamantine": "Adamantine (or equivalent)",
+      "ColdIron": "Cold Iron (or equivalent)",
+      "Silver": "Alchemical Silver (or equivalent)"
+    }
+  }
 }

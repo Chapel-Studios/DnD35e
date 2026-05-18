@@ -1,0 +1,62 @@
+{
+  "waves": {
+    "poc":          { "color": "bfd4f2", "name": "POC",          "description": "Proof of Concept" },
+    "alpha":        { "color": "c2e0c6", "name": "Alpha",        "description": "Paladin vs Dragon" },
+    "beta":         { "color": "ffd580", "name": "Beta",         "description": "Full System Coverage" },
+    "release":      { "color": "d4c5f9", "name": "Release",      "description": "Migration & Content" },
+    "post":         { "color": "e1e4e8", "name": "Post-Release", "description": "Hardening & Bonus Features" }
+  },
+  "phases": [
+    { "wave": "poc",     "number": "01", "title": "Item Foundation",                 "file": "poc/phase-01-item-foundation.md",                    "status": "complete"     },
+    { "wave": "poc",     "number": "02", "title": "Active Effects on Items",          "file": "poc/phase-02-active-effect-on-item.md",              "status": "in-progress"  },
+    { "wave": "poc",     "number": "03", "title": "Localization",                     "file": "poc/phase-03-localization.md",                       "status": "complete"     },
+    { "wave": "poc",     "number": "04", "title": "Testing Infrastructure",           "file": "poc/phase-04-testing-infrastructure.md",             "status": "approved"      },
+    { "wave": "poc",     "number": "05", "title": "Compendium Foundation",            "file": "poc/phase-05-compendium-foundation.md",              "status": "planned"      },
+    { "wave": "poc",     "number": "06", "title": "Actor Foundation",                 "file": "poc/phase-06-actor-foundation.md",                   "status": "outlined"     },
+    { "wave": "poc",     "number": "07", "title": "Roll Formulas",                    "file": "poc/phase-07-roll-formulas.md",                      "status": "outlined"     },
+    { "wave": "poc",     "number": "08", "title": "Pipeline & Branching",             "file": "poc/phase-08-pipeline-and-branching.md",             "status": "in-progress"  },
+
+    { "wave": "alpha",   "number": "01", "title": "Races & Progression",              "file": "alpha/phase-01-races-progression.md",                "status": "outlined"     },
+    { "wave": "alpha",   "number": "02", "title": "Classes & Level History",          "file": "alpha/phase-02-classes-level-history.md",            "status": "outlined"     },
+    { "wave": "alpha",   "number": "03", "title": "Action System",                    "file": "alpha/phase-03-action-system.md",                    "status": "outlined"     },
+    { "wave": "alpha",   "number": "04", "title": "Feats",                            "file": "alpha/phase-04-feats.md",                            "status": "outlined"     },
+    { "wave": "alpha",   "number": "05", "title": "Natural & Special Attacks",        "file": "alpha/phase-05-natural-attacks.md",                  "status": "outlined"     },
+    { "wave": "alpha",   "number": "06", "title": "Class Features",                   "file": "alpha/phase-06-class-features.md",                   "status": "outlined"     },
+    { "wave": "alpha",   "number": "07", "title": "Combat Tracker & Turn Economy",    "file": "alpha/phase-07-combat-tracker.md",                   "status": "outlined"     },
+    { "wave": "alpha",   "number": "08", "title": "Conditions",                       "file": "alpha/phase-08-conditions.md",                       "status": "outlined"     },
+    { "wave": "alpha",   "number": "09", "title": "Buff AE Core",                     "file": "alpha/phase-09-buff-ae-core.md",                     "status": "rough-sketch" },
+    { "wave": "alpha",   "number": "10", "title": "Breath Weapon & Area Templates",   "file": "alpha/phase-10-breath-weapon.md",                    "status": "outlined"     },
+    { "wave": "alpha",   "number": "11", "title": "Spells",                           "file": "alpha/phase-11-spells.md",                           "status": "outlined"     },
+    { "wave": "alpha",   "number": "12", "title": "Enhancement",                      "file": "alpha/phase-12-enhancements.md",                     "status": "outlined"     },
+
+    { "wave": "beta",    "number": "01", "title": "Equipment & Loot",                 "file": "beta/phase-01-equipment-loot.md",                    "status": "rough-sketch" },
+    { "wave": "beta",    "number": "02", "title": "Spells & Spellbooks",              "file": "beta/phase-02-spells-spellbooks.md",                 "status": "rough-sketch" },
+    { "wave": "beta",    "number": "03", "title": "Buffs & Conditions",               "file": "beta/phase-03-buffs-conditions.md",                  "status": "rough-sketch" },
+    { "wave": "beta",    "number": "04", "title": "Advanced Classes",                 "file": "beta/phase-04-advanced-classes.md",                  "status": "stub"         },
+    { "wave": "beta",    "number": "05", "title": "Consumables",                      "file": "beta/phase-05-consumables.md",                       "status": "rough-sketch" },
+    { "wave": "beta",    "number": "06", "title": "Advanced Actors",                  "file": "beta/phase-06-advanced-actors.md",                   "status": "rough-sketch" },
+    { "wave": "beta",    "number": "07", "title": "Area Effects & Auras",             "file": "beta/phase-07-area-effects-auras.md",                "status": "rough-sketch" },
+    { "wave": "beta",    "number": "08", "title": "Enhancements",                     "file": "beta/phase-08-enhancements.md",                      "status": "rough-sketch" },
+    { "wave": "beta",    "number": "09", "title": "Metamagic",                        "file": "beta/phase-09-metamagic.md",                         "status": "rough-sketch" },
+    { "wave": "beta",    "number": "10", "title": "Full Spells",                      "file": "beta/phase-10-full-spells.md",                       "status": "rough-sketch" },
+    { "wave": "beta",    "number": "11", "title": "Psionics",                         "file": "beta/phase-11-psionics.md",                          "status": "rough-sketch" },
+
+    { "wave": "release", "number": "01", "title": "Compendium Browser",               "file": "release/phase-01-compendium-browser.md",             "status": "rough-sketch" },
+    { "wave": "release", "number": "02", "title": "Documentation & SRD",              "file": "release/phase-02-documentation-srd.md",              "status": "rough-sketch" },
+    { "wave": "release", "number": "03", "title": "Epic Level Rules",                 "file": "release/phase-03-epic-level-rules.md",               "status": "rough-sketch" },
+    { "wave": "release", "number": "04", "title": "Psionic Rules Full",               "file": "release/phase-04-psionic-rules-full.md",             "status": "rough-sketch" },
+    { "wave": "release", "number": "05", "title": "Cards",                            "file": "release/phase-05-cards.md",                          "status": "rough-sketch" },
+    { "wave": "release", "number": "06", "title": "Content Migration",                "file": "release/phase-06-content-migration.md",              "status": "rough-sketch" },
+    { "wave": "release", "number": "07", "title": "Community Hardening",              "file": "release/phase-07-community-hardening.md",            "status": "rough-sketch" },
+
+    { "wave": "post",    "number": "01", "title": "Art Module Support",               "file": "post-release/phase-01-art-module-support.md",        "status": "rough-sketch" },
+    { "wave": "post",    "number": "02", "title": "Module Integration Testing",       "file": "post-release/phase-02-module-integration.md",        "status": "rough-sketch" },
+    { "wave": "post",    "number": "03", "title": "Sight & Concealment",              "file": "post-release/phase-03-sight-concealment.md",         "status": "stub"         },
+    { "wave": "post",    "number": "04", "title": "Stat Block Sheet",                 "file": "post-release/phase-04-stat-block-sheet.md",          "status": "stub"         },
+    { "wave": "post",    "number": "05", "title": "Vigor & Wound HP",                 "file": "post-release/phase-05-vigor-wound-hp.md",            "status": "stub"         },
+    { "wave": "post",    "number": "06", "title": "Environmental Hazards",            "file": "post-release/phase-06-environmental-hazards.md",     "status": "stub"         },
+    { "wave": "post",    "number": "07", "title": "Divine Rules",                     "file": "post-release/phase-07-divine-rules.md",              "status": "stub"         },
+    { "wave": "post",    "number": "08", "title": "Variant Rules",                    "file": "post-release/phase-08-variant-rules.md",             "status": "stub"         },
+    { "wave": "post",    "number": "09", "title": "Random Treasure",                  "file": "post-release/phase-09-random-treasure.md",           "status": "stub"         }
+  ]
+}

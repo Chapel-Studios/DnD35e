@@ -17,12 +17,12 @@
 
     <!-- Hit Dice Tab -->
     <section v-show="activeTab === 'hitDice'" class="tab" data-group="primary" data-tab="hitDice">
-      <p class="notes">{{ localize('DND35E.Settings.Health.HitDiceInstructions') }}</p>
+      <p class="notes">{{ localize('dnd35e.SETTINGS.Health.HitDiceInstructions') }}</p>
 
       <div class="hitdice-config">
         <!-- Header row -->
         <div class="hitdice-row header">
-          <label class="col-label">{{ localize('DND35E.HitDie') }}</label>
+          <label class="col-label">{{ localize('dnd35e.HitDie') }}</label>
           <label v-for="option in hitdieOptions" :key="option" class="col-header">
             {{ option }}
           </label>
@@ -36,8 +36,8 @@
           <div class="col-field">
             <ToggleSwitch
               :checked="hdConfig.auto"
-              :true-label="'DND35E.Settings.Health.Auto'"
-              :false-label="'DND35E.Settings.Health.Manual'"
+              :true-label="'dnd35e.SETTINGS.Health.Auto'"
+              :false-label="'dnd35e.SETTINGS.Health.Manual'"
               @update="onUpdate(`hitdice.${hdType}.auto`, $event)"
             />
           </div>
@@ -67,8 +67,8 @@
 
       <!-- Rounding options -->
       <SelectFormGroup
-        label="DND35E.Settings.Health.Rounding.Name"
-        hint="DND35E.Settings.Health.Rounding.Hint"
+        label="dnd35e.SETTINGS.Health.Rounding.Name"
+        hint="dnd35e.SETTINGS.Health.Rounding.Hint"
         :value="context.data.rounding"
         :options="roundingOptions"
         :on-update="(v: unknown) => onUpdate('rounding', v)"
@@ -77,8 +77,8 @@
 
       <!-- Continuity options -->
       <SelectFormGroup
-        label="DND35E.Settings.Health.Continuity.Name"
-        hint="DND35E.Settings.Health.Continuity.Hint"
+        label="dnd35e.SETTINGS.Health.Continuity.Name"
+        hint="dnd35e.SETTINGS.Health.Continuity.Hint"
         :value="context.data.continuity"
         :options="continuityOptions"
         :on-update="(v: unknown) => onUpdate('continuity', v)"
@@ -88,12 +88,12 @@
 
     <!-- Variants Tab -->
     <section v-show="activeTab === 'variants'" class="tab" data-group="primary" data-tab="variants">
-      <p class="notes">{{ localize('DND35E.Settings.Health.VariantsInstructions') }}</p>
+      <p class="notes">{{ localize('dnd35e.SETTINGS.Health.VariantsInstructions') }}</p>
 
       <!-- Wounds & Vigor for PCs -->
       <CheckBoxFormGroup
-        label="DND35E.Settings.Health.WoundsAndVigor.PC.Name"
-        hint="DND35E.Settings.Health.WoundsAndVigor.PC.Hint"
+        label="dnd35e.SETTINGS.Health.WoundsAndVigor.PC.Name"
+        hint="dnd35e.SETTINGS.Health.WoundsAndVigor.PC.Hint"
         :value="context.data.variants.pc.useWoundsAndVigor"
         :on-update="(v: unknown) => onUpdate('variants.pc.useWoundsAndVigor', v)"
         field-path="variants.pc.useWoundsAndVigor"
@@ -101,8 +101,8 @@
 
       <!-- Wounds & Vigor for NPCs -->
       <CheckBoxFormGroup
-        label="DND35E.Settings.Health.WoundsAndVigor.NPC.Name"
-        hint="DND35E.Settings.Health.WoundsAndVigor.NPC.Hint"
+        label="dnd35e.SETTINGS.Health.WoundsAndVigor.NPC.Name"
+        hint="dnd35e.SETTINGS.Health.WoundsAndVigor.NPC.Hint"
         :value="context.data.variants.npc.useWoundsAndVigor"
         :on-update="(v: unknown) => onUpdate('variants.npc.useWoundsAndVigor', v)"
         field-path="variants.npc.useWoundsAndVigor"
@@ -113,24 +113,24 @@
     <footer class="form-footer">
       <button type="button" class="reset-btn" @click="onReset">
         <i class="fas fa-undo" />
-        {{ localize('DND35E.Settings.Reset') }}
+        {{ localize('dnd35e.SETTINGS.Reset') }}
       </button>
       <button type="submit" class="save-btn">
         <i class="fas fa-save" />
-        {{ localize('DND35E.Settings.Save') }}
+        {{ localize('dnd35e.SETTINGS.Save') }}
       </button>
     </footer>
   </form>
 </template>
 
 <script setup lang="ts">
-  import CheckBoxFormGroup from '@vc/Fields/FormGroups/CheckBoxFormGroup.vue';
-  import SelectFormGroup from '@vc/Fields/FormGroups/SelectFormGroup.vue';
-  import ToggleSwitch from '@vc/Fields/ToggleSwitch.vue';
+  import CheckBoxFormGroup from '@vc/fields/formGroups/CheckBoxFormGroup.vue';
+  import SelectFormGroup from '@vc/fields/formGroups/SelectFormGroup.vue';
+  import ToggleSwitch from '@vc/fields/ToggleSwitch.vue';
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
   import { ref } from 'vue';
 
-  import type { HealthConfig } from '../_types.mjs';
+  import type { HealthConfig } from '../types.mjs';
 
   interface TabInfo {
     id: string;
@@ -151,21 +151,21 @@
   const activeTab = ref('hitDice');
 
   const tabs: TabInfo[] = [
-    { id: 'hitDice', label: 'DND35E.Settings.Health.HitDice', icon: 'fas fa-dice-d6' },
-    { id: 'variants', label: 'DND35E.Settings.Health.Variants', icon: 'fas fa-flask' },
+    { id: 'hitDice', label: 'dnd35e.SETTINGS.Health.HitDice', icon: 'fas fa-dice-d6' },
+    { id: 'variants', label: 'dnd35e.SETTINGS.Health.Variants', icon: 'fas fa-flask' },
   ];
 
   const hitdieOptions = ['Compute', 'Rate', 'Maximized'];
 
   const roundingOptions = [
-    { value: 'up', label: 'DND35E.Settings.Health.Rounding.Up' },
-    { value: 'nearest', label: 'DND35E.Settings.Health.Rounding.Nearest' },
-    { value: 'down', label: 'DND35E.Settings.Health.Rounding.Down' },
+    { value: 'up', label: 'dnd35e.SETTINGS.Health.Rounding.Up' },
+    { value: 'nearest', label: 'dnd35e.SETTINGS.Health.Rounding.Nearest' },
+    { value: 'down', label: 'dnd35e.SETTINGS.Health.Rounding.Down' },
   ];
 
   const continuityOptions = [
-    { value: 'continuous', label: 'DND35E.Settings.Health.Continuity.Continuous' },
-    { value: 'discrete', label: 'DND35E.Settings.Health.Continuity.Discrete' },
+    { value: 'continuous', label: 'dnd35e.SETTINGS.Health.Continuity.Continuous' },
+    { value: 'discrete', label: 'dnd35e.SETTINGS.Health.Continuity.Discrete' },
   ];
 
   function localize(key: string): string {

@@ -1,18 +1,18 @@
 <template>
   <div class="currency-settings-form">
-    <p class="notes">{{ localize('DND35E.Settings.CurrencyConfig.Instructions') }}</p>
+    <p class="notes">{{ localize('dnd35e.SETTINGS.CurrencyConfig.Instructions') }}</p>
 
     <!-- Coinage Table -->
     <div class="coinage-table">
       <!-- Header -->
       <div class="table-header">
-        <span class="col-id">{{ localize('DND35E.Settings.CurrencyConfig.Id') }}</span>
-        <span class="col-label">{{ localize('DND35E.Settings.CurrencyConfig.Label') }}</span>
-        <span class="col-short">{{ localize('DND35E.Settings.CurrencyConfig.ShortLabel') }}</span>
-        <span class="col-value">{{ localize('DND35E.Settings.CurrencyConfig.ValueInGp') }}</span>
-        <span class="col-weight">{{ localize('DND35E.Settings.CurrencyConfig.Weight') }}</span>
+        <span class="col-id">{{ localize('dnd35e.SETTINGS.CurrencyConfig.Id') }}</span>
+        <span class="col-label">{{ localize('dnd35e.SETTINGS.CurrencyConfig.Label') }}</span>
+        <span class="col-short">{{ localize('dnd35e.SETTINGS.CurrencyConfig.ShortLabel') }}</span>
+        <span class="col-value">{{ localize('dnd35e.SETTINGS.CurrencyConfig.ValueInGp') }}</span>
+        <span class="col-weight">{{ localize('dnd35e.SETTINGS.CurrencyConfig.Weight') }}</span>
         <span class="col-actions">
-          <button type="button" class="add-btn" @click="addNewCoinage" :title="localize('DND35E.Add')">
+          <button type="button" class="add-btn" @click="addNewCoinage" :title="localize('dnd35e.COMMON.Add')">
             <i class="fas fa-plus" />
           </button>
         </span>
@@ -30,14 +30,14 @@
 
       <!-- Empty state -->
       <div v-if="coinages.length === 0" class="table-empty">
-        {{ localize('DND35E.Settings.CurrencyConfig.NoCurrencies') }}
+        {{ localize('dnd35e.SETTINGS.CurrencyConfig.NoCurrencies') }}
       </div>
     </div>
 
     <!-- Global Settings -->
     <div class="global-settings">
       <div class="setting-row">
-        <label>{{ localize('DND35E.Settings.CurrencyConfig.DefaultDisplayCoin') }}</label>
+        <label>{{ localize('dnd35e.SETTINGS.CurrencyConfig.DefaultDisplayCoin') }}</label>
         <select v-model="defaultDisplayCoin">
           <option v-for="coin in enabledCoinages" :key="coin.id" :value="coin.id">
             {{ coin.label }} ({{ coin.shortLabel }})
@@ -45,7 +45,7 @@
         </select>
       </div>
       <div class="setting-row">
-        <label>{{ localize('DND35E.Settings.CurrencyConfig.RollUpMaximum') }}</label>
+        <label>{{ localize('dnd35e.SETTINGS.CurrencyConfig.RollUpMaximum') }}</label>
         <select v-model="rollUpTargetCoin">
           <option v-for="coin in enabledCoinages" :key="coin.id" :value="coin.id">
             {{ coin.label }} ({{ coin.shortLabel }})
@@ -58,11 +58,11 @@
     <footer class="form-footer">
       <button type="button" class="reset-btn" @click="onReset">
         <i class="fas fa-undo" />
-        {{ localize('DND35E.Settings.Reset') }}
+        {{ localize('dnd35e.SETTINGS.Reset') }}
       </button>
       <button type="submit" class="save-btn" @click.prevent="saveConfig">
         <i class="fas fa-save" />
-        {{ localize('DND35E.Settings.Save') }}
+        {{ localize('dnd35e.SETTINGS.Save') }}
       </button>
     </footer>
   </div>
@@ -70,14 +70,15 @@
 
 <script setup lang="ts">
   import { stripSpecialCharacters } from '@helpers/stringHelpers.mjs';
-  import { SettingsStore, SettingsStoreSymbol } from '@settings/core/sheet/settingsStore.mjs';
   import { SYSTEM_ID } from '@settings/shared.mjs';
+  import type { SettingsStore } from '@settings/shared/sheet/settingsStore.mjs';
+  import { SettingsStoreSymbol } from '@settings/shared/sheet/settingsStore.mjs';
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
   import { computed, inject, ref, watch } from 'vue';
 
-  import type { CoinageDefinition, CurrencyConfig } from '../_types.mjs';
-  import { coinageVisibilityEveryone } from '../_types.mjs';
   import { CURRENCY_KEY, DEFAULT_CURRENCY_CONFIG, USER_COIN_PREFIX } from '../constants.mjs';
+  import type { CoinageDefinition, CurrencyConfig } from '../types.mjs';
+  import { coinageVisibilityEveryone } from '../types.mjs';
   import CoinageRow from './CoinageRow.vue';
   import { AUTO_ID_PREFIX } from './idFieldUtils.mjs';
 
@@ -158,7 +159,7 @@
     const ids = coinages.value.map(c => c.id);
     const uniqueIds = new Set(ids);
     if (ids.length !== uniqueIds.size) {
-      foundry.ui.notifications.warn(localize('DND35E.Settings.CurrencyConfig.DuplicateId'));
+      foundry.ui.notifications.warn(localize('dnd35e.SETTINGS.CurrencyConfig.DuplicateId'));
       return false;
     }
 
@@ -168,7 +169,7 @@
       }
 
       if (!coinage.label || coinage.valueInGp == null || coinage.shortLabel == null) {
-        foundry.ui.notifications.warn(localize('DND35E.Settings.CurrencyConfig.RequiredFields'));
+        foundry.ui.notifications.warn(localize('dnd35e.SETTINGS.CurrencyConfig.RequiredFields'));
         return false;
       }
 
@@ -197,10 +198,10 @@
     try {
       await game.settings.set(SYSTEM_ID, CURRENCY_KEY, updatedConfig);
 
-      foundry.ui.notifications.info(game.i18n.localize('DND35E.Settings.ChangesSaved'));
+      foundry.ui.notifications.info(game.i18n.localize('dnd35e.SETTINGS.ChangesSaved'));
     } catch (error) {
       console.error('Failed to save currency settings:', error);
-      foundry.ui.notifications.error(game.i18n.localize('DND35E.Settings.SaveError'));
+      foundry.ui.notifications.error(game.i18n.localize('dnd35e.SETTINGS.SaveError'));
     }
 
     props.context.close();
@@ -210,15 +211,15 @@
     event.preventDefault();
 
     const confirmed = await foundry.applications.api.DialogV2.confirm({
-      window: { title: game.i18n.localize('DND35E.Settings.ResetConfirm.Title') },
+      window: { title: game.i18n.localize('dnd35e.SETTINGS.ResetConfirm.Title') },
       content: `
-        <p>${game.i18n.localize('DND35E.Settings.ResetConfirm.Content')}</p>
+        <p>${game.i18n.localize('dnd35e.SETTINGS.ResetConfirm.Content')}</p>
         <p style="color:var(--color-level-error);font-weight:bold;">
-          ${game.i18n.localize('DND35E.Settings.CurrencyConfig.ResetIrreversible')}
+          ${game.i18n.localize('dnd35e.SETTINGS.CurrencyConfig.ResetIrreversible')}
         </p>
       `,
       yes: {
-        label: game.i18n.localize('DND35E.Settings.Reset'),
+        label: game.i18n.localize('dnd35e.SETTINGS.Reset'),
         icon: 'fas fa-undo',
       },
       no: {

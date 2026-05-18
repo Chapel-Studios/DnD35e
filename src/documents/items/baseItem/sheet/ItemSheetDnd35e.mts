@@ -1,0 +1,57 @@
+import type { DocumentSheetRenderContext } from '@client/applications/api/document-sheet.mjs';
+import { ITEM_SHEET_CLASS } from '@constants/cssClasses.mjs';
+import type { ItemDnd35e } from '@items/baseItem/index.mjs';
+import type { ItemType } from '@items/itemTypes.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
+import type { VueApplicationConfiguration, VueRenderOptions } from '@vueApps/index.mjs';
+import { VueItemSheet } from '@vueApps/index.mjs';
+
+interface BaseItemSheetRenderContext<TItemType extends ItemType, TDocument extends ItemDnd35e<TItemType>> extends Partial<DocumentSheetRenderContext<TDocument>> {
+  // document: TDocument;
+  renderOptions: VueRenderOptions;
+}
+
+abstract class ItemSheetDnd35e<
+  TDocument extends ItemDnd35e<ItemType> = ItemDnd35e<ItemType>
+> extends VueItemSheet {
+  /** Vue component class must be provided by subclasses */
+  // static override vueComponent: any;
+  
+  static override get DEFAULT_OPTIONS (): VueApplicationConfiguration<ItemDnd35e> {
+    return {
+      classes: [SYSTEM_ID, ITEM_SHEET_CLASS],
+      position: {
+        width: 560,
+        height: 650,
+      },
+    } as DeepPartial<VueApplicationConfiguration<ItemDnd35e>>;
+  }
+
+  /**
+   * Title shown in the window header.
+   */
+  override get title (): string {
+    return this.document.name ?? '';
+  }
+
+  /**
+   * Provide the data that Vue receives on first mount.
+   * VueApplication will merge this into the reactive context.
+   */
+  protected override async _prepareContext (
+    options: VueRenderOptions
+  ): Promise<BaseItemSheetRenderContext<ItemType, TDocument>> {
+    return {
+      editable: this.isEditable,
+      renderOptions: options,
+    };
+  }
+}
+
+export {
+  ItemSheetDnd35e,
+};
+
+export type {
+  BaseItemSheetRenderContext,
+};

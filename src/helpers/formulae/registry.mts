@@ -8,18 +8,19 @@
  * Structure: documentType (Item / ActiveEffect / Actor) → subtype (weapon / material / npc) → builder
  */
 
-import { ActorType } from '@actors/actorTypes.mjs';
-import { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
-import { EffectType } from '@effects/effectTypes.mjs';
-import { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
-import { ItemType } from '@items/itemTypes.mjs';
+import type { ActorType } from '@actors/actorTypes.mjs';
+import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
+import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/index.mjs';
+import type { EffectType } from '@effects/effectTypes.mjs';
+import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
+import type { ItemType } from '@items/itemTypes.mjs';
 
+import { normalizeLabel } from './schemaWalker.mjs';
 import type { AspectGroup, FamiliarContext, FamiliarSchema, FormulaFieldData } from './types.mjs';
 import { mergeAspectGroups } from './utils.mjs';
 
 /** Union of all Foundry document classes that can serve as familiar context. */
-export type NonNullDocumentContext = ItemDnd35e | ActorDnd35e | DnD35eActiveEffect;
+export type NonNullDocumentContext = ItemDnd35e | ActorDnd35e | ActiveEffectDnd35e;
 export type DocumentContext = NonNullDocumentContext | null;
 
 export type ContextDocumentType = ItemType | EffectType | ActorType;
@@ -116,6 +117,27 @@ function buildContextFromFormula(
 }
 
 /**
+ * Generate localized aliases for a context by looking up the Foundry document-type
+ * translation (`TYPES.{docType}.{subtype}`).  Adds the normalized translation to the
+ * existing alias list when it differs from all current entries (case-insensitive).
+ *
+ * Called lazily at render time so `game.i18n` is always available.
+ */
+function buildContextAliases(
+  docType: string,
+  subtype: string,
+  existingAliases?: string[]
+): string[] | undefined {
+  const raw = (game as unknown as { i18n?: { localize?(k: string): string } }).i18n?.localize?.(`TYPES.${docType}.${subtype}`);
+  const localized = raw ? normalizeLabel(raw) : undefined;
+  const all = [...(existingAliases ?? [])];
+  if (localized && !all.some(a => a.toLowerCase() === localized.toLowerCase())) {
+    all.push(localized);
+  }
+  return all.length ? all : undefined;
+}
+
+/**
  * Recursively gather FormulaContextDeclarations from all FormulaField instances
  * in a schema's field tree.
  */
@@ -157,8 +179,17 @@ function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
   const docType = document.documentName;
   const subtype = document.type as ContextDocumentType;
   if (hasFamiliarSchema(docType, subtype)) {
+    // Derive localized display label for the "Self" context from the i18n system.
+    // Lazy call — always runs after i18nInit since builders are lazy.
+    const selfLabel = (game as unknown as { i18n?: { localize?(k: string): string } }).i18n?.localize?.('dnd35e.Formula.Context.Self') ?? 'Self';
+    const normalizedSelf = normalizeLabel(selfLabel) ?? 'Self';
+    const selfTypeAliases = buildContextAliases(docType, subtype) ?? [];
+    // Collect all user-typeable aliases: localized Self + type-based aliases
+    const selfAliases = [normalizedSelf, ...selfTypeAliases.filter(a => a !== normalizedSelf)];
     schema.self = {
       properties: getFamiliarBuilder(docType, subtype)!(document),
+      display: selfLabel,
+      aliases: selfAliases,
     };
   }
 
@@ -192,7 +223,7 @@ function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
         if (hasFamiliarSchema(ctxDocType, ctxSubtype)) {
           schema[decl.contextName] = {
             properties: getFamiliarBuilder(ctxDocType, ctxSubtype)!(contextDoc),
-            aliases: decl.aliases,
+            aliases: buildContextAliases(ctxDocType, ctxSubtype, decl.aliases),
           };
         }
       } else if (decl.fallbackSubtypes?.length) {
@@ -202,7 +233,7 @@ function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
           if (hasFamiliarSchema(fallbackDocType, fallbackSubtype as ContextDocumentType)) {
             schema[decl.contextName] = {
               properties: getFamiliarBuilder(fallbackDocType, fallbackSubtype as ContextDocumentType)!(),
-              aliases: decl.aliases,
+              aliases: buildContextAliases(fallbackDocType, fallbackSubtype, decl.aliases),
             };
             break;
           }

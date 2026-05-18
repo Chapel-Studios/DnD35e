@@ -1,10 +1,10 @@
-import { DocumentSheetConfiguration, DocumentSheetRenderOptions } from '@client/applications/api/document-sheet.mjs';
-import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import type { EditorViewMode } from '@helpers/formulae/types.mjs';
+import type { DocumentSheetConfiguration, DocumentSheetRenderOptions } from '@client/applications/api/document-sheet.mjs';
+import type { ActiveEffectDnd35e } from '@documents/activeEffects/index.mjs';
+import type { DocumentSheetStore } from '@documents/document/index.mjs';
+import type { ViewMode } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 
-interface VueApplicationConfiguration<TDocument extends ItemDnd35e | DnD35eActiveEffect> extends
+interface VueApplicationConfiguration<TDocument extends ItemDnd35e | ActiveEffectDnd35e> extends
   DocumentSheetConfiguration<TDocument>
 {
   document: TDocument;
@@ -16,20 +16,18 @@ interface VueRenderOptions extends DocumentSheetRenderOptions {
 }
 
 interface SheetState {
-  /** Whether the sheet is in edit mode vs play mode */
-  editMode: boolean;
-  /** Which view is shown for identifiable items */
-  editorViewMode: EditorViewMode;
+  /** Current sheet mode state. */
+  viewMode: ViewMode;
 }
 
-interface VueApplicationContext<TDocument extends ItemDnd35e | DnD35eActiveEffect> {
+interface VueApplicationContext<TDocument extends ItemDnd35e | ActiveEffectDnd35e> {
   document: TDocument;
   appConfigOptions: VueApplicationConfiguration<TDocument>;
   renderOptions?: VueRenderOptions;
   close: () => Promise<void>;
 }
 
-interface VueApplicationContextTransfer<TDocument extends ItemDnd35e | DnD35eActiveEffect> extends VueApplicationContext<TDocument> {
+interface VueApplicationContextTransfer<TDocument extends ItemDnd35e | ActiveEffectDnd35e> extends VueApplicationContext<TDocument> {
   store?: DocumentSheetStore<TDocument> | undefined;
 }
 

@@ -1,6 +1,10 @@
-// Defer assigning concrete document classes to avoid circular import
+import { Armor } from '@items/physical/armor/index.mjs';
+import { Weapon } from '@items/physical/weapon/index.mjs';
+
 const ItemConfig = {
   documentClasses: {
+    weapon: Weapon,
+    armor: Armor,
   },
 };
 

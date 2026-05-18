@@ -1,9 +1,11 @@
 import './styles/core.scss';
 
-import { registerEffects } from '@entities/activeEffects/registration.mjs';
-import { registerActors } from '@entities/actors/registration.mjs';
+import { SystemConfig } from '@constants/config/system.mjs';
+import { registerEffects } from '@documents/activeEffects/registration.mjs';
+import { registerActors } from '@documents/actors/registration.mjs';
+import { preLocalizeConfig } from '@helpers/localization/preLocalizeConfig.mjs';
 
-import { registerItems } from './entities/items/index.mjs';
+import { registerItems } from './documents/items/index.mjs';
 import { registerSettings } from './settings/index.mjs';
 
 // globalThis.fa = foundry.applications;
@@ -12,22 +14,7 @@ import { registerSettings } from './settings/index.mjs';
 // globalThis.fh = foundry.helpers;
 // globalThis.fu = foundry.utils;
 
-// TODO: move this to a more appropriate location, such as a system-specific initialization file
-CONFIG.dnd35e = {
-  VERSION: '13.0.0-dev.1',
-  item: {
-    documentClasses: {
-    },
-  },
-  activeEffect: {
-    documentClasses: {
-    },
-  },
-  actor: {
-    documentClasses: {
-    },
-  },
-};
+CONFIG.dnd35e = SystemConfig;
 
 // Register system settings (must happen during init)
 Hooks.once('init', () => {
@@ -40,6 +27,10 @@ Hooks.once('init', () => {
       // Actor: {},
     },
   };
+});
+
+Hooks.once('i18nInit', () => {
+  preLocalizeConfig(CONFIG.dnd35e as unknown as Record<string, unknown>);
 });
 
 registerItems();

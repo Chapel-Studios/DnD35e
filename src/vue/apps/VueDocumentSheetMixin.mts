@@ -5,10 +5,12 @@
 
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
 import type { DocumentSheetV2 } from '@client/applications/api/_module.mjs';
-import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
-import { RenderModeStoreSymbol, useRenderModeStore } from '@ec/CoreMixin/sheet/stores/index.mjs';
-import type { RenderModeStore } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
-import type { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
+import type { ActiveEffectDnd35e } from '@documents/activeEffects/index.mjs';
+import type { DocumentSheetStore } from '@documents/document/sheet/DocumentSheetStore.mjs';
+import { RenderModeStoreSymbol, useRenderModeStore } from '@documents/document/sheet/stores/index.mjs';
+import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
+import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
+import { EDIT, PLAY } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { App } from 'vue';
 import { createApp } from 'vue';
@@ -21,7 +23,7 @@ import type { SheetState, VueApplicationConfiguration, VueApplicationContext, Vu
  * Interface describing members added by VueDocumentSheetMixin.
  * Used for explicit typing instead of ReturnType inference.
  */
-interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | DnD35eActiveEffect> extends VueAppBaseMembers {
+interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | ActiveEffectDnd35e> extends VueAppBaseMembers {
   /** Application options with document reference */
   options: VueApplicationConfiguration<TDocument>;
   /** Shared reactive context passed into Vue */
@@ -34,7 +36,7 @@ interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | DnD35eActiveEff
   readonly isEditable: boolean;
 }
 
-const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocument extends ItemDnd35e | DnD35eActiveEffect> (base: TBase) => {
+const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocument extends ItemDnd35e | ActiveEffectDnd35e> (base: TBase) => {
   const VueAppBase = useVueAppBaseMixin(base);
 
   abstract class VueDocumentSheet extends VueAppBase {
@@ -54,14 +56,18 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       const options = args[0] as VueApplicationConfiguration<TDocument>;
       this.#document = options.document;
 
-      // Create shared reactive state for header controls
-      // Initialize editorViewMode based on the document's actual identification state
-      const system = this.#document.system as { isIdentifiable?: boolean; isIdentified?: boolean } | undefined;
+      // Create shared reactive state for header controls.
+      // GMs land in Edit Mode, players land in Play Mode.
+      const doc = this.#document as { effects?: Iterable<{ type?: string }> };
+      const hasSecrets = !!doc.effects && [...doc.effects].some(effect => effect.type === secretEffectType);
+      const initialMode = game.user.isGM
+        ? EDIT
+        : PLAY;
 
       this.renderModeStore = useRenderModeStore(
         this.#document.testUserPermission(game.user, 'OWNER'),
-        system?.isIdentified ?? true,
-        system?.isIdentifiable ?? false
+        hasSecrets,
+        initialMode
       );
 
       this.context = {
@@ -133,9 +139,21 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       options: ApplicationRenderOptions
     ): Promise<void> {
       await super._onRender(context, options);
+      const liveDoc = this.document as unknown as { effects?: Iterable<{ type?: string }> };
+      const hasSecrets = !!liveDoc.effects && [...liveDoc.effects].some(effect => effect.type === secretEffectType);
+      this.renderModeStore.setHasSecrets(hasSecrets);
+      this.#syncWindowTitle();
       const header = this.element?.querySelector('.window-header');
       if (header) {
         this.renderModeStore.setHeaderElement(header, this.isEditable);
+      }
+    }
+
+    #syncWindowTitle (): void {
+      const title = this.title ?? '';
+      const titleElement = this.element?.querySelector('.window-title');
+      if (titleElement instanceof HTMLElement) {
+        titleElement.textContent = title;
       }
     }
 
@@ -158,7 +176,7 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
  */
 type VueDocumentSheetMixin<
   TBase extends AbstractConstructorOf<DocumentSheetV2>,
-  TDocument extends ItemDnd35e | DnD35eActiveEffect
+  TDocument extends ItemDnd35e | ActiveEffectDnd35e
 > = TBase & AbstractConstructorOf<VueDocumentSheetMembers<TDocument>>;
 
 export {

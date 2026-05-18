@@ -1,4 +1,4 @@
-import { MultiSelectOption } from '@vc/Fields/FormGroups/types.mjs';
+import type { MultiSelectOption } from '@vc/fields/formGroups/types.mjs';
 
 const EQUIP_SLOTS = [
   'head',
@@ -17,12 +17,12 @@ const EQUIP_SLOTS = [
 
 type EquipSlot = (typeof EQUIP_SLOTS)[number];
 
-// TODO: The 'none' sentinel is a placeholder. An empty selection already means "no slot",
+// TODO(Phase 6): The 'none' sentinel is a placeholder. An empty selection already means "no slot",
 // so this option is redundant for multiselect. If equippedSlotIds becomes a single-select
 // nullable field, replace this with value: null and widen the schema type accordingly.
-const EQUIP_SLOT_SELECT_OPTIONS: MultiSelectOption[] = [
-  { value: 'none', label: game.i18n.localize('D35E.None') },
-  ...EQUIP_SLOTS.map(slot => ({ value: slot, label: game.i18n.localize(`D35E.EquipSlot.${slot}`) })),
+const EQUIP_SLOT_SELECT_OPTIONS: MultiSelectOption<EquipSlot | 'none'>[] = [
+  { value: 'none', label: game.i18n.localize('dnd35e.COMMON.None') },
+  ...EQUIP_SLOTS.map(slot => ({ value: slot, label: game.i18n.localize(`dnd35e.EQUIPPABLE.EquipSlot.${slot}`) })),
 ];
 
 export {

@@ -8,7 +8,7 @@
  */
 
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
-import { SettingsStoreSymbol, useSettingsStore } from '@settings/core/sheet/index.mjs';
+import { SettingsStoreSymbol, useSettingsStore } from '@settings/shared/sheet/index.mjs';
 import type { App, Component } from 'vue';
 
 import type { VueApplicationContextTransfer } from './VueAppTypes.mjs';

@@ -1,176 +1,339 @@
 {
-  "DND35E.Settings.Title": "System Settings",
-  "DND35E.Settings.Save": "Save Changes",
-  "DND35E.Settings.Reset": "Reset to Defaults",
-
-  "DND35E.Settings.GameRules.Name": "Game Rules",
-  "DND35E.Settings.GameRules.Label": "Configure Game Rules",
-  "DND35E.Settings.GameRules.Hint": "Configure variant rules and game mechanics.",
-  "DND35E.Settings.GameRules.Title": "Game Rules Configuration",
-  "DND35E.Settings.GameRules.Movement": "Movement",
-  "DND35E.Settings.GameRules.Experience": "Experience",
-  "DND35E.Settings.GameRules.OptionalRules": "Optional Rules",
-
-  "DND35E.Settings.Combat.Name": "Combat Settings",
-  "DND35E.Settings.Combat.Label": "Configure Combat",
-  "DND35E.Settings.Combat.Hint": "Configure combat automation and mechanics.",
-  "DND35E.Settings.Combat.Title": "Combat Configuration",
-  "DND35E.Settings.Combat.Weapons": "Weapons",
-  "DND35E.Settings.Combat.Ammunition": "Ammunition",
-  "DND35E.Settings.Combat.Spellpoints": "Spellpoints",
-  "DND35E.Settings.Combat.Vision": "Vision",
-
-  "DND35E.Settings.Display.Name": "Display Settings",
-  "DND35E.Settings.Display.Label": "Configure Display",
-  "DND35E.Settings.Display.Hint": "Configure UI and display options.",
-  "DND35E.Settings.Display.Title": "Display Configuration",
-  "DND35E.Settings.Display.General": "General",
-  "DND35E.Settings.Display.Interface": "Interface",
-  "DND35E.Settings.Display.PartyHud": "Party HUD",
-  "DND35E.Settings.Display.ChatCards": "Chat Cards",
-
-  "DND35E.Settings.Health.Name": "Health Configuration",
-  "DND35E.Settings.Health.Label": "Configure Health",
-  "DND35E.Settings.Health.Hint": "Configure HP calculation and variant health rules.",
-  "DND35E.Settings.Health.Title": "Health Configuration",
-  "DND35E.Settings.Health.HitDice": "Hit Dice",
-  "DND35E.Settings.Health.Variants": "Variants",
-  "DND35E.Settings.Health.Reset": "Health configuration reset to defaults.",
-  "DND35E.Settings.Health.Updated": "Health configuration updated.",
-  "DND35E.Settings.Health.HitDiceInstructions": "Configure how hit points are calculated for each hit die type. Auto-compute will automatically calculate HP based on the rate multiplied by the hit die maximum. Maximized indicates how many levels have maximized hit dice.",
-  "DND35E.Settings.Health.VariantsInstructions": "Enable variant health systems for your game.",
-  "DND35E.Settings.Health.Auto": "Auto",
-  "DND35E.Settings.Health.Manual": "Manual",
-  "DND35E.Settings.Health.Rounding.Name": "HP Rounding",
-  "DND35E.Settings.Health.Rounding.Hint": "How to round fractional hit points.",
-  "DND35E.Settings.Health.Rounding.Up": "Round Up",
-  "DND35E.Settings.Health.Rounding.Nearest": "Round Nearest",
-  "DND35E.Settings.Health.Rounding.Down": "Round Down",
-  "DND35E.Settings.Health.Continuity.Name": "HP Continuity",
-  "DND35E.Settings.Health.Continuity.Hint": "How HP are calculated across levels.",
-  "DND35E.Settings.Health.Continuity.Continuous": "Continuous (running total)",
-  "DND35E.Settings.Health.Continuity.Discrete": "Discrete (per level)",
-  "DND35E.Settings.Health.WoundsAndVigor.PC.Name": "Wounds & Vigor (PCs)",
-  "DND35E.Settings.Health.WoundsAndVigor.PC.Hint": "Use the Wounds and Vigor variant health system for player characters.",
-  "DND35E.Settings.Health.WoundsAndVigor.NPC.Name": "Wounds & Vigor (NPCs)",
-  "DND35E.Settings.Health.WoundsAndVigor.NPC.Hint": "Use the Wounds and Vigor variant health system for non-player characters.",
-
-  "DND35E.Settings.DiagonalMovement.Name": "Diagonal Movement",
-  "DND35E.Settings.DiagonalMovement.Hint": "Configure the diagonal movement calculation rule.",
-  "DND35E.Settings.DiagonalMovement.PHB": "Player's Handbook (5-5-5)",
-  "DND35E.Settings.DiagonalMovement.DMG": "Dungeon Master's Guide (5-10-5)",
-
-  "DND35E.Settings.ExperienceRate.Name": "Experience Progression",
-  "DND35E.Settings.ExperienceRate.Hint": "The rate at which characters progress through experience levels.",
-  "DND35E.Settings.ExperienceRate.Slow": "Slow",
-  "DND35E.Settings.ExperienceRate.Medium": "Medium",
-  "DND35E.Settings.ExperienceRate.Fast": "Fast",
-
-  "DND35E.Settings.DisableExperienceTracking.Name": "Disable Experience Tracking",
-  "DND35E.Settings.DisableExperienceTracking.Hint": "Hide the XP bar for milestone or story-based advancement.",
-
-  "DND35E.Settings.FractionalBaseBonuses.Name": "Fractional Base Bonuses",
-  "DND35E.Settings.FractionalBaseBonuses.Hint": "Use the optional fractional base attack bonus and save progression rules.",
-
-  "DND35E.Settings.BackgroundSkills.Name": "Background Skills",
-  "DND35E.Settings.BackgroundSkills.Hint": "Enable the background skills optional ruleset.",
-
-  "DND35E.Settings.PsionicsAreDifferent.Name": "Psionics Are Different",
-  "DND35E.Settings.PsionicsAreDifferent.Hint": "Treat psionics as fundamentally different from magic (no spell/power interactions).",
-
-  "DND35E.Settings.MeasureStyle.Name": "Alternate Measure Style",
-  "DND35E.Settings.MeasureStyle.Hint": "Use alternate visual style for measuring distances.",
-
-  "DND35E.Settings.AutosizeWeapons.Name": "Autosize Weapons",
-  "DND35E.Settings.AutosizeWeapons.Hint": "Automatically resize weapons to match the wielder's size.",
-
-  "DND35E.Settings.AutoScaleAttacksBab.Name": "Auto-Scale Attacks",
-  "DND35E.Settings.AutoScaleAttacksBab.Hint": "Automatically generate iterative attacks based on BAB.",
-
-  "DND35E.Settings.AllowNoAmmo.Name": "Allow No Ammo",
-  "DND35E.Settings.AllowNoAmmo.Hint": "Allow ranged attacks even without ammunition.",
-
-  "DND35E.Settings.AutoAmmoRecovery.Name": "Auto Ammo Recovery",
-  "DND35E.Settings.AutoAmmoRecovery.Hint": "Automatically recover ammunition after combat.",
-
-  "DND35E.Settings.NoAutoSpellpointsCost.Name": "Manual Spellpoint Cost",
-  "DND35E.Settings.NoAutoSpellpointsCost.Hint": "Disable automatic spellpoint cost calculation.",
-
-  "DND35E.Settings.SpellpointCostFormula.Name": "Spellpoint Cost Formula",
-  "DND35E.Settings.SpellpointCostFormula.Hint": "Custom formula for calculating spellpoint costs (leave blank for default).",
-
-  "DND35E.Settings.LowLightVisionMode.Name": "Low-Light Vision Mode",
-  "DND35E.Settings.LowLightVisionMode.Hint": "Enable enhanced low-light vision handling for tokens.",
-
-  "DND35E.Settings.Units.Name": "Unit System",
-  "DND35E.Settings.Units.Hint": "The measurement system used for distances and weights.",
-  "DND35E.Settings.Units.Imperial": "Imperial (feet, pounds)",
-  "DND35E.Settings.Units.Metric": "Metric (meters, kilograms)",
-
-  "DND35E.Settings.PartyHud.Name": "Party HUD",
-  "DND35E.Settings.PartyHud.Hint": "Display a party status HUD on the screen.",
-  "DND35E.Settings.PartyHud.Full": "Full Party HUD",
-  "DND35E.Settings.PartyHud.Narrow": "Narrow Party HUD",
-  "DND35E.Settings.PartyHud.None": "No Party HUD",
-
-  "DND35E.Settings.PartyHudTokenImage.Name": "Party HUD Token Images",
-  "DND35E.Settings.PartyHudTokenImage.Hint": "Show token images instead of portraits in the party HUD.",
-
-  "DND35E.Settings.CustomSkin.Name": "Custom Skin",
-  "DND35E.Settings.CustomSkin.Hint": "Use the custom D&D 3.5e visual theme.",
-
-  "DND35E.Settings.ColorblindColors.Name": "Colorblind-Friendly Colors",
-  "DND35E.Settings.ColorblindColors.Hint": "Use a colorblind-friendly color palette.",
-
-  "DND35E.Settings.TransparentSidebar.Name": "Transparent Sidebar",
-  "DND35E.Settings.TransparentSidebar.Hint": "Make the sidebar semi-transparent when using the custom theme.",
-
-  "DND35E.Settings.AutoCollapseItemCards.Name": "Auto-Collapse Item Cards",
-  "DND35E.Settings.AutoCollapseItemCards.Hint": "Automatically collapse item descriptions in chat cards.",
-
-  "DND35E.Settings.ClassFeaturesInTabs.Name": "Class Features in Tabs",
-  "DND35E.Settings.ClassFeaturesInTabs.Hint": "Display class features in multiple tabs instead of a single list.",
-
-  "DND35E.Settings.HideSpellDescriptions.Name": "Hide Spell Descriptions",
-  "DND35E.Settings.HideSpellDescriptions.Hint": "Hide spell descriptions in item lists to save space.",
-
-  "DND35E.Settings.Currency.Name": "Currency Configuration",
-  "DND35E.Settings.Currency.Label": "Configure Currency",
-  "DND35E.Settings.Currency.Hint": "Configure available coinages and currency options.",
-  "DND35E.Settings.Currency.Title": "Currency Configuration",
-
-  "DND35E.Settings.CurrencyConfig.Instructions": "Configure which coinages are available in your world. System coinages can be enabled or disabled; custom coinages can be fully edited.",
-  "DND35E.Settings.CurrencyConfig.DefaultDisplayCoin": "Default Display Coin",
-  "DND35E.Settings.CurrencyConfig.RollUpMaximum": "Roll-Up Maximum",
-  "DND35E.Settings.CurrencyConfig.Status": "Status",
-  "DND35E.Settings.CurrencyConfig.Id": "ID",
-  "DND35E.Settings.CurrencyConfig.Label": "Label",
-  "DND35E.Settings.CurrencyConfig.ShortLabel": "Short",
-  "DND35E.Settings.CurrencyConfig.ValueInGp": "GP Value",
-  "DND35E.Settings.CurrencyConfig.Weight": "Weight",
-  "DND35E.Settings.CurrencyConfig.Visibility": "Visibility",
-  "DND35E.Settings.CurrencyConfig.RestoreDefaults": "Restore system defaults",
-  "DND35E.Settings.CurrencyConfig.NoCurrencies": "No currencies defined.",
-  "DND35E.Settings.CurrencyConfig.VisibilityEveryone": "Everyone",
-  "DND35E.Settings.CurrencyConfig.VisibilityGmSelect": "GM Select",
-  "DND35E.Settings.CurrencyConfig.VisibilityGmOnly": "GM Only",
-  "DND35E.Settings.CurrencyConfig.DuplicateId": "A coin with that ID already exists.",
-
-  "DND35E.Settings.CurrencyConfig.ResetIrreversible": "This will remove all custom coins and restore all defaults. This action cannot be undone.",
-
-  "DND35E.Currency.AddCoinStack": "Add coin stack",
-  "DND35E.Currency.RemoveCoinStack": "Remove coin stack",
-  "DND35E.Currency.Consolidate": "Consolidate currency",
-  
-  "DND35E.Settings.MeasurementUnitsN": "System of units",
-  "DND35E.Settings.MeasurementUnitsL": "System of units to be used in the world",
-
-  "DND35E.HitDie": "Hit Die",
-
-  "DND35E.Settings.DamageReductionTypes.Name": "Damage Reduction Types",
-  "DND35E.Settings.DamageReductionTypes.Hint": "Configure available damage reduction material types.",
-  "DND35E.Settings.DamageReductionTypes.Label": "Damage Reduction Types",
-  "DND35E.Settings.DamageReductionTypes.IdColumn": "ID",
-  "DND35E.Settings.DamageReductionTypes.LabelColumn": "Type",
-  "DND35E.Settings.DamageReductionTypes.None": "No damage reduction types configured."
+  "dnd35e": {
+    "SETTINGS": {
+      "Title": "System Settings",
+      "Save": "Save Changes",
+      "Reset": "Reset to Defaults",
+      "ChangesSaved": "Settings saved successfully.",
+      "SaveError": "Failed to save settings.",
+      "ResetConfirm": {
+        "Title": "Reset to Defaults",
+        "Content": "Are you sure you want to reset all settings to their default values?"
+      },
+      "GameRules": {
+        "Name": "Game Rules",
+        "Label": "Configure Game Rules",
+        "Hint": "Configure variant rules and game mechanics.",
+        "Title": "Game Rules Configuration",
+        "Movement": "Movement",
+        "Experience": "Experience",
+        "OptionalRules": "Optional Rules"
+      },
+      "Combat": {
+        "Name": "Combat Settings",
+        "Label": "Configure Combat",
+        "Hint": "Configure combat automation and mechanics.",
+        "Title": "Combat Configuration",
+        "Weapons": "Weapons",
+        "Ammunition": "Ammunition",
+        "Spellpoints": "Spellpoints",
+        "Vision": "Vision",
+        "Automation": "Automation"
+      },
+      "Display": {
+        "Name": "Display Settings",
+        "Label": "Configure Display",
+        "Hint": "Configure UI and display options.",
+        "Title": "Display Configuration",
+        "General": "General",
+        "Interface": "Interface",
+        "PartyHud": "Party HUD",
+        "ChatCards": "Chat Cards"
+      },
+      "Health": {
+        "Name": "Health Configuration",
+        "Label": "Configure Health",
+        "Hint": "Configure HP calculation and variant health rules.",
+        "Title": "Health Configuration",
+        "HitDice": "Hit Dice",
+        "Variants": "Variants",
+        "Reset": "Health configuration reset to defaults.",
+        "Updated": "Health configuration updated.",
+        "HitDiceInstructions": "Configure how hit points are calculated for each hit die type. Auto-compute will automatically calculate HP based on the rate multiplied by the hit die maximum. Maximized indicates how many levels have maximized hit dice.",
+        "VariantsInstructions": "Enable variant health systems for your game.",
+        "Auto": "Auto",
+        "Manual": "Manual",
+        "Rounding": {
+          "Name": "HP Rounding",
+          "Hint": "How to round fractional hit points.",
+          "Up": "Round Up",
+          "Nearest": "Round Nearest",
+          "Down": "Round Down"
+        },
+        "Continuity": {
+          "Name": "HP Continuity",
+          "Hint": "How HP are calculated across levels.",
+          "Continuous": "Continuous (running total)",
+          "Discrete": "Discrete (per level)"
+        },
+        "WoundsAndVigor": {
+          "PC": {
+            "Name": "Wounds & Vigor (PCs)",
+            "Hint": "Use the Wounds and Vigor variant health system for player characters."
+          },
+          "NPC": {
+            "Name": "Wounds & Vigor (NPCs)",
+            "Hint": "Use the Wounds and Vigor variant health system for non-player characters."
+          }
+        }
+      },
+      "DiagonalMovement": {
+        "Name": "Diagonal Movement",
+        "Hint": "Configure the diagonal movement calculation rule.",
+        "PHB": "Player's Handbook (5-5-5)",
+        "DMG": "Dungeon Master's Guide (5-10-5)"
+      },
+      "ExperienceRate": {
+        "Name": "Experience Progression",
+        "Hint": "The rate at which characters progress through experience levels.",
+        "Slow": "Slow",
+        "Medium": "Medium",
+        "Fast": "Fast"
+      },
+      "DisableExperienceTracking": {
+        "Name": "Disable Experience Tracking",
+        "Hint": "Hide the XP bar for milestone or story-based advancement."
+      },
+      "FractionalBaseBonuses": {
+        "Name": "Fractional Base Bonuses",
+        "Hint": "Use the optional fractional base attack bonus and save progression rules."
+      },
+      "BackgroundSkills": {
+        "Name": "Background Skills",
+        "Hint": "Enable the background skills optional ruleset."
+      },
+      "PsionicsAreDifferent": {
+        "Name": "Psionics Are Different",
+        "Hint": "Treat psionics as fundamentally different from magic (no spell/power interactions)."
+      },
+      "MeasureStyle": {
+        "Name": "Alternate Measure Style",
+        "Hint": "Use alternate visual style for measuring distances."
+      },
+      "AutosizeWeapons": {
+        "Name": "Autosize Weapons",
+        "Hint": "Automatically resize weapons to match the wielder's size."
+      },
+      "AutoScaleAttacksBab": {
+        "Name": "Auto-Scale Attacks",
+        "Hint": "Automatically generate iterative attacks based on BAB."
+      },
+      "AllowNoAmmo": {
+        "Name": "Allow No Ammo",
+        "Hint": "Allow ranged attacks even without ammunition."
+      },
+      "AutoAmmoRecovery": {
+        "Name": "Auto Ammo Recovery",
+        "Hint": "Automatically recover ammunition after combat."
+      },
+      "NoAutoSpellpointsCost": {
+        "Name": "Manual Spellpoint Cost",
+        "Hint": "Disable automatic spellpoint cost calculation."
+      },
+      "SpellpointCostFormula": {
+        "Name": "Spellpoint Cost Formula",
+        "Hint": "Custom formula for calculating spellpoint costs (leave blank for default)."
+      },
+      "LowLightVisionMode": {
+        "Name": "Low-Light Vision Mode",
+        "Hint": "Enable enhanced low-light vision handling for tokens."
+      },
+      "Units": {
+        "Name": "Unit System",
+        "Hint": "The measurement system used for distances and weights.",
+        "Imperial": "Imperial (feet, pounds)",
+        "Metric": "Metric (meters, kilograms)"
+      },
+      "PartyHud": {
+        "Name": "Party HUD",
+        "Hint": "Display a party status HUD on the screen.",
+        "Full": "Full Party HUD",
+        "Narrow": "Narrow Party HUD",
+        "None": "No Party HUD"
+      },
+      "PartyHudTokenImage": {
+        "Name": "Party HUD Token Images",
+        "Hint": "Show token images instead of portraits in the party HUD."
+      },
+      "CustomSkin": {
+        "Name": "Custom Skin",
+        "Hint": "Use the custom D&D 3.5e visual theme."
+      },
+      "ColorblindColors": {
+        "Name": "Colorblind-Friendly Colors",
+        "Hint": "Use a colorblind-friendly color palette."
+      },
+      "TransparentSidebar": {
+        "Name": "Transparent Sidebar",
+        "Hint": "Make the sidebar semi-transparent when using the custom theme."
+      },
+      "AutoCollapseItemCards": {
+        "Name": "Auto-Collapse Item Cards",
+        "Hint": "Automatically collapse item descriptions in chat cards."
+      },
+      "ClassFeaturesInTabs": {
+        "Name": "Class Features in Tabs",
+        "Hint": "Display class features in multiple tabs instead of a single list."
+      },
+      "HideSpellDescriptions": {
+        "Name": "Hide Spell Descriptions",
+        "Hint": "Hide spell descriptions in item lists to save space."
+      },
+      "HideSpellDescriptionsIfHasAction": {
+        "Name": "Hide Spell Descriptions (Actionable)",
+        "Hint": "Hide spell descriptions only if the spell has an action."
+      },
+      "ShowFullAttackChatCard": {
+        "Name": "Show Full Attack Chat Card",
+        "Hint": "Display full attack details in the chat card."
+      },
+      "RepeatAnimations": {
+        "Name": "Repeat Animations",
+        "Hint": "Repeat attack animations for iterative attacks."
+      },
+      "ThreatenedShowSquares": {
+        "Name": "Show Threatened Squares",
+        "Hint": "Highlight threatened squares on the grid."
+      },
+      "AutomateFlankingThreat": {
+        "Name": "Automate Flanking & Threat",
+        "Hint": "Automatically determine flanking and threat."
+      },
+      "RandomizeHp": {
+        "Name": "Randomize HP",
+        "Hint": "Randomize NPC hit points."
+      },
+      "EnforceSingleMaterial": {
+        "Name": "Enforce Single Material",
+        "Hint": "Prevent items from having multiple standard Material effects. Broken and Masterwork subtypes are always allowed."
+      },
+      "UseAutoAmmoRecovery": {
+        "Name": "Auto Ammo Recovery",
+        "Hint": "Automatically recover ammunition after combat."
+      },
+      "SharedVision": {
+        "WithoutSelection": "Without Selection",
+        "WithSelection": "With Selection"
+      },
+      "SharedVisionMode": {
+        "Name": "Shared Vision Mode",
+        "Hint": "How shared vision is determined for players."
+      },
+      "PlayersNoDamageDetails": {
+        "Name": "Hide Damage Details from Players",
+        "Hint": "Hide detailed damage information from players."
+      },
+      "PlayersNoDCDetails": {
+        "Name": "Hide DC Details from Players",
+        "Hint": "Hide difficulty class details from players."
+      },
+      "AllowPlayersApplyActions": {
+        "Name": "Allow Players to Apply Actions",
+        "Hint": "Allow players to apply damage and healing from chat cards."
+      },
+      "PlayersShowContextNotes": {
+        "Name": "Show Context Notes to Players",
+        "Hint": "Show context notes to players in chat."
+      },
+      "GlobalDisableTokenLight": {
+        "Name": "Disable Token Light",
+        "Hint": "Globally disable token light emission."
+      },
+      "GlobalDisableTokenVision": {
+        "Name": "Disable Token Vision",
+        "Hint": "Globally disable token vision."
+      },
+      "HideTokenConditions": {
+        "Name": "Hide Token Conditions",
+        "Hint": "Hide condition icons on tokens."
+      },
+      "CoreEffects": {
+        "Name": "Core Effects",
+        "Hint": "Use Foundry core effect management."
+      },
+      "ChangeScrollIcon": {
+        "Name": "Change Scroll Icon",
+        "Hint": "Automatically change scroll icons based on spell school."
+      },
+      "BuyChat": {
+        "Name": "Buy Chat Messages",
+        "Hint": "Show chat messages when items are purchased."
+      },
+      "ClearInventory": {
+        "Name": "Clear Inventory",
+        "Hint": "Allow clearing all inventory items at once."
+      },
+      "SaveAttackWindow": {
+        "Name": "Save Attack Window Position",
+        "Hint": "Remember the position of the attack dialog."
+      },
+      "HidePlayersList": {
+        "Name": "Hide Players List",
+        "Hint": "Hide the players list panel."
+      },
+      "SkillSettings": {
+        "Name": "Skill Settings",
+        "Title": "Skill Configuration",
+        "Visibility": "Visibility",
+        "VisibilityInstructions": "Configure which skills are visible.",
+        "CustomSkills": "Custom Skills",
+        "CustomSkillsInstructions": "Add custom skills to your game.",
+        "Name": "Name",
+        "Ability": "Ability",
+        "RequiresTraining": "Requires Training",
+        "ArmorCheckPenalty": "Armor Check Penalty",
+        "NoCustomSkills": "No custom skills configured."
+      },
+      "RollConfig": {
+        "Name": "Roll Configuration",
+        "Title": "Roll Configuration",
+        "Instructions": "Configure default roll modes for different roll types."
+      },
+      "Currency": {
+        "Name": "Currency Configuration",
+        "Label": "Configure Currency",
+        "Hint": "Configure available coinages and currency options.",
+        "Title": "Currency Configuration"
+      },
+      "CurrencyConfig": {
+        "Title": "Currency Configuration",
+        "Instructions": "Configure which coinages are available in your world. System coinages can be enabled or disabled; custom coinages can be fully edited.",
+        "DefaultDisplayCoin": "Default Display Coin",
+        "RollUpMaximum": "Roll-Up Maximum",
+        "Status": "Status",
+        "Id": "ID",
+        "Label": "Label",
+        "ShortLabel": "Short",
+        "ValueInGp": "GP Value",
+        "Weight": "Weight",
+        "Visibility": "Visibility",
+        "RestoreDefaults": "Restore system defaults",
+        "NoCurrencies": "No currencies defined.",
+        "VisibilityEveryone": "Everyone",
+        "VisibilityGmSelect": "GM Select",
+        "VisibilityGmOnly": "GM Only",
+        "DuplicateId": "A coin with that ID already exists.",
+        "ResetIrreversible": "This will remove all custom coins and restore all defaults. This action cannot be undone.",
+        "RequiredFields": "Required fields are missing.",
+        "RollUpExcluded": "Excluded from Roll-Up",
+        "RollUpIncluded": "Included in Roll-Up"
+      },
+      "MeasurementUnitsN": "System of units",
+      "MeasurementUnitsL": "System of units to be used in the world",
+      "DamageReductionTypes": {
+        "Name": "Damage Reduction Types",
+        "Hint": "Configure available damage reduction material types.",
+        "Label": "Damage Reduction Types",
+        "IdColumn": "ID",
+        "LabelColumn": "Type",
+        "None": "No damage reduction types configured."
+      }
+    },
+    "Currency": {
+      "AddCoinStack": "Add coin stack",
+      "RemoveCoinStack": "Remove coin stack",
+      "Consolidate": "Consolidate currency"
+    },
+    "HitDie": "Hit Die"
+  }
 }

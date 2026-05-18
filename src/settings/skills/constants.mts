@@ -2,7 +2,7 @@
  * Skills settings constants
  */
 
-import type { CustomSkill, SkillSettings } from './_types.mjs';
+import type { CustomSkill, SkillSettings } from './types.mjs';
 
 /** Skill settings key */
 export const SKILLS_KEY = 'skillSettings';

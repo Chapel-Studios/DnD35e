@@ -1,22 +1,118 @@
 {
-    "D35E.Effects": "Effects",
-    "D35E.EffectCreate": "Create Effect",
-    "D35E.EffectNew": "New Effect",
-    "D35E.EffectEdit": "Edit Effect",
-    "D35E.EffectDelete": "Delete Effect",
-    "D35E.EffectEnable": "Enable Effect",
-    "D35E.EffectDisable": "Disable Effect",
-    "D35E.EffectTemporary": "Temporary Effects",
-    "D35E.EffectPassive": "Passive Effects",
-    "D35E.EffectInactive": "Inactive Effects",
-    "D35E.EffectsNone": "No effects on this item.",
-    "D35E.EffectChangeTarget.Target": "Target",
-    "D35E.EffectChangeTarget.Item": "Item",
-    "D35E.EffectChangeTarget.Actor": "Actor",
-    "D35E.EffectChangeTargetField.TargetField": "Target Field",
-    "D35E.EffectChangeTargetField.Value": "Identified",
-    "D35E.EffectChangeTargetField.Unidentified": "Unidentified",
-
-    "D35E.IsSystemEffect": "System Effect",
-    "D35E.IsSystemEffectHint": "Whether this effect is a built-in system effect and should not be edited by users."
+  "dnd35e": {
+    "BONUS_TYPES": {
+      "Untyped": "Untyped",
+      "Material": "Material",
+      "Broken": "Broken",
+      "Masterwork": "Masterwork"
+    },
+    "EFFECT": {
+      "Effects": "Effects",
+      "Create": "Create Effect",
+      "New": "New Effect",
+      "Edit": "Edit Effect",
+      "Delete": "Delete Effect",
+      "Enable": "Enable Effect",
+      "Disable": "Disable Effect",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "Temporary": "Temporary Effects",
+      "Passive": "Passive Effects",
+      "Inactive": "Inactive Effects",
+      "None": "No effects on this item.",
+      "Hidden": "Hidden",
+      "HideEffect": "Hide from players",
+      "ShowEffect": "Show to players",
+      "StackResult": {
+        "Applied": "Applied",
+        "Ignored": "Ignored"
+      },
+      "EnforceSingleMaterialError": "This item already has a standard Material effect. Only one is allowed when Enforce Single Material is enabled.",
+      "BonusType": {
+        "Label": "Bonus Type",
+        "None": "None"
+      },
+      "Headers": {
+        "Actions": "Actions",
+        "BonusType": "Bonus",
+        "Field": "Field",
+        "Priority": "Priority",
+        "Type": "Type",
+        "Value": "Value"
+      },
+      "IncompleteChangesWarning": "This effect has incomplete changes that will not be applied.",
+      "ChangeTarget": {
+        "Target": "Target",
+        "Item": "Item",
+        "Actor": "Actor"
+      },
+      "ChangeMode": {
+        "Familiar": "Formula Familiar",
+        "Mask": "Mask"
+      },
+      "General": {
+        "Type": "Effect"
+      },
+      "Secret": {
+        "Type": "Secret",
+        "Secrets": "Secrets",
+        "New": "New Secret",
+        "PlayerEdit": "Player Edit",
+        "PlayerEditIndicator": "Player Override",
+        "AddSecret": "Add Secret",
+        "RevealAll": "Reveal All",
+        "RevealAllHint": "Disable all Secret effects, revealing the item's true properties",
+        "MasksTab": "Masks",
+        "Masks": "Field Masks",
+        "AddMask": "Add Mask",
+        "EmptyMasks": "No masks defined. Add a mask to hide a field value from players.",
+        "FieldPlaceholder": "Field path\u2026",
+        "ValuePlaceholder": "Displayed value\u2026",
+        "FIELDS": {
+          "isPlayerEditSecret": {
+            "label": "Player Edit Secret",
+            "hint": "This secret was automatically created from a player's edit on a masked field."
+          }
+        }
+      },
+      "FIELDS": {
+        "changes": {
+          "label": "Changes",
+          "isSystem": {
+            "label": "System Effect",
+            "hint": "Whether this effect is a built-in system effect and should not be edited by users."
+          }
+        }
+      }
+    },
+    "MATERIAL": {
+      "FIELDS": {
+        "price": {
+          "label": "Price",
+          "hint": "The price modifier for this material."
+        },
+        "magicEquivalency": {
+          "label": "Magic Equivalency",
+          "hint": "The magic equivalency of this material."
+        },
+        "hardness": {
+          "label": "Hardness",
+          "hint": "The hardness of this material."
+        },
+        "bonusHp": {
+          "label": "Bonus HP",
+          "hint": "The bonus max HP provided by this material."
+        },
+        "materialSubtype": {
+          "label": "Subtype",
+          "hint": "What type of material is this?",
+          "choices": {
+            "standard": "Standard",
+            "broken": "Broken",
+            "masterwork": "Masterwork"
+          }
+        }
+      }
+    }
+  }
 }

@@ -4,7 +4,8 @@
  * Utility functions for getting and setting system settings.
  */
 
-import { SETTINGS, SYSTEM_ID } from './constants/index.mjs';
+import { SYSTEM_ID } from './shared.mjs';
+import { SETTINGS } from './shared/constants.mjs';
 
 /**
  * Helper function to get a typed setting value

@@ -1,0 +1,17 @@
+{
+  "_comment": "Copy this file to local.config.json and customize for your environment. local.config.json is git-ignored.",
+
+  "_foundryRootPath_comment": "Canonical: the Foundry install root. Everything else is derived from this.",
+  "foundryRootPath": "C:/Program Files/Foundry Virtual Tabletop",
+
+  "_foundryDataPath_comment": "Optional override. Defaults to <foundryRootPath>/Data. Set this if your Foundry data lives somewhere else (configurable via Foundry's --dataPath flag).",
+  "foundryDataPath": null,
+
+  "_e2e_comment": "Below: optional — used only by Playwright E2E tests. Leave defaults / omit if you don't run E2E locally.",
+
+  "_foundryLicenseFile_comment": "Optional override. Defaults to <foundryRootPath>/Config/license.json. Foundry's license.json is a signed payload — activate Foundry once on this machine and it'll be written there automatically. CI environments should set the E2E_LICENSE_JSON env var instead.",
+  "foundryLicenseFile": null,
+
+  "foundryE2EDataDir": "C:/temp/foundry-e2e-data",
+  "foundryE2EPort": 31000
+}

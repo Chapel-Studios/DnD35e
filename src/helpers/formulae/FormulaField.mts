@@ -13,7 +13,7 @@
  */
 
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
-import type { FieldEditability, FieldVisibility } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+import type { FieldEditability, FieldVisibility } from '@vc/fields/formGroups/fieldPermissions.mjs';
 
 import type { FormulaDataSource } from './FormulaData.mjs';
 import { FormulaData } from './FormulaData.mjs';
@@ -43,10 +43,6 @@ type BaseFormulaFieldOptions = {
   excludedFields?: string[];
   /** Required field. Default: false. */
   required?: boolean;
-  /** Label for the field. */
-  label: string;
-  /** Hint for the field. */
-  hint: string;
 }
 
 type NullableFieldOptions = {
@@ -71,9 +67,9 @@ type FormulaFieldOptions = BaseFormulaFieldOptions
  * Wraps {@link FormulaData} DataModel.
  */
 class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
+  static isFamiliarLeaf = true;
+
   constructor(options: FormulaFieldOptions = {
-    label: '',
-    hint: '',
     canEditabilityBeChanged: true,
     canVisibilityBeChanged: true,
     defaultEditability: 'normal',

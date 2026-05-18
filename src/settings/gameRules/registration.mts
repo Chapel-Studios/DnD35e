@@ -6,15 +6,32 @@ import { SYSTEM_ID } from '../shared.mjs';
 import {
   DEFAULT_DAMAGE_REDUCTION_TYPES,
   GAME_RULES_KEYS,
+  GAME_RULES_MENU,
 } from './constants.mjs';
+import { GameRulesSettingsConfig } from './sheet/index.mjs';
+
+/**
+ * Register the Game Rules settings menu button
+ */
+function registerGameRulesMenu(): void {
+  game.settings.registerMenu(SYSTEM_ID, GAME_RULES_MENU, {
+    name: 'dnd35e.SETTINGS.GameRules.Name',
+    label: 'dnd35e.SETTINGS.GameRules.Label',
+    hint: 'dnd35e.SETTINGS.GameRules.Hint',
+    icon: 'fas fa-list-check',
+    type: GameRulesSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
+    restricted: true,
+  });
+}
 
 /**
  * Register game rules settings
  */
 function registerGameRulesSettings(): void {
+  registerGameRulesMenu();
   // game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.DIAGONAL_MOVEMENT, {
-  //   name: 'DND35E.Settings.DiagonalMovement.Name',
-  //   hint: 'DND35E.Settings.DiagonalMovement.Hint',
+  //   name: 'dnd35e.SETTINGS.DiagonalMovement.Name',
+  //   hint: 'dnd35e.SETTINGS.DiagonalMovement.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: String,
@@ -29,8 +46,8 @@ function registerGameRulesSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.EXPERIENCE_RATE, {
-  //   name: 'DND35E.Settings.ExperienceRate.Name',
-  //   hint: 'DND35E.Settings.ExperienceRate.Hint',
+  //   name: 'dnd35e.SETTINGS.ExperienceRate.Name',
+  //   hint: 'dnd35e.SETTINGS.ExperienceRate.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: String,
@@ -47,8 +64,8 @@ function registerGameRulesSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.DISABLE_EXPERIENCE_TRACKING, {
-  //   name: 'DND35E.Settings.DisableExperienceTracking.Name',
-  //   hint: 'DND35E.Settings.DisableExperienceTracking.Hint',
+  //   name: 'dnd35e.SETTINGS.DisableExperienceTracking.Name',
+  //   hint: 'dnd35e.SETTINGS.DisableExperienceTracking.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: Boolean,
@@ -56,8 +73,8 @@ function registerGameRulesSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.USE_FRACTIONAL_BASE_BONUSES, {
-  //   name: 'DND35E.Settings.FractionalBaseBonuses.Name',
-  //   hint: 'DND35E.Settings.FractionalBaseBonuses.Hint',
+  //   name: 'dnd35e.SETTINGS.FractionalBaseBonuses.Name',
+  //   hint: 'dnd35e.SETTINGS.FractionalBaseBonuses.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: Boolean,
@@ -71,8 +88,8 @@ function registerGameRulesSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.ALLOW_BACKGROUND_SKILLS, {
-  //   name: 'DND35E.Settings.BackgroundSkills.Name',
-  //   hint: 'DND35E.Settings.BackgroundSkills.Hint',
+  //   name: 'dnd35e.SETTINGS.BackgroundSkills.Name',
+  //   hint: 'dnd35e.SETTINGS.BackgroundSkills.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: Boolean,
@@ -88,8 +105,8 @@ function registerGameRulesSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.PSIONICS_ARE_DIFFERENT, {
-  //   name: 'DND35E.Settings.PsionicsAreDifferent.Name',
-  //   hint: 'DND35E.Settings.PsionicsAreDifferent.Hint',
+  //   name: 'dnd35e.SETTINGS.PsionicsAreDifferent.Name',
+  //   hint: 'dnd35e.SETTINGS.PsionicsAreDifferent.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: Boolean,
@@ -97,8 +114,8 @@ function registerGameRulesSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.MEASURE_STYLE, {
-  //   name: 'DND35E.Settings.MeasureStyle.Name',
-  //   hint: 'DND35E.Settings.MeasureStyle.Hint',
+  //   name: 'dnd35e.SETTINGS.MeasureStyle.Name',
+  //   hint: 'dnd35e.SETTINGS.MeasureStyle.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: Boolean,
@@ -106,8 +123,8 @@ function registerGameRulesSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.LOW_LIGHT_VISION_MODE, {
-  //   name: 'DND35E.Settings.LowLightVisionMode.Name',
-  //   hint: 'DND35E.Settings.LowLightVisionMode.Hint',
+  //   name: 'dnd35e.SETTINGS.LowLightVisionMode.Name',
+  //   hint: 'dnd35e.SETTINGS.LowLightVisionMode.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: Boolean,
@@ -115,8 +132,8 @@ function registerGameRulesSettings(): void {
   // });
 
   // game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.USE_COMBAT_CHARACTER_SHEET, {
-  //   name: 'DND35E.Settings.UseCombatCharacterSheet.Name',
-  //   hint: 'DND35E.Settings.UseCombatCharacterSheet.Hint',
+  //   name: 'dnd35e.SETTINGS.UseCombatCharacterSheet.Name',
+  //   hint: 'dnd35e.SETTINGS.UseCombatCharacterSheet.Hint',
   //   scope: 'world',
   //   config: false,
   //   type: Boolean,
@@ -127,8 +144,8 @@ function registerGameRulesSettings(): void {
   // });
 
   game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.DAMAGE_REDUCTION_TYPES, {
-    name: 'DND35E.Settings.DamageReductionTypes.Name',
-    hint: 'DND35E.Settings.DamageReductionTypes.Hint',
+    name: 'dnd35e.SETTINGS.DamageReductionTypes.Name',
+    hint: 'dnd35e.SETTINGS.DamageReductionTypes.Hint',
     scope: 'world',
     config: false,
     type: Object,

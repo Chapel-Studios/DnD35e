@@ -4,15 +4,16 @@ import type CompendiumDirectory from '@client/applications/sidebar/tabs/compendi
 import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type Config from '@client/config.mjs';
-import { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
-import { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
-import { ItemType } from '@items/itemTypes.mjs';
+import { ActiveEffectDnd35e } from '@documents/activeEffects/index.mjs';
+import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/index.mjs';
+import type { ItemSheetStore } from '@items/baseItem/index.mjs';
+import { ItemDnd35e } from '@items/baseItem/index.mjs';
+import type { ItemType } from '@items/itemTypes.mjs';
 
-import { CanvasDnd35e } from './canvas/CanvasDnd35e.mjs';
-import { RegionDocumentDnd35e } from './scene/region-document/RegionDocumentDnd35e.mjs';
-import { SceneDnd35e } from './scene/SceneDnd35e.mjs';
-import { TokenDocumentDnd35e } from './scene/token-document/index.mjs';
+import type { CanvasDnd35e } from './canvas/CanvasDnd35e.mjs';
+import { RegionDocumentDnd35e } from './documents/scene/regionDocument/RegionDocumentDnd35e.mjs';
+import { SceneDnd35e } from './documents/scene/SceneDnd35e.mjs';
+import type { TokenDocumentDnd35e } from './documents/scene/tokenDocument/index.mjs';
 
 type GameDnd35e = Game<
   ActorDnd35e<null>,
@@ -62,10 +63,17 @@ declare global {
     dnd35e: {
       VERSION: string;
       item: {
+        enums: {
+          sizes: Record<string, { label: string }>;
+          weaponTypes: Record<string, { label: string }>;
+        };
         documentClasses: Record<string, new (...args: any[]) => ItemDnd35e>;
       },
       activeEffect: {
-        documentClasses: Record<string, new (...args: any[]) => DnD35eActiveEffect>;
+        documentClasses: Record<string, new (...args: any[]) => ActiveEffectDnd35e>;
+      },
+      gameRules: {
+        damageReductionTypes: Record<string, { label: string }>;
       },
       actor: {
         documentClasses: Record<string, new (...args: any[]) => ActorDnd35e>;
@@ -82,5 +90,13 @@ declare global {
     export import fd = foundry.documents;
     export import fh = foundry.helpers;
     export import fu = foundry.utils;
+  }
+}
+
+/** Augment Foundry's change type registry with system-registered change types. */
+declare module '@common/constants.mjs' {
+  interface SystemActiveEffectChangeTypes {
+    FAMILIAR: 'familiar';
+    MASK: 'mask';
   }
 }

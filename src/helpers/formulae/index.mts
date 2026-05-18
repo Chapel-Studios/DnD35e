@@ -33,11 +33,11 @@ import {
   getFamiliarBuilder,
   registerFamiliarSchema,
 } from './registry.mjs';
-import { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema } from './schemaWalker.mjs';
+import { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema, normalizeLabel } from './schemaWalker.mjs';
 import type {
   AspectGroup,
   AutocompleteOption,
-  EditorViewMode,
+  DisplayMode,
   FamiliarContext,
   FamiliarSchema,
   FieldAspect,
@@ -49,13 +49,17 @@ import type {
   FormulaToken,
   FormulaVariable,
   ValidationError,
+  ViewMode,
 } from './types.mjs';
-import { IDENTIFIED, isFieldAspect, UNIDENTIFIED } from './types.mjs';
+import { EDIT, isFieldAspect, PLAY, TRUE } from './types.mjs';
 import type { FamiliarKeyDownResult, UseFamiliarOptions } from './useFamiliar.mjs';
 import { measureTextOffset, useFamiliar } from './useFamiliar.mjs';
+import type { FamiliarOverlayInputApi, OverlayAutocompleteArgs } from './useFamiliarOverlayInput.mjs';
+import { useFamiliarOverlayInput } from './useFamiliarOverlayInput.mjs';
 import type { AspectLookupResult, GetAutocompleteOptionsConfig } from './utils.mjs';
 import {
   buildDocumentDataMap,
+  canonicalizeFormula,
   ensureNameFormula,
   extractVariableAtPosition,
   extractVariables,
@@ -70,9 +74,11 @@ import {
   getVariableTokenIndex,
   getVariableTokens,
   insertAtCursor,
+  localizeFormula,
   mergeAspectGroups,
   nameToFormulaData,
   parseFormula,
+  renderFormulaDisplayHTML,
   renderFormulaHTML,
   resolveFormula,
   resolveFormulaField,
@@ -84,7 +90,9 @@ export {
   buildDocumentDataMap,
   buildDocumentFamiliar,
   buildMergedFamiliarContext,
+  canonicalizeFormula,
   DOCUMENT_LEVEL_ASPECTS,
+  EDIT,
   ensureNameFormula,
   extractVariableAtPosition,
   extractVariables,
@@ -105,19 +113,23 @@ export {
   getTokenAtPosition,
   getVariableTokenIndex,
   getVariableTokens,
-  IDENTIFIED,
   insertAtCursor,
   isFieldAspect,
+  localizeFormula,
   measureTextOffset,
   mergeAspectGroups,
   nameToFormulaData,
+  normalizeLabel,
   parseFormula,
+  PLAY,
   registerFamiliarSchema,
+  renderFormulaDisplayHTML,
   renderFormulaHTML,
   resolveFormula,
   resolveFormulaField,
-  UNIDENTIFIED,
+  TRUE,
   useFamiliar,
+  useFamiliarOverlayInput,
   validateFormula,
 };
 
@@ -126,10 +138,11 @@ export type {
   AspectLookupResult,
   AutocompleteOption,
   ContextDocumentType,
+  DisplayMode,
   DocumentContext,
-  EditorViewMode,
   FamiliarContext,
   FamiliarKeyDownResult,
+  FamiliarOverlayInputApi,
   FamiliarSchema,
   FieldAspect,
   FormulaContextBinding,
@@ -143,7 +156,9 @@ export type {
   FormulaVariable,
   GetAutocompleteOptionsConfig,
   NonNullDocumentContext,
+  OverlayAutocompleteArgs,
   TargetContexts,
   UseFamiliarOptions,
   ValidationError,
+  ViewMode,
 };

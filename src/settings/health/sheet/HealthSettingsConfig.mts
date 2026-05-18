@@ -2,6 +2,7 @@
  * Vue-based Health Settings Configuration Dialog
  */
 
+import { SETTINGS_CONFIG_CLASS, VUE_APP_CLASS } from '@constants/cssClasses.mjs';
 import type { VueSettingsRenderOptions } from '@vueApps/index.mjs';
 import { useVueSettingsMixin } from '@vueApps/index.mjs';
 import type { Component } from 'vue';
@@ -28,13 +29,13 @@ class HealthSettingsConfig extends VueSettingsBase {
     {
       id: 'dnd35e-health-config',
       tag: 'div',
-      classes: ['dnd35e', 'vueApp', 'settings-config'],
+      classes: [SYSTEM_ID, VUE_APP_CLASS, SETTINGS_CONFIG_CLASS],
       position: {
         width: 560,
         height: 500,
       },
       window: {
-        title: 'DND35E.Settings.Health.Title',
+        title: 'dnd35e.SETTINGS.Health.Title',
         icon: 'fas fa-heart-pulse',
         resizable: true,
       },
@@ -86,11 +87,11 @@ class HealthSettingsConfig extends VueSettingsBase {
     try {
       await game.settings.set(SYSTEM_ID, HEALTH_KEY, data);
 
-      ui.notifications.info(game.i18n.localize('DND35E.Settings.ChangesSaved'));
+      ui.notifications.info(game.i18n.localize('dnd35e.SETTINGS.ChangesSaved'));
       await this.close();
     } catch (error) {
       console.error('Failed to save health settings:', error);
-      ui.notifications.error(game.i18n.localize('DND35E.Settings.SaveError'));
+      ui.notifications.error(game.i18n.localize('dnd35e.SETTINGS.SaveError'));
     }
   }
 
@@ -99,10 +100,10 @@ class HealthSettingsConfig extends VueSettingsBase {
    */
   async #onReset(): Promise<void> {
     const confirmed = await foundry.applications.api.DialogV2.confirm({
-      window: { title: game.i18n.localize('DND35E.Settings.ResetConfirm.Title') },
-      content: `<p>${game.i18n.localize('DND35E.Settings.ResetConfirm.Content')}</p>`,
+      window: { title: game.i18n.localize('dnd35e.SETTINGS.ResetConfirm.Title') },
+      content: `<p>${game.i18n.localize('dnd35e.SETTINGS.ResetConfirm.Content')}</p>`,
       yes: {
-        label: game.i18n.localize('DND35E.Settings.Reset'),
+        label: game.i18n.localize('dnd35e.SETTINGS.Reset'),
         icon: 'fas fa-undo',
       },
       no: {

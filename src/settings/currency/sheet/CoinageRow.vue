@@ -79,7 +79,7 @@
         type="button"
         class="status-btn"
         :class="{ enabled: state.enabled }"
-        :title="state.enabled ? localize('DND35E.Disable') : localize('DND35E.Enable')"
+        :title="state.enabled ? localize('dnd35e.COMMON.Disable') : localize('dnd35e.COMMON.Enable')"
         @click="toggleEnabled"
       >
         <i :class="state.enabled ? 'fas fa-check-circle' : 'fas fa-times-circle'" />
@@ -89,7 +89,7 @@
         type="button" 
         class="delete-btn" 
         @click="removeCoinage" 
-        :title="localize('DND35E.Delete')"
+        :title="localize('dnd35e.COMMON.Delete')"
       >
         <i class="fas fa-trash" />
       </button>
@@ -111,8 +111,8 @@
         class="rollup-btn"
         :class="{ excluded: state.excludeFromRollUp }"
         :title="state.excludeFromRollUp
-          ? localize('DND35E.Settings.CurrencyConfig.RollUpExcluded')
-          : localize('DND35E.Settings.CurrencyConfig.RollUpIncluded')"
+          ? localize('dnd35e.SETTINGS.CurrencyConfig.RollUpExcluded')
+          : localize('dnd35e.SETTINGS.CurrencyConfig.RollUpIncluded')"
         @click="toggleExcludeFromRollUp"
       >
         <i :class="state.excludeFromRollUp ? 'fas fa-compress-arrows-alt' : 'fas fa-compress-arrows-alt'" />
@@ -123,11 +123,13 @@
 
 <script setup lang="ts">
   import { stripSpecialCharacters } from '@helpers/stringHelpers.mjs';
-  import { SettingsStore, SettingsStoreSymbol } from '@settings/core/sheet/settingsStore.mjs';
+  import type { SettingsStore } from '@settings/shared/sheet/settingsStore.mjs';
+  import { SettingsStoreSymbol } from '@settings/shared/sheet/settingsStore.mjs';
   import { computed, inject, reactive, ref, watch } from 'vue';
 
-  import { CoinageDefinition, CoinageVisibility, coinageVisibilityEveryone, coinageVisibilityGmOnly, coinageVisibilityGmSelect } from '../_types.mjs';
   import { USER_COIN_PREFIX } from '../constants.mjs';
+  import type { CoinageDefinition, CoinageVisibility } from '../types.mjs';
+  import { coinageVisibilityEveryone, coinageVisibilityGmOnly, coinageVisibilityGmSelect } from '../types.mjs';
   import { isAutoId } from './idFieldUtils.mjs';
 
   const {
@@ -243,9 +245,9 @@
 
   const visibilityTooltip = computed(() => {
     switch (state.visibility) {
-    case coinageVisibilityEveryone: return localize('DND35E.Settings.CurrencyConfig.VisibilityEveryone');
-    case coinageVisibilityGmSelect: return localize('DND35E.Settings.CurrencyConfig.VisibilityGmSelect');
-    case coinageVisibilityGmOnly: return localize('DND35E.Settings.CurrencyConfig.VisibilityGmOnly');
+    case coinageVisibilityEveryone: return localize('dnd35e.SETTINGS.CurrencyConfig.VisibilityEveryone');
+    case coinageVisibilityGmSelect: return localize('dnd35e.SETTINGS.CurrencyConfig.VisibilityGmSelect');
+    case coinageVisibilityGmOnly: return localize('dnd35e.SETTINGS.CurrencyConfig.VisibilityGmOnly');
     default: return '';
     }
   });

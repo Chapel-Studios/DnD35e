@@ -17,6 +17,7 @@ export const COMBAT_KEYS = {
   AUTOMATE_FLANKING_THREAT: 'automate-flanking-threat',
   THREATENED_SHOW_SQUARES: 'threatened-show-squares',
   RANDOMIZE_HP: 'randomizeHp',
+  ENFORCE_SINGLE_MATERIAL: 'enforceSingleMaterial',
 } as const;
 
 /**

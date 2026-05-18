@@ -1,93 +1,180 @@
 {
-    "D35E.Item": "Item",
-    "TYPES.Item.weapon": "Weapon",
-    "TYPES.Item.equipment": "Equipment",
-    "TYPES.Item.loot": "Loot",
-    "TYPES.Item.consumable": "Consumable",
-    "TYPES.Item.class": "Class",
-    "TYPES.Item.buff": "Buff",
-    "TYPES.Item.spell": "Spell",
-    "TYPES.Item.feat": "Feat",
-    "TYPES.Item.attack": "Attack",
-    "TYPES.Item.material": "Material",
-    
-    "D35E.Identified": "Identified",
-    "D35E.Unidentified": "Unidentified",
-    "D35E.UnidentifiedName": "Unidentified Name",
-    "D35E.IdentifiedName": "Identified Name",
-    "D35E.UnidentifiedDescription": "Unidentified Description",
-    "D35E.UnidentifiedValueHint": "Editing unidentified value",
-    "D35E.IdentifiedDescription": "Identified Description",
-    "D35E.ItemName": "Item Name",
-    "D35E.UseNameFromFormula": "Use name from formula",
-    "D35E.UseUnidentifiedNameFromFormula": "Use unidentified name from formula",
-    "D35E.CustomNameFormula": "Custom name formula",
-    "D35E.UsesNameFromFormula": "This Item will have a name updated based on a special formula. You can tweak it and see how it is defined by unlocking custom attributes panel.",
-    "D35E.IsIdentifiable": "Is this item identifiable?",
-    "D35E.ShowingIdentified": "Showing Identified",
-    "D35E.ShowingUnidentified": "Showing Unidentified",
-    "D35E.ToggleToIdentified": "Toggle to Identified View",
-    "D35E.ToggleToUnidentified": "Toggle to Unidentified View",
-    
-    "D35E.Hardness": "Hardness",
-    "D35e.HpPerInch": "HP per inch",
-    "D35E.MagicEquivalent": "Magic Enhancement Equivalent",
-    "D35E.MagicEquivalentDescription": "Material Magic Equivalent is used then determining minimum Enhancement bonus to weapon if a character has a Damage Reduction set to X/Material",
-    "D35E.MaterialAlchemicalSilverEquivalent": "Alchemical Silver Equivalent",
-    "D35E.MaterialAdamantineEquivalent": "Adamantine Equivalent",
-    "D35E.MaterialColdIronEquivalent": "Cold Iron Equivalent",
-
-    "D35E.IsIdentifiableHint": "Whether this item can be identified or unidentified.",
-    "D35E.IsIdentified": "Is Identified",
-    "D35E.IsIdentifiedHint": "Whether this item is currently identified.",
-
-    "D35E.OriginId": "Origin ID",
-    "D35E.OriginIdHint": "The ID of the compendium source this item originated from.",
-    "D35E.OriginVersion": "Origin Version",
-    "D35E.OriginVersionHint": "The system version at the time this item was imported.",
-    "D35E.OriginPack": "Origin Pack",
-    "D35E.OriginPackHint": "The compendium pack this item was imported from.",
-
-    "D35E.IsPsionic": "Is Psionic",
-    "D35E.IsPsionicHint": "Whether this item is psionic in nature.",
-    "D35E.IsEpic": "Is Epic",
-    "D35E.IsEpicHint": "Whether this item is of epic level.",
-
-    "D35E.CurrentHp": "Current HP",
-    "D35E.CurrentHpHint": "The current hit points of this item.",
-    "D35E.MaxHp": "Max HP",
-    "D35E.MaxHpHint": "The maximum hit points of this item.",
-    "D35E.HardnessHint": "How resistant this item is to damage.",
-    "D35E.Quantity": "Quantity",
-    "D35E.QuantityHint": "The number of this item in the stack.",
-    "D35E.Weight": "Weight",
-    "D35E.WeightHint": "The weight of a single unit of this item, in pounds.",
-    "D35E.IsWeightlessInContainer": "Weightless in Container",
-    "D35E.IsWeightlessInContainerHint": "If checked, this item does not contribute weight when stored in a container.",
-    "D35E.IsWeightlessWhenCarried": "Weightless When Carried",
-    "D35E.IsWeightlessWhenCarriedHint": "If checked, this item does not contribute weight when carried.",
-    "D35E.IsCarried": "Is Carried",
-    "D35E.IsCarriedHint": "Whether this item is currently being carried by the owner.",
-    "D35E.Price": "Price",
-    "D35E.PriceHint": "The purchase price of this item.",
-    "D35E.ResalePrice": "Resale Price",
-    "D35E.ResalePriceHint": "The price this item can be sold for.",
-    "D35E.BrokenResalePrice": "Broken Resale Price",
-    "D35E.BrokenResalePriceHint": "The price this item can be sold for when broken.",
-    "D35E.IsBroken": "Is Broken",
-    "D35E.IsBrokenHint": "Whether this item is currently broken.",
-    "D35E.ContainerId": "Container ID",
-    "D35E.ContainerIdHint": "The ID of the container this item is stored in, if any.",
-
-    "D35E.IsEquipped": "Is Equipped",
-    "D35E.IsEquippedHint": "Whether this item is currently equipped.",
-    "D35E.IsMelded": "Is Melded",
-    "D35E.IsMeldedHint": "Whether this item is currently melded into the body.",
-    "D35E.IsWeightlessWhenEquipped": "Weightless When Equipped",
-    "D35E.IsWeightlessWhenEquippedHint": "If checked, this item does not contribute weight when equipped.",
-
-    "D35E.IsCursed": "Is Cursed",
-    "D35E.IsCursedHint": "Whether this item is cursed.",
-    "D35E.IsCurseActive": "Is Curse Active",
-    "D35E.IsCurseActiveHint": "Whether the curse on this item is currently active."
+  "TYPES": {
+    "Item": {
+      "weapon": "Weapon",
+      "equipment": "Equipment",
+      "loot": "Loot",
+      "consumable": "Consumable",
+      "class": "Class",
+      "buff": "Buff",
+      "spell": "Spell",
+      "feat": "Feat",
+      "attack": "Attack",
+      "material": "Material"
+    }
+  },
+  "dnd35e": {
+    "ITEM": {
+      "FIELDS": {
+        "origin": {
+          "label": "Origin",
+          "originId": {
+            "label": "Origin ID",
+            "hint": "The ID of the compendium source this item originated from."
+          },
+          "originVersion": {
+            "label": "Origin Version",
+            "hint": "The system version at the time this item was imported."
+          },
+          "originPack": {
+            "label": "Origin Pack",
+            "hint": "The compendium pack this item was imported from."
+          }
+        },
+        "isPsionic": {
+          "label": "Is Psionic",
+          "hint": "Whether this item is psionic in nature."
+        },
+        "isEpic": {
+          "label": "Is Epic",
+          "hint": "Whether this item is of epic level."
+        }
+      },
+      "Identified": "Identified",
+      "Unidentified": "Unidentified",
+      "UnidentifiedName": "Unidentified Name",
+      "IdentifiedName": "Identified Name",
+      "UnidentifiedDescription": "Unidentified Description",
+      "UnidentifiedValueHint": "Editing unidentified value",
+      "IdentifiedDescription": "Identified Description",
+      "ItemName": "Item Name",
+      "UseNameFromFormula": "Use name from formula",
+      "UseUnidentifiedNameFromFormula": "Use unidentified name from formula",
+      "CustomNameFormula": "Custom name formula",
+      "UsesNameFromFormula": "This Item will have a name updated based on a special formula. You can tweak it and see how it is defined by unlocking custom attributes panel.",
+      "ShowingIdentified": "Showing Identified",
+      "ShowingUnidentified": "Showing Unidentified",
+      "ToggleToIdentified": "Toggle to Identified View",
+      "ToggleToUnidentified": "Toggle to Unidentified View",
+      "Hardness": "Hardness",
+      "BonusHp": "Bonus HP",
+      "MagicEquivalent": "Magic Enhancement Equivalent",
+      "MagicEquivalentDescription": "Material Magic Equivalent is used then determining minimum Enhancement bonus to weapon if a character has a Damage Reduction set to X/Material",
+      "MaterialAlchemicalSilverEquivalent": "Alchemical Silver Equivalent",
+      "MaterialAdamantineEquivalent": "Adamantine Equivalent",
+      "MaterialColdIronEquivalent": "Cold Iron Equivalent",
+      "IsCursed": "Is Cursed",
+      "IsCursedHint": "Whether this item is cursed.",
+      "IsCurseActive": "Is Curse Active",
+      "IsCurseActiveHint": "Whether the curse on this item is currently active."
+    },
+    "IDENTIFIABLE": {
+      "Identified": "Identified",
+      "Unidentified": "Unidentified",
+      "UnidentifiedValueHint": "Editing unidentified value",
+      "MaskedBadge": "Masked",
+      "MaskedValueHint": "Masked value: {value}",
+      "FIELDS": {
+      }
+    },
+    "PHYSICAL_ITEM": {
+      "FIELDS": {
+        "hp": {
+          "label": "Hit Points",
+          "current": {
+            "label": "Current HP",
+            "hint": "The current hit points of this item."
+          },
+          "max": {
+            "label": "Max HP",
+            "hint": "The maximum hit points of this item."
+          }
+        },
+        "hardness": {
+          "label": "Hardness",
+          "hint": "How resistant this item is to damage."
+        },
+        "quantity": {
+          "label": "Quantity",
+          "hint": "The number of this item in the stack.",
+          "IsInfinite": "Is Infinite"
+        },
+        "weight": {
+          "label": "Weight",
+          "hint": "The weight of a single unit of this item, in pounds."
+        },
+        "isCarried": {
+          "label": "Is Carried",
+          "hint": "Whether this item is currently being carried by the owner."
+        },
+        "size": {
+          "label": "Size",
+          "hint": "The size of this item."
+        },
+        "price": {
+          "label": "Price",
+          "hint": "The purchase price of this item."
+        },
+        "isBroken": {
+          "label": "Is Broken",
+          "hint": "Whether this item is currently broken."
+        },
+        "containerId": {
+          "label": "Container ID",
+          "hint": "The ID of the container this item is stored in, if any."
+        }
+      }
+    },
+    "EQUIPPABLE": {
+      "DesignedForSize": "Designed For Size",
+      "FIELDS": {
+        "isEquipped": {
+          "label": "Is Equipped",
+          "hint": "Whether this item is currently equipped."
+        },
+        "isMelded": {
+          "label": "Is Melded",
+          "hint": "Whether this item is currently melded into the body."
+        },
+        "designedForSize": {
+          "label": "Designed For Size",
+          "hint": "The size category this item is designed for. This may affect the item's stats and which characters can equip it."
+        },
+        "isWeightlessWhenEquipped": {
+          "label": "Weightless When Equipped",
+          "hint": "If checked, this item does not contribute weight when equipped."
+        },
+        "equippedSlotIds": {
+          "label": "Equipped Slots",
+          "hint": "The equipment slots this item occupies when equipped."
+        }
+      },
+      "EquipSlot": {
+        "head": "Head",
+        "face": "Face",
+        "neck": "Neck",
+        "shoulders": "Shoulders",
+        "chest": "Chest",
+        "torso": "Torso",
+        "belt": "Belt",
+        "wrists": "Wrists",
+        "hands": "Hands",
+        "ring-left": "Ring (Left)",
+        "ring-right": "Ring (Right)",
+        "feet": "Feet"
+      }
+    },
+    "SIZE": {
+      "Size": "Size",
+      "fine": "Fine",
+      "diminutive": "Diminutive",
+      "tiny": "Tiny",
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large",
+      "huge": "Huge",
+      "gargantuan": "Gargantuan",
+      "colossal": "Colossal"
+    }
+  }
 }
