@@ -525,19 +525,19 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G5i.11 — `npm run build` clean; commit.
 
 ### Group 6: Directory move `entities/` → `documents/`
-- [ ] G6.1 — Edit `tsconfig.json`: add `"@documents/*": ["./src/documents/*"]`; retarget `@items/*`, `@actors/*`, `@effects/*` to `./src/documents/...`; remove `@entities/*` and `@ec/*`
-- [ ] G6.2 — `git mv src/entities src/documents`
-- [ ] G6.3 — `git mv src/documents/components/CoreMixin src/documents/document`
-- [ ] G6.4 — `git mv src/documents/components/Identifiable src/documents/identifiable`
-- [ ] G6.5 — Remove the now-empty `src/documents/components/` directory
-- [ ] G6.6 — Workspace replace: `@ec/CoreMixin/` → `@documents/document/` (string replace)
-- [ ] G6.7 — Workspace replace: `@ec/Identifiable/` → `@documents/identifiable/`
-- [ ] G6.8 — Workspace replace: `@entities/` → `@documents/`
-- [ ] G6.9 — Workspace replace in non-code files (docs, comments) of `src/entities/` → `src/documents/` and `entities/components/` → `documents/...` paths
-- [ ] G6.10 — `grep_search` `@ec/` workspace-wide: zero matches expected (except in this planning doc and git history)
-- [ ] G6.11 — `grep_search` `@entities/` workspace-wide: zero matches expected (same exceptions)
-- [ ] G6.12 — Check `vitest.config.ts`, `playwright.config.ts`, `eslint.config.js`, `package.json` scripts for hardcoded paths
-- [ ] G6.13 — `npm run build` clean; commit
+- [x] G6.1 — Edit `tsconfig.json`: add `"@documents/*": ["./src/documents/*"]`; retarget `@items/*`, `@actors/*`, `@effects/*` to `./src/documents/...`; remove `@entities/*` and `@ec/*`
+- [x] G6.2 — `git mv src/entities src/documents`
+- [x] G6.3 — `git mv src/documents/components/CoreMixin src/documents/document`
+- [x] G6.4 — `git mv src/documents/components/Identifiable src/documents/identifiable`
+- [x] G6.5 — Remove the now-empty `src/documents/components/` directory
+- [x] G6.6 — Workspace replace: `@ec/CoreMixin/` → `@documents/document/` (string replace)
+- [x] G6.7 — Workspace replace: `@ec/Identifiable/` → `@documents/identifiable/`
+- [x] G6.8 — Workspace replace: `@entities/` → `@documents/`
+- [x] G6.9 — Workspace replace in non-code files (docs, comments) of `src/entities/` → `src/documents/` and `entities/components/` → `documents/...` paths
+- [x] G6.10 — `grep_search` `@ec/` workspace-wide: zero matches expected (except in this planning doc and git history)
+- [x] G6.11 — `grep_search` `@entities/` workspace-wide: zero matches expected (same exceptions)
+- [x] G6.12 — Check `vitest.config.ts`, `playwright.config.ts`, `eslint.config.js`, `package.json` scripts for hardcoded paths
+- [x] G6.13 — `npm run build` clean; commit
 
 ### Group 6b: Move `src/scene/` into `src/documents/scene/`
 - [ ] G6b.1 — Edit `tsconfig.json`: retarget `@scene/*` from `./src/scene/*` to `./src/documents/scene/*`
