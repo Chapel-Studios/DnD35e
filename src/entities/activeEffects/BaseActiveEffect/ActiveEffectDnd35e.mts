@@ -6,7 +6,7 @@ import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@ef
 import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/data/constants.mjs';
 import type { EffectType } from '@effects/effectTypes.mjs';
 import { GENERAL_EFFECT_TYPE } from '@effects/effectTypes.mjs';
-import { LogHelper } from '@helpers/logHelper.mjs';
+import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
 

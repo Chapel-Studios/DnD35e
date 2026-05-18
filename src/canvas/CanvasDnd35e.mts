@@ -7,13 +7,13 @@ import type { SceneDnd35e } from '@scene/SceneDnd35e.mjs';
 import type { TokenDocumentDnd35e } from '@scene/token-document/index.mjs';
 
 import type { RegionDnd35e } from './RegionDnd35e.mjs';
-import type { tokenDnd35e } from './token/tokenDnd35e.mjs';
+import type { TokenDnd35e } from './token/TokenDnd35e.mjs';
 
 export type CanvasDnd35e = foundry.canvas.Canvas<
     SceneDnd35e,
     AmbientLight<documents.AmbientLightDocument<SceneDnd35e>>,
     MeasuredTemplate<MeasuredTemplateDocument<SceneDnd35e>>,
-    tokenDnd35e<TokenDocumentDnd35e<SceneDnd35e>>,
+    TokenDnd35e<TokenDocumentDnd35e<SceneDnd35e>>,
     EffectsCanvasGroup,
     RegionDnd35e<RegionDocumentDnd35e<SceneDnd35e>>
 >;

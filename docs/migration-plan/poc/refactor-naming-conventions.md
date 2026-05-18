@@ -455,33 +455,33 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G4d.4 — `npm run build` clean; commit
 
 ### Group 5a: `PhysicalItemDnd35e.mts` → `PhysicalItem.mts`
-- [ ] G5a.1 — Rename file (class already named `PhysicalItem`)
-- [ ] G5a.2 — Update sibling `index.mts`
-- [ ] G5a.3 — `grep_search` for `PhysicalItemDnd35e` workspace-wide
-- [ ] G5a.4 — `npm run build` clean; commit
+- [x] G5a.1 — Rename file (class already named `PhysicalItem`)
+- [x] G5a.2 — Update sibling `index.mts`
+- [x] G5a.3 — `grep_search` for `PhysicalItemDnd35e` workspace-wide
+- [x] G5a.4 — `npm run build` clean; commit
 
 ### Group 5b: `IdentifiableItem.mts` → `IdentifiableDocument.mts`
-- [ ] G5b.1 — Rename file
-- [ ] G5b.2 — Update sibling `index.mts` import path
-- [ ] G5b.3 — `grep_search` for `IdentifiableItem` (file path only — class is `IdentifiableDocument`)
-- [ ] G5b.4 — `npm run build` clean; commit
+- [x] G5b.1 — Rename file
+- [x] G5b.2 — Update sibling `index.mts` import path
+- [x] G5b.3 — `grep_search` for `IdentifiableItem` (file path only — class is `IdentifiableDocument`)
+- [x] G5b.4 — `npm run build` clean; commit
 
 ### Group 5c: `applyIdentifiableSchema.mts` → `IdentifiableSchemaMixin.mts`
-- [ ] G5c.1 — Rename file
-- [ ] G5c.2 — Update sibling `index.mts`
-- [ ] G5c.3 — `npm run build` clean; commit
+- [x] G5c.1 — Rename file
+- [x] G5c.2 — Update sibling `index.mts`
+- [x] G5c.3 — `npm run build` clean; commit
 
 ### Group 5d: `BaseItemSheet.mts` → `ItemSheetDnd35e.mts`
-- [ ] G5d.1 — Rename file (class already named `ItemSheetDnd35e`)
-- [ ] G5d.2 — Update sibling `index.mts`
-- [ ] G5d.3 — `grep_search` for `BaseItemSheet`
-- [ ] G5d.4 — `npm run build` clean; commit
+- [x] G5d.1 — Rename file (class already named `ItemSheetDnd35e`)
+- [x] G5d.2 — Update sibling `index.mts`
+- [x] G5d.3 — `grep_search` for `BaseItemSheet`
+- [x] G5d.4 — `npm run build` clean; commit
 
 ### Group 5e: Non-`entities/` casing & file-name fixes
-- [ ] G5e.1 — Rename file `src/canvas/token/tokenDnd35e.mts` → `TokenDnd35e.mts` (two-step on Windows)
-- [ ] G5e.2 — Rename class `tokenDnd35e` → `TokenDnd35e`; update sibling `index.mts`; workspace `grep_search` for `tokenDnd35e` lowercase
-- [ ] G5e.3 — Rename file `src/helpers/logHelper.mts` → `LogHelper.mts` (two-step on Windows); update sibling `index.mts` and all importers
-- [ ] G5e.4 — `npm run build` clean; commit
+- [x] G5e.1 — Rename file `src/canvas/token/tokenDnd35e.mts` → `TokenDnd35e.mts` (two-step on Windows)
+- [x] G5e.2 — Rename class `tokenDnd35e` → `TokenDnd35e`; update sibling `index.mts`; workspace `grep_search` for `tokenDnd35e` lowercase
+- [x] G5e.3 — Rename file `src/helpers/logHelper.mts` → `LogHelper.mts` (two-step on Windows); update sibling `index.mts` and all importers
+- [x] G5e.4 — `npm run build` clean; commit
 
 ### Group 5f: Settings structural cleanup
 - [ ] G5f.1 — Move orchestrator logic from `src/settings/core/registration.mts` into `src/settings/index.mts` (import + call each category's `registerXxxSettings()`)
@@ -633,7 +633,7 @@ The refactor ships as a sequence of focused PRs, **not** one mega-PR. Each PR mu
 | 3  | G3a–e | Drop `Base` marker from SystemModel/SystemData | Mechanical sweep; five same-pattern renames bundled |
 | 4  | G4a + G4b | `Dnd35eDocument` → `DocumentDnd35e` + system model | Architectural rename of cross-document base |
 | 5  | G4c + G4d | `Dnd35eActiveEffect` + Config rename | Architectural rename of AE base |
-| 6  | G5e | `tokenDnd35e` + `logHelper` casing fixes | Mechanical sweep; small |
+| 6  | G5a–G5e | Misc file renames (PhysicalItem, IdentifiableDocument, IdentifiableSchemaMixin, ItemSheetDnd35e) + Token/LogHelper casing | Mechanical sweep; small |
 | 7  | G5f | Settings cleanup (`core/` flattening + aggregator deletions) | Architectural; reviewer needs settings-domain context |
 | 8  | G5g + G5h + G5i | Cross-tree relocations (`fields/` hoist, `_types.mts`→`types.mts`, method rehoming) | Mechanical sweep |
 | 9  | G6 | `entities/` → `documents/` directory move | Largest PR; the centerpiece move |

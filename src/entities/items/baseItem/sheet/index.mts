@@ -1,8 +1,8 @@
-import { ItemSheetDnd35e } from './BaseItemSheet.mjs';
-import type { BaseItemSheetRenderContext } from './BaseItemSheet.mts';
 import {
   EffectCategory,
 } from './components/index.mjs';
+import type { BaseItemSheetRenderContext } from './ItemSheetDnd35e.mjs';
+import { ItemSheetDnd35e } from './ItemSheetDnd35e.mjs';
 import type {
   ItemDocumentActions,
   ItemDocumentGetters,
