@@ -26,7 +26,7 @@
   // See Phase 2 §2.5.3 for the design. Blocked on RenderModeStore injection + getEffectsForField filtering.
   import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import { EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
+  import { EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
   import type { Override } from '@helpers/stacking.mjs';
   import { STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
   import { computed, inject } from 'vue';

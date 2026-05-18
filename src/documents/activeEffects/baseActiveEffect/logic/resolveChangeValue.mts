@@ -1,5 +1,5 @@
-import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
-import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/data/constants.mjs';
+import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import { getSchemaField } from '@fields/getSchemaField.mjs';
 import { buildDocumentDataMap, FormulaData } from '@helpers/formulae/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';

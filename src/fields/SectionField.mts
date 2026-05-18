@@ -10,8 +10,8 @@
  * @module
  */
 
-import type { FieldEditability, FieldVisibility } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
-import { everyoneVisibility, normalEditability } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+import type { FieldEditability, FieldVisibility } from '@vc/fields/formGroups/fieldPermissions.mjs';
+import { everyoneVisibility, normalEditability } from '@vc/fields/formGroups/fieldPermissions.mjs';
 
 const { SchemaField } = foundry.data.fields;
 

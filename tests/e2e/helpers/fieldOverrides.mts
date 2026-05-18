@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
-import type { FieldEditability, FieldOverrideKey, FieldVisibility } from '../../../src/vue/components/Fields/FormGroups/fieldPermissions.mjs';
-import { encodeFieldPath, FIELD_OVERRIDES_FLAG } from '../../../src/vue/components/Fields/FormGroups/fieldPermissions.mjs';
+import type { FieldEditability, FieldOverrideKey, FieldVisibility } from '../../../src/vue/components/fields/formGroups/fieldPermissions.mjs';
+import { encodeFieldPath, FIELD_OVERRIDES_FLAG } from '../../../src/vue/components/fields/formGroups/fieldPermissions.mjs';
 
 export type { FieldEditability, FieldOverrideKey, FieldVisibility };
 

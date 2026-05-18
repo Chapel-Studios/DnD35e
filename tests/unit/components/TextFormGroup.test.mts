@@ -12,7 +12,7 @@ vi.mock('@documents/document/sheet/stores/RenderModeStore.mjs', () => ({
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
 }));
 
-import TextFormGroup from '@vc/Fields/FormGroups/TextFormGroup.vue';
+import TextFormGroup from '@vc/fields/formGroups/TextFormGroup.vue';
 
 import { createMockDocumentStore, createMockRenderModeStore, makeGlobalProvide } from './setup';
 

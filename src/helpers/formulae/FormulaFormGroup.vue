@@ -47,8 +47,8 @@
   import { DocumentSheetStoreSymbol } from '@documents/document/sheet/DocumentSheetStore.mjs';
   import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
   import { RenderModeStoreSymbol } from '@documents/document/sheet/stores/RenderModeStore.mjs';
-  import FamiliarOverlayInput from '@vc/Fields/FormGroups/FamiliarOverlayInput.vue';
-  import FormGroup from '@vc/Fields/FormGroups/FormGroup.vue';
+  import FamiliarOverlayInput from '@vc/fields/formGroups/FamiliarOverlayInput.vue';
+  import FormGroup from '@vc/fields/formGroups/FormGroup.vue';
   import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, useSlots, watch } from 'vue';
 
   import type { FormulaData } from './FormulaData.mjs';

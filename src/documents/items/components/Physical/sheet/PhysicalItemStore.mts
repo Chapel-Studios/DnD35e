@@ -12,7 +12,7 @@ import type { DamageReductionTypesConfig } from '@settings/index.mjs';
 import { GAME_RULES_KEYS, SettingsStoreSymbol } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { SettingsStore } from '@settings/shared/sheet/settingsStore.mjs';
-import type { MultiSelectOption } from '@vc/Fields/index.mjs';
+import type { MultiSelectOption } from '@vc/fields/index.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';
 import type { ComputedRef } from 'vue';
 import { computed, inject } from 'vue';

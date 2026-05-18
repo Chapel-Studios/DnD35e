@@ -8,7 +8,7 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { NumberFormGroup } from '@vc/Fields/index.mjs';
+  import { NumberFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   const props = defineProps<{

@@ -5,7 +5,7 @@ import {
   RichTextEditorFormGroup,
   ToggleSwitch,
   UniqueId,
-} from './Fields/index.mjs';
+} from './fields/index.mjs';
 
 export {
   DmControl,

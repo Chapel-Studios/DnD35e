@@ -1,8 +1,8 @@
-import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/data/constants.mjs';
+import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import {
   getEffectContexts,
   resolveActiveEffectChangeValue,
-} from '@effects/BaseActiveEffect/logic/resolveChangeValue.mjs';
+} from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**

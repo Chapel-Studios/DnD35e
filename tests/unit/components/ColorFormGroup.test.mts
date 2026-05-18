@@ -11,7 +11,7 @@ vi.mock('@documents/document/sheet/stores/RenderModeStore.mjs', () => ({
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
 }));
 
-import ColorFormGroup from '@vc/Fields/FormGroups/ColorFormGroup.vue';
+import ColorFormGroup from '@vc/fields/formGroups/ColorFormGroup.vue';
 
 import { createMockDocumentStore, createMockRenderModeStore, makeGlobalProvide } from './setup';
 

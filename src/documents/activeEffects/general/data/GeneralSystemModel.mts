@@ -1,4 +1,4 @@
-import { ActiveEffectSystemModel } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModel.mjs';
+import { ActiveEffectSystemModel } from '@effects/baseActiveEffect/data/ActiveEffectSystemModel.mjs';
 
 import type { GeneralSystemData } from './GeneralSystemData.mjs';
 

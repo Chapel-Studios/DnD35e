@@ -9,8 +9,8 @@
 
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-  import ColorFormGroup from '@vc/Fields/FormGroups/ColorFormGroup.vue';
+  import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/index.mjs';
+  import ColorFormGroup from '@vc/fields/formGroups/ColorFormGroup.vue';
   import { computed, inject } from 'vue';
   
   const store = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;

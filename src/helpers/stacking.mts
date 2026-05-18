@@ -1,4 +1,4 @@
-import type { EffectChangeType } from '@effects/BaseActiveEffect/index.mjs';
+import type { EffectChangeType } from '@effects/baseActiveEffect/index.mjs';
 
 const STACK_RESULT_APPLIED = 'applied' as const;
 const STACK_RESULT_IGNORED = 'ignored' as const;

@@ -1,4 +1,4 @@
-import { ActiveEffectSystemModel } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModel.mjs';
+import { ActiveEffectSystemModel } from '@effects/baseActiveEffect/data/ActiveEffectSystemModel.mjs';
 import { requiredBooleanField } from '@fields/fieldBuilders.mjs';
 
 import type { SecretSystemData } from './SecretSystemData.mjs';

@@ -1,4 +1,4 @@
-import { ActiveEffectDnd35e } from './BaseActiveEffect/ActiveEffectDnd35e.mjs';
+import { ActiveEffectDnd35e } from './baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type {
   EffectTarget,
   EffectType,

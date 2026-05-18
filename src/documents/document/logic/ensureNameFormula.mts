@@ -1,4 +1,4 @@
-import type { ActiveEffectSystemData } from '@effects/BaseActiveEffect/index.mjs';
+import type { ActiveEffectSystemData } from '@effects/baseActiveEffect/index.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import type { ItemSystemData } from '@items/baseItem/index.mjs';
 

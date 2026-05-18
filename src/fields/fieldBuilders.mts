@@ -1,5 +1,5 @@
 import type { FormulaFieldMeta } from '@helpers/formulae/types.mjs';
-import type { FieldEditability, FieldVisibility } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+import type { FieldEditability, FieldVisibility } from '@vc/fields/formGroups/fieldPermissions.mjs';
 
 const {
   StringField,

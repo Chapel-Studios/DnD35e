@@ -18,7 +18,7 @@
   import type { SheetMode } from '@documents/document/index.mjs';
   import { DocumentSheetBody, DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { IsIdentifiedToggle } from '@documents/identifiable/index.mjs';
-  import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
+  import { useActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
   import { useItemSheetStore } from '@items/baseItem/index.mjs';
   import { provide, useSlots } from 'vue';
 

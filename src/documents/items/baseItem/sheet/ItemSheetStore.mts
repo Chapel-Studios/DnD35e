@@ -6,7 +6,7 @@ import type {
   SheetTab,
 } from '@documents/document/index.mjs';
 import { defaultDetailsTab, useDocumentSheetStore } from '@documents/document/index.mjs';
-import { ActiveEffectDnd35e } from '@effects/BaseActiveEffect/ActiveEffectDnd35e.mjs';
+import { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectType } from '@effects/effectTypes.mjs';
 import { EFFECT_TYPES } from '@effects/effectTypes.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';

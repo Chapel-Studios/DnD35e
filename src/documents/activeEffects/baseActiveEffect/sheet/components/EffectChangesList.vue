@@ -116,13 +116,13 @@
   import { BONUS_TYPES } from '@constants/bonusTypes.mjs';
   import type { RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
-  import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
-  import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
-  import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
+  import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+  import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+  import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
   import FormulaFormGroup from '@helpers/formulae/FormulaFormGroup.vue';
   import type { FamiliarSchema } from '@helpers/formulae/types.mts';
-  import AspectPicker from '@vc/Fields/FormGroups/AspectPicker.vue';
-  import FieldControls from '@vc/Fields/FormGroups/FieldControls.vue';
+  import AspectPicker from '@vc/fields/formGroups/AspectPicker.vue';
+  import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
   import { computed, inject } from 'vue';
 
   const props = withDefaults(defineProps<{

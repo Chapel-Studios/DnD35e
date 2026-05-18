@@ -12,8 +12,8 @@
  * @module
  */
 
-import type { FieldEditability, FieldVisibility } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
-import { everyoneVisibility, normalEditability } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+import type { FieldEditability, FieldVisibility } from '@vc/fields/formGroups/fieldPermissions.mjs';
+import { everyoneVisibility, normalEditability } from '@vc/fields/formGroups/fieldPermissions.mjs';
 import { vi } from 'vitest';
 import { computed, ref } from 'vue';
 

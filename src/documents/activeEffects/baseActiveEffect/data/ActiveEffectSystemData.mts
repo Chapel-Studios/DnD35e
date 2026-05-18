@@ -1,7 +1,7 @@
 import type { ActiveEffectSystemSource, EffectChangeData } from '@common/documents/active-effect.mjs';
 import type { BonusType } from '@constants/bonusTypes.mjs';
 import type { DocumentSystemData } from '@documents/document/index.mjs';
-import type { EffectChangeTarget } from '@effects/BaseActiveEffect/data/constants.mjs';
+import type { EffectChangeTarget } from '@effects/baseActiveEffect/data/constants.mjs';
 
 type ActiveEffectTarget = 'actor' | 'item';
 

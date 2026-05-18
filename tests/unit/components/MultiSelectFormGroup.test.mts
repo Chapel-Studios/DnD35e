@@ -11,7 +11,7 @@ vi.mock('@documents/document/sheet/stores/RenderModeStore.mjs', () => ({
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
 }));
 
-import MultiSelectFormGroup from '@vc/Fields/FormGroups/MultiSelectFormGroup.vue';
+import MultiSelectFormGroup from '@vc/fields/formGroups/MultiSelectFormGroup.vue';
 
 import { createMockDocumentStore, createMockRenderModeStore, makeGlobalProvide } from './setup';
 

@@ -1,6 +1,6 @@
 import type { FieldOverrideValue, ResolveAtPath } from '@documents/document/sheet/stores/cascadeFieldOverride.mjs';
 import { cascadeFieldOverride, pickMoreRestrictive } from '@documents/document/sheet/stores/cascadeFieldOverride.mjs';
-import type { FieldOverrideKey } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+import type { FieldOverrideKey } from '@vc/fields/formGroups/fieldPermissions.mjs';
 import { describe, expect, it } from 'vitest';
 
 /**

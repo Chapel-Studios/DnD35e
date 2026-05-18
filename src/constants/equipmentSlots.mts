@@ -1,4 +1,4 @@
-import type { MultiSelectOption } from '@vc/Fields/FormGroups/types.mjs';
+import type { MultiSelectOption } from '@vc/fields/formGroups/types.mjs';
 
 const EQUIP_SLOTS = [
   'head',

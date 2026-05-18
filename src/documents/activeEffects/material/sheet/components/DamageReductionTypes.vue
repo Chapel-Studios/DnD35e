@@ -13,7 +13,7 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { MaterialStore } from '@effects/material/index.mjs';
-  import { MultiSelectFormGroup } from '@vc/Fields/index.mjs';
+  import { MultiSelectFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   const props = defineProps<{

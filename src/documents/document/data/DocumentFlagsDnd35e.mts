@@ -1,4 +1,4 @@
-import type { FieldOverrides } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+import type { FieldOverrides } from '@vc/fields/formGroups/fieldPermissions.mjs';
 
 /**
  * Base flags structure shared across all D&D 3.5e documents.

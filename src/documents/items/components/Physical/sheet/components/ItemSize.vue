@@ -10,7 +10,7 @@
   import { SIZE_SELECT_OPTIONS } from '@constants/sizes.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import { SelectFormGroup } from '@vc/Fields/index.mjs';
+  import { SelectFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   const {

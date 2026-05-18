@@ -11,7 +11,7 @@ vi.mock('@documents/document/sheet/stores/RenderModeStore.mjs', () => ({
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
 }));
 
-import CheckBoxFormGroup from '@vc/Fields/FormGroups/CheckBoxFormGroup.vue';
+import CheckBoxFormGroup from '@vc/fields/formGroups/CheckBoxFormGroup.vue';
 
 import { createMockDocumentStore, createMockRenderModeStore, makeGlobalProvide } from './setup';
 
