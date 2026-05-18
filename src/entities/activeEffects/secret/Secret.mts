@@ -1,4 +1,4 @@
-import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
+import { Dnd35eActiveEffect } from '@effects/BaseActiveEffect/Dnd35eActiveEffect.mjs';
 
 import type { SecretSystemData } from './data/index.mjs';
 import type { SecretEffectType } from './secretEffectType.mjs';
@@ -9,7 +9,7 @@ import { secretEffectType } from './secretEffectType.mjs';
  * Uses MASK change mode entries to define which fields are masked and with what values.
  * An item with active (non-disabled) Secret AEs is considered unidentified.
  */
-class Secret extends DnD35eActiveEffect {
+class Secret extends Dnd35eActiveEffect {
   declare type: SecretEffectType;
   declare system: SecretSystemData;
 

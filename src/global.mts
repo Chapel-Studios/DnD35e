@@ -5,7 +5,7 @@ import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type Config from '@client/config.mjs';
 import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-import { DnD35eActiveEffect } from '@entities/activeEffects/index.mjs';
+import { Dnd35eActiveEffect } from '@entities/activeEffects/index.mjs';
 import type { ItemSheetStore } from '@items/baseItem/index.mjs';
 import { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
@@ -70,7 +70,7 @@ declare global {
         documentClasses: Record<string, new (...args: any[]) => ItemDnd35e>;
       },
       activeEffect: {
-        documentClasses: Record<string, new (...args: any[]) => DnD35eActiveEffect>;
+        documentClasses: Record<string, new (...args: any[]) => Dnd35eActiveEffect>;
       },
       gameRules: {
         damageReductionTypes: Record<string, { label: string }>;

@@ -4,7 +4,7 @@ import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
-import type { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
+import type { Dnd35eActiveEffect } from '@effects/BaseActiveEffect/Dnd35eActiveEffect.mjs';
 import { resolveActiveEffectChange } from '@effects/BaseActiveEffect/resolveChangeValue.mjs';
 import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
@@ -14,7 +14,7 @@ import type { TokenDocumentDnd35e } from '@scene/token-document/TokenDocumentDnd
 import type { ActorSystemData } from './index.mjs';
 
 interface AppliedActorEffectChange extends Dnd35eEffectChangeData {
-  effect: DnD35eActiveEffect;
+  effect: Dnd35eActiveEffect;
 }
 
 
@@ -23,7 +23,7 @@ class ActorDnd35e<
   TActorType extends ActorType = ActorType,
   TSystemData extends ActorSystemData = ActorSystemData
 > extends Actor<TToken> {
-  declare readonly effects: EmbeddedCollection<DnD35eActiveEffect<this>>;
+  declare readonly effects: EmbeddedCollection<Dnd35eActiveEffect<this>>;
   declare readonly items: EmbeddedCollection<ItemDnd35e<ItemType, this>>;
   declare type: TActorType;
   declare system: TSystemData;
@@ -56,7 +56,7 @@ class ActorDnd35e<
         const changeTarget = change.target ?? EFFECT_CHANGE_TARGET.ACTOR;
         if ( !change.key || (change.phase !== phase) || (changeTarget !== EFFECT_CHANGE_TARGET.ACTOR) ) continue;
         const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as AppliedActorEffectChange;
-        copy.effect = effect as DnD35eActiveEffect;
+        copy.effect = effect as Dnd35eActiveEffect;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
         copy.priority ??= 0;
         changes.push(copy);
@@ -85,7 +85,7 @@ class ActorDnd35e<
   /**
    * Override to iterate all applicable effects from actor and transferred item effects.
    */
-  override *allApplicableEffects(): Generator<DnD35eActiveEffect<this | ItemDnd35e<ItemType, this>>, void, void> {
+  override *allApplicableEffects(): Generator<Dnd35eActiveEffect<this | ItemDnd35e<ItemType, this>>, void, void> {
     for ( const effect of this.effects ) {
       yield effect;
     }
