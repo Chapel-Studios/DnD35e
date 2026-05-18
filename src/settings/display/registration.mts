@@ -8,11 +8,13 @@ declare const ui: typeof foundry.ui;
 import { SYSTEM_ID } from '../shared.mjs';
 import {
   DISPLAY_CLIENT_KEYS,
+  DISPLAY_MENU,
   DISPLAY_WORLD_KEYS,
   PARTY_HUD_CHOICES,
   SHARED_VISION_MODE_CHOICES,
   UNIT_CHOICES,
 } from './constants.mjs';
+import { DisplaySettingsConfig } from './sheet/index.mjs';
 
 /**
  * Register display settings (world-scoped)
@@ -284,9 +286,24 @@ function registerDisplayClientSettings(): void {
 }
 
 /**
+ * Register the Display settings menu button
+ */
+function registerDisplayMenu(): void {
+  game.settings.registerMenu(SYSTEM_ID, DISPLAY_MENU, {
+    name: 'dnd35e.SETTINGS.Display.Name',
+    label: 'dnd35e.SETTINGS.Display.Label',
+    hint: 'dnd35e.SETTINGS.Display.Hint',
+    icon: 'fas fa-display',
+    type: DisplaySettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
+    restricted: false, // Client-side settings, available to all users
+  });
+}
+
+/**
  * Register all display settings
  */
 function registerDisplaySettings(): void {
+  registerDisplayMenu();
   registerDisplayWorldSettings();
   registerDisplayClientSettings();
 }

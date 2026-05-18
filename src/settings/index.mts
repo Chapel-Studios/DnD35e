@@ -42,7 +42,7 @@ export {
 export { getSetting, setSetting } from './helpers.mjs';
 
 import { registerCombatSettings } from './combat/index.mjs';
-import { registerCoreSettings, registerSettingsMenus } from './core/index.mjs';
+import { registerCoreSettings } from './core/index.mjs';
 import { registerCurrencySettings } from './currency/index.mjs';
 import { registerDisplaySettings } from './display/index.mjs';
 import { registerGameRulesSettings } from './gameRules/index.mjs';
@@ -51,12 +51,14 @@ import { SYSTEM_ID as SYSTEM_ID_INTERNAL } from './shared.mjs';
 /**
  * Register all system settings.
  * Called during system initialization (Hooks.once('init')).
+ *
+ * Each category's `registerXxxSettings()` is responsible for registering both
+ * its menu button(s) and its individual settings.
  */
 function registerSettings(): void {
   console.log(`${SYSTEM_ID_INTERNAL} | Registering system settings`);
 
   registerCoreSettings();
-  registerSettingsMenus();
   registerGameRulesSettings();
   registerCombatSettings();
   registerDisplaySettings();
