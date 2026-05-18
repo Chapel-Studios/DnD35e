@@ -10,7 +10,7 @@ const {
   SchemaField,
 } = foundry.data.fields;
 
-abstract class ItemSystemModelBase extends Dnd35eDocumentSystemModel<foundry.documents.Item> {
+abstract class ItemSystemModel extends Dnd35eDocumentSystemModel<foundry.documents.Item> {
   static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.ITEM'];
 
   static override defineSchema (): Record<string, any> {
@@ -30,8 +30,8 @@ abstract class ItemSystemModelBase extends Dnd35eDocumentSystemModel<foundry.doc
   }
 }
 
-interface ItemSystemModelBase extends ItemSystemData {}
+interface ItemSystemModel extends ItemSystemData {}
 
 export {
-  ItemSystemModelBase,
+  ItemSystemModel,
 };

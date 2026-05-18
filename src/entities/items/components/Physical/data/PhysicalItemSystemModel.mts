@@ -8,15 +8,15 @@ import {
   useDnd35eField,
 } from '@helpers/fieldBuilders.mjs';
 import { Dnd35eSectionField } from '@helpers/fields/index.mjs';
-import { ItemSystemModelBase } from '@items/baseItem/data/index.mjs';
+import { ItemSystemModel } from '@items/baseItem/data/index.mjs';
 import { PriceField } from '@settings/currency/PriceField.mjs';
 
 import type { PhysicalItemSystemData } from './PhysicalItemSystemData.mjs';
 
 const { fields: { StringField } } = foundry.data;
 
-/** Pre-composed: ItemSystemModelBase + identifiable schema fields. */
-const IdentifiableItemSystemModel = IdentifiableSchemaMixin(ItemSystemModelBase);
+/** Pre-composed: ItemSystemModel + identifiable schema fields. */
+const IdentifiableItemSystemModel = IdentifiableSchemaMixin(ItemSystemModel);
 
 /**
  * Abstract system model for all physical items.

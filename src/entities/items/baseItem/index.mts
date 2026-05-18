@@ -2,7 +2,7 @@ import type {
   ItemSystemData,
   ItemSystemSource,
 } from './data/index.mjs';
-import { ItemSystemModelBase } from './data/index.mjs';
+import { ItemSystemModel } from './data/index.mjs';
 import type {
   ItemSourceDnd35e,
 } from './ItemDnd35e.mjs';
@@ -32,7 +32,7 @@ export {
   ItemEffects,
   ItemProxyDnd35e,
   ItemSheetDnd35e,
-  ItemSystemModelBase,
+  ItemSystemModel,
   useItemSheetStore,
 };
 
