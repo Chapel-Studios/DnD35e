@@ -1,5 +1,5 @@
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
-import { Dnd35eActiveEffectConfig } from '@effects/BaseActiveEffect/sheet/Dnd35eActiveEffectConfig.mjs';
+import { ActiveEffectConfigDnd35e } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigDnd35e.mjs';
 import type { Secret } from '@effects/secret/Secret.mjs';
 
 import SecretSheetVue from './SecretSheet.vue';
@@ -9,7 +9,7 @@ type SecretSheetRenderContext = {
   document: Secret;
 };
 
-class SecretSheet extends Dnd35eActiveEffectConfig {
+class SecretSheet extends ActiveEffectConfigDnd35e {
   get vueComponent () {
     return SecretSheetVue;
   }

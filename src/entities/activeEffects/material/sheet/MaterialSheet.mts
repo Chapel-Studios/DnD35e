@@ -1,5 +1,5 @@
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
-import { Dnd35eActiveEffectConfig } from '@effects/BaseActiveEffect/sheet/Dnd35eActiveEffectConfig.mjs';
+import { ActiveEffectConfigDnd35e } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigDnd35e.mjs';
 import { Material } from '@effects/material/Material.mjs';
 
 import MaterialSheetVue from './MaterialSheet.vue';
@@ -9,7 +9,7 @@ type MaterialSheetRenderContext = {
   document: Material;
 };
 
-class MaterialSheet extends Dnd35eActiveEffectConfig {
+class MaterialSheet extends ActiveEffectConfigDnd35e {
   get vueComponent () {
     return MaterialSheetVue;
   }

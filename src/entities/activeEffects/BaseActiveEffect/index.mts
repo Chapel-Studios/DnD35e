@@ -34,7 +34,7 @@ import type {
   ActiveEffectConfigStoreDocumentGetters,
 } from './sheet/index.mjs';
 import {
-  Dnd35eActiveEffectConfig,
+  ActiveEffectConfigDnd35e,
   EffectChanges,
   effectChangesTab,
   EffectChangeValue,
@@ -64,11 +64,11 @@ export type {
 
 export {
   ACTIVE_EFFECT_TARGETS,
+  ActiveEffectConfigDnd35e,
   ActiveEffectDnd35e,
   ActiveEffectProxyDnd35e,
   ActiveEffectSystemModel,
   ALL_CHANGE_TYPES,
-  Dnd35eActiveEffectConfig,
   EFFECT_CHANGE_PHASES,
   EFFECT_CHANGE_TARGET,
   EFFECT_CHANGE_TARGETS,

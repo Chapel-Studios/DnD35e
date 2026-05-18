@@ -3,7 +3,7 @@ import { VueActiveEffectConfig } from '@vueApps/index.mjs';
 import type { Dnd35eEffectChangeData } from '../data/ActiveEffectSystemData.mjs';
 
 
-abstract class Dnd35eActiveEffectConfig extends VueActiveEffectConfig {
+abstract class ActiveEffectConfigDnd35e extends VueActiveEffectConfig {
 
   override async close(
     options?: foundry.applications.ApplicationClosingOptions
@@ -52,5 +52,5 @@ abstract class Dnd35eActiveEffectConfig extends VueActiveEffectConfig {
 }
 
 export {
-  Dnd35eActiveEffectConfig,
+  ActiveEffectConfigDnd35e,
 };

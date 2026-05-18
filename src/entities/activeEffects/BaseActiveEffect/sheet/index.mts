@@ -1,3 +1,4 @@
+import { ActiveEffectConfigDnd35e } from './ActiveEffectConfigDnd35e.mjs';
 import type {
   ActiveEffectConfigStore,
   ActiveEffectConfigStoreDocumentActions,
@@ -7,7 +8,6 @@ import { useActiveEffectConfigStore } from './ActiveEffectConfigStore.mjs';
 import {
   EffectChangeValue,
 } from './components/index.mjs';
-import { Dnd35eActiveEffectConfig } from './Dnd35eActiveEffectConfig.mjs';
 import {
   EffectChanges,
   effectChangesTab,
@@ -19,7 +19,7 @@ import {
 } from './tabs/index.mjs';
 
 export {
-  Dnd35eActiveEffectConfig,
+  ActiveEffectConfigDnd35e,
   EffectChanges,
   effectChangesTab,
   EffectChangeValue,
