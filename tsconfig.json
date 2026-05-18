@@ -11,6 +11,7 @@
     "paths": {
       "@canvas/*": ["./src/canvas/*"],
       "@constants/*": ["./src/constants/*"],
+      "@fields/*": ["./src/fields/*"],
       "@helpers/*": ["./src/helpers/*"],
       "@scene/*": ["./src/scene/*"],
       "@settings/*": ["./src/settings/*"],

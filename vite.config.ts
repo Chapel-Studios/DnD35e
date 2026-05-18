@@ -140,6 +140,7 @@ export default defineConfig(({ command }) => {
         '@vc': path.resolve(__dirname, 'src/vue/components'),
         '@canvas': path.resolve(__dirname, 'src/canvas'),
         '@constants': path.resolve(__dirname, 'src/constants'),
+        '@fields': path.resolve(__dirname, 'src/fields'),
         '@helpers': path.resolve(__dirname, 'src/helpers'),
         '@items': path.resolve(__dirname, 'src/entities/items'),
         '@actors': path.resolve(__dirname, 'src/entities/actors'),
