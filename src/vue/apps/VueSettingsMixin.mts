@@ -3,7 +3,7 @@
  * Extends VueAppBaseMixin with reactive data management for settings forms.
  */
 
-import { SettingsStoreSymbol, useSettingsStore } from '@settings/core/sheet/settingsStore.mjs';
+import { SettingsStoreSymbol, useSettingsStore } from '@settings/shared/sheet/settingsStore.mjs';
 import type { App } from 'vue';
 import { createApp, reactive } from 'vue';
 

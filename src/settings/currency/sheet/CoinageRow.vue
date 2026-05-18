@@ -123,8 +123,8 @@
 
 <script setup lang="ts">
   import { stripSpecialCharacters } from '@helpers/stringHelpers.mjs';
-  import type { SettingsStore } from '@settings/core/sheet/settingsStore.mjs';
-  import { SettingsStoreSymbol } from '@settings/core/sheet/settingsStore.mjs';
+  import type { SettingsStore } from '@settings/shared/sheet/settingsStore.mjs';
+  import { SettingsStoreSymbol } from '@settings/shared/sheet/settingsStore.mjs';
   import { computed, inject, reactive, ref, watch } from 'vue';
 
   import type { CoinageDefinition, CoinageVisibility } from '../_types.mjs';

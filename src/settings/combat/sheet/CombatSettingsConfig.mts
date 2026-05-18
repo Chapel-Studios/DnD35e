@@ -7,8 +7,9 @@ import { useVueSettingsMixin, type VueSettingsRenderOptions } from '@vueApps/ind
 import type { App, Component } from 'vue';
 import { createApp } from 'vue';
 
-import { GenericSettingsApp, type SettingsSection } from '../../core/index.mjs';
+import type { SettingsSection } from '../../core/index.mjs';
 import { SYSTEM_ID } from '../../shared.mjs';
+import { GenericSettingsApp } from '../../shared/sheet/index.mjs';
 import { COMBAT_KEYS } from '../constants.mjs';
 
 // Foundry global UI reference

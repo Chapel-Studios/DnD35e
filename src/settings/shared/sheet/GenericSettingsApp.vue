@@ -58,9 +58,8 @@
 
 <script setup lang="ts">
   // Removed form group imports; using native controls inline
+  import type { SettingsSection } from '@settings/core/_types.mjs';
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
-
-  import type { SettingsSection } from '../_types.mjs';
 
   const props = defineProps<{
     context: VueSettingsContext<Record<string, unknown>>;

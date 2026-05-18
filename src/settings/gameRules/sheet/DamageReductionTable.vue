@@ -17,8 +17,8 @@
 </template>
 
 <script setup lang="ts">
-  import type { SettingsTableItem } from '@settings/core/sheet/SettingsTable/index.mjs';
-  import { AUTO_ID_MARKER, SettingsTable } from '@settings/core/sheet/SettingsTable/index.mjs';
+  import type { SettingsTableItem } from '@settings/shared/sheet/SettingsTable/index.mjs';
+  import { AUTO_ID_MARKER, SettingsTable } from '@settings/shared/sheet/SettingsTable/index.mjs';
   import { computed, ref } from 'vue';
 
   import type { DamageReductionTypesConfig } from '../_types.mjs';

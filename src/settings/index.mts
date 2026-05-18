@@ -20,6 +20,7 @@ export * from './display/index.mjs';
 export * from './gameRules/index.mjs';
 export * from './health/index.mjs';
 export * from './roll/index.mjs';
+export * from './shared/index.mjs';
 export * from './skills/index.mjs';
 
 // Legacy exports (backwards compatibility)
