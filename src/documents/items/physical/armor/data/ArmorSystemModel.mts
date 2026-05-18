@@ -1,6 +1,5 @@
 import {
   requiredBooleanField,
-  requiredNullableStringField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
@@ -45,9 +44,6 @@ class ArmorSystemModel extends EquippableItemSystemModel {
     );
     // TODO(oggy): wire up armorBaseType field once base-type system is finalised.
     // schema.armorBaseType = useDnd35eField(new StringField({ choices: [...ARMOR_BASE_TYPES], initial: '', required: true, blank: true }));
-
-    schema.attackNotes = requiredNullableStringField();
-    schema.damageNotes = requiredNullableStringField();
 
     return schema;
   }

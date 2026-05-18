@@ -8,8 +8,6 @@ interface ArmorSystemSource {
   armorType: ArmorType;
   armorSubtype: ArmorSubtype;
   armorBaseType: ArmorBaseType;
-  attackNotes: string;
-  damageNotes: string;
 }
 
 type ArmorSystemData = ArmorSystemSource
