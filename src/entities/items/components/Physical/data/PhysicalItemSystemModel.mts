@@ -7,9 +7,9 @@ import {
   requiredNumberField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
+import { PriceField } from '@fields/PriceField.mjs';
 import { SectionField } from '@fields/SectionField.mjs';
 import { ItemSystemModel } from '@items/baseItem/data/index.mjs';
-import { PriceField } from '@settings/currency/PriceField.mjs';
 
 import type { PhysicalItemSystemData } from './PhysicalItemSystemData.mjs';
 

@@ -12,9 +12,9 @@
  * It acts as a snapshot so the GP value is still available if settings change.
  */
 
-import { SYSTEM_ID } from '../shared.mjs';
-import type { CoinageDefinition, CoinStack, CurrencyConfig } from './_types.mjs';
-import { CURRENCY_KEY, DEFAULT_CURRENCY_CONFIG } from './constants.mjs';
+import type { CoinageDefinition, CoinStack, CurrencyConfig } from '@settings/currency/_types.mjs';
+import { CURRENCY_KEY, DEFAULT_CURRENCY_CONFIG } from '@settings/currency/constants.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
 
 const { DataModel } = foundry.abstract;
 const { ArrayField, SchemaField, StringField, NumberField } = foundry.data.fields;
