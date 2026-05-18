@@ -2,7 +2,6 @@
  * Roll settings module
  */
 
-export type { RollConfig, RollModeConfig } from './_types.mjs';
 export {
   DEFAULT_ROLL_CONFIG,
   ROLL_KEY,
@@ -10,3 +9,4 @@ export {
 } from './constants.mjs';
 export { registerRollSettings } from './registration.mjs';
 export { RollSettingsConfig } from './sheet/index.mjs';
+export type { RollConfig, RollModeConfig } from './types.mjs';

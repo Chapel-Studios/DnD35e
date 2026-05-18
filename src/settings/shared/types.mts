@@ -6,12 +6,12 @@
  * store, settings sheet, helpers).
  */
 
-import type { CurrencyConfig } from '../currency/_types.mjs';
-import type { PartyHudMode, UnitSystem } from '../display/_types.mjs';
-import type { DamageReductionTypesConfig, DiagonalMovementRule, ExperienceRate } from '../gameRules/_types.mjs';
-import type { HealthConfig } from '../health/_types.mjs';
-import type { RollConfig } from '../roll/_types.mjs';
-import type { SkillSettings } from '../skills/_types.mjs';
+import type { CurrencyConfig } from '../currency/types.mjs';
+import type { PartyHudMode, UnitSystem } from '../display/types.mjs';
+import type { DamageReductionTypesConfig, DiagonalMovementRule, ExperienceRate } from '../gameRules/types.mjs';
+import type { HealthConfig } from '../health/types.mjs';
+import type { RollConfig } from '../roll/types.mjs';
+import type { SkillSettings } from '../skills/types.mjs';
 
 /**
  * Setting scope - determines where the setting is stored

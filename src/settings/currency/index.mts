@@ -2,20 +2,6 @@
  * Currency settings module
  */
 
-export type {
-  CoinageDefinition,
-  CoinageVisibility,
-  CoinStack,
-  CurrencyConfig,
-  Price,
-  PriceSource,
-} from './_types.mjs';
-export {
-  COINAGE_VISIBILITIES,
-  coinageVisibilityEveryone,
-  coinageVisibilityGmOnly,
-  coinageVisibilityGmSelect,
-} from './_types.mjs';
 export {
   CURRENCY_KEY,
   CURRENCY_MENU,
@@ -26,3 +12,17 @@ export {
 } from './constants.mjs';
 export { registerCurrencySettings } from './registration.mjs';
 export { CurrencySettingsConfig } from './sheet/index.mjs';
+export type {
+  CoinageDefinition,
+  CoinageVisibility,
+  CoinStack,
+  CurrencyConfig,
+  Price,
+  PriceSource,
+} from './types.mjs';
+export {
+  COINAGE_VISIBILITIES,
+  coinageVisibilityEveryone,
+  coinageVisibilityGmOnly,
+  coinageVisibilityGmSelect,
+} from './types.mjs';

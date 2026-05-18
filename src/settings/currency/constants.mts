@@ -2,8 +2,8 @@
  * Currency settings constants
  */
 
-import type { CoinageDefinition, CurrencyConfig } from './_types.mjs';
-import { coinageVisibilityEveryone } from './_types.mjs';
+import type { CoinageDefinition, CurrencyConfig } from './types.mjs';
+import { coinageVisibilityEveryone } from './types.mjs';
 
 /** Currency config setting key */
 export const CURRENCY_KEY = 'currencyConfig';

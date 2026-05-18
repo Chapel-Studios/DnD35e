@@ -2,7 +2,7 @@
  * Roll settings constants
  */
 
-import type { RollConfig, RollModeConfig } from './_types.mjs';
+import type { RollConfig, RollModeConfig } from './types.mjs';
 
 /** Roll config setting key */
 export const ROLL_KEY = 'rollConfig';

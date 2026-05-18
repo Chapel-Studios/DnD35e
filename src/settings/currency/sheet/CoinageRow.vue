@@ -127,9 +127,9 @@
   import { SettingsStoreSymbol } from '@settings/shared/sheet/settingsStore.mjs';
   import { computed, inject, reactive, ref, watch } from 'vue';
 
-  import type { CoinageDefinition, CoinageVisibility } from '../_types.mjs';
-  import { coinageVisibilityEveryone, coinageVisibilityGmOnly, coinageVisibilityGmSelect } from '../_types.mjs';
   import { USER_COIN_PREFIX } from '../constants.mjs';
+  import type { CoinageDefinition, CoinageVisibility } from '../types.mjs';
+  import { coinageVisibilityEveryone, coinageVisibilityGmOnly, coinageVisibilityGmSelect } from '../types.mjs';
   import { isAutoId } from './idFieldUtils.mjs';
 
   const {
