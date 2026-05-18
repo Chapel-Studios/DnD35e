@@ -11,7 +11,7 @@ import { Dnd35eSectionField } from '@helpers/fields/index.mjs';
 import { ItemSystemModelBase } from '@items/baseItem/data/index.mjs';
 import { PriceField } from '@settings/currency/PriceField.mjs';
 
-import type { PhysicalItemSystemData } from './PhysicalSystemData.mjs';
+import type { PhysicalItemSystemData } from './PhysicalItemSystemData.mjs';
 
 const { fields: { StringField } } = foundry.data;
 
