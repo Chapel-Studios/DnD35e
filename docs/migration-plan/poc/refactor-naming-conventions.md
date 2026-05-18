@@ -574,12 +574,12 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G8.12 — `npm run build` clean; commit.
 
 ### Group 9: Helper-type prefix sweep
-- [ ] G9.1 — Verified-collision rename first: `Dnd35eEffectChangeData` → `EffectChangeDataDnd35e` (file + symbol + imports).
-- [ ] G9.2 — Bare renames: `Dnd35eParentDoc` → `ParentDoc`, `Dnd35eFieldMeta` → `FieldMeta`, `Dnd35eOverrideOptions` → `OverrideOptions`, `Dnd35eSectionField` → `SectionField`, `Dnd35eBaseFlags` → `BaseFlags`, `Dnd35eChangeType` → `ChangeType`, `DND35E_CHANGE_TYPE` → `CHANGE_TYPE`.
-- [ ] G9.3 — Verify-during-execution: confirm `Dnd35eSystemConfig` → `SystemConfig` does not collide with Foundry; if it does, use `SystemConfigDnd35e`.
-- [ ] G9.4 — Update all imports / barrels; eslint --fix.
-- [ ] G9.5 — `grep_search` workspace-wide for `Dnd35e` — remaining matches should be only the verified colliding names (`*Dnd35e` suffix form) plus planning docs.
-- [ ] G9.6 — `npm run build` clean; commit.
+- [x] G9.1 — Verified-collision rename first: `Dnd35eEffectChangeData` → `EffectChangeDataDnd35e` (file + symbol + imports).
+- [x] G9.2 — Bare renames: `Dnd35eParentDoc` → `ParentDoc`, `Dnd35eFieldMeta` → `FieldMeta`, `Dnd35eOverrideOptions` → `OverrideOptions`, `Dnd35eSectionField` → `SectionField`, `Dnd35eBaseFlags` → `BaseFlags`, `Dnd35eChangeType` → `ChangeType`, `DND35E_CHANGE_TYPE` → `CHANGE_TYPE`.
+- [x] G9.3 — Verify-during-execution: confirm `Dnd35eSystemConfig` → `SystemConfig` does not collide with Foundry; if it does, use `SystemConfigDnd35e`.
+- [x] G9.4 — Update all imports / barrels; eslint --fix.
+- [x] G9.5 — `grep_search` workspace-wide for `Dnd35e` — remaining matches should be only the verified colliding names (`*Dnd35e` suffix form) plus planning docs.
+- [x] G9.6 — `npm run build` clean; commit.
 
 ### Final validation
 - [ ] FV.1 — Workspace `grep_search` for old prefix forms (`DnD35e`, `BaseDnd35eSystemData`, `BaseDnd35eSystemSource`, `ItemSystemModelBase`, `ActorSystemModelBase`, `ActiveEffectSystemModelBase`, `PhysicalSystemData.mjs`, `PhysicalItemDnd35e`, `BaseItemSheet`, `applyIdentifiableSchema.mjs`, `Dnd35eDocument` class, `Dnd35eDocumentMixin`, `Dnd35eDocumentSystemModel`, `Dnd35eDocumentFlags`, `Dnd35eDocumentProperties`, `Dnd35eDocumentConstructor`, `Dnd35eActiveEffect` class, `Dnd35eActiveEffectFlags`, `Dnd35eActiveEffectConfig`, `Dnd35eActiveEffectSystemSource`, `Dnd35eActiveEffectSource`, `Dnd35eParentDoc`, `Dnd35eFieldMeta`, `Dnd35eOverrideOptions`, `Dnd35eSectionField`, `Dnd35eSystemConfig`, `Dnd35eBaseFlags`, `Dnd35eEffectChangeData`, `Dnd35eChangeType`, `DND35E_CHANGE_TYPE`, `tokenDnd35e` (lowercase class form), `logHelper.mjs`, `src/scene/`, `region-document`, `token-document`, `region-behaviour`, `@settings/_types`, `@settings/constants`, `_types.mjs`, `_types.mts`, `@ec/`, `@entities/`, `src/entities/`, inline `getSchemaField` definitions, inline `syncOpenSheetTitle` definitions, top-level `BaseActiveEffect/resolveChangeValue.mjs`). Production code must show zero matches; planning docs / changelog allowed.

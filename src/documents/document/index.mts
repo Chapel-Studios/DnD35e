@@ -1,5 +1,5 @@
 import type {
-  Dnd35eBaseFlags,
+  BaseFlags,
   DocumentFlagsDnd35e,
   DocumentSystemData,
 } from './data/index.mjs';
@@ -76,7 +76,7 @@ export {
 };
 
 export type {
-  Dnd35eBaseFlags,
+  BaseFlags,
   DocumentFlagsDnd35e,
   DocumentSheetStore,
   DocumentSheetStoreDocumentActions,

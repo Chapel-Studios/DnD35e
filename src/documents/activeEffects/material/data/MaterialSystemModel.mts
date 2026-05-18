@@ -1,4 +1,4 @@
-import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { ActiveEffectSystemModel } from '@effects/baseActiveEffect/data/ActiveEffectSystemModel.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
 import { requiredNumberField, useDnd35eField } from '@fields/fieldBuilders.mjs';
@@ -46,7 +46,7 @@ class MaterialSystemModel extends ActiveEffectSystemModel {
     this.changes = this.buildChanges();
   }
 
-  buildChanges(): Dnd35eEffectChangeData[] {
+  buildChanges(): EffectChangeDataDnd35e[] {
     return buildMaterialChanges({
       materialSubtype: this.materialSubtype,
       price: this.price,

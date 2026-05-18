@@ -4,7 +4,7 @@ import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import { getDisplayName } from '@documents/document/logic/index.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
-import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
@@ -231,7 +231,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 
     // Build StackingChange[] for the stacking engine
     const stackingChanges: StackingChange[] = changes.map((change, index) => {
-      const dnd35eChange = change as unknown as Dnd35eEffectChangeData;
+      const dnd35eChange = change as unknown as EffectChangeDataDnd35e;
       const numericValue = parseNumericChangeValue(change.value);
       const bonusType = dnd35eChange.bonusType || undefined;
       

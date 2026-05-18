@@ -1,5 +1,5 @@
 import { BONUS_TYPE_BROKEN, BONUS_TYPE_MASTERWORK, BONUS_TYPE_MATERIAL, BONUS_TYPE_UNTYPED } from '@constants/bonusTypes.mjs';
-import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import {
   buildMaterialChanges,
@@ -29,7 +29,7 @@ function mkInput (partial: Partial<BuildMaterialChangesInput> = {}): BuildMateri
  * fields are placeholders — only `key`, `type`, and `isSystem` matter for the
  * type-preservation logic.
  */
-function mkSystemChange (key: string, type: Dnd35eEffectChangeData['type']): Dnd35eEffectChangeData {
+function mkSystemChange (key: string, type: EffectChangeDataDnd35e['type']): EffectChangeDataDnd35e {
   return {
     key,
     type,
@@ -49,7 +49,7 @@ describe('buildMaterialChanges', () => {
   });
 
   it('preserves user-authored (non-system) changes verbatim', () => {
-    const userChange: Dnd35eEffectChangeData = {
+    const userChange: EffectChangeDataDnd35e = {
       key: 'system.attackBonus',
       type: EFFECT_CHANGE_TYPE.ADD,
       value: 1,
@@ -184,7 +184,7 @@ describe('buildMaterialChanges', () => {
   });
 
   it('user-authored changes come before regenerated system changes in output order', () => {
-    const userChange: Dnd35eEffectChangeData = {
+    const userChange: EffectChangeDataDnd35e = {
       key: 'system.attackBonus',
       type: EFFECT_CHANGE_TYPE.ADD,
       value: 1,

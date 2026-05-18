@@ -9,7 +9,7 @@ type ActiveEffectTarget = 'actor' | 'item';
  * Extended change data that includes the per-change target field.
  * Each change can independently target either the item or the actor.
  */
-interface Dnd35eEffectChangeData extends EffectChangeData {
+interface EffectChangeDataDnd35e extends EffectChangeData {
   target: EffectChangeTarget;
   isSystem: boolean;
   /** Optional bonus type for stacking resolution. Only set when stacking applies (Phase 2+). */
@@ -21,7 +21,7 @@ interface Dnd35eEffectChangeData extends EffectChangeData {
 interface ActiveEffectSystemSourceDnd35e extends DocumentSystemData, Omit<ActiveEffectSystemSource, 'changes'> {
   target: ActiveEffectTarget;
   isHidden: boolean;
-  changes: Dnd35eEffectChangeData[];
+  changes: EffectChangeDataDnd35e[];
 }
 
 interface ActiveEffectSystemData extends ActiveEffectSystemSourceDnd35e {
@@ -31,5 +31,5 @@ export type {
   ActiveEffectSystemData,
   ActiveEffectSystemSourceDnd35e,
   ActiveEffectTarget,
-  Dnd35eEffectChangeData,
+  EffectChangeDataDnd35e,
 };

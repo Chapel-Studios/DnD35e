@@ -1,5 +1,5 @@
 /**
- * Builds the system-managed `Dnd35eEffectChangeData[]` a Material AE applies to its
+ * Builds the system-managed `EffectChangeDataDnd35e[]` a Material AE applies to its
  * parent item based on the material's Details-tab fields (price diff, magic equivalency,
  * hardness, bonus HP, DR types). User-authored changes (`isSystem === false`) are
  * preserved verbatim; existing system changes are consulted only to preserve the
@@ -9,7 +9,7 @@
  */
 
 import type { EffectPhases } from '@common/documents/active-effect.mjs';
-import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import type { EffectChangeTarget, EffectChangeType } from '@effects/baseActiveEffect/data/constants.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { PriceData } from '@fields/PriceData.mjs';
@@ -28,7 +28,7 @@ export type BuildMaterialChangesInput = {
   bonusHp: number;
   damageReductionTypes: ReadonlySet<string> | readonly string[];
   /** The full current `changes` array on the AE system data. */
-  existingChanges: readonly Dnd35eEffectChangeData[];
+  existingChanges: readonly EffectChangeDataDnd35e[];
 };
 
 const buildChange = (
@@ -39,7 +39,7 @@ const buildChange = (
   phase: EffectPhases = 'final',
   priority = 10,
   target: EffectChangeTarget = EFFECT_CHANGE_TARGET.ITEM
-): Dnd35eEffectChangeData => ({
+): EffectChangeDataDnd35e => ({
   key,
   type,
   value,
@@ -57,7 +57,7 @@ const buildChange = (
  * otherwise fall back to `defaultType`.
  */
 const pickType = (
-  existingChanges: readonly Dnd35eEffectChangeData[],
+  existingChanges: readonly EffectChangeDataDnd35e[],
   key: string,
   defaultType: EffectChangeType
 ): EffectChangeType => {
@@ -70,7 +70,7 @@ const pickType = (
  * non-system (user-authored) changes verbatim, then appends one change per
  * non-zero/non-empty Details-tab field.
  */
-export const buildMaterialChanges = (input: BuildMaterialChangesInput): Dnd35eEffectChangeData[] => {
+export const buildMaterialChanges = (input: BuildMaterialChangesInput): EffectChangeDataDnd35e[] => {
   const {
     materialSubtype,
     price,
@@ -81,7 +81,7 @@ export const buildMaterialChanges = (input: BuildMaterialChangesInput): Dnd35eEf
     existingChanges,
   } = input;
 
-  const changes: Dnd35eEffectChangeData[] = [
+  const changes: EffectChangeDataDnd35e[] = [
     ...existingChanges.filter(change => !change.isSystem),
   ];
 

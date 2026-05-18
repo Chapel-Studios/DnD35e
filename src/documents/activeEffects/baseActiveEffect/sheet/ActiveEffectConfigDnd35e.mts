@@ -1,6 +1,6 @@
 import { VueActiveEffectConfig } from '@vueApps/index.mjs';
 
-import type { Dnd35eEffectChangeData } from '../data/ActiveEffectSystemData.mjs';
+import type { EffectChangeDataDnd35e } from '../data/ActiveEffectSystemData.mjs';
 
 
 abstract class ActiveEffectConfigDnd35e extends VueActiveEffectConfig {
@@ -8,7 +8,7 @@ abstract class ActiveEffectConfigDnd35e extends VueActiveEffectConfig {
   override async close(
     options?: foundry.applications.ApplicationClosingOptions
   ): Promise<foundry.applications.api.ApplicationV2> {
-    const changes: Dnd35eEffectChangeData[] = this.document.system?.changes ?? [];
+    const changes: EffectChangeDataDnd35e[] = this.document.system?.changes ?? [];
     const emptyIndices: number[] = [];
     const incompleteIndices: number[] = [];
 

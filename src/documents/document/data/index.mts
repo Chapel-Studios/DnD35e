@@ -1,5 +1,5 @@
 import type {
-  Dnd35eBaseFlags,
+  BaseFlags,
   DocumentFlagsDnd35e,
 } from './DocumentFlagsDnd35e.mjs';
 import type {
@@ -7,7 +7,7 @@ import type {
 } from './DocumentSystemData.mjs';
 
 export type {
-  Dnd35eBaseFlags,
+  BaseFlags,
   DocumentFlagsDnd35e,
   DocumentSystemData,
 };

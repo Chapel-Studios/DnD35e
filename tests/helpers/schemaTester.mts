@@ -45,7 +45,7 @@ interface SchemaTester {
 
 /**
  * Walk a dotted path through a schema object, descending into `SchemaField.fields`
- * (and similar `.fields`-bearing wrappers like `Dnd35eSectionField`).
+ * (and similar `.fields`-bearing wrappers like `SectionField`).
  */
 function walkSchema (
   schema: Record<string, AnyField>,
