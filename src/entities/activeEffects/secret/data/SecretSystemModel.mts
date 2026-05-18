@@ -1,4 +1,4 @@
-import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModelBase.mjs';
+import { ActiveEffectSystemModel } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModel.mjs';
 import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
 
 import type { SecretSystemData } from './SecretSystemData.mjs';
@@ -16,7 +16,7 @@ const PLAYER_EDIT_MASK_PRIORITY = 3001;
  * that parent at runtime (see {@link ActiveEffectConfigStore.resolveTargetContext}).
  * No static `targetContexts` declaration needed.
  */
-class SecretSystemModel extends ActiveEffectSystemModelBase {
+class SecretSystemModel extends ActiveEffectSystemModel {
   static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.EFFECT.Secret'];
 
   static override defineSchema (): Record<string, any> {

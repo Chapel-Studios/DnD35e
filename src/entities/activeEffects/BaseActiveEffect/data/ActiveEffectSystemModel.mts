@@ -15,7 +15,7 @@ const {
   AnyField,
 } = foundry.data.fields;
 
-class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.documents.ActiveEffect> {
+class ActiveEffectSystemModel extends Dnd35eDocumentSystemModel<foundry.documents.ActiveEffect> {
   /**
    * Declares which item/actor subtypes this effect type can target.
    * Used by AspectPicker to build autocomplete contexts.
@@ -64,7 +64,7 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
     super.prepareBaseData();
     const parentName = this.parent?.name;
     if (!parentName) {
-      console.warn('ActiveEffectSystemModelBase.prepareBaseData: ActiveEffect parent has no name; skipping ensureNameFormula.', {
+      console.warn('ActiveEffectSystemModel.prepareBaseData: ActiveEffect parent has no name; skipping ensureNameFormula.', {
         effect: this,
         parent: this.parent,
       });
@@ -74,8 +74,8 @@ class ActiveEffectSystemModelBase extends Dnd35eDocumentSystemModel<foundry.docu
   }
 }
 
-interface ActiveEffectSystemModelBase extends ActiveEffectSystemData {}
+interface ActiveEffectSystemModel extends ActiveEffectSystemData {}
 
 export {
-  ActiveEffectSystemModelBase,
+  ActiveEffectSystemModel,
 };

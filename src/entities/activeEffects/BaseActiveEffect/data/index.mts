@@ -3,7 +3,7 @@ import type {
   Dnd35eActiveEffectSystemSource,
   Dnd35eEffectChangeData,
 } from './ActiveEffectSystemData.mjs';
-import { ActiveEffectSystemModelBase } from './ActiveEffectSystemModelBase.mjs';
+import { ActiveEffectSystemModel } from './ActiveEffectSystemModel.mjs';
 import type {
   ActiveEffectTarget,
   ActiveEffectTargetLocalizationValues,
@@ -27,7 +27,7 @@ import {
 
 export {
   ACTIVE_EFFECT_TARGETS,
-  ActiveEffectSystemModelBase,
+  ActiveEffectSystemModel,
   ALL_CHANGE_TYPES,
   CORE_EFFECT_CHANGE_PHASE,
   EFFECT_CHANGE_PHASES,
