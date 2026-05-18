@@ -124,9 +124,9 @@
 </template>
 
 <script setup lang="ts">
-  import CheckBoxFormGroup from '@vc/Fields/FormGroups/CheckBoxFormGroup.vue';
-  import SelectFormGroup from '@vc/Fields/FormGroups/SelectFormGroup.vue';
-  import ToggleSwitch from '@vc/Fields/ToggleSwitch.vue';
+  import CheckBoxFormGroup from '@vc/fields/formGroups/CheckBoxFormGroup.vue';
+  import SelectFormGroup from '@vc/fields/formGroups/SelectFormGroup.vue';
+  import ToggleSwitch from '@vc/fields/ToggleSwitch.vue';
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
   import { ref } from 'vue';
 

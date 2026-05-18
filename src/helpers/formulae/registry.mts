@@ -10,7 +10,7 @@
 
 import type { ActorType } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import type { ActiveEffectDnd35e } from '@effects/BaseActiveEffect/index.mjs';
+import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/index.mjs';
 import type { EffectType } from '@effects/effectTypes.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';

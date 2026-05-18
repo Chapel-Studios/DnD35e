@@ -12,7 +12,7 @@
 <script setup lang="ts">
   import type { RenderModeStore, TabStore } from '@documents/document/index.mjs';
   import { RenderModeStoreSymbol, TabStoreSymbol } from '@documents/document/index.mjs';
-  import EffectChangesList from '@effects/BaseActiveEffect/sheet/components/EffectChangesList.vue';
+  import EffectChangesList from '@effects/baseActiveEffect/sheet/components/EffectChangesList.vue';
   import { inject } from 'vue';
 
   defineProps<{

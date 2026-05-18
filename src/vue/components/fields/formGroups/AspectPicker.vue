@@ -35,7 +35,7 @@
   import type { AutocompleteOption, FamiliarContext, FamiliarSchema, ValidationError } from '@helpers/formulae/types.mjs';
   import { useFamiliarOverlayInput } from '@helpers/formulae/useFamiliarOverlayInput.mjs';
   import { canonicalizeFormula, findAspectByAccessPath, localizeFormula, parseFormula, renderFormulaHTML, validateFormula } from '@helpers/formulae/utils.mjs';
-  import FamiliarOverlayInput from '@vc/Fields/FormGroups/FamiliarOverlayInput.vue';
+  import FamiliarOverlayInput from '@vc/fields/formGroups/FamiliarOverlayInput.vue';
   import { computed, nextTick, onUnmounted, type PropType, ref, watch } from 'vue';
 
   const props = defineProps({

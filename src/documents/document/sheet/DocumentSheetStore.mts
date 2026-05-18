@@ -11,14 +11,14 @@ import { SYSTEM_ID } from '@settings/shared.mjs';
 import type {
   FieldEditability,
   FieldVisibility,
-} from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+} from '@vc/fields/formGroups/fieldPermissions.mjs';
 import {
   everyoneVisibility,
   gmOnlyEditability,
   gmOnlyVisibility,
   normalEditability,
   ownerPlusVisibility,
-} from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+} from '@vc/fields/formGroups/fieldPermissions.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';
 import type { ComputedRef, ShallowRef } from 'vue';
 import { computed, inject, provide, reactive, ref, shallowRef, triggerRef, unref } from 'vue';

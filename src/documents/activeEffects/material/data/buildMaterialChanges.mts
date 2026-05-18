@@ -9,9 +9,9 @@
  */
 
 import type { EffectPhases } from '@common/documents/active-effect.mjs';
-import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
-import type { EffectChangeTarget, EffectChangeType } from '@effects/BaseActiveEffect/data/constants.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
+import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { EffectChangeTarget, EffectChangeType } from '@effects/baseActiveEffect/data/constants.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { PriceData } from '@fields/PriceData.mjs';
 
 import type { MaterialSubtype } from './materialTypes.mjs';

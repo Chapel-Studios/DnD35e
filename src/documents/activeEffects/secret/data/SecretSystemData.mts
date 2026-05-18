@@ -1,4 +1,4 @@
-import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 
 /**
  * Secret active effect system data — masks field values from non-GM users.

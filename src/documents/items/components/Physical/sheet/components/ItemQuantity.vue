@@ -34,7 +34,7 @@
     everyoneVisibility,
     normalEditability,
     NumberFormGroup,
-  } from '@vc/Fields/index.mjs';
+  } from '@vc/fields/index.mjs';
   import { computed, inject } from 'vue';
 
   const {

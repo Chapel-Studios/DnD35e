@@ -11,7 +11,7 @@
 <script setup lang="ts">
   import type { RenderModeStore } from '@documents/document/index.mjs';
   import { RenderModeStoreSymbol } from '@documents/document/index.mjs';
-  import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/index.mjs';
+  import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/index.mjs';
   import { inject } from 'vue';
   
   defineProps<{

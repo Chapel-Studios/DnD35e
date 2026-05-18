@@ -10,7 +10,7 @@
   import { EQUIP_SLOT_SELECT_OPTIONS } from '@constants/equipmentSlots.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { EquippableDocumentStore } from '@items/components/Equippable/index.mjs';
-  import { MultiSelectFormGroup } from '@vc/Fields/index.mjs';
+  import { MultiSelectFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   const {

@@ -8,7 +8,7 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { EquippableDocumentStore } from '@items/components/Equippable/index.mjs';
-  import { CheckBoxFormGroup } from '@vc/Fields/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   const {

@@ -29,9 +29,9 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  import FormGroupSection from '@vc/Fields/FormGroups/FormGroupSection.vue';
-  import { HasActiveEffectsNotification, NumberFormGroup, ownerPlusVisibility } from '@vc/Fields/index.mjs';
-  import { gmOnlyEditability } from '@vc/Fields/index.mjs';
+  import FormGroupSection from '@vc/fields/formGroups/FormGroupSection.vue';
+  import { HasActiveEffectsNotification, NumberFormGroup, ownerPlusVisibility } from '@vc/fields/index.mjs';
+  import { gmOnlyEditability } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   const {

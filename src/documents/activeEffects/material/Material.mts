@@ -1,6 +1,6 @@
 import type { ActiveEffectSource } from '@common/documents/active-effect.mjs';
 import type { DocumentFlagsDnd35e } from '@documents/document/index.mjs';
-import { ActiveEffectDnd35e } from '@effects/BaseActiveEffect/ActiveEffectDnd35e.mjs';
+import { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import { LogHelper } from '@helpers/index.mjs';
 import { COMBAT_KEYS } from '@settings/combat/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';

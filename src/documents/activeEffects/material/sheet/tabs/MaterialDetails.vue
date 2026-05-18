@@ -67,10 +67,10 @@
 
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import EffectDetails from '@effects/BaseActiveEffect/sheet/tabs/EffectDetails.vue';
+  import EffectDetails from '@effects/baseActiveEffect/sheet/tabs/EffectDetails.vue';
   import { ItemHardness } from '@items/components/Physical/index.mjs';
   import ItemPrice from '@items/components/Physical/sheet/components/ItemPrice.vue';
-  import { NumberFormGroup } from '@vc/Fields/index.mjs';
+  import { NumberFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   import DamageReductionTypes from '../components/DamageReductionTypes.vue';

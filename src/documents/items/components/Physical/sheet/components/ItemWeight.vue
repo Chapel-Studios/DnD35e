@@ -18,7 +18,7 @@
   import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
   import type { SettingsStore } from '@settings/shared/sheet/index.mjs';
   import { SettingsStoreSymbol } from '@settings/shared/sheet/index.mjs';
-  import { NumberFormGroup } from '@vc/Fields/index.mjs';
+  import { NumberFormGroup } from '@vc/fields/index.mjs';
   import { inject, useSlots } from 'vue';
 
   const slots = useSlots();

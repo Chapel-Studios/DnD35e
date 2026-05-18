@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
   import { type DocumentSheetStore, DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import TextFormGroup from '@vc/Fields/FormGroups/TextFormGroup.vue';
+  import TextFormGroup from '@vc/fields/formGroups/TextFormGroup.vue';
   import { inject } from 'vue';
 
   const _field = 'system.slug';

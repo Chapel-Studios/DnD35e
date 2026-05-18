@@ -1,5 +1,5 @@
-import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
-import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
+import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
+import { useActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
 import type { Secret, SecretType } from '@effects/secret/Secret.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 

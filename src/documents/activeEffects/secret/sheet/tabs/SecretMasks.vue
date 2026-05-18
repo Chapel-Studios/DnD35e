@@ -22,9 +22,9 @@
   import type { TabStore } from '@documents/document/index.mjs';
   import { DescriptionEditor } from '@documents/document/index.mjs';
   import { TabStoreSymbol } from '@documents/document/index.mjs';
-  import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/data/constants.mjs';
-  import { SYSTEM_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
-  import EffectChangesList from '@effects/BaseActiveEffect/sheet/components/EffectChangesList.vue';
+  import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
+  import { SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+  import EffectChangesList from '@effects/baseActiveEffect/sheet/components/EffectChangesList.vue';
   import { inject } from 'vue';
 
   const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;

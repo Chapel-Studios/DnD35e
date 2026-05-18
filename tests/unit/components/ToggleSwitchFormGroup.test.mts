@@ -11,7 +11,7 @@ vi.mock('@documents/document/sheet/stores/RenderModeStore.mjs', () => ({
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
 }));
 
-import ToggleSwitchFormGroup from '@vc/Fields/FormGroups/ToggleSwitchFormGroup.vue';
+import ToggleSwitchFormGroup from '@vc/fields/formGroups/ToggleSwitchFormGroup.vue';
 
 import { createMockDocumentStore, createMockRenderModeStore, makeGlobalProvide } from './setup';
 

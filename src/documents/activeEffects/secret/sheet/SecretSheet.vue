@@ -12,7 +12,7 @@
 <script lang="ts" setup>
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { DocumentSheetBody } from '@documents/document/index.mjs';
-  import DisableEffect from '@effects/BaseActiveEffect/sheet/components/DisableEffect.vue';
+  import DisableEffect from '@effects/baseActiveEffect/sheet/components/DisableEffect.vue';
   import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
   import { computed, provide } from 'vue';
 

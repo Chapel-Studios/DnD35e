@@ -13,7 +13,7 @@
  */
 
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
-import type { FieldEditability, FieldVisibility } from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+import type { FieldEditability, FieldVisibility } from '@vc/fields/formGroups/fieldPermissions.mjs';
 
 import type { FormulaDataSource } from './FormulaData.mjs';
 import { FormulaData } from './FormulaData.mjs';

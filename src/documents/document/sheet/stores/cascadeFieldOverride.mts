@@ -14,11 +14,11 @@ import type {
   FieldOverride,
   FieldOverrideKey,
   FieldVisibility,
-} from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+} from '@vc/fields/formGroups/fieldPermissions.mjs';
 import {
   everyoneVisibility,
   normalEditability,
-} from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+} from '@vc/fields/formGroups/fieldPermissions.mjs';
 
 /** Resolved (non-optional) value type for a given override key. */
 export type FieldOverrideValue<K extends FieldOverrideKey> = NonNullable<FieldOverride[K]>;

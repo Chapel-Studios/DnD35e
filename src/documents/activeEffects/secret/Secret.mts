@@ -1,4 +1,4 @@
-import { ActiveEffectDnd35e } from '@effects/BaseActiveEffect/ActiveEffectDnd35e.mjs';
+import { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 
 import type { SecretSystemData } from './data/index.mjs';
 import type { SecretEffectType } from './secretEffectType.mjs';

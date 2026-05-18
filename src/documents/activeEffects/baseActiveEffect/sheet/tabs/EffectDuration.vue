@@ -26,8 +26,8 @@
 <script setup lang="ts">
   import type { TabStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, TabStoreSymbol } from '@documents/document/index.mjs';
-  import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-  import { NumberFormGroup, SelectFormGroup } from '@vc/Fields/index.mjs';
+  import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/index.mjs';
+  import { NumberFormGroup, SelectFormGroup } from '@vc/fields/index.mjs';
   import { computed, inject } from 'vue';
 
   const { getIsTabOpen } = inject(TabStoreSymbol) as TabStore;

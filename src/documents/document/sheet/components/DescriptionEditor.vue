@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-  import { RichTextEditorFormGroup } from '@vc/Fields/index.mjs';
+  import { RichTextEditorFormGroup } from '@vc/fields/index.mjs';
 </script>
 
 <style scoped>

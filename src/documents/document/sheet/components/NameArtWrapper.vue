@@ -6,7 +6,7 @@
 
 <script lang="ts" setup>
   import { type DocumentSheetStore,DocumentSheetStoreSymbol } from '@documents/document/sheet/DocumentSheetStore.mjs';
-  import ImageField from '@vc/Fields/ImageField.vue';
+  import ImageField from '@vc/fields/ImageField.vue';
   import { inject } from 'vue';
 
   const {

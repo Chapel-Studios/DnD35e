@@ -22,7 +22,7 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { weaponSubtypeSelectOptions, weaponTypeSelectOptions } from '@items/weapon/index.mjs';
-  import { SelectFormGroup } from '@vc/Fields/index.mjs';
+  import { SelectFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   import type { WeaponStore } from '../WeaponStore.mjs';

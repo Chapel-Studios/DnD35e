@@ -1,5 +1,5 @@
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
-import { ActiveEffectConfigDnd35e } from '@effects/BaseActiveEffect/sheet/ActiveEffectConfigDnd35e.mjs';
+import { ActiveEffectConfigDnd35e } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigDnd35e.mjs';
 import type { Secret } from '@effects/secret/Secret.mjs';
 
 import SecretSheetVue from './SecretSheet.vue';

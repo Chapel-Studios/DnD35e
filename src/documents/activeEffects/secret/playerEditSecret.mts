@@ -1,4 +1,4 @@
-import { CORE_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
+import { CORE_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 
 import type { SecretSystemData } from './data/SecretSystemData.mjs';

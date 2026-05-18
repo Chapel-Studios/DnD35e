@@ -1,4 +1,4 @@
-import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 
 /**
  * General active effect system data — the standard effect data type for dnd35e.

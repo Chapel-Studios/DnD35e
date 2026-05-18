@@ -14,7 +14,7 @@
   // import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   // import type { RenderModeStore } from '@documents/document/index.mjs';
   // import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
-  // import { NumberFormGroup } from '@vc/Fields/index.mjs';
+  // import { NumberFormGroup } from '@vc/fields/index.mjs';
   // import { computed, inject } from 'vue';
 
 

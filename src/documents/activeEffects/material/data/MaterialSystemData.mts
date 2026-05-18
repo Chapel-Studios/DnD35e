@@ -1,4 +1,4 @@
-import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e, Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import type { PriceData } from '@fields/PriceData.mjs';
 import type { Price, PriceSource } from '@settings/index.mjs';
 

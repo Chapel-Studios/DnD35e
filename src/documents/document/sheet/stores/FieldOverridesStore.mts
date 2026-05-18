@@ -19,13 +19,13 @@ import type {
   FieldOverrideKey,
   FieldOverrides,
   FieldVisibility,
-} from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+} from '@vc/fields/formGroups/fieldPermissions.mjs';
 import {
   encodeFieldPath,
   everyoneVisibility,
   FIELD_OVERRIDES_FLAG,
   normalEditability,
-} from '@vc/Fields/FormGroups/fieldPermissions.mjs';
+} from '@vc/fields/formGroups/fieldPermissions.mjs';
 import type { ComputedRef, ShallowRef } from 'vue';
 import { computed } from 'vue';
 
