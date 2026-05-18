@@ -1,4 +1,4 @@
-import type { Dnd35eDocumentProperties } from '@ec/CoreMixin/Dnd35eDocument.mjs';
+import type { DocumentProperties } from '@ec/CoreMixin/DocumentDnd35e.mjs';
 import type { EvaluationDocument, FormulaRegistration } from '@ec/CoreMixin/index.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import type { ItemSourceDnd35e } from '@items/baseItem/index.mjs';
@@ -37,7 +37,7 @@ interface IdentifiableEffect {
  * Satisfied by Items (now) and Actors (Phase 6+) — both have `effects` collections.
  * Excludes ActiveEffects which lack embedded effect collections.
  */
-interface IdentifiableHostDocument extends Dnd35eDocumentProperties {
+interface IdentifiableHostDocument extends DocumentProperties {
   effects: Iterable<IdentifiableEffect>;
   prepareDerivedData(): void;
   updateEmbeddedDocuments(embeddedName: string, updates: Record<string, unknown>[]): Promise<unknown>;
@@ -49,9 +49,9 @@ type IdentifiableDocumentCtor = AbstractConstructorOf<IdentifiableHostDocument>;
 
 /**
  * Public properties added by {@link IdentifiableDocumentMixin}.
- * Extends Dnd35eDocumentProperties so the mixin chain's shape is flat for TS.
+ * Extends DocumentProperties so the mixin chain's shape is flat for TS.
  */
-interface IdentifiableDocumentProperties extends Dnd35eDocumentProperties {
+interface IdentifiableDocumentProperties extends DocumentProperties {
   /** Whether this document has any Secret AEs (even disabled). */
   readonly isIdentifiable: boolean;
   /** Whether all Secret AEs are disabled/absent — derived in prepareDerivedData. */
