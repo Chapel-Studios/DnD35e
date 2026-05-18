@@ -1,6 +1,6 @@
 import type {
   ActiveEffectSystemData,
-  Dnd35eActiveEffectSystemSource,
+  ActiveEffectSystemSourceDnd35e,
   Dnd35eEffectChangeData,
 } from './ActiveEffectSystemData.mjs';
 import { ActiveEffectSystemModel } from './ActiveEffectSystemModel.mjs';
@@ -41,9 +41,9 @@ export {
 
 export type {
   ActiveEffectSystemData,
+  ActiveEffectSystemSourceDnd35e,
   ActiveEffectTarget,
   ActiveEffectTargetLocalizationValues,
-  Dnd35eActiveEffectSystemSource,
   Dnd35eChangeType,
   Dnd35eEffectChangeData,
   EffectChangePhase,

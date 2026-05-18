@@ -2,7 +2,7 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import { DocumentMixin } from '@ec/CoreMixin/DocumentDnd35e.mjs';
 import { getDisplayName } from '@ec/CoreMixin/index.mjs';
-import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/data/constants.mjs';
 import type { EffectType } from '@effects/effectTypes.mjs';
 import { GENERAL_EFFECT_TYPE } from '@effects/effectTypes.mjs';
@@ -10,27 +10,27 @@ import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
 
-type Dnd35eActiveEffectFlags<T extends object = Record<string, unknown>> = Record<string, Record<string, unknown>> & {
+type ActiveEffectFlags<T extends object = Record<string, unknown>> = Record<string, Record<string, unknown>> & {
   dnd35e: T;
 };
 
-type Dnd35eActiveEffectSource<
+type ActiveEffectSourceDnd35e<
   TEffectType extends EffectType = EffectType,
-  TSystemSource extends Dnd35eActiveEffectSystemSource = Dnd35eActiveEffectSystemSource
+  TSystemSource extends ActiveEffectSystemSourceDnd35e = ActiveEffectSystemSourceDnd35e
 > = foundry.documents.ActiveEffectSource<TEffectType, TSystemSource>;
 
 // Apply mixin at runtime but cast to preserve generic parameter compatibility.
 // TypeScript mixins erase generics; this cast is safe because the mixin only adds
 // methods/properties and doesn't alter the constructor signature's generic behavior.
-const Dnd35eActiveEffectBase = DocumentMixin(foundry.documents.ActiveEffect) as unknown as typeof foundry.documents.ActiveEffect;
+const ActiveEffectBase = DocumentMixin(foundry.documents.ActiveEffect) as unknown as typeof foundry.documents.ActiveEffect;
 
-class Dnd35eActiveEffect<
+class ActiveEffectDnd35e<
   TParent extends ActorDnd35e | ItemDnd35e<ItemType> | null = ActorDnd35e | ItemDnd35e<ItemType> | null,
   TEffectType extends EffectType = EffectType,
   TSystemData extends ActiveEffectSystemData = ActiveEffectSystemData
 >
-  extends Dnd35eActiveEffectBase<TParent> {
-  declare flags: Dnd35eActiveEffectFlags;
+  extends ActiveEffectBase<TParent> {
+  declare flags: ActiveEffectFlags;
   declare system: TSystemData;
   declare type: TEffectType;
 
@@ -68,10 +68,10 @@ class Dnd35eActiveEffect<
   }
 }
 
-const ActiveEffectProxyDnd35e = new Proxy(Dnd35eActiveEffect, {
+const ActiveEffectProxyDnd35e = new Proxy(ActiveEffectDnd35e, {
   construct (
     _target,
-    args: [source: PreCreate<Dnd35eActiveEffectSource>, context?: DocumentConstructionContext<ActorDnd35e | ItemDnd35e<ItemType> | null>]
+    args: [source: PreCreate<ActiveEffectSourceDnd35e>, context?: DocumentConstructionContext<ActorDnd35e | ItemDnd35e<ItemType> | null>]
   ) {
     const [source] = args;
     let type = source?.type;
@@ -84,16 +84,16 @@ const ActiveEffectProxyDnd35e = new Proxy(Dnd35eActiveEffect, {
     }
 
     if (type === GENERAL_EFFECT_TYPE) {
-      return new Dnd35eActiveEffect(...args);
+      return new ActiveEffectDnd35e(...args);
     }
-    const ItemClass = CONFIG.dnd35e.activeEffect.documentClasses[type] as unknown as typeof Dnd35eActiveEffect;
+    const ItemClass = CONFIG.dnd35e.activeEffect.documentClasses[type] as unknown as typeof ActiveEffectDnd35e;
     if (!ItemClass) {
       LogHelper.error(`ActiveEffect type ${type} does not exist or is not properly supported for ActiveEffectProxyDnd35e`);
-      return new Dnd35eActiveEffect(...args);
+      return new ActiveEffectDnd35e(...args);
     }
     return new ItemClass(...args);
   },
 });
 
-export { ActiveEffectProxyDnd35e, Dnd35eActiveEffect };
-export type { Dnd35eActiveEffectFlags };
+export { ActiveEffectDnd35e, ActiveEffectProxyDnd35e };
+export type { ActiveEffectFlags, ActiveEffectSourceDnd35e };

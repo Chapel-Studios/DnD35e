@@ -18,18 +18,18 @@ interface Dnd35eEffectChangeData extends EffectChangeData {
   condition?: string | null;
 }
 
-interface Dnd35eActiveEffectSystemSource extends DocumentSystemData, Omit<ActiveEffectSystemSource, 'changes'> {
+interface ActiveEffectSystemSourceDnd35e extends DocumentSystemData, Omit<ActiveEffectSystemSource, 'changes'> {
   target: ActiveEffectTarget;
   isHidden: boolean;
   changes: Dnd35eEffectChangeData[];
 }
 
-interface ActiveEffectSystemData extends Dnd35eActiveEffectSystemSource {
+interface ActiveEffectSystemData extends ActiveEffectSystemSourceDnd35e {
 }
 
 export type {
   ActiveEffectSystemData,
+  ActiveEffectSystemSourceDnd35e,
   ActiveEffectTarget,
-  Dnd35eActiveEffectSystemSource,
   Dnd35eEffectChangeData,
 };

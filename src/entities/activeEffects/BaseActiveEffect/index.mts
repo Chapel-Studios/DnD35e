@@ -1,8 +1,15 @@
 import type {
+  ActiveEffectFlags,
+} from './ActiveEffectDnd35e.mjs';
+import {
+  ActiveEffectDnd35e,
+  ActiveEffectProxyDnd35e,
+} from './ActiveEffectDnd35e.mjs';
+import type {
   ActiveEffectSystemData,
+  ActiveEffectSystemSourceDnd35e,
   ActiveEffectTarget,
   ActiveEffectTargetLocalizationValues,
-  Dnd35eActiveEffectSystemSource,
   Dnd35eChangeType,
   Dnd35eEffectChangeData,
   EffectChangePhase,
@@ -21,13 +28,6 @@ import {
   INITIAL_EFFECT_CHANGE_PHASE,
   SYSTEM_CHANGE_TYPE,
 } from './data/index.mjs';
-import type {
-  Dnd35eActiveEffectFlags,
-} from './Dnd35eActiveEffect.mjs';
-import {
-  ActiveEffectProxyDnd35e,
-  Dnd35eActiveEffect,
-} from './Dnd35eActiveEffect.mjs';
 import type {
   ActiveEffectConfigStore,
   ActiveEffectConfigStoreDocumentActions,
@@ -50,11 +50,11 @@ export type {
   ActiveEffectConfigStore,
   ActiveEffectConfigStoreDocumentActions,
   ActiveEffectConfigStoreDocumentGetters,
+  ActiveEffectFlags,
   ActiveEffectSystemData,
+  ActiveEffectSystemSourceDnd35e,
   ActiveEffectTarget,
   ActiveEffectTargetLocalizationValues,
-  Dnd35eActiveEffectFlags,
-  Dnd35eActiveEffectSystemSource,
   Dnd35eChangeType,
   Dnd35eEffectChangeData,
   EffectChangePhase,
@@ -64,10 +64,10 @@ export type {
 
 export {
   ACTIVE_EFFECT_TARGETS,
+  ActiveEffectDnd35e,
   ActiveEffectProxyDnd35e,
   ActiveEffectSystemModel,
   ALL_CHANGE_TYPES,
-  Dnd35eActiveEffect,
   Dnd35eActiveEffectConfig,
   EFFECT_CHANGE_PHASES,
   EFFECT_CHANGE_TARGET,

@@ -71,7 +71,7 @@
 
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import type { Dnd35eActiveEffect } from '@effects/index.mjs';
+  import type { ActiveEffectDnd35e } from '@effects/index.mjs';
   import { inject, ref, useSlots } from 'vue';
 
   import type { ItemSheetStore } from '../ItemSheetStore.mjs';
@@ -81,7 +81,7 @@
     defaultCollapsed = false,
   } = defineProps<{
     label: string;
-    effects: Dnd35eActiveEffect[];
+    effects: ActiveEffectDnd35e[];
     canEdit: boolean;
     showVisibilityToggle?: boolean;
     defaultCollapsed?: boolean;
@@ -103,23 +103,23 @@
       createLocalizedComputed,
     },
   } = inject(DocumentSheetStoreSymbol) as ItemSheetStore;
-  const effectEnablementTitle = (effect: Dnd35eActiveEffect) => effect.disabled
+  const effectEnablementTitle = (effect: ActiveEffectDnd35e) => effect.disabled
     ? createLocalizedComputed('dnd35e.EFFECT.Enable')
     : createLocalizedComputed('dnd35e.EFFECT.Disable');
 
-  const handleDelete = async (effect: Dnd35eActiveEffect) => {
+  const handleDelete = async (effect: ActiveEffectDnd35e) => {
     await removeEffect(effect.id);
   };
 
-  const handleEdit = (effect: Dnd35eActiveEffect) => {
+  const handleEdit = (effect: ActiveEffectDnd35e) => {
     editEffect(effect.id);
   };
 
-  const handleToggle = async (effect: Dnd35eActiveEffect) => {
+  const handleToggle = async (effect: ActiveEffectDnd35e) => {
     await toggleEffect(effect.id);
   };
 
-  const handleToggleHidden = async (effect: Dnd35eActiveEffect) => {
+  const handleToggleHidden = async (effect: ActiveEffectDnd35e) => {
     await toggleEffectHidden(effect.id);
   };
 

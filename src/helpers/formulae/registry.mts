@@ -10,7 +10,7 @@
 
 import type { ActorType } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import type { Dnd35eActiveEffect } from '@effects/BaseActiveEffect/index.mjs';
+import type { ActiveEffectDnd35e } from '@effects/BaseActiveEffect/index.mjs';
 import type { EffectType } from '@effects/effectTypes.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
@@ -20,7 +20,7 @@ import type { AspectGroup, FamiliarContext, FamiliarSchema, FormulaFieldData } f
 import { mergeAspectGroups } from './utils.mjs';
 
 /** Union of all Foundry document classes that can serve as familiar context. */
-export type NonNullDocumentContext = ItemDnd35e | ActorDnd35e | Dnd35eActiveEffect;
+export type NonNullDocumentContext = ItemDnd35e | ActorDnd35e | ActiveEffectDnd35e;
 export type DocumentContext = NonNullDocumentContext | null;
 
 export type ContextDocumentType = ItemType | EffectType | ActorType;

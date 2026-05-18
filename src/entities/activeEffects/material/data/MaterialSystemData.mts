@@ -1,4 +1,4 @@
-import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e, Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import type { Price, PriceSource } from '@settings/index.mjs';
 import type { PriceData } from '@settings/index.mjs';
 
@@ -17,7 +17,7 @@ interface MaterialEffectChangeData extends Dnd35eEffectChangeData {
   value: string | number | Price;
 }
 
-interface MaterialSystemSource extends MaterialSystemStats, Dnd35eActiveEffectSystemSource {
+interface MaterialSystemSource extends MaterialSystemStats, ActiveEffectSystemSourceDnd35e {
   changes: MaterialEffectChangeData[];
 }
 

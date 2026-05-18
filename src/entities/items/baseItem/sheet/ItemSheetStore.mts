@@ -6,7 +6,7 @@ import type {
   SheetTab,
 } from '@ec/CoreMixin/index.mjs';
 import { defaultDetailsTab, useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import { Dnd35eActiveEffect } from '@effects/BaseActiveEffect/Dnd35eActiveEffect.mjs';
+import { ActiveEffectDnd35e } from '@effects/BaseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectType } from '@effects/effectTypes.mjs';
 import { EFFECT_TYPES } from '@effects/effectTypes.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
@@ -44,12 +44,12 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
   // with Foundry's EmbeddedCollection proxy (non-configurable property error)
   const hiddenEffectTypeIds = ref<Set<string>>(new Set());
   const allEffects = computed(() => [...(document.value.effects ?? [])]
-    .filter((effect: Dnd35eActiveEffect) => !hiddenEffectTypeIds.value.has(effect.type))
+    .filter((effect: ActiveEffectDnd35e) => !hiddenEffectTypeIds.value.has(effect.type))
   );
   // Non-GM users cannot see effects with isHidden: true
   const effects = computed(() => isGM
     ? allEffects.value
-    : allEffects.value.filter((e: Dnd35eActiveEffect) => !e.system.isHidden)
+    : allEffects.value.filter((e: ActiveEffectDnd35e) => !e.system.isHidden)
   );
   const getEffectsForField = (fieldPath: string) => computed(() => document.value.overrides?.[fieldPath]
     ? document.value.overrides?.[fieldPath] as []
@@ -58,9 +58,9 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
   const itemDocumentGetters = {
     ...baseStore.documentGetters,
     effects,
-    temporaryEffects: computed(() => effects.value.filter((e: Dnd35eActiveEffect) => !e.disabled && e.isTemporary)),
-    passiveEffects: computed(() => effects.value.filter((e: Dnd35eActiveEffect) => !e.disabled && !e.isTemporary)),
-    inactiveEffects: computed(() => effects.value.filter((e: Dnd35eActiveEffect) => e.disabled)),
+    temporaryEffects: computed(() => effects.value.filter((e: ActiveEffectDnd35e) => !e.disabled && e.isTemporary)),
+    passiveEffects: computed(() => effects.value.filter((e: ActiveEffectDnd35e) => !e.disabled && !e.isTemporary)),
+    inactiveEffects: computed(() => effects.value.filter((e: ActiveEffectDnd35e) => e.disabled)),
     hasOwner,
     getEffectsForField,
     hasEffectsForField: (fieldPath: string) => computed(() => getEffectsForField(fieldPath).value.length > 0),
@@ -97,13 +97,13 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
         origin: document.value.uuid,
         disabled: false,
       };
-      // TODO(Phase 7): fix type definitions — add createDialog static method signature to Dnd35eActiveEffect
-      await (Dnd35eActiveEffect as any).createDialog(effectData, {
+      // TODO(Phase 7): fix type definitions — add createDialog static method signature to ActiveEffectDnd35e
+      await (ActiveEffectDnd35e as any).createDialog(effectData, {
         parent: document.value,
       }, {
         types: Object.keys(EFFECT_TYPES),
       });
-      // const createData = Dnd35eActiveEffect.createDialog(effectData);
+      // const createData = ActiveEffectDnd35e.createDialog(effectData);
       // await document.value.createEmbeddedDocuments('ActiveEffect', [createData]);
       triggerRef(document);
     },
@@ -140,10 +140,10 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
 };
 
 type ItemDocumentGetters = DocumentSheetStoreDocumentGetters & {
-  effects: ComputedRef<Dnd35eActiveEffect[]>,
-  temporaryEffects: ComputedRef<Dnd35eActiveEffect[]>,
-  passiveEffects: ComputedRef<Dnd35eActiveEffect[]>,
-  inactiveEffects: ComputedRef<Dnd35eActiveEffect[]>,
+  effects: ComputedRef<ActiveEffectDnd35e[]>,
+  temporaryEffects: ComputedRef<ActiveEffectDnd35e[]>,
+  passiveEffects: ComputedRef<ActiveEffectDnd35e[]>,
+  inactiveEffects: ComputedRef<ActiveEffectDnd35e[]>,
   hasOwner: ComputedRef<boolean>;
   getEffectsForField: (fieldPath: string) => ComputedRef<object[]>;
 };
