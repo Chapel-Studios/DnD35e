@@ -15,13 +15,13 @@ const {
   SchemaField,
 } = foundry.data.fields;
 
-interface Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataModel | null> extends foundry.abstract.TypeDataModel<
+interface DocumentSystemModel<TDocType extends foundry.abstract.DataModel | null> extends foundry.abstract.TypeDataModel<
   TDocType,
   foundry.abstract.DataSchema
 >, DocumentSystemData {
 }
 
-abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataModel | null> extends foundry.abstract.TypeDataModel<
+abstract class DocumentSystemModel<TDocType extends foundry.abstract.DataModel | null> extends foundry.abstract.TypeDataModel<
   TDocType,
   foundry.abstract.DataSchema
 > {
@@ -127,5 +127,5 @@ abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataM
 }
 
 export {
-  Dnd35eDocumentSystemModel,
+  DocumentSystemModel,
 };

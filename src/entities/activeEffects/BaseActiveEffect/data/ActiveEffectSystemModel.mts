@@ -1,4 +1,4 @@
-import { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSystemModel.mjs';
+import { DocumentSystemModel } from '@ec/CoreMixin/data/DocumentSystemModel.mjs';
 import { EFFECT_TARGET } from '@effects/effectTypes.mjs';
 import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
 import { ensureNameFormula } from '@helpers/formulae/index.mjs';
@@ -15,7 +15,7 @@ const {
   AnyField,
 } = foundry.data.fields;
 
-class ActiveEffectSystemModel extends Dnd35eDocumentSystemModel<foundry.documents.ActiveEffect> {
+class ActiveEffectSystemModel extends DocumentSystemModel<foundry.documents.ActiveEffect> {
   /**
    * Declares which item/actor subtypes this effect type can target.
    * Used by AspectPicker to build autocomplete contexts.

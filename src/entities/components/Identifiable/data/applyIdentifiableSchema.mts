@@ -1,6 +1,6 @@
-import type { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSystemModel.mjs';
+import type { DocumentSystemModel } from '@ec/CoreMixin/data/DocumentSystemModel.mjs';
 
-type SystemModelCtor = AbstractConstructorOf<Dnd35eDocumentSystemModel<any>> & {
+type SystemModelCtor = AbstractConstructorOf<DocumentSystemModel<any>> & {
   defineSchema(): Record<string, any>;
   LOCALIZATION_PREFIXES: string[];
 };

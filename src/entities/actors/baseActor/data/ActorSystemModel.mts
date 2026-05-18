@@ -1,8 +1,8 @@
-import { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSystemModel.mjs';
+import { DocumentSystemModel } from '@ec/CoreMixin/data/DocumentSystemModel.mjs';
 
 import type { ActorSystemData } from './ActorSystemData.mjs';
 
-abstract class ActorSystemModel extends Dnd35eDocumentSystemModel<foundry.documents.Actor> {
+abstract class ActorSystemModel extends DocumentSystemModel<foundry.documents.Actor> {
   static override defineSchema (): Record<string, any> {
     const schema = super.defineSchema();
 
