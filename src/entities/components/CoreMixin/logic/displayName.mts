@@ -1,4 +1,4 @@
-import type { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
+import type { DocumentSystemData } from '@ec/CoreMixin/index.mjs';
 import type { FormulaDataSource } from '@helpers/formulae/FormulaData.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { buildDocumentDataMap } from '@helpers/formulae/utils.mjs';
@@ -58,7 +58,7 @@ const getEffectiveNameFormulaSource = <TSystemData extends NameFormulaCarrier = 
   return systemData.nameFormula ?? null;
 };
 
-const getDisplayName = <TSystemData extends BaseDnd35eSystemData = BaseDnd35eSystemData> (documentName: string, systemData: TSystemData, conversionContext: any): string => {
+const getDisplayName = <TSystemData extends DocumentSystemData = DocumentSystemData> (documentName: string, systemData: TSystemData, conversionContext: any): string => {
   const identifiedFormula = getEffectiveNameFormulaSource(documentName, systemData, conversionContext);
   if (!identifiedFormula?.formula) return documentName;
 

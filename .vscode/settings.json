@@ -28,5 +28,8 @@
   "files.associations": {
     "*.mts": "typescript",
     "*.hbs": "handlebars"
+  },
+  "chat.tools.terminal.autoApprove": {
+    "npx vitest": true
   }
 }

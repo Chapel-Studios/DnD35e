@@ -1,7 +1,7 @@
 import type {
-  BaseDnd35eSystemData,
   Dnd35eBaseFlags,
   Dnd35eDocumentFlags,
+  DocumentSystemData,
 } from './data/index.mjs';
 import type {
   NameFormulaDocument,
@@ -76,7 +76,6 @@ export {
 };
 
 export type {
-  BaseDnd35eSystemData,
   Dnd35eBaseFlags,
   Dnd35eDocumentFlags,
   DocumentSheetStore,
@@ -85,6 +84,7 @@ export type {
   DocumentSheetStoreTabActions,
   DocumentSheetStoreTabGetters,
   DocumentSheetStoreUtils,
+  DocumentSystemData,
   EvaluationDocument,
   FieldMeta,
   FieldOverridesStore,
