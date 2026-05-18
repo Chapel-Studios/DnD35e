@@ -2,9 +2,9 @@ import type { documents } from '@client/_module.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type AmbientLight from '@client/canvas/placeables/light.mjs';
 import type MeasuredTemplate from '@client/canvas/placeables/template.mjs';
-import type { RegionDocumentDnd35e } from '@scene/region-document/RegionDocumentDnd35e.mjs';
+import type { RegionDocumentDnd35e } from '@scene/regionDocument/RegionDocumentDnd35e.mjs';
 import type { SceneDnd35e } from '@scene/SceneDnd35e.mjs';
-import type { TokenDocumentDnd35e } from '@scene/token-document/index.mjs';
+import type { TokenDocumentDnd35e } from '@scene/tokenDocument/index.mjs';
 
 import type { RegionDnd35e } from './RegionDnd35e.mjs';
 import type { TokenDnd35e } from './token/TokenDnd35e.mjs';

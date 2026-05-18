@@ -16,7 +16,7 @@ export default defineConfig({
       '@items': path.resolve(__dirname, 'src/documents/items'),
       '@actors': path.resolve(__dirname, 'src/documents/actors'),
       '@documents': path.resolve(__dirname, 'src/documents'),
-      '@scene': path.resolve(__dirname, 'src/scene'),
+      '@scene': path.resolve(__dirname, 'src/documents/scene'),
       '@settings': path.resolve(__dirname, 'src/settings'),
       '@source': path.resolve(__dirname, 'src'),
       '@effects': path.resolve(__dirname, 'src/documents/activeEffects'),

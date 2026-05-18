@@ -9,7 +9,7 @@ import { resolveActiveEffectChange } from '@effects/BaseActiveEffect/logic/resol
 import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
-import type { TokenDocumentDnd35e } from '@scene/token-document/TokenDocumentDnd35e.mjs';
+import type { TokenDocumentDnd35e } from '@scene/tokenDocument/TokenDocumentDnd35e.mjs';
 
 import type { ActorSystemData } from './index.mjs';
 
