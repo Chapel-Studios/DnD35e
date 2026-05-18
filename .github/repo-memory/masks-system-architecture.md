@@ -63,8 +63,8 @@ if (masks && fieldPath in masks) {
 
 ## Related
 
-- `src/entities/items/baseItem/ItemDnd35e.mts` — `_buildMasks()`, `_masks` property
-- `src/entities/components/CoreMixin/sheet/DocumentSheetStore.mts` — `getViewAwareFieldValue()` masks check
-- `src/entities/activeEffects/secret/` — Secret AE type that carries MASK changes
+- `src/documents/items/baseItem/ItemDnd35e.mts` — `_buildMasks()`, `_masks` property
+- `src/documents/document/sheet/DocumentSheetStore.mts` — `getViewAwareFieldValue()` masks check
+- `src/documents/activeEffects/secret/` — Secret AE type that carries MASK changes
 - `foundry-type-augmentation.md` — How MASK type is registered in the type system
 - `dnd35e-naming-convention.md` — Why const is `DND35E_CHANGE_TYPE.MASK` not `SYSTEM_CHANGE_TYPE.MASK`

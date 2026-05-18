@@ -1,6 +1,6 @@
 # Refactor: Naming & Layout Conventions (src-wide)
 
-**Status**: 📋 Planned
+**Status**: ✅ Complete
 **Type**: Cross-cutting refactor (mini-phase)
 **Branch**: `poc/refactor-naming-conventions` (off `origin/dev`)
 **Dependencies**: None (pure rename / relocation / re-export work, no runtime behavior change)
@@ -311,7 +311,7 @@ One row per rename unit. "Symbols" lists all in-file symbol renames; "—" means
 | Old | New | Note |
 | --- | --- | ---- |
 | `Dnd35eParentDoc` | `ParentDoc` | no collision |
-| `Dnd35eFieldMeta` | `FieldMeta` | no collision |
+| `Dnd35eFieldMeta` | `SchemaFieldMeta` | collision with `FieldOverridesStore.FieldMeta` discovered during PR 15; suffix-form `FieldMeta` already exists as the sheet-store runtime-resolved meta, so the schema-definition meta took the descriptive `SchemaFieldMeta` name |
 | `Dnd35eOverrideOptions` | `OverrideOptions` | no collision |
 | `Dnd35eSystemConfig` | `SystemConfig` | verify; escalate to `SystemConfigDnd35e` if needed |
 | `Dnd35eBaseFlags` | `BaseFlags` | `Base` prefix is the accurate descriptor |
@@ -575,19 +575,19 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 
 ### Group 9: Helper-type prefix sweep
 - [x] G9.1 — Verified-collision rename first: `Dnd35eEffectChangeData` → `EffectChangeDataDnd35e` (file + symbol + imports).
-- [x] G9.2 — Bare renames: `Dnd35eParentDoc` → `ParentDoc`, `Dnd35eFieldMeta` → `FieldMeta`, `Dnd35eOverrideOptions` → `OverrideOptions`, `Dnd35eSectionField` → `SectionField`, `Dnd35eBaseFlags` → `BaseFlags`, `Dnd35eChangeType` → `ChangeType`, `DND35E_CHANGE_TYPE` → `CHANGE_TYPE`.
+- [x] G9.2 — Bare renames: `Dnd35eParentDoc` → `ParentDoc`, `Dnd35eFieldMeta` → `SchemaFieldMeta` (collision with `FieldOverridesStore.FieldMeta` — see R.3.3), `Dnd35eOverrideOptions` → `OverrideOptions`, `Dnd35eSectionField` → `SectionField`, `Dnd35eBaseFlags` → `BaseFlags`, `Dnd35eChangeType` → `ChangeType`, `DND35E_CHANGE_TYPE` → `CHANGE_TYPE`.
 - [x] G9.3 — Verify-during-execution: confirm `Dnd35eSystemConfig` → `SystemConfig` does not collide with Foundry; if it does, use `SystemConfigDnd35e`.
 - [x] G9.4 — Update all imports / barrels; eslint --fix.
 - [x] G9.5 — `grep_search` workspace-wide for `Dnd35e` — remaining matches should be only the verified colliding names (`*Dnd35e` suffix form) plus planning docs.
 - [x] G9.6 — `npm run build` clean; commit.
 
 ### Final validation
-- [ ] FV.1 — Workspace `grep_search` for old prefix forms (`DnD35e`, `BaseDnd35eSystemData`, `BaseDnd35eSystemSource`, `ItemSystemModelBase`, `ActorSystemModelBase`, `ActiveEffectSystemModelBase`, `PhysicalSystemData.mjs`, `PhysicalItemDnd35e`, `BaseItemSheet`, `applyIdentifiableSchema.mjs`, `Dnd35eDocument` class, `Dnd35eDocumentMixin`, `Dnd35eDocumentSystemModel`, `Dnd35eDocumentFlags`, `Dnd35eDocumentProperties`, `Dnd35eDocumentConstructor`, `Dnd35eActiveEffect` class, `Dnd35eActiveEffectFlags`, `Dnd35eActiveEffectConfig`, `Dnd35eActiveEffectSystemSource`, `Dnd35eActiveEffectSource`, `Dnd35eParentDoc`, `Dnd35eFieldMeta`, `Dnd35eOverrideOptions`, `Dnd35eSectionField`, `Dnd35eSystemConfig`, `Dnd35eBaseFlags`, `Dnd35eEffectChangeData`, `Dnd35eChangeType`, `DND35E_CHANGE_TYPE`, `tokenDnd35e` (lowercase class form), `logHelper.mjs`, `src/scene/`, `region-document`, `token-document`, `region-behaviour`, `@settings/_types`, `@settings/constants`, `_types.mjs`, `_types.mts`, `@ec/`, `@entities/`, `src/entities/`, inline `getSchemaField` definitions, inline `syncOpenSheetTitle` definitions, top-level `BaseActiveEffect/resolveChangeValue.mjs`). Production code must show zero matches; planning docs / changelog allowed.
-- [ ] FV.2 — `npm run build` clean
-- [ ] FV.3 — `npx vitest run` green
-- [ ] FV.4 — **Full Playwright E2E suite** (`npx playwright test`) green on the final merged `dev` tree (one last sanity pass; each PR already ran E2E pre-merge).
-- [ ] FV.5 — `.github/copilot-instructions.md` and `.github/instructions/dnd35e-patterns.instructions.md` updated to reflect the new `documents/` vocabulary, the suffix rule (with verified-collision exceptions), the `Base`-over-`Dnd35e` preference, the file-name-vs-grouped-helpers exception, the R.2.9 file-casing rule, and the R.2.10 `types.mts` convention.
-- [ ] FV.6 — Mark this phase doc Complete (no roadmap row needed — see R.7).
+- [x] FV.1 — Workspace `grep_search` for old prefix forms (`DnD35e`, `BaseDnd35eSystemData`, `BaseDnd35eSystemSource`, `ItemSystemModelBase`, `ActorSystemModelBase`, `ActiveEffectSystemModelBase`, `PhysicalSystemData.mjs`, `PhysicalItemDnd35e`, `BaseItemSheet`, `applyIdentifiableSchema.mjs`, `Dnd35eDocument` class, `Dnd35eDocumentMixin`, `Dnd35eDocumentSystemModel`, `Dnd35eDocumentFlags`, `Dnd35eDocumentProperties`, `Dnd35eDocumentConstructor`, `Dnd35eActiveEffect` class, `Dnd35eActiveEffectFlags`, `Dnd35eActiveEffectConfig`, `Dnd35eActiveEffectSystemSource`, `Dnd35eActiveEffectSource`, `Dnd35eParentDoc`, `Dnd35eFieldMeta`, `Dnd35eOverrideOptions`, `Dnd35eSectionField`, `Dnd35eSystemConfig`, `Dnd35eBaseFlags`, `Dnd35eEffectChangeData`, `Dnd35eChangeType`, `DND35E_CHANGE_TYPE`, `tokenDnd35e` (lowercase class form), `logHelper.mjs`, `src/scene/`, `region-document`, `token-document`, `region-behaviour`, `@settings/_types`, `@settings/constants`, `_types.mjs`, `_types.mts`, `@ec/`, `@entities/`, `src/entities/`, inline `getSchemaField` definitions, inline `syncOpenSheetTitle` definitions, top-level `BaseActiveEffect/resolveChangeValue.mjs`). Production code must show zero matches; planning docs / changelog allowed.
+- [x] FV.2 — `npm run build` clean
+- [x] FV.3 — `npx vitest run` green
+- [x] FV.4 — **Full Playwright E2E suite** (`npx playwright test`) green on the final merged `dev` tree (one last sanity pass; each PR already ran E2E pre-merge).
+- [x] FV.5 — `.github/copilot-instructions.md` and `.github/instructions/dnd35e-patterns.instructions.md` updated to reflect the new `documents/` vocabulary, the suffix rule (with verified-collision exceptions), the `Base`-over-`Dnd35e` preference, the file-name-vs-grouped-helpers exception, the R.2.9 file-casing rule, and the R.2.10 `types.mts` convention.
+- [x] FV.6 — Mark this phase doc Complete (no roadmap row needed — see R.7).
 
 ---
 

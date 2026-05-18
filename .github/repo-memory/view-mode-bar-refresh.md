@@ -9,7 +9,7 @@
 - **Reactivity is provided by the AE hook chain**: `createActiveEffect`,
   `updateActiveEffect`, and `deleteActiveEffect` all route through
   `refreshOwningItemForSecret` in
-  `src/entities/activeEffects/registration.mts`, which calls
+  `src/documents/activeEffects/registration.mts`, which calls
   `item.sheet.render()` when the open item sheet is rendered. That
   re-render fires `_onRender`, which resamples `hasSecrets`.
 - **Consequence**: structural bar changes (True button appearing or

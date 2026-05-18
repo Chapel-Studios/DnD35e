@@ -122,7 +122,7 @@ The currently selected button carries `.active`. Clicking another button moves `
 ### Secret AE removal — reactivity contract
 Two facts to remember when mutating Secret AEs in a test:
 
-1. **The True button updates automatically.** Creating, updating, or deleting a Secret AE on an Item fires the `createActiveEffect` / `updateActiveEffect` / `deleteActiveEffect` hook chain, which calls `item.sheet.render()` via `refreshOwningItemForSecret` (`src/entities/activeEffects/registration.mts`). `_onRender` re-samples `hasSecrets` and pushes it to the store, so the bar refreshes without any explicit `rerenderSheet` call. If you ever find yourself needing a manual rerender to surface a Secret-AE change, **that's a bug in the hook, not the test**.
+1. **The True button updates automatically.** Creating, updating, or deleting a Secret AE on an Item fires the `createActiveEffect` / `updateActiveEffect` / `deleteActiveEffect` hook chain, which calls `item.sheet.render()` via `refreshOwningItemForSecret` (`src/documents/activeEffects/registration.mts`). `_onRender` re-samples `hasSecrets` and pushes it to the store, so the bar refreshes without any explicit `rerenderSheet` call. If you ever find yourself needing a manual rerender to surface a Secret-AE change, **that's a bug in the hook, not the test**.
 2. **Disabled Secret AEs still count as secrets.** The "does this doc have secrets?" check filters by `effect.type === 'secret'` only — it does not inspect `disabled`. To make the True button go away you must `.delete()` the AE (or change its type). Toggling `disabled` keeps it.
 
 ```ts

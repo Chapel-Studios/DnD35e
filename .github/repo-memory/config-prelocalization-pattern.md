@@ -49,7 +49,7 @@ CONFIG.dnd35e.item = { ...CONFIG.dnd35e.item, ...ItemConfig };
 CONFIG.dnd35e.item = ItemConfig;
 ```
 
-Both `src/entities/items/registration.mts` and `src/entities/activeEffects/registration.mts` use spread merge.
+Both `src/documents/items/registration.mts` and `src/documents/activeEffects/registration.mts` use spread merge.
 
 ## i18n Key Naming Convention
 

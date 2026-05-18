@@ -49,7 +49,7 @@ Document sheets use a unified 3-state mode model rendered via a header mode bar:
 - `useDocumentSheetStore.isEditable`: true only when user can edit and mode is `edit`
 - `getViewAwareFieldValue()` applies mask/effective logic for `play`; true-value behavior is available only in `true`
 
-## FormGroup Components (`src/vue/components/Fields/FormGroups/`)
+## FormGroup Components (`src/vue/components/fields/formGroups/`)
 All form input components share a common `editValue` pattern that must respect `ViewMode` (`edit`/`play`/`true`).
 
 ### Complete list
