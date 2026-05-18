@@ -4,7 +4,7 @@ import {
   requiredBooleanField,
   requiredNullableStringField,
   useDnd35eField,
-} from '@helpers/fieldBuilders.mjs';
+} from '@fields/fieldBuilders.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import { EquippableItemSystemModel } from '@items/components/Equippable/data/index.mjs';
 

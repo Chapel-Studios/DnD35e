@@ -24,7 +24,5 @@ export {
   SRD_COINAGES,
   USER_COIN_PREFIX,
 } from './constants.mjs';
-export { PriceData } from './PriceData.mjs';
-export { PriceField } from './PriceField.mjs';
 export { registerCurrencySettings } from './registration.mjs';
 export { CurrencySettingsConfig } from './sheet/index.mjs';

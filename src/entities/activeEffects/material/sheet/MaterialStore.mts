@@ -5,7 +5,7 @@ import { useActiveEffectConfigStore } from '@effects/BaseActiveEffect/sheet/Acti
 import { getDefaultActiveEffectTabs } from '@effects/BaseActiveEffect/sheet/tabs/index.mjs';
 import type { MaterialType } from '@effects/material/Material.mjs';
 import { Material } from '@effects/material/Material.mjs';
-import { PriceData } from '@settings/currency/index.mjs';
+import { PriceData } from '@fields/PriceData.mjs';
 import type { DamageReductionTypesConfig } from '@settings/gameRules/_types.mjs';
 import { GAME_RULES_KEYS } from '@settings/gameRules/constants.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';

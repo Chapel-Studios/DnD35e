@@ -80,11 +80,11 @@
 
 <script setup lang="ts">
   import { type DocumentSheetStore, DocumentSheetStoreSymbol, type RenderModeStore,RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { PriceData } from '@fields/PriceData.mjs';
   import type { CoinageDefinition, CoinStack, PriceSource } from '@settings/currency/index.mjs';
   import {
     coinageVisibilityGmOnly,
     coinageVisibilityGmSelect,
-    PriceData,
   } from '@settings/currency/index.mjs';
   import { computed, inject } from 'vue';
 

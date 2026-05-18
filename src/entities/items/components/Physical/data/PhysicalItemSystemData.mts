@@ -1,8 +1,8 @@
 import type { Size } from '@constants/sizes.mjs';
 import type { IdentifiableDocumentSystemData } from '@entities/components/Identifiable/index.mjs';
+import type { PriceData } from '@fields/PriceData.mjs';
 import type { ItemSystemSource } from '@items/baseItem/index.mjs';
 import type { PriceSource } from '@settings/currency/index.mjs';
-import type { PriceData } from '@settings/currency/index.mjs';
 
 interface PhysicalItemSystemSource {
   quantity: number;

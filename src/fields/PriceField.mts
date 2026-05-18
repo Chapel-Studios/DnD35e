@@ -15,7 +15,8 @@
  * - Raw CoinStack arrays (from programmatic change building)
  */
 
-import type { CoinStack } from './_types.mjs';
+import type { CoinStack } from '@settings/currency/_types.mjs';
+
 import { PriceData } from './PriceData.mjs';
 
 const { EmbeddedDataField } = foundry.data.fields;

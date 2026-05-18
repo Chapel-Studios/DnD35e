@@ -6,10 +6,10 @@ import {
   requiredBooleanField,
   requiredNumberField,
   useDnd35eField,
-} from '@helpers/fieldBuilders.mjs';
-import { Dnd35eSectionField } from '@helpers/fields/index.mjs';
+} from '@fields/fieldBuilders.mjs';
+import { PriceField } from '@fields/PriceField.mjs';
+import { SectionField } from '@fields/SectionField.mjs';
 import { ItemSystemModel } from '@items/baseItem/data/index.mjs';
-import { PriceField } from '@settings/currency/PriceField.mjs';
 
 import type { PhysicalItemSystemData } from './PhysicalItemSystemData.mjs';
 
@@ -30,7 +30,7 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     const schema = super.defineSchema();
 
     // Physical
-    schema.hp = new Dnd35eSectionField({
+    schema.hp = new SectionField({
       current: useDnd35eField(requiredNumberField(0)),
       max: useDnd35eField(requiredNumberField(0)),
     });

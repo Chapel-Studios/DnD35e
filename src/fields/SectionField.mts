@@ -1,5 +1,5 @@
 /**
- * Dnd35eSectionField — A SchemaField that carries override-related options
+ * SectionField — A SchemaField that carries override-related options
  * (defaultVisibility, defaultEditability, canVisibilityBeChanged,
  * canEditabilityBeChanged) discoverable at runtime via `field.options`.
  *
@@ -15,7 +15,7 @@ import { everyoneVisibility, normalEditability } from '@vc/Fields/FormGroups/fie
 
 const { SchemaField } = foundry.data.fields;
 
-interface Dnd35eSectionFieldOptions {
+interface SectionFieldOptions {
   /** Default visibility when no GM override is saved. Default: 'everyone'. */
   defaultVisibility?: FieldVisibility;
   /** Default editability when no GM override is saved. Default: 'normal'. */
@@ -32,7 +32,7 @@ interface Dnd35eSectionFieldOptions {
  * Thin SchemaField wrapper whose only purpose is to carry override options
  * so that `resolveFieldMeta` can discover them via `field.options`.
  */
-class Dnd35eSectionField extends SchemaField {
+class SectionField extends SchemaField {
   declare options: {
     defaultVisibility: FieldVisibility;
     defaultEditability: FieldEditability;
@@ -43,7 +43,7 @@ class Dnd35eSectionField extends SchemaField {
   };
   constructor(
     fields: Record<string, foundry.data.fields.DataField>,
-    sectionOptions: Dnd35eSectionFieldOptions = { label: '', hint: '' }
+    sectionOptions: SectionFieldOptions = { label: '', hint: '' }
   ) {
     const {
       defaultVisibility,
@@ -70,5 +70,5 @@ class Dnd35eSectionField extends SchemaField {
   }
 }
 
-export { Dnd35eSectionField };
-export type { Dnd35eSectionFieldOptions };
+export { SectionField };
+export type { SectionFieldOptions };
