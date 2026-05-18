@@ -495,16 +495,16 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G5f.9 — `npm run build` clean; commit
 
 ### Group 5g: `helpers/` relocations (field-related files)
-- [ ] G5g.1 — Create `src/fields/` directory + `src/fields/index.mts` (empty barrel)
-- [ ] G5g.2 — Add `@fields/*` → `./src/fields/*` to `tsconfig.json`, `vite.config.ts`, `vitest.config.ts` (all three configs)
-- [ ] G5g.3 — `git mv src/helpers/fields/Dnd35eSectionField.mts src/fields/SectionField.mts`; rename symbol `Dnd35eSectionField` → `SectionField` (this is the R.3.2 promotion); update importers
-- [ ] G5g.4 — `git mv src/helpers/fieldBuilders.mts src/fields/fieldBuilders.mts`; update importers
-- [ ] G5g.5 — `git mv src/settings/currency/PriceField.mts src/fields/PriceField.mts`; update importers; workspace `grep_search` for `@settings/currency/PriceField`
-- [ ] G5g.6 — `git mv src/settings/currency/PriceData.mts src/fields/PriceData.mts`; update importers; workspace `grep_search` for `@settings/currency/PriceData`
-- [ ] G5g.7 — Update `src/fields/index.mts` to export all relocated files
-- [ ] G5g.8 — Delete the now-empty `src/helpers/fields/` directory + its `index.mts`
-- [ ] G5g.9 — `npm run build` clean; commit
-- [ ] G5g.5 — `npm run build` clean; commit
+- [x] G5g.1 — Create `src/fields/` directory + `src/fields/index.mts` (empty barrel)
+- [x] G5g.2 — Add `@fields/*` → `./src/fields/*` to `tsconfig.json`, `vite.config.ts`, `vitest.config.ts` (all three configs)
+- [x] G5g.3 — `git mv src/helpers/fields/Dnd35eSectionField.mts src/fields/SectionField.mts`; rename symbol `Dnd35eSectionField` → `SectionField` (this is the R.3.2 promotion); update importers
+- [x] G5g.4 — `git mv src/helpers/fieldBuilders.mts src/fields/fieldBuilders.mts`; update importers
+- [x] G5g.5 — `git mv src/settings/currency/PriceField.mts src/fields/PriceField.mts`; update importers; workspace `grep_search` for `@settings/currency/PriceField`
+- [x] G5g.6 — `git mv src/settings/currency/PriceData.mts src/fields/PriceData.mts`; update importers; workspace `grep_search` for `@settings/currency/PriceData`
+- [x] G5g.7 — Update `src/fields/index.mts` to export all relocated files
+- [x] G5g.8 — Delete the now-empty `src/helpers/fields/` directory + its `index.mts`
+- [x] G5g.9 — `npm run build` clean; commit
+- [x] G5g.5 — `npm run build` clean; commit
 
 ### Group 5h: `_types.mts` → `types.mts` repo-wide
 - [ ] G5h.1 — Workspace `file_search` for `_types.mts` to inventory all files
