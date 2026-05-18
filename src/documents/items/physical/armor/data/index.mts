@@ -1,4 +1,9 @@
 import type {
+  ArmorSystemData,
+  ArmorSystemSource,
+} from './ArmorSystemData.mjs';
+import { ArmorSystemModel } from './ArmorSystemModel.mjs';
+import type {
   ArmorBaseType,
   ArmorSubtype,
   ArmorType,
@@ -12,11 +17,6 @@ import {
   ArmorSubtypeSelectOptions,
   ArmorTypeSelectOptions,
 } from './constants.mjs';
-import type {
-  ArmorSystemData,
-  ArmorSystemSource,
-} from './ArmorSystemData.mjs';
-import { ArmorSystemModel } from './ArmorSystemModel.mjs';
 
 export type {
   ArmorBaseType,

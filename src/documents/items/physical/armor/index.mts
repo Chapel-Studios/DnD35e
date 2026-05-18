@@ -1,6 +1,9 @@
+import {
+  Armor,
+} from './Armor.mjs';
 import type {
   ArmorBaseType,
-//  ArmorDamage,
+  //  ArmorDamage,
   ArmorSubtype,
   ArmorSystemData,
   ArmorSystemSource,
@@ -22,19 +25,15 @@ import type {
   ArmorStore,
 } from './sheet/index.mjs';
 import {
-  useArmorStore,
   ArmorDetails,
   armorDetailsTab,
   ArmorSheet,
   ArmorSheetVue,
   ArmorSummary,
+  useArmorStore,
 } from './sheet/index.mjs';
-import {
-  Armor,
-} from './Armor.mjs';
 
 export {
-  useArmorStore,
   Armor,
   ARMOR_BASE_TYPES,
   ARMOR_SUBTYPE_LOCALIZED,
@@ -49,6 +48,7 @@ export {
   ArmorSummary,
   ArmorSystemModel,
   ArmorTypeSelectOptions,
+  useArmorStore,
 };
 
 export type {

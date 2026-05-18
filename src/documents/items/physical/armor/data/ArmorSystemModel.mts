@@ -1,56 +1,59 @@
-import { DAMAGE_TYPES } from '@constants/attacks/damageTypes.mjs';
 import {
-  optionalStringField,
   requiredBooleanField,
   requiredNullableStringField,
-} from '@helpers/fieldBuilders.mjs';
-import { Dnd35eField } from '@helpers/fields/index.mjs';
+  useDnd35eField,
+} from '@fields/fieldBuilders.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
-import { EquippableItemSystemModel } from '@items/components/Equippable/index.mjs';
+import { EquippableItemSystemModel } from '@items/physical/equippableItem/data/index.mjs';
 
-import { ARMOR_BASE_TYPES,ARMOR_SUBTYPES, ARMOR_TYPES } from '@items/armor/index.mjs';
+import type { ArmorSystemData } from './ArmorSystemData.mjs';
+import { ARMOR_SUBTYPES, ARMOR_TYPES } from './constants.mjs';
 
 const {
   fields: {
-    NumberField,
-    SchemaField,
     StringField,
   },
 } = foundry.data;
 
 class ArmorSystemModel extends EquippableItemSystemModel {
+  static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.ARMOR'];
+
   static override defineSchema () {
     const schema = super.defineSchema();
 
-    // Declare Owner context on inherited nameFormula (access inner FormulaField via .fields.value)
-    (schema.nameFormula.fields.value as FormulaField).formulaContexts = [
+    // Declare Owner context on inherited nameFormula
+    (schema.nameFormula as FormulaField).formulaContexts = [
       { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
     ];
 
-    schema.isMasterwork = requiredBooleanField('D35E.IsMasterwork', 'D35E.IsMasterworkHint', false);
-    schema.armorType = new Dnd35eField(
-      StringField, 
-      { 
-        choices: [
-          ...ARMOR_TYPES,
-        ],
+    schema.isMasterwork = requiredBooleanField(false);
+    schema.armorType = useDnd35eField(
+      new StringField({
+        choices: [...ARMOR_TYPES],
         initial: 'medium',
         required: true,
-      },
-      {
-        label: 'Armor Type',                                                                                                                                                                                                                                                                                                                           
-        hint: 'The general type of this armor, which may affect which characters can use it and how it interacts with certain effects.',
-        familiar: { aliases: ['type'] },
-      });
+      }),
+      { familiar: { aliases: ['type'] } }
+    );
+    schema.armorSubtype = useDnd35eField(
+      new StringField({
+        choices: [...ARMOR_SUBTYPES],
+        initial: 'cloth',
+        required: true,
+      }),
+      { familiar: { aliases: ['subtype'] } }
+    );
+    // TODO(oggy): wire up armorBaseType field once base-type system is finalised.
+    // schema.armorBaseType = useDnd35eField(new StringField({ choices: [...ARMOR_BASE_TYPES], initial: '', required: true, blank: true }));
 
-    schema.armorSubtype = new Dnd35eField(StringField, { choices: [...ARMOR_SUBTYPES], initial: 'cloth', required: true }, { label: 'Armor Subtype', hint: 'The specific subtype of this armor, which may affect its properties and usage.', familiar: { aliases: ['subtype'] } });
-    //schema.armorBaseType = new Dnd35eField(StringField, { choices: [...ARMOR_BASE_TYPES], initial: '', required: true, blank: true }, { label: 'Base Type', hint: 'The base type of this armor, which may affect its characteristics and interactions.' });
-
-    schema.attackNotes = requiredNullableStringField('D35E.AttackNotes', 'D35E.AttackNotesHint');
-    schema.damageNotes = requiredNullableStringField('D35E.DamageNotes', 'D35E.DamageNotesHint');
+    schema.attackNotes = requiredNullableStringField();
+    schema.damageNotes = requiredNullableStringField();
 
     return schema;
   }
 }
 
+interface ArmorSystemModel extends ArmorSystemData {}
+
 export { ArmorSystemModel };
+

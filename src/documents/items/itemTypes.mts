@@ -34,17 +34,17 @@ const ITEM_TYPES_LOCALIZED = {
 type ItemTypeLocalizationValues = typeof ITEM_TYPES_LOCALIZED[keyof typeof ITEM_TYPES_LOCALIZED];
 
 export {
+  armorItemType,
   ITEM_TYPES_LOCALIZED,
   PHYSICAL_ITEM_TYPES,
   weaponItemType,
-  armorItemType,
 };
 
 export type {
+  ArmorItemType,
   EquippableItemType,
   ItemType,
   ItemTypeLocalizationValues,
   PhysicalItemType,
   WeaponItemType,
-  ArmorItemType,
 };

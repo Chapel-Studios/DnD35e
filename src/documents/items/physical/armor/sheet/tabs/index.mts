@@ -1,4 +1,4 @@
-import type { SheetTab } from '@ec/CoreMixin/index.mjs';
+import type { SheetTab } from '@documents/document/index.mjs';
 
 import ArmorDetails from './ArmorDetails.vue';
 

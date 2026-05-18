@@ -12,9 +12,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { PhysicalItemSheet } from '@items/components/Physical/index.mjs';
-  import { useArmorStore, ArmorSummary } from '@items/armor/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import { ArmorSummary, useArmorStore } from '@items/physical/armor/index.mjs';
+  import { PhysicalItemSheet } from '@items/physical/physicalItem/index.mjs';
   import { provide } from 'vue';
 
   const props = defineProps<{

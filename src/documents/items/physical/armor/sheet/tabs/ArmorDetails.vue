@@ -18,10 +18,10 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentDetails, DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { MaterialStore } from '@effects/material/index.mjs';
-  import { DamageReductionTypes, MagicEquivalency } from '@effects/material/index.mjs';
-  import { EquippableItemWeight } from '@items/components/Equippable/index.mjs';
+  import { DocumentDetails, DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import DamageReductionTypes from '@effects/material/sheet/components/DamageReductionTypes.vue';
+  import MagicEquivalency from '@effects/material/sheet/components/MagicEquivalency.vue';
+  import { EquippableItemWeight } from '@items/physical/equippableItem/index.mjs';
   import {
     ItemHardness,
     ItemHP,
@@ -29,13 +29,15 @@
     ItemQuantity,
     ItemSheetContainerSelector,
     ItemSheetIsCarriedCheckbox,
-  } from '@items/components/Physical/index.mjs';
+  } from '@items/physical/physicalItem/index.mjs';
   import { DmControl, UniqueId } from '@vc/index.mjs';
   import { inject } from 'vue';
 
+  import type { ArmorStore } from '../ArmorStore.mjs';
+
   const {
     documentGetters: { hasEffectsForField },
-  } = inject(DocumentSheetStoreSymbol) as MaterialStore;
+  } = inject(DocumentSheetStoreSymbol) as ArmorStore;
 
   const hasMagicEquivalentEffects = hasEffectsForField('system.magicEquivalency');
   const hasDamageReductionTypeEffects = hasEffectsForField('system.damageReductionTypes');

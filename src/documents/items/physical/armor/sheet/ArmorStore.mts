@@ -1,11 +1,11 @@
 import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
 import { useItemSheetStore } from '@items/baseItem/index.mjs';
-import type { EquippableItemGetters, EquippableItemLike, EquippableItemStore, EquippableItemStoreUtils } from '@items/components/Equippable/index.mjs';
-import { useEquippableItemStore } from '@items/components/Equippable/index.mjs';
-import { EquippableItemActions } from '@items/components/Equippable/sheet/EquippableItemStore.mjs';
-import { physicalItemEffectsTab } from '@items/components/Physical/index.mjs';
-import type { Armor } from '@items/armor/index.mjs';
-import { armorDetailsTab } from '@items/armor/index.mjs';
+import type { Armor } from '@items/physical/armor/index.mjs';
+import { armorDetailsTab } from '@items/physical/armor/index.mjs';
+import type { EquippableItemGetters, EquippableItemLike, EquippableItemStore, EquippableItemStoreUtils } from '@items/physical/equippableItem/index.mjs';
+import { useEquippableItemStore } from '@items/physical/equippableItem/index.mjs';
+import type { EquippableItemActions } from '@items/physical/equippableItem/sheet/EquippableItemStore.mjs';
+import { physicalItemEffectsTab } from '@items/physical/physicalItem/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -28,8 +28,8 @@ const useArmorStore = (context: VueApplicationContext<Armor>) => {
   const documentGetters: ArmorGetters = {
     ...baseStore.documentGetters,
     ...equippableStore.documentGetters,
-    armorType: computed(() => game.i18n.localize(document.value.system.armorType.value)),
-    armorSubtype: computed(() => game.i18n.localize(document.value.system.armorSubtype.value)),
+    armorType: computed(() => game.i18n.localize(document.value.system.armorType)),
+    armorSubtype: computed(() => game.i18n.localize(document.value.system.armorSubtype)),
   };
 
   const _storeUtils: armorStoreUtils = {

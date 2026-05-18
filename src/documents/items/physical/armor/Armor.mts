@@ -1,8 +1,8 @@
-import { EquippableItem } from '@items/components/Equippable/index.mjs';
-import type { PhysicalItemSourceProps } from '@items/components/Physical/index.mjs';
-import { ArmorItemType } from '@items/itemTypes.mjs';
+import type { ArmorItemType } from '@items/itemTypes.mjs';
+import { EquippableItem } from '@items/physical/equippableItem/index.mjs';
+import type { PhysicalItemSourceProps } from '@items/physical/physicalItem/index.mjs';
 
-import { ArmorSystemData, ArmorSystemSource } from './index.mjs';
+import type { ArmorSystemData, ArmorSystemSource } from './index.mjs';
 
 type ArmorSource = Omit<foundry.documents.ItemSource, 'system'>
   & Omit<PhysicalItemSourceProps, 'system'>
@@ -15,16 +15,6 @@ class Armor extends EquippableItem {
   override prepareBaseData (): void {
     super.prepareBaseData();
   }
-  // This needs to go to equippable
-  // get equippedStatusLabel() {
-  //   if (!this.parent) {
-  //     return '';
-  //   }
-
-  //   return this.system.isEquipped
-  //     ? 'D35E.Equipped'
-  //     : 'D35E.NotEquipped';
-  // }
 }
 
 type ArmorType = Armor;

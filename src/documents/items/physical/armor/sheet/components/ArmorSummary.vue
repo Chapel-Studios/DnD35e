@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import { ArmorSubtypeSelectOptions, ArmorTypeSelectOptions } from '@items/armor/index.mjs';
-  import { SelectFormGroup } from '@vc/Fields/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import { ArmorSubtypeSelectOptions, ArmorTypeSelectOptions } from '@items/physical/armor/index.mjs';
+  import { SelectFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   import type { ArmorStore } from '../ArmorStore.mjs';

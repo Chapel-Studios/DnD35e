@@ -1,16 +1,16 @@
 export type {
+  ArmorItemType,
   EquippableItemType,
   ItemType,
   ItemTypeLocalizationValues,
   PhysicalItemType,
   WeaponItemType,
-  ArmorItemType,
 } from './itemTypes.mjs';
 export {
+  armorItemType,
   ITEM_TYPES_LOCALIZED,
   PHYSICAL_ITEM_TYPES,
   weaponItemType,
-  armorItemType,
 } from './itemTypes.mjs';
 export { registerItems } from './registration.mjs';
 export * as baseItem from '@items/baseItem/index.mjs';

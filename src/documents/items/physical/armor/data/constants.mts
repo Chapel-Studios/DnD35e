@@ -91,13 +91,13 @@ export type {
 };
 
 export {
+  ARMOR_AC_LOCALIZED,
   ARMOR_BASE_TYPES,
   ARMOR_SUBTYPE_LOCALIZED,
   ARMOR_SUBTYPES,
   ARMOR_TYPE_LOCALIZED,
-  ARMOR_AC_LOCALIZED,
   ARMOR_TYPES,
+  ArmorACSelectOptions,
   ArmorSubtypeSelectOptions,
   ArmorTypeSelectOptions,
-  ArmorACSelectOptions,
 };
