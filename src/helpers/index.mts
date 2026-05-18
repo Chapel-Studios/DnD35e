@@ -4,6 +4,7 @@ import { preLocalizeConfig, registerConfigPreLocalization } from './localization
 import { LogHelper } from './LogHelper.mjs';
 import { parseNumericChangeValue, resolveActiveEffectChanges, STACK_RESULT_APPLIED, STACK_RESULT_IGNORED } from './stacking.mjs';
 import { createTag } from './stringHelpers.mjs';
+import { syncOpenSheetTitle } from './syncOpenSheetTitle.mjs';
 
 export {
   buildDocumentDataMap,
@@ -16,6 +17,7 @@ export {
   resolveFormulaField,
   STACK_RESULT_APPLIED,
   STACK_RESULT_IGNORED,
+  syncOpenSheetTitle,
 };
 
 export type {
