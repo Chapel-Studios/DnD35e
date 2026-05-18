@@ -1,10 +1,10 @@
-import type { ActiveEffectSystemData, Dnd35eActiveEffectSystemSource } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 
 /**
  * Secret active effect system data — masks field values from non-GM users.
  * `isPlayerEditSecret` marks secrets auto-created by player edits on masked fields.
  */
-interface SecretSystemSource extends Dnd35eActiveEffectSystemSource {
+interface SecretSystemSource extends ActiveEffectSystemSourceDnd35e {
   isPlayerEditSecret: boolean;
 }
 

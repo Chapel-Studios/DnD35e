@@ -9,7 +9,7 @@ import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/DocumentSheetStore.
 import { RenderModeStoreSymbol, useRenderModeStore } from '@ec/CoreMixin/sheet/stores/index.mjs';
 import type { RenderModeStore } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
-import type { Dnd35eActiveEffect } from '@entities/activeEffects/index.mjs';
+import type { ActiveEffectDnd35e } from '@entities/activeEffects/index.mjs';
 import { EDIT, PLAY } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { App } from 'vue';
@@ -23,7 +23,7 @@ import type { SheetState, VueApplicationConfiguration, VueApplicationContext, Vu
  * Interface describing members added by VueDocumentSheetMixin.
  * Used for explicit typing instead of ReturnType inference.
  */
-interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | Dnd35eActiveEffect> extends VueAppBaseMembers {
+interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | ActiveEffectDnd35e> extends VueAppBaseMembers {
   /** Application options with document reference */
   options: VueApplicationConfiguration<TDocument>;
   /** Shared reactive context passed into Vue */
@@ -36,7 +36,7 @@ interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | Dnd35eActiveEff
   readonly isEditable: boolean;
 }
 
-const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocument extends ItemDnd35e | Dnd35eActiveEffect> (base: TBase) => {
+const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocument extends ItemDnd35e | ActiveEffectDnd35e> (base: TBase) => {
   const VueAppBase = useVueAppBaseMixin(base);
 
   abstract class VueDocumentSheet extends VueAppBase {
@@ -176,7 +176,7 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
  */
 type VueDocumentSheetMixin<
   TBase extends AbstractConstructorOf<DocumentSheetV2>,
-  TDocument extends ItemDnd35e | Dnd35eActiveEffect
+  TDocument extends ItemDnd35e | ActiveEffectDnd35e
 > = TBase & AbstractConstructorOf<VueDocumentSheetMembers<TDocument>>;
 
 export {

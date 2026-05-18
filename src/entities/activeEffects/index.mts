@@ -1,4 +1,4 @@
-import { Dnd35eActiveEffect } from './BaseActiveEffect/Dnd35eActiveEffect.mjs';
+import { ActiveEffectDnd35e } from './BaseActiveEffect/ActiveEffectDnd35e.mjs';
 import type {
   EffectTarget,
   EffectType,
@@ -11,7 +11,7 @@ import {
 } from './effectTypes.mjs';
 
 export {
-  Dnd35eActiveEffect,
+  ActiveEffectDnd35e,
   EFFECT_TARGET,
   EFFECT_TYPES,
   GENERAL_EFFECT_TYPE,

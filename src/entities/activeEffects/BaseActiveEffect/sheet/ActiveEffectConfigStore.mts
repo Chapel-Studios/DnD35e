@@ -2,9 +2,9 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type Color from '@common/utils/color.mjs';
 import type { DocumentSheetStore, DocumentSheetStoreDocumentActions, DocumentSheetStoreDocumentGetters } from '@ec/CoreMixin/index.mjs';
 import { useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
+import type { ActiveEffectDnd35e } from '@effects/BaseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { ActiveEffectSystemModel } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModel.mjs';
-import type { Dnd35eActiveEffect } from '@effects/BaseActiveEffect/Dnd35eActiveEffect.mjs';
 import { buildMergedFamiliarContext, getFamiliarBuilder } from '@helpers/formulae/index.mjs';
 import type { ContextDocumentType, TargetContexts } from '@helpers/formulae/registry.mjs';
 import type { FamiliarContext } from '@helpers/formulae/types.mjs';
@@ -23,7 +23,7 @@ const syncOpenSheetTitle = (sheet: { rendered?: boolean; title?: string; window?
   }
 };
 
-const useActiveEffectConfigStore = <TDocument extends Dnd35eActiveEffect>(
+const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
   context: VueApplicationContext<TDocument>
 ) => {
   const baseStore = useDocumentSheetStore(context, {
@@ -273,7 +273,7 @@ type ActiveEffectConfigStoreDocumentGetters = DocumentSheetStoreDocumentGetters 
   getTargetFamiliarContextName: (target: string) => string;
 };
 
-type ActiveEffectConfigStoreDocumentActions<TDocument extends Dnd35eActiveEffect> = DocumentSheetStoreDocumentActions<TDocument> & {
+type ActiveEffectConfigStoreDocumentActions<TDocument extends ActiveEffectDnd35e> = DocumentSheetStoreDocumentActions<TDocument> & {
   addChange: (changeData: Dnd35eEffectChangeData) => Promise<boolean>;
   removeChange?: (index: number) => Promise<boolean>;
   updateChangeField: (index: number, field: string, value: unknown) => Promise<boolean>;
@@ -281,7 +281,7 @@ type ActiveEffectConfigStoreDocumentActions<TDocument extends Dnd35eActiveEffect
   updateDurationUnits: (units: string) => Promise<boolean>;
 };
 
-type ActiveEffectConfigStore<TDocument extends Dnd35eActiveEffect = Dnd35eActiveEffect> = DocumentSheetStore<TDocument> & {
+type ActiveEffectConfigStore<TDocument extends ActiveEffectDnd35e = ActiveEffectDnd35e> = DocumentSheetStore<TDocument> & {
   documentGetters: ActiveEffectConfigStoreDocumentGetters;
   documentActions: ActiveEffectConfigStoreDocumentActions<TDocument>;
 };
