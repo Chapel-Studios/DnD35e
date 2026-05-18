@@ -2,6 +2,7 @@ import type { ActorType } from '@actors/actorTypes.mjs';
 import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type { ActiveEffectDnd35e, EffectType } from '@effects/index.mjs';
 import { addOrUpdatePlayerEditMask, findOrCreatePlayerEditSecret } from '@effects/secret/playerEditSecret.mjs';
+import { getSchemaField } from '@fields/getSchemaField.mjs';
 import { buildDocumentFamiliar } from '@helpers/formulae/index.mjs';
 import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
@@ -237,18 +238,8 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     return document.value.getFlag(SYSTEM_ID, flagPath) as T;
   };
 
-  const getSchemaField = (fieldPath: string): foundry.data.fields.DataField | undefined => {
-    if (!fieldPath.startsWith('system.')) return undefined;
-    const systemPath = fieldPath.replace(/^system\./, '');
-    const systemModel = document.value.system as foundry.abstract.DataModel | undefined;
-    const schema = ((systemModel?.constructor as {
-      schema?: { _getField?: (path: string[]) => foundry.data.fields.DataField | undefined };
-    } | undefined)?.schema) ?? systemModel?.schema;
-    return schema?._getField?.(systemPath.split('.'));
-  };
-
   const normalizeMaskValue = <T,>(fieldPath: string, maskValue: unknown): T => {
-    const schemaField = getSchemaField(fieldPath);
+    const schemaField = getSchemaField(document.value, fieldPath);
     if (!(schemaField instanceof EmbeddedDataField) || !maskValue || typeof maskValue !== 'object') {
       return maskValue as T;
     }

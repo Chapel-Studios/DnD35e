@@ -11,6 +11,7 @@
  * @module
  */
 
+import { getSchemaField as resolveSchemaField } from '@fields/getSchemaField.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import type {
   FieldEditability,
@@ -125,14 +126,9 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
   // Internal helpers
   // ---------------------------------------------------------------------------
 
-  /** Look up a schema field by its system-relative path. */
-  const getSchemaField = (fieldPath: string): DataField | undefined => {
-    const systemPath = fieldPath.replace(/^system\./, '');
-    const systemModel = document.value.system as foundry.abstract.DataModel | undefined;
-    const schema = ((systemModel?.constructor as { schema?: { _getField?: (path: string[]) => DataField | undefined } } | undefined)?.schema)
-        ?? systemModel?.schema;
-    return schema?._getField?.(systemPath.split('.'));
-  };
+  /** Look up a schema field on this store's document. */
+  const getSchemaField = (fieldPath: string): DataField | undefined =>
+    resolveSchemaField(document.value, fieldPath);
 
   const getFieldLocalization = (fieldPath: string, kind: 'label' | 'hint'): string => {
     const schemaField = getSchemaField(fieldPath);
