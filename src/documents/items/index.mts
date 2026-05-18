@@ -12,5 +12,5 @@ export {
 } from './itemTypes.mjs';
 export { registerItems } from './registration.mjs';
 export * as baseItem from '@items/baseItem/index.mjs';
-export * as physicalItem from '@items/components/Physical/index.mjs';
-export * as weapon from '@items/weapon/index.mjs';
+export * as physicalItem from '@items/physical/physicalItem/index.mjs';
+export * as weapon from '@items/physical/weapon/index.mjs';

@@ -13,7 +13,7 @@
    */
   import type { RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
-  import type { PhysicalDocumentStore } from '@items/components/Physical/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
   import LandingPad from '@vc/components/LandingPad.vue';
   import { inject } from 'vue';
 

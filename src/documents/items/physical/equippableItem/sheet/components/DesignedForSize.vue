@@ -1,0 +1,20 @@
+<template>
+  <SelectFormGroup
+    :value="designedForSize"
+    :options="SIZE_SELECT_OPTIONS"
+    field-path="system.designedForSize"
+  />
+</template>
+<script setup lang="ts">
+  import { SIZE_SELECT_OPTIONS } from '@constants/sizes.mjs';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import type { EquippableDocumentStore } from '@items/physical/equippableItem/index.mjs';
+  import { SelectFormGroup } from '@vc/fields/index.mjs';
+  import { inject } from 'vue';
+
+  const {
+    documentGetters: {
+      designedForSize,
+    },
+  } = inject(DocumentSheetStoreSymbol) as EquippableDocumentStore;
+</script>
