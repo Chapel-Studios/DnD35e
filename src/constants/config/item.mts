@@ -1,4 +1,4 @@
-import { Weapon } from '@items/weapon/index.mjs';
+import { Weapon } from '@items/physical/weapon/index.mjs';
 
 const ItemConfig = {
   documentClasses: {

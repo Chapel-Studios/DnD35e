@@ -1,5 +1,5 @@
 import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
-import { WeaponSystemModel } from '@items/weapon/data/WeaponSystemModel.mjs';
+import { WeaponSystemModel } from '@items/physical/weapon/data/WeaponSystemModel.mjs';
 import { describe, it } from 'vitest';
 
 import { createSchemaTester } from '../../helpers/schemaTester.mjs';

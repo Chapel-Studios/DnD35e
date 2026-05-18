@@ -1,6 +1,6 @@
 import { SIZES } from '@constants/sizes.mjs';
 import { registerConfigPreLocalization } from '@helpers/localization/preLocalizeConfig.mjs';
-import { WEAPON_TYPES } from '@items/weapon/data/constants.mjs';
+import { WEAPON_TYPES } from '@items/physical/weapon/data/constants.mjs';
 import { DEFAULT_DAMAGE_REDUCTION_TYPES } from '@settings/gameRules/constants.mjs';
 
 const SIZES_CONFIG = Object.fromEntries(

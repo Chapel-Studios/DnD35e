@@ -5,7 +5,7 @@ import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formul
 import type { ItemSheetStore } from '@items/baseItem/index.mjs';
 import { ItemProxyDnd35e } from '@items/baseItem/index.mjs';
 import { weaponItemType } from '@items/itemTypes.mjs';
-import { WeaponSheet, WeaponSystemModel } from '@items/weapon/index.mjs';
+import { WeaponSheet, WeaponSystemModel } from '@items/physical/weapon/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 const registerItemSheets = () => {
