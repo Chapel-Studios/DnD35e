@@ -2,10 +2,10 @@ import type {
   ActorSystemData,
   ActorSystemSource,
 } from './ActorSystemData.mjs';
-import { ActorSystemModelBase } from './ActorSystemModelBase.mjs';
+import { ActorSystemModel } from './ActorSystemModel.mjs';
 
 export {
-  ActorSystemModelBase,
+  ActorSystemModel,
 };
 
 export type {

@@ -4,12 +4,12 @@ import type {
   ActorSystemSource,
 } from './data/index.mjs';
 import {
-  ActorSystemModelBase,
+  ActorSystemModel,
 } from './data/index.mjs';
 
 export {
   ActorDnd35e,
-  ActorSystemModelBase,
+  ActorSystemModel,
 };
 
 export type {
