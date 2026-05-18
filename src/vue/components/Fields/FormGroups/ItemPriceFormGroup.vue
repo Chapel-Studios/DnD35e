@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-  import { type DocumentSheetStore, DocumentSheetStoreSymbol, type RenderModeStore,RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { type DocumentSheetStore, DocumentSheetStoreSymbol, type RenderModeStore,RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { PriceData } from '@fields/PriceData.mjs';
   import type { CoinageDefinition, CoinStack, PriceSource } from '@settings/currency/index.mjs';
   import {

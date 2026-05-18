@@ -18,8 +18,8 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore, RenderModeStore } from '@ec/CoreMixin/index.mjs';
-  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject, useSlots } from 'vue';
 
   import FieldControls from './FieldControls.vue';

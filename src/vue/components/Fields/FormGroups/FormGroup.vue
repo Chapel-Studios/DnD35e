@@ -41,10 +41,10 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/index.mjs';
-  import type { RenderModeStore } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
-  import { RenderModeStoreSymbol } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
+  import type { DocumentSheetStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
+  import { RenderModeStoreSymbol } from '@documents/document/sheet/stores/RenderModeStore.mjs';
   import { computed, inject } from 'vue';
 
   import FieldControls from './FieldControls.vue';

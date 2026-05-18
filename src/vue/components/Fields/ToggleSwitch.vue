@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-  import { type RenderModeStore,RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import { type RenderModeStore,RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject } from 'vue';
 
   const props = withDefaults(defineProps<{

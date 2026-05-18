@@ -53,8 +53,8 @@
 </template>
 
 <script setup lang="ts" generic="TValue">
-  import type { DocumentSheetStore, RenderModeStore } from '@ec/CoreMixin/index.mjs';
-  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@ec/CoreMixin/index.mjs';
+  import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject } from 'vue';
 
   import type { FieldEditability,FieldVisibility } from './fieldPermissions.mjs';

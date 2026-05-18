@@ -5,11 +5,11 @@
 
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
 import type { DocumentSheetV2 } from '@client/applications/api/_module.mjs';
-import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
-import { RenderModeStoreSymbol, useRenderModeStore } from '@ec/CoreMixin/sheet/stores/index.mjs';
-import type { RenderModeStore } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
+import type { ActiveEffectDnd35e } from '@documents/activeEffects/index.mjs';
+import type { DocumentSheetStore } from '@documents/document/sheet/DocumentSheetStore.mjs';
+import { RenderModeStoreSymbol, useRenderModeStore } from '@documents/document/sheet/stores/index.mjs';
+import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
-import type { ActiveEffectDnd35e } from '@entities/activeEffects/index.mjs';
 import { EDIT, PLAY } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { App } from 'vue';

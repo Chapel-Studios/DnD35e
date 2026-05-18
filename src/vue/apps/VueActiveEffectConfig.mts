@@ -1,6 +1,6 @@
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
 import { VUE_APP_CLASS } from '@constants/cssClasses.mjs';
-import type { ActiveEffectDnd35e } from '@entities/activeEffects/index.mjs';
+import type { ActiveEffectDnd35e } from '@documents/activeEffects/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { VueApplicationConfiguration, VueRenderOptions } from './VueAppTypes.mjs';
