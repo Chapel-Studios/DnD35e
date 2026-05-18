@@ -6,11 +6,11 @@ import {
   evaluateRegisteredFormulas,
   evaluateRegisteredFormulasForCreate,
 } from './formulaRegistrationHelpers.mjs';
-import type { Dnd35eDocumentFlags, FormulaRegistration } from './index.mjs';
+import type { DocumentFlagsDnd35e, FormulaRegistration } from './index.mjs';
 
 interface DocumentProperties {
   readonly localizedType: string;
-  flags: Dnd35eDocumentFlags;
+  flags: DocumentFlagsDnd35e;
   registeredFormulas: Set<FormulaRegistration>;
 }
 
@@ -32,7 +32,7 @@ const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base
       this.registeredFormulas = new Set([derived, name]);
     }
 
-    declare flags: Dnd35eDocumentFlags;
+    declare flags: DocumentFlagsDnd35e;
 
     declare registeredFormulas: Set<FormulaRegistration>;
 

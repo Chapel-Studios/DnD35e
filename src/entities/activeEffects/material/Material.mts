@@ -1,5 +1,5 @@
 import type { ActiveEffectSource } from '@common/documents/active-effect.mjs';
-import type { Dnd35eDocumentFlags } from '@ec/CoreMixin/index.mjs';
+import type { DocumentFlagsDnd35e } from '@ec/CoreMixin/index.mjs';
 import { Dnd35eActiveEffect } from '@effects/BaseActiveEffect/Dnd35eActiveEffect.mjs';
 import { LogHelper } from '@helpers/index.mjs';
 import { COMBAT_KEYS } from '@settings/combat/index.mjs';
@@ -18,7 +18,7 @@ interface MaterialEffectFlags {
 class Material extends Dnd35eActiveEffect {
   declare type: MaterialEffectType;
   declare system: MaterialSystemData;
-  declare flags: Dnd35eDocumentFlags<MaterialEffectFlags>;
+  declare flags: DocumentFlagsDnd35e<MaterialEffectFlags>;
 
   override get transfer (): boolean {
     return false;
