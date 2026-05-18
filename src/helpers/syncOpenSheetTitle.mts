@@ -13,7 +13,8 @@ export const syncOpenSheetTitle = (
     | undefined
 ): void => {
   if (!sheet?.rendered) return;
-  if (sheet.window?.title instanceof HTMLElement) {
-    sheet.window.title.textContent = sheet.title ?? '';
+  const titleEl = sheet.window?.title as { textContent?: string | null } | undefined;
+  if (titleEl && 'textContent' in titleEl) {
+    titleEl.textContent = sheet.title ?? '';
   }
 };
