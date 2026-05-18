@@ -1,33 +1,17 @@
 /**
- * Type definitions for dnd35e system settings
+ * Shared settings types
  *
- * Category-specific types are defined in their respective folders.
- * This file re-exports them for backwards compatibility and defines base types.
+ * Cross-cutting type definitions used by multiple settings categories or by
+ * consumers that need a unified view of system settings (e.g. the settings
+ * store, settings sheet, helpers).
  */
 
-// Import category types for use in SystemSettings
-import type { CurrencyConfig } from './currency/_types.mjs';
-import type { PartyHudMode, UnitSystem } from './display/_types.mjs';
-import type { DamageReductionTypesConfig, DiagonalMovementRule, ExperienceRate } from './gameRules/_types.mjs';
-import type { HealthConfig, HitDieConfig } from './health/_types.mjs';
-import type { RollConfig, RollModeConfig } from './roll/_types.mjs';
-import type { CustomSkill, SkillSettings } from './skills/_types.mjs';
-
-// Re-export category types
-export type {
-  CurrencyConfig,
-  CustomSkill,
-  DamageReductionTypesConfig,
-  DiagonalMovementRule,
-  ExperienceRate,
-  HealthConfig,
-  HitDieConfig,
-  PartyHudMode,
-  RollConfig,
-  RollModeConfig,
-  SkillSettings,
-  UnitSystem,
-};
+import type { CurrencyConfig } from '../currency/_types.mjs';
+import type { PartyHudMode, UnitSystem } from '../display/_types.mjs';
+import type { DamageReductionTypesConfig, DiagonalMovementRule, ExperienceRate } from '../gameRules/_types.mjs';
+import type { HealthConfig } from '../health/_types.mjs';
+import type { RollConfig } from '../roll/_types.mjs';
+import type { SkillSettings } from '../skills/_types.mjs';
 
 /**
  * Setting scope - determines where the setting is stored
@@ -52,7 +36,6 @@ export interface SettingConfig<T> {
 /**
  * All system settings mapped by key
  *
- * Note: This is a comprehensive type that imports from all category modules.
  * For individual setting types, import from the specific category module.
  */
 export interface SystemSettings {
@@ -89,4 +72,3 @@ export interface SystemSettings {
   currencyConfig: CurrencyConfig;
   skillSettings: SkillSettings;
 }
-

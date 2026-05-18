@@ -1,15 +1,14 @@
 /**
- * Core/Hidden settings registration and main registration orchestration
+ * Core/Hidden settings registration
+ *
+ * Holds only hidden/internal settings (not shown in UI), such as the system
+ * migration version. The top-level orchestration of all category
+ * `registerXxxSettings()` calls lives in `src/settings/index.mts`.
  */
 
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
-import { registerCombatSettings } from '../combat/index.mjs';
-import { registerCurrencySettings } from '../currency/index.mjs';
-import { registerDisplaySettings } from '../display/index.mjs';
-import { registerGameRulesSettings } from '../gameRules/index.mjs';
 import { CORE_KEYS } from './constants.mjs';
-import { registerSettingsMenus } from './menus.mjs';
 
 /**
  * Register core/hidden settings (not shown in UI)
@@ -85,29 +84,4 @@ function registerCoreSettings(): void {
   // });
 }
 
-/**
- * Register all system settings.
- * Called during system initialization (Hooks.once('init')).
- */
-function registerSettings(): void {
-  console.log(`${SYSTEM_ID} | Registering system settings`);
-
-  // registerRootSettings();
-  registerCoreSettings();
-  registerSettingsMenus();
-  registerGameRulesSettings();
-  registerCombatSettings();
-  registerDisplaySettings();
-  // registerHealthSettings();
-  // registerRollSettings();
-  registerCurrencySettings();
-  // registerSkillsSettings();
-
-  console.log(`${SYSTEM_ID} | Settings registration complete`);
-}
-
-export {
-  registerCoreSettings,
-  registerSettings,
-  registerSettingsMenus,
-};
+export { registerCoreSettings };

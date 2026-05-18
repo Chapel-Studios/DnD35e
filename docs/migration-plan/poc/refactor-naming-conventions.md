@@ -484,14 +484,15 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G5e.4 — `npm run build` clean; commit
 
 ### Group 5f: Settings structural cleanup
-- [ ] G5f.1 — Move orchestrator logic from `src/settings/core/registration.mts` into `src/settings/index.mts` (import + call each category's `registerXxxSettings()`)
-- [ ] G5f.2 — Inline each category's menu registration from `src/settings/core/menus.mts` into that category's own `registration.mts` (e.g. game-rules menu → `gameRules/registration.mts`); delete `core/menus.mts`
-- [ ] G5f.3 — Move `unitOfMeasure.mts` content into `src/settings/display/`; merge its registration into `display/registration.mts` (`registerDisplaySettings` registers it alongside other display settings); rename `registerRootSettings` symbol away (it becomes part of `registerDisplaySettings`)
-- [ ] G5f.4 — `core/registration.mts` retains only hidden/internal settings (system migration version, dev flags); remove the orchestration block
-- [ ] G5f.5 — Delete `src/settings/core/settings/unitOfMeasure.mts` and any now-empty `core/settings/` subfolder
-- [ ] G5f.6 — Delete `src/settings/constants/index.mts` aggregator and `src/settings/_types.mts` aggregator; rewrite every importer to point at the owning category module (`grep_search` for `@settings/constants` and `@settings/_types`)
-- [ ] G5f.7 — Update `src/settings/index.mts` to call each category's `registerXxxSettings()`; update any consumer imports of the unit-of-measure setting key if its export path changed
-- [ ] G5f.8 — `npm run build` clean; commit
+- [x] G5f.1 — Move orchestrator logic from `src/settings/core/registration.mts` into `src/settings/index.mts` (import + call each category's `registerXxxSettings()`)
+- [x] G5f.2 — Inline each category's menu registration from `src/settings/core/menus.mts` into that category's own `registration.mts` (e.g. game-rules menu → `gameRules/registration.mts`); delete `core/menus.mts`
+- [x] G5f.3 — Move `unitOfMeasure.mts` content into `src/settings/display/`; merge its registration into `display/registration.mts` (`registerDisplaySettings` registers it alongside other display settings); rename `registerRootSettings` symbol away (it becomes part of `registerDisplaySettings`)
+- [x] G5f.4 — `core/registration.mts` retains only hidden/internal settings (system migration version, dev flags); remove the orchestration block
+- [x] G5f.5 — Delete `src/settings/core/settings/unitOfMeasure.mts` and any now-empty `core/settings/` subfolder
+- [x] G5f.6 — Promote shared sheet infrastructure out of `core/`: `git mv src/settings/core/sheet → src/settings/shared/sheet` (`GenericSettingsApp.vue`, `SettingsTable/`, `settingsStore.mts`, barrel). Rationale: after `core/` is narrowed to hidden settings only, this shared UI plumbing no longer belongs there. The `shared/` folder is named in anticipation of future cross-cutting helpers (composables, formatters) as settings grow. Update all importers (`@settings/core/sheet/*` → `@settings/shared/sheet/*`; ~6 files including `VueAppBaseMixin`, `VueSettingsMixin`, `DamageReductionTable.vue`, `CurrencySettingsApp.vue`, `PhysicalItemStore`, `DisplaySettingsConfig`)
+- [x] G5f.7 — Delete `src/settings/constants/index.mts` aggregator and `src/settings/_types.mts` aggregator; rewrite every importer to point at the owning category module (`grep_search` for `@settings/constants` and `@settings/_types`)
+- [x] G5f.8 — Update `src/settings/index.mts` to call each category's `registerXxxSettings()`; update any consumer imports of the unit-of-measure setting key if its export path changed
+- [x] G5f.9 — `npm run build` clean; commit
 
 ### Group 5g: `helpers/` relocations (field-related files)
 - [ ] G5g.1 — Create `src/fields/` directory + `src/fields/index.mts` (empty barrel)

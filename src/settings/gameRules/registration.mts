@@ -6,12 +6,29 @@ import { SYSTEM_ID } from '../shared.mjs';
 import {
   DEFAULT_DAMAGE_REDUCTION_TYPES,
   GAME_RULES_KEYS,
+  GAME_RULES_MENU,
 } from './constants.mjs';
+import { GameRulesSettingsConfig } from './sheet/index.mjs';
+
+/**
+ * Register the Game Rules settings menu button
+ */
+function registerGameRulesMenu(): void {
+  game.settings.registerMenu(SYSTEM_ID, GAME_RULES_MENU, {
+    name: 'dnd35e.SETTINGS.GameRules.Name',
+    label: 'dnd35e.SETTINGS.GameRules.Label',
+    hint: 'dnd35e.SETTINGS.GameRules.Hint',
+    icon: 'fas fa-list-check',
+    type: GameRulesSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
+    restricted: true,
+  });
+}
 
 /**
  * Register game rules settings
  */
 function registerGameRulesSettings(): void {
+  registerGameRulesMenu();
   // game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.DIAGONAL_MOVEMENT, {
   //   name: 'dnd35e.SETTINGS.DiagonalMovement.Name',
   //   hint: 'dnd35e.SETTINGS.DiagonalMovement.Hint',

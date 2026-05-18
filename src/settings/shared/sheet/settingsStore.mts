@@ -1,11 +1,10 @@
+import type { UnitOfMeasureOption } from '@settings/display/unitOfMeasure.mjs';
+import { imperialUnitOfMeasure, WEIGHT_OPTIONS } from '@settings/display/unitOfMeasure.mjs';
 import type { CoinageDefinition, CurrencyConfig } from '@settings/index.mjs';
 import { CURRENCY_KEY, DISPLAY_WORLD_KEYS } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { ComputedRef } from 'vue';
 import { computed, ref } from 'vue';
-
-import type { UnitOfMeasureOption } from '../settings/unitOfMeasure.mjs';
-import { imperialUnitOfMeasure, WEIGHT_OPTIONS } from '../settings/unitOfMeasure.mjs';
 
 const useSettingsStore = (): SettingsStore => {
   const currencySettings = ref(game.settings.get(SYSTEM_ID, CURRENCY_KEY) as CurrencyConfig);

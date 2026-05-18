@@ -18,3 +18,14 @@ export {
   registerDisplayWorldSettings,
 } from './registration.mjs';
 export { DisplaySettingsConfig } from './sheet/index.mjs';
+export type {
+  ImperialUnitOfMeasure,
+  MetricUnitOfMeasure,
+  UnitOfMeasureOption,
+} from './unitOfMeasure.mjs';
+export {
+  imperialUnitOfMeasure,
+  metricUnitOfMeasure,
+  UNIT_OF_MEASURE_OPTIONS,
+  WEIGHT_OPTIONS,
+} from './unitOfMeasure.mjs';
