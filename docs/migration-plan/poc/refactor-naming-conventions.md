@@ -394,9 +394,9 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G2.2 — Rename class `DnD35eActiveEffect` → `Dnd35eActiveEffect`
 - [x] G2.3 — Rename type `DnD35eActiveEffectFlags` → `Dnd35eActiveEffectFlags`
 - [x] G2.4 — Rename local const `DnD35eActiveEffectBase` → `Dnd35eActiveEffectBase`
-- [x] G2.5 — Workspace-wide replace of all `DnD35e` → `Dnd35e` (case-sensitive)
+- [x] G2.5 — Replace `DnD35e` → `Dnd35e` across production-code paths (case-sensitive; e.g. `src/`, `tests/`, and related type/runtime files), not attribution/docs-only references
 - [x] G2.6 — Re-run eslint --fix on touched files
-- [x] G2.7 — `grep_search` for `DnD35e` workspace-wide; expect zero matches in `src/` and `tests/`
+- [x] G2.7 — Run `grep_search` for `DnD35e` from the workspace root; expect zero matches in `src/` and `tests/` (non-code references such as README/docs/scripts may remain intentionally)
 - [x] G2.8 — `npm run build` clean; commit
 
 ### Group 3a: `BaseDnd35eSystemData` → `DocumentSystemData`
