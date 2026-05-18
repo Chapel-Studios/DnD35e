@@ -166,7 +166,7 @@ Codified in `docs/migration-plan/poc/refactor-naming-conventions.md`. Key rules:
 - **File casing**: `camelCase` directory names; `PascalCase` filenames for class-containing modules (e.g. `Buff.mts`, `ItemDnd35e.mts`). Single-component packaging folders may stay PascalCase (R.2.9).
 - **`types.mts` convention** (R.2.10): per-folder type-aggregation files use the bare `types.mts` name (not `_types.mts`).
 - **Grouped-helpers exception**: when a file aggregates many small helpers, the filename describes the group (e.g. `fieldBuilders.mts`) rather than any one symbol. Single-symbol files match the symbol's PascalCase name.
-- **Path aliases**: `@documents/*`, `@items/*`, `@actors/*`, `@effects/*`, `@scene/*`, `@fields/*`, `@vc/*` (vue components), `@helpers/*`, `@constants/*`, `@settings/*`, plus Foundry `@client/*`, `@common/*`, `@source/*`.
+- **Path aliases**: `@documents/*`, `@items/*`, `@actors/*`, `@effects/*`, `@scene/*`, `@fields/*`, `@vc/*` (vue components), `@vueApps/*`, `@vueStores/*`, `@canvas/*`, `@helpers/*`, `@constants/*`, `@settings/*`, plus Foundry `@client/*`, `@common/*`, `@source/*`.
 
 ## Vue Sheet Patterns
 

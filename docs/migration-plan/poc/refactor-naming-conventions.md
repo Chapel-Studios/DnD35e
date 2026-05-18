@@ -588,7 +588,6 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] FV.4 — **Full Playwright E2E suite** (`npx playwright test`) green on the final merged `dev` tree (one last sanity pass; each PR already ran E2E pre-merge).
 - [x] FV.5 — `.github/copilot-instructions.md` and `.github/instructions/dnd35e-patterns.instructions.md` updated to reflect the new `documents/` vocabulary, the suffix rule (with verified-collision exceptions), the `Base`-over-`Dnd35e` preference, the file-name-vs-grouped-helpers exception, the R.2.9 file-casing rule, and the R.2.10 `types.mts` convention.
 - [x] FV.6 — Mark this phase doc Complete (no roadmap row needed — see R.7).
-- [ ] FV.6 — Mark this phase doc Complete (no roadmap row needed — see R.7).
 
 ---
 
