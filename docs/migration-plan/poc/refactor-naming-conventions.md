@@ -504,7 +504,6 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G5g.7 — Update `src/fields/index.mts` to export all relocated files
 - [x] G5g.8 — Delete the now-empty `src/helpers/fields/` directory + its `index.mts`
 - [x] G5g.9 — `npm run build` clean; commit
-- [x] G5g.5 — `npm run build` clean; commit
 
 ### Group 5h: `_types.mts` → `types.mts` repo-wide
 - [ ] G5h.1 — Workspace `file_search` for `_types.mts` to inventory all files
