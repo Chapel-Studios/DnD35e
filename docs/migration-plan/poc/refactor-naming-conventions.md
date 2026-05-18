@@ -540,15 +540,15 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G6.13 — `npm run build` clean; commit
 
 ### Group 6b: Move `src/scene/` into `src/documents/scene/`
-- [ ] G6b.1 — Edit `tsconfig.json`: retarget `@scene/*` from `./src/scene/*` to `./src/documents/scene/*`
-- [ ] G6b.2 — `git mv src/scene src/documents/scene` (two-step on Windows via temp folder name if case collision risk; here it's a fresh target so a single move should be fine)
-- [ ] G6b.3 — `git mv src/documents/scene/region-document src/documents/scene/regionDocument` (two-step on Windows)
-- [ ] G6b.4 — `git mv src/documents/scene/token-document src/documents/scene/tokenDocument` (two-step on Windows)
-- [ ] G6b.5 — `git mv src/documents/scene/region-behaviour src/documents/scene/regionBehaviour` (two-step on Windows; British spelling preserved)
-- [ ] G6b.6 — Workspace replace: `@scene/region-document/` → `@scene/regionDocument/`, `@scene/token-document/` → `@scene/tokenDocument/`, `@scene/region-behaviour/` → `@scene/regionBehaviour/`
-- [ ] G6b.7 — Workspace `grep_search` for `src/scene/` and kebab-case scene subfolders; zero matches expected in production code
-- [ ] G6b.8 — Update `src/main.mts` and `src/global.mts` scene imports
-- [ ] G6b.9 — `npm run build` clean; commit
+- [x] G6b.1 — Edit `tsconfig.json`: retarget `@scene/*` from `./src/scene/*` to `./src/documents/scene/*`
+- [x] G6b.2 — `git mv src/scene src/documents/scene` (two-step on Windows via temp folder name if case collision risk; here it's a fresh target so a single move should be fine)
+- [x] G6b.3 — `git mv src/documents/scene/region-document src/documents/scene/regionDocument` (two-step on Windows)
+- [x] G6b.4 — `git mv src/documents/scene/token-document src/documents/scene/tokenDocument` (two-step on Windows)
+- [x] G6b.5 — `git mv src/documents/scene/region-behaviour src/documents/scene/regionBehaviour` (two-step on Windows; British spelling preserved)
+- [x] G6b.6 — Workspace replace: `@scene/region-document/` → `@scene/regionDocument/`, `@scene/token-document/` → `@scene/tokenDocument/`, `@scene/region-behaviour/` → `@scene/regionBehaviour/`
+- [x] G6b.7 — Workspace `grep_search` for `src/scene/` and kebab-case scene subfolders; zero matches expected in production code
+- [x] G6b.8 — Update `src/main.mts` and `src/global.mts` scene imports
+- [x] G6b.9 — `npm run build` clean; commit
 
 ### Group 7: Folder casing (documents/ + vue/components/)
 - [ ] G7.1 — Audit all PascalCase folders under `src/documents/` and decide per-folder: keep PascalCase (proper noun, brand) or normalize to camelCase (common noun).

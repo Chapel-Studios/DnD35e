@@ -1,4 +1,4 @@
-import type { RegionDocumentDnd35e } from '../region-document/RegionDocumentDnd35e.mjs';
+import type { RegionDocumentDnd35e } from '../regionDocument/RegionDocumentDnd35e.mjs';
 import coreBehaviors = foundry.data.regionBehaviors;
 import { type RegionEvent } from '@client/documents/region.mjs';
 

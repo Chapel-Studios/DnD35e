@@ -1,4 +1,4 @@
-import { RegionDocumentDnd35e } from '../region-document/RegionDocumentDnd35e.mjs';
+import { RegionDocumentDnd35e } from '../regionDocument/RegionDocumentDnd35e.mjs';
 
 class RegionBehaviorDnd35e<
     TParent extends RegionDocumentDnd35e | null = RegionDocumentDnd35e | null,

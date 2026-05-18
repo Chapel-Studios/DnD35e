@@ -13,7 +13,7 @@
       "@constants/*": ["./src/constants/*"],
       "@fields/*": ["./src/fields/*"],
       "@helpers/*": ["./src/helpers/*"],
-      "@scene/*": ["./src/scene/*"],
+      "@scene/*": ["./src/documents/scene/*"],
       "@settings/*": ["./src/settings/*"],
       "@vc/*": ["./src/vue/components/*"],
       "@vueApps/*": ["./src/vue/apps/*"],

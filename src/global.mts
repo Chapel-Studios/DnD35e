@@ -11,9 +11,9 @@ import { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
 
 import type { CanvasDnd35e } from './canvas/CanvasDnd35e.mjs';
-import { RegionDocumentDnd35e } from './scene/region-document/RegionDocumentDnd35e.mjs';
-import { SceneDnd35e } from './scene/SceneDnd35e.mjs';
-import type { TokenDocumentDnd35e } from './scene/token-document/index.mjs';
+import { RegionDocumentDnd35e } from './documents/scene/regionDocument/RegionDocumentDnd35e.mjs';
+import { SceneDnd35e } from './documents/scene/SceneDnd35e.mjs';
+import type { TokenDocumentDnd35e } from './documents/scene/tokenDocument/index.mjs';
 
 type GameDnd35e = Game<
   ActorDnd35e<null>,
