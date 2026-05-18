@@ -1,6 +1,6 @@
 import type { ActiveEffectSource } from '@common/documents/active-effect.mjs';
 import type { Dnd35eDocumentFlags } from '@ec/CoreMixin/index.mjs';
-import { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
+import { Dnd35eActiveEffect } from '@effects/BaseActiveEffect/Dnd35eActiveEffect.mjs';
 import { LogHelper } from '@helpers/index.mjs';
 import { COMBAT_KEYS } from '@settings/combat/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -15,7 +15,7 @@ interface MaterialEffectFlags {
   // Add material-specific flags here as needed
 }
 
-class Material extends DnD35eActiveEffect {
+class Material extends Dnd35eActiveEffect {
   declare type: MaterialEffectType;
   declare system: MaterialSystemData;
   declare flags: Dnd35eDocumentFlags<MaterialEffectFlags>;

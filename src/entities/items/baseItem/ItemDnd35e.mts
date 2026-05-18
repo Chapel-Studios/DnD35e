@@ -5,7 +5,7 @@ import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import { getDisplayName } from '@ec/CoreMixin/logic/index.mjs';
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
-import type { DnD35eActiveEffect } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
+import type { Dnd35eActiveEffect } from '@effects/BaseActiveEffect/Dnd35eActiveEffect.mjs';
 import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/BaseActiveEffect/resolveChangeValue.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
@@ -30,7 +30,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     super(source, context);
     this._completedActiveEffectPhases = new Set();
   }
-  declare readonly effects: EmbeddedCollection<DnD35eActiveEffect<this>>;
+  declare readonly effects: EmbeddedCollection<Dnd35eActiveEffect<this>>;
   declare type: TItemType;
   declare system: ItemSystemData;
   declare _source: ItemSourceDnd35e<TItemType>;
@@ -203,7 +203,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     this._completedActiveEffectPhases.add(phase);
 
     type AppliedItemEffectChange = EffectChangeData<ItemDnd35e<TItemType, TParent>>
-      & { type: string; effect: DnD35eActiveEffect<ItemDnd35e<TItemType, TParent>> };
+      & { type: string; effect: Dnd35eActiveEffect<ItemDnd35e<TItemType, TParent>> };
     const changes: AppliedItemEffectChange[] = [];
     for ( const effect of this.allApplicableEffects() ) {
       if ( !effect.active ) continue;

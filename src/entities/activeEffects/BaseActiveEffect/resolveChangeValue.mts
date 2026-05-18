@@ -3,7 +3,7 @@ import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/data/constants.m
 import { buildDocumentDataMap, FormulaData } from '@helpers/formulae/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 
-import type { DnD35eActiveEffect } from './DnD35eActiveEffect.mjs';
+import type { Dnd35eActiveEffect } from './Dnd35eActiveEffect.mjs';
 
 const {
   BooleanField,
@@ -14,7 +14,7 @@ const {
 type SupportedEffectParent = foundry.documents.Actor | ItemDnd35e | null;
 
 function getEffectContexts(
-  effect: DnD35eActiveEffect,
+  effect: Dnd35eActiveEffect,
   change: Dnd35eEffectChangeData
 ): {
   targetDocument: foundry.abstract.Document | null;
@@ -85,7 +85,7 @@ function tryEvaluateNumber(expression: string): number | null {
 }
 
 function resolveActiveEffectChangeValue(
-  effect: DnD35eActiveEffect,
+  effect: Dnd35eActiveEffect,
   change: Dnd35eEffectChangeData
 ): unknown {
   const rawValue = change.value;
@@ -113,7 +113,7 @@ function resolveActiveEffectChangeValue(
 }
 
 function resolveMaskedActiveEffectChangeValue(
-  effect: DnD35eActiveEffect,
+  effect: Dnd35eActiveEffect,
   change: Dnd35eEffectChangeData
 ): unknown {
   const resolvedValue = resolveActiveEffectChangeValue(effect, change);
@@ -156,7 +156,7 @@ function resolveMaskedActiveEffectChangeValue(
 }
 
 function resolveActiveEffectChange(
-  effect: DnD35eActiveEffect,
+  effect: Dnd35eActiveEffect,
   change: Dnd35eEffectChangeData
 ): Dnd35eEffectChangeData {
   const resolvedValue = resolveActiveEffectChangeValue(effect, change);

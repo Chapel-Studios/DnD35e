@@ -390,14 +390,14 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G1.4 — `npm run build` clean; commit
 
 ### Group 2: `DnD` → `Dnd` casing
-- [ ] G2.1 — Rename file `DnD35eActiveEffect.mts` → `Dnd35eActiveEffect.mts` (use temp-name two-step on Windows)
-- [ ] G2.2 — Rename class `DnD35eActiveEffect` → `Dnd35eActiveEffect`
-- [ ] G2.3 — Rename type `DnD35eActiveEffectFlags` → `Dnd35eActiveEffectFlags`
-- [ ] G2.4 — Rename local const `DnD35eActiveEffectBase` → `Dnd35eActiveEffectBase`
-- [ ] G2.5 — Workspace-wide replace of all `DnD35e` → `Dnd35e` (case-sensitive)
-- [ ] G2.6 — Re-run eslint --fix on touched files
-- [ ] G2.7 — `grep_search` for `DnD35e` workspace-wide; expect zero matches in `src/` and `tests/`
-- [ ] G2.8 — `npm run build` clean; commit
+- [x] G2.1 — Rename file `DnD35eActiveEffect.mts` → `Dnd35eActiveEffect.mts` (use temp-name two-step on Windows)
+- [x] G2.2 — Rename class `DnD35eActiveEffect` → `Dnd35eActiveEffect`
+- [x] G2.3 — Rename type `DnD35eActiveEffectFlags` → `Dnd35eActiveEffectFlags`
+- [x] G2.4 — Rename local const `DnD35eActiveEffectBase` → `Dnd35eActiveEffectBase`
+- [x] G2.5 — Workspace-wide replace of all `DnD35e` → `Dnd35e` (case-sensitive)
+- [x] G2.6 — Re-run eslint --fix on touched files
+- [x] G2.7 — `grep_search` for `DnD35e` workspace-wide; expect zero matches in `src/` and `tests/`
+- [x] G2.8 — `npm run build` clean; commit
 
 ### Group 3a: `BaseDnd35eSystemData` → `DocumentSystemData`
 - [ ] G3a.1 — Rename file `BaseDnd35eSystemData.mts` → `DocumentSystemData.mts`

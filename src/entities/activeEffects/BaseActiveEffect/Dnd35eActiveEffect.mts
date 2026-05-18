@@ -10,7 +10,7 @@ import { LogHelper } from '@helpers/logHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
 
-type DnD35eActiveEffectFlags<T extends object = Record<string, unknown>> = Record<string, Record<string, unknown>> & {
+type Dnd35eActiveEffectFlags<T extends object = Record<string, unknown>> = Record<string, Record<string, unknown>> & {
   dnd35e: T;
 };
 
@@ -22,15 +22,15 @@ type Dnd35eActiveEffectSource<
 // Apply mixin at runtime but cast to preserve generic parameter compatibility.
 // TypeScript mixins erase generics; this cast is safe because the mixin only adds
 // methods/properties and doesn't alter the constructor signature's generic behavior.
-const DnD35eActiveEffectBase = Dnd35eDocumentMixin(foundry.documents.ActiveEffect) as unknown as typeof foundry.documents.ActiveEffect;
+const Dnd35eActiveEffectBase = Dnd35eDocumentMixin(foundry.documents.ActiveEffect) as unknown as typeof foundry.documents.ActiveEffect;
 
-class DnD35eActiveEffect<
+class Dnd35eActiveEffect<
   TParent extends ActorDnd35e | ItemDnd35e<ItemType> | null = ActorDnd35e | ItemDnd35e<ItemType> | null,
   TEffectType extends EffectType = EffectType,
   TSystemData extends ActiveEffectSystemData = ActiveEffectSystemData
 >
-  extends DnD35eActiveEffectBase<TParent> {
-  declare flags: DnD35eActiveEffectFlags;
+  extends Dnd35eActiveEffectBase<TParent> {
+  declare flags: Dnd35eActiveEffectFlags;
   declare system: TSystemData;
   declare type: TEffectType;
 
@@ -68,7 +68,7 @@ class DnD35eActiveEffect<
   }
 }
 
-const ActiveEffectProxyDnd35e = new Proxy(DnD35eActiveEffect, {
+const ActiveEffectProxyDnd35e = new Proxy(Dnd35eActiveEffect, {
   construct (
     _target,
     args: [source: PreCreate<Dnd35eActiveEffectSource>, context?: DocumentConstructionContext<ActorDnd35e | ItemDnd35e<ItemType> | null>]
@@ -84,16 +84,16 @@ const ActiveEffectProxyDnd35e = new Proxy(DnD35eActiveEffect, {
     }
 
     if (type === GENERAL_EFFECT_TYPE) {
-      return new DnD35eActiveEffect(...args);
+      return new Dnd35eActiveEffect(...args);
     }
-    const ItemClass = CONFIG.dnd35e.activeEffect.documentClasses[type] as unknown as typeof DnD35eActiveEffect;
+    const ItemClass = CONFIG.dnd35e.activeEffect.documentClasses[type] as unknown as typeof Dnd35eActiveEffect;
     if (!ItemClass) {
       LogHelper.error(`ActiveEffect type ${type} does not exist or is not properly supported for ActiveEffectProxyDnd35e`);
-      return new DnD35eActiveEffect(...args);
+      return new Dnd35eActiveEffect(...args);
     }
     return new ItemClass(...args);
   },
 });
 
-export { ActiveEffectProxyDnd35e, DnD35eActiveEffect };
-export type { DnD35eActiveEffectFlags };
+export { ActiveEffectProxyDnd35e, Dnd35eActiveEffect };
+export type { Dnd35eActiveEffectFlags };

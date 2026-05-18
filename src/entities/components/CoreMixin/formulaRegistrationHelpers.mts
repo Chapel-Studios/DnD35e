@@ -6,7 +6,7 @@ import type { EvaluationDocument, FormulaRegistration } from './sheet/index.mjs'
 
 /**
  * Minimal interface for documents that support formula registration.
- * Both the mixin and DnD35eActiveEffect satisfy this.
+ * Both the mixin and Dnd35eActiveEffect satisfy this.
  */
 interface FormulaRegistrationHost {
   system: any;

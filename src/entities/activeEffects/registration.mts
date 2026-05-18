@@ -2,7 +2,7 @@ import { EffectConfig } from '@constants/config/activeEffect.mjs';
 import type { NameFormulaDocument } from '@ec/CoreMixin/index.mjs';
 import { ensureNameFormulaOnCreate } from '@ec/CoreMixin/index.mjs';
 import { EFFECT_CHANGE_PHASES } from '@effects/BaseActiveEffect/data/index.mjs';
-import { ActiveEffectProxyDnd35e } from '@effects/BaseActiveEffect/DnD35eActiveEffect.mjs';
+import { ActiveEffectProxyDnd35e } from '@effects/BaseActiveEffect/Dnd35eActiveEffect.mjs';
 import { GENERAL_EFFECT_TYPE, GeneralSystemModel } from '@effects/general/index.mjs';
 import { MaterialSystemModel } from '@effects/material/data/MaterialSystemModel.mjs';
 import { validateSingleMaterial } from '@effects/material/Material.mjs';
