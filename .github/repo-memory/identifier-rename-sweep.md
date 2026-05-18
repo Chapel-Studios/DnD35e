@@ -50,7 +50,7 @@ Write-Host "---"
 npm run build 2>&1 | Select-Object -Last 5
 ```
 
-Then `npm test` for vitest. E2E only on the FV PR.
+Then `npx vitest run` for a non-interactive unit gate (the package's `npm test` script runs vitest in watch mode and won't exit; `npm run test:ci` wraps `typecheck + vitest run` if you want both in one step). In a cross-cutting refactor sweep, also run `npm run test:e2e` per PR — it triggers `pretest:e2e` which rebuilds, regenerates the test-world JSON, and runs `setup:e2e` before Playwright. Calling `npx playwright test` directly will skip that setup and the run will fail on a stale or missing world. Mechanical renames only surface their regressions in E2E. See `cross-cutting-refactor-strategy.md` for the rationale.
 
 ## Common pitfalls
 

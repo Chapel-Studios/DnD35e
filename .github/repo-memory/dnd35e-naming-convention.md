@@ -10,8 +10,8 @@
 
 ## The Rule
 
-1. **Default**: use the bare, descriptive name. `ChangeType`, `OverrideOptions`, `ParentDoc`, `SystemConfig`, `BaseFlags`, `EffectChangeData`-style names — no decoration.
-2. **On collision with a Foundry export**: append `Dnd35e` as a **suffix**. The suffix marks "this is our version of the otherwise-Foundry-named thing."
+1. **Default**: use the bare, descriptive name. `ChangeType`, `OverrideOptions`, `ParentDoc`, `SystemConfig`, `BaseFlags`, `FieldMeta` — no decoration when no Foundry export claims the name.
+2. **On collision with a Foundry export**: append `Dnd35e` as a **suffix**. The suffix marks "this is our version of the otherwise-Foundry-named thing." `EffectChangeData` is a Foundry type, so our extended interface is `EffectChangeDataDnd35e`.
 3. **`System` is reserved for Foundry's `system` data concept** (the `Document.system` DataModel slot). Never use `System` for arbitrary "this is the game system" decoration.
 4. **Constant naming**: bare `SCREAMING_SNAKE` for our consts when there's no collision (`CHANGE_TYPE`, not `DND35E_CHANGE_TYPE`). Only suffix on collision.
 
@@ -33,15 +33,18 @@ A single bare name can be claimed by two different layers. When the second layer
 
 ## Naming Sub-Rules from the Refactor
 
-- **`Base` marker**: drop it where it only restates `abstract class`; keep it where it's the most accurate descriptor *and* avoids a `Dnd35e` suffix (e.g. `BaseActiveEffect`, `BaseItem`).
+- **`Base` marker**: drop it from class names where it only restates `abstract class`. After the refactor, no `src/` class is named `Base*`; the marker survives only on **folder names** that hold the foundation layer of a composition chain (`baseItem/`, `baseActiveEffect/`, `baseActor/`). Class names inside those folders still follow the suffix rule (`ItemDnd35e`, `ActiveEffectDnd35e`, `ActorDnd35e`).
 - **`types.mts`** (no leading underscore) is the file-aggregation convention; `_types.mts` is non-standard JS/TS.
 - **`fieldBuilders.mts`** is the canonical exception for grouped-helper filenames: camelCase plural when the file groups related factory helpers, not a single exported class.
 - **`documents/`**, not `entities/`. Foundry calls them documents; we follow.
 - **File casing**: PascalCase filename matches the primary exported class (`ItemDnd35e.mts` exports `class ItemDnd35e`). camelCase for grouped-helper files. R.2.9 single-component-folder exception allows `TabDivider/TabDivider.vue` PascalCase folder when the folder is dedicated to a single same-named export.
 
-## Migration Aliases
+## Migration Aliases vs Semantic Re-Exports
 
-When renaming a public-ish symbol, prefer a clean cut. Do **not** add `export { NewName as OldName }` aliases unless an external consumer demands it — the refactor sweep deleted these as it went.
+Two different things; only one is banned.
+
+- **Migration alias** (banned): `export { NewName as OldName }` purely so importers can keep using the *old* name post-rename. The refactor sweep deleted all of these as it went; prefer a clean cut and update call sites in the same PR.
+- **Semantic re-export** (allowed): exporting a value under a second name that means something different in the consumer's vocabulary. The active example is `export { CHANGE_TYPE as SYSTEM_CHANGE_TYPE }` in `src/documents/activeEffects/baseActiveEffect/data/constants.mts` — `CHANGE_TYPE` is the local data-module name, `SYSTEM_CHANGE_TYPE` is how the rest of `src/` (Item, Secret, sheet components) refers to "the system's effect-change-type enum" to disambiguate from Foundry's own change-type concepts. Both names are first-class; neither is a deprecated alias of the other.
 
 ## Related
 
