@@ -1,5 +1,6 @@
 import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
 import { useItemSheetStore } from '@items/baseItem/index.mjs';
+import { ARMOR_SUBTYPE_LOCALIZED, ARMOR_TYPE_LOCALIZED } from '@items/physical/armor/data/constants.mjs';
 import type { Armor } from '@items/physical/armor/index.mjs';
 import { armorDetailsTab } from '@items/physical/armor/index.mjs';
 import type { EquippableItemGetters, EquippableItemLike, EquippableItemStore, EquippableItemStoreUtils } from '@items/physical/equippableItem/index.mjs';
@@ -28,8 +29,8 @@ const useArmorStore = (context: VueApplicationContext<Armor>) => {
   const documentGetters: ArmorGetters = {
     ...baseStore.documentGetters,
     ...equippableStore.documentGetters,
-    armorType: computed(() => game.i18n.localize(document.value.system.armorType)),
-    armorSubtype: computed(() => game.i18n.localize(document.value.system.armorSubtype)),
+    armorType: computed(() => game.i18n.localize(ARMOR_TYPE_LOCALIZED[document.value.system.armorType])),
+    armorSubtype: computed(() => game.i18n.localize(ARMOR_SUBTYPE_LOCALIZED[document.value.system.armorSubtype])),
   };
 
   const _storeUtils: armorStoreUtils = {
@@ -39,8 +40,7 @@ const useArmorStore = (context: VueApplicationContext<Armor>) => {
 
   const documentActions = {
     ...baseStore.documentActions,
-    // no specific actions in equippable yet, but they will come
-    //...equippableStore.documentActions,
+    ...equippableStore.documentActions,
   };
 
   return {

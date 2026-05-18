@@ -4,6 +4,7 @@ import type { EquippableItemGetters, EquippableItemLike, EquippableItemStore, Eq
 import { useEquippableItemStore } from '@items/physical/equippableItem/index.mjs';
 import type { EquippableItemActions } from '@items/physical/equippableItem/sheet/EquippableItemStore.mjs';
 import { physicalItemEffectsTab } from '@items/physical/physicalItem/index.mjs';
+import { WEAPON_SUBTYPE_LOCALIZED, WEAPON_TYPE_LOCALIZED } from '@items/physical/weapon/data/constants.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
 import { weaponDetailsTab } from '@items/physical/weapon/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
@@ -28,8 +29,8 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>) => {
   const documentGetters: WeaponGetters = {
     ...baseStore.documentGetters,
     ...equippableStore.documentGetters,
-    weaponType: computed(() => game.i18n.localize(document.value.system.weaponType)),
-    weaponSubtype: computed(() => game.i18n.localize(document.value.system.weaponSubtype)),
+    weaponType: computed(() => game.i18n.localize(WEAPON_TYPE_LOCALIZED[document.value.system.weaponType])),
+    weaponSubtype: computed(() => game.i18n.localize(WEAPON_SUBTYPE_LOCALIZED[document.value.system.weaponSubtype])),
   };
 
   const _storeUtils: weaponStoreUtils = {
