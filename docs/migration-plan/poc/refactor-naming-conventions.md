@@ -512,17 +512,17 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G5h.4 — `npm run build` clean; commit
 
 ### Group 5i: Method/file rehoming (DRY + co-location)
-- [ ] G5i.1 — Create `src/fields/getSchemaField.mts` with the extracted helper (~20 lines, takes `document` and `fieldPath`, returns `DataField | undefined`).
-- [ ] G5i.2 — Update `src/fields/index.mts` to export it.
-- [ ] G5i.3 — Replace the inline copy in `src/entities/components/CoreMixin/sheet/DocumentSheetStore.mts` with an import from `@fields/`.
-- [ ] G5i.4 — Replace the inline copy in `src/entities/components/CoreMixin/sheet/stores/FieldOverridesStore.mts` with the import.
-- [ ] G5i.5 — Replace the inline copy in `src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts` with the import.
-- [ ] G5i.6 — Create `src/entities/activeEffects/BaseActiveEffect/logic/` folder with `index.mts`.
-- [ ] G5i.7 — `git mv src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts src/entities/activeEffects/BaseActiveEffect/logic/resolveChangeValue.mts`; update sibling `index.mts` re-exports; update importers (`grep_search` `resolveChangeValue` workspace-wide).
-- [ ] G5i.8 — Create `src/helpers/syncOpenSheetTitle.mts` with the extracted 5-line helper.
-- [ ] G5i.9 — Update `src/helpers/index.mts` to export it.
-- [ ] G5i.10 — Replace inline copies in `src/entities/activeEffects/registration.mts` and `src/entities/activeEffects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mts` with imports from `@helpers/`.
-- [ ] G5i.11 — `npm run build` clean; commit.
+- [x] G5i.1 — Create `src/fields/getSchemaField.mts` with the extracted helper (~20 lines, takes `document` and `fieldPath`, returns `DataField | undefined`).
+- [x] G5i.2 — Update `src/fields/index.mts` to export it.
+- [x] G5i.3 — Replace the inline copy in `src/entities/components/CoreMixin/sheet/DocumentSheetStore.mts` with an import from `@fields/`.
+- [x] G5i.4 — Replace the inline copy in `src/entities/components/CoreMixin/sheet/stores/FieldOverridesStore.mts` with the import.
+- [x] G5i.5 — Replace the inline copy in `src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts` with the import.
+- [x] G5i.6 — Create `src/entities/activeEffects/BaseActiveEffect/logic/` folder with `index.mts`.
+- [x] G5i.7 — `git mv src/entities/activeEffects/BaseActiveEffect/resolveChangeValue.mts src/entities/activeEffects/BaseActiveEffect/logic/resolveChangeValue.mts`; update sibling `index.mts` re-exports; update importers (`grep_search` `resolveChangeValue` workspace-wide).
+- [x] G5i.8 — Create `src/helpers/syncOpenSheetTitle.mts` with the extracted 5-line helper.
+- [x] G5i.9 — Update `src/helpers/index.mts` to export it.
+- [x] G5i.10 — Replace inline copies in `src/entities/activeEffects/registration.mts` and `src/entities/activeEffects/BaseActiveEffect/sheet/ActiveEffectConfigStore.mts` with imports from `@helpers/`.
+- [x] G5i.11 — `npm run build` clean; commit.
 
 ### Group 6: Directory move `entities/` → `documents/`
 - [ ] G6.1 — Edit `tsconfig.json`: add `"@documents/*": ["./src/documents/*"]`; retarget `@items/*`, `@actors/*`, `@effects/*` to `./src/documents/...`; remove `@entities/*` and `@ec/*`

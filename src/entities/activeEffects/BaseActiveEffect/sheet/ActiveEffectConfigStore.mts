@@ -8,6 +8,7 @@ import { ActiveEffectSystemModel } from '@effects/BaseActiveEffect/data/ActiveEf
 import { buildMergedFamiliarContext, getFamiliarBuilder } from '@helpers/formulae/index.mjs';
 import type { ContextDocumentType, TargetContexts } from '@helpers/formulae/registry.mjs';
 import type { FamiliarContext } from '@helpers/formulae/types.mjs';
+import { syncOpenSheetTitle } from '@helpers/syncOpenSheetTitle.mjs';
 import type { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
 import type { MultiSelectOption, SelectOption } from '@vc/Fields/FormGroups/types.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
@@ -15,13 +16,6 @@ import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
 
 import { getDefaultActiveEffectTabs } from './tabs/index.mjs';
-
-const syncOpenSheetTitle = (sheet: { rendered?: boolean; title?: string; window?: { title?: HTMLElement } } | null | undefined): void => {
-  if (!sheet?.rendered) return;
-  if (sheet.window?.title instanceof HTMLElement) {
-    sheet.window.title.textContent = sheet.title ?? '';
-  }
-};
 
 const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
   context: VueApplicationContext<TDocument>

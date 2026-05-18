@@ -1,5 +1,5 @@
 import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/data/constants.mjs';
-import { resolveMaskedActiveEffectChangeValue } from '@effects/BaseActiveEffect/resolveChangeValue.mjs';
+import { resolveMaskedActiveEffectChangeValue } from '@effects/BaseActiveEffect/logic/resolveChangeValue.mjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**

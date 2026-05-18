@@ -12,15 +12,9 @@ import { SecretSystemModel } from '@effects/secret/data/SecretSystemModel.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { SecretSheet } from '@effects/secret/sheet/SecretSheet.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
+import { syncOpenSheetTitle } from '@helpers/syncOpenSheetTitle.mjs';
 import type { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
-
-const syncOpenSheetTitle = (sheet: { rendered?: boolean; title?: string; window?: { title?: HTMLElement } } | null | undefined): void => {
-  if (!sheet?.rendered) return;
-  if (sheet.window?.title instanceof HTMLElement) {
-    sheet.window.title.textContent = sheet.title ?? '';
-  }
-};
 
 const refreshOwningItemForSecret = (document: unknown): void => {
   const effect = document as foundry.documents.ActiveEffect | null;

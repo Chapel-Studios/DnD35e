@@ -6,7 +6,7 @@ import { getDisplayName } from '@ec/CoreMixin/logic/index.mjs';
 import type { ActiveEffectDnd35e } from '@effects/BaseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
-import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/BaseActiveEffect/resolveChangeValue.mjs';
+import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/BaseActiveEffect/logic/resolveChangeValue.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';

@@ -1,9 +1,10 @@
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/BaseActiveEffect/data/constants.mjs';
+import { getSchemaField } from '@fields/getSchemaField.mjs';
 import { buildDocumentDataMap, FormulaData } from '@helpers/formulae/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 
-import type { ActiveEffectDnd35e } from './ActiveEffectDnd35e.mjs';
+import type { ActiveEffectDnd35e } from '../ActiveEffectDnd35e.mjs';
 
 const {
   BooleanField,
@@ -52,14 +53,7 @@ function getEffectContexts(
 
   const contextMap = buildDocumentDataMap(targetDocument, additionalContexts);
 
-  let schemaField: foundry.data.fields.DataField | undefined;
-  if (change.key.startsWith('system.')) {
-    const systemModel = targetDocument.system as foundry.abstract.DataModel | undefined;
-    const schema = ((systemModel?.constructor as {
-      schema?: { _getField?: (path: string[]) => foundry.data.fields.DataField | undefined };
-    } | undefined)?.schema) ?? systemModel?.schema;
-    schemaField = schema?._getField?.(change.key.replace(/^system\./, '').split('.'));
-  }
+  const schemaField = getSchemaField(targetDocument, change.key);
 
   return { targetDocument, schemaField, contextMap };
 }
