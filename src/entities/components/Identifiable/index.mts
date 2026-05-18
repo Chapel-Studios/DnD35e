@@ -13,10 +13,10 @@ import type {
   IdentifiableDocumentProperties,
   IdentifiableDocumentSource,
   IdentifiableDocumentSourceProps,
-} from './IdentifiableItem.mjs';
+} from './IdentifiableDocument.mjs';
 import {
   IdentifiableDocumentMixin,
-} from './IdentifiableItem.mjs';
+} from './IdentifiableDocument.mjs';
 import type {
   IdentifiableDocumentActions,
   IdentifiableDocumentGetters,
