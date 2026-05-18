@@ -1,33 +1,41 @@
 /**
- * Constants for dnd35e system settings
+ * Cross-cutting settings composites
  *
- * This file provides unified exports for backwards compatibility.
- * New code should import directly from category modules.
+ * Unified views of category-level setting keys, menu keys, choice maps, and
+ * defaults. Used by helpers and consumers that need a system-wide view of
+ * settings. Individual categories should be imported directly from their
+ * category module.
  */
 
 import { COMBAT_KEYS, COMBAT_MENU } from '../combat/index.mjs';
 import { CORE_KEYS } from '../core/index.mjs';
 import { CURRENCY_KEY, CURRENCY_MENU, DEFAULT_CURRENCY_CONFIG } from '../currency/index.mjs';
-import { DISPLAY_KEYS, DISPLAY_MENU, PARTY_HUD_CHOICES, SHARED_VISION_MODE_CHOICES,UNIT_CHOICES } from '../display/index.mjs';
-import { DIAGONAL_MOVEMENT_CHOICES, EXPERIENCE_RATE_CHOICES,GAME_RULES_KEYS, GAME_RULES_MENU } from '../gameRules/index.mjs';
-import { DEFAULT_HEALTH_CONFIG,HEALTH_KEY, HEALTH_MENU } from '../health/index.mjs';
-import { DEFAULT_ROLL_CONFIG,ROLL_KEY, ROLL_MENU } from '../roll/index.mjs';
+import {
+  DISPLAY_KEYS,
+  DISPLAY_MENU,
+  PARTY_HUD_CHOICES,
+  SHARED_VISION_MODE_CHOICES,
+  UNIT_CHOICES,
+} from '../display/index.mjs';
+import {
+  DIAGONAL_MOVEMENT_CHOICES,
+  EXPERIENCE_RATE_CHOICES,
+  GAME_RULES_KEYS,
+  GAME_RULES_MENU,
+} from '../gameRules/index.mjs';
+import { DEFAULT_HEALTH_CONFIG, HEALTH_KEY, HEALTH_MENU } from '../health/index.mjs';
+import { DEFAULT_ROLL_CONFIG, ROLL_KEY, ROLL_MENU } from '../roll/index.mjs';
 import { SYSTEM_ID } from '../shared.mjs';
-import { DEFAULT_SKILL_SETTINGS,SKILLS_KEY, SKILLS_MENU } from '../skills/index.mjs';
+import { DEFAULT_SKILL_SETTINGS, SKILLS_KEY, SKILLS_MENU } from '../skills/index.mjs';
 
 /**
- * Unified SETTINGS object combining all category keys for backwards compatibility
+ * Unified SETTINGS object combining all category keys
  */
 const SETTINGS = {
-  // Core/Hidden
   ...CORE_KEYS,
-  // Game Rules
   ...GAME_RULES_KEYS,
-  // Combat
   ...COMBAT_KEYS,
-  // Display
   ...DISPLAY_KEYS,
-  // Complex Config Objects
   HEALTH_CONFIG: HEALTH_KEY,
   ROLL_CONFIG: ROLL_KEY,
   CURRENCY_CONFIG: CURRENCY_KEY,
@@ -84,21 +92,9 @@ type ConstantTypes = {
 export {
   choices,
   constants,
-  DEFAULT_CURRENCY_CONFIG,
-  DEFAULT_HEALTH_CONFIG,
-  DEFAULT_ROLL_CONFIG,
-  DEFAULT_SKILL_SETTINGS,
   defaults,
-  DIAGONAL_MOVEMENT_CHOICES,
-  EXPERIENCE_RATE_CHOICES,
-  PARTY_HUD_CHOICES,
   SETTING_MENUS,
   SETTINGS,
-  SHARED_VISION_MODE_CHOICES,
-  SYSTEM_ID,
-  UNIT_CHOICES,
 };
 
-export type {
-  ConstantTypes,
-};
+export type { ConstantTypes };
