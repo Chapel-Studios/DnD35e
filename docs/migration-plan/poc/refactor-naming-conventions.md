@@ -400,33 +400,33 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G2.8 — `npm run build` clean; commit
 
 ### Group 3a: `BaseDnd35eSystemData` → `DocumentSystemData`
-- [ ] G3a.1 — Rename file `BaseDnd35eSystemData.mts` → `DocumentSystemData.mts`
-- [ ] G3a.2 — Rename symbols: `BaseDnd35eSystemData` → `DocumentSystemData`, `BaseDnd35eSystemSource` → `DocumentSystemSource`
-- [ ] G3a.3 — Update all imports
-- [ ] G3a.4 — `npm run build` clean; commit
+- [x] G3a.1 — Rename file `BaseDnd35eSystemData.mts` → `DocumentSystemData.mts`
+- [x] G3a.2 — Rename symbols: `BaseDnd35eSystemData` → `DocumentSystemData`, `BaseDnd35eSystemSource` → `DocumentSystemSource`
+- [x] G3a.3 — Update all imports
+- [x] G3a.4 — `npm run build` clean; commit
 
 ### Group 3b: `PhysicalSystemData.mts` → `PhysicalItemSystemData.mts`
-- [ ] G3b.1 — `git mv` the file
-- [ ] G3b.2 — Update sibling `index.mts` and any other importers
-- [ ] G3b.3 — `npm run build` clean; commit
+- [x] G3b.1 — `git mv` the file
+- [x] G3b.2 — Update sibling `index.mts` and any other importers
+- [x] G3b.3 — `npm run build` clean; commit
 
 ### Group 3c: `ItemSystemModelBase` → `ItemSystemModel`
-- [ ] G3c.1 — Rename file
-- [ ] G3c.2 — Rename class symbol
-- [ ] G3c.3 — Update imports
-- [ ] G3c.4 — `npm run build` clean; commit
+- [x] G3c.1 — Rename file
+- [x] G3c.2 — Rename class symbol
+- [x] G3c.3 — Update imports
+- [x] G3c.4 — `npm run build` clean; commit
 
 ### Group 3d: `ActorSystemModelBase` → `ActorSystemModel`
-- [ ] G3d.1 — Rename file
-- [ ] G3d.2 — Rename class symbol (and the `interface ActorSystemModelBase` mirror)
-- [ ] G3d.3 — Update imports
-- [ ] G3d.4 — `npm run build` clean; commit
+- [x] G3d.1 — Rename file
+- [x] G3d.2 — Rename class symbol (and the `interface ActorSystemModelBase` mirror)
+- [x] G3d.3 — Update imports
+- [x] G3d.4 — `npm run build` clean; commit
 
 ### Group 3e: `ActiveEffectSystemModelBase` → `ActiveEffectSystemModel`
-- [ ] G3e.1 — Rename file
-- [ ] G3e.2 — Rename class symbol
-- [ ] G3e.3 — Update imports
-- [ ] G3e.4 — `npm run build` clean; commit
+- [x] G3e.1 — Rename file
+- [x] G3e.2 — Rename class symbol
+- [x] G3e.3 — Update imports
+- [x] G3e.4 — `npm run build` clean; commit
 
 ### Group 4a: `Dnd35eDocument` (mixin + types) → `DocumentDnd35e`
 - [ ] G4a.1 — Rename file `Dnd35eDocument.mts` → `DocumentDnd35e.mts`
