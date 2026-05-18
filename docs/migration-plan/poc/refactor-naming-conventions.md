@@ -560,18 +560,18 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G7.7 — `npm run build` clean; commit.
 
 ### Group 8: Reorganize `documents/items/` into `physical/` + `metaphysical/` buckets
-- [ ] G8.1 — Verify zero imports of the three dead files (`Alignment.mts`, `Changes.mts`, `CursableItem.mts`) — `grep_search` workspace-wide must return only the files themselves.
-- [ ] G8.2 — `git rm src/documents/items/components/Alignment.mts src/documents/items/components/Changes.mts src/documents/items/components/CursableItem.mts`.
-- [ ] G8.3 — Create `src/documents/items/physical/` and `src/documents/items/metaphysical/` directories (placeholder `index.mts` or `.gitkeep` if needed).
-- [ ] G8.4 — `git mv src/documents/items/components/Physical src/documents/items/physical/physicalItem` (two-step on Windows if case-only collision risk).
-- [ ] G8.5 — `git mv src/documents/items/components/Equippable src/documents/items/physical/equippableItem`.
-- [ ] G8.6 — `git mv src/documents/items/weapon src/documents/items/physical/weapon`.
-- [ ] G8.7 — `git mv src/documents/items/Dnd35eBuff src/documents/activeEffects/buff` (folder cased lowercase as part of the move). Rename file `Dnd35eBuff.mts` → `Buff.mts`. Prepend a header comment marking the file as **parked work-in-progress reference — not registered, not used, retained for alpha.9 Buff AE Core (and expansion in beta.3); see `docs/architecture/property-maps/PropertyMap-ActiveEffects.md` §5**. The single commented-out class line stays as-is.
-- [ ] G8.8 — Remove the now-empty `src/documents/items/components/` directory.
-- [ ] G8.9 — Workspace replace of import paths: `@items/components/Physical/` → `@items/physical/physicalItem/`, `@items/components/Equippable/` → `@items/physical/equippableItem/`, `@items/weapon/` → `@items/physical/weapon/`. `@items/Dnd35eBuff/` has zero imports (verified — the placeholder class line is commented out) so no path replacement needed; if any straggler reference is found, repoint to `@effects/buff/`.
-- [ ] G8.10 — eslint --fix on touched files.
-- [ ] G8.11 — `grep_search` workspace-wide for `items/components` — zero matches expected in production code.
-- [ ] G8.12 — `npm run build` clean; commit.
+- [x] G8.1 — Verify zero imports of the three dead files (`Alignment.mts`, `Changes.mts`, `CursableItem.mts`) — `grep_search` workspace-wide must return only the files themselves.
+- [x] G8.2 — `git rm src/documents/items/components/Alignment.mts src/documents/items/components/Changes.mts src/documents/items/components/CursableItem.mts`.
+- [x] G8.3 — Create `src/documents/items/physical/` and `src/documents/items/metaphysical/` directories (placeholder `index.mts` or `.gitkeep` if needed).
+- [x] G8.4 — `git mv src/documents/items/components/Physical src/documents/items/physical/physicalItem` (two-step on Windows if case-only collision risk).
+- [x] G8.5 — `git mv src/documents/items/components/Equippable src/documents/items/physical/equippableItem`.
+- [x] G8.6 — `git mv src/documents/items/weapon src/documents/items/physical/weapon`.
+- [x] G8.7 — `git mv src/documents/items/Dnd35eBuff src/documents/activeEffects/buff` (folder cased lowercase as part of the move). Rename file `Dnd35eBuff.mts` → `Buff.mts`. Prepend a header comment marking the file as **parked work-in-progress reference — not registered, not used, retained for alpha.9 Buff AE Core (and expansion in beta.3); see `docs/architecture/property-maps/PropertyMap-ActiveEffects.md` §5**. The single commented-out class line stays as-is.
+- [x] G8.8 — Remove the now-empty `src/documents/items/components/` directory.
+- [x] G8.9 — Workspace replace of import paths: `@items/components/Physical/` → `@items/physical/physicalItem/`, `@items/components/Equippable/` → `@items/physical/equippableItem/`, `@items/weapon/` → `@items/physical/weapon/`. `@items/Dnd35eBuff/` has zero imports (verified — the placeholder class line is commented out) so no path replacement needed; if any straggler reference is found, repoint to `@effects/buff/`.
+- [x] G8.10 — eslint --fix on touched files.
+- [x] G8.11 — `grep_search` workspace-wide for `items/components` — zero matches expected in production code.
+- [x] G8.12 — `npm run build` clean; commit.
 
 ### Group 9: Helper-type prefix sweep
 - [ ] G9.1 — Verified-collision rename first: `Dnd35eEffectChangeData` → `EffectChangeDataDnd35e` (file + symbol + imports).
