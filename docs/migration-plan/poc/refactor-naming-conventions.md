@@ -551,13 +551,13 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G6b.9 — `npm run build` clean; commit
 
 ### Group 7: Folder casing (documents/ + vue/components/)
-- [ ] G7.1 — Audit all PascalCase folders under `src/documents/` and decide per-folder: keep PascalCase (proper noun, brand) or normalize to camelCase (common noun).
-- [ ] G7.2 — `git mv src/documents/activeEffects/BaseActiveEffect src/documents/activeEffects/baseActiveEffect` (two-step on Windows via temp name).
-- [ ] G7.3 — Apply remaining folder renames identified in G7.1 (note: `items/components/Physical/` and `items/components/Equippable/` are NOT renamed here — Group 8 relocates them into `items/physical/physicalItem/` and `items/physical/equippableItem/`).
-- [ ] G7.4 — `git mv src/vue/components/Fields src/vue/components/fields` (two-step on Windows); `git mv src/vue/components/fields/FormGroups src/vue/components/fields/formGroups` (two-step on Windows). Single-component packaging folders like `TabDivider/` retain PascalCase per R.2.9.
-- [ ] G7.5 — Workspace replace import paths and any string references: `vue/components/Fields/` → `vue/components/fields/`, `vue/components/fields/FormGroups/` → `vue/components/fields/formGroups/`; `grep_search` to confirm zero leftover production-code matches.
-- [ ] G7.6 — Update all import paths; eslint --fix on touched files.
-- [ ] G7.7 — `npm run build` clean; commit.
+- [x] G7.1 — Audit all PascalCase folders under `src/documents/` and decide per-folder: keep PascalCase (proper noun, brand) or normalize to camelCase (common noun).
+- [x] G7.2 — `git mv src/documents/activeEffects/BaseActiveEffect src/documents/activeEffects/baseActiveEffect` (two-step on Windows via temp name).
+- [x] G7.3 — Apply remaining folder renames identified in G7.1 (note: `items/components/Physical/` and `items/components/Equippable/` are NOT renamed here — Group 8 relocates them into `items/physical/physicalItem/` and `items/physical/equippableItem/`).
+- [x] G7.4 — `git mv src/vue/components/Fields src/vue/components/fields` (two-step on Windows); `git mv src/vue/components/fields/FormGroups src/vue/components/fields/formGroups` (two-step on Windows). Single-component packaging folders like `TabDivider/` retain PascalCase per R.2.9.
+- [x] G7.5 — Workspace replace import paths and any string references: `vue/components/Fields/` → `vue/components/fields/`, `vue/components/fields/FormGroups/` → `vue/components/fields/formGroups/`; `grep_search` to confirm zero leftover production-code matches.
+- [x] G7.6 — Update all import paths; eslint --fix on touched files.
+- [x] G7.7 — `npm run build` clean; commit.
 
 ### Group 8: Reorganize `documents/items/` into `physical/` + `metaphysical/` buckets
 - [ ] G8.1 — Verify zero imports of the three dead files (`Alignment.mts`, `Changes.mts`, `CursableItem.mts`) — `grep_search` workspace-wide must return only the files themselves.
