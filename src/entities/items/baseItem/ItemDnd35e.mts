@@ -9,7 +9,7 @@ import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, IN
 import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/BaseActiveEffect/resolveChangeValue.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
-import { LogHelper } from '@helpers/logHelper.mjs';
+import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { ChangeHistory, Override, StackingChange } from '@helpers/stacking.mjs';
 import { parseNumericChangeValue, resolveActiveEffectChanges, STACK_RESULT_APPLIED, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
 import type { ItemType } from '@items/index.mjs';

@@ -6,7 +6,7 @@ import type { ActiveEffectDnd35e } from '@effects/BaseActiveEffect/ActiveEffectD
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
 import { resolveActiveEffectChange } from '@effects/BaseActiveEffect/resolveChangeValue.mjs';
-import { LogHelper } from '@helpers/logHelper.mjs';
+import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
 import type { TokenDocumentDnd35e } from '@scene/token-document/TokenDocumentDnd35e.mjs';
