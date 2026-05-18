@@ -1,6 +1,6 @@
 import type { fields as fieldsType } from '@common/data/_module.mjs';
 import type { ModelPropsFromSchema, SourceFromSchema } from '@common/data/fields.mjs';
-import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
+import { requiredBooleanField } from '@fields/fieldBuilders.mjs';
 const { fields } = foundry.data;
 
 type CursableItem = {

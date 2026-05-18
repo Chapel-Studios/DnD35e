@@ -1,6 +1,6 @@
 import { DocumentSystemModel } from '@ec/CoreMixin/data/DocumentSystemModel.mjs';
 import { EFFECT_TARGET } from '@effects/effectTypes.mjs';
-import { requiredBooleanField } from '@helpers/fieldBuilders.mjs';
+import { requiredBooleanField } from '@fields/fieldBuilders.mjs';
 import { ensureNameFormula } from '@helpers/formulae/index.mjs';
 import type { TargetContexts } from '@helpers/formulae/registry.mjs';
 

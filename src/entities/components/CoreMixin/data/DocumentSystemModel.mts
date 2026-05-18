@@ -3,7 +3,7 @@ import {
   requiredStringField,
   useDnd35eField,
   withFamiliar,
-} from '@helpers/fieldBuilders.mjs';
+} from '@fields/fieldBuilders.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { DocumentContext } from '@helpers/formulae/registry.mjs';

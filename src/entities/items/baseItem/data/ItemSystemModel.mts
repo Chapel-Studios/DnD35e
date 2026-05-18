@@ -2,7 +2,7 @@ import { DocumentSystemModel } from '@ec/CoreMixin/data/DocumentSystemModel.mjs'
 import {
   requiredBooleanField,
   requiredStringField,
-} from '@helpers/fieldBuilders.mjs';
+} from '@fields/fieldBuilders.mjs';
 
 import type { ItemSystemData } from './ItemSystemData.mjs';
 

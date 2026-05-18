@@ -1,7 +1,7 @@
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { ActiveEffectSystemModel } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModel.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
-import { requiredNumberField, useDnd35eField } from '@helpers/fieldBuilders.mjs';
+import { requiredNumberField, useDnd35eField } from '@fields/fieldBuilders.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { TargetContexts } from '@helpers/formulae/registry.mjs';
 import { PriceField } from '@settings/currency/PriceField.mjs';

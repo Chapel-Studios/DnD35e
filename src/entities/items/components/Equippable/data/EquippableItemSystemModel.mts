@@ -1,6 +1,6 @@
 import type { EquipSlot } from '@constants/equipmentSlots.mjs';
 import { SIZES } from '@constants/sizes.mjs';
-import { requiredBooleanField, useDnd35eField } from '@helpers/fieldBuilders.mjs';
+import { requiredBooleanField, useDnd35eField } from '@fields/fieldBuilders.mjs';
 import { PhysicalItemSystemModel } from '@items/components/Physical/data/PhysicalItemSystemModel.mjs';
 
 import type { EquippableItemSystemData } from './EquippableItemSystemData.mjs';
