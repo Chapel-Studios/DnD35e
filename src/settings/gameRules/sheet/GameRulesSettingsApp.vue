@@ -66,11 +66,11 @@
 </template>
 
 <script setup lang="ts">
-  import type { SettingsSection } from '@settings/core/_types.mjs';
+  import type { SettingsSection } from '@settings/core/types.mjs';
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
 
-  import type { DamageReductionTypesConfig } from '../_types.mjs';
   import { GAME_RULES_KEYS } from '../constants.mjs';
+  import type { DamageReductionTypesConfig } from '../types.mjs';
   import DamageReductionTable from './DamageReductionTable.vue';
 
   const props = defineProps<{

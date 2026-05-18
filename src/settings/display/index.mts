@@ -2,7 +2,6 @@
  * Display settings module
  */
 
-export type { PartyHudMode, UnitSystem } from './_types.mjs';
 export {
   DISPLAY_CLIENT_KEYS,
   DISPLAY_KEYS,
@@ -18,6 +17,7 @@ export {
   registerDisplayWorldSettings,
 } from './registration.mjs';
 export { DisplaySettingsConfig } from './sheet/index.mjs';
+export type { PartyHudMode, UnitSystem } from './types.mjs';
 export type {
   ImperialUnitOfMeasure,
   MetricUnitOfMeasure,

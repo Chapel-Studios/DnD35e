@@ -1,4 +1,4 @@
-import type { DamageReductionTypesConfig } from './_types.mjs';
+import type { DamageReductionTypesConfig } from './types.mjs';
 
 /**
  * Game Rules settings constants

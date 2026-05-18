@@ -117,7 +117,7 @@
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
   import { computed, ref } from 'vue';
 
-  import type { CustomSkill, SkillSettings } from '../_types.mjs';
+  import type { CustomSkill, SkillSettings } from '../types.mjs';
 
   interface TabInfo {
     id: string;

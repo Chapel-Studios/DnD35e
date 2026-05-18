@@ -506,10 +506,10 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G5g.9 — `npm run build` clean; commit
 
 ### Group 5h: `_types.mts` → `types.mts` repo-wide
-- [ ] G5h.1 — Workspace `file_search` for `_types.mts` to inventory all files
-- [ ] G5h.2 — Per file: `git mv _types.mts types.mts`; workspace `grep_search` for the old import path (e.g. `from './_types.mjs'`) and update each
-- [ ] G5h.3 — Workspace `grep_search` for `_types.mjs` and `_types.mts` after all renames; zero matches expected in production code
-- [ ] G5h.4 — `npm run build` clean; commit
+- [x] G5h.1 — Workspace `file_search` for `_types.mts` to inventory all files
+- [x] G5h.2 — Per file: `git mv _types.mts types.mts`; workspace `grep_search` for the old import path (e.g. `from './_types.mjs'`) and update each
+- [x] G5h.3 — Workspace `grep_search` for `_types.mjs` and `_types.mts` after all renames; zero matches expected in production code
+- [x] G5h.4 — `npm run build` clean; commit
 
 ### Group 5i: Method/file rehoming (DRY + co-location)
 - [ ] G5i.1 — Create `src/fields/getSchemaField.mts` with the extracted helper (~20 lines, takes `document` and `fieldPath`, returns `DataField | undefined`).
@@ -595,6 +595,7 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 
 - **`Dnd35eBuff` placeholder content**. The class body itself stays commented-out work-in-progress. Group 8 relocates the file from `items/Dnd35eBuff/Dnd35eBuff.mts` to `activeEffects/buff/Buff.mts` (Buff is an AE subtype in dnd35e, not an item type — see `PropertyMap-ActiveEffects.md` §5). Actual implementation lands in alpha.9 Buff AE Core (and expands in beta.3). This refactor does not uncomment or rewrite the placeholder body; it just parks it in the correct location.
 - **Sheet boilerplate helper**. Reconsider once 5+ item types exist and per-type `*Sheet.mts` wrappers feel repetitive.
+- unit tests around unit of measurement settings and currency settings
 
 ---
 

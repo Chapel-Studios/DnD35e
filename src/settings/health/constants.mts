@@ -2,7 +2,7 @@
  * Health settings constants
  */
 
-import type { HealthConfig, HitDieConfig } from './_types.mjs';
+import type { HealthConfig, HitDieConfig } from './types.mjs';
 
 /** Health config setting key */
 export const HEALTH_KEY = 'healthConfig';

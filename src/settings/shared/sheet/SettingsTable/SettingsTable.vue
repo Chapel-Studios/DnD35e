@@ -33,8 +33,8 @@
 </template>
 
 <script setup lang="ts">
-  import type { IdConfig, SettingsTableColumn, SettingsTableItem } from './_types.mjs';
   import SettingsTableRow from './SettingsTableRow.vue';
+  import type { IdConfig, SettingsTableColumn, SettingsTableItem } from './types.mjs';
 
   withDefaults(defineProps<{
     items: SettingsTableItem[];

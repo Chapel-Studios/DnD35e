@@ -95,8 +95,8 @@
   import { stripSpecialCharacters } from '@helpers/stringHelpers.mjs';
   import { computed, reactive, ref, watch } from 'vue';
 
-  import type { ColumnRenderContext, IdConfig, SettingsTableColumn, SettingsTableItem } from './_types.mjs';
-  import { AUTO_ID_MARKER, DEFAULT_ID_PREFIX } from './_types.mjs';
+  import type { ColumnRenderContext, IdConfig, SettingsTableColumn, SettingsTableItem } from './types.mjs';
+  import { AUTO_ID_MARKER, DEFAULT_ID_PREFIX } from './types.mjs';
 
   const props = withDefaults(defineProps<{
     item: SettingsTableItem;
