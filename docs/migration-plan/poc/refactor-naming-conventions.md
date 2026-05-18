@@ -442,17 +442,17 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G4b.4 — `npm run build` clean; commit
 
 ### Group 4c: `Dnd35eActiveEffect` → `ActiveEffectDnd35e`
-- [ ] G4c.1 — Rename file `Dnd35eActiveEffect.mts` → `ActiveEffectDnd35e.mts`
-- [ ] G4c.2 — Rename: `Dnd35eActiveEffect` (class) → `ActiveEffectDnd35e`, `Dnd35eActiveEffectFlags` → `ActiveEffectFlags`, `Dnd35eActiveEffectBase` (const) → `ActiveEffectBase`, `Dnd35eActiveEffectSource` → `ActiveEffectSourceDnd35e` (**verified collision**), `Dnd35eActiveEffectSystemSource` → `ActiveEffectSystemSourceDnd35e` (**verified collision**)
-- [ ] G4c.3 — `ActiveEffectProxyDnd35e` already in suffix form — verify, no rename
-- [ ] G4c.4 — Update all imports / re-export barrels
-- [ ] G4c.5 — `npm run build` clean; commit
+- [x] G4c.1 — Rename file `Dnd35eActiveEffect.mts` → `ActiveEffectDnd35e.mts`
+- [x] G4c.2 — Rename: `Dnd35eActiveEffect` (class) → `ActiveEffectDnd35e`, `Dnd35eActiveEffectFlags` → `ActiveEffectFlags`, `Dnd35eActiveEffectBase` (const) → `ActiveEffectBase`, `Dnd35eActiveEffectSource` → `ActiveEffectSourceDnd35e` (**verified collision**), `Dnd35eActiveEffectSystemSource` → `ActiveEffectSystemSourceDnd35e` (**verified collision**)
+- [x] G4c.3 — `ActiveEffectProxyDnd35e` already in suffix form — verify, no rename
+- [x] G4c.4 — Update all imports / re-export barrels
+- [x] G4c.5 — `npm run build` clean; commit
 
 ### Group 4d: `Dnd35eActiveEffectConfig` → `ActiveEffectConfigDnd35e`
-- [ ] G4d.1 — Rename file
-- [ ] G4d.2 — Rename class symbol
-- [ ] G4d.3 — Update imports / re-export barrels (Secret, Material, General sheets all extend this)
-- [ ] G4d.4 — `npm run build` clean; commit
+- [x] G4d.1 — Rename file
+- [x] G4d.2 — Rename class symbol
+- [x] G4d.3 — Update imports / re-export barrels (Secret, Material, General sheets all extend this)
+- [x] G4d.4 — `npm run build` clean; commit
 
 ### Group 5a: `PhysicalItemDnd35e.mts` → `PhysicalItem.mts`
 - [ ] G5a.1 — Rename file (class already named `PhysicalItem`)
