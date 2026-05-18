@@ -39,7 +39,7 @@ type SchemaField = foundry.data.fields.SchemaField;
  * Custom options stashed on fields via useDnd35eField / withFamiliar / FormulaField at schema definition time.
  * Foundry preserves unknown keys in `field.options`; this interface describes the ones we read back.
  */
-interface Dnd35eOverrideOptions {
+interface OverrideOptions {
   identifiable?: boolean;
   defaultVisibility?: FieldVisibility;
   defaultEditability?: FieldEditability;
@@ -52,7 +52,7 @@ interface Dnd35eOverrideOptions {
 // ---------------------------------------------------------------------------
 
 /** Maps each override key to its corresponding schema default option name. */
-const SCHEMA_DEFAULT_KEYS: { [K in FieldOverrideKey]: keyof Dnd35eOverrideOptions } = {
+const SCHEMA_DEFAULT_KEYS: { [K in FieldOverrideKey]: keyof OverrideOptions } = {
   visibility: 'defaultVisibility',
   editability: 'defaultEditability',
 };
@@ -156,8 +156,8 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
   const getFieldHint = (fieldPath: string): string => getFieldLocalization(fieldPath, 'hint');
 
   /** Read our custom override options from a DataField. */
-  const getOverrideOptions = (field: DataField): Dnd35eOverrideOptions =>
-    field.options as unknown as Dnd35eOverrideOptions;
+  const getOverrideOptions = (field: DataField): OverrideOptions =>
+    field.options as unknown as OverrideOptions;
 
   /**
    * Resolve a single override key at a single path (no cascade).

@@ -27,7 +27,7 @@ const WEAPON_TYPES_CONFIG = Object.fromEntries(
  * Attached to CONFIG.dnd35e during system initialization.
  * Contains custom document classes and system-level settings.
  */
-const Dnd35eSystemConfig = {
+const SystemConfig = {
   VERSION: '13.0.0-dev.1',
   item: {
     enums: {
@@ -54,4 +54,4 @@ registerConfigPreLocalization('item.enums.sizes', { key: 'label' });
 registerConfigPreLocalization('item.enums.weaponTypes', { key: 'label' });
 registerConfigPreLocalization('gameRules.damageReductionTypes', { key: 'label' });
 
-export { Dnd35eSystemConfig };
+export { SystemConfig };

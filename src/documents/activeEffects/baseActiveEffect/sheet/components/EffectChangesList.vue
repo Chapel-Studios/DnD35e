@@ -116,7 +116,7 @@
   import { BONUS_TYPES } from '@constants/bonusTypes.mjs';
   import type { RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
-  import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+  import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
   import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
   import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
   import FormulaFormGroup from '@helpers/formulae/FormulaFormGroup.vue';
@@ -133,7 +133,7 @@
     variant?: 'default' | 'mask';
     showBonusType?: boolean;
     showChangeFieldControls?: boolean;
-    createChangeData?: Partial<Dnd35eEffectChangeData>;
+    createChangeData?: Partial<EffectChangeDataDnd35e>;
   }>(), {
     title: undefined,
     addLabel: undefined,

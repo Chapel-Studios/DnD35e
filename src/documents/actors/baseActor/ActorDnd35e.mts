@@ -3,7 +3,7 @@ import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
-import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import { resolveActiveEffectChange } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
@@ -13,7 +13,7 @@ import type { TokenDocumentDnd35e } from '@scene/tokenDocument/TokenDocumentDnd3
 
 import type { ActorSystemData } from './index.mjs';
 
-interface AppliedActorEffectChange extends Dnd35eEffectChangeData {
+interface AppliedActorEffectChange extends EffectChangeDataDnd35e {
   effect: ActiveEffectDnd35e;
 }
 

@@ -3,7 +3,7 @@ import type Color from '@common/utils/color.mjs';
 import type { DocumentSheetStore, DocumentSheetStoreDocumentActions, DocumentSheetStoreDocumentGetters } from '@documents/document/index.mjs';
 import { useDocumentSheetStore } from '@documents/document/index.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
-import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { ActiveEffectSystemModel } from '@effects/baseActiveEffect/data/ActiveEffectSystemModel.mjs';
 import { buildMergedFamiliarContext, getFamiliarBuilder } from '@helpers/formulae/index.mjs';
 import type { ContextDocumentType, TargetContexts } from '@helpers/formulae/registry.mjs';
@@ -185,7 +185,7 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
 
   const documentActions: ActiveEffectConfigStoreDocumentActions<TDocument> = {
     ...baseStore.documentActions,
-    addChange: async (changeData: Dnd35eEffectChangeData) => {
+    addChange: async (changeData: EffectChangeDataDnd35e) => {
       if (!('changes' in document.value.system)) return false;
       const changes = document.value.system.changes || [];
       const updatedChanges = [...changes, changeData];
@@ -268,7 +268,7 @@ type ActiveEffectConfigStoreDocumentGetters = DocumentSheetStoreDocumentGetters 
 };
 
 type ActiveEffectConfigStoreDocumentActions<TDocument extends ActiveEffectDnd35e> = DocumentSheetStoreDocumentActions<TDocument> & {
-  addChange: (changeData: Dnd35eEffectChangeData) => Promise<boolean>;
+  addChange: (changeData: EffectChangeDataDnd35e) => Promise<boolean>;
   removeChange?: (index: number) => Promise<boolean>;
   updateChangeField: (index: number, field: string, value: unknown) => Promise<boolean>;
   updateDurationValue: (value: number | null) => Promise<boolean>;

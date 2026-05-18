@@ -1,4 +1,4 @@
-import type { Dnd35eEffectChangeData } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import { getSchemaField } from '@fields/getSchemaField.mjs';
 import { buildDocumentDataMap, FormulaData } from '@helpers/formulae/index.mjs';
@@ -16,7 +16,7 @@ type SupportedEffectParent = foundry.documents.Actor | ItemDnd35e | null;
 
 function getEffectContexts(
   effect: ActiveEffectDnd35e,
-  change: Dnd35eEffectChangeData
+  change: EffectChangeDataDnd35e
 ): {
   targetDocument: foundry.abstract.Document | null;
   schemaField?: foundry.data.fields.DataField;
@@ -80,7 +80,7 @@ function tryEvaluateNumber(expression: string): number | null {
 
 function resolveActiveEffectChangeValue(
   effect: ActiveEffectDnd35e,
-  change: Dnd35eEffectChangeData
+  change: EffectChangeDataDnd35e
 ): unknown {
   const rawValue = change.value;
   if (typeof rawValue !== 'string') return rawValue;
@@ -108,7 +108,7 @@ function resolveActiveEffectChangeValue(
 
 function resolveMaskedActiveEffectChangeValue(
   effect: ActiveEffectDnd35e,
-  change: Dnd35eEffectChangeData
+  change: EffectChangeDataDnd35e
 ): unknown {
   const resolvedValue = resolveActiveEffectChangeValue(effect, change);
   const { targetDocument, schemaField } = getEffectContexts(effect, change);
@@ -123,7 +123,7 @@ function resolveMaskedActiveEffectChangeValue(
       current: unknown,
       delta: unknown,
       model: foundry.abstract.DataModel,
-      change: Dnd35eEffectChangeData
+      change: EffectChangeDataDnd35e
     ) => unknown;
   };
 
@@ -151,8 +151,8 @@ function resolveMaskedActiveEffectChangeValue(
 
 function resolveActiveEffectChange(
   effect: ActiveEffectDnd35e,
-  change: Dnd35eEffectChangeData
-): Dnd35eEffectChangeData {
+  change: EffectChangeDataDnd35e
+): EffectChangeDataDnd35e {
   const resolvedValue = resolveActiveEffectChangeValue(effect, change);
   if (resolvedValue === change.value) return change;
 

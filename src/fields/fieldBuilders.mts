@@ -84,7 +84,7 @@ function withFamiliar<T extends foundry.data.fields.DataField>(
   return field;
 }
 
-interface Dnd35eFieldMeta {
+interface FieldMeta {
   /** FormulaFamiliar schema walker metadata. */
   familiar?: FormulaFieldMeta;
   /** Whether this field supports identified/unidentified variants. Defaults to `true`. */
@@ -113,7 +113,7 @@ interface Dnd35eFieldMeta {
  */
 function useDnd35eField<T extends foundry.data.fields.DataField>(
   field: T,
-  meta: Dnd35eFieldMeta = {}
+  meta: FieldMeta = {}
 ): T {
   const opts = field.options as Record<string, unknown>;
   opts.identifiable = meta.identifiable ?? true;
@@ -126,7 +126,7 @@ function useDnd35eField<T extends foundry.data.fields.DataField>(
 }
 
 export {
-  type Dnd35eFieldMeta,
+  type FieldMeta,
   formulaField,
   nullableOptionalStringField,
   optionalHtmlField,

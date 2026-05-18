@@ -43,7 +43,7 @@ const EFFECT_CHANGE_TYPE = {
  * System-registered change types beyond Foundry's built-in set.
  * These are registered in CONFIG.ActiveEffect.changeTypes at init.
  */
-const DND35E_CHANGE_TYPE = {
+const CHANGE_TYPE = {
   /** FormulaFamiliar change type — provides autocomplete context, not value changes. */
   FAMILIAR: 'familiar',
   /** MASK change type — defines masked (fake) values for Secret AEs. Not applied via stacking. */
@@ -53,7 +53,7 @@ const DND35E_CHANGE_TYPE = {
 /** All valid change types (Foundry built-in + system-registered) as a flat array for schema choices. */
 const ALL_CHANGE_TYPES = [
   ...Object.values(EFFECT_CHANGE_TYPE),
-  ...Object.values(DND35E_CHANGE_TYPE),
+  ...Object.values(CHANGE_TYPE),
 ] as const;
 
 const INITIAL_EFFECT_CHANGE_PHASE = 'initial';
@@ -66,8 +66,8 @@ const EFFECT_CHANGE_PHASES = [
   FINAL_EFFECT_CHANGE_PHASE,
 ] as const;
 
-type EffectChangeType = typeof EFFECT_CHANGE_TYPE[keyof typeof EFFECT_CHANGE_TYPE] | Dnd35eChangeType;
-type Dnd35eChangeType = typeof DND35E_CHANGE_TYPE[keyof typeof DND35E_CHANGE_TYPE];
+type EffectChangeType = typeof EFFECT_CHANGE_TYPE[keyof typeof EFFECT_CHANGE_TYPE] | ChangeType;
+type ChangeType = typeof CHANGE_TYPE[keyof typeof CHANGE_TYPE];
 type EffectChangePhase = typeof EFFECT_CHANGE_PHASES[number];
 
 export {
@@ -80,13 +80,13 @@ export {
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
   INITIAL_EFFECT_CHANGE_PHASE,
-  DND35E_CHANGE_TYPE as SYSTEM_CHANGE_TYPE,
+  CHANGE_TYPE as SYSTEM_CHANGE_TYPE,
 };
 
 export type {
   ActiveEffectTarget,
   ActiveEffectTargetLocalizationValues,
-  Dnd35eChangeType,
+  ChangeType,
   EffectChangePhase,
   EffectChangeTarget,
   EffectChangeType,

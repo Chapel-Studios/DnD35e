@@ -1,7 +1,7 @@
 import type {
-  Dnd35eParentDoc,
+  ParentDoc,
 } from '@documents/types.mjs';
 
 export type {
-  Dnd35eParentDoc,
+  ParentDoc,
 };
