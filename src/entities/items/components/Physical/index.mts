@@ -9,11 +9,11 @@ import type {
   PhysicalItemLike,
   PhysicalItemSource,
   PhysicalItemSourceProps,
-} from './PhysicalItemDnd35e.mjs';
+} from './PhysicalItem.mjs';
 import {
   IdentifiableItemBase,
   PhysicalItem,
-} from './PhysicalItemDnd35e.mjs';
+} from './PhysicalItem.mjs';
 import type {
   PhysicalDocumentStore,
   PhysicalItemActions,
