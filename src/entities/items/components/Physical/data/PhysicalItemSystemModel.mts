@@ -1,5 +1,6 @@
 import { SIZES } from '@constants/sizes.mjs';
 import { IdentifiableSchemaMixin } from '@ec/Identifiable/data/index.mjs';
+import { SectionField } from '@fields/SectionField.mjs';
 import {
   optionalNumberField,
   optionalStringField,
@@ -7,7 +8,6 @@ import {
   requiredNumberField,
   useDnd35eField,
 } from '@helpers/fieldBuilders.mjs';
-import { Dnd35eSectionField } from '@helpers/fields/index.mjs';
 import { ItemSystemModel } from '@items/baseItem/data/index.mjs';
 import { PriceField } from '@settings/currency/PriceField.mjs';
 
@@ -30,7 +30,7 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     const schema = super.defineSchema();
 
     // Physical
-    schema.hp = new Dnd35eSectionField({
+    schema.hp = new SectionField({
       current: useDnd35eField(requiredNumberField(0)),
       max: useDnd35eField(requiredNumberField(0)),
     });
