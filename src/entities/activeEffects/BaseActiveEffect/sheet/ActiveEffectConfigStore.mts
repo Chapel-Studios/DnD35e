@@ -3,7 +3,7 @@ import type Color from '@common/utils/color.mjs';
 import type { DocumentSheetStore, DocumentSheetStoreDocumentActions, DocumentSheetStoreDocumentGetters } from '@ec/CoreMixin/index.mjs';
 import { useDocumentSheetStore } from '@ec/CoreMixin/index.mjs';
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
-import type { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModelBase.mjs';
+import { ActiveEffectSystemModel } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModel.mjs';
 import type { Dnd35eActiveEffect } from '@effects/BaseActiveEffect/Dnd35eActiveEffect.mjs';
 import { buildMergedFamiliarContext, getFamiliarBuilder } from '@helpers/formulae/index.mjs';
 import type { ContextDocumentType, TargetContexts } from '@helpers/formulae/registry.mjs';
@@ -68,7 +68,7 @@ const useActiveEffectConfigStore = <TDocument extends Dnd35eActiveEffect>(
    * Fallback path: merges all subtypes declared in `targetContexts`.
    */
   function resolveTargetContext(target: string): FamiliarContext | null {
-    const systemConstructor = document.value.system?.constructor as typeof ActiveEffectSystemModelBase | undefined;
+    const systemConstructor = document.value.system?.constructor as typeof ActiveEffectSystemModel | undefined;
     const targetContexts: TargetContexts = systemConstructor?.targetContexts ?? {};
     const parent = document.value.parent;
 

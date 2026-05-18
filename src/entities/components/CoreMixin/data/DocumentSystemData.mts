@@ -1,15 +1,15 @@
 import type { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 
-type BaseDnd35eSystemSource = {
+type DocumentSystemSource = {
     version: string;
     slug?: string;
     nameFormula: FormulaData;
     description: string;
 };
 
-interface BaseDnd35eSystemData extends BaseDnd35eSystemSource {}
+interface DocumentSystemData extends DocumentSystemSource {}
 
 export type {
-  BaseDnd35eSystemData,
-  BaseDnd35eSystemSource,
+  DocumentSystemData,
+  DocumentSystemSource,
 };

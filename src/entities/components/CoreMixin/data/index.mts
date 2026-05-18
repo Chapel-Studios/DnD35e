@@ -1,13 +1,13 @@
 import type {
-  BaseDnd35eSystemData,
-} from './BaseDnd35eSystemData.mjs';
-import type {
   Dnd35eBaseFlags,
   Dnd35eDocumentFlags,
 } from './Dnd35eDocumentFlags.mjs';
+import type {
+  DocumentSystemData,
+} from './DocumentSystemData.mjs';
 
 export type {
-  BaseDnd35eSystemData,
   Dnd35eBaseFlags,
   Dnd35eDocumentFlags,
+  DocumentSystemData,
 };

@@ -1,10 +1,10 @@
-import {
-  PhysicalItemSystemModel,
-} from './PhysicalItemSystemModel.mjs';
 import type {
   PhysicalItemSystemData,
   PhysicalItemSystemSource,
-} from './PhysicalSystemData.mjs';
+} from './PhysicalItemSystemData.mjs';
+import {
+  PhysicalItemSystemModel,
+} from './PhysicalItemSystemModel.mjs';
 
 export type {
   PhysicalItemSystemData,

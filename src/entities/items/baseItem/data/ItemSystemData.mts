@@ -3,7 +3,7 @@
 //
 // type ItemGrantDeleteAction = 'cascade' | 'detach' | 'restrict';
 
-import type { BaseDnd35eSystemData } from '@ec/CoreMixin/index.mjs';
+import type { DocumentSystemData } from '@ec/CoreMixin/index.mjs';
 
 
 // interface ItemGrantSource {
@@ -30,7 +30,7 @@ interface ItemOrigin {
 }
 
 // whats actually stored in the DB
-interface ItemSystemSource extends BaseDnd35eSystemData {
+interface ItemSystemSource extends DocumentSystemData {
     origin: ItemOrigin | null;
     isPsionic: boolean;
     isEpic: boolean;

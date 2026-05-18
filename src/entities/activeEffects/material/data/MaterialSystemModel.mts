@@ -1,5 +1,5 @@
 import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
-import { ActiveEffectSystemModelBase } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModelBase.mjs';
+import { ActiveEffectSystemModel } from '@effects/BaseActiveEffect/data/ActiveEffectSystemModel.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
 import { requiredNumberField, useDnd35eField } from '@helpers/fieldBuilders.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
@@ -12,7 +12,7 @@ import { MATERIAL_SUBTYPE_STANDARD, MATERIAL_SUBTYPES } from './materialTypes.mj
 
 const { fields: { StringField } } = foundry.data;
 
-class MaterialSystemModel extends ActiveEffectSystemModelBase {
+class MaterialSystemModel extends ActiveEffectSystemModel {
   static override targetContexts: TargetContexts = { item: ['weapon'] };
   static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.MATERIAL'];
 

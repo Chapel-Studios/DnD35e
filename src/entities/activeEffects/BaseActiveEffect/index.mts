@@ -11,7 +11,7 @@ import type {
 } from './data/index.mjs';
 import {
   ACTIVE_EFFECT_TARGETS,
-  ActiveEffectSystemModelBase,
+  ActiveEffectSystemModel,
   ALL_CHANGE_TYPES,
   EFFECT_CHANGE_PHASES,
   EFFECT_CHANGE_TARGET,
@@ -65,7 +65,7 @@ export type {
 export {
   ACTIVE_EFFECT_TARGETS,
   ActiveEffectProxyDnd35e,
-  ActiveEffectSystemModelBase,
+  ActiveEffectSystemModel,
   ALL_CHANGE_TYPES,
   Dnd35eActiveEffect,
   Dnd35eActiveEffectConfig,

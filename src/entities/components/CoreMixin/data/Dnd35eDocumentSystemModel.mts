@@ -8,7 +8,7 @@ import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { DocumentContext } from '@helpers/formulae/registry.mjs';
 
-import type { BaseDnd35eSystemData } from './BaseDnd35eSystemData.mjs';
+import type { DocumentSystemData } from './DocumentSystemData.mjs';
 
 const {
   HTMLField,
@@ -18,7 +18,7 @@ const {
 interface Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataModel | null> extends foundry.abstract.TypeDataModel<
   TDocType,
   foundry.abstract.DataSchema
->, BaseDnd35eSystemData {
+>, DocumentSystemData {
 }
 
 abstract class Dnd35eDocumentSystemModel<TDocType extends foundry.abstract.DataModel | null> extends foundry.abstract.TypeDataModel<

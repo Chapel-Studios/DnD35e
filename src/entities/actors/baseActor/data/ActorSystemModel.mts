@@ -2,7 +2,7 @@ import { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSyst
 
 import type { ActorSystemData } from './ActorSystemData.mjs';
 
-abstract class ActorSystemModelBase extends Dnd35eDocumentSystemModel<foundry.documents.Actor> {
+abstract class ActorSystemModel extends Dnd35eDocumentSystemModel<foundry.documents.Actor> {
   static override defineSchema (): Record<string, any> {
     const schema = super.defineSchema();
 
@@ -10,8 +10,8 @@ abstract class ActorSystemModelBase extends Dnd35eDocumentSystemModel<foundry.do
   }
 }
 
-interface ActorSystemModelBase extends ActorSystemData {}
+interface ActorSystemModel extends ActorSystemData {}
 
 export {
-  ActorSystemModelBase,
+  ActorSystemModel,
 };
