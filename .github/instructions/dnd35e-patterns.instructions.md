@@ -115,19 +115,19 @@ Resolution: when multiple AEs apply same field, only highest value in each `bonu
 Sheet components belong in their entity-type folder:
 
 ```
-src/entities/items/
-  components/
-    Physical/
+src/documents/items/
+  physical/
+    physicalItem/
       sheet/components/
         PhysicalItemHeaderStatus.vue       ← Physical item badges
         ...                                ← Other physical-item-only sheet components
-    Equippable/
+    equippableItem/
       sheet/components/
         EquippableHeaderStatus.vue         ← Equippable-specific (equipped/carried state)
         ...                                ← Other equippable-item-only sheet components
-  Weapon/
-    sheet/components/
-      WeaponDamage.vue                     ← Weapon damage form group
+    weapon/
+      sheet/components/
+        WeaponDamage.vue                   ← Weapon damage form group
 ```
 
 **Why**: When Physical and Equippable item sheets need different behavior (e.g. badges show different state), having separate component homes makes changes safer. Updates to one entity type don't accidentally affect unrelated types. Search for "PhysicalItemHeaderStatus" finds exactly what you need, not 5 false positives in generic folders.
@@ -137,8 +137,8 @@ Generic components stay in `src/vue/components/` **only when** they are truly cr
 
 ```
 src/vue/components/
-  Fields/
-    FormGroups/
+  fields/
+    formGroups/
       FormGroup.vue                     ← Used by all entity types, all sheets
       NumberFormGroup.vue               ← Generic number input
       SelectFormGroup.vue               ← Generic select dropdown
@@ -146,7 +146,7 @@ src/vue/components/
     TabView.vue                         ← Generic tab container
 ```
 
-Test: "Is this used by Physical items AND Weapons AND Actors AND Effects?" If yes, generic folder. If "just items," put it in `src/entities/items/components/`.
+Test: "Is this used by Physical items AND Weapons AND Actors AND Effects?" If yes, generic folder. If "just items," put it in `src/documents/items/<bucket>/<type>/components/`.
 
 ### Anti-Pattern: Catch-All Folders
 Don't create folders like `HeaderComponents/`, `StatusBadges/`, `EditControls/`. These catch-alls:
@@ -155,6 +155,18 @@ Don't create folders like `HeaderComponents/`, `StatusBadges/`, `EditControls/`.
 - Violate single-responsibility (folder should have a *reason* to exist)
 
 **Learned**: Phase 1 initially placed HeaderStatus in generic `src/vue/components/HeaderStatus/`, then moved to entity domains when two different types needed two different components. Established domain-first placement avoids rework.
+
+## Naming Conventions
+
+Codified in `docs/migration-plan/poc/refactor-naming-conventions.md`. Key rules:
+
+- **Top-level layout**: documents live under `src/documents/` (`actors/`, `items/`, `activeEffects/`, `scene/`, `document/`). Item subtypes nest under buckets: `items/physical/` and `items/metaphysical/`.
+- **Suffix over prefix for system-named classes**: when a class name would collide with a Foundry type, use the `*Dnd35e` suffix form (e.g. `ItemDnd35e`, `ActorDnd35e`, `ActiveEffectDnd35e`, `RegionDocumentDnd35e`, `EffectChangeDataDnd35e`). Internal helper types that don't collide use bare names (e.g. `ParentDoc`, `OverrideOptions`, `SchemaFieldMeta`, `BaseFlags`, `ChangeType`).
+- **Drop `Base` markers** on system-data classes: `*SystemModel` and `*SystemData`, not `Base*SystemData` or `*SystemModelBase`.
+- **File casing**: `camelCase` directory names; `PascalCase` filenames for class-containing modules (e.g. `Buff.mts`, `ItemDnd35e.mts`). Single-component packaging folders may stay PascalCase (R.2.9).
+- **`types.mts` convention** (R.2.10): per-folder type-aggregation files use the bare `types.mts` name (not `_types.mts`).
+- **Grouped-helpers exception**: when a file aggregates many small helpers, the filename describes the group (e.g. `fieldBuilders.mts`) rather than any one symbol. Single-symbol files match the symbol's PascalCase name.
+- **Path aliases**: `@documents/*`, `@items/*`, `@actors/*`, `@effects/*`, `@scene/*`, `@fields/*`, `@vc/*` (vue components), `@helpers/*`, `@constants/*`, `@settings/*`, plus Foundry `@client/*`, `@common/*`, `@source/*`.
 
 ## Vue Sheet Patterns
 
