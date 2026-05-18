@@ -17,7 +17,7 @@ import { everyoneVisibility, normalEditability } from '@vc/Fields/FormGroups/fie
 import { vi } from 'vitest';
 import { computed, ref } from 'vue';
 
-// Tests that import this setup module also `vi.mock('@ec/CoreMixin/index.mjs', ...)`
+// Tests that import this setup module also `vi.mock('@documents/document/index.mjs', ...)`
 // to expose registry symbols with these exact keys. Using `Symbol.for(...)` (the global
 // symbol registry) means identity matches across the mock and this provider — even though
 // we never import the real symbols (which would pull in document/sheet UI).

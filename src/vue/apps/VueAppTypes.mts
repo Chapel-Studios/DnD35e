@@ -1,6 +1,6 @@
 import type { DocumentSheetConfiguration, DocumentSheetRenderOptions } from '@client/applications/api/document-sheet.mjs';
-import type { DocumentSheetStore } from '@ec/CoreMixin/index.mjs';
-import type { ActiveEffectDnd35e } from '@entities/activeEffects/index.mjs';
+import type { ActiveEffectDnd35e } from '@documents/activeEffects/index.mjs';
+import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { ViewMode } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 

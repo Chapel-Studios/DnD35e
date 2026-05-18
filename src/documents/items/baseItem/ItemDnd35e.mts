@@ -1,0 +1,347 @@
+import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
+import type { DocumentConstructionContext } from '@common/_types.mjs';
+import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
+import type { EffectChangeData } from '@common/documents/active-effect.mjs';
+import { getDisplayName } from '@documents/document/logic/index.mjs';
+import type { ActiveEffectDnd35e } from '@effects/BaseActiveEffect/ActiveEffectDnd35e.mjs';
+import type { Dnd35eEffectChangeData } from '@effects/BaseActiveEffect/data/ActiveEffectSystemData.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/BaseActiveEffect/data/constants.mjs';
+import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/BaseActiveEffect/logic/resolveChangeValue.mjs';
+import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
+import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
+import { LogHelper } from '@helpers/LogHelper.mjs';
+import type { ChangeHistory, Override, StackingChange } from '@helpers/stacking.mjs';
+import { parseNumericChangeValue, resolveActiveEffectChanges, STACK_RESULT_APPLIED, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+import type { ItemType } from '@items/index.mjs';
+import { ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
+
+import type { ItemSystemData, ItemSystemSource } from './index.mjs';
+
+type FormulaLikeSource = {
+  formula?: unknown;
+  resolvedValue?: unknown;
+  expectedType?: unknown;
+};
+
+type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
+
+class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<TParent> {
+  constructor(source: PreCreate<ItemSourceDnd35e<TItemType>>, context?: DocumentConstructionContext<TParent>) {
+    super(source, context);
+    this._completedActiveEffectPhases = new Set();
+  }
+  declare readonly effects: EmbeddedCollection<ActiveEffectDnd35e<this>>;
+  declare type: TItemType;
+  declare system: ItemSystemData;
+  declare _source: ItemSourceDnd35e<TItemType>;
+  // declare _sheet: ItemSheetDnd35e<any> | null;
+
+  _completedActiveEffectPhases: Set<string>;
+
+  /** Runtime masks dictionary built from active Secret AE MASK changes. Keyed by field path. */
+  _masks: Record<string, unknown> = {};
+
+  private get _maskedNameFormula (): { formula: string; resolvedValue: string | null; expectedType: 'string' | 'number' } | null {
+    const directMask = this._masks['system.nameFormula'] as FormulaLikeSource | undefined;
+    if (directMask && typeof directMask === 'object') {
+      const formula = typeof directMask.formula === 'string' ? directMask.formula : null;
+      const resolvedValue = typeof directMask.resolvedValue === 'string' ? directMask.resolvedValue : null;
+      if (formula || resolvedValue) {
+        const effectiveText = resolvedValue ?? formula ?? '';
+        return FormulaData.toSource(formula ?? effectiveText, {
+          resolvedValue: effectiveText,
+          expectedType: 'string',
+        });
+      }
+    }
+
+    const formulaMask = typeof this._masks['system.nameFormula.formula'] === 'string'
+      ? this._masks['system.nameFormula.formula']
+      : null;
+    const resolvedMask = typeof this._masks['system.nameFormula.resolvedValue'] === 'string'
+      ? this._masks['system.nameFormula.resolvedValue']
+      : null;
+    const nameMask = typeof this._masks.name === 'string'
+      ? this._masks.name
+      : null;
+
+    const effectiveText = resolvedMask ?? formulaMask ?? nameMask;
+    if (!effectiveText) return null;
+
+    return FormulaData.toSource(formulaMask ?? effectiveText, {
+      resolvedValue: resolvedMask ?? effectiveText,
+      expectedType: 'string',
+    });
+  }
+
+  private _normalizeSpecialMasks (): void {
+    const maskedNameFormula = this._maskedNameFormula;
+    if (!maskedNameFormula) return;
+
+    this._masks['system.nameFormula'] = maskedNameFormula;
+    this._masks['system.nameFormula.formula'] = maskedNameFormula.formula;
+    this._masks['system.nameFormula.resolvedValue'] = maskedNameFormula.resolvedValue;
+    this._masks.name = maskedNameFormula.resolvedValue ?? maskedNameFormula.formula;
+  }
+
+  private _getMaskedTopLevelField<T extends string> (fieldPath: 'name' | 'img', rawValue: T, fallbackValue: T): T {
+    const identifiableState = this as unknown as { isIdentified?: boolean };
+    const baseValue = rawValue ?? fallbackValue;
+    if (identifiableState.isIdentified !== false) {
+      return baseValue;
+    }
+
+    const maskedValue = this._masks?.[fieldPath];
+    if (maskedValue === undefined || maskedValue === null) {
+      return baseValue;
+    }
+
+    return typeof maskedValue === 'string' ? maskedValue as T : baseValue;
+  }
+
+  override prepareBaseData (): void {
+    super.prepareBaseData();
+    this._completedActiveEffectPhases = new Set();
+    this.overrides = {};
+    this._masks = {};
+  }
+
+  /**
+   * @sealed Do not override - manages initial active effect application.
+   */
+  override prepareEmbeddedDocuments (): void {
+    super.prepareEmbeddedDocuments();
+    this.applyActiveEffects(INITIAL_EFFECT_CHANGE_PHASE);
+  }
+
+  /**
+   * @sealed Do not override - manages final active effect application.
+   * Override {@link _prepareDerivedItemData} instead.
+   */
+  override prepareDerivedData (): void {
+    super.prepareDerivedData();
+    this._buildMasks();
+    this._prepareDerivedItemData();
+    this.applyActiveEffects(FINAL_EFFECT_CHANGE_PHASE);
+  }
+
+  /**
+   * Build the _masks dictionary from active Secret AE MASK changes.
+   * Per-change priority resolution: highest priority wins per field path.
+   */
+  private _buildMasks (): void {
+    this._masks = {};
+    const maskCandidates: Array<{ key: string; value: unknown; priority: number }> = [];
+    for (const effect of this.effects) {
+      if (effect.type !== secretEffectType || !effect.active) continue;
+      for (const change of effect.system.changes) {
+        if (change.type !== SYSTEM_CHANGE_TYPE.MASK) continue;
+        if (!change.key) continue;
+        maskCandidates.push({
+          key: change.key,
+          value: resolveMaskedActiveEffectChangeValue(effect, change),
+          priority: change.priority ?? 0,
+        });
+      }
+    }
+    // Sort descending by priority — highest priority first
+    maskCandidates.sort((a, b) => b.priority - a.priority);
+    for (const { key, value } of maskCandidates) {
+      if (key in this._masks) continue;
+      this._masks[key] = value;
+    }
+    this._normalizeSpecialMasks();
+  }
+
+  /** Override this in subclasses for derived data calculations that should run before final active effects. */
+  protected _prepareDerivedItemData (): void {
+    // Base implementation - empty, subclasses override
+  }
+
+  // Active Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method,
+  // but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
+  overrides: Record<string, Override[]> = {};
+
+  /**
+   * Get all ActiveEffects that have item-targeted changes.
+   * Effects can have both item and actor targeted changes - we yield any effect
+   * that has at least one item-targeted change.
+   */
+  *allApplicableEffects() {
+    for (const effect of this.effects) {
+      if (effect.hasItemChanges) yield effect;
+    }
+  }
+
+  /**
+   * Apply active effects to this item for the given phase.
+   * 
+   * Implementation from actor.mjs on version 14.354, since items don't have their own
+   * applyActiveEffects method, but they do have active effects that need to be applied
+   * to themselves when prepareEmbeddedDocuments is called.
+   * 
+   * @sealed Do not override - core active effect application logic.
+   * @param phase - The effect application phase ('initial' or 'final')
+   */
+  applyActiveEffects(phase: string) {
+    const ActiveEffect = foundry.documents.ActiveEffect;
+    if ( !(phase in ActiveEffect.CHANGE_PHASES) ) {
+      // TODO(Phase 7): incorporate Hooks.onError pattern into LogHelper for consistency with Foundry error surfacing
+      // Currently using LogHelper.error() directly to avoid hook dependency in type definitions
+      // Also, does that throw the error?
+      // const error = new Error(`"${phase}" is not a registered ActiveEffect application phase.`);
+      // Hooks.onError("Actor#applyActiveEffects", error, {log: "error"});
+      LogHelper.error(`ActiveEffect application phase "${phase}" is not a registered phase.`);
+      return;
+    }
+    if ( this._completedActiveEffectPhases.has(phase) ) {
+      // const error = new Error(`ActiveEffect application phase "${phase}" has already completed and cannot be run again in this Actor's data-preparation cycle.`);
+      // Hooks.onError("Actor#applyActiveEffects", error, {log: "error"});
+      LogHelper.error(`ActiveEffect application phase "${phase}" has already completed and cannot be run again in this Actor's data-preparation cycle.`);
+      return;
+    }
+    this._completedActiveEffectPhases.add(phase);
+
+    type AppliedItemEffectChange = EffectChangeData<ItemDnd35e<TItemType, TParent>>
+      & { type: string; effect: ActiveEffectDnd35e<ItemDnd35e<TItemType, TParent>> };
+    const changes: AppliedItemEffectChange[] = [];
+    for ( const effect of this.allApplicableEffects() ) {
+      if ( !effect.active ) continue;
+      for ( const change of effect.system.changes ) {
+        // Only apply item-targeted changes (default to actor for compatibility with base ActiveEffect change data structure)
+        const changeTarget = change.target ?? EFFECT_CHANGE_TARGET.ACTOR;
+        if ( !change.key || (change.phase !== phase) || (changeTarget !== EFFECT_CHANGE_TARGET.ITEM) ) continue;
+        // MASK changes are not applied via stacking — they define masked values read at prep time
+        if (change.type === SYSTEM_CHANGE_TYPE.MASK) continue;
+        const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as unknown as AppliedItemEffectChange;
+        copy.effect = effect;
+        copy.type ??= EFFECT_CHANGE_TYPE.ADD;
+        copy.priority ??= 0;
+        changes.push(copy);
+      }
+      // Not sure how statuses should interact with item active effects, since they don't have tokens,
+      // but we'll keep this here for now in case we want to add some sort of status effect functionality to items in the future.
+      // if ( phase === 'initial' ) {
+      //   for ( const statusId of effect.statuses ) this.statuses.add(statusId);
+      // }
+    }
+    changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+    // TODO(Phase 7): remove in v16, this is for backwards compatibility with older active effects
+    ActiveEffect._shimChanges(changes);
+
+    // Build StackingChange[] for the stacking engine
+    const stackingChanges: StackingChange[] = changes.map((change, index) => {
+      const dnd35eChange = change as unknown as Dnd35eEffectChangeData;
+      const numericValue = parseNumericChangeValue(change.value);
+      const bonusType = dnd35eChange.bonusType || undefined;
+      
+      return {
+        index,
+        field: change.key,
+        bonusType,
+        value: numericValue,
+        source: change.effect.displayName,
+        effectId: change.effect.id ?? undefined,
+      };
+    });
+
+    // Resolve stacking — only numeric, typed changes participate
+    const numericStackable = stackingChanges.filter(sc => !isNaN(sc.value) && sc.bonusType !== undefined);
+    const { winners, history } = resolveActiveEffectChanges(numericStackable);
+    const winnerIndices = new Set(winners.map((w: { changeIndex: number }) => w.changeIndex));
+    const historyByIndex = new Map<number, ChangeHistory>();
+    for (const h of history) historyByIndex.set(h.changeIndex, h);
+    const winnerByIndex = new Map(winners.map((w: { changeIndex: number; reason: string }) => [w.changeIndex, w]));
+
+    // Apply winning changes + all non-stackable changes (untyped or non-numeric)
+    const replacementData = this.getRollData() as Record<string, unknown>;
+    for (let i = 0; i < changes.length; i++) {
+      const change = changes[i];
+      const sc = stackingChanges[i];
+      const isStackable = !isNaN(sc.value) && sc.bonusType !== undefined;
+      const isWinner = winnerIndices.has(i);
+
+      if (isStackable && !isWinner) {
+        // Stacking loser — record in overrides but don't apply
+        const historyEntry = historyByIndex.get(i);
+        this.overrides[change.key] = [
+          ...(this.overrides[change.key] ?? []),
+          {
+            fieldPath: change.key,
+            value: change.value,
+            effectName: change.effect.name,
+            type: change.type,
+            bonusType: sc.bonusType,
+            stackResult: STACK_RESULT_IGNORED,
+            stackReason: historyEntry?.rejection ?? 'stacking resolution',
+          },
+        ];
+        continue;
+      }
+
+      // Apply the change (winner or non-stackable)
+      const EffectClass = change.effect.constructor as typeof ActiveEffect;
+      const result = (ActiveEffect.CHANGE_TYPES[change.type].handler?.(this, change)
+        ?? EffectClass.applyChange(this, change, { replacementData }) ?? {}) as Record<string, unknown>;
+      for (const fieldPath of Object.keys(result)) {
+        const winner = isStackable ? winnerByIndex.get(i) : undefined;
+        this.overrides[fieldPath] = [
+          ...(this.overrides[fieldPath] ?? []),
+          {
+            fieldPath,
+            value: change.value,
+            effectName: change.effect.name,
+            type: change.type,
+            bonusType: sc.bonusType,
+            stackResult: isStackable ? STACK_RESULT_APPLIED : undefined,
+            stackReason: (winner as { reason: string } | undefined)?.reason,
+          },
+        ];
+      }
+    }
+  }
+  
+  get localizedType (): string {
+    return ITEM_TYPES_LOCALIZED[this.type] ??
+      'dnd35e.COMMON.Item';
+  }
+
+  override get name (): string {
+    const fallbackName = (this._source?.name ?? '') as string;
+    return getDisplayName(fallbackName, this.system, this);
+  }
+
+  override get img (): foundry.documents.Item<TParent>['img'] {
+    const fallbackImg = super.img;
+    return this._getMaskedTopLevelField('img', super.img, fallbackImg);
+  }
+
+  get _displayName (): string {
+    const fallbackName = (this._source?.name ?? '') as string;
+    return getDisplayName(fallbackName, this.system, this);
+  }
+
+  get displayName (): string {
+    return this._displayName;
+  }
+}
+
+const ItemProxyDnd35e = new Proxy(ItemDnd35e, {
+  construct (
+    _target,
+    args: [source: PreCreate<ItemSourceDnd35e>, context?: DocumentConstructionContext<ActorDnd35e | null>]
+  ) {
+    const [source] = args;
+    const type = source?.type;
+    const ItemClass = CONFIG.dnd35e.item.documentClasses[type] as unknown as typeof ItemDnd35e;
+    // const ItemClass: typeof ItemDnd35e = CONFIG.Dnd35e.item.documentClasses[type];
+    if (!ItemClass) {
+      LogHelper.error(`Item type ${type} does not exist or is not properly supported for ItemProxyDnd35e`);
+    }
+    return new ItemClass(...args);
+  },
+});
+
+export { ItemDnd35e, ItemProxyDnd35e };
+
+export type { ItemSourceDnd35e };

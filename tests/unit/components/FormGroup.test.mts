@@ -3,16 +3,16 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 
-// FormGroup imports `DocumentSheetStoreSymbol` from the heavy `@ec/CoreMixin/index.mjs`
+// FormGroup imports `DocumentSheetStoreSymbol` from the heavy `@documents/document/index.mjs`
 // barrel, which transitively pulls in document mixins, sheet stores, and Vue app classes
 // that won't initialise cleanly in the unit env (they expect real Foundry ClientDocument /
 // ApplicationV2 bases). Mock the barrel to expose just the Symbol the component needs.
-vi.mock('@ec/CoreMixin/index.mjs', () => ({
+vi.mock('@documents/document/index.mjs', () => ({
   DocumentSheetStoreSymbol: Symbol.for('test.DocumentSheetStore'),
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
 }));
 // Same for FieldControls' deeper imports (it's stubbed in the mount but still gets parsed).
-vi.mock('@ec/CoreMixin/sheet/stores/RenderModeStore.mjs', () => ({
+vi.mock('@documents/document/sheet/stores/RenderModeStore.mjs', () => ({
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
 }));
 

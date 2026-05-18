@@ -1,11 +1,11 @@
 import './styles/core.scss';
 
 import { Dnd35eSystemConfig } from '@constants/config/system.mjs';
-import { registerEffects } from '@entities/activeEffects/registration.mjs';
-import { registerActors } from '@entities/actors/registration.mjs';
+import { registerEffects } from '@documents/activeEffects/registration.mjs';
+import { registerActors } from '@documents/actors/registration.mjs';
 import { preLocalizeConfig } from '@helpers/localization/preLocalizeConfig.mjs';
 
-import { registerItems } from './entities/items/index.mjs';
+import { registerItems } from './documents/items/index.mjs';
 import { registerSettings } from './settings/index.mjs';
 
 // globalThis.fa = foundry.applications;

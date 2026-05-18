@@ -1,4 +1,4 @@
-import { resolveViewAwareFieldPlan, type ViewAwareModes } from '@ec/CoreMixin/sheet/viewAwareFieldPlan.mjs';
+import { resolveViewAwareFieldPlan, type ViewAwareModes } from '@documents/document/sheet/viewAwareFieldPlan.mjs';
 import { describe, expect, it } from 'vitest';
 
 const modes = (overrides: Partial<ViewAwareModes> = {}): ViewAwareModes => ({

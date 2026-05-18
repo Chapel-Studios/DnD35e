@@ -4,8 +4,8 @@ import type CompendiumDirectory from '@client/applications/sidebar/tabs/compendi
 import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type Config from '@client/config.mjs';
+import { ActiveEffectDnd35e } from '@documents/activeEffects/index.mjs';
 import type { ActiveEffectConfigStore } from '@effects/BaseActiveEffect/index.mjs';
-import { ActiveEffectDnd35e } from '@entities/activeEffects/index.mjs';
 import type { ItemSheetStore } from '@items/baseItem/index.mjs';
 import { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';

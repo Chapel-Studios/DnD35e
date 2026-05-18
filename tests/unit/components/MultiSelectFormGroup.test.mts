@@ -3,11 +3,11 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@ec/CoreMixin/index.mjs', () => ({
+vi.mock('@documents/document/index.mjs', () => ({
   DocumentSheetStoreSymbol: Symbol.for('test.DocumentSheetStore'),
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
 }));
-vi.mock('@ec/CoreMixin/sheet/stores/RenderModeStore.mjs', () => ({
+vi.mock('@documents/document/sheet/stores/RenderModeStore.mjs', () => ({
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
 }));
 

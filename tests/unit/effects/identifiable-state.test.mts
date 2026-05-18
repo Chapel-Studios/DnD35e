@@ -1,7 +1,7 @@
 import {
   deriveIdentifiableState,
   type IdentifiableEffectLike,
-} from '@ec/Identifiable/logic/index.mjs';
+} from '@documents/identifiable/logic/index.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { describe, expect, it } from 'vitest';
 

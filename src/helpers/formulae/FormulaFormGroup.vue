@@ -43,10 +43,10 @@
 </template>
 
 <script setup lang="ts">
-  import type { DocumentSheetStore } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
-  import { DocumentSheetStoreSymbol } from '@ec/CoreMixin/sheet/DocumentSheetStore.mjs';
-  import type { RenderModeStore } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
-  import { RenderModeStoreSymbol } from '@ec/CoreMixin/sheet/stores/RenderModeStore.mjs';
+  import type { DocumentSheetStore } from '@documents/document/sheet/DocumentSheetStore.mjs';
+  import { DocumentSheetStoreSymbol } from '@documents/document/sheet/DocumentSheetStore.mjs';
+  import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
+  import { RenderModeStoreSymbol } from '@documents/document/sheet/stores/RenderModeStore.mjs';
   import FamiliarOverlayInput from '@vc/Fields/FormGroups/FamiliarOverlayInput.vue';
   import FormGroup from '@vc/Fields/FormGroups/FormGroup.vue';
   import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, useSlots, watch } from 'vue';
