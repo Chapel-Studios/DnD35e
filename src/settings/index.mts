@@ -40,5 +40,30 @@ export {
   UNIT_CHOICES,
 } from './constants/index.mjs';
 export { getSetting, setSetting } from './helpers.mjs';
-// registerSettings is exported via core/index.mjs re-export above
+
+import { registerCombatSettings } from './combat/index.mjs';
+import { registerCoreSettings, registerSettingsMenus } from './core/index.mjs';
+import { registerCurrencySettings } from './currency/index.mjs';
+import { registerDisplaySettings } from './display/index.mjs';
+import { registerGameRulesSettings } from './gameRules/index.mjs';
+import { SYSTEM_ID as SYSTEM_ID_INTERNAL } from './shared.mjs';
+
+/**
+ * Register all system settings.
+ * Called during system initialization (Hooks.once('init')).
+ */
+function registerSettings(): void {
+  console.log(`${SYSTEM_ID_INTERNAL} | Registering system settings`);
+
+  registerCoreSettings();
+  registerSettingsMenus();
+  registerGameRulesSettings();
+  registerCombatSettings();
+  registerDisplaySettings();
+  registerCurrencySettings();
+
+  console.log(`${SYSTEM_ID_INTERNAL} | Settings registration complete`);
+}
+
+export { registerSettings };
 
