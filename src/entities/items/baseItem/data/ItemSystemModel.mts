@@ -1,4 +1,4 @@
-import { Dnd35eDocumentSystemModel } from '@ec/CoreMixin/data/Dnd35eDocumentSystemModel.mjs';
+import { DocumentSystemModel } from '@ec/CoreMixin/data/DocumentSystemModel.mjs';
 import {
   requiredBooleanField,
   requiredStringField,
@@ -10,7 +10,7 @@ const {
   SchemaField,
 } = foundry.data.fields;
 
-abstract class ItemSystemModel extends Dnd35eDocumentSystemModel<foundry.documents.Item> {
+abstract class ItemSystemModel extends DocumentSystemModel<foundry.documents.Item> {
   static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.ITEM'];
 
   static override defineSchema (): Record<string, any> {

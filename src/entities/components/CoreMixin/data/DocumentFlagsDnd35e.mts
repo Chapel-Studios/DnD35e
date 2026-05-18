@@ -14,12 +14,12 @@ interface Dnd35eBaseFlags {
  * Generic document flags type that includes dnd35e namespace with optional extensions.
  * @template T - Additional dnd35e-specific flags to include
  */
-type Dnd35eDocumentFlags<T extends object = object> = Record<string, Record<string, unknown>> & {
+type DocumentFlagsDnd35e<T extends object = object> = Record<string, Record<string, unknown>> & {
   dnd35e: Dnd35eBaseFlags & T;
 };
 
 
 export type {
   Dnd35eBaseFlags,
-  Dnd35eDocumentFlags,
+  DocumentFlagsDnd35e,
 };

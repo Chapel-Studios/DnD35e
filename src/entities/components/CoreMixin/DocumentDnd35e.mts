@@ -6,33 +6,33 @@ import {
   evaluateRegisteredFormulas,
   evaluateRegisteredFormulasForCreate,
 } from './formulaRegistrationHelpers.mjs';
-import type { Dnd35eDocumentFlags, FormulaRegistration } from './index.mjs';
+import type { DocumentFlagsDnd35e, FormulaRegistration } from './index.mjs';
 
-interface Dnd35eDocumentProperties {
+interface DocumentProperties {
   readonly localizedType: string;
-  flags: Dnd35eDocumentFlags;
+  flags: DocumentFlagsDnd35e;
   registeredFormulas: Set<FormulaRegistration>;
 }
 
 // Instance type: the base document extended with mixin properties
-type Dnd35eDocument<TBase extends AbstractConstructorOf<ClientDocument>> = 
-  InstanceType<TBase> & Dnd35eDocumentProperties;
+type DocumentDnd35e<TBase extends AbstractConstructorOf<ClientDocument>> = 
+  InstanceType<TBase> & DocumentProperties;
 
 // Constructor type: TBase extended with abstract mixin members
 // The abstract class adds localizedType (abstract), flags, registeredFormulas
-type Dnd35eDocumentConstructor<TBase extends AbstractConstructorOf<ClientDocument>> = 
-  (abstract new (...args: ConstructorParameters<TBase>) => Dnd35eDocument<TBase>) & { [K in keyof TBase]: TBase[K] };
+type DocumentConstructor<TBase extends AbstractConstructorOf<ClientDocument>> = 
+  (abstract new (...args: ConstructorParameters<TBase>) => DocumentDnd35e<TBase>) & { [K in keyof TBase]: TBase[K] };
 
 
-const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base: TBase): Dnd35eDocumentConstructor<TBase> => {
-  abstract class Dnd35eDocument extends Base {
+const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base: TBase): DocumentConstructor<TBase> => {
+  abstract class DocumentDnd35e extends Base {
     constructor (...args: any[]) {
       super(...args);
       const [derived, name] = createDefaultNameRegistrations(this as any);
       this.registeredFormulas = new Set([derived, name]);
     }
 
-    declare flags: Dnd35eDocumentFlags;
+    declare flags: DocumentFlagsDnd35e;
 
     declare registeredFormulas: Set<FormulaRegistration>;
 
@@ -56,15 +56,15 @@ const Dnd35eDocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>
     }
   }
   
-  return Dnd35eDocument as unknown as Dnd35eDocumentConstructor<TBase>;
+  return DocumentDnd35e as unknown as DocumentConstructor<TBase>;
 };
 
 export {
-  Dnd35eDocumentMixin,
+  DocumentMixin,
 };
 
 export type {
-  Dnd35eDocument,
-  Dnd35eDocumentConstructor,
-  Dnd35eDocumentProperties,
+  DocumentConstructor,
+  DocumentDnd35e,
+  DocumentProperties,
 };

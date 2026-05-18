@@ -1,4 +1,4 @@
-import { Dnd35eDocumentMixin } from '@ec/CoreMixin/Dnd35eDocument.mjs';
+import { DocumentMixin } from '@ec/CoreMixin/DocumentDnd35e.mjs';
 import type { IdentifiableDocumentSourceProps } from '@ec/Identifiable/index.mjs';
 import {
   IdentifiableDocumentMixin,
@@ -19,8 +19,8 @@ type PhysicalItemSource<TItemType extends ItemType = ItemType> =
     & PhysicalItemSourceProps;
 
 // ─── Pre-composed mixin base ────────────────────────────────────────────────
-/** ItemDnd35e → Dnd35eDocumentMixin → IdentifiableDocumentMixin */
-const IdentifiableItemBase = IdentifiableDocumentMixin(Dnd35eDocumentMixin(ItemDnd35eClass));
+/** ItemDnd35e → DocumentMixin → IdentifiableDocumentMixin */
+const IdentifiableItemBase = IdentifiableDocumentMixin(DocumentMixin(ItemDnd35eClass));
 
 // ─── Abstract class layer ───────────────────────────────────────────────────
 

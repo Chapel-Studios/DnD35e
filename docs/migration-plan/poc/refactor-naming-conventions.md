@@ -429,17 +429,17 @@ Every numbered task ends with `npm run build` exit 0. Failures block the next ta
 - [x] G3e.4 — `npm run build` clean; commit
 
 ### Group 4a: `Dnd35eDocument` (mixin + types) → `DocumentDnd35e`
-- [ ] G4a.1 — Rename file `Dnd35eDocument.mts` → `DocumentDnd35e.mts`
-- [ ] G4a.2 — Rename: `Dnd35eDocument` → `DocumentDnd35e`, `Dnd35eDocumentMixin` → `DocumentMixin`, `Dnd35eDocumentProperties` → `DocumentProperties`, `Dnd35eDocumentConstructor` → `DocumentConstructor` (escalate to `DocumentConstructorDnd35e` if build fails on collision)
-- [ ] G4a.3 — Rename file `Dnd35eDocumentFlags.mts` → `DocumentFlagsDnd35e.mts`; rename type `Dnd35eDocumentFlags` → `DocumentFlagsDnd35e` (**verified collision** with Foundry `DocumentFlags`)
-- [ ] G4a.4 — Update all imports / re-export barrels
-- [ ] G4a.5 — `npm run build` clean; commit
+- [x] G4a.1 — Rename file `Dnd35eDocument.mts` → `DocumentDnd35e.mts`
+- [x] G4a.2 — Rename: `Dnd35eDocument` → `DocumentDnd35e`, `Dnd35eDocumentMixin` → `DocumentMixin`, `Dnd35eDocumentProperties` → `DocumentProperties`, `Dnd35eDocumentConstructor` → `DocumentConstructor` (no Foundry collision)
+- [x] G4a.3 — Rename file `Dnd35eDocumentFlags.mts` → `DocumentFlagsDnd35e.mts`; rename type `Dnd35eDocumentFlags` → `DocumentFlagsDnd35e` (**verified collision** with Foundry `DocumentFlags`)
+- [x] G4a.4 — Update all imports / re-export barrels
+- [x] G4a.5 — `npm run build` clean; commit
 
 ### Group 4b: `Dnd35eDocumentSystemModel` → `DocumentSystemModel`
-- [ ] G4b.1 — Rename file `Dnd35eDocumentSystemModel.mts` → `DocumentSystemModel.mts`
-- [ ] G4b.2 — Rename class symbol
-- [ ] G4b.3 — Update imports
-- [ ] G4b.4 — `npm run build` clean; commit
+- [x] G4b.1 — Rename file `Dnd35eDocumentSystemModel.mts` → `DocumentSystemModel.mts`
+- [x] G4b.2 — Rename class symbol
+- [x] G4b.3 — Update imports
+- [x] G4b.4 — `npm run build` clean; commit
 
 ### Group 4c: `Dnd35eActiveEffect` → `ActiveEffectDnd35e`
 - [ ] G4c.1 — Rename file `Dnd35eActiveEffect.mts` → `ActiveEffectDnd35e.mts`
