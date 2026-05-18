@@ -4,7 +4,7 @@ import { getSchemaField } from '@fields/getSchemaField.mjs';
 import { buildDocumentDataMap, FormulaData } from '@helpers/formulae/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 
-import type { ActiveEffectDnd35e } from './ActiveEffectDnd35e.mjs';
+import type { ActiveEffectDnd35e } from '../ActiveEffectDnd35e.mjs';
 
 const {
   BooleanField,
