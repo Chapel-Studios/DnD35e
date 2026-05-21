@@ -30,6 +30,36 @@
   ],
   "flags": {
   },
+  "packs": [
+    {
+      "name": "materials",
+      "label": "dnd35e.COMPENDIUM.PACK.Materials",
+      "type": "ActiveEffect",
+      "flags": {
+        "dnd35e": {
+          "indexFields": ["system.materialSubtype"]
+        }
+      }
+    },
+    {
+      "name": "documentation",
+      "label": "dnd35e.COMPENDIUM.PACK.Documentation",
+      "type": "JournalEntry"
+    },
+    {
+      "name": "macros-dev",
+      "label": "dnd35e.COMPENDIUM.PACK.MacrosDev",
+      "type": "Macro",
+      "_dev": true
+    }
+  ],
+  "packFolders": [
+    {
+      "name": "Content",
+      "sorting": "a",
+      "packs": ["materials", "documentation"]
+    }
+  ],
   "documentTypes": {
     "Item": {
       "weapon": {}

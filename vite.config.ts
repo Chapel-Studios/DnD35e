@@ -6,6 +6,8 @@ import path from 'path';
 import { defineConfig, Plugin } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
+import { compilePacks } from './vite-plugin-compile-packs';
+
 // Read local developer config (git-ignored) for per-machine paths
 const localConfigPath = path.resolve(__dirname, 'local.config.json');
 let localConfig: {
@@ -33,6 +35,31 @@ const foundrySystemDir = foundryDataPath
   : undefined;
 const buildOutDir = foundrySystemDir ? path.join(foundrySystemDir, 'dnd35e') : 'dist';
 
+// Replace Vite's built-in emptyOutDir with a mode-aware alternative.
+// Prod: hard-deletes the full output dir (mirrors emptyOutDir:true behaviour).
+// Dev: skips the packs/ subdirectory so Foundry's LevelDB locks can't abort the build.
+//      Pack compilation is handled (with soft-fail) by the compilePacks plugin.
+function cleanOutputDir (mode: string): Plugin {
+  return {
+    name: 'clean-output-dir',
+    apply: 'build',
+    enforce: 'pre',
+    async buildStart () {
+      if (!(await fs.pathExists(buildOutDir))) return;
+      if (mode === 'production') {
+        await fs.emptyDir(buildOutDir);
+        return;
+      }
+      // Dev: clear everything except packs/ — compilePacks soft-fails on locked LevelDB files
+      const entries = await fs.readdir(buildOutDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.name === 'packs') continue;
+        await fs.remove(path.join(buildOutDir, entry.name));
+      }
+    },
+  };
+}
+
 // Copy static files to build output after Vite clears the directory
 function copyStaticFiles (): Plugin {
   return {
@@ -45,6 +72,12 @@ function copyStaticFiles (): Plugin {
         if (await fs.pathExists(src)) {
           await fs.copy(src, path.join(buildOutDir, file));
         }
+      }
+      // Copy src/macros/** → <buildOutDir>/macros/ (dev macro scripts, loaded by fetch+eval)
+      const macroFiles = await fg('src/macros/**/*.js');
+      for (const file of macroFiles) {
+        const rel = path.relative('src', file); // e.g. "macros/import-csv-items.js"
+        await fs.copy(path.resolve(__dirname, file), path.join(buildOutDir, rel));
       }
     },
   };
@@ -124,7 +157,7 @@ function bundleLangFiles (): Plugin {
   };
 }
 
-export default defineConfig(({ command }) => {
+export default defineConfig(({ command, mode }) => {
   if (command === 'build' && !foundrySystemDir) {
     console.warn(
       '⚠️  foundrySystemDir is not configured — building to dist/ (CI mode).\n' +
@@ -153,15 +186,22 @@ export default defineConfig(({ command }) => {
     },
     plugins: [
       tsconfigPaths(),
+      cleanOutputDir(mode),
       copyStaticFiles(),
       // copyHbsFiles(),
       bundleLangFiles(),
+      compilePacks({
+        manifestPath: path.resolve(__dirname, 'system.json'),
+        sourceRoot: path.resolve(__dirname, 'packs/_source'),
+        outRoot: path.resolve(__dirname, buildOutDir),
+        mode,
+      }),
       vue(),
       logBuildTimestamp(),
     ],
     build: {
       outDir: buildOutDir,
-      emptyOutDir: true,
+      emptyOutDir: false, // cleanOutputDir plugin handles this with mode-aware logic
       sourcemap: true,
       ssr: false,
       minify: false,
