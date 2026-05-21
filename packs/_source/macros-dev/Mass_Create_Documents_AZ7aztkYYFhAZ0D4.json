@@ -1,11 +1,11 @@
 {
-  "name": "Mass Create Items",
+  "name": "Mass Create Documents",
   "type": "script",
   "_id": "AZ7aztkYYFhAZ0D4",
   "author": "mBlpD72i6u17h1qm",
   "img": "icons/svg/dice-target.svg",
   "scope": "global",
-  "command": "//script goes here",
+  "command": "(async () => { const r = await fetch(`systems/${game.system.id}/macros/import-csv-items.js`); if (!r.ok) throw new Error(`Failed to load macro: ${r.status} ${r.statusText}`); eval(await r.text()); })();",
   "folder": null,
   "sort": 0,
   "ownership": {
