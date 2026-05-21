@@ -471,7 +471,7 @@ This means: **the directory layout on disk is cosmetic for compilation, but sema
 
 #### What the dnd35e pipeline does
 
-1. **Authoring loop**: GM creates folders + documents in the dev world via Foundry UI → `npm run unpack:<pack>` runs `extractPack({ folders: true, omitVolatile: true })` → source tree gets rewritten with the canonical nested layout → commit the diff.
+1. **Authoring loop**: GM creates folders + documents in the dev world via Foundry UI → `npm run unpack -- --pack <pack>` runs `extractPack({ folders: true, omitVolatile: true })` → source tree gets rewritten with the canonical nested layout → commit the diff.
 2. **Compile loop**: `npm run build` invokes the Vite plugin → plugin calls `compilePack(src, dest, { recursive: true })` → every `*.json` (including `_Folder.json`) gets packed by `_key` → Foundry sees the folder hierarchy at world load.
 3. **Validation** ([§5.6](#56-build--validation-setup)) treats `_Folder.json` like any other document: requires `_id`, `_key: "!folders!<id>"`, `name`, `type` matching the pack's content type, and a `folder` parent reference that resolves to another folder in the same pack (or `null`).
 
@@ -1149,7 +1149,7 @@ The compendium build pipeline works end-to-end, and the authoring tooling devs w
 - [x] `system.json` `packFolders[]` declares sidebar pack grouping; build fails when a `packFolders[].packs[]` entry references an unknown pack. A `"Content"` folder grouping `materials` + `documentation` is declared in the template to exercise the mechanism.
 - [x] Compiled LevelDB packs are git-ignored; sources in `packs/_source/` are committed; `local.config.json` remains git-ignored; `system.json` is git-ignored (generated artifact)
 - [x] `npm run validate:packs` (AJV) catches malformed `_id`s and missing required fields, and validates `_Folder.json` files (folder type matches pack content type, parent folder reference resolves or is null)
-- [ ] **Folder round-trip works** at both layers: (a) `packFolders[]` sidebar grouping is visible in Foundry's compendium sidebar *(infrastructure ready — verify by reloading dev world)*; (b) in-pack folders authored in Foundry unpack to `_Folder.json` subdirs via `npm run unpack:<pack>` and re-compile cleanly *(infrastructure ready — verify manually: create item in folder → close Foundry → `npm run unpack:materials` → check JSON → `npm run build:dev` → reload)*
+- [ ] **Folder round-trip works** at both layers: (a) `packFolders[]` sidebar grouping is visible in Foundry's compendium sidebar *(infrastructure ready — verify by reloading dev world)*; (b) in-pack folders authored in Foundry unpack to `_Folder.json` subdirs via `npm run unpack -- --pack <pack>` and re-compile cleanly *(infrastructure ready — verify manually: create item in folder → close Foundry → `npm run unpack -- --pack materials` → check JSON → `npm run build:dev` → reload)*
 - [ ] Dev macro `import-csv-items` creates items with valid Foundry-generated `_id`s when run in the dev world
 - ~~[ ] Transformation scripts (`transform-weapons.mjs`, `transform-materials.mjs`) run and produce schema-correct output~~ *(deferred to Content Migration phase)*
 - [x] CSV skeleton template (`docs/ItemCreation.SAMPLE.csv`) exists with `name,type,slug,pack` columns; intentionally minimal — CSV is for ID generation only, not data migration
@@ -1285,7 +1285,7 @@ task_1j:
   name: "Verify folder round-trip end-to-end (both layers: packFolders sidebar grouping AND in-pack folders)"
   routing: Pair (Lead + Jr)
   depends_on: [1b, 1d, 1f]
-  verify: "(a) Sidebar pack folders: system.json packFolders[] groups packs as declared (e.g. Gear contains weapons + armor) and Foundry's compendium sidebar shows the grouping. (b) In-pack folders: dev world has weapons in nested Simple/Martial/Exotic folders → npm run unpack:weapons writes _Folder.json files in subdirectories matching the hierarchy → npm run build compiles without warnings → reloading the world shows the same folder tree in the compendium sidebar with no orphaned docs."
+  verify: "(a) Sidebar pack folders: system.json packFolders[] groups packs as declared (e.g. Gear contains weapons + armor) and Foundry's compendium sidebar shows the grouping. (b) In-pack folders: dev world has weapons in nested Simple/Martial/Exotic folders → npm run unpack -- --pack weapons writes _Folder.json files in subdirectories matching the hierarchy → npm run build compiles without warnings → reloading the world shows the same folder tree in the compendium sidebar with no orphaned docs."
 ```
 
 **Story 1 acceptance**: A developer can author a single sample item in `packs/_source/`, run `npm run build:dev`, and see it in the Foundry compendium sidebar. CSV-driven workflow is documented and the macro generates valid IDs.

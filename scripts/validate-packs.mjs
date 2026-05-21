@@ -50,7 +50,7 @@ const folderDocSchema = {
     _id: { type: 'string', pattern: ID_PATTERN },
     name: { type: 'string', minLength: 1 },
     type: { type: 'string', minLength: 1 },
-    folder: { type: ['string', 'null'] },
+    folder: { type: ['string', 'null'], pattern: ID_PATTERN, nullable: true },
   },
   additionalProperties: true,
 };
@@ -79,7 +79,20 @@ const activeEffectSchema = {
   ...baseDocSchema,
   properties: {
     ...baseDocSchema.properties,
-    changes: { type: 'array' },    // optional: Foundry omits the field when empty
+
+    changes: {                       // optional: Foundry omits the field when empty
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['key', 'mode', 'value'],
+        properties: {
+          key:   { type: 'string', minLength: 1 },
+          mode:  { type: 'integer' },
+          value: { type: 'string' },
+        },
+        additionalProperties: true,
+      },
+    },
     transfer: { type: 'boolean' },
   },
 };

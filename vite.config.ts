@@ -56,6 +56,29 @@ function cleanOutputDir (mode: string): Plugin {
         if (entry.name === 'packs') continue;
         await fs.remove(path.join(buildOutDir, entry.name));
       }
+      // Dev: best-effort prune of pack directories no longer in the manifest
+      const packsDir = path.join(buildOutDir, 'packs');
+      if (await fs.pathExists(packsDir)) {
+        const sysJsonPath = path.resolve(__dirname, 'system.json');
+        if (await fs.pathExists(sysJsonPath)) {
+          const sysJson = await fs.readJson(sysJsonPath);
+          const activePacks = new Set<string>(
+            (sysJson.packs ?? []).map((p: { name: string; path?: string }) =>
+              path.basename(p.path ?? p.name)
+            )
+          );
+          const packEntries = await fs.readdir(packsDir, { withFileTypes: true });
+          for (const entry of packEntries) {
+            if (!entry.isDirectory() || activePacks.has(entry.name)) continue;
+            try {
+              await fs.remove(path.join(packsDir, entry.name));
+              console.log(`[cleanOutputDir] removed stale pack: ${entry.name}`);
+            } catch (err) {
+              console.warn(`[cleanOutputDir] could not remove stale pack "${entry.name}": ${(err as Error).message}`);
+            }
+          }
+        }
+      }
     },
   };
 }
