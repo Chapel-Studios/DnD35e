@@ -6,6 +6,7 @@ dist/
 out/
 *.js
 !eslint.config.js
+!src/macros/**
 *.js.map
 *.d.ts
 

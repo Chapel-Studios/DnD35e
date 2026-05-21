@@ -5,7 +5,7 @@
   "author": "mBlpD72i6u17h1qm",
   "img": "icons/svg/dice-target.svg",
   "scope": "global",
-  "command": "(async () => { const r = await fetch(`systems/${game.system.id}/macros/import-csv-items.js`); if (!r.ok) throw new Error(`Failed to load macro: ${r.status} ${r.statusText}`); eval(await r.text()); })();",
+  "command": "(async () => { const r = await fetch(`systems/${game.system.id}/macros/import-csv-items.mjs`); if (!r.ok) throw new Error(`Failed to load macro: ${r.status} ${r.statusText}`); eval(await r.text()); })();",
   "folder": null,
   "sort": 0,
   "ownership": {

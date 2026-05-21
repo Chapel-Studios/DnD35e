@@ -97,9 +97,9 @@ function copyStaticFiles (): Plugin {
         }
       }
       // Copy src/macros/** → <buildOutDir>/macros/ (dev macro scripts, loaded by fetch+eval)
-      const macroFiles = await fg('src/macros/**/*.js');
+      const macroFiles = await fg('src/macros/**/*.mjs');
       for (const file of macroFiles) {
-        const rel = path.relative('src', file); // e.g. "macros/import-csv-items.js"
+        const rel = path.relative('src', file); // e.g. "macros/import-csv-items.mjs"
         await fs.copy(path.resolve(__dirname, file), path.join(buildOutDir, rel));
       }
     },
