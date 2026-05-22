@@ -23,15 +23,8 @@ import type { DocumentSystemData } from '@documents/document/index.mjs';
 // type ItemGrantData = Required<ItemGrantSource>;
 // * -----------------------------------------------------
 
-interface ItemOrigin {
-    originId: string;
-    originVersion: string;
-    originPack: string;
-}
-
 // whats actually stored in the DB
 interface ItemSystemSource extends DocumentSystemData {
-    origin: ItemOrigin | null;
     isPsionic: boolean;
     isEpic: boolean;
 }

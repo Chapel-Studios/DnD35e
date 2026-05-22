@@ -55,9 +55,12 @@
     },
     "DOCUMENT": {
       "FIELDS": {
-        "version": {
-          "label": "System Version",
-          "hint": "Internal version of the document's system data schema."
+        "origin": {
+          "label": "Origin",
+          "migrationVersion": {
+            "label": "Migration Version",
+            "hint": "The system version when this document was created."
+          }
         },
         "slug": {
           "label": "Unique ID",

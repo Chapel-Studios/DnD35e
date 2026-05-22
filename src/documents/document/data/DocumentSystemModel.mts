@@ -1,6 +1,5 @@
 import {
   optionalStringField,
-  requiredStringField,
   useDnd35eField,
   withFamiliar,
 } from '@fields/fieldBuilders.mjs';
@@ -13,6 +12,7 @@ import type { DocumentSystemData } from './DocumentSystemData.mjs';
 const {
   HTMLField,
   SchemaField,
+  StringField,
 } = foundry.data.fields;
 
 interface DocumentSystemModel<TDocType extends foundry.abstract.DataModel | null> extends foundry.abstract.TypeDataModel<
@@ -31,7 +31,9 @@ abstract class DocumentSystemModel<TDocType extends foundry.abstract.DataModel |
 
   static override defineSchema(): Record<string, any> {
     const schema = {
-      version: withFamiliar(requiredStringField('14.0.0'), { formulaVisible: false }),
+      origin: withFamiliar(new SchemaField({
+        migrationVersion: new StringField({ nullable: true, required: false, initial: () => game.system.version }),
+      }), { formulaVisible: false }),
       slug: withFamiliar(optionalStringField(), { formulaVisible: false }),
       nameFormula: useDnd35eField(new FormulaField({
         expectedType: 'string',

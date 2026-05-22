@@ -16,21 +16,6 @@
   "dnd35e": {
     "ITEM": {
       "FIELDS": {
-        "origin": {
-          "label": "Origin",
-          "originId": {
-            "label": "Origin ID",
-            "hint": "The ID of the compendium source this item originated from."
-          },
-          "originVersion": {
-            "label": "Origin Version",
-            "hint": "The system version at the time this item was imported."
-          },
-          "originPack": {
-            "label": "Origin Pack",
-            "hint": "The compendium pack this item was imported from."
-          }
-        },
         "isPsionic": {
           "label": "Is Psionic",
           "hint": "Whether this item is psionic in nature."
