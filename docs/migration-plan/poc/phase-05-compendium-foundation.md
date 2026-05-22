@@ -1159,11 +1159,13 @@ The compendium build pipeline works end-to-end, and the authoring tooling devs w
 
 Items and actors track where they came from and whether they've been changed; UUIDs resolve type-safely; documents stamp their migration version.
 
-- [ ] Importing a doc from a compendium populates `origin.sourceId` + `sourceHash`
-- [ ] Modifying an imported doc flips `isModified` (current hash diverges from source hash)
+> **Scope change (feat/poc-05.2-tracking)**: `origin.sourceId`/`sourceHash`/`isModified` hash tracking was deferred to post-release. Foundry's native `_stats.compendiumSource` is sufficient to identify system-managed AEs for Story 3 — it's set automatically on drag-drop import and can be set programmatically (mirrors Foundry's own region behavior pattern at foundry.mjs L76331). The `system.origin` schema was reduced to `migrationVersion` only.
+
+- ~~`[ ]` Importing a doc from a compendium populates `origin.sourceId` + `sourceHash`~~ — **deferred to post-release** (use `_stats.compendiumSource` natively instead)
+- ~~`[ ]` Modifying an imported doc flips `isModified` (current hash diverges from source hash)~~ — **deferred to post-release**
 - [ ] `fromCompendiumUuid<T>()` and batch `resolveUuids<T>()` resolve correctly; invalid UUIDs return `null` without throwing
-- [ ] `system.migration.version` is auto-populated to `game.system.version` on document creation
-- [ ] All POC.1–3 DataModels carry the `migration.version` field
+- [x] `system.origin.migrationVersion` is auto-populated to `game.system.version` on document creation
+- [x] All document DataModels carry `system.origin.migrationVersion` (via `DocumentSystemModel` base — propagates to items, AEs, actors)
 
 ### Gate 3 — Broken & Masterwork Work End-to-End
 
@@ -1300,25 +1302,29 @@ task_1j:
 Independent of Story 1's pipeline (pure schema + helpers + lifecycle hooks), so it can run fully in parallel.
 
 ```yaml
-task_2a:
-  name: "Origin tracking schema (sourceId, sourceHash, currentHash) + auto-population in Dnd35eDocumentMixin._onCreate/_onUpdate"
-  routing: Lead dev
-  blocking: [3c, 3d]
-  verify: "Import doc from compendium → origin.sourceId + sourceHash populated. Modify doc → currentHash diverges → isModified getter returns true. Round-trip survives save/load."
+task_2a:  # DONE (combined with 2c)
+  name: "[REDUCED SCOPE] system.origin.migrationVersion on DocumentSystemModel base"
+  status: complete
+  note: |
+    Hash tracking (sourceId/sourceHash/currentHash/isModified) deferred to post-release.
+    _stats.compendiumSource is Foundry-native and sufficient for Story 3 AE identification.
+    Removed old item-level origin schema (originId/originVersion/originPack) from ItemSystemModel.
+    DocumentSystemModel now has: origin SchemaField { migrationVersion: StringField(nullable, stamps game.system.version at creation) }
+  verify: "New document created → system.origin.migrationVersion === game.system.version."
 
-task_2b:
+task_2b:  # TODO
   name: "src/helpers/uuid.mts (fromCompendiumUuid<T>, resolveUuids<T>, isValidUuid, error-safe variants)"
   routing: Jr dev or Pair
   blocking: [3c, 3d]
   verify: "fromCompendiumUuid resolves a real compendium doc with the typed return; batch resolveUuids handles a Map; invalid UUID returns null without throwing"
 
-task_2c:
-  name: "Add system.migration.version to all DataModel defineSchema() (CoreMixin level — propagates to all docs)"
-  routing: Jr dev
-  verify: "New documents auto-populate system.migration.version = game.system.version on creation; existing POC.1–3 docs receive the field without breaking schema validation"
+task_2c:  # DONE (combined with 2a)
+  name: "Add system.origin.migrationVersion to all DataModel defineSchema() (DocumentSystemModel level)"
+  status: complete
+  verify: "New documents auto-populate system.origin.migrationVersion = game.system.version on creation; existing POC.1–3 docs receive the field without breaking schema validation"
 ```
 
-**Story 2 acceptance**: Integration test imports a weapon from a compendium → origin stamped, hash matches; modifying the weapon flips `isModified`; UUID helpers resolve and reject invalid input gracefully; new docs ship with a migration version.
+**Story 2 acceptance (revised)**: UUID helpers resolve and reject invalid input gracefully; new docs ship with `system.origin.migrationVersion`; Story 3 uses `_stats.compendiumSource` (native Foundry) to identify system-managed AEs.
 
 ---
 
