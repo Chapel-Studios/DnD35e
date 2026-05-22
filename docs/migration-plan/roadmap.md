@@ -176,7 +176,7 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 | 2 | [Active Effect on Item](poc/phase-02-active-effect-on-item.md) | 🔶 In Progress | poc.1 | Material AE, phase system, stacking engine, proxy dispatcher, GeneralSystemModel |
 | 3 | [Localization](poc/phase-03-localization.md) | ✅ Complete | — | LOCALIZATION_PREFIXES, lang files, FormGroup auto-labels |
 | 4 | [Testing Infrastructure](poc/phase-04-testing-infrastructure.md) | ✅ Complete | poc.1, poc.2, poc.3 | Vitest, Foundry mocks, coverage tooling — establishes test patterns; back-fills poc.1–3 tests |
-| 5 | [Compendium Foundation](poc/phase-05-compendium-foundation.md) | ✅ Approved | poc.1, poc.2, poc.3 | Pack pipeline, origin tracking, UUID helpers, migration version field |
+| 5 | [Compendium Foundation](poc/phase-05-compendium-foundation.md) | 🔶 In Progress | poc.1, poc.2, poc.3 | Pack pipeline, origin tracking, UUID helpers, migration version field |
 | 6 | [Actor Foundation](poc/phase-06-actor-foundation.md) | 📋 Outlined | poc.1, poc.3 | Character actor: abilities, AC shell, HP, saves, skills, inventory, tokens, equipment slots |
 | 7 | [Roll Formulas & Custom Rolls](poc/phase-07-roll-formulas.md) | 📋 Outlined | poc.6 | D20Roll, DamageRoll, FormulaFamiliar roll data, formula paths |
 | 8 | [Pipeline & Branching](poc/phase-08-pipeline-and-branching.md) | 🔶 In Progress | — | Branching model, PR gate (`test.yml`), release pipeline (`build.yml`), `phases.json` sync. Independent of POC content; can land any time before POC closes. |

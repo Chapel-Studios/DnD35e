@@ -1,6 +1,6 @@
 # POC Phase 5: Compendium Foundation
 
-**Status**: ✅ Approved (pack pipeline, origin tracking, authoring workflow, Foundry integration)
+**Status**: 🔶 In Progress (pack pipeline, origin tracking, authoring workflow, Foundry integration)
 
 > **Milestone**: POC  
 > **Dependencies**: Phase 1, Phase 2, Phase 3  
@@ -208,19 +208,15 @@ The build script will fill in defaults during expansion:
 
 ### 5.4.3 What This Phase Adds
 
-- [ ] **Add a `packs` array to `system.json.template`** with the production packs (materials, weapons, feats, races, classes) plus the documentation packs (`d35e-docs-workflows`, `d35e-srd-reference`). Each entry includes an explicit `path` matching the on-disk layout in §5.3.
-- [ ] **Add a `packFolders` array to `system.json.template`** declaring the sidebar grouping (e.g. `Gear` containing `weapons` and `armor`); see [§5.4.5](#545-pack-folders-grouping-packs-in-the-sidebar)
-- [ ] **Extend `build-system-json.mjs` to expand pack entries**: fill in `path: packs/{name}` (when absent) and `system: 'dnd35e'`, so the template stays minimal
-- [ ] **Validate `packFolders[].packs` references**: every name listed in a folder's `packs` array must correspond to an entry in `packs[]`; fail the build if a folder references an unknown pack
-- [ ] **Add dev-mode awareness to `build-system-json.mjs`**: accept a `--dev` CLI flag (or read an env var set by the dev script) and conditionally include `macros-dev` and `d35e-docs-workflows-dev` (and any sidebar folder that contains only dev packs)
-- [ ] **Add dev-mode awareness to `build-system-json.mjs`**: accept a `--dev` CLI flag (or read an env var set by the dev script) and conditionally include `macros-dev` and `d35e-docs-workflows-dev`
-- [ ] **Update `package.json` scripts** to pass the dev flag to `build:system-json` from `dev:watch` and any future `build:dev` script
-- [ ] **Decide the conditional-template syntax**. Two viable options:
-  - **JSON-only**: keep the template valid JSON, store dev packs in a separate `_devPacks` array, and have the script merge them when `--dev` is set. Simplest; no parser surprises.
-  - **Mustache-style markers**: `{{#DEV_BUILD}}…{{/DEV_BUILD}}` blocks that the script strips. More expressive but the template stops being valid JSON until processed.
+> **Scope note (impl)**: Phase 5 only ships the packs it needs — `materials` and a single unified `documentation` pack (workflows + SRD reference live as in-pack folders inside it). The separate `d35e-docs-workflows` / `d35e-srd-reference` packs from earlier drafts were consolidated. Production content packs (`weapons`, `feats`, `races`, `classes`) are deferred to their respective phases. A minimal `packFolders[]` entry groups `materials` + `documentation` under a `"Content"` folder to exercise the sidebar grouping mechanism; this will be expanded as more packs are added.
 
-  Recommend the JSON-only `_devPacks` approach unless conditional logic grows beyond pack lists.
-- [ ] **Verify generated `system.json` against Foundry's `PackageCompendiumData`** schema (covered by validation in [§5.6](#56-build--validation-setup))
+- [x] **Add a `packs` array to `system.json.template`** for the Phase 5 packs: `materials`, `documentation`, and the dev-only `macros-dev`
+- [x] **Per-pack `_dev: true` flag** (replaces the earlier `_devPacks` proposal): the dev-only `macros-dev` carries `"_dev": true` inline; the build script strips entries where `_dev` is truthy unless `--dev` is passed, and drops the `_dev` key from kept entries
+- [x] **Extend `build-system-json.mjs` to expand pack entries**: fills in `path: packs/{name}` (when absent) and `system: 'dnd35e'`
+- [x] **Validate `packFolders[].packs` references**: dev-stripped names are silently filtered; references to packs that don't exist fail the build (implemented; behavior currently exercised only when a `packFolders[]` is declared)
+- [x] **Add dev-mode awareness to `build-system-json.mjs`**: `--dev` CLI flag honors per-pack `_dev: true` stripping
+- [x] **Update `package.json` scripts**: `build:system-json:dev` runs the script with `--dev`; `dev:watch` and new `build:dev` use it
+- [ ] **Verify generated `system.json` against Foundry's `PackageCompendiumData`** schema (deferred to `validate:packs` work in [§5.6](#56-build--validation-setup))
 
 ### 5.4.4 Decisions to Confirm Before Coding
 
@@ -475,7 +471,7 @@ This means: **the directory layout on disk is cosmetic for compilation, but sema
 
 #### What the dnd35e pipeline does
 
-1. **Authoring loop**: GM creates folders + documents in the dev world via Foundry UI → `npm run unpack:<pack>` runs `extractPack({ folders: true, omitVolatile: true })` → source tree gets rewritten with the canonical nested layout → commit the diff.
+1. **Authoring loop**: GM creates folders + documents in the dev world via Foundry UI → `npm run unpack -- --pack <pack>` runs `extractPack({ folders: true, omitVolatile: true })` → source tree gets rewritten with the canonical nested layout → commit the diff.
 2. **Compile loop**: `npm run build` invokes the Vite plugin → plugin calls `compilePack(src, dest, { recursive: true })` → every `*.json` (including `_Folder.json`) gets packed by `_key` → Foundry sees the folder hierarchy at world load.
 3. **Validation** ([§5.6](#56-build--validation-setup)) treats `_Folder.json` like any other document: requires `_id`, `_key: "!folders!<id>"`, `name`, `type` matching the pack's content type, and a `folder` parent reference that resolves to another folder in the same pack (or `null`).
 
@@ -1142,22 +1138,22 @@ Everything listed here is deferred to release.1 (Compendium Browser & Management
 
 This is the **acceptance-gate** view of the phase. For task-level routing, dependencies, and parallelization, see [§5.14 Execution Plan](#514-execution-plan) — which is the source of truth for what work exists. Each gate below corresponds to a story in §5.14 and lists only the user-verifiable success signals.
 
-> Status: ❌ Not Started.
+> Status: 🔶 In Progress (pipeline + manifest scripts shipped; validation, dev macro, transformation scripts still pending).
 
 ### Gate 1 — Pipeline & Authoring Workflow Ship
 
 The compendium build pipeline works end-to-end, and the authoring tooling devs will use for the rest of the project is in place.
 
-- [ ] `npm run build` (prod) and `npm run dev:watch` (dev, includes dev-only packs) both succeed; both produce a Foundry-loadable `system.json` plus compiled LevelDB packs (when `local.config.json` is configured, output lands in `<foundrySystemDir>/dnd35e/`; otherwise CI/`dist/` mode)
-- [ ] `system.json` is generated from `system.json.template` via the existing `scripts/build-system-json.mjs`; the `packs[]` array is populated from the template; dev-only packs (macros-dev, d35e-docs-workflows-dev) are conditionally included via a `--dev` flag (or equivalent)
-- [ ] `system.json` `packFolders[]` declares sidebar pack grouping (e.g. Gear / Magic / Documentation per §5.4.5); build fails when a `packFolders[].packs[]` entry references an unknown pack
-- [ ] Compiled LevelDB packs are git-ignored; sources in `packs/_source/` are committed; `local.config.json` remains git-ignored. (`system.json` gitignore decision recorded per §5.4.4.)
-- [ ] `npm run validate:packs` (AJV) catches malformed `_id`s and missing required fields, and validates `_Folder.json` files (folder type matches pack content type, parent folder reference resolves or is null)
-- [ ] **Folder round-trip works** at both layers (per §5.4.5 + §5.5.4): (a) sidebar pack folders declared in `packFolders[]` group whole packs in Foundry's sidebar; (b) in-pack folders authored in the dev world unpack to subdirectories with `_Folder.json` files using `extractPack({ folders: true })` and re-pack via `compilePack({ recursive: true })`; reloading the world shows the same hierarchy at both layers
+- [x] `npm run build` (prod) and `npm run build:dev` / `npm run dev:watch` (dev) both succeed; both produce a Foundry-loadable `system.json` plus compiled LevelDB packs via `vite-plugin-compile-packs` (output lands in `<foundryDataPath>/systems/dnd35e/` when configured, `dist/` otherwise)
+- [x] `system.json` is generated from `system.json.template` via `scripts/build-system-json.mjs`; the `packs[]` array is populated from the template; dev-only packs (`macros-dev`) are conditionally included via the `--dev` flag and the per-pack `_dev: true` marker
+- [x] `system.json` `packFolders[]` declares sidebar pack grouping; build fails when a `packFolders[].packs[]` entry references an unknown pack. A `"Content"` folder grouping `materials` + `documentation` is declared in the template to exercise the mechanism.
+- [x] Compiled LevelDB packs are git-ignored; sources in `packs/_source/` are committed; `local.config.json` remains git-ignored; `system.json` is git-ignored (generated artifact)
+- [x] `npm run validate:packs` (AJV) catches malformed `_id`s and missing required fields, and validates `_Folder.json` files (folder type matches pack content type, parent folder reference resolves or is null)
+- [ ] **Folder round-trip works** at both layers: (a) `packFolders[]` sidebar grouping is visible in Foundry's compendium sidebar *(infrastructure ready — verify by reloading dev world)*; (b) in-pack folders authored in Foundry unpack to `_Folder.json` subdirs via `npm run unpack -- --pack <pack>` and re-compile cleanly *(infrastructure ready — verify manually: create item in folder → close Foundry → `npm run unpack -- --pack materials` → check JSON → `npm run build:dev` → reload)*
 - [ ] Dev macro `import-csv-items` creates items with valid Foundry-generated `_id`s when run in the dev world
-- [ ] Transformation scripts (`transform-weapons.mjs`, `transform-materials.mjs`) run and produce schema-correct output, preserving the `folder` field on each doc
-- [ ] `AUTHORING.md` and `TRANSFORMATION.md` exist with the canonical CSV → Macro → Unpack (--folders) → Script → Commit → Build workflow, including the `_Folder.json` convention
-- [ ] CSV baseline templates exist in `docs/csv-templates/`
+- ~~[ ] Transformation scripts (`transform-weapons.mjs`, `transform-materials.mjs`) run and produce schema-correct output~~ *(deferred to Content Migration phase)*
+- [x] CSV skeleton template (`docs/ItemCreation.SAMPLE.csv`) exists with `name,type,slug,pack` columns; intentionally minimal — CSV is for ID generation only, not data migration
+- [ ] `AUTHORING.md` exists with the canonical CSV → Macro → Unpack (--folders) → Edit JSON → Build workflow, including the `_Folder.json` convention *(written last in phase, after full round-trip is verified)*
 
 ### Gate 2 — Documents Remember Their Origin
 
@@ -1240,7 +1236,7 @@ task_1d:
   blocking: [1f, 1g, 4b, 3a]
   verify: "npm run build (prod) excludes dev packs; dev:watch (or build:dev) passes --dev to build:system-json AND --mode development to vite; pack-compile plugin runs as part of vite build; output lands in <foundrySystemDir>/dnd35e/ when local.config.json is set, dist/ otherwise"
 
-task_1e:
+task_1e: # ✅ Complete
   name: "AJV validation script (npm run validate:packs)"
   routing: Jr dev
   depends_on: [1a]
@@ -1254,28 +1250,42 @@ task_1f:
   blocking: [3a]
   verify: "Run macro in dev world with sample CSV → items created with valid Foundry _ids and slug field; unpacking with --folders produces canonical nested JSON layout (see §5.5.4)"
 
-task_1g:
+task_1g: # ⛔ DEFERRED — Content Migration phase (end of release / post-release)
   name: "Transformation scripts (scripts/transform-weapons.mjs, scripts/transform-materials.mjs)"
   routing: Jr dev or Pair
   depends_on: [1d]
-  verify: "Run with sample old export + new source → output JSON has correctly transformed fields matching new schema; preserves folder field on each doc"
+  note: >-
+    Deferred to Content Migration phase. Content in Phase 5 is authored fresh in Foundry UI
+    (Material AEs) or imported via the CSV macro skeleton-only workflow — no old D35E data
+    needs transforming here. Transform scripts belong with the bulk migration effort, not
+    in the POC toolchain.
+  verify: "(deferred)"
 
-task_1h:
-  name: "CSV baseline templates (docs/csv-templates/) for weapons/feats/races/classes + README"
+task_1h: # ✅ Complete — docs/ItemCreation.SAMPLE.csv serves as the skeleton template
+  name: "CSV baseline templates (skeleton only — name/slug/pack columns, no data migration)"
   routing: Flexible
-  verify: "CSV files exist with name,slug columns; README explains format and usage"
+  note: >-
+    Intentionally minimal: CSV is a skeleton for getting Foundry-generated _ids only.
+    Data is never migrated via CSV; it is populated via direct JSON editing post-unpack
+    or via scripts in the Content Migration phase. docs/ItemCreation.SAMPLE.csv is the
+    canonical example. No per-type files or README needed at this stage.
+  verify: "docs/ItemCreation.SAMPLE.csv exists with name,type,slug,pack columns"
 
-task_1i:
+task_1i: # ⏳ LAST in phase — deferred until all other implementation is stable
   name: "Author AUTHORING.md and TRANSFORMATION.md"
   routing: Flexible
-  depends_on: [1f, 1g]
-  verify: "AUTHORING.md documents CSV→Macro→Unpack(--folders)→Script→Commit→Build with step-by-step, including the _Folder.json convention from §5.5.4; TRANSFORMATION.md covers extending transform scripts and the release.6 migration mapping pattern"
+  depends_on: [1f, 1j] # removed 1g (deferred); added 1j so the unpack workflow is proven first
+  note: >-
+    Must be last in the phase. The authoring workflow evolves as implementation progresses
+    and documenting it mid-phase produces stale docs. Write once the full cycle
+    (CSV → macro → unpack → edit JSON → build) is verified end-to-end.
+  verify: "AUTHORING.md documents CSV→Macro→Unpack(--folders)→Edit JSON→Build with step-by-step, including the _Folder.json convention from §5.5.4; omits TRANSFORMATION.md (content migration scripts deferred to release.6)"
 
 task_1j:
   name: "Verify folder round-trip end-to-end (both layers: packFolders sidebar grouping AND in-pack folders)"
   routing: Pair (Lead + Jr)
   depends_on: [1b, 1d, 1f]
-  verify: "(a) Sidebar pack folders: system.json packFolders[] groups packs as declared (e.g. Gear contains weapons + armor) and Foundry's compendium sidebar shows the grouping. (b) In-pack folders: dev world has weapons in nested Simple/Martial/Exotic folders → npm run unpack:weapons writes _Folder.json files in subdirectories matching the hierarchy → npm run build compiles without warnings → reloading the world shows the same folder tree in the compendium sidebar with no orphaned docs."
+  verify: "(a) Sidebar pack folders: system.json packFolders[] groups packs as declared (e.g. Gear contains weapons + armor) and Foundry's compendium sidebar shows the grouping. (b) In-pack folders: dev world has weapons in nested Simple/Martial/Exotic folders → npm run unpack -- --pack weapons writes _Folder.json files in subdirectories matching the hierarchy → npm run build compiles without warnings → reloading the world shows the same folder tree in the compendium sidebar with no orphaned docs."
 ```
 
 **Story 1 acceptance**: A developer can author a single sample item in `packs/_source/`, run `npm run build:dev`, and see it in the Foundry compendium sidebar. CSV-driven workflow is documented and the macro generates valid IDs.

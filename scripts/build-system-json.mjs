@@ -9,10 +9,24 @@
  * If the path ends with /dnd35e, it is normalized to the parent.
  *
  * Substitutes {{VERSION}} from version.yaml.
+ *
+ * Pack handling:
+ *   - Each entry in packs[] may carry an internal "_dev": true flag.
+ *   - In dev builds (--dev), all packs are kept. In prod builds, packs
+ *     with _dev:true are stripped.
+ *   - The _dev key itself is always removed before writing (it is not
+ *     part of Foundry's PackageCompendiumData schema).
+ *   - path defaults to "packs/{name}" when absent.
+ *   - system defaults to "dnd35e" when absent.
+ *   - packFolders[].packs[] entries that reference stripped (dev-only)
+ *     packs are filtered out; remaining entries must reference a known
+ *     pack or the build fails.
+ *
  * Without local.config.json, runs in CI mode (generates in-repo, skips copy).
  *
  * Usage:
- *   node scripts/build-system-json.mjs
+ *   node scripts/build-system-json.mjs           # prod build
+ *   node scripts/build-system-json.mjs --dev     # dev build (includes _dev packs)
  */
 
 import fs from 'fs';
@@ -21,6 +35,9 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
+
+// --- Parse CLI flags ---
+const isDev = process.argv.includes('--dev');
 
 // --- Read local config (git-ignored, optional for CI) ---
 const localConfigPath = path.join(root, 'local.config.json');
@@ -69,18 +86,59 @@ let content = fs.readFileSync(templatePath, 'utf8');
 // Substitute {{VERSION}}
 content = content.replace('{{VERSION}}', version);
 
-// Validate result is valid JSON
+// Validate result is valid JSON and parse so we can expand packs/packFolders.
+let manifest;
 try {
-  JSON.parse(content);
+  manifest = JSON.parse(content);
 } catch (err) {
   console.error('❌ Generated system.json is not valid JSON:', err.message);
   process.exit(1);
 }
 
+// --- Expand packs[]: strip _dev entries in prod, default path/system ---
+if (Array.isArray(manifest.packs)) {
+  const expanded = [];
+  const strippedPackNames = new Set();
+  for (const pack of manifest.packs) {
+    if (pack._dev === true && !isDev) {
+      strippedPackNames.add(pack.name);
+      continue;
+    }
+    // Drop the _dev key (not part of Foundry's schema) before emitting.
+    const { _dev, ...rest } = pack;
+    if (!rest.path) rest.path = `packs/${rest.name}`;
+    if (!rest.system) rest.system = 'dnd35e';
+    expanded.push(rest);
+  }
+  manifest.packs = expanded;
+
+  // --- Validate packFolders[].packs[] references; drop stripped names ---
+  if (Array.isArray(manifest.packFolders)) {
+    const knownPackNames = new Set(expanded.map(p => p.name));
+    for (const folder of manifest.packFolders) {
+      if (!Array.isArray(folder.packs)) continue;
+      const filtered = [];
+      for (const packName of folder.packs) {
+        if (strippedPackNames.has(packName)) continue; // dev-only pack, silently drop in prod
+        if (!knownPackNames.has(packName)) {
+          console.error(
+            `❌ packFolders entry "${folder.name}" references unknown pack "${packName}"`
+          );
+          process.exit(1);
+        }
+        filtered.push(packName);
+      }
+      folder.packs = filtered;
+    }
+  }
+}
+
+content = JSON.stringify(manifest, null, 2) + '\n';
+
 // --- Write system.json to repo root ---
 const outputPath = path.join(root, 'system.json');
 fs.writeFileSync(outputPath, content);
-console.log(`✅ Generated system.json (version: ${version})`);
+console.log(`✅ Generated system.json (version: ${version}, mode: ${isDev ? 'dev' : 'prod'})`);
 
 // --- Copy to Foundry system directory (skip in CI when foundrySystemDir is absent) ---
 if (foundrySystemDir) {
