@@ -16,31 +16,35 @@ import { syncOpenSheetTitle } from '@helpers/syncOpenSheetTitle.mjs';
 import type { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
-const refreshOwningItemForSecret = (document: unknown): void => {
+const refreshOwningDocument = (document: unknown): void => {
   const effect = document as foundry.documents.ActiveEffect | null;
-  if (!effect || effect.type !== secretEffectType) return;
-  if (!effect.parent || effect.parent.documentName !== 'Item') return;
+  const parent = effect?.parent;
+  if (!parent || !parent.id || !parent.documentName) return;
 
-  const item = effect.parent as ItemDnd35e;
-  item.prepareData();
+  // Re-run prepareData so derived data (e.g. system.isBroken, secret-driven
+  // name/img) recomputes from the current set of effects.
+  (parent as { prepareData?: () => void }).prepareData?.();
 
+  const stores = game.dnd35e?.stores as unknown as Record<string, Record<string, ItemSheetStore<any>>> | undefined;
+  const store = stores?.[parent.documentName]?.[parent.id];
+  store?._storeUtils.refreshDocument?.(parent as ItemDnd35e);
+
+  // Sync the open sheet's window title (secret-driven name changes etc.)
   // TODO: Revisit secret hook refresh coverage for masked top-level fields like img.
   // Name is updated here today, but secret images and similar fields still need a
   // deliberate refresh path for directories/sidebar-style consumers when we return to it.
+  const sheet = (parent as { sheet?: foundry.applications.api.ApplicationV2 | null }).sheet;
+  if (sheet) syncOpenSheetTitle(sheet);
 
-  if (item.id && game.dnd35e?.stores?.Item?.[item.id]) {
-    (game.dnd35e.stores.Item[item.id] as ItemSheetStore<any>)?._storeUtils.refreshDocument?.(item);
-  }
+  // Re-render the parent's own sheet so view-mode-bar `hasSecrets` and other
+  // render-time computed state refresh (see VueDocumentSheetMixin#_onRender).
+  // `force: false` is a no-op when closed.
+  if (sheet?.rendered) sheet.render(false);
 
-  syncOpenSheetTitle(item.sheet);
-  // Re-render the item's own sheet so view-mode-bar `hasSecrets` and other
-  // render-time samples (see VueDocumentSheetMixin#_onRender) refresh when a
-  // Secret AE is added, updated, or removed. `force: false` makes this a no-op
-  // when the sheet is closed.
-  if (item.sheet?.rendered) item.sheet.render(false);
-  // Also refresh the containing document (Actor sheet, sidebar) so embedded
-  // displays of this item update their masked surfaces.
-  item.parent?.sheet?.render(true);
+  // Also refresh the grand-parent (e.g. Actor sheet showing this item) so
+  // embedded displays update their masked surfaces.
+  const grandParent = (parent as { parent?: { sheet?: foundry.applications.api.ApplicationV2 | null } }).parent;
+  grandParent?.sheet?.render(true);
 };
 
 const registerEffectSheets = () => {
@@ -118,15 +122,15 @@ export const registerEffects = () => {
   });
 
   Hooks.on('createActiveEffect', (document) => {
-    refreshOwningItemForSecret(document);
+    refreshOwningDocument(document);
   });
 
   Hooks.on('updateActiveEffect', (document) => {
-    refreshOwningItemForSecret(document);
+    refreshOwningDocument(document);
   });
 
   Hooks.on('deleteActiveEffect', (document) => {
-    refreshOwningItemForSecret(document);
+    refreshOwningDocument(document);
   });
 };
 

@@ -1,28 +1,21 @@
 <template>
-  <!-- <CheckBoxFormGroup
+  <CheckBoxFormGroup
     label="dnd35e.ITEM.IsBroken"
     :value="isBroken"
-    :on-update="updater"
+    :on-update="toggleBroken"
     field-path="system.isBroken"
-    default-visibility="gmOnly"
-  /> -->
+    default-editability="gmOnly"
+    edit-derived
+  />
 </template>
 <script setup lang="ts">
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  // WIP stub - all code commented out until template is ready
-  // import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  // import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
-  // import { CheckBoxFormGroup } from '@vc/fields/index.mjs';
-  // import { inject } from 'vue';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/physical/physicalItem/sheet/index.mjs';
+  import { CheckBoxFormGroup } from '@vc/fields/index.mjs';
+  import { inject } from 'vue';
 
-  // const {
-  //   documentGetters: {
-  //     isBroken,
-  //   },
-  //   documentActions: {
-  //     getDirectFieldUpdater,
-  //   },
-  // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
-
-  // const updater = getDirectFieldUpdater('system.isBroken');
+  const {
+    documentGetters: { isBroken },
+    documentActions: { toggleBroken },
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 </script>

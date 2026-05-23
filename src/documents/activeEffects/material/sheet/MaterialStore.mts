@@ -3,6 +3,7 @@ import type { ActiveEffectConfigStoreDocumentActions, ActiveEffectConfigStoreDoc
 import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
 import { useActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
 import { getDefaultActiveEffectTabs } from '@effects/baseActiveEffect/sheet/tabs/index.mjs';
+import type { MaterialSubtype } from '@effects/material/data/index.mjs';
 import type { MaterialType } from '@effects/material/Material.mjs';
 import { Material } from '@effects/material/Material.mjs';
 import { PriceData } from '@fields/PriceData.mjs';
@@ -35,6 +36,7 @@ const useMaterialStore = (context: VueApplicationContext<Material>): MaterialSto
     price: computed(() => getViewAwareFieldValue('system.price') || new PriceData({})),
     hardness: computed(() => getViewAwareFieldValue('system.hardness') ?? 0),
     bonusHp: computed(() => getViewAwareFieldValue('system.bonusHp') ?? 0),
+    materialSubtype: computed(() => getViewAwareFieldValue<MaterialSubtype>('system.materialSubtype') ?? 'standard'),
     magicEquivalency: computed(() => getViewAwareFieldValue('system.magicEquivalency') ?? 0),
     damageReductionTypes: computed(() => [...(getViewAwareFieldValue<string[]>('system.damageReductionTypes') ?? [])]),
     damageReductionTypeOptions: computed<MultiSelectOption<string>[]>(() => {
@@ -69,6 +71,7 @@ interface MaterialGetters extends ActiveEffectConfigStoreDocumentGetters
   price: ComputedRef<PriceData>;
   hardness: ComputedRef<number>;
   bonusHp: ComputedRef<number>;
+  materialSubtype: ComputedRef<MaterialSubtype>;
   magicEquivalency: ComputedRef<number | null>;
   damageReductionTypes: ComputedRef<string[]>;
   damageReductionTypeOptions: ComputedRef<MultiSelectOption<string>[]>;

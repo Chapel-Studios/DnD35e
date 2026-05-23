@@ -2,7 +2,8 @@ import type { DocumentSheetConfiguration } from '@client/applications/api/docume
 import { ItemSheetDnd35e } from '@items/baseItem/index.mjs';
 import type { PhysicalItemSheetRenderContext } from '@items/physical/physicalItem/index.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
-import { WeaponSheetVue } from '@items/physical/weapon/index.mjs';
+
+import WeaponSheetVue from './WeaponSheet.vue';
 
 type WeaponSheetConfig = DocumentSheetConfiguration<Weapon>;
 type WeaponSheetRenderContext = PhysicalItemSheetRenderContext & {

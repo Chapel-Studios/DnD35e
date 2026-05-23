@@ -925,11 +925,14 @@ Item._onCreate() →
   4. Stamp origin tracking (sourceId → compendium UUID)
 ```
 
-**Two-way sync between `isBroken` and the Broken AE:**
-- Setting `isBroken = true` on the item → enables the Broken AE (`disabled: false`)
-- Setting `isBroken = false` → disables the Broken AE (`disabled: true`)
-- Manually enabling the Broken AE → sets `isBroken = true` on the parent item
-- Manually disabling the Broken AE → sets `isBroken = false`
+**`isBroken` is a derived property — the Broken AE is the source of truth:**
+- `isBroken` is NOT stored in the schema. It is computed in `PhysicalItemSystemModel.prepareDerivedData()` by checking whether any active (`!disabled`) Material AE with `materialSubtype === 'broken'` exists on the item.
+- HP drops to ≤ 0 (and `hp.max > 0`) → `_onUpdate` detects the HP change → enables the system-managed Broken AE
+- HP restored above 0 → `_onUpdate` disables the system-managed Broken AE
+- Manually enabling any broken-material AE → `prepareDerivedData` recomputes `isBroken = true` automatically on next data prep cycle — no write-back needed
+- Manually disabling → same, `isBroken` recomputes to `false`
+
+> **Phase 6 refactor (deferred):** The `_onUpdate` HP watcher is a PoC placeholder. In Phase 6 (§5.9), the `DocumentEventEmitter` infrastructure lands on all documents. The correct long-term trigger is: `_onUpdate` emits `item 'destroyed'` when HP crosses 0; the broken AE sync subscribes to that event. See [Phase 6 §5.9](phase-06-actor-foundation.md#59-document-event-system) for the full design.
 
 The Broken AE is **not** subject to single-material enforcement — it's always allowed alongside any standard material. Its changes use `bonusType: 'broken'` (penalty type, always stacks).
 
@@ -974,16 +977,16 @@ Masterwork changes use `bonusType: 'masterwork'` — resolved independently from
 
 ### Implementation Notes
 
-- Sync logic lives on the item document class (e.g., `WeaponDnd35e._onUpdate()`, `_onCreateDescendantDocuments()`)
+- Sync logic lives on `PhysicalItem._onUpdate()` watching `system.hp` changes (not per-subclass)
 - `isMasterwork` stays as a boolean on `WeaponSystemModel` (and later `EquipmentSystemModel` in Phase 15)
-- `isBroken` added to `PhysicalItemSystemModel` (all physical items can break)
+- `isBroken` is a **derived boolean** on `PhysicalItemSystemData` — computed in `PhysicalItemSystemModel.prepareDerivedData()` from AE state; it is NOT a stored schema field
 - The compendium UUIDs for default broken/masterwork are stored as system constants (not hardcoded strings scattered through code)
 
 ### Phase 2 Deferrals (Landing Here)
 
 The following items were deferred from Phase 2 to this phase because they require compendium content:
 
-- [ ] **`materialSubtype` selector UI**: Visible and functional in Material AE sheet — user can pick `standard` / `broken` / `masterwork`
+- [x] **`materialSubtype` selector UI**: Visible and functional in Material AE sheet — user can pick `standard` / `broken` / `masterwork`
 - [ ] **Material AE creation workflow end-to-end test**: Create Material AE → verify changes propagate to weapon stats
 - [ ] **Material AE updates propagate immediately to weapon stats**: Verify `buildChanges()` regeneration after materialSubtype change
 - [ ] **Integration tests for material stacking**: Single material applies; two materials → highest-wins per field; standard + broken + masterwork all apply (different bonus types); overrides enriched correctly
@@ -1159,23 +1162,26 @@ The compendium build pipeline works end-to-end, and the authoring tooling devs w
 
 Items and actors track where they came from and whether they've been changed; UUIDs resolve type-safely; documents stamp their migration version.
 
-- [ ] Importing a doc from a compendium populates `origin.sourceId` + `sourceHash`
-- [ ] Modifying an imported doc flips `isModified` (current hash diverges from source hash)
+> **Scope change (feat/poc-05.2-tracking)**: `origin.sourceId`/`sourceHash`/`isModified` hash tracking was deferred to post-release. Foundry's native `_stats.compendiumSource` is sufficient to identify system-managed AEs for Story 3 — it's set automatically on drag-drop import and can be set programmatically (mirrors Foundry's own region behavior pattern at foundry.mjs L76331). The `system.origin` schema was reduced to `migrationVersion` only.
+
+- ~~`[ ]` Importing a doc from a compendium populates `origin.sourceId` + `sourceHash`~~ — **deferred to post-release** (use `_stats.compendiumSource` natively instead)
+- ~~`[ ]` Modifying an imported doc flips `isModified` (current hash diverges from source hash)~~ — **deferred to post-release**
 - [ ] `fromCompendiumUuid<T>()` and batch `resolveUuids<T>()` resolve correctly; invalid UUIDs return `null` without throwing
-- [ ] `system.migration.version` is auto-populated to `game.system.version` on document creation
-- [ ] All POC.1–3 DataModels carry the `migration.version` field
+- [x] `system.origin.migrationVersion` is auto-populated to `game.system.version` on document creation
+- [x] All document DataModels carry `system.origin.migrationVersion` (via `DocumentSystemModel` base — propagates to items, AEs, actors)
 
 ### Gate 3 — Broken & Masterwork Work End-to-End
 
 The headline POC proof case: GMs and players can apply Broken or Masterwork to a weapon and see the effect on stats.
 
-- [ ] Four Material AEs exist in `packs/_source/materials/` (broken-weapon, broken-armor, masterwork-weapon, masterwork-armor) and compile into the materials pack
-- [ ] `src/constants/compendiumUuids.mts` exports the four UUIDs as named constants
-- [ ] Creating a new weapon auto-attaches a disabled Broken AE pulled from the compendium with origin tracking stamped
-- [ ] Toggling `isBroken` on the sheet enables/disables the Broken AE (bidirectional sync)
-- [ ] Toggling `isMasterwork` on creates the Masterwork AE from compendium; toggling off removes only the system-added one (custom Masterwork AEs are preserved)
-- [ ] Manually enabling/disabling either AE syncs the corresponding flag back
-- [ ] Effects visibly modify weapon stats per their `bonusType` (broken / masterwork stack independently from `material`)
+- [x] Four Material AEs exist in `packs/_source/materials/` (broken-weapon, broken-armor, masterwork-weapon, masterwork-armor) and compile into the materials pack
+- [x] `src/constants/compendiumUuids.mts` exports the four UUIDs as named constants
+- ~~[ ] Creating a new weapon auto-attaches a disabled Broken AE pulled from the compendium with origin tracking stamped~~ **Deferred — decided not to auto-attach; players/GMs add Broken AE manually or via HP sync**
+- [x] Reducing weapon HP to 0 → system-managed Broken AE auto-enables; restoring HP above 0 → AE auto-disables
+- [x] `isBroken` reflects the live AE state: `true` when any active broken-material AE is present, `false` otherwise (no stored flag — derived each prepare cycle)
+- [x] Toggling `isMasterwork` on creates the Masterwork AE from compendium; toggling off removes only the system-added one (custom Masterwork AEs are preserved)
+- [x] Manually enabling/disabling either AE syncs `isBroken`/`isMasterwork` derived values on next render
+- [x] Effects visibly modify weapon stats per their `bonusType` (broken / masterwork stack independently from `material`) — **verified in-game**
 
 ### Gate 4 — Workflow Journals Visible in Dev World
 
@@ -1300,25 +1306,29 @@ task_1j:
 Independent of Story 1's pipeline (pure schema + helpers + lifecycle hooks), so it can run fully in parallel.
 
 ```yaml
-task_2a:
-  name: "Origin tracking schema (sourceId, sourceHash, currentHash) + auto-population in Dnd35eDocumentMixin._onCreate/_onUpdate"
-  routing: Lead dev
-  blocking: [3c, 3d]
-  verify: "Import doc from compendium → origin.sourceId + sourceHash populated. Modify doc → currentHash diverges → isModified getter returns true. Round-trip survives save/load."
+task_2a:  # DONE (combined with 2c)
+  name: "[REDUCED SCOPE] system.origin.migrationVersion on DocumentSystemModel base"
+  status: complete
+  note: |
+    Hash tracking (sourceId/sourceHash/currentHash/isModified) deferred to post-release.
+    _stats.compendiumSource is Foundry-native and sufficient for Story 3 AE identification.
+    Removed old item-level origin schema (originId/originVersion/originPack) from ItemSystemModel.
+    DocumentSystemModel now has: origin SchemaField { migrationVersion: StringField(nullable, stamps game.system.version at creation) }
+  verify: "New document created → system.origin.migrationVersion === game.system.version."
 
-task_2b:
+task_2b:  # TODO
   name: "src/helpers/uuid.mts (fromCompendiumUuid<T>, resolveUuids<T>, isValidUuid, error-safe variants)"
   routing: Jr dev or Pair
   blocking: [3c, 3d]
   verify: "fromCompendiumUuid resolves a real compendium doc with the typed return; batch resolveUuids handles a Map; invalid UUID returns null without throwing"
 
-task_2c:
-  name: "Add system.migration.version to all DataModel defineSchema() (CoreMixin level — propagates to all docs)"
-  routing: Jr dev
-  verify: "New documents auto-populate system.migration.version = game.system.version on creation; existing POC.1–3 docs receive the field without breaking schema validation"
+task_2c:  # DONE (combined with 2a)
+  name: "Add system.origin.migrationVersion to all DataModel defineSchema() (DocumentSystemModel level)"
+  status: complete
+  verify: "New documents auto-populate system.origin.migrationVersion = game.system.version on creation; existing POC.1–3 docs receive the field without breaking schema validation"
 ```
 
-**Story 2 acceptance**: Integration test imports a weapon from a compendium → origin stamped, hash matches; modifying the weapon flips `isModified`; UUID helpers resolve and reject invalid input gracefully; new docs ship with a migration version.
+**Story 2 acceptance (revised)**: UUID helpers resolve and reject invalid input gracefully; new docs ship with `system.origin.migrationVersion`; Story 3 uses `_stats.compendiumSource` (native Foundry) to identify system-managed AEs.
 
 ---
 
@@ -1352,11 +1362,12 @@ task_3c:
   verify: "Constants exported (BROKEN_WEAPON_UUID, BROKEN_ARMOR_UUID, MASTERWORK_WEAPON_UUID, MASTERWORK_ARMOR_UUID); UUIDs match the source JSON _ids exactly"
 
 task_3d:
-  name: "Add isBroken to PhysicalItemSystemModel + Broken AE auto-attach + bidirectional sync"
+  name: "isBroken as derived property + Broken AE HP-driven AE sync (no auto-attach on create)"
   routing: Lead dev
   depends_on: [3c]
   blocking: [3f]
-  verify: "New weapon → Broken AE auto-attached, disabled, with origin stamped. Toggle isBroken=true → AE enables. Toggle isBroken=false → AE disables. Manually enabling AE sets isBroken=true. Manually disabling AE sets isBroken=false."
+  verify: "isBroken is NOT in the schema (derived only). HP drops to 0 → system-managed Broken AE enables. HP restored → AE disables. Manually enabling/disabling Broken AE → isBroken reflects new AE state on next data-prep cycle. Note: _onUpdate HP watcher is a Phase 5 PoC placeholder; Phase 6 refactors to DocumentEventEmitter 'destroyed' event. Auto-attach on create intentionally omitted."
+  # ✅ IMPLEMENTED — build clean, circular barrel-import TDZ crash fixed, verified in-game
 
 task_3e:
   name: "Masterwork AE on-demand creation + sync (preserves custom Masterwork AEs)"
@@ -1364,6 +1375,7 @@ task_3e:
   depends_on: [3c]
   blocking: [3f]
   verify: "Toggle isMasterwork=true → default Masterwork AE created from compendium with origin. Toggle off → only system-added AE removed; custom Masterwork AEs survive. Custom Masterwork AE drag-in → isMasterwork auto-syncs true and default is NOT added."
+  # ✅ IMPLEMENTED — masterworkAe.mts at @effects/material/logic/; isMasterwork derived at equippable layer
 
 task_3f:
   name: "isBroken / isMasterwork toggles on item sheet UI"
@@ -1371,12 +1383,14 @@ task_3f:
   depends_on: [3d, 3e]
   blocking: [3g]
   verify: "Weapon sheet shows both toggles; toggling fires sync; AE list reflects state changes; effects visible in derived weapon stats"
+  # ✅ IMPLEMENTED — ItemSheetIsBrokenCheckbox at physicalItem layer; ItemSheetIsMasterworkCheckbox at equippableItem layer
 
 task_3g:
   name: "Integration tests: full Broken/Masterwork sync cycle"
   routing: Jr dev or Pair
   depends_on: [3f]
   verify: "Tests cover: auto-attach on create, sheet toggle bidirectional sync, manual AE toggle reverse sync, custom MW preservation, broken+material+masterwork stacking with independent bonus types"
+  # ✅ IMPLEMENTED — tests/unit/effects/material-sync.test.mts (39 tests); weapon.model.test.mts updated (isMasterwork removed from schema assertions)
 ```
 
 **Story 3 acceptance**: All four material AEs ship in the compiled materials pack. Creating a weapon attaches Broken (disabled) automatically. Both toggles work end-to-end with origin tracking, bidirectional sync, and custom-AE preservation.

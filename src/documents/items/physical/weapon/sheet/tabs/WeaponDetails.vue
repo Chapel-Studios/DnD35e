@@ -9,6 +9,8 @@
       <ItemHardness />
       <DesignedForSize class="span-2" />
       <ItemSheetIsCarriedCheckbox />
+      <ItemSheetIsBrokenCheckbox />
+      <ItemIsMasterworkCheckbox />
       <ItemSheetContainerSelector />
       <MagicEquivalency v-if="hasMagicEquivalentEffects" class="magic-eq-effect" read-only />
       <DamageReductionTypes v-if="hasDamageReductionTypeEffects" class="dr-types" read-only />
@@ -23,16 +25,17 @@
   import { DocumentDetails, DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import DamageReductionTypes from '@effects/material/sheet/components/DamageReductionTypes.vue';
   import MagicEquivalency from '@effects/material/sheet/components/MagicEquivalency.vue';
-  import { DesignedForSize, EquippableItemWeight } from '@items/physical/equippableItem/index.mjs';
+  import { DesignedForSize, EquippableItemWeight, ItemIsMasterworkCheckbox } from '@items/physical/equippableItem/index.mjs';
   import {
     ItemHardness,
     ItemHP,
     ItemPrice,
     ItemQuantity,
     ItemSheetContainerSelector,
+    ItemSheetIsBrokenCheckbox,
     ItemSheetIsCarriedCheckbox,
     ItemSize,
-  } from '@items/physical/physicalItem/index.mjs';
+  } from '@items/physical/physicalItem/sheet/index.mjs';
   import { DmControl, UniqueId } from '@vc/index.mjs';
   import { inject } from 'vue';
 

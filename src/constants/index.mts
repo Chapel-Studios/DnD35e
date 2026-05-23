@@ -6,6 +6,12 @@ import {
   BONUS_TYPES,
   type BonusType,
 } from './bonusTypes.mjs';
+import {
+  BROKEN_ARMOR_AE_UUID,
+  BROKEN_WEAPON_AE_UUID,
+  MASTERWORK_ARMOR_AE_UUID,
+  MASTERWORK_WEAPON_AE_UUID,
+} from './compendiumUuids.mjs';
 import { EffectConfig, ItemConfig } from './config/index.mjs';
 import { ITEM_SHEET_CLASS, SETTINGS_CONFIG_CLASS, VUE_APP_CLASS } from './cssClasses.mjs';
 import { devConfig } from './devConfig.mjs';
@@ -22,6 +28,8 @@ export {
   BONUS_TYPE_MASTERWORK,
   BONUS_TYPE_MATERIAL,
   BONUS_TYPES,
+  BROKEN_ARMOR_AE_UUID,
+  BROKEN_WEAPON_AE_UUID,
   DAMAGE_TYPES,
   defaultGameSettings,
   devConfig,
@@ -33,6 +41,8 @@ export {
   ITEM_SHEET_CLASS,
   ItemConfig,
   LogLevel,
+  MASTERWORK_ARMOR_AE_UUID,
+  MASTERWORK_WEAPON_AE_UUID,
   SETTINGS_CONFIG_CLASS,
   SIZE_SELECT_OPTIONS,
   SIZES,

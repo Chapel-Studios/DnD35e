@@ -1,13 +1,13 @@
 import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { IdentifiableDocumentActions, IdentifiableDocumentGetters, IdentifiableDocumentStoreUtils, IdentifiableStore } from '@documents/identifiable/index.mjs';
 import { useIdentifiableStore } from '@documents/identifiable/index.mjs';
+import { syncBrokenAeState } from '@effects/material/logic/brokenAe.mjs';
 import type { MaterialType } from '@effects/material/Material.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
 import type { SecretType } from '@effects/secret/Secret.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { PriceData } from '@fields/PriceData.mjs';
 import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
-import { physicalItemEffectsTab, type PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
 import type { DamageReductionTypesConfig } from '@settings/index.mjs';
 import { GAME_RULES_KEYS, SettingsStoreSymbol } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -16,6 +16,9 @@ import type { MultiSelectOption } from '@vc/fields/index.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';
 import type { ComputedRef } from 'vue';
 import { computed, inject } from 'vue';
+
+import type { PhysicalItem, PhysicalItemLike } from '../PhysicalItem.mjs';
+import { physicalItemEffectsTab } from './tabs/index.mjs';
 
 const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemLike> (
   context: VueApplicationContext<TDocument>,
@@ -85,8 +88,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
 
     // Identifiable props: use effective value to allow overrides when viewing as unidentified
     price: computed(() => getViewAwareFieldValue('system.price') || createDefaultPrice()),
-    // TODO(Phase 5): This needs to be reassessed as material effects (broken/masterwork Material content)
-    // isBroken: computed(() => getViewAwareFieldValue('system.isBroken') || false),
+    isBroken: computed(() => document.value.system.isBroken ?? false),
     // TODO(Phase ?): These need to be reassessed for merchants (advanced actors)
     // resalePrice: computed(() => getViewAwareFieldValue('system.resalePrice') ?? null),
     // brokenResalePrice: computed(() => getViewAwareFieldValue('system.brokenResalePrice') ?? null),
@@ -108,6 +110,9 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
 
   const documentActions: PhysicalItemActions = {
     ...identifiableStore.documentActions,
+    toggleBroken: async (value: boolean) => {
+      await syncBrokenAeState(document.value as unknown as PhysicalItem, value);
+    },
     createSecret: async () => {
       const createdSecrets = await document.value.createEmbeddedDocuments('ActiveEffect', [{
         name: game.i18n.localize('dnd35e.EFFECT.Secret.New'),
@@ -136,7 +141,7 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   actualWeight: ComputedRef<number>;
   effectiveWeight: ComputedRef<number>;
   price: ComputedRef<PriceData>;
-  // isBroken: ComputedRef<boolean>;
+  isBroken: ComputedRef<boolean>;
   maxHp: ComputedRef<number>;
   currentHp: ComputedRef<number>;
   hardness: ComputedRef<number | null>;
@@ -154,6 +159,7 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
 interface PhysicalItemStoreUtils extends IdentifiableDocumentStoreUtils {}
 
 interface PhysicalItemActions extends IdentifiableDocumentActions {
+  toggleBroken: (value: boolean) => Promise<void>;
   createSecret: () => Promise<void>;
 }
 

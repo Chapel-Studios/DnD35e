@@ -49,14 +49,14 @@ type NullableFieldOptions = {
   /** Allow null value (no formula set). Default: true. */
   nullable?: true;
   /** Initial value. Default: null. */
-  initial?: FormulaDataSource | null;
+  initial?: FormulaDataSource | (() => FormulaDataSource) | null;
 };
 
 type NonNullableFieldOptions = {
   /** Allow null value (no formula set). Default: true. */
   nullable?: false;
   /** Initial value. Default: null. */
-  initial?: FormulaDataSource;
+  initial?: FormulaDataSource | (() => FormulaDataSource);
 };
 
 type FormulaFieldOptions = BaseFormulaFieldOptions

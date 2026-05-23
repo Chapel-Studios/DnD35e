@@ -1,5 +1,6 @@
 import type { BonusType } from '@constants/bonusTypes.mjs';
 import { BONUS_TYPE_BROKEN, BONUS_TYPE_MASTERWORK, BONUS_TYPE_MATERIAL } from '@constants/bonusTypes.mjs';
+import type { SelectOption } from '@vc/fields/index.mjs';
 
 /**
  * Material subtypes determine how the material's bonus type stacks.
@@ -22,3 +23,9 @@ const MATERIAL_SUBTYPE_BONUS_MAP: Record<MaterialSubtype, BonusType> = {
 
 export { MATERIAL_SUBTYPE_BONUS_MAP, MATERIAL_SUBTYPE_BROKEN, MATERIAL_SUBTYPE_MASTERWORK, MATERIAL_SUBTYPE_STANDARD, MATERIAL_SUBTYPES };
 export type { MaterialSubtype };
+
+const materialSubtypeSelectOptions: SelectOption<MaterialSubtype>[] = MATERIAL_SUBTYPES.map(
+  (value) => ({ value, label: `dnd35e.MATERIAL.FIELDS.materialSubtype.choices.${value}` })
+);
+
+export { materialSubtypeSelectOptions };

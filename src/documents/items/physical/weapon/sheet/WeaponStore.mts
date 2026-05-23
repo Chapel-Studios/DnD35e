@@ -3,13 +3,14 @@ import { useItemSheetStore } from '@items/baseItem/index.mjs';
 import type { EquippableItemGetters, EquippableItemLike, EquippableItemStore, EquippableItemStoreUtils } from '@items/physical/equippableItem/index.mjs';
 import { useEquippableItemStore } from '@items/physical/equippableItem/index.mjs';
 import type { EquippableItemActions } from '@items/physical/equippableItem/sheet/EquippableItemStore.mjs';
-import { physicalItemEffectsTab } from '@items/physical/physicalItem/index.mjs';
+import { physicalItemEffectsTab } from '@items/physical/physicalItem/sheet/tabs/index.mjs';
 import { WEAPON_SUBTYPE_LOCALIZED, WEAPON_TYPE_LOCALIZED } from '@items/physical/weapon/data/constants.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
-import { weaponDetailsTab } from '@items/physical/weapon/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
+
+import { weaponDetailsTab } from './tabs/index.mjs';
 
 const useWeaponStore = (context: VueApplicationContext<Weapon>) => {
   const baseStore = useItemSheetStore(context);

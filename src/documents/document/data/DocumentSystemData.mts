@@ -1,7 +1,9 @@
 import type { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 
 type DocumentSystemSource = {
-    version: string;
+    origin: {
+        migrationVersion: string | null;
+    };
     slug?: string;
     nameFormula: FormulaData;
     description: string;

@@ -1,5 +1,6 @@
 import type { ClientDocument } from '@client/documents/abstract/_module.mjs';
-import type { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
+import type { DatabaseCreateCallbackOptions, DatabaseDeleteCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
+import { DocumentEventEmitter } from '@helpers/DocumentEventEmitter.mjs';
 
 import {
   createDefaultNameRegistrations,
@@ -8,10 +9,24 @@ import {
 } from './formulaRegistrationHelpers.mjs';
 import type { DocumentFlagsDnd35e, FormulaRegistration } from './index.mjs';
 
+/**
+ * Lifecycle events present on every system document.
+ * Subclasses extend via spread:
+ *   `static override readonly LifeCycle = { ...DocumentLifeCycle, broken: 'broken' } as const`
+ */
+const DocumentLifeCycle = {
+  /** Document first created in the DB. */
+  created: 'created',
+  /** Document deleted from the DB. */
+  destroyed: 'destroyed',
+} as const;
+
 interface DocumentProperties {
   readonly localizedType: string;
   flags: DocumentFlagsDnd35e;
   registeredFormulas: Set<FormulaRegistration>;
+  /** Per-instance lifecycle event bus. */
+  readonly events: DocumentEventEmitter;
 }
 
 // Instance type: the base document extended with mixin properties
@@ -36,7 +51,33 @@ const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base
 
     declare registeredFormulas: Set<FormulaRegistration>;
 
+    /** Per-instance lifecycle event bus. All system documents carry this. */
+    readonly events = new DocumentEventEmitter();
+
     abstract get localizedType (): string;
+
+    protected override _onCreate (
+      data: this['_source'],
+      options: DatabaseCreateCallbackOptions,
+      userId: string
+    ): void {
+      super._onCreate(data as any, options, userId);
+      // Defer until after the full synchronous _onCreate call stack (including all
+      // subclass overrides that call super first) has completely unwound.
+      queueMicrotask(() => void this.events.emit(DocumentLifeCycle.created, { document: this as unknown as ClientDocument }));
+    }
+
+    protected override _onDelete (
+      options: DatabaseDeleteCallbackOptions,
+      userId: string
+    ): void {
+      // Emit BEFORE super so subscribers can still access the document while it
+      // remains in its collections. emit() snapshots handlers immediately, so
+      // clear() below is safe — async handlers still run from the snapshot.
+      void this.events.emit(DocumentLifeCycle.destroyed, { document: this as unknown as ClientDocument });
+      this.events.clear();
+      super._onDelete(options, userId);
+    }
 
     protected override async _preCreate (
       data: Record<string, unknown>,
@@ -60,6 +101,7 @@ const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base
 };
 
 export {
+  DocumentLifeCycle,
   DocumentMixin,
 };
 

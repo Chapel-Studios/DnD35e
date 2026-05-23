@@ -10,7 +10,10 @@ interface EquippableItemSystemSource {
   isWeightlessWhenEquipped: boolean;
 }
 
-interface EquippableItemSystemData extends EquippableItemSystemSource, PhysicalItemSystemData {}
+interface EquippableItemSystemData extends EquippableItemSystemSource, PhysicalItemSystemData {
+  /** Derived: true when any active masterwork-material AE is present. */
+  isMasterwork: boolean;
+}
 
 export type {
   EquippableItemSystemData,
