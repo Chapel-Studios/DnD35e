@@ -180,7 +180,7 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 | 6 | [Actor Foundation](poc/phase-06-actor-foundation.md) | ✅ Approved | poc.1, poc.3 | Character actor: abilities, AC shell, HP, saves, skills, inventory, tokens, equipment slots |
 | 7 | [Roll Formulas & Custom Rolls](poc/phase-07-roll-formulas.md) | 📋 Outlined | poc.6 | D20Roll, DamageRoll, FormulaFamiliar roll data, formula paths |
 | 8 | [Pipeline & Branching](poc/phase-08-pipeline-and-branching.md) | 🔶 In Progress | — | Branching model, PR gate (`test.yml`), release pipeline (`build.yml`), `phases.json` sync. Independent of POC content; can land any time before POC closes. |
-| 9 | [Basic Tokens](poc/phase-09-basic-tokens.md) | 📄 Stub | poc.6 | Token placed on scene, moved, `token.actor` resolves correctly, size and HP bar wired. Thin proof before poc.10. |
+| 9 | [Basic Tokens](poc/phase-09-basic-tokens.md) | � Planned | poc.6 | Token placed on scene, moved, `token.actor` resolves correctly, size and HP bar wired. Thin proof before poc.10. |
 | 10 | [Basic Combat](poc/phase-10-basic-combat.md) | 📄 Stub | poc.6, poc.7, poc.9 | Combat tracker functional; detects basic move, double move, and main-hand attack. Seeds alpha.3 Action System. |
 
 **Exit criteria**: A Character actor exists on a scene with derived ability scores, saves, HP, and skills. Weapons can be created, identified, and equipped. Material AEs modify item stats with correct stacking. Roll formulas resolve with FormulaFamiliar context. Compendium items can be imported with origin tracking. All strings are localized. Test framework is in place with unit/integration test examples covering poc.1–3.
