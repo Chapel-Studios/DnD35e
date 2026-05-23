@@ -70,18 +70,40 @@ export async function attachDefaultMasterworkAe(
 
 /**
  * Syncs all Masterwork material AEs on the item to match `isMasterwork`.
- * - If ANY masterwork AEs exist (system-managed or custom), flips ALL of them.
- * - If none exist and `isMasterwork` is true, attaches a fresh enabled default AE.
- * - If none exist and `isMasterwork` is false, no-op.
+ *
+ * Turning ON (`isMasterwork = true`):
+ * - If existing masterwork AEs are present, enables them all.
+ * - If none exist, attaches a fresh enabled default AE from the compendium.
+ *
+ * Turning OFF (`isMasterwork = false`):
+ * - System-managed masterwork AEs are DELETED (they were created by the system
+ *   and should not linger as disabled clutter).
+ * - Custom masterwork AEs (user-created) are DISABLED, not deleted, so the user
+ *   does not lose their custom data.
+ * - If no masterwork AEs exist, this is a no-op.
  */
 export async function syncMasterworkAeState(item: MasterworkAeTarget, isMasterwork: boolean): Promise<void> {
   const masterworkAes = findAllMasterworkAes(item);
   if (masterworkAes.length > 0) {
-    const updates = masterworkAes
-      .filter((ae) => ae.disabled === isMasterwork)
-      .map((ae) => ({ _id: ae.id, disabled: !isMasterwork }));
-    if (updates.length > 0) {
-      await item.updateEmbeddedDocuments('ActiveEffect', updates);
+    if (isMasterwork) {
+      const updates = masterworkAes
+        .filter((ae) => ae.disabled)
+        .map((ae) => ({ _id: ae.id, disabled: false }));
+      if (updates.length > 0) {
+        await item.updateEmbeddedDocuments('ActiveEffect', updates);
+      }
+    } else {
+      const systemManaged = masterworkAes.filter((ae) => isSystemManagedMasterworkAe(ae));
+      const custom = masterworkAes.filter((ae) => !isSystemManagedMasterworkAe(ae));
+      if (systemManaged.length > 0) {
+        await item.deleteEmbeddedDocuments('ActiveEffect', systemManaged.map((ae) => ae.id!));
+      }
+      const updates = custom
+        .filter((ae) => !ae.disabled)
+        .map((ae) => ({ _id: ae.id, disabled: true }));
+      if (updates.length > 0) {
+        await item.updateEmbeddedDocuments('ActiveEffect', updates);
+      }
     }
     return;
   }

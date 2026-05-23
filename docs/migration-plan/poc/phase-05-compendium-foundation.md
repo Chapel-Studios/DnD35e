@@ -1176,12 +1176,12 @@ The headline POC proof case: GMs and players can apply Broken or Masterwork to a
 
 - [x] Four Material AEs exist in `packs/_source/materials/` (broken-weapon, broken-armor, masterwork-weapon, masterwork-armor) and compile into the materials pack
 - [x] `src/constants/compendiumUuids.mts` exports the four UUIDs as named constants
-- [ ] Creating a new weapon auto-attaches a disabled Broken AE pulled from the compendium with origin tracking stamped
+- ~~[ ] Creating a new weapon auto-attaches a disabled Broken AE pulled from the compendium with origin tracking stamped~~ **Deferred — decided not to auto-attach; players/GMs add Broken AE manually or via HP sync**
 - [x] Reducing weapon HP to 0 → system-managed Broken AE auto-enables; restoring HP above 0 → AE auto-disables
 - [x] `isBroken` reflects the live AE state: `true` when any active broken-material AE is present, `false` otherwise (no stored flag — derived each prepare cycle)
 - [x] Toggling `isMasterwork` on creates the Masterwork AE from compendium; toggling off removes only the system-added one (custom Masterwork AEs are preserved)
 - [x] Manually enabling/disabling either AE syncs `isBroken`/`isMasterwork` derived values on next render
-- [ ] Effects visibly modify weapon stats per their `bonusType` (broken / masterwork stack independently from `material`)
+- [x] Effects visibly modify weapon stats per their `bonusType` (broken / masterwork stack independently from `material`) — **verified in-game**
 
 ### Gate 4 — Workflow Journals Visible in Dev World
 
@@ -1362,12 +1362,12 @@ task_3c:
   verify: "Constants exported (BROKEN_WEAPON_UUID, BROKEN_ARMOR_UUID, MASTERWORK_WEAPON_UUID, MASTERWORK_ARMOR_UUID); UUIDs match the source JSON _ids exactly"
 
 task_3d:
-  name: "isBroken as derived property + Broken AE auto-attach on create + HP-driven AE sync"
+  name: "isBroken as derived property + Broken AE HP-driven AE sync (no auto-attach on create)"
   routing: Lead dev
   depends_on: [3c]
   blocking: [3f]
-  verify: "New weapon → Broken AE auto-attached, disabled, with origin stamped. isBroken is NOT in the schema (derived only). HP drops to 0 → system-managed Broken AE enables. HP restored → AE disables. Manually enabling/disabling Broken AE → isBroken reflects new AE state on next data-prep cycle. Note: _onUpdate HP watcher is a Phase 5 PoC placeholder; Phase 6 refactors to DocumentEventEmitter 'destroyed' event."
-  # IMPLEMENTED — build clean, circular barrel-import TDZ crash fixed, awaiting Foundry test
+  verify: "isBroken is NOT in the schema (derived only). HP drops to 0 → system-managed Broken AE enables. HP restored → AE disables. Manually enabling/disabling Broken AE → isBroken reflects new AE state on next data-prep cycle. Note: _onUpdate HP watcher is a Phase 5 PoC placeholder; Phase 6 refactors to DocumentEventEmitter 'destroyed' event. Auto-attach on create intentionally omitted."
+  # ✅ IMPLEMENTED — build clean, circular barrel-import TDZ crash fixed, verified in-game
 
 task_3e:
   name: "Masterwork AE on-demand creation + sync (preserves custom Masterwork AEs)"

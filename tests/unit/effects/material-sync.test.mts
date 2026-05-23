@@ -76,6 +76,7 @@ type FakeItem = {
   effects: FakeAe[];
   updateEmbeddedDocuments: ReturnType<typeof vi.fn>;
   createEmbeddedDocuments: ReturnType<typeof vi.fn>;
+  deleteEmbeddedDocuments: ReturnType<typeof vi.fn>;
 };
 
 function mkItem (type: string, effects: FakeAe[] = []): FakeItem {
@@ -84,6 +85,7 @@ function mkItem (type: string, effects: FakeAe[] = []): FakeItem {
     effects,
     updateEmbeddedDocuments: vi.fn().mockResolvedValue([]),
     createEmbeddedDocuments: vi.fn().mockResolvedValue([]),
+    deleteEmbeddedDocuments: vi.fn().mockResolvedValue([]),
   };
 }
 
@@ -352,14 +354,34 @@ describe('syncMasterworkAeState', () => {
     expect(item.createEmbeddedDocuments).not.toHaveBeenCalled();
   });
 
-  it('disables all masterwork AEs when turning off (existing AEs present)', async () => {
+  it('disables custom masterwork AEs when turning off (no system-managed AEs)', async () => {
     const ae1 = mkMasterworkAe({ id: 'mw1', disabled: false });
     const ae2 = mkMasterworkAe({ id: 'mw2', disabled: false });
     const item = mkItem('weapon', [ae1, ae2]);
     await syncMasterworkAeState(item as any, false);
+    expect(item.deleteEmbeddedDocuments).not.toHaveBeenCalled();
     expect(item.updateEmbeddedDocuments).toHaveBeenCalledWith('ActiveEffect', [
       { _id: 'mw1', disabled: true },
       { _id: 'mw2', disabled: true },
+    ]);
+  });
+
+  it('deletes system-managed masterwork AE when turning off', async () => {
+    const sysAe = mkSystemManagedMasterworkAe({ id: 'sys', disabled: false });
+    const item = mkItem('weapon', [sysAe]);
+    await syncMasterworkAeState(item as any, false);
+    expect(item.deleteEmbeddedDocuments).toHaveBeenCalledWith('ActiveEffect', ['sys']);
+    expect(item.updateEmbeddedDocuments).not.toHaveBeenCalled();
+  });
+
+  it('deletes system-managed and disables custom when turning off (mixed)', async () => {
+    const sysAe = mkSystemManagedMasterworkAe({ id: 'sys', disabled: false });
+    const customAe = mkMasterworkAe({ id: 'custom', disabled: false });
+    const item = mkItem('weapon', [sysAe, customAe]);
+    await syncMasterworkAeState(item as any, false);
+    expect(item.deleteEmbeddedDocuments).toHaveBeenCalledWith('ActiveEffect', ['sys']);
+    expect(item.updateEmbeddedDocuments).toHaveBeenCalledWith('ActiveEffect', [
+      { _id: 'custom', disabled: true },
     ]);
   });
 
