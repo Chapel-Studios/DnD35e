@@ -137,6 +137,16 @@ AmmoSystemModel extends PhysicalItemSystemModel
 └── isDefaultAmmo: boolean
 ```
 
+### Named Vault Containers
+
+A **vault** is a `ContainerSystemModel` item with `capacity: 0` (unlimited) and a `isWeightless: boolean` flag that, when true, removes the container's own weight and all contents weight from the actor's encumbrance. Examples: "Town Bank", "Hideout Stash", "Merchant Account".
+
+The vault carries its own `currency: CurrencyField` for tracking stored coin separately from the character's on-person currency. This reuses the same `CurrencyField` the actor schema uses — no new field type.
+
+Vault items appear in a dedicated **Vaults** section in the Inventory tab (below the main item groups) showing each vault's name and currency total. Depends on the Container infrastructure implemented in this phase.
+
+---
+
 ## 10.5 Double-Sided Weapons (Deferred)
 
 **Challenge**: In the current system (D35E), each side of a double weapon is created as a separate weapon item. In dnd35e, a weapon can have only one set of attack actions. Supporting double weapons would require either:

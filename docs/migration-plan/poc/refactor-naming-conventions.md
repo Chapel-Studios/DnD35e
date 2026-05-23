@@ -20,7 +20,7 @@ Foundry's own vocabulary calls these things **documents**: `Document` is the roo
 4. **Drop the `Base` marker** where it only restates `abstract class`. Keep it when it's the most accurate descriptor *and* avoids a `Dnd35e` collision suffix.
 5. **File-name casing rule** (PascalCase / camelCase / lowercase) aligned with JS/TS community standards, applied repo-wide.
 6. **Folder-name casing**: camelCase when the folder groups multiple files (`baseItem/`, `formGroups/`); PascalCase only when the folder is dedicated to a single same-named export (`TabDivider/TabDivider.vue`). Full file-casing rule lives in §R.2.9.
-7. **Co-locate code with its purpose**, not its incidental neighbours. Custom `DataField` subclasses (`PriceField`, `PriceData`, `SectionField`) live in top-level `src/fields/` — they're schema primitives, not utility helpers. Settings-only files live under `settings/<category>/`.
+7. **Co-locate code with its purpose**, not its incidental neighbours. Custom `DataField` subclasses (`CurrencyField`, `CurrencyData`, `SectionField`) live in top-level `src/fields/` — they're schema primitives, not utility helpers. Settings-only files live under `settings/<category>/`.
 8. **Tab `.vue` naming**. `documents/items/baseItem/sheet/tabs/Effects.vue` → `ItemEffects.vue` for parity with the `<ConceptType><TabPurpose>` convention all other tab files already follow.
 
 ### In-scope, multi-wave
@@ -62,7 +62,7 @@ These rules are the target state. The checklist in §R.5 enforces them.
 src/
   canvas/                ← runtime placeables (Canvas, Token, Region — NOT documents)
   constants/             ← system-wide constants and CONFIG.dnd35e shape
-  fields/                ← custom DataField subclasses + factories (PriceField, SectionField, fieldBuilders)
+  fields/                ← custom DataField subclasses + factories (CurrencyField, SectionField, fieldBuilders)
   documents/             ← all Foundry documents (was entities/ + scene/)
     document/            ← cross-document base (was entities/components/CoreMixin/)
     identifiable/        ← cross-document mixin (was entities/components/Identifiable/)

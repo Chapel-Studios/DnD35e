@@ -1,6 +1,6 @@
 # POC Phase 6: Actor Foundation
 
-**Status**: 📋 Outlined (Actor schema, multiclass stacking, ability scores)
+**Status**: � Planned (Actor schema, multiclass stacking, ability scores)
 
 > **Milestone**: POC  
 > **Dependencies**: Phase 1, Phase 3  
@@ -36,7 +36,7 @@ Questions organized into groups for serial resolution. As each group is resolved
 - [x] **Alignment, description fields**: In Phase 5. biography, notes, height, weight, gender, deity, age, XP — these are character sheet display properties with no external consumer dependency.
 - [x] **DR / SR**: Fields exist on model but empty/0. Populated by race/class/item effects when those arrive.
 - [x] **Encumbrance**: Derived from STR + inventory weight, assumes Medium size multiplier. Races adjust multiplier.
-- [x] **Skills**: **Not on model at all** until the Skills phase. No stub, no empty record.
+- [x] **Skills**: **Not on model** until the dedicated Skills phase (after Classes). Skill totals derive from `ranks + ability mod + misc - ACP`; ranks are awarded from class levels and can't be meaningfully stored without the Classes system. No stub, no empty record. Phase 8 handles "roll a skill check" as a simple `d20 + ability mod` actor action without needing schema fields.
 - [x] **Conditions**: **Not on model** until Conditions phase. The Effects tab shows Active Effects (which already work). Condition toggle UI added when Conditions phase arrives.
 - [x] **Formula familiar**: Each phase registers its own `#self.*` fields when it adds properties. Phase 5 registers abilities, HP, AC, saves, init, BAB, speed. Later phases add their fields.
 
@@ -46,15 +46,14 @@ Questions organized into groups for serial resolution. As each group is resolved
 
 - [x] **Location**: `docs/architecture/property-maps/PropertyMap-Actors.md`
 - [x] **Format**: Hybrid — mermaid ER for inheritance hierarchy, grouped field tables per model with Phase/Stored-Derived/D35E-Source columns
-- [x] **Scope**: All 6 types mapped: Character, NPC (covers monsters), Companion, Object, Trap + future Vehicle/IntelligentItem notes
+- [x] **Scope**: All 5 types mapped: Character, NPC (covers monsters), Object, Trap + future Vehicle/IntelligentItem notes. Companions are **not a separate type** — Bond AE on any actor (Character or NPC) handles the relationship.
 - [x] **Composition**: Inheritance-first architecture:
   - `ActorSystemModelBase` → speed, biography/notes (truly universal)
-  - `CreatureSystemModel` → abilities, HP(creature), AC, saves, BAB, init, combat, senses, encumbrance, currency, equipment
-  - `CharacterSystemModel` → xp, description fields, isPartyMember
-  - `NpcSystemModel` → cr, creature type/subtype, environment, treasure, advancement (covers all monsters)
-  - `CompanionSystemModel` → bond { actorId, bondType, sharedInitiative }
-  - `ObjectSystemModel` → HP(object), hardness, breakDC
-  - `TrapSystemModel` → init, findDC, disarmDC, cr, saves
+  - `CreatureSystemModel extends ActorSystemModelBase` → abilities, HP(creature), AC, saves, BAB, init, combat, senses, encumbrance, currency, equipment
+  - `CharacterSystemModel extends CreatureSystemModel` → xp, description fields, isPartyMember
+  - `NpcSystemModel extends CreatureSystemModel` → cr, creature type/subtype, environment, treasure, advancement (covers all monsters)
+  - `ObjectSystemModel extends ActorSystemModelBase` → HP(object), hardness, breakDC
+  - `TrapSystemModel extends ObjectSystemModel` → adds action/trigger capability (design deferred)
 
 **Key decisions documented in PropertyMap**:
 - NPC = Monster (same type, different sheet presentation)
@@ -66,9 +65,9 @@ Questions organized into groups for serial resolution. As each group is resolved
 ### Group C: Inventory System ❓
 
 #### C1: Item States
-- [ ] **Three-state model**: Stored (not on person) → Carried (on person) → Equipped (subset of carried). Items in containers inherit their container's state.
-- [ ] **Existing flags**: `isCarried` exists on `PhysicalItemSystemModel`, `isEquipped` exists on `EquippableItemSystemModel`. Confirm these are the right home — no new flags needed on the actor.
-- [ ] **"Stored" semantics**: `isCarried = false` means stored. Is "stored" always on the actor but just not contributing to weight? Or does stored mean "in a chest somewhere, not on this actor at all"?
+- [x] **Three-state model**: Stored (not on person) → Carried (on person) → Equipped (subset of carried). Items in containers inherit their container's state.
+- [x] **Existing flags**: `isCarried` exists on `PhysicalItemSystemModel`, `isEquipped` exists on `EquippableItemSystemModel`. These are the right home — no new flags needed on the actor.
+- [x] **"Stored" semantics resolved**: `isCarried = false` means stored. Stored items remain **owned by the actor** (tracked in their inventory) but do **not** contribute to encumbrance weight. They appear in the inventory tab in a visually distinct "Stored" section below carried items. Use case: "I left my camping gear at the inn." A stored item can be un-stored (toggle `isCarried = true`) at any time.
 
 #### C2: Containers
 - [x] **Container model**: Uses `containerId` reference pattern (dnd5e canonical). All items are flat siblings in `actor.items`. Contained items store `containerId` pointing to parent container's ID. Container items compute `contents` by filtering siblings.
@@ -76,43 +75,62 @@ Questions organized into groups for serial resolution. As each group is resolved
 - [ ] **Nesting**: Can containers contain containers? (Bag inside a backpack?) — needs rules decision
 - [ ] **UI**: How do containers display in the inventory tab? Expandable tree? Flat list with parent indicator?
 
-#### C3: Weapon Slots
-- [ ] **Slot definitions**: Need mainhand / offhand at minimum. Natural attack slots?
-- [ ] **Two-handing**: A weapon in mainhand that is two-handed occupies both hand slots. How is this tracked?
-- [ ] **Dual wield**: Two weapons, one per hand. Interaction with the existing `equipmentSlots.mts` body slots.
-- [ ] **Where do weapon slots live**: Extend `equipmentSlots.mts` or separate `weaponSlots.mts`?
+#### C3: Weapon Slots ✅
 
-#### C4: Currency
-- [ ] **Storage model**: User has detailed plans. Need in-depth dialog.
-- [ ] **Weight rule**: 50 coins = 1 lb. Is this always-on or setting-dependent?
-- [ ] **Currency on actor vs in containers**: Can coins be in a bag of holding?
-- [ ] **Multiple currency pools**: D35E has `currency` + `altCurrency` + `customCurrency`. What do we need?
+**Resolved decisions:**
+
+- [x] **Slot definitions**: `mainhand` and `offhand` as sentinel slot IDs in `equipmentSlots.mts`. Natural attack slots deferred to Natural Attacks phase.
+- [x] **Two-handing**: Deferred to **end of Phase 6** with a community feedback round mid-phase once screenshots of the mainhand/offhand UI exist. We want players to react to what they see before locking in the three-slot design (mainhand / offhand / two-hand).
+  - For Phase 6: no two-hand slot. A two-handed weapon equips to mainhand. The offhand is not locked. Action System (Phase 8) reads `isTwoHanded` flag at roll time and handles the penalty/off-hand-disable logic there.
+  - Community feedback question: "Is a distinct two-hand slot better UX than the mainhand+offhand model? Does a third slot that disables both others feel right?"
+- [x] **Dual wield**: Two weapons, one per hand — works naturally with mainhand + offhand. Two-weapon fighting penalties live in the Action System (Phase 8).
+- [x] **Where weapon slots live**: Extend `equipmentSlots.mts` with `mainhand` and `offhand` sentinel constants.
+
+#### C4: Currency & Vaults ✅
+
+**Resolved decisions:**
+
+- [x] **Vault concept**: Every container can hold currency. A vault is any container with a `containedValue: CurrencyField` — same field type as an item's `price`, just representing currency *held inside* rather than the item's sale value.
+- [x] **CurrencyField for all currency**: Uses `CurrencyField` directly — same as item prices. No bespoke `Record<currencyId, number>` structure. World-settings currencies supported from day one. Renamed from `PriceField` in the Phase 6 pre-story refactor.
+- [x] **One built-in currency field**: Characters have exactly ONE schema currency field:
+  - `currency: CurrencyField` — currency on person (pockets, coin purse). At root of schema — no nesting. Contributes to encumbrance via coin weights from world settings. Future vault container items (Beta Phase 1+) will each carry their own `CurrencyField` but are separate items, not schema fields.
+- [x] **Global "ignore currency weight" world setting**: A single setting that removes all currency from encumbrance calculations system-wide. No per-vault toggles. Default: off (currency weighs something).
+- [x] **Future vaults (Beta Phase 1+)**: Named currency-only container items on the character sheet. No item weight-capacity limit. Each can be toggled weightless. Examples: "Town Bank", "Hideout Stash", "Merchant Account". These are container items (depend on poc.6 + poc.7 → beta.1) — deferred.
+- [x] **Debt tracking**: Post-release wishlist. Vaults with negative currency counts to represent debts owed.
+- [x] **D35E fields removed**:
+  - `currency.pp/gp/sp/cp` → `currency: CurrencyField` (flat root field, no nesting)
+  - `altCurrency` → Future named vault container items (Beta Phase 1)
+  - `customCurrency` → World-settings currency configuration (`CurrencyData.getCurrencyConfig()`)
 
 #### C5: Item Lifecycle
 - [ ] **Drag-and-drop from compendium**: Foundry creates owned item copy. Confirm this works out-of-the-box or needs custom handling.
 - [ ] **Item deletion**: Remove from actor. Any cleanup needed (unequip, remove from container)?
 
-### Group D: Character Sheet UX ❓
+### Group D: Character Sheet UX ✅
 
-- [ ] **Tab structure**: Review D35E's 12-tab layout and DnD5e's 8-tab sidebar layout. Decide our approach.
-  - D35E tabs: Details, Attributes, Combat, Inventory, Features, Skills, Buffs, Spells, Cards, Biography, Notes, Config
-  - DnD5e tabs: Details, Inventory, Features, Spells, Effects, Biography (+ conditional Bastion, Special Traits)
-- [ ] **Tab navigation style**: Horizontal top bar (D35E) vs vertical sidebar (DnD5e) vs something else?
-- [ ] **What's available in Phase 5**: Abilities display, Inventory tab, Effects tab (no conditions yet), Biography tab. Features tab as placeholder.
-- [ ] **Skills tab**: Blank/hidden until Skills phase. Confirm.
-- [ ] **Combat tab**: Deferred until Phase 8/9. Confirm.
-- [ ] **Conditions in Effects tab**: Show effects list now, add conditions toggles when Conditions phase arrives.
-- [ ] **Inventory tab detail level**: Grouped by type, equip toggles, weight/price. Slot selection is basic until Equipment phase refines it.
-- [ ] **Header bar content**: Name, portrait — what else in Phase 5? (Level, race, alignment all deferred per Group A?)
+**Resolved decisions:**
 
-### Group E: Active Effect & Store Integration ❓
+- [x] **Tab navigation style**: **Vertical sidebar** (like dnd5e's AppV2 side tab bar). Preferred over D35E horizontal top bar — better UX and visual hierarchy. Community feedback round planned mid-phase.
+- [x] **Phase 6 tabs**: `Abilities | Inventory | Features | Effects | Biography`
+  - D35E has 12 tabs — we scope-cut aggressively and add tabs only when their data lands.
+- [x] **Skills tab**: Hidden/absent until the full Skills phase (after Classes). No stub.
+- [x] **Combat tab**: Absent until Phase 8 (Action System). No stub.
+- [x] **Conditions in Effects tab**: Show AE list now; condition toggles added when Conditions phase arrives.
+- [x] **Inventory tab detail**: Grouped by type (Weapons, Equipment, Consumables, Loot). Equip toggles, weight/price columns, total weight display. `isCarried` grouping distinguishes stored vs. carried items visually. Slot selection is basic until Beta Phase 1 (Equipment) refines it.
+- [x] **Header bar**: Name, portrait. Level/race/alignment deferred per Group A decisions.
+- [x] **D35E reference**: Run `@Explore` subagent against the D35E system source to map their sheet layout and UX patterns. Use as visual reference during implementation. Do NOT copy directly — bring it up to modern standards with our styles.
 
-- [ ] **AE processing update**: Current `ActorDnd35e.applyActiveEffects()` uses Foundry's base `CHANGE_TYPES` handlers. Phase 2 introduced `resolveActiveEffectChanges()` with pre-filter stacking. The actor override should **fully replace** the base application loop with the same collect → resolve → apply winners pattern used by `ItemDnd35e`. Extract shared logic into `applyStackedChanges()` helper in `src/helpers/stacking.mts`.
-- [ ] **Stale references**: §5.8 and completion checklist reference `system._stackingHistory` which was redesigned in Phase 2 to use enriched `overrides`. Update to use `overrides` with `bonusType`, `stackResult`, `stackReason` metadata.
-- [ ] **VueDocumentSheetMixin**: Current type constraint is `ItemDnd35e | DnD35eActiveEffect`. Needs to accept actors. This is likely a small change (widen the generic), not a big task — confirm.
-- [ ] **Actor Pinia store**: No dedicated actor store exists. Need one for document sheet reactivity. Follow existing `DocumentSheetStore` pattern or create actor-specific store?
-- [ ] **Actor config registration**: `src/constants/config/actor.mts` has empty `documentClasses`. Register character class.
-- [ ] **Formula familiar expansion**: `registration.mts` currently registers only document-level aspects (name). Expand with ability scores, attributes, etc. for `#self.*` contexts.
+### Group E: Active Effect & Store Integration ✅
+
+**Resolved decisions:**
+
+- [x] **AE processing update**: Confirmed — fully replace the base application loop with collect → resolve → apply winners pattern (same as `ItemDnd35e`). Extract shared logic into `applyStackedChanges()` helper in `src/helpers/stacking.mts`.
+- [x] **Stale references**: Update §5.8 and checklist to use `overrides` with `bonusType`, `stackResult`, `stackReason` metadata (not `system._stackingHistory`).
+- [x] **VueDocumentSheetMixin**: Widen `TDocument` generic to accept `ActorDnd35e`. Small change — widen the union type constraint.
+- [x] **VueActorSheet**: Create `src/vue/apps/VueActorSheet.mts` mirroring `VueItemSheet.mts` but extending `useVueDocumentSheetMixin(ActorSheetBase)` where `ActorSheetBase = foundry.applications.sheets.ActorSheetV2<ActorDnd35e, ...>`.
+- [x] **Actor Pinia store**: Create actor-specific store following the exact same pattern as `DocumentSheetStore` (item/AE pattern). One store file per major store concern — mirrors item and AE implementation.
+- [x] **Actor config registration**: Register character class in `src/constants/config/actor.mts` `documentClasses`.
+- [x] **Formula familiar expansion**: Expand `registration.mts` with ability scores, attributes, etc. for `#self.*` contexts when schema is defined.
 
 ### Codebase TODO Notes (Landing Here)
 
@@ -122,6 +140,24 @@ The following TODO notes exist in the codebase and are tracked here for resoluti
 - [ ] **Equipment slot 'none' sentinel cleanup** (`equipmentSlots.mts:20`): The `'none'` option in `EQUIP_SLOT_SELECT_OPTIONS` is flagged as redundant for multiselect. When this phase implements equipment slot UI and validation, resolve whether `equippedSlotIds` should become a single-select nullable field (replace `'none'` with `value: null`) or remain multiselect (remove the `'none'` option entirely).
 - [ ] **Container dropdown in PhysicalItemStore** (`PhysicalItemStore.mts:64`): `possibleContainers` computed returns only `[None]` with a TODO to build out after implementing containers. Wire this to query the parent actor's items for container-type items once the container model (§C2) is implemented.
 
+### Group G: Actor Type Hierarchy ✅
+
+**Resolved decisions:**
+
+- [x] **Schema hierarchy confirmed — build all layers now**: Three DataModel base layers + stubs for unregistered types. Only `CharacterSystemModel` is registered in Phase 6.
+  - `ActorSystemModelBase` → speed, biography/notes (universal)
+  - `CreatureSystemModel extends ActorSystemModelBase` → abilities, HP, AC, saves, BAB, init, senses, encumbrance, currency, equipment (shared by Character + NPC)
+  - `CharacterSystemModel extends CreatureSystemModel` → xp, description fields (height/weight/gender/deity/age/alignment), isPartyMember
+  - `NpcSystemModel extends CreatureSystemModel` → cr, creature type/subtype, environment, treasure, advancement — **stub only**, Phase 23
+  - `ObjectSystemModel extends ActorSystemModelBase` → HP(object), hardness, breakDC — **stub only**, Phase 23
+  - `TrapSystemModel extends ObjectSystemModel` → action/trigger capability deferred to trap design phase — **stub only**, Phase 23
+- [x] **No CompanionSystemModel**: Companions (familiars, animal companions, mounts, summons, cohorts, commanded creatures) are regular Character or NPC actors linked to their master via the Bond AE. No dedicated actor type. No `bond` field on any schema in Phase 6. Bond relationship design deferred to the phase that implements it.
+- [x] **TrapSystemModel extends ObjectSystemModel**: Traps are objects with actions. They share HP, hardness, and breakDC with objects. The `findDC` and `disarmDC` trap-specific fields are added on top. Future: a trap actor may reference the physical item it represents (e.g., a pressure plate in the actor's inventory) to drive its stats — see WISHLIST.
+- [x] **NPC = Monster confirmed**: SRD analysis — no mechanical distinction. One `NpcSystemModel` covers all non-player creatures. Sheet presentation may differ; data model is shared. Phase 23 scope.
+- [x] **Actor sheets get full view-mode treatment**: `VueActorSheet` uses `VueDocumentSheetMixin`, so edit/play/true modes, field visibility overrides, editability overrides, and FieldControls all work identically to item sheets. GMs can mark any actor field as GM-only or hidden. Secret AEs on actors work. Nothing actor-specific needed — it's all in the mixin.
+
+---
+
 ### Group F: Phase Structure ✅
 
 **Resolved decisions:**
@@ -129,10 +165,99 @@ The following TODO notes exist in the codebase and are tracked here for resoluti
 - [x] **Skills split into two scopes**:
   - **Phase 8 (Action System)**: Basic skill check as an example of an *actor-owned action*. d20 + ability mod → chat card. No ranks, no class skills, just an ability check with skill flavor. Proves that actions can live on actors, not just items.
   - **New phase after Phase 12 (Classes)**: Full skill system — ranks, class skills, skill points per level, trained-only, ACP, synergies, custom skills. This phase depends heavily on class data.
-- [x] **No skills on the actor model in Phase 5**: No `skills` property at all. The basic skill check in Phase 8 reads ability mods directly. The full Skills phase adds the schema.
+- [x] **No skills on the actor model in Phase 6**: No `skills` property at all. The basic skill check in Phase 8 reads ability mods directly. The full Skills phase adds the schema.
 - [x] **INSERT, don't take over**: The full Skills phase is inserted after Classes. Does not replace Phase 14 (Testing & POC Validation). Exact numbering deferred until we do the README update.
 - [x] **POC exit criteria**: Will revisit — tentatively includes "a character can roll a skill check" via the Phase 8 actor-action example.
 - [x] **Current spec cleanup**: Remove "skills stub — expanded in Phase 14" references from §5.1 and completion checklist. (Phase 14 is Testing, not Skills.)
+
+---
+
+---
+
+## Phase Delivery Plan
+
+Phase 6 is delivered in **4 stories**. Each story ends with a working, user-testable slice — E2E tests are written at story completion. Unit tests accompany each commit within a story.
+### Pre-story: Rename `PriceField` / `PriceData` → `CurrencyField` / `CurrencyData`
+
+**Rationale**: `PriceField` is a generic currency-value field that happens to be used as an item's sale price. Naming it after its most common use case leaks item semantics into infrastructure. Phase 6 adds it to the actor schema as `currency: CurrencyField` — which reads wrong with the old name. Rename now so all Phase 6 code starts with the correct name.
+
+**Scope**:
+- `src/fields/PriceField.mts` → `src/fields/CurrencyField.mts` (class `CurrencyField`, type `CurrencyData`)
+- All usages: `new PriceField()` → `new CurrencyField()`, `PriceData` → `CurrencyData`
+- **Keep "Price" in item-specific components**: `ItemPriceFormGroup.vue`, `ItemPrice.vue`, `ItemResalePrice.vue` — these are contextually correct (they display an item's price).
+- **Keep "price" as the schema field name on items**: `price: new CurrencyField()` — field name is still `price`, only the class name changes.
+
+This is a single commit, pure rename, no behavior change.
+```
+Story 1
+  └─► Story 2  ──► Story 4
+  └─► Story 3  ──► Story 4
+```
+
+Stories 2 and 3 are independent of each other and can be worked in parallel after Story 1 merges.
+
+---
+
+### Story 1 — Character Actor with Ability Scores
+
+**User**: GM  
+**Delivers**: A character actor can be created, its sheet opens, and all 6 ability scores are visible and editable with live modifier display. Sheet tab bar present (stubs OK for non-Abilities tabs). DocumentEventEmitter wired on all system documents.  
+**Depends on**: nothing — first story.
+
+**Commits:**
+1. **Schema hierarchy + registration** — `ActorSystemModelBase`, `CreatureSystemModel`, `CharacterSystemModel` (full), `NpcSystemModel` / `ObjectSystemModel` / `TrapSystemModel` (stubs). Register `CharacterSystemModel` in `registration.mts`. *(Unit tests: schema instantiates with defaults, `persisted:false` fields reset on prep cycle)*
+2. **DocumentEventEmitter** — `DocumentEventEmitter` class, typed payload interfaces, well-known event registry wired into `DocumentDnd35e`. *(Unit tests: on/off/once/emit/clear; failing callback doesn't block others)*
+3. **VueActorSheet + sheet scaffolding** — `VueActorSheet.mts` base class, `CharacterSheet.mts` + `CharacterSheet.vue` with tab bar (Abilities | Inventory | Features | Effects | Biography), widen `VueDocumentSheetMixin` generic to accept `ActorDnd35e`. *(Unit tests: sheet mounts without errors)*
+4. **Abilities tab** — 6 `NumberFormGroup`s (editable base score), derived modifier display (read-only). All labels via i18n. `abilities.json` + `actors.json`. *(Unit tests: mod formula edge cases — score 1 → −5, score 20 → +5)*
+5. **Biography tab** — Rich-text editor or plain textarea for biography/notes fields.
+
+**E2E acceptance**: Create character actor → open sheet → Abilities tab visible → edit STR from 10 to 14 → modifier updates to `+2`.
+
+---
+
+### Story 2 — Combat Stats (HP, AC, Saves, Speed, Initiative, BAB)
+
+**User**: GM/Player  
+**Delivers**: Sheet displays HP (editable current/max), all 3 AC variants, fort/ref/will saves, initiative, BAB, and land speed — all deriving live from ability scores.  
+**Depends on**: Story 1.
+
+**Commits:**
+1. **Derived data pipeline** — `prepareBaseData()` + `prepareDerivedData()`: ability modifiers, AC (normal/touch/flat-footed), saves, initiative, BAB stub (0), speed, size modifier plumbing. All `persisted:false` fields reset and recomputed each prep cycle. *(Unit tests: ability mod calc; AC at DEX 14 = 12; fort = CON mod; init = DEX mod + bonus)*
+2. **HP system + damage event cascade** — `hp.max = hp.base + CON mod`; `hp.value` editable; wire `takeDamage → dying → death` event cascade in damage-application method. *(Unit tests: `dying` fires at HP ≤ 0, `death` fires at HP ≤ −10; threshold configurable; events fire once per transition)*
+3. **Combat stats panel on sheet** — HP (editable `value` / derived `max`), AC variants, saves, initiative, BAB, speed displayed in sheet Abilities tab or a summary header section. *(Unit tests: component renders correct values)*
+
+**E2E acceptance**: Create character with DEX 16 → AC shows `13` (10 + 3); set CON 14 → HP max increases by 2; edit `hp.value` → value persists after sheet re-open.
+
+---
+
+### Story 3 — Inventory, Equipment Slots, Encumbrance, Currency
+
+**User**: GM/Player  
+**Delivers**: Inventory tab shows owned items grouped by type; items dragged from compendium appear in the list; weapons can be equipped to mainhand/offhand; encumbrance tier shown; currency field on sheet.  
+**Depends on**: Story 1. **Runs in parallel with Story 2.**
+
+**Commits:**
+1. **Inventory tab scaffold** — Inventory tab with grouped item list (Weapons / Equipment / Consumables / Loot); item rows: name, quantity, weight, price, carried/equipped state. *(Unit tests: grouping logic, stored-vs-carried display)*
+2. **Equipment slots + equip toggle** — mainhand/offhand sentinel constants in `equipmentSlots.mts`; equip/unequip toggle per item; slot collision validation. *(Unit tests: slot validation; equipping occupied slot blocked)*
+3. **Encumbrance + currency** — `carriedWeight` derived from `sum(item.weight × qty)` for `isCarried` items; thresholds from STR score; encumbrance tier display; `currency: CurrencyField` in inventory footer. *(Unit tests: carrying capacity at STR 10 = 100 lb; light/medium/heavy thresholds; stored items excluded from weight)*
+4. **Drag-drop from compendium** — item drop handler; `instantiate` event fires on item add. *(Integration tests: drop item → appears in correct group)*
+
+**E2E acceptance**: Drag longsword from compendium → appears in Weapons list → equip to mainhand → equipped state shown; add items exceeding STR light load → encumbrance tier shows Medium.
+
+---
+
+### Story 4 — Active Effects Modify Stats (Stacking Engine on Actor)
+
+**User**: GM  
+**Delivers**: Effects tab shows AEs on the actor; adding a stat-modifying AE changes derived stats immediately; same bonus-type bonuses don't stack (only best applies).  
+**Depends on**: Story 2 (stat fields must exist before AEs can modify them).
+
+**Commits:**
+1. **`applyStackedChanges()` helper** — extract/finalize shared stacking utility in `src/helpers/stacking.mts` for use by both `ItemDnd35e` and `ActorDnd35e`. *(Unit tests: stacking rules; same-type rejection; penalty tracking)*
+2. **`ActorDnd35e.applyActiveEffects()`** — integrate stacking engine: collect changes from all enabled AEs, separate penalties, resolve, write to `system`, enrich `this.overrides` with `bonusType` / `stackResult` / `stackReason` metadata. *(Unit tests: buff applies; penalty applies; duplicate enhancement bonus rejected; overrides populated correctly)*
+3. **Effects tab** — AE list display; enable/disable toggle; stacking debug info visible in expanded view (which bonuses won/were rejected). *(Integration tests: toggle AE enabled → stat updates live)*
+
+**E2E acceptance**: Add `+2 enhancement` STR AE → STR score increases by 2; add second `+2 enhancement` STR AE → STR does NOT increase to +4 (non-stacking); disable first AE from Effects tab → STR reverts.
 
 ---
 
@@ -157,12 +282,11 @@ ActorSystemModel (character)
 ├── details
 │   ├── level (persisted: false, derived from class items)
 │   ├── xp: { value, max }
-│   ├── alignment: string
+│   ├── alignment: [MoralAxis|null, ChaosAxis|null]
 │   ├── race: string (persisted: false, derived from race item)
 │   └── size: SizeCategory
-├── skills: Record<SkillKey, SkillData> (stub — expanded in Phase 14)
-├── currency: { pp, gp, sp, cp }
-├── encumbrance: { current (p:f), light (p:f), medium (p:f), heavy (p:f), carry (p:f), drag (p:f) }
+├── currency: CurrencyField             (coin weight → encumbrance; "ignore currency weight" setting disables)
+├── encumbrance: { carriedWeight (p:f), light (p:f), medium (p:f), heavy (p:f), carry (p:f), drag (p:f), level (p:f), carryBonus, carryMultiplier }
 └── conditions: Record<ConditionKey, boolean> (stub — expanded in Phase 20)
 ```
 
@@ -214,9 +338,9 @@ Start tracking `system.migration.version` on actors from this phase onward. Even
 ## Completion Checklist
 
 ### ✅ Complete
-- (None — Phase 5 has not started)
+- (None — Phase 6 has not started)
 
-### ❌ Not Started (All Tasks for Phase 5)
+### ❌ Not Started (All Tasks for Phase 6)
 
 **Foundry v14 Integration:**
 - [ ] Use `persisted: false` for ALL derived stat fields: ability mods, AC totals, save totals, init total, BAB total, HP max, speed totals, encumbrance thresholds, level, race string
@@ -230,22 +354,27 @@ Start tracking `system.migration.version` on actors from this phase onward. Even
 - [ ] Test: `isOfType("character")` correctly narrows TypeScript type
 - [ ] Test: Derived `persisted: false` fields reset every prep cycle and are NOT saved to DB
 
-**Actor Data Model & Schema Structure:**
-- [ ] Create `src/entities/actor/ActorSystemModel.mts` extending DataModel
-- [ ] Implement abilities section: str, dex, con, int, wis, cha each with base + derived mod
-- [ ] Implement attributes.hp: base, max (derived), value, temp, nonlethal fields
-- [ ] Implement attributes.bab: total field (derived, computed from BAB formula)
-- [ ] Implement attributes.ac: normal, touch, flatFooted (all derived from DEX + 10 + size)
-- [ ] Implement attributes.saves: fort, ref, will each with base + total (derived) + ability key
-- [ ] Implement attributes.speed: land, climb, swim, burrow, fly each with base + total (derived)
-- [ ] Implement attributes.init: bonus + total (derived from DEX mod + bonus)
-- [ ] Implement attributes.sr and attributes.dr[]  array
-- [ ] Implement details: level (derived from class items), xp (value/max), alignment, race, size (SizeCategory enum)
-- [ ] Implement skills as empty Record<string, SkillData> stub for Phase 14 expansion
-- [ ] Implement currency: pp, gp, sp, cp fields
-- [ ] Implement encumbrance: current (derived), light/medium/heavy (derived), carry/drag (derived)
-- [ ] Implement conditions as empty Record<string, boolean> stub for Phase 20 expansion
-- [ ] Add `system.migration.version` field with initial value matching current dnd35e version
+**Actor Data Model & Schema Structure (Group G hierarchy — build all layers now):**
+- [ ] Create `src/documents/actors/baseActor/data/ActorSystemModelBase.mts` — universal base (`ActorSystemModelBase`): speed fields (land/climb/swim/burrow/fly each with base + total `persisted:false`), biography, notes
+- [ ] Create `src/documents/actors/baseActor/data/CreatureSystemModel.mts` — `CreatureSystemModel extends ActorSystemModelBase`: all creature-shared stats
+  - [ ] Abilities: str, dex, con, int, wis, cha each with `base: number` + `mod: number (persisted:false)`
+  - [ ] Attributes.hp: `base, max (persisted:false), value, temp, nonlethal`
+  - [ ] Attributes.bab: `total (persisted:false, derived as 0; Classes phase fills progression)`
+  - [ ] Attributes.ac: `normal, touch, flatFooted` all `persisted:false` — start at `10 + DEX mod + size`
+  - [ ] Attributes.saves: fort, ref, will each with `base + total (persisted:false) + ability: AbilityKey`
+  - [ ] Attributes.init: `bonus + total (persisted:false)`
+  - [ ] Attributes.sr: number; attributes.dr: DamageReduction[] array
+  - [ ] `currency: CurrencyField` at schema root (world-settings currencies; coin weight → encumbrance)
+  - [ ] Encumbrance: `carriedWeight (pf), light/medium/heavy/carry/drag thresholds (pf), carryBonus, carryMultiplier`
+- [ ] Create `src/documents/actors/character/data/CharacterSystemModel.mts` — `CharacterSystemModel extends CreatureSystemModel`: character-only fields
+  - [ ] Details: `level (persisted:false)`, `xp: {value, max}`, `alignment`, `race (persisted:false)`, `size: SizeCategory`
+  - [ ] `isPartyMember: boolean`
+  - [ ] Conditions as empty `Record<string, boolean>` stub (Phase 20 expands)
+  - [ ] `system.migration.version` field with initial value matching current dnd35e version
+- [ ] Create `src/documents/actors/npc/data/NpcSystemModel.mts` — `NpcSystemModel extends CreatureSystemModel`: **stub only** (Phase 23 adds cr, type/subtype, environment, treasure, advancement)
+- [ ] Create `src/documents/actors/object/data/ObjectSystemModel.mts` — `ObjectSystemModel extends ActorSystemModelBase`: **stub only** (Phase 23 adds HP(object), hardness, breakDC)
+- [ ] Create `src/documents/actors/trap/data/TrapSystemModel.mts` — `TrapSystemModel extends ObjectSystemModel`: **stub only** (Phase 23 adds findDC, disarmDC)
+- _(Skills are deferred to the dedicated Skills phase after Classes — see Group A for rationale.)_
 - [ ] Ensure all NumberFields use proper Foundry validation (min: 0 where applicable)
 
 **Derived Data Preparation Pipeline:**
@@ -282,7 +411,7 @@ Start tracking `system.migration.version` on actors from this phase onward. Even
 - [ ] Separate all changes into two groups: `penalty` bonus type vs all others
 - [ ] Call `resolveActiveEffectChanges(bonuses, penalties)` to get resolved values + history
 - [ ] Store resolved values back into `this.system` using setProperty for each field
-- [ ] Enrich `this.overrides` with stacking metadata (`bonusType`, `stackResult`, `stackReason`) — same pattern as Phase 2 ItemDnd35e
+- [ ] Enrich `this.overrides` with stacking metadata (`bonusType`, `stackResult`, `stackReason`) per the `Override` interface in `src/helpers/stacking.mts` — same pattern as Phase 2 ItemDnd35e
 - [ ] Test: Buff AE with +2 bonus applies and shows in resolved value
 - [ ] Test: Penalty AE is tracked separately and rejected if higher bonus wins
 - [ ] Test: Stacking history in overrides contains all applied/ignored changes with reasons
@@ -328,7 +457,6 @@ Start tracking `system.migration.version` on actors from this phase onward. Even
 - [ ] Add i18n keys for all ability names: dnd35e.abilities.str, .dex, .con, .int, .wis, .cha
 - [ ] Add i18n keys for all attribute names: dnd35e.attributes.hp, .ac, .init, .bab
 - [ ] Add i18n keys for save names: dnd35e.saves.fort, .ref, .will
-- [ ] Add i18n keys for skill names (empty for now, Phase 14 fills in)
 - [ ] Add i18n keys for actor sheet tabs
 - [ ] Add i18n keys for inventory grouping labels
 - [ ] Update en.json in src/lang/ with all new keys
@@ -362,15 +490,15 @@ This phase integrates active effect changes into actor preparation, using the **
 Actors can have active effects that modify their stats (e.g., a buff that grants +2 to Strength checks). These effects generate `Dnd35eEffectChangeData` changes just like Material AEs on items do:
 
 ```typescript
-// src/entities/actor/ActorDnd35e.mts
+// src/documents/actors/baseActor/ActorDnd35e.mts
 override applyActiveEffects() {
-  // Import the generic stacking utility from Phase 2
-  const { resolveActiveEffectChanges } = await import('@helpers/stacking.mts');
+  // Import the generic stacking utility from helpers
+  const { resolveActiveEffectChanges } = await import('@helpers/stacking.mjs');
 
   // Collect all changes from enabled active effects
   const allChanges: Dnd35eEffectChangeData[] = [];
   for (const effect of this.effects) {
-    if (effect.data.disabled) continue;
+    if (effect.disabled) continue;
     if (effect.system.buildChanges) {
       allChanges.push(...effect.system.buildChanges());
     }
@@ -746,15 +874,22 @@ Modules extend: `DocumentEventEmitter.registerEventType('myModule.stunned', { la
 | Action | Path |
 |--------|------|
 | Create | `src/helpers/DocumentEventEmitter.mts` — `DocumentEventEmitter` class, `DocumentEvent<T>`, `DocumentEventCallback<T>` types |
-| Modify | `src/entities/components/CoreMixin/Dnd35eDocument.mts` — add `readonly events: DocumentEventEmitter` to mixin |
-| Expand | `src/entities/actors/baseActor/data/ActorSystemModelBase.mts` — add ability scores, HP, AC, saves, etc. |
-| Expand | `src/entities/actors/baseActor/data/ActorSystemData.mts` — interfaces for source + derived data |
-| Implement | `ActorDnd35e.applyActiveEffects()` — import `resolveActiveEffectChanges()` from Phase 2 stacking module; store history in `system._stackingHistory` |
-| Expand | `src/entities/actors/baseActor/ActorDnd35e.mts` — implement `prepareBaseData()`, `prepareDerivedData()`, `update()` refresh, `applyActiveEffects()` |
-| Create | `src/vue/apps/actor/CharacterSheet.vue` — main character sheet |
-| Create | `src/vue/apps/actor/CharacterSheetApp.mts` — Vue app wrapper |
-| Create | `src/vue/components/actor/` — AbilityScores, Inventory, EquipmentSlots components |
-| Modify | `src/entities/actors/registration.mts` — register character sheet |
-| Create | `src/constants/abilities.mts` — ability score constants |
+| Modify | `src/documents/document/DocumentDnd35e.mts` — add `readonly events: DocumentEventEmitter` to mixin |
+| Create | `src/documents/actors/baseActor/data/ActorSystemModelBase.mts` — `ActorSystemModelBase`: speed, biography/notes |
+| Create | `src/documents/actors/baseActor/data/CreatureSystemModel.mts` — `CreatureSystemModel extends ActorSystemModelBase`: abilities, HP, AC, saves, BAB, init, senses, encumbrance, currency |
+| Create | `src/documents/actors/character/data/CharacterSystemModel.mts` — `CharacterSystemModel extends CreatureSystemModel`: xp, description fields, isPartyMember |
+| Create | `src/documents/actors/npc/data/NpcSystemModel.mts` — `NpcSystemModel extends CreatureSystemModel`: stub only (Phase 23) |
+| Create | `src/documents/actors/object/data/ObjectSystemModel.mts` — `ObjectSystemModel extends ActorSystemModelBase`: stub only (Phase 23) |
+| Create | `src/documents/actors/trap/data/TrapSystemModel.mts` — `TrapSystemModel extends ObjectSystemModel`: stub only (Phase 23) |
+| Expand | `src/documents/actors/baseActor/data/ActorSystemData.mts` — interfaces for source + derived data |
+| Expand | `src/documents/actors/baseActor/ActorDnd35e.mts` — implement `prepareBaseData()`, `prepareDerivedData()`, `update()` refresh, `applyActiveEffects()` with stacking engine |
+| Modify | `src/helpers/stacking.mts` — extract `applyStackedChanges()` helper (if not already done in Phase 2) for shared use by items and actors |
+| Create | `src/vue/apps/VueActorSheet.mts` — abstract actor sheet base, mirrors `VueItemSheet.mts`; extends `useVueDocumentSheetMixin(ActorSheetBase)` |
+| Widen | `src/vue/apps/VueDocumentSheetMixin.mts` — widen `TDocument` generic to accept `ActorDnd35e` |
+| Create | `src/documents/actors/character/sheet/CharacterSheet.mts` — concrete character sheet class extending `VueActorSheet` |
+| Create | `src/documents/actors/character/sheet/CharacterSheet.vue` — main character sheet Vue component (tabs: Abilities, Inventory, Features, Effects, Biography) |
+| Create | `src/documents/actors/character/sheet/components/` — AbilityScores.vue, InventoryTab.vue, EquipmentSlots.vue and other tab/section components |
+| Modify | `src/documents/actors/registration.mts` — register character sheet and `CharacterSystemModel` |
+| Create | `src/constants/abilities.mts` — ability score constants (keys, labels, associated saves) |
 | Create | `src/lang/en/abilities.json`, `src/lang/en/actors.json` |
-| Test | Unit tests for actor-level stacking (buffs, penalties); validate history accuracy on combat-relevant fields |
+| Test | `tests/unit/documents/actors/` — unit tests for ability mod calculation, AC derivation, encumbrance, stacking |

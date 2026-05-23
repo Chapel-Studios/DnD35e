@@ -52,7 +52,7 @@
   - [How `applyChange` Works](#how-applychange-works)
   - [Change Modes by Field Type](#change-modes-by-field-type)
   - [Extending a Field for Custom `applyChange`](#extending-a-field-for-custom-applychange)
-  - [Example: PriceField for Price Objects](#example-pricefield-for-price-objects)
+  - [Example: CurrencyField for Currency Values](#example-currencyfield-for-currency-values)
 - [When to Extend a Field](#when-to-extend-a-field)
 
 ---
@@ -586,27 +586,27 @@ You should extend a field when:
 
 You can also override `applyChange` itself for complete control, but usually the individual methods are sufficient.
 
-### Example: PriceField for Price Objects
+### Example: CurrencyField for Currency Values
 
-A `Price` is `CoinStack[]` where each `CoinStack` is `{ coinId: string, count: number }`. The natural base is `ArrayField` with a `SchemaField` element, but extending `ArrayField` gives us Price-aware AE behavior:
+A `Price` is `CoinStack[]` where each `CoinStack` is `{ coinId: string, count: number }`. The natural base is `ArrayField` with a `SchemaField` element, but extending `ArrayField` gives us currency-aware AE behavior:
 
 ```ts
-// src/data/fields/PriceField.mts
+// src/fields/CurrencyField.mts
 
 import type { CoinStack, Price } from "../../settings/currency/_types.mts";
 
 /**
- * A specialized ArrayField for Price (CoinStack[]) values.
+ * A specialized ArrayField for currency (CoinStack[]) values.
  *
  * Provides Active Effect change modes that operate on coin stacks by coinId:
  * - add: merge coin counts by coinId (adds counts for matching coins, appends new ones)
  * - subtract: reduce coin counts by coinId (removes stacks that reach 0)
  * - multiply: multiply all coin counts by a scalar
- * - override: replace entire price
+ * - override: replace entire currency value
  * - upgrade: per-coinId max of counts
  * - downgrade: per-coinId min of counts
  */
-class PriceField extends foundry.data.fields.ArrayField {
+class CurrencyField extends foundry.data.fields.ArrayField {
   constructor(options = {}, context = {}) {
     super(
       new foundry.data.fields.SchemaField({
@@ -674,23 +674,23 @@ class PriceField extends foundry.data.fields.ArrayField {
 
   /** Add: merge coin stacks by coinId. */
   override _applyChangeAdd(value: Price, delta: Price, _model: any, _change: any): Price {
-    const map = PriceField.#toMap(value);
+    const map = CurrencyField.#toMap(value);
     for (const stack of delta) {
       map.set(stack.coinId, (map.get(stack.coinId) ?? 0) + stack.count);
     }
-    return PriceField.#fromMap(map);
+    return CurrencyField.#fromMap(map);
   }
 
   /** Subtract: reduce coin counts by coinId. Removes stacks at 0 or below. */
   override _applyChangeSubtract(value: Price, delta: Price, _model: any, _change: any): Price {
-    const map = PriceField.#toMap(value);
+    const map = CurrencyField.#toMap(value);
     for (const stack of delta) {
       const current = map.get(stack.coinId) ?? 0;
       const result = current - stack.count;
       if (result <= 0) map.delete(stack.coinId);
       else map.set(stack.coinId, result);
     }
-    return PriceField.#fromMap(map);
+    return CurrencyField.#fromMap(map);
   }
 
   /** Multiply: scale all coin counts by a numeric factor. */
@@ -709,22 +709,22 @@ class PriceField extends foundry.data.fields.ArrayField {
 
   /** Upgrade: per-coinId, take the higher count. */
   override _applyChangeUpgrade(value: Price, delta: Price, _model: any, _change: any): Price {
-    const map = PriceField.#toMap(value);
+    const map = CurrencyField.#toMap(value);
     for (const stack of delta) {
       map.set(stack.coinId, Math.max(map.get(stack.coinId) ?? 0, stack.count));
     }
-    return PriceField.#fromMap(map);
+    return CurrencyField.#fromMap(map);
   }
 
   /** Downgrade: per-coinId, take the lower count. Only affects existing coins. */
   override _applyChangeDowngrade(value: Price, delta: Price, _model: any, _change: any): Price {
-    const map = PriceField.#toMap(value);
+    const map = CurrencyField.#toMap(value);
     for (const stack of delta) {
       if (map.has(stack.coinId)) {
         map.set(stack.coinId, Math.min(map.get(stack.coinId)!, stack.count));
       }
     }
-    return PriceField.#fromMap(map);
+    return CurrencyField.#fromMap(map);
   }
 }
 ```
@@ -735,7 +735,7 @@ class PriceField extends foundry.data.fields.ArrayField {
 static override defineSchema() {
   return {
     ...super.defineSchema(),
-    price: new PriceField(),
+    price: new CurrencyField(),
   };
 }
 ```
@@ -758,7 +758,7 @@ static override defineSchema() {
 
 | Reason | Example |
 | --- | --- |
-| **Custom AE change semantics** | `PriceField` — domain-aware add/subtract on coin stacks. |
+| **Custom AE change semantics** | `CurrencyField` — domain-aware add/subtract on coin stacks. |
 | **Custom delta casting** | Parsing shorthand strings (`"5 gp"`) into structured data. |
 | **Custom cleaning/coercion** | Normalizing or sorting values during `_cleanType`. |
 | **Custom validation** | Business rules beyond simple type/range checks. |
