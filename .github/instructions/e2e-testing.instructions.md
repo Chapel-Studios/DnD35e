@@ -168,6 +168,37 @@ await setFieldOverride(page, weaponUuid, 'system.hp.value', 'visibility', 'gmOnl
 
 Field overrides write to `flags.dnd35e.fieldOverrides.{encodedPath}.{key}` — same flag the in-app override UI uses. `encodeFieldPath` from `fieldPermissions.mts` handles path escaping for keys that contain dots.
 
+## Pre-Seeding Documents for Sync Tests
+
+When testing "enable / create-from-compendium" toggle logic (e.g. `syncMasterworkAeState`, `syncBrokenAeState`), prefer **pre-seeding the item with a disabled AE** rather than letting the code create one from compendium on the first toggle-on.
+
+Why:
+- Avoids compendium availability as a dependency (LOCK file failures, missing pack)
+- Exercises the "existing disabled AE gets re-enabled" code path explicitly, not the create-from-scratch fallback
+- Deterministic: the test controls exactly what AEs exist
+
+```ts
+// Pre-seed: create the item with the AE already embedded and disabled
+const itemUuid = await createItem(page, 'weapon', { name: 'Test Blade' });
+await page.evaluate(async (uuid) => {
+  const item = await (globalThis as any).fromUuid(uuid);
+  await item.createEmbeddedDocuments('ActiveEffect', [{
+    name: 'Masterwork Weapon Enhancement',
+    type: 'base',
+    disabled: true,
+    flags: { dnd35e: { materialSubtype: 'masterwork', systemManaged: true } },
+  }]);
+}, itemUuid);
+
+// Now toggle on — should re-enable the existing AE, not create from compendium
+await toggleMasterwork(page, itemUuid, true);
+const aes = await listMaterialAes(page, itemUuid);
+expect(aes.filter(a => a.materialSubtype === 'masterwork')).toHaveLength(1);
+expect(aes[0].disabled).toBe(false);
+```
+
+See `tests/e2e/broken-masterwork-sync.spec.ts` test 4 for the canonical example.
+
 ## Unit Test Companions (`tests/unit/`)
 
 E2E specs are slow; pair them with unit tests for the extracted pieces:
@@ -184,6 +215,18 @@ Run unit tests fast: `npx vitest run --project unit`. Run a single file: `npx vi
 2. **Check view mode** — is the surface you're asserting on actually rendered in the current mode?
 3. **Check overlays** — did a notification appear and block your click?
 4. **Check commit timing** — did you wait for the document update to round-trip, or only for the DOM to redraw?
+5. **Compendium returns null** — check for stale LevelDB LOCK files (`packs/materials/LOCK`, `packs/documentation/LOCK`). Foundry leaves these behind if it was running during a build. Remove them and rebuild. See `/memories/repo/e2e-leveldb-lock-files.md`.
+6. **`_onUpdate` hook not firing** — check that you're using **nested** object paths (`{ system: { hp: { current: 0 } } }`), not flat dot-notation (`{ 'system.hp.current': 0 }`). Foundry's diff object only populates `changed.system` when the update is nested. See `/memories/repo/foundry-onupdate-nested-path.md`.
+
+### Identifying Pre-Existing Flaky Failures (Dual-Browser Tests)
+
+Dual-browser tests (`field-permissions.spec.ts`, `secret-ae.spec.ts`, `view-mode-bar.spec.ts`) fail intermittently due to Foundry/Playwright timing instability in the second browser context. **These are not regressions.** The telltale sign is repeated log lines:
+
+```
+[WebServer] FoundryVTT | ... | [warn] Failed to parse URL from undefined
+```
+
+If you see this pattern clustered around a failure, it is the dual-browser test flaking — not a code regression. Note them as pre-existing in the PR.
 
 ## Related
 - [vue-sheet-patterns.instructions.md](vue-sheet-patterns.instructions.md) — view modes and FormGroup behavior under test
