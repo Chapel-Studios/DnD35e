@@ -132,6 +132,10 @@
         "equippedSlotIds": {
           "label": "Equipped Slots",
           "hint": "The equipment slots this item occupies when equipped."
+        },
+        "isMasterwork": {
+          "label": "Is Masterwork",
+          "hint": "Whether this item is of masterwork quality."
         }
       },
       "EquipSlot": {

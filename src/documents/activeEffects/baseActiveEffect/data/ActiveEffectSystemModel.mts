@@ -33,6 +33,24 @@ class ActiveEffectSystemModel extends DocumentSystemModel<foundry.documents.Acti
         initial: EFFECT_TARGET,
       }),
       isHidden: requiredBooleanField(false),
+      // ─── Future: triggers ──────────────────────────────────────────────────
+      // AEs will be able to subscribe to document lifecycle events on their
+      // owning item/actor. When a lifecycle event fires (e.g. Weapon.LifeCycle.onHit),
+      // matching triggers here activate — applying additional changes, rolling
+      // dice, or running a formula.
+      //
+      // Planned schema shape (not yet implemented — Phase 10 / Action System):
+      //   triggers: ArrayField(SchemaField({
+      //     event: StringField          — e.g. 'onHit', 'broken', 'death'
+      //     target: StringField         — 'owner' | 'actor' | 'any'
+      //     condition: StringField|null — formula expression, null = always
+      //     action: StringField         — what to do when triggered
+      //   }), { initial: [] })
+      //
+      // Design constraint: do NOT use the `changes` array for trigger-based
+      // effects. Keep changes (passive modifiers) and triggers (event reactions)
+      // as separate top-level fields so each can evolve independently.
+      // ───────────────────────────────────────────────────────────────────────
       changes: new ArrayField(
         new SchemaField({
           key: new StringField({ required: true }),

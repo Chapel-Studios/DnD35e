@@ -1,8 +1,8 @@
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/index.mjs';
-import type { PhysicalItemSourceProps } from '@items/physical/physicalItem/index.mjs';
-import { PhysicalItem } from '@items/physical/physicalItem/index.mjs';
 
+import type { PhysicalItemSourceProps } from '../physicalItem/PhysicalItem.mjs';
+import { PhysicalItem } from '../physicalItem/PhysicalItem.mjs';
 import type { EquippableItemSystemData, EquippableItemSystemSource } from './index.mjs';
 
 type EquippableItemSourceProps = {

@@ -1,9 +1,9 @@
 import { SIZES } from '@constants/sizes.mjs';
 import { IdentifiableSchemaMixin } from '@documents/identifiable/data/index.mjs';
+import { materialEffectType } from '@effects/material/materialEffectType.mjs';
 import {
   optionalNumberField,
   optionalStringField,
-  requiredBooleanField,
   requiredNumberField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
@@ -39,11 +39,11 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     schema.weight = useDnd35eField(optionalNumberField(0));
     // schema.isWeightlessInContainer = requiredBooleanField(false);
     // schema.isWeightlessWhenCarried = requiredBooleanField(false);
-    schema.isCarried = requiredBooleanField(true);
+    schema.isCarried = new foundry.data.fields.BooleanField({ initial: true, required: true });
     schema.size = useDnd35eField(new StringField({ choices: SIZES, initial: 'tiny', required: true }));
     // Price - EmbeddedDataField wrapping PriceData with coin stacks
     schema.price = useDnd35eField(new PriceField({}));
-    schema.isBroken = requiredBooleanField(false);
+    // isBroken is derived in prepareDerivedData — not stored in schema
 
     // Container
     schema.containerId = optionalStringField();
@@ -59,6 +59,18 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     }
     this.magicEquivalency = this.magicEquivalency ?? 0;
     this.damageReductionTypes = this.damageReductionTypes ?? [];
+    // isBroken: derived from active broken material AEs — not stored field.
+    // HP changes trigger AE sync; the AE drives this flag.
+    const effects = (this.parent as unknown as { effects?: Iterable<unknown> } | null)?.effects;
+    const effectList = effects ? [...effects] : [];
+    this.isBroken = effectList.some((e) => {
+      const ae = e as unknown as ActiveEffect;
+      return (
+        ae.type === materialEffectType
+        && (ae.system as { materialSubtype?: string } | undefined)?.materialSubtype === 'broken'
+        && !ae.disabled
+      );
+    });
   }
 }
 

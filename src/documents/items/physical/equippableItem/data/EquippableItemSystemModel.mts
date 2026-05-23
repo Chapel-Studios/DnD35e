@@ -1,5 +1,6 @@
 import type { EquipSlot } from '@constants/equipmentSlots.mjs';
 import { SIZES } from '@constants/sizes.mjs';
+import { materialEffectType } from '@effects/material/materialEffectType.mjs';
 import { requiredBooleanField, useDnd35eField } from '@fields/fieldBuilders.mjs';
 import { PhysicalItemSystemModel } from '@items/physical/physicalItem/data/PhysicalItemSystemModel.mjs';
 
@@ -35,6 +36,17 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
     this.effectiveWeight = this.isWeightlessWhenEquipped && this.isEquipped
       ? 0
       : this.weight ?? 0;
+    // isMasterwork: derived from active masterwork material AEs — not stored field.
+    const effects = (this.parent as unknown as { effects?: Iterable<unknown> } | null)?.effects;
+    const effectList = effects ? [...effects] : [];
+    this.isMasterwork = effectList.some((e) => {
+      const ae = e as unknown as ActiveEffect;
+      return (
+        ae.type === materialEffectType
+        && (ae.system as { materialSubtype?: string } | undefined)?.materialSubtype === 'masterwork'
+        && !ae.disabled
+      );
+    });
   }
 }
 

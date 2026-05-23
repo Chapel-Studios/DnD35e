@@ -43,6 +43,7 @@
             :name="`system.changes.${index}.type`"
             :value="change.type"
             :disabled="!isChangeEditable(index) || change.isSystem"
+            @change="(e: Event) => updateChangeField(index, 'type', (e.target as HTMLSelectElement).value)"
           >
             <option v-for="(label, type) in changeTypes" :key="type" :value="type">
               {{ label }}
@@ -66,6 +67,7 @@
             :disabled="!isChangeEditable(index) || change.isSystem"
             class="bonus-type-select"
             :title="bonusTypeLabel"
+            @change="(e: Event) => updateChangeField(index, 'bonusType', (e.target as HTMLSelectElement).value || null)"
           >
             <option value="">{{ noneLabel }}</option>
             <option v-for="bt in bonusTypeOptions" :key="bt.value" :value="bt.value">
@@ -80,6 +82,7 @@
             :disabled="!isChangeEditable(index) || change.isSystem"
             class="target-select"
             :title="targetLabel"
+            @change="(e: Event) => updateChangeField(index, 'target', (e.target as HTMLSelectElement).value)"
           >
             <option v-for="(label, target) in changeTargets" :key="target" :value="target">
               {{ label }}

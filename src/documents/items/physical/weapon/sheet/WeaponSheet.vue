@@ -12,9 +12,11 @@
 <script lang="ts" setup>
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { EquippableHeaderStatus } from '@items/physical/equippableItem/index.mjs';
-  import { PhysicalItemSheet } from '@items/physical/physicalItem/index.mjs';
-  import { useWeaponStore, WeaponSummary } from '@items/physical/weapon/index.mjs';
+  import { PhysicalItemSheet } from '@items/physical/physicalItem/sheet/index.mjs';
   import { provide } from 'vue';
+
+  import WeaponSummary from './components/WeaponSummary.vue';
+  import { useWeaponStore } from './WeaponStore.mjs';
 
   const props = defineProps<{
     context: any;

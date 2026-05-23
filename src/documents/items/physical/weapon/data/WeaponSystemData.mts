@@ -15,7 +15,6 @@ type WeaponDamage = {
 
 interface WeaponSystemSource {
   isBaseWeaponType: boolean;
-  isMasterwork: boolean;
   weaponType: WeaponType;
   weaponSubtype: WeaponSubtype;
   weaponBaseType: WeaponBaseType;

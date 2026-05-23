@@ -31,7 +31,6 @@ class WeaponSystemModel extends EquippableItemSystemModel {
     ];
 
     schema.isBaseWeaponType = requiredBooleanField(false);
-    schema.isMasterwork = requiredBooleanField(false);
     schema.weaponType = useDnd35eField(
       new StringField({ 
         choices: [

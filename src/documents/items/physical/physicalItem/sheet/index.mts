@@ -6,6 +6,7 @@ import ItemHP from './components/ItemHP.vue';
 import ItemPrice from './components/ItemPrice.vue';
 import ItemQuantity from './components/ItemQuantity.vue';
 import ItemSheetContainerSelector from './components/ItemSheetContainerSelector.vue';
+import ItemSheetIsBrokenCheckbox from './components/ItemSheetIsBrokenCheckbox.vue';
 import ItemSheetIsCarriedCheckbox from './components/ItemSheetIsCarriedCheckbox.vue';
 import ItemSize from './components/ItemSize.vue';
 import ItemWeight from './components/ItemWeight.vue';
@@ -30,6 +31,7 @@ export {
   ItemPrice,
   ItemQuantity,
   ItemSheetContainerSelector,
+  ItemSheetIsBrokenCheckbox,
   ItemSheetIsCarriedCheckbox,
   ItemSize,
   ItemWeight,

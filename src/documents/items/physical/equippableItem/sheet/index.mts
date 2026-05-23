@@ -3,6 +3,7 @@ import EquippableHeaderStatus from './components/EquippableHeaderStatus.vue';
 import EquippableItemWeight from './components/EquippableItemWeight.vue';
 import ItemIsMelded from './components/ItemIsMelded.vue';
 import ItemIsWeightlessWhenEquipped from './components/ItemIsWeightlessWhenEquipped.vue';
+import ItemIsMasterworkCheckbox from './components/ItemSheetIsMasterworkCheckbox.vue';
 import type { EquippableItemSheetRenderContext } from './EquippableItemSheet.mjs';
 import EquippableItemSheet from './EquippableItemSheet.vue';
 import type {
@@ -18,6 +19,7 @@ export {
   EquippableHeaderStatus,
   EquippableItemSheet,
   EquippableItemWeight,
+  ItemIsMasterworkCheckbox,
   ItemIsMelded,
   ItemIsWeightlessWhenEquipped,
   useEquippableItemStore,

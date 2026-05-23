@@ -41,11 +41,11 @@ abstract class DocumentSystemModel<TDocType extends foundry.abstract.DataModel |
         excludedFields: ['name'],
         nullable: false,
         required: true,
-        initial: {
+        initial: () => ({
           formula: '',
           expectedType: 'string',
           resolvedValue: null,
-        },
+        }),
       }), {
         familiar: { formulaVisible: false },
       }),

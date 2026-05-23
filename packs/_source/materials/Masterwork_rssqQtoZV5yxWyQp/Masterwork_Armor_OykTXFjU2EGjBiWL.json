@@ -1,0 +1,62 @@
+{
+  "folder": "rssqQtoZV5yxWyQp",
+  "name": "Masterwork Armor",
+  "type": "material",
+  "_id": "OykTXFjU2EGjBiWL",
+  "img": "icons/svg/aura.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Masterwork Armor",
+      "expectedType": "string",
+      "resolvedValue": "Masterwork Armor"
+    },
+    "description": "",
+    "target": "item",
+    "isHidden": false,
+    "changes": [],
+    "price": {
+      "stacks": [],
+      "srdEquivalent": 0
+    },
+    "magicEquivalency": 0,
+    "hardness": 0,
+    "bonusHp": 0,
+    "damageReductionTypes": [],
+    "materialSubtype": "masterwork"
+  },
+  "disabled": false,
+  "start": null,
+  "duration": {
+    "value": null,
+    "units": "seconds",
+    "expiry": null,
+    "expired": false
+  },
+  "description": "",
+  "origin": null,
+  "tint": "#ffffff",
+  "transfer": false,
+  "statuses": [],
+  "showIcon": 1,
+  "sort": 0,
+  "flags": {
+    "dnd35e": {
+      "systemManaged": true
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1779423644699,
+    "modifiedTime": 1779423644699,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!effects!OykTXFjU2EGjBiWL"
+}
