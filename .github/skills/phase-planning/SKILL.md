@@ -42,6 +42,26 @@ Helps maintain and improve phase planning documentation throughout the system li
 - **Traceability**: Cross-reference related sections
 - **Testability**: Completion checklists use verifiable criteria
 - **Terminology fidelity**: Verify runtime terms against constants/types before final wording
+- **Open question protocol**: Never mark open questions as resolved unilaterally. Present each proposed answer, get user sign-off, then apply. See "Open Question Protocol" below.
+- **WISHLIST scope rule**: WISHLIST = "no phase assigned yet." If the target phase is known, reference that phase directly instead. Sending known-phase work to WISHLIST creates false backlog.
+
+## Open Question Protocol
+
+Phase docs contain `[ ]` open questions in a dedicated section. These are unresolved design decisions — **never resolve them without user sign-off**, even when the answer seems obvious.
+
+**Correct workflow:**
+1. Read each unchecked question aloud to the user
+2. Propose an answer with brief rationale (especially for POC-scope questions where "simplest thing" is usually right)
+3. Wait for confirmation or correction
+4. Apply the resolution verbatim to the doc
+5. Mark the item `[x]`
+
+**Example — good approach:**
+> C2 UI — original question: "expandable tree or flat list with parent indicator?"
+> My proposal: flat list, contained items grouped under container row with indentation. Tree UI → deferred to beta.1.
+> *(wait for user response before editing)*
+
+**Why it matters:** Design decisions in planning docs have downstream cost. A wrong answer left unchallenged gets built. An answer the user disagrees with costs a corrective conversation mid-implementation.
 
 ## Anti-Regression Checks (After Major Implementation)
 
