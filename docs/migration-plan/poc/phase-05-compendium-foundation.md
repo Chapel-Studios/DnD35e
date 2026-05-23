@@ -1177,10 +1177,10 @@ The headline POC proof case: GMs and players can apply Broken or Masterwork to a
 - [x] Four Material AEs exist in `packs/_source/materials/` (broken-weapon, broken-armor, masterwork-weapon, masterwork-armor) and compile into the materials pack
 - [x] `src/constants/compendiumUuids.mts` exports the four UUIDs as named constants
 - [ ] Creating a new weapon auto-attaches a disabled Broken AE pulled from the compendium with origin tracking stamped
-- [ ] Reducing weapon HP to 0 → system-managed Broken AE auto-enables; restoring HP above 0 → AE auto-disables
-- [ ] `isBroken` reflects the live AE state: `true` when any active broken-material AE is present, `false` otherwise (no stored flag — derived each prepare cycle)
-- [ ] Toggling `isMasterwork` on creates the Masterwork AE from compendium; toggling off removes only the system-added one (custom Masterwork AEs are preserved)
-- [ ] Manually enabling/disabling either AE syncs `isBroken`/`isMasterwork` derived values on next render
+- [x] Reducing weapon HP to 0 → system-managed Broken AE auto-enables; restoring HP above 0 → AE auto-disables
+- [x] `isBroken` reflects the live AE state: `true` when any active broken-material AE is present, `false` otherwise (no stored flag — derived each prepare cycle)
+- [x] Toggling `isMasterwork` on creates the Masterwork AE from compendium; toggling off removes only the system-added one (custom Masterwork AEs are preserved)
+- [x] Manually enabling/disabling either AE syncs `isBroken`/`isMasterwork` derived values on next render
 - [ ] Effects visibly modify weapon stats per their `bonusType` (broken / masterwork stack independently from `material`)
 
 ### Gate 4 — Workflow Journals Visible in Dev World
@@ -1375,6 +1375,7 @@ task_3e:
   depends_on: [3c]
   blocking: [3f]
   verify: "Toggle isMasterwork=true → default Masterwork AE created from compendium with origin. Toggle off → only system-added AE removed; custom Masterwork AEs survive. Custom Masterwork AE drag-in → isMasterwork auto-syncs true and default is NOT added."
+  # ✅ IMPLEMENTED — masterworkAe.mts at @effects/material/logic/; isMasterwork derived at equippable layer
 
 task_3f:
   name: "isBroken / isMasterwork toggles on item sheet UI"
@@ -1382,12 +1383,14 @@ task_3f:
   depends_on: [3d, 3e]
   blocking: [3g]
   verify: "Weapon sheet shows both toggles; toggling fires sync; AE list reflects state changes; effects visible in derived weapon stats"
+  # ✅ IMPLEMENTED — ItemSheetIsBrokenCheckbox at physicalItem layer; ItemSheetIsMasterworkCheckbox at equippableItem layer
 
 task_3g:
   name: "Integration tests: full Broken/Masterwork sync cycle"
   routing: Jr dev or Pair
   depends_on: [3f]
   verify: "Tests cover: auto-attach on create, sheet toggle bidirectional sync, manual AE toggle reverse sync, custom MW preservation, broken+material+masterwork stacking with independent bonus types"
+  # ✅ IMPLEMENTED — tests/unit/effects/material-sync.test.mts (39 tests); weapon.model.test.mts updated (isMasterwork removed from schema assertions)
 ```
 
 **Story 3 acceptance**: All four material AEs ship in the compiled materials pack. Creating a weapon attaches Broken (disabled) automatically. Both toggles work end-to-end with origin tracking, bidirectional sync, and custom-AE preservation.

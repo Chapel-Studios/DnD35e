@@ -25,7 +25,7 @@ describe('WeaponSystemModel schema', () => {
   describe('declared top-level fields', () => {
     it('declares all weapon-specific fields', () => {
       t.assertField('isBaseWeaponType');
-      t.assertField('isMasterwork');
+      // isMasterwork is derived (from active masterwork AEs) — not a schema field
       t.assertField('weaponType');
       t.assertField('weaponSubtype');
       t.assertField('weaponBaseType');
@@ -59,7 +59,7 @@ describe('WeaponSystemModel schema', () => {
   describe('field types', () => {
     it('boolean flags use BooleanField', () => {
       t.assertFieldType('isBaseWeaponType', BooleanField);
-      t.assertFieldType('isMasterwork', BooleanField);
+      // isMasterwork is derived, not a schema field
       t.assertFieldType('noAmmoRequired', BooleanField);
     });
 
@@ -101,7 +101,7 @@ describe('WeaponSystemModel schema', () => {
   describe('declared defaults', () => {
     it('non-combat flags default to false', () => {
       t.assertDefault('isBaseWeaponType', false);
-      t.assertDefault('isMasterwork', false);
+      // isMasterwork is derived — no schema default
       t.assertDefault('noAmmoRequired', false);
     });
 

@@ -1,7 +1,7 @@
 import {
   BROKEN_ARMOR_AE_UUID,
   BROKEN_WEAPON_AE_UUID,
-} from '@constants/index.mjs';
+} from '@constants/compendiumUuids.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/index.mjs';
