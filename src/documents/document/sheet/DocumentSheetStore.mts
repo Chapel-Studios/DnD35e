@@ -283,7 +283,10 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     // They are always read from live derived data regardless of view mode —
     // there is no "source" version of a derived value to show.
     const schemaField = getSchemaField(document.value, fieldPath);
-    const isDerived = schemaField?.options?.persisted === false;
+    // `persisted` is a direct instance property on Foundry's DataField at runtime
+    // but is not yet reflected in the TypeScript stubs.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isDerived = (schemaField as any)?.persisted === false;
 
     const useSource = !isDerived && plan.readMode === 'source';
     const usableFieldPath = useSource ? `_source.${fieldPath}` : `${fieldPath}`;

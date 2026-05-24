@@ -15,8 +15,10 @@ export function getSchemaField(
   if (!fieldPath.startsWith('system.')) return undefined;
   const systemPath = fieldPath.replace(/^system\./, '');
   const systemModel = document?.system as foundry.abstract.DataModel | undefined;
-  const schema = ((systemModel?.constructor as {
-    schema?: { _getField?: (path: string[]) => foundry.data.fields.DataField | undefined };
-  } | undefined)?.schema) ?? systemModel?.schema;
-  return schema?._getField?.(systemPath.split('.'));
+  // SchemaField.getField() is a public Foundry runtime method but not yet reflected in
+  // the FoundryVTT TypeScript stubs. Cast through `any` to access it.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const schema: { getField?: (path: string) => foundry.data.fields.DataField | undefined } | undefined =
+    (systemModel?.constructor as any)?.schema ?? (systemModel as any)?.schema;
+  return schema?.getField?.(systemPath);
 }
