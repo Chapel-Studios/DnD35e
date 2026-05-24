@@ -5,6 +5,7 @@ import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type Config from '@client/config.mjs';
 import { ActiveEffectDnd35e } from '@documents/activeEffects/index.mjs';
+import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/index.mjs';
 import type { ItemSheetStore } from '@items/baseItem/index.mjs';
 import { ItemDnd35e } from '@items/baseItem/index.mjs';
@@ -27,6 +28,7 @@ type GameDnd35e = Game<
 > & {
   dnd35e: {
     stores: {
+      Actor: Record<string, DocumentSheetStore<any>>;
       Item: Record<string, ItemSheetStore<any>>;
       ActiveEffect: Record<string, ActiveEffectConfigStore>;
     };

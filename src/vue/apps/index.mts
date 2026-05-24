@@ -8,9 +8,11 @@
 import type { ViewMode } from '@helpers/formulae/types.mjs';
 
 import { VueActiveEffectConfig } from './VueActiveEffectConfig.mjs';
+import { VueActorSheet } from './VueActorSheet.mjs';
 import type { VueAppBaseMembers, VueAppBaseMixin } from './VueAppBaseMixin.mjs';
 import { useVueAppBaseMixin } from './VueAppBaseMixin.mjs';
 import type {
+  SheetDocumentType,
   SheetState,
   VueApplicationConfiguration,
   VueApplicationContext,
@@ -33,10 +35,12 @@ export {
   useVueDocumentSheetMixin,
   useVueSettingsMixin,
   VueActiveEffectConfig,
+  VueActorSheet,
   VueItemSheet,
 };
 
 export type {
+  SheetDocumentType,
   SheetState,
   ViewMode,
   VueAppBaseMembers,

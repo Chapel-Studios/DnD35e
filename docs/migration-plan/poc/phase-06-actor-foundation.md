@@ -1,6 +1,6 @@
 # POC Phase 6: Actor Foundation
 
-**Status**: ✅ Approved (Actor schema, multiclass stacking, ability scores)
+**Status**: 🔶 In Progress
 
 > **Milestone**: POC  
 > **Dependencies**: Phase 1, Phase 3  
@@ -207,9 +207,27 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 ## Completion Checklist
 
 ### ✅ Complete
-- (None — Phase 6 has not started)
 
-### ❌ Not Started (All Tasks for Phase 6)
+**DocumentMixin wiring on `ActorDnd35e`:**
+- [x] `ActorDnd35e` now extends `DocumentMixin(Actor)` — adds per-instance `events: DocumentEventEmitter`, `registeredFormulas`, and lifecycle hooks (`_onCreate`, `_onDelete`, `_preCreate`, `update`)
+- [x] `localizedType` getter returns `ACTOR_TYPES_LOCALIZED[this.type]` fallback to `'dnd35e.COMMON.Actor'`
+
+**Actor Sheet class hierarchy (TS):**
+- [x] `ActorSheetDnd35e` — abstract base at `src/documents/actors/baseActor/sheet/ActorSheetDnd35e.mts`; owns `DEFAULT_OPTIONS` (720×680, `[SYSTEM_ID, ACTOR_SHEET_CLASS]`) and `title` getter
+- [x] `CreatureSheet` — abstract creature-layer class at `src/documents/actors/creature/sheet/CreatureSheet.mts`; extends `ActorSheetDnd35e`
+- [x] `CharacterSheet` — concrete class at `src/documents/actors/character/sheet/CharacterSheet.mts`; extends `CreatureSheet`; owns only `vueComponent` getter
+
+**Actor Sheet Vue component layer:**
+- [x] `CharacterSheet.vue` — root component; calls `useActorSheetStore`, provides `DocumentSheetStoreSymbol`, renders `<CreatureSheetVue>`
+- [x] `CreatureSheet.vue` — layout component at `src/documents/actors/creature/sheet/CreatureSheet.vue`; delegates to `<DocumentSheetBody>` (reuses item-sheet header/tabs/layout infrastructure)
+- [x] View mode bar (Edit/Play/True toggles) renders automatically via `VueDocumentSheetMixin._onRender` — no actor-specific code needed
+
+**Tab component layer placement:**
+- [x] `ActorEffectsTab.vue` → `baseActor/sheet/tabs/` (all actors)
+- [x] `AbilitiesTab.vue`, `BiographyTab.vue`, `FeaturesTab.vue`, `InventoryTab.vue` → `creature/sheet/tabs/` (creature layer)
+- [x] Tab `SheetTab` definitions live at their respective layers; `CharacterSheet.vue` imports directly from `@actors/baseActor/sheet/tabs/index.mjs` and `@actors/creature/sheet/tabs/index.mjs`
+
+### ❌ Not Started
 
 **Foundry v14 Integration:**
 - [ ] Use `persisted: false` for ALL derived stat fields: ability mods, AC totals, save totals, init total, BAB total, HP max, speed totals, encumbrance thresholds, level, race string

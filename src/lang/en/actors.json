@@ -1,0 +1,16 @@
+{
+  "dnd35e": {
+    "ACTOR": {
+      "sheet": {
+        "Character": "D&D 3.5e Character Sheet"
+      },
+      "tab": {
+        "Abilities": "Abilities",
+        "Inventory": "Inventory",
+        "Features": "Features",
+        "Effects": "Effects",
+        "Biography": "Biography"
+      }
+    }
+  }
+}

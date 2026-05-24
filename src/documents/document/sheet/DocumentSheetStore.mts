@@ -1,4 +1,5 @@
 import type { ActorType } from '@actors/actorTypes.mjs';
+import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type { ActiveEffectDnd35e, EffectType } from '@effects/index.mjs';
 import { addOrUpdatePlayerEditMask, findOrCreatePlayerEditSecret } from '@effects/secret/playerEditSecret.mjs';
@@ -39,7 +40,7 @@ import { resolveViewAwareFieldPlan } from './viewAwareFieldPlan.mjs';
 // Types
 // ---------------------------------------------------------------------------
 
-type SheetDocument = ItemDnd35e | ActiveEffectDnd35e;
+type SheetDocument = ItemDnd35e | ActiveEffectDnd35e | ActorDnd35e;
 
 type DocumentSheetStoreUtils<TDocument extends SheetDocument> = FieldOverridesStoreUtils & {
   document: ShallowRef<TDocument>;

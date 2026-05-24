@@ -5,3 +5,4 @@ export type {
 export {
   CreatureSystemModel,
 } from './data/index.mjs';
+export { CreatureSheet } from './sheet/index.mjs';

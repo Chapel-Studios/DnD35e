@@ -1,8 +1,9 @@
 import type { ActorType } from '@actors/actorTypes.mjs';
+import { ACTOR_TYPES_LOCALIZED } from '@actors/actorTypes.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
-import { DocumentLifeCycle } from '@documents/document/DocumentDnd35e.mjs';
+import { DocumentLifeCycle, DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
@@ -14,6 +15,11 @@ import type { ItemType } from '@items/itemTypes.mjs';
 import type { TokenDocumentDnd35e } from '@scene/tokenDocument/TokenDocumentDnd35e.mjs';
 
 import type { ActorSystemData } from './index.mjs';
+
+// Apply mixin at runtime but cast to preserve generic parameter compatibility.
+// TypeScript mixins erase generics; this cast is safe because the mixin only adds
+// methods/properties and doesn't alter the constructor signature's generic behavior.
+const ActorDocumentBase = DocumentMixin(Actor) as unknown as typeof Actor;
 
 interface AppliedActorEffectChange extends EffectChangeDataDnd35e {
   effect: ActiveEffectDnd35e;
@@ -59,11 +65,15 @@ class ActorDnd35e<
   TToken extends TokenDocumentDnd35e | null = TokenDocumentDnd35e | null,
   TActorType extends ActorType = ActorType,
   TSystemData extends ActorSystemData = ActorSystemData
-> extends Actor<TToken> {
+> extends ActorDocumentBase<TToken> {
   declare readonly effects: EmbeddedCollection<ActiveEffectDnd35e<this>>;
   declare readonly items: EmbeddedCollection<ItemDnd35e<ItemType, this>>;
   declare type: TActorType;
   declare system: TSystemData;
+
+  get localizedType (): string {
+    return ACTOR_TYPES_LOCALIZED[this.type as ActorType] ?? 'dnd35e.COMMON.Actor';
+  }
 
   /**
    * Static registry of lifecycle event names for this class.

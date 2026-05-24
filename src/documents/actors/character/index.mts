@@ -5,3 +5,4 @@ export type {
 export {
   CharacterSystemModel,
 } from './data/index.mjs';
+export { CharacterSheet, useActorSheetStore } from './sheet/index.mjs';
