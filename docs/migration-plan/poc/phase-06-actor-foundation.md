@@ -79,7 +79,7 @@ Stories 2 and 3 are independent of each other and can be worked in parallel afte
 3. ✅ **VueActorSheet + sheet scaffolding** — `VueActorSheet.mts` base class, `CharacterSheet.mts` + `CharacterSheet.vue` with tab bar (Abilities | Inventory | Features | Effects | Biography), widen `VueDocumentSheetMixin` generic to accept `ActorDnd35e`. *(Unit tests: sheet mounts without errors)*
 4. ✅ **Abilities tab** — 6 `NumberFormGroup`s (editable base score), derived modifier display (read-only). All labels via i18n. `abilities.json` + `actors.json`. *(Unit tests: mod formula edge cases — score 1 → −5, score 20 → +5)*
    - _Includes fix: `getSchemaField` was using private `_getField` with un-reversed path; now uses public `getField()`. Also: `persisted` is a direct runtime property on `DataField`, not nested in `options`._
-5. [ ] **Biography tab** — Rich-text editor or plain textarea for biography/notes fields.
+5. ✅ **Notes tab** — Layered description component architecture: `ActorDescriptionTab.vue` (base, uses `system.description`), `CreatureDescriptionTab.vue` (relabels as Biography), `CharacterDescriptionTab.vue` (wraps creature tab, adds Session Notes editor for `system.notes`). `system.notes` HTMLField added to `CharacterSystemModel` only.
 
 **E2E acceptance**: Create character actor → open sheet → Abilities tab visible → edit STR from 10 to 14 → modifier updates to `+2`.
 

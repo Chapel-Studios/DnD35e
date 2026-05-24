@@ -5,7 +5,6 @@
       label="dnd35e.ACTOR.field.SessionNotes"
       placeholder="dnd35e.ACTOR.field.SessionNotesPlaceholder"
     />
-    <slot />
   </CreatureDescriptionTab>
 </template>
 
