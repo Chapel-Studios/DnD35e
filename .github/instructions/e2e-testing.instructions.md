@@ -215,8 +215,8 @@ Run unit tests fast: `npx vitest run --project unit`. Run a single file: `npx vi
 2. **Check view mode** — is the surface you're asserting on actually rendered in the current mode?
 3. **Check overlays** — did a notification appear and block your click?
 4. **Check commit timing** — did you wait for the document update to round-trip, or only for the DOM to redraw?
-5. **Compendium returns null** — check for stale LevelDB LOCK files (`packs/materials/LOCK`, `packs/documentation/LOCK`). Foundry leaves these behind if it was running during a build. Remove them and rebuild. See `/memories/repo/e2e-leveldb-lock-files.md`.
-6. **`_onUpdate` hook not firing** — check that you're using **nested** object paths (`{ system: { hp: { current: 0 } } }`), not flat dot-notation (`{ 'system.hp.current': 0 }`). Foundry's diff object only populates `changed.system` when the update is nested. See `/memories/repo/foundry-onupdate-nested-path.md`.
+5. **Compendium returns null** — check for stale LevelDB LOCK files (`packs/materials/LOCK`, `packs/documentation/LOCK`). Foundry leaves these behind if it was running during a build. Remove them and rebuild. See `../repo-memory/e2e-leveldb-lock-files.md`.
+6. **`_onUpdate` hook not firing** — check that you're using **nested** object paths (`{ system: { hp: { current: 0 } } }`), not flat dot-notation (`{ 'system.hp.current': 0 }`). Foundry's diff object only populates `changed.system` when the update is nested. See `../repo-memory/foundry-onupdate-nested-path.md`.
 
 ### Identifying Pre-Existing Flaky Failures (Dual-Browser Tests)
 
