@@ -6,7 +6,7 @@
  *
  * Field handling (all fields are **included by default** — opt-out via `formulaVisible: false`):
  * - Field with `options.familiar.formulaVisible === false` → excluded (opt-out)
- * - Field whose constructor has `isFamiliarLeaf === true` (e.g. PriceField, FormulaField) → opaque leaf
+ * - Field whose constructor has `isFamiliarLeaf === true` (e.g. CurrencyField, FormulaField) → opaque leaf
  *   - Treated as a single value; inner fields are NOT recursed into
  * - SchemaField without the above marker → recurse into children (grouping node)
  * - All other fields (NumberField, StringField, BooleanField, etc.) → included as simple leaves
@@ -76,7 +76,7 @@ function inferFieldType(field: foundry.data.fields.DataField): 'string' | 'numbe
  * Resolve a live value from a context document and coerce it to the target type.
  *
  * For scalar values this is straightforward.  For objects (e.g. a DataModel
- * like PriceData), we call `toString()` only if the instance provides a
+ * like CurrencyData), we call `toString()` only if the instance provides a
  * custom override — a plain `[object Object]` fallback is treated as missing.
  */
 function resolveValue(
@@ -92,7 +92,7 @@ function resolveValue(
   // Scalar → coerce directly
   if (typeof raw !== 'object') return String(raw);
 
-  // Object with a custom toString (e.g. PriceData DataModel) → use it
+  // Object with a custom toString (e.g. CurrencyData DataModel) → use it
   if (typeof (raw as Record<string, unknown>).toString === 'function'
     && (raw as object).toString !== Object.prototype.toString) {
     return String(raw);
@@ -174,7 +174,7 @@ function walkFields(
     const isOpaqueLeaf = ctor.isFamiliarLeaf === true;
 
     if (isOpaqueLeaf) {
-      // ── Opaque leaf (PriceField, FormulaField) — single value, no recursion ──
+      // ── Opaque leaf (CurrencyField, FormulaField) — single value, no recursion ──
       addLeafToGroup(field, meta, key, currentPath, context, output);
     } else if (field instanceof SchemaField) {
       // ── Branch: recurse into nested SchemaField children ──
@@ -203,7 +203,7 @@ function walkFields(
  * Uses `ModelClass.schema.fields` (the cached, LOCALIZATION_PREFIXES-mutated schema)
  * rather than `ModelClass.defineSchema()` (which creates fresh unlabeled instances).
  * Fields opt out with `familiar: { formulaVisible: false }`. Opaque leaves
- * (PriceField, FormulaField, `isFamiliarLeaf`) are recognized by a static
+ * (CurrencyField, FormulaField, `isFamiliarLeaf`) are recognized by a static
  * marker on their constructors.
  *
  * @param ModelClass  A TypeDataModel class whose `schema.fields` holds localized field metadata

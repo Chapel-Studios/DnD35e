@@ -56,7 +56,7 @@ This pre-story PR contains **3 commits**:
 2. **`persisted: false` audit** — audit all existing system models (poc.1–poc.2: `PhysicalItemSystemModel`, `EquippableItemSystemModel`, `WeaponSystemModel`, `GeneralSystemModel`, and any mixins with schema declarations) for fields that are derived/computed but currently declared as stored fields. Reclassify them as `{ persisted: false }` with an appropriate `initial` value. Actor-only derived fields (`str.mod`, `bab`, AC totals, etc.) are new and handled in Story 1 — this commit covers the existing item and AE side models only.
 3. **Pack source items** — identify and author items needed for Phase 6 testing, commit the resulting `packs/_source` JSON. Since item creation is a manual process done in the Foundry UI (export → JSON), decide what's needed here so the items exist before Stories 3+ need them.
 
-**Pack content identification** (for commit 3): Before authoring anything, list required items and which pack they belong to. Examples: a longsword for inventory/equip testing, a suit of leather armor for AC testing, a basic consumable for the Consumables group. Add that list here before beginning commit 3.
+**Pack content identification** (for commit 3): One item needed for Phase 6 E2E testing — a longsword for Story 3 inventory/equip testing. No armor items exist yet (equipment AC is Phase 11/19); AC tests run on pure math (10 + DEX mod). No consumables until much later in the roadmap.
 ```
 Story 1
   └─► Story 2  ──► Story 4
@@ -148,7 +148,7 @@ ActorSystemModel (character)
 │   Each: { base, total (p:f) }
 ├── init: { bonus, total (p:f) }
 ├── sr: number
-├── dr: DamageReduction[]
+├── ~~dr: DamageReduction[]~~   ← deferred to alpha (phases 8/12/13/21 — Special Abilities & damage pipeline)
 ├── level (p:f, derived from class items)
 ├── xp: { value, max }
 ├── alignment: [MoralAxis|null, ChaosAxis|null]

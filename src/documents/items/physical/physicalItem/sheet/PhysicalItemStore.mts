@@ -6,7 +6,7 @@ import type { MaterialType } from '@effects/material/Material.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
 import type { SecretType } from '@effects/secret/Secret.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
-import { PriceData } from '@fields/PriceData.mjs';
+import { CurrencyData } from '@fields/CurrencyData.mjs';
 import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
 import type { DamageReductionTypesConfig } from '@settings/index.mjs';
 import { GAME_RULES_KEYS, SettingsStoreSymbol } from '@settings/index.mjs';
@@ -56,7 +56,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     physicalItemEffectsTab,
   ]);
 
-  const createDefaultPrice = (): PriceData => new PriceData({ stacks: [{
+  const createDefaultPrice = (): CurrencyData => new CurrencyData({ stacks: [{
     coinId: defaultDisplayCoin.value,
     count: 0,
   }] });
@@ -140,7 +140,7 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   quantity: ComputedRef<number>;
   actualWeight: ComputedRef<number>;
   effectiveWeight: ComputedRef<number>;
-  price: ComputedRef<PriceData>;
+  price: ComputedRef<CurrencyData>;
   isBroken: ComputedRef<boolean>;
   maxHp: ComputedRef<number>;
   currentHp: ComputedRef<number>;

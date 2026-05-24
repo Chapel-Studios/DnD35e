@@ -1,13 +1,13 @@
 import { SIZES } from '@constants/sizes.mjs';
 import { IdentifiableSchemaMixin } from '@documents/identifiable/data/index.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
+import { CurrencyField } from '@fields/CurrencyField.mjs';
 import {
   optionalNumberField,
   optionalStringField,
   requiredNumberField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
-import { PriceField } from '@fields/PriceField.mjs';
 import { SectionField } from '@fields/SectionField.mjs';
 import { ItemSystemModel } from '@items/baseItem/data/index.mjs';
 
@@ -41,8 +41,8 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     // schema.isWeightlessWhenCarried = requiredBooleanField(false);
     schema.isCarried = new foundry.data.fields.BooleanField({ initial: true, required: true });
     schema.size = useDnd35eField(new StringField({ choices: SIZES, initial: 'tiny', required: true }));
-    // Price - EmbeddedDataField wrapping PriceData with coin stacks
-    schema.price = useDnd35eField(new PriceField({}));
+    // Price - EmbeddedDataField wrapping CurrencyData with coin stacks
+    schema.price = useDnd35eField(new CurrencyField({}));
     // isBroken is derived in prepareDerivedData — not stored in schema
 
     // Container
