@@ -29,9 +29,9 @@ interface PhysicalItemSystemData extends ItemSystemSource, PhysicalItemSystemSou
     effectiveWeight: number;
     /** Derived: true when any active broken-material AE is present. */
     isBroken: boolean;
-    // Material might apply these
-    magicEquivalency?: number;
-    damageReductionTypes?: string[];
+    // Material AEs apply these via changes; persisted:false schema fields reset them each cycle
+    magicEquivalency: number;
+    damageReductionTypes: string[];
   }
 
 export type {

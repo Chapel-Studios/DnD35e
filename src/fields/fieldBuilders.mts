@@ -66,6 +66,22 @@ const optionalNumberField = (initialValue?: number) => {
 const requiredNullableNumberField = () =>
   new NumberField<number, number, true, true, false>({ required: true, nullable: true });
 
+// Derived (persisted: false)
+
+/**
+ * A derived number field — in schema for FormulaFamiliar visibility and AE targeting,
+ * but never written to the database. Resets to `initial` each prep cycle.
+ */
+const derivedNumberField = (initialValue: number = 0) =>
+  new NumberField<number, number, true, false, true>({ required: true, nullable: false, initial: initialValue, persisted: false });
+
+/**
+ * A derived boolean field — in schema for FormulaFamiliar visibility and AE targeting,
+ * but never written to the database. Resets to `initial` each prep cycle.
+ */
+const derivedBooleanField = (initialValue: boolean = false) =>
+  new BooleanField<boolean, boolean, true, false, true>({ required: true, nullable: false, initial: initialValue, persisted: false });
+
 // Formula
 const formulaField = () => new SchemaField({
   formula: new StringField({ required: true, initial: '', nullable: false }),
@@ -128,6 +144,8 @@ function useDnd35eField<T extends foundry.data.fields.DataField>(
 export type { SchemaFieldMeta };
 
 export {
+  derivedBooleanField,
+  derivedNumberField,
   formulaField,
   nullableOptionalStringField,
   optionalHtmlField,
