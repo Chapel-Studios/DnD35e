@@ -117,19 +117,19 @@ All actors inherit these fields.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `speed.land.base` | number | 5 🔲 | Stored | `attributes.speed.land.base` | Default 30 (human). Race modifies via AE |
-| `speed.land.total` | number | 5 🔲 | Derived | `attributes.speed.land.total` | base + modifiers (armor, encumbrance, effects) |
-| `speed.climb.base` | number | 5 🔲 | Stored | `attributes.speed.climb.base` | Default 0 |
-| `speed.climb.total` | number | 5 🔲 | Derived | `attributes.speed.climb.total` | |
-| `speed.swim.base` | number | 5 🔲 | Stored | `attributes.speed.swim.base` | Default 0 |
-| `speed.swim.total` | number | 5 🔲 | Derived | `attributes.speed.swim.total` | |
-| `speed.burrow.base` | number | 5 🔲 | Stored | `attributes.speed.burrow.base` | Default 0 |
-| `speed.burrow.total` | number | 5 🔲 | Derived | `attributes.speed.burrow.total` | |
-| `speed.fly.base` | number | 5 🔲 | Stored | `attributes.speed.fly.base` | Default 0 |
-| `speed.fly.total` | number | 5 🔲 | Derived | `attributes.speed.fly.total` | |
-| `speed.fly.maneuverability` | string | 5 🔲 | Stored | `attributes.speed.fly.maneuverability` | "clumsy"\|"poor"\|"average"\|"good"\|"perfect" |
-| `biography` | string | 5 🔲 | Stored | `details.biography.value` | Rich text |
-| `notes` | string | 5 🔲 | Stored | `details.notes.value` | Rich text |
+| `speed.land.base` | number | 6 🔲 | Stored | `attributes.speed.land.base` | Default 30 (human). Race modifies via AE |
+| `speed.land.total` | number | 6 🔲 | Derived | `attributes.speed.land.total` | base + modifiers (armor, encumbrance, effects) |
+| `speed.climb.base` | number | 6 🔲 | Stored | `attributes.speed.climb.base` | Default 0 |
+| `speed.climb.total` | number | 6 🔲 | Derived | `attributes.speed.climb.total` | |
+| `speed.swim.base` | number | 6 🔲 | Stored | `attributes.speed.swim.base` | Default 0 |
+| `speed.swim.total` | number | 6 🔲 | Derived | `attributes.speed.swim.total` | |
+| `speed.burrow.base` | number | 6 🔲 | Stored | `attributes.speed.burrow.base` | Default 0 |
+| `speed.burrow.total` | number | 6 🔲 | Derived | `attributes.speed.burrow.total` | |
+| `speed.fly.base` | number | 6 🔲 | Stored | `attributes.speed.fly.base` | Default 0 |
+| `speed.fly.total` | number | 6 🔲 | Derived | `attributes.speed.fly.total` | |
+| `speed.fly.maneuverability` | string | 6 🔲 | Stored | `attributes.speed.fly.maneuverability` | "clumsy"\|"poor"\|"average"\|"good"\|"perfect" |
+| `biography` | string | 6 🔲 | Stored | `details.biography.value` | Rich text |
+| `notes` | string | 6 🔲 | Stored | `details.notes.value` | Rich text |
 | `bond` | — | ⛔ | — | `master` | Replaced by Bond Pattern AE on the bonded creature. Not a stored field. |
 | `bond.actorId` | — | ⛔ | — | `master.id` | Bond AE carries `bondedTo` UUID in its changes |
 | `bond.bondType` | — | ⛔ | — | — | Bond AE carries `bondType` in its changes |
@@ -162,18 +162,18 @@ Shared by Character and NPC.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `abilities.str.base` | number | 5 🔲 | Stored | `abilities.str.value` | Raw score |
-| `abilities.str.mod` | number | 5 🔲 | Derived | `abilities.str.mod` | `floor((base - 10) / 2)` |
-| `abilities.dex.base` | number | 5 🔲 | Stored | `abilities.dex.value` | |
-| `abilities.dex.mod` | number | 5 🔲 | Derived | `abilities.dex.mod` | |
-| `abilities.con.base` | number | 5 🔲 | Stored | `abilities.con.value` | |
-| `abilities.con.mod` | number | 5 🔲 | Derived | `abilities.con.mod` | |
-| `abilities.int.base` | number | 5 🔲 | Stored | `abilities.int.value` | |
-| `abilities.int.mod` | number | 5 🔲 | Derived | `abilities.int.mod` | |
-| `abilities.wis.base` | number | 5 🔲 | Stored | `abilities.wis.value` | |
-| `abilities.wis.mod` | number | 5 🔲 | Derived | `abilities.wis.mod` | |
-| `abilities.cha.base` | number | 5 🔲 | Stored | `abilities.cha.value` | |
-| `abilities.cha.mod` | number | 5 🔲 | Derived | `abilities.cha.mod` | |
+| `abilities.str.base` | number | 6 🔲 | Stored | `abilities.str.value` | Raw score |
+| `abilities.str.mod` | number | 6 🔲 | Derived | `abilities.str.mod` | `floor((base - 10) / 2)` |
+| `abilities.dex.base` | number | 6 🔲 | Stored | `abilities.dex.value` | |
+| `abilities.dex.mod` | number | 6 🔲 | Derived | `abilities.dex.mod` | |
+| `abilities.con.base` | number | 6 🔲 | Stored | `abilities.con.value` | |
+| `abilities.con.mod` | number | 6 🔲 | Derived | `abilities.con.mod` | |
+| `abilities.int.base` | number | 6 🔲 | Stored | `abilities.int.value` | |
+| `abilities.int.mod` | number | 6 🔲 | Derived | `abilities.int.mod` | |
+| `abilities.wis.base` | number | 6 🔲 | Stored | `abilities.wis.value` | |
+| `abilities.wis.mod` | number | 6 🔲 | Derived | `abilities.wis.mod` | |
+| `abilities.cha.base` | number | 6 🔲 | Stored | `abilities.cha.value` | |
+| `abilities.cha.mod` | number | 6 🔲 | Derived | `abilities.cha.mod` | |
 
 ##### Ability fields deferred to later phases
 
@@ -184,18 +184,18 @@ Shared by Character and NPC.
 | `abilities.*.penalty` | 20 | `abilities.*.penalty` | Ability penalty (stacks) |
 | `abilities.*.userPenalty` | 20 | `abilities.*.userPenalty` | Manual penalty override |
 | `abilities.*.checkMod` | Skills | `abilities.*.checkMod` | Ability check modifier |
-| `abilities.str.carryBonus` | 5 🔲 | `abilities.str.carryBonus` | Extra carrying capacity |
-| `abilities.str.carryMultiplier` | 5 🔲 | `abilities.str.carryMultiplier` | Size/quadruped multiplier |
+| ~~`abilities.str.carryBonus`~~ | — | — | Moved to `encumbrance.carryBonus` |
+| ~~`abilities.str.carryMultiplier`~~ | — | — | Moved to `encumbrance.carryMultiplier` |
 
 #### Hit Points (Creature)
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `hp.value` | number | 5 🔲 | Stored | `attributes.hp.value` | Current HP |
-| `hp.max` | number | 5 🔲 | Derived | `attributes.hp.max` | Placeholder: `1 × HD + CON mod`. Classes replace |
-| `hp.temp` | number | 5 🔲 | Stored | `attributes.hp.temp` | Temporary HP |
-| `hp.nonlethal` | number | 5 🔲 | Stored | `attributes.hp.nonlethal` | Nonlethal damage taken |
-| `hp.min` | number | 5 🔲 | Stored | `attributes.hp.min` | Death threshold (default -10) |
+| `hp.value` | number | 6 🔲 | Stored | `attributes.hp.value` | Current HP |
+| `hp.max` | number | 6 🔲 | Derived | `attributes.hp.max` | Placeholder: `1 × HD + CON mod`. Classes replace |
+| `hp.temp` | number | 6 🔲 | Stored | `attributes.hp.temp` | Temporary HP |
+| `hp.nonlethal` | number | 6 🔲 | Stored | `attributes.hp.nonlethal` | Nonlethal damage taken |
+| `hp.min` | number | 6 🔲 | Stored | `attributes.hp.min` | Death threshold (default -10) |
 
 ##### HP fields deferred
 
@@ -209,9 +209,9 @@ Shared by Character and NPC.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `ac.normal` | number | 5 🔲 | Derived | `attributes.ac.normal.total` | `10 + DEX mod`. +armor/shield (Ph15), +size (Ph11), +deflect/dodge etc. |
-| `ac.touch` | number | 5 🔲 | Derived | `attributes.ac.touch.total` | `10 + DEX mod`. No armor/shield |
-| `ac.flatFooted` | number | 5 🔲 | Derived | `attributes.ac.flatFooted.total` | `10`. No DEX bonus |
+| `ac.normal` | number | 6 🔲 | Derived | `attributes.ac.normal.total` | `10 + DEX mod`. +armor/shield (Ph15), +size (Ph11), +deflect/dodge etc. |
+| `ac.touch` | number | 6 🔲 | Derived | `attributes.ac.touch.total` | `10 + DEX mod`. No armor/shield |
+| `ac.flatFooted` | number | 6 🔲 | Derived | `attributes.ac.flatFooted.total` | `10`. No DEX bonus |
 | `ac.naturalArmor` | number | 11 (Races) 🔲 | Stored | `attributes.naturalAC` | Race/monster natural armor |
 
 ##### AC fields deferred
@@ -228,23 +228,23 @@ Shared by Character and NPC.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `saves.fort.base` | number | 5 🔲 | Stored | `attributes.savingThrows.fort.base` | 0 until Classes provides progression |
-| `saves.fort.total` | number | 5 🔲 | Derived | `attributes.savingThrows.fort.total` | `base + CON mod` |
-| `saves.fort.ability` | string | 5 🔲 | Stored | — | Default "con". Configurable for edge cases |
-| `saves.ref.base` | number | 5 🔲 | Stored | `attributes.savingThrows.ref.base` | |
-| `saves.ref.total` | number | 5 🔲 | Derived | `attributes.savingThrows.ref.total` | `base + DEX mod` |
-| `saves.ref.ability` | string | 5 🔲 | Stored | — | Default "dex" |
-| `saves.will.base` | number | 5 🔲 | Stored | `attributes.savingThrows.will.base` | |
-| `saves.will.total` | number | 5 🔲 | Derived | `attributes.savingThrows.will.total` | `base + WIS mod` |
-| `saves.will.ability` | string | 5 🔲 | Stored | — | Default "wis" |
+| `saves.fort.base` | number | 6 🔲 | Stored | `attributes.savingThrows.fort.base` | 0 until Classes provides progression |
+| `saves.fort.total` | number | 6 🔲 | Derived | `attributes.savingThrows.fort.total` | `base + CON mod` |
+| `saves.fort.ability` | string | 6 🔲 | Stored | — | Default "con". Configurable for edge cases |
+| `saves.ref.base` | number | 6 🔲 | Stored | `attributes.savingThrows.ref.base` | |
+| `saves.ref.total` | number | 6 🔲 | Derived | `attributes.savingThrows.ref.total` | `base + DEX mod` |
+| `saves.ref.ability` | string | 6 🔲 | Stored | — | Default "dex" |
+| `saves.will.base` | number | 6 🔲 | Stored | `attributes.savingThrows.will.base` | |
+| `saves.will.total` | number | 6 🔲 | Derived | `attributes.savingThrows.will.total` | `base + WIS mod` |
+| `saves.will.ability` | string | 6 🔲 | Stored | — | Default "wis" |
 
 #### Combat Stats
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `bab` | number | 5 🔲 | Derived | `attributes.bab.total` | 0 until Classes provides progression |
-| `init.bonus` | number | 5 🔲 | Stored | `attributes.init.bonus` | Misc initiative bonus (feats, items) |
-| `init.total` | number | 5 🔲 | Derived | `attributes.init.total` | `DEX mod + bonus` |
+| `bab` | number | 6 🔲 | Derived | `attributes.bab.total` | 0 until Classes provides progression |
+| `init.bonus` | number | 6 🔲 | Stored | `attributes.init.bonus` | Misc initiative bonus (feats, items) |
+| `init.total` | number | 6 🔲 | Derived | `attributes.init.total` | `DEX mod + bonus` |
 | `cmb` | number | 8 (Actions) 🔲 | Derived | `attributes.cmb.total` | `BAB + STR mod + size mod` |
 | `cmd` | number | 8 🔲 | Derived | `attributes.cmd.total` | `10 + BAB + STR mod + DEX mod + size mod` |
 
@@ -261,8 +261,8 @@ Shared by Character and NPC.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `sr` | number | 5 🔲 | Stored | `attributes.sr.total` | Spell resistance. 0 default |
-| `dr` | array | 5 🔲 | Stored | `attributes.damageReduction` | DR entries (value, types) |
+| `sr` | number | 6 🔲 | Stored | `attributes.sr.total` | Spell resistance. 0 default |
+| `dr` | array | 6 🔲 | Stored | `attributes.damageReduction` | DR entries (value, types) |
 | `energyResistance` | array | 📋 | Stored | `attributes.energyResistance` | Defer — no consumer yet |
 
 #### Senses
@@ -279,29 +279,33 @@ Shared by Character and NPC.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `encumbrance.carriedWeight` | number | 5 🔲 | Derived | `attributes.encumbrance.carriedWeight` | Sum of inventory weight |
-| `encumbrance.light` | number | 5 🔲 | Derived | `attributes.encumbrance.levels.light` | STR-based threshold |
-| `encumbrance.medium` | number | 5 🔲 | Derived | `attributes.encumbrance.levels.medium` | |
-| `encumbrance.heavy` | number | 5 🔲 | Derived | `attributes.encumbrance.levels.heavy` | |
-| `encumbrance.carry` | number | 5 🔲 | Derived | `attributes.encumbrance.levels.carry` | Max lift overhead |
-| `encumbrance.drag` | number | 5 🔲 | Derived | `attributes.encumbrance.levels.drag` | Max push/drag |
-| `encumbrance.level` | number | 5 🔲 | Derived | `attributes.encumbrance.level` | 0=light, 1=medium, 2=heavy, 3=over |
+| `encumbrance.carriedWeight` | number | 6 🔲 | Derived | `attributes.encumbrance.carriedWeight` | Sum of inventory weight |
+| `encumbrance.light` | number | 6 🔲 | Derived | `attributes.encumbrance.levels.light` | STR-based threshold |
+| `encumbrance.medium` | number | 6 🔲 | Derived | `attributes.encumbrance.levels.medium` | |
+| `encumbrance.heavy` | number | 6 🔲 | Derived | `attributes.encumbrance.levels.heavy` | |
+| `encumbrance.carry` | number | 6 🔲 | Derived | `attributes.encumbrance.levels.carry` | Max lift overhead |
+| `encumbrance.drag` | number | 6 🔲 | Derived | `attributes.encumbrance.levels.drag` | Max push/drag |
+| `encumbrance.level` | number | 6 🔲 | Derived | `attributes.encumbrance.level` | 0=light, 1=medium, 2=heavy, 3=over |
+| `encumbrance.carryBonus` | number | 6 🔲 | Stored | `abilities.str.carryBonus` | Flat bonus to base carrying capacity. Default 0. AE-targetable (e.g., Carrying feats). |
+| `encumbrance.carryMultiplier` | number | 6 🔲 | Stored | `abilities.str.carryMultiplier` | Capacity multiplier. Default 1.0 (medium, bipedal). AEs set to 2.0 (Large), 1.5 (quadruped). |
 
-#### Currency
+#### Currency & Vault
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `currency.pp` | number | 5 🔲 | Stored | `currency.pp` | Planned with Group C decisions |
-| `currency.gp` | number | 5 🔲 | Stored | `currency.gp` | |
-| `currency.sp` | number | 5 🔲 | Stored | `currency.sp` | |
-| `currency.cp` | number | 5 🔲 | Stored | `currency.cp` | |
+| `currency` | CurrencyField | 6 🔲 | Stored | `currency.*` | Currency carried on person. Uses world-settings coins (same infrastructure as item prices via `CurrencyData.getCurrencyConfig()`). Contributes to encumbrance unless the "ignore currency weight" world setting is on. |
 
-##### Currency fields deferred / removed
+> **One built-in currency field per actor.** Future vaults are named container items (Beta Phase 1+) each carrying their own `CurrencyField`. Debt tracking is on the post-release wishlist.
+>
+> `CurrencyField` (renamed from `PriceField` in Phase 6 pre-story) supports all world-configured currencies, AE add/subtract/multiply change modes, consolidation, and GP-equivalent snapshot.
+
+##### Currency fields removed
 
 | D35E Field | Disposition | Notes |
 |-----------|-------------|-------|
-| `altCurrency` | ⛔ Removed | Replaced by currency in containers |
-| `customCurrency` | 📋 Deferred | Custom currency types — revisit in Beta |
+| `currency.pp/gp/sp/cp` | ⛔ Removed | Replaced by `currency: CurrencyField` (world-settings currencies) |
+| `altCurrency` | ⛔ Removed | Replaced by named vault container items (Beta Phase 1+) |
+| `customCurrency` | ⛔ Removed | Replaced by world-settings currency configuration (`CurrencyData.getCurrencyConfig()`) |
 
 #### Equipment Slots
 
@@ -316,9 +320,9 @@ Shared by Character and NPC.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `alignment` | [LawAxis, MoralAxis] | 5 🔲 | Stored | `details.alignment` | Strongly-typed tuple: [`"lawful"\|"neutral"\|"chaotic"`, `"good"\|"neutral"\|"evil"`]. Concrete strings, no nulls. Maps to the 3x3 alignment grid. |
-| `size` | string | 5 🔲 | Stored | `traits.size` | Default "medium". Race modifies. Uses `SIZES` constant |
-| `level` | number | 5 🔲 | Derived | `details.level.value` | Placeholder = 1. Classes replace with sum of class levels |
+| `alignment` | [MoralAxis\|null, ChaosAxis\|null] | 6 🔲 | Stored | `details.alignment` | Strongly-typed tuple. `MoralAxis = 'good'\|'neutral'\|'evil'`. `ChaosAxis = 'lawful'\|'neutral'\|'chaotic'`. Null for unaligned/any-alignment creatures (some monster stat blocks). Maps to the 3×3 grid; null renders as "—". Agreed with D35E creator. |
+| `size` | string | 6 🔲 | Stored | `traits.size` | Default "medium". Race modifies. Uses `SIZES` constant |
+| `level` | number | 6 🔲 | Derived | `details.level.value` | Placeholder = 1. Classes replace with sum of class levels |
 
 ##### Creature fields deferred
 
@@ -359,14 +363,14 @@ Extends Creature. Character-specific fields.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `xp.value` | number | 5 🔲 | Stored | `details.xp.value` | Current XP. Cosmetic in milestone mode. |
+| `xp.value` | number | 6 🔲 | Stored | `details.xp.value` | Current XP. Cosmetic in milestone mode. |
 | `xp.max` | number | 12 🔲 | Derived | `details.xp.max` | XP to next level. Derived from GM's XP table in XP mode; 0 in milestone mode. |
-| `height` | string | 5 🔲 | Stored | `details.height` | Description field |
-| `weight` | string | 5 🔲 | Stored | `details.weight` | Description field (character weight, not inventory) |
-| `gender` | string | 5 🔲 | Stored | `details.gender` | |
-| `deity` | string | 5 🔲 | Stored | `details.deity` | |
-| `age` | string | 5 🔲 | Stored | `details.age` | |
-| `isPartyMember` | boolean | 5 🔲 | Stored | `isPartyMember` | Show in party tracker |
+| `height` | string | 6 🔲 | Stored | `details.height` | Description field |
+| `weight` | string | 6 🔲 | Stored | `details.weight` | Description field (character weight, not inventory) |
+| `gender` | string | 6 🔲 | Stored | `details.gender` | |
+| `deity` | string | 6 🔲 | Stored | `details.deity` | |
+| `age` | string | 6 🔲 | Stored | `details.age` | |
+| `isPartyMember` | boolean | 6 🔲 | Stored | `isPartyMember` | Show in party tracker |
 
 #### Level History (Character)
 
@@ -426,7 +430,11 @@ The registry is rebuilt every `prepareDerivedData()` cycle — never persisted. 
 
 ### NpcSystemModel
 
-Extends Creature. Covers all non-player creatures: goblins, dragons, NPCs with class levels, mindless undead.
+Extends Creature. Covers **all** non-player creatures: goblins, dragons, NPCs with class levels, mindless undead — including named villain NPCs and anonymous merchants.
+
+> **SRD analysis confirms**: No mechanical distinction between "NPC" and "monster" in D&D 3.5e. Both use identical ability scores, saves, BAB, feats, and skills. CR, Environment, Treasure, and Advancement are informational extras that monsters happen to have, not a schema boundary. A merchant NPC is just a human with Commoner/Expert class levels. A dragon is a creature with racial HD progression. Both advance through the same `Progression` component. **One type, two sheet presentations.**
+>
+> Lair/legendary actions do not exist in D&D 3.5e (5e only). No schema reason to split.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
@@ -453,15 +461,13 @@ Extends Creature. Covers all non-player creatures: goblins, dragons, NPCs with c
 
 ---
 
-### Companion Mixin (on ActorSystemModelBase)
+### Companion Relationship (Bond AE Pattern)
 
-Companion is NOT a separate actor type — it is an optional `bond` field on ActorSystemModelBase. **Any actor** can be bonded to a controller: an NPC familiar, a Character cohort, or even an animated Object. The `bond` field is null by default and populated when the actor is wrapped in its companion shell.
+Companion is **not a separate actor type**. Any actor (Character, NPC, Object) can be bonded to a controller via a **Bond AE** — a non-transfer active effect applied to the bonded creature carrying `bondType`, `bondedTo` (UUID), and `sharedInitiative` in its changes. No schema field on any model. Reverse lookup (what is bonded TO me) uses AE queries.
 
-> Bond fields are listed in the **ActorSystemModelBase** field table above — they are not duplicated here.
+> Bond fields shown as `⛔` in the `ActorSystemModelBase` field table are confirmed **not stored** — they exist as a D35E migration note only.
 
-> **Key insight**: Bond is a mixin/wrapper, not a type. This eliminates the need for type conversion workflows. Applying a bond = setting one field. Removing a bond = clearing it. The actor's actual type (NPC, Character, Object) never changes.
->
-> **Stat derivation by bondType**: Handled in `prepareDerivedData()` when `bond !== null`. Familiars derive HP/BAB/saves from controller. Animal companions gain bonus HD/natural armor/STR/DEX from druid level. Others: no stat changes, bond is informational.
+> **No schema stub needed**: Bond design is deferred entirely. When the Bond/Companion feature is implemented, it reads/writes Bond AEs, not schema fields. The actor's actual type never changes.
 
 ---
 

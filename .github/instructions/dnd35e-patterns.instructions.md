@@ -236,6 +236,140 @@ CONFIG.dnd35e.item = ItemConfig;
 
 Registration order is not guaranteed. Multiple files populate the same CONFIG object.
 
+## DocumentEventEmitter — Per-Instance Lifecycle Event Bus
+
+Every system document carries a `readonly events: DocumentEventEmitter` instance. It is an **instance-scoped** pub/sub bus — each document has its own subscriber list, contrasting with global `Hooks.*` which fan out to all listeners for that event type.
+
+### API
+
+```ts
+// Subscribe — returns an unsubscribe function
+const off = item.events.on(PhysicalItem.LifeCycle.broken, ({ item, hp }) => {
+  console.log(`${item.name} became broken (hp: ${hp.current}/${hp.max})`);
+});
+off(); // unsubscribe
+
+// Subscribe once — auto-unsubscribes after first firing
+item.events.once(PhysicalItem.LifeCycle.repaired, (payload) => { ... });
+
+// Emit (from within the document class)
+void this.events.emit(PhysicalItem.LifeCycle.broken, { item: this, hp: { current, max } });
+```
+
+### LifeCycle Static Constants — Spread Inheritance
+
+Each class in the composition chain declares a `static readonly LifeCycle` object, extending parents via spread:
+
+```ts
+// Base (DocumentDnd35e):
+const DocumentLifeCycle = { created: 'created', destroyed: 'destroyed' } as const;
+
+// PhysicalItem extends base:
+static readonly LifeCycle = {
+  ...DocumentLifeCycle,
+  broken: 'broken',
+  repaired: 'repaired',
+} as const;
+
+// Weapon extends PhysicalItem:
+static override readonly LifeCycle = {
+  ...PhysicalItem.LifeCycle,
+  beforeAction: 'beforeAction',
+  afterAction: 'afterAction',
+  onHit: 'onHit',
+  onCrit: 'onCrit',
+} as const;
+```
+
+**Always use the constant** (`PhysicalItem.LifeCycle.broken`) not the raw string (`'broken'`) — TypeScript narrows the type and refactoring stays safe.
+
+### Timing Contracts
+
+| Event | When emitted | Why |
+|-------|-------------|-----|
+| `created` | Via `queueMicrotask` after `_onCreate` | Defers until the full `_onCreate` call stack (all super calls) has unwound — subscribers see a fully initialized document |
+| `destroyed` | **Before** `super._onDelete` | Subscribers can still access the document's collections while it's in-memory |
+
+After `destroyed` emits, `events.clear()` is called immediately — async handlers running from the snapshot still complete, but no new subscriptions can receive the event.
+
+### Memory Leak Prevention
+
+`events.clear()` is called automatically in `_onDelete`. If your subscriber holds a reference to the emitting document (common), you must either:
+1. Rely on `_onDelete` clearing (sufficient for most cases)
+2. Call `off()` explicitly in component teardown (for Vue stores / UI subscribers)
+
+### Scope: When to use `events` vs. global `Hooks`
+
+| Scenario | Use |
+|----------|-----|
+| "Any weapon became broken" | `Hooks.on('updateItem', ...)` |
+| "**This specific** weapon became broken" | `weapon.events.on(Weapon.LifeCycle.broken, ...)` |
+| Cross-document side effects (actor ← item) | `item.events.on(...)` subscribed by the owning actor |
+| System-wide tracking / analytics | `Hooks` |
+
+See `src/helpers/DocumentEventEmitter.mts` and `src/documents/document/DocumentDnd35e.mts`.
+
+---
+
+## System-Managed AE Flag + Toggle Semantics
+
+AEs created programmatically by system code are marked with `flags.dnd35e.systemManaged: true`. This flag governs **toggle-off behavior** — user-authored custom AEs must never be silently deleted.
+
+### The Convention
+
+```ts
+// Marking an AE as system-managed (at creation time):
+await item.createEmbeddedDocuments('ActiveEffect', [{
+  name: 'Masterwork Weapon Enhancement',
+  type: materialEffectType,
+  flags: { dnd35e: { materialSubtype: 'masterwork', systemManaged: true } },
+}]);
+
+// Detecting system-managed vs. custom:
+const isSystemManaged = effect.getFlag('dnd35e', 'systemManaged') === true;
+```
+
+### Toggle-Off Semantic: Delete System / Disable Custom
+
+When a toggle (e.g. `isMasterwork = false`) turns off a category of AEs:
+
+| AE type | Toggle OFF action | Rationale |
+|---------|------------------|-----------|
+| System-managed | **Delete** | System owns it; it will be re-created from compendium on next toggle-on |
+| Custom (user-created) | **Disable** | User data must not be destroyed; disabling stops the effect while preserving edits |
+
+```ts
+const systemManaged = masterworkAes.filter((ae) => isSystemManagedMasterworkAe(ae));
+const custom        = masterworkAes.filter((ae) => !isSystemManagedMasterworkAe(ae));
+
+// Delete system-managed
+if (systemManaged.length) {
+  await item.deleteEmbeddedDocuments('ActiveEffect', systemManaged.map((ae) => ae.id!));
+}
+// Disable custom
+const toDisable = custom.filter((ae) => !ae.disabled).map((ae) => ({ _id: ae.id, disabled: true }));
+if (toDisable.length) {
+  await item.updateEmbeddedDocuments('ActiveEffect', toDisable);
+}
+```
+
+### Toggle-On Semantic: Re-enable Existing / Create from Compendium
+
+```ts
+if (masterworkAes.length > 0) {
+  // Re-enable any disabled ones (system-managed or custom)
+  const toEnable = masterworkAes.filter((ae) => ae.disabled).map((ae) => ({ _id: ae.id, disabled: false }));
+  if (toEnable.length) await item.updateEmbeddedDocuments('ActiveEffect', toEnable);
+} else {
+  // No AEs of this type exist yet — create from compendium
+  await attachDefaultMasterworkAe(item, { enabled: true });
+}
+```
+
+This pattern applies to every system-managed AE category: Masterwork, Broken, and any future system AEs.
+
+---
+
 ## Field Permissions & Overrides
 
 See `dnd35e-field.instructions.md` for field override cascade, view-aware getters, and permission defaults.

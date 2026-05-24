@@ -130,6 +130,7 @@ If the spec exposed a complex pure function inside a class, **extract the functi
 | `material-single-per-type.spec.ts` | System setting toggling, validation surfaces |
 | `material-details-changes-tab.spec.ts` | Tab navigation, AE-changes assertions |
 | `secret-ae.spec.ts` | Active Effect lifecycle on items |
+| `broken-masterwork-sync.spec.ts` | Pre-seeding disabled AEs, `listMaterialAes` helper, sync-state assertions, `expect.poll` on `readWeaponSystem` |
 
 ## When You Get Stuck
 

@@ -33,7 +33,7 @@ A GM prepares a compendium of art objects for random treasure. When a player loo
 
 ### How It Works
 
-The `price` field on `PhysicalItemSystemModel` is a `PriceField` (not a `FormulaField`), so price itself doesn't support formulas directly. Instead, the item uses the **`_preCreate` formula resolution** that already exists on `Dnd35eDocumentMixin`:
+The `price` field on `PhysicalItemSystemModel` is a `CurrencyField` (not a `FormulaField`), so price itself doesn't support formulas directly. Instead, the item uses the **`_preCreate` formula resolution** that already exists on `Dnd35eDocumentMixin`:
 
 1. **Compendium source**: The art object's `system.price` is set to a placeholder value (e.g., `0 srd_gp`)
 2. **Price formula field**: Add a `priceFormula: FormulaField` to `PhysicalItemSystemModel` that holds a dice expression like `2d6 * 100`

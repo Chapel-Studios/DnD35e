@@ -38,7 +38,7 @@ Masking (showing players different values than stored) is handled entirely by th
 ```ts
 // Plain field — always the pattern
 schema.hardness = requiredNumberField(0);
-schema.price = new PriceField();          // special composite type
+schema.price = new CurrencyField();       // special composite type
 schema.nameFormula = new FormulaField();  // formula-specific type
 ```
 
@@ -63,7 +63,7 @@ Runtime GM overrides are stored in `flags.dnd35e.fieldOverrides` on the document
 The schema walker uses static markers on field constructors to control recursion:
 
 - `isFamiliarField = true` — compound leaf; schema walker exposes `.value` access path
-- `isFamiliarLeaf = true` — opaque leaf; no recursion (used by `PriceField`, `FormulaField`)
+- `isFamiliarLeaf = true` — opaque leaf; no recursion (used by `CurrencyField`, `FormulaField`)
 - No marker on a `SchemaField` → walker recurses into children
 - No marker on other field types → simple scalar leaf
 
@@ -380,11 +380,11 @@ src/settings/{domain}/
 
 Most settings are ported from the legacy system. Health, Roll, and Skills are scaffolded with types, constants, and UI but their registrations are commented out pending wiring to actual game mechanics.
 
-### Currency & PriceField — The Deep Dive
+### Currency & CurrencyField — The Deep Dive
 
-The currency system is the most architecturally significant settings domain because it introduces `PriceField` and `PriceData` — a new composite data type that flows through the entire AE pipeline.
+The currency system is the most architecturally significant settings domain because it introduces `CurrencyField` and `CurrencyData` — a new composite data type that flows through the entire AE pipeline.
 
-**PriceData** is a DataModel representing a price as a collection of coin stacks:
+**CurrencyData** is a DataModel representing a currency value as a collection of coin stacks:
 
 ```ts
 {
@@ -398,20 +398,20 @@ The currency system is the most architecturally significant settings domain beca
 
 `srdEquivalent` is recomputed from stacks on every `_initializeSource` using the world's current currency settings. If stacks reference coins that have been disabled in settings, the system reconsolidates using the stored `srdEquivalent` and the currently-enabled denominations. This means worlds can change their currency configuration without losing price data.
 
-**PriceField** extends `EmbeddedDataField<PriceData>` and adds full Active Effect change support:
+**CurrencyField** extends `EmbeddedDataField<CurrencyData>` and adds full Active Effect change support:
 
 | AE Mode | Behavior |
 |---------|----------|
 | **add** | Merge coin counts (add matching coins, append new) |
 | **subtract** | Reduce counts (remove stacks at zero) |
 | **multiply** | Multiply all counts by scalar |
-| **override** | Replace entire price |
+| **override** | Replace entire value |
 | **upgrade** | Per-coin, take the higher count |
 | **downgrade** | Per-coin, take the lower count |
 
-Delta casting accepts multiple formats: JSON arrays, `PriceData` instances, shorthand strings (`"5 srd_gp, 3 srd_sp"`), or raw numbers (treated as GP).
+Delta casting accepts multiple formats: JSON arrays, `CurrencyData` instances, shorthand strings (`"5 srd_gp, 3 srd_sp"`), or raw numbers (treated as GP).
 
-**Why this matters**: Material effects generate price modifier changes. A Mithral material might add `[{ coinId: 'srd_gp', count: 1000 }]` to a weapon's price. Because `PriceField` handles its own AE change modes, this works through the standard Foundry AE pipeline — no special-case code needed.
+**Why this matters**: Material effects generate price modifier changes. A Mithral material might add `[{ coinId: 'srd_gp', count: 1000 }]` to a weapon's price. Because `CurrencyField` handles its own AE change modes, this works through the standard Foundry AE pipeline — no special-case code needed.
 
 The **ItemPriceFormGroup** Vue component renders a multi-denomination coin editor in item sheets, reading from the world's currency settings to know which coins to display. It respects ViewMode semantics so play mode can display masked/effective values while true mode shows unmasked values for GMs.
 

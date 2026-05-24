@@ -1091,12 +1091,12 @@ PARALLEL WORK ZONES
 - `schemaWalker.mts`: `walkFields()` treats non-opted-out, non-SchemaField fields as simple leaves
 - Two static markers recognized on field constructors:
   - `isFamiliarField = true` → compound leaf with `.value` access path
-  - `isFamiliarLeaf = true` → opaque leaf, not recursed into (PriceField, FormulaField)
+  - `isFamiliarLeaf = true` → opaque leaf, not recursed into (CurrencyField, FormulaField)
 - Opt-out: `slug` field in `Dnd35eDocumentSystemModel` uses `familiar: { formulaVisible: false }`
 - Fields that already opt out: `nameFormula`, `description` (via `withFamiliar(..., { formulaVisible: false })`)
 
 **Opaque leaf fields** (handle their own inner structure):
-- **PriceField** — renders via `PriceData.toString()`; inner stacks/srdEquivalent hidden from walker
+- **CurrencyField** — renders via `CurrencyData.toString()`; inner stacks/srdEquivalent hidden from walker
 - **FormulaField** — the formula string is an implementation detail; future phases surface `resolvedValue`
 
 ---
