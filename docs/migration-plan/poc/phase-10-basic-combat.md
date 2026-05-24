@@ -1,6 +1,6 @@
 # POC Phase 10: Basic Combat
 
-**Status**: 📋 Planned
+**Status**: 📝 Planned
 
 > **Milestone**: POC  
 > **Dependencies**: poc.6, poc.7, poc.9  

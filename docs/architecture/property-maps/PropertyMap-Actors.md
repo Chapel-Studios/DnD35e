@@ -1,4 +1,4 @@
-﻿# 📘 Actor Architecture Reference (Work in Progress)
+# 📘 Actor Architecture Reference (Work in Progress)
 
 A unified reference for all actor type compositions, inheritance chains, and field assignments.
 

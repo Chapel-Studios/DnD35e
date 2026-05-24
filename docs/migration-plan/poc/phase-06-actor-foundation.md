@@ -1,4 +1,4 @@
-﻿# POC Phase 6: Actor Foundation
+# POC Phase 6: Actor Foundation
 
 **Status**: ✅ Approved (Actor schema, multiclass stacking, ability scores)
 
@@ -451,7 +451,7 @@ class DocumentEventEmitter {
 | `death` | `{ previousHp: number, currentHp: number, cause?: string, attackerId?: string, damage?: number }` | Actor HP drops to ≤ world death threshold | Draconian death throes, Rage ends, Contingency fires |
 | `revealSecret` | `{ secretAeId: string, field: string, previousValue: unknown, revealedValue: unknown }` | Secret AE is disabled (revealed) | Chat notification, journal updates, identification macro triggers |
 
-> `preUseAction`, `postUseAction`, `dealDamage`, and `UseActionContext` → **poc.9** (Basic Combat).
+> `preUseAction`, `postUseAction`, `dealDamage`, and `UseActionContext` → **poc.10** (Basic Combat).
 
 #### Item Events
 
