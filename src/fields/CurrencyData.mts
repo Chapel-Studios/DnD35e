@@ -1,4 +1,4 @@
-﻿/**
+/**
  * DataModel representing a price composed of coin stacks.
  *
  * When used with {@link CurrencyField} (an EmbeddedDataField), the prepared value
@@ -38,7 +38,7 @@ class CurrencyData extends DataModel {
    * with stale currency settings.
    *
    * - If every stack references an **enabled** coin in this world, recompute
-   *   `srdEquivalent` from the stacks (normal case â€” keeps the snapshot fresh).
+   *   `srdEquivalent` from the stacks (normal case — keeps the snapshot fresh).
    * - If **any** stack references a disabled or unknown coin, the stacks are
    *   stale.  Use the previously-stored `srdEquivalent` as the total GP value
    *   and reconsolidate into denominations the current world supports.
@@ -55,10 +55,10 @@ class CurrencyData extends DataModel {
     const allValid = stacks.length === 0 || stacks.every(s => enabledIds.has(s.coinId));
 
     if (allValid) {
-      // Normal path â€” recompute srdEquivalent from current stacks
+      // Normal path — recompute srdEquivalent from current stacks
       (source as any).srdEquivalent = CurrencyData.computeGpValue(stacks);
     } else {
-      // Stale stacks â€” reconsolidate using the stored srdEquivalent
+      // Stale stacks — reconsolidate using the stored srdEquivalent
       const storedGp = (source as any).srdEquivalent ?? CurrencyData.computeGpValue(stacks);
       (source as any).stacks = CurrencyData.consolidateFromGp(storedGp);
       (source as any).srdEquivalent = storedGp;
@@ -67,7 +67,7 @@ class CurrencyData extends DataModel {
     return source;
   }
 
-  // â”€â”€â”€ Currency Config Access â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Currency Config Access ─────────────────────────────────────────────────
 
   /** Retrieve the world's currency configuration from settings. */
   static getCurrencyConfig(): CurrencyConfig {
@@ -83,14 +83,14 @@ class CurrencyData extends DataModel {
     return this.getCurrencyConfig().coinages.filter(c => c.enabled);
   }
 
-  // â”€â”€â”€ Computed Properties â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Computed Properties ────────────────────────────────────────────────────
 
   /** Total value of this price expressed in gold pieces (live, from current settings). */
   get totalValueInGp(): number {
     return CurrencyData.computeGpValue(this.stacks);
   }
 
-  // â”€â”€â”€ Static Value Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Static Value Helpers ───────────────────────────────────────────────────
 
   /**
    * Compute the total GP value of a set of coin stacks using the current
@@ -112,7 +112,7 @@ class CurrencyData extends DataModel {
     return this.stacks.length === 0;
   }
 
-  // â”€â”€â”€ Manipulation Methods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Manipulation Methods ───────────────────────────────────────────────────
 
   /**
    * Consolidate into the fewest coins possible, targeting the
@@ -125,7 +125,7 @@ class CurrencyData extends DataModel {
    * Coins marked {@link CoinageDefinition.excludeFromRollUp | excludeFromRollUp}
    * are not used as output denominations.
    *
-   * Does **not** mutate this instance â€” returns a new stacks array suitable
+   * Does **not** mutate this instance — returns a new stacks array suitable
    * for passing to a field updater or `updateSource`.
    */
   consolidate(): CoinStack[] {
@@ -187,7 +187,7 @@ class CurrencyData extends DataModel {
       });
   }
 
-  // â”€â”€â”€ Static Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Static Helpers ─────────────────────────────────────────────────────────
 
   /**
    * Build a complete {@link PriceSource} from stacks, pre-computing
@@ -202,7 +202,7 @@ class CurrencyData extends DataModel {
 
   /**
    * Merge two sets of stacks by coinId, summing counts.
-   * Returns a new array â€” does not mutate inputs.
+   * Returns a new array — does not mutate inputs.
    */
   static mergeStacks(a: CoinStack[], b: CoinStack[]): CoinStack[] {
     const map = new Map<string, number>();

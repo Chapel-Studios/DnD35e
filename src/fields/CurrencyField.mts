@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Custom EmbeddedDataField for Price objects.
  *
  * Provides Active Effect change modes that operate on coin stacks by coinId:
@@ -28,7 +28,7 @@ class CurrencyField extends EmbeddedDataField {
     super(CurrencyData, options);
   }
 
-  // â”€â”€â”€ Delta Casting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Delta Casting ──────────────────────────────────────────────────────────
 
   /**
    * Cast an AE change value into a CoinStack array (the delta).
@@ -39,7 +39,7 @@ class CurrencyField extends EmbeddedDataField {
    * - Object with `.stacks` `CoinStack[]` array
    * - JSON string encoding any of the above
    * - Shorthand string: `"5 srd_gp, 3 srd_sp"`
-   * - Number: treated as srd_gp count (e.g., `5` â†’ `[{ coinId: 'srd_gp', count: 5 }]`)
+   * - Number: treated as srd_gp count (e.g., `5` → `[{ coinId: 'srd_gp', count: 5 }]`)
    */
   override _castChangeDelta(raw: unknown, replacementData: Record<string, unknown> = {}): CoinStack[] {
     // Already a stacks array
@@ -73,7 +73,7 @@ class CurrencyField extends EmbeddedDataField {
           return [{ coinId: String(parsed.coinId), count: Number(parsed.count) }];
         }
       } catch {
-        // Not JSON â€” try shorthand
+        // Not JSON — try shorthand
       }
 
       return CurrencyField.parseShorthand(resolved);
@@ -93,7 +93,7 @@ class CurrencyField extends EmbeddedDataField {
     }, []);
   }
 
-  // â”€â”€â”€ Change Modes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Change Modes ───────────────────────────────────────────────────────────
 
   /** Wrap stacks in a source object with an up-to-date srdEquivalent. */
   static #withGpValue(stacks: CoinStack[]): { stacks: CoinStack[]; srdEquivalent: number } {
@@ -112,7 +112,7 @@ class CurrencyField extends EmbeddedDataField {
   /**
    * Subtract: remove the delta's GP value from the current price, then
    * reconstruct stacks that mirror the original denominations as closely as
-   * possible â€” "making change" when a denomination must be broken.
+   * possible — "making change" when a denomination must be broken.
    *
    * Algorithm:
    * 1. Compute GP totals for current stacks and the delta.
