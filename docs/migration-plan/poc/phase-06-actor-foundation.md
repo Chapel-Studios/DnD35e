@@ -498,7 +498,7 @@ A separate **"Monsters die at 0"** world toggle makes NPC actors without class l
 
 **Phase 6 — Remaining:**
 - [ ] Add static `wellKnownEvents` registry + `registerEventType()` to `DocumentEventEmitter`
-- [ ] Register well-known domain events at system init: `takeDamage`, `dying`, `death`, `destroyed`, `revealSecret` (`preUseAction`/`postUseAction`/`dealDamage` registered in poc.9)
+- [ ] Register well-known domain events at system init: `takeDamage`, `dying`, `death`, `destroyed`, `revealSecret` (`preUseAction`/`postUseAction`/`dealDamage` registered in poc.10)
 - [ ] Define typed payload interfaces: `TakeDamagePayload`, `DeathPayload`, `DyingPayload`, `DestroyedPayload`, `RevealSecretPayload`
 - [ ] Implement `takeDamage → dying → death` cascade in actor damage application method
 - [ ] Implement world setting: death threshold mode (`−10` flat / `−CON score`)

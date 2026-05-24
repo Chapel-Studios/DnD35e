@@ -1,6 +1,6 @@
 # POC Phase 9: Basic Tokens
 
-**Status**: ⚪ Planned
+**Status**: 📝 Planned
 
 > **Milestone**: POC  
 > **Dependencies**: poc.6  
