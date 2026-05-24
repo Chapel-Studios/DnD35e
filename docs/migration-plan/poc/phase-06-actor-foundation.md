@@ -74,11 +74,12 @@ Stories 2 and 3 are independent of each other and can be worked in parallel afte
 **Depends on**: nothing — first story.
 
 **Commits:**
-1. **Schema hierarchy + registration** — `ActorSystemModelBase`, `CreatureSystemModel`, `CharacterSystemModel` (full), `NpcSystemModel` / `ObjectSystemModel` / `TrapSystemModel` (stubs). Register `CharacterSystemModel` in `registration.mts`. *(Unit tests: schema instantiates with defaults, `persisted:false` fields reset on prep cycle)*
-2. **Domain event wiring** — `DocumentEventEmitter` and `events` on all documents are already implemented (Phase 5). This commit: add `wellKnownEvents` static registry + `registerEventType()`; define typed payload interfaces for all domain events (`TakeDamagePayload`, `DeathPayload`, `DyingPayload`, etc.). *(Unit tests: on/off/once/emit/clear; failing callback doesn't block others)*
-3. **VueActorSheet + sheet scaffolding** — `VueActorSheet.mts` base class, `CharacterSheet.mts` + `CharacterSheet.vue` with tab bar (Abilities | Inventory | Features | Effects | Biography), widen `VueDocumentSheetMixin` generic to accept `ActorDnd35e`. *(Unit tests: sheet mounts without errors)*
-4. **Abilities tab** — 6 `NumberFormGroup`s (editable base score), derived modifier display (read-only). All labels via i18n. `abilities.json` + `actors.json`. *(Unit tests: mod formula edge cases — score 1 → −5, score 20 → +5)*
-5. **Biography tab** — Rich-text editor or plain textarea for biography/notes fields.
+1. ✅ **Schema hierarchy + registration** — `ActorSystemModelBase`, `CreatureSystemModel`, `CharacterSystemModel` (full), `NpcSystemModel` / `ObjectSystemModel` / `TrapSystemModel` (stubs). Register `CharacterSystemModel` in `registration.mts`. *(Unit tests: schema instantiates with defaults, `persisted:false` fields reset on prep cycle)*
+2. ✅ **Domain event wiring** — `DocumentEventEmitter` and `events` on all documents are already implemented (Phase 5). This commit: add `wellKnownEvents` static registry + `registerEventType()`; define typed payload interfaces for all domain events (`TakeDamagePayload`, `DeathPayload`, `DyingPayload`, etc.). *(Unit tests: on/off/once/emit/clear; failing callback doesn't block others)*
+3. ✅ **VueActorSheet + sheet scaffolding** — `VueActorSheet.mts` base class, `CharacterSheet.mts` + `CharacterSheet.vue` with tab bar (Abilities | Inventory | Features | Effects | Biography), widen `VueDocumentSheetMixin` generic to accept `ActorDnd35e`. *(Unit tests: sheet mounts without errors)*
+4. ✅ **Abilities tab** — 6 `NumberFormGroup`s (editable base score), derived modifier display (read-only). All labels via i18n. `abilities.json` + `actors.json`. *(Unit tests: mod formula edge cases — score 1 → −5, score 20 → +5)*
+   - _Includes fix: `getSchemaField` was using private `_getField` with un-reversed path; now uses public `getField()`. Also: `persisted` is a direct runtime property on `DataField`, not nested in `options`._
+5. [ ] **Biography tab** — Rich-text editor or plain textarea for biography/notes fields.
 
 **E2E acceptance**: Create character actor → open sheet → Abilities tab visible → edit STR from 10 to 14 → modifier updates to `+2`.
 
@@ -247,7 +248,7 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 **Actor Data Model & Schema Structure (Group G hierarchy — build all layers now):**
 - [ ] Create `src/documents/actors/baseActor/data/ActorSystemModelBase.mts` — universal base (`ActorSystemModelBase`): speed fields (land/climb/swim/burrow/fly each with base + total `persisted:false`), biography, notes
 - [ ] Create `src/documents/actors/baseActor/data/CreatureSystemModel.mts` — `CreatureSystemModel extends ActorSystemModelBase`: all creature-shared stats
-  - [ ] Abilities: str, dex, con, int, wis, cha each with `base: number` + `mod: number (persisted:false)`
+  - [x] Abilities: str, dex, con, int, wis, cha each with `base: number` + `mod: number (persisted:false)`
   - [ ] `hp`: `base, max (persisted:false), current, temp, nonlethal`
   - [ ] `bab`: `total (persisted:false, derived as 0; alpha.2 fills class progression)`
   - [ ] `ac`: `normal, touch, flatFooted` all `persisted:false` — start at `10 + DEX mod + size`
@@ -267,7 +268,7 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 
 **Derived Data Preparation Pipeline:**
 - [ ] Implement `prepareBaseData()`: Load ability scores, level, size from source
-- [ ] Implement ability modifier calculation: `mod = floor((ability - 10) / 2)` for all six
+- [x] Implement ability modifier calculation: `mod = floor((ability - 10) / 2)` for all six
 - [ ] Implement AC calculation for all three variants: normal (10 + DEX), touch (10 + DEX), flatFooted (10 or less if no DEX)
 - [ ] Implement AC size modifier: add `actor.system.size` modifier to all AC variants
 - [ ] Implement carrying capacity from STR score using D&D 3.5e encumbrance table
@@ -321,7 +322,7 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 **Actor Sheet Vue Component:**
 - [ ] Create `src/vue/components/sheets/ActorSheetDnd35e.vue` extending `.vue` with tabs array
 - [ ] Implement tab structure: `[Abilities, Inventory, Features, Effects, Biography]` with router-like tab state
-- [ ] **Abilities Tab**: Render all 6 abilities with ability name, base score (editable NumberFormGroup), derived modifier display
+- [x] **Abilities Tab**: Render all 6 abilities with ability name, base score (editable NumberFormGroup), derived modifier display
 - [ ] **Inventory Tab**: Group items by type (Weapons, Equipment, Consumables, Loot), equip toggle checkbox per item, weight/price column, total weight display
 - [ ] **Features Tab**: Placeholder for feats/traits/class features (styling only, data implementation deferred to Phase 10)
 - [ ] **Effects Tab**: List active effects, show effect name, enabled toggle, delete button (use Phase 2's AE component if available)
@@ -329,7 +330,7 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 - [ ] Pull all labels from i18n keys: abilities.str, abilities.dex, etc., actors.tabs.abilities, actors.tabs.inventory
 - [ ] Add drag-and-drop support for items into inventory tab (accept drops from compendium or sidebar)
 - [ ] Implement form binding to ActorSystemModel fields and update() call on change
-- [ ] Test: All ability scores display and can be edited
+- [x] Test: All ability scores display and can be edited
 - [ ] Test: Inventory tab updates when items added/removed
 - [ ] Test: AE list updates when effects enabled/disabled
 
@@ -342,7 +343,7 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 - [ ] Document pattern for next phases to follow
 
 **Localization & i18n:**
-- [ ] Add i18n keys for all ability names: dnd35e.abilities.str, .dex, .con, .int, .wis, .cha
+- [x] Add i18n keys for all ability names: dnd35e.abilities.str, .dex, .con, .int, .wis, .cha
 - [ ] Add i18n keys for all attribute names: dnd35e.attributes.hp, .ac, .init, .bab
 - [ ] Add i18n keys for save names: dnd35e.saves.fort, .ref, .will
 - [ ] Add i18n keys for actor sheet tabs

@@ -5,6 +5,7 @@ import { derivedNumberField, requiredBooleanField, requiredTypedStringField } fr
 import type { CharacterSystemData } from './CharacterSystemData.mjs';
 
 const {
+  HTMLField,
   SchemaField,
   NumberField,
   StringField,
@@ -40,6 +41,8 @@ class CharacterSystemModel extends CreatureSystemModel {
     schema.size = requiredTypedStringField(SIZES, 'medium');
 
     schema.isPartyMember = requiredBooleanField(false);
+
+    schema.notes = new HTMLField({ required: false, nullable: false, blank: true });
 
     return schema;
   }

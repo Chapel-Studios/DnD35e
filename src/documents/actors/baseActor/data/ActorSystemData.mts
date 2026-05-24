@@ -16,9 +16,7 @@ type SpeedDataOf<TEntry extends SpeedEntrySource> = {
   fly: TEntry;
 };
 
-interface ActorSystemSourceProperties extends DocumentSystemData {
-  notes: string;
-}
+interface ActorSystemSourceProperties extends DocumentSystemData {}
 
 interface ActorSystemSource extends ActorSystemSourceProperties {
   speed: SpeedDataOf<SpeedEntrySource>;

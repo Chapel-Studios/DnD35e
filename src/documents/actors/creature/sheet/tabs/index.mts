@@ -1,7 +1,7 @@
 import type { SheetTab } from '@documents/document/index.mjs';
 
 import AbilitiesTab from './AbilitiesTab.vue';
-import BiographyTab from './BiographyTab.vue';
+import CharacterDescriptionTab from './CharacterDescriptionTab.vue';
 import FeaturesTab from './FeaturesTab.vue';
 import InventoryTab from './InventoryTab.vue';
 
@@ -29,12 +29,12 @@ const featuresTab: SheetTab = {
   icon: 'fas fa-star',
 };
 
-const biographyTab: SheetTab = {
-  id: 'biography',
-  label: 'dnd35e.ACTOR.tab.Biography',
-  component: BiographyTab,
+const notesTab: SheetTab = {
+  id: 'notes',
+  label: 'dnd35e.ACTOR.tab.Notes',
+  component: CharacterDescriptionTab,
   order: 50,
   icon: 'fas fa-book-open',
 };
 
-export { abilitiesTab, biographyTab, featuresTab, inventoryTab };
+export { abilitiesTab, featuresTab, inventoryTab, notesTab };

@@ -9,7 +9,13 @@
         "Inventory": "Inventory",
         "Features": "Features",
         "Effects": "Effects",
-        "Biography": "Biography"
+        "Notes": "Notes"
+      },
+      "field": {
+        "Biography": "Biography",
+        "BiographyPlaceholder": "Character biography, backstory, appearance, personality...",
+        "SessionNotes": "Session Notes",
+        "SessionNotesPlaceholder": "Notes from recent sessions, reminders, loose ends..."
       }
     }
   }

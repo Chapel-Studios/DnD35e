@@ -19,6 +19,7 @@ interface CharacterSystemSourceProperties {
   alignment: AlignmentData;
   size: Size;
   isPartyMember: boolean;
+  notes: string;
 }
 
 interface CharacterSystemSource extends CharacterSystemSourceProperties, CreatureSystemSource {}

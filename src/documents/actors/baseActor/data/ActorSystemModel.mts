@@ -4,7 +4,6 @@ import { derivedNumberField, requiredNumberField } from '@fields/fieldBuilders.m
 import type { ActorSystemData } from './ActorSystemData.mjs';
 
 const {
-  HTMLField,
   SchemaField,
 } = foundry.data.fields;
 
@@ -24,8 +23,6 @@ abstract class ActorSystemModel extends DocumentSystemModel<foundry.documents.Ac
       burrow: speedEntry(),
       fly:    speedEntry(),
     });
-
-    schema.notes = new HTMLField({ required: false, nullable: false, blank: true });
 
     return schema;
   }
