@@ -4,9 +4,9 @@
 
 > **Milestone**: POC  
 > **Dependencies**: Phase 1, Phase 3  
-> **Goal**: A character actor has ability scores, BAB, HP, flat AC, saves, speed, size, and an inventory with equipped weapon tracking. All stats are stored as formula-ready fields that Phase 8 (Action System) consumes via `#self.*` contexts.
+> **Goal**: A character actor has ability scores, BAB, HP, flat AC, saves, speed, size, and an inventory with equipped weapon tracking. All stats are stored as formula-ready fields that poc.10 (Basic Combat) and alpha.3 (Action System) consume via `#self.*` contexts.
 
-> **Action System note**: Phase 8 action formulas reference actor stats via `#self.*` contexts — e.g., `#self.abilities.str.mod`, `#self.bab`, `#self.ac.*`, `#self.saves.*`. These are **derived** fields (`persisted: false`): `str.mod` is calculated from base score, `bab` derives from class progressions (alpha.2; resolves to `0` until then), and `attributes.ac.*` is computed from DEX + size + bonuses. Base score fields are stored; derived stats are computed each prep cycle.
+> **Action System note**: poc.10 and alpha.3 action formulas reference actor stats via `#self.*` contexts — e.g., `#self.abilities.str.mod`, `#self.bab`, `#self.ac.*`, `#self.saves.*`. These are **derived** fields (`persisted: false`): `str.mod` is calculated from base score, `bab` derives from class progressions (alpha.2; resolves to `0` until then), and `attributes.ac.*` is computed from DEX + size + bonuses. Base score fields are stored; derived stats are computed each prep cycle.
 
 ---
 
@@ -33,7 +33,7 @@ The following TODO notes exist in the codebase and are tracked here for resoluti
 - [ ] **Update `actorTypes.mts` placeholder** (`actorTypes.mts:1`): Currently only defines `'character'` with a TODO to add actual actor types. Phase 6 adds the character shell; Phase 23 adds NPC/Trap/Object. At minimum, verify the placeholder is sufficient for Phase 6's character-only scope, and add a forward reference to Phase 23 for expansion.
 - [ ] **Equipment slot 'none' sentinel cleanup** (`equipmentSlots.mts:20`): The `'none'` option in `EQUIP_SLOT_SELECT_OPTIONS` is flagged as redundant for multiselect. When this phase implements equipment slot UI and validation, resolve whether `equippedSlotIds` should become a single-select nullable field (replace `'none'` with `value: null`) or remain multiselect (remove the `'none'` option entirely).
 - [ ] **Container dropdown in PhysicalItemStore** (`PhysicalItemStore.mts:64`): `possibleContainers` computed returns only `[None]` with a TODO to build out after implementing containers. Wire this to query the parent actor's items for container-type items once the container model (§C2) is implemented.
-- [ ] **FormulaFamiliar derived field support**: FormulaFamiliar's schema walker builds autocomplete from static `DataModel` schema definitions. Verify that `persisted: false` fields (ability mods, BAB, AC totals, save totals) are included in walker output — they are declared in `defineSchema()` but their runtime values only exist after `prepareDerivedData()` runs. If the walker skips them, either extend the walker to include runtime-derived fields or ensure `_buildFormulaContexts()` registers them separately as formula-visible properties. **Must be resolved before Phase 8 ships formula authoring UI.**
+- [ ] **FormulaFamiliar derived field support**: FormulaFamiliar's schema walker builds autocomplete from static `DataModel` schema definitions. Verify that `persisted: false` fields (ability mods, BAB, AC totals, save totals) are included in walker output — they are declared in `defineSchema()` but their runtime values only exist after `prepareDerivedData()` runs. If the walker skips them, either extend the walker to include runtime-derived fields or ensure `_buildFormulaContexts()` registers them separately as formula-visible properties. **Must be resolved before alpha.3 ships formula authoring UI** (poc.10 attack formulas also depend on this).
 
 ---
 
@@ -259,12 +259,12 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 - [ ] Call `applyActiveEffects()` during `prepareDerivedData()` prep cycle
 - [ ] Test: Prep cycle completes without errors for fresh actor
 
-**Formula-Ready Field Preparation for Phase 8:**
+**Formula-Ready Field Preparation for poc.10 / alpha.3:**
 - [ ] Call `_buildFormulaContexts()` (from Dnd35eDocumentMixin) in `prepareDerivedData()` to populate `#self.*` contexts
 - [ ] Verify RollData includes: abilities, ability modifiers, bab, ac variants, saves, speed, size, initiative, hp
 - [ ] Ensure `getRollData()` returns POJO with all formula-ready paths (e.g., `abilities.str.mod`, `bab`, `ac.normal`)
 - [ ] Register formula contexts in Pinia store for IDE autocomplete hints
-- [ ] Document all formula paths available via `#self.*` that Phase 8 actions will consume
+- [ ] Document all formula paths available via `#self.*` that poc.10 and alpha.3 actions will consume
 - [ ] Test: `getRollData()` returns complete object with no undefined fields
 
 **Active Effect Integration (Stacking Engine):**
