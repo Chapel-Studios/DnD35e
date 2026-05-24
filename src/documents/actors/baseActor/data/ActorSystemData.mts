@@ -1,12 +1,38 @@
 import type { DocumentSystemData } from '@documents/document/index.mjs';
 
-interface ActorSystemSource extends DocumentSystemData {
-
+interface SpeedEntrySource {
+  base: number;
 }
 
-type ActorSystemData = ActorSystemSource;
+interface SpeedEntryData extends SpeedEntrySource {
+  total: number;
+}
+
+type SpeedDataOf<TEntry extends SpeedEntrySource> = {
+  land: TEntry;
+  climb: TEntry;
+  swim: TEntry;
+  burrow: TEntry;
+  fly: TEntry;
+};
+
+interface ActorSystemSourceProperties extends DocumentSystemData {
+  notes: string;
+}
+
+interface ActorSystemSource extends ActorSystemSourceProperties {
+  speed: SpeedDataOf<SpeedEntrySource>;
+}
+
+interface ActorSystemData extends ActorSystemSourceProperties {
+  speed: SpeedDataOf<SpeedEntryData>;
+}
 
 export type {
   ActorSystemData,
   ActorSystemSource,
+  ActorSystemSourceProperties,
+  SpeedDataOf,
+  SpeedEntryData,
+  SpeedEntrySource,
 };

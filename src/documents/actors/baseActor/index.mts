@@ -1,4 +1,4 @@
-import { ActorDnd35e } from './ActorDnd35e.mjs';
+import { ActorDnd35e, ActorProxyDnd35e } from './ActorDnd35e.mjs';
 import type {
   ActorSystemData,
   ActorSystemSource,
@@ -9,6 +9,7 @@ import {
 
 export {
   ActorDnd35e,
+  ActorProxyDnd35e,
   ActorSystemModel,
 };
 
