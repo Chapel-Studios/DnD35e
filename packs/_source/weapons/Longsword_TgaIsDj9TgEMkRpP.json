@@ -1,0 +1,71 @@
+{
+  "name": "Longsword",
+  "type": "weapon",
+  "_id": "TgaIsDj9TgEMkRpP",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Longsword",
+      "expectedType": "string",
+      "resolvedValue": "Longsword"
+    },
+    "description": "",
+    "isPsionic": false,
+    "isEpic": false,
+    "hp": {
+      "current": 0,
+      "max": 0
+    },
+    "hardness": 0,
+    "quantity": 0,
+    "weight": 0,
+    "isCarried": true,
+    "size": "tiny",
+    "price": {
+      "stacks": [],
+      "srdEquivalent": 0
+    },
+    "isEquipped": false,
+    "equippedSlotIds": [],
+    "isMelded": false,
+    "designedForSize": "medium",
+    "isWeightlessWhenEquipped": false,
+    "isBaseWeaponType": false,
+    "weaponType": "simple",
+    "weaponSubtype": "light",
+    "weaponBaseType": "",
+    "weaponDamage": {
+      "damageRoll": "",
+      "damageType": "dnd35e.DAMAGE_TYPES.Slashing",
+      "critRange": "20",
+      "critMultiplier": 2,
+      "rangeIncrement": null
+    },
+    "attackNotes": "",
+    "damageNotes": "",
+    "noAmmoRequired": false
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "mBlpD72i6u17h1qm": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1779589406115,
+    "modifiedTime": 1779589406118,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!TgaIsDj9TgEMkRpP"
+}

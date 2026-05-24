@@ -3,6 +3,7 @@
     "COMPENDIUM": {
       "PACK": {
         "Materials": "Materials",
+        "Weapons": "Weapons",
         "MacrosDev": "Developer Macros",
         "Documentation": "Documentation"
       }

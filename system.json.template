@@ -47,6 +47,16 @@
       "type": "JournalEntry"
     },
     {
+      "name": "weapons",
+      "label": "dnd35e.COMPENDIUM.PACK.Weapons",
+      "type": "Item",
+      "flags": {
+        "dnd35e": {
+          "indexFields": ["system.weaponType", "system.weaponSubtype", "system.weaponBaseType"]
+        }
+      }
+    },
+    {
       "name": "macros-dev",
       "label": "dnd35e.COMPENDIUM.PACK.MacrosDev",
       "type": "Macro",
@@ -57,7 +67,7 @@
     {
       "name": "Content",
       "sorting": "a",
-      "packs": ["materials", "documentation"]
+      "packs": ["materials", "weapons", "documentation"]
     }
   ],
   "documentTypes": {
