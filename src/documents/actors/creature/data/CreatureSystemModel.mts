@@ -1,4 +1,4 @@
-import { ActorSystemModel } from '@actors/baseActor/index.mjs';
+import { ActorSystemModel } from '@actors/baseActor/data/index.mjs';
 import { CurrencyField } from '@fields/CurrencyField.mjs';
 import {
   derivedNumberField,
@@ -17,6 +17,13 @@ const abilityEntry = () => new SchemaField({
 });
 
 abstract class CreatureSystemModel extends ActorSystemModel {
+  override prepareDerivedData(): void {
+    super.prepareDerivedData();
+    for (const ability of Object.values(this.abilities)) {
+      ability.mod = Math.floor((ability.base - 10) / 2);
+    }
+  }
+
   static override defineSchema(): Record<string, any> {
     const schema = super.defineSchema();
 

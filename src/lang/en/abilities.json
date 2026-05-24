@@ -1,0 +1,12 @@
+{
+  "dnd35e": {
+    "ABILITY": {
+      "str": { "label": "Strength",     "abbr": "STR" },
+      "dex": { "label": "Dexterity",    "abbr": "DEX" },
+      "con": { "label": "Constitution", "abbr": "CON" },
+      "int": { "label": "Intelligence", "abbr": "INT" },
+      "wis": { "label": "Wisdom",       "abbr": "WIS" },
+      "cha": { "label": "Charisma",     "abbr": "CHA" }
+    }
+  }
+}

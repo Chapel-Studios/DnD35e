@@ -279,7 +279,13 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       }
     }
 
-    const useSource = plan.readMode === 'source';
+    // persisted:false fields (computed/derived values) have no _source entry.
+    // They are always read from live derived data regardless of view mode —
+    // there is no "source" version of a derived value to show.
+    const schemaField = getSchemaField(document.value, fieldPath);
+    const isDerived = schemaField?.options?.persisted === false;
+
+    const useSource = !isDerived && plan.readMode === 'source';
     const usableFieldPath = useSource ? `_source.${fieldPath}` : `${fieldPath}`;
     const viewValue = foundry.utils.getProperty(document.value, usableFieldPath) as T | undefined;
 
