@@ -1,7 +1,7 @@
 import type { EquipSlot } from '@constants/equipmentSlots.mjs';
 import { SIZES } from '@constants/sizes.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
-import { requiredBooleanField, useDnd35eField } from '@fields/fieldBuilders.mjs';
+import { derivedBooleanField, requiredBooleanField, useDnd35eField } from '@fields/fieldBuilders.mjs';
 import { PhysicalItemSystemModel } from '@items/physical/physicalItem/data/PhysicalItemSystemModel.mjs';
 
 import type { EquippableItemSystemData } from './EquippableItemSystemData.mjs';
@@ -27,6 +27,9 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
     schema.isMelded = requiredBooleanField(false);
     schema.designedForSize = useDnd35eField(new StringField({ choices: SIZES, initial: 'medium', required: true }));
     schema.isWeightlessWhenEquipped = requiredBooleanField(false);
+
+    // Derived fields (persisted: false) — initialized each cycle, never saved to DB.
+    schema.isMasterwork = derivedBooleanField(false);
 
     return schema;
   }

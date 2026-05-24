@@ -39,6 +39,14 @@ export interface DataFieldOptions<
     /** Can this field only be modified by a gamemaster or assistant gamemaster? */
     gmOnly?: boolean;
 
+    /**
+     * Is a value of this field written to source data? When false, the field is initialized
+     * from its `initial` value each prep cycle and ActiveEffects can apply changes to it,
+     * but it is never saved to the database.
+     * @default true
+     */
+    persisted?: boolean;
+
     /** The initial value of a field, or a function which assigns that initial value. */
     initial?: THasInitial extends true
         ?

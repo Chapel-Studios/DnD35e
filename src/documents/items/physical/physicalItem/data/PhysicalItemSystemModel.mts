@@ -1,19 +1,21 @@
 import { SIZES } from '@constants/sizes.mjs';
 import { IdentifiableSchemaMixin } from '@documents/identifiable/data/index.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
+import { CurrencyField } from '@fields/CurrencyField.mjs';
 import {
+  derivedBooleanField,
+  derivedNumberField,
   optionalNumberField,
   optionalStringField,
   requiredNumberField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
-import { PriceField } from '@fields/PriceField.mjs';
 import { SectionField } from '@fields/SectionField.mjs';
 import { ItemSystemModel } from '@items/baseItem/data/index.mjs';
 
 import type { PhysicalItemSystemData } from './PhysicalItemSystemData.mjs';
 
-const { fields: { StringField } } = foundry.data;
+const { fields: { ArrayField, StringField } } = foundry.data;
 
 /** Pre-composed: ItemSystemModel + identifiable schema fields. */
 const IdentifiableItemSystemModel = IdentifiableSchemaMixin(ItemSystemModel);
@@ -41,9 +43,17 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     // schema.isWeightlessWhenCarried = requiredBooleanField(false);
     schema.isCarried = new foundry.data.fields.BooleanField({ initial: true, required: true });
     schema.size = useDnd35eField(new StringField({ choices: SIZES, initial: 'tiny', required: true }));
-    // Price - EmbeddedDataField wrapping PriceData with coin stacks
-    schema.price = useDnd35eField(new PriceField({}));
-    // isBroken is derived in prepareDerivedData — not stored in schema
+    // Price - EmbeddedDataField wrapping CurrencyData with coin stacks
+    schema.price = useDnd35eField(new CurrencyField({}));
+    // Derived fields (persisted: false) — initialized each cycle, never saved to DB.
+    // FormulaFamiliar and AE targeting both rely on these being in the schema.
+    schema.effectiveWeight = derivedNumberField(0);
+    schema.isBroken = derivedBooleanField(false);
+    schema.magicEquivalency = derivedNumberField(0);
+    schema.damageReductionTypes = new ArrayField(
+      new StringField({ required: true }),
+      { initial: [], persisted: false }
+    );
 
     // Container
     schema.containerId = optionalStringField();
@@ -57,9 +67,7 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     if (!this.parent?.parent) {
       this.isCarried = false;
     }
-    this.magicEquivalency = this.magicEquivalency ?? 0;
-    this.damageReductionTypes = this.damageReductionTypes ?? [];
-    // isBroken: derived from active broken material AEs — not stored field.
+    // isBroken: derived from active broken material AEs — persisted:false schema field.
     // HP changes trigger AE sync; the AE drives this flag.
     const effects = (this.parent as unknown as { effects?: Iterable<unknown> } | null)?.effects;
     const effectList = effects ? [...effects] : [];

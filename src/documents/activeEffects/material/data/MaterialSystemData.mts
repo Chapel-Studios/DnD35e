@@ -1,5 +1,5 @@
 import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e, EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
-import type { PriceData } from '@fields/PriceData.mjs';
+import type { CurrencyData } from '@fields/CurrencyData.mjs';
 import type { Price, PriceSource } from '@settings/index.mjs';
 
 import type { MaterialSubtype } from './materialTypes.mjs';
@@ -22,7 +22,7 @@ interface MaterialSystemSource extends MaterialSystemStats, ActiveEffectSystemSo
 }
 
 interface MaterialSystemData extends MaterialSystemStats, ActiveEffectSystemData {
-  price: PriceData;
+  price: CurrencyData;
 }
 
 export type {

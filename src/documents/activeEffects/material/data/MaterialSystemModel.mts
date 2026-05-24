@@ -1,8 +1,8 @@
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { ActiveEffectSystemModel } from '@effects/baseActiveEffect/data/ActiveEffectSystemModel.mjs';
 import type { MaterialSystemData } from '@effects/material/index.mjs';
+import { CurrencyField } from '@fields/CurrencyField.mjs';
 import { requiredNumberField, useDnd35eField } from '@fields/fieldBuilders.mjs';
-import { PriceField } from '@fields/PriceField.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { TargetContexts } from '@helpers/formulae/registry.mjs';
 
@@ -24,7 +24,7 @@ class MaterialSystemModel extends ActiveEffectSystemModel {
       { contextName: 'Item', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['Parent'] },
     ];
 
-    schema.price = useDnd35eField(new PriceField({}));
+    schema.price = useDnd35eField(new CurrencyField({}));
     schema.magicEquivalency = useDnd35eField(requiredNumberField(0));
     schema.hardness = useDnd35eField(requiredNumberField(0));
     schema.bonusHp = useDnd35eField(requiredNumberField(0));

@@ -6,7 +6,7 @@ import { getDefaultActiveEffectTabs } from '@effects/baseActiveEffect/sheet/tabs
 import type { MaterialSubtype } from '@effects/material/data/index.mjs';
 import type { MaterialType } from '@effects/material/Material.mjs';
 import { Material } from '@effects/material/Material.mjs';
-import { PriceData } from '@fields/PriceData.mjs';
+import { CurrencyData } from '@fields/CurrencyData.mjs';
 import { GAME_RULES_KEYS } from '@settings/gameRules/constants.mjs';
 import type { DamageReductionTypesConfig } from '@settings/gameRules/types.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -33,7 +33,7 @@ const useMaterialStore = (context: VueApplicationContext<Material>): MaterialSto
 
   const documentGetters: MaterialGetters = {
     ...baseStore.documentGetters,
-    price: computed(() => getViewAwareFieldValue('system.price') || new PriceData({})),
+    price: computed(() => getViewAwareFieldValue('system.price') || new CurrencyData({})),
     hardness: computed(() => getViewAwareFieldValue('system.hardness') ?? 0),
     bonusHp: computed(() => getViewAwareFieldValue('system.bonusHp') ?? 0),
     materialSubtype: computed(() => getViewAwareFieldValue<MaterialSubtype>('system.materialSubtype') ?? 'standard'),
@@ -68,7 +68,7 @@ const useMaterialStore = (context: VueApplicationContext<Material>): MaterialSto
 
 interface MaterialGetters extends ActiveEffectConfigStoreDocumentGetters
 {
-  price: ComputedRef<PriceData>;
+  price: ComputedRef<CurrencyData>;
   hardness: ComputedRef<number>;
   bonusHp: ComputedRef<number>;
   materialSubtype: ComputedRef<MaterialSubtype>;

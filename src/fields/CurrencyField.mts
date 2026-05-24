@@ -17,15 +17,15 @@
 
 import type { CoinStack } from '@settings/currency/types.mjs';
 
-import { PriceData } from './PriceData.mjs';
+import { CurrencyData } from './CurrencyData.mjs';
 
 const { EmbeddedDataField } = foundry.data.fields;
 
-class PriceField extends EmbeddedDataField {
+class CurrencyField extends EmbeddedDataField {
   static isFamiliarLeaf = true;
 
   constructor(options: Record<string, unknown> = {}) {
-    super(PriceData, options);
+    super(CurrencyData, options);
   }
 
   // ─── Delta Casting ──────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ class PriceField extends EmbeddedDataField {
    *
    * Accepts:
    * - `CoinStack[]` (passthrough)
-   * - `PriceData` instance (extracts `.stacks`)
+   * - `CurrencyData` instance (extracts `.stacks`)
    * - Object with `.stacks` `CoinStack[]` array
    * - JSON string encoding any of the above
    * - Shorthand string: `"5 srd_gp, 3 srd_sp"`
@@ -47,7 +47,7 @@ class PriceField extends EmbeddedDataField {
       return raw.map((e: any) => ({ coinId: String(e.coinId), count: Number(e.count) }));
     }
 
-    // PriceData instance or object with stacks
+    // CurrencyData instance or object with stacks
     if (raw && typeof raw === 'object' && 'stacks' in raw && Array.isArray((raw as any).stacks)) {
       return (raw as any).stacks.map((e: any) => ({ coinId: String(e.coinId), count: Number(e.count) }));
     }
@@ -76,7 +76,7 @@ class PriceField extends EmbeddedDataField {
         // Not JSON — try shorthand
       }
 
-      return PriceField.parseShorthand(resolved);
+      return CurrencyField.parseShorthand(resolved);
     }
 
     return [];
@@ -97,16 +97,16 @@ class PriceField extends EmbeddedDataField {
 
   /** Wrap stacks in a source object with an up-to-date srdEquivalent. */
   static #withGpValue(stacks: CoinStack[]): { stacks: CoinStack[]; srdEquivalent: number } {
-    return { stacks, srdEquivalent: PriceData.computeGpValue(stacks) };
+    return { stacks, srdEquivalent: CurrencyData.computeGpValue(stacks) };
   }
 
   /** Add: merge coin stacks by coinId, summing counts. */
-  override _applyChangeAdd(value: PriceData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
-    const map = PriceData.toMap(value.stacks);
+  override _applyChangeAdd(value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
+    const map = CurrencyData.toMap(value.stacks);
     for (const stack of delta) {
       map.set(stack.coinId, (map.get(stack.coinId) ?? 0) + stack.count);
     }
-    return PriceField.#withGpValue(PriceData.fromMap(map));
+    return CurrencyField.#withGpValue(CurrencyData.fromMap(map));
   }
 
   /**
@@ -120,14 +120,14 @@ class PriceField extends EmbeddedDataField {
    *    coins of each as fit within the remaining GP budget.
    * 3. Any leftover fractional GP is expressed in the smallest enabled coin.
    */
-  override _applyChangeSubtract(value: PriceData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
-    const currentGp = PriceData.computeGpValue(value.stacks);
-    const subtractGp = PriceData.computeGpValue(delta);
+  override _applyChangeSubtract(value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
+    const currentGp = CurrencyData.computeGpValue(value.stacks);
+    const subtractGp = CurrencyData.computeGpValue(delta);
     const remainingGp = currentGp - subtractGp;
 
-    if (remainingGp <= 0) return PriceField.#withGpValue([]);
+    if (remainingGp <= 0) return CurrencyField.#withGpValue([]);
 
-    const enabledCoinages = PriceData.getEnabledCoinages();
+    const enabledCoinages = CurrencyData.getEnabledCoinages();
     const coinLookup = new Map(enabledCoinages.map(c => [c.id, c]));
 
     // Walk existing denominations highest-first, keeping as many as fit
@@ -162,39 +162,40 @@ class PriceField extends EmbeddedDataField {
       }
     }
 
-    return PriceField.#withGpValue(newStacks);
+    return CurrencyField.#withGpValue(newStacks);
   }
 
   /**
    * Multiply: scale all coin counts by a numeric factor.
    * The delta is expected to be a single-element array where `count` is the factor.
    */
-  override _applyChangeMultiply(value: PriceData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
+  override _applyChangeMultiply(value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
     const factor = delta.length === 1 ? delta[0].count : 1;
     const stacks = value.stacks
       .map(s => ({ coinId: s.coinId, count: Math.round(s.count * factor) }))
       .filter(s => s.count > 0);
-    return PriceField.#withGpValue(stacks);
+    return CurrencyField.#withGpValue(stacks);
   }
 
   /** Override: replace the entire price with the delta. */
-  override _applyChangeOverride(_value: PriceData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
-    return PriceField.#withGpValue(delta);
+  override _applyChangeOverride(_value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
+    return CurrencyField.#withGpValue(delta);
   }
 
   /** Upgrade: compare total GP value, keep whichever stacks are worth more. */
-  override _applyChangeUpgrade(value: PriceData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
-    const currentGp = PriceData.computeGpValue(value.stacks);
-    const deltaGp = PriceData.computeGpValue(delta);
-    return PriceField.#withGpValue(deltaGp > currentGp ? delta : [...value.stacks]);
+  override _applyChangeUpgrade(value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
+    const currentGp = CurrencyData.computeGpValue(value.stacks);
+    const deltaGp = CurrencyData.computeGpValue(delta);
+    return CurrencyField.#withGpValue(deltaGp > currentGp ? delta : [...value.stacks]);
   }
 
   /** Downgrade: compare total GP value, keep whichever stacks are worth less. */
-  override _applyChangeDowngrade(value: PriceData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
-    const currentGp = PriceData.computeGpValue(value.stacks);
-    const deltaGp = PriceData.computeGpValue(delta);
-    return PriceField.#withGpValue(deltaGp < currentGp ? delta : [...value.stacks]);
+  override _applyChangeDowngrade(value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
+    const currentGp = CurrencyData.computeGpValue(value.stacks);
+    const deltaGp = CurrencyData.computeGpValue(delta);
+    return CurrencyField.#withGpValue(deltaGp < currentGp ? delta : [...value.stacks]);
   }
 }
 
-export { PriceField };
+export { CurrencyField };
+

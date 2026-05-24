@@ -79,8 +79,9 @@
 </template>
 
 <script setup lang="ts">
-  import { type DocumentSheetStore, DocumentSheetStoreSymbol, type RenderModeStore,RenderModeStoreSymbol } from '@documents/document/index.mjs';
-  import { PriceData } from '@fields/PriceData.mjs';
+  import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
+  import { CurrencyData } from '@fields/CurrencyData.mjs';
   import type { CoinageDefinition, CoinStack, PriceSource } from '@settings/currency/index.mjs';
   import {
     coinageVisibilityGmOnly,
@@ -94,7 +95,7 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: PriceData;
+    value: CurrencyData;
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
@@ -155,11 +156,11 @@
     return props.value?.stacks ?? [];
   });
 
-  // Get currency config from settings (delegates to PriceData)
-  const currencyConfig = computed(() => PriceData.getCurrencyConfig());
+  // Get currency config from settings (delegates to CurrencyData)
+  const currencyConfig = computed(() => CurrencyData.getCurrencyConfig());
 
   // All enabled coinages
-  const enabledCoinages = computed(() => PriceData.getEnabledCoinages());
+  const enabledCoinages = computed(() => CurrencyData.getEnabledCoinages());
 
   // Coinages the current user can select (respects visibility)
   const selectableCoinages = computed((): CoinageDefinition[] => {
@@ -206,12 +207,12 @@
       coinId: nextCoin.id,
       count: 0,
     };
-    fieldUpdater(PriceData.toSource([...editStacks.value, newStack]));
+    fieldUpdater(CurrencyData.toSource([...editStacks.value, newStack]));
   }
 
   function removeCoinStack(index: number): void {
     const newStacks = editStacks.value.filter((_, i) => i !== index);
-    fieldUpdater(PriceData.toSource(newStacks));
+    fieldUpdater(CurrencyData.toSource(newStacks));
   }
 
   function updateStackCount(index: number, rawValue: string): void {
@@ -219,24 +220,24 @@
     const newStacks = editStacks.value.map((stack, i) =>
       i === index ? { ...stack, count: Math.max(0, count) } : stack
     );
-    fieldUpdater(PriceData.toSource(newStacks));
+    fieldUpdater(CurrencyData.toSource(newStacks));
   }
 
   function updateStackCoin(index: number, coinId: string): void {
     const newStacks = editStacks.value.map((stack, i) =>
       i === index ? { ...stack, coinId } : stack
     );
-    fieldUpdater(PriceData.toSource(newStacks));
+    fieldUpdater(CurrencyData.toSource(newStacks));
   }
 
   /**
    * Consolidate the price into the fewest coins possible,
-   * delegating to {@link PriceData.consolidate}.
+   * delegating to {@link CurrencyData.consolidate}.
    */
   function consolidatePrice(): void {
     if (editStacks.value.length === 0) return;
-    const consolidated = new PriceData({ stacks: editStacks.value }).consolidate();
-    fieldUpdater(PriceData.toSource(consolidated));
+    const consolidated = new CurrencyData({ stacks: editStacks.value }).consolidate();
+    fieldUpdater(CurrencyData.toSource(consolidated));
   }
 </script>
 <!-- Styles live in src/styles/core.scss — see price form group comment there for why. -->
