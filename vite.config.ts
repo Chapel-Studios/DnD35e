@@ -49,7 +49,7 @@ function cleanOutputDir (mode: string): Plugin {
     enforce: 'pre',
     async buildStart () {
       if (!(await fs.pathExists(buildOutDir))) return;
-      if (mode === 'production') {
+      if (mode === 'production' || mode === 'dist') {
         await fs.emptyDir(buildOutDir);
         return;
       }

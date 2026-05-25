@@ -6,7 +6,7 @@
   import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
   import { actorEffectsTab } from '@actors/baseActor/sheet/tabs/index.mjs';
   import CreatureSheetVue from '@actors/creature/sheet/CreatureSheet.vue';
-  import { abilitiesTab, featuresTab, inventoryTab,notesTab } from '@actors/creature/sheet/tabs/index.mjs';
+  import { abilitiesTab, featuresTab, inventoryTab, notesTab } from '@actors/creature/sheet/tabs/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
   import { provide } from 'vue';

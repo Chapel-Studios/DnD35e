@@ -24,7 +24,7 @@ abstract class VueActorSheet extends useVueDocumentSheetMixin(ActorSheetBase) {
   }
 
   protected override async _onDrop (event: DragEvent): Promise<void> {
-    super._onDrop(event);
+    return super._onDrop(event);
   }
 }
 
