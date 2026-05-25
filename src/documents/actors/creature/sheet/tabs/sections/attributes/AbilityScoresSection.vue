@@ -1,6 +1,6 @@
 <template>
   <section class="sheet-section ability-scores-section">
-    <h2 class="section-header">Ability Scores</h2>
+    <h2 class="section-header">{{ localize('dnd35e.ACTOR.section.AbilityScores') }}</h2>
     <div class="abilities-strip">
       <div v-for="ability in abilities" :key="ability.key" class="ability-box">
         <div class="ability-abbr">{{ localize(`dnd35e.ABILITY.${ability.key}.abbr`) }}</div>

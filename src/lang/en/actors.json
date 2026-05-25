@@ -1,4 +1,9 @@
 {
+  "TYPES": {
+    "Actor": {
+      "character": "Character"
+    }
+  },
   "dnd35e": {
     "ACTOR": {
       "sheet": {
@@ -14,6 +19,9 @@
         "Buffs": "Buffs",
         "Spells": "Spells",
         "Notes": "Notes"
+      },
+      "section": {
+        "AbilityScores": "Ability Scores"
       },
       "field": {
         "Biography": "Biography",

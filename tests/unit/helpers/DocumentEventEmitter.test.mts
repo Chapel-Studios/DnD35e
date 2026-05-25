@@ -1,14 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DocumentEventEmitter } from '../../../src/helpers/DocumentEventEmitter.mjs';
 
 // DocumentEventEmitter uses Hooks.onError for error forwarding.
 // Stub it globally so tests that trigger errors don't throw.
 const hooksMock = { onError: vi.fn() };
-(globalThis as any).Hooks = hooksMock;
+vi.stubGlobal('Hooks', hooksMock);
 
 describe('DocumentEventEmitter', () => {
   let emitter: DocumentEventEmitter;
+
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
 
   beforeEach(() => {
     emitter = new DocumentEventEmitter();
