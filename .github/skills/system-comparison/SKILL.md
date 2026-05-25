@@ -1,241 +1,280 @@
 ---
 name: system-comparison
-description: "Compare how different D&D 5e, Pathfinder 2e, and D&D 3.5e handle similar mechanics, spells, items, and features."
+description: 'Compare D35E (legacy Foundry system), dnd5e, and PF2e implementations side-by-side. Use when deciding data structure for a new item type, comparing buff/AE/RuleElement approaches, checking HP/saves/BAB/AC paths across systems, reviewing condition implementations, or understanding why dnd35e chose a particular design over the D35E approach.'
 ---
 
 # System Comparison Skill
 
-## Using This Skill
+## When to Use This Skill
 
 Ask questions like:
-- "How do 5e and 3.5e handle resistance differently?"
-- "Does PF2e have bonus types like 3.5e?"
-- "How do attack rolls work in each system?"
-- "What's the difference in feat progression?"
-- "How are conditions handled across systems?"
+- "How does D35E store buffs compared to dnd5e?"
+- "How do the three systems handle item Active Effects?"
+- "What does D35E's changes template look like vs dnd5e AEs?"
+- "How do the three Foundry systems structure actor HP?"
+- "How does PF2e handle conditions compared to D35E?"
 
 This skill helps you:
-- **Understand differences** between 5e, PF2e, and d35e
-- **Port mechanics** from one system to another
-- **Find 3.5e equivalents** of 5e features
-- **Implement system-specific rules** correctly
-- **Plan compatibility** with related systems
+- **Compare Foundry system implementations** across D35E (legacy), dnd5e, and PF2e
+- **Understand migration targets** — what D35E did and how dnd35e (our new system) improves on it
+- **Port mechanics** between Foundry system paradigms
+- **Identify D35E patterns** that carry over or need redesign
+- **Plan compatibility** with world data from the old D35E system
 
-## Core Mechanic Differences
+> **Terminology**
+> - **D35E** = the legacy Foundry VTT system (system ID `D35E`, last known version ~2.4.3) we are rebuilding from
+> - **dnd5e** = the official Foundry D&D 5e system by Atropos et al.
+> - **PF2e** = the official Foundry Pathfinder 2e system
+> - **dnd35e** = our new system (what we are building)
 
-### Ability Scores & Modifiers
+> **For raw 3.5e rule lookups** use `/srd-lookup`.
+> **For detailed D35E schema reference** use `/d35e-reference`.
 
-| System | Score Range | Modifier Formula | Special |
-|--------|-------------|------------------|---------|
-| **d35e** | 3-20+ (no cap) | (score - 10) / 2 | Score-based, can exceed 20 |
-| **5e** | 3-20 (soft cap 20) | (score - 10) / 2 | Score cap 20, racial bonuses |
-| **PF2e** | Static +0 to +10 | Derived from proficiency | Proficiency-based, no scores |
+## Actor Data Comparison
 
-**Key difference**: 3.5e and 5e use scores; PF2e uses proficiency levels.
+### Hit Points
 
-### Attack Bonuses
+| Field | D35E | dnd5e | PF2e |
+|-------|------|-------|------|
+| Current HP | `system.attributes.hp.value` | `system.attributes.hp.value` | `system.attributes.hp.value` |
+| Max HP | `system.attributes.hp.max` | `system.attributes.hp.max` | `system.attributes.hp.max` |
+| Temp HP | `system.attributes.hp.temp` | `system.attributes.hp.temp` | `system.attributes.hp.temp` |
+| Non-lethal | `system.attributes.hp.nonlethal` | ❌ not a field | ❌ not a concept |
+| Wound threshold | ❌ | ❌ | `system.attributes.hp.sp` (stamina) |
 
-| System | Components | Stacking |
-|--------|------------|----------|
-| **d35e** | BAB + Modifiers + Bonus Types | Material/Competence/etc don't stack |
-| **5e** | Proficiency + Modifiers | Only Proficiency matters, no types |
-| **PF2e** | Proficiency + Modifiers | Multiple types stack (item, status, etc) |
+**D35E** uses non-lethal damage as a separate tracked value. **PF2e** uses a stamina system at GM option. **dnd5e** has no non-lethal concept.
 
-**Example d35e**: Attack = +6 (BAB) + 3 (STR) + 1 (magic) + 2 (morale) = +12
+### Ability Scores
 
-**Example 5e**: Attack = +2 (proficiency) + 3 (STR) = +5
+| Field | D35E | dnd5e | PF2e |
+|-------|------|-------|------|
+| Score | `system.abilities.str.value` | `system.abilities.str.value` | `system.abilities.str.mod` (derived) |
+| Modifier | `system.abilities.str.mod` (derived) | `system.abilities.str.mod` (derived) | Proficiency-based, no raw score |
+| Temp score | `system.abilities.str.total`, `system.abilities.str.userPenalty` | ❌ | ❌ |
+| Damage/drain | `system.abilities.str.damage`, `system.abilities.str.drain` | ❌ | `system.abilities.str.apex` for item bonus |
 
-### Damage Resistance
-
-| System | Representation | Stacking | Exceptions |
-|--------|----------------|----------|-----------|
-| **d35e** | Type (fire, cold, etc) + amount | Multiple types stack | Magic/metal weapons overcome |
-| **5e** | Type only, halves damage | Multiple types allowed | Specific conditions listed |
-| **PF2e** | Type + weakness/hardness | Weakness/Hardness stack | Resistance does not stack |
-
-**d35e example**: "Fire resistance 10, cold immunity, DR 5/magic"
-
-**5e example**: "Fire resistance, magic weapon immunity"
-
-### Feat System
-
-| System | Frequency | Count | Selection |
-|--------|-----------|-------|-----------|
-| **d35e** | Every 3 levels | Bonuses + class grants | Huge list, no restrictions |
-| **5e** | Every 4 levels (or +2 ASI) | Limited, feat list | Fewer, prerequisites |
-| **PF2e** | Every level | Flexible, class+general | Mandatory ancestry/heritage |
-
-**d35e**: Level 1,4,7,10,13,16,19 gain bonus feat. Clerics get bonus feats per deity.
-
-**5e**: Level 4,8,12,16,19 gain +2 ASI or feat.
-
-**PF2e**: Every level gain 1 feat (ancestry 1st, class 1st/2nd/etc, general at any level).
-
-## Attack Resolution Comparison
-
-### Attack Roll Sequence
-
-**d35e**:
-1. Roll d20 + BAB + STR + magic + misc bonuses
-2. Apply penalties/bonuses from circumstances
-3. Apply active effect modifiers
-4. Compare to target AC
-
-**5e**:
-1. Roll d20 + DEX (ranged/finesse) or STR (melee) + proficiency (if trained)
-2. Apply advantage/disadvantage
-3. Compare to target AC
-
-**PF2e**:
-1. Roll d20 + proficiency + modifier + item bonuses
-2. Critical success (≥10 over DC), success, failure, critical failure
-3. Different damage on each outcome
+**Key difference**: D35E tracks ability damage/drain as permanent vs temporary reduction. PF2e has no ability score concept — everything is proficiency + item bonus.
 
 ### Saving Throws
 
-| System | Roll | Bonuses |
-|--------|------|---------|
-| **d35e** | d20 + ability mod + magic + misc | Stacked by bonus type |
-| **5e** | d20 + ability mod + proficiency | Only proficiency matters |
-| **PF2e** | d20 + proficiency + ability mod + item | Multiple types stack |
+| Throw | D35E path | dnd5e path | PF2e path |
+|-------|-----------|------------|-----------|
+| Fortitude/Con | `system.attributes.savingThrows.fort` | `system.abilities.con.save` | `system.saves.fortitude` |
+| Reflex/Dex | `system.attributes.savingThrows.ref` | `system.abilities.dex.save` | `system.saves.reflex` |
+| Will/Wis | `system.attributes.savingThrows.will` | `system.abilities.wis.save` | `system.saves.will` |
 
-## Spell Casting Comparison
+**D35E** stores saves as `{ base, ability, misc, total }`. **dnd5e** stores a save modifier per ability. **PF2e** stores a proficiency rank.
 
-### Spell Slots vs. Spells Known
+### Attack (BAB)
 
-| System | Model | Progression | Recovery |
-|--------|-------|-------------|----------|
-| **d35e** | Slots per level | Cleric 4+/day at 1st cast | Rest 8 hours |
-| **5e** | Slots per level | Wizard 1st available at 3rd level | Long rest |
-| **PF2e** | Spell Proficiency | Spells per spell level | Daily + free cantrip |
+| Component | D35E | dnd5e | PF2e |
+|-----------|------|-------|------|
+| Base attack | `system.attributes.bab.total` | ❌ (no BAB) | ❌ (proficiency rank instead) |
+| Attack bonus | BAB + STR/DEX + changes | Proficiency + STR/DEX | Proficiency rank + STR/DEX |
+| Full attack | Iteratives from BAB ≥ 6 | Extra Attack class feature | `MAP` (multiple attack penalty) |
 
-**d35e**: "You can cast 4 1st-level spells per day"
+**D35E** uses BAB stored directly on the actor (aggregated from class items). **dnd5e** only uses proficiency. **PF2e** uses proficiency ranks (untrained/trained/expert/master/legendary) and the MAP system.
 
-**5e**: "You have 2 1st-level spell slots"
+---
 
-**PF2e**: "You can cast 1st-level spells, proficiency determines number"
+## Item Type Comparison
 
-### Prepared vs Spells Known
+### Weapons
 
-| System | Type | Count | Selection Timing |
-|--------|------|-------|------------------|
-| **d35e** | Prepared | (WIS mod + spell level) per spell for clerics | On rest |
-| **5e** | Known/Prepared | (Level / 2) + WIS for clerics | On rest |
-| **PF2e** | Spells Known | Proficiency-based | On character creation/level |
+| Feature | D35E | dnd5e | PF2e |
+|---------|------|-------|------|
+| Item type | `weapon` | `weapon` | `weapon` |
+| Damage formula | `system.damage.parts[]` (array of `[formula, type]`) | `system.damage.parts[]` | `system.damage.dice + system.damage.die` |
+| Critical threat | `system.ability.critRange` | `system.critical.threshold` | `system.criticalHit` |
+| Critical multiplier | `system.ability.critMult` | ❌ (always ×2) | ❌ (crit is double dice) |
+| Attack bonus | `changes[]` targeting `~attack` | `system.attackBonus` | `system.bonus.value` |
+| Weapon groups | ❌ | `system.weaponType` | `system.group` |
 
-## Item & Equipment Differences
+### Armor / Equipment
 
-### Item Rarity
+| Feature | D35E | dnd5e | PF2e |
+|---------|------|-------|------|
+| Item type | `equipment` | `equipment` | `armor` |
+| AC bonus | `system.armor.value` | `system.armor.value` | `system.acBonus` |
+| Max Dex | `system.armor.dex` | `system.armor.dex` | `system.dexCap` |
+| Check penalty | `system.armor.acp` | `system.armor.checkPenalty` | `system.checkPenalty` |
+| Equip slot | `system.slot` (head/body/etc) | `system.armor.type` | `system.category` + traits |
 
-| System | Levels | How Determined | Effect |
-|--------|--------|---------------|--------|
-| **d35e** | Modifier bonus (avg +1 to +10) | Enchantment crafting cost | +X to attack/AC/ability |
-| **5e** | Common/Uncommon/Rare/VRare/Leg | Random tables | Varied effects, usually 1+ bonuses only |
-| **PF2e** | 0-11 (item level) | Crafting formula level | Damage scaling, crafting cost |
+### Buffs
 
-**Key**: d35e items stack bonuses; 5e is limited to +3 caps; PF2e scales linearly with item level.
+| Feature | D35E | dnd5e | PF2e |
+|---------|------|-------|------|
+| Implementation | **Item** type `buff` on actor | Active Effect on actor | **Item** type `effect` on actor |
+| Toggle on/off | `system.active` boolean | AE enable/disable | `system.active` boolean |
+| Duration | `system.duration` object | AE duration | `system.duration` |
+| Applies to | `system.changes[]` → actor stats | AE `changes[]` | `system.rules[]` (RuleElements) |
+| Stacking | Manual `modifier` field, no enforcement | No stacking rules | PF2e enforces type stacking |
 
-### Armor Class (AC)
+**D35E buffs are items.** dnd5e uses pure AEs. PF2e uses `effect` items with RuleElements.
 
-| System | Calculation | Max Dex | Penalties |
-|--------|-------------|---------|-----------|
-| **d35e** | 10 + armor + DEX (limit) + shield | Varies by armor | Check penalty for some |
-| **5e** | 10 + armor + DEX + shield | None for light, some medium | No check penalty |
-| **PF2e** | 10 + Dex + Armor proficiency mod | Varies by armor | Penalty affects many rolls |
+### Spells
 
-**d35e example**: Heavy armor (AC 8) = 10 + 8 + 0 (DEX capped) = AC 18
+| Feature | D35E | dnd5e | PF2e |
+|---------|------|-------|------|
+| Item type | `spell` | `spell` | `spell` |
+| Spell level | `system.level` | `system.level` | `system.level.value` |
+| Prepared | `system.preparation.preparedAmount` | `system.preparation.mode` | `system.location` (spellbook) |
+| School | `system.school` | `system.school` | `system.traits.value[]` |
+| Components | `system.components` | `system.components` | `system.components.value[]` |
+| Buff creation | Creates `buff` item on target | Creates AE on target | Creates `effect` item on target |
 
-**5e example**: Plate (AC 18) ignores DEX
+### Feats
 
-**PF2e example**: Plate (AC 18) + armor check penalty -2
+| Feature | D35E | dnd5e | PF2e |
+|---------|------|-------|------|
+| Item type | `feat` | `feat` | `feat` |
+| Feat type | `system.featType` (feat/classFeat/etc) | `system.type.value` | `system.category` |
+| Prerequisites | `system.prerequisites.value[]` | None enforced | `system.prerequisites.value[]` |
+| Uses | `system.uses` | `system.uses` | `system.frequency` |
+| Passive changes | `system.changes[]` | Creates AE | `system.rules[]` (RuleElements) |
 
-## Condition Differences
+---
 
-### Common Conditions Mapping
+## Active Effects / Changes Comparison
 
-| Condition | d35e | 5e | PF2e |
-|-----------|------|-----|------|
-| Restrained | Pinned/Grappled | Restrained | Grabbed/Immobilized |
-| Stunned | Stunned | Stunned | Stunned |
-| Invisible | Invisible | Invisible | Invisible (2e changes rules) |
-| Prone | Prone | Prone | Prone |
-| Frightened | Frightened/Shaken | Frightened | Frightened (varies) |
+This is the most significant architectural difference between the three systems.
 
-**Key**: 3.5e has more condition states (Dazed, Comatose, etc); 5e simplified.
+### D35E `changes` Template
 
-## Feature Porting Strategy
+D35E does NOT use Foundry Active Effects for stat modification. Instead items carry a `changes` array:
 
-### Porting Feat from d35e to 5e
-
-**Original d35e**: "Power Attack: -1 to hit, +2 damage per attack" (could be done every round)
-
-**5e equivalent**: "Great Weapon Master: -5 to hit, +10 damage" (bonus action interaction, once per turn)
-
-**Why different**: 5e simplifies bonus types, removes per-round choices.
-
-### Porting Spell from 5e to d35e
-
-**Original 5e**: "Fireball: All creatures make DEX save, take 8d6 damage"
-
-**d35e equivalent**: "Fireball: 8d6 (capped 40), no save allowed, Reflex save for half"
-
-**Why different**: d35e has Reflex saves instead of DEX saves; saves are more powerful.
-
-## Implementation Patterns
-
-### Pattern: 3.5e Bonus Stacking
-
-```typescript
-// Only highest of each type applies
-const bonuses = {
-  material: 1,      // Magic weapon +1
-  enhancement: 1,   // Armor enhancement +1
-  morale: 2,        // Inspiring word +2
-  competence: 1,    // Bless +1
-};
-
-const total = Object.values(bonuses).reduce((a, b) => a + b, 0);  // 5
-// Note: Multiple 'material' bonuses only use highest
+```json
+{
+  "system": {
+    "changes": [
+      { "formula": "2", "operator": "+", "target": "~acBonus", "modifier": "armor", "priority": 200 },
+      { "formula": "1", "operator": "+", "target": "~bab",      "modifier": "enhancement", "priority": 0 }
+    ]
+  }
+}
 ```
 
-### Pattern: 5e Advantage/Disadvantage
+| Field | Meaning |
+|-------|---------|
+| `formula` | Value formula (string, may be an expression) |
+| `operator` | `+`, `-`, `=` (add/subtract/set) |
+| `target` | Stat path using `~` shorthand (e.g. `~acBonus`, `~bab`, `~str`) |
+| `modifier` | Bonus type label (not enforced for stacking) |
+| `priority` | Application order (higher = later) |
 
-```typescript
-// Not present in d35e; instead use circumstance modifiers
-const bonuses = {
-  circumstance: [2, -2, 1],  // Multiple apply, add all
-};
-const total = bonuses.circumstance.reduce((a, b) => a + b, 0);  // 1
+**Stacking** is not enforced in D35E — all changes are summed. The GM/system designer manually structures items to avoid stacking.
+
+### dnd5e Active Effects
+
+dnd5e uses Foundry's native AE system:
+
+```json
+{
+  "changes": [
+    { "key": "system.attributes.ac.bonus", "mode": 2, "value": "2", "priority": 20 }
+  ]
+}
 ```
 
-### Pattern: PF2e Proficiency Scaling
+`mode` values: 0=Custom, 1=Multiply, 2=Add, 3=Downgrade, 4=Upgrade, 5=Override
 
-```typescript
-// PF2e adds +1/2 per rarity, d35e uses fixed bonuses
-const rarityBonus = itemLevel * 0.5;  // Item level 4 = +2 bonus
-// d35e: +1 enchantment = 2,000 gp always
+No bonus type stacking enforcement. Advantage/disadvantage handled separately from numeric bonuses.
+
+### PF2e Rule Elements
+
+PF2e replaces AEs entirely with `RuleElement` objects:
+
+```json
+{
+  "system": {
+    "rules": [
+      { "key": "FlatModifier", "selector": "ac", "value": 2, "type": "armor" },
+      { "key": "FlatModifier", "selector": "attack-roll", "value": 1, "type": "item" }
+    ]
+  }
+}
 ```
 
-## When to Port Features
+PF2e fully enforces stacking — the `type` field is used to deduplicate (only highest of each type applies). Conditions are first-class items, not flags.
 
-**Easy to port** (minimal changes):
-- Basic ability checks & saving throws
-- Skill use & situations
-- Spell effects that don't depend on saves
+---
 
-**Hard to port** (system-dependent):
-- Attack bonuses (bonus types differ fundamentally)
-- Damage output (5e is lower power than d35e)
-- Spell damage scaling
-- Feat prerequisites & levels
+## Condition Comparison
 
-**Won't port without redesign**:
-- 3.5e multiclassing (PF2e has no class levels)
-- 5e Concentration (3.5e only on sustained spells)
-- PF2e critical specialization effects
+| Condition | D35E implementation | dnd5e implementation | PF2e implementation |
+|-----------|--------------------|--------------------|-------------------|
+| Stunned | `ActiveEffect` flag or `changes[]` | AE with `statuses` | `effect` item type `condition` |
+| Frightened | `system.attributes.conditions.frightened` | AE `statuses` | `effect` with `system.value` (severity) |
+| Prone | `ActiveEffect` or `system.conditions` | AE `statuses` | `condition` item, applies MAP +2 |
+| Invisible | `ActiveEffect` | AE `statuses` | `condition` item, RuleElements handle effects |
+| Grappled | `system.attributes.conditions.grapple` | AE `statuses` | `condition` item |
+
+**Key difference**: PF2e conditions are first-class items that carry their own RuleElements. D35E and dnd5e use flags/AEs, requiring the system to hard-code condition effects.
+
+---
+
+## Feat/Skill Comparison
+
+### Skills Storage
+
+| Field | D35E | dnd5e | PF2e |
+|-------|------|-------|------|
+| Skill ranks | `system.skills.per.rank` | ❌ (no ranks) | ❌ (proficiency rank) |
+| Class skill | `system.skills.per.cs` (boolean) | ❌ | ❌ |
+| Modifier | `system.skills.per.mod` | `system.skills.per.total` | `system.skills.per.value` (proficiency) |
+| Synergy | `system.skills.per.synergy` bonus via `changes[]` | ❌ | ❌ |
+| Total | `system.skills.per.total` | `system.skills.per.total` | Computed from proficiency + ability |
+
+D35E has 40+ individual skills; dnd5e has 18; PF2e has 16 core + lore skills.
+
+---
+
+## Compendium Structure Comparison
+
+| Pack type | D35E | dnd5e | PF2e |
+|-----------|------|-------|------|
+| Spells | `dnd35e.spells` | `dnd5e.spells` | `pf2e.spells` |
+| Feats | `dnd35e.feats` | `dnd5e.feats` | `pf2e.feats` |
+| Conditions | (Not Implemented AE yet) | `dnd5e.rules` | `pf2e.conditionitems` |
+| Monsters | `dnd35e.monsters` | `dnd5e.monsters` | `pf2e.monstercore` |
+| Classes | `dnd35e.classes` | `dnd5e.classes` | `pf2e.classes` |
+
+---
+
+## When to Use This Comparison
+
+**Use this skill when**:
+- Implementing a mechanic and need to see how other Foundry systems approached it
+- Deciding data structure for a new item type or field
+- Reviewing how D35E stored something before designing dnd35e's version
+- Checking if a pattern from dnd5e or PF2e applies to our 3.5e rebuild
+
+**Use `/d35e-reference` instead when**:
+- You need exact D35E schema field names, paths, and types
+- You are writing a migration script mapping old fields to new ones
+- You need to understand D35E item/actor templates in detail
+
+**Use `/srd-lookup` instead when**:
+- You need to look up raw 3.5e rules (how many attacks at BAB +11, etc.)
+- You want the official SRD text for a mechanic, spell, or condition
+
+---
+
+## Gotchas
+
+- **D35E `changes[]` stacking is NOT enforced** — every entry is summed regardless of `modifier` type. PF2e RuleElements actually deduplicate by `type`; D35E and dnd5e do not. Comparison tables showing the same field name across systems do not imply the same stacking behavior.
+
+- **PF2e has no ability scores, only modifiers** — there is no `str.value` (a score like 18) in PF2e; everything works from the `+4` modifier. Never look for a `score` field in PF2e schema.
+
+- **dnd5e has no BAB concept** — the field does not exist. All attack math is proficiency bonus + ability modifier. Do not assume any D35E `bab` path maps to a dnd5e equivalent.
+
+- **D35E buffs are Item documents, not AEs** — they are Items of type `buff` with `system.active`. dnd5e uses pure AEs on the actor; PF2e uses `effect` items with RuleElements. These are architecturally different despite surface similarity.
+
+- **System IDs are case-sensitive**: `D35E`, `dnd5e`, `pf2e` — wrong case causes silent filtering failures in Foundry pack and world lookups.
 
 ## Related Skills
 
-- **phase-reference**: Which phase plans similar features
-- **foundry-reference**: How to implement differences in code
-- **implementation-guide**: Step-by-step for new mechanics
+- **`/d35e-reference`**: Detailed old D35E schema field reference for migration
+- **`/srd-lookup`**: Raw 3.5e SRD rules lookup (online + local journal)
+- **`/foundry-reference`**: Foundry VTT v14 API for implementing mechanics in code
+- **`/implementation-guide`**: Step-by-step for adding a mechanic to dnd35e

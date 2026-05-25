@@ -22,25 +22,24 @@ type AbilityScoresOf<TEntry extends AbilityScoreSource> = {
 // ─── HP ──────────────────────────────────────────────────────────────────────
 
 interface HpSource {
-  base: number;
   current: number;
   temp: number;
   nonlethal: number;
 }
 
 interface HpData extends HpSource {
-  /** Derived: base + CON mod + bonuses. Never stored. */
+  /** Derived: class HD × level + CON mod + bonuses. Never stored. */
   max: number;
 }
 
 // ─── Saves ───────────────────────────────────────────────────────────────────
 
 interface SaveSource {
-  base: number;
+  // base save progression comes from class levels (alpha.2)
 }
 
 interface SaveData extends SaveSource {
-  /** Derived: base + ability mod + bonuses. Never stored. */
+  /** Derived: class save progression + ability mod + bonuses. Never stored. */
   total: number;
 }
 

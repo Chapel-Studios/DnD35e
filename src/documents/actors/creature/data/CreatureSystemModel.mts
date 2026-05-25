@@ -37,7 +37,6 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     });
 
     schema.hp = new SchemaField({
-      base:      requiredNumberField(0),
       max:       derivedNumberField(0),
       current:   requiredNumberField(0),
       temp:      requiredNumberField(0),
@@ -55,7 +54,6 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     });
 
     const saveEntry = () => new SchemaField({
-      base:  requiredNumberField(0),
       total: derivedNumberField(0),
     });
 

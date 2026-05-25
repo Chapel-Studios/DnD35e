@@ -176,7 +176,9 @@ Full list: see [`.github/AGENTS.md`](.github/AGENTS.md)
 | `/phase-reference` | Look up which phase covers a feature, track progress, check dependencies |
 | `/phase-planning` | Improve planning docs — consolidate, update checklists, extract patterns |
 | `/foundry-reference` | Query Foundry VTT v14 API, data structures, hooks, and common patterns |
-| `/system-comparison` | Compare how 5e, PF2e, and 3.5e handle similar mechanics |
+| `/system-comparison` | Compare how D35E (legacy), dnd5e, and PF2e Foundry systems implement mechanics |
+| `/srd-lookup` | Look up raw D&D 3.5e SRD rules — spells, feats, conditions, combat mechanics |
+| `/d35e-reference` | D35E legacy system schema — item types, actor paths, `changes[]` template |
 | `/implementation-guide` | Step-by-step workflows for adding item types, mechanics, or compendium entries |
 | `/e2e-testing` | Add a Playwright E2E spec — selectors, helpers, isolation, pitfalls |
 

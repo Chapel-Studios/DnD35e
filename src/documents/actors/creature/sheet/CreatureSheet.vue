@@ -1,5 +1,5 @@
 <template>
-  <DocumentSheetBody />
+  <DocumentSheetBody :vertical-tabs="true" />
 </template>
 
 <script lang="ts" setup>

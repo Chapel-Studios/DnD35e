@@ -5,10 +5,14 @@
         "Character": "D&D 3.5e Character Sheet"
       },
       "tab": {
-        "Abilities": "Abilities",
+        "Summary": "Summary",
+        "Attributes": "Attributes",
+        "Combat": "Combat",
         "Inventory": "Inventory",
         "Features": "Features",
-        "Effects": "Effects",
+        "Skills": "Skills",
+        "Buffs": "Buffs",
+        "Spells": "Spells",
         "Notes": "Notes"
       },
       "field": {
