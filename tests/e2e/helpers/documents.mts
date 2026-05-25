@@ -15,11 +15,34 @@ export async function createItem (
   const uuid = await page.evaluate(async ({ type, data }) => {
     const Item = (globalThis as any).Item;
     const created = await Item.create({
-      type,
-      name: (data as any).name ?? 'Test Item',
+      name: 'Test Item',
       ...data,
+      type, // enforced last — caller cannot override the explicit type parameter
     });
     if (!created?.uuid) throw new Error('Item.create returned no uuid');
+    return created.uuid as string;
+  }, { type, data });
+  return uuid;
+}
+
+/**
+ * Programmatic actor creation via Foundry's Actor.create().
+ *
+ * Returns the created actor's UUID. Caller must be authenticated as GM.
+ */
+export async function createActor (
+  page: Page,
+  type: string,
+  data: Record<string, unknown> = {}
+): Promise<string> {
+  const uuid = await page.evaluate(async ({ type, data }) => {
+    const Actor = (globalThis as any).Actor;
+    const created = await Actor.create({
+      name: 'Test Actor',
+      ...data,
+      type, // enforced last — caller cannot override the explicit type parameter
+    });
+    if (!created?.uuid) throw new Error('Actor.create returned no uuid');
     return created.uuid as string;
   }, { type, data });
   return uuid;

@@ -21,14 +21,18 @@
         <slot name="header-summary"></slot>
       </template>
     </DocumentHeader>
-    <TabDivider />
-    <div
-      v-for="tab in tabList"
-      :key="tab.id"
-      v-show="tab.id === activeTabId"
-      class="sheet-tab"
-    >
-      <component :is="tab.component" />
+    <div class="sheet-body-content" :class="{ 'vertical-tabs': verticalTabs }">
+      <TabDivider :vertical-tabs="verticalTabs" />
+      <div class="sheet-tab-panes">
+        <div
+          v-for="tab in tabList"
+          :key="tab.id"
+          v-show="tab.id === activeTabId"
+          class="sheet-tab"
+        >
+          <component :is="tab.component" />
+        </div>
+      </div>
     </div>
     <slot name="footer"></slot>
   </div>
@@ -56,8 +60,10 @@
   const props = withDefaults(defineProps<{
     context?: any;
     mode?: SheetMode;
+    verticalTabs?: boolean;
   }>(), {
     mode: 'item',
+    verticalTabs: false,
   });
 
   if (props.context) {
@@ -78,6 +84,24 @@
     flex-direction: column;
     min-height: 100%;
     height: 100%;
+  }
+
+  .sheet-body-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    &.vertical-tabs {
+      flex-direction: row;
+    }
+  }
+
+  .sheet-tab-panes {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    position: relative;
   }
 
   .sheet-tab {

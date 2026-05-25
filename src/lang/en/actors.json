@@ -1,0 +1,34 @@
+{
+  "TYPES": {
+    "Actor": {
+      "character": "Character"
+    }
+  },
+  "dnd35e": {
+    "ACTOR": {
+      "sheet": {
+        "Character": "D&D 3.5e Character Sheet"
+      },
+      "tab": {
+        "Summary": "Summary",
+        "Attributes": "Attributes",
+        "Combat": "Combat",
+        "Inventory": "Inventory",
+        "Features": "Features",
+        "Skills": "Skills",
+        "Buffs": "Buffs",
+        "Spells": "Spells",
+        "Notes": "Notes"
+      },
+      "section": {
+        "AbilityScores": "Ability Scores"
+      },
+      "field": {
+        "Biography": "Biography",
+        "BiographyPlaceholder": "Character biography, backstory, appearance, personality...",
+        "SessionNotes": "Session Notes",
+        "SessionNotesPlaceholder": "Notes from recent sessions, reminders, loose ends..."
+      }
+    }
+  }
+}

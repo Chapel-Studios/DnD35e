@@ -33,7 +33,10 @@ const foundryDataPath = localConfig.foundryDataPath
 const foundrySystemDir = foundryDataPath
   ? path.join(foundryDataPath, 'systems')
   : undefined;
-const buildOutDir = foundrySystemDir ? path.join(foundrySystemDir, 'dnd35e') : 'dist';
+// Default: build directly into the dev Foundry data dir (convenient for hot-iteration).
+// Overridden to dist/ when mode === 'dist' (E2E and CI) so the build never touches
+// a running Foundry's directory and avoids LevelDB / file-handle conflicts.
+let buildOutDir = foundrySystemDir ? path.join(foundrySystemDir, 'dnd35e') : path.resolve(__dirname, 'dist');
 
 // Replace Vite's built-in emptyOutDir with a mode-aware alternative.
 // Prod: hard-deletes the full output dir (mirrors emptyOutDir:true behaviour).
@@ -46,14 +49,17 @@ function cleanOutputDir (mode: string): Plugin {
     enforce: 'pre',
     async buildStart () {
       if (!(await fs.pathExists(buildOutDir))) return;
-      if (mode === 'production') {
+      if (mode === 'production' || mode === 'dist') {
         await fs.emptyDir(buildOutDir);
         return;
       }
-      // Dev: clear everything except packs/ — compilePacks soft-fails on locked LevelDB files
+      // Dev: clear everything except packs/ and macros/ — both may have file handles
+      // held by a running Foundry process (LevelDB for packs, served scripts for macros).
+      // compilePacks soft-fails on locked LevelDB files; macro files are overwritten in place.
       const entries = await fs.readdir(buildOutDir, { withFileTypes: true });
       for (const entry of entries) {
         if (entry.name === 'packs') continue;
+        if (entry.name === 'macros') continue;
         await fs.remove(path.join(buildOutDir, entry.name));
       }
       // Dev: best-effort prune of pack directories no longer in the manifest
@@ -181,7 +187,14 @@ function bundleLangFiles (): Plugin {
 }
 
 export default defineConfig(({ command, mode }) => {
-  if (command === 'build' && !foundrySystemDir) {
+  // mode === 'dist': build to <repo>/dist, independent of any running Foundry instance.
+  // Used by `npm run build:dist` which pretest:e2e runs before spawning the E2E Foundry.
+  // mode === 'development' or 'production': build into the dev Foundry data dir as usual.
+  if (mode === 'dist') {
+    buildOutDir = path.resolve(__dirname, 'dist');
+  }
+
+  if (command === 'build' && !foundrySystemDir && mode !== 'dist') {
     console.warn(
       '⚠️  foundrySystemDir is not configured — building to dist/ (CI mode).\n' +
       '   For local development, copy local.config.json.example → local.config.json and set the path.'

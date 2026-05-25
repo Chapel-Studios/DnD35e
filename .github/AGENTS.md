@@ -153,15 +153,39 @@ These specialized agents can be invoked directly for specific planning tasks:
 **Invoke**: Type `/foundry-reference` (e.g., "How do I listen to item updates?")
 
 ### system-comparison
-**When to use**: Comparing how 5e, PF2e, and D&D 3.5e handle similar mechanics or porting features.
+**When to use**: Comparing how the D35E (legacy), dnd5e, and PF2e **Foundry systems** implement similar mechanics, item types, and data structures.
 
 **Capabilities**:
-- Compare ability scores, attack bonuses, saves, resistances
-- Show feat/spell differences between systems
-- Explain item rarity and scaling differences
-- Help port features from one system to another
+- Compare actor data paths across the three Foundry systems
+- Show item type schemas and differences (weapon, buff, spell, feat, etc.)
+- Explain the D35E `changes[]` template vs dnd5e AEs vs PF2e RuleElements
+- Help decide data structure for a new dnd35e feature
 
-**Invoke**: Type `/system-comparison` (e.g., "How do 5e and 3.5e handle resistances?")
+**Invoke**: Type `/system-comparison` (e.g., "How does D35E store buffs compared to dnd5e?")
+
+### srd-lookup
+**When to use**: Looking up raw D&D 3.5e SRD rules — spells, feats, conditions, combat mechanics, class features.
+
+**Capabilities**:
+- Reference the local SRD journal (`docs/reference/fvtt-JournalEntry-3.5-srd-working-c3lf0RUqQVJ8Pm20.json`)
+- Provide direct links to d20srd.org sections
+- Quick-reference tables for attack iteratives, conditions, bonus stacking, saving throws, AC formula
+- Spell lookup pattern (URL slugs for d20srd.org)
+
+**Invoke**: Type `/srd-lookup` (e.g., "What does the SRD say about Power Attack?")
+
+### d35e-reference
+**When to use**: Looking up how the legacy D35E Foundry system stores or implements a specific mechanic. Essential for writing migration scripts or understanding what we are rebuilding.
+
+**Capabilities**:
+- Actor data paths (abilities, HP, saves, BAB, AC, skills)
+- Full item type list with key schema fields (weapon, equipment, buff, spell, feat, class, etc.)
+- The `changes[]` template: all fields, common `~` target shortcuts, priority system
+- Buff schema, spell schema, class schema detail
+- How D35E aggregates stats in `prepareDerivedData()`
+- Links to migration notes screenshots and property maps
+
+**Invoke**: Type `/d35e-reference` (e.g., "How does D35E store weapon crit range?")
 
 ### implementation-guide
 **When to use**: Step-by-step workflows for adding item types, mechanics, compendium entries, or features.
@@ -273,7 +297,9 @@ Choose the right tool for your task:
 ### Development Work (Implementation, Fixes, Features)
 - Edit code → Instruction files auto-load (`vue-sheet-patterns`, `dnd35e-patterns`, etc)
 - Ask `/foundry-reference` for API help
-- Ask `/system-comparison` when porting from 5e/PF2e
+- Ask `/system-comparison` when comparing Foundry system implementations (D35E vs dnd5e vs PF2e)
+  - Ask `/srd-lookup` for raw 3.5e SRD rules text
+  - Ask `/d35e-reference` for D35E legacy schema and data paths
 - Ask `/implementation-guide` for step-by-step workflows
 - Ask `/e2e-testing` when adding test coverage for a user-visible behavior
 
@@ -311,5 +337,5 @@ Use Case Examples:
 - Phase 4: ✅ Complete
 - Phase 5-32: 📋 Planned (see `docs/migration-plan/roadmap.md`)
 - Instruction Files: 7 ✅ (foundry-data-fields, dnd35e-patterns, vue-sheet-patterns, formula-familiar, dnd35e-field, form-groups, e2e-testing)
-- Skills: 6 ✅ (phase-planning, phase-reference, foundry-reference, system-comparison, implementation-guide, e2e-testing)
+- Skills: 8 ✅ (phase-planning, phase-reference, foundry-reference, system-comparison, implementation-guide, e2e-testing, srd-lookup, d35e-reference)
 - Agents: 2 ✅ (planning, kb-curator)

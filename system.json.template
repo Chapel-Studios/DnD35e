@@ -71,6 +71,9 @@
     }
   ],
   "documentTypes": {
+    "Actor": {
+      "character": {}
+    },
     "Item": {
       "weapon": {}
     },

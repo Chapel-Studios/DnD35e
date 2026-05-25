@@ -1,6 +1,8 @@
+import { ActorDnd35e } from '@actors/baseActor/index.mjs';
+
 const ActorConfig = {
   documentClasses: {
-    // weapon: Weapon,
+    character: ActorDnd35e,
   },
 };
 

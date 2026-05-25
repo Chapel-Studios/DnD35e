@@ -17,9 +17,9 @@ describe('resolveViewAwareFieldPlan', () => {
       expect(plan.checkMasks).toBe(false);
     });
 
-    it('GM in true mode reads from source, no mask check', () => {
+    it('GM in true mode reads from derived, no mask check (unmasked play view)', () => {
       const plan = resolveViewAwareFieldPlan(modes({ isGM: true, isTrueMode: true }));
-      expect(plan.readMode).toBe('source');
+      expect(plan.readMode).toBe('derived');
       expect(plan.checkMasks).toBe(false);
     });
 
@@ -81,6 +81,12 @@ describe('resolveViewAwareFieldPlan', () => {
 
     it('GM in true mode does not check masks even though it is not edit mode', () => {
       const plan = resolveViewAwareFieldPlan(modes({ isGM: true, isTrueMode: true }));
+      expect(plan.checkMasks).toBe(false);
+    });
+
+    it('getFromSource=true in true mode forces source read (explicit caller override)', () => {
+      const plan = resolveViewAwareFieldPlan(modes({ isGM: true, isTrueMode: true }), true);
+      expect(plan.readMode).toBe('source');
       expect(plan.checkMasks).toBe(false);
     });
   });

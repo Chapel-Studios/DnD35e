@@ -36,14 +36,17 @@ export type ViewAwareModes = {
  *
  * Rules (matching the impl that lives in `DocumentSheetStore.getViewAwareFieldValue`):
  *
- * 1. **GM in Edit or True Mode** → read from `_source` directly, never via masks. GMs
- *    authoring or auditing see truth.
- * 2. **Play Mode (any user)** → check masks first; if present, return normalized mask.
+ * 1. **GM in Edit Mode** → read from `_source` directly, never via masks. GM sees the
+ *    pre-AE authored truth for persisted fields. `persisted:false` fields are exempt —
+ *    they have no `_source` entry and are always read from derived data.
+ * 2. **True Mode (GM only)** → read from derived data, no mask check. "Unmasked play
+ *    view" — GM sees exactly what the player sees, minus masks.
+ * 3. **Play Mode (any user)** → check masks first; if present, return normalized mask.
  *    Then read from derived data.
- * 3. **Non-GM in Edit Mode** → check masks first (so player edits route through Player
+ * 4. **Non-GM in Edit Mode** → check masks first (so player edits route through Player
  *    Edit Secrets instead of revealing GM truth). Then read from derived data.
- * 4. **Caller explicit `getFromSource = true`** → always read from `_source`, regardless
- *    of other modes.
+ * 5. **Caller explicit `getFromSource = true`** → always read from `_source`, regardless
+ *    of other modes (still exempt for `persisted:false` fields).
  *
  * @param modes - the four mode booleans
  * @param getFromSource - explicit caller override; forces `readMode: 'source'`
@@ -52,13 +55,14 @@ export const resolveViewAwareFieldPlan = (
   modes: ViewAwareModes,
   getFromSource = false
 ): ViewAwareFieldPlan => {
-  const { isEditMode, isPlayMode, isTrueMode, isGM } = modes;
+  const { isEditMode, isPlayMode, isGM } = modes;
 
-  // Rule 1 + 4: GMs editing or viewing true mode see source. Caller can force-source too.
-  const sourceForced = (isEditMode || isTrueMode) && isGM;
+  // Rule 1 + 5: GM in edit mode sees source (pre-AE authored truth). Caller can force-source too.
+  // True mode reads derived — it is the "unmasked play view", not an authoring view.
+  const sourceForced = isEditMode && isGM;
   const useSource = getFromSource || sourceForced;
 
-  // Rules 2 + 3: masks apply in play mode and in non-GM edit mode.
+  // Rules 2 + 3 + 4: masks apply in play mode and in non-GM edit mode.
   const checkMasks = isPlayMode || (!isGM && isEditMode);
 
   return {

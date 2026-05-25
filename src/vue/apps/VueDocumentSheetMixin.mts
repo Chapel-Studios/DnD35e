@@ -3,6 +3,7 @@
  * Extends VueAppBaseMixin with document-specific features like header buttons, edit mode, and identified view.
  */
 
+import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client/applications/_types.mjs';
 import type { DocumentSheetV2 } from '@client/applications/api/_module.mjs';
 import type { ActiveEffectDnd35e } from '@documents/activeEffects/index.mjs';
@@ -23,7 +24,7 @@ import type { SheetState, VueApplicationConfiguration, VueApplicationContext, Vu
  * Interface describing members added by VueDocumentSheetMixin.
  * Used for explicit typing instead of ReturnType inference.
  */
-interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | ActiveEffectDnd35e> extends VueAppBaseMembers {
+interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | ActiveEffectDnd35e | ActorDnd35e> extends VueAppBaseMembers {
   /** Application options with document reference */
   options: VueApplicationConfiguration<TDocument>;
   /** Shared reactive context passed into Vue */
@@ -36,7 +37,7 @@ interface VueDocumentSheetMembers<TDocument extends ItemDnd35e | ActiveEffectDnd
   readonly isEditable: boolean;
 }
 
-const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocument extends ItemDnd35e | ActiveEffectDnd35e> (base: TBase) => {
+const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSheetV2>, TDocument extends ItemDnd35e | ActiveEffectDnd35e | ActorDnd35e> (base: TBase) => {
   const VueAppBase = useVueAppBaseMixin(base);
 
   abstract class VueDocumentSheet extends VueAppBase {
@@ -176,7 +177,7 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
  */
 type VueDocumentSheetMixin<
   TBase extends AbstractConstructorOf<DocumentSheetV2>,
-  TDocument extends ItemDnd35e | ActiveEffectDnd35e
+  TDocument extends ItemDnd35e | ActiveEffectDnd35e | ActorDnd35e
 > = TBase & AbstractConstructorOf<VueDocumentSheetMembers<TDocument>>;
 
 export {

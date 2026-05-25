@@ -85,6 +85,24 @@
         }
       }
     },
+    "EVENTS": {
+      "takeDamage": {
+        "label": "Take Damage",
+        "description": "Fires when damage is applied to the actor HP."
+      },
+      "dying": {
+        "label": "Dying",
+        "description": "Fires when the actor HP drops to 0 or below, but above the death threshold."
+      },
+      "death": {
+        "label": "Death",
+        "description": "Fires when the actor HP drops to the world death threshold."
+      },
+      "revealSecret": {
+        "label": "Reveal Secret",
+        "description": "Fires when a Secret AE is disabled, revealing the true value of a masked field."
+      }
+    },
     "MATERIAL": {
       "FIELDS": {
         "price": {

@@ -49,6 +49,10 @@ type MaterialType = Material;
 function validateSingleMaterial(document: ActiveEffect): false | void {
   if (document.type !== materialEffectType || !document.parent) return;
 
+  // System-managed AEs are created by game logic, not user action. They
+  // handle their own deduplication and must bypass this user-facing check.
+  if (document.getFlag('dnd35e', 'systemManaged') === true) return;
+
   const incomingSubtype = (document.system as Record<string, unknown>)?.materialSubtype;
   if (typeof incomingSubtype !== 'string') return;
 

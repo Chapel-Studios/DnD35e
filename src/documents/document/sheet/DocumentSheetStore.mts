@@ -1,4 +1,5 @@
 import type { ActorType } from '@actors/actorTypes.mjs';
+import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type { ActiveEffectDnd35e, EffectType } from '@effects/index.mjs';
 import { addOrUpdatePlayerEditMask, findOrCreatePlayerEditSecret } from '@effects/secret/playerEditSecret.mjs';
@@ -39,7 +40,7 @@ import { resolveViewAwareFieldPlan } from './viewAwareFieldPlan.mjs';
 // Types
 // ---------------------------------------------------------------------------
 
-type SheetDocument = ItemDnd35e | ActiveEffectDnd35e;
+type SheetDocument = ItemDnd35e | ActiveEffectDnd35e | ActorDnd35e;
 
 type DocumentSheetStoreUtils<TDocument extends SheetDocument> = FieldOverridesStoreUtils & {
   document: ShallowRef<TDocument>;
@@ -278,7 +279,27 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       }
     }
 
-    const useSource = plan.readMode === 'source';
+    // True Mode: some top-level document getters (name, img) are overridden on
+    // ItemDnd35e to project _masks values, so reading the derived property would
+    // return the masked value even though checkMasks is false. Guard: if the field
+    // has a mask entry, read from _source to get the real (unmasked) value.
+    if (isTrueMode.value) {
+      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+      if (masks && fieldPath in masks) {
+        return foundry.utils.getProperty(document.value, `_source.${fieldPath}`) as T;
+      }
+    }
+
+    // persisted:false fields (computed/derived values) have no _source entry.
+    // They are always read from live derived data regardless of view mode —
+    // there is no "source" version of a derived value to show.
+    const schemaField = getSchemaField(document.value, fieldPath);
+    // `persisted` is a direct instance property on Foundry's DataField at runtime
+    // but is not yet reflected in the TypeScript stubs.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isDerived = (schemaField as any)?.persisted === false;
+
+    const useSource = !isDerived && plan.readMode === 'source';
     const usableFieldPath = useSource ? `_source.${fieldPath}` : `${fieldPath}`;
     const viewValue = foundry.utils.getProperty(document.value, usableFieldPath) as T | undefined;
 
