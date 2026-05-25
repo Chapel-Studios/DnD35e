@@ -68,17 +68,20 @@ const port = config.foundryE2EPort ?? 31000;
 // Default to repo-local so contributors can inspect post-failure state.
 const dataDir = config.foundryE2EDataDir
   ?? path.join(REPO_ROOT, 'tests', 'e2e', '.foundry-data');
-// Path to the built system (where vite outputs).
-const systemSourceDir = foundrySystemDir
-  ? path.join(foundrySystemDir, 'dnd35e')
-  : path.join(REPO_ROOT, 'dist');
+// Path to the built system. `npm run build:dist` (used by pretest:e2e) always
+// outputs to <repo>/dist so the E2E Foundry is fully independent of any running
+// dev Foundry instance. Fall back to the dev system dir only for manual/legacy runs.
+const distDir = path.join(REPO_ROOT, 'dist');
+const systemSourceDir = existsSync(distDir)
+  ? distDir
+  : (foundrySystemDir ? path.join(foundrySystemDir, 'dnd35e') : distDir);
 
 if (!foundryAppPath) {
   console.error('[setup-e2e] foundryRootPath missing in local.config.json.');
   process.exit(1);
 }
 if (!existsSync(systemSourceDir)) {
-  console.error(`[setup-e2e] System source not found at ${systemSourceDir}. Run "npm run build" first.`);
+  console.error(`[setup-e2e] System source not found at ${systemSourceDir}. Run "npm run build:dist" first.`);
   process.exit(1);
 }
 

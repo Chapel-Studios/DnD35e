@@ -279,6 +279,17 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       }
     }
 
+    // True Mode: some top-level document getters (name, img) are overridden on
+    // ItemDnd35e to project _masks values, so reading the derived property would
+    // return the masked value even though checkMasks is false. Guard: if the field
+    // has a mask entry, read from _source to get the real (unmasked) value.
+    if (isTrueMode.value) {
+      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+      if (masks && fieldPath in masks) {
+        return foundry.utils.getProperty(document.value, `_source.${fieldPath}`) as T;
+      }
+    }
+
     // persisted:false fields (computed/derived values) have no _source entry.
     // They are always read from live derived data regardless of view mode —
     // there is no "source" version of a derived value to show.

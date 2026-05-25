@@ -2,7 +2,6 @@
   <DmControl v-if="secrets.length || isEditMode">
     <div class="secrets-list">
       <EffectCategory
-        v-if="secrets.length"
         :label="localize('dnd35e.EFFECT.Secret.Secrets').value"
         :effects="secrets"
         :can-edit="isEditMode"

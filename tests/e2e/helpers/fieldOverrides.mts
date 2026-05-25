@@ -58,15 +58,14 @@ export async function clearFieldOverride (
     const flag = doc.getFlag('dnd35e', flagKey) ?? {};
     const entry = { ...(flag[encoded] ?? {}) };
     delete entry[key];
-    // Foundry `setFlag` merges; explicit deletion uses the `-=` prefix.
+    // Use setFlag with the `-=key` convention embedded in the value object.
+    // Foundry's mergeObject handles `-=` prefixes at any nesting depth, and
+    // setFlag avoids the server-side `_updateDocuments` path that fails with
+    // deeply-nested dotted deletion paths in V14.
     if (Object.keys(entry).length === 0) {
-      await doc.update({
-        [`flags.dnd35e.${flagKey}.-=${encoded}`]: null,
-      });
+      await doc.setFlag('dnd35e', flagKey, { [`-=${encoded}`]: null });
     } else {
-      await doc.update({
-        [`flags.dnd35e.${flagKey}.${encoded}.-=${key}`]: null,
-      });
+      await doc.setFlag('dnd35e', flagKey, { [encoded]: { [`-=${key}`]: null } });
     }
   }, { docUuid, encoded, key, flagKey: FIELD_OVERRIDES_FLAG });
 }

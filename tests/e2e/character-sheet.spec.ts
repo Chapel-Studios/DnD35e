@@ -31,7 +31,7 @@ test.describe('character sheet — Story 1', () => {
 
     // Edit the STR base input (10 → 14).
     const strInput = page.locator(
-      `${sheet} [data-field-path="system.abilities.str.base"] input[type="number"]`,
+      `${sheet} [data-field-path="system.abilities.str.base"] input[type="number"]`
     );
     await dismissOverlays(page);
     await strInput.click({ clickCount: 3 });
@@ -41,7 +41,7 @@ test.describe('character sheet — Story 1', () => {
 
     // The STR modifier div updates reactively once prepareDerivedData() runs.
     const strMod = page.locator(
-      `${sheet} .ability-entry:has([data-field-path="system.abilities.str.base"]) .ability-mod`,
+      `${sheet} .ability-entry:has([data-field-path="system.abilities.str.base"]) .ability-mod`
     );
     await expect(strMod).toHaveText('+2', { timeout: 5_000 });
   });
@@ -60,12 +60,12 @@ test.describe('character sheet — Story 1', () => {
 
     // Biography editor — system.description (ActorDescriptionTab via CreatureDescriptionTab).
     await expect(
-      page.locator(`${sheet} .form-group[data-field-path="system.description"]`),
+      page.locator(`${sheet} .form-group[data-field-path="system.description"]`)
     ).toBeVisible({ timeout: 5_000 });
 
     // Session Notes editor — system.notes (CharacterDescriptionTab only).
     await expect(
-      page.locator(`${sheet} .form-group[data-field-path="system.notes"]`),
+      page.locator(`${sheet} .form-group[data-field-path="system.notes"]`)
     ).toBeVisible({ timeout: 5_000 });
   });
 });

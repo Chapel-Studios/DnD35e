@@ -127,6 +127,17 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
         editEffect(createdSecret.id);
       }
     },
+    revealAllSecrets: async () => {
+      const active = [...document.value.effects].filter(
+        (e) => e.type === secretEffectType && !e.disabled
+      );
+      if (active.length > 0) {
+        await document.value.updateEmbeddedDocuments(
+          'ActiveEffect',
+          active.map((e) => ({ _id: e.id, disabled: true }))
+        );
+      }
+    },
   };
 
   return {
@@ -161,6 +172,7 @@ interface PhysicalItemStoreUtils extends IdentifiableDocumentStoreUtils {}
 interface PhysicalItemActions extends IdentifiableDocumentActions {
   toggleBroken: (value: boolean) => Promise<void>;
   createSecret: () => Promise<void>;
+  revealAllSecrets: () => Promise<void>;
 }
 
 interface PhysicalItemStore extends IdentifiableStore {
