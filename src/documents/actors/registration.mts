@@ -3,6 +3,7 @@ import { ActorProxyDnd35e } from '@actors/baseActor/index.mjs';
 import { CharacterSystemModel } from '@actors/character/index.mjs';
 import { CharacterSheet } from '@actors/character/sheet/CharacterSheet.mjs';
 import { ActorConfig } from '@constants/config/actor.mjs';
+import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
@@ -36,5 +37,10 @@ export const registerActors = () => {
       if (type === characterActorType) continue;
       registerFamiliarSchema('Actor', type, (ctx?) => gatherAspectsFromSchema(CharacterSystemModel, ctx));
     }
+  });
+
+  Hooks.on('updateActor', (document, _updateData, _options, _userId) => {
+    if (!document._id || !game.dnd35e?.stores?.[document.documentName]?.[document._id]) return;
+    (game.dnd35e.stores[document.documentName]?.[document._id] as DocumentSheetStore<any>)?._storeUtils.refreshDocument?.(document);
   });
 };

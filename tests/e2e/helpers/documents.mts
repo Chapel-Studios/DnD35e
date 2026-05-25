@@ -15,9 +15,9 @@ export async function createItem (
   const uuid = await page.evaluate(async ({ type, data }) => {
     const Item = (globalThis as any).Item;
     const created = await Item.create({
-      type,
-      name: (data as any).name ?? 'Test Item',
+      name: 'Test Item',
       ...data,
+      type, // enforced last — caller cannot override the explicit type parameter
     });
     if (!created?.uuid) throw new Error('Item.create returned no uuid');
     return created.uuid as string;
@@ -38,9 +38,9 @@ export async function createActor (
   const uuid = await page.evaluate(async ({ type, data }) => {
     const Actor = (globalThis as any).Actor;
     const created = await Actor.create({
-      type,
-      name: (data as any).name ?? 'Test Actor',
+      name: 'Test Actor',
       ...data,
+      type, // enforced last — caller cannot override the explicit type parameter
     });
     if (!created?.uuid) throw new Error('Actor.create returned no uuid');
     return created.uuid as string;

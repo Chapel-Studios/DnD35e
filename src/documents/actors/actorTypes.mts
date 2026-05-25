@@ -9,7 +9,7 @@ type ActorType = SetElement<typeof ACTOR_TYPES>;
 
 
 const ACTOR_TYPES_LOCALIZED = {
-  character: 'TYPES.actor.character',
+  character: 'TYPES.Actor.character',
 } as const satisfies Record<ActorType, string>;
 type ActorTypeLocalizationValues = typeof ACTOR_TYPES_LOCALIZED[keyof typeof ACTOR_TYPES_LOCALIZED];
 
