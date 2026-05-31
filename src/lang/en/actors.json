@@ -21,7 +21,42 @@
         "Notes": "Notes"
       },
       "section": {
-        "AbilityScores": "Ability Scores"
+        "AbilityScores": "Ability Scores",
+        "Health": "Health",
+        "Actions": "Actions",
+        "Skills": "Skills"
+      },
+      "header": {
+        "xp": "XP",
+        "gender": "Gender",
+        "alignment": "Alignment",
+        "deity": "Deity",
+        "age": "Age",
+        "height": "Height",
+        "weight": "Weight",
+        "race": "Race",
+        "racePlaceholder": "No race assigned",
+        "landSpeed": "Land Speed"
+      },
+      "stat": {
+        "hp": "HP",
+        "base": "Base",
+        "mod": "Mod",
+        "temp": "+Temp",
+        "nonlethal": "Nonlethal",
+        "initiative": "Init",
+        "bab": "BAB",
+        "ac": "AC",
+        "touch": "Touch",
+        "flatFooted": "FF",
+        "fort": "Fort",
+        "ref": "Ref",
+        "will": "Will",
+        "points": "Points",
+        "total": "Total"
+      },
+      "action": {
+        "rest": "Rest"
       },
       "field": {
         "Biography": "Biography",

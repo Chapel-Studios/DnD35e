@@ -63,7 +63,15 @@ Story 1
   └─► Story 3  ──► Story 4
 ```
 
-Stories 2 and 3 are independent of each other and can be worked in parallel after Story 1 merges.
+Stories 2–5 are independent of each other and can be worked in parallel after Story 1 merges. Stories 2 and 3 are design-only (layout/CSS) and do not block Combat Stats (Story 4).
+
+```
+Story 1
+  └─► Story 2 (Summary Design)
+  └─► Story 3 (Attributes Design)
+  └─► Story 4 (Combat Stats) ──► Story 6 (AEs)
+  └─► Story 5 (Inventory)
+```
 
 ---
 
@@ -85,7 +93,31 @@ Stories 2 and 3 are independent of each other and can be worked in parallel afte
 
 ---
 
-### Story 2 — Combat Stats (HP, AC, Saves, Speed, Initiative, BAB)
+### Story 2 — Summary Tab Design
+
+**User**: GM/Player  
+**Delivers**: Character sheet opens to a D35E-style Summary tab. Header shows character detail rows (gender/alignment/deity, age/height/weight, race/speed) as stub placeholders. Summary tab uses a 3-column grid: Ability Scores table (left), compact stat panel (middle), skills placeholder (right). Horizontal text tabs replace the vertical tab layout.  
+**Depends on**: Story 1.
+
+**Commits:**
+1. **Horizontal tabs + header character details** — Remove `verticalTabs` prop from `CreatureSheet.vue`. Add `#actor-details` slot to `DocumentSheetBody.vue`. Create `CreatureHeaderDetails.vue` with XP bar, gender/alignment/deity row, age/height/weight row, race/speed row (all stub `—` values). Change `defaultActiveTab` to `'summary'`. Add i18n keys to `actors.json`.
+2. **Summary tab 3-column grid** — Redesign `SummaryTab.vue` as a 3-column CSS grid. Redesign `AbilityScoresSection.vue` as a vertical table (Name | Base | Total | Mod rows, replacing the horizontal strip). Create `SummaryStatPanel.vue` (Rest button + Health + Init/BAB + AC trio + Saves trio + Actions placeholder). Create `SummarySkillsSection.vue` (Points | Total header + empty scrollable placeholder).
+
+**E2E acceptance**: Open character sheet → Summary tab is active by default → ability scores table shows 6 rows with Name/Base/Total/Mod → middle column shows stat stubs → right column shows empty skills placeholder → horizontal tab bar visible.
+
+---
+
+### Story 3 — Attributes Tab Design
+
+**User**: GM/Player  
+**Delivers**: Attributes tab redesigned to match D35E layout — full-size editable panels for ability scores, HP, AC variants, saves, speed, and initiative. More spacious than Summary tab; intended for detailed editing.  
+**Depends on**: Story 1.
+
+> **Status**: Planned. Scope to be defined when Story 2 ships.
+
+---
+
+### Story 4 — Combat Stats (HP, AC, Saves, Speed, Initiative, BAB)
 
 **User**: GM/Player  
 **Delivers**: Sheet displays HP (editable current/max), all 3 AC variants, fort/ref/will saves, initiative, BAB, and land speed — all deriving live from ability scores.  
@@ -100,11 +132,11 @@ Stories 2 and 3 are independent of each other and can be worked in parallel afte
 
 ---
 
-### Story 3 — Inventory, Equipment Slots, Encumbrance, Currency
+### Story 5 — Inventory, Equipment Slots, Encumbrance, Currency
 
 **User**: GM/Player  
 **Delivers**: Inventory tab shows owned items grouped by type; items dragged from compendium appear in the list; weapons can be equipped to mainhand/offhand; encumbrance tier shown; currency field on sheet.  
-**Depends on**: Story 1. **Runs in parallel with Story 2.**
+**Depends on**: Story 1. **Runs in parallel with Stories 2–4.**
 
 **Commits:**
 1. **Inventory tab scaffold** — Inventory tab with grouped item list (Weapons / Equipment / Consumables / Loot); item rows: name, quantity, weight, price, carried/equipped state. *(Unit tests: grouping logic, stored-vs-carried display)*
@@ -116,11 +148,10 @@ Stories 2 and 3 are independent of each other and can be worked in parallel afte
 
 ---
 
-### Story 4 — Active Effects Modify Stats (Stacking Engine on Actor)
 
 **User**: GM  
 **Delivers**: Effects tab shows AEs on the actor; adding a stat-modifying AE changes derived stats immediately; same bonus-type bonuses don't stack (only best applies).
-**Depends on**: Story 2 (stat fields must exist before AEs can modify them).
+**Depends on**: Story 4 (stat fields must exist before AEs can modify them).
 
 **Commits:**
 1. **`applyStackedChanges()` helper** — extract/finalize shared stacking utility in `src/helpers/stacking.mts` for use by both `ItemDnd35e` and `ActorDnd35e`. *(Unit tests: stacking rules; same-type rejection; penalty tracking)*

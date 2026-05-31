@@ -1,5 +1,9 @@
 <template>
-  <CreatureSheetVue />
+  <CreatureSheetVue>
+    <template #header-name>
+      <CharacterNameField />
+    </template>
+  </CreatureSheetVue>
 </template>
 
 <script lang="ts" setup>
@@ -21,6 +25,7 @@
   import { provide } from 'vue';
 
   import { useActorSheetStore } from './ActorSheetStore.mjs';
+  import CharacterNameField from './components/CharacterNameField.vue';
 
   const props = defineProps<{
     context: VueApplicationContext<ActorDnd35e>;
@@ -28,7 +33,7 @@
 
   const store = useActorSheetStore<ActorDnd35e>(props.context, {
     defaultTabs: [summaryTab, attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, notesTab],
-    defaultActiveTab: 'attributes',
+    defaultActiveTab: 'summary',
   });
 
   provide(DocumentSheetStoreSymbol, store);

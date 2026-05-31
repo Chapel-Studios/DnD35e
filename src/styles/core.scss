@@ -13,6 +13,21 @@ h3 {
   overflow: auto;
 }
 
+/* Allow the vertical tab sidebar to overflow outside the actor sheet window.
+   Foundry sets overflow:hidden on both .application (outer) and .window-content (inner),
+   so we need to lift clipping on all three levels. */
+.actor-sheet.dnd35e {
+  overflow: visible;
+
+  .window-content {
+    overflow: visible;
+  }
+
+  .vue-root {
+    overflow: visible;
+  }
+}
+
 /* View mode bar — 3-state button bar in sheet header */
 .window-header {
   .view-mode-bar {
