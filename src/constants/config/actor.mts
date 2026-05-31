@@ -1,8 +1,8 @@
-import { ActorDnd35e } from '@actors/baseActor/index.mjs';
+import { Character } from '@actors/character/Character.mjs';
 
 const ActorConfig = {
   documentClasses: {
-    character: ActorDnd35e,
+    character: Character,
   },
 };
 

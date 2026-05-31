@@ -5,6 +5,44 @@
     }
   },
   "dnd35e": {
+    "CREATURE": {
+      "FIELDS": {
+        "bio": {
+          "label": "Biography",
+          "gender": { "label": "Gender" },
+          "deity":  { "label": "Deity" },
+          "age":    { "label": "Age" },
+          "height": { "label": "Height" },
+          "weight": { "label": "Weight" }
+        },
+        "alignment": {
+          "label": "Alignment",
+          "law":   { "label": "Law/Chaos" },
+          "moral": { "label": "Good/Evil" }
+        },
+        "speed": {
+          "label": "Speed",
+          "land": {
+            "label": "Land Speed",
+            "base":  { "label": "Land Speed" },
+            "total": { "label": "Total Land Speed" }
+          }
+        }
+      },
+      "alignment": {
+        "trueNeutral": "True Neutral",
+        "law": {
+          "lawful": "Lawful",
+          "neutral": "Neutral",
+          "chaotic": "Chaotic"
+        },
+        "moral": {
+          "good": "Good",
+          "neutral": "Neutral",
+          "evil": "Evil"
+        }
+      }
+    },
     "ACTOR": {
       "sheet": {
         "Character": "D&D 3.5e Character Sheet"
@@ -28,15 +66,8 @@
       },
       "header": {
         "xp": "XP",
-        "gender": "Gender",
-        "alignment": "Alignment",
-        "deity": "Deity",
-        "age": "Age",
-        "height": "Height",
-        "weight": "Weight",
         "race": "Race",
-        "racePlaceholder": "No race assigned",
-        "landSpeed": "Land Speed"
+        "racePlaceholder": "No race assigned"
       },
       "stat": {
         "hp": "HP",

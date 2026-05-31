@@ -18,7 +18,7 @@
     <template #readonly>
       <input
         type="checkbox"
-        :checked="value"
+        :checked="resolvedValue"
         disabled
       />
     </template>
@@ -36,7 +36,7 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: boolean;
+    value?: boolean;
     isDmOnly?: boolean;
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
@@ -55,6 +55,7 @@
   const {
     documentGetters: {
       hasMaskForField,
+      getViewAwareFieldValue,
     },
     documentActions: {
       getDirectFieldUpdater,
@@ -64,6 +65,10 @@
       getSourceProperty,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  const resolvedValue = computed<boolean>(() =>
+    props.value !== undefined ? props.value : getViewAwareFieldValue<boolean>(props.fieldPath) ?? false
+  );
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;
@@ -78,8 +83,8 @@
 
   const sourceValue = getSourceProperty<boolean>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.editDerived || !sourceValue) return props.value;
-    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return props.value;
+    if (props.editDerived || !sourceValue) return resolvedValue.value;
+    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
     return sourceValue.value as boolean;
   });
 

@@ -1,5 +1,6 @@
 <template>
   <div class="creature-header-details">
+    <!-- XP – stub until level system lands -->
     <div class="xp-row">
       <span class="xp-label">{{ localize('dnd35e.ACTOR.header.xp') }}</span>
       <div class="xp-bar-wrap">
@@ -8,50 +9,42 @@
       <span class="xp-value">0 / 0</span>
     </div>
 
+    <!-- Row 1: gender | alignment | deity -->
     <div class="detail-row">
-      <div class="detail-cell">
-        <span class="detail-label">{{ localize('dnd35e.ACTOR.header.gender') }}</span>
-        <span class="detail-value">—</span>
-      </div>
-      <div class="detail-cell">
-        <span class="detail-label">{{ localize('dnd35e.ACTOR.header.alignment') }}</span>
-        <span class="detail-value">—</span>
-      </div>
-      <div class="detail-cell">
-        <span class="detail-label">{{ localize('dnd35e.ACTOR.header.deity') }}</span>
-        <span class="detail-value">—</span>
-      </div>
+      <CreatureGender />
+      <CreatureAlignment />
+      <CreatureDeity />
     </div>
 
+    <!-- Row 2: age | height | weight -->
     <div class="detail-row">
-      <div class="detail-cell">
-        <span class="detail-label">{{ localize('dnd35e.ACTOR.header.age') }}</span>
-        <span class="detail-value">—</span>
-      </div>
-      <div class="detail-cell">
-        <span class="detail-label">{{ localize('dnd35e.ACTOR.header.height') }}</span>
-        <span class="detail-value">—</span>
-      </div>
-      <div class="detail-cell">
-        <span class="detail-label">{{ localize('dnd35e.ACTOR.header.weight') }}</span>
-        <span class="detail-value">—</span>
-      </div>
+      <CreatureAge />
+      <CreatureHeight />
+      <CreatureWeight />
     </div>
 
-    <div class="race-row">
-      <div class="race-cell">
+    <!-- Row 3: race (stub) | land speed -->
+    <div class="detail-row row-2">
+      <div class="race-stub">
         <span class="detail-label">{{ localize('dnd35e.ACTOR.header.race') }}</span>
-        <span class="detail-value race-placeholder">{{ localize('dnd35e.ACTOR.header.racePlaceholder') }}</span>
+        <span class="race-placeholder">{{ localize('dnd35e.ACTOR.header.racePlaceholder') }}</span>
       </div>
-      <div class="speed-cell">
-        <span class="detail-label">{{ localize('dnd35e.ACTOR.header.landSpeed') }}</span>
-        <span class="detail-value">—</span>
-      </div>
+      <CreatureLandSpeed />
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
+  import {
+    CreatureAge,
+    CreatureAlignment,
+    CreatureDeity,
+    CreatureGender,
+    CreatureHeight,
+    CreatureLandSpeed,
+    CreatureWeight,
+  } from './header/index.mjs';
+
   const localize = (key: string) => game.i18n.localize(key);
 </script>
 
@@ -64,6 +57,40 @@
     border-bottom: 1px solid var(--color-border-light-2, #ccc);
     background: var(--color-bg-option, rgba(0, 0, 0, 0.03));
     font-size: 0.75rem;
+
+    // ── Compact FormGroup overrides for the header bar ─────────────────────
+    :deep(.form-group) {
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
+      margin: 0;
+
+      // Hide GM field-controls icons in the compact header context
+      .controls { display: none; }
+
+      .form-group-label {
+        margin: 0;
+
+        label {
+          font-weight: bold;
+          color: var(--color-text-dark-secondary, #666);
+          text-transform: uppercase;
+          font-size: 0.65rem;
+          letter-spacing: 0.04em;
+          white-space: nowrap;
+        }
+      }
+
+      input[type='text'],
+      input[type='number'],
+      select {
+        font-size: 0.75rem;
+        height: 1.3em;
+        padding: 0 0.1rem;
+        width: 100%;
+        min-width: 0;
+      }
+    }
   }
 
   .xp-row {
@@ -105,22 +132,17 @@
   .detail-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.25rem;
-  }
-
-  .race-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
     gap: 0.5rem;
-    align-items: center;
+
+    &.row-2 {
+      grid-template-columns: 1fr auto;
+    }
   }
 
-  .detail-cell,
-  .race-cell,
-  .speed-cell {
+  .race-stub {
     display: flex;
     align-items: baseline;
-    gap: 0.3rem;
+    gap: 0.25rem;
   }
 
   .detail-label {
@@ -132,16 +154,9 @@
     white-space: nowrap;
   }
 
-  .detail-value {
-    color: var(--color-text-dark-primary, #191813);
-  }
-
   .race-placeholder {
     color: var(--color-text-dark-secondary, #888);
     font-style: italic;
-  }
-
-  .speed-cell {
-    white-space: nowrap;
+    font-size: 0.75rem;
   }
 </style>

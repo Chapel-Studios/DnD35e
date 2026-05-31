@@ -1,22 +1,33 @@
 import { ActorSystemModel } from '@actors/baseActor/data/index.mjs';
+import { LAW_AXES, MORAL_AXES } from '@constants/alignment.mjs';
+import { SIZES } from '@constants/sizes.mjs';
 import { CurrencyField } from '@fields/CurrencyField.mjs';
 import {
   derivedNumberField,
   requiredNumberField,
+  requiredTypedStringField,
+  useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
 
 import type { CreatureSystemData } from './CreatureSystemData.mjs';
 
 const {
+  HTMLField,
   SchemaField,
+  StringField,
 } = foundry.data.fields;
 
 const abilityEntry = () => new SchemaField({
-  base: requiredNumberField(10),
-  mod:  derivedNumberField(0),
+  base: useDnd35eField(requiredNumberField(10), { familiar: { aliases: ['score'] } }),
+  mod:  useDnd35eField(derivedNumberField(0),   { familiar: { aliases: ['modifier'] } }),
 });
 
+const nullableBioField = () =>
+  useDnd35eField(new StringField({ required: true, nullable: true, initial: null }));
+
 abstract class CreatureSystemModel extends ActorSystemModel {
+  static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.CREATURE'];
+
   override prepareDerivedData(): void {
     super.prepareDerivedData();
     for (const ability of Object.values(this.abilities)) {
@@ -37,24 +48,24 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     });
 
     schema.hp = new SchemaField({
-      max:       derivedNumberField(0),
-      current:   requiredNumberField(0),
-      temp:      requiredNumberField(0),
-      nonlethal: requiredNumberField(0),
+      max:       useDnd35eField(derivedNumberField(0)),
+      current:   useDnd35eField(requiredNumberField(0)),
+      temp:      useDnd35eField(requiredNumberField(0)),
+      nonlethal: useDnd35eField(requiredNumberField(0)),
     });
 
     schema.bab = new SchemaField({
-      total: derivedNumberField(0),
+      total: useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['baseAttackBonus'] } }),
     });
 
     schema.ac = new SchemaField({
-      normal:     derivedNumberField(10),
-      touch:      derivedNumberField(10),
-      flatFooted: derivedNumberField(10),
+      normal:     useDnd35eField(derivedNumberField(10)),
+      touch:      useDnd35eField(derivedNumberField(10)),
+      flatFooted: useDnd35eField(derivedNumberField(10)),
     });
 
     const saveEntry = () => new SchemaField({
-      total: derivedNumberField(0),
+      total: useDnd35eField(derivedNumberField(0)),
     });
 
     schema.saves = new SchemaField({
@@ -64,23 +75,42 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     });
 
     schema.init = new SchemaField({
-      total: derivedNumberField(0),
+      total: useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['initiative'] } }),
     });
 
-    schema.sr = requiredNumberField(0);
+    schema.sr = useDnd35eField(requiredNumberField(0), { familiar: { aliases: ['spellResistance'] } });
+
+    schema.bio = new SchemaField({
+      gender: nullableBioField(),
+      deity:  nullableBioField(),
+      age:    nullableBioField(),
+      height: nullableBioField(),
+      weight: nullableBioField(),
+    });
+
+    schema.level = useDnd35eField(derivedNumberField(1), { familiar: { aliases: ['lvl'] } });
+
+    schema.alignment = new SchemaField({
+      law:   useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...LAW_AXES] })),
+      moral: useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...MORAL_AXES] })),
+    });
+
+    schema.size = useDnd35eField(requiredTypedStringField(SIZES, 'medium'));
+
+    schema.notes = useDnd35eField(new HTMLField({ required: false, nullable: false, blank: true }));
 
     schema.currency = new CurrencyField({ required: true });
 
     schema.encumbrance = new SchemaField({
-      carriedWeight:   derivedNumberField(0),
-      light:           derivedNumberField(0),
-      medium:          derivedNumberField(0),
-      heavy:           derivedNumberField(0),
-      carry:           derivedNumberField(0),
-      drag:            derivedNumberField(0),
-      level:           derivedNumberField(0),
-      carryBonus:      derivedNumberField(0),
-      carryMultiplier: derivedNumberField(1),
+      carriedWeight:   useDnd35eField(derivedNumberField(0)),
+      light:           useDnd35eField(derivedNumberField(0)),
+      medium:          useDnd35eField(derivedNumberField(0)),
+      heavy:           useDnd35eField(derivedNumberField(0)),
+      carry:           useDnd35eField(derivedNumberField(0)),
+      drag:            useDnd35eField(derivedNumberField(0)),
+      level:           useDnd35eField(derivedNumberField(0)),
+      carryBonus:      useDnd35eField(derivedNumberField(0)),
+      carryMultiplier: useDnd35eField(derivedNumberField(1)),
     });
 
     return schema;

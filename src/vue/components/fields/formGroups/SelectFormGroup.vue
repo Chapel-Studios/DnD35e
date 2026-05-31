@@ -6,7 +6,7 @@
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
-    :value="value"
+    :value="resolvedValue"
   >
     <select
       :value="editValue"
@@ -23,7 +23,7 @@
     </select>
     <template #readonly>
       <span>
-        {{ localize(options.find(opt => opt.value === value)?.label ?? String(value)) }}
+        {{ localize(options.find(opt => opt.value === resolvedValue)?.label ?? String(resolvedValue)) }}
       </span>
     </template>
   </FormGroup>
@@ -41,7 +41,7 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: TValue;
+    value?: TValue;
     options: SelectOption<TValue>[];
     isDmOnly?: boolean;
     fieldPath: string;
@@ -59,10 +59,14 @@
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    documentGetters: { hasMaskForField },
+    documentGetters: { hasMaskForField, getViewAwareFieldValue },
     documentActions: { getDirectFieldUpdater, getViewAwareFieldUpdater },
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  const resolvedValue = computed<TValue>(() =>
+    props.value !== undefined ? props.value : getViewAwareFieldValue<TValue>(props.fieldPath)
+  );
   
   const isDisabled = computed(() => {
     if (props.disabled) return true;
@@ -78,9 +82,9 @@
 
   const sourceValue = getSourceProperty<TValue>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.editDerived || !sourceValue) return props.value;
-    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return props.value;
-    return sourceValue.value ?? props.value;
+    if (props.editDerived || !sourceValue) return resolvedValue.value;
+    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
+    return sourceValue.value ?? resolvedValue.value;
   });
 
   function localize(key: string): string {

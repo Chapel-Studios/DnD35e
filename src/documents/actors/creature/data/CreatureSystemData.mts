@@ -1,3 +1,5 @@
+import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
+import type { Size } from '@constants/sizes.mjs';
 import type { CurrencyData } from '@fields/CurrencyData.mjs';
 import type { PriceSource } from '@settings/currency/index.mjs';
 
@@ -64,10 +66,31 @@ interface EncumbranceData {
   carryMultiplier: number;
 }
 
+// ─── Alignment ───────────────────────────────────────────────────────────────
+
+interface AlignmentData {
+  law:   LawAxis | null;
+  moral: MoralAxis | null;
+}
+
+// ─── Bio ─────────────────────────────────────────────────────────────────────
+
+interface BioData {
+  gender: string | null;
+  deity:  string | null;
+  age:    string | null;
+  height: string | null;
+  weight: string | null;
+}
+
 // ─── Creature source / data ───────────────────────────────────────────────────
 
 interface CreatureSystemSourceProperties {
-  sr: number;
+  sr:        number;
+  bio:       BioData;
+  alignment: AlignmentData;
+  size:      Size;
+  notes:     string;
 }
 
 interface CreatureSystemSource extends CreatureSystemSourceProperties, ActorSystemSource {
@@ -87,6 +110,8 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   saves: SavesOf<SaveData>;
   /** Entirely derived — not stored in source. */
   init: { total: number };
+  /** Derived from class items. Resets to 1 until class system is implemented. Never stored. */
+  level: number;
   currency: CurrencyData;
   encumbrance: EncumbranceData;
 }
@@ -95,6 +120,8 @@ export type {
   AbilityScoreData,
   AbilityScoresOf,
   AbilityScoreSource,
+  AlignmentData,
+  BioData,
   CreatureSystemData,
   CreatureSystemSource,
   CreatureSystemSourceProperties,
