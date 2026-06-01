@@ -1,3 +1,4 @@
+import type { ActorStore } from '@actors/baseActor/sheet/index.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import { ALIGNMENT_I18N, NEUTRAL } from '@constants/alignment.mjs';
@@ -50,9 +51,6 @@ const useCreatureStore = <TDocument extends Creature>(
     size:  computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
     notes: computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
     level: computed(() => (document.value as unknown as { system: { level?: number } }).system.level ?? 1),
-
-    landSpeedBase:  computed(() => getViewAwareFieldValue<number>('system.speed.land.base')  ?? 0),
-    landSpeedTotal: computed(() => getViewAwareFieldValue<number>('system.speed.land.total') ?? 0),
   };
 
   return {
@@ -74,8 +72,6 @@ interface CreatureGetters {
   size:           ComputedRef<Size>;
   notes:          ComputedRef<string>;
   level:          ComputedRef<number>;
-  landSpeedBase:  ComputedRef<number>;
-  landSpeedTotal: ComputedRef<number>;
 }
 
 type CreatureActions = Record<string, unknown>;
@@ -88,7 +84,7 @@ interface CreatureStore {
 }
 
 type CreatureDocumentStore<TDocument extends Creature = Creature> =
-  DocumentSheetStore<TDocument> & CreatureStore;
+  DocumentSheetStore<TDocument> & ActorStore & CreatureStore;
 
 export { useCreatureStore };
 export type {

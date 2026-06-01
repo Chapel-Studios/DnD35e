@@ -1,3 +1,5 @@
+import type { ActorStore } from '@actors/baseActor/sheet/index.mjs';
+import { useActorSheetStore } from '@actors/baseActor/sheet/index.mjs';
 import { Character } from '@actors/character/Character.mjs';
 import type { CreatureGetters, CreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
 import { useCreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
@@ -20,7 +22,7 @@ import { computed } from 'vue';
 
 /**
  * Leaf store for the Character sheet. Builds the base document store, layers the
- * creature overlay on top, and adds character-specific named getters.
+ * actor and creature overlays on top, and adds character-specific named getters.
  */
 const useCharacterStore = (
   context: VueApplicationContext<Character>
@@ -31,15 +33,12 @@ const useCharacterStore = (
   });
   const { document } = baseStore._storeUtils;
 
-  baseStore._storeUtils.setGetFreshDocument(async (id: string) => {
-    const doc = game.actors.get(id) as Character | undefined;
-    return Promise.resolve(doc ?? null);
-  });
-
+  const actorStore    = useActorSheetStore(context, baseStore);
   const creatureStore = useCreatureStore(context, baseStore);
 
   const documentGetters: CharacterGetters = {
     ...baseStore.documentGetters,
+    ...actorStore.documentGetters,
     ...creatureStore.documentGetters,
 
     xpValue:       computed(() => document.value.system.xp?.value ?? 0),
@@ -48,16 +47,19 @@ const useCharacterStore = (
 
   const documentActions = {
     ...baseStore.documentActions,
+    ...actorStore.documentActions,
     ...creatureStore.documentActions,
   };
 
   const _storeUtils = {
     ...baseStore._storeUtils,
+    ...actorStore._storeUtils,
     ...creatureStore._storeUtils,
   };
 
   const providedStore = {
     ...baseStore,
+    ...actorStore,
     ...creatureStore,
     documentGetters,
     documentActions,
@@ -75,8 +77,10 @@ interface CharacterGetters extends CreatureGetters {
 }
 
 interface CharacterDocumentStore
-  extends DocumentSheetStore<Character>, CreatureStore {
-  documentGetters: CharacterGetters & DocumentSheetStore<Character>['documentGetters'];
+  extends DocumentSheetStore<Character>, ActorStore, CreatureStore {
+  documentGetters: CharacterGetters
+    & ActorStore['documentGetters']
+    & DocumentSheetStore<Character>['documentGetters'];
   documentActions: DocumentSheetStore<Character>['documentActions'];
   _storeUtils: DocumentSheetStore<Character>['_storeUtils'];
 }
