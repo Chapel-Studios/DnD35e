@@ -7,7 +7,8 @@ import { materialEffectType } from '@effects/material/materialEffectType.mjs';
 import type { SecretType } from '@effects/secret/Secret.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { CurrencyData } from '@fields/CurrencyData.mjs';
-import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
+import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils, UseItemSheetStoreOptions } from '@items/baseItem/index.mjs';
+import { useItemSheetStore } from '@items/baseItem/index.mjs';
 import type { DamageReductionTypesConfig } from '@settings/index.mjs';
 import { GAME_RULES_KEYS, SettingsStoreSymbol } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -20,10 +21,13 @@ import { computed, inject } from 'vue';
 import type { PhysicalItem, PhysicalItemLike } from '../PhysicalItem.mjs';
 import { physicalItemEffectsTab } from './tabs/index.mjs';
 
+type UsePhysicalItemStoreOptions = UseItemSheetStoreOptions;
+
 const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemLike> (
   context: VueApplicationContext<TDocument>,
-  baseStore: ItemSheetStore<TDocument>
-): PhysicalItemStore => {
+  options?: UsePhysicalItemStoreOptions
+): PhysicalDocumentStore<TDocument> => {
+  const baseStore = useItemSheetStore<TDocument>(context, options);
   const {
     currency: {
       defaultDisplayCoin,
@@ -46,7 +50,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
   } = baseStore;
   const identifiableStore = useIdentifiableStore(
     context,
-  baseStore as DocumentSheetStore<TDocument>
+    baseStore as DocumentSheetStore<TDocument>
   );
   const isGM = game.user.isGM;
   updateHiddenEffects([materialEffectType, secretEffectType]);
@@ -61,7 +65,8 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     count: 0,
   }] });
 
-  const documentGetters: PhysicalItemGetters = {
+  const documentGetters: PhysicalItemGetters & ItemDocumentGetters = {
+    ...baseStore.documentGetters,
     ...identifiableStore.documentGetters,
     // static props: don't have an identifiable mode
     quantity: computed(() => document.value.system.quantity),
@@ -108,7 +113,8 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     }),
   };
 
-  const documentActions: PhysicalItemActions = {
+  const documentActions: PhysicalItemActions & ItemDocumentActions<TDocument> = {
+    ...baseStore.documentActions,
     ...identifiableStore.documentActions,
     toggleBroken: async (value: boolean) => {
       await syncBrokenAeState(document.value as unknown as PhysicalItem, value);
@@ -140,11 +146,13 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     },
   };
 
-  return {
-    ...identifiableStore,
+  const store: PhysicalDocumentStore<TDocument> = {
+    ...baseStore,
     documentGetters,
     documentActions,
   };
+
+  return store;
 };
 
 interface PhysicalItemGetters extends IdentifiableDocumentGetters {
@@ -181,11 +189,12 @@ interface PhysicalItemStore extends IdentifiableStore {
     _storeUtils: PhysicalItemStoreUtils;
 }
 
-interface PhysicalDocumentStore extends PhysicalItemStore, ItemSheetStore<PhysicalItemLike> {
-  _storeUtils: PhysicalItemStoreUtils & ItemSheetStoreUtils<PhysicalItemLike>;
-  documentGetters: PhysicalItemGetters & ItemDocumentGetters;
-  documentActions: ItemDocumentActions<PhysicalItemLike> & PhysicalItemActions;
-}
+type PhysicalDocumentStore<TDocument extends PhysicalItemLike = PhysicalItemLike> =
+  ItemSheetStore<TDocument> & {
+    documentGetters: ItemDocumentGetters & PhysicalItemGetters;
+    documentActions: ItemDocumentActions<TDocument> & PhysicalItemActions;
+    _storeUtils: ItemSheetStoreUtils<TDocument> & PhysicalItemStoreUtils;
+  };
 
 export { usePhysicalItemStore };
 export type {
@@ -194,4 +203,6 @@ export type {
   PhysicalItemGetters,
   PhysicalItemStore,
   PhysicalItemStoreUtils,
+  UsePhysicalItemStoreOptions,
 };
+

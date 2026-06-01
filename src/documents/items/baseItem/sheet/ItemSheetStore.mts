@@ -24,11 +24,19 @@ const getDefaultItemTabs = (): SheetTab[] => [
   defaultEffectsTab,
 ];
 
-const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplicationContext<TDocument>): ItemSheetStore<TDocument> => {
+interface UseItemSheetStoreOptions {
+  defaultTabs?: SheetTab[];
+  defaultActiveTab?: string;
+}
+
+const useItemSheetStore = <TDocument extends ItemDnd35e>(
+  context: VueApplicationContext<TDocument>,
+  options?: UseItemSheetStoreOptions
+): ItemSheetStore<TDocument> => {
   // Get base store functionality
   const baseStore = useDocumentSheetStore(context, {
-    defaultTabs: getDefaultItemTabs(),
-    defaultActiveTab: 'details',
+    defaultTabs: options?.defaultTabs ?? getDefaultItemTabs(),
+    defaultActiveTab: options?.defaultActiveTab ?? 'details',
   });
   const document = baseStore._storeUtils.document;
   baseStore._storeUtils.setGetFreshDocument(async (id: string) => {
@@ -134,8 +142,6 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(context: VueApplication
     // Item-specific
   };
 
-  game.dnd35e.stores[document.value.documentName][context.document.id] = store;
-
   return store;
 };
 
@@ -177,4 +183,5 @@ export type {
   ItemDocumentGetters,
   ItemSheetStore,
   ItemSheetStoreUtils,
+  UseItemSheetStoreOptions,
 };

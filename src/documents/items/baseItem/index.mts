@@ -16,6 +16,7 @@ import type {
   ItemDocumentGetters,
   ItemSheetStore,
   ItemSheetStoreUtils,
+  UseItemSheetStoreOptions,
 } from './sheet/index.mjs';
 import {
   defaultEffectsTab,
@@ -45,4 +46,5 @@ export type {
   ItemSourceDnd35e,
   ItemSystemData,
   ItemSystemSource,
+  UseItemSheetStoreOptions,
 };

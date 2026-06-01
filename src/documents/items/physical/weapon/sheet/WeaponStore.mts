@@ -1,8 +1,5 @@
-import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
-import { useItemSheetStore } from '@items/baseItem/index.mjs';
-import type { EquippableItemGetters, EquippableItemLike, EquippableItemStore, EquippableItemStoreUtils } from '@items/physical/equippableItem/index.mjs';
+import type { EquippableDocumentStore } from '@items/physical/equippableItem/index.mjs';
 import { useEquippableItemStore } from '@items/physical/equippableItem/index.mjs';
-import type { EquippableItemActions } from '@items/physical/equippableItem/sheet/EquippableItemStore.mjs';
 import { physicalItemEffectsTab } from '@items/physical/physicalItem/sheet/tabs/index.mjs';
 import { WEAPON_SUBTYPE_LOCALIZED, WEAPON_TYPE_LOCALIZED } from '@items/physical/weapon/data/constants.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
@@ -12,61 +9,37 @@ import { computed } from 'vue';
 
 import { weaponDetailsTab } from './tabs/index.mjs';
 
-const useWeaponStore = (context: VueApplicationContext<Weapon>) => {
-  const baseStore = useItemSheetStore(context);
+const useWeaponStore = (context: VueApplicationContext<Weapon>): WeaponStore => {
+  const equippableStore = useEquippableItemStore<Weapon>(context, {
+    defaultTabs: [weaponDetailsTab, physicalItemEffectsTab],
+    defaultActiveTab: 'details',
+  });
+  const document = equippableStore._storeUtils.document;
 
-  const equippableStore = useEquippableItemStore(
-    context as VueApplicationContext<EquippableItemLike>,
-    baseStore as ItemSheetStore
-  );
-
-  const { replaceTabs } = baseStore._storeUtils.tabStore;
-  replaceTabs([
-    weaponDetailsTab,
-    physicalItemEffectsTab,
-  ]);
-  const document = baseStore._storeUtils.document;
-
-  const documentGetters: WeaponGetters = {
-    ...baseStore.documentGetters,
+  const documentGetters = {
     ...equippableStore.documentGetters,
     weaponType: computed(() => game.i18n.localize(WEAPON_TYPE_LOCALIZED[document.value.system.weaponType])),
     weaponSubtype: computed(() => game.i18n.localize(WEAPON_SUBTYPE_LOCALIZED[document.value.system.weaponSubtype])),
   };
 
-  const _storeUtils: weaponStoreUtils = {
-    ...baseStore._storeUtils,
-    ...equippableStore._storeUtils,
-  };
-
-  const documentActions = {
-    ...baseStore.documentActions,
-    ...equippableStore.documentActions,
-  };
-
-  return {
-    ...baseStore,
+  const store: WeaponStore = {
     ...equippableStore,
     documentGetters,
-    documentActions,
-    _storeUtils,
   };
+
+  game.dnd35e.stores[document.value.documentName][context.document.id] = store;
+
+  return store;
 };
 
-interface WeaponGetters extends EquippableItemGetters, ItemDocumentGetters {
+interface WeaponGetters {
   weaponType: ComputedRef<string>;
   weaponSubtype: ComputedRef<string>;
 }
 
-interface weaponStoreUtils extends EquippableItemStoreUtils, ItemSheetStoreUtils<Weapon> {}
-
-interface WeaponActions extends EquippableItemActions, ItemDocumentActions<Weapon> {}
-
-interface WeaponStore extends EquippableItemStore, ItemSheetStore<Weapon> {
-  documentGetters: WeaponGetters;
-  _storeUtils: weaponStoreUtils;
-  documentActions: WeaponActions;
-}
+type WeaponStore = EquippableDocumentStore<Weapon> & {
+  documentGetters: EquippableDocumentStore<Weapon>['documentGetters'] & WeaponGetters;
+};
 
 export { useWeaponStore };
-export type { WeaponStore };
+export type { WeaponGetters, WeaponStore };

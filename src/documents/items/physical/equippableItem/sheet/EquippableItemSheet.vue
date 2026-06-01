@@ -14,7 +14,6 @@
 
 <script lang="ts" setup>
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import { useItemSheetStore } from '@items/baseItem/index.mjs';
   import PhysicalItemSheet from '@items/physical/physicalItem/sheet/PhysicalItemSheet.vue';
   import { provide } from 'vue';
 
@@ -25,12 +24,8 @@
   }>();
 
   if (props.context) {
-    const baseStore = useItemSheetStore(props.context);
-    const equippableItemStore = useEquippableItemStore(props.context, baseStore);
+    const equippableItemStore = useEquippableItemStore(props.context);
 
-    provide(DocumentSheetStoreSymbol, {
-      ...baseStore,
-      ...equippableItemStore,
-    });
+    provide(DocumentSheetStoreSymbol, equippableItemStore);
   }
 </script>

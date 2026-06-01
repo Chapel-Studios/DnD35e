@@ -5,5 +5,6 @@ export type {
   ActorGetters,
   ActorStore,
   ActorStoreUtils,
+  UseActorSheetStoreOptions,
 } from './ActorSheetStore.mjs';
 export { useActorSheetStore } from './ActorSheetStore.mjs';

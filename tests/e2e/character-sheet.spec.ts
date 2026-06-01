@@ -13,8 +13,6 @@ import { dismissOverlays } from './helpers/ui.mjs';
  *      the derived modifier updates reactively to +2.
  *   2. Notes tab renders both the Biography (system.description) and
  *      Session Notes (system.notes) rich-text editors.
- *
- * Story 2 changed the default tab to `summary`; tests navigate explicitly.
  */
 test.describe('character sheet — Story 1', () => {
   test.afterEach(async ({ page }) => {

@@ -1,45 +1,44 @@
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
-import type { DocumentSheetStore } from '@documents/document/index.mjs';
+import type { DocumentSheetStore, SheetTab } from '@documents/document/index.mjs';
+import { useDocumentSheetStore } from '@documents/document/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
 
+interface UseActorSheetStoreOptions {
+  defaultTabs?: SheetTab[];
+  defaultActiveTab?: string;
+}
+
 /**
- * Overlay that adds actor-level named getters and behaviors on top of a base
- * document sheet store. Mirrors the IdentifiableStore / CreatureStore pattern:
- * returns a partial overlay that callers spread into the final leaf store.
- *
- * Responsibilities at this layer:
- *   - Tell the base store how to refetch this kind of document (`game.actors.get`).
- *   - Provide getters for fields defined on `ActorSystemModel` (e.g. speeds).
- *
- * Final-store registration in `game.dnd35e.stores` is done by the leaf store,
- * since it requires the fully composed store reference.
+ * Top of the actor inheritance chain. Builds the base document store internally
+ * and adds actor-level named getters/behaviors.
  */
 const useActorSheetStore = <TDocument extends ActorDnd35e>(
-  _context: VueApplicationContext<TDocument>,
-  baseStore: DocumentSheetStore<TDocument>
-): ActorStore => {
-  const {
-    documentGetters: { getViewAwareFieldValue },
-  } = baseStore;
-
+  context: VueApplicationContext<TDocument>,
+  options?: UseActorSheetStoreOptions
+): ActorDocumentStore<TDocument> => {
+  const baseStore = useDocumentSheetStore(context, options);
   baseStore._storeUtils.setGetFreshDocument(async (id: string) => {
     const doc = game.actors.get(id);
     return Promise.resolve(doc ?? null) as Promise<TDocument | null>;
   });
 
-  const documentGetters: ActorGetters = {
+  const { getViewAwareFieldValue } = baseStore.documentGetters;
+
+  const documentGetters = {
+    ...baseStore.documentGetters,
     landSpeedBase:  computed(() => getViewAwareFieldValue<number>('system.speed.land.base')  ?? 0),
     landSpeedTotal: computed(() => getViewAwareFieldValue<number>('system.speed.land.total') ?? 0),
     // TODO(actor speed): expose climb/swim/burrow/fly when sheet UI consumes them
   };
 
-  return {
+  const store: ActorDocumentStore<TDocument> = {
+    ...baseStore,
     documentGetters,
-    documentActions: {},
-    _storeUtils: {},
   };
+
+  return store;
 };
 
 interface ActorGetters {
@@ -57,7 +56,9 @@ interface ActorStore {
 }
 
 type ActorDocumentStore<TDocument extends ActorDnd35e = ActorDnd35e> =
-  DocumentSheetStore<TDocument> & ActorStore;
+  DocumentSheetStore<TDocument> & {
+    documentGetters: DocumentSheetStore<TDocument>['documentGetters'] & ActorGetters;
+  };
 
 export { useActorSheetStore };
 export type {
@@ -66,4 +67,5 @@ export type {
   ActorGetters,
   ActorStore,
   ActorStoreUtils,
+  UseActorSheetStoreOptions,
 };

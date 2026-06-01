@@ -1,9 +1,9 @@
-import type { ActorStore } from '@actors/baseActor/sheet/index.mjs';
+import type { ActorDocumentStore, ActorStore, UseActorSheetStoreOptions } from '@actors/baseActor/sheet/index.mjs';
+import { useActorSheetStore } from '@actors/baseActor/sheet/index.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import { ALIGNMENT_I18N, NEUTRAL } from '@constants/alignment.mjs';
 import type { Size } from '@constants/sizes.mjs';
-import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -20,24 +20,25 @@ const buildAlignmentLabel = (law: LawAxis | null, moral: MoralAxis | null): stri
   return [lawLabel, moralLabel].filter((p): p is string => Boolean(p)).join(' ') || null;
 };
 
+type UseCreatureStoreOptions = UseActorSheetStoreOptions;
+
 /**
- * Overlay that adds creature-level named getters on top of a base document sheet store.
- * Mirrors the IdentifiableStore / EquippableItemStore pattern: returns a partial overlay
- * that callers spread into the final leaf store.
+ * Creature layer of the actor inheritance chain. Builds the actor store internally,
+ * and adds creature-level named getters.
  */
 const useCreatureStore = <TDocument extends Creature>(
-  _context: VueApplicationContext<TDocument>,
-  baseStore: DocumentSheetStore<TDocument>
-): CreatureStore => {
-  const {
-    documentGetters: { getViewAwareFieldValue },
-    _storeUtils: { document },
-  } = baseStore;
+  context: VueApplicationContext<TDocument>,
+  options?: UseCreatureStoreOptions
+): CreatureDocumentStore<TDocument> => {
+  const actorStore = useActorSheetStore<TDocument>(context, options);
+  const { getViewAwareFieldValue } = actorStore.documentGetters;
+  const { document } = actorStore._storeUtils;
 
   const alignmentLaw   = computed(() => getViewAwareFieldValue<LawAxis | null>('system.alignment.law')   ?? null);
   const alignmentMoral = computed(() => getViewAwareFieldValue<MoralAxis | null>('system.alignment.moral') ?? null);
 
-  const documentGetters: CreatureGetters = {
+  const documentGetters = {
+    ...actorStore.documentGetters,
     gender: computed(() => getViewAwareFieldValue<string | null>('system.bio.gender') ?? ''),
     deity:  computed(() => getViewAwareFieldValue<string | null>('system.bio.deity')  ?? ''),
     age:    computed(() => getViewAwareFieldValue<string | null>('system.bio.age')    ?? ''),
@@ -53,11 +54,12 @@ const useCreatureStore = <TDocument extends Creature>(
     level: computed(() => (document.value as unknown as { system: { level?: number } }).system.level ?? 1),
   };
 
-  return {
+  const store: CreatureDocumentStore<TDocument> = {
+    ...actorStore,
     documentGetters,
-    documentActions: {},
-    _storeUtils: {},
   };
+
+  return store;
 };
 
 interface CreatureGetters {
@@ -84,7 +86,12 @@ interface CreatureStore {
 }
 
 type CreatureDocumentStore<TDocument extends Creature = Creature> =
-  DocumentSheetStore<TDocument> & ActorStore & CreatureStore;
+  ActorDocumentStore<TDocument> & {
+    documentGetters: ActorDocumentStore<TDocument>['documentGetters'] & CreatureGetters;
+  };
+
+// Re-export ActorStore for downstream consumers that previously imported it from here.
+export type { ActorStore };
 
 export { useCreatureStore };
 export type {
@@ -93,4 +100,5 @@ export type {
   CreatureGetters,
   CreatureStore,
   CreatureStoreUtils,
+  UseCreatureStoreOptions,
 };

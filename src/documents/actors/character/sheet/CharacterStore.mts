@@ -1,7 +1,5 @@
-import type { ActorStore } from '@actors/baseActor/sheet/index.mjs';
-import { useActorSheetStore } from '@actors/baseActor/sheet/index.mjs';
 import { Character } from '@actors/character/Character.mjs';
-import type { CreatureGetters, CreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
+import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
 import { useCreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
 import {
   attributesTab,
@@ -14,76 +12,48 @@ import {
   spellsTab,
   summaryTab,
 } from '@actors/creature/sheet/tabs/index.mjs';
-import type { DocumentSheetStore } from '@documents/document/index.mjs';
-import { useDocumentSheetStore } from '@documents/document/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
 
 /**
- * Leaf store for the Character sheet. Builds the base document store, layers the
- * actor and creature overlays on top, and adds character-specific named getters.
+ * Leaf store for Character documents. Builds on the creature store and adds
+ * character-specific getters; self-registration in `game.dnd35e.stores` happens
+ * here last (overwriting any registration from upstream layers).
  */
 const useCharacterStore = (
   context: VueApplicationContext<Character>
 ): CharacterDocumentStore => {
-  const baseStore = useDocumentSheetStore(context, {
+  const creatureStore = useCreatureStore<Character>(context, {
     defaultTabs: [summaryTab, attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, notesTab],
     defaultActiveTab: 'summary',
   });
-  const { document } = baseStore._storeUtils;
+  const { document } = creatureStore._storeUtils;
 
-  const actorStore    = useActorSheetStore(context, baseStore);
-  const creatureStore = useCreatureStore(context, baseStore);
-
-  const documentGetters: CharacterGetters = {
-    ...baseStore.documentGetters,
-    ...actorStore.documentGetters,
+  const documentGetters = {
     ...creatureStore.documentGetters,
-
     xpValue:       computed(() => document.value.system.xp?.value ?? 0),
     isPartyMember: computed(() => document.value.system.isPartyMember ?? false),
   };
 
-  const documentActions = {
-    ...baseStore.documentActions,
-    ...actorStore.documentActions,
-    ...creatureStore.documentActions,
-  };
-
-  const _storeUtils = {
-    ...baseStore._storeUtils,
-    ...actorStore._storeUtils,
-    ...creatureStore._storeUtils,
-  };
-
-  const providedStore = {
-    ...baseStore,
-    ...actorStore,
+  const store: CharacterDocumentStore = {
     ...creatureStore,
     documentGetters,
-    documentActions,
-    _storeUtils,
-  } as CharacterDocumentStore;
+  };
 
-  game.dnd35e.stores[document.value.documentName][context.document.id] = providedStore;
+  game.dnd35e.stores[document.value.documentName][context.document.id] = store;
 
-  return providedStore;
+  return store;
 };
 
-interface CharacterGetters extends CreatureGetters {
+interface CharacterGetters {
   xpValue:        ComputedRef<number>;
   isPartyMember:  ComputedRef<boolean>;
 }
 
-interface CharacterDocumentStore
-  extends DocumentSheetStore<Character>, ActorStore, CreatureStore {
-  documentGetters: CharacterGetters
-    & ActorStore['documentGetters']
-    & DocumentSheetStore<Character>['documentGetters'];
-  documentActions: DocumentSheetStore<Character>['documentActions'];
-  _storeUtils: DocumentSheetStore<Character>['_storeUtils'];
-}
+type CharacterDocumentStore = CreatureDocumentStore<Character> & {
+  documentGetters: CreatureDocumentStore<Character>['documentGetters'] & CharacterGetters;
+};
 
 export { useCharacterStore };
 export type { CharacterDocumentStore, CharacterGetters };
