@@ -22,9 +22,7 @@
       </option>
     </select>
     <template #readonly>
-      <span>
-        {{ localize(options.find(opt => opt.value === resolvedValue)?.label ?? String(resolvedValue)) }}
-      </span>
+      <span>{{ readonlyLabel }}</span>
     </template>
   </FormGroup>
 </template>
@@ -64,9 +62,16 @@
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<TValue>(() =>
+  const resolvedValue = computed<TValue | undefined>(() =>
     props.value !== undefined ? props.value : getViewAwareFieldValue<TValue>(props.fieldPath)
   );
+
+  const readonlyLabel = computed(() => {
+    const current = resolvedValue.value;
+    if (current === undefined) return '';
+    const matchedLabel = props.options.find(opt => opt.value === current)?.label;
+    return localize(matchedLabel ?? String(current));
+  });
   
   const isDisabled = computed(() => {
     if (props.disabled) return true;
@@ -92,7 +97,9 @@
   }
 
   function onChange(val: string) {
-    const parsed = typeof props.value === 'number' ? Number(val) : val;
+    // Coerce based on the resolved value's type so numeric selects still write
+    // numbers to the document even when no explicit `:value` prop is passed.
+    const parsed = typeof resolvedValue.value === 'number' ? Number(val) : val;
     fieldUpdater(parsed as TValue);
   }
 </script>

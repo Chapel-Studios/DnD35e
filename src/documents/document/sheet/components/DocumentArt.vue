@@ -17,10 +17,6 @@
 </script>
 
 <style scoped lang="scss">
-  .actor-sheet .doc-art-container {
-    width: 10rem;
-  }
-
   .doc-art-container {
     width: 8rem;
     position: relative;
@@ -30,5 +26,11 @@
       object-fit: contain;
       border: 2px solid #000;
     }
+  }
+
+  // Ancestor (.actor-sheet) lives outside this component, so wrap it in :global()
+  // to opt out of scoping while keeping .doc-art-container scoped to this component.
+  :global(.actor-sheet) .doc-art-container {
+    width: 10rem;
   }
 </style>

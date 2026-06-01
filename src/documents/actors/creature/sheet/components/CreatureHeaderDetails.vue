@@ -68,7 +68,7 @@
 
       // -Hide GM field-controls icons in the compact header context-
       // or not, not sure if those exist anywhere else....
-      // TODO: revisit after imlementing attributes tab
+      // TODO: revisit after implementing attributes tab
       //.controls { display: none; }
 
       .form-group-label {

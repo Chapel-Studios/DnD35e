@@ -149,6 +149,7 @@ Story 1
 
 ---
 
+### Story 6 — Active Effects Modify Stats (Stacking Engine on Actor)
 
 **User**: GM  
 **Delivers**: Effects tab shows AEs on the actor; adding a stat-modifying AE changes derived stats immediately; same bonus-type bonuses don't stack (only best applies).

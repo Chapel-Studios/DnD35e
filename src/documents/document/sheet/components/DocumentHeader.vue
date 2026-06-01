@@ -28,9 +28,6 @@
 </script>
 
 <style scoped lang="scss">
-  .actor-sheet .doc-header {
-    grid-template-columns: 10.25rem 3fr minmax(80px, auto);
-  }
   .doc-header {
     display: grid;
     grid-template: auto / 8.25rem 3fr minmax(80px, auto);
@@ -49,5 +46,11 @@
     line-height: 26px;
     text-align: center;
     margin-bottom: 0.5rem;
+  }
+
+  // Ancestor (.actor-sheet) lives outside this component, so wrap it in :global()
+  // to opt out of scoping while keeping .doc-header scoped to this component.
+  :global(.actor-sheet) .doc-header {
+    grid-template-columns: 10.25rem 3fr minmax(80px, auto);
   }
 </style>
