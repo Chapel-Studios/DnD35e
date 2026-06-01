@@ -3,6 +3,7 @@ import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore
 import { useCreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
 import {
   attributesTab,
+  bioTab,
   buffsTab,
   combatTab,
   featuresTab,
@@ -25,7 +26,7 @@ const useCharacterStore = (
   context: VueApplicationContext<Character>
 ): CharacterDocumentStore => {
   const creatureStore = useCreatureStore<Character>(context, {
-    defaultTabs: [summaryTab, attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, notesTab],
+    defaultTabs: [summaryTab, attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, bioTab, notesTab],
     defaultActiveTab: 'summary',
   });
   const { document } = creatureStore._storeUtils;

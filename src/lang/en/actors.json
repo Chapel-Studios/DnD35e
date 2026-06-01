@@ -60,9 +60,11 @@
         "Inventory": "Inventory",
         "Features": "Features",
         "Skills": "Skills",
+        "Bio": "Biography",
         "Buffs": "Buffs",
         "Spells": "Spells",
-        "Notes": "Notes"
+        "Notes": "Notes",
+        "Settings": "Settings"
       },
       "section": {
         "AbilityScores": "Ability Scores",
@@ -94,6 +96,12 @@
       },
       "action": {
         "rest": "Rest"
+      },
+      "bio": {
+        "identity": "Identity",
+        "physical": "Physical",
+        "addLanguage": "Add language...",
+        "removeLanguage": "Remove"
       },
       "field": {
         "Biography": "Biography",

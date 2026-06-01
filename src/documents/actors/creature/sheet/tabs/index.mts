@@ -1,6 +1,7 @@
 import type { SheetTab } from '@documents/document/index.mjs';
 
 import AttributesTab from './AttributesTab.vue';
+import BioTab from './bio/BioTab.vue';
 import BuffsTab from './BuffsTab.vue';
 import CharacterDescriptionTab from './CharacterDescriptionTab.vue';
 import CombatTab from './CombatTab.vue';
@@ -91,8 +92,18 @@ const notesTab: SheetTab = {
   icon: 'fas fa-book-open',
 };
 
+const bioTab: SheetTab = {
+  id: 'bio',
+  label: 'dnd35e.ACTOR.tab.Bio',
+  tooltip: 'dnd35e.ACTOR.tab.Bio',
+  component: BioTab,
+  order: 85,
+  icon: 'fas fa-user',
+};
+
 export {
   attributesTab,
+  bioTab,
   buffsTab,
   combatTab,
   featuresTab,
