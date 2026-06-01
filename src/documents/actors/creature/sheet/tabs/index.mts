@@ -7,6 +7,7 @@ import CharacterDescriptionTab from './CharacterDescriptionTab.vue';
 import CombatTab from './CombatTab.vue';
 import FeaturesTab from './FeaturesTab.vue';
 import InventoryTab from './InventoryTab.vue';
+import SettingsTab from './SettingsTab.vue';
 import SkillsTab from './SkillsTab.vue';
 import SpellsTab from './SpellsTab.vue';
 import SummaryTab from './summary/SummaryTab.vue';
@@ -101,6 +102,15 @@ const bioTab: SheetTab = {
   icon: 'fas fa-user',
 };
 
+const settingsTab: SheetTab = {
+  id: 'settings',
+  label: 'dnd35e.ACTOR.tab.Settings',
+  tooltip: 'dnd35e.ACTOR.tab.Settings',
+  component: SettingsTab,
+  order: 95,
+  icon: 'fas fa-cog',
+};
+
 export {
   attributesTab,
   bioTab,
@@ -109,6 +119,7 @@ export {
   featuresTab,
   inventoryTab,
   notesTab,
+  settingsTab,
   skillsTab,
   spellsTab,
   summaryTab,
