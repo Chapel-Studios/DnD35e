@@ -43,6 +43,7 @@ const { NumberField, BooleanField, StringField } = (globalThis as any).foundry.d
 // --- Fixtures ------------------------------------------------------------
 interface SchemaStub {
   _getField: (path: string[]) => unknown;
+  getField:  (path: string)   => unknown;
 }
 
 function mkDoc (opts: {
@@ -53,6 +54,7 @@ function mkDoc (opts: {
 }) {
   const schema: SchemaStub = {
     _getField: (path: string[]) => opts.systemFields?.[path.join('.')],
+    getField:  (path: string)   => opts.systemFields?.[path],
   };
   const system: any = { schema };
   // Mirror how the resolver introspects: `system.constructor.schema`.
@@ -158,7 +160,7 @@ describe('getEffectContexts', () => {
     expect(result.contextMap?.actor).toBe(actor);
   });
 
-  it('change.key starting with "system." → schemaField resolved via _getField', () => {
+  it('change.key starting with "system." → schemaField resolved via system.constructor.schema', () => {
     const numField = new NumberField({});
     const actor = mkDoc({
       documentName: 'Actor',
