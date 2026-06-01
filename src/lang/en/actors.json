@@ -26,6 +26,7 @@
           "label": "Settings",
           "isPartyMember": { "label": "Party Member" }
         },
+        "size": { "label": "Size" },
         "speed": {
           "label": "Speed",
           "land": {
@@ -70,7 +71,9 @@
         "AbilityScores": "Ability Scores",
         "Health": "Health",
         "Actions": "Actions",
-        "Skills": "Skills"
+        "Skills": "Skills",
+        "Speed": "Movement",
+        "Traits": "Traits"
       },
       "header": {
         "xp": "XP",
@@ -93,6 +96,17 @@
         "will": "Will",
         "points": "Points",
         "total": "Total"
+      },
+      "speed": {
+        "land": "Land",
+        "climb": "Climb",
+        "swim": "Swim",
+        "fly": "Fly",
+        "burrow": "Burrow"
+      },
+      "trait": {
+        "creatureType": "Creature Type",
+        "reach": "Reach"
       },
       "action": {
         "rest": "Rest"

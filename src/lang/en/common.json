@@ -44,6 +44,17 @@
       "ActorTypeNPC": "NPC",
       "ActorTypeTrap": "Trap"
     },
+    "SIZE": {
+      "fine":        "Fine",
+      "diminutive":  "Diminutive",
+      "tiny":        "Tiny",
+      "small":       "Small",
+      "medium":      "Medium",
+      "large":       "Large",
+      "huge":        "Huge",
+      "gargantuan":  "Gargantuan",
+      "colossal":    "Colossal"
+    },
     "UI": {
       "EditField": "Edit {field}",
       "Content": "content"
