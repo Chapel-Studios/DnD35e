@@ -52,6 +52,90 @@ class EquippableItemSystemModel extends PhysicalItemSystemModel {
 
 **Legacy fields may still be compound-shaped** — see `dnd35e-field.instructions.md` for compatibility rules.
 
+## Sheet Store Composition Chain
+
+Sheet stores mirror the DataModel composition chain layer-for-layer. Every layer follows a single, unified shape so inheritance composes cleanly and refactors stay local.
+
+### The Pattern
+
+Each layer in the chain:
+
+1. Takes `(context, options?)` where `options = { defaultTabs?: SheetTab[]; defaultActiveTab?: string }`.
+2. Calls **its direct parent layer** internally — never skips levels, never re-implements parent logic.
+3. Adds its own `documentGetters` / `documentActions` and spreads them on top of the parent store.
+4. Returns the **fully composed store** (parent spread + own additions) so the next layer up can keep composing.
+
+```typescript
+// Intermediate layer — unified signature
+export function useEquippableItemStore<T extends EquippableItemLike>(
+  context: SheetContext,
+  options?: UseEquippableItemStoreOptions,
+): EquippableDocumentStore<T> {
+  const physicalStore = usePhysicalItemStore<T>(context, options);  // call direct parent
+
+  const documentGetters = {
+    ...physicalStore.documentGetters,
+    isEquipped,
+    isMasterwork,
+    // …
+  };
+
+  const documentActions = {
+    ...physicalStore.documentActions,
+    toggleMasterwork,
+  };
+
+  return { ...physicalStore, documentGetters, documentActions };
+  // ⚠️ Intermediate layers do NOT register in game.dnd35e.stores.
+}
+```
+
+### Leaves vs. Intermediates
+
+Only **runtime leaves** register themselves in `game.dnd35e.stores`. Today the runtime leaves are:
+
+- `useCharacterStore` — leaf of the actor chain
+- `useWeaponStore` — leaf of the item chain
+
+Intermediate layers (`useActorSheetStore`, `useCreatureStore`, `useItemSheetStore`, `usePhysicalItemStore`, `useEquippableItemStore`) are **leaves only in type** — they exist so that future document subtypes can inherit a middle layer ready-to-go (e.g. a future `Armor` will compose from `useEquippableItemStore`). They must not register, and the matching intermediate `*.vue` sheet shells must call the store with the single-arg signature and `provide()` it without registering either.
+
+```typescript
+// Runtime leaf (e.g. WeaponStore.mts)
+const store: WeaponStore = {
+  ...equippableStore,
+  documentGetters: { ...equippableStore.documentGetters, weaponType, weaponSubtype },
+};
+
+// Only leaves do this:
+game.dnd35e.stores[document.value.documentName][context.document.id] = store;
+return store;
+```
+
+### Why This Shape
+
+- **Tabs flow top-down**: only the leaf knows the final tab set; it passes `defaultTabs` / `defaultActiveTab` through `options`, and intermediate layers may still mutate tabs (`replaceTabs(...)`) for shared structure (e.g. `PhysicalItemStore` injects `physicalItemEffectsTab`).
+- **Single registration point** prevents duplicate writes to `game.dnd35e.stores` and avoids `any`-indexed type errors in intermediate `.vue` shells.
+- **Destructure-safe**: leaf code constantly destructures `documentGetters` / `documentActions`; the spread-from-parent shape keeps the destructured references reactive across the whole composition.
+- **`IdentifiableDocumentStore` is a parallel mixin**, not a chain layer — `usePhysicalItemStore` calls `useIdentifiableStore(context, baseStore)` alongside the chain.
+
+### Type Shape
+
+Each layer's store type extends the parent layer's store type and intersects added getters/actions:
+
+```typescript
+type PhysicalDocumentStore<T> = ItemSheetStore<T> & {
+  documentGetters: ItemDocumentGetters & PhysicalItemGetters;
+  documentActions: ItemDocumentActions<T> & PhysicalItemActions;
+};
+
+type EquippableDocumentStore<T> = PhysicalDocumentStore<T> & {
+  documentGetters: PhysicalDocumentStore<T>['documentGetters'] & EquippableItemGetters;
+  documentActions: PhysicalDocumentStore<T>['documentActions'] & EquippableItemActions;
+};
+```
+
+Leaf type aliases keep their historical bare names (`WeaponStore`, `CharacterDocumentStore`) to avoid churning consumer imports.
+
 ## Formula Resolution
 
 FormulaFamiliar enables `#context.property` syntax in formulas. Schema walker **includes all fields by default** (opt-out via `familiar: { formulaVisible: false }`).
