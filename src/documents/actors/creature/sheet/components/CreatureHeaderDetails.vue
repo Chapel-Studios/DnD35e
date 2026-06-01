@@ -57,6 +57,7 @@
     border-bottom: 1px solid var(--color-border-light-2, #ccc);
     background: var(--color-bg-option, rgba(0, 0, 0, 0.03));
     font-size: 0.75rem;
+    grid-column: span 2;
 
     // ── Compact FormGroup overrides for the header bar ─────────────────────
     :deep(.form-group) {
@@ -65,8 +66,10 @@
       gap: 0.25rem;
       margin: 0;
 
-      // Hide GM field-controls icons in the compact header context
-      .controls { display: none; }
+      // -Hide GM field-controls icons in the compact header context-
+      // or not, not sure if those exist anywhere else....
+      // TODO: revisit after imlementing attributes tab
+      //.controls { display: none; }
 
       .form-group-label {
         margin: 0;

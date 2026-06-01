@@ -100,8 +100,9 @@ Story 1
 **Depends on**: Story 1.
 
 **Commits:**
-1. **Horizontal tabs + header character details** — Remove `verticalTabs` prop from `CreatureSheet.vue`. Add `#actor-details` slot to `DocumentSheetBody.vue`. Create `CreatureHeaderDetails.vue` with XP bar, gender/alignment/deity row, age/height/weight row, race/speed row (all stub `—` values). Change `defaultActiveTab` to `'summary'`. Add i18n keys to `actors.json`.
-2. **Summary tab 3-column grid** — Redesign `SummaryTab.vue` as a 3-column CSS grid. Redesign `AbilityScoresSection.vue` as a vertical table (Name | Base | Total | Mod rows, replacing the horizontal strip). Create `SummaryStatPanel.vue` (Rest button + Health + Init/BAB + AC trio + Saves trio + Actions placeholder). Create `SummarySkillsSection.vue` (Points | Total header + empty scrollable placeholder).
+1. ✅ **Horizontal tabs + header character details** — Remove `verticalTabs` prop from `CreatureSheet.vue`. Add `#actor-details` slot to `DocumentSheetBody.vue`. Create `CreatureHeaderDetails.vue` with XP bar, gender/alignment/deity row, age/height/weight row, race/speed row (all stub `—` values). Change `defaultActiveTab` to `'summary'`. Add i18n keys to `actors.json`.
+2. ✅ **Summary tab 3-column grid** — Redesign `SummaryTab.vue` as a 3-column CSS grid. Redesign `AbilityScoresSection.vue` as a vertical table (Name | Base | Total | Mod rows, replacing the horizontal strip). Create `SummaryStatPanel.vue` (Rest button + Health + Init/BAB + AC trio + Saves trio + Actions placeholder). Create `SummarySkillsSection.vue` (Points | Total header + empty scrollable placeholder).
+3. ✅ **Unify store inheritance pattern** — Refactor actor and item store chains so each layer takes `(context, options?)`, calls its direct parent layer internally, and returns the fully composed store. Only runtime leaves (`CharacterStore`, `WeaponStore`) register in `game.dnd35e.stores`; intermediate layers are leaves only in type and exist for future expansion.
 
 **E2E acceptance**: Open character sheet → Summary tab is active by default → ability scores table shows 6 rows with Name/Base/Total/Mod → middle column shows stat stubs → right column shows empty skills placeholder → horizontal tab bar visible.
 
