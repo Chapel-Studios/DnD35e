@@ -12,6 +12,8 @@ import {
 import type { CreatureSystemData } from './CreatureSystemData.mjs';
 
 const {
+  ArrayField,
+  BooleanField,
   HTMLField,
   SchemaField,
   StringField,
@@ -86,16 +88,21 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       age:    nullableBioField(),
       height: nullableBioField(),
       weight: nullableBioField(),
+      alignment: new SchemaField({
+        law:   useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...LAW_AXES] })),
+        moral: useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...MORAL_AXES] })),
+      }),
+      languages: new ArrayField(new StringField({ required: true, blank: false }), { initial: [] }),
+      senses:    useDnd35eField(new StringField({ required: true, nullable: true, initial: null })),
     });
 
     schema.level = useDnd35eField(derivedNumberField(1), { familiar: { aliases: ['lvl'] } });
 
-    schema.alignment = new SchemaField({
-      law:   useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...LAW_AXES] })),
-      moral: useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...MORAL_AXES] })),
-    });
-
     schema.size = useDnd35eField(requiredTypedStringField(SIZES, 'medium'));
+
+    schema.settings = new SchemaField({
+      isPartyMember: new BooleanField({ initial: false }),
+    });
 
     schema.notes = useDnd35eField(new HTMLField({ required: false, nullable: false, blank: true }));
 

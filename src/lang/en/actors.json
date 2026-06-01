@@ -9,16 +9,22 @@
       "FIELDS": {
         "bio": {
           "label": "Biography",
-          "gender": { "label": "Gender" },
-          "deity":  { "label": "Deity" },
-          "age":    { "label": "Age" },
-          "height": { "label": "Height" },
-          "weight": { "label": "Weight" }
+          "gender":    { "label": "Gender" },
+          "deity":     { "label": "Deity" },
+          "age":       { "label": "Age" },
+          "height":    { "label": "Height" },
+          "weight":    { "label": "Weight" },
+          "languages": { "label": "Languages" },
+          "senses":    { "label": "Senses" },
+          "alignment": {
+            "label": "Alignment",
+            "law":   { "label": "Law/Chaos" },
+            "moral": { "label": "Good/Evil" }
+          }
         },
-        "alignment": {
-          "label": "Alignment",
-          "law":   { "label": "Law/Chaos" },
-          "moral": { "label": "Good/Evil" }
+        "settings": {
+          "label": "Settings",
+          "isPartyMember": { "label": "Party Member" }
         },
         "speed": {
           "label": "Speed",

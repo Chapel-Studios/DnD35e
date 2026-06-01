@@ -39,7 +39,7 @@ The following TODO notes exist in the codebase and are tracked here for resoluti
 
 ## Phase Delivery Plan
 
-Phase 6 is delivered in **4 stories**. Each story ends with a working, user-testable slice — E2E tests are written at story completion. Unit tests accompany each commit within a story.
+Phase 6 is delivered in **6 stories**. Each story ends with a working, user-testable slice — E2E tests are written at story completion. Unit tests accompany each commit within a story.
 ### Pre-story: Rename `PriceField` / `PriceData` → `CurrencyField` / `CurrencyData`
 
 **Rationale**: `PriceField` is a generic currency-value field that happens to be used as an item's sale price. Naming it after its most common use case leaks item semantics into infrastructure. Phase 6 adds it to the actor schema as `currency: CurrencyField` — which reads wrong with the old name. Rename now so all Phase 6 code starts with the correct name.
@@ -108,13 +108,28 @@ Story 1
 
 ---
 
-### Story 3 — Attributes Tab Design
+### Story 3 — Attributes Tab Redesign + Sheet Reorganization
 
 **User**: GM/Player  
-**Delivers**: Attributes tab redesigned to match D35E layout — full-size editable panels for ability scores, HP, AC variants, saves, speed, and initiative. More spacious than Summary tab; intended for detailed editing.  
+**Delivers**: Full sheet reorganization — stats are split to their correct tabs, a new Bio tab holds character identity fields, a new Settings tab scaffolds per-character toggles, the header gains a compact HP/AC/Saves pill strip and a Rest icon (replacing the verbose identity rows), and the Attributes tab is rebuilt as spacious editing panels for ability scores, speed stubs, senses stub, and traits. Initiative moves off Attributes and into the Combat tab (Story 4). Story 3 is purely UI/layout — no new derived data pipeline (Story 4 owns that). Stub panels hard-code sensible placeholder values until Story 4 wires live derivation.  
 **Depends on**: Story 1.
 
-> **Status**: Planned. Scope to be defined when Story 2 ships.
+**Schema additions (on `CreatureSystemModel`):**
+- `system.bio.alignment` — **moved** from `system.alignment`; fields (`law`, `moral`) unchanged, only path changes. Simple `migrateData()` handles existing actors.
+- `system.bio.languages: ArrayField(StringField, { initial: [] })` — new; managed on Bio tab.
+- `system.bio.senses: StringField({ nullable: true, initial: null })` — stub text field; folksonomy redesign deferred to the token/perception phase.
+- `system.settings: SchemaField({ isPartyMember: BooleanField({ initial: false }) })` — new; managed on Settings tab.
+- `creature.race` — **not a schema field**. A getter property on `CreatureDnd35e` class returning `'Human'` (stub until Race item type lands in a later phase).
+
+**Commits:**
+1. **Schema: bio.alignment migration + bio.languages + bio.senses + system.settings** — Move `system.alignment` → `system.bio.alignment` (add static `migrateData()` to `CreatureSystemModel` to rewrite path for existing documents). Add `system.bio.languages: ArrayField(StringField)`. Add `system.bio.senses: StringField` (nullable stub). Add `system.settings: SchemaField({ isPartyMember })`. Add `get race()` stub getter on `CreatureDnd35e` returning `'Human'`. Update all existing component/store references from `system.alignment` → `system.bio.alignment`. *(Unit tests: schema instantiates; languages array accepts strings; alignment at new path; migration correctly rewrites old path)*
+2. **Header redesign** — Strip `CreatureHeaderDetails.vue` down to: portrait, name, XP bar, and a new compact stat-pill strip (HP `current/max` | AC | Fort | Ref | Will — stub values, Story 4 wires live data). Add Rest button as a `fa-campground` icon button in the header. Remove the three identity detail rows (gender/alignment/deity, age/height/weight, race/speed); the sub-components (`CreatureGender`, `CreatureAlignment`, etc.) are kept for Bio tab reuse. Update `DocumentHeader.vue` / `CreatureSheet.vue` grid columns as needed. *(Unit tests: header renders pills; icon button renders)*
+3. **Bio tab (new)** — Create `src/documents/actors/creature/sheet/tabs/bio/BioTab.vue`. Sections: **Identity** (gender, alignment reusing existing `CreatureAlignment`/`CreatureGender`/`CreatureDeity` components), **Physical** (age, height, weight), **Race** (display-only, renders `creature.race` getter), **Languages** (chip/tag list bound to `system.bio.languages`), **Senses** (textarea for `system.bio.senses` stub), **Biography** (HTML editor from `system.description`). Add tab to `CreatureSheet.vue`. *(Unit tests: tab mounts; languages list renders; alignment binds to new path)*
+4. **Settings tab (new)** — Create `src/documents/actors/creature/sheet/tabs/SettingsTab.vue`. "General Settings" section with `isPartyMember` toggle (`ToggleSwitchFormGroup` bound to `system.settings.isPartyMember`). Add tab to `CreatureSheet.vue`. *(Unit tests: tab mounts; toggle saves correctly)*
+5. **Summary tab cleanup** — Strip `SummaryStatPanel.vue`: remove HP group, AC trio, Saves trio, and Rest button (all now on header or Combat tab). Keep Init + BAB pair. Summary 3-column layout unchanged; middle column now shows only Init/BAB with a "Combat stats · Story 4" placeholder note. *(Unit tests: stripped panel renders without HP/AC/Saves)*
+6. **Attributes tab redesign** — Delete `HpSection.vue`, `SavingThrowsSection.vue`, `ArmorClassSection.vue`, `InitiativeSpeedSection.vue` (all dead code; combat sections rebuilt fresh in Story 4). Rebuild `AbilityScoresSection.vue` as wide-card format: 6 cards each with large `total/mod` display, small `base` input, and a "…" overflow button (renders, does nothing — Phase 20 wires damage/drain/penalties modal). Extract previous compact table as `AbilityScoresTable.vue` for continued use in Summary tab. Add `SpeedSection.vue`: 5 stub cards (Land=30ft, Climb/Swim/Burrow/Fly=—); Story 4 adds schema + derivation. Add `SensesSection.vue`: textarea bound to `system.bio.senses`. Add `TraitsSection.vue`: Size dropdown (`SIZE_SELECT_OPTIONS`), Creature Type text stub, Reach text stub. Update `AttributesTab.vue` to use new sections. *(Unit tests: cards render; Size dropdown saves via SIZE_SELECT_OPTIONS; overflow button renders inert)*
+
+**E2E acceptance**: Open character sheet → Header shows HP/AC/Saves pills and tent-icon Rest button (no identity rows) → Bio tab opens; gender/alignment/deity/age/height/weight visible; languages field is editable → Settings tab shows Party Member toggle; toggling saves correctly → Summary tab shows only Init + BAB (no HP/AC/Saves) + Skills placeholder → Attributes tab shows 6 wide ability score cards + 5 speed stub cards + Size dropdown + Senses text → changing Size saves correctly.
 
 ---
 
@@ -176,20 +191,26 @@ ActorSystemModel (character)
 ├── abilities: { str, dex, con, int, wis, cha }
 │   Each: { base: number, mod: number (p:f) }
 │   (damage/drain/penalty added in Phase 20)
-├── hp: { base, max (p:f), current, temp, nonlethal }
+├── hp: { max (p:f), current, temp, nonlethal }
 ├── bab: { total (p:f) }
 ├── ac: { normal (p:f), touch (p:f), flatFooted (p:f) }  — start: 10 + DEX mod + size
 ├── saves: { fort, ref, will }
-│   Each: { base, total (p:f), ability: AbilityKey }
+│   Each: { total (p:f) }   (base + ability mod — class contributions in alpha.2)
 ├── speed: { land, climb, swim, burrow, fly }
-│   Each: { base, total (p:f) }
-├── init: { bonus, total (p:f) }
+│   Each: { base, total (p:f) }   (Story 4 adds schema + derivation)
+├── init: { total (p:f) }
 ├── sr: number
 ├── ~~dr: DamageReduction[]~~   ← deferred to alpha (phases 8/12/13/21 — Special Abilities & damage pipeline)
 ├── level (p:f, derived from class items)
 ├── xp: { value, max }
-├── alignment: [MoralAxis|null, ChaosAxis|null]
-├── race (p:f, derived from race item)
+├── bio: {
+│     gender, deity, age, height, weight  (nullable strings)
+│     alignment: { law: LawAxis|null, moral: MoralAxis|null }   (moved from system.alignment in Story 3)
+│     languages: string[]                                        (added Story 3)
+│     senses: string|null                                        (stub — folksonomy redesign deferred to token phase)
+│   }
+├── settings: { isPartyMember: boolean }                         (added Story 3)
+├── race  — NOT a schema field; getter on CreatureDnd35e returns 'Human' stub (real Race item lands in a later phase)
 ├── size: SizeCategory
 ├── currency: CurrencyField             (coin weight → encumbrance; "ignore currency weight" setting disables)
 └── encumbrance: { carriedWeight (p:f), light (p:f), medium (p:f), heavy (p:f), carry (p:f), drag (p:f), level (p:f), carryBonus, carryMultiplier }
@@ -230,11 +251,18 @@ One item per slot; exception: both ring slots may each hold one ring independent
 
 ## 5.5 Actor Sheet (Vue)
 
-- **Header**: Name, level, race, alignment, portrait
-- **Tabs**: Abilities, Inventory, Features, Effects, Biography
-- **Abilities tab**: Six ability scores (editable base, display modifier)
+- **Header**: Portrait, Name, XP bar, compact stat pills (HP | AC | Fort | Ref | Will), Rest icon button (`fa-campground`)
+- **Tabs**: Summary, Attributes, Combat, Inventory, Features, Skills, Bio, Effects, Settings, Notes
+- **Summary tab**: 3-column grid — compact ability scores table (left), Init + BAB quick stats (middle), skills placeholder (right)
+- **Attributes tab**: Wide ability score cards (base input + total/mod display), Speed stub cards, Senses stub, Traits (Size dropdown + stubs)
+- **Combat tab**: HP, AC trio, Saves, BAB, Initiative — added in Story 4; combat-only resistances (SR, NA, DR, fast healing, etc.) in later phases
 - **Inventory tab**: Grouped item list, equip toggles, weight/price, drag-and-drop
+- **Features tab**: Placeholder — feats/class features in later phases
+- **Skills tab**: Skills list + ACP reference — later phases
+- **Bio tab**: Identity (gender, alignment, deity), Physical (age, height, weight), Race (getter stub), Languages, Senses, Biography
 - **Effects tab**: Active effects on the actor
+- **Settings tab**: Per-character toggles (`isPartyMember`; more settings added in later phases)
+- **Notes tab**: GM session notes
 - **All strings via i18n keys**
 
 ## 5.6 Document Store Refresh
@@ -291,8 +319,10 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
   - [ ] `currency: CurrencyField` at schema root (world-settings currencies; coin weight → encumbrance)
   - [ ] Encumbrance: `carriedWeight (pf), light/medium/heavy/carry/drag thresholds (pf), carryBonus, carryMultiplier`
 - [ ] Create `src/documents/actors/character/data/CharacterSystemModel.mts` — `CharacterSystemModel extends CreatureSystemModel`: character-only fields
-  - [ ] `level (persisted:false)`, `xp: {value, max}`, `alignment`, `race (persisted:false)`, `size: SizeCategory`
-  - [ ] `isPartyMember: boolean`
+  - [ ] `level (persisted:false)`, `xp: {value, max}`, `size: SizeCategory`
+  - [ ] `bio.alignment` (moved from top-level `system.alignment` — Story 3), `bio.languages: string[]`, `bio.senses: string|null`
+  - [ ] `settings.isPartyMember: boolean`
+  - [ ] `get race()` getter on `CreatureDnd35e` returning `'Human'` stub — NOT a schema field (real Race item in a later phase)
 - [ ] Create `src/documents/actors/npc/data/NpcSystemModel.mts` — `NpcSystemModel extends CreatureSystemModel`: **stub only** (Phase 23 adds cr, type/subtype, environment, treasure, advancement)
 - [ ] Create `src/documents/actors/object/data/ObjectSystemModel.mts` — `ObjectSystemModel extends ActorSystemModelBase`: **stub only** (Phase 23 adds HP(object), hardness, breakDC)
 - [ ] Create `src/documents/actors/trap/data/TrapSystemModel.mts` — `TrapSystemModel extends ObjectSystemModel`: **stub only** (Phase 23 adds findDC, disarmDC)
@@ -590,7 +620,11 @@ A separate **"Monsters die at 0"** world toggle makes NPC actors without class l
 | Create | `src/vue/apps/VueActorSheet.mts` — abstract actor sheet base, mirrors `VueItemSheet.mts`; extends `useVueDocumentSheetMixin(ActorSheetBase)` |
 | Widen | `src/vue/apps/VueDocumentSheetMixin.mts` — widen `TDocument` generic to accept `ActorDnd35e` |
 | Create | `src/documents/actors/character/sheet/CharacterSheet.mts` — concrete character sheet class extending `VueActorSheet` |
-| Create | `src/documents/actors/character/sheet/CharacterSheet.vue` — main character sheet Vue component (tabs: Abilities, Inventory, Features, Effects, Biography) |
+| Create | `src/documents/actors/character/sheet/CharacterSheet.vue` — main character sheet Vue component |
+| Create | `src/documents/actors/creature/sheet/tabs/bio/BioTab.vue` — Bio tab (identity, physical, languages, senses, biography) |
+| Create | `src/documents/actors/creature/sheet/tabs/SettingsTab.vue` — Settings tab (isPartyMember, future per-character settings) |
+| Create | `src/documents/actors/creature/sheet/tabs/sections/attributes/` — `AbilityScoresSection.vue` (wide cards), `AbilityScoresTable.vue` (compact, for Summary), `SpeedSection.vue`, `SensesSection.vue`, `TraitsSection.vue` |
+| Delete | `src/documents/actors/creature/sheet/tabs/sections/attributes/HpSection.vue`, `SavingThrowsSection.vue`, `ArmorClassSection.vue`, `InitiativeSpeedSection.vue` — moved to Combat tab (Story 4) |
 | Create | `src/documents/actors/character/sheet/components/` — AbilityScores.vue, InventoryTab.vue, EquipmentSlots.vue and other tab/section components |
 | Modify | `src/documents/actors/registration.mts` — register character sheet and `CharacterSystemModel` |
 | Create | `src/constants/abilities.mts` — ability score constants (keys, labels, associated saves) |

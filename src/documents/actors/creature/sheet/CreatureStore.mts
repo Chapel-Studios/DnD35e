@@ -34,8 +34,8 @@ const useCreatureStore = <TDocument extends Creature>(
   const { getViewAwareFieldValue } = actorStore.documentGetters;
   const { document } = actorStore._storeUtils;
 
-  const alignmentLaw   = computed(() => getViewAwareFieldValue<LawAxis | null>('system.alignment.law')   ?? null);
-  const alignmentMoral = computed(() => getViewAwareFieldValue<MoralAxis | null>('system.alignment.moral') ?? null);
+  const alignmentLaw   = computed(() => getViewAwareFieldValue<LawAxis | null>('system.bio.alignment.law')   ?? null);
+  const alignmentMoral = computed(() => getViewAwareFieldValue<MoralAxis | null>('system.bio.alignment.moral') ?? null);
 
   const documentGetters = {
     ...actorStore.documentGetters,
@@ -49,9 +49,12 @@ const useCreatureStore = <TDocument extends Creature>(
     alignmentMoral,
     alignmentLabel: computed(() => buildAlignmentLabel(alignmentLaw.value, alignmentMoral.value)),
 
-    size:  computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
-    notes: computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
-    level: computed(() => (document.value as unknown as { system: { level?: number } }).system.level ?? 1),
+    size:           computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
+    notes:          computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
+    level:          computed(() => (document.value as unknown as { system: { level?: number } }).system.level ?? 1),
+    isPartyMember:  computed(() => getViewAwareFieldValue<boolean>('system.settings.isPartyMember') ?? false),
+    languages:      computed(() => getViewAwareFieldValue<string[]>('system.bio.languages') ?? []),
+    senses:         computed(() => getViewAwareFieldValue<string | null>('system.bio.senses') ?? null),
   };
 
   const store: CreatureDocumentStore<TDocument> = {
@@ -74,6 +77,9 @@ interface CreatureGetters {
   size:           ComputedRef<Size>;
   notes:          ComputedRef<string>;
   level:          ComputedRef<number>;
+  isPartyMember:  ComputedRef<boolean>;
+  languages:      ComputedRef<string[]>;
+  senses:         ComputedRef<string | null>;
 }
 
 type CreatureActions = Record<string, unknown>;

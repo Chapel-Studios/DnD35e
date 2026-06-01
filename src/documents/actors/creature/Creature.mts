@@ -15,6 +15,14 @@ abstract class Creature extends ActorDnd35e {
   declare system: CreatureSystemData;
 
   /**
+   * Stub: returns 'Human' until the Race item type is implemented.
+   * Will be replaced with a getter that resolves a linked Race item.
+   */
+  get race(): string {
+    return 'Human';
+  }
+
+  /**
    * Static registry of lifecycle event names for this class.
    * Subclasses extend via spread:
    *   `static override readonly LifeCycle = { ...Creature.LifeCycle, levelUp: 'levelUp' } as const`

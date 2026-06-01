@@ -62,7 +62,7 @@
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<TValue | undefined>(() =>
+  const resolvedValue = computed<TValue>(() =>
     props.value !== undefined ? props.value : getViewAwareFieldValue<TValue>(props.fieldPath)
   );
 

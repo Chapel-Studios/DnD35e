@@ -76,21 +76,30 @@ interface AlignmentData {
 // ─── Bio ─────────────────────────────────────────────────────────────────────
 
 interface BioData {
-  gender: string | null;
-  deity:  string | null;
-  age:    string | null;
-  height: string | null;
-  weight: string | null;
+  gender:    string | null;
+  deity:     string | null;
+  age:       string | null;
+  height:    string | null;
+  weight:    string | null;
+  alignment: AlignmentData;
+  languages: string[];
+  senses:    string | null;
+}
+
+// ─── Settings ────────────────────────────────────────────────────────────────
+
+interface SettingsData {
+  isPartyMember: boolean;
 }
 
 // ─── Creature source / data ───────────────────────────────────────────────────
 
 interface CreatureSystemSourceProperties {
-  sr:        number;
-  bio:       BioData;
-  alignment: AlignmentData;
-  size:      Size;
-  notes:     string;
+  sr:       number;
+  bio:      BioData;
+  size:     Size;
+  notes:    string;
+  settings: SettingsData;
 }
 
 interface CreatureSystemSource extends CreatureSystemSourceProperties, ActorSystemSource {
@@ -131,4 +140,5 @@ export type {
   SaveData,
   SavesOf,
   SaveSource,
+  SettingsData,
 };
