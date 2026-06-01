@@ -8,11 +8,12 @@ import FeaturesTab from './FeaturesTab.vue';
 import InventoryTab from './InventoryTab.vue';
 import SkillsTab from './SkillsTab.vue';
 import SpellsTab from './SpellsTab.vue';
-import SummaryTab from './SummaryTab.vue';
+import SummaryTab from './summary/SummaryTab.vue';
 
 const summaryTab: SheetTab = {
   id: 'summary',
   label: 'dnd35e.ACTOR.tab.Summary',
+  tooltip: 'dnd35e.ACTOR.tab.Summary',
   component: SummaryTab,
   order: 10,
   icon: 'fas fa-address-card',
@@ -21,6 +22,7 @@ const summaryTab: SheetTab = {
 const attributesTab: SheetTab = {
   id: 'attributes',
   label: 'dnd35e.ACTOR.tab.Attributes',
+  tooltip: 'dnd35e.ACTOR.tab.Attributes',
   component: AttributesTab,
   order: 20,
   icon: 'fas fa-fist-raised',
@@ -29,6 +31,7 @@ const attributesTab: SheetTab = {
 const combatTab: SheetTab = {
   id: 'combat',
   label: 'dnd35e.ACTOR.tab.Combat',
+  tooltip: 'dnd35e.ACTOR.tab.Combat',
   component: CombatTab,
   order: 30,
   icon: 'fas fa-shield-halved',
@@ -37,6 +40,7 @@ const combatTab: SheetTab = {
 const inventoryTab: SheetTab = {
   id: 'inventory',
   label: 'dnd35e.ACTOR.tab.Inventory',
+  tooltip: 'dnd35e.ACTOR.tab.Inventory',
   component: InventoryTab,
   order: 40,
   icon: 'fas fa-backpack',
@@ -45,6 +49,7 @@ const inventoryTab: SheetTab = {
 const featuresTab: SheetTab = {
   id: 'features',
   label: 'dnd35e.ACTOR.tab.Features',
+  tooltip: 'dnd35e.ACTOR.tab.Features',
   component: FeaturesTab,
   order: 50,
   icon: 'fas fa-star',
@@ -53,6 +58,7 @@ const featuresTab: SheetTab = {
 const skillsTab: SheetTab = {
   id: 'skills',
   label: 'dnd35e.ACTOR.tab.Skills',
+  tooltip: 'dnd35e.ACTOR.tab.Skills',
   component: SkillsTab,
   order: 60,
   icon: 'fas fa-scroll',
@@ -61,6 +67,7 @@ const skillsTab: SheetTab = {
 const buffsTab: SheetTab = {
   id: 'buffs',
   label: 'dnd35e.ACTOR.tab.Buffs',
+  tooltip: 'dnd35e.ACTOR.tab.Buffs',
   component: BuffsTab,
   order: 70,
   icon: 'fas fa-bolt',
@@ -69,6 +76,7 @@ const buffsTab: SheetTab = {
 const spellsTab: SheetTab = {
   id: 'spells',
   label: 'dnd35e.ACTOR.tab.Spells',
+  tooltip: 'dnd35e.ACTOR.tab.Spells',
   component: SpellsTab,
   order: 80,
   icon: 'fas fa-hat-wizard',
@@ -77,6 +85,7 @@ const spellsTab: SheetTab = {
 const notesTab: SheetTab = {
   id: 'notes',
   label: 'dnd35e.ACTOR.tab.Notes',
+  tooltip: 'dnd35e.ACTOR.tab.Notes',
   component: CharacterDescriptionTab,
   order: 90,
   icon: 'fas fa-book-open',

@@ -6,7 +6,7 @@
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
-    :value="value"
+    :value="resolvedValue"
     :read-only="props.readOnly"
   >
     <template v-if="slots.controls" #controls="{ editable }">
@@ -38,7 +38,7 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: number | null;
+    value?: number | null;
     isDmOnly?: boolean;
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
@@ -60,6 +60,7 @@
   const {
     documentGetters: {
       hasMaskForField,
+      getViewAwareFieldValue,
     },
     documentActions: {
       getDirectFieldUpdater,
@@ -69,6 +70,10 @@
       getSourceProperty,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  const resolvedValue = computed<number | null>(() =>
+    props.value !== undefined ? props.value : getViewAwareFieldValue<number | null>(props.fieldPath) ?? null
+  );
   const isDisabled = computed(() => {
     if (props.disabled) return true;
     return !isEditMode.value;
@@ -82,8 +87,8 @@
 
   const sourceValue = getSourceProperty<number | null>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.editDerived || !sourceValue) return props.value;
-    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return props.value;
+    if (props.editDerived || !sourceValue) return resolvedValue.value;
+    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
     return sourceValue.value as number | null;
   });
 

@@ -1,3 +1,5 @@
+export type { CreatureLike, CreatureSource } from './Creature.mjs';
+export { Creature } from './Creature.mjs';
 export type {
   CreatureSystemData,
   CreatureSystemSource,

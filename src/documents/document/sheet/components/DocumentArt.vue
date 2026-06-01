@@ -1,6 +1,6 @@
 <template>
-  <div class="item-art-container">
-    <ImageField field="img" :title="name" class="item-art" />
+  <div class="doc-art-container">
+    <ImageField field="img" :title="name" class="doc-art" />
   </div>
 </template>
 
@@ -17,15 +17,20 @@
 </script>
 
 <style scoped lang="scss">
-  .item-art-container {
-    flex: 0 128px;
-    width: 128px;
+  .doc-art-container {
+    width: 8rem;
     position: relative;
     grid-row: span 2;
 
-    img.item-art {
+    img.doc-art {
       object-fit: contain;
       border: 2px solid #000;
     }
+  }
+
+  // Ancestor (.actor-sheet) lives outside this component, so wrap it in :global()
+  // to opt out of scoping while keeping .doc-art-container scoped to this component.
+  :global(.actor-sheet) .doc-art-container {
+    width: 10rem;
   }
 </style>

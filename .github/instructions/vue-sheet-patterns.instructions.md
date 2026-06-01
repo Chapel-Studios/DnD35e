@@ -178,6 +178,12 @@ this.renderModeStore = useRenderModeStore(
 );
 ```
 
+## Sheet Store Composition
+
+Sheet stores follow a unified composition chain (`useDocumentSheetStore` → `useActorSheetStore`/`useItemSheetStore` → … → leaf). Each layer takes `(context, options?)`, calls its direct parent internally, and returns the fully composed store. **Only the runtime leaf** (e.g. `useCharacterStore`, `useWeaponStore`) writes to `game.dnd35e.stores`. Intermediate `.vue` sheet shells call the store with a single arg and `provide()` it without registering.
+
+See `dnd35e-patterns.instructions.md` → "Sheet Store Composition Chain" for the full pattern, type shape, and rationale.
+
 ## Test Coverage & Phase Boundaries
 
 Not all sheet features can be tested in the phase they're implemented. Some require downstream phases to provide supporting systems.

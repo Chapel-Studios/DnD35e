@@ -5,6 +5,44 @@
     }
   },
   "dnd35e": {
+    "CREATURE": {
+      "FIELDS": {
+        "bio": {
+          "label": "Biography",
+          "gender": { "label": "Gender" },
+          "deity":  { "label": "Deity" },
+          "age":    { "label": "Age" },
+          "height": { "label": "Height" },
+          "weight": { "label": "Weight" }
+        },
+        "alignment": {
+          "label": "Alignment",
+          "law":   { "label": "Law/Chaos" },
+          "moral": { "label": "Good/Evil" }
+        },
+        "speed": {
+          "label": "Speed",
+          "land": {
+            "label": "Land Speed",
+            "base":  { "label": "Land Speed" },
+            "total": { "label": "Total Land Speed" }
+          }
+        }
+      },
+      "alignment": {
+        "trueNeutral": "True Neutral",
+        "law": {
+          "lawful": "Lawful",
+          "neutral": "Neutral",
+          "chaotic": "Chaotic"
+        },
+        "moral": {
+          "good": "Good",
+          "neutral": "Neutral",
+          "evil": "Evil"
+        }
+      }
+    },
     "ACTOR": {
       "sheet": {
         "Character": "D&D 3.5e Character Sheet"
@@ -21,7 +59,35 @@
         "Notes": "Notes"
       },
       "section": {
-        "AbilityScores": "Ability Scores"
+        "AbilityScores": "Ability Scores",
+        "Health": "Health",
+        "Actions": "Actions",
+        "Skills": "Skills"
+      },
+      "header": {
+        "xp": "XP",
+        "race": "Race",
+        "racePlaceholder": "No race assigned"
+      },
+      "stat": {
+        "hp": "HP",
+        "base": "Base",
+        "mod": "Mod",
+        "temp": "+Temp",
+        "nonlethal": "Nonlethal",
+        "initiative": "Init",
+        "bab": "BAB",
+        "ac": "AC",
+        "touch": "Touch",
+        "flatFooted": "FF",
+        "fort": "Fort",
+        "ref": "Ref",
+        "will": "Will",
+        "points": "Points",
+        "total": "Total"
+      },
+      "action": {
+        "rest": "Rest"
       },
       "field": {
         "Biography": "Biography",

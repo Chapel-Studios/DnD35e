@@ -6,7 +6,7 @@
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
-    :value="value"
+    :value="resolvedValue"
   >
     <select
       :value="editValue"
@@ -22,9 +22,7 @@
       </option>
     </select>
     <template #readonly>
-      <span>
-        {{ localize(options.find(opt => opt.value === value)?.label ?? String(value)) }}
-      </span>
+      <span>{{ readonlyLabel }}</span>
     </template>
   </FormGroup>
 </template>
@@ -41,7 +39,7 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: TValue;
+    value?: TValue;
     options: SelectOption<TValue>[];
     isDmOnly?: boolean;
     fieldPath: string;
@@ -59,10 +57,21 @@
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    documentGetters: { hasMaskForField },
+    documentGetters: { hasMaskForField, getViewAwareFieldValue },
     documentActions: { getDirectFieldUpdater, getViewAwareFieldUpdater },
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  const resolvedValue = computed<TValue | undefined>(() =>
+    props.value !== undefined ? props.value : getViewAwareFieldValue<TValue>(props.fieldPath)
+  );
+
+  const readonlyLabel = computed(() => {
+    const current = resolvedValue.value;
+    if (current === undefined) return '';
+    const matchedLabel = props.options.find(opt => opt.value === current)?.label;
+    return localize(matchedLabel ?? String(current));
+  });
   
   const isDisabled = computed(() => {
     if (props.disabled) return true;
@@ -78,9 +87,9 @@
 
   const sourceValue = getSourceProperty<TValue>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.editDerived || !sourceValue) return props.value;
-    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return props.value;
-    return sourceValue.value ?? props.value;
+    if (props.editDerived || !sourceValue) return resolvedValue.value;
+    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
+    return sourceValue.value ?? resolvedValue.value;
   });
 
   function localize(key: string): string {
@@ -88,7 +97,9 @@
   }
 
   function onChange(val: string) {
-    const parsed = typeof props.value === 'number' ? Number(val) : val;
+    // Coerce based on the resolved value's type so numeric selects still write
+    // numbers to the document even when no explicit `:value` prop is passed.
+    const parsed = typeof resolvedValue.value === 'number' ? Number(val) : val;
     fieldUpdater(parsed as TValue);
   }
 </script>

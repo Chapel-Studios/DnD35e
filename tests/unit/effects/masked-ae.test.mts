@@ -53,6 +53,7 @@ function mkDoc (opts: {
 }) {
   const schema = {
     _getField: (path: string[]) => opts.systemFields?.[path.join('.')],
+    getField:  (path: string)   => opts.systemFields?.[path],
   };
   const system: any = {
     schema,

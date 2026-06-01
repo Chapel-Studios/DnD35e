@@ -4,6 +4,8 @@ import { CharacterSystemModel } from '@actors/character/index.mjs';
 import { CharacterSheet } from '@actors/character/sheet/CharacterSheet.mjs';
 import { ActorConfig } from '@constants/config/actor.mjs';
 import type { DocumentSheetStore } from '@documents/document/index.mjs';
+import type { NameFormulaDocument } from '@documents/document/logic/index.mjs';
+import { ensureNameFormulaOnCreate } from '@documents/document/logic/index.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
@@ -37,6 +39,10 @@ export const registerActors = () => {
       if (type === characterActorType) continue;
       registerFamiliarSchema('Actor', type, (ctx?) => gatherAspectsFromSchema(CharacterSystemModel, ctx));
     }
+  });
+
+  Hooks.on('preCreateActor', (document, _data, _options, _userId) => {
+    ensureNameFormulaOnCreate(document as NameFormulaDocument);
   });
 
   Hooks.on('updateActor', (document, _updateData, _options, _userId) => {

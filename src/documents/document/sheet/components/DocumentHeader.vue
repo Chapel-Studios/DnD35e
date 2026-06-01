@@ -1,11 +1,11 @@
 <template>
-  <div class="item-header">
+  <div class="doc-header">
     <slot>
       <HeaderNameField />
     </slot>
 
-    <div class="item-subtitle">
-      <h4 class="item-type">{{localizedType}}</h4>
+    <div v-if="showStatusArea" class="doc-status-area">
+      <h4 class="doc-type">{{localizedType}}</h4>
       <slot name="status"></slot>
     </div>
     <slot name="summary"></slot>
@@ -18,27 +18,39 @@
 
   import HeaderNameField from './HeaderNameField.vue';
 
+  withDefaults(defineProps<{
+    showStatusArea?: boolean;
+  }>(), {
+    showStatusArea: true,
+  });
+
   const { documentGetters: { localizedType } } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 </script>
 
 <style scoped lang="scss">
-  .item-header {
+  .doc-header {
     display: grid;
-    grid-template: auto / 130px 3fr minmax(80px, auto);
+    grid-template: auto / 8.25rem 3fr minmax(80px, auto);
     margin-bottom: 0.5rem;
   }
 
-  .item-subtitle {
+  .doc-status-area {
     flex: 0 0 80px;
     margin: 0;
     padding: 0.25rem 1rem 1rem;
     color: #7a7971;
   }
 
-  .item-type {
+  .doc-header .doc-type {
     font-size: 24px;
     line-height: 26px;
     text-align: center;
     margin-bottom: 0.5rem;
+  }
+
+  // Ancestor (.actor-sheet) lives outside this component, so wrap it in :global()
+  // to opt out of scoping while keeping .doc-header scoped to this component.
+  :global(.actor-sheet) .doc-header {
+    grid-template-columns: 10.25rem 3fr minmax(80px, auto);
   }
 </style>

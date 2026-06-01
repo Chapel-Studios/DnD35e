@@ -64,7 +64,7 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: TValue[];
+    value?: TValue[];
     options: MultiSelectOption<TValue>[];
     isDmOnly?: boolean;
     fieldPath: string;
@@ -85,6 +85,7 @@
   const {
     documentGetters: {
       hasMaskForField,
+      getViewAwareFieldValue,
     },
     documentActions: {
       getDirectFieldUpdater,
@@ -94,6 +95,10 @@
       getSourceProperty,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  const resolvedValue = computed<TValue[]>(() =>
+    props.value !== undefined ? props.value : getViewAwareFieldValue<TValue[]>(props.fieldPath) ?? []
+  );
 
   function localize(key: string): string {
     return game.i18n.localize(key);
@@ -112,9 +117,9 @@
 
   const sourceValue = getSourceProperty<TValue[]>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.editDerived || !sourceValue) return props.value;
-    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return props.value;
-    return (sourceValue.value ?? props.value);
+    if (props.editDerived || !sourceValue) return resolvedValue.value;
+    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
+    return (sourceValue.value ?? resolvedValue.value);
   });
 
   function onToggle(val: TValue, checked: boolean) {
@@ -125,7 +130,7 @@
     fieldUpdater(updated);
   }
 
-  const selectedOptions = computed(() => props.options.filter(o => o.value !== null && props.value.includes(o.value)));
+  const selectedOptions = computed(() => props.options.filter(o => o.value !== null && resolvedValue.value.includes(o.value)));
 </script>
 
 <style scoped>

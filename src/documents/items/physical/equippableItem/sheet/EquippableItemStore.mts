@@ -1,21 +1,23 @@
-import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import { syncMasterworkAeState } from '@effects/material/logic/masterworkAe.mjs';
-import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
+import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStoreUtils } from '@items/baseItem/index.mjs';
 import type { EquippableItemLike } from '@items/physical/equippableItem/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef, ShallowRef } from 'vue';
 import { computed } from 'vue';
 
-import type { PhysicalItemLike } from '../../physicalItem/PhysicalItem.mjs';
-import type { PhysicalItemActions, PhysicalItemGetters, PhysicalItemStore, PhysicalItemStoreUtils } from '../../physicalItem/sheet/PhysicalItemStore.mjs';
+import type { PhysicalDocumentStore, PhysicalItemActions, PhysicalItemGetters, PhysicalItemStore, PhysicalItemStoreUtils, UsePhysicalItemStoreOptions } from '../../physicalItem/sheet/PhysicalItemStore.mjs';
 import { usePhysicalItemStore } from '../../physicalItem/sheet/PhysicalItemStore.mjs';
 
+type UseEquippableItemStoreOptions = UsePhysicalItemStoreOptions;
 
-const useEquippableItemStore = <TDocument extends EquippableItemLike> (context: VueApplicationContext<TDocument>, baseStore: ItemSheetStore) => {
-  const document = baseStore._storeUtils.document as ShallowRef<TDocument>;
-  const physicalStore = usePhysicalItemStore(context, baseStore as ItemSheetStore<PhysicalItemLike>);
+const useEquippableItemStore = <TDocument extends EquippableItemLike> (
+  context: VueApplicationContext<TDocument>,
+  options?: UseEquippableItemStoreOptions
+): EquippableDocumentStore<TDocument> => {
+  const physicalStore = usePhysicalItemStore<TDocument>(context, options);
+  const document = physicalStore._storeUtils.document as ShallowRef<TDocument>;
 
-  const documentGetters: EquippableItemGetters = {
+  const documentGetters = {
     ...physicalStore.documentGetters,
     isEquipped: computed(() => document.value.system.isEquipped),
     equippedSlotIds: computed(() => document.value.system.equippedSlotIds),
@@ -25,18 +27,20 @@ const useEquippableItemStore = <TDocument extends EquippableItemLike> (context: 
     isMasterwork: computed(() => document.value.system.isMasterwork ?? false),
   };
 
-  const documentActions: EquippableItemActions = {
+  const documentActions = {
     ...physicalStore.documentActions,
     toggleMasterwork: async (value: boolean) => {
       await syncMasterworkAeState(document.value as unknown as EquippableItemLike, value);
     },
   };
 
-  return {
+  const store: EquippableDocumentStore<TDocument> = {
     ...physicalStore,
     documentGetters,
     documentActions,
   };
+
+  return store;
 };
 
 interface EquippableItemGetters extends PhysicalItemGetters {
@@ -54,17 +58,18 @@ interface EquippableItemActions extends PhysicalItemActions {
   toggleMasterwork: (value: boolean) => Promise<void>;
 }
 
-type EquippableItemStore = PhysicalItemStore & {
+interface EquippableItemStore extends PhysicalItemStore {
   documentGetters: EquippableItemGetters;
   _storeUtils: EquippableItemStoreUtils;
-  actions: EquippableItemActions;
-};
-
-interface EquippableDocumentStore extends EquippableItemStore, DocumentSheetStore<EquippableItemLike> {
-  _storeUtils: EquippableItemStoreUtils & ItemSheetStoreUtils<EquippableItemLike>;
-  documentGetters: EquippableItemGetters & ItemDocumentGetters;
-  documentActions: EquippableItemActions & ItemDocumentActions<EquippableItemLike>;
+  documentActions: EquippableItemActions;
 }
+
+type EquippableDocumentStore<TDocument extends EquippableItemLike = EquippableItemLike> =
+  PhysicalDocumentStore<TDocument> & {
+    _storeUtils: EquippableItemStoreUtils & ItemSheetStoreUtils<TDocument>;
+    documentGetters: EquippableItemGetters & ItemDocumentGetters;
+    documentActions: EquippableItemActions & ItemDocumentActions<TDocument>;
+  };
 
 export type {
   EquippableDocumentStore,
@@ -72,6 +77,7 @@ export type {
   EquippableItemGetters,
   EquippableItemStore,
   EquippableItemStoreUtils,
+  UseEquippableItemStoreOptions,
 };
 
 export {

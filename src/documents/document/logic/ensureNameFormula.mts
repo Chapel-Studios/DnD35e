@@ -1,3 +1,4 @@
+import type { ActorSystemData } from '@actors/baseActor/index.mjs';
 import type { ActiveEffectSystemData } from '@effects/baseActiveEffect/index.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import type { ItemSystemData } from '@items/baseItem/index.mjs';
@@ -21,7 +22,7 @@ const ensureNameFormulaOnCreate = (document: NameFormulaDocument): void => {
     system: {},
   };
   let hasUpdate = false;
-  const system = document.system as ItemSystemData | ActiveEffectSystemData | undefined;
+  const system = document.system as ActorSystemData | ActiveEffectSystemData | ItemSystemData | undefined;
   if (!system?.nameFormula?.formula && document.name) {
     updateData.system.nameFormula = FormulaData.toSource(document.name, {
       resolvedValue: document.name,

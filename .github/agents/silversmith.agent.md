@@ -348,6 +348,14 @@ SilverSmith: ✓ 6.A complete. Updated checklist and session memory.
   Ready to proceed?
 ```
 
+## Branch & Pull Request Conventions
+
+- **Default PR base is `dev`, NOT `main`.** When opening a PR for any feature/phase branch, target `dev` unless the user explicitly says otherwise. `main` is reserved for releases.
+- **Always pass `--base dev` to `gh pr create`.** If you forget and the PR opens against `main`, immediately retarget with `gh pr edit <num> --base dev`.
+- Feature branches: `feat/<phase-or-topic>` (e.g. `feat/poc-06-story-2`).
+- Push with `git push origin <branch>`. The repo has two remotes (`origin` = Chapel-Studios upstream, `ogmathus` = fork); default to `origin` for PRs.
+- After approval of a section, the standard close-out is: `git add -A` → commit with a clear subject + body → `git push origin <branch>` → `gh pr create --base dev` (or `gh pr edit` if already open).
+
 ## Related Agents & Skills
 
 - **@kb-curator**: Captures knowledge discovered during implementation into compressed KB files

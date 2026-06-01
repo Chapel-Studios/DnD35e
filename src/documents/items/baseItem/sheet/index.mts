@@ -8,6 +8,7 @@ import type {
   ItemDocumentGetters,
   ItemSheetStore,
   ItemSheetStoreUtils,
+  UseItemSheetStoreOptions,
 } from './ItemSheetStore.mjs';
 import {
   getDefaultItemTabs,
@@ -33,4 +34,5 @@ export type {
   ItemDocumentGetters,
   ItemSheetStore,
   ItemSheetStoreUtils,
+  UseItemSheetStoreOptions,
 };

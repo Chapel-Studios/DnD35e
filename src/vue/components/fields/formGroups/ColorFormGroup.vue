@@ -16,9 +16,9 @@
     <template #readonly>
       <div
         class="color-display"
-        :style="{ backgroundColor: value ?? DEFAULT_COLOR }"
+        :style="{ backgroundColor: resolvedValue ?? DEFAULT_COLOR }"
       ></div>
-      {{ value ?? localize('dnd35e.COMMON.NoColor') }}
+      {{ resolvedValue ?? localize('dnd35e.COMMON.NoColor') }}
     </template>
   </FormGroup>
 </template>
@@ -34,7 +34,7 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: string | null;
+    value?: string | null;
     isDmOnly?: boolean;
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
@@ -53,6 +53,7 @@
   const {
     documentGetters: {
       hasMaskForField,
+      getViewAwareFieldValue,
     },
     documentActions: {
       getDirectFieldUpdater,
@@ -63,6 +64,10 @@
       createLocalizedComputed: localize,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  const resolvedValue = computed<string | null>(() =>
+    props.value !== undefined ? props.value : getViewAwareFieldValue<string | null>(props.fieldPath) ?? null
+  );
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;
@@ -77,8 +82,8 @@
 
   const sourceValue = getSourceProperty<string | null>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.editDerived || !sourceValue) return props.value;
-    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return props.value;
+    if (props.editDerived || !sourceValue) return resolvedValue.value;
+    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
     return sourceValue.value as string | null;
   });
 
