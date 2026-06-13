@@ -83,11 +83,11 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     schema.sr = useDnd35eField(requiredNumberField(0), { familiar: { aliases: ['spellResistance'] } });
 
     schema.bio = new SchemaField({
-      gender: nullableBioField(),
-      deity:  nullableBioField(),
-      age:    nullableBioField(),
-      height: nullableBioField(),
-      weight: nullableBioField(),
+      gender: useDnd35eField(nullableBioField()),
+      deity:  useDnd35eField(nullableBioField()),
+      age:    useDnd35eField(nullableBioField()),
+      height: useDnd35eField(nullableBioField()),
+      weight: useDnd35eField(nullableBioField()),
       alignment: new SchemaField({
         law:   useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...LAW_AXES] })),
         moral: useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...MORAL_AXES] })),

@@ -1,3 +1,4 @@
+import type { FlyManeuverability } from '@constants/index.mjs';
 import type { DocumentSystemData } from '@documents/document/index.mjs';
 
 interface SpeedEntrySource {
@@ -14,6 +15,7 @@ type SpeedDataOf<TEntry extends SpeedEntrySource> = {
   swim: TEntry;
   burrow: TEntry;
   fly: TEntry;
+  flyManeuverability: FlyManeuverability | null;
 };
 
 interface ActorSystemSourceProperties extends DocumentSystemData {}

@@ -77,15 +77,7 @@
           "label": "Settings",
           "isPartyMember": { "label": "Party Member" }
         },
-        "size": { "label": "Size" },
-        "speed": {
-          "label": "Speed",
-          "land":   { "label": "Land Speed",   "base": { "label": "Land Speed"   }, "total": { "label": "Total Land Speed"   } },
-          "climb":  { "label": "Climb Speed",  "base": { "label": "Climb Speed"  }, "total": { "label": "Total Climb Speed"  } },
-          "swim":   { "label": "Swim Speed",   "base": { "label": "Swim Speed"   }, "total": { "label": "Total Swim Speed"   } },
-          "fly":    { "label": "Fly Speed",    "base": { "label": "Fly Speed"    }, "total": { "label": "Total Fly Speed"    } },
-          "burrow": { "label": "Burrow Speed", "base": { "label": "Burrow Speed" }, "total": { "label": "Total Burrow Speed" } }
-        }
+        "size": { "label": "Size" }
       },
       "alignment": {
         "trueNeutral": "True Neutral",
@@ -102,6 +94,17 @@
       }
     },
     "ACTOR": {
+      "FIELDS": {
+        "speed": {
+          "label": "Speed",
+          "land":   { "label": "Land Speed",   "base": { "label": "Land"   }, "total": { "label": "Total Land Speed"   } },
+          "climb":  { "label": "Climb Speed",  "base": { "label": "Climb"  }, "total": { "label": "Total Climb Speed"  } },
+          "swim":   { "label": "Swim Speed",   "base": { "label": "Swim"   }, "total": { "label": "Total Swim Speed"   } },
+          "fly":    { "label": "Fly Speed",    "base": { "label": "Fly"    }, "total": { "label": "Total Fly Speed"    } },
+          "burrow": { "label": "Burrow Speed", "base": { "label": "Burrow" }, "total": { "label": "Total Burrow Speed" } },
+          "flyManeuverability": { "label": "Fly Maneuverability" }
+        }
+      },
       "sheet": {
         "Character": "D&D 3.5e Character Sheet"
       },
@@ -121,7 +124,7 @@
       "section": {
         "AbilityScores": "Ability Scores",
         "Health": "Health",
-        "Actions": "Actions",
+        "Actions": "Quick Actions",
         "Skills": "Skills",
         "Speed": "Movement",
         "Traits": "Traits"
@@ -148,12 +151,12 @@
         "points": "Points",
         "total": "Total"
       },
-      "speed": {
-        "land": "Land",
-        "climb": "Climb",
-        "swim": "Swim",
-        "fly": "Fly",
-        "burrow": "Burrow"
+      "flyManeuverability": {
+        "clumsy": "Clumsy",
+        "poor": "Poor",
+        "average": "Average",
+        "good": "Good",
+        "perfect": "Perfect"
       },
       "trait": {
         "creatureType": "Creature Type",

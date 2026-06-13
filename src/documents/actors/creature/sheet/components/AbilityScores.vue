@@ -86,7 +86,7 @@
     justify-items: center;
     justify-content: center;
     gap: 0.1rem;
-    border: 1px solid var(--color-border-light-2, #ccc);
+    border: 1px solid var(--color-tabs-border);
     border-radius: 4px;
     padding: 0.35rem 0.2rem 0.25rem;
     min-width: 3.75rem;

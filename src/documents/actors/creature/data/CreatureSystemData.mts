@@ -1,3 +1,4 @@
+import type { AbilityKey } from '@constants/abilities.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import type { Size } from '@constants/sizes.mjs';
 import type { CurrencyData } from '@fields/CurrencyData.mjs';
@@ -16,10 +17,7 @@ interface AbilityScoreData extends AbilityScoreSource {
   mod: number;
 }
 
-type AbilityScoresOf<TEntry extends AbilityScoreSource> = {
-  str: TEntry; dex: TEntry; con: TEntry;
-  int: TEntry; wis: TEntry; cha: TEntry;
-};
+type AbilityScoresOf<TEntry extends AbilityScoreSource> = Record<AbilityKey, TEntry>;
 
 // ─── HP ──────────────────────────────────────────────────────────────────────
 

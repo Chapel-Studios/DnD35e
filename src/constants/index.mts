@@ -1,5 +1,14 @@
 import type { AbilityKey } from './abilities.mjs';
-import { ABILITY_KEYS, ABILITY_KEYS_LOCALIZED } from './abilities.mjs';
+import {
+  ABILITY_KEYS,
+  ABILITY_KEYS_LOCALIZED,
+  CHA,
+  CON,
+  DEX,
+  INT,
+  STR,
+  WIS,
+} from './abilities.mjs';
 import type { LawAxis, MoralAxis } from './alignment.mjs';
 import {
   ALIGNMENT_I18N,
@@ -43,6 +52,19 @@ import { defaultGameSettings } from './gameSettings/index.mjs';
 import { LogLevel } from './logging.mjs';
 import { hbsTemplatePath, systemPath } from './paths.mjs';
 import { SIZE_MODIFIERS, SIZE_SELECT_OPTIONS, SIZES } from './sizes.mjs';
+import type {
+  FlyManeuverability,
+  SpeedType,
+} from './speeds.mjs';
+import {
+  FLY_MANEUVERABILITIES,
+  FLY_MANEUVERABILITY,
+  FLY_MANEUVERABILITY_LOCALIZED,
+  FLY_MANEUVERABILITY_OPTIONS,
+  SPEED_KEYS_LOCALIZED,
+  SPEED_TYPE,
+  SPEED_TYPES,
+} from './speeds.mjs';
 
 export {
   ABILITY_KEYS,
@@ -56,16 +78,24 @@ export {
   BONUS_TYPES,
   BROKEN_ARMOR_AE_UUID,
   BROKEN_WEAPON_AE_UUID,
+  CHA,
   CHAOTIC,
+  CON,
   DAMAGE_TYPES,
   defaultGameSettings,
   devConfig,
+  DEX,
   EffectConfig,
   EQUIP_SLOT_SELECT_OPTIONS,
   EQUIP_SLOTS,
   EVIL,
+  FLY_MANEUVERABILITIES,
+  FLY_MANEUVERABILITY,
+  FLY_MANEUVERABILITY_LOCALIZED,
+  FLY_MANEUVERABILITY_OPTIONS,
   GOOD,
   hbsTemplatePath,
+  INT,
   isAttackAction,
   ITEM_SHEET_CLASS,
   ItemConfig,
@@ -82,13 +112,20 @@ export {
   SIZE_MODIFIERS,
   SIZE_SELECT_OPTIONS,
   SIZES,
+  SPEED_KEYS_LOCALIZED,
+  SPEED_TYPE,
+  SPEED_TYPES,
+  STR,
   systemPath,
   VUE_APP_CLASS,
+  WIS,
 };
 
 export type {
   AbilityKey,
   BonusType,
+  FlyManeuverability,
   LawAxis,
   MoralAxis,
+  SpeedType,
 };

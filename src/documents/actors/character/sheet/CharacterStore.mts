@@ -1,5 +1,5 @@
 import { Character } from '@actors/character/Character.mjs';
-import type { CreatureDocumentStore, CreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
+import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
 import { useCreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
 import {
   attributesTab,
@@ -12,7 +12,6 @@ import {
   settingsTab,
   skillsTab,
   spellsTab,
-  summaryTab,
 } from '@actors/creature/sheet/tabs/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
@@ -27,8 +26,8 @@ const useCharacterStore = (
   context: VueApplicationContext<Character>
 ): CharacterStore => {
   const creatureStore = useCreatureStore<Character>(context, {
-    defaultTabs: [summaryTab, attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, bioTab, notesTab, settingsTab],
-    defaultActiveTab: 'summary',
+    defaultTabs: [attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, bioTab, notesTab, settingsTab],
+    defaultActiveTab: 'attributes',
   });
   const { document } = creatureStore._storeUtils;
 

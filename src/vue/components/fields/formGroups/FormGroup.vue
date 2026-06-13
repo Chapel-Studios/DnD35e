@@ -18,7 +18,7 @@
     </div>
 
     <!-- Content slot for input elements -->
-    <slot v-if="isFieldEditable"></slot>
+    <slot v-if="showDefaultSlot"></slot>
     <slot v-else name="readonly">{{ props.value }}</slot>
 
     <p v-if="hasHint" class="hint">
@@ -63,13 +63,15 @@
     defaultEditability?: FieldEditability; // defaults to 'normal'
     /** When true, forces the readonly display. */
     readOnly?: boolean;
+    /** When true, forces the edit display even in play/true modes. */
+    forceEdit?: boolean;
     /** When false, suppress the built-in FieldControls for this field wrapper. */
     showFieldControls?: boolean;
   }>(), {
     localizeHint: true,
     showFieldControls: true,
   });
-  
+
   function localize(key: string): string {
     return game.i18n.localize(key);
   }
@@ -115,6 +117,8 @@
   const isFieldVisible = getIsFieldVisible(props.fieldPath, props.defaultVisibility);
 
   const isFieldEditable = getIsFieldEditable(props.fieldPath, props.defaultEditability);
+  const showDefaultSlot = computed(() => !props.readOnly && (isFieldEditable || props.forceEdit));
+  
 
   // Restriction checks
   const isVisibilityRestricted = computed(() => resolveVisibility(props.fieldPath, props.defaultVisibility) !== everyoneVisibility);
@@ -154,7 +158,6 @@
   .form-group-label label {
     margin: 0;
     cursor: help;
-    word-break: break-word;
     overflow-wrap: break-word;
     min-width: 0;
   }

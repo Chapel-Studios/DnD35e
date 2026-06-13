@@ -92,6 +92,7 @@
 <style scoped lang="scss">
   .form-group-section {
     border: 1px solid var(--color-border, #7a7971);
+    position: relative;
 
     .form-group-section-header {
       position: absolute;

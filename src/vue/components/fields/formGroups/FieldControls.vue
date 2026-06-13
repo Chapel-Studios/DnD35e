@@ -16,6 +16,7 @@
       </button>
       <!-- Editability toggle (lock icon) -->
       <button
+        v-if="showEditabilityButton"
         type="button"
         class="field-control editability-control"
         :class="{ 'is-restricted': isEditabilityRestricted }"
@@ -75,13 +76,18 @@
 
   // For schema fields: only show controls if the field supports overrides. For legacy fields: always show.
   const hasOverrides = computed(() => fieldMeta.value ? fieldMeta.value.hasOverrides : true);
+  
+  // Show GM controls in edit mode when GM has field path and overrides exist.
+  // readOnly doesn't hide visibility controls, only editability.
   const showGMControls = computed(() =>
     isEditMode.value
     && isGM.value
     && !!props.fieldPath
-    && !props.readOnly
     && hasOverrides.value
   );
+
+  // Editability button: hide when readOnly (can't edit a derived/read-only field)
+  const showEditabilityButton = computed(() => !props.readOnly);
 
   // Visibility button: only for identifiable fields (or legacy fields where we default to showing it)
   const showVisibilityButton = computed(() => fieldMeta.value ? fieldMeta.value.identifiable : true);

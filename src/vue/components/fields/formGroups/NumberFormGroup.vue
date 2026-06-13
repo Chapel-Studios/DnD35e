@@ -8,6 +8,7 @@
     :default-editability="defaultEditability"
     :value="resolvedValue"
     :read-only="props.readOnly"
+    :force-edit="props.forceEdit"
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
@@ -54,6 +55,8 @@
     directUpdate?: boolean;
     /** When true, forces the readonly display. */
     readOnly?: boolean;
+    /** When true, forces the edit display even in play/true modes. */
+    forceEdit?: boolean;
   }>();
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
@@ -76,6 +79,7 @@
   );
   const isDisabled = computed(() => {
     if (props.disabled) return true;
+    if (props.forceEdit) return false;  // forceEdit fields stay enabled
     return !isEditMode.value;
   });
 

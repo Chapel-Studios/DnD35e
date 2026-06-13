@@ -213,4 +213,8 @@
   .actor-sheet .doc-name-container {
     grid-column: span 2;
   }
+
+  .sheet-sidebar {
+    width: fit-content;
+  }
 </style>
