@@ -1,5 +1,5 @@
 import { Character } from '@actors/character/Character.mjs';
-import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
+import type { CreatureDocumentStore, CreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
 import { useCreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
 import {
   attributesTab,
@@ -25,7 +25,7 @@ import { computed } from 'vue';
  */
 const useCharacterStore = (
   context: VueApplicationContext<Character>
-): CharacterDocumentStore => {
+): CharacterStore => {
   const creatureStore = useCreatureStore<Character>(context, {
     defaultTabs: [summaryTab, attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, bioTab, notesTab, settingsTab],
     defaultActiveTab: 'summary',
@@ -34,11 +34,13 @@ const useCharacterStore = (
 
   const documentGetters = {
     ...creatureStore.documentGetters,
+
+    classShorthand: computed(() => document.value.classShorthand ?? ''),
     xpValue:       computed(() => document.value.system.xp?.value ?? 0),
     isPartyMember: computed(() => document.value.system.isPartyMember ?? false),
   };
 
-  const store: CharacterDocumentStore = {
+  const store: CharacterStore = {
     ...creatureStore,
     documentGetters,
   };
@@ -49,13 +51,14 @@ const useCharacterStore = (
 };
 
 interface CharacterGetters {
+  classShorthand: ComputedRef<string>;
   xpValue:        ComputedRef<number>;
   isPartyMember:  ComputedRef<boolean>;
 }
 
-type CharacterDocumentStore = CreatureDocumentStore<Character> & {
+type CharacterStore = CreatureDocumentStore<Character> & {
   documentGetters: CreatureDocumentStore<Character>['documentGetters'] & CharacterGetters;
 };
 
 export { useCharacterStore };
-export type { CharacterDocumentStore, CharacterGetters };
+export type { CharacterGetters,CharacterStore };

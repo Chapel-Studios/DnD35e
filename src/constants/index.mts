@@ -13,7 +13,12 @@ import {
   MORAL_AXIS_SELECT_OPTIONS,
   NEUTRAL,
 } from './alignment.mjs';
-import { ActionsTypesList, ActionTypes, DAMAGE_TYPES, isAttackAction } from './attacks/index.mjs';
+import {
+  ActionsTypesList,
+  ActionTypes,
+  DAMAGE_TYPES,
+  isAttackAction,
+} from './attacks/index.mjs';
 import {
   BONUS_TYPE_BROKEN,
   BONUS_TYPE_MASTERWORK,
@@ -30,11 +35,14 @@ import {
 import { EffectConfig, ItemConfig } from './config/index.mjs';
 import { ITEM_SHEET_CLASS, SETTINGS_CONFIG_CLASS, VUE_APP_CLASS } from './cssClasses.mjs';
 import { devConfig } from './devConfig.mjs';
-import { EQUIP_SLOT_SELECT_OPTIONS,EQUIP_SLOTS } from './equipmentSlots.mjs';
+import { 
+  EQUIP_SLOT_SELECT_OPTIONS,
+  EQUIP_SLOTS,
+} from './equipmentSlots.mjs';
 import { defaultGameSettings } from './gameSettings/index.mjs';
 import { LogLevel } from './logging.mjs';
-import { hbsTemplatePath,systemPath } from './paths.mjs';
-import { SIZE_SELECT_OPTIONS, SIZES } from './sizes.mjs';
+import { hbsTemplatePath, systemPath } from './paths.mjs';
+import { SIZE_MODIFIERS, SIZE_SELECT_OPTIONS, SIZES } from './sizes.mjs';
 
 export {
   ABILITY_KEYS,
@@ -71,6 +79,7 @@ export {
   MORAL_AXIS_SELECT_OPTIONS,
   NEUTRAL,
   SETTINGS_CONFIG_CLASS,
+  SIZE_MODIFIERS,
   SIZE_SELECT_OPTIONS,
   SIZES,
   systemPath,

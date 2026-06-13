@@ -11,12 +11,12 @@
 </template>
 
 <script setup lang="ts">
-  import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
+  import type { CreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { NumberFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   const {
     documentGetters: { landSpeedTotal },
-  } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as CreatureStore;
 </script>

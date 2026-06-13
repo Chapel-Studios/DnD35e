@@ -60,4 +60,3 @@ describe('CreatureSystemModel ability modifier', () => {
     expect(model.abilities.cha.mod).toBe(4);
   });
 });
-

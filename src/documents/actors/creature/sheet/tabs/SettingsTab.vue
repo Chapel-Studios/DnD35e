@@ -13,7 +13,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
+  import type { CreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { ToggleSwitchFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
@@ -22,7 +22,7 @@
 
   const {
     documentGetters: { isPartyMember },
-  } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
+  } = inject(DocumentSheetStoreSymbol) as CreatureStore;
 </script>
 
 <style lang="scss" scoped>

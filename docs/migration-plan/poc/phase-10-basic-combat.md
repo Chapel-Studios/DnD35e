@@ -649,7 +649,37 @@ When a player right-clicks their own controlled token, an "Attack with..." subme
 - [ ] `updateCombat` hook: call `combatant.resetActions()` on turn advance
 - [ ] Extend combat tracker rendering: S/M pips per row, greyed when action unavailable
 
-**Verify**: Roll initiative → combatants ordered. Advance turn → pips reset. Use attack → S greys.
+**Flat-Footed as First Condition AE (Proof of Concept):**
+- [ ] Create `src/constants/conditions.mts` with flat-footed AE template:
+  ```typescript
+  export const CONDITIONS = {
+    flatFooted: {
+      id: 'flatFooted',
+      label: 'dnd35e.conditions.flatFooted',
+      icon: 'icons/svg/dazed.svg',  // placeholder, no token display yet
+      changes: [],  // Flat-footed doesn't use AE changes; instead, AC calc checks for the AE
+      flags: { dnd35e: { conditionType: 'flatFooted', isCondition: true } }
+    }
+  };
+  ```
+- [ ] Create `ConditionManager` static utility class in `src/documents/actors/creature/ConditionManager.mts`:
+  - `static applyCondition(actor, conditionId)`: creates AE with condition template
+  - `static removeCondition(actor, conditionId)`: finds and deletes condition AE by `flags.dnd35e.conditionType`
+  - `static hasCondition(actor, conditionId)`: checks for active condition AE
+- [ ] In `onUpdateCombat` hook: when combat starts, apply flat-footed AE to all combatants
+- [ ] In AC calculation (`CreatureSystemModel.prepareDerivedData()`): check if actor has flat-footed condition AE, if so exclude DEX from flatFooted AC calculation
+- [ ] Test: Start combat → all combatants have flat-footed AE. After first turn, flat-footed AE is removed (or persists based on design choice). AC calculation respects flat-footed status.
+
+**Verify**: Roll initiative → combatants ordered. Advance turn → pips reset. Use attack → S greys. Flat-footed AE applied/removed correctly per turn. AC calculated without DEX when flat-footed.
+
+---
+
+**AC Calculation Implementation Notes**:
+- `ac.normal` = 10 + armor bonus + shield bonus + min(DEX mod, max DEX) + size mod + dodge
+- `ac.touch` = 10 + DEX mod + size mod + dodge (no armor/shield)
+- `ac.flatFooted` = 10 + armor bonus + shield bonus + size mod (no DEX, no dodge)
+- When flat-footed AE is active: lose DEX bonus in `ac.normal` and `ac.touch` calculations (Phase 15 will expand this; Phase 10 stubs to basic logic)
+- Flat-footed status is NOT stored on actor data; it is ONLY represented by the presence of the condition AE (no condition flags on schema)
 
 ---
 

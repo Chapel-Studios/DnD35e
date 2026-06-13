@@ -3,6 +3,9 @@
     <template #header-name>
       <CharacterNameField />
     </template>
+    <template #header>
+      <CharacterRaceClass />
+    </template>
   </CreatureSheetVue>
 </template>
 
@@ -15,6 +18,7 @@
 
   import { useCharacterStore } from './CharacterStore.mjs';
   import CharacterNameField from './components/CharacterNameField.vue';
+  import CharacterRaceClass from './components/CharacterRaceClass.vue';
 
   const props = defineProps<{
     context: VueApplicationContext<Character>;

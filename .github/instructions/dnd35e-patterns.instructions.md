@@ -134,7 +134,7 @@ type EquippableDocumentStore<T> = PhysicalDocumentStore<T> & {
 };
 ```
 
-Leaf type aliases keep their historical bare names (`WeaponStore`, `CharacterDocumentStore`) to avoid churning consumer imports.
+Leaf type aliases keep their historical bare names (`WeaponStore`, `CharacterStore`) to avoid churning consumer imports.
 
 ## Formula Resolution
 

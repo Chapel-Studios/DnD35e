@@ -22,6 +22,9 @@
       </template>
     </DocumentHeader>
     <div class="sheet-body-content" :class="{ 'vertical-tabs': verticalTabs }">
+      <div v-if="$slots.sidebar" class="sheet-sidebar">
+        <slot name="sidebar"></slot>
+      </div>
       <TabDivider :vertical-tabs="verticalTabs" />
       <div class="sheet-tab-panes">
         <div

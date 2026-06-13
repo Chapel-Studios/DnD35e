@@ -3,9 +3,7 @@
     <div v-if="hasLabel" class="form-group-label">
       <label :title="labelTooltip">
         {{ resolvedLabel }}
-        <span v-if="showMaskedBadge" class="masked-badge" :title="maskedBadgeTooltip" :aria-label="maskedBadgeTooltip">
-          <i class="fa-solid fa-mask" aria-hidden="true" />
-        </span>
+        <MaskedBadge :field-path="props.fieldPath" />
       </label>
       <!-- GM permission controls next to label -->
       <FieldControls
@@ -43,8 +41,6 @@
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
-  import { RenderModeStoreSymbol } from '@documents/document/sheet/stores/RenderModeStore.mjs';
   import { computed, inject } from 'vue';
 
   import FieldControls from './FieldControls.vue';
@@ -53,6 +49,7 @@
     everyoneVisibility,
     gmOnlyEditability,
   } from './fieldPermissions.mjs';
+  import MaskedBadge from './MaskedBadge.vue';
 
   const props = withDefaults(defineProps<{
     label?: string; // localization key
@@ -81,8 +78,6 @@
     documentGetters: {
       getIsFieldVisible,
       getIsFieldEditable,
-      getMaskForField,
-      hasMaskForField,
     },
     _storeUtils: {
       getFieldHint,
@@ -114,10 +109,7 @@
   });
 
   const hasHint = computed(() => !!resolvedHint.value);
-  const fieldHint = computed(() => getFieldHint(props.fieldPath));
-  const labelTooltip = computed(() => fieldHint.value || undefined);
-
-  const { isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const labelTooltip = computed(() => getFieldHint(props.fieldPath) || undefined);
 
   // Get effective visibility: override > prop > schema default > 'everyone'
   const isFieldVisible = getIsFieldVisible(props.fieldPath, props.defaultVisibility);
@@ -128,29 +120,6 @@
   const isVisibilityRestricted = computed(() => resolveVisibility(props.fieldPath, props.defaultVisibility) !== everyoneVisibility);
   const isEditabilityRestricted = computed(() => resolveEditability(props.fieldPath, props.defaultEditability) === gmOnlyEditability);
 
-  const showMaskedBadge = computed(() => isGM.value && hasMaskForField(props.fieldPath).value);
-  const maskValue = getMaskForField(props.fieldPath);
-
-  const formatMaskValue = (value: unknown): string => {
-    if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'boolean' || value === null) return String(value);
-    if (value && typeof value === 'object') {
-      const objectValue = value as { toString?: () => string };
-      if (typeof objectValue.toString === 'function' && objectValue.toString !== Object.prototype.toString) {
-        return objectValue.toString();
-      }
-    }
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return String(value);
-    }
-  };
-
-  const maskedBadgeTooltip = computed(() => game.i18n.format('dnd35e.IDENTIFIABLE.MaskedValueHint', {
-    value: formatMaskValue(maskValue.value),
-  }));
-
   // Form group classes
   const formGroupClasses = computed(() => ({
     'with-hint': hasHint.value,
@@ -159,7 +128,7 @@
   }));
 </script>
 
-<style scoped>
+<style scoped lang="scss">
   .view-mode .form-group {
     & > :first-child {
       justify-self: left;
@@ -178,33 +147,16 @@
   .form-group-label {
     display: flex;
     align-items: center;
+    justify-items: center;
     gap: 0.25rem;
   }
 
   .form-group-label label {
     margin: 0;
     cursor: help;
-  }
-
-  .masked-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: 0.35rem;
-    width: 1rem;
-    height: 1rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--color-level-warning) 16%, transparent);
-    border: 1px solid color-mix(in srgb, var(--color-level-warning) 40%, transparent);
-    color: var(--color-level-warning);
-    font-size: var(--font-size-10);
-    font-weight: 600;
-    line-height: 1.2;
-    vertical-align: middle;
-  }
-
-  .masked-badge i {
-    font-size: 0.65rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
   }
 
   .form-group.with-hint :slotted(.hint) {

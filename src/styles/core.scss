@@ -13,6 +13,15 @@ h3 {
   overflow: auto;
 }
 
+/* Fix padding in righthand sidebar. */
+.directory-list .entry-name {
+  padding: 0.25rem 0.5rem;
+
+  &:first-child {
+    padding-left: 1rem;
+  }
+}
+
 /* Allow the vertical tab sidebar to overflow outside the actor sheet window.
    Foundry sets overflow:hidden on both .application (outer) and .window-content (inner),
    so we need to lift clipping on all three levels. */

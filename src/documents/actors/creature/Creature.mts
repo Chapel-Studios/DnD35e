@@ -1,4 +1,5 @@
 import { ActorDnd35e } from '@actors/baseActor/index.mjs';
+import { calculateStandardAC, calculateTouchAC } from '@helpers/AC.mjs';
 
 import type { CreatureSystemData, CreatureSystemSource } from './data/index.mjs';
 
@@ -23,6 +24,39 @@ abstract class Creature extends ActorDnd35e {
   }
 
   /**
+   * Stub: returns '0' until the Armor item type is implemented.
+   * Will be replaced with a getter that resolves a value from equipped Armor items.
+   */
+  get armorBonus(): number 
+  {
+    return 0;
+  }
+
+  /**
+   * Stub: returns '0' until the Shield item type is implemented.
+   * Will be replaced with a getter that resolves a value from equipped Shield items.
+   */
+  get shieldBonus(): number 
+  {
+    return 0;
+  }
+
+  /**
+   * Stub: returns '0' until the Shield item type is implemented.
+   * Will be replaced with a getter that resolves a value from equipped Shield items.
+   */
+  get maxDexModifier(): number | null
+  {
+    return null;
+  }
+
+  calculateAC(isTouch = false, denyDex = false): number {
+    return isTouch
+      ? calculateTouchAC(this, denyDex)
+      : calculateStandardAC(this, denyDex);
+  }
+
+  /**
    * Static registry of lifecycle event names for this class.
    * Subclasses extend via spread:
    *   `static override readonly LifeCycle = { ...Creature.LifeCycle, levelUp: 'levelUp' } as const`
@@ -30,6 +64,12 @@ abstract class Creature extends ActorDnd35e {
   static override readonly LifeCycle = {
     ...super.LifeCycle,
   } as const;
+
+  override prepareDerivedData(): void {
+    super.prepareDerivedData();
+    // stub value to for sheet building; replace with real HP calculation when progression is implemented
+    this.system.hp.max = 100;
+  }
 }
 
 type CreatureLike = ActorDnd35e & Creature;

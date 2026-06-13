@@ -7,6 +7,57 @@
   "dnd35e": {
     "CREATURE": {
       "FIELDS": {
+        "abilities": {
+          "label": "Ability Scores",
+          "str": { "label": "Strength",     "base": { "label": "Strength"     }, "mod": { "label": "STR Mod" } },
+          "dex": { "label": "Dexterity",    "base": { "label": "Dexterity"    }, "mod": { "label": "DEX Mod" } },
+          "con": { "label": "Constitution", "base": { "label": "Constitution" }, "mod": { "label": "CON Mod" } },
+          "int": { "label": "Intelligence", "base": { "label": "Intelligence" }, "mod": { "label": "INT Mod" } },
+          "wis": { "label": "Wisdom",       "base": { "label": "Wisdom"       }, "mod": { "label": "WIS Mod" } },
+          "cha": { "label": "Charisma",     "base": { "label": "Charisma"     }, "mod": { "label": "CHA Mod" } }
+        },
+        "hp": {
+          "label": "Hit Points",
+          "max":       { "label": "Max HP" },
+          "current":   { "label": "Current HP" },
+          "temp":      { "label": "Temp HP" },
+          "nonlethal": { "label": "Nonlethal Damage" }
+        },
+        "bab": {
+          "label": "Base Attack Bonus",
+          "total": { "label": "BAB" }
+        },
+        "ac": {
+          "label": "Armor Class",
+          "normal":     { "label": "AC", "tooltip": "Armor Class" },
+          "touch":      { "label": "Touch", "tooltip": "Touch AC"   },
+          "flatFooted": { "label": "Flat-Footed", "tooltip": "Flat-Footed AC" }
+        },
+        "saves": {
+          "label": "Saving Throws",
+          "fort": { "label": "Fortitude", "total": { "label": "Fort" } },
+          "ref":  { "label": "Reflex",    "total": { "label": "Ref" } },
+          "will": { "label": "Will",      "total": { "label": "Will" } }
+        },
+        "init": {
+          "label": "Initiative",
+          "total": { "label": "Init" }
+        },
+        "sr":    { "label": "Spell Resistance" },
+        "level": { "label": "Level" },
+        "notes": { "label": "Notes" },
+        "encumbrance": {
+          "label": "Encumbrance",
+          "carriedWeight":   { "label": "Carried Weight" },
+          "light":           { "label": "Light Load" },
+          "medium":          { "label": "Medium Load" },
+          "heavy":           { "label": "Heavy Load" },
+          "carry":           { "label": "Max Carry" },
+          "drag":            { "label": "Max Drag" },
+          "level":           { "label": "Encumbrance Level" },
+          "carryBonus":      { "label": "Carry Bonus" },
+          "carryMultiplier": { "label": "Carry Multiplier" }
+        },
         "bio": {
           "label": "Biography",
           "gender":    { "label": "Gender" },
@@ -29,11 +80,11 @@
         "size": { "label": "Size" },
         "speed": {
           "label": "Speed",
-          "land": {
-            "label": "Land Speed",
-            "base":  { "label": "Land Speed" },
-            "total": { "label": "Total Land Speed" }
-          }
+          "land":   { "label": "Land Speed",   "base": { "label": "Land Speed"   }, "total": { "label": "Total Land Speed"   } },
+          "climb":  { "label": "Climb Speed",  "base": { "label": "Climb Speed"  }, "total": { "label": "Total Climb Speed"  } },
+          "swim":   { "label": "Swim Speed",   "base": { "label": "Swim Speed"   }, "total": { "label": "Total Swim Speed"   } },
+          "fly":    { "label": "Fly Speed",    "base": { "label": "Fly Speed"    }, "total": { "label": "Total Fly Speed"    } },
+          "burrow": { "label": "Burrow Speed", "base": { "label": "Burrow Speed" }, "total": { "label": "Total Burrow Speed" } }
         }
       },
       "alignment": {
@@ -90,7 +141,7 @@
         "bab": "BAB",
         "ac": "AC",
         "touch": "Touch",
-        "flatFooted": "FF",
+        "flatFooted": "Flat-Footed",
         "fort": "Fort",
         "ref": "Ref",
         "will": "Will",

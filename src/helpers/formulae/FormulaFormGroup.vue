@@ -227,10 +227,17 @@
     }
   });
 
-  // Re-localize when the schema loads or locale changes (e.g. initial load, context switch)
-  watch(contexts, () => {
+  // Re-localize when the schema loads or locale changes (e.g. initial load, context switch).
+  // Guard: only update localValue when it still reflects the formula under the OLD contexts.
+  // If the user has committed a new value that hasn't been mirrored back to effectiveFormula yet
+  // (e.g. document update in flight), localValue will differ from the old localized form —
+  // leave it alone so the in-flight watcher for effectiveFormula can confirm it in the next tick.
+  watch(contexts, (newContexts, oldContexts) => {
     if (!isUserEditing) {
-      localValue.value = localizeFormula(effectiveFormula.value || '', contexts.value);
+      const oldLocalized = localizeFormula(effectiveFormula.value || '', oldContexts);
+      if (localValue.value === oldLocalized) {
+        localValue.value = localizeFormula(effectiveFormula.value || '', newContexts);
+      }
       updateValidation();
     }
   });

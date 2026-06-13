@@ -30,8 +30,12 @@
 <style scoped lang="scss">
   .doc-header {
     display: grid;
-    grid-template: auto / 8.25rem 3fr minmax(80px, auto);
+    grid-template: auto / auto 3fr minmax(80px, auto);
     margin-bottom: 0.5rem;
+
+    & > :first-child {
+      aspect-ratio: 1;
+    }
   }
 
   .doc-status-area {

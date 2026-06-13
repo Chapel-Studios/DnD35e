@@ -158,6 +158,7 @@
     display: inline-flex;
     gap: 0.25rem;
     align-items: center;
+    justify-content: center;
     position: relative;
   }
 

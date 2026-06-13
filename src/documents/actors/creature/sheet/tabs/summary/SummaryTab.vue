@@ -1,7 +1,5 @@
 <template>
   <div class="actor-tab summary-tab">
-    <AbilityScoresSection class="summary-abilities" />
-    <SummaryStatPanel class="summary-stats" />
     <SummarySkillsSection class="summary-skills" />
 
     <!-- Actions placeholder -->
@@ -13,9 +11,7 @@
 </template>
 
 <script setup lang="ts">
-  import AbilityScoresSection from '../sections/attributes/AbilityScoresSection.vue';
   import SummarySkillsSection from './SummarySkillsSection.vue';
-  import SummaryStatPanel from './SummaryStatPanel.vue';
   
   const localize = (key: string) => game.i18n.localize(key);
 </script>

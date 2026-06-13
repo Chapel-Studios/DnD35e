@@ -86,7 +86,7 @@
     font-weight: bold;
     line-height: 1;
 
-    &.positive { color: var(--color-level-success, #2d8a2d); }
+    // &.positive { color: var(--color-level-success, #2d8a2d); }
     &.negative { color: var(--color-level-error, #a30000); }
   }
 

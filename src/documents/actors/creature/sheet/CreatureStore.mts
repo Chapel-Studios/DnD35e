@@ -39,11 +39,19 @@ const useCreatureStore = <TDocument extends Creature>(
 
   const documentGetters = {
     ...actorStore.documentGetters,
+
+    //HP
+    currentHp: computed(() => document.value.system.hp.current),
+    maxHp: computed(() => document.value.system.hp.max),
+    tempHp: computed(() => document.value.system.hp.temp),
+    nonlethalDamage: computed(() => document.value.system.hp.nonlethal),
+
     gender: computed(() => getViewAwareFieldValue<string | null>('system.bio.gender') ?? ''),
     deity:  computed(() => getViewAwareFieldValue<string | null>('system.bio.deity')  ?? ''),
     age:    computed(() => getViewAwareFieldValue<string | null>('system.bio.age')    ?? ''),
     height: computed(() => getViewAwareFieldValue<string | null>('system.bio.height') ?? ''),
     weight: computed(() => getViewAwareFieldValue<string | null>('system.bio.weight') ?? ''),
+    race:   computed(() => document.value.race ?? ''),
 
     alignmentLaw,
     alignmentMoral,
@@ -51,10 +59,12 @@ const useCreatureStore = <TDocument extends Creature>(
 
     size:           computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
     notes:          computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
-    level:          computed(() => (document.value as unknown as { system: { level?: number } }).system.level ?? 1),
+    level:          computed(() => document.value.system.level ?? 1),
     isPartyMember:  computed(() => getViewAwareFieldValue<boolean>('system.settings.isPartyMember') ?? false),
     languages:      computed(() => getViewAwareFieldValue<string[]>('system.bio.languages') ?? []),
     senses:         computed(() => getViewAwareFieldValue<string | null>('system.bio.senses') ?? null),
+    armorClass:     computed(() => document.value.calculateAC() ?? 10),
+    getArmorClass: (isTouch = false, denyDex = false): number => document.value.calculateAC(isTouch, denyDex) ?? 10,
   };
 
   const store: CreatureDocumentStore<TDocument> = {
@@ -66,11 +76,16 @@ const useCreatureStore = <TDocument extends Creature>(
 };
 
 interface CreatureGetters {
+  currentHp:     ComputedRef<number>;
+  maxHp:         ComputedRef<number>;
+  tempHp:        ComputedRef<number>;
+  nonlethalDamage: ComputedRef<number>;
   gender:         ComputedRef<string>;
   deity:          ComputedRef<string>;
   age:            ComputedRef<string>;
   height:         ComputedRef<string>;
   weight:         ComputedRef<string>;
+  race:           ComputedRef<string>;
   alignmentLaw:   ComputedRef<LawAxis | null>;
   alignmentMoral: ComputedRef<MoralAxis | null>;
   alignmentLabel: ComputedRef<string | null>;
@@ -80,6 +95,8 @@ interface CreatureGetters {
   isPartyMember:  ComputedRef<boolean>;
   languages:      ComputedRef<string[]>;
   senses:         ComputedRef<string | null>;
+  armorClass:     ComputedRef<number>;
+  getArmorClass: (isTouch?: boolean, denyDex?: boolean) => number;
 }
 
 type CreatureActions = Record<string, unknown>;
