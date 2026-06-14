@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-  import type { CreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
+  import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
   import { LAW_AXIS_SELECT_OPTIONS, MORAL_AXIS_SELECT_OPTIONS } from '@constants/alignment.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { FormGroup } from '@vc/fields/index.mjs';
@@ -34,7 +34,7 @@
   const {
     documentGetters: { alignmentLaw, alignmentMoral, alignmentLabel },
     documentActions: { getDirectFieldUpdater },
-  } = inject(DocumentSheetStoreSymbol) as CreatureStore;
+  } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
   const updateLaw   = getDirectFieldUpdater('system.bio.alignment.law');
   const updateMoral = getDirectFieldUpdater('system.bio.alignment.moral');

@@ -36,6 +36,22 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   declare _source: ItemSourceDnd35e<TItemType>;
   // declare _sheet: ItemSheetDnd35e<any> | null;
 
+  // Active Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method,
+  // but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
+  // Example:
+  // {
+  //    "system.ability": {
+  //      fieldPath: string;
+  //      value: unknown;
+  //      effectName: string;
+  //      type: EffectChangeType;
+  //      bonusType?: BonusType;
+  //      stackResult?: StackResult;
+  //      stackReason?: string;
+  //    }[];
+  // }
+  overrides: Record<string, Override[]> = {};
+
   _completedActiveEffectPhases: Set<string>;
 
   /** Runtime masks dictionary built from active Secret AE MASK changes. Keyed by field path. */
@@ -157,10 +173,6 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   protected _prepareDerivedItemData (): void {
     // Base implementation - empty, subclasses override
   }
-
-  // Active Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method,
-  // but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
-  overrides: Record<string, Override[]> = {};
 
   /**
    * Get all ActiveEffects that have item-targeted changes.

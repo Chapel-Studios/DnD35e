@@ -26,7 +26,6 @@ interface PhysicalItemSystemData extends ItemSystemSource, PhysicalItemSystemSou
   IdentifiableDocumentSystemData {
     // Prepared price fields are CurrencyData instances (with methods like .consolidate())
     price: CurrencyData;
-    effectiveWeight: number;
     /** Derived: true when any active broken-material AE is present. */
     isBroken: boolean;
     // Material AEs apply these via changes; persisted:false schema fields reset them each cycle

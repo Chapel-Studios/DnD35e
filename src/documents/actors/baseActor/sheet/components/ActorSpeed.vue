@@ -12,72 +12,101 @@
         :key="mode.key"
         class="speed-card"
       >
-        <NumberFormGroup
+        <DistanceFormGroup
           :label="mode.label"
           :field-path="mode.fieldPath"
-          :value="mode.value"
           class="speed-form-group"
-        />
+        >
+          <template v-if="mode.showAltReadOnly" #readonly>
+            <span v-if="mode.hasNoValue" class="placeholder">—</span>
+            <div v-else>
+              <span>{{ mode.value }} {{ distanceDisplayShortLabel }} </span> 
+              <span> ({{ flyManeuverabilityLabel }})</span>
+            </div>
+          </template>
+        </DistanceFormGroup>
       </div>
-      <div v-if="hasFlySpeed" class="speed-card fm">
+      <div v-if="showFlyManueverabilityPicker" class="speed-card fm">
         <SelectFormGroup
           field-path="system.speed.flyManeuverability"
           label="dnd35e.ACTOR.FIELDS.speed.flyManeuverability.label"
           :options="flyManeuverabilityOptions"
           :value="flyManeuverability"
-          :disabled="!hasFlySpeed"
+          :disabled="!showFlyManueverabilityPicker"
           class="speed-form-group" 
         />
       </div>
     </div>
   </FormGroupSection>
-  <section class="sheet-section movement-section">
-    <h2 class="section-header">{{ localize('dnd35e.ACTOR.section.Speed') }}</h2>
-    <div class="speed-cards">
-      <div class="speed-card">
-        <div class="speed-value">{{ landSpeed }}&thinsp;ft</div>
-        <div class="speed-label">{{ localize('dnd35e.ACTOR.speed.land') }}</div>
-      </div>
-      <div v-for="mode in allModes" :key="mode.key" class="speed-card stub">
-        <div class="speed-value placeholder">—</div>
-        <div class="speed-label">{{ localize(mode.label) }}</div>
-      </div>
-    </div>
-  </section>
 </template>
 
 <script setup lang="ts">
   import type { ActorDocumentStore } from '@actors/baseActor/sheet/ActorSheetStore.mjs';
-  import { FLY_MANEUVERABILITY, FLY_MANEUVERABILITY_OPTIONS, type FlyManeuverability,SPEED_KEYS_LOCALIZED, SPEED_TYPE } from '@constants/speeds.mjs';
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import { everyoneVisibility, FormGroupSection, gmOnlyEditability, NumberFormGroup, SelectFormGroup, type SelectOption } from '@vc/fields/index.mjs';
+  import type { FlyManeuverability } from '@constants/speeds.mjs';
+  import {
+    FLY_MANEUVERABILITY,
+    FLY_MANEUVERABILITY_OPTIONS,
+    SPEED_KEYS_LOCALIZED,
+    SPEED_TYPE,
+  } from '@constants/speeds.mjs';
+  import type { RenderModeStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
+  import type { SettingsStore } from '@settings/index.mjs';
+  import { SettingsStoreSymbol } from '@settings/index.mjs';
+  import type { SelectOption } from '@vc/fields/index.mjs';
+  import {
+    DistanceFormGroup,
+    everyoneVisibility,
+    FormGroupSection,
+    gmOnlyEditability,
+    SelectFormGroup,
+  } from '@vc/fields/index.mjs';
   import { computed, type ComputedRef,inject } from 'vue';
 
-  const localize = (key: string) => game.i18n.localize(key);
-
   const {
-    documentGetters: { landSpeedTotal, getViewAwareFieldValue },
+    documentGetters: { getViewAwareFieldValue },
     _storeUtils: {  },
   } = inject(DocumentSheetStoreSymbol) as ActorDocumentStore;
 
-  const landSpeed = landSpeedTotal;
+  const { isEditMode } =inject(RenderModeStoreSymbol) as RenderModeStore;
+  const {
+    measurement: {
+      distanceDisplayShortLabel,
+    },
+  } = inject(SettingsStoreSymbol) as SettingsStore;
 
   const allModes = computed(() => Object.entries(SPEED_KEYS_LOCALIZED)
-    .map(([key, label]) => ({
-      key,
-      label,
-      fieldPath: `system.speed.${key}.base`,
-      value: getViewAwareFieldValue<number>(`system.speed.${key}.total`),
-    })));
+    .map(([key, label]) => {
+      const value = getViewAwareFieldValue<number>(`system.speed.${key}.total`) ?? 0;
+      const isFlySpeed = key === SPEED_TYPE.FLY;
+      const hasNoValue = value === 0;
+      
+      return {
+        key,
+        label,
+        fieldPath: `system.speed.${key}.base`,
+        value,
+        isFlySpeed,
+        hasNoValue,
+        showAltReadOnly: hasNoValue || isFlySpeed, // only show the alt read-only display if the speed is 0 (i.e. doesn't exist)
+      };
+    }));
 
-  const hasFlySpeed = computed(() => allModes.value.some(mode => mode.key === SPEED_TYPE.FLY && mode.value > 0));
+  const showFlyManueverabilityPicker = computed(() => {
+    const hasFlySpeed = allModes.value.some(mode => mode.key === SPEED_TYPE.FLY && mode.value > 0);
+    return hasFlySpeed && isEditMode.value; // only show when fly speed exists and in edit mode
+  });
   const flyManeuverabilityOptions: ComputedRef<SelectOption<FlyManeuverability | '-'>[]> = computed(() => 
-    hasFlySpeed.value ? FLY_MANEUVERABILITY_OPTIONS : [{ value: '-', label: '-' }]);
+    showFlyManueverabilityPicker.value ? FLY_MANEUVERABILITY_OPTIONS : [{ value: '-', label: '-' }]);
 
-  const flyManeuverability = computed(() => hasFlySpeed.value
-    ? getViewAwareFieldValue<FlyManeuverability | null>('system.speed.flyManeuverability')
-      ?? FLY_MANEUVERABILITY.CLUMSY // default to clumsy if fly speed exists but maneuverability is not set
-    : '-');
+  const flyManeuverability = computed(() => getViewAwareFieldValue<FlyManeuverability | null>('system.speed.flyManeuverability')
+    ?? FLY_MANEUVERABILITY.CLUMSY); // default to clumsy if fly speed exists but maneuverability is not set
+  const flyManeuverabilityLabel = computed(() => {
+    return game.i18n.localize(FLY_MANEUVERABILITY_OPTIONS
+      .find(opt => opt.value === flyManeuverability.value)
+      ?.label
+      ?? '');
+  });
 </script>
 
 <style lang="scss" scoped>
@@ -101,6 +130,7 @@
         padding: 0.3rem 0.5rem;
         min-width: 3.5rem;
         text-align: center;
+        justify-content: center;
         gap: 0.3rem;
 
         &.fm {
@@ -132,41 +162,36 @@
             grid-area: label;
             display: grid;
             gap: 0;
+            justify-self: center;
           }
 
-          :deep(input) {
-            font-size: 1rem;
-            font-weight: bold;
-            line-height: 1;
-            grid-area: value;
-            text-align: center;
+          :deep(.input-group) {
+            position: relative;
             width: 75%;
             justify-self: center;
+            font-size: 1rem;
+            line-height: 1;
 
-            &.placeholder {
-              color: var(--color-text-dark-secondary, #888);
+            input {
+              grid-area: value;
+              text-align: center;
+              letter-spacing: 0.05em;
+
+              &.placeholder {
+                color: var(--color-text-dark-secondary, #888);
+              }
+            }
+
+            .unit {
+              position: absolute;
+              right: 0.25rem;
+              top: 50%;
+              transform: translateY(-50%);
+              letter-spacing: 0.1rem;
             }
           }
         }
       }
     }
-  }
-
-  .speed-value {
-    font-size: 1rem;
-    font-weight: bold;
-    line-height: 1;
-
-    &.placeholder {
-      color: var(--color-text-dark-secondary, #888);
-    }
-  }
-
-  .speed-label {
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--color-text-dark-secondary, #666);
-    margin-top: 0.1rem;
   }
 </style>

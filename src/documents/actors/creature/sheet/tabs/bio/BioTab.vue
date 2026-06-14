@@ -68,7 +68,7 @@
     CreatureHeight,
     CreatureWeight,
   } from '@actors/creature/sheet/components/header/index.mjs';
-  import type { CreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
+  import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
   import type { RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { TextFormGroup } from '@vc/fields/index.mjs';
@@ -80,7 +80,7 @@
   const {
     documentGetters: { languages },
     documentActions: { getDirectFieldUpdater },
-  } = inject(DocumentSheetStoreSymbol) as CreatureStore;
+  } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
   const updateLanguages = getDirectFieldUpdater('system.bio.languages');
 

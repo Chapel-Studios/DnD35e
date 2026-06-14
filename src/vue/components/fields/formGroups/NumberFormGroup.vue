@@ -16,13 +16,15 @@
     <template v-if="slots.readonly" #readonly>
       <slot name="readonly" />
     </template>
-    <input
-      type="number"
-      :value="editValue ?? ''"
-      :disabled="isDisabled"
-      @change="onChange(($event.target as HTMLInputElement).value)"
-    />
-    <span v-if="props.unit">{{ props.unit }}</span>
+    <div class="input-group">
+      <input
+        type="number"
+        :value="editValue ?? ''"
+        :disabled="isDisabled"
+        @change="onChange(($event.target as HTMLInputElement).value)"
+      />
+      <span v-if="props.unit" class="unit">{{ props.unit }}</span>
+    </div>
   </FormGroup>
 </template>
 
@@ -100,3 +102,9 @@
     fieldUpdater(val === '' ? null : Number(val));
   }
 </script>
+
+<style scoped lang="scss">
+  .input-group {
+    position: relative;
+  }
+</style>

@@ -2,6 +2,7 @@ import UniqueId from '@items/baseItem/sheet/components/UniqueId.vue';
 
 import CheckBoxFormGroup from './formGroups/CheckBoxFormGroup.vue';
 import ColorFormGroup from './formGroups/ColorFormGroup.vue';
+import DistanceFormGroup from './formGroups/DistanceFormGroup.vue';
 import FamiliarOverlayInput from './formGroups/FamiliarOverlayInput.vue';
 import type { FieldEditability, FieldVisibility } from './formGroups/fieldPermissions.mjs';
 import {
@@ -27,6 +28,7 @@ import type {
   MultiSelectOption,
   SelectOption,
 } from './formGroups/types.mjs';
+import WeightFormGroup from './formGroups/WeightFormGroup.vue';
 import ImageField from './ImageField.vue';
 import ToggleSwitch from './ToggleSwitch.vue';
 
@@ -34,6 +36,7 @@ import ToggleSwitch from './ToggleSwitch.vue';
 export {
   CheckBoxFormGroup,
   ColorFormGroup,
+  DistanceFormGroup,
   everyoneVisibility,
   FamiliarOverlayInput,
   FIELD_EDITABILITIES,
@@ -55,6 +58,7 @@ export {
   ToggleSwitch,
   ToggleSwitchFormGroup,
   UniqueId,
+  WeightFormGroup,
 };
 
 export type {

@@ -19,22 +19,10 @@ const UNIT_OF_MEASURE_OPTIONS = new Set([
 ] as const);
 type UnitOfMeasureOption = SetElement<typeof UNIT_OF_MEASURE_OPTIONS>;
 
-const WEIGHT_OPTIONS = {
-  [imperialUnitOfMeasure]: {
-    label: 'Pounds (lbs)',
-    short: 'lbs',
-  },
-  [metricUnitOfMeasure]: {
-    label: 'Kilograms (kg)',
-    short: 'kg',
-  },
-};
-
 export {
   imperialUnitOfMeasure,
   metricUnitOfMeasure,
   UNIT_OF_MEASURE_OPTIONS,
-  WEIGHT_OPTIONS,
 };
 
 export type {

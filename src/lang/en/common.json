@@ -55,6 +55,38 @@
       "gargantuan":  "Gargantuan",
       "colossal":    "Colossal"
     },
+    "MEASUREMENT": {
+      "weight": "Weight",
+      "distance": "Distance",
+      "imperial": {
+        "distance": {
+          "label": "Feet (ft)",
+          "singular": "foot",
+          "plural": "feet",
+          "abbreviation": "ft"
+        },
+        "weight": {
+          "label": "Pounds (lbs)",
+          "singular": "pound",
+          "plural": "pounds",
+          "abbreviation": "lbs"
+        }
+      },
+      "metric": {
+        "distance": {
+          "label": "Meters (m)",
+          "singular": "meter",
+          "plural": "meters",
+          "abbreviation": "m"
+        },
+        "weight": {
+          "label": "Kilograms (kg)",
+          "singular": "kilogram",
+          "plural": "kilograms",
+          "abbreviation": "kg"
+        }
+      }
+    },
     "UI": {
       "EditField": "Edit {field}",
       "Content": "content"

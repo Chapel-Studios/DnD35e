@@ -191,7 +191,7 @@
     display: flex;
     flex: 1 1 auto;
     min-height: 0;
-    padding: 0.5rem 0.5rem 0 0;
+    padding: 0.5rem;
     overflow: visible;
   }
 
@@ -216,5 +216,6 @@
 
   .sheet-sidebar {
     width: fit-content;
+    padding: 0.5rem;
   }
 </style>

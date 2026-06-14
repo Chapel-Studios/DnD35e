@@ -117,7 +117,7 @@
   const isFieldVisible = getIsFieldVisible(props.fieldPath, props.defaultVisibility);
 
   const isFieldEditable = getIsFieldEditable(props.fieldPath, props.defaultEditability);
-  const showDefaultSlot = computed(() => !props.readOnly && (isFieldEditable || props.forceEdit));
+  const showDefaultSlot = computed(() => !props.readOnly && (isFieldEditable.value || props.forceEdit));
   
 
   // Restriction checks

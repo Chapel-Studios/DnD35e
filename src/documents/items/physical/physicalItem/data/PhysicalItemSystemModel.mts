@@ -47,7 +47,6 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     schema.price = useDnd35eField(new CurrencyField({}));
     // Derived fields (persisted: false) — initialized each cycle, never saved to DB.
     // FormulaFamiliar and AE targeting both rely on these being in the schema.
-    schema.effectiveWeight = derivedNumberField(0);
     schema.isBroken = derivedBooleanField(false);
     schema.magicEquivalency = derivedNumberField(0);
     schema.damageReductionTypes = new ArrayField(
@@ -63,7 +62,6 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
 
   override prepareDerivedData(): void {
     super.prepareDerivedData();
-    this.effectiveWeight = this.weight ?? 0;
     if (!this.parent?.parent) {
       this.isCarried = false;
     }
