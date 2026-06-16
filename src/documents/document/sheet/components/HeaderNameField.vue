@@ -12,6 +12,7 @@
         :value="formulaString"
         :onUpdate="onUpdate"
         :field-path="fieldPath"
+        class="contents"
       >
       </FormulaFormGroup>
     </div>

@@ -93,6 +93,7 @@
   .form-group-section {
     border: 1px solid var(--color-border, #7a7971);
     position: relative;
+    margin-top: 0.5em;
 
     .form-group-section-header {
       position: absolute;

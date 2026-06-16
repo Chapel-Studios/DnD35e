@@ -21,17 +21,22 @@
           "max":       { "label": "Max HP" },
           "current":   { "label": "Current HP" },
           "temp":      { "label": "Temp HP" },
-          "nonlethal": { "label": "Nonlethal Damage" }
+          "nonlethal": { "label": "Nonlethal Damage" },
+          "fastHealing": { "label": "Fast Healing" },
+          "regeneration": { "label": "Regeneration" }
         },
         "bab": {
           "label": "Base Attack Bonus",
           "total": { "label": "BAB" }
         },
-        "ac": {
+        "defense": {
           "label": "Armor Class",
-          "normal":     { "label": "AC", "tooltip": "Armor Class" },
-          "touch":      { "label": "Touch", "tooltip": "Touch AC"   },
-          "flatFooted": { "label": "Flat-Footed", "tooltip": "Flat-Footed AC" }
+          "armorClass":     { "label": "AC", "tooltip": "Armor Class" },
+          "touchAC":      { "label": "Touch", "tooltip": "Touch AC"   },
+          "flatFootedAC": { "label": "Flat-Footed", "tooltip": "Flat-Footed AC" },
+          "naturalArmor":    { "label": "Natural Armor", "tooltip": "Natural Armor Bonus" },
+          "spellResistance": { "label": "Spell Resistance", "tooltip": "Spell Resistance" },
+          "concealment":      { "label": "Concealment", "tooltip": "Concealment Bonus" }
         },
         "saves": {
           "label": "Saving Throws",
@@ -43,7 +48,6 @@
           "label": "Initiative",
           "total": { "label": "Init" }
         },
-        "sr":    { "label": "Spell Resistance" },
         "level": { "label": "Level" },
         "notes": { "label": "Notes" },
         "encumbrance": {
@@ -66,7 +70,12 @@
           "height":    { "label": "Height" },
           "weight":    { "label": "Weight" },
           "languages": { "label": "Languages" },
-          "senses":    { "label": "Senses" },
+          "senses": {
+            "label": "Senses",
+            "add": "Add Sense",
+            "remove": "Remove Sense",
+            "empty": "No senses configured"
+          },
           "alignment": {
             "label": "Alignment",
             "law":   { "label": "Law/Chaos" },
@@ -77,7 +86,11 @@
           "label": "Settings",
           "isPartyMember": { "label": "Party Member" }
         },
-        "size": { "label": "Size" }
+        "size": { "label": "Size" },
+        "reach": { "label": "Reach", "hint": "The distance at which this creature can make melee attacks." },
+        "isIncorporeal": { "label": "Incorporeal?", "hint": "Whether this creature is incorporeal or not." },
+        "isQuadraped": { "label": "Quadruped?", "hint": "Whether this creature is a quadruped or not." },
+        "creatureType": { "label": "Creature Type", "hint": "The creature type of this creature, such as 'Humanoid', 'Undead', 'Dragon', etc." }
       },
       "alignment": {
         "trueNeutral": "True Neutral",
@@ -127,7 +140,8 @@
         "Actions": "Quick Actions",
         "Skills": "Skills",
         "Speed": "Movement",
-        "Traits": "Traits"
+        "p-attributes": "Physical Attributes",
+        "c-attributes": "Combat Attributes"
       },
       "header": {
         "xp": "XP",
@@ -157,6 +171,14 @@
         "average": "Average",
         "good": "Good",
         "perfect": "Perfect"
+      },
+      "sense": {
+        "darkvision": "Darkvision",
+        "lowLight": "Low-Light Vision",
+        "tremorsense": "Tremorsense",
+        "blindsight": "Blindsight",
+        "scent": "Scent",
+        "trapSense": "Trap Sense"
       },
       "trait": {
         "creatureType": "Creature Type",

@@ -22,6 +22,14 @@ const nullableOptionalStringField = (initialValue?: string) => {
   return new StringField<string, string, false, true, true>({ required: false, blank: true, initial: initialValue ?? undefined });
 };
 
+const derivedNullableOptionalStringField = (initialValue?: string | null) => {
+  return new StringField<string, string, false, true, true>({ required: false, blank: true, initial: initialValue, persisted: false });
+};
+
+const derivedOptionalStringField = (initialValue?: string) => {
+  return new StringField<string, string, false, true, true>({ required: false, blank: true, initial: initialValue, persisted: false });
+};
+
 const optionalStringField = (initialValue?: string) => {
   return new StringField<string, string, false, false, true>({ required: false, blank: true, initial: initialValue ?? undefined });
 };
@@ -145,7 +153,9 @@ export type { SchemaFieldMeta };
 
 export {
   derivedBooleanField,
+  derivedNullableOptionalStringField,
   derivedNumberField,
+  derivedOptionalStringField,
   formulaField,
   nullableOptionalStringField,
   optionalHtmlField,

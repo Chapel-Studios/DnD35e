@@ -1,23 +1,16 @@
 <template>
-  <FormGroup
-    :label="label"
-    :hint="hint"
+  <ListFormGroup
+    :value="editStacks"
     :field-path="fieldPath"
+    :add-button-title="localize('dnd35e.Currency.AddCoinStack')"
+    :remove-button-title="localize('dnd35e.Currency.RemoveCoinStack')"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
-    class="price-form-group"
+    :on-update="(stacks) => fieldUpdater(CurrencyData.toSource(stacks))"
+    :on-add-item="addCoinStack"
+    class="coinage-form-group"
   >
-    <!-- Controls slot: add coin stack button and consolidate button -->
     <template #controls="{ editable }">
-      <button
-        v-if="editable && !isDisabled"
-        type="button"
-        class="field-control-btn add-stack-btn"
-        :title="localize('dnd35e.Currency.AddCoinStack')"
-        @click="addCoinStack"
-      >
-        <i class="fas fa-plus" />
-      </button>
       <button
         v-if="editable && !isDisabled && hasEditStacks"
         type="button"
@@ -27,55 +20,38 @@
       >
         <i class="fas fa-compress-arrows-alt" />
       </button>
-      <slot name="controls" />
+      <slot name="controls" :editable="editable" />
     </template>
-
-    <!-- Editable coin stacks -->
-    <div class="coin-stacks">
-      <div v-if="!hasEditStacks" class="empty-price">
+    <template #item-edit="{ item, index, disabled }">
+      <!-- side-by-side: same two inputs, wrapped in the new ValueUnitInput -->
+      <ValueUnitInput
+        value-type="number"
+        :value="item.count"
+        :min="0"
+        :unit="item.coinId"
+        :unit-options="availableCoinsForStack(item.coinId)"
+        :sizing-unit-options="allSelectableCoinOptions"
+        :disabled="disabled"
+        :on-value-change="(raw: number) => updateStackCount(index, raw)"
+        :on-unit-change="(coinId: string) => updateStackCoin(index, coinId)"
+      />
+    </template>
+    <template #empty>
+      <div class="empty-price">
         <span class="zero-value">0 {{ defaultCoinShortLabel }}</span>
       </div>
-      <div v-for="(stack, index) in editStacks" :key="index" class="coin-stack">
-        <input
-          type="number"
-          class="stack-count"
-          :value="stack.count"
-          min="0"
-          :disabled="isDisabled"
-          @change="updateStackCount(index, ($event.target as HTMLInputElement).value)"
-        />
-        <select
-          class="stack-coin"
-          :value="stack.coinId"
-          :disabled="isDisabled"
-          @change="updateStackCoin(index, ($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="coin in availableCoinsForStack(stack.coinId)" :key="coin.id" :value="coin.id">
-            {{ coin.shortLabel }}
-          </option>
-        </select>
-        <button
-          v-if="!isDisabled"
-          type="button"
-          class="remove-stack-btn"
-          :title="localize('dnd35e.Currency.RemoveCoinStack')"
-          @click="removeCoinStack(index)"
-        >
-          <i class="fas fa-times" />
-        </button>
-      </div>
-    </div>
-
-    <!-- Readonly display -->
+    </template>
     <template #readonly>
       <div class="coin-stacks readonly">
-        <span v-if="readonlyStacks.length === 0" class="empty-price">0 {{ defaultCoinShortLabel }}</span>
-        <span v-for="(stack, index) in readonlyStacks" :key="index" class="coin-stack-display">
-          {{ stack.count }} {{ getCoinShortLabel(stack.coinId) }}{{ index < readonlyStacks.length - 1 ? ', ' : '' }}
+        <span v-if="readonlyStacks.length === 0" class="empty-price">
+          <span class="zero-value">0 {{ defaultCoinShortLabel }}</span>
+        </span>
+        <span v-for="(stack, index) in readonlyStacks" :key="index" class="coin-stack">
+          {{ stack.count }} {{ getCoinShortLabel(stack.coinId) }}<span v-if="index < readonlyStacks.length - 1">, </span>
         </span>
       </div>
-    </template>
-  </FormGroup>
+    </template> 
+  </ListFormGroup>
 </template>
 
 <script setup lang="ts">
@@ -87,10 +63,11 @@
     coinageVisibilityGmOnly,
     coinageVisibilityGmSelect,
   } from '@settings/currency/index.mjs';
+  import { type SelectOption,ValueUnitInput } from '@vc/fields/index.mjs';
   import { computed, inject } from 'vue';
 
   import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
-  import FormGroup from './FormGroup.vue';
+  import ListFormGroup from './ListFormGroup.vue';
 
   const props = defineProps<{
     label?: string;
@@ -186,10 +163,16 @@
   }
 
   // Available coins for a specific stack (includes currently selected + unselected coins)
-  function availableCoinsForStack(currentCoinId: string): CoinageDefinition[] {
+  function availableCoinsForStack(currentCoinId: string): SelectOption<string>[] {
     const usedCoinIds = new Set(editStacks.value.map(s => s.coinId));
-    return selectableCoinages.value.filter(c => c.id === currentCoinId || !usedCoinIds.has(c.id));
+    return selectableCoinages.value
+      .filter(c => c.id === currentCoinId || !usedCoinIds.has(c.id))
+      .map(c => ({ value: c.id, label: c.shortLabel }));
   }
+
+  const allSelectableCoinOptions = computed((): SelectOption<string>[] => {
+    return selectableCoinages.value.map(c => ({ value: c.id, label: c.shortLabel }));
+  });
 
   // Get the next available coin (not already in use)
   function getNextAvailableCoin(): CoinageDefinition | undefined {
@@ -210,13 +193,8 @@
     fieldUpdater(CurrencyData.toSource([...editStacks.value, newStack]));
   }
 
-  function removeCoinStack(index: number): void {
-    const newStacks = editStacks.value.filter((_, i) => i !== index);
-    fieldUpdater(CurrencyData.toSource(newStacks));
-  }
-
-  function updateStackCount(index: number, rawValue: string): void {
-    const count = parseInt(rawValue, 10) || 0;
+  function updateStackCount(index: number, rawValue: number): void {
+    const count = rawValue || 0;
     const newStacks = editStacks.value.map((stack, i) =>
       i === index ? { ...stack, count: Math.max(0, count) } : stack
     );
@@ -240,4 +218,42 @@
     fieldUpdater(CurrencyData.toSource(consolidated));
   }
 </script>
-<!-- Styles live in src/styles/core.scss — see price form group comment there for why. -->
+
+<style lang="scss" scoped>
+  .coinage-form-group {
+
+    :deep(.list-items) {
+
+      &.readonly {
+        font-size: var(--font-size-14);
+      }
+    }
+
+    :deep(.list-item) {
+      gap: 0.25rem;
+    }
+
+    .stack-count {
+      width: 60px;
+      text-align: right;
+    }
+
+    .stack-coin {
+      padding: 0.05rem;
+    }
+
+    .empty-price {
+      color: var(--color-text-secondary);
+      font-style: italic;
+    }
+
+    .zero-value {
+      font-style: normal;
+    }
+  }
+  
+  :global(.view-mode) .coinage-form-group {
+    grid-template-columns: minmax(max-content, 2fr) 5fr;
+  }
+
+</style>

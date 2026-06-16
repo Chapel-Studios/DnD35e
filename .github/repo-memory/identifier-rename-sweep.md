@@ -55,7 +55,7 @@ Then `npx vitest run` for a non-interactive unit gate (the package's `npm test` 
 ## Common pitfalls
 
 - **`-replace` instead of `-creplace`**: mangles comments, doc-strings, and case-different identifiers in the same file.
-- **Missing `\b`**: renaming `Item` matches `ItemDnd35e`, `FormItem`, `ItemPriceFormGroup`, etc. Devastating.
+- **Missing `\b`**: renaming `Item` matches `ItemDnd35e`, `FormItem`, `CoinageFormGroup`, etc. Devastating.
 - **Renaming into a collision**: see pre-flight above. The PR 15 `FieldMeta` collision was missed at planning time and caught only after the sweep; fixup commit + amended push + force-with-lease was needed.
 - **Trusting `git push --force-with-lease` exit code**: it can return 1 on a successful push (verified the push succeeded by reading the remote refs in stdout). Read the output, not the exit code.
 

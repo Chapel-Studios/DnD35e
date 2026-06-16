@@ -1,6 +1,6 @@
 <template>
   <CreatureDefenseStat
-    fieldPath="system.ac.normal"
+    fieldPath="system.defense.armorClass"
     :value="resolvedAc"
     :sublabel="shieldSublabel"
   >
@@ -35,14 +35,14 @@
   const showTouchAC = ref(false);
   const toggleTouchAC = () => showTouchAC.value = !showTouchAC.value;
   const touchAcToggleTitle = computed(() => showTouchAC.value
-    ? game.i18n.localize('dnd35e.CREATURE.FIELDS.ac.normal.tooltip')
-    : game.i18n.localize('dnd35e.CREATURE.FIELDS.ac.touch.tooltip'));
+    ? game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.armorClass.tooltip')
+    : game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.touchAC.tooltip'));
   const touchAcIcon = computed(() => showTouchAC.value
     ? 'fa-solid fa-hand'
     : 'fa-light fa-hand');
 
   const shieldSublabel = computed(() => showTouchAC.value
-    ? game.i18n.localize('dnd35e.CREATURE.FIELDS.ac.touch.label')
+    ? game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.touchAC.label')
     : undefined);
   
   const flatFootedAcTitle = '';

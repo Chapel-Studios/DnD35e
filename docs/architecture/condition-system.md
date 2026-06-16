@@ -16,7 +16,7 @@ CONFIG.DND35E.conditions = {
     name: 'DND35E.ConditionBlinded',    // i18n key
     icon: 'icons/conditions/blinded.svg',
     changes: [
-      { key: 'attributes.ac.value', value: -2, bonusType: 'Penalty', operator: 'ADD' },
+      { key: 'system.defense.armorClass', value: -2, bonusType: 'Penalty', operator: 'ADD' },
       { key: 'combat.attack', value: -4, bonusType: 'Penalty', operator: 'ADD' }
       // ... additional mechanical effects
     ],
@@ -27,8 +27,8 @@ CONFIG.DND35E.conditions = {
     name: 'DND35E.ConditionProne',
     icon: 'icons/conditions/prone.svg',
     changes: [
-      { key: 'attributes.ac.melee', value: -4, bonusType: 'Penalty', operator: 'ADD' },
-      { key: 'attributes.ac.ranged', value: 4, bonusType: 'Circumstance', operator: 'ADD' },
+      { key: 'system.defense.armorClass', value: -4, bonusType: 'Penalty', operator: 'ADD' },
+      { key: 'system.defense.armorClass', value: 4, bonusType: 'Circumstance', operator: 'ADD' },
       { key: 'combat.attack.melee', value: -4, bonusType: 'Penalty', operator: 'ADD' }
     ],
     flags: { dnd35e: { conditionType: 'prone' } }

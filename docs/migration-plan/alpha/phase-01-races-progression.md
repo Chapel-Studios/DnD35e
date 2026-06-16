@@ -8,7 +8,7 @@
 
 > **Action System note**: Size from race affects `#self.size.attackMod` and `#self.size.grappleMod` used in action formulas. Speed determines the movement budget for TurnActionBudget (Phase 9). Racial feat grants can include combat feats that add EffectTriggers. Grant UUIDs resolve to compendium items via Phase 4 helpers.
 
-> **Phase 5 defaults overridden here**: Phase 5 provides `size = medium`, `speed = 30`, `ac.naturalArmor = 0`. This phase modifies those via AE (racial ability adjustments generate AE changes following the Material pattern). Languages and senses (darkvision, low-light, etc.) are also introduced in this phase.
+> **Phase 5 defaults overridden here**: Phase 5 provides `size = medium`, `speed = 30`, `defense.naturalArmor = 0`. This phase modifies those via AE (racial ability adjustments generate AE changes following the Material pattern). Languages and senses (darkvision, low-light, etc.) are also introduced in this phase.
 
 > **Key separation**: Race = innate identity. Progression = earned advancement. A Dragon's breath weapon is a racial trait (innate, scales with total HD via value schedule). A Dragon's d12 HD, good BAB, and good saves are progression features embedded in the race's Progression component. A Human has no progression — just innate traits.
 
@@ -130,7 +130,7 @@ Granted items receive a `grantedBy: { sourceId, level }` field on the owned item
 
 **Racial traits that scale with total HD:** Some racial abilities (size growth, breath weapon damage) scale with `@attributes.hd.total` — these use the value scheduling system (see README cross-cutting concerns). The race grants the trait item at level 1; the trait's own schedule handles scaling. The race doesn't know how the trait scales.
 
-**Natural armor:** The `naturalArmor` field on RaceSystemModel generates an AE change targeting `system.attributes.ac.naturalArmor` with `bonusType: 'natural'`. Stacking follows Phase 2 rules (highest natural armor bonus wins).
+**Natural armor:** The `naturalArmor` field on RaceSystemModel generates an AE change targeting `system.defense.naturalArmor` with `bonusType: 'natural'`. Stacking follows Phase 2 rules (highest natural armor bonus wins).
 
 ## 11.4 Files to Create/Modify
 
@@ -215,7 +215,7 @@ Granted items receive a `grantedBy: { sourceId, level }` field on the owned item
 - [ ] Support racial ability adjustments: STR +2, DEX -2, CON +2, etc.
 - [ ] Support size derivation: pass size to token dimension lookup (Phase 6)
 - [ ] Support speed variants: land (default), climb, swim, fly (all stored, used when applicable)
-- [ ] Implement `buildChanges()` for natural armor: `{ key: 'system.attributes.ac.naturalArmor', mode: ADD, value: naturalArmor, bonusType: 'natural' }`
+- [ ] Implement `buildChanges()` for natural armor: `{ key: 'system.naturalArmor', mode: ADD, value: naturalArmor, bonusType: 'natural' }`
 - [ ] If race has a progression, delegate progression AE generation to `src/helpers/progression.mts`
 - [ ] Test: Race generates expected AE changes
 - [ ] Test: Ability adjustments correct
@@ -236,7 +236,7 @@ Granted items receive a `grantedBy: { sourceId, level }` field on the owned item
 - [ ] Add `naturalArmor` field (NumberField, default 0) to AC sub-model in CreatureSystemModel
 - [ ] Add `languages` ArrayField of StringField to CreatureSystemModel
 - [ ] Add `senses` SchemaField to CreatureSystemModel: darkvision (NumberField, 0 for none), lowLight (BooleanField), blindsight (NumberField), tremorsense (NumberField)
-- [ ] Wire natural armor into AC derivation: `ac.normal += naturalArmor` (doesn't apply to touch AC)
+- [ ] Wire natural armor into AC derivation: `defense.armorClass += naturalArmor` (doesn't apply to touch AC)
 - [ ] Test: Actor with natural armor 2 → AC increases by 2 (normal and flat-footed, not touch)
 
 **Race Sheet (Vue Component):**

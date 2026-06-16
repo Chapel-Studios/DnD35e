@@ -80,7 +80,7 @@ interface Dnd35eEffectChangeData extends EffectChangeData {
 
 // Resolution tracking
 interface StackingHistory {
-  field: string;                   // "attributes.ac.value"
+  field: string;                   // "system.defense.armorClass"
   applied: StackingEntry[];        // bonuses that were applied
   ignored: StackingEntry[];        // bonuses that were not applied (with reason)
 }
@@ -98,7 +98,7 @@ interface StackingEntry {
 A level 5 Fighter with Mithral Full Plate, Ring of Protection +1, and Shield of Faith (+2 deflection):
 
 ```
-Field: attributes.ac.value
+Field: system.defense.armorClass
 
 Bonuses collected:
   +9 armor (Mithral Full Plate)     → bonusType: Armor

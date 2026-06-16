@@ -137,8 +137,10 @@
   .multi-select-checkboxes {
     display: grid;
     gap: 0.25rem;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(150px, max-content));
     width: 100%;
+    padding: 0 1.5rem 0.5rem;
+    justify-content: space-between;
   }
 
   .multi-select-option {

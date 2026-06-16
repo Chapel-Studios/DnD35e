@@ -5,9 +5,9 @@
       <ItemHP />
       <ItemQuantity />
       <EquippableItemWeight />
-      <ItemSize class="span-2" />
+      <ItemSize />
       <ItemHardness />
-      <DesignedForSize class="span-2" />
+      <DesignedForSize   />
       <ItemSheetIsCarriedCheckbox />
       <ItemSheetIsBrokenCheckbox />
       <ItemIsMasterworkCheckbox />
@@ -65,17 +65,8 @@
   .weapon-details-container {
     grid-column: span 2;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
     gap: 0.66rem 0.5rem;
-
-    :deep(.form-group),
-    :deep(.form-group-section) {
-      border: 1px solid var(--color-border, #7a7971);
-      display: grid;
-      grid-auto-flow: column;
-      align-items: center;
-      grid-gap: 0.33rem;
-    }
 
     :deep(.form-group.item-price.price-form-group) {
       grid-auto-flow: row;
@@ -86,13 +77,11 @@
       position: relative;
     }
 
-    :deep(.form-group-label) {
-      flex-direction: column;
-      text-align: center;
+    :deep(.form-group) {
+      grid-auto-flow: row;
     }
 
     :deep(.form-group input) {
-      max-width: 50px;
       text-align: right;
     }
 
@@ -102,6 +91,12 @@
       .form-group-label {
         flex-direction: row;
       }
+    }
+
+    :deep(.coinage-form-group) {
+      grid-auto-flow: row;
+      justify-items: center;
+      margin-top: 0;
     }
   }
   

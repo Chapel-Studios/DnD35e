@@ -171,7 +171,7 @@ dnd5e uses Foundry's native AE system:
 ```json
 {
   "changes": [
-    { "key": "system.attributes.ac.bonus", "mode": 2, "value": "2", "priority": 20 }
+    { "key": "system.defense.normal", "mode": 2, "value": "2", "priority": 20 }
   ]
 }
 ```

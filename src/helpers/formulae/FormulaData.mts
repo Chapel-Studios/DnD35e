@@ -22,7 +22,7 @@ const {
  */
 interface FormulaDataSource {
   formula: string;
-  resolvedValue: string | null;
+  resolvedValue: string | number | null;
   expectedType: 'string' | 'number';
 }
 

@@ -141,7 +141,7 @@ FormGroup exposes `{ editable: boolean }` as a scoped slot prop on `#controls`. 
 </ItemWeight>
 ```
 
-**Components with internal controls** (ItemPriceFormGroup, RichTextEditorFormGroup) use the same pattern directly on FormGroup:
+**Components with internal controls** (CoinageFormGroup, RichTextEditorFormGroup) use the same pattern directly on FormGroup:
 ```vue
 <template #controls="{ editable }">
   <button v-if="editable && !isDisabled" type="button" class="field-control-btn" @click="action">

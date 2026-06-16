@@ -121,14 +121,14 @@ Establish and document the canonical `#context.property` paths:
 | `#self.abilities.str.mod` | Strength modifier |
 | `#self.abilities.str.total` | Total Strength score |
 | `#self.bab` | Base attack bonus |
-| `#self.attributes.ac.normal` | Normal AC |
+| `#self.defense.armorClass` | Normal AC |
 | `#self.saves.fort.total` | Fort save total |
 | `#self.attributes.init.total` | Initiative total |
 | `#self.details.level` | Character level |
 | `#self.skills.perception.total` | Skill total |
 | `#self.size.attackMod` | Size attack modifier |
 | `#item.enhancement` | Item's enhancement bonus |
-| `#target.attributes.ac.normal` | Target's AC (at execution time) |
+| `#target.defense.armorClass` | Target's AC (at execution time) |
 | `#action.attackBonus` | Action's computed attack bonus |
 
 ## 7.5 Custom Roll Classes

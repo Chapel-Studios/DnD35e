@@ -91,6 +91,9 @@
       "EditField": "Edit {field}",
       "Content": "content"
     },
+    "form": {
+      "emptyList": "No items"
+    },
     "Formula": {
       "Context": {
         "Self": "Self"

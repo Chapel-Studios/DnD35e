@@ -25,18 +25,9 @@
 <style lang="scss" scoped>
   .effect-details {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
     gap: 0.33rem;
 
-    :deep(.form-group) {
-      border: 1px solid var(--color-border, #7a7971);
-      display: grid;
-      grid-auto-flow: column;
-      align-items: center;
-      justify-items: center;
-      grid-gap: 0.33rem;
-      padding: 0.25rem;
-    }
     :deep(.form-group-label) {
       flex-direction: column;
     }

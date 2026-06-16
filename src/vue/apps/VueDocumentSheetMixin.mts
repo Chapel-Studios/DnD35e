@@ -13,8 +13,9 @@ import type { RenderModeStore } from '@documents/document/sheet/stores/RenderMod
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { EDIT, PLAY } from '@helpers/formulae/types.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
-import type { App } from 'vue';
-import { createApp } from 'vue';
+import { DocumentSheetChromeSymbol } from '@vueApps/DocumentSheetChrome.mjs';
+import type { App, ShallowRef } from 'vue';
+import { createApp, shallowRef } from 'vue';
 
 import type { VueAppBaseMembers } from './VueAppBaseMixin.mjs';
 import { useVueAppBaseMixin } from './VueAppBaseMixin.mjs';
@@ -51,6 +52,7 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
     // protected sheetState!: SheetState;
 
     protected renderModeStore!: RenderModeStore;
+    protected verticalTabHost: ShallowRef<HTMLElement | null> = shallowRef(null);
 
     constructor (...args: any[]) {
       super(...args);
@@ -110,6 +112,9 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
         context,
       });
       app.provide(RenderModeStoreSymbol, this.renderModeStore);
+      app.provide(DocumentSheetChromeSymbol, {
+        verticalTabHost: this.verticalTabHost,
+      });
 
       return app;
     }
@@ -127,6 +132,7 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       result.document = doc;
       result.appConfigOptions = this.options;
       result.store = game.dnd35e.stores[doc.documentName]?.[doc.id] as DocumentSheetStore<TDocument> | undefined;
+      this.#ensureVerticalTabHost(content);
 
       // Let base handle Vue mounting
       await super._replaceHTML(result, content, options);
@@ -148,6 +154,24 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       if (header) {
         this.renderModeStore.setHeaderElement(header, this.isEditable);
       }
+
+      this.#ensureVerticalTabHost();
+    }
+
+    #ensureVerticalTabHost (providedWindowContent?: HTMLElement): void {
+      const windowContent = providedWindowContent ?? this.element?.querySelector('.window-content');
+      if (!(windowContent instanceof HTMLElement)) return;
+      const applicationRoot = this.element;
+      if (!(applicationRoot instanceof HTMLElement)) return;
+
+      let host = applicationRoot.querySelector<HTMLElement>(':scope > .dnd35e-vertical-tab-host');
+      if (!host) {
+        host = document.createElement('div');
+        host.classList.add('dnd35e-vertical-tab-host');
+        applicationRoot.append(host);
+      }
+
+      this.verticalTabHost.value = host;
     }
 
     #syncWindowTitle (): void {
@@ -163,6 +187,10 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
     }
 
     override async close (options?: foundry.applications.ApplicationClosingOptions): Promise<foundry.applications.api.ApplicationV2> {
+      if (this.verticalTabHost.value?.isConnected) {
+        this.verticalTabHost.value.remove();
+      }
+      this.verticalTabHost.value = null;
       delete game.dnd35e.stores[this.#document.documentName]?.[this.#document.id];
       return super.close(options);
     }

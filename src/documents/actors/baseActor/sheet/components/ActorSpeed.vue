@@ -15,7 +15,7 @@
         <DistanceFormGroup
           :label="mode.label"
           :field-path="mode.fieldPath"
-          class="speed-form-group"
+          class="speed-form-group contents"
         >
           <template v-if="mode.showAltReadOnly" #readonly>
             <span v-if="mode.hasNoValue" class="placeholder">—</span>
@@ -118,6 +118,7 @@
       grid-template-columns: repeat(5, 1fr);
       grid-auto-rows: min-content;
       gap: 0.25rem 0.5rem;
+      width: 100%;
 
       .speed-card {
         display: grid;
@@ -167,8 +168,6 @@
 
           :deep(.input-group) {
             position: relative;
-            width: 75%;
-            justify-self: center;
             font-size: 1rem;
             line-height: 1;
 
@@ -180,14 +179,6 @@
               &.placeholder {
                 color: var(--color-text-dark-secondary, #888);
               }
-            }
-
-            .unit {
-              position: absolute;
-              right: 0.25rem;
-              top: 50%;
-              transform: translateY(-50%);
-              letter-spacing: 0.1rem;
             }
           }
         }

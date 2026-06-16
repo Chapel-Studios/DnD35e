@@ -1,6 +1,6 @@
 <template>
   <ColorFormGroup
-    label="EFFECT.Tint"
+    label="EFFECT.FIELDS.Tint"
     :value="tintString"
     :on-update="getViewAwareFieldUpdater('tint')"
     field-path="tint"

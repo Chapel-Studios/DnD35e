@@ -16,7 +16,7 @@
             :label="`dnd35e.ABILITY.${ability.key}.abbr`"
             :value="ability.base"
             :field-path="`system.abilities.${ability.key}.base`"
-            class="ability-base-input"
+            class="ability-base-input contents"
           />
         </div>
       </div>

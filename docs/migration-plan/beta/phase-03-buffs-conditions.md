@@ -250,7 +250,7 @@ Energy drain applies -1 per negative level to: attack rolls, saves, skill checks
     system: {
       conditionType: "blinded",
       changes: [
-        { key: "attributes.ac.misc", operator: Operate.ADD, value: 2, priority: 0, bonus type: "penalty" },  // -2 to AC
+        { key: "defense.armorClass.misc", operator: Operate.ADD, value: 2, priority: 0, bonus type: "penalty" },  // -2 to AC
         { key: "abilities.dex.penalty", operator: Operate.ADD, value: 2, priority: 0 },  // lose DEX to AC
         // Conceptual miss chance (25-50%) not represented as AE, applied in attack rolls
       ]

@@ -87,9 +87,9 @@ BAB is aggregated by the system from class items owned by the actor.
 
 | Component | Path |
 |-----------|------|
-| AC value | `system.attributes.ac.normal.total` |
-| Touch AC | `system.attributes.ac.touch.total` |
-| Flat-footed | `system.attributes.ac.flatFooted.total` |
+| AC value | `system.defense.defense.armorClass.total` |
+| Touch AC | `system.defense.armorClass.touch.total` |
+| Flat-footed | `system.defense.armorClass.flatFooted.total` |
 | Armor bonus | Applied via `changes[]` targeting `~acBonus` |
 | Deflection | Applied via `changes[]` targeting `~acDeflection` |
 

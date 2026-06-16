@@ -6,12 +6,14 @@
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
+    class="color-form-group"
   >
     <input
       type="color"
       :value="editValue ?? DEFAULT_COLOR"
       :disabled="isDisabled"
       @change="onChange(($event.target as HTMLInputElement).value)"
+      class="form-control"
     />
     <template #readonly>
       <div
@@ -94,10 +96,16 @@
   }
 </script>
 
-<style scoped>
-  .color-display {
-    width: 60px;
-    height: 30px;
-    border: 1px solid var(--color-border);
+<style scoped lang="scss">
+  .color-form-group {
+    .form-control {
+      justify-self: center;
+    }
+
+    .color-display {
+      width: 60px;
+      height: 30px;
+      border: 1px solid var(--color-border);
+    }
   }
 </style>

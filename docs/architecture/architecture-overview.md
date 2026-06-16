@@ -413,7 +413,7 @@ Delta casting accepts multiple formats: JSON arrays, `CurrencyData` instances, s
 
 **Why this matters**: Material effects generate price modifier changes. A Mithral material might add `[{ coinId: 'srd_gp', count: 1000 }]` to a weapon's price. Because `CurrencyField` handles its own AE change modes, this works through the standard Foundry AE pipeline — no special-case code needed.
 
-The **ItemPriceFormGroup** Vue component renders a multi-denomination coin editor in item sheets, reading from the world's currency settings to know which coins to display. It respects ViewMode semantics so play mode can display masked/effective values while true mode shows unmasked values for GMs.
+The **CoinageFormGroup** Vue component renders a multi-denomination coin editor in item sheets, reading from the world's currency settings to know which coins to display. It respects ViewMode semantics so play mode can display masked/effective values while true mode shows unmasked values for GMs.
 
 ### Settings UI
 

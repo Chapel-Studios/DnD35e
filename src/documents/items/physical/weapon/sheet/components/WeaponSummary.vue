@@ -6,6 +6,7 @@
         :options="weaponTypeSelectOptions"
         :on-update="weaponTypeUpdater"
         field-path="system.weaponType"
+        class="contents"
       />
     </li>
     <li>
@@ -14,6 +15,7 @@
         :options="weaponSubtypeSelectOptions"
         :on-update="weaponSubtypeUpdater"
         field-path="system.weaponSubtype"
+        class="contents"
       />
     </li>
   </ul>

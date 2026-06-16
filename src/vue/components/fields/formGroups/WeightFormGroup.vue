@@ -4,6 +4,7 @@
     :on-update="weightUpdater"
     :field-path="props.fieldPath"
     :unit="weightDisplayShortLabel"
+    class="weight-form-group"
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
@@ -60,4 +61,10 @@
 </script>
 
 <style lang="scss" scoped>
+.weight-form-group {
+  :deep(.input-group .number-input) {
+    padding-right: 4ch;
+    width: 10.5ch;
+  }
+}
 </style>

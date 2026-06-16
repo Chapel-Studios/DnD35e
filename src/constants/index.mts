@@ -51,6 +51,19 @@ import {
 import { defaultGameSettings } from './gameSettings/index.mjs';
 import { LogLevel } from './logging.mjs';
 import { hbsTemplatePath, systemPath } from './paths.mjs';
+import type { SenseType } from './senses.mjs';
+import {
+  BLINDSIGHT,
+  DARKVISION,
+  LOW_LIGHT_VISION,
+  SCENT,
+  SENSE_TYPE,
+  SENSE_TYPES,
+  SENSE_TYPES_LOCALIZED,
+  SENSE_TYPES_OPTIONS,
+  TRAP_SENSE,
+  TREMORSENSE,
+} from './senses.mjs';
 import { SIZE_MODIFIERS, SIZE_SELECT_OPTIONS, SIZES } from './sizes.mjs';
 import type {
   FlyManeuverability,
@@ -72,6 +85,7 @@ export {
   ActionsTypesList,
   ActionTypes,
   ALIGNMENT_I18N,
+  BLINDSIGHT,
   BONUS_TYPE_BROKEN,
   BONUS_TYPE_MASTERWORK,
   BONUS_TYPE_MATERIAL,
@@ -82,6 +96,7 @@ export {
   CHAOTIC,
   CON,
   DAMAGE_TYPES,
+  DARKVISION,
   defaultGameSettings,
   devConfig,
   DEX,
@@ -103,11 +118,17 @@ export {
   LAW_AXIS_SELECT_OPTIONS,
   LAWFUL,
   LogLevel,
+  LOW_LIGHT_VISION,
   MASTERWORK_ARMOR_AE_UUID,
   MASTERWORK_WEAPON_AE_UUID,
   MORAL_AXES,
   MORAL_AXIS_SELECT_OPTIONS,
   NEUTRAL,
+  SCENT,
+  SENSE_TYPE,
+  SENSE_TYPES,
+  SENSE_TYPES_LOCALIZED,
+  SENSE_TYPES_OPTIONS,
   SETTINGS_CONFIG_CLASS,
   SIZE_MODIFIERS,
   SIZE_SELECT_OPTIONS,
@@ -117,6 +138,8 @@ export {
   SPEED_TYPES,
   STR,
   systemPath,
+  TRAP_SENSE,
+  TREMORSENSE,
   VUE_APP_CLASS,
   WIS,
 };
@@ -127,5 +150,6 @@ export type {
   FlyManeuverability,
   LawAxis,
   MoralAxis,
+  SenseType,
   SpeedType,
 };

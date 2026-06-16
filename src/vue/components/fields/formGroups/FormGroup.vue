@@ -19,7 +19,9 @@
 
     <!-- Content slot for input elements -->
     <slot v-if="showDefaultSlot"></slot>
-    <slot v-else name="readonly">{{ props.value }}</slot>
+    <div v-else class="readonly-content">
+      <slot name="readonly">{{ props.value }}</slot>
+    </div>
 
     <p v-if="hasHint" class="hint">
       {{ resolvedHint }}
@@ -133,26 +135,27 @@
 </script>
 
 <style scoped lang="scss">
-  .view-mode .form-group {
-    & > :first-child {
-      justify-self: left;
-    }
-
-    & > :not(:first-child) {
-      justify-self: center;
-    }
-  }
   
   .form-group {
-    display: contents;
+    border: 1px solid var(--color-border, #7a7971);
+    display: grid;
+    grid-auto-flow: row;
+    align-items: center;
+    grid-gap: 0.33rem;
     padding: 0.5rem;
+
+    &.contents {
+      display: contents;
+    }
   }
 
   .form-group-label {
     display: flex;
     align-items: center;
     justify-items: center;
+    justify-content: center;
     gap: 0.25rem;
+    flex-wrap: wrap;
   }
 
   .form-group-label label {
@@ -160,6 +163,7 @@
     cursor: help;
     overflow-wrap: break-word;
     min-width: 0;
+    text-align: center;
   }
 
   .form-group.with-hint :slotted(.hint) {
@@ -208,5 +212,9 @@
     width: 3px;
     background: var(--color-level-warning);
     border-radius: 2px;
+  }
+  
+  .readonly-content {
+    justify-self: center;
   }
 </style>

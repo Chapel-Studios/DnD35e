@@ -14,7 +14,7 @@ abstract class ActorSheetDnd35e extends VueActorSheet {
     return {
       classes: [SYSTEM_ID, ACTOR_SHEET_CLASS],
       position: {
-        width: 1000,
+        width: 1050,
         height: 840,
       },
     } as DeepPartial<VueApplicationConfiguration<ActorDnd35e>>;

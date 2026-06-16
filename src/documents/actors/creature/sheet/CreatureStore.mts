@@ -1,6 +1,7 @@
 import type { ActorDocumentStore, ActorStore, UseActorSheetStoreOptions } from '@actors/baseActor/sheet/index.mjs';
 import { useActorSheetStore } from '@actors/baseActor/sheet/index.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
+import type { SenseEntrySource } from '@actors/creature/data/CreatureSystemData.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import { ALIGNMENT_I18N, NEUTRAL } from '@constants/alignment.mjs';
 import type { Size } from '@constants/sizes.mjs';
@@ -62,7 +63,11 @@ const useCreatureStore = <TDocument extends Creature>(
     level:          computed(() => document.value.system.level ?? 1),
     isPartyMember:  computed(() => getViewAwareFieldValue<boolean>('system.settings.isPartyMember') ?? false),
     languages:      computed(() => getViewAwareFieldValue<string[]>('system.bio.languages') ?? []),
-    senses:         computed(() => getViewAwareFieldValue<string | null>('system.bio.senses') ?? null),
+    senses:         computed(() => {
+      const raw = getViewAwareFieldValue<SenseEntrySource[]>('system.bio.senses') ?? [];
+      // Clone so Vue's reactivity detects in-place mutations from Foundry's mergeObject
+      return foundry.utils.deepClone(raw);
+    }),
     armorClass:     computed(() => document.value.calculateAC() ?? 10),
     getArmorClass: (isTouch = false, denyDex = false): number => document.value.calculateAC(isTouch, denyDex) ?? 10,
   };
@@ -94,7 +99,7 @@ interface CreatureGetters {
   level:          ComputedRef<number>;
   isPartyMember:  ComputedRef<boolean>;
   languages:      ComputedRef<string[]>;
-  senses:         ComputedRef<string | null>;
+  senses:         ComputedRef<SenseEntrySource[]>;
   armorClass:     ComputedRef<number>;
   getArmorClass: (isTouch?: boolean, denyDex?: boolean) => number;
 }

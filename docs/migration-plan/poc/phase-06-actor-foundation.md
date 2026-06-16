@@ -6,7 +6,7 @@
 > **Dependencies**: Phase 1, Phase 3  
 > **Goal**: A character actor has ability scores, BAB, HP, flat AC, saves, speed, size, and an inventory with equipped weapon tracking. All stats are stored as formula-ready fields that poc.10 (Basic Combat) and alpha.3 (Action System) consume via `#self.*` contexts.
 
-> **Action System note**: poc.10 and alpha.3 action formulas reference actor stats via `#self.*` contexts — e.g., `#self.abilities.str.mod`, `#self.bab`, `#self.ac.*`, `#self.saves.*`. These are **derived** fields (`persisted: false`): `str.mod` is calculated from base score, `bab` derives from class progressions (alpha.2; resolves to `0` until then), and `attributes.ac.*` is computed from DEX + size + bonuses. Base score fields are stored; derived stats are computed each prep cycle.
+> **Action System note**: poc.10 and alpha.3 action formulas reference actor stats via `#self.*` contexts — e.g., `#self.abilities.str.mod`, `#self.bab`, `#self.ac.*`, `#self.saves.*`. These are **derived** fields (`persisted: false`): `str.mod` is calculated from base score, `bab` derives from class progressions (alpha.2; resolves to `0` until then), and `defense.armorClass.*` is computed from DEX + size + bonuses. Base score fields are stored; derived stats are computed each prep cycle.
 
 ---
 
@@ -47,7 +47,7 @@ Phase 6 is delivered in **6 stories**. Each story ends with a working, user-test
 **Scope**:
 - `src/fields/PriceField.mts` → `src/fields/CurrencyField.mts` (class `CurrencyField`, type `CurrencyData`)
 - All usages: `new PriceField()` → `new CurrencyField()`, `PriceData` → `CurrencyData`
-- **Keep "Price" in item-specific components**: `ItemPriceFormGroup.vue`, `ItemPrice.vue`, `ItemResalePrice.vue` — these are contextually correct (they display an item's price).
+- **Keep "Price" in item-specific components**: `CoinageFormGroup.vue`, `ItemPrice.vue`, `ItemResalePrice.vue` — these are contextually correct (they display an item's price).
 - **Keep "price" as the schema field name on items**: `price: new CurrencyField()` — field name is still `price`, only the class name changes.
 
 This pre-story PR contains **3 commits**:
@@ -130,7 +130,7 @@ Story 1
 3. **Bio tab (new)** — Create `src/documents/actors/creature/sheet/tabs/bio/BioTab.vue`. Sections: **Identity** (gender, alignment reusing existing `CreatureAlignment`/`CreatureGender`/`CreatureDeity` components), **Physical** (age, height, weight), **Race** (display-only, renders `creature.race` getter), **Languages** (chip/tag list bound to `system.bio.languages`), **Senses** (textarea for `system.bio.senses` stub), **Biography** (HTML editor from `system.description`). Add tab to `CreatureSheet.vue`. *(Unit tests: tab mounts; languages list renders; alignment binds to new path)*
 4. **Settings tab (new)** — Create `src/documents/actors/creature/sheet/tabs/SettingsTab.vue`. "General Settings" section with `isPartyMember` toggle (`ToggleSwitchFormGroup` bound to `system.settings.isPartyMember`). Add tab to `CreatureSheet.vue`. *(Unit tests: tab mounts; toggle saves correctly)*
 5. **Summary tab cleanup** — Strip `SummaryStatPanel.vue`: remove HP group, AC trio, Saves trio, and Rest button (all now on header or Combat tab). Keep Init + BAB pair. Summary 3-column layout unchanged; middle column now shows only Init/BAB with a "Combat stats · Story 4" placeholder note. *(Unit tests: stripped panel renders without HP/AC/Saves)*
-6. **Attributes tab redesign** — Delete `HpSection.vue`, `SavingThrowsSection.vue`, `ArmorClassSection.vue`, `InitiativeSpeedSection.vue` (all dead code; combat sections rebuilt fresh in Story 4). Rebuild `AbilityScoresSection.vue` as wide-card format: 6 cards each with large `total/mod` display, small `base` input, and a "…" overflow button (renders, does nothing — Phase 20 wires damage/drain/penalties modal). Extract previous compact table as `AbilityScoresTable.vue` for continued use in Summary tab. Add `ActorSpeed.vue`: 5 stub cards (Land=30ft, Climb/Swim/Burrow/Fly=—); Story 4 adds schema + derivation. Add `SensesSection.vue`: textarea bound to `system.bio.senses`. Add `TraitsSection.vue`: Size dropdown (`SIZE_SELECT_OPTIONS`), Creature Type text stub, Reach text stub. Update `AttributesTab.vue` to use new sections. *(Unit tests: cards render; Size dropdown saves via SIZE_SELECT_OPTIONS; overflow button renders inert)*
+6. **Attributes tab redesign** — Delete `HpSection.vue`, `SavingThrowsSection.vue`, `ArmorClassSection.vue`, `InitiativeSpeedSection.vue` (all dead code; combat sections rebuilt fresh in Story 4). Rebuild `AbilityScoresSection.vue` as wide-card format: 6 cards each with large `total/mod` display, small `base` input, and a "…" overflow button (renders, does nothing — Phase 20 wires damage/drain/penalties modal). Extract previous compact table as `AbilityScoresTable.vue` for continued use in Summary tab. Add `ActorSpeed.vue`: 5 stub cards (Land=30ft, Climb/Swim/Burrow/Fly=—); Story 4 adds schema + derivation. Add `SensesSection.vue`: textarea bound to `system.bio.senses`. Add `PhysicalAttributes.vue`: Size dropdown (`SIZE_SELECT_OPTIONS`), Creature Type text stub, Reach text stub. Update `AttributesTab.vue` to use new sections. *(Unit tests: cards render; Size dropdown saves via SIZE_SELECT_OPTIONS; overflow button renders inert)*
 
 **E2E acceptance**: Open character sheet → Header shows HP/AC/Saves pills and tent-icon Rest button (no identity rows) → Bio tab opens; gender/alignment/deity/age/height/weight visible; languages field is editable → Settings tab shows Party Member toggle; toggling saves correctly → Summary tab shows only Init + BAB (no HP/AC/Saves) + Skills placeholder → Attributes tab shows 6 wide ability score cards + 5 speed stub cards + Size dropdown + Senses text → changing Size saves correctly.
 
@@ -300,8 +300,8 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 **Foundry v14 Integration:**
 - [ ] Use `persisted: false` for ALL derived stat fields: ability mods, AC totals, save totals, init total, BAB total, HP max, speed totals, encumbrance thresholds, level, race string
 - [ ] Set `CONFIG.Actor.trackableAttributes` in `setup` hook:
-  - `character: { bar: ['hp'], value: ['ac.normal', 'init.total'] }`
-  - `npc: { bar: ['hp'], value: ['ac.normal', 'init.total', 'cr'] }`
+  - `character: { bar: ['hp'], value: ['defense.armorClass', 'init.total'] }`
+  - `npc: { bar: ['hp'], value: ['defense.armorClass', 'init.total', 'cr'] }`
 - [ ] Override `Actor.modifyTokenAttribute()` for temp HP, nonlethal damage, custom bar modification
 - [ ] Implement `isOfType(...types)` method on `ActorDnd35e` with TypeScript overloads for type narrowing (PF2E pattern)
 - [ ] Register `CONFIG.Actor.documentClass = ActorProxyDnd35e` in `init` hook
@@ -350,7 +350,7 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 **Formula-Ready Field Preparation for poc.10 / alpha.3:**
 - [ ] Call `_buildFormulaContexts()` (from Dnd35eDocumentMixin) in `prepareDerivedData()` to populate `#self.*` contexts
 - [ ] Verify RollData includes: abilities, ability modifiers, bab, ac variants, saves, speed, size, initiative, hp
-- [ ] Ensure `getRollData()` returns POJO with all formula-ready paths (e.g., `abilities.str.mod`, `bab`, `ac.normal`)
+- [ ] Ensure `getRollData()` returns POJO with all formula-ready paths (e.g., `abilities.str.mod`, `bab`, `defense.armorClass`)
 - [ ] Register formula contexts in Pinia store for IDE autocomplete hints
 - [ ] Document all formula paths available via `#self.*` that poc.10 and alpha.3 actions will consume
 - [ ] Test: `getRollData()` returns complete object with no undefined fields
@@ -626,7 +626,7 @@ A separate **"Monsters die at 0"** world toggle makes NPC actors without class l
 | Create | `src/documents/actors/character/sheet/CharacterSheet.vue` — main character sheet Vue component |
 | Create | `src/documents/actors/creature/sheet/tabs/bio/BioTab.vue` — Bio tab (identity, physical, languages, senses, biography) |
 | Create | `src/documents/actors/creature/sheet/tabs/SettingsTab.vue` — Settings tab (isPartyMember, future per-character settings) |
-| Create | `src/documents/actors/creature/sheet/tabs/sections/attributes/` — `AbilityScoresSection.vue` (wide cards), `AbilityScoresTable.vue` (compact, for Summary), `ActorSpeed.vue`, `SensesSection.vue`, `TraitsSection.vue` |
+| Create | `src/documents/actors/creature/sheet/tabs/sections/attributes/` — `AbilityScoresSection.vue` (wide cards), `AbilityScoresTable.vue` (compact, for Summary), `ActorSpeed.vue`, `SensesSection.vue`, `PhysicalAttributes.vue` |
 | Delete | `src/documents/actors/creature/sheet/tabs/sections/attributes/HpSection.vue`, `SavingThrowsSection.vue`, `ArmorClassSection.vue`, `InitiativeSpeedSection.vue` — moved to Combat tab (Story 4) |
 | Create | `src/documents/actors/character/sheet/components/` — AbilityScores.vue, InventoryTab.vue, EquipmentSlots.vue and other tab/section components |
 | Modify | `src/documents/actors/registration.mts` — register character sheet and `CharacterSystemModel` |

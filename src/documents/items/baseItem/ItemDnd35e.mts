@@ -57,11 +57,13 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   /** Runtime masks dictionary built from active Secret AE MASK changes. Keyed by field path. */
   _masks: Record<string, unknown> = {};
 
-  private get _maskedNameFormula (): { formula: string; resolvedValue: string | null; expectedType: 'string' | 'number' } | null {
+  private get _maskedNameFormula (): { formula: string; resolvedValue: string | number | null; expectedType: 'string' | 'number' } | null {
     const directMask = this._masks['system.nameFormula'] as FormulaLikeSource | undefined;
     if (directMask && typeof directMask === 'object') {
       const formula = typeof directMask.formula === 'string' ? directMask.formula : null;
-      const resolvedValue = typeof directMask.resolvedValue === 'string' ? directMask.resolvedValue : null;
+      const resolvedValue = typeof directMask.resolvedValue === 'string' || typeof directMask.resolvedValue === 'number'
+        ? String(directMask.resolvedValue)
+        : null;
       if (formula || resolvedValue) {
         const effectiveText = resolvedValue ?? formula ?? '';
         return FormulaData.toSource(formula ?? effectiveText, {

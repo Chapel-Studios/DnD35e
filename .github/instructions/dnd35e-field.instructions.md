@@ -158,7 +158,7 @@ FormGroups auto-derive labels from localization schema — no explicit label nee
 
 ```typescript
 // In sheet component — always use store getters for display
-const ac = store.documentGetters.getViewAwareFieldValue('system.ac');
+const ac = store.documentGetters.getViewAwareFieldValue('system.defense.armorClass');
 // → masked value in play mode, real value in edit/true mode
 ```
 

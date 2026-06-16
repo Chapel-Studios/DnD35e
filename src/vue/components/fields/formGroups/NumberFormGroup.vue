@@ -17,13 +17,14 @@
       <slot name="readonly" />
     </template>
     <div class="input-group">
+      <span v-if="props.unit" class="unit">{{ props.unit }}</span>
       <input
         type="number"
         :value="editValue ?? ''"
         :disabled="isDisabled"
         @change="onChange(($event.target as HTMLInputElement).value)"
+        class="number-input"
       />
-      <span v-if="props.unit" class="unit">{{ props.unit }}</span>
     </div>
   </FormGroup>
 </template>
@@ -106,5 +107,25 @@
 <style scoped lang="scss">
   .input-group {
     position: relative;
+    width: max-content;
+    justify-self: center;
+
+    .number-input {
+      width: 6ch;
+    }
+
+    .unit {
+      position: absolute;
+      right: 0.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      letter-spacing: 0.1rem;
+
+      + .number-input {
+        width: 9ch;
+        padding-right: 2.5ch;
+        text-align: right;
+      }
+    }
   }
 </style>
