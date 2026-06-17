@@ -48,11 +48,11 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
         {
           fieldPath: systemWeight,
           value: 0,
-          effectName: 'dnd35e.ITEM.EQUIPPABLE.isWeightlessWhenEquipped.label',
+          effectName: game.i18n.localize('dnd35e.ITEM.EQUIPPABLE.FIELDS.isWeightlessWhenEquipped.label'),
           type: EFFECT_CHANGE_TYPE.OVERRIDE,
           bonusType: BONUS_TYPE_UNTYPED,
           stackResult: STACK_RESULT_APPLIED,
-          stackReason: 'dnd35e.ITEM.EQUIPPABLE.isWeightlessWhenEquipped.hint',
+          stackReason: game.i18n.localize('dnd35e.ITEM.EQUIPPABLE.FIELDS.isWeightlessWhenEquipped.hint'),
         },
       ];
       this.parent.overrides[systemWeight] = overrides;
