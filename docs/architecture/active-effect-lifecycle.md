@@ -49,7 +49,7 @@ The system extends Foundry's base `EffectChangeData` with fields needed for D&D 
 
 ```typescript
 interface Dnd35eEffectChangeData extends EffectChangeData {
-  key: string;              // target field path ("attributes.ac.value")
+  key: string;              // target field path ("system.defense.armorClass")
   value: string | number;   // change value (can be a formula)
   mode: number;             // Foundry change mode
   priority: number;         // application order within phase
@@ -87,7 +87,7 @@ class MaterialSystemModel extends Dnd35eActiveEffectSystemModel {
 
     return [
       {
-        key: 'attributes.ac.misc',
+        key: 'system.defense.armorClass',
         value: config.acBonus,
         bonusType: BonusType.Material,
         operator: 'UPGRADE',

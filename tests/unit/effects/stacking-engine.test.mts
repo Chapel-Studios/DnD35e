@@ -302,9 +302,9 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
 
   it('all positive same type → highest wins, no penalty winner', () => {
     const changes = [
-      mkChange({ index: 0, field: 'system.ac', bonusType: MATERIAL, value: 3, source: 'A' }),
-      mkChange({ index: 1, field: 'system.ac', bonusType: MATERIAL, value: 5, source: 'B' }),
-      mkChange({ index: 2, field: 'system.ac', bonusType: MATERIAL, value: 1, source: 'C' }),
+      mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 3, source: 'A' }),
+      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 5, source: 'B' }),
+      mkChange({ index: 2, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 1, source: 'C' }),
     ];
 
     const { winners } = resolveActiveEffectChanges(changes);
@@ -314,9 +314,9 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
 
   it('all negative same type → worst penalty wins, no bonus winner', () => {
     const changes = [
-      mkChange({ index: 0, field: 'system.ac', bonusType: MATERIAL, value: -1, source: 'Light' }),
-      mkChange({ index: 1, field: 'system.ac', bonusType: MATERIAL, value: -3, source: 'Heavy' }),
-      mkChange({ index: 2, field: 'system.ac', bonusType: MATERIAL, value: -2, source: 'Medium' }),
+      mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: -1, source: 'Light' }),
+      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: MATERIAL, value: -3, source: 'Heavy' }),
+      mkChange({ index: 2, field: 'system.defense.armorClass', bonusType: MATERIAL, value: -2, source: 'Medium' }),
     ];
 
     const { winners, history } = resolveActiveEffectChanges(changes);
@@ -371,8 +371,8 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
 
   it('tied bonuses: deterministic — first encountered wins', () => {
     const changes = [
-      mkChange({ index: 0, field: 'system.ac', bonusType: MATERIAL, value: 4, source: 'First' }),
-      mkChange({ index: 1, field: 'system.ac', bonusType: MATERIAL, value: 4, source: 'Second' }),
+      mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 4, source: 'First' }),
+      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 4, source: 'Second' }),
     ];
 
     const { winners } = resolveActiveEffectChanges(changes);
@@ -382,8 +382,8 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
 
   it('tied penalties: deterministic — first encountered wins', () => {
     const changes = [
-      mkChange({ index: 0, field: 'system.ac', bonusType: MATERIAL, value: -3, source: 'First' }),
-      mkChange({ index: 1, field: 'system.ac', bonusType: MATERIAL, value: -3, source: 'Second' }),
+      mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: -3, source: 'First' }),
+      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: MATERIAL, value: -3, source: 'Second' }),
     ];
 
     const { winners } = resolveActiveEffectChanges(changes);
@@ -393,8 +393,8 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
 
   it('zero-valued change in a named-type group is recorded but does not win', () => {
     const changes = [
-      mkChange({ index: 0, field: 'system.ac', bonusType: MATERIAL, value: 0, source: 'Zero' }),
-      mkChange({ index: 1, field: 'system.ac', bonusType: MATERIAL, value: 3, source: 'Pos' }),
+      mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 0, source: 'Zero' }),
+      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 3, source: 'Pos' }),
     ];
 
     const { winners, history } = resolveActiveEffectChanges(changes);
@@ -412,9 +412,9 @@ describe('SRD cross-type combinations on the same field', () => {
     // armor, deflection, …) all behave the same way under SRD: different types
     // stack with each other; same type does not.
     const changes = [
-      mkChange({ index: 0, field: 'system.ac', bonusType: MATERIAL, value: 2, source: 'Mat' }),
-      mkChange({ index: 1, field: 'system.ac', bonusType: MASTERWORK, value: 1, source: 'MW' }),
-      mkChange({ index: 2, field: 'system.ac', bonusType: BROKEN, value: -2, source: 'Broken' }),
+      mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 2, source: 'Mat' }),
+      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: MASTERWORK, value: 1, source: 'MW' }),
+      mkChange({ index: 2, field: 'system.defense.armorClass', bonusType: BROKEN, value: -2, source: 'Broken' }),
     ];
 
     const { winners } = resolveActiveEffectChanges(changes);
@@ -530,8 +530,8 @@ describe('SRD per-field independence under penalties', () => {
     // every non-penalty change in a group containing any penalty. RAW says the
     // best bonus and worst penalty BOTH apply.
     const changes = [
-      mkChange({ index: 0, field: 'system.ac', bonusType: MATERIAL, value: 4, source: 'Bonus' }),
-      mkChange({ index: 1, field: 'system.ac', bonusType: MATERIAL, value: -2, source: 'Penalty' }),
+      mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 4, source: 'Bonus' }),
+      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: MATERIAL, value: -2, source: 'Penalty' }),
     ];
 
     const { winners, history } = resolveActiveEffectChanges(changes);
@@ -546,7 +546,7 @@ describe('SRD per-field independence under penalties', () => {
 describe('SRD edge cases', () => {
   it('single change in a named-type group always applies (no comparison group)', () => {
     const changes = [
-      mkChange({ index: 0, field: 'system.ac', bonusType: MATERIAL, value: 3, source: 'Only' }),
+      mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 3, source: 'Only' }),
     ];
 
     const { winners } = resolveActiveEffectChanges(changes);
@@ -556,8 +556,8 @@ describe('SRD edge cases', () => {
 
   it('NaN-valued change is dropped silently (callers should pre-filter)', () => {
     const changes: StackingChange[] = [
-      mkChange({ index: 0, field: 'system.ac', bonusType: MATERIAL, value: Number.NaN, source: 'Junk' }),
-      mkChange({ index: 1, field: 'system.ac', bonusType: MATERIAL, value: 3, source: 'Real' }),
+      mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: Number.NaN, source: 'Junk' }),
+      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 3, source: 'Real' }),
     ];
 
     const { winners } = resolveActiveEffectChanges(changes);
@@ -621,9 +621,9 @@ describe('Dual-stack interactions with penalties', () => {
 
   it('excluding the highest bonus: masked stack falls back to next-highest', () => {
     const changes: StackingChange[] = [
-      mkChange({ index: 0, field: 'system.ac', bonusType: MATERIAL, value: 5, source: 'Hidden', effectId: 'h-1' }),
-      mkChange({ index: 1, field: 'system.ac', bonusType: MATERIAL, value: 3, source: 'Visible', effectId: 'v-1' }),
-      mkChange({ index: 2, field: 'system.ac', bonusType: MATERIAL, value: 2, source: 'AlsoVisible', effectId: 'v-2' }),
+      mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 5, source: 'Hidden', effectId: 'h-1' }),
+      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 3, source: 'Visible', effectId: 'v-1' }),
+      mkChange({ index: 2, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 2, source: 'AlsoVisible', effectId: 'v-2' }),
     ];
 
     const masked = resolveActiveEffectChanges(changes, new Set(['h-1']));

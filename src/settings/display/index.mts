@@ -27,5 +27,4 @@ export {
   imperialUnitOfMeasure,
   metricUnitOfMeasure,
   UNIT_OF_MEASURE_OPTIONS,
-  WEIGHT_OPTIONS,
 } from './unitOfMeasure.mjs';

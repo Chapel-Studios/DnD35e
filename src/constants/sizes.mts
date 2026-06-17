@@ -8,7 +8,20 @@ const SIZE_SELECT_OPTIONS: SelectOption<Size>[] = SIZES.map(size => ({
   label: `dnd35e.SIZE.${size}`,
 }));
 
+const SIZE_MODIFIERS: Record<Size, number> = {
+  colossal: -8,
+  gargantuan: -4,
+  huge: -2,
+  large: -1,
+  medium: 0,
+  small: 1,
+  tiny: 2,
+  diminutive: 4,
+  fine: 8,
+};
+
 export {
+  SIZE_MODIFIERS,
   SIZE_SELECT_OPTIONS,
   SIZES,
 };

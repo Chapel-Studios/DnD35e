@@ -34,6 +34,7 @@
     direction: rtl; // Flip the switch to the right side of the sheet
     grid-template-columns: 1fr min-content;
     justify-self: center;
+    border: none;
 
     :deep(.controls),
     :deep(.form-fields) {

@@ -11,8 +11,10 @@
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
     </template>
-    <template v-if="slots.readonly" #readonly>
-      <slot name="readonly" />
+    <template #readonly>
+      <slot name="readonly">
+        <span>{{ readonlyLabel }}</span>
+      </slot>
     </template>
     <input
       type="text"
@@ -82,4 +84,8 @@
   function onChange(val: string) {
     fieldUpdater(val);
   }
+
+  const readonlyLabel = computed(() => {
+    return resolvedValue.value || '-';
+  });
 </script>

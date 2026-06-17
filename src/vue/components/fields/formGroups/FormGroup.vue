@@ -1,11 +1,9 @@
 <template>
   <div class="form-group" :class="formGroupClasses" :hidden="!isFieldVisible" :data-field-path="props.fieldPath || undefined">
     <div v-if="hasLabel" class="form-group-label">
-      <label :title="labelTooltip">
+      <label class="default-label" :title="labelTooltip">
         {{ resolvedLabel }}
-        <span v-if="showMaskedBadge" class="masked-badge" :title="maskedBadgeTooltip" :aria-label="maskedBadgeTooltip">
-          <i class="fa-solid fa-mask" aria-hidden="true" />
-        </span>
+        <MaskedBadge :field-path="props.fieldPath" />
       </label>
       <!-- GM permission controls next to label -->
       <FieldControls
@@ -20,8 +18,10 @@
     </div>
 
     <!-- Content slot for input elements -->
-    <slot v-if="isFieldEditable"></slot>
-    <slot v-else name="readonly">{{ props.value }}</slot>
+    <slot v-if="showDefaultSlot"></slot>
+    <div v-else class="readonly-content">
+      <slot name="readonly">{{ props.value }}</slot>
+    </div>
 
     <p v-if="hasHint" class="hint">
       {{ resolvedHint }}
@@ -43,8 +43,6 @@
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
-  import { RenderModeStoreSymbol } from '@documents/document/sheet/stores/RenderModeStore.mjs';
   import { computed, inject } from 'vue';
 
   import FieldControls from './FieldControls.vue';
@@ -53,6 +51,7 @@
     everyoneVisibility,
     gmOnlyEditability,
   } from './fieldPermissions.mjs';
+  import MaskedBadge from './MaskedBadge.vue';
 
   const props = withDefaults(defineProps<{
     label?: string; // localization key
@@ -66,13 +65,15 @@
     defaultEditability?: FieldEditability; // defaults to 'normal'
     /** When true, forces the readonly display. */
     readOnly?: boolean;
+    /** When true, forces the edit display even in play/true modes. */
+    forceEdit?: boolean;
     /** When false, suppress the built-in FieldControls for this field wrapper. */
     showFieldControls?: boolean;
   }>(), {
     localizeHint: true,
     showFieldControls: true,
   });
-  
+
   function localize(key: string): string {
     return game.i18n.localize(key);
   }
@@ -81,8 +82,6 @@
     documentGetters: {
       getIsFieldVisible,
       getIsFieldEditable,
-      getMaskForField,
-      hasMaskForField,
     },
     _storeUtils: {
       getFieldHint,
@@ -114,42 +113,18 @@
   });
 
   const hasHint = computed(() => !!resolvedHint.value);
-  const fieldHint = computed(() => getFieldHint(props.fieldPath));
-  const labelTooltip = computed(() => fieldHint.value || undefined);
-
-  const { isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const labelTooltip = computed(() => getFieldHint(props.fieldPath) || undefined);
 
   // Get effective visibility: override > prop > schema default > 'everyone'
   const isFieldVisible = getIsFieldVisible(props.fieldPath, props.defaultVisibility);
 
   const isFieldEditable = getIsFieldEditable(props.fieldPath, props.defaultEditability);
+  const showDefaultSlot = computed(() => !props.readOnly && (isFieldEditable.value || props.forceEdit));
+  
 
   // Restriction checks
   const isVisibilityRestricted = computed(() => resolveVisibility(props.fieldPath, props.defaultVisibility) !== everyoneVisibility);
   const isEditabilityRestricted = computed(() => resolveEditability(props.fieldPath, props.defaultEditability) === gmOnlyEditability);
-
-  const showMaskedBadge = computed(() => isGM.value && hasMaskForField(props.fieldPath).value);
-  const maskValue = getMaskForField(props.fieldPath);
-
-  const formatMaskValue = (value: unknown): string => {
-    if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'boolean' || value === null) return String(value);
-    if (value && typeof value === 'object') {
-      const objectValue = value as { toString?: () => string };
-      if (typeof objectValue.toString === 'function' && objectValue.toString !== Object.prototype.toString) {
-        return objectValue.toString();
-      }
-    }
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return String(value);
-    }
-  };
-
-  const maskedBadgeTooltip = computed(() => game.i18n.format('dnd35e.IDENTIFIABLE.MaskedValueHint', {
-    value: formatMaskValue(maskValue.value),
-  }));
 
   // Form group classes
   const formGroupClasses = computed(() => ({
@@ -159,92 +134,78 @@
   }));
 </script>
 
-<style scoped>
-  .view-mode .form-group {
-    & > :first-child {
-      justify-self: left;
-    }
-
-    & > :not(:first-child) {
-      justify-self: center;
-    }
-  }
+<style scoped lang="scss">
   
   .form-group {
-    display: contents;
+    border: 1px solid var(--color-border, #7a7971);
+    display: grid;
+    grid-auto-flow: row;
+    align-items: center;
+    grid-gap: 0.33rem;
     padding: 0.5rem;
+
+    &.contents {
+      display: contents;
+    }
   }
 
   .form-group-label {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-  }
-
-  .form-group-label label {
-    margin: 0;
-    cursor: help;
-  }
-
-  .masked-badge {
-    display: inline-flex;
-    align-items: center;
+    justify-items: center;
     justify-content: center;
-    margin-left: 0.35rem;
-    width: 1rem;
-    height: 1rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--color-level-warning) 16%, transparent);
-    border: 1px solid color-mix(in srgb, var(--color-level-warning) 40%, transparent);
-    color: var(--color-level-warning);
-    font-size: var(--font-size-10);
-    font-weight: 600;
-    line-height: 1.2;
-    vertical-align: middle;
-  }
+    gap: 0.25rem;
+    flex-wrap: wrap;
 
-  .masked-badge i {
-    font-size: 0.65rem;
-  }
+    .default-label {
+      margin: 0;
+      cursor: help;
+      overflow-wrap: break-word;
+      min-width: 0;
+      text-align: center;
+    }
 
-  .form-group.with-hint :slotted(.hint) {
-    grid-column: 1 / -1;
-    font-size: var(--font-size-11);
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
+    &.with-hint {
+      :slotted(.hint) {
+        grid-column: 1 / -1;
+        font-size: var(--font-size-11);
+        color: var(--color-text-secondary);
+        margin: 0;
+      }
+    }
 
-  /* Direct child hint (not slotted) also spans full width */
-  .form-group.with-hint > .hint {
-    grid-column: 1 / -1;
-    font-size: var(--font-size-11);
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
+    /* Direct child hint (not slotted) also spans full width */
+    & > .hint {
+      grid-column: 1 / -1;
+      font-size: var(--font-size-11);
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
 
-  .form-group.with-hint :slotted(select[multiple]) {
-    min-height: 80px;
-  }
+    :slotted(select[multiple]) {
+      min-height: 80px;
+    }
 
-  .form-group.with-hint :slotted(input[type='text']),
-  .form-group.with-hint :slotted(input[type='number']) {
-    min-width: 10rem;
-  }
+    :slotted(input[type='text']),
+    :slotted(input[type='number']) {
+      min-width: 10rem;
+    }
 
-  .form-group.with-hint :slotted(input[type='color']) {
-    width: 60px;
-    height: 30px;
-    padding: 0;
-    border: 1px solid var(--color-border);
+    :slotted(input[type='color']) {
+      width: 60px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid var(--color-border);
+    }
   }
 
   /* Visual indicator for restricted fields */
-  .form-group.restricted-visibility > label,
-  .form-group.restricted-editability > label {
+  .form-group.restricted-visibility .default-label,
+  .form-group.restricted-editability .default-label {
     position: relative;
   }
 
-  .form-group.restricted-visibility > label::before {
+  .form-group.restricted-visibility .default-label::before {
     content: '';
     position: absolute;
     left: -0.5rem;
@@ -253,5 +214,9 @@
     width: 3px;
     background: var(--color-level-warning);
     border-radius: 2px;
+  }
+  
+  .readonly-content {
+    justify-self: center;
   }
 </style>

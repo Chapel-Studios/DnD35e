@@ -220,7 +220,7 @@ Document what "Defensive Stance" does:
 **Option A**: Active Effect (Simple, reusable)
 ```typescript
 // Already built-in, GM just creates AE with changes
-// changes: [{ key: "system.ac.base", mode: "ADD", value: 2 }]
+// changes: [{ key: "system.defense.base", mode: "ADD", value: 2 }]
 ```
 
 **Option B**: Character Sheet Toggle (Complex, custom logic)

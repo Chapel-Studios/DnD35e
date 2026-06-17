@@ -94,6 +94,16 @@ function copyStaticFiles (): Plugin {
   return {
     name: 'copy-static-files',
     apply: 'build',
+    async buildStart () {
+      const assetFiles = await fg('src/assets/**/*.*');
+      for (const file of assetFiles) {
+        this.addWatchFile(path.resolve(__dirname, file));
+      }
+      const macroFiles = await fg('src/macros/**/*.mjs');
+      for (const file of macroFiles) {
+        this.addWatchFile(path.resolve(__dirname, file));
+      }
+    },
     async closeBundle () {
       const staticFiles = ['README.md', 'system.json'];
       for (const file of staticFiles) {
@@ -106,6 +116,12 @@ function copyStaticFiles (): Plugin {
       const macroFiles = await fg('src/macros/**/*.mjs');
       for (const file of macroFiles) {
         const rel = path.relative('src', file); // e.g. "macros/import-csv-items.mjs"
+        await fs.copy(path.resolve(__dirname, file), path.join(buildOutDir, rel));
+      }
+      // Copy Assets (e.g. icons, styles) to <buildOutDir>/assets/ for direct import in code and use in sheets.
+      const assetFiles = await fg('src/assets/**/*.*');
+      for (const file of assetFiles) {
+        const rel = path.relative('src', file); // e.g. "assets/shield.svg"
         await fs.copy(path.resolve(__dirname, file), path.join(buildOutDir, rel));
       }
     },
@@ -151,6 +167,15 @@ function logBuildTimestamp (): Plugin {
 function bundleLangFiles (): Plugin {
   return {
     name: 'bundle-lang-files',
+    async buildStart () {
+      const srcRoot = path.resolve(__dirname, 'src/lang');
+      const files = await fg('src/lang/**/*.json');
+      for (const file of files) {
+        this.addWatchFile(path.resolve(__dirname, file));
+      }
+      // Also watch the lang root so new locale dirs are picked up
+      this.addWatchFile(srcRoot);
+    },
     async closeBundle () {
       const srcRoot = path.resolve(__dirname, 'src/lang');
       const distRoot = path.resolve(__dirname, buildOutDir, 'lang');

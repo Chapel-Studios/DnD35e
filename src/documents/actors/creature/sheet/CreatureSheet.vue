@@ -1,10 +1,17 @@
 <template>
   <DocumentSheetBody :vertical-tabs="true" :show-status-area="false">
     <template #header-summary>
-      <CreatureHeaderDetails />
+      <CreatureHeaderDetails>
+        <slot v-if="$slots['header']" name="header" />
+      </CreatureHeaderDetails>
     </template>
     <template v-if="$slots['header-name']" #header-name>
       <slot name="header-name" />
+    </template>
+    <template #sidebar>
+      <CreatureSidebar>
+        <slot name="sidebar" />
+      </CreatureSidebar>
     </template>
   </DocumentSheetBody>
 </template>
@@ -13,4 +20,5 @@
   import { DocumentSheetBody } from '@documents/document/index.mjs';
 
   import CreatureHeaderDetails from './components/CreatureHeaderDetails.vue';
+  import CreatureSidebar from './components/CreatureSidebar.vue';
 </script>

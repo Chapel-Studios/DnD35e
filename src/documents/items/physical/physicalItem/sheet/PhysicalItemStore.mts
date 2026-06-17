@@ -70,8 +70,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     ...identifiableStore.documentGetters,
     // static props: don't have an identifiable mode
     quantity: computed(() => document.value.system.quantity),
-    actualWeight: computed(() => convertToLocalizedWeight(document.value.system.weight ?? 0) ?? 0),
-    effectiveWeight: computed(() => convertToLocalizedWeight(document.value.system.effectiveWeight ?? 0) ?? 0),
+    weight: computed(() => convertToLocalizedWeight(document.value.system.weight ?? 0) ?? 0),
     currentHp: computed(() => getViewAwareFieldValue('system.hp.current') || 0),
     maxHp: computed(() => getViewAwareFieldValue('system.hp.max') || 0),
     possibleContainers: computed(() => {
@@ -157,8 +156,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
 
 interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   quantity: ComputedRef<number>;
-  actualWeight: ComputedRef<number>;
-  effectiveWeight: ComputedRef<number>;
+  weight: ComputedRef<number>;
   price: ComputedRef<CurrencyData>;
   isBroken: ComputedRef<boolean>;
   maxHp: ComputedRef<number>;

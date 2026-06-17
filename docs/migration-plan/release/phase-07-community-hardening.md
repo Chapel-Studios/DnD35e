@@ -147,7 +147,7 @@ Create a reference document:
 ```
 FIELD OVERRIDE GUIDE
 
-system.attributes.ac.normal
+system.defense.armorClass
   - Visible by default: YES
   - Player editable by default: NO
   - Why: GMs want to see AC, players should not tweak it directly
@@ -336,8 +336,8 @@ Example:
   - Actor.system.details.experience (XP)
   - Actor.system.attributes.hp.value (HP total)
   - Actor.system.attributes.hp.temp (temporary HP)
-  - Actor.system.attributes.ac.value (AC total)
-  - Actor.system.attributes.ac.full breakdown (armor, dex, size, misc)
+  - Actor.system.system.defense.armorClass (AC total)
+  - Actor.system.defense.armorClass.full breakdown (armor, dex, size, misc)
   - Actor.system.details.alignment
   - Actor.system.details.notes
   - Skill components (ranks + mod vs. total only)
@@ -360,7 +360,7 @@ Example:
   - **GM override**: Can a GM change visibility/editability?
   - **Example**: "AC breakdown visible by default, but GM can hide"
 - [ ] Example entries:
-  - system.attributes.ac.value: Visible YES, Editable NO, Override YES
+  - system.system.defense.armorClass: Visible YES, Editable NO, Override YES
   - system.details.xp.value: Visible NO, Editable YES (GM only), Override NO
   - system.details.notes: Visible YES, Editable YES, Override YES
   - system.attributes.hp.temp: Visible YES, Editable YES, Override NO

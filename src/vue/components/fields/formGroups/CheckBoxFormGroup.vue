@@ -6,15 +6,15 @@
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
+    class="checkbox-form-group"
   >
-    <div class="form-fields">
-      <input
-        type="checkbox"
-        :checked="editValue"
-        :disabled="isDisabled"
-        @change="onChange(($event.target as HTMLInputElement).checked)"
-      />
-    </div>
+    <input
+      type="checkbox"
+      :checked="editValue"
+      :disabled="isDisabled"
+      @change="onChange(($event.target as HTMLInputElement).checked)"
+      class="checkbox-input"
+    />
     <template #readonly>
       <input
         type="checkbox"
@@ -94,7 +94,9 @@
 </script>
 
 <style scoped>
-.form-fields {
-  justify-self: end;
+.checkbox-form-group {
+  .checkbox-input {
+    justify-self: center;
+  }
 }
 </style>

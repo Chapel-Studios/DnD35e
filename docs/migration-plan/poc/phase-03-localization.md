@@ -79,7 +79,7 @@ Current split files under `src/lang/en/`:
 
 ## 3.3 FormGroup Consumers (Current Status)
 
-All FormGroup wrapper components (`NumberFormGroup`, `SelectFormGroup`, `TextFormGroup`, `CheckBoxFormGroup`, `ToggleSwitchFormGroup`, `ColorFormGroup`, `MultiSelectFormGroup`, `RichTextEditorFormGroup`, `ItemPriceFormGroup`, `FormulaFormGroup`) delegate to `FormGroup.vue`, which handles auto-derivation.
+All FormGroup wrapper components (`NumberFormGroup`, `SelectFormGroup`, `TextFormGroup`, `CheckBoxFormGroup`, `ToggleSwitchFormGroup`, `ColorFormGroup`, `MultiSelectFormGroup`, `RichTextEditorFormGroup`, `CoinageFormGroup`, `FormulaFormGroup`) delegate to `FormGroup.vue`, which handles auto-derivation.
 
 **All current consumers rely on auto-derived labels** — explicit `label` props have been removed from:
 - `MaterialDetails.vue` — bonusHp

@@ -9,9 +9,10 @@
 
     <div v-else class="name-formula-inline">
       <FormulaFormGroup
-        :formula-data="formulaData"
+        :value="formulaString"
         :onUpdate="onUpdate"
         :field-path="fieldPath"
+        class="contents"
       >
       </FormulaFormGroup>
     </div>
@@ -28,7 +29,6 @@
  * We tried setting up a read only slot but there were a lot of styling concerns so was put off as a todo
  */
   import type { DocumentSheetStore } from '@documents/document/sheet/DocumentSheetStore.mjs';
-  import type { FormulaData } from '@helpers/formulae/FormulaData.mjs';
   import { FormulaFormGroup } from '@helpers/formulae/index.mjs';
   import { computed, inject } from 'vue';
 
@@ -45,8 +45,15 @@
     isEditMode,
   } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
-  /** The FormulaData instance for the name formula. */
-  const formulaData = computed(() => getViewAwareFieldValue<FormulaData | null>(fieldPath) ?? null);
+  /**
+   * Read the raw formula string as a primitive so Vue tracks it by value, not
+   * by reference. FormulaData is a DataModel instance — if we pass the whole
+   * object to FormulaFormGroup, Vue cannot detect in-place mutations of
+   * `.formula` (same object reference = no reactivity trigger).
+   */
+  const formulaString = computed((): string =>
+    getViewAwareFieldValue<string>(`${fieldPath}.formula`) ?? ''
+  );
 
   const displayValue = computed(() => name.value || '—');
   const showEditor = computed((): boolean => {

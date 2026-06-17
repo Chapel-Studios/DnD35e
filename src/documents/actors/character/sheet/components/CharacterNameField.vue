@@ -3,7 +3,7 @@
     <TextFormGroup
       :value="formulaString"
       field-path="system.nameFormula.formula"
-      class="character-name-input"
+      class="character-name-input contents"
     >
       <template #readonly>
         <DocumentName :value="displayValue" />

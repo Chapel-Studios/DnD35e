@@ -29,6 +29,14 @@ class Character extends Creature {
     /** Character was awarded XP. Payload TBD (Emission: Phase 9) */
     awardXp: 'awardXp',
   } as const;
+
+  /**
+   * Stub: returns 'Paladin 1' until the Class item type is implemented.
+   * Will be replaced with a getter that resolves a value from Class items.
+   */
+  get classShorthand(): string {
+    return 'Paladin 1';
+  }
 }
 
 type CharacterType = Character;

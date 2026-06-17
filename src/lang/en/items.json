@@ -111,14 +111,13 @@
       }
     },
     "EQUIPPABLE": {
-      "DesignedForSize": "Designed For Size",
       "FIELDS": {
         "isEquipped": {
-          "label": "Is Equipped",
+          "label": "Equipped?",
           "hint": "Whether this item is currently equipped."
         },
         "isMelded": {
-          "label": "Is Melded",
+          "label": "Melded?",
           "hint": "Whether this item is currently melded into the body."
         },
         "designedForSize": {
@@ -134,8 +133,12 @@
           "hint": "The equipment slots this item occupies when equipped."
         },
         "isMasterwork": {
-          "label": "Is Masterwork",
+          "label": "Masterwork?",
           "hint": "Whether this item is of masterwork quality."
+        },
+        "isBroken": {
+          "label": "Broken?",
+          "hint": "Whether this item is currently broken."
         }
       },
       "EquipSlot": {

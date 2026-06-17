@@ -16,7 +16,7 @@ The POC includes the Trip combat maneuver (Phase 8, §7.7). For trip to be meani
 Trip action chain (Phase 8)
   → opposed check (attack vs Dex/Str)
   → onSuccess → apply "Prone" condition AE to target
-  → Prone AE modifies target stats (#target.attributes.ac.*, attack penalties)
+  → Prone AE modifies target stats (#target.defenses.*, attack penalties)
   → Standing up = move action (TurnActionBudget cost)
 ```
 
@@ -38,9 +38,9 @@ export const CONDITIONS = {
       { key: "system.attributes.attack.melee", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: "-4" },
       // Cannot use ranged weapons (except crossbow from prone) — enforced by action system
       // +4 bonus to AC vs ranged attacks
-      { key: "system.attributes.ac.rangedBonus", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: "4" },
+      { key: "system.defense.rangedAcBonus", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: "4" },
       // -4 penalty to AC vs melee attacks
-      { key: "system.attributes.ac.meleePenalty", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: "-4" },
+      { key: "system.defense.meleeAcPenalty", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: "-4" },
     ],
     recovery: {
       // Standing from prone is a move-equivalent action that provokes AoO
@@ -187,8 +187,8 @@ Everything listed here is deferred to beta.3 (Buff AE Expansion & Conditions Ful
   - description: "dnd35e.conditions.proneDescription" (i18n key)
 - [ ] Define Prone as ActiveEffect changes array:
   - Change 1: melee attack penalty (-4): { key: "system.attributes.attack.melee", mode: ADD, value: -4 }
-  - Change 2: ranged AC bonus (+4): { key: "system.attributes.ac.rangedBonus", mode: ADD, value: 4 }
-  - Change 3: melee AC penalty (-4): { key: "system.attributes.ac.meleePenalty", mode: ADD, value: -4 }
+  - Change 2: ranged AC bonus (+4): { key: "system.defense.rangedAcBonus", mode: ADD, value: 4 }
+  - Change 3: melee AC penalty (-4): { key: "system.defense.meleeAcPenalty", mode: ADD, value: -4 }
 - [ ] Define recovery action: { actionCost: "move", provokesAoO: true }
 - [ ] Export CONFIG.DND35E.conditions = CONDITIONS
 - [ ] Test: CONFIG.DND35E.conditions.prone accessible

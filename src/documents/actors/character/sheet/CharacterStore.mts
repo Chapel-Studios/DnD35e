@@ -3,14 +3,15 @@ import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore
 import { useCreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
 import {
   attributesTab,
+  bioTab,
   buffsTab,
   combatTab,
   featuresTab,
   inventoryTab,
   notesTab,
+  settingsTab,
   skillsTab,
   spellsTab,
-  summaryTab,
 } from '@actors/creature/sheet/tabs/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
@@ -23,20 +24,22 @@ import { computed } from 'vue';
  */
 const useCharacterStore = (
   context: VueApplicationContext<Character>
-): CharacterDocumentStore => {
+): CharacterStore => {
   const creatureStore = useCreatureStore<Character>(context, {
-    defaultTabs: [summaryTab, attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, notesTab],
-    defaultActiveTab: 'summary',
+    defaultTabs: [attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, bioTab, notesTab, settingsTab],
+    defaultActiveTab: 'attributes',
   });
   const { document } = creatureStore._storeUtils;
 
   const documentGetters = {
     ...creatureStore.documentGetters,
+
+    classShorthand: computed(() => document.value.classShorthand ?? ''),
     xpValue:       computed(() => document.value.system.xp?.value ?? 0),
-    isPartyMember: computed(() => document.value.system.isPartyMember ?? false),
+    isPartyMember: computed(() => document.value.system.settings.isPartyMember ?? false),
   };
 
-  const store: CharacterDocumentStore = {
+  const store: CharacterStore = {
     ...creatureStore,
     documentGetters,
   };
@@ -47,13 +50,14 @@ const useCharacterStore = (
 };
 
 interface CharacterGetters {
+  classShorthand: ComputedRef<string>;
   xpValue:        ComputedRef<number>;
   isPartyMember:  ComputedRef<boolean>;
 }
 
-type CharacterDocumentStore = CreatureDocumentStore<Character> & {
+type CharacterStore = CreatureDocumentStore<Character> & {
   documentGetters: CreatureDocumentStore<Character>['documentGetters'] & CharacterGetters;
 };
 
 export { useCharacterStore };
-export type { CharacterDocumentStore, CharacterGetters };
+export type { CharacterGetters,CharacterStore };

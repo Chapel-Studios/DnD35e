@@ -91,6 +91,10 @@
 
 <style scoped lang="scss">
   .form-group-section {
+    border: 1px solid var(--color-border, #7a7971);
+    position: relative;
+    margin-top: 0.5em;
+
     .form-group-section-header {
       position: absolute;
       top: 0;
@@ -111,6 +115,7 @@
       display: grid;
       grid-auto-flow: column;
       justify-items: center;
+      margin-top: 0.75em;
 
       :deep(.form-group) {
         border: none;

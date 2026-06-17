@@ -121,14 +121,14 @@ Establish and document the canonical `#context.property` paths:
 | `#self.abilities.str.mod` | Strength modifier |
 | `#self.abilities.str.total` | Total Strength score |
 | `#self.bab` | Base attack bonus |
-| `#self.attributes.ac.normal` | Normal AC |
+| `#self.defense.armorClass` | Normal AC |
 | `#self.saves.fort.total` | Fort save total |
 | `#self.attributes.init.total` | Initiative total |
 | `#self.details.level` | Character level |
 | `#self.skills.perception.total` | Skill total |
 | `#self.size.attackMod` | Size attack modifier |
 | `#item.enhancement` | Item's enhancement bonus |
-| `#target.attributes.ac.normal` | Target's AC (at execution time) |
+| `#target.defense.armorClass` | Target's AC (at execution time) |
 | `#action.attackBonus` | Action's computed attack bonus |
 
 ## 7.5 Custom Roll Classes
@@ -310,6 +310,98 @@ This system is orthogonal to field permission metadata for schema field groups o
 | Expand | AE change-application loop — call `resolveChangeTargets()` before applying each change |
 | Implement | `CONFIG.ActiveEffect.changeTypes.familiar.handler` — FormulaFamiliar AE change evaluation |
 | Create | Preparation warnings infrastructure on base document classes |
+| Create | `src/vue/components/actors/CreatureDefenseStat.vue` — clickable stat chip for saves and AC |
+| Create | `src/vue/components/dialogs/D20RollDialog.vue` — roll dialog with situational mod + roll mode |
+| Create | `src/vue/components/chat/SaveRollChatCard.vue` — chat card with full modifier breakdown |
+| Create | `src/helpers/rollMessages.mts` — chat message assembly from a `D20Roll` + modifier history |
+| Expand | `CreatureDnd35e` — add `rollSave(saveKey, options)` method |
+| Expand | `CreatureDnd35e` — add `rollAC(acVariant, options)` stub (same pipeline, AC-specific label) |
+
+---
+
+## 7.9 POC Story: Clickable Defense Stat → Roll Dialog → Chat Card
+
+**User**: GM / Player  
+**Delivers**: Clicking a save (Fort / Ref / Will) or AC value on the character sheet opens a Roll dialog. The user optionally adds a situational modifier, picks a roll mode, and clicks Roll. A `D20Roll` executes and posts a chat card with a full modifier breakdown — mirroring D35E's save roll window.  
+**Depends on**: Phase 6 Story 4 (saves and AC are live derived fields), §7.2 (`D20Roll` class), §7.1 (`getRollData`).
+
+This is Phase 7's proof-of-concept story — the first complete click-to-chat-card pipeline in the system.
+
+### `CreatureDefenseStat.vue`
+
+A general-purpose clickable stat chip used wherever a derived defense stat appears on the sheet. Replaces plain text displays in the header stat pills and Combat tab stat rows.
+
+**Props**:
+- `label` — display string (already localized by caller)
+- `value` — the computed numeric value
+- `rollable: boolean` — default `true`; set to `false` to suppress click (e.g. flat-footed AC displayed as info-only)
+
+**Behavior**:
+- **Edit mode**: read-only display, no click — GMs edit source values; rolling from edit mode would be confusing
+- **Play / True mode**: renders as a button-like chip (cursor pointer); click → opens roll dialog
+
+Used in:
+- Header stat pills: Fort | Ref | Will | AC (normal)
+- Combat tab rows for each save variant and all three AC variants
+
+### Roll Dialog (`D20RollDialog.vue`)
+
+A Vue dialog component (consistent with the system's Vue-first approach).
+
+**Contents**:
+| Element | Notes |
+|---------|-------|
+| Title | `"Roll Fortitude Save"` / `"Roll AC"` etc. — localized |
+| Base total | Read-only display of the actor's current computed value |
+| Situational modifier | Signed number input (`+2`, `-1`); defaults to `0`; live-updates the total preview |
+| Total preview | `= base + situational` shown reactively as modifier is typed |
+| Roll Mode | Selector: Normal / GM Only / Blind / Self — maps to `CONST.DICE_ROLL_MODES` |
+| Roll button | Evaluates, sends chat card, closes dialog |
+
+> **Open decision** (explore at implementation): Vue dialog vs. lightweight Foundry `Application`. Default assumption is Vue (consistent with sheets). If wiring `renderVueComponent()` in a modal context proves awkward, fall back to a minimal Foundry `FormApplication`.
+
+### Chat Card
+
+Mimics D35E's save roll window (see `migration notes/Save Roll window.png`). The key feature is the **modifier breakdown list** (the green circle panel in D35E) — every contributor shown as a labeled row, not just the final number.
+
+**Required elements**:
+- Save / stat name + actor name header
+- Large die result (the raw d20 face value) — prominently displayed
+- Large total — die + all modifiers
+- **Breakdown list** — one labeled row per modifier source:
+  - Base save/AC total (e.g. `Fortitude +4`)
+  - Situational bonus if non-zero (e.g. `Situational +2`)
+  - Die roll (e.g. `d20 → 14`)
+- Natural 1 callout (fumble styling) / Natural 20 callout (exceptional)
+- Pass / Fail indicator — shown only when a DC is provided (Phase 8 wire-up; Phase 7 leaves DC as an optional parameter that defaults to undefined / not shown)
+
+> **Design note**: Exact layout and styling is an implementation-time decision. The modifier breakdown list is the non-negotiable requirement — it must show every contributor in the order they were added. The D35E screenshot is the visual target; we do not need to pixel-match it.
+
+### Actor Method: `rollSave(saveKey, options)`
+
+```typescript
+// On CreatureDnd35e
+async rollSave(
+  saveKey: SaveKey,                  // 'fort' | 'ref' | 'will'
+  options?: {
+    situationalModifier?: number;    // pre-fill dialog situational field
+    rollMode?: string;               // CONST.DICE_ROLL_MODES default
+    dc?: number;                     // optional; shows pass/fail on card if set
+    skipDialog?: boolean;            // for macro / API callers
+  }
+): Promise<D20Roll>
+```
+
+**Pipeline**:
+1. If `!skipDialog` → render `D20RollDialog`; await user confirmation (situational mod, roll mode)
+2. Assemble modifier list: `[{ label: saveName, value: saveTotal }, { label: 'Situational', value: situationalMod }]`
+3. Build formula string: `"1d20 + @saveTotal + @situational"` with roll data from modifier list
+4. Create and evaluate `D20Roll` — `situationalModifiers` carries the labeled list
+5. Call `rollMessages.buildSaveCard(roll, modifierList, { dc, saveKey })` → HTML
+6. `ChatMessage.create({ content, roll, rollMode })`
+7. Return evaluated `D20Roll`
+
+A matching `rollAC(acVariant, options)` method follows the same pipeline with AC-appropriate labels (no pass/fail concept for Phase 7).
 
 ---
 
@@ -512,3 +604,53 @@ This system is orthogonal to field permission metadata for schema field groups o
 - [ ] Document D20Roll/DamageRoll for developers
 - [ ] Add journal entry in dev world: "Roll Formula System"
 - [ ] Create comment block in `rollData.mts` explaining architecture
+
+**POC Story 7.9 — Clickable Defense Stat → Roll → Chat Card:**
+
+*`CreatureDefenseStat.vue`*
+- [ ] Create `src/vue/components/actors/CreatureDefenseStat.vue`
+- [ ] Props: `label: string`, `value: number`, `rollable: boolean` (default `true`)
+- [ ] Edit mode: read-only display, no click handler
+- [ ] Play / True mode: cursor pointer, click emits roll intent
+- [ ] Wire into header stat pills: Fort | Ref | Will | AC (normal)
+- [ ] Wire into Combat tab rows: all three AC variants + fort/ref/will rows
+- [ ] Test: Click in edit mode does nothing
+- [ ] Test: Click in play mode triggers dialog
+
+*`D20RollDialog.vue`*
+- [ ] Create `src/vue/components/dialogs/D20RollDialog.vue`
+- [ ] Props: `title: string`, `baseTotal: number`, `defaultRollMode: string`
+- [ ] Signed situational modifier input, defaults to `0`
+- [ ] Live total preview (`baseTotal + situationalMod`)
+- [ ] Roll Mode selector bound to `CONST.DICE_ROLL_MODES` options
+- [ ] Roll button: resolves promise with `{ situationalMod, rollMode }`; closes dialog
+- [ ] Cancel button / ESC: resolves with `null` (roll cancelled)
+- [ ] Test: Total preview updates reactively
+- [ ] Test: Submitting with no situational mod passes 0
+- [ ] Test: Cancel resolves null
+
+*`rollMessages.mts` + chat card*
+- [ ] Create `src/helpers/rollMessages.mts`
+- [ ] `buildSaveCard(roll: D20Roll, modifierList: RollModifier[], opts: { dc?, saveKey })` → HTML string
+- [ ] `buildACCard(roll: D20Roll, modifierList: RollModifier[], opts: { acVariant })` → HTML string
+- [ ] Create `src/vue/components/chat/SaveRollChatCard.vue` (rendered into card HTML)
+- [ ] Card shows: stat name + actor name header, large die face value, large total
+- [ ] Breakdown list: one row per `RollModifier` entry (label + signed value) + die row
+- [ ] Natural 1 / Natural 20 callout (distinct CSS class for styling)
+- [ ] Pass / Fail indicator: only rendered when `dc` is provided
+- [ ] Test: Card renders breakdown list with correct labels and values
+- [ ] Test: Natural 1 has fumble CSS class
+- [ ] Test: Natural 20 has exceptional CSS class
+- [ ] Test: Pass/Fail absent when no DC; correct when DC provided
+
+*`CreatureDnd35e` actor methods*
+- [ ] Add `async rollSave(saveKey: SaveKey, options?)` to `CreatureDnd35e`
+- [ ] Add `async rollAC(acVariant: 'normal'|'touch'|'flatFooted', options?)` to `CreatureDnd35e`
+- [ ] Both methods follow the dialog → D20Roll → ChatMessage pipeline (§7.9)
+- [ ] `skipDialog` option bypasses dialog (for macro callers)
+- [ ] Test: `rollSave('fort')` creates a chat message with Fort save breakdown
+- [ ] Test: Situational modifier from dialog appears in card breakdown
+- [ ] Test: `skipDialog: true` skips dialog and uses provided options directly
+- [ ] Test: `rollSave` with `dc: 15` shows Pass on roll ≥ 15, Fail below
+
+*E2E acceptance*: Open character sheet in play mode → click Fort save pill → dialog opens with correct base total → enter `+2` situational modifier → click Roll → chat card appears with: `Fortitude +X`, `Situational +2`, `d20 → N`, bold total. Click AC pill → same pipeline, AC-labeled card, no Pass/Fail shown.

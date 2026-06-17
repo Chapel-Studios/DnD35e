@@ -7,27 +7,90 @@
   "dnd35e": {
     "CREATURE": {
       "FIELDS": {
+        "abilities": {
+          "label": "Ability Scores",
+          "str": { "label": "Strength",     "base": { "label": "Strength"     }, "mod": { "label": "STR Mod" } },
+          "dex": { "label": "Dexterity",    "base": { "label": "Dexterity"    }, "mod": { "label": "DEX Mod" } },
+          "con": { "label": "Constitution", "base": { "label": "Constitution" }, "mod": { "label": "CON Mod" } },
+          "int": { "label": "Intelligence", "base": { "label": "Intelligence" }, "mod": { "label": "INT Mod" } },
+          "wis": { "label": "Wisdom",       "base": { "label": "Wisdom"       }, "mod": { "label": "WIS Mod" } },
+          "cha": { "label": "Charisma",     "base": { "label": "Charisma"     }, "mod": { "label": "CHA Mod" } }
+        },
+        "hp": {
+          "label": "Hit Points",
+          "max":       { "label": "Max HP" },
+          "current":   { "label": "Current HP" },
+          "temp":      { "label": "Temp HP" },
+          "nonlethal": { "label": "Nonlethal Damage" },
+          "fastHealing": { "label": "Fast Healing" },
+          "regeneration": { "label": "Regeneration" }
+        },
+        "bab": {
+          "label": "Base Attack Bonus",
+          "total": { "label": "BAB" }
+        },
+        "defense": {
+          "label": "Armor Class",
+          "armorClass":     { "label": "AC", "tooltip": "Armor Class" },
+          "touchAC":      { "label": "Touch", "tooltip": "Touch AC"   },
+          "flatFootedAC": { "label": "Flat-Footed", "tooltip": "Flat-Footed AC" },
+          "naturalArmor":    { "label": "Natural Armor", "tooltip": "Natural Armor Bonus" },
+          "spellResistance": { "label": "Spell Resistance", "tooltip": "Spell Resistance" },
+          "concealment":      { "label": "Concealment", "tooltip": "Concealment Bonus" }
+        },
+        "saves": {
+          "label": "Saving Throws",
+          "fort": { "label": "Fortitude", "total": { "label": "Fort" } },
+          "ref":  { "label": "Reflex",    "total": { "label": "Ref" } },
+          "will": { "label": "Will",      "total": { "label": "Will" } }
+        },
+        "init": {
+          "label": "Initiative",
+          "total": { "label": "Init" }
+        },
+        "level": { "label": "Level" },
+        "notes": { "label": "Notes" },
+        "encumbrance": {
+          "label": "Encumbrance",
+          "carriedWeight":   { "label": "Carried Weight" },
+          "light":           { "label": "Light Load" },
+          "medium":          { "label": "Medium Load" },
+          "heavy":           { "label": "Heavy Load" },
+          "carry":           { "label": "Max Carry" },
+          "drag":            { "label": "Max Drag" },
+          "level":           { "label": "Encumbrance Level" },
+          "carryBonus":      { "label": "Carry Bonus" },
+          "carryMultiplier": { "label": "Carry Multiplier" }
+        },
         "bio": {
           "label": "Biography",
-          "gender": { "label": "Gender" },
-          "deity":  { "label": "Deity" },
-          "age":    { "label": "Age" },
-          "height": { "label": "Height" },
-          "weight": { "label": "Weight" }
-        },
-        "alignment": {
-          "label": "Alignment",
-          "law":   { "label": "Law/Chaos" },
-          "moral": { "label": "Good/Evil" }
-        },
-        "speed": {
-          "label": "Speed",
-          "land": {
-            "label": "Land Speed",
-            "base":  { "label": "Land Speed" },
-            "total": { "label": "Total Land Speed" }
+          "gender":    { "label": "Gender" },
+          "deity":     { "label": "Deity" },
+          "age":       { "label": "Age" },
+          "height":    { "label": "Height" },
+          "weight":    { "label": "Weight" },
+          "languages": { "label": "Languages" },
+          "senses": {
+            "label": "Senses",
+            "add": "Add Sense",
+            "remove": "Remove Sense",
+            "empty": "No senses configured"
+          },
+          "alignment": {
+            "label": "Alignment",
+            "law":   { "label": "Law/Chaos" },
+            "moral": { "label": "Good/Evil" }
           }
-        }
+        },
+        "settings": {
+          "label": "Settings",
+          "isPartyMember": { "label": "Party Member" }
+        },
+        "size": { "label": "Size" },
+        "reach": { "label": "Reach", "hint": "The distance at which this creature can make melee attacks." },
+        "isIncorporeal": { "label": "Incorporeal?", "hint": "Whether this creature is incorporeal or not." },
+        "isQuadraped": { "label": "Quadruped?", "hint": "Whether this creature is a quadruped or not." },
+        "creatureType": { "label": "Creature Type", "hint": "The creature type of this creature, such as 'Humanoid', 'Undead', 'Dragon', etc." }
       },
       "alignment": {
         "trueNeutral": "True Neutral",
@@ -44,6 +107,17 @@
       }
     },
     "ACTOR": {
+      "FIELDS": {
+        "speed": {
+          "label": "Speed",
+          "land":   { "label": "Land Speed",   "base": { "label": "Land"   }, "total": { "label": "Total Land Speed"   } },
+          "climb":  { "label": "Climb Speed",  "base": { "label": "Climb"  }, "total": { "label": "Total Climb Speed"  } },
+          "swim":   { "label": "Swim Speed",   "base": { "label": "Swim"   }, "total": { "label": "Total Swim Speed"   } },
+          "fly":    { "label": "Fly Speed",    "base": { "label": "Fly"    }, "total": { "label": "Total Fly Speed"    } },
+          "burrow": { "label": "Burrow Speed", "base": { "label": "Burrow" }, "total": { "label": "Total Burrow Speed" } },
+          "flyManeuverability": { "label": "Fly Maneuverability" }
+        }
+      },
       "sheet": {
         "Character": "D&D 3.5e Character Sheet"
       },
@@ -54,15 +128,20 @@
         "Inventory": "Inventory",
         "Features": "Features",
         "Skills": "Skills",
+        "Bio": "Biography",
         "Buffs": "Buffs",
         "Spells": "Spells",
-        "Notes": "Notes"
+        "Notes": "Notes",
+        "Settings": "Settings"
       },
       "section": {
         "AbilityScores": "Ability Scores",
         "Health": "Health",
-        "Actions": "Actions",
-        "Skills": "Skills"
+        "Actions": "Quick Actions",
+        "Skills": "Skills",
+        "Speed": "Movement",
+        "p-attributes": "Physical Attributes",
+        "c-attributes": "Combat Attributes"
       },
       "header": {
         "xp": "XP",
@@ -79,15 +158,40 @@
         "bab": "BAB",
         "ac": "AC",
         "touch": "Touch",
-        "flatFooted": "FF",
+        "flatFooted": "Flat-Footed",
         "fort": "Fort",
         "ref": "Ref",
         "will": "Will",
         "points": "Points",
         "total": "Total"
       },
+      "flyManeuverability": {
+        "clumsy": "Clumsy",
+        "poor": "Poor",
+        "average": "Average",
+        "good": "Good",
+        "perfect": "Perfect"
+      },
+      "sense": {
+        "darkvision": "Darkvision",
+        "lowLight": "Low-Light Vision",
+        "tremorsense": "Tremorsense",
+        "blindsight": "Blindsight",
+        "scent": "Scent",
+        "trapSense": "Trap Sense"
+      },
+      "trait": {
+        "creatureType": "Creature Type",
+        "reach": "Reach"
+      },
       "action": {
         "rest": "Rest"
+      },
+      "bio": {
+        "identity": "Identity",
+        "physical": "Physical",
+        "addLanguage": "Add language...",
+        "removeLanguage": "Remove"
       },
       "field": {
         "Biography": "Biography",

@@ -7,11 +7,13 @@
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
     :value="resolvedValue"
+    class="select-form-group"
   >
     <select
       :value="editValue"
       :disabled="isDisabled"
       @change="onChange(($event.target as HTMLSelectElement).value)"
+      class="form-control"
     >
       <option
         v-for="opt in options"
@@ -22,7 +24,9 @@
       </option>
     </select>
     <template #readonly>
-      <span>{{ readonlyLabel }}</span>
+      <slot name="readonly">
+        <span>{{ readonlyLabel }}</span>
+      </slot>
     </template>
   </FormGroup>
 </template>
@@ -62,7 +66,7 @@
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<TValue | undefined>(() =>
+  const resolvedValue = computed<TValue>(() =>
     props.value !== undefined ? props.value : getViewAwareFieldValue<TValue>(props.fieldPath)
   );
 
@@ -103,3 +107,13 @@
     fieldUpdater(parsed as TValue);
   }
 </script>
+
+<style lang="scss" scoped>
+  .select-form-group {
+
+    .form-control {
+      width: max-content;
+      justify-self: center;
+    }
+  }
+</style>

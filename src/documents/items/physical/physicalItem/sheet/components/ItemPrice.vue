@@ -1,5 +1,5 @@
 <template>
-  <ItemPriceFormGroup
+  <CoinageFormGroup
     label="Price"
     :value="price"
     field-path="system.price"
@@ -10,7 +10,7 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
-  import { ItemPriceFormGroup } from '@vc/fields/index.mjs';
+  import { CoinageFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
   const props = defineProps<{
@@ -24,4 +24,7 @@
     },
   } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 </script>
-<!-- Styles live in src/styles/core.scss — see price form group comment there for why. -->
+
+<style lang="scss" scoped>
+
+</style>

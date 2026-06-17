@@ -35,7 +35,7 @@ prepareBaseData() {
   
   // Set initial shell values that will be replaced
   this.system.attributes.bab = 0;
-  this.system.attributes.ac.value = 10;
+  this.system.defense.armorClass = 10;
 }
 ```
 

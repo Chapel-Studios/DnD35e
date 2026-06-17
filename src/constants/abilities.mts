@@ -1,18 +1,30 @@
-const ABILITY_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
+const STR = 'str';
+const DEX = 'dex';
+const CON = 'con';
+const INT = 'int';
+const WIS = 'wis';
+const CHA = 'cha';
+const ABILITY_KEYS = [STR, DEX, CON, INT, WIS, CHA] as const;
 type AbilityKey = (typeof ABILITY_KEYS)[number];
 
 const ABILITY_KEYS_LOCALIZED = {
-  str: 'dnd35e.ABILITY.str',
-  dex: 'dnd35e.ABILITY.dex',
-  con: 'dnd35e.ABILITY.con',
-  int: 'dnd35e.ABILITY.int',
-  wis: 'dnd35e.ABILITY.wis',
-  cha: 'dnd35e.ABILITY.cha',
+  [STR]: 'dnd35e.ABILITY.str',
+  [DEX]: 'dnd35e.ABILITY.dex',
+  [CON]: 'dnd35e.ABILITY.con',
+  [INT]: 'dnd35e.ABILITY.int',
+  [WIS]: 'dnd35e.ABILITY.wis',
+  [CHA]: 'dnd35e.ABILITY.cha',
 } as const satisfies Record<AbilityKey, string>;
 
 export {
   ABILITY_KEYS,
   ABILITY_KEYS_LOCALIZED,
+  CHA,
+  CON,
+  DEX,
+  INT,
+  STR,
+  WIS,
 };
 
 export type {

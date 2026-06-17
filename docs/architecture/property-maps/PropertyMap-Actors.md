@@ -209,9 +209,9 @@ Shared by Character and NPC.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `ac.normal` | number | 6 🔲 | Derived | `attributes.ac.normal.total` | `10 + DEX mod`. +armor/shield (Ph15), +size (Ph11), +deflect/dodge etc. |
-| `ac.touch` | number | 6 🔲 | Derived | `attributes.ac.touch.total` | `10 + DEX mod`. No armor/shield |
-| `ac.flatFooted` | number | 6 🔲 | Derived | `attributes.ac.flatFooted.total` | `10`. No DEX bonus |
+| `defense.armorClass` | number | 6 🔲 | Derived | `defense.armorClass.total` | `10 + DEX mod`. +armor/shield (Ph15), +size (Ph11), +deflect/dodge etc. |
+| `defense.touchAC` | number | 6 🔲 | Derived | `attributes.defense.touchAC.total` | `10 + DEX mod`. No armor/shield |
+| `defense.flatFootedAC` | number | 6 🔲 | Derived | `attributes.defense.flatFootedAC.total` | `10`. No DEX bonus |
 | `ac.naturalArmor` | number | 11 (Races) 🔲 | Stored | `attributes.naturalAC` | Race/monster natural armor |
 
 ##### AC fields deferred

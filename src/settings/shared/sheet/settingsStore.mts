@@ -1,5 +1,5 @@
 import type { UnitOfMeasureOption } from '@settings/display/unitOfMeasure.mjs';
-import { imperialUnitOfMeasure, WEIGHT_OPTIONS } from '@settings/display/unitOfMeasure.mjs';
+import { imperialUnitOfMeasure } from '@settings/display/unitOfMeasure.mjs';
 import type { CoinageDefinition, CurrencyConfig } from '@settings/index.mjs';
 import { CURRENCY_KEY, DISPLAY_WORLD_KEYS } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -19,10 +19,10 @@ const useSettingsStore = (): SettingsStore => {
   const measurement = {
     unitOfMeasure,
     weightDisplayLabel: computed(() => {
-      return WEIGHT_OPTIONS[unitOfMeasure.value].label;
+      return game.i18n.localize(`dnd35e.MEASUREMENT.${unitOfMeasure.value}.weight.label`);
     }),
     weightDisplayShortLabel: computed(() => {
-      return WEIGHT_OPTIONS[unitOfMeasure.value].short;
+      return game.i18n.localize(`dnd35e.MEASUREMENT.${unitOfMeasure.value}.weight.abbreviation`);
     }),
     convertToLocalizedWeight: (storedWeight: number) => {
       const unitOfMeasure = game.settings.get(SYSTEM_ID, DISPLAY_WORLD_KEYS.UNITS) ?? imperialUnitOfMeasure;
@@ -42,6 +42,30 @@ const useSettingsStore = (): SettingsStore => {
         return localizedWeight * 2; // Example conversion, adjust as needed
       }
     },
+    distanceDisplayLabel: computed(() => {
+      return game.i18n.localize(`dnd35e.MEASUREMENT.${unitOfMeasure.value}.distance.label`);
+    }),
+    distanceDisplayShortLabel: computed(() => {
+      return game.i18n.localize(`dnd35e.MEASUREMENT.${unitOfMeasure.value}.distance.abbreviation`);
+    }),
+    convertToLocalizedDistance: (storedDistance: number) => {
+      const unitOfMeasure = game.settings.get(SYSTEM_ID, DISPLAY_WORLD_KEYS.UNITS) ?? imperialUnitOfMeasure;
+      if (unitOfMeasure === 'imperial') {
+        return storedDistance;
+      } else {
+        // Convert to metric
+        return (storedDistance / 5) * 1.5; // Example conversion, adjust as needed
+      }
+    },
+    convertToStoredDistance: (localizedDistance: number) => {
+      const unitOfMeasure = game.settings.get(SYSTEM_ID, DISPLAY_WORLD_KEYS.UNITS) ?? imperialUnitOfMeasure;
+      if (unitOfMeasure === 'imperial') {
+        return localizedDistance;
+      } else {
+        // Convert to imperial
+        return (localizedDistance / 1.5) * 5; // Example conversion, adjust as needed
+      }
+    },
   };
 
   return {
@@ -59,11 +83,15 @@ type SettingsStore = {
     rollUpTargetCoin: ComputedRef<string>;
   };
   measurement: {
-    unitOfMeasure: ComputedRef<string>;
-    convertToLocalizedWeight: (storedWeight: number) => number;
+    unitOfMeasure: ComputedRef<UnitOfMeasureOption>;
     weightDisplayLabel: ComputedRef<string>;
     weightDisplayShortLabel: ComputedRef<string>;
+    convertToLocalizedWeight: (storedWeight: number) => number;
     convertToStoredWeight: (localizedWeight: number) => number;
+    distanceDisplayLabel: ComputedRef<string>;
+    distanceDisplayShortLabel: ComputedRef<string>;
+    convertToLocalizedDistance: (storedDistance: number) => number;
+    convertToStoredDistance: (localizedDistance: number) => number;
   };
 };
 

@@ -1,6 +1,6 @@
 <template>
   <FormGroup
-    field-path="system.alignment"
+    field-path="system.bio.alignment"
     :value="alignmentLabel ?? ''"
   >
     <div class="alignment-selects">
@@ -36,8 +36,8 @@
     documentActions: { getDirectFieldUpdater },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
-  const updateLaw   = getDirectFieldUpdater('system.alignment.law');
-  const updateMoral = getDirectFieldUpdater('system.alignment.moral');
+  const updateLaw   = getDirectFieldUpdater('system.bio.alignment.law');
+  const updateMoral = getDirectFieldUpdater('system.bio.alignment.moral');
 
   const onLawChange   = (e: Event) => updateLaw((e.target  as HTMLSelectElement).value || null);
   const onMoralChange = (e: Event) => updateMoral((e.target as HTMLSelectElement).value || null);

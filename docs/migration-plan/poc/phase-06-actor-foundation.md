@@ -6,7 +6,7 @@
 > **Dependencies**: Phase 1, Phase 3  
 > **Goal**: A character actor has ability scores, BAB, HP, flat AC, saves, speed, size, and an inventory with equipped weapon tracking. All stats are stored as formula-ready fields that poc.10 (Basic Combat) and alpha.3 (Action System) consume via `#self.*` contexts.
 
-> **Action System note**: poc.10 and alpha.3 action formulas reference actor stats via `#self.*` contexts — e.g., `#self.abilities.str.mod`, `#self.bab`, `#self.ac.*`, `#self.saves.*`. These are **derived** fields (`persisted: false`): `str.mod` is calculated from base score, `bab` derives from class progressions (alpha.2; resolves to `0` until then), and `attributes.ac.*` is computed from DEX + size + bonuses. Base score fields are stored; derived stats are computed each prep cycle.
+> **Action System note**: poc.10 and alpha.3 action formulas reference actor stats via `#self.*` contexts — e.g., `#self.abilities.str.mod`, `#self.bab`, `#self.ac.*`, `#self.saves.*`. These are **derived** fields (`persisted: false`): `str.mod` is calculated from base score, `bab` derives from class progressions (alpha.2; resolves to `0` until then), and `defense.armorClass.*` is computed from DEX + size + bonuses. Base score fields are stored; derived stats are computed each prep cycle.
 
 ---
 
@@ -39,7 +39,7 @@ The following TODO notes exist in the codebase and are tracked here for resoluti
 
 ## Phase Delivery Plan
 
-Phase 6 is delivered in **4 stories**. Each story ends with a working, user-testable slice — E2E tests are written at story completion. Unit tests accompany each commit within a story.
+Phase 6 is delivered in **6 stories**. Each story ends with a working, user-testable slice — E2E tests are written at story completion. Unit tests accompany each commit within a story.
 ### Pre-story: Rename `PriceField` / `PriceData` → `CurrencyField` / `CurrencyData`
 
 **Rationale**: `PriceField` is a generic currency-value field that happens to be used as an item's sale price. Naming it after its most common use case leaks item semantics into infrastructure. Phase 6 adds it to the actor schema as `currency: CurrencyField` — which reads wrong with the old name. Rename now so all Phase 6 code starts with the correct name.
@@ -47,7 +47,7 @@ Phase 6 is delivered in **4 stories**. Each story ends with a working, user-test
 **Scope**:
 - `src/fields/PriceField.mts` → `src/fields/CurrencyField.mts` (class `CurrencyField`, type `CurrencyData`)
 - All usages: `new PriceField()` → `new CurrencyField()`, `PriceData` → `CurrencyData`
-- **Keep "Price" in item-specific components**: `ItemPriceFormGroup.vue`, `ItemPrice.vue`, `ItemResalePrice.vue` — these are contextually correct (they display an item's price).
+- **Keep "Price" in item-specific components**: `CoinageFormGroup.vue`, `ItemPrice.vue`, `ItemResalePrice.vue` — these are contextually correct (they display an item's price).
 - **Keep "price" as the schema field name on items**: `price: new CurrencyField()` — field name is still `price`, only the class name changes.
 
 This pre-story PR contains **3 commits**:
@@ -63,14 +63,13 @@ Story 1
   └─► Story 3  ──► Story 4
 ```
 
-Stories 2–5 are independent of each other and can be worked in parallel after Story 1 merges. Stories 2 and 3 are design-only (layout/CSS) and do not block Combat Stats (Story 4).
+Stories 2–4 are independent of each other and can be worked in parallel after Story 1 merges. Story 5 can also run in parallel technically, but execution order should prefer **Story 4 -> Story 5 -> Story 6** so actor AE integration lands after inventory/equipment item sources are in place.
 
 ```
 Story 1
   └─► Story 2 (Summary Design)
   └─► Story 3 (Attributes Design)
-  └─► Story 4 (Combat Stats) ──► Story 6 (AEs)
-  └─► Story 5 (Inventory)
+  └─► Story 4 (Combat Stats) ──► Story 5 (Inventory) ──► Story 6 (AEs)
 ```
 
 ---
@@ -108,13 +107,31 @@ Story 1
 
 ---
 
-### Story 3 — Attributes Tab Design
+### Story 3 — Attributes Tab Redesign + Sheet Reorganization
 
+**Status**: ✅ Complete  
 **User**: GM/Player  
-**Delivers**: Attributes tab redesigned to match D35E layout — full-size editable panels for ability scores, HP, AC variants, saves, speed, and initiative. More spacious than Summary tab; intended for detailed editing.  
+**Delivers**: Full sheet reorganization — stats are split to their correct tabs, a new Bio tab holds character identity fields, a new Settings tab scaffolds per-character toggles, the header gains a compact HP/AC/Saves pill strip and a Rest icon (replacing the verbose identity rows), and the Attributes tab is rebuilt as spacious editing panels for ability scores, speed stubs, senses stub, and traits. Initiative moves off Attributes and into the Combat tab (Story 4). Story 3 is purely UI/layout — no new derived data pipeline (Story 4 owns that). Stub panels hard-code sensible placeholder values until Story 4 wires live derivation.  
 **Depends on**: Story 1.
 
-> **Status**: Planned. Scope to be defined when Story 2 ships.
+**Completed in**: bio info moved out of header into new Bio tab; Summary stats moved to header sidebar; Settings tab added.
+
+**Schema additions (on `CreatureSystemModel`):**
+- `system.bio.alignment` — **moved** from `system.alignment`; fields (`law`, `moral`) unchanged, only path changes. Simple `migrateData()` handles existing actors.
+- `system.bio.languages: ArrayField(StringField, { initial: [] })` — new; managed on Bio tab.
+- `system.bio.senses: ArrayField(SchemaField({ type, distance }), { initial: [] })` — structured senses list used by `CreatureSenses`.
+- `system.settings: SchemaField({ isPartyMember: BooleanField({ initial: false }) })` — new; managed on Settings tab.
+- `creature.race` — **not a schema field**. A getter property on `CreatureDnd35e` class returning `'Human'` (stub until Race item type lands in a later phase).
+
+**Commits:**
+1. **Schema: bio.alignment migration + bio.languages + bio.senses + system.settings** — Move `system.alignment` → `system.bio.alignment` (add static `migrateData()` to `CreatureSystemModel` to rewrite path for existing documents). Add `system.bio.languages: ArrayField(StringField)`. Add `system.bio.senses: StringField` (nullable stub). Add `system.settings: SchemaField({ isPartyMember })`. Add `get race()` stub getter on `CreatureDnd35e` returning `'Human'`. Update all existing component/store references from `system.alignment` → `system.bio.alignment`. *(Unit tests: schema instantiates; languages array accepts strings; alignment at new path; migration correctly rewrites old path)*
+2. **Header redesign** — Strip `CreatureHeaderDetails.vue` down to: portrait, name, XP bar, and a new compact stat-pill strip (HP `current/max` | AC | Fort | Ref | Will — stub values, Story 4 wires live data). Add Rest button as a `fa-campground` icon button in the header. Remove the three identity detail rows (gender/alignment/deity, age/height/weight, race/speed); the sub-components (`CreatureGender`, `CreatureAlignment`, etc.) are kept for Bio tab reuse. Update `DocumentHeader.vue` / `CreatureSheet.vue` grid columns as needed. *(Unit tests: header renders pills; icon button renders)*
+3. **Bio tab (new)** — Create `src/documents/actors/creature/sheet/tabs/bio/BioTab.vue`. Sections: **Identity** (gender, alignment reusing existing `CreatureAlignment`/`CreatureGender`/`CreatureDeity` components), **Physical** (age, height, weight), **Race** (display-only, renders `creature.race` getter), **Languages** (chip/tag list bound to `system.bio.languages`), **Senses** (textarea for `system.bio.senses` stub), **Biography** (HTML editor from `system.description`). Add tab to `CreatureSheet.vue`. *(Unit tests: tab mounts; languages list renders; alignment binds to new path)*
+4. **Settings tab (new)** — Create `src/documents/actors/creature/sheet/tabs/SettingsTab.vue`. "General Settings" section with `isPartyMember` toggle (`ToggleSwitchFormGroup` bound to `system.settings.isPartyMember`). Add tab to `CreatureSheet.vue`. *(Unit tests: tab mounts; toggle saves correctly)*
+5. **Summary tab cleanup** — Strip `SummaryStatPanel.vue`: remove HP group, AC trio, Saves trio, and Rest button (all now on header or Combat tab). Keep Init + BAB pair. Summary 3-column layout unchanged; middle column now shows only Init/BAB with a "Combat stats · Story 4" placeholder note. *(Unit tests: stripped panel renders without HP/AC/Saves)*
+6. **Attributes tab redesign** — Delete `HpSection.vue`, `SavingThrowsSection.vue`, `ArmorClassSection.vue`, `InitiativeSpeedSection.vue` (all dead code; combat sections rebuilt fresh in Story 4). Rebuild `AbilityScoresSection.vue` as wide-card format: 6 cards each with large `total/mod` display, small `base` input, and a "…" overflow button (renders, does nothing — Phase 20 wires damage/drain/penalties modal). Extract previous compact table as `AbilityScoresTable.vue` for continued use in Summary tab. Add `ActorSpeed.vue`: 5 stub cards (Land=30ft, Climb/Swim/Burrow/Fly=—); Story 4 adds schema + derivation. Replace `SensesSection` textarea with `CreatureSenses` structured list editor (`type` + `distance`). Add `PhysicalAttributes.vue`: Size dropdown (`SIZE_SELECT_OPTIONS`), Creature Type text stub, Reach text stub. Add `CombatAttributes.vue`: init/BAB and combat-resistance stubs (SR/NA/concealment/regen/fast healing). Update `AttributesTab.vue` to use physical/combat sections. *(Unit tests: cards render; Size dropdown saves via SIZE_SELECT_OPTIONS; overflow button renders inert)*
+
+**E2E acceptance**: Open character sheet → Header shows HP/AC/Saves pills and tent-icon Rest button (no identity rows) → Bio tab opens; gender/alignment/deity/age/height/weight visible; languages field is editable → Settings tab shows Party Member toggle; toggling saves correctly → Summary tab shows only Init + BAB (no HP/AC/Saves) + Skills placeholder → Attributes tab shows 6 wide ability score cards + 5 speed stub cards + Size dropdown + Senses text → changing Size saves correctly.
 
 ---
 
@@ -131,13 +148,18 @@ Story 1
 
 **E2E acceptance**: Create character with DEX 16 → AC shows `13` (10 + 3); edit `hp.current` → value persists after sheet re-open. *(No E2E for `hp.max` until Classes phase — alpha.2)*
 
+**Implementation note (current branch reality):**
+- `system.defense.spellResistance` is now a `FormulaField` (`expectedType: 'number'`) in `CreatureSystemModel`.
+- UI scaffold exists via `SpellResistance.vue`, but update wiring is still a stub (`console.log`) and must be replaced with a real store updater.
+- Flat-footed in Story 4 is a **no-condition baseline value** only; condition-aware DEX denial is deferred to condition/AE combat work (poc.10 / alpha.8).
+
 ---
 
 ### Story 5 — Inventory, Equipment Slots, Encumbrance, Currency
 
 **User**: GM/Player  
 **Delivers**: Inventory tab shows owned items grouped by type; items dragged from compendium appear in the list; weapons can be equipped to mainhand/offhand; encumbrance tier shown; currency field on sheet.  
-**Depends on**: Story 1. **Runs in parallel with Stories 2–4.**
+**Depends on**: Story 1. **Can run in parallel with Stories 2–4, but preferred sequencing is after Story 4 and before Story 6.**
 
 **Commits:**
 1. **Inventory tab scaffold** — Inventory tab with grouped item list (Weapons / Equipment / Consumables / Loot); item rows: name, quantity, weight, price, carried/equipped state. *(Unit tests: grouping logic, stored-vs-carried display)*
@@ -176,20 +198,26 @@ ActorSystemModel (character)
 ├── abilities: { str, dex, con, int, wis, cha }
 │   Each: { base: number, mod: number (p:f) }
 │   (damage/drain/penalty added in Phase 20)
-├── hp: { base, max (p:f), current, temp, nonlethal }
+├── hp: { max (p:f), current, temp, nonlethal }
 ├── bab: { total (p:f) }
 ├── ac: { normal (p:f), touch (p:f), flatFooted (p:f) }  — start: 10 + DEX mod + size
 ├── saves: { fort, ref, will }
-│   Each: { base, total (p:f), ability: AbilityKey }
+│   Each: { total (p:f) }   (base + ability mod — class contributions in alpha.2)
 ├── speed: { land, climb, swim, burrow, fly }
-│   Each: { base, total (p:f) }
-├── init: { bonus, total (p:f) }
+│   Each: { base, total (p:f) }   (Story 4 adds schema + derivation)
+├── init: { total (p:f) }
 ├── sr: number
 ├── ~~dr: DamageReduction[]~~   ← deferred to alpha (phases 8/12/13/21 — Special Abilities & damage pipeline)
 ├── level (p:f, derived from class items)
 ├── xp: { value, max }
-├── alignment: [MoralAxis|null, ChaosAxis|null]
-├── race (p:f, derived from race item)
+├── bio: {
+│     gender, deity, age, height, weight  (nullable strings)
+│     alignment: { law: LawAxis|null, moral: MoralAxis|null }   (moved from system.alignment in Story 3)
+│     languages: string[]                                        (added Story 3)
+│     senses: string|null                                        (stub — folksonomy redesign deferred to token phase)
+│   }
+├── settings: { isPartyMember: boolean }                         (added Story 3)
+├── race  — NOT a schema field; getter on CreatureDnd35e returns 'Human' stub (real Race item lands in a later phase)
 ├── size: SizeCategory
 ├── currency: CurrencyField             (coin weight → encumbrance; "ignore currency weight" setting disables)
 └── encumbrance: { carriedWeight (p:f), light (p:f), medium (p:f), heavy (p:f), carry (p:f), drag (p:f), level (p:f), carryBonus, carryMultiplier }
@@ -230,11 +258,18 @@ One item per slot; exception: both ring slots may each hold one ring independent
 
 ## 5.5 Actor Sheet (Vue)
 
-- **Header**: Name, level, race, alignment, portrait
-- **Tabs**: Abilities, Inventory, Features, Effects, Biography
-- **Abilities tab**: Six ability scores (editable base, display modifier)
+- **Header**: Portrait, Name, XP bar, compact stat pills (HP | AC | Fort | Ref | Will), Rest icon button (`fa-campground`)
+- **Tabs**: Summary, Attributes, Combat, Inventory, Features, Skills, Bio, Effects, Settings, Notes
+- **Summary tab**: 3-column grid — compact ability scores table (left), Init + BAB quick stats (middle), skills placeholder (right)
+- **Attributes tab**: Wide ability score cards (base input + total/mod display), Speed stub cards, Senses stub, Traits (Size dropdown + stubs)
+- **Combat tab**: HP, AC trio, Saves, BAB, Initiative — added in Story 4; combat-only resistances (SR, NA, DR, fast healing, etc.) in later phases
 - **Inventory tab**: Grouped item list, equip toggles, weight/price, drag-and-drop
+- **Features tab**: Placeholder — feats/class features in later phases
+- **Skills tab**: Skills list + ACP reference — later phases
+- **Bio tab**: Identity (gender, alignment, deity), Physical (age, height, weight), Race (getter stub), Languages, Senses, Biography
 - **Effects tab**: Active effects on the actor
+- **Settings tab**: Per-character toggles (`isPartyMember`; more settings added in later phases)
+- **Notes tab**: GM session notes
 - **All strings via i18n keys**
 
 ## 5.6 Document Store Refresh
@@ -269,8 +304,8 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 **Foundry v14 Integration:**
 - [ ] Use `persisted: false` for ALL derived stat fields: ability mods, AC totals, save totals, init total, BAB total, HP max, speed totals, encumbrance thresholds, level, race string
 - [ ] Set `CONFIG.Actor.trackableAttributes` in `setup` hook:
-  - `character: { bar: ['hp'], value: ['ac.normal', 'init.total'] }`
-  - `npc: { bar: ['hp'], value: ['ac.normal', 'init.total', 'cr'] }`
+  - `character: { bar: ['hp'], value: ['defense.armorClass', 'init.total'] }`
+  - `npc: { bar: ['hp'], value: ['defense.armorClass', 'init.total', 'cr'] }`
 - [ ] Override `Actor.modifyTokenAttribute()` for temp HP, nonlethal damage, custom bar modification
 - [ ] Implement `isOfType(...types)` method on `ActorDnd35e` with TypeScript overloads for type narrowing (PF2E pattern)
 - [ ] Register `CONFIG.Actor.documentClass = ActorProxyDnd35e` in `init` hook
@@ -282,17 +317,20 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 - [ ] Create `src/documents/actors/baseActor/data/ActorSystemModelBase.mts` — universal base (`ActorSystemModelBase`): speed fields (land/climb/swim/burrow/fly each with base + total `persisted:false`), biography, notes
 - [ ] Create `src/documents/actors/baseActor/data/CreatureSystemModel.mts` — `CreatureSystemModel extends ActorSystemModelBase`: all creature-shared stats
   - [x] Abilities: str, dex, con, int, wis, cha each with `base: number` + `mod: number (persisted:false)`
-  - [ ] `hp`: `base, max (persisted:false), current, temp, nonlethal`
-  - [ ] `bab`: `total (persisted:false, derived as 0; alpha.2 fills class progression)`
-  - [ ] `ac`: `normal, touch, flatFooted` all `persisted:false` — start at `10 + DEX mod + size`
-  - [ ] `saves`: fort, ref, will each with `base + total (persisted:false) + ability: AbilityKey`
-  - [ ] `init`: `bonus + total (persisted:false)`
-  - [ ] `sr`: number; `dr`: DamageReduction[] array
-  - [ ] `currency: CurrencyField` at schema root (world-settings currencies; coin weight → encumbrance)
-  - [ ] Encumbrance: `carriedWeight (pf), light/medium/heavy/carry/drag thresholds (pf), carryBonus, carryMultiplier`
+  - [x] `hp`: `max (persisted:false), current, temp, nonlethal` (plus `regeneration` and `fastHealing` scaffolding)
+  - [x] `bab`: `total (persisted:false, derived as 0; alpha.2 fills class progression)`
+  - [x] `defense`: `armorClass`, `touchAC`, `flatFootedAC` all `persisted:false` (renamed from legacy `ac.*` shape)
+  - [x] `saves`: fort, ref, will each with `total (persisted:false)`
+  - [x] `init`: `total (persisted:false)`
+  - [x] `defense.spellResistance`: FormulaField (`expectedType: number`) scaffolded
+  - [ ] `dr`: DamageReduction[] array
+  - [x] `currency: CurrencyField` at schema root (world-settings currencies; coin weight → encumbrance)
+  - [x] Encumbrance schema: `carriedWeight`, `light/medium/heavy/carry/drag`, `level`, `carryBonus`, `carryMultiplier`
 - [ ] Create `src/documents/actors/character/data/CharacterSystemModel.mts` — `CharacterSystemModel extends CreatureSystemModel`: character-only fields
-  - [ ] `level (persisted:false)`, `xp: {value, max}`, `alignment`, `race (persisted:false)`, `size: SizeCategory`
-  - [ ] `isPartyMember: boolean`
+  - [ ] `level (persisted:false)`, `xp: {value, max}`, `size: SizeCategory`
+  - [x] `bio.alignment` (moved from top-level `system.alignment` — Story 3), `bio.languages: string[]`, `bio.senses: SenseEntrySource[]`
+  - [x] `settings.isPartyMember: boolean`
+  - [x] `get race()` getter on `CreatureDnd35e` returning `'Human'` stub — NOT a schema field (real Race item in a later phase)
 - [ ] Create `src/documents/actors/npc/data/NpcSystemModel.mts` — `NpcSystemModel extends CreatureSystemModel`: **stub only** (Phase 23 adds cr, type/subtype, environment, treasure, advancement)
 - [ ] Create `src/documents/actors/object/data/ObjectSystemModel.mts` — `ObjectSystemModel extends ActorSystemModelBase`: **stub only** (Phase 23 adds HP(object), hardness, breakDC)
 - [ ] Create `src/documents/actors/trap/data/TrapSystemModel.mts` — `TrapSystemModel extends ObjectSystemModel`: **stub only** (Phase 23 adds findDC, disarmDC)
@@ -302,7 +340,7 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 **Derived Data Preparation Pipeline:**
 - [ ] Implement `prepareBaseData()`: Load ability scores, level, size from source
 - [x] Implement ability modifier calculation: `mod = floor((ability - 10) / 2)` for all six
-- [ ] Implement AC calculation for all three variants: normal (10 + DEX), touch (10 + DEX), flatFooted (10 or less if no DEX)
+- [ ] Implement AC calculation for all three variants: normal (10 + DEX), touch (10 + DEX), flatFooted baseline (no-condition value; condition-aware DEX denial deferred)
 - [ ] Implement AC size modifier: add `actor.system.size` modifier to all AC variants
 - [ ] Implement carrying capacity from STR score using D&D 3.5e encumbrance table
 - [ ] Implement encumbrance threshold calculation (light = 1/3 carry, medium = 2/3, heavy = carry)
@@ -311,15 +349,16 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 - [ ] Implement initiative total = DEX mod + bonus field
 - [ ] Implement BAB calculation stub (rule: compute from class items, stub as 0 for now, alpha.2 fills in class contribution)
 - [ ] Implement save calculations stub (rule: base + ability mod, class contributions in alpha.2)
-- [ ] Call `applyActiveEffects()` during `prepareDerivedData()` prep cycle
+- [ ] Call `applyActiveEffects()` during `prepareDerivedData()` prep cycle (Story 6 sequencing: land after inventory/equipment sources)
 - [ ] Test: Prep cycle completes without errors for fresh actor
 
 **Formula-Ready Field Preparation for poc.10 / alpha.3:**
 - [ ] Call `_buildFormulaContexts()` (from Dnd35eDocumentMixin) in `prepareDerivedData()` to populate `#self.*` contexts
 - [ ] Verify RollData includes: abilities, ability modifiers, bab, ac variants, saves, speed, size, initiative, hp
-- [ ] Ensure `getRollData()` returns POJO with all formula-ready paths (e.g., `abilities.str.mod`, `bab`, `ac.normal`)
+- [ ] Ensure `getRollData()` returns POJO with all formula-ready paths (e.g., `abilities.str.mod`, `bab`, `defense.armorClass`)
 - [ ] Register formula contexts in Pinia store for IDE autocomplete hints
 - [ ] Document all formula paths available via `#self.*` that poc.10 and alpha.3 actions will consume
+- [ ] Wire `SpellResistance.vue` to a real FormulaFormGroup updater (replace current `console.log` stub) so SR formulas persist to `system.defense.spellResistance`
 - [ ] Test: `getRollData()` returns complete object with no undefined fields
 
 **Active Effect Integration (Stacking Engine):**
@@ -590,7 +629,11 @@ A separate **"Monsters die at 0"** world toggle makes NPC actors without class l
 | Create | `src/vue/apps/VueActorSheet.mts` — abstract actor sheet base, mirrors `VueItemSheet.mts`; extends `useVueDocumentSheetMixin(ActorSheetBase)` |
 | Widen | `src/vue/apps/VueDocumentSheetMixin.mts` — widen `TDocument` generic to accept `ActorDnd35e` |
 | Create | `src/documents/actors/character/sheet/CharacterSheet.mts` — concrete character sheet class extending `VueActorSheet` |
-| Create | `src/documents/actors/character/sheet/CharacterSheet.vue` — main character sheet Vue component (tabs: Abilities, Inventory, Features, Effects, Biography) |
+| Create | `src/documents/actors/character/sheet/CharacterSheet.vue` — main character sheet Vue component |
+| Create | `src/documents/actors/creature/sheet/tabs/bio/BioTab.vue` — Bio tab (identity, physical, languages, senses, biography) |
+| Create | `src/documents/actors/creature/sheet/tabs/SettingsTab.vue` — Settings tab (isPartyMember, future per-character settings) |
+| Create | `src/documents/actors/creature/sheet/tabs/sections/attributes/` — `AbilityScoresSection.vue` (wide cards), `AbilityScoresTable.vue` (compact, for Summary), `ActorSpeed.vue`, `SensesSection.vue`, `PhysicalAttributes.vue` |
+| Delete | `src/documents/actors/creature/sheet/tabs/sections/attributes/HpSection.vue`, `SavingThrowsSection.vue`, `ArmorClassSection.vue`, `InitiativeSpeedSection.vue` — moved to Combat tab (Story 4) |
 | Create | `src/documents/actors/character/sheet/components/` — AbilityScores.vue, InventoryTab.vue, EquipmentSlots.vue and other tab/section components |
 | Modify | `src/documents/actors/registration.mts` — register character sheet and `CharacterSystemModel` |
 | Create | `src/constants/abilities.mts` — ability score constants (keys, labels, associated saves) |

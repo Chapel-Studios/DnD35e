@@ -1,17 +1,19 @@
 <template>
   <div class="actor-tab attributes-tab">
-    <AbilityScoresSection />
-    <HpSection />
-    <SavingThrowsSection />
-    <InitiativeSpeedSection />
-    <ArmorClassSection />
+    <PhysicalAttributes />
+    <CombatAttributes />
   </div>
 </template>
 
 <script setup lang="ts">
-  import AbilityScoresSection from './sections/attributes/AbilityScoresSection.vue';
-  import ArmorClassSection from './sections/attributes/ArmorClassSection.vue';
-  import HpSection from './sections/attributes/HpSection.vue';
-  import InitiativeSpeedSection from './sections/attributes/InitiativeSpeedSection.vue';
-  import SavingThrowsSection from './sections/attributes/SavingThrowsSection.vue';
+  import CombatAttributes from './sections/attributes/CombatAttributes.vue';
+  import PhysicalAttributes from './sections/attributes/PhysicalAttributes.vue';
 </script>
+
+<style lang="scss" scoped>
+  .attributes-tab {
+    display: grid;
+    gap: 0.5rem;
+    width: 100%;
+  }
+</style>

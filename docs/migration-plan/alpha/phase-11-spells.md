@@ -111,7 +111,7 @@ Casting a prepared spell is an action through the Action System (Phase 9):
 - **Duration**: 1 min/level (20 rounds at CL 2)
 - **Range**: Touch
 - **AE changes**:
-  - `{ key: "system.ac.deflection", mode: ADD, value: "2", bonusType: "deflection" }`
+  - `{ key: "system.defense.deflection", mode: ADD, value: "2", bonusType: "deflection" }`
   - `{ key: "system.saves.fort.misc", mode: ADD, value: "2", bonusType: "resistance" }`
   - Same for ref, will
 - **What it proves**: Deflection and resistance bonus types. Touch range delivery.

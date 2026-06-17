@@ -8,6 +8,7 @@
     :default-editability="defaultEditability"
     :value="resolvedValue"
     :read-only="props.readOnly"
+    :force-edit="props.forceEdit"
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
@@ -15,13 +16,16 @@
     <template v-if="slots.readonly" #readonly>
       <slot name="readonly" />
     </template>
-    <input
-      type="number"
-      :value="editValue ?? ''"
-      :disabled="isDisabled"
-      @change="onChange(($event.target as HTMLInputElement).value)"
-    />
-    <span v-if="props.unit">{{ props.unit }}</span>
+    <div class="input-group">
+      <span v-if="props.unit" class="unit">{{ props.unit }}</span>
+      <input
+        type="number"
+        :value="editValue ?? ''"
+        :disabled="isDisabled"
+        @change="onChange(($event.target as HTMLInputElement).value)"
+        class="number-input"
+      />
+    </div>
   </FormGroup>
 </template>
 
@@ -54,6 +58,8 @@
     directUpdate?: boolean;
     /** When true, forces the readonly display. */
     readOnly?: boolean;
+    /** When true, forces the edit display even in play/true modes. */
+    forceEdit?: boolean;
   }>();
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
@@ -74,8 +80,10 @@
   const resolvedValue = computed<number | null>(() =>
     props.value !== undefined ? props.value : getViewAwareFieldValue<number | null>(props.fieldPath) ?? null
   );
+
   const isDisabled = computed(() => {
     if (props.disabled) return true;
+    if (props.forceEdit) return false;  // forceEdit fields stay enabled
     return !isEditMode.value;
   });
 
@@ -96,3 +104,29 @@
     fieldUpdater(val === '' ? null : Number(val));
   }
 </script>
+
+<style scoped lang="scss">
+  .input-group {
+    position: relative;
+    width: max-content;
+    justify-self: center;
+
+    .number-input {
+      width: 6ch;
+    }
+
+    .unit {
+      position: absolute;
+      right: 0.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      letter-spacing: 0.1rem;
+
+      + .number-input {
+        width: 9ch;
+        padding-right: 2.5ch;
+        text-align: right;
+      }
+    }
+  }
+</style>

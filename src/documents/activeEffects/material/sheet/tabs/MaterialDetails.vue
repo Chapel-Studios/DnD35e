@@ -8,10 +8,10 @@
         field-path="system.bonusHp"
       />
       <MagicEquivalency />
-      <DamageReductionTypes />
       <ItemPrice />
     </template>
     <template #outer-append>
+      <DamageReductionTypes />
       <div class="material-details-container grid-full-row">
         <!-- 
         <h3 class="form-header">{{ localize("dnd35e.ITEM.MagicEquivalent") }}</h3>
@@ -101,9 +101,5 @@
   .notes {
     margin: -0.75rem 0 0.125rem;
     grid-column: span 2;
-  }
-
-  .form-group {
-    display: contents;
   }
 </style>

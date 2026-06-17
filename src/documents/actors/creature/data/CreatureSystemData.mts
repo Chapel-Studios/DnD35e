@@ -1,6 +1,9 @@
+import type { AbilityKey } from '@constants/abilities.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
+import type { SenseType } from '@constants/senses.mjs';
 import type { Size } from '@constants/sizes.mjs';
 import type { CurrencyData } from '@fields/CurrencyData.mjs';
+import type { FormulaDataSource } from '@helpers/formulae/index.mjs';
 import type { PriceSource } from '@settings/currency/index.mjs';
 
 import type { ActorSystemData, ActorSystemSource } from '../../baseActor/data/ActorSystemData.mjs';
@@ -16,10 +19,7 @@ interface AbilityScoreData extends AbilityScoreSource {
   mod: number;
 }
 
-type AbilityScoresOf<TEntry extends AbilityScoreSource> = {
-  str: TEntry; dex: TEntry; con: TEntry;
-  int: TEntry; wis: TEntry; cha: TEntry;
-};
+type AbilityScoresOf<TEntry extends AbilityScoreSource> = Record<AbilityKey, TEntry>;
 
 // ─── HP ──────────────────────────────────────────────────────────────────────
 
@@ -32,6 +32,8 @@ interface HpSource {
 interface HpData extends HpSource {
   /** Derived: class HD × level + CON mod + bonuses. Never stored. */
   max: number;
+  regeneration: number;
+  fastHealing: number;
 }
 
 // ─── Saves ───────────────────────────────────────────────────────────────────
@@ -75,29 +77,45 @@ interface AlignmentData {
 
 // ─── Bio ─────────────────────────────────────────────────────────────────────
 
+interface SenseEntrySource {
+  type: SenseType;
+  distance: number;
+}
+
 interface BioData {
-  gender: string | null;
-  deity:  string | null;
-  age:    string | null;
-  height: string | null;
-  weight: string | null;
+  gender:    string | null;
+  deity:     string | null;
+  age:       string | null;
+  height:    string | null;
+  weight:    string | null;
+  alignment: AlignmentData;
+  languages: string[];
+  senses:    SenseEntrySource[];
+}
+
+// ─── Settings ────────────────────────────────────────────────────────────────
+
+interface SettingsData {
+  isPartyMember: boolean;
 }
 
 // ─── Creature source / data ───────────────────────────────────────────────────
 
 interface CreatureSystemSourceProperties {
-  sr:        number;
-  bio:       BioData;
-  alignment: AlignmentData;
-  size:      Size;
-  notes:     string;
+  bio:          BioData;
+  size:         Size;
+  notes:        string;
+  settings:     SettingsData;
 }
 
 interface CreatureSystemSource extends CreatureSystemSourceProperties, ActorSystemSource {
-  abilities: AbilityScoresOf<AbilityScoreSource>;
-  hp: HpSource;
-  saves: SavesOf<SaveSource>;
-  currency: PriceSource;
+  abilities:  AbilityScoresOf<AbilityScoreSource>;
+  hp:         HpSource;
+  saves:      SavesOf<SaveSource>;
+  currency:   PriceSource;
+  defense: {
+    spellResistance: FormulaDataSource;
+  }
 }
 
 interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystemData {
@@ -106,7 +124,15 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   /** Entirely derived — not stored in source. */
   bab: { total: number };
   /** Entirely derived — not stored in source. */
-  ac: { normal: number; touch: number; flatFooted: number };
+  defense: {
+    armorClass: number;
+    touchAC: number;
+    flatFootedAC: number;
+    naturalArmor: number;
+    fortification: number;
+    concealment: number;
+    spellResistance: FormulaDataSource;
+  };
   saves: SavesOf<SaveData>;
   /** Entirely derived — not stored in source. */
   init: { total: number };
@@ -114,6 +140,9 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   level: number;
   currency: CurrencyData;
   encumbrance: EncumbranceData;
+  isIncorporeal: boolean;
+  isQuadraped: boolean;
+  creatureType: string;
 }
 
 export type {
@@ -131,4 +160,6 @@ export type {
   SaveData,
   SavesOf,
   SaveSource,
+  SenseEntrySource,
+  SettingsData,
 };

@@ -1,35 +1,32 @@
 <template>
-  <section class="sheet-section ability-scores-section">
-    <h2 class="section-header">{{ localize('dnd35e.ACTOR.section.AbilityScores') }}</h2>
-    <table class="abilities-table">
-      <thead>
-        <tr>
-          <th class="col-name"></th>
-          <th class="col-base">{{ localize('dnd35e.ACTOR.stat.base') }}</th>
-          <th class="col-total">{{ localize('dnd35e.ACTOR.stat.total') }}</th>
-          <th class="col-mod">{{ localize('dnd35e.ACTOR.stat.mod') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="ability in abilities" :key="ability.key" class="ability-row">
-          <td class="col-name ability-name">{{ localize(`dnd35e.ABILITY.${ability.key}.abbr`) }}</td>
-          <td class="col-base ability-base-cell">
-            <NumberFormGroup
-              :label="`dnd35e.ABILITY.${ability.key}.abbr`"
-              :value="ability.base"
-              :field-path="`system.abilities.${ability.key}.base`"
-              class="ability-score-input"
-              :show-label="false"
-            />
-          </td>
-          <td class="col-total ability-total">{{ ability.base }}</td>
-          <td class="col-mod ability-mod" :class="{ positive: ability.mod >= 0, negative: ability.mod < 0 }">
-            {{ formatMod(ability.mod) }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+  <table class="abilities-table">
+    <thead>
+      <tr>
+        <th class="col-name"></th>
+        <th class="col-base">{{ localize('dnd35e.ACTOR.stat.base') }}</th>
+        <th class="col-total">{{ localize('dnd35e.ACTOR.stat.total') }}</th>
+        <th class="col-mod">{{ localize('dnd35e.ACTOR.stat.mod') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="ability in abilities" :key="ability.key" class="ability-row">
+        <td class="col-name ability-name">{{ localize(`dnd35e.ABILITY.${ability.key}.abbr`) }}</td>
+        <td class="col-base ability-base-cell">
+          <NumberFormGroup
+            :label="`dnd35e.ABILITY.${ability.key}.abbr`"
+            :value="ability.base"
+            :field-path="`system.abilities.${ability.key}.base`"
+            class="ability-score-input"
+            :show-label="false"
+          />
+        </td>
+        <td class="col-total ability-total">{{ ability.base }}</td>
+        <td class="col-mod ability-mod" :class="{ positive: ability.mod >= 0, negative: ability.mod < 0 }">
+          {{ formatMod(ability.mod) }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </template>
 
 <script setup lang="ts">
@@ -58,10 +55,6 @@
 </script>
 
 <style lang="scss" scoped>
-  .ability-scores-section {
-    padding: 0.25rem;
-  }
-
   .abilities-table {
     width: 100%;
     border-collapse: collapse;
@@ -117,21 +110,26 @@
       padding: 0;
       width: 2.5rem;
     }
+
     :deep(.form-group-label) {
       display: none;
     }
+
+    :deep(.form-group) {
+      justify-content: center;
+      margin: 0;
+    }
   }
 
-  .ability-total {
-    color: var(--color-text-dark-secondary, #555);
+  .col-total,
+  .col-mod {
+    min-width: 2.5rem;
   }
 
   .ability-mod {
     font-weight: bold;
-    font-size: 0.85rem;
 
-    &.positive { color: var(--color-level-success, #2d8a2d); }
-    &.negative { color: var(--color-level-error, #a30000); }
+    &.positive { color: var(--color-level-success, #3a7534); }
+    &.negative { color: var(--color-level-error,   #9b1515); }
   }
 </style>
-

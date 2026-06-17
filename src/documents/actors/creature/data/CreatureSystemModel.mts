@@ -1,17 +1,23 @@
 import { ActorSystemModel } from '@actors/baseActor/data/index.mjs';
 import { LAW_AXES, MORAL_AXES } from '@constants/alignment.mjs';
+import { SENSE_TYPES } from '@constants/senses.mjs';
 import { SIZES } from '@constants/sizes.mjs';
 import { CurrencyField } from '@fields/CurrencyField.mjs';
 import {
+  derivedBooleanField,
+  derivedNullableOptionalStringField,
   derivedNumberField,
   requiredNumberField,
   requiredTypedStringField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
+import { FormulaField } from '@helpers/formulae/index.mjs';
 
 import type { CreatureSystemData } from './CreatureSystemData.mjs';
 
 const {
+  ArrayField,
+  BooleanField,
   HTMLField,
   SchemaField,
   StringField,
@@ -52,16 +58,33 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       current:   useDnd35eField(requiredNumberField(0)),
       temp:      useDnd35eField(requiredNumberField(0)),
       nonlethal: useDnd35eField(requiredNumberField(0)),
+      regeneration: useDnd35eField(derivedNumberField(0)),
+      fastHealing: useDnd35eField(derivedNumberField(0)),
     });
 
     schema.bab = new SchemaField({
       total: useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['baseAttackBonus'] } }),
     });
 
-    schema.ac = new SchemaField({
-      normal:     useDnd35eField(derivedNumberField(10)),
-      touch:      useDnd35eField(derivedNumberField(10)),
-      flatFooted: useDnd35eField(derivedNumberField(10)),
+    schema.defense = new SchemaField({
+      armorClass:     useDnd35eField(derivedNumberField(10)),
+      touchAC:      useDnd35eField(derivedNumberField(10)),
+      flatFootedAC: useDnd35eField(derivedNumberField(10)),
+      naturalArmor:    useDnd35eField(derivedNumberField(0)),
+      fortification: useDnd35eField(derivedNumberField(0)),
+      concealment: useDnd35eField(derivedNumberField(0)),
+      spellResistance: useDnd35eField(new FormulaField({
+        expectedType: 'number',
+        nullable: true,
+        required: false,
+        initial: () => ({
+          formula: '',
+          expectedType: 'number',
+          resolvedValue: 0,
+        }),
+      }), {
+        familiar: { aliases: ['spellResistance'] },
+      }),
     });
 
     const saveEntry = () => new SchemaField({
@@ -78,24 +101,30 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       total: useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['initiative'] } }),
     });
 
-    schema.sr = useDnd35eField(requiredNumberField(0), { familiar: { aliases: ['spellResistance'] } });
-
     schema.bio = new SchemaField({
-      gender: nullableBioField(),
-      deity:  nullableBioField(),
-      age:    nullableBioField(),
-      height: nullableBioField(),
-      weight: nullableBioField(),
+      gender: useDnd35eField(nullableBioField()),
+      deity:  useDnd35eField(nullableBioField()),
+      age:    useDnd35eField(nullableBioField()),
+      height: useDnd35eField(nullableBioField()),
+      weight: useDnd35eField(nullableBioField()),
+      alignment: new SchemaField({
+        law:   useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...LAW_AXES] })),
+        moral: useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...MORAL_AXES] })),
+      }),
+      languages: new ArrayField(new StringField({ required: true, blank: false }), { initial: [] }),
+      senses: new ArrayField(new SchemaField({
+        type:     useDnd35eField(requiredTypedStringField(SENSE_TYPES, 'darkvision')),
+        distance: useDnd35eField(requiredNumberField(0)),
+      }), { initial: [] }),
     });
 
     schema.level = useDnd35eField(derivedNumberField(1), { familiar: { aliases: ['lvl'] } });
 
-    schema.alignment = new SchemaField({
-      law:   useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...LAW_AXES] })),
-      moral: useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...MORAL_AXES] })),
-    });
-
     schema.size = useDnd35eField(requiredTypedStringField(SIZES, 'medium'));
+
+    schema.settings = new SchemaField({
+      isPartyMember: new BooleanField({ initial: false }),
+    });
 
     schema.notes = useDnd35eField(new HTMLField({ required: false, nullable: false, blank: true }));
 
@@ -112,6 +141,11 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       carryBonus:      useDnd35eField(derivedNumberField(0)),
       carryMultiplier: useDnd35eField(derivedNumberField(1)),
     });
+
+    schema.isIncorporeal = useDnd35eField(derivedBooleanField(false), { familiar: { aliases: ['incorporeal'] } });
+    schema.isQuadraped = useDnd35eField(derivedBooleanField(false), { familiar: { aliases: ['quadraped'] } });
+
+    schema.creatureType = useDnd35eField(derivedNullableOptionalStringField(null));
 
     return schema;
   }

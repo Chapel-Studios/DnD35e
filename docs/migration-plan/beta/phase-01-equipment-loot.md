@@ -6,7 +6,7 @@
 > **Dependencies**: Phase 5, Phase 7  
 > **Goal**: Armor, shield, and loot item types. Armor/shields affect AC via generated AE changes. **Expands bonus type stacking** (established in Phase 2) with armor/shield/natural/deflection types. Masterwork armor and shields now work (via Material AE pattern from Phase 2). Replaces POC flat AC with equipment-derived AC.
 
-> **Action System note**: Equipment AC feeds into `#target.attributes.ac.*` contexts used by attack action formulas. Bonus type stacking rules (dodge, armor, shield, natural, deflection, etc.) affect how AE changes from different sources interact.
+> **Action System note**: Equipment AC feeds into `#target.defense.*` contexts used by attack action formulas. Bonus type stacking rules (dodge, armor, shield, natural, deflection, etc.) affect how AE changes from different sources interact.
 
 ---
 
@@ -70,9 +70,9 @@ Phase 5 provides flat AC shell values. This phase replaces them with equipment-d
 
 | Field | Phase 5 Shell | Phase 15 Derivation |
 |-------|---------------|--------------------|
-| `ac.normal` | `10 + DEX mod` | `10 + armor bonus + shield bonus + min(DEX mod, maxDexBonus) + size mod + natural armor + deflection + dodge` |
-| `ac.touch` | `10 + DEX mod` | `10 + DEX mod + size mod + deflection + dodge` (no armor/shield/natural) |
-| `ac.flatFooted` | `10` | `10 + armor bonus + shield bonus + size mod + natural armor + deflection` (no DEX, no dodge) |
+| `defense.armorClass` | `10 + DEX mod` | `10 + armor bonus + shield bonus + min(DEX mod, maxDexBonus) + size mod + natural armor + deflection + dodge` |
+| `defense.touchAC` | `10 + DEX mod` | `10 + DEX mod + size mod + deflection + dodge` (no armor/shield/natural) |
+| `defense.flatFootedAC` | `10` | `10 + armor bonus + shield bonus + size mod + natural armor + deflection` (no DEX, no dodge) |
 
 ## 10.1.2 Equipment Slot Capacities
 
@@ -102,8 +102,8 @@ Phase 5's basic slot display uses a hardcoded single-slot assumption. This phase
 ## 10.2 Equipment → AC via Generated AE Changes (Material Pattern)
 
 The equipment item's `prepareDerivedData()` generates system changes targeting the actor:
-- `system.attributes.ac.armorBonus` ADD with `bonusType: 'armor'`
-- `system.attributes.ac.shieldBonus` ADD with `bonusType: 'shield'`
+- `system.defense.armorClass.armorBonus` ADD with `bonusType: 'armor'`
+- `system.defense.armorClass.shieldBonus` ADD with `bonusType: 'shield'`
 - Max Dex cap as a special change type
 
 ## 10.3 Bonus Type Stacking (Expanded)
@@ -217,8 +217,8 @@ This is a unique infrastructure challenge that may be pushed to post-release dep
 - [ ] Create `src/entities/items/equipment/ItemDnd35eEquipment.mts` extending ItemDnd35e
 - [ ] Override `prepareDerivedData()` to generate AC bonus AE changes (Material pattern)
 - [ ] Implement `buildChanges()` method:
-  - For armor: generate `{ key: 'system.attributes.ac.armorBonus', mode: ADD, value: armorBonus, bonusType: 'armor' }`
-  - For shield: generate `{ key: 'system.attributes.ac.shieldBonus', mode: ADD, value: shieldBonus, bonusType: 'shield' }`
+  - For armor: generate `{ key: 'system.defense.armorClass.armorBonus', mode: ADD, value: armorBonus, bonusType: 'armor' }`
+  - For shield: generate `{ key: 'system.defense.armorClass.shieldBonus', mode: ADD, value: shieldBonus, bonusType: 'shield' }`
   - For masterwork armor/shield: add `+1 untyped` bonus (via Material pattern, Material item adds this)
   - For enhancement bonus from Phase 23: add via enhancement bonus type
 - [ ] Implement special change for max dex bonus, if applicable

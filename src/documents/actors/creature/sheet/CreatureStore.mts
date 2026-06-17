@@ -1,6 +1,7 @@
 import type { ActorDocumentStore, ActorStore, UseActorSheetStoreOptions } from '@actors/baseActor/sheet/index.mjs';
 import { useActorSheetStore } from '@actors/baseActor/sheet/index.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
+import type { SenseEntrySource } from '@actors/creature/data/CreatureSystemData.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import { ALIGNMENT_I18N, NEUTRAL } from '@constants/alignment.mjs';
 import type { Size } from '@constants/sizes.mjs';
@@ -34,24 +35,40 @@ const useCreatureStore = <TDocument extends Creature>(
   const { getViewAwareFieldValue } = actorStore.documentGetters;
   const { document } = actorStore._storeUtils;
 
-  const alignmentLaw   = computed(() => getViewAwareFieldValue<LawAxis | null>('system.alignment.law')   ?? null);
-  const alignmentMoral = computed(() => getViewAwareFieldValue<MoralAxis | null>('system.alignment.moral') ?? null);
+  const alignmentLaw   = computed(() => getViewAwareFieldValue<LawAxis | null>('system.bio.alignment.law')   ?? null);
+  const alignmentMoral = computed(() => getViewAwareFieldValue<MoralAxis | null>('system.bio.alignment.moral') ?? null);
 
   const documentGetters = {
     ...actorStore.documentGetters,
+
+    //HP
+    currentHp: computed(() => document.value.system.hp.current),
+    maxHp: computed(() => document.value.system.hp.max),
+    tempHp: computed(() => document.value.system.hp.temp),
+    nonlethalDamage: computed(() => document.value.system.hp.nonlethal),
+
     gender: computed(() => getViewAwareFieldValue<string | null>('system.bio.gender') ?? ''),
     deity:  computed(() => getViewAwareFieldValue<string | null>('system.bio.deity')  ?? ''),
     age:    computed(() => getViewAwareFieldValue<string | null>('system.bio.age')    ?? ''),
     height: computed(() => getViewAwareFieldValue<string | null>('system.bio.height') ?? ''),
     weight: computed(() => getViewAwareFieldValue<string | null>('system.bio.weight') ?? ''),
+    race:   computed(() => document.value.race ?? ''),
 
     alignmentLaw,
     alignmentMoral,
     alignmentLabel: computed(() => buildAlignmentLabel(alignmentLaw.value, alignmentMoral.value)),
 
-    size:  computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
-    notes: computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
-    level: computed(() => (document.value as unknown as { system: { level?: number } }).system.level ?? 1),
+    size:           computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
+    notes:          computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
+    level:          computed(() => document.value.system.level ?? 1),
+    languages:      computed(() => getViewAwareFieldValue<string[]>('system.bio.languages') ?? []),
+    senses:         computed(() => {
+      const raw = getViewAwareFieldValue<SenseEntrySource[]>('system.bio.senses') ?? [];
+      // Clone so Vue's reactivity detects in-place mutations from Foundry's mergeObject
+      return foundry.utils.deepClone(raw);
+    }),
+    armorClass:     computed(() => document.value.calculateAC() ?? 10),
+    getArmorClass: (isTouch = false, denyDex = false): number => document.value.calculateAC(isTouch, denyDex) ?? 10,
   };
 
   const store: CreatureDocumentStore<TDocument> = {
@@ -63,17 +80,26 @@ const useCreatureStore = <TDocument extends Creature>(
 };
 
 interface CreatureGetters {
+  currentHp:     ComputedRef<number>;
+  maxHp:         ComputedRef<number>;
+  tempHp:        ComputedRef<number>;
+  nonlethalDamage: ComputedRef<number>;
   gender:         ComputedRef<string>;
   deity:          ComputedRef<string>;
   age:            ComputedRef<string>;
   height:         ComputedRef<string>;
   weight:         ComputedRef<string>;
+  race:           ComputedRef<string>;
   alignmentLaw:   ComputedRef<LawAxis | null>;
   alignmentMoral: ComputedRef<MoralAxis | null>;
   alignmentLabel: ComputedRef<string | null>;
   size:           ComputedRef<Size>;
   notes:          ComputedRef<string>;
   level:          ComputedRef<number>;
+  languages:      ComputedRef<string[]>;
+  senses:         ComputedRef<SenseEntrySource[]>;
+  armorClass:     ComputedRef<number>;
+  getArmorClass: (isTouch?: boolean, denyDex?: boolean) => number;
 }
 
 type CreatureActions = Record<string, unknown>;

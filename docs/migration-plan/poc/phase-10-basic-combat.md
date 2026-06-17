@@ -195,8 +195,8 @@ class ActionDataModel extends foundry.abstract.DataModel {
           // Default: "1d20 + #self.attributes.bab.total + #self.abilities.str.mod"
         }),
         against: new foundry.data.fields.StringField({
-          choices: ['ac', 'touchAc', 'flatFootedAc'],
-          initial: 'ac',
+          choices: ['armorClass', 'touchAc', 'flatFootedAc'],
+          initial: 'armorClass',
         }),
       }, { required: false, nullable: true, initial: null }),
 
@@ -261,7 +261,7 @@ const actionFormulaContexts: FormulaContext[] = [
     resolvePath: 'runtime',         // Resolved at execution time
     documentType: 'Actor',
     aliases: [],
-    // Exposes: #target.attributes.ac.normal, #target.attributes.ac.touch, etc.
+    // Exposes: #target.defense.armorClass, #target.defense.touchAC, etc.
   },
 ];
 ```
@@ -295,7 +295,7 @@ protected override async _onCreate(data: object, options: object, userId: string
     activation: 'standard',
     check: {
       formula: '1d20 + #self.attributes.bab.total + #self.abilities.str.mod',
-      against: 'ac',
+      against: 'armorClass',
     },
     damage: {
       formula: this.system.damage.formula ?? '1d4',  // use weapon's damage formula
@@ -499,7 +499,7 @@ private async _executeAttackAction(context: UseActionContext, targetId?: string)
   // Attack roll
   const rollData = { ...actor.getRollData(), target: target?.getRollData() ?? {} };
   const attackRoll = await new D20Roll(action.check?.formula ?? '1d20', rollData).evaluate();
-  const targetAc = target?.system.attributes.ac[action.check?.against ?? 'normal'] ?? 10;
+  const targetAc = target?.system.defense[action.check?.against ?? 'armorClass'] ?? 10;
   const hit = attackRoll.total >= targetAc;
   const criticalHit = attackRoll.isCrit && hit;
 
@@ -649,7 +649,37 @@ When a player right-clicks their own controlled token, an "Attack with..." subme
 - [ ] `updateCombat` hook: call `combatant.resetActions()` on turn advance
 - [ ] Extend combat tracker rendering: S/M pips per row, greyed when action unavailable
 
-**Verify**: Roll initiative → combatants ordered. Advance turn → pips reset. Use attack → S greys.
+**Flat-Footed as First Condition AE (Proof of Concept):**
+- [ ] Create `src/constants/conditions.mts` with flat-footed AE template:
+  ```typescript
+  export const CONDITIONS = {
+    flatFooted: {
+      id: 'flatFooted',
+      label: 'dnd35e.conditions.flatFooted',
+      icon: 'icons/svg/dazed.svg',  // placeholder, no token display yet
+      changes: [],  // Flat-footed doesn't use AE changes; instead, AC calc checks for the AE
+      flags: { dnd35e: { conditionType: 'flatFooted', isCondition: true } }
+    }
+  };
+  ```
+- [ ] Create `ConditionManager` static utility class in `src/documents/actors/creature/ConditionManager.mts`:
+  - `static applyCondition(actor, conditionId)`: creates AE with condition template
+  - `static removeCondition(actor, conditionId)`: finds and deletes condition AE by `flags.dnd35e.conditionType`
+  - `static hasCondition(actor, conditionId)`: checks for active condition AE
+- [ ] In `onUpdateCombat` hook: when combat starts, apply flat-footed AE to all combatants
+- [ ] In AC calculation (`CreatureSystemModel.prepareDerivedData()`): check if actor has flat-footed condition AE, if so exclude DEX from flatFooted AC calculation
+- [ ] Test: Start combat → all combatants have flat-footed AE. After first turn, flat-footed AE is removed (or persists based on design choice). AC calculation respects flat-footed status.
+
+**Verify**: Roll initiative → combatants ordered. Advance turn → pips reset. Use attack → S greys. Flat-footed AE applied/removed correctly per turn. AC calculated without DEX when flat-footed.
+
+---
+
+**AC Calculation Implementation Notes**:
+- `defense.armorClass` = 10 + armor bonus + shield bonus + min(DEX mod, max DEX) + size mod + dodge
+- `defense.touchAC` = 10 + DEX mod + size mod + dodge (no armor/shield)
+- `defense.flatFootedAC` = 10 + armor bonus + shield bonus + size mod (no DEX, no dodge)
+- When flat-footed AE is active: lose DEX bonus in `defense.armorClass` and `defense.touchAC` calculations (Phase 15 will expand this; Phase 10 stubs to basic logic)
+- Flat-footed status is NOT stored on actor data; it is ONLY represented by the presence of the condition AE (no condition flags on schema)
 
 ---
 
