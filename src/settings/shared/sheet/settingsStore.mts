@@ -83,7 +83,7 @@ type SettingsStore = {
     rollUpTargetCoin: ComputedRef<string>;
   };
   measurement: {
-    unitOfMeasure: ComputedRef<string>;
+    unitOfMeasure: ComputedRef<UnitOfMeasureOption>;
     weightDisplayLabel: ComputedRef<string>;
     weightDisplayShortLabel: ComputedRef<string>;
     convertToLocalizedWeight: (storedWeight: number) => number;

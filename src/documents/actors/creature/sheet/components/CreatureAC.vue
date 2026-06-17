@@ -3,9 +3,10 @@
     fieldPath="system.defense.armorClass"
     :value="resolvedAc"
     :sublabel="shieldSublabel"
+    no-sign
   >
     <button
-      class="sheild-badge touch-ac-toggle"
+      class="shield-badge touch-ac-toggle"
       type="button"
       :class="{ 'is-active': showTouchAC }"
       :title="touchAcToggleTitle"
@@ -15,7 +16,7 @@
     </button>
     <button
       v-if="showFlatFootedAC"
-      class="sheild-badge touch-ac-toggle"
+      class="shield-badge touch-ac-toggle"
       type="button"
       :class="{ 'is-active': showFlatFootedAC }"
       :title="flatFootedAcTitle"
@@ -61,7 +62,7 @@
 </script>
 
 <style lang="scss" scoped>
-  .sheild-badge {
+  .shield-badge {
     position: absolute;
     bottom: 0;
     right: 20%;

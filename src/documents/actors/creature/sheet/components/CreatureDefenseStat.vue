@@ -12,14 +12,17 @@
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject } from 'vue';
 
-  const props = defineProps<{
+  const props = withDefaults(defineProps<{
     fieldPath: string;
     value?: number | null;
     labelTooltip?: string;
     sublabel?: string;
     /** Optional tooltip for the sublabel. */
     sublabelTooltip?: string;
-  }>();
+    noSign?: boolean; // flag to hide the + sign for positive values (default: false)
+  }>(), {
+    noSign: false,
+  });
 
   const {
     documentGetters: {
@@ -30,7 +33,7 @@
       getFieldLabel,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
-  const formatBonus = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
+  const formatBonus = (n: number) => (!props.noSign && n >= 0 ? `+${n}` : `${n}`);
 
   const label = computed(() => getFieldLabel(props.fieldPath));
   const resolvedLabelTooltip = computed(() => props.labelTooltip

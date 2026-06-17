@@ -1,7 +1,7 @@
 <template>
   <div class="form-group" :class="formGroupClasses" :hidden="!isFieldVisible" :data-field-path="props.fieldPath || undefined">
     <div v-if="hasLabel" class="form-group-label">
-      <label :title="labelTooltip">
+      <label class="default-label" :title="labelTooltip">
         {{ resolvedLabel }}
         <MaskedBadge :field-path="props.fieldPath" />
       </label>
@@ -156,54 +156,56 @@
     justify-content: center;
     gap: 0.25rem;
     flex-wrap: wrap;
-  }
 
-  .form-group-label label {
-    margin: 0;
-    cursor: help;
-    overflow-wrap: break-word;
-    min-width: 0;
-    text-align: center;
-  }
+    .default-label {
+      margin: 0;
+      cursor: help;
+      overflow-wrap: break-word;
+      min-width: 0;
+      text-align: center;
+    }
 
-  .form-group.with-hint :slotted(.hint) {
-    grid-column: 1 / -1;
-    font-size: var(--font-size-11);
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
+    &.with-hint {
+      :slotted(.hint) {
+        grid-column: 1 / -1;
+        font-size: var(--font-size-11);
+        color: var(--color-text-secondary);
+        margin: 0;
+      }
+    }
 
-  /* Direct child hint (not slotted) also spans full width */
-  .form-group.with-hint > .hint {
-    grid-column: 1 / -1;
-    font-size: var(--font-size-11);
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
+    /* Direct child hint (not slotted) also spans full width */
+    & > .hint {
+      grid-column: 1 / -1;
+      font-size: var(--font-size-11);
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
 
-  .form-group.with-hint :slotted(select[multiple]) {
-    min-height: 80px;
-  }
+    :slotted(select[multiple]) {
+      min-height: 80px;
+    }
 
-  .form-group.with-hint :slotted(input[type='text']),
-  .form-group.with-hint :slotted(input[type='number']) {
-    min-width: 10rem;
-  }
+    :slotted(input[type='text']),
+    :slotted(input[type='number']) {
+      min-width: 10rem;
+    }
 
-  .form-group.with-hint :slotted(input[type='color']) {
-    width: 60px;
-    height: 30px;
-    padding: 0;
-    border: 1px solid var(--color-border);
+    :slotted(input[type='color']) {
+      width: 60px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid var(--color-border);
+    }
   }
 
   /* Visual indicator for restricted fields */
-  .form-group.restricted-visibility > label,
-  .form-group.restricted-editability > label {
+  .form-group.restricted-visibility .default-label,
+  .form-group.restricted-editability .default-label {
     position: relative;
   }
 
-  .form-group.restricted-visibility > label::before {
+  .form-group.restricted-visibility .default-label::before {
     content: '';
     position: absolute;
     left: -0.5rem;
