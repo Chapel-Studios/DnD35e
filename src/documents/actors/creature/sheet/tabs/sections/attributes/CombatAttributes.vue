@@ -20,7 +20,6 @@
       <NaturalArmor />
       <FastHealing />
       <Regeneration />
-      <FastHealing />
       <Concealment />
     </template>
   </SheetSection>

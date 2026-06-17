@@ -40,11 +40,11 @@ Related:
 
 ## Phase 1: Field-Level Mask/Edit Strategy (start here)
 
-### 1.1 Add schema metadata for masked edit behavior
+### 1.1 Add schema metadata for masking and edit strategy
 - [ ] Extend `SchemaFieldMeta` in [fieldBuilders.mts](src/fields/fieldBuilders.mts) with:
   - `maskable?: boolean` (default `true`)
   - `maskedEditStrategy?: 'playerSecretRoute' | 'deltaMirror'` (default `'playerSecretRoute'`)
-- [ ] Wire both options into `useDnd35eField(...)` options bag.
+- [ ] Wire `maskable` + `maskedEditStrategy` into `useDnd35eField(...)` options bag.
 - [ ] Document defaults and intended behavior in code comments.
 
 ### 1.2 Store routing implementation
@@ -56,12 +56,21 @@ Related:
 - [ ] Add guard/fallback for non-numeric `deltaMirror` fields (warn + no-op or route default).
 
 ### 1.3 Initial field adoption
+- [ ] Mark unmaskable fields with `maskable: false`:
+  - `character.isPartyMember`
+  - `xpValue`
+  - all derived values
 - [ ] Mark actor HP state fields with `maskedEditStrategy: 'deltaMirror'` (`current`, `temp`, `nonlethal`).
 - [ ] Mark item HP state fields with `maskedEditStrategy: 'deltaMirror'` where applicable.
 - [ ] Confirm behavior for:
   - masked player edit (no paradox)
   - GM edit while masks exist
   - unmasked normal edit
+
+### 1.4 Unmaskable field audit
+- [ ] Inventory all derived fields and mark them `maskable: false` unless a concrete masking use case exists.
+- [ ] Audit boolean/settings/admin fields for unmaskable treatment.
+- [ ] Verify unmaskable fields never create or consume secret-mask routing.
 
 ## Phase 2: FormGroup API Standardization
 

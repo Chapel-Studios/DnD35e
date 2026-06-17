@@ -36,7 +36,7 @@ const useCharacterStore = (
 
     classShorthand: computed(() => document.value.classShorthand ?? ''),
     xpValue:       computed(() => document.value.system.xp?.value ?? 0),
-    isPartyMember: computed(() => document.value.system.isPartyMember ?? false),
+    isPartyMember: computed(() => document.value.system.settings.isPartyMember ?? false),
   };
 
   const store: CharacterStore = {

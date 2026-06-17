@@ -42,7 +42,7 @@
 
   import type { SelectOption } from './index.mjs';
 
-  const props = withDefaults(defineProps<{
+  const props = defineProps<{
     /** Type of the value input. Defaults to 'number'. */
     valueType: TValue extends number ? 'number' : 'text';
     /** Current value of the value input. */
@@ -67,8 +67,7 @@
     onValueChange?: (raw: TValue) => void;
     /** Called when the unit select commits a change. */
     onUnitChange?: (unit: TUnit) => void;
-  }>(), {
-  });
+  }>();
 
   const sizerUnitOptions = computed(() => props.sizingUnitOptions ?? props.unitOptions);
 

@@ -67,16 +67,16 @@ Keys: `fort`, `ref`, `will`
 
 | Field | Path |
 |-------|------|
-| Base save | `system.attributes.savingThrows.fort.base` |
-| Ability mod | `system.attributes.savingThrows.fort.ability` |
-| Misc bonus | `system.attributes.savingThrows.fort.misc` |
-| Total | `system.attributes.savingThrows.fort.total` |
+| Base save | `system.saves.fort.base` |
+| Ability mod | `system.saves.fort.ability` |
+| Misc bonus | `system.saves.fort.misc` |
+| Total | `system.saves.fort.total` |
 
 ### Base Attack Bonus
 
 | Field | Path |
 |-------|------|
-| Total BAB | `system.attributes.bab.total` |
+| Total BAB | `system.bab.total` |
 | Iterative 1 | BAB total |
 | Iterative 2 | BAB − 5 (if BAB ≥ 6) |
 | Iterative 3 | BAB − 10 (if BAB ≥ 11) |
@@ -87,9 +87,9 @@ BAB is aggregated by the system from class items owned by the actor.
 
 | Component | Path |
 |-----------|------|
-| AC value | `system.defense.defense.armorClass.total` |
-| Touch AC | `system.defense.armorClass.touch.total` |
-| Flat-footed | `system.defense.armorClass.flatFooted.total` |
+| AC value | `system.defense.armorClass.total` |
+| Touch AC | `system.defense.touchAC.total` |
+| Flat-footed | `system.defense.flatFootedAC.total` |
 | Armor bonus | Applied via `changes[]` targeting `~acBonus` |
 | Deflection | Applied via `changes[]` targeting `~acDeflection` |
 

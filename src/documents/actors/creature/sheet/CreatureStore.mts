@@ -61,7 +61,6 @@ const useCreatureStore = <TDocument extends Creature>(
     size:           computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
     notes:          computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
     level:          computed(() => document.value.system.level ?? 1),
-    isPartyMember:  computed(() => getViewAwareFieldValue<boolean>('system.settings.isPartyMember') ?? false),
     languages:      computed(() => getViewAwareFieldValue<string[]>('system.bio.languages') ?? []),
     senses:         computed(() => {
       const raw = getViewAwareFieldValue<SenseEntrySource[]>('system.bio.senses') ?? [];
@@ -97,7 +96,6 @@ interface CreatureGetters {
   size:           ComputedRef<Size>;
   notes:          ComputedRef<string>;
   level:          ComputedRef<number>;
-  isPartyMember:  ComputedRef<boolean>;
   languages:      ComputedRef<string[]>;
   senses:         ComputedRef<SenseEntrySource[]>;
   armorClass:     ComputedRef<number>;

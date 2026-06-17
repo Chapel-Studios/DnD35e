@@ -17,7 +17,7 @@
       v-if="showFlatFootedAC"
       class="sheild-badge touch-ac-toggle"
       type="button"
-      :class="{ 'is-active': showTouchAC }"
+      :class="{ 'is-active': showFlatFootedAC }"
       :title="flatFootedAcTitle"
     >
       <i class="fa-duotone fa-solid fa-boot-heeled"></i>
