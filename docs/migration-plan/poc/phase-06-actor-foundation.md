@@ -63,14 +63,13 @@ Story 1
   └─► Story 3  ──► Story 4
 ```
 
-Stories 2–5 are independent of each other and can be worked in parallel after Story 1 merges. Stories 2 and 3 are design-only (layout/CSS) and do not block Combat Stats (Story 4).
+Stories 2–4 are independent of each other and can be worked in parallel after Story 1 merges. Story 5 can also run in parallel technically, but execution order should prefer **Story 4 -> Story 5 -> Story 6** so actor AE integration lands after inventory/equipment item sources are in place.
 
 ```
 Story 1
   └─► Story 2 (Summary Design)
   └─► Story 3 (Attributes Design)
-  └─► Story 4 (Combat Stats) ──► Story 6 (AEs)
-  └─► Story 5 (Inventory)
+  └─► Story 4 (Combat Stats) ──► Story 5 (Inventory) ──► Story 6 (AEs)
 ```
 
 ---
@@ -120,7 +119,7 @@ Story 1
 **Schema additions (on `CreatureSystemModel`):**
 - `system.bio.alignment` — **moved** from `system.alignment`; fields (`law`, `moral`) unchanged, only path changes. Simple `migrateData()` handles existing actors.
 - `system.bio.languages: ArrayField(StringField, { initial: [] })` — new; managed on Bio tab.
-- `system.bio.senses: StringField({ nullable: true, initial: null })` — stub text field; folksonomy redesign deferred to the token/perception phase.
+- `system.bio.senses: ArrayField(SchemaField({ type, distance }), { initial: [] })` — structured senses list used by `CreatureSenses`.
 - `system.settings: SchemaField({ isPartyMember: BooleanField({ initial: false }) })` — new; managed on Settings tab.
 - `creature.race` — **not a schema field**. A getter property on `CreatureDnd35e` class returning `'Human'` (stub until Race item type lands in a later phase).
 
@@ -130,7 +129,7 @@ Story 1
 3. **Bio tab (new)** — Create `src/documents/actors/creature/sheet/tabs/bio/BioTab.vue`. Sections: **Identity** (gender, alignment reusing existing `CreatureAlignment`/`CreatureGender`/`CreatureDeity` components), **Physical** (age, height, weight), **Race** (display-only, renders `creature.race` getter), **Languages** (chip/tag list bound to `system.bio.languages`), **Senses** (textarea for `system.bio.senses` stub), **Biography** (HTML editor from `system.description`). Add tab to `CreatureSheet.vue`. *(Unit tests: tab mounts; languages list renders; alignment binds to new path)*
 4. **Settings tab (new)** — Create `src/documents/actors/creature/sheet/tabs/SettingsTab.vue`. "General Settings" section with `isPartyMember` toggle (`ToggleSwitchFormGroup` bound to `system.settings.isPartyMember`). Add tab to `CreatureSheet.vue`. *(Unit tests: tab mounts; toggle saves correctly)*
 5. **Summary tab cleanup** — Strip `SummaryStatPanel.vue`: remove HP group, AC trio, Saves trio, and Rest button (all now on header or Combat tab). Keep Init + BAB pair. Summary 3-column layout unchanged; middle column now shows only Init/BAB with a "Combat stats · Story 4" placeholder note. *(Unit tests: stripped panel renders without HP/AC/Saves)*
-6. **Attributes tab redesign** — Delete `HpSection.vue`, `SavingThrowsSection.vue`, `ArmorClassSection.vue`, `InitiativeSpeedSection.vue` (all dead code; combat sections rebuilt fresh in Story 4). Rebuild `AbilityScoresSection.vue` as wide-card format: 6 cards each with large `total/mod` display, small `base` input, and a "…" overflow button (renders, does nothing — Phase 20 wires damage/drain/penalties modal). Extract previous compact table as `AbilityScoresTable.vue` for continued use in Summary tab. Add `ActorSpeed.vue`: 5 stub cards (Land=30ft, Climb/Swim/Burrow/Fly=—); Story 4 adds schema + derivation. Add `SensesSection.vue`: textarea bound to `system.bio.senses`. Add `PhysicalAttributes.vue`: Size dropdown (`SIZE_SELECT_OPTIONS`), Creature Type text stub, Reach text stub. Update `AttributesTab.vue` to use new sections. *(Unit tests: cards render; Size dropdown saves via SIZE_SELECT_OPTIONS; overflow button renders inert)*
+6. **Attributes tab redesign** — Delete `HpSection.vue`, `SavingThrowsSection.vue`, `ArmorClassSection.vue`, `InitiativeSpeedSection.vue` (all dead code; combat sections rebuilt fresh in Story 4). Rebuild `AbilityScoresSection.vue` as wide-card format: 6 cards each with large `total/mod` display, small `base` input, and a "…" overflow button (renders, does nothing — Phase 20 wires damage/drain/penalties modal). Extract previous compact table as `AbilityScoresTable.vue` for continued use in Summary tab. Add `ActorSpeed.vue`: 5 stub cards (Land=30ft, Climb/Swim/Burrow/Fly=—); Story 4 adds schema + derivation. Replace `SensesSection` textarea with `CreatureSenses` structured list editor (`type` + `distance`). Add `PhysicalAttributes.vue`: Size dropdown (`SIZE_SELECT_OPTIONS`), Creature Type text stub, Reach text stub. Add `CombatAttributes.vue`: init/BAB and combat-resistance stubs (SR/NA/concealment/regen/fast healing). Update `AttributesTab.vue` to use physical/combat sections. *(Unit tests: cards render; Size dropdown saves via SIZE_SELECT_OPTIONS; overflow button renders inert)*
 
 **E2E acceptance**: Open character sheet → Header shows HP/AC/Saves pills and tent-icon Rest button (no identity rows) → Bio tab opens; gender/alignment/deity/age/height/weight visible; languages field is editable → Settings tab shows Party Member toggle; toggling saves correctly → Summary tab shows only Init + BAB (no HP/AC/Saves) + Skills placeholder → Attributes tab shows 6 wide ability score cards + 5 speed stub cards + Size dropdown + Senses text → changing Size saves correctly.
 
@@ -149,13 +148,18 @@ Story 1
 
 **E2E acceptance**: Create character with DEX 16 → AC shows `13` (10 + 3); edit `hp.current` → value persists after sheet re-open. *(No E2E for `hp.max` until Classes phase — alpha.2)*
 
+**Implementation note (current branch reality):**
+- `system.defense.spellResistance` is now a `FormulaField` (`expectedType: 'number'`) in `CreatureSystemModel`.
+- UI scaffold exists via `SpellResistance.vue`, but update wiring is still a stub (`console.log`) and must be replaced with a real store updater.
+- Flat-footed in Story 4 is a **no-condition baseline value** only; condition-aware DEX denial is deferred to condition/AE combat work (poc.10 / alpha.8).
+
 ---
 
 ### Story 5 — Inventory, Equipment Slots, Encumbrance, Currency
 
 **User**: GM/Player  
 **Delivers**: Inventory tab shows owned items grouped by type; items dragged from compendium appear in the list; weapons can be equipped to mainhand/offhand; encumbrance tier shown; currency field on sheet.  
-**Depends on**: Story 1. **Runs in parallel with Stories 2–4.**
+**Depends on**: Story 1. **Can run in parallel with Stories 2–4, but preferred sequencing is after Story 4 and before Story 6.**
 
 **Commits:**
 1. **Inventory tab scaffold** — Inventory tab with grouped item list (Weapons / Equipment / Consumables / Loot); item rows: name, quantity, weight, price, carried/equipped state. *(Unit tests: grouping logic, stored-vs-carried display)*
@@ -313,19 +317,20 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 - [ ] Create `src/documents/actors/baseActor/data/ActorSystemModelBase.mts` — universal base (`ActorSystemModelBase`): speed fields (land/climb/swim/burrow/fly each with base + total `persisted:false`), biography, notes
 - [ ] Create `src/documents/actors/baseActor/data/CreatureSystemModel.mts` — `CreatureSystemModel extends ActorSystemModelBase`: all creature-shared stats
   - [x] Abilities: str, dex, con, int, wis, cha each with `base: number` + `mod: number (persisted:false)`
-  - [ ] `hp`: `base, max (persisted:false), current, temp, nonlethal`
-  - [ ] `bab`: `total (persisted:false, derived as 0; alpha.2 fills class progression)`
-  - [ ] `ac`: `normal, touch, flatFooted` all `persisted:false` — start at `10 + DEX mod + size`
-  - [ ] `saves`: fort, ref, will each with `base + total (persisted:false) + ability: AbilityKey`
-  - [ ] `init`: `bonus + total (persisted:false)`
-  - [ ] `sr`: number; `dr`: DamageReduction[] array
-  - [ ] `currency: CurrencyField` at schema root (world-settings currencies; coin weight → encumbrance)
-  - [ ] Encumbrance: `carriedWeight (pf), light/medium/heavy/carry/drag thresholds (pf), carryBonus, carryMultiplier`
+  - [x] `hp`: `max (persisted:false), current, temp, nonlethal` (plus `regeneration` and `fastHealing` scaffolding)
+  - [x] `bab`: `total (persisted:false, derived as 0; alpha.2 fills class progression)`
+  - [x] `defense`: `armorClass`, `touchAC`, `flatFootedAC` all `persisted:false` (renamed from legacy `ac.*` shape)
+  - [x] `saves`: fort, ref, will each with `total (persisted:false)`
+  - [x] `init`: `total (persisted:false)`
+  - [x] `defense.spellResistance`: FormulaField (`expectedType: number`) scaffolded
+  - [ ] `dr`: DamageReduction[] array
+  - [x] `currency: CurrencyField` at schema root (world-settings currencies; coin weight → encumbrance)
+  - [x] Encumbrance schema: `carriedWeight`, `light/medium/heavy/carry/drag`, `level`, `carryBonus`, `carryMultiplier`
 - [ ] Create `src/documents/actors/character/data/CharacterSystemModel.mts` — `CharacterSystemModel extends CreatureSystemModel`: character-only fields
   - [ ] `level (persisted:false)`, `xp: {value, max}`, `size: SizeCategory`
-  - [ ] `bio.alignment` (moved from top-level `system.alignment` — Story 3), `bio.languages: string[]`, `bio.senses: string|null`
-  - [ ] `settings.isPartyMember: boolean`
-  - [ ] `get race()` getter on `CreatureDnd35e` returning `'Human'` stub — NOT a schema field (real Race item in a later phase)
+  - [x] `bio.alignment` (moved from top-level `system.alignment` — Story 3), `bio.languages: string[]`, `bio.senses: SenseEntrySource[]`
+  - [x] `settings.isPartyMember: boolean`
+  - [x] `get race()` getter on `CreatureDnd35e` returning `'Human'` stub — NOT a schema field (real Race item in a later phase)
 - [ ] Create `src/documents/actors/npc/data/NpcSystemModel.mts` — `NpcSystemModel extends CreatureSystemModel`: **stub only** (Phase 23 adds cr, type/subtype, environment, treasure, advancement)
 - [ ] Create `src/documents/actors/object/data/ObjectSystemModel.mts` — `ObjectSystemModel extends ActorSystemModelBase`: **stub only** (Phase 23 adds HP(object), hardness, breakDC)
 - [ ] Create `src/documents/actors/trap/data/TrapSystemModel.mts` — `TrapSystemModel extends ObjectSystemModel`: **stub only** (Phase 23 adds findDC, disarmDC)
@@ -335,7 +340,7 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 **Derived Data Preparation Pipeline:**
 - [ ] Implement `prepareBaseData()`: Load ability scores, level, size from source
 - [x] Implement ability modifier calculation: `mod = floor((ability - 10) / 2)` for all six
-- [ ] Implement AC calculation for all three variants: normal (10 + DEX), touch (10 + DEX), flatFooted (10 or less if no DEX)
+- [ ] Implement AC calculation for all three variants: normal (10 + DEX), touch (10 + DEX), flatFooted baseline (no-condition value; condition-aware DEX denial deferred)
 - [ ] Implement AC size modifier: add `actor.system.size` modifier to all AC variants
 - [ ] Implement carrying capacity from STR score using D&D 3.5e encumbrance table
 - [ ] Implement encumbrance threshold calculation (light = 1/3 carry, medium = 2/3, heavy = carry)
@@ -344,7 +349,7 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 - [ ] Implement initiative total = DEX mod + bonus field
 - [ ] Implement BAB calculation stub (rule: compute from class items, stub as 0 for now, alpha.2 fills in class contribution)
 - [ ] Implement save calculations stub (rule: base + ability mod, class contributions in alpha.2)
-- [ ] Call `applyActiveEffects()` during `prepareDerivedData()` prep cycle
+- [ ] Call `applyActiveEffects()` during `prepareDerivedData()` prep cycle (Story 6 sequencing: land after inventory/equipment sources)
 - [ ] Test: Prep cycle completes without errors for fresh actor
 
 **Formula-Ready Field Preparation for poc.10 / alpha.3:**
@@ -353,6 +358,7 @@ Override `update()` on `ActorDnd35e` to refresh the active Pinia store after Fou
 - [ ] Ensure `getRollData()` returns POJO with all formula-ready paths (e.g., `abilities.str.mod`, `bab`, `defense.armorClass`)
 - [ ] Register formula contexts in Pinia store for IDE autocomplete hints
 - [ ] Document all formula paths available via `#self.*` that poc.10 and alpha.3 actions will consume
+- [ ] Wire `SpellResistance.vue` to a real FormulaFormGroup updater (replace current `console.log` stub) so SR formulas persist to `system.defense.spellResistance`
 - [ ] Test: `getRollData()` returns complete object with no undefined fields
 
 **Active Effect Integration (Stacking Engine):**

@@ -73,6 +73,18 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       naturalArmor:    useDnd35eField(derivedNumberField(0)),
       fortification: useDnd35eField(derivedNumberField(0)),
       concealment: useDnd35eField(derivedNumberField(0)),
+      spellResistance: useDnd35eField(new FormulaField({
+        expectedType: 'number',
+        nullable: true,
+        required: false,
+        initial: () => ({
+          formula: '',
+          expectedType: 'number',
+          resolvedValue: 0,
+        }),
+      }), {
+        familiar: { aliases: ['spellResistance'] },
+      }),
     });
 
     const saveEntry = () => new SchemaField({
@@ -87,19 +99,6 @@ abstract class CreatureSystemModel extends ActorSystemModel {
 
     schema.init = new SchemaField({
       total: useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['initiative'] } }),
-    });
-
-    schema.sr = useDnd35eField(new FormulaField({
-      expectedType: 'number',
-      nullable: true,
-      required: false,
-      initial: () => ({
-        formula: '',
-        expectedType: 'number',
-        resolvedValue: 0,
-      }),
-    }), {
-      familiar: { aliases: ['spellResistance'] },
     });
 
     schema.bio = new SchemaField({

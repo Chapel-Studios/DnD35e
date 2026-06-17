@@ -102,7 +102,6 @@ interface SettingsData {
 // ─── Creature source / data ───────────────────────────────────────────────────
 
 interface CreatureSystemSourceProperties {
-  sr:           FormulaDataSource;
   bio:          BioData;
   size:         Size;
   notes:        string;
@@ -116,7 +115,7 @@ interface CreatureSystemSource extends CreatureSystemSourceProperties, ActorSyst
   saves:      SavesOf<SaveSource>;
   currency:   PriceSource;
   defense: {
-    sr: FormulaDataSource;
+    spellResistance: FormulaDataSource;
   }
 }
 

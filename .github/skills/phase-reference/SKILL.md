@@ -21,7 +21,7 @@ This skill helps you:
 
 ## Source of Truth
 
-**For the dnd35e system**, all phase information lives in **[docs/migration-plan/README.md](../../docs/migration-plan/README.md)**.
+**For the dnd35e system**, all phase information lives in **[docs/migration-plan/roadmap.md](../../docs/migration-plan/roadmap.md)**.
 
 This is the authoritative reference for:
 - All 32 phases (POC, Beta, Release, Post-Release)
@@ -53,7 +53,7 @@ The dnd35e roadmap breaks D&D 3.5e system implementation into major deliverables
 
 ## Finding a Feature's Phase
 
-**Step 1**: Open [docs/migration-plan/README.md](../../docs/migration-plan/README.md) (single source of truth)
+**Step 1**: Open [docs/migration-plan/roadmap.md](../../docs/migration-plan/roadmap.md) (single source of truth)
 
 **Step 2**: Use Ctrl+F to search the phase table for your feature name. Example: "Where should I add channel resistance for undead?"
 
@@ -67,7 +67,7 @@ The dnd35e roadmap breaks D&D 3.5e system implementation into major deliverables
 
 Each phase in `docs/migration-plan/` has:
 
-**In README.md table**:
+**In roadmap.md table**:
 - Phase number and name
 - Current status (✅ Complete, 🔶 In Progress %, 📋 Outlined, 📖 Rough Sketch)
 - Dependencies (which phases must be done first)
@@ -80,7 +80,7 @@ Each phase in `docs/migration-plan/` has:
 - **Implementation notes**: Architecture decisions and patterns
 - **Scope notes**: What's included vs. deferred
 
-**Dependency graph**: README.md includes a DAG showing which phases unlock which. Plan parallel work by following this graph.
+**Dependency graph**: `roadmap.md` includes a DAG showing which phases unlock which. Plan parallel work by following this graph.
 
 ## Related Skills
 

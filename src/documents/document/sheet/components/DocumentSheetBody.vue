@@ -93,6 +93,8 @@
   .sheet-body-content {
     display: flex;
     overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0; // Ensure the content can shrink properly when vertical tabs are enabled
 
     &.vertical-tabs {
       position: relative;

@@ -14,7 +14,7 @@
       :step="step"
       :placeholder="placeholder"
       :disabled="disabled"
-      @change="onValueChange?.(($event.target as HTMLInputElement).value as TValue)"
+      @change="valueChangeHandler"
     />
     <span class="vui-divider" aria-hidden="true" />
     <div class="select-auto">
@@ -27,7 +27,7 @@
         class="vui-unit"
         :value="unit"
         :disabled="disabled"
-        @change="onUnitChange?.(($event.target as HTMLSelectElement).value as TUnit)"
+        @change="unitChangeHandler"
       >
         <option v-for="opt in unitOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -71,6 +71,20 @@
   });
 
   const sizerUnitOptions = computed(() => props.sizingUnitOptions ?? props.unitOptions);
+
+  const valueChangeHandler = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (props.valueType === 'number') {
+      props.onValueChange?.(Number(target.value) as TValue);
+    } else {
+      props.onValueChange?.(target.value as TValue);
+    }
+  };
+
+  const unitChangeHandler = (event: Event) => {
+    const target = event.target as HTMLSelectElement;
+    props.onUnitChange?.(target.value as TUnit);
+  };
 </script>
 
 <style lang="scss" scoped>
