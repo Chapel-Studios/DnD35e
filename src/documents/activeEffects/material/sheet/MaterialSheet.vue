@@ -48,9 +48,9 @@
   const materialDisplayValue = computed(() => {
     const materialSubtypeSelection = materialSubtypeSelectOptions
       .find(option => option.value === materialSubtype.value);
-    if (materialSubtype.value === undefined) return null;
+    if (materialSubtypeSelection === undefined) return null;
     const isStandard = materialSubtypeSelection?.value === MATERIAL_SUBTYPE_STANDARD;
-    return isStandard ? ' ' : game.i18n.localize(materialSubtypeSelection!.label);
+    return isStandard ? ' ' : game.i18n.localize(materialSubtypeSelection.label);
   });
 </script>
 

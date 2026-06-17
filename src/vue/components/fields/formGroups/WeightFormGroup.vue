@@ -5,6 +5,7 @@
     :field-path="props.fieldPath"
     :unit="weightDisplayShortLabel"
     class="weight-form-group"
+    edit-derived
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />

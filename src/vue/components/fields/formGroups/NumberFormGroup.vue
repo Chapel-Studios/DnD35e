@@ -80,6 +80,7 @@
   const resolvedValue = computed<number | null>(() =>
     props.value !== undefined ? props.value : getViewAwareFieldValue<number | null>(props.fieldPath) ?? null
   );
+
   const isDisabled = computed(() => {
     if (props.disabled) return true;
     if (props.forceEdit) return false;  // forceEdit fields stay enabled

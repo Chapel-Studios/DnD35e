@@ -6,6 +6,7 @@
     :unit="distanceDisplayShortLabel"
     :label="props.label"
     :hint="props.hint"
+    edit-derived
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />

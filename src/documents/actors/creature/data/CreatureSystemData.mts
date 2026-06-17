@@ -106,7 +106,6 @@ interface CreatureSystemSourceProperties {
   size:         Size;
   notes:        string;
   settings:     SettingsData;
-  creatureType: string;
 }
 
 interface CreatureSystemSource extends CreatureSystemSourceProperties, ActorSystemSource {
@@ -143,6 +142,7 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   encumbrance: EncumbranceData;
   isIncorporeal: boolean;
   isQuadraped: boolean;
+  creatureType: string;
 }
 
 export type {

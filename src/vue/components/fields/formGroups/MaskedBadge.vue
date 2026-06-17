@@ -33,7 +33,7 @@
       }
     }
     try {
-      return JSON.stringify(value);
+      return JSON.stringify(value) ?? String(value);
     } catch {
       return String(value);
     }
