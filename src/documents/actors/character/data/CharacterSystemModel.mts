@@ -17,11 +17,11 @@ class CharacterSystemModel extends CreatureSystemModel {
     schema.xp = new SchemaField({
       value: useDnd35eField(
         new NumberField<number, number, true, false, true>({ required: true, nullable: false, initial: 0 }),
-        { familiar: { aliases: ['experience'] } }
+        { familiar: { aliases: ['experience'] }, maskable: false }
       ),
     });
 
-    schema.isPartyMember = useDnd35eField(requiredBooleanField(false));
+    schema.isPartyMember = useDnd35eField(requiredBooleanField(false), { maskable: false });
 
     return schema;
   }

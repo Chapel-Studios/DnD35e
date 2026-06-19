@@ -1,11 +1,8 @@
 <template>
   <CheckBoxFormGroup
-    label="dnd35e.EQUIPPABLE.FIELDS.isMasterwork.label"
-    :value="isMasterwork"
     :on-update="toggleMasterwork"
     field-path="system.isMasterwork"
     default-editability="gmOnly"
-    edit-derived
   />
 </template>
 <script setup lang="ts">
@@ -15,7 +12,8 @@
   import { inject } from 'vue';
 
   const {
-    documentGetters: { isMasterwork },
     documentActions: { toggleMasterwork },
   } = inject(DocumentSheetStoreSymbol) as EquippableDocumentStore;
+
+  // Domain callback: toggling masterwork applies item-specific logic beyond a raw boolean write.
 </script>

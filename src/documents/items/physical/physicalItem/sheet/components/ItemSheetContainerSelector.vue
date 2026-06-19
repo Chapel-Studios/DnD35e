@@ -3,7 +3,6 @@
     v-if="hasOwner"
     label="Container"
     :value="currentContainerId"
-    :on-update="updater"
     :options="possibleContainers"
     field-path="system.containerId"
   /> -->
@@ -26,5 +25,4 @@
   //   },
   // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
-  // const updater = getDirectFieldUpdater('system.containerId');
 </script>

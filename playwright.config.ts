@@ -43,6 +43,7 @@ const foundryMainJs = localConfig.foundryRootPath
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.spec.ts',
+  // Keep full discovery enabled; draft suites should be promoted as runnable specs.
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

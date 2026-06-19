@@ -33,11 +33,11 @@
       isWeightlessWhenEquipped,
     },
     documentActions: {
-      getDirectFieldUpdater,
+      getViewAwareFieldUpdater,
     },
   } = inject(DocumentSheetStoreSymbol) as EquippableDocumentStore;
 
-  const isWeightlessWhenEquippedUpdater = getDirectFieldUpdater('system.isWeightlessWhenEquipped');
+  const isWeightlessWhenEquippedUpdater = getViewAwareFieldUpdater('system.isWeightlessWhenEquipped');
 </script>
 
 <style scoped lang="scss">

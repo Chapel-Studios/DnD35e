@@ -1,11 +1,10 @@
 <template>
   <ListFormGroup
     field-path="system.bio.senses"
-    label="dnd35e.CREATURE.FIELDS.bio.senses.label"
+    :value="senses"
     add-button-title="dnd35e.CREATURE.FIELDS.bio.senses.add"
     remove-button-title="dnd35e.CREATURE.FIELDS.bio.senses.remove"
     empty-label="dnd35e.CREATURE.FIELDS.bio.senses.empty"
-    :value="senses"
     :default-visibility="ownerPlusVisibility"
     :default-editability="gmOnlyEditability"
     :on-add-item="addSense"
@@ -23,25 +22,6 @@
         :on-unit-change="(val: SenseType) => updateSenseType(index, val)"
         class="sense-type-select"
       />
-      <!-- <div class="sense-entry">
-        <SelectFormGroup
-          :field-path="`system.bio.senses[${index}].type`"
-          :options="senseTypeOptions"
-          :value="item.type"
-          :disabled="disabled"
-          label=""
-          class="sense-type-select"
-          :on-update="(val: SenseType) => updateSenseType(index, val)"
-          show-field-controls="false"
-        />
-        <DistanceFormGroup
-          :field-path="`system.bio.senses[${index}].distance`"
-          :value="item.distance"
-          label=""
-          class="sense-distance-input"
-          :on-update="(val: number) => updateSenseDistance(index, val)"
-        />
-      </div> -->
     </template>
     <template #item-readonly="{ item }">
       {{ item.distance }}&thinsp;{{ distanceUnit }} {{ localize(SENSE_TYPES_LOCALIZED[item.type]) }}
@@ -73,7 +53,7 @@
       senses,
     },
     documentActions: {
-      getDirectFieldUpdater,
+      getViewAwareFieldUpdater,
     },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
@@ -90,7 +70,8 @@
     })));
   const distanceUnit = computed(() => distanceDisplayShortLabel.value);
 
-  const sensesUpdater = getDirectFieldUpdater('system.bio.senses');
+  // Domain callback: senses are edited as a coordinated array of structured entries.
+  const sensesUpdater = getViewAwareFieldUpdater('system.bio.senses');
 
   function addSense(): void {
     const nextSense = senseTypeOptions.value

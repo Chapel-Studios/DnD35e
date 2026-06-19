@@ -40,27 +40,20 @@
         </div>
       </div>
       <NumberFormGroup
-        :value="tempHp"
-        :on-update="tempHpUpdater"
         field-path="system.hp.temp"
         :default-visibility="ownerPlusVisibility"
         :default-editability="gmOnlyEditability"
         class="hp-temp"
-        direct-update
         force-edit
       />
       <NumberFormGroup
-        :value="currentHp"
-        :on-update="currentHpUpdater"
         field-path="system.hp.current"
         :default-visibility="ownerPlusVisibility"
         :default-editability="gmOnlyEditability"
         class="hp-current"
-        direct-update
         force-edit
       />
       <NumberFormGroup
-        :value="maxHp"
         field-path="system.hp.max"
         :default-visibility="ownerPlusVisibility"
         :default-editability="gmOnlyEditability"
@@ -68,13 +61,10 @@
         read-only
       />
       <NumberFormGroup
-        :value="nonlethalDamage"
-        :on-update="nonlethalDamageUpdater"
         field-path="system.hp.nonlethal"
         :default-visibility="ownerPlusVisibility"
         :default-editability="gmOnlyEditability"
         class="hp-nonlethal"
-        direct-update
         force-edit
       />
     </div>
@@ -107,14 +97,9 @@
       nonlethalDamage,
     },
     documentActions: {
-      getDirectFieldUpdater,
-      getViewAwareFieldUpdater,
     },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
-  const currentHpUpdater = getDirectFieldUpdater('system.hp.current');
-  const tempHpUpdater = getDirectFieldUpdater('system.hp.temp');
-  const nonlethalDamageUpdater = getViewAwareFieldUpdater('system.hp.nonlethal');
 
   // Computed bar widths and values
   const totalMax = computed(() => (maxHp.value ?? 0) + (tempHp.value ?? 0));

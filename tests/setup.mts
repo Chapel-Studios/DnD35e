@@ -44,23 +44,24 @@ function setProperty (obj: any, path: string, value: unknown): boolean {
 }
 
 function mergeObject<T extends Record<string, any>> (
-  target: T,
+  target: T | undefined,
   source: Partial<T> = {}
 ): T {
+  const output = (target ?? {}) as T;
   for (const [k, v] of Object.entries(source)) {
     if (
       v !== null &&
       typeof v === 'object' &&
       !Array.isArray(v) &&
-      typeof target[k] === 'object' &&
-      target[k] !== null
+      typeof output[k] === 'object' &&
+      output[k] !== null
     ) {
-      mergeObject(target[k], v as any);
+      mergeObject(output[k], v as any);
     } else {
-      (target as any)[k] = v;
+      (output as any)[k] = v;
     }
   }
-  return target;
+  return output;
 }
 
 (globalThis as any).foundry = {
@@ -91,6 +92,15 @@ function mergeObject<T extends Record<string, any>> (
   documents: {
     // Constructor-only; only used as a generic type argument in source.
     Item: class {},
+    ActiveEffect: class {
+      static metadata = {};
+      constructor (..._args: any[]) {}
+      _onCreate (..._args: any[]): void {}
+      _onDelete (..._args: any[]): void {}
+      async _preCreate (..._args: any[]): Promise<boolean | void> { return true; }
+      updateSource (..._args: any[]): void {}
+      async update (..._args: any[]): Promise<this> { return this; }
+    },
   },
   applications: {
     // Application classes pulled in via deep imports (e.g. settings menus
@@ -105,6 +115,7 @@ function mergeObject<T extends Record<string, any>> (
       HandlebarsApplicationMixin: <T extends new (...args: any[]) => any> (Base: T): T => Base,
     },
     sheets: {
+      ActorSheetV2: class { constructor (..._args: any[]) {} },
       ItemSheetV2: class { constructor (..._args: any[]) {} },
       ActiveEffectConfig: class { constructor (..._args: any[]) {} },
     },
@@ -133,4 +144,15 @@ function mergeObject<T extends Record<string, any>> (
     const n = Number(expr);
     return Number.isFinite(n) ? n : 0;
   }),
+};
+
+// --- global document constructors ---------------------------------------
+(globalThis as any).Actor = class {
+  static metadata = {};
+  constructor (..._args: any[]) {}
+  _onCreate (..._args: any[]): void {}
+  _onDelete (..._args: any[]): void {}
+  async _preCreate (..._args: any[]): Promise<boolean | void> { return true; }
+  updateSource (..._args: any[]): void {}
+  async update (..._args: any[]): Promise<this> { return this; }
 };

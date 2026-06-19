@@ -2,18 +2,14 @@
   <ul class="weapon-summary">
     <li>
       <SelectFormGroup
-        :value="weaponType"
         :options="weaponTypeSelectOptions"
-        :on-update="weaponTypeUpdater"
         field-path="system.weaponType"
         class="contents"
       />
     </li>
     <li>
       <SelectFormGroup
-        :value="weaponSubtype"
         :options="weaponSubtypeSelectOptions"
-        :on-update="weaponSubtypeUpdater"
         field-path="system.weaponSubtype"
         class="contents"
       />
@@ -22,25 +18,8 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { weaponSubtypeSelectOptions, weaponTypeSelectOptions } from '@items/physical/weapon/data/constants.mjs';
   import { SelectFormGroup } from '@vc/fields/index.mjs';
-  import { inject } from 'vue';
-
-  import type { WeaponStore } from '../WeaponStore.mjs';
-
-  const {
-    documentGetters: {
-      weaponType,
-      weaponSubtype,
-    },
-    documentActions: {
-      getViewAwareFieldUpdater,
-    },
-  } = inject(DocumentSheetStoreSymbol) as WeaponStore;
-
-  const weaponTypeUpdater = getViewAwareFieldUpdater('system.weaponType');
-  const weaponSubtypeUpdater = getViewAwareFieldUpdater('system.weaponSubtype');
 </script>
 
 <style scoped lang="scss">

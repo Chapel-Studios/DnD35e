@@ -1,7 +1,6 @@
 <template>
   <FormulaFormGroup
     field-path="system.defense.spellResistance"
-    :on-update="(value) => console.log('New SR value:', value)"
   />
 </template>
 

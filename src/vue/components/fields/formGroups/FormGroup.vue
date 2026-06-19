@@ -118,7 +118,7 @@
   // Get effective visibility: override > prop > schema default > 'everyone'
   const isFieldVisible = getIsFieldVisible(props.fieldPath, props.defaultVisibility);
 
-  const isFieldEditable = getIsFieldEditable(props.fieldPath, props.defaultEditability);
+  const isFieldEditable = getIsFieldEditable(props.fieldPath, props.defaultEditability, !!props.forceEdit);
   const showDefaultSlot = computed(() => !props.readOnly && (isFieldEditable.value || props.forceEdit));
   
 

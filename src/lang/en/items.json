@@ -139,6 +139,10 @@
         "isBroken": {
           "label": "Broken?",
           "hint": "Whether this item is currently broken."
+        },
+        "magicEquivalency": {
+          "label": "Magic Equivalency",
+          "hint": "The magic equivalency granted to this item."
         }
       },
       "EquipSlot": {

@@ -222,7 +222,7 @@ export interface FormulaFormGroupProps {
 
   // Data & callbacks
   value: string;               // The formula string: "Silver (+#self.hardness AC)"
-  onUpdate: (value: string) => void;  // Called when formula changes
+  onUpdate?: (value: string) => void;  // Optional override; when omitted, component infers updater from fieldPath
 
   // Component state
   disabled?: boolean;          // Override: force-disable editing regardless of store state

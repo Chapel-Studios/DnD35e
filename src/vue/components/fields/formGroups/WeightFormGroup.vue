@@ -5,7 +5,6 @@
     :field-path="props.fieldPath"
     :unit="weightDisplayShortLabel"
     class="weight-form-group"
-    edit-derived
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
@@ -28,8 +27,6 @@
   const slots = useSlots();
 
   const props = defineProps<{
-    /** When true, edit inputs show derived data instead of source data. */
-    editDerived?: boolean;
     fieldPath: string;
   }>();
 
@@ -55,6 +52,7 @@
     return convertToLocalizedWeight(value ?? 0) ?? 0;
   });
 
+  // Projection callback: convert localized display weight back to stored base units.
   const weightUpdater = (value: number | null) => {
     const realValue = convertToStoredWeight(value ?? 0);
     getViewAwareFieldUpdater(props.fieldPath)(realValue);

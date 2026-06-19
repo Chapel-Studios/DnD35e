@@ -3,9 +3,7 @@
     class="grid-full-row"
     label="dnd35e.SETTINGS.DamageReductionTypes.Label"
     field-path="system.damageReductionTypes"
-    :value="damageReductionTypes"
     :options="damageReductionTypeOptions"
-    :on-update="updater"
     :read-only="props.readOnly"
   />
 </template>
@@ -23,14 +21,9 @@
 
   const {
     documentGetters: {
-      damageReductionTypes,
       damageReductionTypeOptions,
     },
-    documentActions: {
-      getDirectFieldUpdater,
-    },
   } = inject(DocumentSheetStoreSymbol) as MaterialStore;
-  const updater = getDirectFieldUpdater('system.damageReductionTypes');
 </script>
 
 <style lang="scss" scoped>

@@ -2,6 +2,8 @@
   "recommendations": [
     "dbaeumer.vscode-eslint",
     "vue.volar",
-    "bierner.markdown-mermaid"
+    "bierner.markdown-mermaid",
+    "vitest.explorer",
+    "ms-playwright.playwright"
   ]
 }

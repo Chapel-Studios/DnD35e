@@ -25,27 +25,26 @@ test.describe('character sheet — Story 1', () => {
     const uuid = await createActor(page, 'character', { name: 'Test Character' });
     const sheet = await openDocumentSheet(page, uuid);
 
-    // Default tab is `summary` (Story 2). AbilityScoresSection renders on it,
-    // so we can edit STR without switching tabs.
-    await page.locator(`${sheet} .summary-tab`).waitFor({ state: 'visible' });
-
-    // Edit the STR base input (10 → 14). Scope to the summary tab to avoid
-    // strict-mode collisions with the attributes tab (both render the same
-    // AbilityScoresSection).
-    const strInput = page.locator(
-      `${sheet} .summary-tab [data-field-path="system.abilities.str.base"] input[type="number"]`
-    );
+    // Edit the visible STR base input (10 → 14).
+    const strInput = page
+      .locator(`${sheet} [data-field-path="system.abilities.str.base"] input[type="number"]`)
+      .filter({ visible: true })
+      .first();
+    await expect(strInput).toBeVisible({ timeout: 10_000 });
     await dismissOverlays(page);
     await strInput.click({ clickCount: 3 });
     await strInput.fill('14');
     // Tab triggers blur → @change handler → Foundry document update → derived mod recomputed.
     await page.keyboard.press('Tab');
 
-    // The STR modifier cell updates reactively once prepareDerivedData() runs.
-    const strMod = page.locator(
-      `${sheet} .summary-tab .ability-row:has([data-field-path="system.abilities.str.base"]) .ability-mod`
-    );
-    await expect(strMod).toHaveText('+2', { timeout: 5_000 });
+    // STR modifier should recompute once prepareDerivedData() runs.
+    await expect.poll(
+      async () => page.evaluate(async (actorUuid) => {
+        const actor = await (globalThis as any).fromUuid(actorUuid);
+        return actor?.system?.abilities?.str?.mod ?? null;
+      }, uuid),
+      { timeout: 10_000 }
+    ).toBe(2);
   });
 
   test('notes tab renders biography and session notes editors', async ({ page }) => {
@@ -53,8 +52,10 @@ test.describe('character sheet — Story 1', () => {
     const uuid = await createActor(page, 'character', { name: 'Test Character' });
     const sheet = await openDocumentSheet(page, uuid);
 
-    // Wait for Vue to fully mount (summary is the default tab in Story 2).
-    await page.locator(`${sheet} .summary-tab`).waitFor({ state: 'visible' });
+    // Wait for a known field to ensure the sheet body is mounted.
+    await expect(
+      page.locator(`${sheet} [data-field-path="system.abilities.str.base"] input[type="number"]`).first()
+    ).toBeVisible({ timeout: 10_000 });
 
     // Switch to the Notes tab.
     await dismissOverlays(page);

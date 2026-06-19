@@ -29,7 +29,6 @@
       <div v-if="showFlyManueverabilityPicker" class="speed-card fm">
         <SelectFormGroup
           field-path="system.speed.flyManeuverability"
-          label="dnd35e.ACTOR.FIELDS.speed.flyManeuverability.label"
           :options="flyManeuverabilityOptions"
           :value="flyManeuverability"
           :disabled="!showFlyManueverabilityPicker"

@@ -1,24 +1,9 @@
 <template>
   <CheckBoxFormGroup
-    :value="isMelded"
-    :on-update="updater"
     field-path="system.isMelded"
   />
 </template>
+
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import type { EquippableDocumentStore } from '@items/physical/equippableItem/index.mjs';
   import { CheckBoxFormGroup } from '@vc/fields/index.mjs';
-  import { inject } from 'vue';
-
-  const {
-    documentGetters: {
-      isMelded,
-    },
-    documentActions: {
-      getDirectFieldUpdater,
-    },
-  } = inject(DocumentSheetStoreSymbol) as EquippableDocumentStore;
-
-  const updater = getDirectFieldUpdater('system.isMelded');
 </script>

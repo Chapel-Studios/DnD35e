@@ -18,6 +18,14 @@ describe('CreatureSystemModel ability modifier', () => {
     model.abilities = Object.fromEntries(
       ABILITY_KEYS.map((key) => [key, { base: scores[key] ?? 10, mod: 0 }])
     ) as CreatureSystemModel['abilities'];
+    model.speed = {
+      land: { base: 30, total: 0 },
+      climb: { base: 0, total: 0 },
+      swim: { base: 0, total: 0 },
+      burrow: { base: 0, total: 0 },
+      fly: { base: 0, total: 0 },
+      flyManeuverability: null,
+    } as CreatureSystemModel['speed'];
     model.prepareDerivedData();
     return model;
   };

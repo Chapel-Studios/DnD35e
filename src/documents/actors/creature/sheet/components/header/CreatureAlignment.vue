@@ -33,11 +33,11 @@
 
   const {
     documentGetters: { alignmentLaw, alignmentMoral, alignmentLabel },
-    documentActions: { getDirectFieldUpdater },
+    documentActions: { getViewAwareFieldUpdater },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
-  const updateLaw   = getDirectFieldUpdater('system.bio.alignment.law');
-  const updateMoral = getDirectFieldUpdater('system.bio.alignment.moral');
+  const updateLaw   = getViewAwareFieldUpdater('system.bio.alignment.law');
+  const updateMoral = getViewAwareFieldUpdater('system.bio.alignment.moral');
 
   const onLawChange   = (e: Event) => updateLaw((e.target  as HTMLSelectElement).value || null);
   const onMoralChange = (e: Event) => updateMoral((e.target as HTMLSelectElement).value || null);

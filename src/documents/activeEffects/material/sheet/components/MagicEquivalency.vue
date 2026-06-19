@@ -1,7 +1,5 @@
 <template>
   <NumberFormGroup
-    label="dnd35e.ITEM.MagicEquivalent"
-    :value="magicEquivalency"
     field-path="system.magicEquivalency"
     :read-only="props.readOnly"
   />
@@ -18,11 +16,7 @@
     readOnly?: boolean;
   }>();
 
-  const {
-    documentGetters: {
-      magicEquivalency,
-    },
-  } = inject(DocumentSheetStoreSymbol) as MaterialStore;
+  inject(DocumentSheetStoreSymbol) as MaterialStore;
 </script>
 
 <style lang="scss" scoped>

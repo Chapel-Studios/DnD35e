@@ -1,10 +1,7 @@
 <template>
   <SelectFormGroup
-    label="EFFECT.ShowIcon"
     field-path="showIcon"
-    :value="showIcon"
     :options="showIconOptions"
-    :on-update="getViewAwareFieldUpdater('showIcon')"
   />
 </template>
 
@@ -17,11 +14,7 @@
 
   const {
     documentGetters: {
-      showIcon,
       showIconOptions,
-    },
-    documentActions: {
-      getViewAwareFieldUpdater,
     },
   } = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
 </script>

@@ -10,7 +10,6 @@
       field-path="duration.value"
       :value="durationValue"
       :on-update="updateDurationValue"
-      edit-derived
     />
     <SelectFormGroup
       :label="durationUnitsLabel"
@@ -18,7 +17,6 @@
       :value="durationUnits"
       :options="availableUnits"
       :on-update="updateDurationUnits"
-      edit-derived
     />
   </section>
 </template>
@@ -37,6 +35,8 @@
     _storeUtils: { createLocalizedComputed },
   } = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
 
+  // Duration uses dedicated document actions to keep unit/value behavior centralized.
+  // TODO: this can probably be refactored into the existing ValueUnitInput component
   const isActiveTab = getIsTabOpen('duration');
 
   const durationLabel = createLocalizedComputed('EFFECT.Duration');
