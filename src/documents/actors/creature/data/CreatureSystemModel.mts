@@ -1,8 +1,11 @@
 import { ActorSystemModel } from '@actors/baseActor/data/index.mjs';
-import { LAW_AXES, MORAL_AXES } from '@constants/alignment.mjs';
-import { SENSE_TYPES } from '@constants/senses.mjs';
-import { SIZES } from '@constants/sizes.mjs';
-import { MASKED_EDIT_STRATEGY } from '@documents/document/sheet/DocumentSheetStore.mjs';
+import {
+  LAW_AXES,
+  MASKED_EDIT_STRATEGY,
+  MORAL_AXES,
+  SENSE_TYPES,
+  SIZES,
+} from '@constants/index.mjs';
 import { CurrencyField } from '@fields/CurrencyField.mjs';
 import {
   derivedBooleanField,

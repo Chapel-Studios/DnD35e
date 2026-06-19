@@ -1,5 +1,5 @@
+import { MASKED_EDIT_STRATEGY } from '@constants/index.mjs';
 import { SIZES } from '@constants/sizes.mjs';
-import { MASKED_EDIT_STRATEGY } from '@documents/document/sheet/DocumentSheetStore.mjs';
 import { IdentifiableSchemaMixin } from '@documents/identifiable/data/index.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
 import { CurrencyField } from '@fields/CurrencyField.mjs';

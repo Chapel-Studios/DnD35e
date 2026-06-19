@@ -1,3 +1,4 @@
+import { MASKED_EDIT_STRATEGY } from '@constants/fields.mjs';
 import { routeMaskedFieldEdit } from '@documents/document/sheet/maskedFieldRouting.mjs';
 import { describe, expect, it } from 'vitest';
 
@@ -9,7 +10,7 @@ describe('routeMaskedFieldEdit', () => {
   it('playerSecretRoute strategy for non-GM routes only to player mask', () => {
     setIsGM(false);
     const result = routeMaskedFieldEdit({
-      strategy: 'playerSecretRoute',
+      strategy: MASKED_EDIT_STRATEGY.PLAYER_SECRET_ROUTE,
       isPlayMode: true,
       nextValue: 12,
       sourceValue: 30,
@@ -25,7 +26,7 @@ describe('routeMaskedFieldEdit', () => {
   it('playerSecretRoute strategy for GM routes to normal field value', () => {
     setIsGM(true);
     const result = routeMaskedFieldEdit({
-      strategy: 'playerSecretRoute',
+      strategy: MASKED_EDIT_STRATEGY.PLAYER_SECRET_ROUTE,
       isPlayMode: false,
       nextValue: 40,
       sourceValue: 30,
@@ -41,7 +42,7 @@ describe('routeMaskedFieldEdit', () => {
   it('deltaMirror strategy for non-GM preserves hidden offset while updating visible value', () => {
     setIsGM(false);
     const result = routeMaskedFieldEdit({
-      strategy: 'deltaMirror',
+      strategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR,
       isPlayMode: true,
       nextValue: 12,
       sourceValue: 30,
@@ -59,7 +60,7 @@ describe('routeMaskedFieldEdit', () => {
   it('deltaMirror strategy for GM edit-mode mirrors delta into visible mask value', () => {
     setIsGM(true);
     const result = routeMaskedFieldEdit({
-      strategy: 'deltaMirror',
+      strategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR,
       isPlayMode: false,
       nextValue: 36,
       sourceValue: 30,
@@ -77,7 +78,7 @@ describe('routeMaskedFieldEdit', () => {
   it('deltaMirror strategy for GM true-mode mirrors the same source-view delta into visible mask value', () => {
     setIsGM(true);
     const result = routeMaskedFieldEdit({
-      strategy: 'deltaMirror',
+      strategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR,
       isPlayMode: false,
       nextValue: 36,
       sourceValue: 30,
@@ -94,7 +95,7 @@ describe('routeMaskedFieldEdit', () => {
   it('deltaMirror strategy for GM play-mode force-edit mirrors the visible masked value like a player edit', () => {
     setIsGM(true);
     const result = routeMaskedFieldEdit({
-      strategy: 'deltaMirror',
+      strategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR,
       isPlayMode: true,
       nextValue: 24,
       sourceValue: 30,
@@ -112,7 +113,7 @@ describe('routeMaskedFieldEdit', () => {
   it('deltaMirror strategy falls back to default routing for non-numeric inputs', () => {
     setIsGM(false);
     const result = routeMaskedFieldEdit({
-      strategy: 'deltaMirror',
+      strategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR,
       isPlayMode: true,
       nextValue: 'abc',
       sourceValue: 30,

@@ -69,6 +69,7 @@
   const props = withDefaults(defineProps<{
     label?: string;
     hint?: string;
+    /** The current value of the list, not required but encouraged for typing. */
     value?: TItem[];
     fieldPath: string;
     defaultVisibility?: FieldVisibility;

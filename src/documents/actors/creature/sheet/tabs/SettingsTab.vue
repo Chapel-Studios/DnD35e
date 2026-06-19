@@ -10,14 +10,9 @@
 </template>
 
 <script lang="ts" setup>
-  import type { CreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { ToggleSwitchFormGroup } from '@vc/fields/index.mjs';
-  import { inject } from 'vue';
 
   const localize = (key: string) => game.i18n.localize(key);
-
-  inject(DocumentSheetStoreSymbol) as CreatureStore;
 </script>
 
 <style lang="scss" scoped>

@@ -1,4 +1,4 @@
-import type { MaskedEditStrategy } from '@documents/document/sheet/DocumentSheetStore.mjs';
+import { MASKED_EDIT_STRATEGY, type MaskedEditStrategy } from '@constants/fields.mjs';
 import type { FormulaFieldMeta } from '@helpers/formulae/types.mjs';
 import type { FieldEditability, FieldVisibility } from '@vc/fields/formGroups/fieldPermissions.mjs';
 
@@ -147,7 +147,7 @@ function useDnd35eField<T extends foundry.data.fields.DataField>(
   const opts = field.options as Record<string, unknown>;
   opts.identifiable = meta.identifiable ?? true;
   opts.maskable = meta.maskable ?? (opts.persisted === false ? false : true);
-  opts.maskedEditStrategy = meta.maskedEditStrategy ?? 'playerSecretRoute';
+  opts.maskedEditStrategy = meta.maskedEditStrategy ?? MASKED_EDIT_STRATEGY.PLAYER_SECRET_ROUTE;
   if (meta.familiar) opts.familiar = meta.familiar;
   if (meta.defaultVisibility) opts.defaultVisibility = meta.defaultVisibility;
   if (meta.defaultEditability) opts.defaultEditability = meta.defaultEditability;

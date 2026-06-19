@@ -1,6 +1,7 @@
 import type { ActorType } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
+import { MASKED_EDIT_STRATEGY, type MaskedEditStrategy } from '@constants/index.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import { resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import type { ActiveEffectDnd35e, EffectType } from '@effects/index.mjs';
@@ -45,21 +46,6 @@ import { resolveViewAwareFieldPlan } from './viewAwareFieldPlan.mjs';
 // ---------------------------------------------------------------------------
 
 type SheetDocument = ItemDnd35e | ActiveEffectDnd35e | ActorDnd35e;
-
-const PLAYER_SECRET_ROUTE = 'playerSecretRoute';
-const DELTA_MIRROR = 'deltaMirror';
-
-const MASKED_EDIT_STRATEGIES = [
-  PLAYER_SECRET_ROUTE,
-  DELTA_MIRROR,
-] as const;
-
-const MASKED_EDIT_STRATEGY = {
-  PLAYER_SECRET_ROUTE,
-  DELTA_MIRROR,
-} as const;
-
-type MaskedEditStrategy = (typeof MASKED_EDIT_STRATEGIES)[number];
 
 type DocumentSheetStoreUtils<TDocument extends SheetDocument> = FieldOverridesStoreUtils & {
   document: ShallowRef<TDocument>;
@@ -209,7 +195,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     options: Partial<DatabaseUpdateOperation<TDocument>> = {}
   ) => {
     if (document.value.documentName === 'Item' || document.value.documentName === 'Actor') {
-      const masks = getDocumentMasks();
+      const masks = documentMasks.value;
       if (masks) {
         const normalFields: Record<string, unknown> = {};
         const playerMaskFields: Record<string, unknown> = {};
@@ -314,7 +300,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     return schemaField?.options?.maskedEditStrategy ?? MASKED_EDIT_STRATEGY.PLAYER_SECRET_ROUTE;
   };
 
-  const getDocumentMasks = (): Record<string, unknown> | undefined => {
+  const documentMasks = computed((): Record<string, unknown> | undefined => {
     const directMasks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
     if (directMasks) return directMasks;
 
@@ -326,7 +312,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       EFFECT_CHANGE_TARGET.ACTOR,
       (effect, change) => resolveMaskedActiveEffectChangeValue(effect, change)
     );
-  };
+  });
 
   const getViewAwareFieldValue = <T,>(fieldPath: string, getFromSource = false): T => {
     const plan = resolveViewAwareFieldPlan(
@@ -342,7 +328,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     // Apply masks in Play Mode, and also in player Edit Mode so non-GM owners
     // do not see GM truth while editing masked fields.
     if (plan.checkMasks && isFieldMaskable(fieldPath)) {
-      const masks = getDocumentMasks();
+      const masks = documentMasks.value;
       if (masks && fieldPath in masks) {
         return normalizeMaskValue<T>(fieldPath, masks[fieldPath]);
       }
@@ -352,7 +338,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     // return the masked value even though checkMasks is false. Guard: if the field
     // has a mask entry, read from _source to get the real (unmasked) value.
     if (isTrueMode.value && isFieldMaskable(fieldPath)) {
-      const masks = getDocumentMasks();
+      const masks = documentMasks.value;
       if (masks && fieldPath in masks) {
         return foundry.utils.getProperty(document.value, `_source.${fieldPath}`) as T;
       }
@@ -415,13 +401,13 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
   const hasMaskForField = (fieldPath: string): ComputedRef<boolean> =>
     computed(() => {
-      const masks = getDocumentMasks();
+      const masks = documentMasks.value;
       return !!masks && fieldPath in masks;
     });
 
   const getMaskForField = <T = unknown,>(fieldPath: string): ComputedRef<T | undefined> =>
     computed(() => {
-      const masks = getDocumentMasks();
+      const masks = documentMasks.value;
       if (!masks || !(fieldPath in masks)) return undefined;
       return normalizeMaskValue<T>(fieldPath, masks[fieldPath]);
     });
@@ -535,7 +521,6 @@ const DocumentSheetStoreSymbol = Symbol('DocumentSheetStore');
 
 export {
   DocumentSheetStoreSymbol,
-  MASKED_EDIT_STRATEGY,
   useDocumentSheetStore,
 };
 
@@ -546,7 +531,6 @@ export type {
   DocumentSheetStoreUtils,
   EvaluationDocument,
   FormulaRegistration,
-  MaskedEditStrategy,
   SheetDocument,
   SheetTab,
 };

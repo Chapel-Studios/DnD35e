@@ -83,7 +83,7 @@ Assume final target behavior is already implemented.
 | `MultiSelectFormGroup<TValue>` | `TValue[]` | `fieldPath`, `options` | `options: MultiSelectOption<TValue>[]` |
 | `ListFormGroup<TItem>` | `TItem[]` | `fieldPath`, `onAddItem`, `addButtonTitle`, `removeButtonTitle` | `maxItems?: number` |
 | `RichTextEditorFormGroup` | `string` | `field` | `showFieldControls?: boolean` |
-| `FormulaFormGroup` | `string` | `fieldPath`, `onUpdate` | `contexts?: FamiliarSchema`, `formulaData?: FormulaData \| null`, `showFieldControls?: boolean` |
+| `FormulaFormGroup` | `string` | `fieldPath` | `contexts?: FamiliarSchema`, `formulaData?: FormulaData \| null`, `showFieldControls?: boolean`, `onUpdate?: (value: string) => void` |
 
 ### Settings type references used above
 
@@ -143,13 +143,13 @@ Real snippet: `src/documents/actors/creature/data/CreatureSystemModel.mts`
 schema.hp = new SchemaField({
   max: useDnd35eField(derivedNumberField(0)),
   current: useDnd35eField(requiredNumberField(0), {
-    maskedEditStrategy: 'deltaMirror',
+    maskedEditStrategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR, //'deltaMirror'
   }),
   temp: useDnd35eField(requiredNumberField(0), {
-    maskedEditStrategy: 'deltaMirror',
+    maskedEditStrategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR,
   }),
   nonlethal: useDnd35eField(requiredNumberField(0), {
-    maskedEditStrategy: 'deltaMirror',
+    maskedEditStrategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR,
   }),
   regeneration: useDnd35eField(derivedNumberField(0)),
   fastHealing: useDnd35eField(derivedNumberField(0)),
@@ -162,8 +162,6 @@ Real snippet: `src/documents/actors/creature/sheet/components/CreatureHP.vue`
 
 ```vue
 <NumberFormGroup
-  :value="currentHp"
-  :on-update="currentHpUpdater"
   field-path="system.hp.current"
   force-edit
 />
@@ -431,7 +429,6 @@ Real form snippet: `src/documents/actors/creature/sheet/tabs/SettingsTab.vue`
 ```vue
 <ToggleSwitchFormGroup
   field-path="system.settings.isPartyMember"
-  :value="isPartyMember"
 />
 ```
 

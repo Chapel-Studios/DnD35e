@@ -1,4 +1,4 @@
-type MaskedEditStrategy = 'playerSecretRoute' | 'deltaMirror';
+import { MASKED_EDIT_STRATEGY, type MaskedEditStrategy } from '@constants/index.mjs';
 
 type RouteMaskedFieldEditParams = {
   strategy: MaskedEditStrategy;
@@ -25,13 +25,13 @@ const toFiniteNumber = (value: unknown): number | undefined => {
 
 const routeMaskedFieldEdit = ({
   strategy,
-  isPlayMode: isPlayMode,
+  isPlayMode,
   nextValue,
   sourceValue,
   maskValue,
 }: RouteMaskedFieldEditParams): RouteMaskedFieldEditResult => {
   const isVisibleMaskedView = !game.user?.isGM || isPlayMode;
-  if (strategy !== 'deltaMirror') {
+  if (strategy !== MASKED_EDIT_STRATEGY.DELTA_MIRROR) {
     return isVisibleMaskedView
       ? { playerMaskValue: nextValue, usedFallback: false }
       : { normalValue: nextValue, usedFallback: false };
