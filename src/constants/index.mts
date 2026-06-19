@@ -88,7 +88,6 @@ import {
   SPEED_TYPES,
 } from './speeds.mjs';
 
-
 export {
   ABILITY_KEYS,
   ABILITY_KEYS_LOCALIZED,

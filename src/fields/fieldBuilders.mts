@@ -1,4 +1,5 @@
-import { MASKED_EDIT_STRATEGY, type MaskedEditStrategy } from '@constants/fields.mjs';
+import type { MaskedEditStrategy } from '@constants/fields.mjs';
+import { MASKED_EDIT_STRATEGY } from '@constants/fields.mjs';
 import type { FormulaFieldMeta } from '@helpers/formulae/types.mjs';
 import type { FieldEditability, FieldVisibility } from '@vc/fields/formGroups/fieldPermissions.mjs';
 

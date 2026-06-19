@@ -74,7 +74,7 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: CurrencyData;
+    value?: CurrencyData;
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
@@ -119,22 +119,26 @@
   };
 
   const sourceValue = getSourceProperty<PriceSource>(props.fieldPath);
+  const projectedValue = computed(() => {
+    if (props.value !== undefined) return props.value;
+    if (!sourceValue) return new CurrencyData();
+    return sourceValue.value;
+  });
 
   /** The stacks currently shown in the edit UI. */
   const editStacks = computed((): CoinStack[] => {
-    if (!sourceValue) return props.value.stacks ?? [];
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) {
-      return props.value.stacks ?? [];
+      return projectedValue.value.stacks ?? [];
     }
     const src = sourceValue.value;
-    return src?.stacks ?? props.value.stacks ?? [];
+    return src?.stacks ?? projectedValue.value.stacks ?? [];
   });
 
   const hasEditStacks = computed(() => editStacks.value.length > 0);
 
   /** The stacks shown in the readonly display. */
   const readonlyStacks = computed((): CoinStack[] => {
-    return props.value?.stacks ?? [];
+    return projectedValue.value.stacks ?? [];
   });
 
   // Get currency config from settings (delegates to CurrencyData)

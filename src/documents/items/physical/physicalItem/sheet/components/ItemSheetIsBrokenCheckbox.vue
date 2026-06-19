@@ -14,6 +14,4 @@
   const {
     documentActions: { toggleBroken },
   } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
-
-  // Domain callback: broken-state changes may trigger related item calculations.
 </script>

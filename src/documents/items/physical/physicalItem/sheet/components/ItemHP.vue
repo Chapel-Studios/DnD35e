@@ -7,13 +7,11 @@
     class="item-hp-section"
   >
     <NumberFormGroup
-      :value="currentHp"
       field-path="system.hp.current"
       :default-visibility="ownerPlusVisibility"
       :default-editability="gmOnlyEditability"
     />
     <NumberFormGroup
-      :value="maxHp"
       field-path="system.hp.max"
       :default-visibility="ownerPlusVisibility"
       :default-editability="gmOnlyEditability"
