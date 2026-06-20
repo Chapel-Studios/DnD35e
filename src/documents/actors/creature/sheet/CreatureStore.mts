@@ -41,11 +41,11 @@ const useCreatureStore = <TDocument extends Creature>(
   const documentGetters = {
     ...actorStore.documentGetters,
 
-    //HP
-    currentHp: computed(() => document.value.system.hp.current),
-    maxHp: computed(() => document.value.system.hp.max),
-    tempHp: computed(() => document.value.system.hp.temp),
-    nonlethalDamage: computed(() => document.value.system.hp.nonlethal),
+    // HP is view-aware so masked values render correctly in play/edit surfaces.
+    currentHp: computed(() => getViewAwareFieldValue<number>('system.hp.current') ?? 0),
+    maxHp: computed(() => getViewAwareFieldValue<number>('system.hp.max') ?? 0),
+    tempHp: computed(() => getViewAwareFieldValue<number>('system.hp.temp') ?? 0),
+    nonlethalDamage: computed(() => getViewAwareFieldValue<number>('system.hp.nonlethal') ?? 0),
 
     gender: computed(() => getViewAwareFieldValue<string | null>('system.bio.gender') ?? ''),
     deity:  computed(() => getViewAwareFieldValue<string | null>('system.bio.deity')  ?? ''),
@@ -61,6 +61,7 @@ const useCreatureStore = <TDocument extends Creature>(
     size:           computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
     notes:          computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
     level:          computed(() => document.value.system.level ?? 1),
+    isPartyMember:  computed(() => getViewAwareFieldValue<boolean>('system.settings.isPartyMember') ?? false),
     languages:      computed(() => getViewAwareFieldValue<string[]>('system.bio.languages') ?? []),
     senses:         computed(() => {
       const raw = getViewAwareFieldValue<SenseEntrySource[]>('system.bio.senses') ?? [];
@@ -96,6 +97,7 @@ interface CreatureGetters {
   size:           ComputedRef<Size>;
   notes:          ComputedRef<string>;
   level:          ComputedRef<number>;
+  isPartyMember:  ComputedRef<boolean>;
   languages:      ComputedRef<string[]>;
   senses:         ComputedRef<SenseEntrySource[]>;
   armorClass:     ComputedRef<number>;

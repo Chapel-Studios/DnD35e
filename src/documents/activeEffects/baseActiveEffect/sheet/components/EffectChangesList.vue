@@ -227,6 +227,7 @@
     await removeChange?.(index);
   };
 
+  // Domain callback: each editor row targets a specific indexed change entry.
   const updateChangeKey = async (index: number, val: string) => {
     await updateChangeField(index, 'key', val);
   };

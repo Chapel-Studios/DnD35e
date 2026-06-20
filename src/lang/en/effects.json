@@ -82,6 +82,30 @@
             "label": "System Effect",
             "hint": "Whether this effect is a built-in system effect and should not be edited by users."
           }
+        },
+        "showIcon": {
+          "label": "Show Icon",
+          "hint": "Whether to show the effect's icon on the actor sheet when this effect is active."
+        },
+        "statuses": {
+          "label": "Status Effects",
+          "hint": "A list of status effects to apply to the actor when this effect is active."
+        },
+        "tint": {
+          "label": "Tint",
+          "hint": "A color tint to apply to the actor's token when this effect is active."
+        },
+        "duration": {
+          "label": "Duration",
+          "hint": "The duration of this effect in rounds. The effect will automatically expire when the duration reaches 0.",
+          "value": {
+            "label": "Duration Value",
+            "hint": "The current duration of this effect in rounds."
+          },
+          "units": {
+            "label": "Duration Units",
+            "hint": "The units for the duration of this effect."
+          }
         }
       }
     },

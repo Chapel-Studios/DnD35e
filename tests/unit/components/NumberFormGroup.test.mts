@@ -75,4 +75,107 @@ describe('NumberFormGroup — passthrough smoke test', () => {
     expect(control.exists()).toBe(true);
     expect(control.attributes('data-editable')).toBe('false');
   });
+
+  it('forceEdit shows input in play mode but keeps it disabled when resolved editable=false', () => {
+    const wrapper = mount(NumberFormGroup, {
+      props: {
+        fieldPath: FIELD_PATH,
+        value: 7,
+        forceEdit: true,
+      },
+      global: {
+        provide: makeGlobalProvide({
+          documentStore: createMockDocumentStore({
+            fieldEditability: { [FIELD_PATH]: false },
+            sourceValues: { [FIELD_PATH]: 7 },
+          }),
+          renderModeStore: createMockRenderModeStore({ isGM: true, isEditMode: false, isPlayMode: true }),
+        }),
+        stubs: {
+          FieldControls: { template: '<div class="fc-stub"><slot /></div>' },
+        },
+      },
+    });
+
+    const input = wrapper.find('input[type="number"]');
+    expect(input.exists()).toBe(true);
+    expect(input.attributes('disabled')).toBeDefined();
+  });
+
+  it('forceEdit does not bypass non-GM lock in play mode', () => {
+    const wrapper = mount(NumberFormGroup, {
+      props: {
+        fieldPath: FIELD_PATH,
+        value: 7,
+        forceEdit: true,
+      },
+      global: {
+        provide: makeGlobalProvide({
+          documentStore: createMockDocumentStore({
+            fieldEditability: { [FIELD_PATH]: false },
+            sourceValues: { [FIELD_PATH]: 7 },
+          }),
+          renderModeStore: createMockRenderModeStore({ isGM: false, isEditMode: false, isPlayMode: true }),
+        }),
+        stubs: {
+          FieldControls: { template: '<div class="fc-stub"><slot /></div>' },
+        },
+      },
+    });
+
+    const input = wrapper.find('input[type="number"]');
+    expect(input.exists()).toBe(true);
+    expect(input.attributes('disabled')).toBeDefined();
+  });
+
+  it('forceEdit remains enabled when resolved editable=true', () => {
+    const wrapper = mount(NumberFormGroup, {
+      props: {
+        fieldPath: FIELD_PATH,
+        value: 7,
+        forceEdit: true,
+      },
+      global: {
+        provide: makeGlobalProvide({
+          documentStore: createMockDocumentStore({
+            fieldEditability: { [FIELD_PATH]: true },
+            sourceValues: { [FIELD_PATH]: 7 },
+          }),
+          renderModeStore: createMockRenderModeStore({ isGM: true, isEditMode: true }),
+        }),
+        stubs: {
+          FieldControls: { template: '<div class="fc-stub"><slot /></div>' },
+        },
+      },
+    });
+
+    const input = wrapper.find('input[type="number"]');
+    expect(input.exists()).toBe(true);
+    expect(input.attributes('disabled')).toBeUndefined();
+  });
+
+  it('uses explicit value prop for edit display when source differs', () => {
+    const wrapper = mount(NumberFormGroup, {
+      props: {
+        fieldPath: FIELD_PATH,
+        value: 42,
+      },
+      global: {
+        provide: makeGlobalProvide({
+          documentStore: createMockDocumentStore({
+            fieldEditability: { [FIELD_PATH]: true },
+            sourceValues: { [FIELD_PATH]: 7 },
+          }),
+          renderModeStore: createMockRenderModeStore({ isGM: true, isEditMode: true }),
+        }),
+        stubs: {
+          FieldControls: { template: '<div class="fc-stub"><slot /></div>' },
+        },
+      },
+    });
+
+    const input = wrapper.find('input[type="number"]');
+    expect(input.exists()).toBe(true);
+    expect((input.element as HTMLInputElement).value).toBe('42');
+  });
 });

@@ -1,8 +1,6 @@
 <template>
   <CheckBoxFormGroup
     v-if="hasOwner"
-    :value="isCarried"
-    :on-update="updater"
     field-path="system.isCarried"
     disabled
   />
@@ -15,13 +13,7 @@
 
   const {
     documentGetters: {
-      isCarried,
       hasOwner,
     },
-    documentActions: {
-      getDirectFieldUpdater,
-    },
   } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
-
-  const updater = getDirectFieldUpdater('system.isCarried');
 </script>

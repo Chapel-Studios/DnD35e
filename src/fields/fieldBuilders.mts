@@ -1,3 +1,5 @@
+import type { MaskedEditStrategy } from '@constants/fields.mjs';
+import { MASKED_EDIT_STRATEGY } from '@constants/fields.mjs';
 import type { FormulaFieldMeta } from '@helpers/formulae/types.mjs';
 import type { FieldEditability, FieldVisibility } from '@vc/fields/formGroups/fieldPermissions.mjs';
 
@@ -113,6 +115,10 @@ interface SchemaFieldMeta {
   familiar?: FormulaFieldMeta;
   /** Whether this field supports identified/unidentified variants. Defaults to `true`. */
   identifiable?: boolean;
+  /** Whether this field participates in secret masking. Defaults to `false` for derived fields, otherwise `true`. */
+  maskable?: boolean;
+  /** Masked write behavior. Defaults to `playerSecretRoute`. */
+  maskedEditStrategy?: MaskedEditStrategy;
   /** Default visibility when no GM override is saved. */
   defaultVisibility?: FieldVisibility;
   /** Default editability when no GM override is saved. */
@@ -141,6 +147,8 @@ function useDnd35eField<T extends foundry.data.fields.DataField>(
 ): T {
   const opts = field.options as Record<string, unknown>;
   opts.identifiable = meta.identifiable ?? true;
+  opts.maskable = meta.maskable ?? (opts.persisted === false ? false : true);
+  opts.maskedEditStrategy = meta.maskedEditStrategy ?? MASKED_EDIT_STRATEGY.PLAYER_SECRET_ROUTE;
   if (meta.familiar) opts.familiar = meta.familiar;
   if (meta.defaultVisibility) opts.defaultVisibility = meta.defaultVisibility;
   if (meta.defaultEditability) opts.defaultEditability = meta.defaultEditability;

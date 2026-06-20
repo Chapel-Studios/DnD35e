@@ -1,4 +1,6 @@
+import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import { CORE_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 
 import type { SecretSystemData } from './data/SecretSystemData.mjs';
@@ -6,21 +8,23 @@ import { PLAYER_EDIT_MASK_PRIORITY } from './data/SecretSystemModel.mjs';
 import type { Secret } from './Secret.mjs';
 import { secretEffectType } from './secretEffectType.mjs';
 
+type PlayerEditMaskHostDocument = ItemDnd35e | ActorDnd35e;
+
 /**
- * Find an existing Player Edit Secret on the item, or create one.
- * There is exactly one Player Edit Secret per item — it accumulates all player field edits.
+ * Find an existing Player Edit Secret on the host document, or create one.
+ * There is exactly one Player Edit Secret per host — it accumulates all player field edits.
  */
-async function findOrCreatePlayerEditSecret (item: ItemDnd35e): Promise<Secret> {
-  const existing = [...item.effects].find(
+async function findOrCreatePlayerEditSecret (host: PlayerEditMaskHostDocument): Promise<Secret> {
+  const existing = [...host.effects].find(
     e => e.type === secretEffectType && (e.system as SecretSystemData).isPlayerEditSecret
   );
   if (existing) return existing as unknown as Secret;
 
-  const created = await item.createEmbeddedDocuments('ActiveEffect', [{
+  const created = await host.createEmbeddedDocuments('ActiveEffect', [{
     name: game.i18n.localize('dnd35e.EFFECT.Secret.PlayerEdit'),
     img: 'icons/svg/eye.svg',
     type: secretEffectType,
-    origin: item.uuid,
+    origin: host.uuid,
     disabled: false,
     system: {
       isPlayerEditSecret: true,
@@ -47,13 +51,16 @@ async function addOrUpdatePlayerEditMask (
   if (existingIndex >= 0) {
     changes[existingIndex] = { ...changes[existingIndex], value };
   } else {
+    const target = secret.parent?.documentName === 'Actor'
+      ? EFFECT_CHANGE_TARGET.ACTOR
+      : EFFECT_CHANGE_TARGET.ITEM;
     changes.push({
       key: fieldPath,
       type: SYSTEM_CHANGE_TYPE.MASK,
       value,
       priority: PLAYER_EDIT_MASK_PRIORITY,
       phase: CORE_EFFECT_CHANGE_PHASE as any,
-      target: 'item',
+      target,
       isSystem: false,
       bonusType: undefined,
       condition: undefined,

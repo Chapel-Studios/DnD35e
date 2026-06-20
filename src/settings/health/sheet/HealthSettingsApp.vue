@@ -172,6 +172,7 @@
     return game.i18n.localize(key);
   }
 
+  // Domain callback bridge: settings form controls update arbitrary config paths, not document fields.
   function onUpdate(path: string, value: unknown): void {
     props.onUpdateData(path, value);
   }

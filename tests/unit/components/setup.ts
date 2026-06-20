@@ -99,7 +99,7 @@ export const createMockDocumentStore = (options: MockDocumentStoreOptions = {}):
     computed(() => fieldVisibility[path] ?? true)
   );
 
-  const getIsFieldEditable = vi.fn((path: string, _default?: FieldEditability) =>
+  const getIsFieldEditable = vi.fn((path: string, _default?: FieldEditability, _allowForceEdit?: boolean) =>
     computed(() => fieldEditability[path] ?? true)
   );
 

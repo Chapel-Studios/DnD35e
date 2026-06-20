@@ -3,26 +3,16 @@
     <section class="settings-section">
       <h3 class="settings-section-label">{{ localize('dnd35e.CREATURE.FIELDS.settings.label') }}</h3>
       <ToggleSwitchFormGroup
-        :label="localize('dnd35e.CREATURE.FIELDS.settings.isPartyMember.label')"
         field-path="system.settings.isPartyMember"
-        :value="isPartyMember"
-        direct-update
       />
     </section>
   </div>
 </template>
 
 <script lang="ts" setup>
-  import type { CreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { ToggleSwitchFormGroup } from '@vc/fields/index.mjs';
-  import { inject } from 'vue';
 
   const localize = (key: string) => game.i18n.localize(key);
-
-  const {
-    documentGetters: { isPartyMember },
-  } = inject(DocumentSheetStoreSymbol) as CreatureStore;
 </script>
 
 <style lang="scss" scoped>

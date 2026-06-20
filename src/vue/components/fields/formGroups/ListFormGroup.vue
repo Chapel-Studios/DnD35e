@@ -7,6 +7,7 @@
     :default-editability="defaultEditability"
     class="list-form-group"
     :read-only="props.readOnly"
+    :force-edit="props.forceEdit"
   >
     <!-- Controls slot: add item button -->
     <template #controls="{ editable }">
@@ -68,18 +69,17 @@
   const props = withDefaults(defineProps<{
     label?: string;
     hint?: string;
+    /** The current value of the list, not required but encouraged for typing. */
     value?: TItem[];
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
     disabled?: boolean;
     onUpdate?: (value: TItem[]) => void;
-    /** When true, edit inputs show derived data instead of source data. */
-    editDerived?: boolean;
-    /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
-    directUpdate?: boolean;
     /** When true, forces the readonly display. */
     readOnly?: boolean;
+    /** When true, forces the edit display even in play/true modes. */
+    forceEdit?: boolean;
     /** Localization key for "add item" button title */
     addButtonTitle: string;
     /** Localization key for "remove item" button title */
@@ -123,12 +123,12 @@
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
+      getIsFieldEditable,
       hasMaskForField,
       getViewAwareFieldValue,
     },
     isGM,
     documentActions: {
-      getDirectFieldUpdater,
       getViewAwareFieldUpdater,
     },
     _storeUtils: {
@@ -142,14 +142,10 @@
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;
-    return !isEditMode.value;
+    return !getIsFieldEditable(props.fieldPath, props.defaultEditability, !!props.forceEdit).value;
   });
 
-  const fieldUpdater = props.onUpdate ?? (
-    props.directUpdate
-      ? getDirectFieldUpdater(props.fieldPath)
-      : getViewAwareFieldUpdater(props.fieldPath)
-  );
+  const fieldUpdater = props.onUpdate ?? getViewAwareFieldUpdater(props.fieldPath);
 
   const sourceValue = getSourceProperty<TItem[]>(props.fieldPath);
 
@@ -159,7 +155,7 @@
     // any source/derived/mask logic (e.g. when fieldPath points to a wrapper object
     // rather than the array itself).
     if (props.value !== undefined) return resolvedValue.value;
-    if (props.editDerived || !sourceValue) return resolvedValue.value;
+    if (!sourceValue) return resolvedValue.value;
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) {
       return resolvedValue.value;
     }

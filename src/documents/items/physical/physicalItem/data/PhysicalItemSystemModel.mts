@@ -1,3 +1,4 @@
+import { MASKED_EDIT_STRATEGY } from '@constants/index.mjs';
 import { SIZES } from '@constants/sizes.mjs';
 import { IdentifiableSchemaMixin } from '@documents/identifiable/data/index.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
@@ -33,7 +34,7 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
 
     // Physical
     schema.hp = new SectionField({
-      current: useDnd35eField(requiredNumberField(0)),
+      current: useDnd35eField(requiredNumberField(0), { maskedEditStrategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR }),
       max: useDnd35eField(requiredNumberField(0)),
     });
     schema.hardness = useDnd35eField(requiredNumberField(0));

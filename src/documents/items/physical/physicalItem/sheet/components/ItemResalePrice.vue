@@ -3,7 +3,6 @@
     :editable="isEditViewMode"
     label="dnd35e.PHYSICAL_ITEM.ResalePrice"
     :value="resalePrice"
-    :on-update="updater"
     field-path="system.resalePrice"
     default-visibility="gmOnly"
   /> -->
@@ -25,5 +24,4 @@
   //     getViewAwareFieldUpdater,
   //   },
   // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
-  // const updater = getViewAwareFieldUpdater('system.resalePrice');
 </script>

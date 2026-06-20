@@ -2,7 +2,6 @@
   <!-- <MultiSelectFormGroup
     label="Container"
     :value="currentContainerId"
-    :on-update="updater"
     :options="EQUIP_SLOT_SELECT_OPTIONS"
     field-path="system.containerId"
   /> -->
@@ -25,5 +24,4 @@
   //   },
   // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
-  // const updater = getViewAwareFieldUpdater('system.containerId');
 </script>

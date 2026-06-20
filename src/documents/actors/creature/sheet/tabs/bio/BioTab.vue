@@ -51,9 +51,7 @@
     <!-- Senses (stub) -->
     <section class="bio-section">
       <TextFormGroup
-        :label="localize('dnd35e.CREATURE.FIELDS.bio.senses.label')"
         field-path="system.bio.senses"
-        direct-update
       />
     </section>
   </div>
@@ -79,10 +77,10 @@
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: { languages },
-    documentActions: { getDirectFieldUpdater },
+    documentActions: { getViewAwareFieldUpdater },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
-  const updateLanguages = getDirectFieldUpdater('system.bio.languages');
+  const updateLanguages = getViewAwareFieldUpdater('system.bio.languages');
 
   const newLanguage = ref('');
 

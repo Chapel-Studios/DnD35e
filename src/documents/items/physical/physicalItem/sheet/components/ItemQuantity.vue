@@ -1,11 +1,7 @@
 <template>
   <NumberFormGroup
     field-path="system.quantity"
-    :value="quantity"
-    :default-visibility="everyoneVisibility"
-    :default-editability="normalEditability"
     :disabled="isInfinite"
-    direct-update
   >
     <template #controls="{ editable }">
       <button
@@ -30,19 +26,15 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
-  import {
-    everyoneVisibility,
-    normalEditability,
-    NumberFormGroup,
-  } from '@vc/fields/index.mjs';
+  import { NumberFormGroup } from '@vc/fields/index.mjs';
   import { computed, inject } from 'vue';
 
   const {
     documentGetters: { quantity },
-    documentActions: { getDirectFieldUpdater },
+    documentActions: { getViewAwareFieldUpdater },
   } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
-  const updater = getDirectFieldUpdater('system.quantity');
+  const updater = getViewAwareFieldUpdater('system.quantity');
   const isInfinite = computed(() => quantity.value === -1);
 
   const toggleInfinite = () => updater(isInfinite.value ? 0 : -1);

@@ -6,8 +6,10 @@
     :remove-button-title="localize('dnd35e.Currency.RemoveCoinStack')"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
-    :on-update="(stacks) => fieldUpdater(CurrencyData.toSource(stacks))"
+    :on-update="updateCoinStacks"
     :on-add-item="addCoinStack"
+    :read-only="props.readOnly"
+    :force-edit="props.forceEdit"
     class="coinage-form-group"
   >
     <template #controls="{ editable }">
@@ -72,16 +74,16 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value: CurrencyData;
+    value?: CurrencyData;
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
     disabled?: boolean;
     onUpdate?: (value: PriceSource) => void;
-    /** When true, edit inputs show derived data instead of source data. */
-    editDerived?: boolean;
-    /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
-    directUpdate?: boolean;
+    /** When true, forces the readonly display. */
+    readOnly?: boolean;
+    /** When true, forces the edit display even in play/true modes. */
+    forceEdit?: boolean;
   }>();
 
   function localize(key: string): string {
@@ -91,11 +93,11 @@
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
+      getIsFieldEditable,
       hasMaskForField,
     },
     isGM,
     documentActions: {
-      getDirectFieldUpdater,
       getViewAwareFieldUpdater,
     },
     _storeUtils: {
@@ -105,32 +107,38 @@
   
   const isDisabled = computed(() => {
     if (props.disabled) return true;
-    return !isEditMode.value;
+    return !getIsFieldEditable(props.fieldPath, props.defaultEditability, !!props.forceEdit).value;
   });
 
-  const fieldUpdater = props.onUpdate ?? (
-    props.directUpdate
-      ? getDirectFieldUpdater(props.fieldPath)
-      : getViewAwareFieldUpdater(props.fieldPath)
-  );
+  // Projection callback target: coin stack UI edits are converted to PriceSource before persisting.
+  const fieldUpdater = props.onUpdate ?? getViewAwareFieldUpdater(props.fieldPath);
+
+  // Explicit inverse mapping for projection-pair contract (CoinStack[] -> PriceSource).
+  const updateCoinStacks = (stacks: CoinStack[]): void => {
+    fieldUpdater(CurrencyData.toSource(stacks));
+  };
 
   const sourceValue = getSourceProperty<PriceSource>(props.fieldPath);
+  const projectedValue = computed(() => {
+    if (props.value !== undefined) return props.value;
+    if (!sourceValue) return new CurrencyData();
+    return sourceValue.value;
+  });
 
   /** The stacks currently shown in the edit UI. */
   const editStacks = computed((): CoinStack[] => {
-    if (props.editDerived || !sourceValue) return props.value?.stacks ?? [];
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) {
-      return props.value?.stacks ?? [];
+      return projectedValue.value.stacks ?? [];
     }
     const src = sourceValue.value;
-    return src?.stacks ?? props.value?.stacks ?? [];
+    return src?.stacks ?? projectedValue.value.stacks ?? [];
   });
 
   const hasEditStacks = computed(() => editStacks.value.length > 0);
 
   /** The stacks shown in the readonly display. */
   const readonlyStacks = computed((): CoinStack[] => {
-    return props.value?.stacks ?? [];
+    return projectedValue.value.stacks ?? [];
   });
 
   // Get currency config from settings (delegates to CurrencyData)

@@ -1,7 +1,11 @@
 import { ActorSystemModel } from '@actors/baseActor/data/index.mjs';
-import { LAW_AXES, MORAL_AXES } from '@constants/alignment.mjs';
-import { SENSE_TYPES } from '@constants/senses.mjs';
-import { SIZES } from '@constants/sizes.mjs';
+import {
+  LAW_AXES,
+  MASKED_EDIT_STRATEGY,
+  MORAL_AXES,
+  SENSE_TYPES,
+  SIZES,
+} from '@constants/index.mjs';
 import { CurrencyField } from '@fields/CurrencyField.mjs';
 import {
   derivedBooleanField,
@@ -55,9 +59,9 @@ abstract class CreatureSystemModel extends ActorSystemModel {
 
     schema.hp = new SchemaField({
       max:       useDnd35eField(derivedNumberField(0)),
-      current:   useDnd35eField(requiredNumberField(0)),
-      temp:      useDnd35eField(requiredNumberField(0)),
-      nonlethal: useDnd35eField(requiredNumberField(0)),
+      current:   useDnd35eField(requiredNumberField(0), { maskedEditStrategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR }),
+      temp:      useDnd35eField(requiredNumberField(0), { maskedEditStrategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR }),
+      nonlethal: useDnd35eField(requiredNumberField(0), { maskedEditStrategy: MASKED_EDIT_STRATEGY.DELTA_MIRROR }),
       regeneration: useDnd35eField(derivedNumberField(0)),
       fastHealing: useDnd35eField(derivedNumberField(0)),
     });
@@ -80,7 +84,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
         initial: () => ({
           formula: '',
           expectedType: 'number',
-          resolvedValue: 0,
+          resolvedValue: '0',
         }),
       }), {
         familiar: { aliases: ['spellResistance'] },

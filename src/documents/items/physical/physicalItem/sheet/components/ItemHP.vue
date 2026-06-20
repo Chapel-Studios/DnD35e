@@ -7,16 +7,11 @@
     class="item-hp-section"
   >
     <NumberFormGroup
-      :value="currentHp"
-      :on-update="updateCurrentHp"
       field-path="system.hp.current"
       :default-visibility="ownerPlusVisibility"
       :default-editability="gmOnlyEditability"
-      direct-update
     />
     <NumberFormGroup
-      :value="maxHp"
-      :on-update="maxHpUpdater"
       field-path="system.hp.max"
       :default-visibility="ownerPlusVisibility"
       :default-editability="gmOnlyEditability"
@@ -39,17 +34,7 @@
       maxHp,
       currentHp,
     },
-    documentActions: {
-      getDirectFieldUpdater,
-      getViewAwareFieldUpdater,
-    },
   } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
-
-  // Current HP is state - always write directly
-  const updateCurrentHp = getDirectFieldUpdater('system.hp.current');
-
-  // Max HP is identifiable - view-aware updater
-  const maxHpUpdater = getViewAwareFieldUpdater('system.hp.max');
 </script>
 
 <style lang="scss" scoped>

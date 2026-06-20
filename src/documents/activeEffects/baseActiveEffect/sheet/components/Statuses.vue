@@ -1,11 +1,8 @@
 <template>
   <MultiSelectFormGroup
     class="grid-full-row"
-    label="EFFECT.Statuses"
     field-path="statuses"
-    :value="statuses"
     :options="statusOptions"
-    :on-update="getDirectFieldUpdater('statuses')"
   />
 </template>
 
@@ -18,11 +15,7 @@
 
   const {
     documentGetters: {
-      statuses,
       statusOptions,
-    },
-    documentActions: {
-      getDirectFieldUpdater,
     },
   } = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
 </script>

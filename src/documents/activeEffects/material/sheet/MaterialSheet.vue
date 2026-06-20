@@ -2,9 +2,7 @@
   <DocumentSheetBody>
     <template #header-summary>
       <SelectFormGroup
-        :value="materialSubtype"
         :options="materialSubtypeSelectOptions"
-        :on-update="materialSubtypeUpdater"
         field-path="system.materialSubtype"
         class="material-subtype"
       >
@@ -39,12 +37,7 @@
     documentGetters: {
       materialSubtype,
     },
-    documentActions: {
-      getViewAwareFieldUpdater,
-    },
   } = store;
-
-  const materialSubtypeUpdater = getViewAwareFieldUpdater('system.materialSubtype');
   const materialDisplayValue = computed(() => {
     const materialSubtypeSelection = materialSubtypeSelectOptions
       .find(option => option.value === materialSubtype.value);

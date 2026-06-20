@@ -1,8 +1,6 @@
 <template>
   <ToggleSwitchFormGroup
     class="effect-enablement"
-    :value="isDisabled"
-    :on-update="getDirectFieldUpdater('disabled')"
     field-path="disabled"
     true-label="dnd35e.EFFECT.Disabled"
     false-label="dnd35e.EFFECT.Enabled"
@@ -11,20 +9,7 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { ToggleSwitchFormGroup } from '@vc/fields/index.mjs';
-  import { inject } from 'vue';
-
-  import type { ActiveEffectConfigStore } from '../ActiveEffectConfigStore.mjs';
-
-  const {
-    documentGetters: {
-      isDisabled,
-    },
-    documentActions: {
-      getDirectFieldUpdater,
-    },
-  } = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
 </script>
 
 <style lang="scss" scoped>

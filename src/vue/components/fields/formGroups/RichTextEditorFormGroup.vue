@@ -70,10 +70,6 @@
     // Field permissions
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
-    /** When true, the editor uses derived data instead of source data. */
-    editDerived?: boolean;
-    /** When true, uses the store's direct field updater instead of view-aware. */
-    directUpdate?: boolean;
   }>();
 
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
@@ -82,7 +78,7 @@
       documentUuid,
       getViewAwareFieldValue,
     },
-    documentActions: { getViewAwareFieldUpdater, getDirectFieldUpdater },
+    documentActions: { getViewAwareFieldUpdater },
     _storeUtils: {
       getSourceProperty,
       getSchemaField,
@@ -100,16 +96,14 @@
     getViewAwareFieldValue<string>(props.field) ?? ''
   );
 
-  // Editor value: use source data by default, derived if editDerived is set
+  // Editor value: when a source property exists, edit the source data.
+  // Otherwise use the effective value.
   const editorValue = computed(() => {
-    if (props.editDerived) return effectiveValue.value;
+    if (!sourceRawValue) return effectiveValue.value;
     return sourceRawValue.value ?? '';
   });
 
-  // Field updater: respects directUpdate flag
-  const fieldUpdater = props.directUpdate
-    ? getDirectFieldUpdater(props.field)
-    : getViewAwareFieldUpdater(props.field);
+  const fieldUpdater = getViewAwareFieldUpdater(props.field);
 
   // Editing state
   const isEditing = ref(false);

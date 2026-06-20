@@ -6,7 +6,6 @@
     :unit="distanceDisplayShortLabel"
     :label="props.label"
     :hint="props.hint"
-    edit-derived
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
@@ -31,8 +30,6 @@
   const slots = useSlots();
 
   const props = defineProps<{
-    /** When true, edit inputs show derived data instead of source data. */
-    editDerived?: boolean;
     fieldPath: string;
     label?: string;
     hint?: string;
@@ -60,6 +57,7 @@
     return convertToLocalizedDistance(value ?? 0) ?? 0;
   });
 
+  // Projection callback: convert localized display units back to stored distance units.
   const distanceUpdater = (value: number | null) => {
     const realValue = convertToStoredDistance(value ?? 0);
     getViewAwareFieldUpdater(props.fieldPath)(realValue);

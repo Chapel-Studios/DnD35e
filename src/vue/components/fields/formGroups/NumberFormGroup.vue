@@ -52,10 +52,6 @@
     /** Optional updater override. When omitted, derives from the store using fieldPath. */
     onUpdate?: (value: number | null) => void;
     unit?: string;
-    /** When true, edit inputs show derived data instead of source data. */
-    editDerived?: boolean;
-    /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
-    directUpdate?: boolean;
     /** When true, forces the readonly display. */
     readOnly?: boolean;
     /** When true, forces the edit display even in play/true modes. */
@@ -65,11 +61,11 @@
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
+      getIsFieldEditable,
       hasMaskForField,
       getViewAwareFieldValue,
     },
     documentActions: {
-      getDirectFieldUpdater,
       getViewAwareFieldUpdater,
     },
     _storeUtils: {
@@ -83,19 +79,14 @@
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;
-    if (props.forceEdit) return false;  // forceEdit fields stay enabled
-    return !isEditMode.value;
+    return !getIsFieldEditable(props.fieldPath, props.defaultEditability, !!props.forceEdit).value;
   });
 
-  const fieldUpdater = props.onUpdate ?? (
-    props.directUpdate
-      ? getDirectFieldUpdater(props.fieldPath)
-      : getViewAwareFieldUpdater(props.fieldPath)
-  );
+  const fieldUpdater = props.onUpdate ?? getViewAwareFieldUpdater(props.fieldPath);
 
   const sourceValue = getSourceProperty<number | null>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.editDerived || !sourceValue) return resolvedValue.value;
+    if (props.value !== undefined || !sourceValue) return resolvedValue.value;
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
     return sourceValue.value as number | null;
   });

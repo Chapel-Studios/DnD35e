@@ -48,6 +48,15 @@ import {
   EQUIP_SLOT_SELECT_OPTIONS,
   EQUIP_SLOTS,
 } from './equipmentSlots.mjs';
+import type {
+  MaskedEditStrategy,
+} from './fields.mjs';
+import {
+  DELTA_MIRROR,
+  MASKED_EDIT_STRATEGIES,
+  MASKED_EDIT_STRATEGY,
+  PLAYER_SECRET_ROUTE,
+} from './fields.mjs';
 import { defaultGameSettings } from './gameSettings/index.mjs';
 import { LogLevel } from './logging.mjs';
 import { hbsTemplatePath, systemPath } from './paths.mjs';
@@ -98,6 +107,7 @@ export {
   DAMAGE_TYPES,
   DARKVISION,
   defaultGameSettings,
+  DELTA_MIRROR,
   devConfig,
   DEX,
   EffectConfig,
@@ -119,11 +129,14 @@ export {
   LAWFUL,
   LogLevel,
   LOW_LIGHT_VISION,
+  MASKED_EDIT_STRATEGIES,
+  MASKED_EDIT_STRATEGY,
   MASTERWORK_ARMOR_AE_UUID,
   MASTERWORK_WEAPON_AE_UUID,
   MORAL_AXES,
   MORAL_AXIS_SELECT_OPTIONS,
   NEUTRAL,
+  PLAYER_SECRET_ROUTE,
   SCENT,
   SENSE_TYPE,
   SENSE_TYPES,
@@ -149,6 +162,7 @@ export type {
   BonusType,
   FlyManeuverability,
   LawAxis,
+  MaskedEditStrategy,
   MoralAxis,
   SenseType,
   SpeedType,

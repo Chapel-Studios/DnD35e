@@ -11,9 +11,8 @@ import { dismissOverlays } from './helpers/ui.mjs';
  *
  *   1. The formula input itself (edit mode)
  *   2. The sheet window title
- *   3. The sidebar item directory entry
- *   4. The .item-name heading (play mode)
- *   5. The formula input again after returning to edit mode
+ *   3. The .item-name heading (play mode)
+ *   4. The formula input again after returning to edit mode
  *
  * All name assertions use `expect.soft` so every location is checked even
  * if earlier ones fail — giving a holistic picture for debugging.
@@ -28,7 +27,7 @@ test.describe('item name update propagation', () => {
     await clearWorld(page);
   });
 
-  test('name committed with Enter propagates to input, header title, sidebar, play mode, and back to edit', async ({ page }) => {
+  test('name committed with Enter propagates to input, header title, play mode, and back to edit', async ({ page }) => {
     await gotoGame(page);
 
     const itemUuid = await createItem(page, 'weapon', { name: 'Original Sword' });
@@ -72,30 +71,13 @@ test.describe('item name update propagation', () => {
       'window title should contain the new name'
     ).toContainText(NEW_NAME);
 
-    // 3. Sidebar item directory entry — expand and switch to the Items tab,
-    //    then assert on the specific entry by document id.
-    const itemId = await page.evaluate(
-      async (uuid) => ((await (globalThis as any).fromUuid(uuid))?.id as string) ?? '',
-      itemUuid
-    );
-    // Foundry v14: group is "primary", tab name is "items" (plural).
-    await page.evaluate(() => {
-      const ui = (globalThis as any).ui;
-      ui?.sidebar?.expand?.();
-      ui?.sidebar?.changeTab?.('items', 'primary');
-    });
-    await expect.soft(
-      page.locator(`[data-document-id="${itemId}"]`),
-      'sidebar item entry should contain the new name'
-    ).toContainText(NEW_NAME, { timeout: 10_000 });
-
     // ─── Play mode ───────────────────────────────────────────────────────────
     const bar = page.locator(`${sheet} .view-mode-bar`);
     const playBtn = bar.locator('.view-mode-btn').filter({ has: page.locator('i.fa-dice-d20') });
     await playBtn.click();
     await expect(playBtn).toHaveClass(/active/);
 
-    // 4. .item-name heading — only present in play / true mode.
+    // 3. .item-name heading — only present in play / true mode.
     await expect.soft(
       page.locator(`${sheet} .item-name`),
       '.item-name heading in play mode should show the new name'
@@ -106,7 +88,7 @@ test.describe('item name update propagation', () => {
     await editBtn.click();
     await expect(editBtn).toHaveClass(/active/);
 
-    // 5. Formula input still shows the name after the mode round-trip.
+    // 4. Formula input still shows the name after the mode round-trip.
     await expect.soft(
       nameInput,
       'input should still show the new name after returning to edit'

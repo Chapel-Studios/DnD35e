@@ -1,6 +1,9 @@
 import type { ActorType } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
+import { MASKED_EDIT_STRATEGY, type MaskedEditStrategy } from '@constants/index.mjs';
+import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
+import { resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import type { ActiveEffectDnd35e, EffectType } from '@effects/index.mjs';
 import { addOrUpdatePlayerEditMask, findOrCreatePlayerEditSecret } from '@effects/secret/playerEditSecret.mjs';
 import { getSchemaField } from '@fields/getSchemaField.mjs';
@@ -24,6 +27,8 @@ import type { VueApplicationContext } from '@vueApps/index.mjs';
 import type { ComputedRef, ShallowRef } from 'vue';
 import { computed, inject, provide, reactive, ref, shallowRef, triggerRef, unref } from 'vue';
 
+import { routeMaskedFieldEdit } from './maskedFieldRouting.mjs';
+import { buildMaskMapFromSecretEffects } from './maskMap.mjs';
 import type {
   FieldOverridesStoreActions,
   FieldOverridesStoreGetters,
@@ -62,7 +67,7 @@ type DocumentSheetStoreUtils<TDocument extends SheetDocument> = FieldOverridesSt
 type DocumentSheetStoreDocumentGetters = FieldOverridesStoreGetters & {
   // Getter Functions
   getIsFieldVisible: (fieldPath: string, defaultVisibility?: FieldVisibility) => ComputedRef<boolean>;
-  getIsFieldEditable: (fieldPath: string, defaultEditability?: FieldEditability) => ComputedRef<boolean>;
+  getIsFieldEditable: (fieldPath: string, defaultEditability?: FieldEditability, allowForceEdit?: boolean) => ComputedRef<boolean>;
   getViewAwareFieldValue: <T>(fieldPath: string, getFromSource?: boolean) => T;
   hasMaskForField: (fieldPath: string) => ComputedRef<boolean>;
   getMaskForField: <T = unknown>(fieldPath: string) => ComputedRef<T | undefined>;
@@ -83,8 +88,7 @@ type DocumentSheetStoreDocumentGetters = FieldOverridesStoreGetters & {
 
 type DocumentSheetStoreDocumentActions<TDocument extends SheetDocument> = FieldOverridesStoreActions & {
   // updateDocument: (data: Record<string, unknown>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
-  viewModeAwareUpdateDocument: (data: Record<string, unknown>, options?: Partial<DatabaseUpdateOperation<TDocument>>, directUpdate?: boolean) => Promise<boolean>;
-  getDirectFieldUpdater: (path: string, options?: Partial<DatabaseUpdateOperation<TDocument>>) => (value: unknown) => Promise<boolean>;
+  viewModeAwareUpdateDocument: (data: Record<string, unknown>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
   getViewAwareFieldUpdater: (path: string, options?: Partial<DatabaseUpdateOperation<TDocument>>) => (value: unknown) => Promise<boolean>;
   updateFlag: (key: string, value: unknown) => Promise<boolean>;
 };
@@ -187,41 +191,65 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   // -- Major Functions
 
   const viewModeAwareUpdateDocument = async (
-    data: Record<string, unknown>,
-    options: Partial<DatabaseUpdateOperation<TDocument>> = {},
-    directUpdate: boolean = false
+    updateData: Record<string, unknown>,
+    options: Partial<DatabaseUpdateOperation<TDocument>> = {}
   ) => {
-    if (directUpdate) return await updateDocument(data, options);
-
-    // Player Edit Secret interception: non-GM writing to a masked field on an Item
-    if (!isGM.value && document.value.documentName === 'Item') {
-      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+    if (document.value.documentName === 'Item' || document.value.documentName === 'Actor') {
+      const masks = documentMasks.value;
       if (masks) {
-        const maskedFields: Record<string, unknown> = {};
         const normalFields: Record<string, unknown> = {};
-        for (const [field, value] of Object.entries(data)) {
-          if (field in masks) {
-            maskedFields[field] = value;
-          } else {
-            normalFields[field] = value;
+        const playerMaskFields: Record<string, unknown> = {};
+
+        for (const [fieldPath, nextValue] of Object.entries(updateData)) {
+          const hasMask = fieldPath in masks;
+
+          if (
+            !hasMask
+            || !isFieldMaskable(fieldPath)
+          ) {
+            normalFields[fieldPath] = nextValue;
+            continue;
+          }
+
+          const strategy = getFieldMaskedEditStrategy(fieldPath);
+          const routed = routeMaskedFieldEdit({
+            strategy,
+            isPlayMode: isPlayMode.value,
+            nextValue,
+            sourceValue: foundry.utils.getProperty(document.value, `_source.${fieldPath}`),
+            maskValue: masks[fieldPath],
+          });
+
+          if (routed.usedFallback) {
+            console.warn(`[DocumentSheetStore] deltaMirror requires numeric values at ${fieldPath}; falling back to default routing.`);
+          }
+
+          if (routed.normalValue !== undefined) {
+            normalFields[fieldPath] = routed.normalValue;
+          }
+          if (routed.playerMaskValue !== undefined) {
+            playerMaskFields[fieldPath] = routed.playerMaskValue;
           }
         }
-        if (Object.keys(maskedFields).length > 0) {
-          const item = document.value as unknown as ItemDnd35e;
-          const secret = await findOrCreatePlayerEditSecret(item);
-          for (const [fieldPath, value] of Object.entries(maskedFields)) {
+
+        if (Object.keys(playerMaskFields).length > 0) {
+          const maskHost = document.value as unknown as ItemDnd35e | ActorDnd35e;
+          const secret = await findOrCreatePlayerEditSecret(maskHost);
+          for (const [fieldPath, value] of Object.entries(playerMaskFields)) {
             await addOrUpdatePlayerEditMask(secret, fieldPath, value);
           }
-          // If there are also non-masked fields, update those normally
-          if (Object.keys(normalFields).length > 0) {
-            return await updateDocument(normalFields as Record<string, unknown>, options);
-          }
+        }
+
+        if (Object.keys(normalFields).length > 0) {
+          return await updateDocument(normalFields, options);
+        }
+        if (Object.keys(playerMaskFields).length > 0) {
           return true;
         }
       }
     }
 
-    return await updateDocument(data, options);
+    return await updateDocument(updateData, options);
   };
 
   // --- Overridable implementations (replaced by extending stores via _storeUtils) ---
@@ -259,6 +287,33 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     }
   };
 
+  const isFieldMaskable = (fieldPath: string): boolean => {
+    const schemaField = getSchemaField(document.value, fieldPath) as { options?: { maskable?: boolean }; persisted?: boolean } | undefined;
+    if (!schemaField) return true;
+    if (schemaField.options?.maskable !== undefined) return schemaField.options.maskable;
+    if (schemaField.persisted === false) return false;
+    return true;
+  };
+
+  const getFieldMaskedEditStrategy = (fieldPath: string): MaskedEditStrategy => {
+    const schemaField = getSchemaField(document.value, fieldPath) as { options?: { maskedEditStrategy?: MaskedEditStrategy } } | undefined;
+    return schemaField?.options?.maskedEditStrategy ?? MASKED_EDIT_STRATEGY.PLAYER_SECRET_ROUTE;
+  };
+
+  const documentMasks = computed((): Record<string, unknown> | undefined => {
+    const directMasks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+    if (directMasks) return directMasks;
+
+    if (document.value.documentName !== 'Actor') return undefined;
+
+    const effects = (document.value as unknown as { effects?: Iterable<ActiveEffectDnd35e> }).effects;
+    return buildMaskMapFromSecretEffects(
+      effects,
+      EFFECT_CHANGE_TARGET.ACTOR,
+      (effect, change) => resolveMaskedActiveEffectChangeValue(effect, change)
+    );
+  });
+
   const getViewAwareFieldValue = <T,>(fieldPath: string, getFromSource = false): T => {
     const plan = resolveViewAwareFieldPlan(
       {
@@ -272,19 +327,18 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
     // Apply masks in Play Mode, and also in player Edit Mode so non-GM owners
     // do not see GM truth while editing masked fields.
-    if (plan.checkMasks) {
-      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+    if (plan.checkMasks && isFieldMaskable(fieldPath)) {
+      const masks = documentMasks.value;
       if (masks && fieldPath in masks) {
         return normalizeMaskValue<T>(fieldPath, masks[fieldPath]);
       }
     }
 
-    // True Mode: some top-level document getters (name, img) are overridden on
-    // ItemDnd35e to project _masks values, so reading the derived property would
+    // True Mode: some top-level document getters can project mask values, so reading the derived property would
     // return the masked value even though checkMasks is false. Guard: if the field
     // has a mask entry, read from _source to get the real (unmasked) value.
-    if (isTrueMode.value) {
-      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+    if (isTrueMode.value && isFieldMaskable(fieldPath)) {
+      const masks = documentMasks.value;
       if (masks && fieldPath in masks) {
         return foundry.utils.getProperty(document.value, `_source.${fieldPath}`) as T;
       }
@@ -332,10 +386,11 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
   const getIsFieldEditable = (
     fieldPath: string,
-    defaultEditability?: FieldEditability
+    defaultEditability?: FieldEditability,
+    allowForceEdit = false
   ): ComputedRef<boolean> =>
     computed(() => {
-      if (!isEditMode.value) return false;
+      if (!isEditMode.value && !allowForceEdit) return false;
       const currentEditability = isGM.value ? gmOnlyEditability : normalEditability;
       return fieldOverridesUtils.getIsEditable(
         fieldPath,
@@ -346,13 +401,13 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
   const hasMaskForField = (fieldPath: string): ComputedRef<boolean> =>
     computed(() => {
-      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+      const masks = documentMasks.value;
       return !!masks && fieldPath in masks;
     });
 
   const getMaskForField = <T = unknown,>(fieldPath: string): ComputedRef<T | undefined> =>
     computed(() => {
-      const masks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
+      const masks = documentMasks.value;
       if (!masks || !(fieldPath in masks)) return undefined;
       return normalizeMaskValue<T>(fieldPath, masks[fieldPath]);
     });
@@ -394,12 +449,6 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   const documentActions: DocumentSheetStoreDocumentActions<TDocument> = {
     // updateDocument,
     viewModeAwareUpdateDocument,
-    getDirectFieldUpdater: (
-      path: string,
-      options: Partial<DatabaseUpdateOperation<TDocument>> = {}
-    ): ((value: unknown) => Promise<boolean>) => {
-      return async (value: unknown) => viewModeAwareUpdateDocument({ [path]: value }, options, true);
-    },
     getViewAwareFieldUpdater: (
       path: string,
       options: Partial<DatabaseUpdateOperation<TDocument>> = {}

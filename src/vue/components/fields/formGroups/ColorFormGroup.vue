@@ -6,13 +6,15 @@
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
+    :read-only="props.readOnly"
+    :force-edit="props.forceEdit"
     class="color-form-group"
   >
     <input
       type="color"
       :value="editValue ?? DEFAULT_COLOR"
       :disabled="isDisabled"
-      @change="onChange(($event.target as HTMLInputElement).value)"
+      @change="onChange(($event.target as HTMLInputElement).value as HexColorString | null)"
       class="form-control"
     />
     <template #readonly>
@@ -26,6 +28,8 @@
 </template>
 
 <script setup lang="ts">
+  import type { HexColorString } from '@common/constants.mjs';
+  import type Color from '@common/utils/color.mjs';
   import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject } from 'vue';
@@ -36,7 +40,7 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value?: string | null;
+    value?: HexColorString | Color | null;
     isDmOnly?: boolean;
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
@@ -44,21 +48,21 @@
     /** Only used for overriding store behavior. */
     disabled?: boolean;
     /** Optional updater override. When omitted, derives from the store using fieldPath. */
-    onUpdate?: (value: string | null) => void;
-    /** When true, edit inputs show derived data instead of source data. */
-    editDerived?: boolean;
-    /** When true and no onUpdate, uses the store's direct field updater instead of view-aware. */
-    directUpdate?: boolean;
+    onUpdate?: (value: HexColorString | null) => void;
+    /** When true, forces the readonly display. */
+    readOnly?: boolean;
+    /** When true, forces the edit display even in play/true modes. */
+    forceEdit?: boolean;
   }>();
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
+      getIsFieldEditable,
       hasMaskForField,
       getViewAwareFieldValue,
     },
     documentActions: {
-      getDirectFieldUpdater,
       getViewAwareFieldUpdater,
     },
     _storeUtils: {
@@ -67,31 +71,33 @@
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<string | null>(() =>
-    props.value !== undefined ? props.value : getViewAwareFieldValue<string | null>(props.fieldPath) ?? null
-  );
+  const resolvedValue = computed<HexColorString | null>(() => {
+    const resolved = props.value !== undefined
+      ? props.value
+      : getViewAwareFieldValue<Color | null>(props.fieldPath) ?? null;
+
+    return resolved instanceof foundry.utils.Color
+      ? resolved.toString() as HexColorString
+      : resolved as HexColorString | null; 
+  });
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;
-    return !isEditMode.value;
+    return !getIsFieldEditable(props.fieldPath, props.defaultEditability, !!props.forceEdit).value;
   });
 
-  const fieldUpdater = props.onUpdate ?? (
-    props.directUpdate
-      ? getDirectFieldUpdater(props.fieldPath)
-      : getViewAwareFieldUpdater(props.fieldPath)
-  );
+  const fieldUpdater = props.onUpdate ?? getViewAwareFieldUpdater(props.fieldPath);
 
   const sourceValue = getSourceProperty<string | null>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.editDerived || !sourceValue) return resolvedValue.value;
+    if (props.value !== undefined || !sourceValue) return resolvedValue.value;
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
     return sourceValue.value as string | null;
   });
 
   const DEFAULT_COLOR = '#ffffff';
 
-  function onChange(val: string) {
+  function onChange(val: HexColorString | null) {
     fieldUpdater(val);
   }
 </script>

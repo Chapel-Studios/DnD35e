@@ -5,7 +5,6 @@
       label="UID"
       :value="uniqueId"
       field-path="system.slug"
-      direct-update
     >
       <template #controls="{ editable }">
         <button
@@ -33,14 +32,14 @@
 
   const {
     documentGetters: { getViewAwareFieldValue },
-    documentActions: { getDirectFieldUpdater },
+    documentActions: { getViewAwareFieldUpdater },
     _storeUtils: {
       createLocalizedComputed: localize,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
   const uniqueId = getViewAwareFieldValue<string>(_field);
-  const updateUUID = getDirectFieldUpdater(_field);
+  const updateUUID = getViewAwareFieldUpdater(_field);
 
   async function generate () {
     const uid = crypto.randomUUID();

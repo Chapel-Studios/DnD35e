@@ -52,7 +52,7 @@
   import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, useSlots, watch } from 'vue';
 
   import type { FormulaData } from './FormulaData.mjs';
-  import type { FormulaField } from './FormulaField.mjs';
+  import { FormulaField } from './FormulaField.mjs';
   import type { AutocompleteOption, FamiliarSchema, ValidationError } from './types.mts';
   import { useFamiliarOverlayInput } from './useFamiliarOverlayInput.mjs';
   import {
@@ -74,7 +74,7 @@
     isDmOnly: { type: Boolean, default: false },
     /** Formula string (legacy). When formulaData is provided, this is ignored. */
     value: { type: String, default: '' },
-    onUpdate: { type: Function as PropType<(value: string) => void>, required: true },
+    onUpdate: { type: Function as PropType<(value: string) => void>, default: undefined },
     disabled: { type: Boolean, default: false },
     /** Explicit familiar contexts. When omitted, auto-derived from the store's document. */
     contexts: { type: Object as PropType<FamiliarSchema>, default: undefined },
@@ -98,6 +98,24 @@
   // Resolve the FormulaField schema entry for this field path to read excludedFields
   const formulaField = computed((): FormulaField | undefined => {
     return sheetStore?._storeUtils?.getSchemaField?.(props.fieldPath) as FormulaField | undefined;
+  });
+
+  // If no explicit updater is provided, infer write path from fieldPath:
+  // - FormulaField path (e.g. system.nameFormula) => write to .formula leaf
+  // - Leaf formula path (e.g. system.changes.0.value) => write directly
+  const inferredUpdatePath = computed((): string => {
+    if (props.fieldPath.endsWith('.formula')) return props.fieldPath;
+    const schemaField = sheetStore?._storeUtils?.getSchemaField?.(props.fieldPath);
+    if (schemaField instanceof FormulaField) {
+      return `${props.fieldPath}.formula`;
+    }
+    return props.fieldPath;
+  });
+
+  const inferredUpdater = computed<((value: string) => Promise<boolean>) | undefined>(() => {
+    return sheetStore?.documentActions?.getViewAwareFieldUpdater?.(inferredUpdatePath.value) as
+      | ((value: string) => Promise<boolean>)
+      | undefined;
   });
 
   // Effective contexts — explicit prop > store schema > FormulaData bindings > empty
@@ -285,14 +303,22 @@
   }
 
   function commitValue() {
+    // Canonicalize before saving (e.g. #Self.Hardness → #self.hardness)
+    const canonical = canonicalizeFormula(localValue.value, contexts.value);
+    const current = effectiveFormula.value || '';
+    if (canonical === current) return;
+
     if (typeof props.onUpdate === 'function') {
-      // Canonicalize before saving (e.g. #Self.Hardness → #self.hardness)
-      const canonical = canonicalizeFormula(localValue.value, contexts.value);
-      const current = effectiveFormula.value || '';
-      if (canonical !== current) {
-        props.onUpdate(canonical);
-      }
+      props.onUpdate(canonical);
+      return;
     }
+
+    if (typeof inferredUpdater.value === 'function') {
+      void inferredUpdater.value(canonical || '');
+      return;
+    }
+
+    console.warn(`[FormulaFormGroup] No updater available for ${props.fieldPath}. Provide onUpdate or ensure DocumentSheetStore is injected.`);
   }
 
   function onKeyDown(event: KeyboardEvent) {

@@ -65,4 +65,56 @@ describe('TextFormGroup — passthrough smoke test', () => {
     expect(control.exists()).toBe(true);
     expect(control.attributes('data-editable')).toBe('false');
   });
+
+  it('forceEdit shows input in play mode but keeps it disabled when resolved editable=false', () => {
+    const wrapper = mount(TextFormGroup, {
+      props: {
+        fieldPath: FIELD_PATH,
+        value: 'hello',
+        forceEdit: true,
+      },
+      global: {
+        provide: makeGlobalProvide({
+          documentStore: createMockDocumentStore({
+            fieldEditability: { [FIELD_PATH]: false },
+            sourceValues: { [FIELD_PATH]: 'hello' },
+          }),
+          renderModeStore: createMockRenderModeStore({ isGM: false, isEditMode: false, isPlayMode: true }),
+        }),
+        stubs: {
+          FieldControls: { template: '<div class="fc-stub"><slot /></div>' },
+        },
+      },
+    });
+
+    const input = wrapper.find('input[type="text"]');
+    expect(input.exists()).toBe(true);
+    expect(input.attributes('disabled')).toBeDefined();
+  });
+
+  it('forceEdit remains enabled when resolved editable=true', () => {
+    const wrapper = mount(TextFormGroup, {
+      props: {
+        fieldPath: FIELD_PATH,
+        value: 'hello',
+        forceEdit: true,
+      },
+      global: {
+        provide: makeGlobalProvide({
+          documentStore: createMockDocumentStore({
+            fieldEditability: { [FIELD_PATH]: true },
+            sourceValues: { [FIELD_PATH]: 'hello' },
+          }),
+          renderModeStore: createMockRenderModeStore({ isGM: true, isEditMode: false, isPlayMode: true }),
+        }),
+        stubs: {
+          FieldControls: { template: '<div class="fc-stub"><slot /></div>' },
+        },
+      },
+    });
+
+    const input = wrapper.find('input[type="text"]');
+    expect(input.exists()).toBe(true);
+    expect(input.attributes('disabled')).toBeUndefined();
+  });
 });
