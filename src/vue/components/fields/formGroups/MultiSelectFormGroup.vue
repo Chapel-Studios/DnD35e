@@ -65,7 +65,7 @@
   const props = defineProps<{
     label?: string;
     hint?: string;
-    value?: TValue[];
+    value?: TValue[] | Set<TValue>;
     options: MultiSelectOption<TValue>[];
     isDmOnly?: boolean;
     fieldPath: string;
@@ -96,7 +96,9 @@
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
   const resolvedValue = computed<TValue[]>(() =>
-    props.value !== undefined ? props.value : getViewAwareFieldValue<TValue[]>(props.fieldPath) ?? []
+    props.value !== undefined
+      ? [...props.value]
+      : getViewAwareFieldValue<TValue[]>(props.fieldPath) ?? []
   );
 
   function localize(key: string): string {

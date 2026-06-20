@@ -18,18 +18,13 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import EffectDetails from '@effects/baseActiveEffect/sheet/tabs/EffectDetails.vue';
   import ItemPrice from '@items/physical/physicalItem/sheet/components/ItemPrice.vue';
   import { ItemHardness } from '@items/physical/physicalItem/sheet/index.mjs';
   import { NumberFormGroup } from '@vc/fields/index.mjs';
-  import { inject } from 'vue';
 
   import DamageReductionTypes from '../components/DamageReductionTypes.vue';
   import MagicEquivalency from '../components/MagicEquivalency.vue';
-  import type { MaterialStore } from '../MaterialStore.mjs';
-
-  inject(DocumentSheetStoreSymbol) as MaterialStore;
 </script>
 
 <style scoped>
