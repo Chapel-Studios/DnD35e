@@ -1,8 +1,8 @@
 <template>
   <div class="actor-tab actor-description-tab">
     <RichTextEditorFormGroup
-      field="system.description"
       :label="descriptionLabel"
+      field-path="system.description"
       class="description-editor"
     />
     <slot />

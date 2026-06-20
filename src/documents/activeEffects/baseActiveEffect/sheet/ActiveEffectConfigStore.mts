@@ -10,7 +10,7 @@ import type { ContextDocumentType, TargetContexts } from '@helpers/formulae/regi
 import type { FamiliarContext } from '@helpers/formulae/types.mjs';
 import { syncOpenSheetTitle } from '@helpers/syncOpenSheetTitle.mjs';
 import type { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
-import type { SelectOption, SelectOption } from '@vc/fields/formGroups/types.mjs';
+import type { SelectOption } from '@vc/fields/formGroups/types.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -232,9 +232,9 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
         { 'duration.value': value }
       );
     },
-    updateDurationUnits: async (units: string) => {
+    updateDurationUnits: async (units: string | null) => {
       return await baseStore._storeUtils.updateDocument(
-        { 'duration.units': units }
+        { 'duration.units': units ?? '' }
       );
     },
   };
@@ -272,7 +272,7 @@ type ActiveEffectConfigStoreDocumentActions<TDocument extends ActiveEffectDnd35e
   removeChange?: (index: number) => Promise<boolean>;
   updateChangeField: (index: number, field: string, value: unknown) => Promise<boolean>;
   updateDurationValue: (value: number | null) => Promise<boolean>;
-  updateDurationUnits: (units: string) => Promise<boolean>;
+  updateDurationUnits: (units: string | null) => Promise<boolean>;
 };
 
 type ActiveEffectConfigStore<TDocument extends ActiveEffectDnd35e = ActiveEffectDnd35e> = DocumentSheetStore<TDocument> & {

@@ -22,7 +22,6 @@
       type="text"
       :value="editValue"
       :disabled="isDisabled"
-      :multiple="props.multiline"
       :minlength="props.minLength"
       :maxlength="props.maxLength"
       @change="onChange(($event.target as HTMLInputElement).value)"

@@ -75,8 +75,11 @@
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed(() => (props.value
-    ?? getViewAwareFieldValue<TValue>(props.fieldPath).toString()));
+  const resolvedValue = computed(() => ((
+    props.value
+    ?? getViewAwareFieldValue<TValue>(props.fieldPath)
+    ?? ''
+  ).toString()));
 
   /**
    * Resolve label: explicit prop (localization key) > schema field label (already localized)

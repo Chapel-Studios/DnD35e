@@ -1,9 +1,8 @@
 <template>
   <RichTextEditorFormGroup 
-    field="system.description.value" 
-    label="dnd35e.COMMON.Description"
+    field-path="system.description" 
     class="description-editor"
-    placeholder="Enter a description..."
+    placeholder="dnd35e.ACTOR.FIELDS.description.placeholder"
   />
 </template>
 

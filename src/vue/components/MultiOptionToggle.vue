@@ -20,6 +20,10 @@
     options: SelectOption<TType>[];
     value: TType;
   }>();
+
+  defineEmits<{
+    update: [value: TType];
+  }>();
 </script>
 
 <style lang="scss" scoped>

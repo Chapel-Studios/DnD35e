@@ -77,12 +77,12 @@ Assume final target behavior is already implemented.
 
 | FormGroup component | Value type | Required settings | Component-specific settings |
 |---|---|---|---|
-| `NumberFormGroup` | `number` | `fieldPath` | `unit?: string` |
+| `NumberFormGroup` | `number \| null` | `fieldPath` | `unit?: string` |
 | `TextFormGroup` | `string` | `fieldPath` | None |
 | `SelectFormGroup<TValue>` | `string \| number` | `fieldPath`, `options` | `options: SelectOption<TValue>[]` |
 | `CheckBoxFormGroup` | `boolean` | `fieldPath` | None |
 | `ToggleSwitchFormGroup` | `boolean` | `fieldPath` | `trueLabel?: string`, `falseLabel?: string`, `flip?: boolean` |
-| `ColorFormGroup` | `HexColorString \| Color` | `fieldPath` | None |
+| `ColorFormGroup` | `HexColorString \| Color \| null` | `fieldPath` | None |
 | `MultiSelectFormGroup<TValue>` | `TValue[]` | `fieldPath`, `options` | `options: SelectOption<TValue>[]` |
 | `ListFormGroup<TItem, TUpdateData = TItem[]>` | `TItem[] \| null` | `fieldPath`, `onAddItem`, `addButtonTitle`, `removeButtonTitle` | `onUpdate?: (value: TUpdateData \| null) => void`, `maxItems?: number` |
 | `CoinageFormGroup` | `PriceSource \| null` | `fieldPath`, `onAddItem`, `addButtonTitle`, `removeButtonTitle` | `onUpdate?: (value: PriceSource \| null) => void`, `maxStackValue?: number`, `minStackValue?: number`, `stackValueStep?: number` |

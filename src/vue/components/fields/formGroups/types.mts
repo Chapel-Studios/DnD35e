@@ -27,7 +27,7 @@ interface BaseFormGroupProps<TValue extends ValueType> {
 }
 
 interface FormGroupWithInputProps<TValue  extends ValueType> extends BaseFormGroupProps<TValue> {
-  onUpdate?: (value: TValue | null) => void;
+  onUpdate?: (value: TValue | null) => void | boolean | Promise<void> | Promise<boolean>;
   disabled?: boolean;
 }
 
@@ -42,10 +42,11 @@ interface NumberFormGroupProps extends FormGroupWithInputProps<number> {
 
 interface ForcedUnitNumberFormGroupProps extends Omit<NumberFormGroupProps, 'unit'> {}
 
-interface CheckBoxFormGroupProps extends FormGroupWithInputProps<boolean> {}
+interface CheckBoxFormGroupProps extends Omit<FormGroupWithInputProps<boolean>, 'onUpdate'> {
+  onUpdate?: (value: boolean) => void | boolean | Promise<void> | Promise<boolean>;
+}
 
 interface TextFormGroupProps extends FormGroupWithInputProps<string> {
-  multiline?: boolean;
   minLength?: number;
   maxLength?: number;
 }
@@ -67,14 +68,14 @@ interface SelectFormGroupProps<TValue extends string | number> extends FormGroup
 
 interface MultiSelectFormGroupProps<TValue extends string | number> extends Omit<FormGroupWithInputProps<TValue>, 'value' | 'onUpdate'> {
   value?: TValue[] | Set<TValue> | null;
-  onUpdate?: (value: TValue[]) => void;
+  onUpdate?: (value: TValue[]) => void | boolean | Promise<void> | Promise<boolean>;
   options: SelectOption<TValue>[];
 }
 
 interface ListFormGroupProps<TItem, TUpdateData = TItem[]> extends Omit<FormGroupWithInputProps<string>, 'value' | 'onUpdate'> {
   /** The current value of the field. */
   value?: TItem[] | null;
-  onUpdate?: (value: TUpdateData | null) => void;
+  onUpdate?: (value: TUpdateData | null) => void | boolean | Promise<void> | Promise<boolean>;
   /** Localization key for "add item" button title */
   addButtonTitle: string;
   /** Localization key for "remove item" button title */
@@ -89,10 +90,13 @@ interface ListFormGroupProps<TItem, TUpdateData = TItem[]> extends Omit<FormGrou
    * sensible defaults) and pushing it to the field. If omitted, the add
    * button is hidden.
    */
-  onAddItem: () => void;
+  onAddItem: () => void | boolean | Promise<void> | Promise<boolean>;
 }
 
-interface CoinageFormGroupProps extends Omit<ListFormGroupProps<CoinStack, PriceSource>, 'value'> {
+interface CoinageFormGroupProps extends Omit<
+  ListFormGroupProps<CoinStack, PriceSource>,
+  'value' | 'addButtonTitle' | 'removeButtonTitle' | 'onAddItem'
+> {
   value?: PriceSource | null;
   /** Optional: max count per stack (0 = unlimited) */
   maxStackValue?: number;
@@ -100,6 +104,12 @@ interface CoinageFormGroupProps extends Omit<ListFormGroupProps<CoinStack, Price
   minStackValue?: number;
   /** Optional: step value for stack count */
   stackValueStep?: number;
+  /** Optional override: localization key for "add item" button title */
+  addButtonTitle?: string;
+  /** Optional override: localization key for "remove item" button title */
+  removeButtonTitle?: string;
+  /** Optional override: Called when the user clicks the add-item button. */
+  onAddItem?: () => void | boolean | Promise<void> | Promise<boolean>;
 }
 
 interface SelectOption<TValue> {
