@@ -1,6 +1,17 @@
 <template>
   <NumberFormGroup
     :value="weight"
+    :label="props.label"
+    :hint="props.hint"
+    :min="props.min ?? 0"
+    :max="props.max"
+    :step="props.step"
+    :disabled="props.disabled"
+    :read-only="props.readOnly"
+    :force-edit="props.forceEdit"
+    :show-field-controls="props.showFieldControls"
+    :default-editability="props.defaultEditability"
+    :default-visibility="props.defaultVisibility"
     :on-update="weightUpdater"
     :field-path="props.fieldPath"
     :unit="weightDisplayShortLabel"
@@ -10,7 +21,9 @@
       <slot name="controls" :editable="editable" />
     </template>
     <template #readonly>
-      {{ weight }} {{ weightDisplayShortLabel }}
+      <slot name="readonly">
+        {{ weight }} {{ weightDisplayShortLabel }}
+      </slot>
     </template>
   </NumberFormGroup>
 </template>
@@ -23,12 +36,11 @@
   import { computed, inject, useSlots } from 'vue';
 
   import NumberFormGroup from './NumberFormGroup.vue';
+  import type { ForcedUnitNumberFormGroupProps } from './types.mjs';
 
   const slots = useSlots();
 
-  const props = defineProps<{
-    fieldPath: string;
-  }>();
+  const props = defineProps<ForcedUnitNumberFormGroupProps>();
 
   const {
     measurement: {
@@ -48,14 +60,18 @@
   } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
   const weight = computed(() => {
-    const value = getViewAwareFieldValue<number>(props.fieldPath);
-    return convertToLocalizedWeight(value ?? 0) ?? 0;
+    const value = props.value
+      ?? getViewAwareFieldValue<number>(props.fieldPath)
+      ?? 0;
+    return Math.roundDecimals(convertToLocalizedWeight(value), 2);
   });
 
   // Projection callback: convert localized display weight back to stored base units.
   const weightUpdater = (value: number | null) => {
     const realValue = convertToStoredWeight(value ?? 0);
-    getViewAwareFieldUpdater(props.fieldPath)(realValue);
+    const updater = props.onUpdate
+      ?? getViewAwareFieldUpdater(props.fieldPath);
+    updater(realValue);
   };
 </script>
 

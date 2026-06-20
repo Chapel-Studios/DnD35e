@@ -3,12 +3,12 @@
     class="multi-select-form-group"
     :label="label"
     :hint="hint"
-    :is-dm-only="isDmOnly"
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
+    :show-field-controls="props.showFieldControls"
   >
     <div class="multi-select-checkboxes">
       <label
@@ -53,32 +53,15 @@
   </FormGroup>
 </template>
 
-<script setup lang="ts" generic="TValue">
+<script setup lang="ts" generic="TValue extends string | number">
   import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject } from 'vue';
 
-  import type { FieldEditability,FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
-  import type { MultiSelectOption } from './types.mjs';
+  import type { MultiSelectFormGroupProps } from './types.mjs';
 
-  const props = defineProps<{
-    label?: string;
-    hint?: string;
-    value?: TValue[] | Set<TValue>;
-    options: MultiSelectOption<TValue>[];
-    isDmOnly?: boolean;
-    fieldPath: string;
-    defaultVisibility?: FieldVisibility;
-    defaultEditability?: FieldEditability;
-    /** Only used for overriding store behavior. */
-    disabled?: boolean;
-    onUpdate?: (value: TValue[]) => void;
-    /** When true, forces the readonly display. */
-    readOnly?: boolean;
-    /** When true, forces the edit display even in play/true modes. */
-    forceEdit?: boolean;
-  }>();
+  const props = defineProps<MultiSelectFormGroupProps<TValue>>();
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
@@ -97,7 +80,7 @@
 
   const resolvedValue = computed<TValue[]>(() =>
     props.value !== undefined
-      ? [...props.value]
+      ? [...(props.value ?? [])]
       : getViewAwareFieldValue<TValue[]>(props.fieldPath) ?? []
   );
 
@@ -109,8 +92,6 @@
     if (props.disabled) return true;
     return !getIsFieldEditable(props.fieldPath, props.defaultEditability, !!props.forceEdit).value;
   });
-
-  const fieldUpdater = props.onUpdate ?? getViewAwareFieldUpdater(props.fieldPath);
 
   const sourceValue = getSourceProperty<TValue[]>(props.fieldPath);
   const editValue = computed(() => {
@@ -124,7 +105,8 @@
     const updated = checked
       ? [...current, val]
       : current.filter(v => v !== val);
-    fieldUpdater(updated);
+    const updater = props.onUpdate ?? getViewAwareFieldUpdater(props.fieldPath);
+    updater(updated);
   }
 
   const selectedOptions = computed(() => props.options.filter(o => o.value !== null && resolvedValue.value.includes(o.value)));

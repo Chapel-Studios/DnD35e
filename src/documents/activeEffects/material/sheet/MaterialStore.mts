@@ -10,7 +10,7 @@ import { CurrencyData } from '@fields/CurrencyData.mjs';
 import { GAME_RULES_KEYS } from '@settings/gameRules/constants.mjs';
 import type { DamageReductionTypesConfig } from '@settings/gameRules/types.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
-import type { MultiSelectOption } from '@vc/fields/formGroups/types.mjs';
+import type { SelectOption } from '@vc/fields/formGroups/types.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -39,7 +39,7 @@ const useMaterialStore = (context: VueApplicationContext<Material>): MaterialSto
     materialSubtype: computed(() => getViewAwareFieldValue<MaterialSubtype>('system.materialSubtype') ?? 'standard'),
     magicEquivalency: computed(() => getViewAwareFieldValue('system.magicEquivalency') ?? 0),
     damageReductionTypes: computed(() => [...(getViewAwareFieldValue<string[]>('system.damageReductionTypes') ?? [])]),
-    damageReductionTypeOptions: computed<MultiSelectOption<string>[]>(() => {
+    damageReductionTypeOptions: computed<SelectOption<string>[]>(() => {
       const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.DAMAGE_REDUCTION_TYPES) as DamageReductionTypesConfig;
       const systemDefaults = (CONFIG.dnd35e.gameRules.damageReductionTypes ?? {}) as Record<string, { label: string }>;
       return Object.entries(config)
@@ -74,7 +74,7 @@ interface MaterialGetters extends ActiveEffectConfigStoreDocumentGetters
   materialSubtype: ComputedRef<MaterialSubtype>;
   magicEquivalency: ComputedRef<number | null>;
   damageReductionTypes: ComputedRef<string[]>;
-  damageReductionTypeOptions: ComputedRef<MultiSelectOption<string>[]>;
+  damageReductionTypeOptions: ComputedRef<SelectOption<string>[]>;
 }
 
 interface MaterialStoreUtils extends DocumentSheetStoreUtils<MaterialType> {}

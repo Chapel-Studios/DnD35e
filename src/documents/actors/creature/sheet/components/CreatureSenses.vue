@@ -36,12 +36,12 @@
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { SettingsStore } from '@settings/index.mjs';
   import { SettingsStoreSymbol } from '@settings/index.mjs';
+  import type { SelectOption } from '@vc/fields/index.mjs';
   import { 
     DistanceValueUnitInput,
     gmOnlyEditability,
     ListFormGroup,
     ownerPlusVisibility,
-    type SelectOption,
   } from '@vc/fields/index.mjs';
   import { computed, inject } from 'vue';
 
