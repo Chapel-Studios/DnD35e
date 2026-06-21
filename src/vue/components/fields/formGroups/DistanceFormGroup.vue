@@ -59,10 +59,10 @@
   } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
   const distance = computed(() => {
-    const value = props.value
-      ?? getViewAwareFieldValue<number>(props.fieldPath)
-      ?? 0;
-    return Math.roundDecimals(convertToLocalizedDistance(value), 2);
+    const value = props.value !== undefined
+      ? props.value
+      : getViewAwareFieldValue<number>(props.fieldPath);
+    return Math.roundDecimals(convertToLocalizedDistance(value ?? 0), 2);
   });
 
   // Projection callback: convert localized display units back to stored distance units.

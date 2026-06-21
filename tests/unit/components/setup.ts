@@ -142,7 +142,7 @@ export const createMockDocumentStore = (options: MockDocumentStoreOptions = {}):
     _storeUtils: {
       getFieldLabel: vi.fn((path: string) => labels[path] ?? ''),
       getFieldHint: vi.fn((path: string) => hints[path] ?? ''),
-      createLocalizedComputed: vi.fn((key: string) => key),
+      createLocalizedComputed: vi.fn((key: string) => computed(() => key)),
       resolveVisibility,
       resolveEditability,
       getSourceProperty,

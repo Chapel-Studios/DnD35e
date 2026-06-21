@@ -60,10 +60,10 @@
   } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 
   const weight = computed(() => {
-    const value = props.value
-      ?? getViewAwareFieldValue<number>(props.fieldPath)
-      ?? 0;
-    return Math.roundDecimals(convertToLocalizedWeight(value), 2);
+    const value = props.value !== undefined
+      ? props.value
+      : getViewAwareFieldValue<number>(props.fieldPath);
+    return Math.roundDecimals(convertToLocalizedWeight(value ?? 0), 2);
   });
 
   // Projection callback: convert localized display weight back to stored base units.

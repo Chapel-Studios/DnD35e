@@ -50,8 +50,10 @@
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<TValue>(() => props.value
-    ?? getViewAwareFieldValue<TValue>(props.fieldPath)
+  const resolvedValue = computed<TValue | null>(() => 
+    props.value !== undefined
+      ? props.value
+      : getViewAwareFieldValue<TValue>(props.fieldPath)
   );
 
   const readonlyLabel = computed(() => {

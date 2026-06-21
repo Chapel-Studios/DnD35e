@@ -64,14 +64,8 @@ async function closePlayerConfigIfOpen (page: Page): Promise<void> {
   });
 }
 
-/** Create a weapon owned (3 = OWNER) by all players so the player can edit. */
+/** Create a baseline weapon; player ownership is granted separately via grantPlayerOwner. */
 async function createOwnedWeapon (page: Page): Promise<string> {
-  const playerUserId = await page.evaluate(() => {
-    const user = (globalThis as any).game?.users?.find((u: any) => String(u?.name).toLowerCase() === 'player');
-    if (!user?.id) throw new Error('Could not resolve player user id');
-    return user.id as string;
-  });
-
   return await createItem(page, 'weapon', {
     name: 'Permission Test Sword',
     system: { quantity: 1 },
