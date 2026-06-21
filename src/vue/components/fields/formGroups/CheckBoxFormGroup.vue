@@ -36,7 +36,7 @@
   import { computed, inject } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { CheckBoxFormGroupProps } from './types.mjs';
+  import type { CheckBoxFormGroupProps } from './types.mts';
 
   const props = defineProps<CheckBoxFormGroupProps>();
 

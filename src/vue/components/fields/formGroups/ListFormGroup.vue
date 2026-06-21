@@ -65,7 +65,7 @@
   import { computed, inject, onMounted, useSlots } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { ListFormGroupProps } from './types.mjs';
+  import type { ListFormGroupProps } from './types.mts';
   const props = withDefaults(defineProps<ListFormGroupProps<TItem>>(), {
     emptyLabel: 'dnd35e.form.emptyList',
   });

@@ -40,7 +40,7 @@
 <script setup lang="ts" generic="TValue extends number | string, TUnit extends string">
   import { computed } from 'vue';
 
-  import type { ValueUnitInputProps } from './types.mjs';
+  import type { ValueUnitInputProps } from './types.mts';
 
   const props = defineProps<ValueUnitInputProps<TValue, TUnit>>();
 

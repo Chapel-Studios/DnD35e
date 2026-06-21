@@ -37,7 +37,7 @@
 
   import ToggleSwitch from '../ToggleSwitch.vue';
   import FormGroup from './FormGroup.vue';
-  import type { ToggleSwitchFormGroupProps } from './types.mjs';
+  import type { ToggleSwitchFormGroupProps } from './types.mts';
 
   const props = defineProps<ToggleSwitchFormGroupProps>();
 

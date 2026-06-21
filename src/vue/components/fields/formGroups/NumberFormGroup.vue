@@ -38,7 +38,7 @@
   import { computed, inject, useSlots } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { NumberFormGroupProps } from './types.mjs';
+  import type { NumberFormGroupProps } from './types.mts';
 
   const slots = useSlots();
 

@@ -157,14 +157,6 @@ function mergeObject<T extends Record<string, any>> (
   }),
 };
 
-// Foundry extends Math with helpers like roundDecimals.
-if (typeof Math.roundDecimals !== 'function') {
-  Math.roundDecimals = (value: number, places: number): number => {
-    const factor = 10 ** places;
-    return Math.round(value * factor) / factor;
-  };
-}
-
 // --- global document constructors ---------------------------------------
 (globalThis as any).Actor = class {
   static metadata = {};

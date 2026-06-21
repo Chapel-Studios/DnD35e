@@ -21,7 +21,7 @@
   import { AUTO_ID_MARKER, SettingsTable } from '@settings/shared/sheet/SettingsTable/index.mjs';
   import { computed, ref } from 'vue';
 
-  import type { DamageReductionTypesConfig } from '../types.mjs';
+  import type { DamageReductionTypesConfig } from '../types.mts';
 
   const CUSTOM_PREFIX = 'custom_';
 

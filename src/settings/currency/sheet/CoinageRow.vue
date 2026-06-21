@@ -128,8 +128,8 @@
   import { computed, inject, reactive, ref, watch } from 'vue';
 
   import { USER_COIN_PREFIX } from '../constants.mjs';
-  import type { CoinageDefinition, CoinageVisibility } from '../types.mjs';
   import { coinageVisibilityEveryone, coinageVisibilityGmOnly, coinageVisibilityGmSelect } from '../types.mjs';
+  import type { CoinageDefinition, CoinageVisibility } from '../types.mts';
   import { isAutoId } from './idFieldUtils.mjs';
 
   const {

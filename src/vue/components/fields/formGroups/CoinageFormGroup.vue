@@ -74,7 +74,7 @@
   import { computed, inject } from 'vue';
 
   import ListFormGroup from './ListFormGroup.vue';
-  import type { CoinageFormGroupProps } from './types.mjs';
+  import type { CoinageFormGroupProps } from './types.mts';
 
   const props = defineProps<CoinageFormGroupProps>();
 

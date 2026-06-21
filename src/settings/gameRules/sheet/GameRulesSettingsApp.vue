@@ -70,7 +70,7 @@
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
 
   import { GAME_RULES_KEYS } from '../constants.mjs';
-  import type { DamageReductionTypesConfig } from '../types.mjs';
+  import type { DamageReductionTypesConfig } from '../types.mts';
   import DamageReductionTable from './DamageReductionTable.vue';
 
   const props = defineProps<{

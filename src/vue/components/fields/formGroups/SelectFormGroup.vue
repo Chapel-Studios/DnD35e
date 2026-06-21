@@ -39,7 +39,7 @@
   import { computed, inject } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { SelectFormGroupProps } from './types.mjs';
+  import type { SelectFormGroupProps } from './types.mts';
 
   const props = defineProps<SelectFormGroupProps<TValue>>();
 

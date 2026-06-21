@@ -59,7 +59,7 @@
   import { computed, inject } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { MultiSelectFormGroupProps } from './types.mjs';
+  import type { MultiSelectFormGroupProps } from './types.mts';
 
   const props = defineProps<MultiSelectFormGroupProps<TValue>>();
 

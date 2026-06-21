@@ -51,7 +51,7 @@
     gmOnlyEditability,
   } from './fieldPermissions.mjs';
   import MaskedBadge from './MaskedBadge.vue';
-  import type { BaseFormGroupProps } from './types.mjs';
+  import type { BaseFormGroupProps } from './types.mts';
 
   const props = withDefaults(defineProps<BaseFormGroupProps<TValue>>(), {
     showFieldControls: true,

@@ -35,7 +35,7 @@
   import { computed, inject, useSlots } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { TextFormGroupProps } from './types.mjs';
+  import type { TextFormGroupProps } from './types.mts';
 
   const slots = useSlots();
   const props = defineProps<TextFormGroupProps>();

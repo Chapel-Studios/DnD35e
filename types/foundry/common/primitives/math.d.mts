@@ -36,13 +36,6 @@ declare global {
         normalizeRadians(radians: number): number;
 
         /**
-         * Round a floating point number to a certain number of decimal places
-         * @param number A floating point number
-         * @param places An integer number of decimal places
-         */
-        roundDecimals(number: number, places: number): number;
-
-        /**
          * Transform an angle in radians to a number in degrees
          * @param angle An angle in radians
          * @returns An angle in degrees
