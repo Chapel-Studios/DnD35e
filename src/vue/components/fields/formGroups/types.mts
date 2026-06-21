@@ -12,7 +12,7 @@ type ValueType = string
 
 interface BaseFormGroupProps<TValue extends ValueType> {
   label?: string; // localization key
-  hint?: string; // localization key for hint text, or raw string if localizeHint=false
+  hint?: string; // localization key for hint text
   fieldPath: string; // unique identifier for this field's permission overrides
   defaultVisibility?: FieldVisibility; // defaults to 'everyone'
   defaultEditability?: FieldEditability; // defaults to 'normal'

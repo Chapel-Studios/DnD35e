@@ -117,10 +117,11 @@
     fieldUpdater(CurrencyData.toSource(stacks ?? []));
   };
 
-  const sourceValue = getSourceProperty<PriceSource | null>(props.fieldPath);
-  const projectedValue = computed<PriceSource>(() => props.value
-    ?? sourceValue.value
-    ?? CurrencyData.toSource([]));
+  const projectedValue = computed<PriceSource>(() => (
+    props.value !== undefined
+      ? (props.value ?? CurrencyData.toSource([]))
+      : (sourceValue.value ?? CurrencyData.toSource([]))
+  ));
 
   /** The stacks currently shown in the edit UI. */
   const editStacks = computed((): CoinStack[] => {

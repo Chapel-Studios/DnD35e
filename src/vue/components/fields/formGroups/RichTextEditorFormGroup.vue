@@ -58,8 +58,7 @@
   import { computed, inject, onMounted, ref, watch } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { RichTextEditorFormGroupProps } from './types.mts';
-
+  import type { RichTextEditorFormGroupProps } from './types.mjs';
   const props = defineProps<RichTextEditorFormGroupProps>();
 
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;

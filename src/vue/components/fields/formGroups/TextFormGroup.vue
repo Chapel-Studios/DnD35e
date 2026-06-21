@@ -47,10 +47,11 @@
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<string>(() => props.value
-    ?? getViewAwareFieldValue<string>(props.fieldPath)
-    ?? ''
-  );
+  const resolvedValue = computed<string>(() => (
+    props.value !== undefined
+      ? (props.value ?? '')
+      : (getViewAwareFieldValue<string>(props.fieldPath) ?? '')
+  ));
   
   const isDisabled = computed(() => {
     if (props.disabled) return true;

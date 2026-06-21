@@ -65,8 +65,7 @@
   import { computed, inject, onMounted, useSlots } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { ListFormGroupProps } from './types.mts';
-
+  import type { ListFormGroupProps } from './types.mjs';
   const props = withDefaults(defineProps<ListFormGroupProps<TItem>>(), {
     emptyLabel: 'dnd35e.form.emptyList',
   });
@@ -108,10 +107,11 @@
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<TItem[]>(() => props.value
-    ?? getViewAwareFieldValue<TItem[]>(props.fieldPath)
-    ?? []
-  );
+  const resolvedValue = computed<TItem[]>(() => (
+    props.value !== undefined
+      ? (props.value ?? [])
+      : (getViewAwareFieldValue<TItem[]>(props.fieldPath) ?? [])
+  ));
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;
