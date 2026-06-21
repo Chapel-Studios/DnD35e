@@ -2,13 +2,13 @@
   <FormGroup
     :label="label"
     :hint="hint"
-    :is-dm-only="isDmOnly"
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
     :value="resolvedValue"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
+    :show-field-controls="props.showFieldControls"
     class="select-form-group"
   >
     <select
@@ -38,28 +38,10 @@
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject } from 'vue';
 
-  import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
-  import type { SelectOption } from './types.mjs';
+  import type { SelectFormGroupProps } from './types.mjs';
 
-  const props = defineProps<{
-    label?: string;
-    hint?: string;
-    value?: TValue;
-    options: SelectOption<TValue>[];
-    isDmOnly?: boolean;
-    fieldPath: string;
-    defaultVisibility?: FieldVisibility;
-    defaultEditability?: FieldEditability;
-    /** Only used for overriding store behavior. */
-    disabled?: boolean;
-    /** Optional updater override. When omitted, derives from the store using fieldPath. */
-    onUpdate?: (value: TValue) => void;
-    /** When true, forces the readonly display. */
-    readOnly?: boolean;
-    /** When true, forces the edit display even in play/true modes. */
-    forceEdit?: boolean;
-  }>();
+  const props = defineProps<SelectFormGroupProps<TValue>>();
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
@@ -68,8 +50,10 @@
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<TValue>(() =>
-    props.value !== undefined ? props.value : getViewAwareFieldValue<TValue>(props.fieldPath)
+  const resolvedValue = computed<TValue | null>(() => 
+    props.value !== undefined
+      ? props.value
+      : getViewAwareFieldValue<TValue>(props.fieldPath)
   );
 
   const readonlyLabel = computed(() => {
@@ -84,7 +68,6 @@
     return !getIsFieldEditable(props.fieldPath, props.defaultEditability, !!props.forceEdit).value;
   });
 
-  const fieldUpdater = props.onUpdate ?? getViewAwareFieldUpdater(props.fieldPath);
 
   const sourceValue = getSourceProperty<TValue>(props.fieldPath);
   const editValue = computed(() => {
@@ -100,8 +83,13 @@
   function onChange(val: string) {
     // Coerce based on the resolved value's type so numeric selects still write
     // numbers to the document even when no explicit `:value` prop is passed.
-    const parsed = typeof resolvedValue.value === 'number' ? Number(val) : val;
-    fieldUpdater(parsed as TValue);
+    const parsed = typeof resolvedValue.value === 'number'
+      ? Number(val)
+      : val;
+    const updater = props.onUpdate
+      ?? getViewAwareFieldUpdater(props.fieldPath);
+
+    updater(parsed as TValue);
   }
 </script>
 

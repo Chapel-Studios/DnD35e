@@ -8,6 +8,7 @@
     class="list-form-group"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
+    :show-field-controls="props.showFieldControls"
   >
     <!-- Controls slot: add item button -->
     <template #controls="{ editable }">
@@ -63,39 +64,9 @@
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject, onMounted, useSlots } from 'vue';
 
-  import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
-
-  const props = withDefaults(defineProps<{
-    label?: string;
-    hint?: string;
-    /** The current value of the list, not required but encouraged for typing. */
-    value?: TItem[];
-    fieldPath: string;
-    defaultVisibility?: FieldVisibility;
-    defaultEditability?: FieldEditability;
-    disabled?: boolean;
-    onUpdate?: (value: TItem[]) => void;
-    /** When true, forces the readonly display. */
-    readOnly?: boolean;
-    /** When true, forces the edit display even in play/true modes. */
-    forceEdit?: boolean;
-    /** Localization key for "add item" button title */
-    addButtonTitle: string;
-    /** Localization key for "remove item" button title */
-    removeButtonTitle: string;
-    /** Localization key for empty list display (defaults to 'dnd35e.form.emptyList') */
-    emptyLabel?: string;
-    /** Optional: max items allowed (0 = unlimited) */
-    maxItems?: number;
-    /**
-     * Called when the user clicks the add-item button. The consumer is
-     * responsible for constructing a new item (only they know the shape and
-     * sensible defaults) and pushing it to the field. If omitted, the add
-     * button is hidden.
-     */
-    onAddItem: () => void;
-  }>(), {
+  import type { ListFormGroupProps } from './types.mjs';
+  const props = withDefaults(defineProps<ListFormGroupProps<TItem>>(), {
     emptyLabel: 'dnd35e.form.emptyList',
   });
 
@@ -136,9 +107,11 @@
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<TItem[]>(() =>
-    props.value !== undefined ? props.value : getViewAwareFieldValue<TItem[]>(props.fieldPath) ?? []
-  );
+  const resolvedValue = computed<TItem[]>(() => (
+    props.value !== undefined
+      ? (props.value ?? [])
+      : (getViewAwareFieldValue<TItem[]>(props.fieldPath) ?? [])
+  ));
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;

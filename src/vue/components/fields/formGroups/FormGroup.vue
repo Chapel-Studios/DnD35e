@@ -20,7 +20,7 @@
     <!-- Content slot for input elements -->
     <slot v-if="showDefaultSlot"></slot>
     <div v-else class="readonly-content">
-      <slot name="readonly">{{ props.value }}</slot>
+      <slot name="readonly">{{ resolvedValue }}</slot>
     </div>
 
     <p v-if="hasHint" class="hint">
@@ -40,37 +40,20 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TValue extends string | number | boolean">
   import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject } from 'vue';
 
   import FieldControls from './FieldControls.vue';
-  import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import {
     everyoneVisibility,
     gmOnlyEditability,
   } from './fieldPermissions.mjs';
   import MaskedBadge from './MaskedBadge.vue';
+  import type { BaseFormGroupProps } from './types.mjs';
 
-  const props = withDefaults(defineProps<{
-    label?: string; // localization key
-    hint?: string; // localization key for hint text, or raw string if localizeHint=false
-    // TODO(Phase 3): evaluate removing localizeHint — hints are pre-localized via LOCALIZATION_PREFIXES
-    localizeHint?: boolean; // whether to localize hint (default: true)
-    value?: string | number | null;
-    // Field permissions
-    fieldPath: string; // unique identifier for this field's permission overrides
-    defaultVisibility?: FieldVisibility; // defaults to 'everyone'
-    defaultEditability?: FieldEditability; // defaults to 'normal'
-    /** When true, forces the readonly display. */
-    readOnly?: boolean;
-    /** When true, forces the edit display even in play/true modes. */
-    forceEdit?: boolean;
-    /** When false, suppress the built-in FieldControls for this field wrapper. */
-    showFieldControls?: boolean;
-  }>(), {
-    localizeHint: true,
+  const props = withDefaults(defineProps<BaseFormGroupProps<TValue>>(), {
     showFieldControls: true,
   });
 
@@ -82,6 +65,7 @@
     documentGetters: {
       getIsFieldVisible,
       getIsFieldEditable,
+      getViewAwareFieldValue,
     },
     _storeUtils: {
       getFieldHint,
@@ -90,6 +74,12 @@
       resolveEditability,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  const resolvedValue = computed(() => (
+    props.value !== undefined
+      ? (props.value == null ? '' : String(props.value))
+      : String(getViewAwareFieldValue<TValue>(props.fieldPath) ?? '')
+  ));
 
   /**
    * Resolve label: explicit prop (localization key) > schema field label (already localized)
@@ -109,7 +99,7 @@
    */
   const resolvedHint = computed(() => {
     if (!props.hint) return '';
-    return props.localizeHint === false ? props.hint : localize(props.hint);
+    return localize(props.hint);
   });
 
   const hasHint = computed(() => !!resolvedHint.value);

@@ -10,6 +10,9 @@
     :on-add-item="addCoinStack"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
+    :show-field-controls="props.showFieldControls"
+    :label="label"
+    :hint="hint"
     class="coinage-form-group"
   >
     <template #controls="{ editable }">
@@ -29,7 +32,9 @@
       <ValueUnitInput
         value-type="number"
         :value="item.count"
-        :min="0"
+        :min="props.minStackValue ?? 0"
+        :max="props.maxStackValue"
+        :step="props.stackValueStep ?? 1"
         :unit="item.coinId"
         :unit-options="availableCoinsForStack(item.coinId)"
         :sizing-unit-options="allSelectableCoinOptions"
@@ -65,26 +70,13 @@
     coinageVisibilityGmOnly,
     coinageVisibilityGmSelect,
   } from '@settings/currency/index.mjs';
-  import { type SelectOption,ValueUnitInput } from '@vc/fields/index.mjs';
+  import { type SelectOption, ValueUnitInput } from '@vc/fields/index.mjs';
   import { computed, inject } from 'vue';
 
-  import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import ListFormGroup from './ListFormGroup.vue';
+  import type { CoinageFormGroupProps } from './types.mjs';
 
-  const props = defineProps<{
-    label?: string;
-    hint?: string;
-    value?: CurrencyData;
-    fieldPath: string;
-    defaultVisibility?: FieldVisibility;
-    defaultEditability?: FieldEditability;
-    disabled?: boolean;
-    onUpdate?: (value: PriceSource) => void;
-    /** When true, forces the readonly display. */
-    readOnly?: boolean;
-    /** When true, forces the edit display even in play/true modes. */
-    forceEdit?: boolean;
-  }>();
+  const props = defineProps<CoinageFormGroupProps>();
 
   function localize(key: string): string {
     return game.i18n.localize(key);
@@ -93,15 +85,13 @@
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
+      getViewAwareFieldValue,
       getIsFieldEditable,
       hasMaskForField,
     },
     isGM,
     documentActions: {
       getViewAwareFieldUpdater,
-    },
-    _storeUtils: {
-      getSourceProperty,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
   
@@ -111,27 +101,35 @@
   });
 
   // Projection callback target: coin stack UI edits are converted to PriceSource before persisting.
-  const fieldUpdater = props.onUpdate ?? getViewAwareFieldUpdater(props.fieldPath);
-
-  // Explicit inverse mapping for projection-pair contract (CoinStack[] -> PriceSource).
-  const updateCoinStacks = (stacks: CoinStack[]): void => {
-    fieldUpdater(CurrencyData.toSource(stacks));
+  const defaultFieldUpdater = getViewAwareFieldUpdater(props.fieldPath);
+  const fieldUpdater = (value: PriceSource): void => {
+    if (props.onUpdate) {
+      props.onUpdate(value);
+      return;
+    }
+    void defaultFieldUpdater(value);
   };
 
-  const sourceValue = getSourceProperty<PriceSource>(props.fieldPath);
-  const projectedValue = computed(() => {
-    if (props.value !== undefined) return props.value;
-    if (!sourceValue) return new CurrencyData();
-    return sourceValue.value;
+  // Explicit inverse mapping for projection-pair contract (CoinStack[] -> PriceSource).
+  const updateCoinStacks = (stacks: CoinStack[] | null): void => {
+    fieldUpdater(CurrencyData.toSource(stacks ?? []));
+  };
+
+  const projectedValue = computed<PriceSource>(() => {
+    const viewAwareValue = getViewAwareFieldValue<PriceSource>(props.fieldPath);
+    return props.value !== undefined
+      ? (props.value ?? CurrencyData.toSource([]))
+      : (viewAwareValue ?? CurrencyData.toSource([]));
   });
 
   /** The stacks currently shown in the edit UI. */
   const editStacks = computed((): CoinStack[] => {
+    if (props.value !== undefined) return projectedValue.value.stacks ?? [];
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) {
-      return projectedValue.value.stacks ?? [];
+      return projectedValue.value?.stacks ?? [];
     }
-    const src = sourceValue.value;
-    return src?.stacks ?? projectedValue.value.stacks ?? [];
+    const sourceValue = getViewAwareFieldValue<PriceSource>(props.fieldPath, true);
+    return sourceValue?.stacks ?? projectedValue.value.stacks ?? [];
   });
 
   const hasEditStacks = computed(() => editStacks.value.length > 0);

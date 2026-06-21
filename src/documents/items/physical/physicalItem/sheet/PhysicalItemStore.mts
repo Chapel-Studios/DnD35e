@@ -13,7 +13,7 @@ import type { DamageReductionTypesConfig } from '@settings/index.mjs';
 import { GAME_RULES_KEYS, SettingsStoreSymbol } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { SettingsStore } from '@settings/shared/sheet/settingsStore.mjs';
-import type { MultiSelectOption } from '@vc/fields/index.mjs';
+import type { SelectOption } from '@vc/fields/index.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';
 import type { ComputedRef } from 'vue';
 import { computed, inject } from 'vue';
@@ -100,7 +100,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     // Material Effects support
     magicEquivalency: computed(() => document.value.system.magicEquivalency ?? 0),
     damageReductionTypes: computed(() => [...(document.value.system.damageReductionTypes ?? [])]),
-    damageReductionTypeOptions: computed<MultiSelectOption<string>[]>(() => {
+    damageReductionTypeOptions: computed<SelectOption<string>[]>(() => {
       const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.DAMAGE_REDUCTION_TYPES) as DamageReductionTypesConfig;
       const systemDefaults = (CONFIG.dnd35e.gameRules.damageReductionTypes ?? {}) as Record<string, { label: string }>;
       return Object.entries(config)
@@ -170,7 +170,7 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   secrets: ComputedRef<SecretType[]>;
   magicEquivalency: ComputedRef<number | null>;
   damageReductionTypes: ComputedRef<string[]>;
-  damageReductionTypeOptions: ComputedRef<MultiSelectOption<string>[]>;
+  damageReductionTypeOptions: ComputedRef<SelectOption<string>[]>;
 }
 
 interface PhysicalItemStoreUtils extends IdentifiableDocumentStoreUtils {}

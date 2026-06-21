@@ -2,13 +2,13 @@
   <FormGroup
     :label="label"
     :hint="hint"
-    :is-dm-only="isDmOnly"
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
-    :value="resolvedValue"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
+    :show-field-controls="props.showFieldControls"
+    :value="resolvedValue"
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
@@ -22,6 +22,9 @@
         type="number"
         :value="editValue ?? ''"
         :disabled="isDisabled"
+        :min="props.min"
+        :max="props.max"
+        :step="props.step"
         @change="onChange(($event.target as HTMLInputElement).value)"
         class="number-input"
       />
@@ -34,29 +37,12 @@
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject, useSlots } from 'vue';
 
-  import type { FieldEditability,FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
+  import type { NumberFormGroupProps } from './types.mjs';
 
   const slots = useSlots();
 
-  const props = defineProps<{
-    label?: string;
-    hint?: string;
-    value?: number | null;
-    isDmOnly?: boolean;
-    fieldPath: string;
-    defaultVisibility?: FieldVisibility;
-    defaultEditability?: FieldEditability;
-    /** Only used for overriding store behavior. */
-    disabled?: boolean;
-    /** Optional updater override. When omitted, derives from the store using fieldPath. */
-    onUpdate?: (value: number | null) => void;
-    unit?: string;
-    /** When true, forces the readonly display. */
-    readOnly?: boolean;
-    /** When true, forces the edit display even in play/true modes. */
-    forceEdit?: boolean;
-  }>();
+  const props = defineProps<NumberFormGroupProps>();
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {

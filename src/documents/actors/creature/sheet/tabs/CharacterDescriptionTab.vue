@@ -1,8 +1,7 @@
 <template>
   <CreatureDescriptionTab>
     <RichTextEditorFormGroup
-      field="system.notes"
-      label="dnd35e.ACTOR.field.SessionNotes"
+      field-path="system.notes"
       placeholder="dnd35e.ACTOR.field.SessionNotesPlaceholder"
     />
   </CreatureDescriptionTab>

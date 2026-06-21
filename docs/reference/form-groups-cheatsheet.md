@@ -35,11 +35,14 @@ Assume final target behavior is already implemented.
 
 ### Core settings types
 
+- `ValueType = string | number | boolean | Color`
+  - Shared scalar value union used by `BaseFormGroupProps` and input-based variants.
+
 - `fieldPath: string`
   - Document path used for default read/write routing and permissions.
-- `value?: TValue`
+- `value?: TValue | null`
   - Optional explicit display value. Required for projection-pair editors (Use Case C).
-- `onUpdate?: (value: TValue) => void`
+- `onUpdate?: (value: TValue | null) => void`
   - Optional custom updater. For Use Case C/F, wraps or extends view-aware update behavior.
 - `disabled?: boolean`
   - Hard-stop UI disable for this input surface.
@@ -79,16 +82,21 @@ Assume final target behavior is already implemented.
 | `SelectFormGroup<TValue>` | `string \| number` | `fieldPath`, `options` | `options: SelectOption<TValue>[]` |
 | `CheckBoxFormGroup` | `boolean` | `fieldPath` | None |
 | `ToggleSwitchFormGroup` | `boolean` | `fieldPath` | `trueLabel?: string`, `falseLabel?: string`, `flip?: boolean` |
-| `ColorFormGroup` | `string \| null` | `fieldPath` | None |
-| `MultiSelectFormGroup<TValue>` | `TValue[]` | `fieldPath`, `options` | `options: MultiSelectOption<TValue>[]` |
-| `ListFormGroup<TItem>` | `TItem[]` | `fieldPath`, `onAddItem`, `addButtonTitle`, `removeButtonTitle` | `maxItems?: number` |
-| `RichTextEditorFormGroup` | `string` | `field` | `showFieldControls?: boolean` |
+| `ColorFormGroup` | `HexColorString \| Color \| null` | `fieldPath` | None |
+| `MultiSelectFormGroup<TValue>` | `TValue[]` | `fieldPath`, `options` | `options: SelectOption<TValue>[]` |
+| `ListFormGroup<TItem, TUpdateData = TItem[]>` | `TItem[] \| null` | `fieldPath`, `onAddItem`, `addButtonTitle`, `removeButtonTitle` | `onUpdate?: (value: TUpdateData \| null) => void`, `maxItems?: number` |
+| `CoinageFormGroup` | `PriceSource \| null` | `fieldPath`, `onAddItem`, `addButtonTitle`, `removeButtonTitle` | `onUpdate?: (value: PriceSource \| null) => void`, `maxStackValue?: number`, `minStackValue?: number`, `stackValueStep?: number` |
+| `RichTextEditorFormGroup` | `string` | `fieldPath` | `showFieldControls?: boolean`, `placeholder?: string` |
 | `FormulaFormGroup` | `string` | `fieldPath` | `contexts?: FamiliarSchema`, `formulaData?: FormulaData \| null`, `showFieldControls?: boolean`, `onUpdate?: (value: string) => void` |
+
+Notes:
+- `BaseFormGroupProps` declares `value?: TValue | null`, so nullable value handling applies across FormGroup variants unless a specialized interface overrides it.
+- `MultiSelectFormGroup` keeps a non-null update callback: `onUpdate?: (value: TValue[]) => void`.
 
 ### Settings type references used above
 
 - `SelectOption<TValue>`: `{ value: TValue; label: string }`
-- `MultiSelectOption<TValue>`: `{ value: TValue; label: string }`
+- `PriceSource`: `{ stacks: CoinStack[]; srdEquivalent: number }`
 - `FamiliarSchema`: FormulaFamiliar context schema map for autocomplete/validation.
 - `FormulaData`: Formula model payload used by `FormulaFormGroup`.
 
@@ -315,9 +323,9 @@ Minimal settings: `:on-update="..."`.
 Real snippet: `src/vue/components/fields/formGroups/CoinageFormGroup.vue`
 
 ```ts
-const updateCoinStacks = (stacks: CoinStack[]) => {
+const updateCoinStacks = (stacks: CoinStack[] | null) => {
   // UI edits coin-stack rows; storage expects PriceSource shape.
-  fieldUpdater(CurrencyData.toSource(stacks));
+  fieldUpdater(CurrencyData.toSource(stacks ?? []));
 };
 ```
 

@@ -27,7 +27,6 @@ import SelectFormGroup from './formGroups/SelectFormGroup.vue';
 import TextFormGroup from './formGroups/TextFormGroup.vue';
 import ToggleSwitchFormGroup from './formGroups/ToggleSwitchFormGroup.vue';
 import type {
-  MultiSelectOption,
   SelectOption,
 } from './formGroups/types.mjs';
 import WeightFormGroup from './formGroups/WeightFormGroup.vue';
@@ -72,6 +71,5 @@ export {
 export type {
   FieldEditability,
   FieldVisibility,
-  MultiSelectOption,
   SelectOption,
 };

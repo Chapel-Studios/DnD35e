@@ -122,6 +122,8 @@ export const createMockDocumentStore = (options: MockDocumentStoreOptions = {}):
     computed(() => sourceValues[path] as T)
   );
 
+  const getViewAwareFieldValue = vi.fn(<T,>(path: string) => sourceValues[path] as T);
+
   const getDirectFieldUpdater = vi.fn((_path: string) => vi.fn());
   const getViewAwareFieldUpdater = vi.fn((_path: string) => vi.fn());
 
@@ -131,6 +133,7 @@ export const createMockDocumentStore = (options: MockDocumentStoreOptions = {}):
       getIsFieldEditable,
       getMaskForField,
       hasMaskForField,
+      getViewAwareFieldValue,
     },
     documentActions: {
       getDirectFieldUpdater,
@@ -139,6 +142,7 @@ export const createMockDocumentStore = (options: MockDocumentStoreOptions = {}):
     _storeUtils: {
       getFieldLabel: vi.fn((path: string) => labels[path] ?? ''),
       getFieldHint: vi.fn((path: string) => hints[path] ?? ''),
+      createLocalizedComputed: vi.fn((key: string) => computed(() => key)),
       resolveVisibility,
       resolveEditability,
       getSourceProperty,

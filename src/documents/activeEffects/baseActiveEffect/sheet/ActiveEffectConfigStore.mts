@@ -10,7 +10,7 @@ import type { ContextDocumentType, TargetContexts } from '@helpers/formulae/regi
 import type { FamiliarContext } from '@helpers/formulae/types.mjs';
 import { syncOpenSheetTitle } from '@helpers/syncOpenSheetTitle.mjs';
 import type { ItemDnd35e, ItemSheetStore } from '@items/baseItem/index.mjs';
-import type { MultiSelectOption, SelectOption } from '@vc/fields/formGroups/types.mjs';
+import type { SelectOption } from '@vc/fields/formGroups/types.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -158,7 +158,7 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
     tint: computed(() => document.value.tint ?? null),
     transfer: computed(() => document.value.transfer ?? false),
     statuses: computed(() => [...(document.value.statuses ?? [])]),
-    statusOptions: computed<MultiSelectOption<string>[]>(() =>
+    statusOptions: computed<SelectOption<string>[]>(() =>
       Object.values(CONFIG.statusEffects).map(s => ({
         value: s.id,
         label: s.name,
@@ -232,9 +232,9 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
         { 'duration.value': value }
       );
     },
-    updateDurationUnits: async (units: string) => {
+    updateDurationUnits: async (units: string | null) => {
       return await baseStore._storeUtils.updateDocument(
-        { 'duration.units': units }
+        { 'duration.units': units ?? '' }
       );
     },
   };
@@ -253,7 +253,7 @@ type ActiveEffectConfigStoreDocumentGetters = DocumentSheetStoreDocumentGetters 
   tint: ComputedRef<Color | null>;
   transfer: ComputedRef<boolean>;
   statuses: ComputedRef<string[]>;
-  statusOptions: ComputedRef<MultiSelectOption<string>[]>;
+  statusOptions: ComputedRef<SelectOption<string>[]>;
   showIcon: ComputedRef<number>;
   showIconOptions: ComputedRef<SelectOption<number>[]>;
   origin: ComputedRef<string>;
@@ -272,7 +272,7 @@ type ActiveEffectConfigStoreDocumentActions<TDocument extends ActiveEffectDnd35e
   removeChange?: (index: number) => Promise<boolean>;
   updateChangeField: (index: number, field: string, value: unknown) => Promise<boolean>;
   updateDurationValue: (value: number | null) => Promise<boolean>;
-  updateDurationUnits: (units: string) => Promise<boolean>;
+  updateDurationUnits: (units: string | null) => Promise<boolean>;
 };
 
 type ActiveEffectConfigStore<TDocument extends ActiveEffectDnd35e = ActiveEffectDnd35e> = DocumentSheetStore<TDocument> & {

@@ -15,6 +15,7 @@
     { "wave": "poc",     "number": "06", "title": "Actor Foundation",                 "file": "poc/phase-06-actor-foundation.md",                   "status": "outlined"     },
     { "wave": "poc",     "number": "07", "title": "Roll Formulas",                    "file": "poc/phase-07-roll-formulas.md",                      "status": "outlined"     },
     { "wave": "poc",     "number": "08", "title": "Pipeline & Branching",             "file": "poc/phase-08-pipeline-and-branching.md",             "status": "in-progress"  },
+    { "wave": "poc",     "number": "11", "title": "POC Cleanup",                      "file": "poc/phase-11-poc-cleanup.md",                        "status": "rough-sketch" },
 
     { "wave": "alpha",   "number": "01", "title": "Races & Progression",              "file": "alpha/phase-01-races-progression.md",                "status": "outlined"     },
     { "wave": "alpha",   "number": "02", "title": "Classes & Level History",          "file": "alpha/phase-02-classes-level-history.md",            "status": "outlined"     },

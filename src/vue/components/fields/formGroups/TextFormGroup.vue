@@ -1,14 +1,14 @@
 <template>
   <FormGroup
-    :label="label"
-    :hint="hint"
-    :is-dm-only="isDmOnly"
-    :field-path="fieldPath"
-    :default-visibility="defaultVisibility"
-    :default-editability="defaultEditability"
+    :label="props.label"
+    :hint="props.hint"
+    :field-path="props.fieldPath"
+    :default-visibility="props.defaultVisibility"
+    :default-editability="props.defaultEditability"
     :value="resolvedValue"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
+    :show-field-controls="props.showFieldControls"
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
@@ -22,6 +22,8 @@
       type="text"
       :value="editValue"
       :disabled="isDisabled"
+      :minlength="props.minLength"
+      :maxlength="props.maxLength"
       @change="onChange(($event.target as HTMLInputElement).value)"
     />
   </FormGroup>
@@ -32,27 +34,11 @@
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject, useSlots } from 'vue';
 
-  import type { FieldEditability,FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
+  import type { TextFormGroupProps } from './types.mjs';
 
   const slots = useSlots();
-  const props = defineProps<{
-    label?: string;
-    hint?: string;
-    value?: string;
-    isDmOnly?: boolean;
-    fieldPath: string;
-    defaultVisibility?: FieldVisibility;
-    defaultEditability?: FieldEditability;
-    /** Only used for overriding store behavior. */
-    disabled?: boolean;
-    /** Optional updater override. When omitted, derives from the store using fieldPath. */
-    onUpdate?: (value: string) => void;
-    /** When true, forces the readonly display. */
-    readOnly?: boolean;
-    /** When true, forces the edit display even in play/true modes. */
-    forceEdit?: boolean;
-  }>();
+  const props = defineProps<TextFormGroupProps>();
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
@@ -61,16 +47,16 @@
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<string>(() =>
-    props.value !== undefined ? props.value : getViewAwareFieldValue<string>(props.fieldPath) ?? ''
-  );
+  const resolvedValue = computed<string>(() => (
+    props.value !== undefined
+      ? (props.value ?? '')
+      : (getViewAwareFieldValue<string>(props.fieldPath) ?? '')
+  ));
   
   const isDisabled = computed(() => {
     if (props.disabled) return true;
     return !getIsFieldEditable(props.fieldPath, props.defaultEditability, !!props.forceEdit).value;
   });
-
-  const fieldUpdater = props.onUpdate ?? getViewAwareFieldUpdater(props.fieldPath);
 
   const sourceValue = getSourceProperty<string>(props.fieldPath);
   const editValue = computed(() => {
@@ -80,6 +66,7 @@
   });
 
   function onChange(val: string) {
+    const fieldUpdater = props.onUpdate ?? getViewAwareFieldUpdater(props.fieldPath);
     fieldUpdater(val);
   }
 

@@ -2,12 +2,13 @@
   <FormGroup
     :label="label"
     :hint="hint"
-    :is-dm-only="isDmOnly"
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
+    :show-field-controls="props.showFieldControls"
+    :value="resolvedValue"
     class="checkbox-form-group"
   >
     <input
@@ -18,11 +19,13 @@
       class="checkbox-input"
     />
     <template #readonly>
-      <input
-        type="checkbox"
-        :checked="resolvedValue"
-        disabled
-      />
+      <slot name="readonly">
+        <input
+          type="checkbox"
+          :checked="resolvedValue"
+          disabled
+        />
+      </slot>
     </template>
   </FormGroup>
 </template>
@@ -32,26 +35,10 @@
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject } from 'vue';
 
-  import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
+  import type { CheckBoxFormGroupProps } from './types.mjs';
 
-  const props = defineProps<{
-    label?: string;
-    hint?: string;
-    value?: boolean;
-    isDmOnly?: boolean;
-    fieldPath: string;
-    defaultVisibility?: FieldVisibility;
-    defaultEditability?: FieldEditability;
-    /** Only used for overriding store behavior. */
-    disabled?: boolean;
-    /** Optional updater override. When omitted, derives from the store using fieldPath. */
-    onUpdate?: (value: boolean) => void;
-    /** When true, forces the readonly display. */
-    readOnly?: boolean;
-    /** When true, forces the edit display even in play/true modes. */
-    forceEdit?: boolean;
-  }>();
+  const props = defineProps<CheckBoxFormGroupProps>();
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
@@ -68,9 +55,11 @@
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<boolean>(() =>
-    props.value !== undefined ? props.value : getViewAwareFieldValue<boolean>(props.fieldPath) ?? false
-  );
+  const resolvedValue = computed<boolean>(() => (
+    props.value !== undefined
+      ? (props.value ?? false)
+      : (getViewAwareFieldValue<boolean>(props.fieldPath) ?? false)
+  ));
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;

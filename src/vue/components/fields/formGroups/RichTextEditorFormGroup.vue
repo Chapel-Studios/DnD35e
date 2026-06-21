@@ -1,13 +1,15 @@
 <template>
   <FormGroup
-    :label="label"
-    :hint="hint"
-    :localize-hint="localizeHint"
-    :field-path="field"
-    :default-visibility="defaultVisibility"
-    :default-editability="defaultEditability"
-    class="rich-text-form-group"
+    :label="props.label"
+    :hint="props.hint"
+    :field-path="props.fieldPath"
+    :default-visibility="props.defaultVisibility"
+    :default-editability="props.defaultEditability"
+    :read-only="props.readOnly"
+    :force-edit="props.forceEdit"
+    :show-field-controls="props.showFieldControls"
     :class="{ editing: isEditing }"
+    class="rich-text-form-group"
   >
     <!-- Edit button in controls slot -->
     <template #controls="{ editable }">
@@ -26,7 +28,7 @@
     <!-- Editable: prose-mirror when editing, enriched HTML otherwise -->
     <div v-if="isEditing" class="editor-container">
       <prose-mirror
-        :name="field"
+        :name="fieldPath"
         :value="editorValue"
         :document-uuid="documentUuid"
         class="sized"
@@ -55,22 +57,9 @@
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject, onMounted, ref, watch } from 'vue';
 
-  import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
-
-  const props = defineProps<{
-    field: string; // The document field path for the rich text content
-    label?: string; // Localization key for the label
-    hint?: string; // Localization key for hint text
-    localizeHint?: boolean; // Whether to localize hint (default: true)
-    placeholder?: string; // Placeholder text when content is empty
-    // Layout options
-    // is now always stacked, will leave here in case we want to make it optional in the future
-    // stacked?: boolean; // Label above content instead of beside (default: true for rich text)
-    // Field permissions
-    defaultVisibility?: FieldVisibility;
-    defaultEditability?: FieldEditability;
-  }>();
+  import type { RichTextEditorFormGroupProps } from './types.mjs';
+  const props = defineProps<RichTextEditorFormGroupProps>();
 
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
@@ -88,12 +77,12 @@
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
   // Source value for editing (pre-active-effect data)
-  const sourceRawValue = getSourceProperty<string>(props.field);
+  const sourceRawValue = getSourceProperty<string>(props.fieldPath);
 
   // Effective value considering view mode (shows override when viewing as unidentified)
   // Ensure it's always a string to avoid Vue patching errors with null
   const effectiveValue = computed(() =>
-    getViewAwareFieldValue<string>(props.field) ?? ''
+    getViewAwareFieldValue<string>(props.fieldPath) ?? ''
   );
 
   // Editor value: when a source property exists, edit the source data.
@@ -103,7 +92,7 @@
     return sourceRawValue.value ?? '';
   });
 
-  const fieldUpdater = getViewAwareFieldUpdater(props.field);
+  const fieldUpdater = getViewAwareFieldUpdater(props.fieldPath);
 
   // Editing state
   const isEditing = ref(false);
@@ -116,7 +105,7 @@
   const editAriaLabel = computed(() => {
     const localizedLabel = props.label
       ? game.i18n.localize(props.label)
-      : (getSchemaField(props.field)?.options?.label as string | undefined)
+      : (getSchemaField(props.fieldPath)?.options?.label as string | undefined)
         ?? game.i18n.localize('dnd35e.UI.Content');
     return game.i18n.format('dnd35e.UI.EditField', { field: localizedLabel });
   });

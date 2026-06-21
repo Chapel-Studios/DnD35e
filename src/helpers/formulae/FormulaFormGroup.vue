@@ -2,7 +2,6 @@
   <FormGroup
     :label="props.label"
     :hint="displayHint"
-    :localize-hint="false"
     :field-path="props.fieldPath"
     :default-visibility="props.defaultVisibility"
     :default-editability="props.defaultEditability"

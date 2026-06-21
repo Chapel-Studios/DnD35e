@@ -2,12 +2,12 @@
   <FormGroup
     :label="label"
     :hint="hint"
-    :is-dm-only="isDmOnly"
     :field-path="fieldPath"
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
+    :show-field-controls="props.showFieldControls"
   >
     <div class="form-fields">
       <ToggleSwitch
@@ -36,29 +36,10 @@
   import { computed, inject } from 'vue';
 
   import ToggleSwitch from '../ToggleSwitch.vue';
-  import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
   import FormGroup from './FormGroup.vue';
+  import type { ToggleSwitchFormGroupProps } from './types.mjs';
 
-  const props = defineProps<{
-    label?: string;
-    hint?: string;
-    value?: boolean;
-    isDmOnly?: boolean;
-    fieldPath: string;
-    defaultVisibility?: FieldVisibility;
-    defaultEditability?: FieldEditability;
-    trueLabel?: string;
-    falseLabel?: string;
-    /** Only used for overriding store behavior. */
-    disabled?: boolean;
-    /** Optional updater override. When omitted, derives from the store using fieldPath. */
-    onUpdate?: (value: boolean) => void;
-    /** When true, forces the readonly display. */
-    readOnly?: boolean;
-    /** When true, forces the edit display even in play/true modes. */
-    forceEdit?: boolean;
-    flip?: boolean;
-  }>();
+  const props = defineProps<ToggleSwitchFormGroupProps>();
 
   const { isEditMode, isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
@@ -67,9 +48,11 @@
     _storeUtils: { getSourceProperty },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<boolean>(() =>
-    props.value !== undefined ? props.value : getViewAwareFieldValue<boolean>(props.fieldPath) ?? false
-  );
+  const resolvedValue = computed<boolean>(() => (
+    props.value !== undefined
+      ? (props.value ?? false)
+      : (getViewAwareFieldValue<boolean>(props.fieldPath) ?? false)
+  ));
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;

@@ -5,6 +5,7 @@ import { clearWorld, createItem } from './helpers/documents.mjs';
 import { clearFieldOverride, setFieldOverride, waitForFieldOverride } from './helpers/fieldOverrides.mjs';
 import { gotoGame, loginAs } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet, rerenderSheet } from './helpers/sheets.mjs';
+import { dismissOverlays } from './helpers/ui.mjs';
 
 /**
  * Field-permissions round-trip E2E.
@@ -43,16 +44,42 @@ const quantityInput = (page: Page, sheetSelector: string) =>
  */
 async function switchToEditMode (page: Page, sheetSelector: string): Promise<void> {
   const editBtn = page.locator(`${sheetSelector} .view-mode-bar .view-mode-btn`).filter({ has: page.locator('i.fa-pen-to-square') });
+  await dismissOverlays(page);
+  await expect(editBtn).toBeVisible();
+  if (await editBtn.evaluate((el) => el.classList.contains('active'))) return;
   await editBtn.click();
+  await expect(editBtn).toHaveClass(/active/);
 }
 
-/** Create a weapon owned (3 = OWNER) by all players so the player can edit. */
+async function closePlayerConfigIfOpen (page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const apps = (globalThis as any).foundry?.applications?.instances;
+    if (!apps?.values) return;
+    for (const app of apps.values()) {
+      if (!app?.constructor?.name?.match(/UserConfig/i)) continue;
+      if (typeof app.close === 'function') {
+        await app.close({ animate: false });
+      }
+    }
+  });
+}
+
+/** Create a baseline weapon; player ownership is granted separately via grantPlayerOwner. */
 async function createOwnedWeapon (page: Page): Promise<string> {
   return await createItem(page, 'weapon', {
     name: 'Permission Test Sword',
     system: { quantity: 1 },
-    ownership: { default: 3 },
+    ownership: { default: 0 },
   });
+}
+
+async function grantPlayerOwner (page: Page, itemUuid: string): Promise<void> {
+  await page.evaluate(async (uuid) => {
+    const doc = await (globalThis as any).fromUuid(uuid);
+    const player = (globalThis as any).game?.users?.find((u: any) => String(u?.name).toLowerCase() === 'player');
+    if (!doc || !player?.id) throw new Error('grantPlayerOwner: missing doc or player');
+    await doc.update({ ownership: { ...doc.ownership, default: 0, [player.id]: 3 } });
+  }, itemUuid);
 }
 
 test.describe('field-permissions round-trip', () => {
@@ -71,9 +98,12 @@ test.describe('field-permissions round-trip', () => {
   test('gmOnly visibility hides the field from a player; clearing restores it', async ({ page }) => {
     await gotoGame(page);
     const itemUuid = await createOwnedWeapon(page);
+    await grantPlayerOwner(page, itemUuid);
 
     // Baseline: player sees the quantity form-group rendered (play mode is fine).
     const playerPage = await loginAs(playerContext, 'player');
+    await closePlayerConfigIfOpen(playerPage);
+    await dismissOverlays(playerPage);
     const playerSheet = await openDocumentSheet(playerPage, itemUuid);
     await expect(quantityFormGroup(playerPage, playerSheet)).toBeVisible();
 
@@ -91,9 +121,18 @@ test.describe('field-permissions round-trip', () => {
   test('gmOnly editability makes the field read-only for a player; clearing restores edit', async ({ page }) => {
     await gotoGame(page);
     const itemUuid = await createOwnedWeapon(page);
+    await grantPlayerOwner(page, itemUuid);
 
     // Player needs edit mode to see the input (non-GM defaults to play mode).
     const playerPage = await loginAs(playerContext, 'player');
+    await closePlayerConfigIfOpen(playerPage);
+    await dismissOverlays(playerPage);
+    await expect.poll(async () => {
+      return playerPage.evaluate(async (uuid) => {
+        const doc = await (globalThis as any).fromUuid(uuid);
+        return !!doc?.testUserPermission((globalThis as any).game.user, 'OWNER');
+      }, itemUuid);
+    }).toBe(true);
     const playerSheet = await openDocumentSheet(playerPage, itemUuid);
     await switchToEditMode(playerPage, playerSheet);
 
@@ -113,6 +152,9 @@ test.describe('field-permissions round-trip', () => {
     await waitForFieldOverride(playerPage, itemUuid, FIELD_PATH, 'editability', null);
     await rerenderSheet(playerPage, itemUuid);
     await switchToEditMode(playerPage, playerSheet).catch(() => {});
-    await expect.poll(() => quantityInput(playerPage, playerSheet).count()).toBe(1);
+    await expect.poll(async () => {
+      if (playerPage.isClosed()) return -1;
+      return quantityInput(playerPage, playerSheet).count();
+    }).toBe(1);
   });
 });

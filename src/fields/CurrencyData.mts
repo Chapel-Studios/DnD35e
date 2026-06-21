@@ -13,7 +13,7 @@
  */
 
 import { CURRENCY_KEY, DEFAULT_CURRENCY_CONFIG } from '@settings/currency/constants.mjs';
-import type { CoinageDefinition, CoinStack, CurrencyConfig } from '@settings/currency/types.mjs';
+import type { CoinageDefinition, CoinStack, CurrencyConfig, PriceSource } from '@settings/currency/types.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 const { DataModel } = foundry.abstract;
@@ -196,7 +196,7 @@ class CurrencyData extends DataModel {
    *
    * `_initializeSource` will verify / correct the value on the next load.
    */
-  static toSource(stacks: CoinStack[]): { stacks: CoinStack[]; srdEquivalent: number } {
+  static toSource(stacks: CoinStack[]): PriceSource {
     return { stacks, srdEquivalent: CurrencyData.computeGpValue(stacks) };
   }
 
