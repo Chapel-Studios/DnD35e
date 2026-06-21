@@ -1,8 +1,8 @@
 import { DocumentSystemModel } from '@documents/document/data/DocumentSystemModel.mjs';
 import { EFFECT_TARGET } from '@effects/effectTypes.mjs';
 import { requiredBooleanField } from '@fields/fieldBuilders.mjs';
-import { ensureNameFormula } from '@helpers/formulae/index.mjs';
 import type { TargetContexts } from '@helpers/formulae/registry.mjs';
+import { ensureNameFormula } from '@helpers/formulae/utils.mjs';
 
 import type { ActiveEffectSystemData } from './ActiveEffectSystemData.mjs';
 import { ACTIVE_EFFECT_TARGETS, ALL_CHANGE_TYPES, CORE_EFFECT_CHANGE_PHASE, EFFECT_CHANGE_PHASES, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE } from './constants.mjs';

@@ -1,7 +1,7 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
-import { getDisplayName } from '@documents/document/index.mjs';
+import { getDisplayName } from '@documents/document/logic/index.mjs';
 import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { EffectType } from '@effects/effectTypes.mjs';

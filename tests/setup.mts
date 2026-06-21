@@ -66,6 +66,17 @@ function mergeObject<T extends Record<string, any>> (
 
 (globalThis as any).foundry = {
   utils: {
+    Color: class {
+      private readonly value: string;
+      constructor (value: string | number = '#000000') {
+        this.value = typeof value === 'number'
+          ? `#${value.toString(16).padStart(6, '0')}`
+          : String(value);
+      }
+      toString (): string {
+        return this.value;
+      }
+    },
     getProperty,
     setProperty,
     mergeObject,
@@ -145,6 +156,14 @@ function mergeObject<T extends Record<string, any>> (
     return Number.isFinite(n) ? n : 0;
   }),
 };
+
+// Foundry extends Math with helpers like roundDecimals.
+if (typeof Math.roundDecimals !== 'function') {
+  Math.roundDecimals = (value: number, places: number): number => {
+    const factor = 10 ** places;
+    return Math.round(value * factor) / factor;
+  };
+}
 
 // --- global document constructors ---------------------------------------
 (globalThis as any).Actor = class {

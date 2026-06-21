@@ -1,7 +1,8 @@
+import { CURRENCY_KEY } from '@settings/currency/constants.mjs';
+import type { CoinageDefinition, CurrencyConfig } from '@settings/currency/types.mjs';
+import { DISPLAY_WORLD_KEYS } from '@settings/display/constants.mjs';
 import type { UnitOfMeasureOption } from '@settings/display/unitOfMeasure.mjs';
 import { imperialUnitOfMeasure } from '@settings/display/unitOfMeasure.mjs';
-import type { CoinageDefinition, CurrencyConfig } from '@settings/index.mjs';
-import { CURRENCY_KEY, DISPLAY_WORLD_KEYS } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { ComputedRef } from 'vue';
 import { computed, ref } from 'vue';

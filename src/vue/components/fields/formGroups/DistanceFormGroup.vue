@@ -60,7 +60,8 @@
 
   const distance = computed(() => {
     const value = props.value
-      ?? getViewAwareFieldValue<number>(props.fieldPath);
+      ?? getViewAwareFieldValue<number>(props.fieldPath)
+      ?? 0;
     return Math.roundDecimals(convertToLocalizedDistance(value), 2);
   });
 

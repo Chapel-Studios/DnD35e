@@ -85,15 +85,13 @@
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
     documentGetters: {
+      getViewAwareFieldValue,
       getIsFieldEditable,
       hasMaskForField,
     },
     isGM,
     documentActions: {
       getViewAwareFieldUpdater,
-    },
-    _storeUtils: {
-      getSourceProperty,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
   
@@ -117,19 +115,21 @@
     fieldUpdater(CurrencyData.toSource(stacks ?? []));
   };
 
-  const projectedValue = computed<PriceSource>(() => (
-    props.value !== undefined
+  const projectedValue = computed<PriceSource>(() => {
+    const viewAwareValue = getViewAwareFieldValue<PriceSource>(props.fieldPath);
+    return props.value !== undefined
       ? (props.value ?? CurrencyData.toSource([]))
-      : (sourceValue.value ?? CurrencyData.toSource([]))
-  ));
+      : (viewAwareValue ?? CurrencyData.toSource([]));
+  });
 
   /** The stacks currently shown in the edit UI. */
   const editStacks = computed((): CoinStack[] => {
+    if (props.value !== undefined) return projectedValue.value.stacks ?? [];
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) {
       return projectedValue.value?.stacks ?? [];
     }
-    const src = sourceValue.value;
-    return src?.stacks ?? projectedValue.value.stacks ?? [];
+    const sourceValue = getViewAwareFieldValue<PriceSource>(props.fieldPath, true);
+    return sourceValue?.stacks ?? projectedValue.value.stacks ?? [];
   });
 
   const hasEditStacks = computed(() => editStacks.value.length > 0);

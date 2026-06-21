@@ -8,6 +8,7 @@
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
     :show-field-controls="props.showFieldControls"
+    :value="resolvedValue"
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
