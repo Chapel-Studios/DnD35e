@@ -55,10 +55,11 @@
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<boolean>(() => props.value 
-    ?? getViewAwareFieldValue<boolean>(props.fieldPath)
-    ?? false
-  );
+  const resolvedValue = computed<boolean>(() => (
+    props.value !== undefined
+      ? (props.value ?? false)
+      : (getViewAwareFieldValue<boolean>(props.fieldPath) ?? false)
+  ));
 
   const isDisabled = computed(() => {
     if (props.disabled) return true;
