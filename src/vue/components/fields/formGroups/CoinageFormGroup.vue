@@ -10,7 +10,7 @@
     :on-add-item="addCoinStack"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
     :label="label"
     :hint="hint"
     class="coinage-form-group"

@@ -18,12 +18,22 @@
         },
         "hp": {
           "label": "Hit Points",
-          "max":       { "label": "Max HP" },
-          "current":   { "label": "Current HP" },
-          "temp":      { "label": "Temp HP" },
-          "nonlethal": { "label": "Nonlethal Damage" },
-          "fastHealing": { "label": "Fast Healing" },
-          "regeneration": { "label": "Regeneration" }
+          "max":       { "label": "Max HP", "tooltip": "The maximum hit points of this creature." },
+          "current":   { "label": "Current HP", "tooltip": "The current hit points of this creature." },
+          "temp":      { "label": "Temp HP", "tooltip": "Temporary hit points that can absorb damage." },
+          "nonlethal": { "label": "Nonlethal Damage", "tooltip": "Damage that does not reduce hit points but can incapacitate the creature." },
+          "fastHealing": { "label": "Fast Healing", "tooltip": "The rate at which the creature heals each round." },
+          "regeneration": { "label": "Regeneration", "tooltip": "The rate at which the creature regenerates hit points." },
+          "adjustment": {
+            "label": "HP Adjustment",
+            "type": { "label": "Adjustment Type" },
+            "amount": { "label": "Amount" },
+            "apply": { "label": "Apply", "tooltip": "Apply the HP adjustment." },
+            "damage": { "label": "Damage", "tooltip": "Deal damage by this amount to adjust HP. (Applied to Temp HP first)" },
+            "healing": { "label": "Healing", "tooltip": "Heal HP by this amount." },
+            "temp": { "label": "Temp HP", "tooltip": "Grant temporary hit points by this amount." },
+            "nonlethal": { "label": "Nonlethal", "tooltip": "Apply nonlethal damage by this amount." }
+          }
         },
         "bab": {
           "label": "Base Attack Bonus",

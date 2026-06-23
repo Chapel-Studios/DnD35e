@@ -222,3 +222,8 @@ h3 {
     color: var(--color-level-warning);
   }
 }
+
+// fix spacing on actor sheet for scrollbar in tab pane
+.dnd35e.actor-sheet .window-content {
+  padding-right: 0;
+}

@@ -8,7 +8,7 @@
     :value="resolvedValue"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
     class="select-form-group"
   >
     <select

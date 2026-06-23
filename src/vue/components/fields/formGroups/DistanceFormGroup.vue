@@ -12,7 +12,7 @@
     :disabled="props.disabled"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
     :default-editability="props.defaultEditability"
     :default-visibility="props.defaultVisibility"
   >

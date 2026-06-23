@@ -96,14 +96,17 @@
     flex: 1 1 auto;
     min-height: 0; // Ensure the content can shrink properly when vertical tabs are enabled
 
+    .sheet-tab-panes {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
     &.vertical-tabs {
       position: relative;
       flex-direction: row;
 
       .sheet-tab-panes {
         order: 1;
-        flex: 1 1 auto;
-        min-height: 0;
         position: relative;
       }
     }
@@ -116,8 +119,6 @@
     padding: 0.5rem;
     overflow: visible;
   }
-
-
 
   .doc-name-container {
     display: flex;

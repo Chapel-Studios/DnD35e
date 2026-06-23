@@ -20,8 +20,8 @@ interface BaseFormGroupProps<TValue extends ValueType> {
   readOnly?: boolean;
   /** When true, forces the edit display even in play/true modes. */
   forceEdit?: boolean;
-  /** When false, suppress the built-in FieldControls for this field wrapper. */
-  showFieldControls?: boolean;
+  /** When true, suppress the built-in FieldControls for this field wrapper. */
+  hideFieldControls?: boolean;
   /** The current value of the field. */
   value?: TValue | null;
 }
@@ -116,6 +116,9 @@ interface SelectOption<TValue> {
   label: string;
   value: TValue;
   icon?: string;
+  disabled?: boolean;
+  visibility?: FieldVisibility;
+  editability?: FieldEditability;
 }
 
 export type {

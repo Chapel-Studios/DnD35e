@@ -1,4 +1,4 @@
-import type { ActorDocumentStore, ActorStore, UseActorSheetStoreOptions } from '@actors/baseActor/sheet/index.mjs';
+import type { ActorActions, ActorDocumentStore, ActorGetters, ActorStore, UseActorSheetStoreOptions } from '@actors/baseActor/sheet/index.mjs';
 import { useActorSheetStore } from '@actors/baseActor/sheet/index.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
 import type { SenseEntrySource } from '@actors/creature/data/CreatureSystemData.mjs';
@@ -8,6 +8,8 @@ import type { Size } from '@constants/sizes.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
+
+import type { HPAdjustmentType } from './components/constants.mjs';
 
 const buildAlignmentLabel = (law: LawAxis | null, moral: MoralAxis | null): string | null => {
   if (!law && !moral) return null;
@@ -72,9 +74,17 @@ const useCreatureStore = <TDocument extends Creature>(
     getArmorClass: (isTouch = false, denyDex = false): number => document.value.calculateAC(isTouch, denyDex) ?? 10,
   };
 
+  const documentActions = {
+    ...actorStore.documentActions,
+    adjustHp: async (amount: number, adjustmentType: HPAdjustmentType): Promise<boolean> => {
+      return await document.value.updateHP(amount, adjustmentType);
+    },
+  };
+
   const store: CreatureDocumentStore<TDocument> = {
     ...actorStore,
     documentGetters,
+    documentActions,
   };
 
   return store;
@@ -104,7 +114,9 @@ interface CreatureGetters {
   getArmorClass: (isTouch?: boolean, denyDex?: boolean) => number;
 }
 
-type CreatureActions = Record<string, unknown>;
+type CreatureActions = {
+  adjustHp: (amount: number, adjustmentType: HPAdjustmentType) => Promise<boolean>;
+};
 type CreatureStoreUtils = Record<string, unknown>;
 
 interface CreatureStore {
@@ -115,13 +127,12 @@ interface CreatureStore {
 
 type CreatureDocumentStore<TDocument extends Creature = Creature> =
   ActorDocumentStore<TDocument> & {
-    documentGetters: ActorDocumentStore<TDocument>['documentGetters'] & CreatureGetters;
+    documentGetters: ActorGetters & CreatureGetters;
+    documentActions: ActorActions & CreatureActions;
   };
 
-// Re-export ActorStore for downstream consumers that previously imported it from here.
-export type { ActorStore };
-
 export { useCreatureStore };
+
 export type {
   CreatureActions,
   CreatureDocumentStore,

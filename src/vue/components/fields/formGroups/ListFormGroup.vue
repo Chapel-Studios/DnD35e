@@ -8,7 +8,7 @@
     class="list-form-group"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
   >
     <!-- Controls slot: add item button -->
     <template #controls="{ editable }">

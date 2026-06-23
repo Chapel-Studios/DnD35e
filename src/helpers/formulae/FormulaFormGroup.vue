@@ -5,7 +5,7 @@
     :field-path="props.fieldPath"
     :default-visibility="props.defaultVisibility"
     :default-editability="props.defaultEditability"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.showFieldControls"
   >
     <template #readonly>
       <slot v-if="slots.readonly" name="readonly" />

@@ -7,7 +7,7 @@
     :default-editability="props.defaultEditability"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
     :class="{ editing: isEditing }"
     class="rich-text-form-group"
   >

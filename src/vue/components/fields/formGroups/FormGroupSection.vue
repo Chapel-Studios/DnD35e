@@ -33,6 +33,7 @@
     fieldPath: string;
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
+    column?: boolean;
   }>();
 
   function localize(key: string): string {
@@ -79,6 +80,7 @@
 
   const sectionClasses = computed(() => ({
     'restricted-visibility': isVisibilityRestricted.value,
+    column: props.column,
   }));
 
   const isSectionEditable = computed((): boolean => {
@@ -113,12 +115,17 @@
 
     .form-group-section-content {
       display: grid;
-      grid-auto-flow: column;
       justify-items: center;
       margin-top: 0.75em;
 
       :deep(.form-group) {
         border: none;
+      }
+    }
+
+    &.column {
+      .form-group-section-content {
+        grid-auto-flow: column;
       }
     }
   }

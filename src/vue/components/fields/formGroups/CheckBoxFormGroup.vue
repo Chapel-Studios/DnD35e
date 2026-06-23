@@ -7,7 +7,7 @@
     :default-editability="defaultEditability"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
     :value="resolvedValue"
     class="checkbox-form-group"
   >

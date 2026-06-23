@@ -7,7 +7,7 @@
       </label>
       <!-- GM permission controls next to label -->
       <FieldControls
-        v-if="props.showFieldControls !== false"
+        v-if="props.hideFieldControls !== true"
         :field-path="props.fieldPath"
         :default-editability="props.defaultEditability"
         :default-visibility="props.defaultVisibility"
@@ -29,7 +29,7 @@
 
     <!-- Standalone controls when no label -->
     <FieldControls
-      v-if="!hasLabel && props.showFieldControls !== false"
+      v-if="!hasLabel && props.hideFieldControls !== true"
       :field-path="props.fieldPath"
       :default-editability="props.defaultEditability"
       :default-visibility="props.defaultVisibility"
@@ -54,7 +54,6 @@
   import type { BaseFormGroupProps } from './types.mts';
 
   const props = withDefaults(defineProps<BaseFormGroupProps<TValue>>(), {
-    showFieldControls: true,
   });
 
   function localize(key: string): string {
