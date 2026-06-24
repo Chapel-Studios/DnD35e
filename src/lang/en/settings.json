@@ -272,7 +272,7 @@
         "Hint": "Hide the players list panel."
       },
       "SkillSettings": {
-        "Name": "Skill Settings",
+        "Label": "Skill Settings",
         "Title": "Skill Configuration",
         "Visibility": "Visibility",
         "VisibilityInstructions": "Configure which skills are visible.",
@@ -327,6 +327,18 @@
         "IdColumn": "ID",
         "LabelColumn": "Type",
         "None": "No damage reduction types configured."
+      },
+      "AvailableLanguageOptions": {
+        "Name": "Available Language Options",
+        "Hint": "Configure which languages are available in your world.",
+        "Label": "Available Language Options",
+        "IdColumn": "ID",
+        "LabelColumn": "Language",
+        "None": "No languages configured."
+      },
+      "AllowCustomLanguages": {
+        "Name": "Allow players to enter custom languages?",
+        "Hint": "When enabled, players can type any language name. When disabled, they must choose from the available languages list."
       }
     },
     "Currency": {

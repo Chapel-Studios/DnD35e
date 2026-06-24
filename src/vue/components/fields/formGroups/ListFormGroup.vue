@@ -32,7 +32,7 @@
         </slot>
       </div>
       <div v-for="(item, index) in editItems" :key="index" class="list-item">
-        <slot name="item-edit" :item="item" :index="index" :disabled="isDisabled" />
+        <slot name="item-edit" :item="item" :index="index" :disabled="isDisabled" :update-item="(v: TItem) => updateItem(index, v)" />
         <button
           v-if="!isDisabled"
           type="button"
@@ -66,6 +66,7 @@
 
   import FormGroup from './FormGroup.vue';
   import type { ListFormGroupProps } from './types.mts';
+
   const props = withDefaults(defineProps<ListFormGroupProps<TItem>>(), {
     emptyLabel: 'dnd35e.form.emptyList',
   });
@@ -150,6 +151,12 @@
 
   function addItem(): void {
     props.onAddItem();
+  }
+
+  function updateItem(index: number, value: TItem): void {
+    const newItems = [...editItems.value];
+    newItems[index] = value;
+    fieldUpdater(newItems);
   }
 
   function removeItem(index: number): void {

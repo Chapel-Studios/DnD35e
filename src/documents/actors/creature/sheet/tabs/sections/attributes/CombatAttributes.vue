@@ -17,17 +17,21 @@
         read-only
       />
       <SpellResistance class="sr" />
+      <AooPerRound />
       <NaturalArmor />
       <FastHealing />
       <Regeneration />
       <Concealment />
+      <Fortification />
     </template>
   </SheetSection>
 </template>
 
 <script setup lang="ts">
+  import AooPerRound from '@actors/creature/sheet/components/AooPerRound.vue';
   import Concealment from '@actors/creature/sheet/components/Concealment.vue';
   import FastHealing from '@actors/creature/sheet/components/FastHealing.vue';
+  import Fortification from '@actors/creature/sheet/components/Fortification.vue';
   import NaturalArmor from '@actors/creature/sheet/components/NaturalArmor.vue';
   import Regeneration from '@actors/creature/sheet/components/Regeneration.vue';
   import SpellResistance from '@actors/creature/sheet/components/SpellResistance.vue';

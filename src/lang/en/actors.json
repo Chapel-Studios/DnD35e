@@ -46,7 +46,8 @@
           "flatFootedAC": { "label": "Flat-Footed", "tooltip": "Flat-Footed AC" },
           "naturalArmor":    { "label": "Natural Armor", "tooltip": "Natural Armor Bonus" },
           "spellResistance": { "label": "Spell Resistance", "tooltip": "Spell Resistance" },
-          "concealment":      { "label": "Concealment", "tooltip": "Concealment Bonus" }
+          "concealment":      { "label": "Concealment", "tooltip": "Concealment Bonus" },
+          "fortification":     { "label": "Fortification", "tooltip": "Fortification Bonus" }
         },
         "saves": {
           "label": "Saving Throws",
@@ -100,7 +101,8 @@
         "reach": { "label": "Reach", "hint": "The distance at which this creature can make melee attacks." },
         "isIncorporeal": { "label": "Incorporeal?", "hint": "Whether this creature is incorporeal or not." },
         "isQuadraped": { "label": "Quadruped?", "hint": "Whether this creature is a quadruped or not." },
-        "creatureType": { "label": "Creature Type", "hint": "The creature type of this creature, such as 'Humanoid', 'Undead', 'Dragon', etc." }
+        "creatureType": { "label": "Creature Type", "hint": "The creature type of this creature, such as 'Humanoid', 'Undead', 'Dragon', etc." },
+        "aooCount": { "label": "Attacks of Opportunity", "hint": "The number of attacks of opportunity this creature can make per round." }
       },
       "alignment": {
         "trueNeutral": "True Neutral",
@@ -209,6 +211,28 @@
         "SessionNotes": "Session Notes",
         "SessionNotesPlaceholder": "Notes from recent sessions, reminders, loose ends..."
       }
+    },
+    "LANGUAGE_OPTIONS": {
+      "Common": "Common",
+      "Dwarven": "Dwarven",
+      "Elven": "Elven",
+      "Giant": "Giant",
+      "Gnomish": "Gnomish",
+      "Goblin": "Goblin",
+      "Halfling": "Halfling",
+      "Orc": "Orc",
+      "Abyssal": "Abyssal",
+      "Aquan": "Aquan",
+      "Auran": "Auran",
+      "Celestial": "Celestial",
+      "Draconic": "Draconic",
+      "Druidic": "Druidic",
+      "Gnoll": "Gnoll",
+      "Ignan": "Ignan",
+      "Infernal": "Infernal",
+      "Sylvan": "Sylvan",
+      "Terran": "Terran",
+      "Undercommon": "Undercommon"
     }
   }
 }

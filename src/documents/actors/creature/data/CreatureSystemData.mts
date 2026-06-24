@@ -82,7 +82,7 @@ interface SenseEntrySource {
   distance: number;
 }
 
-interface BioData {
+interface BioSource {
   gender:    string | null;
   deity:     string | null;
   age:       string | null;
@@ -102,7 +102,7 @@ interface SettingsData {
 // ─── Creature source / data ───────────────────────────────────────────────────
 
 interface CreatureSystemSourceProperties {
-  bio:          BioData;
+  bio:          BioSource;
   size:         Size;
   notes:        string;
   settings:     SettingsData;
@@ -143,6 +143,7 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   isIncorporeal: boolean;
   isQuadraped: boolean;
   creatureType: string;
+  aooCount: number;
 }
 
 export type {
@@ -150,7 +151,7 @@ export type {
   AbilityScoresOf,
   AbilityScoreSource,
   AlignmentData,
-  BioData,
+  BioSource,
   CreatureSystemData,
   CreatureSystemSource,
   CreatureSystemSourceProperties,

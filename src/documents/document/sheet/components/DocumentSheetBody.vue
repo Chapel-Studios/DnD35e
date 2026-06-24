@@ -31,9 +31,9 @@
           v-for="tab in tabList"
           :key="tab.id"
           v-show="tab.id === activeTabId"
-          class="sheet-tab"
+          class="sheet-tab-container"
         >
-          <component :is="tab.component" />
+          <component :is="tab.component" class="sheet-tab" />
         </div>
       </div>
     </div>
@@ -112,12 +112,17 @@
     }
   }
 
-  .sheet-tab {
+  .sheet-tab-container {
     display: flex;
     flex: 1 1 auto;
     min-height: 0;
     padding: 0.5rem;
     overflow: visible;
+    width: 100%;
+  }
+
+  .sheet-tab {
+    width: 100%;  
   }
 
   .doc-name-container {

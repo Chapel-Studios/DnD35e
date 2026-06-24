@@ -1,14 +1,14 @@
 <template>
-  <div class="damage-reduction-settings">
-    <p class="notes">{{ localize('dnd35e.SETTINGS.DamageReductionTypes.Hint') }}</p>
+  <div class="available-languages-settings">
+    <p class="notes">{{ localize('dnd35e.SETTINGS.AvailableLanguages.Hint') }}</p>
 
     <SettingsTable
       :items="tableItems"
       :id-config="{ customPrefix: 'custom_' }"
-      id-header="dnd35e.SETTINGS.DamageReductionTypes.IdColumn"
-      label-header="dnd35e.SETTINGS.DamageReductionTypes.LabelColumn"
+      id-header="dnd35e.SETTINGS.AvailableLanguages.IdColumn"
+      label-header="dnd35e.SETTINGS.AvailableLanguages.LabelColumn"
       add-tooltip="dnd35e.COMMON.Add"
-      empty-label="dnd35e.SETTINGS.DamageReductionTypes.None"
+      empty-label="dnd35e.SETTINGS.AvailableLanguages.None"
       @add="addType"
       @update-item="updateType"
       @delete-item="removeType"
@@ -18,40 +18,41 @@
 
 <script setup lang="ts">
   import { stripSpecialCharacters } from '@helpers/stringHelpers.mjs';
-  import type { SettingsTableItem } from '@settings/shared/sheet/SettingsTable/index.mjs';
-  import { AUTO_ID_MARKER, SettingsTable } from '@settings/shared/sheet/SettingsTable/index.mjs';
+  import { AUTO_ID_MARKER, type SettingsTableItem } from '@settings/index.mjs';
+  import SettingsTable from '@settings/shared/sheet/SettingsTable/SettingsTable.vue';
   import { computed, ref } from 'vue';
 
-  import type { DamageReductionTypesConfig } from '../types.mts';
+  import type { AvailableLanguagesConfig } from '../types.mjs';
 
   const CUSTOM_PREFIX = 'custom_';
+  const localize = (key: string) => game.i18n.localize(key);
 
   const props = defineProps<{
-    modelValue: DamageReductionTypesConfig;
+    modelValue: AvailableLanguagesConfig;
   }>();
 
   const emit = defineEmits<{
-    (e: 'update:modelValue', value: DamageReductionTypesConfig): void;
+    (e: 'update:modelValue', value: AvailableLanguagesConfig): void;
   }>();
 
-  const config = ref<DamageReductionTypesConfig>(foundry.utils.deepClone(props.modelValue));
+  const config = ref<AvailableLanguagesConfig>(foundry.utils.deepClone(props.modelValue));
   const autoIdCounter = ref(0);
 
   /** Convert the Record-based config to the flat items array the table expects */
   const tableItems = computed((): SettingsTableItem[] => {
-    const systemDefaults = (CONFIG.dnd35e.gameRules.damageReductionTypes ?? {}) as Record<string, { label: string }>;
+    const systemDefaults = (CONFIG.dnd35e.gameRules.availableLanguageOptions ?? {}) as Record<string, { label: string }>;
     return Object.entries(config.value).map(([key, entry]) => ({
       id: key,
       // Use pre-localized CONFIG label for system entries; stored label for custom
       label: systemDefaults[key]?.label ?? entry.label,
       enabled: entry.enabled,
       isSystem: entry.isSystem,
-    }));
+    }));  
   });
 
   /** Strip AUTO_ID_MARKER from config keys before emitting so stored IDs are always clean. */
-  function stripAutoMarkers(cfg: DamageReductionTypesConfig): DamageReductionTypesConfig {
-    const result: DamageReductionTypesConfig = {};
+  function stripAutoMarkers(cfg: AvailableLanguagesConfig): AvailableLanguagesConfig {
+    const result: AvailableLanguagesConfig = {};
     for (const [key, entry] of Object.entries(cfg)) {
       const markerIdx = key.indexOf(AUTO_ID_MARKER);
       if (markerIdx === -1) {
@@ -117,14 +118,10 @@
     config.value = newConfig;
     emitUpdate();
   }
-
-  function localize(key: string): string {
-    return game.i18n.localize(key);
-  }
 </script>
 
 <style scoped lang="scss">
-  .damage-reduction-settings {
+  .available-languages-settings {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;

@@ -226,4 +226,9 @@ h3 {
 // fix spacing on actor sheet for scrollbar in tab pane
 .dnd35e.actor-sheet .window-content {
   padding-right: 0;
+  padding-left: 0;
+}
+
+.actor-tab {
+  width: 100%;
 }

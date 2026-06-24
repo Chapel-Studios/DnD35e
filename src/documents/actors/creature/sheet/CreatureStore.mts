@@ -1,10 +1,13 @@
-import type { ActorActions, ActorDocumentStore, ActorGetters, ActorStore, UseActorSheetStoreOptions } from '@actors/baseActor/sheet/index.mjs';
+import type { ActorActions, ActorDocumentStore, ActorGetters, UseActorSheetStoreOptions } from '@actors/baseActor/sheet/index.mjs';
 import { useActorSheetStore } from '@actors/baseActor/sheet/index.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
 import type { SenseEntrySource } from '@actors/creature/data/CreatureSystemData.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import { ALIGNMENT_I18N, NEUTRAL } from '@constants/alignment.mjs';
 import type { Size } from '@constants/sizes.mjs';
+import { GAME_RULES_KEYS } from '@settings/index.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
+import type { SelectOption } from '@vc/fields/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -64,7 +67,7 @@ const useCreatureStore = <TDocument extends Creature>(
     notes:          computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
     level:          computed(() => document.value.system.level ?? 1),
     isPartyMember:  computed(() => getViewAwareFieldValue<boolean>('system.settings.isPartyMember') ?? false),
-    languages:      computed(() => getViewAwareFieldValue<string[]>('system.bio.languages') ?? []),
+    languages:      computed(() => [...(getViewAwareFieldValue<string[]>('system.bio.languages') ?? [])]),
     senses:         computed(() => {
       const raw = getViewAwareFieldValue<SenseEntrySource[]>('system.bio.senses') ?? [];
       // Clone so Vue's reactivity detects in-place mutations from Foundry's mergeObject
@@ -72,7 +75,36 @@ const useCreatureStore = <TDocument extends Creature>(
     }),
     armorClass:     computed(() => document.value.calculateAC() ?? 10),
     getArmorClass: (isTouch = false, denyDex = false): number => document.value.calculateAC(isTouch, denyDex) ?? 10,
+    availableLanguages: computed<SelectOption<string>[]>(() => {
+      const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.AVAILABLE_LANGUAGE_OPTIONS) as Record<string, { label: string; enabled: boolean; isSystem: boolean }>;
+      const systemDefaults = (CONFIG.dnd35e.gameRules.availableLanguageOptions ?? {}) as Record<string, { label: string }>;
+      return Object.entries(config)
+        .filter(([, entry]) => entry.enabled)
+        .map(([key, entry]) => ({
+          value: key,
+          // Use pre-localized CONFIG label for system entries; stored label for custom
+          label: systemDefaults[key]?.label ?? entry.label,
+        }));
+    }),
+    displayLanguages: computed<string[]>(() => {
+      const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.AVAILABLE_LANGUAGE_OPTIONS) as Record<string, { label: string; enabled: boolean }>;
+      const systemDefaults = (CONFIG.dnd35e.gameRules.availableLanguageOptions ?? {}) as Record<string, { label: string }>;
+      const stored = getViewAwareFieldValue<string[]>('system.bio.languages') ?? [];
+      return stored.map(id => {
+        const entry = config[id];
+        if (!entry) return id;
+        return systemDefaults[id]?.label ?? entry.label;
+      });
+    }),
   };
+
+  // Resolved display labels: maps stored IDs → labels; falls back to raw value for custom text
+  const availableLanguagesRef = documentGetters.availableLanguages;
+  (documentGetters as Record<string, unknown>)['displayLanguages'] = computed<string[]>(() =>
+    documentGetters.languages.value.map(
+      id => availableLanguagesRef.value.find(o => o.value === id)?.label ?? id
+    )
+  );
 
   const documentActions = {
     ...actorStore.documentActions,
@@ -112,6 +144,8 @@ interface CreatureGetters {
   senses:         ComputedRef<SenseEntrySource[]>;
   armorClass:     ComputedRef<number>;
   getArmorClass: (isTouch?: boolean, denyDex?: boolean) => number;
+  availableLanguages: ComputedRef<SelectOption<string>[]>;
+  displayLanguages: ComputedRef<string[]>;
 }
 
 type CreatureActions = {

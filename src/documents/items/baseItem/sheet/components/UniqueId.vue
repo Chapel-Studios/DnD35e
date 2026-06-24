@@ -6,7 +6,7 @@
       :value="uniqueId"
       field-path="system.slug"
     >
-      <template #controls="{ editable }">
+      <template #edit-only="{ editable }">
         <button
           class="field-control-btn generate-uid"
           :disabled="!editable"

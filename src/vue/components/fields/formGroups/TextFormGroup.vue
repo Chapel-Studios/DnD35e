@@ -13,6 +13,9 @@
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
     </template>
+    <template v-if="slots.editOnlyControls" #edit-only-controls="{ editable }">
+      <slot name="edit-only-controls" :editable="editable" />
+    </template>
     <template #readonly>
       <slot name="readonly">
         <span>{{ readonlyLabel }}</span>

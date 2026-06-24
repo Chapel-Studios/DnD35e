@@ -26,6 +26,7 @@
         <i :class="editabilityIcon"></i>
       </button>
     </template>
+    <slot name="edit-only"></slot>
     <slot></slot>
   </span>
 </template>
@@ -95,9 +96,10 @@
   const hideEverything = computed(() => 
     (
       !isEditMode.value
-      || (!showGMControls.value && !slots.default)
+      || (!showGMControls.value && !slots.editOnly)
     )
     && !hasActiveEffects.value
+    && !slots.default
   );
 
   // === VISIBILITY ===

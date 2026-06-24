@@ -17,7 +17,9 @@ export const GAME_RULES_KEYS = {
   // LOW_LIGHT_VISION_MODE: 'lowLightVisionMode',
   // USE_COMBAT_CHARACTER_SHEET: 'useCombatCharacterSheet',
   // MEASURE_STYLE: 'measureStyle',
+  ALLOW_CUSTOM_LANGUAGES: 'allowCustomLanguages',
   DAMAGE_REDUCTION_TYPES: 'damageReductionTypes',
+  AVAILABLE_LANGUAGE_OPTIONS: 'availableLanguageOptions',
 } as const;
 
 /**

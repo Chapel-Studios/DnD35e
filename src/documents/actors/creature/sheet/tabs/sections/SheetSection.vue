@@ -6,6 +6,7 @@
       <div class="section-grid">
         <slot name="grid" />
       </div>
+      <slot name="list-append" />
     </div>
   </section>
 </template>
@@ -21,10 +22,11 @@
 <style lang="scss" scoped>
   .sheet-section {
     padding: 0.5rem;
+    padding-top: 0;
     position: relative;
 
-    &:first-child {
-      padding-top: 0;
+    & + .sheet-section {
+      margin-top: 0.5rem;
     }
   }
 

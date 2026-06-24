@@ -35,7 +35,7 @@
         @save="onSave"
       />
     </div>
-    <div v-else>
+    <div v-else class="editor-content-container">
       <div v-if="!!enrichedHtml" class="editor-content" v-html="enrichedHtml" />
       <div v-else class="editor-content placeholder">
         {{ placeholder ? localize(placeholder) : '' }}
@@ -139,11 +139,21 @@
     &.form-group {
       display: inline;
       border: 1px solid var(--color-border, #7a7971);
-      padding: 0.25rem 0.5rem 0.5rem;
+      padding: 0.75rem 0.5rem 0.5rem 0.5rem;
+      margin-top: 0.75rem;
+      position: relative;
     }
 
     &.editing {
       border-color: var(--color-fieldset-border-highlight, #7a7971);
+    }
+
+    &:deep(.form-group-label) {
+      position: absolute;
+      top: 0;
+      left: 1.1rem;
+      transform: translateY(-55%);
+      background: var(--background); /* Foundry default variable */
     }
 
     &:deep(label) {
@@ -163,6 +173,10 @@
       flex-direction: column;
       gap: 0.25rem;
     }
+  }
+
+  .editor-content-container {
+    margin-top: 0.25rem;
   }
 
   .editor-content {

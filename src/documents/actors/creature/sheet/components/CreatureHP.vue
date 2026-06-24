@@ -229,6 +229,7 @@
       gap: 0.25rem;
       position: absolute;
       width: 100%;
+      height:   100%;
       transform: translateY(110%);
       transition: transform 0.3s ease;
 

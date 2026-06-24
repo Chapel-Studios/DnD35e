@@ -14,6 +14,9 @@
         :read-only="props.readOnly"
       >
         <slot name="controls" :editable="isFieldEditable" />
+        <template #edit-only v-if="$slots.editOnlyControls">
+          <slot name="edit-only-controls" :editable="isFieldEditable" />
+        </template>
       </FieldControls>
     </div>
 

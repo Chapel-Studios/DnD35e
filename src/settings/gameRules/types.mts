@@ -26,3 +26,14 @@ export interface DamageReductionTypeEntry {
  * Stored setting value: map of lowercase key → entry.
  */
 export type DamageReductionTypesConfig = Record<string, DamageReductionTypeEntry>;
+
+export interface AvailableLanguageEntry {
+  label: string;
+  enabled: boolean;
+  isSystem: boolean;
+}
+
+/**
+ * Stored setting value: map of lowercase key → entry.
+ */
+export type AvailableLanguagesConfig = Record<string, AvailableLanguageEntry>;

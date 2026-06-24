@@ -3,12 +3,10 @@ import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore
 import { useCreatureStore } from '@actors/creature/sheet/CreatureStore.mjs';
 import {
   attributesTab,
-  bioTab,
   buffsTab,
   combatTab,
   featuresTab,
   inventoryTab,
-  notesTab,
   settingsTab,
   skillsTab,
   spellsTab,
@@ -16,6 +14,8 @@ import {
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
+
+import { characterBioTab } from './tabs/index.mjs';
 
 /**
  * Leaf store for Character documents. Builds on the creature store and adds
@@ -26,7 +26,7 @@ const useCharacterStore = (
   context: VueApplicationContext<Character>
 ): CharacterStore => {
   const creatureStore = useCreatureStore<Character>(context, {
-    defaultTabs: [attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, bioTab, notesTab, settingsTab],
+    defaultTabs: [attributesTab, combatTab, inventoryTab, featuresTab, skillsTab, buffsTab, spellsTab, characterBioTab, settingsTab],
     defaultActiveTab: 'attributes',
   });
   const { document } = creatureStore._storeUtils;
