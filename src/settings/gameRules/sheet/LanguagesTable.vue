@@ -1,14 +1,14 @@
 <template>
   <div class="available-languages-settings">
-    <p class="notes">{{ localize('dnd35e.SETTINGS.AvailableLanguages.Hint') }}</p>
+    <p class="notes">{{ localize('dnd35e.SETTINGS.AvailableLanguageOptions.Hint') }}</p>
 
     <SettingsTable
       :items="tableItems"
       :id-config="{ customPrefix: 'custom_' }"
-      id-header="dnd35e.SETTINGS.AvailableLanguages.IdColumn"
-      label-header="dnd35e.SETTINGS.AvailableLanguages.LabelColumn"
+      id-header="dnd35e.SETTINGS.AvailableLanguageOptions.IdColumn"
+      label-header="dnd35e.SETTINGS.AvailableLanguageOptions.LabelColumn"
       add-tooltip="dnd35e.COMMON.Add"
-      empty-label="dnd35e.SETTINGS.AvailableLanguages.None"
+      empty-label="dnd35e.SETTINGS.AvailableLanguageOptions.None"
       @add="addType"
       @update-item="updateType"
       @delete-item="removeType"
@@ -22,7 +22,7 @@
   import SettingsTable from '@settings/shared/sheet/SettingsTable/SettingsTable.vue';
   import { computed, ref } from 'vue';
 
-  import type { AvailableLanguagesConfig } from '../types.mjs';
+  import type { AvailableLanguagesConfig } from '../types.mts';
 
   const CUSTOM_PREFIX = 'custom_';
   const localize = (key: string) => game.i18n.localize(key);
