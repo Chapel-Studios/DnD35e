@@ -7,7 +7,7 @@
       v-for="option in props.options"
       :key="option.value"
       :class="getOptionClass(option)"
-      @click="$emit('update', option.value)"
+      @click="() => handleClick(option)"
       class="multi-option-toggle__option"
     >
       <i v-if="option.icon" :class="option.icon" class="multi-option-toggle__option-icon"></i>
@@ -35,9 +35,15 @@
   const localize = (key: string) => game.i18n.localize(key);
   const props = defineProps<MultiOptionToggleProps<TType>>();
 
-  defineEmits<{
+  const emit = defineEmits<{
     update: [value: TType];
   }>();
+
+  const handleClick = (option: SelectOption<TType>) => {
+    if (!option.disabled) {
+      emit('update', option.value);
+    }
+  };
 
   const derivedClass = computed(() => {
     return {

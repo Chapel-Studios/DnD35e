@@ -1,0 +1,65 @@
+// App shell + base layout
+//
+// Global element resets, the Vue sheet root, sidebar/directory tweaks, and the
+// app-level hosts used by teleported vertical tab rails.
+
+h1,
+h2,
+h3 {
+  border-bottom: none;
+  margin: 0;
+}
+
+.vue-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+
+  // Tell Chromium to render native popup chrome (dropdowns, scrollbars, etc.)
+  // with the dark theme. Without this, the brief moment a <select> popup
+  // first opens it paints with the OS light theme regardless of CSS
+  // `background-color` on the element. Setting it on the sheet root means
+  // it's resolved before any popup spawns, eliminating the white flash.
+  color-scheme: dark;
+}
+
+/* Fix padding in righthand sidebar. */
+.directory-list .entry-name {
+  padding: 0.25rem 0.5rem;
+
+  &:first-child {
+    padding-left: 1rem;
+  }
+}
+
+/* App-level host used by teleported vertical tab rails. */
+.window-content {
+  position: relative;
+}
+
+.application.sheet.dnd35e {
+  overflow: unset;
+}
+
+.dnd35e-vertical-tab-host {
+  position: absolute;
+  top: 5rem;
+  left: 100%;
+  z-index: 20;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+// fix spacing on actor sheet for scrollbar in tab pane
+.dnd35e.actor-sheet .window-content {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.actor-tab {
+  width: 100%;
+}

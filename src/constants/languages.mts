@@ -64,7 +64,7 @@ const DEFAULT_AVAILABLE_LANGUAGE = {
   TERRAN_LANGUAGE,
   UNDERCOMMON_LANGUAGE,
 } as const;
-type DefaultAvailableLanguage = typeof DEFAULT_AVAILABLE_LANGUAGES[number];
+type DefaultAvailableLanguage = (typeof DEFAULT_AVAILABLE_LANGUAGES)[number];
 const DEFAULT_AVAILABLE_LANGUAGES_OPTIONS: AvailableLanguagesConfig = {
   [COMMON_LANGUAGE]: { label: 'dnd35e.LANGUAGE_OPTIONS.Common', enabled: true, isSystem: true },
   [ELVEN_LANGUAGE]: { label: 'dnd35e.LANGUAGE_OPTIONS.Elven', enabled: true, isSystem: true },

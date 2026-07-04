@@ -108,7 +108,7 @@ See `form-groups.instructions.md` for full auto-derivation details.
 
 ## Control Button Styling
 
-All custom buttons in `#controls` slots **MUST use `.field-control-btn` class** (from `src/styles/core.scss`):
+All custom buttons in `#controls` slots **MUST use `.field-control-btn` class** (from `src/styles/_helpers.scss`, merged via `src/styles/core.scss`):
 
 ```vue
 <template #controls="{ editable }">

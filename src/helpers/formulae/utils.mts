@@ -1252,6 +1252,13 @@ export const resolveFormulaField = (
  */
 export function toFormulaDataObject(doc: any): any {
   const data = doc.toObject ? doc.toObject() : doc;
+  // `doc.toObject()` returns *source* data, which omits derived (persisted: false)
+  // schema fields such as `system.isBroken`. Formula resolution must be able to
+  // reference derived values, so overlay the live prepared system data — its
+  // `toObject(false)` includes derived fields with their current computed values.
+  if (doc?.system?.toObject && data && typeof data === 'object') {
+    data.system = doc.system.toObject(false);
+  }
   if (doc.documentName) data.documentName = doc.documentName;
   if (doc.type) data.type = doc.type;
   return data;

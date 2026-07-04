@@ -5,7 +5,7 @@ import { clearWorld, createItem } from './helpers/documents.mjs';
 import { clearFieldOverride, setFieldOverride, waitForFieldOverride } from './helpers/fieldOverrides.mjs';
 import { gotoGame, loginAs } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet, rerenderSheet } from './helpers/sheets.mjs';
-import { dismissOverlays } from './helpers/ui.mjs';
+import { closePlayerConfigIfOpen, dismissOverlays } from './helpers/ui.mjs';
 
 /**
  * Field-permissions round-trip E2E.
@@ -47,21 +47,12 @@ async function switchToEditMode (page: Page, sheetSelector: string): Promise<voi
   await dismissOverlays(page);
   await expect(editBtn).toBeVisible();
   if (await editBtn.evaluate((el) => el.classList.contains('active'))) return;
-  await editBtn.click();
+  // dispatchEvent instead of click(): the toggle handler is a plain @click, and
+  // under heavy canvas load Playwright's actionability "stable" gate can hang
+  // indefinitely on the jittering view-mode bar. dispatchEvent sidesteps both
+  // the stability check and any residual overlay interception.
+  await editBtn.dispatchEvent('click');
   await expect(editBtn).toHaveClass(/active/);
-}
-
-async function closePlayerConfigIfOpen (page: Page): Promise<void> {
-  await page.evaluate(async () => {
-    const apps = (globalThis as any).foundry?.applications?.instances;
-    if (!apps?.values) return;
-    for (const app of apps.values()) {
-      if (!app?.constructor?.name?.match(/UserConfig/i)) continue;
-      if (typeof app.close === 'function') {
-        await app.close({ animate: false });
-      }
-    }
-  });
 }
 
 /** Create a baseline weapon; player ownership is granted separately via grantPlayerOwner. */
@@ -82,6 +73,8 @@ async function grantPlayerOwner (page: Page, itemUuid: string): Promise<void> {
   }, itemUuid);
 }
 
+// These tests are sadly flakey and need to be run separately. 
+// TODO: investigate and fix the flakiness, then re-enable them to run in parallel with other e2e tests.
 test.describe('field-permissions round-trip', () => {
   let playerContext: BrowserContext;
 

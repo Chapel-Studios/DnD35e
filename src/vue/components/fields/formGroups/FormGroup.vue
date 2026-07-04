@@ -7,7 +7,7 @@
       </label>
       <!-- GM permission controls next to label -->
       <FieldControls
-        v-if="props.hideFieldControls !== true"
+        v-if="props.hideFieldControls !== false"
         :field-path="props.fieldPath"
         :default-editability="props.defaultEditability"
         :default-visibility="props.defaultVisibility"

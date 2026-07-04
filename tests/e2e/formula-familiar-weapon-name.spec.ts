@@ -130,4 +130,28 @@ test.describe('FormulaFamiliar dropdown on weapon name', () => {
     }, weaponUuid);
     expect(stored).toBe('Escape Sword');
   });
+
+  test('resolves a derived (persisted:false) field in the name formula', async ({ page }) => {
+    await gotoGame(page);
+
+    // `system.isBroken` is a derived field (persisted:false) — it is absent from
+    // source `toObject()` data. Regression guard: the `get name()` path must still
+    // resolve it (it reads derived values via `doc.system.toObject(false)`).
+    const weaponUuid = await createItem(page, 'weapon', {
+      name: 'Broke Test',
+      system: {
+        nameFormula: { formula: '#self.isBroken', expectedType: 'string', resolvedValue: null },
+      },
+    });
+
+    const resolved = await page.evaluate(async (uuid) => {
+      const doc = await (globalThis as any).fromUuid(uuid);
+      return { isBroken: doc?.system?.isBroken, name: doc?.name };
+    }, weaponUuid);
+
+    // Weapon has no broken-material AE, so isBroken is false → name resolves to "false"
+    // (not the raw formula, which was the bug).
+    expect(resolved.isBroken).toBe(false);
+    expect(resolved.name).toBe('false');
+  });
 });

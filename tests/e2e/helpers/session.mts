@@ -1,5 +1,7 @@
 import type { BrowserContext, Page } from '@playwright/test';
 
+import { closePlayerConfigIfOpen } from './ui.mjs';
+
 export type FoundryRole = 'gm' | 'player';
 
 /**
@@ -44,6 +46,12 @@ export async function loginAs (context: BrowserContext, role: FoundryRole): Prom
   const baseUrl = process.env.FOUNDRY_E2E_BASE_URL ?? 'http://localhost:31000';
   const page = await context.newPage();
   await performJoin(page, baseUrl, role);
+  // A freshly-joined player with no assigned character gets an auto-opened
+  // UserConfig dialog that intercepts sheet clicks; close it before returning
+  // so every player-context spec starts from a clean, interactable state.
+  if (role === 'player') {
+    await closePlayerConfigIfOpen(page);
+  }
   return page;
 }
 

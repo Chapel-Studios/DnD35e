@@ -1,7 +1,7 @@
 import type { ActorType } from '@actors/actorTypes.mjs';
 import { ACTOR_TYPES_LOCALIZED } from '@actors/actorTypes.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
-import type { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
+import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
@@ -126,17 +126,6 @@ class ActorDnd35e<
     const result = await super._preCreate(data, options, user);
     if (result === false) return false;
     ensureNameFormulaOnCreate(this as NameFormulaDocument);
-  }
-
-  protected override async _preUpdate (
-    updateData: Record<string, unknown>,
-    options: DatabaseUpdateOperation<null>,
-    user: foundry.documents.BaseUser
-  ): Promise<boolean | void> {
-    const result = await super._preUpdate(updateData, options, user);
-    if (result === false) return false;
-
-    
   }
 }
 

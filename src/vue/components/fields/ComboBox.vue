@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SelectOption } from './index.mjs';
 
-  export interface ComboBoxProps<TValue> {
+  export interface ComboBoxProps<TValue extends string> {
     /** Current value. */
     value: TValue;
     /** Available suggestions / options. */
@@ -36,6 +36,7 @@
         v-for="opt in props.options"
         :key="opt.value"
         :value="opt.label ?? opt.value"
+        :disabled="opt.disabled"
       />
     </datalist>
   </template>
@@ -69,7 +70,7 @@
   });
 
   const emit = defineEmits<{
-    update: [value: string];
+    update: [value: TValue];
   }>();
 
   const listId = `combobox-${Math.random().toString(36).slice(2)}`;
@@ -79,11 +80,11 @@
   );
 
   function onInputChange(e: Event): void {
-    emit('update', (e.target as HTMLInputElement).value);
+    emit('update', (e.target as HTMLInputElement).value as TValue);
   }
 
   function onSelectChange(e: Event): void {
-    emit('update', (e.target as HTMLSelectElement).value);
+    emit('update', (e.target as HTMLSelectElement).value as TValue);
   }
 </script>
 

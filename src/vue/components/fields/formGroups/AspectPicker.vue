@@ -341,7 +341,11 @@
     width: 100%;
   }
 
-  .aspect-picker-input {
+  // `.aspect-picker-input` and `.highlight-layer` are rendered inside the child
+  // <FamiliarOverlayInput>, so scoped CSS can't reach them without :deep().
+  // Without this the input never turns transparent and its opaque text hides
+  // the colored highlight overlay (variables appear uncolored).
+  :deep(.aspect-picker-input) {
     padding: 0.35rem 0.5rem;
     font-family: 'Courier New', 'Consolas', monospace;
     font-size: 0.85rem;
@@ -374,7 +378,7 @@
     }
   }
 
-  .highlight-layer {
+  :deep(.highlight-layer) {
     padding: 0.35rem 0.5rem;
     font-family: 'Courier New', 'Consolas', monospace;
     font-size: 0.85rem;

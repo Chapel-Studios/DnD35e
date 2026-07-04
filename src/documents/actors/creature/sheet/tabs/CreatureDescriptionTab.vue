@@ -1,6 +1,6 @@
 <template>
   <ActorDescriptionTab description-label="dnd35e.ACTOR.field.Biography">
-    <template #prepend v-if="slots.prepend">
+    <template #prepend>
       <slot name="header" />
       <IdentitySection />
       <PhysicalSection />
@@ -20,6 +20,4 @@
   import SessionNotes from '../components/SessionNotes.vue';
   import IdentitySection from './bio/IdentitySection.vue';
   import PhysicalSection from './bio/PhysicalSection.vue';
-
-  const slots = defineSlots();
 </script>

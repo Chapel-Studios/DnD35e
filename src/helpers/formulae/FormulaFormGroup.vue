@@ -5,7 +5,7 @@
     :field-path="props.fieldPath"
     :default-visibility="props.defaultVisibility"
     :default-editability="props.defaultEditability"
-    :hideFieldControls="props.showFieldControls"
+    :hide-field-controls="props.hideFieldControls"
   >
     <template #readonly>
       <slot v-if="slots.readonly" name="readonly" />
@@ -76,7 +76,7 @@
     fieldPath: { type: String, required: true },
     defaultVisibility: { type: String as PropType<'everyone' | 'ownerPlus' | 'gmOnly'>, default: undefined },
     defaultEditability: { type: String as PropType<'normal' | 'gmOnly'>, default: undefined },
-    showFieldControls: { type: Boolean, default: true },
+    hideFieldControls: { type: Boolean, default: false },
     /** FormulaData instance for formula/unidentified formula access. */
     formulaData: { type: Object as PropType<FormulaData | null>, default: undefined },
   });
@@ -219,65 +219,11 @@
   white-space: pre-wrap;
 }
 
-// Default slot content wrapper
-.formula-form-group {
-  // Shared font metrics for perfect alignment between input and highlight layer
-  %formula-font {
-    font-family: 'Courier New', 'Consolas', monospace;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    letter-spacing: normal;
-    word-spacing: normal;
-  }
-
-  .highlight-layer {
-    @extend %formula-font;
-    padding: 0.65rem;
-    border: 1px solid transparent; // match input border width for alignment
-    color: #d4d4d4; // plain text visible — variables override with their own color
-  }
-
-  .formula-input {
-    @extend %formula-font;
-    padding: 0.65rem;
-    min-height: 2.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
-    background: transparent;
-    color: transparent; // text invisible — highlight layer provides all coloring
-    caret-color: #d4d4d4; // cursor remains visible
-    transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.25);
-      font-style: italic;
-    }
-
-    &:focus {
-      border-color: rgba(102, 166, 255, 0.6);
-      box-shadow:
-        0 0 0 3px rgba(102, 166, 255, 0.1),
-        inset 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-
-    &.has-error {
-      border-color: rgba(255, 100, 100, 0.4);
-
-      &:focus {
-        border-color: rgba(255, 100, 100, 0.6);
-        box-shadow:
-          0 0 0 3px rgba(255, 100, 100, 0.1),
-          inset 0 1px 2px rgba(0, 0, 0, 0.1);
-      }
-    }
-
-    &::selection {
-      background: rgba(102, 166, 255, 0.35);
-      color: inherit;
-    }
-  }
-
-}
+// NOTE: `.formula-input` and `.highlight-layer` styling lives in the GLOBAL
+// stylesheet (src/styles/core.scss), NOT here. Those elements are rendered
+// inside the child <FamiliarOverlayInput> component, so Vue scoped CSS cannot
+// reach them from this parent. The class names are also intentionally shared
+// with FormulaSettingsGroup, so a single global source of truth keeps every
+// formula editor's transparent-input + colored-overlay treatment consistent.
 
 </style>

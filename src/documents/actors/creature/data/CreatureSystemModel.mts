@@ -105,10 +105,6 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       total: useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['initiative'] } }),
     });
 
-    schema.init = new SchemaField({
-      total: useDnd35eField(derivedNumberField(1), { familiar: { aliases: ['initiative'] } }),
-    });
-
     schema.bio = new SchemaField({
       gender: useDnd35eField(nullableBioField()),
       deity:  useDnd35eField(nullableBioField()),

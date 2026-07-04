@@ -4,6 +4,6 @@ type HpUpdateMetadata = {
   damageType?: string;
 }
 
-export type{
+export type {
   HpUpdateMetadata,
 };
