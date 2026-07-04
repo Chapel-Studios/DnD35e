@@ -12,7 +12,9 @@ const updateTempHp = (
 ): TempHpCheckResult => {
   const newTempHp = Math.max(0, hp.temp + amount);
   updateObject['system.hp.temp'] = newTempHp;
-  const remainingDamage = Math.max(0, amount - hp.temp);
+  const remainingDamage = newTempHp !== 0
+    ? 0
+    : Math.max(0, (amount * -1) - hp.temp) ; // Damage is always thought of as a positive number.
   return { newTempHp, remainingDamage };
 };
 

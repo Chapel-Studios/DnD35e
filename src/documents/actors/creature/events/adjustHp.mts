@@ -1,5 +1,5 @@
 import type { HpData } from '@actors/creature/data/CreatureSystemData.mjs';
-import type { HpAdjustmentType } from '@actors/creature/sheet/components/constants.mjs';
+import { HP_ADJUSTMENT_TYPE, type HpAdjustmentType } from '@actors/creature/sheet/components/constants.mjs';
 import type { DocumentEvent, EventChecker, EventCheckResult } from '@helpers/documentEvents/types.mjs';
 
 import type { Creature } from '../index.mjs';
@@ -57,9 +57,12 @@ const checkForAdjustHpEvent: EventChecker<AdjustHpPayload> = (
 
   result.result = true;
   result.payload = {
-    ...payloadMetaData,
     adjustedHp,
-  } as AdjustHpPayload;
+    amount: payloadMetaData.adjustmentAmount ?? 0,
+    hpAdjustmentType: payloadMetaData.hpAdjustmentType ?? HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT,
+    sourceMsg: payloadMetaData.sourceMsg,
+    sourceActorId: payloadMetaData.sourceActorId,    
+  };
 
   return result;
 };

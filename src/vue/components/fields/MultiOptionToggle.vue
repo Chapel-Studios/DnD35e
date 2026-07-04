@@ -40,7 +40,7 @@
   }>();
 
   const handleClick = (option: SelectOption<TType>) => {
-    if (!option.disabled) {
+    if (!option.disabled && !props.disabled) {
       emit('update', option.value);
     }
   };
