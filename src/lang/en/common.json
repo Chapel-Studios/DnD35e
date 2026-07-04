@@ -95,6 +95,7 @@
       "emptyList": "No items"
     },
     "Formula": {
+      "availableContexts": "Available Contexts",
       "Context": {
         "Self": "Self"
       }

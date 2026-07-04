@@ -35,7 +35,7 @@ const checkForBloodiedEvent: EventChecker<BloodiedPayload> = (
     args: [],    
   };
   // Cancel if updateData does not contain a system.hp.current property
-  if (!(updateData.system as CreatureSystemData)?.hp?.current) {
+  if ((updateData.system as CreatureSystemData)?.hp?.current === undefined) {
     return result;
   }
 

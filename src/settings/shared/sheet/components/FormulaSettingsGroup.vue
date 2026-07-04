@@ -54,7 +54,8 @@
     const keys = Object.keys(contexts.value);
     if (!keys.length) return '';
     const names = Object.entries(contexts.value).map(([key, ctx]) => ctx.display ?? (key.charAt(0).toUpperCase() + key.slice(1)));
-    return `Available Contexts: [${names.join(', ')}]`;
+    const localizedPrefix = game.i18n.localize('dnd35e.Formula.availableContexts');
+    return `${localizedPrefix}: [${names.join(', ')}]`;
   });
 
   const {

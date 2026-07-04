@@ -153,7 +153,8 @@
     const keys = Object.keys(contexts.value);
     if (keys.length === 0) return '';
     const names = Object.entries(contexts.value).map(([k, ctx]) => ctx.display ?? (k.charAt(0).toUpperCase() + k.slice(1)));
-    return `Available Contexts: [${names.join(', ')}]`;
+    const localizedPrefix = game.i18n.localize('dnd35e.Formula.availableContexts');
+    return `${localizedPrefix}: [${names.join(', ')}]`;
   });
 
   const displayHint = computed(() => isEditMode.value ? dynamicHint.value : (props.hint ?? ''));

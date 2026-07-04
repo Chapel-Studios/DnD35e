@@ -98,14 +98,6 @@ const useCreatureStore = <TDocument extends Creature>(
     }),
   };
 
-  // Resolved display labels: maps stored IDs → labels; falls back to raw value for custom text
-  const availableLanguagesRef = documentGetters.availableLanguages;
-  (documentGetters as Record<string, unknown>)['displayLanguages'] = computed<string[]>(() =>
-    documentGetters.languages.value.map(
-      id => availableLanguagesRef.value.find(o => o.value === id)?.label ?? id
-    )
-  );
-
   const documentActions = {
     ...actorStore.documentActions,
     adjustHp: async (amount: number, adjustmentType: HpAdjustmentType): Promise<boolean> => {
