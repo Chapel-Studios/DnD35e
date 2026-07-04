@@ -136,8 +136,8 @@
         },
         "Formula": {
           "Name": "Custom Death Threshold Formula",
-          "Hint": "Enter a formula or number for this actor. Examples: '-10', '-#Self.Con.Score', '0'",
-          "Placeholder": "e.g. '-10' or '-#Self.Con.Score'"
+          "Hint": "Enter a formula or number for this actor. Examples: '-10', '-#Self.AbilityScores.Con.Score', '0'",
+          "Placeholder": "e.g. '-10' or '-#Self.AbilityScores.Con.Score'"
         }
       },
       "AllowNoAmmo": {

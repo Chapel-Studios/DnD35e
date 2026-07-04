@@ -34,7 +34,7 @@
     <datalist :id="listId">
       <option
         v-for="opt in props.options"
-        :key="opt.value"
+        :key="opt.label ?? opt.value"
         :value="opt.value"
         :disabled="opt.disabled"
       />
@@ -54,7 +54,7 @@
     </option>
     <option
       v-for="opt in props.options"
-      :key="opt.value"
+      :key="opt.label ?? opt.value"
       :value="opt.value"
     >
       {{ opt.label ?? opt.value }}
@@ -80,7 +80,10 @@
   );
 
   function onInputChange(e: Event): void {
-    emit('update', (e.target as HTMLInputElement).value as TValue);
+    // Get the value associated with the selected option, or the raw text if no match.
+    const inputValue = (e.target as HTMLInputElement).value;
+    const matchedOption = props.options.find(opt => (opt.label ?? opt.value) === inputValue);
+    emit('update', (matchedOption ? matchedOption.value : inputValue) as TValue);
   }
 
   function onSelectChange(e: Event): void {

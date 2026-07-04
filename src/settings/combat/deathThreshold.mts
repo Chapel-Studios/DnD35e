@@ -1,4 +1,6 @@
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
+import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
+import { buildDocumentDataMap } from '@helpers/formulae/utils.mjs';
 
 import { SYSTEM_ID } from '../shared.mjs';
 import { COMBAT_KEYS } from './constants.mjs';
@@ -18,10 +20,7 @@ const PARTY_MEMBER_DEATH_THRESHOLD_DEFAULT: DeathThresholdSetting = '-10';
 const STANDARD_ACTOR_DEATH_THRESHOLD_DEFAULT: DeathThresholdSetting = '0';
 
 const normalizeDeathThresholdFormula = (value: string): string => {
-  const trimmed = value.trim();
-  if (!trimmed) return '';
-
-  return trimmed.replace(/\bcon\s*mod(?:ifier)?\b/gi, 'conMod');
+  return value.trim();
 };
 
 const normalizeDeathThresholdSetting = (
@@ -36,25 +35,32 @@ const normalizeDeathThresholdSetting = (
   return fallback;
 };
 
-const resolveDeathThresholdValue = (setting: DeathThresholdSetting, conModifier: number): number => {
+const resolveDeathThresholdValue = (setting: DeathThresholdSetting, actor?: ActorDnd35e): number => {
   const normalizedFormula = normalizeDeathThresholdFormula(setting || '');
   if (!normalizedFormula) {
     return 0;
   }
 
-  const substituted = normalizedFormula.replace(/\bconMod\b/g, String(conModifier));
+  const resolvedFormula = actor
+    ? FormulaData.resolveSource(
+      FormulaData.toSource(normalizedFormula, { expectedType: 'number' }),
+      buildDocumentDataMap(actor),
+      '0'
+    )
+    : normalizedFormula;
+
   const safeEval = (Roll as unknown as { safeEval?: (formula: string) => number }).safeEval;
 
   if (safeEval) {
     try {
-      const evaluated = safeEval(substituted);
+      const evaluated = safeEval(resolvedFormula);
       if (Number.isFinite(evaluated)) return evaluated;
     } catch {
       // Fall through to numeric parsing when formula evaluation fails.
     }
   }
 
-  const parsed = Number.parseFloat(substituted);
+  const parsed = Number.parseFloat(resolvedFormula);
   if (Number.isFinite(parsed)) {
     return parsed;
   }
@@ -96,9 +102,8 @@ const getActorDeathThresholdSetting = (actor: ActorDnd35e): DeathThresholdSettin
 };
 
 const getActorDeathThreshold = (actor: ActorDnd35e): number => {
-  const conModifier = Number(foundry.utils.getProperty(actor, 'system.abilities.con.mod')) || 0;
   const setting = getActorDeathThresholdSetting(actor);
-  return resolveDeathThresholdValue(setting, conModifier);
+  return resolveDeathThresholdValue(setting, actor);
 };
 
 export {

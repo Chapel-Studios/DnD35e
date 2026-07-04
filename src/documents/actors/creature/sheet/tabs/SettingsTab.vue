@@ -48,10 +48,9 @@
   const { document } = store._storeUtils;
 
   const isPartyMember = computed(() => Boolean(foundry.utils.getProperty(document.value, 'system.settings.isPartyMember')));
-  const conModifier = computed(() => Number(foundry.utils.getProperty(document.value, 'system.abilities.con.mod')) || 0);
 
   const worldThresholdSetting = computed(() => getWorldDeathThresholdSetting(isPartyMember.value));
-  const currentDefaultThreshold = computed(() => resolveDeathThresholdValue(worldThresholdSetting.value, conModifier.value));
+  const currentDefaultThreshold = computed(() => resolveDeathThresholdValue(worldThresholdSetting.value, document.value));
   const deathThresholdOverride = computed(() => getActorDeathThresholdOverride(document.value));
 
   const selectedDeathThresholdMode = computed(() => {
@@ -66,7 +65,7 @@
     return [
       {
         value: 'default',
-        label: `default (${currentDefaultThreshold.value})`,
+        label: `${localize('dnd35e.SETTINGS.DeathThreshold.Mode.Default')} (${currentDefaultThreshold.value})`,
         className: 'is-default-option',
       },
       {

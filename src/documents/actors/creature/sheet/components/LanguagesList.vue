@@ -29,7 +29,7 @@
   import { GAME_RULES_KEYS } from '@settings/gameRules/constants.mjs';
   import { SYSTEM_ID } from '@settings/shared.mjs';
   import { ComboBox, ListFormGroup } from '@vc/fields/index.mjs';
-  import { inject, ref } from 'vue';
+  import { inject, ref, watch } from 'vue';
 
   import type { CreatureDocumentStore } from '../CreatureStore.mjs';
 
@@ -43,6 +43,9 @@
   const allowCustom = (game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.ALLOW_CUSTOM_LANGUAGES) ?? true) as boolean;
 
   const projectedValue = ref<string[]>([...languages.value]);
+  watch(languages, (newVal) => {
+    projectedValue.value = [...newVal];
+  });
 
   const fieldUpdater = (update: string[] | null) => {
     projectedValue.value = [...(update ?? [])];
