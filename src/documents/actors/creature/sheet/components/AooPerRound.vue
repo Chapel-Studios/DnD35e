@@ -1,7 +1,7 @@
 <template>
   <NumberFormGroup
     field-path="system.aooCount"
-    readonly
+    read-only
   />
 </template>
 

@@ -38,7 +38,11 @@ class DocumentEventEmitter<TParent extends DocumentDnd35e<any>> {
    * Register a check function for a specific event type.
    */
   registerChangeEventCheck<TPayload>(event: string, check: EventChecker<TPayload>, priority: number = 0): void {
-    if (this._registeredUpdateEventChecks.has({ event, check, priority })) {
+    if ([...this._registeredUpdateEventChecks].some(
+      x => x.event === event
+      && x.check === check
+      && x.priority === priority
+    )) {
       this._registeredUpdateEventChecks.delete({ event, check, priority });
     }
     this._registeredUpdateEventChecks.add({ event, check, priority });
@@ -113,7 +117,7 @@ class DocumentEventEmitter<TParent extends DocumentDnd35e<any>> {
     return {
       token,
       event,
-      cancel: () => this.off(event, handler),
+      cancel: () => this.cancel(token),
     };
   }
 

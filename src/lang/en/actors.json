@@ -60,7 +60,6 @@
           "total": { "label": "Init" }
         },
         "level": { "label": "Level" },
-        "notes": { "label": "Notes" },
         "encumbrance": {
           "label": "Encumbrance",
           "carriedWeight":   { "label": "Carried Weight" },
@@ -205,6 +204,12 @@
           "fly":    { "label": "Fly Speed",    "familiarLabel": "Fly",    "familiarAliases": [], "base": { "label": "Fly",    "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Fly Speed",    "familiarLabel": "Total", "familiarAliases": [] } },
           "burrow": { "label": "Burrow Speed", "familiarLabel": "Burrow", "familiarAliases": [], "base": { "label": "Burrow", "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Burrow Speed", "familiarLabel": "Total", "familiarAliases": [] } },
           "flyManeuverability": { "label": "Fly Maneuverability", "familiarLabel": "Maneuverability", "familiarAliases": [] }
+        },
+        "notes": { "label": "Notes", "placeholder": "Enter notes here..." },
+        "sessionNotes": { "label": "Session Notes", "placeholder": "Notes from recent sessions, reminders, loose ends..." },
+        "bio": {
+          "label": "Biography",
+          "placeholder": "Character biography, backstory, appearance, personality..."
         }
       },
       "sheet": {
@@ -281,12 +286,6 @@
         "physical": "Physical",
         "addLanguage": "Add language...",
         "removeLanguage": "Remove"
-      },
-      "field": {
-        "Biography": "Biography",
-        "BiographyPlaceholder": "Character biography, backstory, appearance, personality...",
-        "SessionNotes": "Session Notes",
-        "SessionNotesPlaceholder": "Notes from recent sessions, reminders, loose ends..."
       }
     },
     "LANGUAGE_OPTIONS": {

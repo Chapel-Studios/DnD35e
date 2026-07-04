@@ -35,7 +35,7 @@
       <option
         v-for="opt in props.options"
         :key="opt.value"
-        :value="opt.label ?? opt.value"
+        :value="opt.value"
         :disabled="opt.disabled"
       />
     </datalist>
@@ -55,7 +55,7 @@
     <option
       v-for="opt in props.options"
       :key="opt.value"
-      :value="opt.label ?? opt.value"
+      :value="opt.value"
     >
       {{ opt.label ?? opt.value }}
     </option>

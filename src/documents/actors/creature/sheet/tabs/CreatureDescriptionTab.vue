@@ -1,5 +1,8 @@
 <template>
-  <ActorDescriptionTab description-label="dnd35e.ACTOR.field.Biography">
+  <ActorDescriptionTab
+    description-label="dnd35e.ACTOR.FIELDS.bio.label"
+    description-placeholder="dnd35e.ACTOR.FIELDS.bio.placeholder"
+  >
     <template #prepend>
       <slot name="header" />
       <IdentitySection />

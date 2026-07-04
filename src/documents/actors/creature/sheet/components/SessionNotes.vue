@@ -2,7 +2,8 @@
   <RichTextEditorFormGroup 
     field-path="system.notes" 
     class="notes-editor"
-    placeholder="dnd35e.ACTOR.FIELDS.SessionNotesPlaceholder"
+    label="dnd35e.ACTOR.FIELDS.sessionNotes.label"
+    placeholder="dnd35e.ACTOR.FIELDS.sessionNotes.placeholder"
   />
 </template>
 
