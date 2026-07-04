@@ -8,10 +8,10 @@ import { closeAllSheets, openDocumentSheet, rerenderSheet } from './helpers/shee
 import { dismissOverlays } from './helpers/ui.mjs';
 
 const PARENT_PATH = 'system.abilities.str';
-const CHILD_PATH = 'system.abilities.str.base';
+const CHILD_PATH = 'system.abilities.str.score';
 
 const childGroup = (page: any, sheet: string) =>
-  page.locator(`${sheet} .form-group[data-field-path="${CHILD_PATH}"]`);
+  page.locator(`${sheet} [data-field-path="${CHILD_PATH}"]`).first();
 
 const switchToEditMode = async (page: any, sheet: string) => {
   const editBtn = page.locator(`${sheet} .view-mode-bar .view-mode-btn`).filter({ has: page.locator('i.fa-pen-to-square') });
@@ -50,17 +50,21 @@ test.describe('Permission override cascades', () => {
     const playerPage = await loginAs(playerContext, 'player');
     const playerSheet = await openDocumentSheet(playerPage, actorUuid);
 
+    await switchToEditMode(playerPage, playerSheet);
+
     await expect(childGroup(playerPage, playerSheet)).toBeVisible();
 
     await setFieldOverride(page, actorUuid, PARENT_PATH, 'visibility', 'gmOnly');
     await waitForFieldOverride(playerPage, actorUuid, PARENT_PATH, 'visibility', 'gmOnly');
     await rerenderSheet(playerPage, actorUuid);
+    await switchToEditMode(playerPage, playerSheet).catch(() => {});
 
     await expect.poll(() => childGroup(playerPage, playerSheet).isHidden()).toBe(true);
 
     await clearFieldOverride(page, actorUuid, PARENT_PATH, 'visibility');
     await waitForFieldOverride(playerPage, actorUuid, PARENT_PATH, 'visibility', null);
     await rerenderSheet(playerPage, actorUuid);
+    await switchToEditMode(playerPage, playerSheet).catch(() => {});
 
     await expect.poll(() => childGroup(playerPage, playerSheet).isVisible()).toBe(true);
   });

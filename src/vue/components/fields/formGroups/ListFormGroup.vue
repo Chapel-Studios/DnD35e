@@ -150,7 +150,7 @@
   });
 
   function addItem(): void {
-    props.onAddItem();
+    props.addItem();
   }
 
   function updateItem(index: number, value: TItem): void {

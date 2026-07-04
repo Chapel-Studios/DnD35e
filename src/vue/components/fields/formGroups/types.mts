@@ -90,12 +90,12 @@ interface ListFormGroupProps<TItem, TUpdateData = TItem[]> extends Omit<FormGrou
    * sensible defaults) and pushing it to the field. If omitted, the add
    * button is hidden.
    */
-  onAddItem: () => void | boolean | Promise<void> | Promise<boolean>;
+  addItem: () => void | boolean | Promise<void> | Promise<boolean>;
 }
 
 interface CoinageFormGroupProps extends Omit<
   ListFormGroupProps<CoinStack, PriceSource>,
-  'value' | 'addButtonTitle' | 'removeButtonTitle' | 'onAddItem'
+  'value' | 'addButtonTitle' | 'removeButtonTitle' | 'addItem'
 > {
   value?: PriceSource | null;
   /** Optional: max count per stack (0 = unlimited) */
@@ -109,7 +109,7 @@ interface CoinageFormGroupProps extends Omit<
   /** Optional override: localization key for "remove item" button title */
   removeButtonTitle?: string;
   /** Optional override: Called when the user clicks the add-item button. */
-  onAddItem?: () => void | boolean | Promise<void> | Promise<boolean>;
+  addItem?: () => void | boolean | Promise<void> | Promise<boolean>;
 }
 
 interface SelectOption<TValue> {

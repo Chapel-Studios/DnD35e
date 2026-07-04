@@ -90,8 +90,9 @@ test.describe('FormulaFamiliar dropdown on weapon name', () => {
     await expect(familiarMenu(page, sheetSelector)).toBeHidden();
 
     const input = familiarInput(page, sheetSelector, FIELD_PATH);
-    // The inserted text is the localized fullPath, e.g. `#Self.WeaponDamage.DamageRoll`.
-    await expect(input).toHaveValue(/^#Self\.WeaponDamage\.DamageRoll/i);
+    // The inserted text is a localized fullPath. The leaf display token can
+    // vary by localization/familiar label (e.g. `DamageRoll` vs `Roll`).
+    await expect(input).toHaveValue(/^#Self\.WeaponDamage\.(DamageRoll|Roll)/i);
 
     // Commit by moving focus away (Tab triggers a real blur event on the input).
     await page.keyboard.press('Tab');

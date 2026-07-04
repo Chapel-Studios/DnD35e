@@ -7,7 +7,7 @@
     empty-label="dnd35e.CREATURE.FIELDS.bio.senses.empty"
     :default-visibility="ownerPlusVisibility"
     :default-editability="gmOnlyEditability"
-    :on-add-item="addSense"
+    :add-item="addSense"
     :on-update="sensesUpdater"
     class="creature-senses"
   >

@@ -3,7 +3,7 @@
     field-path="system.bio.languages"
     add-button-title="dnd35e.ACTOR.bio.addLanguage"
     remove-button-title="dnd35e.ACTOR.bio.removeLanguage"
-    :on-add-item="addNewLanguage"
+    :add-item="addNewLanguage"
     :on-update="fieldUpdater"
     :value="projectedValue"
     class="languages-list"

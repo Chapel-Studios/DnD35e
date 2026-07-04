@@ -21,7 +21,7 @@ test.describe('Label override verification', () => {
     const actorUuid = await createActor(page, 'character', { name: 'Abbreviation Test' });
     const sheet = await openDocumentSheet(page, actorUuid);
 
-    const strGroup = page.locator(`${sheet} .form-group[data-field-path="system.abilities.str.base"]`).first();
+    const strGroup = page.locator(`${sheet} .form-group[data-field-path="system.abilities.str.score"]`).first();
 
     await expect(strGroup).toBeVisible();
     await expect(strGroup.locator('.form-group-label')).toContainText(/STR/i);
