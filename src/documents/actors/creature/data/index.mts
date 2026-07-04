@@ -3,7 +3,7 @@ export type {
   AbilityScoresOf,
   AbilityScoreSource,
   AlignmentData,
-  BioData,
+  BioSource,
   CreatureSystemData,
   CreatureSystemSource,
   CreatureSystemSourceProperties,

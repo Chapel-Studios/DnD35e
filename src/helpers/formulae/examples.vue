@@ -27,7 +27,7 @@
 
   import { FormulaFormGroup } from './index.mjs';
   import { buildContextFromFormula } from './registry.mjs';
-  import type { FamiliarSchema } from './types.mjs';
+  import type { FamiliarSchema } from './types.mts';
 
   const formulaValue = ref('');
 

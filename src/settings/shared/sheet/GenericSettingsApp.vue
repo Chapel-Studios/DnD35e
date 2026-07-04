@@ -19,6 +19,15 @@
             </option>
           </select>
         </template>
+        <template v-else-if="field.type === 'formula'">
+          <FormulaSettingsGroup
+            :id="field.key"
+            :label="field.label"
+            :hint="field.hint"
+            :value="String(getFieldValue(field.key) ?? '')"
+            :on-update="value => onUpdate(field.key, value)"
+          />
+        </template>
         <template v-else-if="field.type === 'boolean'">
           <input
             type="checkbox"
@@ -57,9 +66,10 @@
 </template>
 
 <script setup lang="ts">
-  // Removed form group imports; using native controls inline
   import type { SettingsSection } from '@settings/core/types.mjs';
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
+
+  import FormulaSettingsGroup from './components/FormulaSettingsGroup.vue';
 
   const props = defineProps<{
     context: VueSettingsContext<Record<string, unknown>>;
@@ -78,8 +88,6 @@
   function getFieldValue(key: string): unknown {
     return props.context.data[key];
   }
-
-
 
   function onUpdate(key: string, value: unknown): void {
     props.onUpdateData(key, value);
@@ -135,6 +143,12 @@
       border: 1px solid var(--color-border);
       border-radius: 3px;
       font-size: 1em;
+    }
+
+    .death-threshold-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
     }
 
     input[type="checkbox"] {

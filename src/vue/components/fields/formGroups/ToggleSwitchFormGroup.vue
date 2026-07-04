@@ -7,7 +7,7 @@
     :default-editability="defaultEditability"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
   >
     <div class="form-fields">
       <ToggleSwitch
@@ -37,7 +37,7 @@
 
   import ToggleSwitch from '../ToggleSwitch.vue';
   import FormGroup from './FormGroup.vue';
-  import type { ToggleSwitchFormGroupProps } from './types.mjs';
+  import type { ToggleSwitchFormGroupProps } from './types.mts';
 
   const props = defineProps<ToggleSwitchFormGroupProps>();
 

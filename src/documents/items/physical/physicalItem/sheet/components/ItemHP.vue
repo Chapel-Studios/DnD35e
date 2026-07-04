@@ -5,6 +5,7 @@
     :default-visibility="ownerPlusVisibility"
     :default-editability="gmOnlyEditability"
     class="item-hp-section"
+    column
   >
     <NumberFormGroup
       field-path="system.hp.current"

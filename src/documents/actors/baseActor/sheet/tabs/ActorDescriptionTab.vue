@@ -1,16 +1,13 @@
 <template>
   <div class="actor-tab actor-description-tab">
-    <RichTextEditorFormGroup
-      :label="descriptionLabel"
-      field-path="system.description"
-      class="description-editor"
-    />
-    <slot />
+    <slot name="prepend" />
+    <DescriptionEditor />
+    <slot name="append" />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { RichTextEditorFormGroup } from '@vc/fields/index.mjs';
+  import { DescriptionEditor } from '@documents/document/index.mjs';
 
   withDefaults(defineProps<{
     descriptionLabel?: string;

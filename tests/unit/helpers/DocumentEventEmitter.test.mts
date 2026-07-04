@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DocumentEventEmitter } from '../../../src/helpers/DocumentEventEmitter.mjs';
+import { DocumentEventEmitter } from '../../../src/helpers/documentEvents/DocumentEventEmitter.mjs';
 
 // DocumentEventEmitter uses Hooks.onError for error forwarding.
 // Stub it globally so tests that trigger errors don't throw.
@@ -8,14 +8,14 @@ const hooksMock = { onError: vi.fn() };
 vi.stubGlobal('Hooks', hooksMock);
 
 describe('DocumentEventEmitter', () => {
-  let emitter: DocumentEventEmitter;
+  let emitter: DocumentEventEmitter<any>;
 
   afterAll(() => {
     vi.unstubAllGlobals();
   });
 
   beforeEach(() => {
-    emitter = new DocumentEventEmitter();
+    emitter = new DocumentEventEmitter({} as any);
     hooksMock.onError.mockClear();
   });
 
@@ -32,8 +32,8 @@ describe('DocumentEventEmitter', () => {
 
     it('returns an unsubscribe function that stops delivery', async () => {
       const handler = vi.fn();
-      const off = emitter.on('test', handler);
-      off();
+      const registration = emitter.on('test', handler);
+      registration.cancel();
       await emitter.emit('test', {});
       expect(handler).not.toHaveBeenCalled();
     });
@@ -80,8 +80,8 @@ describe('DocumentEventEmitter', () => {
 
     it('returns an unsubscribe function usable before first fire', async () => {
       const handler = vi.fn();
-      const off = emitter.once('test', handler);
-      off();
+      const registration = emitter.once('test', handler);
+      registration.cancel();
       await emitter.emit('test', 'x');
       expect(handler).not.toHaveBeenCalled();
     });

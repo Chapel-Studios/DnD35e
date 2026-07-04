@@ -2,6 +2,8 @@
  * Game Rules settings registration
  */
 
+import { DEFAULT_AVAILABLE_LANGUAGES_OPTIONS } from '@constants/languages.mjs';
+
 import { SYSTEM_ID } from '../shared.mjs';
 import {
   DEFAULT_DAMAGE_REDUCTION_TYPES,
@@ -150,6 +152,24 @@ function registerGameRulesSettings(): void {
     config: false,
     type: Object,
     default: DEFAULT_DAMAGE_REDUCTION_TYPES,
+  });
+
+  game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.ALLOW_CUSTOM_LANGUAGES, {
+    name: 'dnd35e.SETTINGS.AllowCustomLanguages.Name',
+    hint: 'dnd35e.SETTINGS.AllowCustomLanguages.Hint',
+    scope: 'world',
+    config: false,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register(SYSTEM_ID, GAME_RULES_KEYS.AVAILABLE_LANGUAGE_OPTIONS, {
+    name: 'dnd35e.SETTINGS.AvailableLanguageOptions.Name',
+    hint: 'dnd35e.SETTINGS.AvailableLanguageOptions.Hint',
+    scope: 'world',
+    config: false,
+    type: Object,
+    default: DEFAULT_AVAILABLE_LANGUAGES_OPTIONS,
   });
 }
 

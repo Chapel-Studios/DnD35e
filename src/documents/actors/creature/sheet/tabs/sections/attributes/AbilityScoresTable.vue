@@ -14,13 +14,13 @@
         <td class="col-base ability-base-cell">
           <NumberFormGroup
             :label="`dnd35e.ABILITY.${ability.key}.abbr`"
-            :value="ability.base"
-            :field-path="`system.abilities.${ability.key}.base`"
+            :value="ability.score"
+            :field-path="`system.abilities.${ability.key}.score`"
             class="ability-score-input"
             :show-label="false"
           />
         </td>
-        <td class="col-total ability-total">{{ ability.base }}</td>
+        <td class="col-total ability-total">{{ ability.score }}</td>
         <td class="col-mod ability-mod" :class="{ positive: ability.mod >= 0, negative: ability.mod < 0 }">
           {{ formatMod(ability.mod) }}
         </td>
@@ -46,7 +46,7 @@
   const abilities = computed(() =>
     ABILITY_KEYS.map((key) => ({
       key,
-      base: (getViewAwareFieldValue<number>(`system.abilities.${key}.base`) ?? 10) as number,
+      score: (getViewAwareFieldValue<number>(`system.abilities.${key}.score`) ?? 10) as number,
       mod:  (getViewAwareFieldValue<number>(`system.abilities.${key}.mod`)  ?? 0)  as number,
     }))
   );

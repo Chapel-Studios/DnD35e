@@ -17,11 +17,12 @@
 </template>
 
 <script setup lang="ts">
+  import { stripSpecialCharacters } from '@helpers/stringHelpers.mjs';
   import type { SettingsTableItem } from '@settings/shared/sheet/SettingsTable/index.mjs';
   import { AUTO_ID_MARKER, SettingsTable } from '@settings/shared/sheet/SettingsTable/index.mjs';
   import { computed, ref } from 'vue';
 
-  import type { DamageReductionTypesConfig } from '../types.mjs';
+  import type { DamageReductionTypesConfig } from '../types.mts';
 
   const CUSTOM_PREFIX = 'custom_';
 
@@ -48,8 +49,26 @@
     }));
   });
 
+  /** Strip AUTO_ID_MARKER from config keys before emitting so stored IDs are always clean. */
+  function stripAutoMarkers(cfg: DamageReductionTypesConfig): DamageReductionTypesConfig {
+    const result: DamageReductionTypesConfig = {};
+    for (const [key, entry] of Object.entries(cfg)) {
+      const markerIdx = key.indexOf(AUTO_ID_MARKER);
+      if (markerIdx === -1) {
+        result[key] = entry;
+        continue;
+      }
+      const suffix = key.slice(markerIdx + AUTO_ID_MARKER.length);
+      const finalKey = suffix
+        ? `${CUSTOM_PREFIX}${suffix}`
+        : `${CUSTOM_PREFIX}${stripSpecialCharacters(entry.label)}`;
+      result[finalKey] = entry;
+    }
+    return result;
+  }
+
   function emitUpdate(): void {
-    emit('update:modelValue', foundry.utils.deepClone(config.value));
+    emit('update:modelValue', stripAutoMarkers(foundry.utils.deepClone(config.value)));
   }
 
   function addType(): void {

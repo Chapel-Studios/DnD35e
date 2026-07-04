@@ -60,7 +60,7 @@ export default defineConfig({
   // cost when iterating locally). Spawns a fresh instance otherwise.
   webServer: foundryMainJs
     ? {
-      command: `node "${foundryMainJs}" --dataPath="${dataDir}" --world=dnd35e-e2e --port=${e2ePort} --noupdate`,
+      command: 'node scripts/run-e2e-foundry.mjs',
       url: `${baseURL}/join`,
       reuseExistingServer: true,
       timeout: 90_000,

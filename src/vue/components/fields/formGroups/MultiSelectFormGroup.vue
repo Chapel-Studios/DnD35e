@@ -8,7 +8,7 @@
     :default-editability="defaultEditability"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
   >
     <div class="multi-select-checkboxes">
       <label
@@ -59,7 +59,7 @@
   import { computed, inject } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { MultiSelectFormGroupProps } from './types.mjs';
+  import type { MultiSelectFormGroupProps } from './types.mts';
 
   const props = defineProps<MultiSelectFormGroupProps<TValue>>();
 
@@ -117,6 +117,7 @@
     display: grid;
     gap: 0.25rem;
     grid-template-columns: repeat(auto-fill, minmax(150px, max-content));
+    grid-auto-flow: row;
     width: 100%;
     padding: 0 1.5rem 0.5rem;
     justify-content: space-between;

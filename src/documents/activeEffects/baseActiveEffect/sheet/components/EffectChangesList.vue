@@ -57,7 +57,7 @@
             :on-update="(val: string) => updateChangeField(index, 'value', val)"
             :disabled="!isChangeEditable(index) || change.isSystem"
             :contexts="getContextsForTarget(change.target ?? 'item')"
-            :show-field-controls="false"
+            hide-field-controls
           />
 
           <select

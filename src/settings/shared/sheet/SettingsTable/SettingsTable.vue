@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
   import SettingsTableRow from './SettingsTableRow.vue';
-  import type { IdConfig, SettingsTableColumn, SettingsTableItem } from './types.mjs';
+  import type { IdConfig, SettingsTableColumn, SettingsTableItem } from './types.mts';
 
   withDefaults(defineProps<{
     items: SettingsTableItem[];

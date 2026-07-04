@@ -25,6 +25,7 @@
         "Hint": "Configure combat automation and mechanics.",
         "Title": "Combat Configuration",
         "Weapons": "Weapons",
+        "DeathAndDying": "Death and Dying",
         "Ammunition": "Ammunition",
         "Spellpoints": "Spellpoints",
         "Vision": "Vision",
@@ -117,6 +118,27 @@
       "AutoScaleAttacksBab": {
         "Name": "Auto-Scale Attacks",
         "Hint": "Automatically generate iterative attacks based on BAB."
+      },
+      "PartyMemberDeathThreshold": {
+        "Name": "Party Member Death Threshold",
+        "Hint": "Death threshold used for party members. Enter a fixed number or a formula such as '-10' or '-#Self.Con.Score'"
+      },
+      "StandardActorDeathThreshold": {
+        "Name": "Standard Actor Death Threshold",
+        "Hint": "Death threshold used for non-party actors. Enter a fixed number or a formula such as '0' or '-#Self.Con.Score'"
+      },
+      "DeathThreshold": {
+        "ModeLabel": "Death Threshold Override",
+        "ModeHint": "Use the world default or provide a custom formula for this actor.",
+        "Mode": {
+          "Default": "Use World Default",
+          "Custom": "Custom Formula"
+        },
+        "Formula": {
+          "Name": "Custom Death Threshold Formula",
+          "Hint": "Enter a formula or number for this actor. Examples: '-10', '-#Self.AbilityScores.Con.Score', '0'",
+          "Placeholder": "e.g. '-10' or '-#Self.AbilityScores.Con.Score'"
+        }
       },
       "AllowNoAmmo": {
         "Name": "Allow No Ammo",
@@ -272,7 +294,7 @@
         "Hint": "Hide the players list panel."
       },
       "SkillSettings": {
-        "Name": "Skill Settings",
+        "Label": "Skill Settings",
         "Title": "Skill Configuration",
         "Visibility": "Visibility",
         "VisibilityInstructions": "Configure which skills are visible.",
@@ -327,6 +349,18 @@
         "IdColumn": "ID",
         "LabelColumn": "Type",
         "None": "No damage reduction types configured."
+      },
+      "AvailableLanguageOptions": {
+        "Name": "Available Language Options",
+        "Hint": "Configure which languages are available in your world.",
+        "Label": "Available Language Options",
+        "IdColumn": "ID",
+        "LabelColumn": "Language",
+        "None": "No languages configured."
+      },
+      "AllowCustomLanguages": {
+        "Name": "Allow players to enter custom languages?",
+        "Hint": "When enabled, players can type any language name. When disabled, they must choose from the available languages list."
       }
     },
     "Currency": {

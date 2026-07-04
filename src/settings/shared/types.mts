@@ -6,6 +6,7 @@
  * store, settings sheet, helpers).
  */
 
+import type { DeathThresholdSetting } from '../combat/deathThreshold.mjs';
 import type { CurrencyConfig } from '../currency/types.mjs';
 import type { PartyHudMode, UnitSystem } from '../display/types.mjs';
 import type { DamageReductionTypesConfig, DiagonalMovementRule, ExperienceRate } from '../gameRules/types.mjs';
@@ -56,6 +57,8 @@ export interface SystemSettings {
   autoScaleAttacksBab: boolean;
   allowNoAmmo: boolean;
   useAutoAmmoRecovery: boolean;
+  partyMemberDeathThreshold: DeathThresholdSetting;
+  standardActorDeathThreshold: DeathThresholdSetting;
 
   // Display settings
   units: UnitSystem;

@@ -12,7 +12,7 @@
     :disabled="props.disabled"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
     :default-editability="props.defaultEditability"
     :default-visibility="props.defaultVisibility"
   >
@@ -29,13 +29,14 @@
 
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import { roundToDecimal } from '@helpers/math.mjs';
   import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
   import type { SettingsStore } from '@settings/index.mjs';
   import { SettingsStoreSymbol } from '@settings/index.mjs';
   import { computed, inject, useSlots } from 'vue';
 
   import NumberFormGroup from './NumberFormGroup.vue';
-  import type { ForcedUnitNumberFormGroupProps } from './types.mjs';
+  import type { ForcedUnitNumberFormGroupProps } from './types.mts';
 
   const slots = useSlots();
 
@@ -62,7 +63,7 @@
     const value = props.value !== undefined
       ? props.value
       : getViewAwareFieldValue<number>(props.fieldPath);
-    return Math.roundDecimals(convertToLocalizedDistance(value ?? 0), 2);
+    return roundToDecimal(convertToLocalizedDistance(value ?? 0), 2);
   });
 
   // Projection callback: convert localized display units back to stored distance units.

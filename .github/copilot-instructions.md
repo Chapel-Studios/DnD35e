@@ -154,7 +154,7 @@ FormGroup exposes `{ editable: boolean }` as a scoped slot prop on `#controls`. 
 ### Control Button Styling (`.field-control-btn`)
 **Firefox scoped CSS bug**: Firefox sometimes fails to apply `[data-v-xxx]` attribute selectors on elements that are slotted into a different component's DOM. This affects all buttons rendered inside `#controls` slots.
 
-**Rule**: All custom buttons in `#controls` slots MUST use the global `.field-control-btn` class from `src/styles/core.scss` for base styling. Do NOT rely on scoped `<style>` for these buttons. Component-specific additions (e.g. custom width, active state colors) may use scoped styles, but the base appearance must come from `.field-control-btn`.
+**Rule**: All custom buttons in `#controls` slots MUST use the global `.field-control-btn` class from `src/styles/_helpers.scss` (merged via `src/styles/core.scss`) for base styling. Do NOT rely on scoped `<style>` for these buttons. Component-specific additions (e.g. custom width, active state colors) may use scoped styles, but the base appearance must come from `.field-control-btn`.
 
 The `.field-control-btn` class provides: transparent background, no border, 0.5 opacity, hover effects (opacity 1, slight lift), consistent font size and padding. Use `.is-active` modifier for active/toggled state (warning color).
 

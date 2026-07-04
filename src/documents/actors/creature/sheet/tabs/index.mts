@@ -1,10 +1,10 @@
+import ActorDescriptionTab from '@actors/baseActor/sheet/tabs/ActorDescriptionTab.vue';
 import type { SheetTab } from '@documents/document/index.mjs';
 
 import AttributesTab from './AttributesTab.vue';
-import BioTab from './bio/BioTab.vue';
 import BuffsTab from './BuffsTab.vue';
-import CharacterDescriptionTab from './CharacterDescriptionTab.vue';
 import CombatTab from './CombatTab.vue';
+import CreatureDescriptionTab from './CreatureDescriptionTab.vue';
 import FeaturesTab from './FeaturesTab.vue';
 import InventoryTab from './InventoryTab.vue';
 import SettingsTab from './SettingsTab.vue';
@@ -74,41 +74,41 @@ const spellsTab: SheetTab = {
   icon: 'fas fa-hat-wizard',
 };
 
-const notesTab: SheetTab = {
+const creatureNotesTab: SheetTab = {
+  ...ActorDescriptionTab,
   id: 'notes',
   label: 'dnd35e.ACTOR.tab.Notes',
   tooltip: 'dnd35e.ACTOR.tab.Notes',
-  component: CharacterDescriptionTab,
+  component: CreatureDescriptionTab,
   order: 80,
   icon: 'fas fa-book-open',
 };
 
-const bioTab: SheetTab = {
-  id: 'bio',
-  label: 'dnd35e.ACTOR.tab.Bio',
-  tooltip: 'dnd35e.ACTOR.tab.Bio',
-  component: BioTab,
-  order: 90,
-  icon: 'fas fa-user',
-};
+// const bioTab: SheetTab = {
+//   id: 'bio',
+//   label: 'dnd35e.ACTOR.tab.Bio',
+//   tooltip: 'dnd35e.ACTOR.tab.Bio',
+//   component: BioTab,
+//   order: 90,
+//   icon: 'fas fa-user',
+// };
 
 const settingsTab: SheetTab = {
   id: 'settings',
   label: 'dnd35e.ACTOR.tab.Settings',
   tooltip: 'dnd35e.ACTOR.tab.Settings',
   component: SettingsTab,
-  order: 100,
+  order: 90,
   icon: 'fas fa-cog',
 };
 
 export {
   attributesTab,
-  bioTab,
   buffsTab,
   combatTab,
+  creatureNotesTab,
   featuresTab,
   inventoryTab,
-  notesTab,
   settingsTab,
   skillsTab,
   spellsTab,

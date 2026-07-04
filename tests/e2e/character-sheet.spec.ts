@@ -27,7 +27,7 @@ test.describe('character sheet — Story 1', () => {
 
     // Edit the visible STR base input (10 → 14).
     const strInput = page
-      .locator(`${sheet} [data-field-path="system.abilities.str.base"] input[type="number"]`)
+      .locator(`${sheet} [data-field-path="system.abilities.str.score"] input[type="number"]`)
       .filter({ visible: true })
       .first();
     await expect(strInput).toBeVisible({ timeout: 10_000 });
@@ -54,7 +54,7 @@ test.describe('character sheet — Story 1', () => {
 
     // Wait for a known field to ensure the sheet body is mounted.
     await expect(
-      page.locator(`${sheet} [data-field-path="system.abilities.str.base"] input[type="number"]`).first()
+      page.locator(`${sheet} [data-field-path="system.abilities.str.score"] input[type="number"]`).first()
     ).toBeVisible({ timeout: 10_000 });
 
     // Switch to the Notes tab.

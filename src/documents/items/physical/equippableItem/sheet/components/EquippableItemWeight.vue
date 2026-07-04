@@ -1,6 +1,6 @@
 <template>
   <ItemWeight>
-    <template v-if="isEditMode" #controls>
+    <template v-if="isEditMode" #edit-only-controls>
       <button
         class="field-control-btn weightless-toggle"
         type="button"

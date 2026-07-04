@@ -1,3 +1,4 @@
+import { DEFAULT_AVAILABLE_LANGUAGES_OPTIONS } from '@constants/languages.mjs';
 import { SIZES } from '@constants/sizes.mjs';
 import { registerConfigPreLocalization } from '@helpers/localization/preLocalizeConfig.mjs';
 import { WEAPON_TYPES } from '@items/physical/weapon/data/constants.mjs';
@@ -13,6 +14,13 @@ const SIZES_CONFIG = Object.fromEntries(
  */
 const DAMAGE_REDUCTION_TYPES_CONFIG = Object.fromEntries(
   Object.entries(DEFAULT_DAMAGE_REDUCTION_TYPES).map(([key, entry]) => [
+    key,
+    { label: entry.label }, // i18n key, to be pre-localized
+  ])
+);
+
+const DEFAULT_AVAILABLE_LANGUAGES_CONFIG = Object.fromEntries(
+  Object.entries(DEFAULT_AVAILABLE_LANGUAGES_OPTIONS).map(([key, entry]) => [
     key,
     { label: entry.label }, // i18n key, to be pre-localized
   ])
@@ -43,6 +51,7 @@ const SystemConfig = {
   },
   gameRules: {
     damageReductionTypes: DAMAGE_REDUCTION_TYPES_CONFIG,
+    availableLanguageOptions: DEFAULT_AVAILABLE_LANGUAGES_CONFIG,
   },
   actor: {
     documentClasses: {
@@ -53,5 +62,6 @@ const SystemConfig = {
 registerConfigPreLocalization('item.enums.sizes', { key: 'label' });
 registerConfigPreLocalization('item.enums.weaponTypes', { key: 'label' });
 registerConfigPreLocalization('gameRules.damageReductionTypes', { key: 'label' });
+registerConfigPreLocalization('gameRules.availableLanguageOptions', { key: 'label' });
 
 export { SystemConfig };

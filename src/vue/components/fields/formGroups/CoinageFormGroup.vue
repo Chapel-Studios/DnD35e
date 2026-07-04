@@ -7,10 +7,10 @@
     :default-visibility="defaultVisibility"
     :default-editability="defaultEditability"
     :on-update="updateCoinStacks"
-    :on-add-item="addCoinStack"
+    :add-item="addCoinStack"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
     :label="label"
     :hint="hint"
     class="coinage-form-group"
@@ -71,10 +71,10 @@
     coinageVisibilityGmSelect,
   } from '@settings/currency/index.mjs';
   import { type SelectOption, ValueUnitInput } from '@vc/fields/index.mjs';
-  import { computed, inject } from 'vue';
+  import { computed, inject, ref, watch } from 'vue';
 
   import ListFormGroup from './ListFormGroup.vue';
-  import type { CoinageFormGroupProps } from './types.mjs';
+  import type { CoinageFormGroupProps } from './types.mts';
 
   const props = defineProps<CoinageFormGroupProps>();
 
@@ -92,6 +92,9 @@
     isGM,
     documentActions: {
       getViewAwareFieldUpdater,
+    },
+    _storeUtils: {
+      getSourceProperty,
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
   
@@ -112,7 +115,7 @@
 
   // Explicit inverse mapping for projection-pair contract (CoinStack[] -> PriceSource).
   const updateCoinStacks = (stacks: CoinStack[] | null): void => {
-    fieldUpdater(CurrencyData.toSource(stacks ?? []));
+    commitStacks(stacks ?? []);
   };
 
   const projectedValue = computed<PriceSource>(() => {
@@ -122,14 +125,29 @@
       : (viewAwareValue ?? CurrencyData.toSource([]));
   });
 
-  /** The stacks currently shown in the edit UI. */
-  const editStacks = computed((): CoinStack[] => {
+  const sourcePrice = getSourceProperty<PriceSource>(props.fieldPath);
+  const projectedStacks = ref<CoinStack[]>([]);
+
+  const cloneStacks = (stacks: CoinStack[]): CoinStack[] => stacks.map((stack) => ({
+    coinId: stack.coinId,
+    count: stack.count,
+  }));
+
+  const baseEditStacks = computed((): CoinStack[] => {
     if (props.value !== undefined) return projectedValue.value.stacks ?? [];
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) {
       return projectedValue.value?.stacks ?? [];
     }
-    const sourceValue = getViewAwareFieldValue<PriceSource>(props.fieldPath, true);
-    return sourceValue?.stacks ?? projectedValue.value.stacks ?? [];
+    return sourcePrice.value?.stacks ?? projectedValue.value.stacks ?? [];
+  });
+
+  watch(baseEditStacks, (nextStacks) => {
+    projectedStacks.value = cloneStacks(nextStacks ?? []);
+  }, { immediate: true, deep: true });
+
+  /** The stacks currently shown in the edit UI. */
+  const editStacks = computed((): CoinStack[] => {
+    return projectedStacks.value;
   });
 
   const hasEditStacks = computed(() => editStacks.value.length > 0);
@@ -188,6 +206,11 @@
 
   // ─── Actions ────────────────────────────────────────────────────────────────
 
+  function commitStacks(stacks: CoinStack[]): void {
+    projectedStacks.value = cloneStacks(stacks);
+    fieldUpdater(CurrencyData.toSource(stacks));
+  }
+
   function addCoinStack(): void {
     const nextCoin = getNextAvailableCoin();
     if (!nextCoin) return; // All coins already in use
@@ -196,7 +219,7 @@
       coinId: nextCoin.id,
       count: 0,
     };
-    fieldUpdater(CurrencyData.toSource([...editStacks.value, newStack]));
+    projectedStacks.value = [...editStacks.value, newStack];
   }
 
   function updateStackCount(index: number, rawValue: number): void {
@@ -204,14 +227,14 @@
     const newStacks = editStacks.value.map((stack, i) =>
       i === index ? { ...stack, count: Math.max(0, count) } : stack
     );
-    fieldUpdater(CurrencyData.toSource(newStacks));
+    commitStacks(newStacks);
   }
 
   function updateStackCoin(index: number, coinId: string): void {
     const newStacks = editStacks.value.map((stack, i) =>
       i === index ? { ...stack, coinId } : stack
     );
-    fieldUpdater(CurrencyData.toSource(newStacks));
+    commitStacks(newStacks);
   }
 
   /**
@@ -221,7 +244,7 @@
   function consolidatePrice(): void {
     if (editStacks.value.length === 0) return;
     const consolidated = new CurrencyData({ stacks: editStacks.value }).consolidate();
-    fieldUpdater(CurrencyData.toSource(consolidated));
+    commitStacks(consolidated);
   }
 </script>
 

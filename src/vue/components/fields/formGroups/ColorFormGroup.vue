@@ -34,7 +34,7 @@
   import { computed, inject } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { ColorFormGroupProps } from './types.mjs';
+  import type { ColorFormGroupProps } from './types.mts';
 
   const props = defineProps<ColorFormGroupProps>();
 

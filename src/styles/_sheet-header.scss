@@ -1,0 +1,44 @@
+// Sheet header controls
+
+/* View mode bar — 3-state button bar in sheet header */
+.window-header {
+  .view-mode-bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: none;
+    margin-right: 4px;
+    background: color-mix(in srgb, var(--color-cool-5) 40%, transparent);
+    border-radius: 4px;
+    padding: 1px 2px;
+
+    .view-mode-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      margin: 0;
+      font-size: var(--font-size-14);
+      color: var(--color-text-light-6);
+      opacity: 0.5;
+      border-radius: 3px;
+      transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+      line-height: 1;
+
+      &:hover {
+        opacity: 0.8;
+        background: color-mix(in srgb, var(--color-cool-5) 60%, transparent);
+      }
+
+      &.active {
+        opacity: 1;
+        color: var(--color-text-primary);
+        background: color-mix(in srgb, var(--color-cool-5) 80%, transparent);
+      }
+
+      i {
+        pointer-events: none;
+      }
+    }
+  }
+}

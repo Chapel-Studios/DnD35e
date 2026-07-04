@@ -2,10 +2,10 @@ import Roll from '../roll.mjs';
 import { DiceTerm, RollTerm, RollTermData } from './_module.mjs';
 import { Evaluated } from './term.mjs';
 
-export default class FunctionTerm<TFunctionName extends MathFunctionName = MathFunctionName> extends RollTerm<
+export default class FunctionTerm<TFunctionName extends string = MathFunctionName> extends RollTerm<
     FunctionTermData<TFunctionName>
 > {
-  constructor({ fn, terms, options }: FunctionTermData<TFunctionName>);
+  constructor({ fn, terms, rolls, result, options }: FunctionTermData<TFunctionName>);
 
   /** The named function in the Math environment which should be applied to the term */
   fn: TFunctionName;
@@ -17,11 +17,11 @@ export default class FunctionTerm<TFunctionName extends MathFunctionName = MathF
   rolls: Roll[];
 
   /** The cached result of evaluating the method arguments */
-  result: number | undefined;
+  result: string | number | undefined;
 
   override isIntermediate: true;
 
-  static override SERIALIZE_ATTRIBUTES: ['fn', 'terms'];
+  static override SERIALIZE_ATTRIBUTES: ['fn', 'terms', 'rolls', 'result'];
 
   /* -------------------------------------------- */
   /*  Math Term Attributes                        */
@@ -30,9 +30,13 @@ export default class FunctionTerm<TFunctionName extends MathFunctionName = MathF
   /** An array of evaluated DiceTerm instances that should be bubbled up to the parent Roll */
   get dice(): DiceTerm[];
 
-  override get total(): number | undefined;
+  override get total(): number | string | undefined;
 
-  override get expression(): `${MathFunctionName}(${string})`;
+  override get expression(): `${TFunctionName}(${string})`;
+
+  get function(): ((...args: any[]) => unknown) | undefined;
+
+  override get isDeterministic(): boolean;
 
   /* -------------------------------------------- */
   /*  Math Term Methods                           */
@@ -58,19 +62,14 @@ export default class FunctionTerm<TFunctionName extends MathFunctionName = MathF
 }
 
 export type MathFunctionName =
-    | Exclude<MathStringKey, 'E' | 'LN2' | 'LN10' | 'LOG2E' | 'LOG10E' | 'PI' | 'SQRT1_2' | 'SQRT2'>
-    | 'clamped'
-    | 'normalizeDegrees'
-    | 'normalizeRadians'
-    | 'roundDecimals'
-    | 'toDegrees'
-    | 'toRadians'
-    | 'safeEval';
+  Exclude<MathStringKey, 'E' | 'LN2' | 'LN10' | 'LOG2E' | 'LOG10E' | 'PI' | 'SQRT1_2' | 'SQRT2'>;
 
-export interface FunctionTermData<TFunctionName extends MathFunctionName = MathFunctionName> extends RollTermData {
+export interface FunctionTermData<TFunctionName extends string = MathFunctionName> extends RollTermData {
     class?: 'FunctionTerm';
     fn?: TFunctionName;
-    terms?: RollTerm[];
+  terms?: string[];
+  rolls?: Roll[];
+  result?: string | number;
 }
 
 export type MathStringKey<T extends keyof Math = keyof Math> = T extends string ? T : never;

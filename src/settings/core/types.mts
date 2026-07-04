@@ -12,7 +12,7 @@ interface SettingField {
   key: string;
   label: string;
   hint?: string;
-  type: 'boolean' | 'string' | 'number';
+  type: 'boolean' | 'string' | 'number' | 'formula';
   choices?: FieldChoice[];
 }
 

@@ -1,6 +1,41 @@
 import type { BrowserContext, Page } from '@playwright/test';
 
+import { closePlayerConfigIfOpen } from './ui.mjs';
+
 export type FoundryRole = 'gm' | 'player';
+
+const DEFAULT_FOUNDRY_E2E_BASE_URL = 'http://localhost:31000';
+
+function resolveBaseUrl (baseUrl?: string): string {
+  return baseUrl ?? process.env.FOUNDRY_E2E_BASE_URL ?? DEFAULT_FOUNDRY_E2E_BASE_URL;
+}
+
+function isConnectionRefusedError (error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('ERR_CONNECTION_REFUSED') || message.includes('ECONNREFUSED');
+}
+
+async function gotoWithRetry (page: Page, url: string, maxAttempts = 8): Promise<void> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await page.goto(url);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!isConnectionRefusedError(error) || attempt === maxAttempts) {
+        throw error;
+      }
+      // Foundry can still be booting between worker startup and first test navigation.
+      await page.waitForTimeout(500 * attempt);
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`Failed to navigate to ${url}`);
+}
 
 /**
  * Drive Foundry's `/join` SPA: select the user by name from the dropdown,
@@ -10,7 +45,7 @@ export type FoundryRole = 'gm' | 'player';
  * (per-test player sessions). Centralises the SPA-aware selector logic.
  */
 export async function performJoin (page: Page, baseUrl: string, userName: string): Promise<void> {
-  await page.goto(`${baseUrl}/join`);
+  await gotoWithRetry(page, `${baseUrl}/join`);
 
   await page.waitForSelector('select[name="userid"]', { timeout: 30_000 });
 
@@ -41,9 +76,15 @@ export async function performJoin (page: Page, baseUrl: string, userName: string
  * globalSetup-saved storageState and skip this helper.
  */
 export async function loginAs (context: BrowserContext, role: FoundryRole): Promise<Page> {
-  const baseUrl = process.env.FOUNDRY_E2E_BASE_URL ?? 'http://localhost:31000';
+  const baseUrl = resolveBaseUrl();
   const page = await context.newPage();
   await performJoin(page, baseUrl, role);
+  // A freshly-joined player with no assigned character gets an auto-opened
+  // UserConfig dialog that intercepts sheet clicks; close it before returning
+  // so every player-context spec starts from a clean, interactable state.
+  if (role === 'player') {
+    await closePlayerConfigIfOpen(page);
+  }
   return page;
 }
 
@@ -54,8 +95,8 @@ export async function loginAs (context: BrowserContext, role: FoundryRole): Prom
  * Relies on the storageState saved by `global-setup.ts` to bypass /join.
  */
 export async function gotoGame (page: Page, baseUrl?: string): Promise<void> {
-  const target = baseUrl ?? '';
-  await page.goto(`${target}/game`);
+  const target = resolveBaseUrl(baseUrl);
+  await gotoWithRetry(page, `${target}/game`);
   await page.waitForFunction(
     () => typeof (globalThis as any).game !== 'undefined' && (globalThis as any).game.ready === true,
     null,

@@ -8,10 +8,13 @@
     :value="resolvedValue"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
   >
     <template v-if="slots.controls" #controls="{ editable }">
       <slot name="controls" :editable="editable" />
+    </template>
+    <template v-if="slots.editOnlyControls" #edit-only-controls="{ editable }">
+      <slot name="edit-only-controls" :editable="editable" />
     </template>
     <template #readonly>
       <slot name="readonly">
@@ -35,7 +38,7 @@
   import { computed, inject, useSlots } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { TextFormGroupProps } from './types.mjs';
+  import type { TextFormGroupProps } from './types.mts';
 
   const slots = useSlots();
   const props = defineProps<TextFormGroupProps>();

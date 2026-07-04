@@ -3,9 +3,6 @@
     <!-- Identity -->
     <section class="bio-section">
       <h3 class="bio-section-label">{{ localize('dnd35e.ACTOR.bio.identity') }}</h3>
-      <CreatureGender />
-      <CreatureDeity />
-      <CreatureAlignment />
     </section>
 
     <!-- Physical traits -->
@@ -20,7 +17,7 @@
     <section class="bio-section">
       <h3 class="bio-section-label">{{ localize('dnd35e.CREATURE.FIELDS.bio.languages.label') }}</h3>
       <ul class="language-list">
-        <li v-for="(lang, idx) in languages" :key="idx" class="language-item">
+        <li v-for="(lang, idx) in displayLanguages" :key="idx" class="language-item">
           <span class="language-text">{{ lang }}</span>
           <button
             v-if="isEditMode"
@@ -47,36 +44,25 @@
         </button>
       </div>
     </section>
-
-    <!-- Senses (stub) -->
-    <section class="bio-section">
-      <TextFormGroup
-        field-path="system.bio.senses"
-      />
-    </section>
   </div>
 </template>
 
 <script lang="ts" setup>
   import {
     CreatureAge,
-    CreatureAlignment,
-    CreatureDeity,
-    CreatureGender,
     CreatureHeight,
     CreatureWeight,
   } from '@actors/creature/sheet/components/header/index.mjs';
   import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
   import type { RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
-  import { TextFormGroup } from '@vc/fields/index.mjs';
   import { inject,ref } from 'vue';
 
   const localize = (key: string) => game.i18n.localize(key);
 
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const {
-    documentGetters: { languages },
+    documentGetters: { languages, displayLanguages },
     documentActions: { getViewAwareFieldUpdater },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 

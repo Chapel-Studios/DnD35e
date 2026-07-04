@@ -8,7 +8,7 @@
     class="list-form-group"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
   >
     <!-- Controls slot: add item button -->
     <template #controls="{ editable }">
@@ -32,7 +32,7 @@
         </slot>
       </div>
       <div v-for="(item, index) in editItems" :key="index" class="list-item">
-        <slot name="item-edit" :item="item" :index="index" :disabled="isDisabled" />
+        <slot name="item-edit" :item="item" :index="index" :disabled="isDisabled" :update-item="(v: TItem) => updateItem(index, v)" />
         <button
           v-if="!isDisabled"
           type="button"
@@ -65,7 +65,8 @@
   import { computed, inject, onMounted, useSlots } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { ListFormGroupProps } from './types.mjs';
+  import type { ListFormGroupProps } from './types.mts';
+
   const props = withDefaults(defineProps<ListFormGroupProps<TItem>>(), {
     emptyLabel: 'dnd35e.form.emptyList',
   });
@@ -149,7 +150,13 @@
   });
 
   function addItem(): void {
-    props.onAddItem();
+    props.addItem();
+  }
+
+  function updateItem(index: number, value: TItem): void {
+    const newItems = [...editItems.value];
+    newItems[index] = value;
+    fieldUpdater(newItems);
   }
 
   function removeItem(index: number): void {

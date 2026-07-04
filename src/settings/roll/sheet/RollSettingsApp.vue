@@ -39,7 +39,7 @@
 <script setup lang="ts">
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
 
-  import type { RollConfig } from '../types.mjs';
+  import type { RollConfig } from '../types.mts';
 
   interface ActorTypeInfo {
     key: 'character' | 'npc' | 'trap';

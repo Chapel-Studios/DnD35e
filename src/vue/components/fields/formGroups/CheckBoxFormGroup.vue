@@ -7,7 +7,7 @@
     :default-editability="defaultEditability"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
     :value="resolvedValue"
     class="checkbox-form-group"
   >
@@ -36,7 +36,7 @@
   import { computed, inject } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { CheckBoxFormGroupProps } from './types.mjs';
+  import type { CheckBoxFormGroupProps } from './types.mts';
 
   const props = defineProps<CheckBoxFormGroupProps>();
 

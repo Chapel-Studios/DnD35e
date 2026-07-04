@@ -1,5 +1,6 @@
 import type { CharacterActorType } from '@actors/actorTypes.mjs';
 import { Creature } from '@actors/creature/Creature.mjs';
+import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 
 import type { CreatureSource } from '../creature/Creature.mjs';
 import type { CharacterSystemData, CharacterSystemSource } from './data/index.mjs';
@@ -29,6 +30,26 @@ class Character extends Creature {
     /** Character was awarded XP. Payload TBD (Emission: Phase 9) */
     awardXp: 'awardXp',
   } as const;
+
+  protected override async _preCreate(
+    data: this['_source'],
+    options: DatabaseCreateCallbackOptions,
+    user: foundry.documents.BaseUser
+  ): Promise<boolean | void> {
+    const result = await super._preCreate(data, options, user);
+    if (result === false) return false;
+
+    const isPartyMember = foundry.utils.getProperty(data, 'system.settings.isPartyMember');
+    if (isPartyMember === undefined || isPartyMember === null) {
+      this.updateSource({
+        system: {
+          settings: {
+            isPartyMember: true,
+          },
+        },
+      });
+    }
+  }
 
   /**
    * Stub: returns 'Paladin 1' until the Class item type is implemented.

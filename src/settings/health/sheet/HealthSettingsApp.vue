@@ -130,7 +130,7 @@
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
   import { ref } from 'vue';
 
-  import type { HealthConfig } from '../types.mjs';
+  import type { HealthConfig } from '../types.mts';
 
   interface TabInfo {
     id: string;

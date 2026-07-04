@@ -77,8 +77,8 @@
   import { computed, inject, ref, watch } from 'vue';
 
   import { CURRENCY_KEY, DEFAULT_CURRENCY_CONFIG, USER_COIN_PREFIX } from '../constants.mjs';
-  import type { CoinageDefinition, CurrencyConfig } from '../types.mjs';
   import { coinageVisibilityEveryone } from '../types.mjs';
+  import type { CoinageDefinition, CurrencyConfig } from '../types.mts';
   import CoinageRow from './CoinageRow.vue';
   import { AUTO_ID_PREFIX } from './idFieldUtils.mjs';
 

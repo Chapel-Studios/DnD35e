@@ -1,7 +1,8 @@
 import type {
   DatabaseUpdateCallbackOptions,
 } from '@common/abstract/_types.mjs';
-import { DocumentLifeCycle, DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
+import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
+import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import type { IdentifiableDocumentSourceProps } from '@documents/identifiable/index.mjs';
 import {
   IdentifiableDocumentMixin,

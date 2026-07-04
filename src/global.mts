@@ -76,6 +76,7 @@ declare global {
       },
       gameRules: {
         damageReductionTypes: Record<string, { label: string }>;
+        availableLanguageOptions: Record<string, { label: string }>;
       },
       actor: {
         documentClasses: Record<string, new (...args: any[]) => ActorDnd35e>;

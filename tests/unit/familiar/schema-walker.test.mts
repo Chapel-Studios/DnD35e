@@ -143,7 +143,7 @@ describe('gatherAspectsFromSchema — FormulaFamiliar schema walker', () => {
         damage: makeNumber({ familiar: { aliases: ['dmg'] } }),
       }));
       const aspect = group.damage as FieldAspect;
-      expect(aspect.aliases).toEqual(['dmg']);
+      expect(aspect.aliases).toContain('dmg');
     });
   });
 

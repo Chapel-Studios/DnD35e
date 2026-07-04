@@ -90,8 +90,9 @@ test.describe('FormulaFamiliar dropdown on weapon name', () => {
     await expect(familiarMenu(page, sheetSelector)).toBeHidden();
 
     const input = familiarInput(page, sheetSelector, FIELD_PATH);
-    // The inserted text is the localized fullPath, e.g. `#Self.WeaponDamage.DamageRoll`.
-    await expect(input).toHaveValue(/^#Self\.WeaponDamage\.DamageRoll/i);
+    // The inserted text is a localized fullPath. The leaf display token can
+    // vary by localization/familiar label (e.g. `DamageRoll` vs `Roll`).
+    await expect(input).toHaveValue(/^#Self\.WeaponDamage\.(DamageRoll|Roll)/i);
 
     // Commit by moving focus away (Tab triggers a real blur event on the input).
     await page.keyboard.press('Tab');
@@ -129,5 +130,29 @@ test.describe('FormulaFamiliar dropdown on weapon name', () => {
       return doc?.name ?? null;
     }, weaponUuid);
     expect(stored).toBe('Escape Sword');
+  });
+
+  test('resolves a derived (persisted:false) field in the name formula', async ({ page }) => {
+    await gotoGame(page);
+
+    // `system.isBroken` is a derived field (persisted:false) — it is absent from
+    // source `toObject()` data. Regression guard: the `get name()` path must still
+    // resolve it (it reads derived values via `doc.system.toObject(false)`).
+    const weaponUuid = await createItem(page, 'weapon', {
+      name: 'Broke Test',
+      system: {
+        nameFormula: { formula: '#self.isBroken', expectedType: 'string', resolvedValue: null },
+      },
+    });
+
+    const resolved = await page.evaluate(async (uuid) => {
+      const doc = await (globalThis as any).fromUuid(uuid);
+      return { isBroken: doc?.system?.isBroken, name: doc?.name };
+    }, weaponUuid);
+
+    // Weapon has no broken-material AE, so isBroken is false → name resolves to "false"
+    // (not the raw formula, which was the bug).
+    expect(resolved.isBroken).toBe(false);
+    expect(resolved.name).toBe('false');
   });
 });

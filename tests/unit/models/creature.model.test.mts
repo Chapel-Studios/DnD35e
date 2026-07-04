@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 /**
  * Unit tests for CreatureSystemModel.prepareDerivedData() ability modifier formula.
  *
- * Formula: mod = floor((base - 10) / 2)
+ * Formula: mod = floor((score - 10) / 2)
  *
  * Uses Object.create to bypass the abstract constructor and invoke
  * prepareDerivedData() directly with pre-set ability data.
@@ -14,9 +14,9 @@ describe('CreatureSystemModel ability modifier', () => {
   const buildModel = (scores: Partial<Record<string, number>>) => {
     const ABILITY_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
     const model = Object.create(CreatureSystemModel.prototype) as CreatureSystemModel;
-    // Set up abilities with provided base scores (default 10)
+    // Set up abilities with provided scores (default 10)
     model.abilities = Object.fromEntries(
-      ABILITY_KEYS.map((key) => [key, { base: scores[key] ?? 10, mod: 0 }])
+      ABILITY_KEYS.map((key) => [key, { score: scores[key] ?? 10, mod: 0 }])
     ) as CreatureSystemModel['abilities'];
     model.speed = {
       land: { base: 30, total: 0 },

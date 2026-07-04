@@ -101,6 +101,64 @@ function resolveValue(
   return undefined;
 }
 
+function resolveLocalizedLabelKey(key: string | undefined): string | undefined {
+  if (!key) return undefined;
+  const localized = game.i18n.localize(key);
+  return localized !== key ? localized : undefined;
+}
+
+function resolveLocalizedRawValue(key: string): unknown {
+  const primary = foundry.utils.getProperty(game.i18n.translations as object, key);
+  if (primary !== undefined) return primary;
+  const fallback = foundry.utils.getProperty((game.i18n as unknown as { _fallback?: object })._fallback ?? {}, key);
+  return fallback;
+}
+
+function normalizeAliasValue(alias: string): string {
+  const localized = resolveLocalizedLabelKey(alias);
+  if (!localized) return alias;
+  return normalizeLabel(localized) ?? localized;
+}
+
+function getPathBasedFamiliarLabel(
+  accessPath: string,
+  localizationPrefixes: string[]
+): string | undefined {
+  const schemaPath = accessPath.startsWith('system.')
+    ? accessPath.substring('system.'.length)
+    : accessPath;
+
+  for (const prefix of localizationPrefixes) {
+    const localized = resolveLocalizedLabelKey(`${prefix}.FIELDS.${schemaPath}.familiarLabel`);
+    if (localized) return localized;
+  }
+
+  return undefined;
+}
+
+function getPathBasedFamiliarAliases(
+  accessPath: string,
+  localizationPrefixes: string[]
+): string[] {
+  const schemaPath = accessPath.startsWith('system.')
+    ? accessPath.substring('system.'.length)
+    : accessPath;
+
+  for (const prefix of localizationPrefixes) {
+    const raw = resolveLocalizedRawValue(`${prefix}.FIELDS.${schemaPath}.familiarAliases`);
+    if (Array.isArray(raw)) {
+      return raw
+        .filter((v): v is string => typeof v === 'string' && v.length > 0)
+        .map(v => normalizeLabel(v) ?? v);
+    }
+    if (typeof raw === 'string' && raw.length > 0) {
+      return [normalizeLabel(raw) ?? raw];
+    }
+  }
+
+  return [];
+}
+
 /**
  * Add a leaf entry to an AspectGroup.
  *
@@ -117,12 +175,17 @@ function addLeafToGroup(
   key: string,
   accessPath: string,
   context: DocumentContext | undefined,
-  output: AspectGroup
+  output: AspectGroup,
+  localizationPrefixes: string[]
 ): void {
   const type = meta?.aspectType ?? inferFieldType(field);
+  const localizedOverride = resolveLocalizedLabelKey(meta?.familiarLabelKey);
+  const pathOverride = getPathBasedFamiliarLabel(accessPath, localizationPrefixes);
+  const resolvedOverride = localizedOverride ?? pathOverride ?? meta?.familiarLabel;
   // field.label is set by Foundry's localizeDataModel (via LOCALIZATION_PREFIXES) after i18nInit.
   // field.options.label is only set when explicitly passed in the constructor.
-  const label = (field as unknown as { label?: string }).label
+  const label = resolvedOverride
+    ?? (field as unknown as { label?: string }).label
     ?? (field.options as Record<string, unknown>).label as string | undefined;
   const aspectKey = meta?.aspectKey ?? key;
 
@@ -132,7 +195,14 @@ function addLeafToGroup(
     accessPath,
   };
 
-  const aliases: string[] = [...(meta?.aliases ?? [])];
+  const aliases: string[] = [
+    ...getPathBasedFamiliarAliases(accessPath, localizationPrefixes),
+    ...(meta?.aliases ?? []).map(normalizeAliasValue),
+  ];
+  const localizedIdentifier = normalizeLabel(prop.display);
+  if (localizedIdentifier && localizedIdentifier !== key && !aliases.includes(localizedIdentifier)) {
+    aliases.unshift(localizedIdentifier);
+  }
   if (aliases.length) {
     prop.aliases = aliases;
   }
@@ -159,7 +229,8 @@ function walkFields(
   fields: Record<string, foundry.data.fields.DataField>,
   context: DocumentContext | undefined,
   pathPrefix: string,
-  output: AspectGroup
+  output: AspectGroup,
+  localizationPrefixes: string[]
 ): void {
   for (const [key, field] of Object.entries(fields)) {
     const meta = (field.options as Record<string, unknown>).familiar as FormulaFieldMeta | undefined;
@@ -175,24 +246,41 @@ function walkFields(
 
     if (isOpaqueLeaf) {
       // ── Opaque leaf (CurrencyField, FormulaField) — single value, no recursion ──
-      addLeafToGroup(field, meta, key, currentPath, context, output);
+      addLeafToGroup(field, meta, key, currentPath, context, output, localizationPrefixes);
     } else if (field instanceof SchemaField) {
       // ── Branch: recurse into nested SchemaField children ──
       const childFields = (field as foundry.data.fields.SchemaField).fields as
         Record<string, foundry.data.fields.DataField> | undefined;
       if (childFields) {
         const branch: AspectGroup = {};
-        const branchLabel = (field as unknown as { label?: string }).label
+        const localizedOverride = resolveLocalizedLabelKey(meta?.familiarLabelKey);
+        const pathOverride = getPathBasedFamiliarLabel(currentPath, localizationPrefixes);
+        const resolvedOverride = localizedOverride ?? pathOverride ?? meta?.familiarLabel;
+        const branchLabel = resolvedOverride
+          ?? (field as unknown as { label?: string }).label
           ?? (field.options as Record<string, unknown>).label as string | undefined;
         if (branchLabel) branch._display = branchLabel;
-        walkFields(childFields, context, currentPath, branch);
+
+        const aliases: string[] = [
+          ...getPathBasedFamiliarAliases(currentPath, localizationPrefixes),
+          ...(meta?.aliases ?? []).map(normalizeAliasValue),
+        ];
+        const localizedIdentifier = normalizeLabel(branchLabel);
+        if (localizedIdentifier && localizedIdentifier !== key && !aliases.includes(localizedIdentifier)) {
+          aliases.unshift(localizedIdentifier);
+        }
+        if (aliases.length) {
+          branch._aliases = aliases;
+        }
+
+        walkFields(childFields, context, currentPath, branch, localizationPrefixes);
         if (Object.keys(branch).filter(k => !k.startsWith('_')).length > 0) {
           output[key] = branch;
         }
       }
     } else {
       // ── Default: include as simple leaf ──
-      addLeafToGroup(field, meta, key, currentPath, context, output);
+      addLeafToGroup(field, meta, key, currentPath, context, output, localizationPrefixes);
     }
   }
 }
@@ -221,16 +309,21 @@ function walkFields(
  */
 function gatherAspectsFromSchema(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ModelClass: { schema?: { fields: Record<string, any> }; defineSchema(): Record<string, foundry.data.fields.DataField> },
+  ModelClass: {
+    schema?: { fields: Record<string, any> };
+    defineSchema(): Record<string, foundry.data.fields.DataField>;
+    LOCALIZATION_PREFIXES?: string[];
+  },
   context?: DocumentContext
 ): AspectGroup {
   // Prefer the cached schema (fields have localized labels from LOCALIZATION_PREFIXES).
   // Fall back to defineSchema() only if schema is not yet available (e.g. unit tests).
   const fields = (ModelClass.schema?.fields) ?? ModelClass.defineSchema();
   const result: AspectGroup = {};
+  const localizationPrefixes = ModelClass.LOCALIZATION_PREFIXES ?? [];
 
   // Walk system-level fields (all schema fields live under document.system)
-  walkFields(fields, context, 'system', result);
+  walkFields(fields, context, 'system', result, localizationPrefixes);
 
   // Merge document-level fields (name, img, etc.) with localized display labels.
   // The tree key is ALWAYS the canonical 'name' — storage must be locale-independent.

@@ -1,5 +1,6 @@
 import UniqueId from '@items/baseItem/sheet/components/UniqueId.vue';
 
+import ComboBox from './ComboBox.vue';
 import DistanceValueUnitInput from './DistanceValueUnitInput.vue';
 import CheckBoxFormGroup from './formGroups/CheckBoxFormGroup.vue';
 import CoinageFormGroup from './formGroups/CoinageFormGroup.vue';
@@ -40,6 +41,7 @@ export {
   CheckBoxFormGroup,
   CoinageFormGroup,
   ColorFormGroup,
+  ComboBox,
   DistanceFormGroup,
   DistanceValueUnitInput,
   everyoneVisibility,

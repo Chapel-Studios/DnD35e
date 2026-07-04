@@ -53,6 +53,24 @@
         :model-value="getDamageReductionTypes()"
         @update:model-value="onDamageReductionUpdate"
       />
+      <!-- Allow Custom Languages toggle (in optionalRules section) -->
+      <div v-if="section.key === 'optionalRules'" class="settings-field">
+        <label for="allow-custom-languages">
+          {{ localize('dnd35e.SETTINGS.AllowCustomLanguages.Name') }}
+          <span class="hint">{{ localize('dnd35e.SETTINGS.AllowCustomLanguages.Hint') }}</span>
+        </label>
+        <input
+          type="checkbox"
+          id="allow-custom-languages"
+          :checked="getAllowCustomLanguages()"
+          @change="e => onAllowCustomLanguagesUpdate((e.target as HTMLInputElement).checked)"
+        />
+      </div>
+      <LanguagesTable
+        v-if="section.key === 'optionalRules'"
+        :model-value="getLanguages()"
+        @update:model-value="onLanguagesUpdate"
+      />
     </fieldset>
 
     <!-- Footer -->
@@ -70,8 +88,9 @@
   import type { VueSettingsContext } from '@vueApps/VueSettingsMixin.mjs';
 
   import { GAME_RULES_KEYS } from '../constants.mjs';
-  import type { DamageReductionTypesConfig } from '../types.mjs';
+  import type { DamageReductionTypesConfig } from '../types.mts';
   import DamageReductionTable from './DamageReductionTable.vue';
+  import LanguagesTable from './LanguagesTable.vue';
 
   const props = defineProps<{
     context: VueSettingsContext<Record<string, unknown>>;
@@ -97,6 +116,22 @@
 
   function onDamageReductionUpdate(value: DamageReductionTypesConfig): void {
     props.onUpdateData(GAME_RULES_KEYS.DAMAGE_REDUCTION_TYPES, value);
+  }
+
+  function getLanguages(): Record<string, { label: string; enabled: boolean; isSystem: boolean }> {
+    return (props.context.data[GAME_RULES_KEYS.AVAILABLE_LANGUAGE_OPTIONS] ?? {}) as Record<string, { label: string; enabled: boolean; isSystem: boolean }>;
+  }
+
+  function onLanguagesUpdate(value: Record<string, { label: string; enabled: boolean; isSystem: boolean }>): void {
+    props.onUpdateData(GAME_RULES_KEYS.AVAILABLE_LANGUAGE_OPTIONS, value);
+  }
+
+  function getAllowCustomLanguages(): boolean {
+    return (props.context.data[GAME_RULES_KEYS.ALLOW_CUSTOM_LANGUAGES] ?? true) as boolean;
+  }
+
+  function onAllowCustomLanguagesUpdate(value: boolean): void {
+    props.onUpdateData(GAME_RULES_KEYS.ALLOW_CUSTOM_LANGUAGES, value);
   }
 
   function onUpdate(key: string, value: unknown): void {

@@ -8,7 +8,7 @@
     :value="resolvedValue"
     :read-only="props.readOnly"
     :force-edit="props.forceEdit"
-    :show-field-controls="props.showFieldControls"
+    :hideFieldControls="props.hideFieldControls"
     class="select-form-group"
   >
     <select
@@ -21,6 +21,7 @@
         v-for="opt in options"
         :key="opt.value"
         :value="opt.value"
+        :class="opt.className"
       >
         {{ localize(opt.label) }}
       </option>
@@ -39,7 +40,7 @@
   import { computed, inject } from 'vue';
 
   import FormGroup from './FormGroup.vue';
-  import type { SelectFormGroupProps } from './types.mjs';
+  import type { SelectFormGroupProps } from './types.mts';
 
   const props = defineProps<SelectFormGroupProps<TValue>>();
 

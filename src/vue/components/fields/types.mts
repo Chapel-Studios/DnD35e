@@ -30,4 +30,6 @@ interface ValueUnitInputProps<
   onUnitChange?: (unit: TUnit) => void;
 }
 
-export type { ValueUnitInputProps };
+export type {
+  ValueUnitInputProps,
+};

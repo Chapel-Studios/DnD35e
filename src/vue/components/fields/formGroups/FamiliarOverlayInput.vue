@@ -7,6 +7,7 @@
           type="text"
           class="familiar-overlay-input"
           :class="[props.inputClass, props.inputStateClasses]"
+          :id="props.id"
           :value="props.modelValue"
           :disabled="props.disabled"
           :placeholder="props.placeholder"
@@ -54,6 +55,7 @@
     modelValue: { type: String, default: '' },
     disabled: { type: Boolean, default: false },
     placeholder: { type: String, default: '' },
+    id: { type: String, default: undefined },
     name: { type: String as PropType<string | undefined>, default: undefined },
 
     inputClass: { type: String, default: '' },
