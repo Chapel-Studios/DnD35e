@@ -121,6 +121,32 @@
           "hint": "The description of this document.",
           "placeholder": "Enter a description here..."
         }
+      },
+      "EVENTS": {
+        "preCreate": {
+          "label": "Pre-Create",
+          "hint": "Triggered before the document is created."
+        },
+        "created": {
+          "label": "Created",
+          "hint": "Triggered after the document is created."
+        },
+        "preUpdate": {
+          "label": "Pre-Update",
+          "hint": "Triggered before the document is updated."
+        },
+        "updated": {
+          "label": "Updated",
+          "hint": "Triggered after the document is updated."
+        },
+        "preDelete": {
+          "label": "Pre-Delete",
+          "hint": "Triggered before the document is deleted."
+        },
+        "deleted": {
+          "label": "Deleted",
+          "hint": "Triggered after the document is deleted."
+        }
       }
     }
   }

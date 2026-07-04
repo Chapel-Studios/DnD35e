@@ -28,8 +28,8 @@ const {
 } = foundry.data.fields;
 
 const abilityEntry = () => new SchemaField({
-  base: useDnd35eField(requiredNumberField(10), { familiar: { aliases: ['score'] } }),
-  mod:  useDnd35eField(derivedNumberField(0),   { familiar: { aliases: ['modifier'] } }),
+  score: useDnd35eField(requiredNumberField(10), { familiar: { aliases: ['score'] } }),
+  mod:   useDnd35eField(derivedNumberField(0),   { familiar: { aliases: ['modifier'] } }),
 });
 
 const nullableBioField = () =>
@@ -41,7 +41,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
   override prepareDerivedData(): void {
     super.prepareDerivedData();
     for (const ability of Object.values(this.abilities)) {
-      ability.mod = Math.floor((ability.base - 10) / 2);
+      ability.mod = Math.floor((ability.score - 10) / 2);
     }
   }
 

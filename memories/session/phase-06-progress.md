@@ -18,6 +18,6 @@
 
 ## Deferred Items
 
-- `wellKnownEvents` static registry + typed payload interfaces (TakeDamagePayload, etc.) — still deferred
+- `wellKnownEvents` static registry + typed payload interfaces (AdjustHpPayload, etc.) — still deferred
 - `isOfType()` method on ActorDnd35e — still deferred
 - All data model / derived data pipeline items for Story 4+

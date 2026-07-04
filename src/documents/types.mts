@@ -6,7 +6,10 @@ type ParentDoc = ItemDnd35e | ActorDnd35e | null;
 
 type Dnd35eDocType = ItemDnd35e | ActorDnd35e | ActiveEffectDnd35e;
 
+type DocumentStoreType = 'Actor' | 'Item' | 'ActiveEffect';
+
 export type {
   Dnd35eDocType,
+  DocumentStoreType,
   ParentDoc,
 };

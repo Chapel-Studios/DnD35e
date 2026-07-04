@@ -3,12 +3,25 @@
  */
 
 import { SYSTEM_ID } from '../shared.mjs';
-import { COMBAT_KEYS } from './constants.mjs';
+import { COMBAT_KEYS, COMBAT_MENU } from './constants.mjs';
+import {
+  PARTY_MEMBER_DEATH_THRESHOLD_DEFAULT,
+  STANDARD_ACTOR_DEATH_THRESHOLD_DEFAULT,
+} from './deathThreshold.mjs';
+import { CombatSettingsConfig } from './sheet/index.mjs';
 
 /**
  * Register combat settings
  */
 function registerCombatSettings(): void {
+  game.settings.registerMenu(SYSTEM_ID, COMBAT_MENU, {
+    name: 'dnd35e.SETTINGS.Combat.Name',
+    label: 'dnd35e.SETTINGS.Combat.Label',
+    hint: 'dnd35e.SETTINGS.Combat.Hint',
+    icon: 'fas fa-swords',
+    type: CombatSettingsConfig as unknown as ConstructorOf<foundry.applications.api.ApplicationV2>,
+    restricted: true,
+  });
   game.settings.register(SYSTEM_ID, COMBAT_KEYS.AUTOSIZE_WEAPONS, {
     name: 'dnd35e.SETTINGS.AutosizeWeapons.Name',
     hint: 'dnd35e.SETTINGS.AutosizeWeapons.Hint',
@@ -25,6 +38,24 @@ function registerCombatSettings(): void {
     config: false,
     type: Boolean,
     default: true,
+  });
+
+  game.settings.register(SYSTEM_ID, COMBAT_KEYS.PARTY_MEMBER_DEATH_THRESHOLD, {
+    name: 'dnd35e.SETTINGS.PartyMemberDeathThreshold.Name',
+    hint: 'dnd35e.SETTINGS.PartyMemberDeathThreshold.Hint',
+    scope: 'world',
+    config: false,
+    type: String,
+    default: PARTY_MEMBER_DEATH_THRESHOLD_DEFAULT,
+  });
+
+  game.settings.register(SYSTEM_ID, COMBAT_KEYS.STANDARD_ACTOR_DEATH_THRESHOLD, {
+    name: 'dnd35e.SETTINGS.StandardActorDeathThreshold.Name',
+    hint: 'dnd35e.SETTINGS.StandardActorDeathThreshold.Hint',
+    scope: 'world',
+    config: false,
+    type: String,
+    default: STANDARD_ACTOR_DEATH_THRESHOLD_DEFAULT,
   });
 
   game.settings.register(SYSTEM_ID, COMBAT_KEYS.ALLOW_NO_AMMO, {

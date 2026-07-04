@@ -20,32 +20,47 @@
         },
         "weaponDamage": {
           "label": "Weapon Damage",
+          "familiarLabel": "Weapon Damage",
           "damageRoll": {
             "label": "Damage Roll",
+            "familiarLabel": "Roll",
+            "familiarAliases": [],
             "hint": "The roll used to determine the damage dealt by this weapon."
           },
           "damageType": {
             "label": "Damage Type",
+            "familiarLabel": "Type",
+            "familiarAliases": [],
             "hint": "The type of damage this weapon deals, which may affect resistances and vulnerabilities."
           },
           "critRange": {
             "label": "Critical Range",
+            "familiarLabel": "Range",
+            "familiarAliases": [],
             "hint": "The range of dice rolls that result in a critical hit."
           },
           "critMultiplier": {
             "label": "Critical Multiplier",
+            "familiarLabel": "Multiplier",
+            "familiarAliases": [],
             "hint": "The multiplier applied to damage on a critical hit."
           },
           "rangeIncrement": {
             "label": "Range Increment",
+            "familiarLabel": "Range",
+            "familiarAliases": [],
             "hint": "The distance at which the weapon's range increment applies."
           },
           "attackFormula": {
             "label": "Attack Formula Override",
+            "familiarLabel": "Attack Formula",
+            "familiarAliases": [],
             "hint": "Optional override formula for the attack roll of this weapon."
           },
           "damageFormula": {
             "label": "Damage Formula Override",
+            "familiarLabel": "Damage Formula",
+            "familiarAliases": [],
             "hint": "Optional override formula for the damage roll of this weapon."
           }
         },

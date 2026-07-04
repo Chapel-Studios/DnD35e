@@ -770,9 +770,7 @@ export function getAutocompleteOptions(
           // Show all aliases EXCEPT the display name itself to avoid redundancy
           const otherAliases = schema.aliases?.filter(a => a !== displayName) ?? [];
           const aliasHint = otherAliases.length ? ` (${otherAliases.join(', ')})` : '';
-          // Only PascalCase when display is explicitly set — inserting a normalized canonical
-          // key (e.g. 'Weapon' from 'weapon') produces a token that context resolution can't
-          // find back when display is undefined.
+          // Default to localized display identifier; aliases are accepted fallbacks.
           const insertCtx = schema.display ? (normalizeLabel(schema.display) ?? name) : name;
           options.push({
             path: insertCtx,
@@ -866,9 +864,11 @@ export function getAutocompleteOptions(
     const localKey = isFieldAspect(value)
       ? (normalizeLabel((value as FieldAspect).display) ?? key)
       : (normalizeLabel((value as AspectGroup)._display) ?? key);
+    const primaryIdentifier = localKey;
     // Match partial key against canonical key, localized name, or leaf aliases (case-insensitive)
     const matchesKey = key.toLowerCase().startsWith(partialKey.toLowerCase())
-      || localKey.toLowerCase().startsWith(partialKey.toLowerCase());
+      || localKey.toLowerCase().startsWith(partialKey.toLowerCase())
+      || primaryIdentifier.toLowerCase().startsWith(partialKey.toLowerCase());
     const matchesAlias = !matchesKey && isFieldAspect(value) && value.aliases?.some(
       alias => alias.toLowerCase().startsWith(partialKey.toLowerCase())
     );
@@ -877,22 +877,22 @@ export function getAutocompleteOptions(
     if (isFieldAspect(value)) {
       const aliasHint = value.aliases?.length ? ` (${value.aliases.join(', ')})` : '';
       options.push({
-        path: localKey,
+        path: primaryIdentifier,
         display: (value.display || key) + aliasHint,
         value: value.value ?? null,
         isLeaf: true,
-        fullPath: buildFullPath(localKey),
+        fullPath: buildFullPath(primaryIdentifier),
         accessPath: value.accessPath,
       });
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       // It's a branch object
       const branchDisplay = (value as { _display?: string })._display ?? key;
       options.push({
-        path: localKey,
+        path: primaryIdentifier,
         display: branchDisplay,
         value: null,
         isLeaf: false,
-        fullPath: buildFullPath(localKey) + '.',
+        fullPath: buildFullPath(primaryIdentifier) + '.',
       });
     }
   }

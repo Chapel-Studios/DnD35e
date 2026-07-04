@@ -1,4 +1,4 @@
-import { DocumentEventEmitter } from './DocumentEventEmitter.mjs';
+import { DocumentEventEmitter } from './documentEvents/DocumentEventEmitter.mjs';
 import { buildDocumentDataMap, resolveFormulaField } from './formulae/index.mjs';
 import type { HasSystem } from './HasSystem.mjs';
 import { preLocalizeConfig, registerConfigPreLocalization } from './localization/preLocalizeConfig.mjs';

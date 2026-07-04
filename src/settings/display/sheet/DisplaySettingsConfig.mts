@@ -3,8 +3,7 @@
  */
 
 import { SETTINGS_CONFIG_CLASS, VUE_APP_CLASS } from '@constants/cssClasses.mjs';
-import type { VueSettingsRenderOptions } from '@vueApps/index.mjs';
-import { useVueSettingsMixin } from '@vueApps/index.mjs';
+import { useVueSettingsMixin, type VueSettingsRenderOptions } from '@vueApps/VueSettingsMixin.mjs';
 import type { App, Component } from 'vue';
 import { createApp } from 'vue';
 

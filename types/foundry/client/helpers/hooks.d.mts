@@ -18,7 +18,7 @@ import {
   User,
 } from '@client/documents/_module.mjs';
 import { DocumentUUID } from '@client/utils/helpers.mjs';
-import { DatabaseCreateOperation } from '@common/abstract/_types.mjs';
+import { DatabaseCreateOperation, DatabaseDeleteOperation, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import Document from '@common/abstract/document.mjs';
 import type ApplicationV2 from '../applications/api/application.mjs';
 import type TokenHUD from '../applications/hud/token-hud.mjs';
@@ -44,19 +44,18 @@ type HookParamsCanvasReady = HookParameters<'canvasReady', [Canvas]>;
 type HookParamsReady = HookParameters<'ready', never[]>;
 
 type HookParamsClose<T extends ApplicationV2, N extends string> = HookParameters<`close${N}`, [T]>;
-type HookParamsDeleteCombat = HookParameters<'deleteCombat', [Combat, { [key: string]: unknown }, string]>;
 type HookParamsDropCanvasData = HookParameters<'dropCanvasData', [Canvas, DropCanvasData, DragEvent]>;
 type HookParamsGetChatLogEntryContext = HookParameters<'getChatLogEntryContext', [HTMLElement, ContextMenuEntry[]]>;
 type HookParamsGetSceneControlButtons = HookParameters<'getSceneControlButtons', [Record<string, SceneControl>]>;
 type HookParamsHotbarDrop = HookParameters<'hotbarDrop', [Hotbar<Macro>, DropCanvasData, string]>;
 type HookParamsLightingRefresh = HookParameters<'lightingRefresh', [LightingLayer]>;
-type HookParamsPreCreateItem = HookParameters<
-    'preCreateItem',
-    [Item<Actor | null>, object, DatabaseCreateOperation<Actor | null>, string]
+type HookParamsPreCreate<T extends foundry.abstract.Document, N extends string> = HookParameters<
+    `preCreate${N}`,
+    [T, Record<string, unknown>, DatabaseCreateOperation<T['parent']>, string]
 >;
-type HookParamsPreCreateActiveEffect = HookParameters<
-    'preCreateActiveEffect',
-    [ActiveEffect, object, DatabaseCreateOperation<Actor | Item | null>, string]
+type HookParamsCreate<T extends foundry.abstract.Document, N extends string> = HookParameters<
+    `create${N}`,
+    [T, DatabaseCreateOperation<T['parent']>, string]
 >;
 type HookParamsPreUpdateCombat = HookParameters<
     'preUpdateCombat',
@@ -84,9 +83,21 @@ type HookParamsRender<T extends ApplicationV2, N extends string> = HookParameter
     [T, HTMLElement, T extends ApplicationV2<infer _First, infer _Second, infer U> ? U : never]
 >;
 type HookParamsTargetToken = HookParameters<'targetToken', [User, Token<TokenDocument<Scene>>, boolean]>;
+type HookParamsPreUpdate<T extends foundry.abstract.Document, N extends string> = HookParameters<
+    `preUpdate${N}`,
+    [T, Record<string, unknown>, DatabaseUpdateOperation<T['parent']>, string]
+>;
 type HookParamsUpdate<T extends foundry.abstract.Document, N extends string> = HookParameters<
     `update${N}`,
-    [T, Record<string, unknown>, DatabaseCreateOperation<T['parent']>, string]
+    [T, Record<string, unknown>, DatabaseUpdateOperation<T['parent']>, string]
+>;
+type HookParamsPreDelete<T extends foundry.abstract.Document, N extends string> = HookParameters<
+    `preDelete${N}`,
+    [T, DatabaseDeleteOperation<T['parent']>, string]
+>;
+type HookParamsDelete<T extends foundry.abstract.Document, N extends string> = HookParameters<
+    `delete${N}`,
+    [T, DatabaseDeleteOperation<T['parent']>, string]
 >;
 type HookParamsUpdateWorldTime = HookParameters<'updateWorldTime', [number, number, Record<string, unknown>, string]>;
 type HookParamsGetProseMirrorMenuDropDowns = HookParameters<
@@ -113,8 +124,12 @@ export default class Hooks {
   static on(...args: HookParamsGetSceneControlButtons): number;
   static on(...args: HookParamsHotbarDrop): number;
   static on(...args: HookParamsLightingRefresh): number;
-  static on(...args: HookParamsPreCreateItem): number;
-  static on(...args: HookParamsPreCreateActiveEffect): number;
+  static on(...args: HookParamsPreCreate<Actor, 'Actor'>): number;
+  static on(...args: HookParamsCreate<Actor, 'Actor'>): number;
+  static on(...args: HookParamsPreCreate<Item, 'Item'>): number;
+  static on(...args: HookParamsCreate<Item, 'Item'>): number;
+  static on(...args: HookParamsPreCreate<ActiveEffect, 'ActiveEffect'>): number;
+  static on(...args: HookParamsCreate<ActiveEffect, 'ActiveEffect'>): number;
   static on(...args: HookParamsPreUpdateCombat): number;
   static on(...args: HookParamsPreUpdateToken): number;
   static on(...args: HookParamsRender<ChatLog, 'ChatLog'>): number;
@@ -127,7 +142,9 @@ export default class Hooks {
   static on(...args: HookParamsRender<SceneControls, 'SceneControls'>): number;
   static on(...args: HookParamsRender<SettingsConfig, 'SettingsConfig'>): number;
   static on(...args: HookParamsRender<TokenHUD, 'TokenHUD'>): number;
+  static on(...args: HookParamsPreUpdate<Actor, 'Actor'>): number;
   static on(...args: HookParamsUpdate<Actor, 'Actor'>): number;
+  static on(...args: HookParamsPreUpdate<Item, 'Item'>): number;
   static on(...args: HookParamsUpdate<Item, 'Item'>): number;
   // static on(
   //       ...args: HookParamsRender<JournalPageSheet<JournalEntryPage<JournalEntry | null>>, 'JournalPageSheet'>
@@ -141,6 +158,17 @@ export default class Hooks {
   static on(...args: HookParamsTargetToken): number;
   static on(...args: HookParamsUpdate<Combat, 'Combat'>): number;
   static on(...args: HookParamsUpdate<Scene, 'Scene'>): number;
+  static on(...args: HookParamsPreUpdate<Scene, 'Scene'>): number;
+  static on(...args: HookParamsPreDelete<Actor, 'Actor'>): number;
+  static on(...args: HookParamsDelete<Actor, 'Actor'>): number;
+  static on(...args: HookParamsPreDelete<Item, 'Item'>): number;
+  static on(...args: HookParamsDelete<Item, 'Item'>): number;
+  static on(...args: HookParamsPreDelete<ActiveEffect, 'ActiveEffect'>): number;
+  static on(...args: HookParamsDelete<ActiveEffect, 'ActiveEffect'>): number;
+  static on(...args: HookParamsPreDelete<Combat, 'Combat'>): number;
+  static on(...args: HookParamsDelete<Combat, 'Combat'>): number;
+  static on(...args: HookParamsPreDelete<Scene, 'Scene'>): number;
+  static on(...args: HookParamsDelete<Scene, 'Scene'>): number;
   static on(...args: HookParamsUpdateWorldTime): number;
   static on(...args: HookParamsGetProseMirrorMenuDropDowns): number;
   static on(...args: HookParameters<string, unknown[]>): number;
@@ -163,8 +191,12 @@ export default class Hooks {
   static once(...args: HookParamsGetSceneControlButtons): number;
   static once(...args: HookParamsHotbarDrop): number;
   static once(...args: HookParamsLightingRefresh): number;
-  static once(...args: HookParamsPreCreateItem): number;
-  static once(...args: HookParamsPreCreateActiveEffect): number;
+  static once(...args: HookParamsPreCreate<Actor, 'Actor'>): number;
+  static once(...args: HookParamsCreate<Actor, 'Actor'>): number;
+  static once(...args: HookParamsPreCreate<Item, 'Item'>): number;
+  static once(...args: HookParamsCreate<Item, 'Item'>): number;
+  static once(...args: HookParamsPreCreate<ActiveEffect, 'ActiveEffect'>): number;
+  static once(...args: HookParamsCreate<ActiveEffect, 'ActiveEffect'>): number;
   static once(...args: HookParamsPreUpdateToken): number;
   // static once(...args: HookParamsRender<ActorDirectory<Actor<null>>, 'ActorDirectory'>): number;
   static once(...args: HookParamsRender<ChatLog, 'ChatLog'>): number;
@@ -183,8 +215,22 @@ export default class Hooks {
   static once(...args: HookParamsRender<SceneControls, 'SceneControls'>): number;
   static once(...args: HookParamsRender<TokenHUD, 'TokenHUD'>): number;
   static once(...args: HookParamsTargetToken): number;
+  static once(...args: HookParamsPreUpdate<Actor, 'Actor'>): number;
+  static once(...args: HookParamsUpdate<Actor, 'Actor'>): number;
+  static once(...args: HookParamsPreUpdate<Item, 'Item'>): number;
+  static once(...args: HookParamsUpdate<Item, 'Item'>): number;
   static once(...args: HookParamsUpdate<Combat, 'Combat'>): number;
   static once(...args: HookParamsUpdate<Scene, 'Scene'>): number;
+  static once(...args: HookParamsPreDelete<Actor, 'Actor'>): number;
+  static once(...args: HookParamsDelete<Actor, 'Actor'>): number;
+  static once(...args: HookParamsPreDelete<Item, 'Item'>): number;
+  static once(...args: HookParamsDelete<Item, 'Item'>): number;
+  static once(...args: HookParamsPreDelete<ActiveEffect, 'ActiveEffect'>): number;
+  static once(...args: HookParamsDelete<ActiveEffect, 'ActiveEffect'>): number;
+  static once(...args: HookParamsPreDelete<Combat, 'Combat'>): number;
+  static once(...args: HookParamsDelete<Combat, 'Combat'>): number;
+  static once(...args: HookParamsPreDelete<Scene, 'Scene'>): number;
+  static once(...args: HookParamsDelete<Scene, 'Scene'>): number;
   static once(...args: HookParamsUpdateWorldTime): number;
   static once(...args: HookParamsI18nInit): number;
   static once(...args: HookParameters<string, unknown[]>): number;

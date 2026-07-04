@@ -1,4 +1,4 @@
-import { VueActiveEffectConfig } from '@vueApps/index.mjs';
+import { VueActiveEffectConfig } from '@vueApps/VueActiveEffectConfig.mjs';
 
 import type { EffectChangeDataDnd35e } from '../data/ActiveEffectSystemData.mjs';
 

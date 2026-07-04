@@ -48,20 +48,16 @@
   import { RenderModeStoreSymbol } from '@documents/document/sheet/stores/RenderModeStore.mjs';
   import FamiliarOverlayInput from '@vc/fields/formGroups/FamiliarOverlayInput.vue';
   import FormGroup from '@vc/fields/formGroups/FormGroup.vue';
-  import { computed, inject, nextTick, onMounted, onUnmounted, type PropType, ref, useSlots, watch } from 'vue';
+  import type { PropType } from 'vue';
+  import { computed, inject, ref, useSlots } from 'vue';
 
   import type { FormulaData } from './FormulaData.mjs';
   import { FormulaField } from './FormulaField.mjs';
-  import type { AutocompleteOption, FamiliarSchema, ValidationError } from './types.mts';
-  import { useFamiliarOverlayInput } from './useFamiliarOverlayInput.mjs';
+  import type { FamiliarSchema } from './types.mts';
+  import { useFormulaEditor } from './useFormulaEditor.mjs';
   import {
-    canonicalizeFormula,
     filterExcludedFields,
-    localizeFormula,
-    parseFormula,
     renderFormulaDisplayHTML,
-    renderFormulaHTML,
-    validateFormula,
   } from './utils.mjs';
 
   const slots = useSlots();
@@ -144,26 +140,6 @@
   const getHighlightElement = (): HTMLDivElement | undefined => overlayRef.value?.getHighlightElement();
   const getDropdownMenuElement = (): HTMLElement | undefined => overlayRef.value?.getDropdownMenuElement();
 
-  // Familiar composable — manages autocomplete state, keyboard nav, positioning
-  const {
-    familiarOptions,
-    showFamiliar,
-    familiarIndex,
-    familiarPosition,
-    dismissFamiliar,
-    handleNavigationKey,
-    syncScroll: syncOverlayScroll,
-    updateAutocomplete,
-  } = useFamiliarOverlayInput();
-
-  // Local state — stored as localized display form (e.g. #Self.Hardness)
-  // canonicalizeFormula is applied on commit; localizeFormula on every sync from external
-  const localValue = ref('');
-  const formulaErrors = ref<ValidationError[]>([]);
-
-  // Track whether the user is actively editing to avoid feedback loops
-  let isUserEditing = false;
-
   // Read isEditable from the store, with disabled prop as override
   const sheetStore = inject(DocumentSheetStoreSymbol, null) as DocumentSheetStore | null;
   const isEditable = computed(() => {
@@ -189,250 +165,40 @@
     return renderFormulaDisplayHTML(effectiveFormula.value, contexts.value);
   });
 
-  /**
-   * Highlighted HTML for the overlay layer.
-   * Renders the formula with variable spans styled for syntax highlighting.
-   * Plain text is escaped and rendered as-is so it aligns 1:1 with the input.
-   */
-  const highlightedHTML = computed(() => {
-    const val = localValue.value;
-    if (!val) return '';
-    const tokens = parseFormula(val);
-    const errors = validateFormula(val, contexts.value);
-    return renderFormulaHTML(val, tokens, errors, contexts.value);
-  });
-
-  /**
-   * Scroll the input so the cursor (at charIndex) is visible,
-   * then sync the highlight layer.
-   */
-  function scrollToCursor(input: HTMLInputElement, charIndex: number) {
-    // Measure text width up to the cursor
-    const mirror = document.createElement('span');
-    const style = window.getComputedStyle(input);
-    mirror.style.font = style.font;
-    mirror.style.letterSpacing = style.letterSpacing;
-    mirror.style.wordSpacing = style.wordSpacing;
-    mirror.style.visibility = 'hidden';
-    mirror.style.position = 'absolute';
-    mirror.style.whiteSpace = 'pre';
-    mirror.textContent = input.value.substring(0, charIndex);
-    document.body.appendChild(mirror);
-    const textWidth = mirror.offsetWidth;
-    document.body.removeChild(mirror);
-
-    const paddingLeft = parseFloat(style.paddingLeft) || 0;
-    const inputWidth = input.clientWidth - paddingLeft - (parseFloat(style.paddingRight) || 0);
-
-    // If cursor is past the visible area, scroll to reveal it
-    if (textWidth - input.scrollLeft > inputWidth) {
-      input.scrollLeft = textWidth - inputWidth + 4; // small buffer
-    }
-    syncScroll();
-  }
-
-  /** Sync scroll position between the real input and the highlight layer */
-  function syncScroll() {
-    syncOverlayScroll(getInputElement(), getHighlightElement());
-  }
-
-  // Sync external value changes into local state (but not during active editing)
-  watch(effectiveFormula, (newValue) => {
-    if (!isUserEditing) {
-      localValue.value = localizeFormula(newValue || '', contexts.value);
-      updateValidation();
-    }
-  });
-
-  // Re-localize when the schema loads or locale changes (e.g. initial load, context switch).
-  // Guard: only update localValue when it still reflects the formula under the OLD contexts.
-  // If the user has committed a new value that hasn't been mirrored back to effectiveFormula yet
-  // (e.g. document update in flight), localValue will differ from the old localized form —
-  // leave it alone so the in-flight watcher for effectiveFormula can confirm it in the next tick.
-  watch(contexts, (newContexts, oldContexts) => {
-    if (!isUserEditing) {
-      const oldLocalized = localizeFormula(effectiveFormula.value || '', oldContexts);
-      if (localValue.value === oldLocalized) {
-        localValue.value = localizeFormula(effectiveFormula.value || '', newContexts);
-      }
-      updateValidation();
-    }
-  });
-
-  function updateValidation() {
-    const errors = validateFormula(localValue.value, contexts.value);
-    formulaErrors.value = errors;
-  }
-
-  function onInput(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const value = target.value;
-
-    isUserEditing = true;
-    localValue.value = value;
-    updateValidation();
-    nextTick(syncScroll);
-
-    // Check for autocomplete trigger (ignore escaped \#)
-    const caretPosition = target.selectionStart ?? value.length;
-    const textBeforeCursor = value.substring(0, caretPosition);
-
-    if (/(?<!\\)#/.test(textBeforeCursor)) {
-      updateAutocompleteMenu(value, caretPosition);
-    } else {
-      dismissFamiliar();
-    }
-  }
-
-  function onFocus() {
-    isUserEditing = true;
-  }
-
-  function onBlur() {
-    // Delay to allow autocomplete item clicks
-    setTimeout(() => {
-      dismissFamiliar();
-
-      // Persist the value on blur
-      if (isUserEditing) {
-        isUserEditing = false;
-        commitValue();
-      }
-    }, 200);
-  }
-
-  function commitValue() {
-    // Canonicalize before saving (e.g. #Self.Hardness → #self.hardness)
-    const canonical = canonicalizeFormula(localValue.value, contexts.value);
-    const current = effectiveFormula.value || '';
-    if (canonical === current) return;
-
-    if (typeof props.onUpdate === 'function') {
-      props.onUpdate(canonical);
-      return;
-    }
-
-    if (typeof inferredUpdater.value === 'function') {
-      void inferredUpdater.value(canonical || '');
-      return;
-    }
-
-    console.warn(`[FormulaFormGroup] No updater available for ${props.fieldPath}. Provide onUpdate or ensure DocumentSheetStore is injected.`);
-  }
-
-  function onKeyDown(event: KeyboardEvent) {
-    // Delegate autocomplete navigation to the Familiar composable
-    if (handleNavigationKey(event, selectAutocomplete, getDropdownMenuElement())) {
-      return;
-    }
-
-    // Enter without autocomplete = commit
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      isUserEditing = false;
-      commitValue();
-      getInputElement()?.blur();
-      return;
-    }
-
-    // Escape = cancel editing (Familiar already handled its own Escape above)
-    if (event.key === 'Escape') {
-      // Revert to localized form of stored value
-      localValue.value = localizeFormula(effectiveFormula.value || '', contexts.value);
-      isUserEditing = false;
-      getInputElement()?.blur();
-      event.preventDefault();
-    }
-  }
-
-  function updateAutocompleteMenu(formula: string, cursorPosition: number) {
-    const beforeCursor = formula.substring(0, cursorPosition);
-
-    // Find the last unescaped '#' (not preceded by \)
-    let lastHashIndex = -1;
-    for (let i = beforeCursor.length - 1; i >= 0; i--) {
-      if (beforeCursor[i] === '#' && (i === 0 || beforeCursor[i - 1] !== '\\')) {
-        lastHashIndex = i;
-        break;
-      }
-    }
-
-    if (lastHashIndex === -1) {
-      dismissFamiliar();
-      return;
-    }
-
-    const partialVariable = beforeCursor.substring(lastHashIndex);
-
-    const inputEl = getInputElement();
-    if (!inputEl) return;
-    const lastDotIndex = partialVariable.lastIndexOf('.');
-    const anchorOffset = lastHashIndex + (lastDotIndex !== -1 ? lastDotIndex + 1 : 0);
-
-    void updateAutocomplete({
-      text: partialVariable,
-      context: contexts.value,
-      inputEl,
-      wrapperEl: inputEl.closest('.formula-input-wrapper') as HTMLElement | null,
-      anchorIndex: anchorOffset,
-      verticalGap: 2,
-      dropdownEl: getDropdownMenuElement(),
-    });
-  }
-
-  function selectAutocomplete(option: AutocompleteOption) {
-    const inputEl = getInputElement();
-    if (!inputEl) return;
-
-    const caretPos = inputEl.selectionStart ?? localValue.value.length;
-    const beforeCursor = localValue.value.substring(0, caretPos);
-    const lastHashIndex = beforeCursor.lastIndexOf('#');
-
-    if (lastHashIndex === -1) return;
-
-    // Replace from # to cursor with the selected option
-    const newValue = localValue.value.substring(0, lastHashIndex) + option.fullPath + localValue.value.substring(caretPos);
-    localValue.value = newValue;
-
-    updateValidation();
-
-    // Restore cursor position after the inserted text
-    const newCursorPos = lastHashIndex + option.fullPath.length;
-    nextTick(() => {
-      const currentInput = getInputElement();
-      if (currentInput) {
-        currentInput.value = newValue;
-        currentInput.setSelectionRange(newCursorPos, newCursorPos);
-        currentInput.focus();
-        scrollToCursor(currentInput, newCursorPos);
+  const {
+    familiarOptions,
+    showFamiliar,
+    familiarIndex,
+    familiarPosition,
+    localValue,
+    formulaErrors,
+    highlightedHTML,
+    syncScroll,
+    onInput,
+    onBlur,
+    onKeyDown,
+    onFocus,
+    onFamiliarSelect,
+  } = useFormulaEditor({
+    contexts,
+    currentValue: effectiveFormula,
+    getInputElement,
+    getHighlightElement,
+    getDropdownMenuElement,
+    onCommit: (canonical) => {
+      if (typeof props.onUpdate === 'function') {
+        props.onUpdate(canonical);
+        return;
       }
 
-      // If the selected option is a branch (context or object), immediately
-      // show the next level of autocomplete options
-      if (!option.isLeaf) {
-        updateAutocompleteMenu(newValue, newCursorPos);
-      } else {
-        dismissFamiliar();
+      if (typeof inferredUpdater.value === 'function') {
+        void inferredUpdater.value(canonical || '');
+        return;
       }
-    });
-  }
 
-  function onFamiliarSelect(option: AutocompleteOption) {
-    selectAutocomplete(option);
-  }
-
-  // Initialize
-  onMounted(() => {
-    localValue.value = localizeFormula(effectiveFormula.value || '', contexts.value);
-    updateValidation();
-    if (isEditable.value && getInputElement()) {
-      nextTick(() => getInputElement()?.focus());
-    }
-  });
-
-  onUnmounted(() => {
-    isUserEditing = false;
-    dismissFamiliar();
+      console.warn(`[FormulaFormGroup] No updater available for ${props.fieldPath}. Provide onUpdate or ensure DocumentSheetStore is injected.`);
+    },
+    focusOnMount: () => isEditable.value,
   });
 </script>
 

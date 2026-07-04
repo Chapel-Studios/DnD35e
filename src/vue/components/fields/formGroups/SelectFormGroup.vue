@@ -21,6 +21,7 @@
         v-for="opt in options"
         :key="opt.value"
         :value="opt.value"
+        :class="opt.className"
       >
         {{ localize(opt.label) }}
       </option>

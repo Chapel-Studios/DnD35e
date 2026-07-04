@@ -8,6 +8,8 @@
 export const COMBAT_KEYS = {
   AUTOSIZE_WEAPONS: 'autosizeWeapons',
   AUTO_SCALE_ATTACKS_BAB: 'autoScaleAttacksBab',
+  PARTY_MEMBER_DEATH_THRESHOLD: 'partyMemberDeathThreshold',
+  STANDARD_ACTOR_DEATH_THRESHOLD: 'standardActorDeathThreshold',
   ALLOW_NO_AMMO: 'allowNoAmmo',
   USE_AUTO_AMMO_RECOVERY: 'useAutoAmmoRecovery',
   NO_AUTO_SPELLPOINTS_COST: 'noAutoSpellpointsCost',

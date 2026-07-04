@@ -3,7 +3,7 @@
  */
 
 import { SETTINGS_CONFIG_CLASS, VUE_APP_CLASS } from '@constants/cssClasses.mjs';
-import { useVueSettingsMixin, type VueSettingsRenderOptions } from '@vueApps/index.mjs';
+import { useVueSettingsMixin, type VueSettingsRenderOptions } from '@vueApps/VueSettingsMixin.mjs';
 import type { App, Component } from 'vue';
 import { createApp } from 'vue';
 
@@ -54,6 +54,15 @@ class CombatSettingsConfig extends VueSettingsBase {
       fields: [
         { key: COMBAT_KEYS.AUTOSIZE_WEAPONS, label: 'dnd35e.SETTINGS.AutosizeWeapons.Name', hint: 'dnd35e.SETTINGS.AutosizeWeapons.Hint', type: 'boolean' },
         { key: COMBAT_KEYS.AUTO_SCALE_ATTACKS_BAB, label: 'dnd35e.SETTINGS.AutoScaleAttacksBab.Name', hint: 'dnd35e.SETTINGS.AutoScaleAttacksBab.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.ENFORCE_SINGLE_MATERIAL, label: 'dnd35e.SETTINGS.EnforceSingleMaterial.Name', hint: 'dnd35e.SETTINGS.EnforceSingleMaterial.Hint', type: 'boolean' },
+      ],
+    },
+    {
+      key: 'deathAndDying',
+      label: 'dnd35e.SETTINGS.Combat.DeathAndDying',
+      fields: [
+        { key: COMBAT_KEYS.PARTY_MEMBER_DEATH_THRESHOLD, label: 'dnd35e.SETTINGS.PartyMemberDeathThreshold.Name', hint: 'dnd35e.SETTINGS.PartyMemberDeathThreshold.Hint', type: 'formula' },
+        { key: COMBAT_KEYS.STANDARD_ACTOR_DEATH_THRESHOLD, label: 'dnd35e.SETTINGS.StandardActorDeathThreshold.Name', hint: 'dnd35e.SETTINGS.StandardActorDeathThreshold.Hint', type: 'formula' },
       ],
     },
     {

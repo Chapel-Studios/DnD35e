@@ -11,11 +11,11 @@ import type { ActorSystemData, ActorSystemSource } from '../../baseActor/data/Ac
 // ─── Ability Scores ──────────────────────────────────────────────────────────
 
 interface AbilityScoreSource {
-  base: number;
+  score: number;
 }
 
 interface AbilityScoreData extends AbilityScoreSource {
-  /** Derived: floor((base - 10) / 2). Never stored. */
+  /** Derived: floor((score - 10) / 2). Never stored. */
   mod: number;
 }
 

@@ -14,6 +14,10 @@
 export interface FormulaFieldMeta {
   /** If true, this field appears in formula autocomplete. Default true. */
   formulaVisible?: boolean;
+  /** Familiar-only display label override; does not affect normal UI labels/localization. */
+  familiarLabel?: string;
+  /** I18n key for Familiar-only display label override (preferred over familiarLabel). */
+  familiarLabelKey?: string;
   /** Override the inferred aspect type (normally inferred from inner field class). */
   aspectType?: 'string' | 'number';
   /** Override the key used in the AspectGroup (normally the field name). */

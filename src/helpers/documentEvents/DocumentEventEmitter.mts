@@ -1,21 +1,12 @@
-type EventHandler<T = unknown> = (payload: T) => void | Promise<void>;
+import type { DocumentDnd35e } from '@documents/document/DocumentDnd35e.mjs';
 
-/**
- * Metadata for a registered well-known event type.
- * Used by UI (future) and module authors to discover available event types.
- *
- * `label` and `description` are **i18n keys** — resolve with `game.i18n.localize(meta.label)`
- * at point-of-use. Do not call `game.i18n.localize()` at registration time because
- * `registerEventType()` is called at module-load, before Foundry's i18n is initialised.
- */
-interface WellKnownEventMeta {
-  /** i18n key for the human-readable display label. */
-  label: string;
-  /** i18n key for the short description of when this event fires. */
-  description: string;
-  /** Document types this event may be emitted on (e.g. `['Actor', 'Item']`). */
-  appliesTo: string[];
-}
+import type { DocumentEvent, EventChecker, EventHandler, EventHandlerBundle, EventHandlerRegistration, WellKnownEventMeta } from './types.mjs';
+
+type RegisteredEventCheck<TPayload> = {
+  event: string;
+  check: EventChecker<TPayload>;
+  priority: number;
+};
 
 /**
  * Per-document lifecycle event bus.
@@ -31,8 +22,50 @@ interface WellKnownEventMeta {
  *
  * All system documents (actors, items, AEs) carry `events` via DocumentMixin.
  */
-class DocumentEventEmitter {
-  readonly #listeners = new Map<string, Set<EventHandler>>();
+class DocumentEventEmitter<TParent extends DocumentDnd35e<any>> {
+  readonly #listeners = new Map<string, Set<EventHandlerBundle<any>>>(); // key is event name, value is set of handlers
+  // TODO: evaluate if we need the map or if a set of EventChecker is sufficient.
+  private _registeredUpdateEventChecks = new Set<RegisteredEventCheck<any>>(); // key is event name, value is check function 
+  private readonly _parent: TParent;
+
+  constructor(parent: TParent) {
+    this._parent = parent;
+  }
+  
+  /// ─── registration for update event checks ───────────────────────────────────────
+
+  /**
+   * Register a check function for a specific event type.
+   */
+  registerChangeEventCheck<TPayload>(event: string, check: EventChecker<TPayload>, priority: number = 0): void {
+    if (this._registeredUpdateEventChecks.has({ event, check, priority })) {
+      this._registeredUpdateEventChecks.delete({ event, check, priority });
+    }
+    this._registeredUpdateEventChecks.add({ event, check, priority });
+  }
+
+  checkForIncomingChangeEvents(changes: Record<string, unknown>, metadata?: Record<string, unknown>): DocumentEvent<any>[] {
+    const readyEvents: DocumentEvent<any>[] = [];
+    const sortedEventChecks = [...this._registeredUpdateEventChecks]
+      .sort((a, b) => b.priority - a.priority);
+    for (const check of sortedEventChecks) {
+      const result = check.check({
+        parent: this._parent,
+        updateData: changes,
+        ...(metadata ?? {}),
+      });
+
+      if (result.result) {
+        readyEvents.push({
+          event: result.event,
+          payload: result.payload,
+          priority: check.priority ?? 0,
+        });
+      }
+    }
+    return readyEvents;
+  }
+
 
   // ─── Static well-known event registry ────────────────────────────────────
 
@@ -65,31 +98,59 @@ class DocumentEventEmitter {
    *   const off = item.events.on('broken', handler);
    *   off(); // stop listening
    */
-  on<T = unknown>(event: string, handler: EventHandler<T>): () => void {
+  on<T = unknown>(
+    event: string,
+    handler: EventHandler<T>,
+    ...args: unknown[]
+  ): EventHandlerRegistration {
     let set = this.#listeners.get(event);
     if (!set) {
       set = new Set();
       this.#listeners.set(event, set);
     }
-    set.add(handler as EventHandler);
-    return () => this.off(event, handler);
+    const token = crypto.randomUUID();
+    set.add({ token, event, handler, args });
+    return {
+      token,
+      event,
+      cancel: () => this.off(event, handler),
+    };
   }
 
   /**
    * Subscribe for a single firing, then auto-unsubscribe.
    */
-  once<T = unknown>(event: string, handler: EventHandler<T>): () => void {
+  once<T = unknown>(event: string, handler: EventHandler<T>): EventHandlerRegistration {
     let off: (() => void) | undefined;
     const wrapper: EventHandler<T> = (payload) => {
       off?.();
       return handler(payload);
     };
-    off = this.on(event, wrapper);
-    return off;
+    const registration = this.on(event, wrapper);
+    off = registration.cancel;
+    return registration;
   }
 
   off<T = unknown>(event: string, handler: EventHandler<T>): void {
-    this.#listeners.get(event)?.delete(handler as EventHandler);
+    const set = this.#listeners.get(event);
+    if (!set) return;
+    for (const bundle of set) {
+      if (bundle.handler === handler) {
+        set.delete(bundle);
+        break;
+      }
+    }
+  }
+
+  cancel(token: string): void {
+    for (const [_, set] of this.#listeners.entries()) {
+      for (const bundle of set) { 
+        if (bundle.token === token) {
+          set.delete(bundle);
+          return;
+        }
+      }
+    }
   }
 
   /**
@@ -100,9 +161,9 @@ class DocumentEventEmitter {
     const handlers = this.#listeners.get(event);
     if (!handlers?.size) return;
     // Snapshot to allow handlers to un/subscribe during iteration
-    for (const handler of [...handlers]) {
+    for (const bundle of [...handlers]) {
       try {
-        await handler(payload);
+        await bundle.handler(payload);
       } catch (err) {
         Hooks.onError(`DocumentEventEmitter[${event}]`, err as Error, {
           msg: `Error in '${event}' lifecycle event handler`,
@@ -127,4 +188,3 @@ class DocumentEventEmitter {
 }
 
 export { DocumentEventEmitter };
-export type { EventHandler, WellKnownEventMeta };

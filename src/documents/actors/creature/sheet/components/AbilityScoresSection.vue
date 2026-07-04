@@ -10,8 +10,8 @@
         <div class="ability-card-base">
           <NumberFormGroup
             :label="`dnd35e.ABILITY.${ability.key}.abbr`"
-            :value="ability.base"
-            :field-path="`system.abilities.${ability.key}.base`"
+            :value="ability.score"
+            :field-path="`system.abilities.${ability.key}.score`"
             class="ability-base-input"
             :show-label="false"
           />
@@ -41,7 +41,7 @@
   const abilities = computed(() =>
     ABILITY_KEYS.map((key) => ({
       key,
-      base: (getViewAwareFieldValue<number>(`system.abilities.${key}.base`) ?? 10) as number,
+      score: (getViewAwareFieldValue<number>(`system.abilities.${key}.score`) ?? 10) as number,
       mod:  (getViewAwareFieldValue<number>(`system.abilities.${key}.mod`)  ?? 0)  as number,
     }))
   );

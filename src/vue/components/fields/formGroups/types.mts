@@ -116,6 +116,7 @@ interface SelectOption<TValue> {
   label: string;
   value: TValue;
   icon?: string;
+  className?: string;
   disabled?: boolean;
   visibility?: FieldVisibility;
   editability?: FieldEditability;

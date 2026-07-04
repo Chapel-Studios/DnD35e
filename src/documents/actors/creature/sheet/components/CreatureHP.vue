@@ -129,7 +129,7 @@
   import { computed, inject, ref } from 'vue';
 
   import type { CreatureDocumentStore } from '../CreatureStore.mjs';
-  import { HP_ADJUSTMENT_TYPE, HP_ADJUSTMENT_TYPE_OPTIONS, type HPAdjustmentType } from './constants.mjs';
+  import { HP_ADJUSTMENT_TYPE, HP_ADJUSTMENT_TYPE_OPTIONS, type HpAdjustmentType } from './constants.mjs';
 
   const localize = (key: string) => game.i18n.localize(key);
   const { 
@@ -164,7 +164,7 @@
   });
 
   // Adjustment drawer state
-  const adjustmentType = ref<HPAdjustmentType>(HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT);
+  const adjustmentType = ref<HpAdjustmentType>(HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT);
   const isAdjustmentDrawerOpen = ref(false);
   const adjustmentAmount = ref(0);
   const minAdjustment = computed(() => {
@@ -177,7 +177,7 @@
   const toggleAdjustmentDrawer = () => {
     isAdjustmentDrawerOpen.value = !isAdjustmentDrawerOpen.value;
   };
-  const onAdjustmentTypeChange = (type: HPAdjustmentType) => {
+  const onAdjustmentTypeChange = (type: HpAdjustmentType) => {
     adjustmentType.value = type;
   };
 

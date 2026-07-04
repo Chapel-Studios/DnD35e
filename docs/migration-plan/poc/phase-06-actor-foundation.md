@@ -84,7 +84,7 @@ Key files:
 
 Implemented:
 
-- Actor event payload types are defined (`TakeDamagePayload`, `DyingPayload`, `DeathPayload`, `RevealSecretPayload`).
+- Actor event payload types are defined (`AdjustHpPayload`, `DyingPayload`, `DeathPayload`, `RevealSecretPayload`).
 - Well-known actor events are registered via `DocumentEventEmitter.registerEventType()`.
 - `DocumentEventEmitter.wellKnownEvents` exists.
 - Actor `applyActiveEffects(phase)` pipeline exists with actor-target filtering and transferred item-effect iteration.

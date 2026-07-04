@@ -12,7 +12,7 @@ import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
 
-import type { HPAdjustmentType } from './components/constants.mjs';
+import type { HpAdjustmentType } from './components/constants.mjs';
 
 const buildAlignmentLabel = (law: LawAxis | null, moral: MoralAxis | null): string | null => {
   if (!law && !moral) return null;
@@ -108,7 +108,7 @@ const useCreatureStore = <TDocument extends Creature>(
 
   const documentActions = {
     ...actorStore.documentActions,
-    adjustHp: async (amount: number, adjustmentType: HPAdjustmentType): Promise<boolean> => {
+    adjustHp: async (amount: number, adjustmentType: HpAdjustmentType): Promise<boolean> => {
       return await document.value.updateHP(amount, adjustmentType);
     },
   };
@@ -149,7 +149,7 @@ interface CreatureGetters {
 }
 
 type CreatureActions = {
-  adjustHp: (amount: number, adjustmentType: HPAdjustmentType) => Promise<boolean>;
+  adjustHp: (amount: number, adjustmentType: HpAdjustmentType) => Promise<boolean>;
 };
 type CreatureStoreUtils = Record<string, unknown>;
 

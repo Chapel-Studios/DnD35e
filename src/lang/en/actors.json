@@ -9,12 +9,12 @@
       "FIELDS": {
         "abilities": {
           "label": "Ability Scores",
-          "str": { "label": "Strength",     "base": { "label": "Strength"     }, "mod": { "label": "STR Mod" } },
-          "dex": { "label": "Dexterity",    "base": { "label": "Dexterity"    }, "mod": { "label": "DEX Mod" } },
-          "con": { "label": "Constitution", "base": { "label": "Constitution" }, "mod": { "label": "CON Mod" } },
-          "int": { "label": "Intelligence", "base": { "label": "Intelligence" }, "mod": { "label": "INT Mod" } },
-          "wis": { "label": "Wisdom",       "base": { "label": "Wisdom"       }, "mod": { "label": "WIS Mod" } },
-          "cha": { "label": "Charisma",     "base": { "label": "Charisma"     }, "mod": { "label": "CHA Mod" } }
+          "str": { "label": "Strength", "familiarLabel": "Str", "familiarAliases": [], "score": { "label": "Strength", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "STR Mod", "familiarLabel": "Mod" } },
+          "dex": { "label": "Dexterity", "familiarLabel": "Dex", "familiarAliases": [], "score": { "label": "Dexterity", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "DEX Mod", "familiarLabel": "Mod" } },
+          "con": { "label": "Constitution", "familiarLabel": "Con", "familiarAliases": [], "score": { "label": "Constitution", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "CON Mod", "familiarLabel": "Mod" } },
+          "int": { "label": "Intelligence", "familiarLabel": "Int", "familiarAliases": [], "score": { "label": "Intelligence", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "INT Mod", "familiarLabel": "Mod" } },
+          "wis": { "label": "Wisdom", "familiarLabel": "Wis", "familiarAliases": [], "score": { "label": "Wisdom", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "WIS Mod", "familiarLabel": "Mod" } },
+          "cha": { "label": "Charisma", "familiarLabel": "Cha", "familiarAliases": [], "score": { "label": "Charisma", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "CHA Mod", "familiarLabel": "Mod" } }
         },
         "hp": {
           "label": "Hit Points",
@@ -95,7 +95,12 @@
         },
         "settings": {
           "label": "Settings",
-          "isPartyMember": { "label": "Party Member" }
+          "isPartyMember": { "label": "Party Member" },
+          "deathThreshold": {
+            "label": "Death Threshold",
+            "hint": "Choose a character-specific death threshold override or use the world default.",
+            "valueLabel": "Death Threshold Value"
+          }
         },
         "size": { "label": "Size" },
         "reach": { "label": "Reach", "hint": "The distance at which this creature can make melee attacks." },
@@ -103,6 +108,78 @@
         "isQuadraped": { "label": "Quadruped?", "hint": "Whether this creature is a quadruped or not." },
         "creatureType": { "label": "Creature Type", "hint": "The creature type of this creature, such as 'Humanoid', 'Undead', 'Dragon', etc." },
         "aooCount": { "label": "Attacks of Opportunity", "hint": "The number of attacks of opportunity this creature can make per round." }
+      },
+      "EVENTS": {
+        "HpEvents": {
+          "adjustHp": {
+            "label": "HP Adjusted",
+            "description": "Triggered when the creature's hit points are adjusted, either through damage or healing."
+          },
+          "damageTaken": {
+            "label": "Damage Taken",
+            "description": "Triggered when the creature takes damage."
+          },
+          "bloodied": {
+            "label": "Bloodied",
+            "description": "Triggered when the creature's hit points fall below half of its maximum."
+          },
+          "unbloodied": {
+            "label": "Unbloodied",
+            "description": "Triggered when the creature's hit points rise above half of its maximum."
+          },
+          "healingReceived": {
+            "label": "Healing Received",
+            "description": "Triggered when the creature receives healing."
+          },
+          "nonLethalTaken": {
+            "label": "Nonlethal Damage Taken",
+            "description": "Triggered when the creature takes nonlethal damage."
+          },
+          "tempHpChanged": {
+            "label": "Temporary HP Adjusted",
+            "description": "Triggered when the creature's temporary hit points are adjusted."
+          },
+          "disabledViaHealth": {
+            "label": "Disabled via Health",
+            "description": "Triggered when the creature becomes disabled due to health conditions."
+          },
+          "recoveredFromDisabledViaHealth": {
+            "label": "Recovered from Disabled via Health",
+            "description": "Triggered when the creature recovers from being disabled due to health conditions."
+          },
+          "dying": {
+            "label": "Dying",
+            "description": "Triggered when the creature is dying."
+          },
+          "noLongerDying": {
+            "label": "No Longer Dying",
+            "description": "Triggered when the creature is no longer dying."
+          },
+          "died": {
+            "label": "Died",
+            "description": "Triggered when the creature dies."
+          },
+          "noLongerDead": {
+            "label": "No Longer Dead",
+            "description": "Triggered when the creature is no longer dead."
+          },
+          "staggeredFromNonLethal": {
+            "label": "Staggered from Nonlethal",
+            "description": "Triggered when the creature becomes staggered due to nonlethal damage."
+          },
+          "noLongerStaggeredFromNonLethal": {
+            "label": "No Longer Staggered from Nonlethal",
+            "description": "Triggered when the creature is no longer staggered due to nonlethal damage."
+          },
+          "unconsciousFromNonLethal": {
+            "label": "Unconscious from Nonlethal",
+            "description": "Triggered when the creature becomes unconscious due to nonlethal damage."
+          },
+          "noLongerUnconsciousFromNonLethal": {
+            "label": "No Longer Unconscious from Nonlethal",
+            "description": "Triggered when the creature is no longer unconscious due to nonlethal damage."
+          }
+        }
       },
       "alignment": {
         "trueNeutral": "True Neutral",
@@ -122,12 +199,12 @@
       "FIELDS": {
         "speed": {
           "label": "Speed",
-          "land":   { "label": "Land Speed",   "base": { "label": "Land"   }, "total": { "label": "Total Land Speed"   } },
-          "climb":  { "label": "Climb Speed",  "base": { "label": "Climb"  }, "total": { "label": "Total Climb Speed"  } },
-          "swim":   { "label": "Swim Speed",   "base": { "label": "Swim"   }, "total": { "label": "Total Swim Speed"   } },
-          "fly":    { "label": "Fly Speed",    "base": { "label": "Fly"    }, "total": { "label": "Total Fly Speed"    } },
-          "burrow": { "label": "Burrow Speed", "base": { "label": "Burrow" }, "total": { "label": "Total Burrow Speed" } },
-          "flyManeuverability": { "label": "Fly Maneuverability" }
+          "land":   { "label": "Land Speed",   "familiarLabel": "Land",   "familiarAliases": [], "base": { "label": "Land",   "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Land Speed",   "familiarLabel": "Total", "familiarAliases": [] } },
+          "climb":  { "label": "Climb Speed",  "familiarLabel": "Climb",  "familiarAliases": [], "base": { "label": "Climb",  "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Climb Speed",  "familiarLabel": "Total", "familiarAliases": [] } },
+          "swim":   { "label": "Swim Speed",   "familiarLabel": "Swim",   "familiarAliases": [], "base": { "label": "Swim",   "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Swim Speed",   "familiarLabel": "Total", "familiarAliases": [] } },
+          "fly":    { "label": "Fly Speed",    "familiarLabel": "Fly",    "familiarAliases": [], "base": { "label": "Fly",    "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Fly Speed",    "familiarLabel": "Total", "familiarAliases": [] } },
+          "burrow": { "label": "Burrow Speed", "familiarLabel": "Burrow", "familiarAliases": [], "base": { "label": "Burrow", "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Burrow Speed", "familiarLabel": "Total", "familiarAliases": [] } },
+          "flyManeuverability": { "label": "Fly Maneuverability", "familiarLabel": "Maneuverability", "familiarAliases": [] }
         }
       },
       "sheet": {
