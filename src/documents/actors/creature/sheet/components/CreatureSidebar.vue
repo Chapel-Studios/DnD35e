@@ -1,5 +1,6 @@
 <template>
   <div class="creature-sidebar">
+    <EquipmentSilhouettePane />
     <CreatureHP />
     <!-- Actions placeholder -->
     <div class="actions-group">
@@ -10,6 +11,8 @@
 </template>
 
 <script setup lang="ts">
+  import EquipmentSilhouettePane from '@actors/baseActor/sheet/components/EquipmentSilhouettePane.vue';
+
   import CreatureHP from './CreatureHP.vue';
   
   const localize = (key: string) => game.i18n.localize(key);

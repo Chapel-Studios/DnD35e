@@ -70,4 +70,32 @@
 </script>
 
 <style scoped lang="scss">
+  .languages-list {
+    width: 100%;
+    min-width: 0;
+
+    :deep(.list-form-group) {
+      width: 100%;
+      min-width: 0;
+    }
+
+    :deep(.list-items) {
+      justify-content: flex-start;
+      align-items: stretch;
+      width: 100%;
+      min-width: 0;
+    }
+
+    :deep(.list-item) {
+      flex: 1 1 16rem;
+      min-width: 0;
+      max-width: 22rem;
+    }
+
+    :deep(.combobox-input),
+    :deep(.combobox-select) {
+      min-width: 0;
+      width: 100%;
+    }
+  }
 </style>

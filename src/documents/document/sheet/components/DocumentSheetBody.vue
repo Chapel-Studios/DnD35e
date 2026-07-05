@@ -26,7 +26,7 @@
       <div v-if="$slots.sidebar" class="sheet-sidebar">
         <slot name="sidebar"></slot>
       </div>
-      <div class="sheet-tab-panes">
+      <div ref="tabPanesEl" class="sheet-tab-panes">
         <div
           v-for="tab in tabList"
           :key="tab.id"
@@ -58,7 +58,13 @@
   import { useActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
   import { useItemSheetStore } from '@items/baseItem/index.mjs';
   import TabDivider from '@vc/TabDivider/TabDivider.vue';
-  import { inject, provide } from 'vue';
+  import {
+    inject,
+    nextTick,
+    provide,
+    ref,
+    watch,
+  } from 'vue';
 
   const props = withDefaults(defineProps<{
     context?: any;
@@ -80,6 +86,24 @@
 
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const { activeTabId, tabs: tabList } = inject(TabStoreSymbol) as TabStore;
+  const tabPanesEl = ref<HTMLDivElement | null>(null);
+  const tabScrollPositions = new Map<string, number>();
+
+  watch(activeTabId, async (newTabId, oldTabId) => {
+    const tabPanes = tabPanesEl.value;
+    if (!tabPanes) return;
+
+    if (oldTabId) {
+      tabScrollPositions.set(oldTabId, tabPanes.scrollTop);
+    }
+
+    await nextTick();
+    const nextTabPanes = tabPanesEl.value;
+    if (!nextTabPanes) return;
+
+    const savedScrollTop = tabScrollPositions.get(newTabId) ?? 0;
+    nextTabPanes.scrollTo({ top: savedScrollTop, behavior: 'auto' });
+  });
 </script>
 
 <style lang="scss" scoped>
@@ -92,13 +116,17 @@
 
   .sheet-body-content {
     display: flex;
-    overflow-y: auto;
+    overflow: hidden;
     flex: 1 1 auto;
+    min-width: 0;
     min-height: 0; // Ensure the content can shrink properly when vertical tabs are enabled
 
     .sheet-tab-panes {
       flex: 1 1 auto;
+      min-width: 0;
       min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
     &.vertical-tabs {
@@ -115,6 +143,7 @@
   .sheet-tab-container {
     display: flex;
     flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
     padding: 0.5rem;
     overflow: visible;
@@ -122,7 +151,8 @@
   }
 
   .sheet-tab {
-    width: 100%;  
+    width: 100%;
+    min-width: 0;
   }
 
   .doc-name-container {
@@ -136,7 +166,12 @@
   }
 
   .sheet-sidebar {
+    flex: 0 0 auto;
     width: fit-content;
     padding: 0.5rem;
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
   }
 </style>

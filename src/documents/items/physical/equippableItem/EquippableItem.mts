@@ -1,3 +1,4 @@
+import type { EquipSlot } from '@constants/equipmentSlots.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/index.mjs';
 
@@ -20,6 +21,8 @@ type EquippableItemSource<TItemType extends ItemType = ItemType> =
  */
 abstract class EquippableItem extends PhysicalItem {
   declare system: EquippableItemSystemData;
+
+  abstract performEquip(slotIds: EquipSlot[]): Promise<void> | void;
 }
 
 type EquippableItemLike = ItemDnd35e<ItemType> & EquippableItem;

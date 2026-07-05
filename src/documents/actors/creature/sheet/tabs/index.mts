@@ -6,7 +6,6 @@ import BuffsTab from './BuffsTab.vue';
 import CombatTab from './CombatTab.vue';
 import CreatureDescriptionTab from './CreatureDescriptionTab.vue';
 import FeaturesTab from './FeaturesTab.vue';
-import InventoryTab from './InventoryTab.vue';
 import SettingsTab from './SettingsTab.vue';
 import SkillsTab from './SkillsTab.vue';
 import SpellsTab from './SpellsTab.vue';
@@ -27,15 +26,6 @@ const combatTab: SheetTab = {
   component: CombatTab,
   order: 20,
   icon: 'fas fa-shield-halved',
-};
-
-const inventoryTab: SheetTab = {
-  id: 'inventory',
-  label: 'dnd35e.ACTOR.tab.Inventory',
-  tooltip: 'dnd35e.ACTOR.tab.Inventory',
-  component: InventoryTab,
-  order: 30,
-  icon: 'fas fa-backpack',
 };
 
 const featuresTab: SheetTab = {
@@ -108,7 +98,6 @@ export {
   combatTab,
   creatureNotesTab,
   featuresTab,
-  inventoryTab,
   settingsTab,
   skillsTab,
   spellsTab,

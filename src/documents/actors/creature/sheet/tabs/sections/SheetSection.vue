@@ -1,6 +1,11 @@
 <template>
   <section class="sheet-section">
-    <h2 class="section-header">{{ localize(header) }}</h2>
+    <h2 class="section-header">
+      <span>{{ localize(header) }}</span>
+      <span v-if="$slots['header-controls']" class="section-header-controls">
+        <slot name="header-controls" />
+      </span>
+    </h2>
     <div class="section-list">
       <slot name="list" />
       <div class="section-grid">
@@ -32,6 +37,9 @@
 
   .section-header {
     margin-left: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 
     &::before {
       content: '';
@@ -42,6 +50,16 @@
       right: 0;
       border: 1px solid var(--color-border, #ccc);
       z-index: -1;
+    }
+  }
+
+  .section-header-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    ::slotted(.field-control-btn) {
+      font-size: 1.1rem;
     }
   }
 

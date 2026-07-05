@@ -17,8 +17,15 @@
 </template>
 
 <script lang="ts" setup>
+  import {
+    EquipmentPaneStoreSymbol,
+    useEquipmentPaneStore,
+  } from '@actors/creature/sheet/EquipmentPaneStore.mjs';
   import { DocumentSheetBody } from '@documents/document/index.mjs';
+  import { provide } from 'vue';
 
   import CreatureHeaderDetails from './components/CreatureHeaderDetails.vue';
   import CreatureSidebar from './components/CreatureSidebar.vue';
+
+  provide(EquipmentPaneStoreSymbol, useEquipmentPaneStore());
 </script>
