@@ -2,11 +2,10 @@ import { MASKED_EDIT_STRATEGY } from '@constants/index.mjs';
 import { SIZES } from '@constants/sizes.mjs';
 import { IdentifiableSchemaMixin } from '@documents/identifiable/data/index.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
-import { CurrencyField } from '@fields/CurrencyField.mjs';
+import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import {
   derivedBooleanField,
   derivedNumberField,
-  optionalNumberField,
   optionalStringField,
   requiredNumberField,
   useDnd35eField,
@@ -39,7 +38,7 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     });
     schema.hardness = useDnd35eField(requiredNumberField(0));
     schema.quantity = useDnd35eField(requiredNumberField(0));
-    schema.weight = useDnd35eField(optionalNumberField(0));
+    schema.weight = useDnd35eField(requiredNumberField(0));
     // schema.isWeightlessInContainer = requiredBooleanField(false);
     // schema.isWeightlessWhenCarried = requiredBooleanField(false);
     schema.isCarried = new foundry.data.fields.BooleanField({ initial: true, required: true });
@@ -55,8 +54,8 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
       { initial: [], persisted: false }
     );
 
-    // Container
-    schema.containerId = optionalStringField();
+    // Container — UUID of the bag this item is stowed in; null = not contained.
+    schema.containerUuid = optionalStringField();
 
     return schema;
   }

@@ -171,6 +171,7 @@ The `.field-control-btn` class provides: transparent background, no border, 0.5 
 - File extensions: `.mts` for TypeScript source, `.mjs` for import paths (path aliases resolve `.mts` → `.mjs`)
 - All field helpers (`requiredNumberField`, `optionalStringField`, etc.) return plain Foundry DataFields
 - Field masking is handled via Secret AEs + `_masks`; never store dual values in the schema shape
+- put ternary expressions on multiple lines for readability, especially in Vue templates
 
 ---
 

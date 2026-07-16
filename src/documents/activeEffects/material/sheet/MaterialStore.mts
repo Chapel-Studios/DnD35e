@@ -6,7 +6,7 @@ import { getDefaultActiveEffectTabs } from '@effects/baseActiveEffect/sheet/tabs
 import type { MaterialSubtype } from '@effects/material/data/index.mjs';
 import type { MaterialType } from '@effects/material/Material.mjs';
 import { Material } from '@effects/material/Material.mjs';
-import { CurrencyData } from '@fields/CurrencyData.mjs';
+import { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 import { GAME_RULES_KEYS } from '@settings/gameRules/constants.mjs';
 import type { DamageReductionTypesConfig } from '@settings/gameRules/types.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';

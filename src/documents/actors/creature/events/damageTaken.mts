@@ -21,7 +21,7 @@ interface DamageTakenEvent extends DocumentEvent {
   payload: DamageTakenPayload;
 }
 
-interface checkForDamageTakenEventParams {
+interface CheckForDamageTakenEventParams {
   parent: Creature;
   updateData: Record<string, unknown>;
   hpAdjustmentType?: HpAdjustmentType;
@@ -36,7 +36,7 @@ interface checkForDamageTakenEventParams {
  * Does NOT fire on direct character-sheet HP edits (no hpAdjustmentType metadata).
  */
 const checkForDamageTakenEvent: EventChecker<DamageTakenPayload> = (
-  { parent, updateData, hpAdjustmentType, adjustmentAmount, damageType, sourceDocumentId, sourceMessage }: checkForDamageTakenEventParams
+  { parent, updateData, hpAdjustmentType, adjustmentAmount, damageType, sourceDocumentId, sourceMessage }: CheckForDamageTakenEventParams
 ) => {
   const result: EventCheckResult<DamageTakenPayload> = {
     documentId: parent.id,

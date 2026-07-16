@@ -4,7 +4,7 @@ import { SIZES } from '@constants/sizes.mjs';
 import { EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/index.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
 import { derivedBooleanField, requiredBooleanField, useDnd35eField } from '@fields/fieldBuilders.mjs';
-import { type Override,STACK_RESULT_APPLIED } from '@helpers/stacking.mjs';
+import { STACK_RESULT_APPLIED } from '@helpers/stacking.mjs';
 import { PhysicalItemSystemModel } from '@items/physical/physicalItem/data/PhysicalItemSystemModel.mjs';
 
 import type { EquippableItemSystemData } from './EquippableItemSystemData.mjs';
@@ -22,8 +22,12 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
     const schema = super.defineSchema();
 
     // Equippable
-    schema.isEquipped = requiredBooleanField(false);
+    schema.isEquipped = derivedBooleanField(false);
     schema.equippedSlotIds = new ArrayField(
+      new StringField<EquipSlot, EquipSlot, true, false, true>({ required: true }),
+      { initial: [], required: true }
+    );
+    schema.availableEquipmentSlots = new ArrayField(
       new StringField<EquipSlot, EquipSlot, true, false, true>({ required: true }),
       { initial: [], required: true }
     );
@@ -39,11 +43,14 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
 
   override prepareDerivedData(): void {
     super.prepareDerivedData();
+
+    this.isEquipped = this.isCarried && this.equippedSlotIds.length > 0;
+
     // Handle isWeightlessWhenEquipped
     if (this.isWeightlessWhenEquipped && this.isEquipped) {
       this.weight = 0;
       const systemWeight = 'system.weight';
-      const overrides: Override[] = [
+      this.parent.overrides[systemWeight] = [
         ...(this.parent?.overrides[systemWeight] ?? []),
         {
           fieldPath: systemWeight,
@@ -55,7 +62,6 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
           stackReason: game.i18n.localize('dnd35e.ITEM.EQUIPPABLE.FIELDS.isWeightlessWhenEquipped.hint'),
         },
       ];
-      this.parent.overrides[systemWeight] = overrides;
     }
 
     // isMasterwork: derived from active masterwork material AEs — not stored field.

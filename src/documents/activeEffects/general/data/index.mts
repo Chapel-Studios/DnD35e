@@ -1,14 +1,14 @@
 import type {
-  GeneralSystemData,
-  GeneralSystemSource,
-} from './GeneralSystemData.mjs';
-import { GeneralSystemModel } from './GeneralSystemModel.mjs';
+  GeneralEffectSystemData,
+  GeneralEffectSystemSource,
+} from './GeneralEffectSystemData.mjs';
+import { GeneralEffectSystemModel } from './GeneralEffectSystemModel.mjs';
 
 export {
-  GeneralSystemModel,
+  GeneralEffectSystemModel,
 };
 
 export type {
-  GeneralSystemData,
-  GeneralSystemSource,
+  GeneralEffectSystemData,
+  GeneralEffectSystemSource,
 };

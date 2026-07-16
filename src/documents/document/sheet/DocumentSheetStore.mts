@@ -1,7 +1,7 @@
 import type { ActorType } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
-import { MASKED_EDIT_STRATEGY, type MaskedEditStrategy } from '@constants/index.mjs';
+import { MASKED_EDIT_STRATEGY, type MaskedEditStrategy } from '@constants/fields.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import { resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import type { ActiveEffectDnd35e, EffectType } from '@effects/index.mjs';
@@ -81,6 +81,7 @@ type DocumentSheetStoreDocumentGetters = FieldOverridesStoreGetters & {
   systemSlug: ComputedRef<string>;
   documentUuid: ComputedRef<string>;
   description: ComputedRef<string>;
+  parentUuid: ComputedRef<string | null>;
   getEffectsForField: (fieldPath: string) => ComputedRef<object[]>;
   hasEffectsForField: (fieldPath: string) => ComputedRef<boolean>;
   familiarSchema: ComputedRef<FamiliarSchema>;
@@ -426,6 +427,9 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     localizedType: computed(() => game.i18n.localize(document.value.localizedType)),
     systemSlug: computed(() => document.value.system.slug || ''),
     documentUuid: computed(() => document.value.uuid || ''),
+
+    // Parent information (for embedded documents)
+    parentUuid: computed(() => document.value.parent?.uuid || null),
 
     // View-aware document fields
     name: computed(() => getViewAwareFieldValue('name') || ''),

@@ -18,8 +18,8 @@
       class="form-control"
     >
       <option
-        v-for="opt in options"
-        :key="opt.value"
+        v-for="(opt, key) in options"
+        :key="key"
         :value="opt.value"
         :class="opt.className"
       >
@@ -34,7 +34,7 @@
   </FormGroup>
 </template>
 
-<script setup lang="ts" generic="TValue extends string | number">
+<script setup lang="ts" generic="TValue extends string | number | null">
   import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject } from 'vue';

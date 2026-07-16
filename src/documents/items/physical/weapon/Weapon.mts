@@ -1,9 +1,10 @@
 import type { EquipSlot } from '@constants/equipmentSlots.mjs';
+import { MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
 import type { WeaponItemType } from '@items/itemTypes.mjs';
 import { EquippableItem } from '@items/physical/equippableItem/index.mjs';
 
 import type { PhysicalItemSourceProps } from '../physicalItem/PhysicalItem.mjs';
-import { PhysicalItem } from '../physicalItem/PhysicalItem.mjs';
+import { WEAPON_SUBTYPE } from './data/constants.mjs';
 import type { WeaponSystemData, WeaponSystemSource } from './data/WeaponSystemData.mjs';
 
 type WeaponSource = Omit<foundry.documents.ItemSource, 'system'>
@@ -24,7 +25,7 @@ class Weapon extends EquippableItem {
    *   weapon.events.on(Weapon.LifeCycle.onHit, ({ target, damage }) => { ... });
    */
   static override readonly LifeCycle = {
-    ...PhysicalItem.LifeCycle,
+    ...super.LifeCycle,
     /** Before a weapon action executes. Allows cancellation. (Emission: Phase 10) */
     beforeAction: 'beforeAction',
     /** After a weapon action completes successfully. (Emission: Phase 10) */
@@ -35,12 +36,17 @@ class Weapon extends EquippableItem {
     onCrit: 'onCrit',
   } as const;
 
-  override prepareBaseData (): void {
-    super.prepareBaseData();
-  }
-
-  override async performEquip (_slotIds: EquipSlot[]): Promise<void> {
-    return Promise.resolve();
+  override get defaultSlotIds (): EquipSlot[] {
+    if (
+      this.system.weaponSubtype === WEAPON_SUBTYPE.TWO_HANDED_WEAPON
+      || this.system.weaponSubtype === WEAPON_SUBTYPE.RANGED_WEAPON
+    ) {
+      return [MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT];
+    }
+    else if (this.system.weaponSubtype === WEAPON_SUBTYPE.LIGHT_WEAPON) {
+      return [OFF_HAND_EQUIP_SLOT];
+    }
+    return super.defaultSlotIds;
   }
 }
 

@@ -19,6 +19,7 @@
 <style scoped lang="scss">
   .doc-art-container {
     min-width: 8rem;
+    max-width: 13rem;
     width: min-content;
     aspect-ratio: 1;
     position: relative;

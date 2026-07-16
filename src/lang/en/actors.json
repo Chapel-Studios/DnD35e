@@ -295,7 +295,9 @@
         },
         "empty": "No items",
         "emptyCarried": "No carried items",
-        "emptyTracked": "No tracked items"
+        "emptyTracked": "No tracked items",
+        "confirmUnequipTitle": "Confirm Unequip",
+        "confirmUnequipContent": "Are you sure you want to unequip {itemName}?"
       },
       "header": {
         "xp": "XP",

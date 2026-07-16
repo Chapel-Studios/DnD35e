@@ -1,5 +1,6 @@
 import { FLY_MANEUVERABILITIES } from '@constants/index.mjs';
 import { DocumentSystemModel } from '@documents/document/data/DocumentSystemModel.mjs';
+import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import { derivedNumberField, requiredNumberField, useDnd35eField } from '@fields/fieldBuilders.mjs';
 
 import type { ActorSystemData } from './ActorSystemData.mjs';
@@ -30,6 +31,8 @@ abstract class ActorSystemModel extends DocumentSystemModel<foundry.documents.Ac
         choices: [...FLY_MANEUVERABILITIES],
       })),
     });
+
+    schema.inventoryValue = useDnd35eField(new CurrencyField({ persisted: false }));
 
     return schema;
   }

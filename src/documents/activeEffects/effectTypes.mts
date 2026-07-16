@@ -1,5 +1,6 @@
 import type { GeneralEffectType } from '@effects/general/index.mjs';
 
+import type { ContainmentEffectType } from './containment/containmentEffectType.mjs';
 import type { MaterialEffectType } from './material/materialEffectType.mjs';
 import type { SecretEffectType } from './secret/secretEffectType.mjs';
 
@@ -10,6 +11,7 @@ const GENERAL_EFFECT_TYPE = 'general' as const;
 type EffectType = GeneralEffectType
   | MaterialEffectType
   | SecretEffectType
+  | ContainmentEffectType
 // | 'enhancement';
 
 /** Types exposed in the AE creation dialog. Secret is excluded — created only via dedicated UI. */

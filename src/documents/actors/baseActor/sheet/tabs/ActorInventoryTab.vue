@@ -6,10 +6,8 @@
 
 <script setup lang="ts">
   import ActorInventorySection from '@actors/baseActor/sheet/components/ActorInventorySection.vue';
-  import {
-    type EquipmentPaneStore,
-    EquipmentPaneStoreSymbol,
-  } from '@actors/creature/sheet/EquipmentPaneStore.mjs';
+  import type { EquipmentPaneStore } from '@actors/creature/sheet/EquipmentPaneStore.mjs';
+  import { EquipmentPaneStoreSymbol } from '@actors/creature/sheet/EquipmentPaneStore.mjs';
   import { type TabStore,TabStoreSymbol } from '@documents/document/index.mjs';
   import { inject, watch } from 'vue';
 

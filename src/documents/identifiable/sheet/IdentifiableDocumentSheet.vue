@@ -1,7 +1,7 @@
 <template>
   <DocumentSheetBody>
-    <template #header-name>
-      <slot v-if="slots['header-name']" name="header-name">
+    <template v-if="slots['header-name']" #header-name>
+      <slot name="header-name">
       </slot>
     </template>
     <template #header-status>

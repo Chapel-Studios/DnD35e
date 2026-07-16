@@ -14,6 +14,7 @@
         :field-path="fieldPath"
         :focus-on-mount="true"
         class="contents"
+        hide-label
       >
       </FormulaFormGroup>
     </div>

@@ -6,7 +6,7 @@ import {
   SENSE_TYPES,
   SIZES,
 } from '@constants/index.mjs';
-import { CurrencyField } from '@fields/CurrencyField.mjs';
+import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import {
   derivedBooleanField,
   derivedNullableOptionalStringField,
@@ -134,6 +134,19 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     schema.notes = useDnd35eField(new HTMLField({ required: false, nullable: false, blank: true }));
 
     schema.currency = new CurrencyField({ required: true });
+
+    schema.attacks = new ArrayField(new SchemaField({
+      damageRoll: new StringField({ required: true, initial: '', blank: true }),
+      damageType: new StringField({ required: true, initial: '', blank: true }),
+      critRange: new StringField({ required: true, initial: '20' }),
+      critMultiplier: requiredNumberField(2),
+      rangeIncrement: requiredNumberField(0),
+      attackFormula: new StringField({ required: true, initial: '', blank: true }),
+      damageFormula: new StringField({ required: true, initial: '', blank: true }),
+    }), {
+      initial: [],
+      persisted: false,
+    });
 
     schema.encumbrance = new SchemaField({
       carriedWeight:   useDnd35eField(derivedNumberField(0)),

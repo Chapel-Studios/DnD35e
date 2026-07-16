@@ -4,7 +4,7 @@
       <HeaderNameField />
     </slot>
 
-    <div v-if="showStatusArea" class="doc-status-area">
+    <div class="doc-status-area">
       <h4 class="doc-type">{{localizedType}}</h4>
       <slot name="status"></slot>
     </div>
@@ -18,19 +18,13 @@
 
   import HeaderNameField from './HeaderNameField.vue';
 
-  withDefaults(defineProps<{
-    showStatusArea?: boolean;
-  }>(), {
-    showStatusArea: true,
-  });
-
   const { documentGetters: { localizedType } } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 </script>
 
 <style scoped lang="scss">
   .doc-header {
     display: grid;
-    grid-template: auto / auto 3fr minmax(80px, auto);
+    grid-template-columns: auto 3fr minmax(80px, auto);
     margin-bottom: 0.5rem;
 
     & > :first-child {
@@ -38,18 +32,29 @@
     }
   }
 
+  :global(.actor-sheet.sheet .doc-status-area)  {
+    display: none;
+  }
+
   .doc-status-area {
-    flex: 0 0 80px;
+    display: grid;
     margin: 0;
-    padding: 0.25rem 1rem 1rem;
+    grid-gap: 0.5rem 0;
     color: #7a7971;
+    grid-template-rows: min-content;
+    height: max-content;
+
+    :deep(.gm-section) {
+      display: grid;
+      height: fit -content;
+    }
   }
 
   .doc-header .doc-type {
-    font-size: 24px;
-    line-height: 26px;
+    font-size: 1.5rem;
+    line-height: 1.6125rem;
     text-align: center;
-    margin-bottom: 0.5rem;
+    margin: 0;
   }
 
   // Ancestor (.actor-sheet) lives outside this component, so wrap it in :global()

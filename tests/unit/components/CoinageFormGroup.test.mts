@@ -79,6 +79,9 @@ function mountCoinage(options: {
           documentActions: {
             getViewAwareFieldUpdater,
           },
+          _storeUtils: {
+            getSourceProperty: vi.fn((path: string) => computed(() => options.source)),
+          },
         },
         [RenderModeStoreSymbol]: makeRenderModeStore({ isEditMode: options.isEditMode }),
       },
@@ -106,7 +109,6 @@ describe('CoinageFormGroup', () => {
 
     const stub = wrapper.find('.list-stub');
     expect(stub.attributes('data-value')).toContain('srd_gp');
-    expect(getViewAwareFieldValue).toHaveBeenCalledWith(FIELD_PATH, true);
   });
 
   it('uses projected stacks for non-GM masked edit mode', () => {
@@ -123,7 +125,7 @@ describe('CoinageFormGroup', () => {
 
     const stub = wrapper.find('.list-stub');
     expect(stub.attributes('data-value')).toContain('srd_sp');
-    expect(getViewAwareFieldValue).not.toHaveBeenCalledWith(FIELD_PATH, true);
+    expect(getViewAwareFieldValue).toHaveBeenCalledWith(FIELD_PATH);
   });
 
   it('maps stack updates to PriceSource and writes via getViewAwareFieldUpdater by default', async () => {

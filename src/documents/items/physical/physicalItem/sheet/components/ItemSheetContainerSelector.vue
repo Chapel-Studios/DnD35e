@@ -1,28 +1,26 @@
 <template>
-  <!-- <SelectFormGroup
-    v-if="hasOwner"
+  <SelectFormGroup
+    v-if="hasOwner || currentContainerId"
     label="Container"
     :value="currentContainerId"
     :options="possibleContainers"
     field-path="system.containerId"
-  /> -->
+    :update-value="syncContainer"
+  />
 </template>
+
 <script setup lang="ts">
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  // WIP stub - all code commented out until template is ready
-  // import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  // import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
-  // import { inject } from 'vue';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
+  import SelectFormGroup from '@vc/fields/formGroups/SelectFormGroup.vue';
+  import { inject } from 'vue';
 
-  // const {
-  //   documentGetters: {
-  //     possibleContainers,
-  //     // currentContainerId,
-  //     hasOwner,
-  //   },
-  //   documentActions: {
-  //     getDirectFieldUpdater,
-  //   },
-  // } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
-
+  const {
+    documentGetters: {
+      possibleContainers,
+      containerUuid: currentContainerId,
+      hasOwner,
+    },
+    documentActions: { syncContainer },
+  } = inject(DocumentSheetStoreSymbol) as PhysicalDocumentStore;
 </script>

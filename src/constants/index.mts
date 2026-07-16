@@ -41,7 +41,6 @@ import {
   MASTERWORK_ARMOR_AE_UUID,
   MASTERWORK_WEAPON_AE_UUID,
 } from './compendiumUuids.mjs';
-import { EffectConfig, ItemConfig } from './config/index.mjs';
 import { ITEM_SHEET_CLASS, SETTINGS_CONFIG_CLASS, VUE_APP_CLASS } from './cssClasses.mjs';
 import { devConfig } from './devConfig.mjs';
 import { 
@@ -110,7 +109,6 @@ export {
   DELTA_MIRROR,
   devConfig,
   DEX,
-  EffectConfig,
   EQUIP_SLOT_SELECT_OPTIONS,
   EQUIP_SLOTS,
   EVIL,
@@ -123,7 +121,6 @@ export {
   INT,
   isAttackAction,
   ITEM_SHEET_CLASS,
-  ItemConfig,
   LAW_AXES,
   LAW_AXIS_SELECT_OPTIONS,
   LAWFUL,

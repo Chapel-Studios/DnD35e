@@ -21,7 +21,7 @@ abstract class ItemSheetDnd35e<
     return {
       classes: [SYSTEM_ID, ITEM_SHEET_CLASS],
       position: {
-        width: 600,
+        width: 625,
         height: 650,
       },
     } as DeepPartial<VueApplicationConfiguration<ItemDnd35e>>;

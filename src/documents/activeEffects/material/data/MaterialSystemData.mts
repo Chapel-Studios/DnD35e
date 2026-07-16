@@ -1,5 +1,5 @@
 import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e, EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
-import type { CurrencyData } from '@fields/CurrencyData.mjs';
+import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 import type { Price, PriceSource } from '@settings/index.mjs';
 
 import type { MaterialSubtype } from './materialTypes.mjs';

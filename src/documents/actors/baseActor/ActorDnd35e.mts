@@ -43,11 +43,6 @@ class ActorDnd35e<
     return ACTOR_TYPES_LOCALIZED[this.type as ActorType] ?? 'dnd35e.COMMON.Actor';
   }
 
-  static readonly LifeCycle = {
-    // This sadly doesn't properly inherit this from the Mixin
-    ...DocumentLifeCycle,
-  } as const;
-
   /**
    * Override to filter out item-targeted changes from transferred effects.
    * Effects can have both item and actor targeted changes - we only apply actor-targeted changes here.
@@ -117,6 +112,10 @@ class ActorDnd35e<
   }
 
   // LifeCycle-------------------------------------------------------------------
+  static readonly LifeCycle = {
+    // This sadly doesn't properly inherit this from the Mixin
+    ...DocumentLifeCycle,
+  } as const;
 
   protected override async _preCreate (
     data: this['_source'],
@@ -125,7 +124,7 @@ class ActorDnd35e<
   ): Promise<boolean | void> {
     const result = await super._preCreate(data, options, user);
     if (result === false) return false;
-    ensureNameFormulaOnCreate(this as NameFormulaDocument);
+    ensureNameFormulaOnCreate(this as unknown as NameFormulaDocument, options);
   }
 }
 

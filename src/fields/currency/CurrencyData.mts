@@ -200,6 +200,10 @@ class CurrencyData extends DataModel {
     return { stacks, srdEquivalent: CurrencyData.computeGpValue(stacks) };
   }
 
+  toSource(): PriceSource {
+    return CurrencyData.toSource(this.stacks);
+  }
+
   /**
    * Merge two sets of stacks by coinId, summing counts.
    * Returns a new array — does not mutate inputs.

@@ -13,11 +13,11 @@ interface BloodiedPayload extends AdjustHpPayload {
 }
 
 interface BloodiedEvent extends DocumentEvent {
-  type: typeof BLOODIED_EVENT;
+  type: (typeof BLOODIED_EVENT) | (typeof UNBLOODIED_EVENT);
   payload: BloodiedPayload;
 }
 
-interface checkForBloodiedEventParams {
+interface CheckForBloodiedEventParams {
   parent: DocumentDnd35e<any>;
   updateData: Record<string, unknown>;
   sourceActorId?: string;
@@ -25,7 +25,7 @@ interface checkForBloodiedEventParams {
 }
 
 const checkForBloodiedEvent: EventChecker<BloodiedPayload> = (
-  { parent, updateData, ...payloadMetaData }: checkForBloodiedEventParams
+  { parent, updateData, ...payloadMetaData }: CheckForBloodiedEventParams
 ) => {
   const updateSystem = updateData.system as CreatureSystemData;
   const result: EventCheckResult<BloodiedPayload> = {

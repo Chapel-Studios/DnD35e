@@ -1,14 +1,17 @@
 import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { IdentifiableDocumentActions, IdentifiableDocumentGetters, IdentifiableDocumentStoreUtils, IdentifiableStore } from '@documents/identifiable/index.mjs';
 import { useIdentifiableStore } from '@documents/identifiable/index.mjs';
+import { syncContainmentAe } from '@effects/containment/index.mjs';
 import { syncBrokenAeState } from '@effects/material/logic/brokenAe.mjs';
 import type { MaterialType } from '@effects/material/Material.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
 import type { SecretType } from '@effects/secret/Secret.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
-import { CurrencyData } from '@fields/CurrencyData.mjs';
+import { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 import type { ItemDocumentActions, ItemDocumentGetters, ItemSheetStore, ItemSheetStoreUtils, UseItemSheetStoreOptions } from '@items/baseItem/index.mjs';
 import { useItemSheetStore } from '@items/baseItem/index.mjs';
+import { containerItemType } from '@items/itemTypes.mjs';
+import type { Container } from '@items/physical/container/index.mjs';
 import type { DamageReductionTypesConfig } from '@settings/index.mjs';
 import { GAME_RULES_KEYS, SettingsStoreSymbol } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -74,11 +77,37 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     currentHp: computed(() => getViewAwareFieldValue('system.hp.current') || 0),
     maxHp: computed(() => getViewAwareFieldValue('system.hp.max') || 0),
     possibleContainers: computed(() => {
-      // TODO(Phase 6): build this out after implementing containers (§C2)
-      return [{ value: null, label: game.i18n.localize('dnd35e.COMMON.None') }];
+      const containerOptions: SelectOption<string | null>[] = [{
+        value: null,
+        label: game.i18n.localize('dnd35e.COMMON.None'),
+      }];
+      if (!document.value.actor) {
+        const existingUuid = document.value.system.containerUuid;
+        if (!existingUuid) {
+          return containerOptions;
+        }
+
+        const existingContainer = fromUuidSync<Container>(existingUuid);
+
+        containerOptions.push({
+          value: existingUuid,
+          label: existingContainer?.name ?? '',
+        });
+        return containerOptions;
+      }
+
+      return [
+        ...containerOptions,
+        ...document.value.actor.items
+          .filter((item) => item.type === containerItemType && item.id !== document.value.id)
+          .map((item) => ({
+            value: item.uuid,
+            label: item.name,
+          })),
+      ];
     }),
+    containerUuid: computed(() => document.value.system.containerUuid),
     hardness: computed(() => getViewAwareFieldValue('system.hardness') ?? 0),
-    // currentContainerId: computed(() => document.value.system.containerId),
     isCarried: computed(() => document.value.system.isCarried),
     size: computed(() => getViewAwareFieldValue('system.size') ?? ''),
     materials: computed(() => {
@@ -143,6 +172,12 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
         );
       }
     },
+    syncContainer: async (containerUuid: string | null) => {
+      const container = containerUuid
+        ? await fromUuid(containerUuid) as Container
+        : null;
+      await syncContainmentAe(document.value, container);
+    },
   };
 
   const store: PhysicalDocumentStore<TDocument> = {
@@ -162,8 +197,8 @@ interface PhysicalItemGetters extends IdentifiableDocumentGetters {
   maxHp: ComputedRef<number>;
   currentHp: ComputedRef<number>;
   hardness: ComputedRef<number | null>;
-  possibleContainers: ComputedRef<Array<{ value: null; label: string }>>;
-  // currentContainerId: ComputedRef<string | null>;
+  possibleContainers: ComputedRef<SelectOption<string | null>[]>;
+  containerUuid: ComputedRef<string | null>;
   isCarried: ComputedRef<boolean>;
   size: ComputedRef<string>;
   materials: ComputedRef<MaterialType[]>;
@@ -179,6 +214,7 @@ interface PhysicalItemActions extends IdentifiableDocumentActions {
   toggleBroken: (value: boolean) => Promise<void>;
   createSecret: () => Promise<void>;
   revealAllSecrets: () => Promise<void>;
+  syncContainer: (containerUuid: string | null) => Promise<void>;
 }
 
 interface PhysicalItemStore extends IdentifiableStore {

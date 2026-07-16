@@ -1,4 +1,3 @@
-import type { HpAdjustmentType } from '@actors/creature/sheet/components/constants.mjs';
 import type { ClientDocument } from '@client/documents/abstract/_module.mjs';
 import type { DatabaseCreateCallbackOptions, DatabaseDeleteCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import { DOCUMENT_UPDATE_TYPES, type DocumentUpdateType } from '@constants/documentUpdateTypes.mjs';
@@ -37,18 +36,11 @@ interface DocumentUpdateMetadata {
   pendingEvents?: DocumentEvent<any>[];
   sourceDocumentId?: string;
   sourceMessage?: string;
-  [key: string]: unknown;
+  [key: string]: unknown;                                   
 }
 
 interface DocumentUpdateCallbackOptions extends foundry.abstract.DatabaseUpdateCallbackOptions {
   updateMetadata?: DocumentUpdateMetadata;
-}
-
-interface HpAdjustmentMetadata extends DocumentUpdateMetadata {
-  updateType: typeof DOCUMENT_UPDATE_TYPES.HP_ADJUSTMENT_UPDATE;
-  adjustmentAmount: number;
-  damageType?: string;
-  hpAdjustmentType: HpAdjustmentType,
 }
 
 interface DocumentUpdateOptions extends Partial<Omit<DatabaseUpdateOperation<null>, 'parent' | 'pack'>> {
@@ -85,10 +77,10 @@ const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base
     static readonly LifeCycle = DocumentLifeCycle;
 
     protected override async _preCreate (
-      data: this['_source'],
+      data: DeepPartial<this['_source']>,
       options: DatabaseCreateCallbackOptions,
       user: foundry.documents.BaseUser
-    ): Promise<boolean | void> {
+    ): Promise<boolean> {
       const result = await super._preCreate(data as any, options, user);
       if (result === false) return false;
 
@@ -96,6 +88,7 @@ const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base
       if (sourceUpdate) this.updateSource(sourceUpdate);
 
       queueMicrotask(() => void this.events.emit(DocumentDnd35e.LifeCycle.preCreate, { document: this, options }));
+      return true;
     }
     
     protected override _onCreate (
@@ -209,5 +202,4 @@ export type {
   DocumentUpdateCallbackOptions,
   DocumentUpdateMetadata,
   DocumentUpdateOptions,
-  HpAdjustmentMetadata,
 };

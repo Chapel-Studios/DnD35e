@@ -8,7 +8,8 @@ import type { FieldEditability, FieldVisibility } from './fieldPermissions.mjs';
 type ValueType = string
   | number
   | boolean
-  | Color;
+  | Color
+  | null;
 
 interface BaseFormGroupProps<TValue extends ValueType> {
   label?: string; // localization key
@@ -24,6 +25,7 @@ interface BaseFormGroupProps<TValue extends ValueType> {
   hideFieldControls?: boolean;
   /** The current value of the field. */
   value?: TValue | null;
+  hideLabel?: boolean; // when true, the label is not rendered (but the fieldPath is still used for permissions)
 }
 
 interface FormGroupWithInputProps<TValue  extends ValueType> extends BaseFormGroupProps<TValue> {
@@ -62,11 +64,11 @@ interface ToggleSwitchFormGroupProps extends FormGroupWithInputProps<boolean> {
   flip?: boolean; // when true, on/off states are visually flipped (on = left, off = right)
 }
 
-interface SelectFormGroupProps<TValue extends string | number> extends FormGroupWithInputProps<TValue> {
+interface SelectFormGroupProps<TValue extends string | number | null> extends FormGroupWithInputProps<TValue> {
   options: SelectOption<TValue>[];
 }
 
-interface MultiSelectFormGroupProps<TValue extends string | number> extends Omit<FormGroupWithInputProps<TValue>, 'value' | 'onUpdate'> {
+interface MultiSelectFormGroupProps<TValue extends string | number | null> extends Omit<FormGroupWithInputProps<TValue>, 'value' | 'onUpdate'> {
   value?: TValue[] | Set<TValue> | null;
   onUpdate?: (value: TValue[]) => void | boolean | Promise<void> | Promise<boolean>;
   options: SelectOption<TValue>[];

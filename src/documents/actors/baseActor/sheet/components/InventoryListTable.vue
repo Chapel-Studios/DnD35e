@@ -9,10 +9,10 @@
   >
     <CategorizedListTable
       :title="title"
-      :column-count="7"
+      :column-count="8"
       :rows="rows"
       :empty-label="emptyLabel"
-      :empty-icon="isCarried ? 'fas fa-backpack' : 'fas fa-box-open'"
+      :empty-icon="emptyIcon"
       :enable-subcategory-collapse="true"
     >
       <template #header>
@@ -24,12 +24,25 @@
           <th class="equip-col" />
           <th class="open-col" />
           <th class="carry-col" />
+          <th class="delete-col" />
         </tr>
       </template>
 
       <template #row="{ row }">
-        <tr class="inventory-row">
+        <tr
+          class="inventory-row"
+          :data-container-uuid="getRowContainerUuid(row)"
+        >
           <td class="name-col item-name">
+            <button
+              v-if="isContainerRow(row)"
+              type="button"
+              class="field-control-btn container-expand-btn"
+              :title="getContainerExpandTitle(row)"
+              @click.stop="toggleContainerExpand(getRowItem(row).id)"
+            >
+              <i class="fas" :class="isContainerExpanded(getRowItem(row).id) ? 'fa-chevron-down' : 'fa-chevron-right'" />
+            </button>
             <span
               class="drag-handle"
               draggable="true"
@@ -54,11 +67,11 @@
           <td class="weight-col">{{ getRowWeightDisplay(row) }}</td>
           <td class="equip-col">
             <button
-              v-if="isCarried && isEquippable(getRowItem(row))"
+              v-if="variant === 'carried' && isCarried && isEquippable(getRowItem(row))"
               type="button"
               class="field-control-btn equip-toggle"
               :title="localize(getEquipToggleTitle(getRowItem(row)))"
-              @click="toggleEquipped(getRowItem(row))"
+              @click="toggleEquipped(getRowItem(row) as EQUIPPABLE_ITEMS)"
             >
               <i :class="isItemEquipped(getRowItem(row)) ? 'fas fa-toggle-on' : 'fas fa-toggle-off'" />
             </button>
@@ -75,6 +88,7 @@
           </td>
           <td class="carry-col">
             <button
+              v-if="variant === 'carried'"
               type="button"
               class="field-control-btn carry-toggle"
               :title="localize(toggleTitle)"
@@ -82,29 +96,67 @@
             >
               <i :class="isCarried ? 'fas fa-backpack' : 'fas fa-box-open'" />
             </button>
+            <button
+              v-else
+              type="button"
+              class="field-control-btn carry-toggle"
+              :title="localize('dnd35e.CONTAINER.action.removeFromContainer')"
+              @click="removeFromContainer(getRowItem(row))"
+            >
+              <i class="fas fa-arrow-up-from-bracket" />
+            </button>
+          </td>
+          <td class="destroy-col">
+            <button
+              type="button"
+              class="field-control-btn destroy-item-btn"
+              :title="localize('dnd35e.ACTOR.inventory.action.destroyItem')"
+              @click="destroyItem(getRowItem(row))"
+            >
+              <i class="fas fa-trash" />
+            </button>
           </td>
         </tr>
+        <template v-if="isContainerContentsRow(row)">
+          <tr class="inventory-row contained-item-row">
+            <td class="contained-item-cell" colspan="8">
+              <InventoryListTable
+                :title="getRowItem(row).name"
+                variant="container"
+                :is-carried="isCarried"
+                :container-uuid="getRowItem(row).uuid"
+                :owner-uuid="effectiveOwnerUuid"
+                empty-label="dnd35e.CONTAINER.ContentsEmpty"
+              />
+            </td>
+          </tr>
+        </template>
       </template>
     </CategorizedListTable>
   </div>
 </template>
 
 <script setup lang="ts">
-  import type { ActorDocumentStore } from '@actors/baseActor/sheet/index.mjs';
-  import {
-    type EquipSlot,
-    MAIN_HAND_EQUIP_SLOT,
-    OFF_HAND_EQUIP_SLOT,
-  } from '@constants/equipmentSlots.mjs';
+  import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
+  import type { EquipSlot } from '@constants/equipmentSlots.mjs';
+  import type { WeaponSubcategory } from '@constants/inventory.mjs';
+  import { SUBCATEGORY_LABELS, SUBCATEGORY_ORDER, WEAPON_SUBCATEGORY } from '@constants/inventory.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import { syncContainmentAe } from '@effects/containment/index.mjs';
   import type { ItemDnd35e } from '@items/baseItem/index.mjs';
-  import type { PhysicalItemType } from '@items/itemTypes.mjs';
+  import type { EQUIPPABLE_ITEMS, PHYSICAL_ITEMS, PhysicalItemType } from '@items/itemTypes.mjs';
   import {
+    containerItemType,
     ITEM_TYPES_LOCALIZED,
     PHYSICAL_ITEM_TYPES,
   } from '@items/itemTypes.mjs';
-  import CategorizedListTable from '@vc/CategorizedListTable.vue';
-  import { computed, inject, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+  import type { Container } from '@items/physical/container/Container.mjs';
+  import { EquippableItem } from '@items/physical/equippableItem/EquippableItem.mjs';
+  import type { PhysicalItemLike } from '@items/physical/physicalItem/PhysicalItem.mjs';
+  import { WEAPON_SUBTYPE } from '@items/physical/weapon/data/constants.mjs';
+  import type { Weapon, WeaponSubtype, WeaponSystemData } from '@items/physical/weapon/index.mjs';
+  import CategorizedListTable, { type CategorizedRow } from '@vc/CategorizedListTable.vue';
+  import { computed, inject, onBeforeUnmount, reactive } from 'vue';
 
   const ALLOWED_ITEM_TYPES = PHYSICAL_ITEM_TYPES;
 
@@ -119,80 +171,86 @@
     equippedSlotIds?: EquipSlot[];
   };
 
-  type EquippableItemDocument = ItemDnd35e & {
-    system: InventoryItemData;
-    performEquip?: (slotIds: EquipSlot[]) => Promise<void> | void;
-  };
-
-  type InventoryRow = {
-    id: string;
-    categoryId: string;
-    categoryLabel: string;
-    subcategoryId: string;
-    subcategoryLabel: string;
-    sortKey: string;
-    item: ItemDnd35e;
+  type InventoryRow = CategorizedRow & {
+    item: PHYSICAL_ITEMS;
     quantity: number;
     weightDisplay: string;
     typeLabel: string;
     isCarried: boolean;
   };
 
-  const props = defineProps<{
+  const props = withDefaults(defineProps<{
     title: string;
     emptyLabel: string;
-    toggleTitle: string;
-    isCarried: boolean;
-  }>();
+    toggleTitle?: string;
+    isCarried?: boolean;
+    /** 'carried' = actor carried/tracked lists; 'container' = a container's contents. */
+    variant?: 'carried' | 'container';
+    /** Explicit item list. When omitted the injected actor store is used. */
+    items?: PHYSICAL_ITEMS[];
+    /** UUID of the container item (container variant). Used to link/unlink items. */
+    containerUuid?: string;
+    /** Uuid of the actor that owns the container (container variant); null when unowned. */
+    ownerUuid?: string | null;
+  }>(), {
+    toggleTitle: '',
+    isCarried: false,
+    variant: 'carried',
+    items: undefined,
+    containerUuid: undefined,
+    ownerUuid: null,
+  });
 
   const DRAG_SOURCE_KEY = 'inventorySourceIsCarried';
 
-  const SUBCATEGORY_LABELS = {
-    unarmed: 'dnd35e.ACTOR.inventory.subcategory.unarmed',
-    mainOrOff: 'dnd35e.ACTOR.inventory.subcategory.mainOrOff',
-    twoHanded: 'dnd35e.ACTOR.inventory.subcategory.twoHanded',
-    mainOnly: 'dnd35e.ACTOR.inventory.subcategory.mainOnly',
-    offOnly: 'dnd35e.ACTOR.inventory.subcategory.offOnly',
-    ranged: 'dnd35e.ACTOR.inventory.subcategory.ranged',
-    other: 'dnd35e.ACTOR.inventory.subcategory.other',
-  } as const;
-
-  const SUBCATEGORY_ORDER: Record<keyof typeof SUBCATEGORY_LABELS, number> = {
-    unarmed: 0,
-    mainOrOff: 1,
-    twoHanded: 2,
-    mainOnly: 3,
-    offOnly: 4,
-    ranged: 5,
-    other: 99,
-  };
-
   const localize = (key: string): string => game.i18n.localize(key);
 
-  const store = inject(DocumentSheetStoreSymbol) as ActorDocumentStore;
-  const actorId = computed(() => store._storeUtils.document.value.id);
-  const embeddedItemRefresh = ref(0);
+  const {
+    documentGetters: {
+      documentUuid,
+      physicalItems: injectedItems,
+    },
+  } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
-  const bumpEmbeddedItemRefresh = (): void => {
-    embeddedItemRefresh.value += 1;
-  };
+  const effectiveOwnerUuid = computed<string | null>(() => {
+    return props.ownerUuid ?? documentUuid.value ?? null;
+  });
 
-  const actorItems = computed(() => {
-    // Force recompute when embedded items change (img, carried state, etc.)
-    embeddedItemRefresh.value;
-    const actor = store._storeUtils.document.value;
-    return [...actor.items];
+  /** The item pool this list renders from: explicit prop, else injected actor items. */
+  const sourceItems = computed<PHYSICAL_ITEMS[]>(() => props.items ?? injectedItems?.value ?? []);
+
+  const emptyIcon = computed(() => {
+    if (props.variant === 'container') return 'fas fa-box-open';
+    return props.isCarried ? 'fas fa-backpack' : 'fas fa-box-open';
   });
 
   const rows = computed<InventoryRow[]>(() => {
-    return actorItems.value
-      .filter(
-        (item) => ALLOWED_ITEM_TYPES.has(item.type as AllowedItemType)
-          && (item.system as InventoryItemData).isCarried === props.isCarried
-      )
+    const legacyContainerId = props.containerUuid
+      ? sourceItems.value.find((item) => item.uuid === props.containerUuid)?.id
+      : null;
+
+    return sourceItems.value
+      .filter((item) => {
+        if (!ALLOWED_ITEM_TYPES.has(item.type as AllowedItemType)) return false;
+
+        if (props.variant === 'container') {
+          const parentRef = item.system.containerUuid;
+          return (
+            item.uuid !== props.containerUuid
+            && (
+              parentRef === props.containerUuid
+              || (!!legacyContainerId && parentRef === legacyContainerId)
+            )
+          );
+        }
+
+        return !item.system.containerUuid;
+      })
       .map((item) => {
-        const itemData = item.system as InventoryItemData;
-        const { subcategoryId, subcategoryLabel } = resolveWeaponSubcategory(itemData.weaponSubtype);
+        const itemData = item.system;
+        const { subcategoryId, subcategoryLabel } = isWeapon(item)
+          ? resolveWeaponSubcategory((itemData as WeaponSystemData).weaponSubtype)
+          : { subcategoryId: WEAPON_SUBCATEGORY.OTHER_WEAPON_SUBCATEGORY, subcategoryLabel: localize(SUBCATEGORY_LABELS[WEAPON_SUBCATEGORY.OTHER_WEAPON_SUBCATEGORY]) };
         const quantity = itemData.quantity ?? 1;
         const weight = itemData.weight ?? 0;
         const allowedType = item.type as AllowedItemType;
@@ -210,86 +268,83 @@
           typeLabel: localize('dnd35e.WEAPON.Type.' + ((item.system as { weaponType?: string }).weaponType ?? 'simple')),
           isCarried: itemData.isCarried ?? false,
         };
-      })
-      .filter((row) => row.isCarried === props.isCarried);
+      });
   });
 
-  const getRowItem = (row: unknown): ItemDnd35e => (row as InventoryRow).item;
-  const getRowTypeLabel = (row: unknown): string => (row as InventoryRow).typeLabel;
-  const getRowQuantity = (row: unknown): number => (row as InventoryRow).quantity;
-  const getRowWeightDisplay = (row: unknown): string => (row as InventoryRow).weightDisplay;
+  const getRowItem = (row: InventoryRow): PHYSICAL_ITEMS => (row).item as PHYSICAL_ITEMS;
+  const getRowTypeLabel = (row: InventoryRow): string => (row).typeLabel;
+  const getRowQuantity = (row: InventoryRow): number => (row).quantity;
+  const getRowWeightDisplay = (row: InventoryRow): string => (row).weightDisplay;
+  const isContainerContentsRow = (row: InventoryRow): boolean => {
+    return isContainerRow(row)
+      && isContainerExpanded(getRowItem(row).id);
+  };
+  const getContainerExpandTitle = (row: InventoryRow): string => {
+    return isContainerExpanded(getRowItem(row).id)
+      ? localize('dnd35e.CONTAINER.action.collapse')
+      : localize('dnd35e.CONTAINER.action.expand');
+  };
 
-  const isEquippable = (item: ItemDnd35e): item is EquippableItemDocument => {
+  const isEquippable = (item: PHYSICAL_ITEMS): item is EQUIPPABLE_ITEMS => {
     const data = item.system as InventoryItemData | undefined;
-    return !!data && Array.isArray(data.equippedSlotIds);
+    return (
+      !!data
+      && Array.isArray(data.equippedSlotIds)
+      && item instanceof EquippableItem
+      && typeof item.performEquip === 'function'
+      && typeof item.performUnequip === 'function'
+    );
   };
 
-  const isItemEquipped = (item: ItemDnd35e): boolean => {
-    if (!isEquippable(item)) return false;
-    return (item.system.isEquipped ?? false) || (item.system.equippedSlotIds?.length ?? 0) > 0;
+  const isWeapon = (item: PHYSICAL_ITEMS): item is Weapon => {
+    return item.type === 'weapon';
   };
 
-  const getEquipToggleTitle = (item: ItemDnd35e): string => {
-    return isItemEquipped(item) ? 'dnd35e.ACTOR.inventory.action.unequip' : 'dnd35e.ACTOR.inventory.action.equip';
+  const isItemEquipped = (item: PHYSICAL_ITEMS): boolean => {
+    return isEquippable(item) && (item.system.isEquipped ?? false);
   };
 
-  const getPreferredSlotsForEquip = (item: EquippableItemDocument): EquipSlot[] => {
-    if (item.type !== 'weapon') return [MAIN_HAND_EQUIP_SLOT];
-
-    const weaponSubtype = item.system.weaponSubtype;
-    if (weaponSubtype === 'twoHanded') {
-      return [MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT];
-    }
-
-    return [MAIN_HAND_EQUIP_SLOT];
+  const getEquipToggleTitle = (item: PHYSICAL_ITEMS): string => {
+    return isItemEquipped(item)
+      ? 'dnd35e.ACTOR.inventory.action.unequip'
+      : 'dnd35e.ACTOR.inventory.action.equip';
   };
 
-  const getEquippedSlots = (item: EquippableItemDocument): EquipSlot[] => {
-    return [...(item.system.equippedSlotIds ?? [])];
-  };
-
-  const equippableItems = computed<EquippableItemDocument[]>(() => {
-    return actorItems.value.filter(isEquippable);
+  const equippableItems = computed<EquippableItem[]>(() => {
+    return sourceItems.value.filter(isEquippable);
   });
 
-  const equipItemToSlots = async (item: EquippableItemDocument, slots: EquipSlot[]): Promise<void> => {
+  const equipItemToSlots = async (item: EquippableItem, slots: EquipSlot[]): Promise<void> => {
+    if (
+      item.system.equippedSlotIds?.length === slots.length
+      && item.system.equippedSlotIds?.every((slot) => slots.includes(slot))
+    ) {
+      // Already equipped to the requested slots; no action needed.
+      return;
+    }
+    
     const conflictingItems = equippableItems.value.filter((other) => {
       if (other.id === item.id) return false;
-      const otherSlots = getEquippedSlots(other);
+      const otherSlots =  other.system.equippedSlotIds ?? [];
       return otherSlots.some(slot => slots.includes(slot));
     });
 
     for (const conflictingItem of conflictingItems) {
-      await conflictingItem.update({
-        'system.isEquipped': false,
-        'system.equippedSlotIds': [],
-      });
+      await conflictingItem.performUnequip?.();
     }
 
-    const updated = await item.update({
-      'system.isEquipped': true,
-      'system.equippedSlotIds': slots,
-    }) as EquippableItemDocument | undefined;
-
-    const equippedItem = updated ?? item;
-    if (typeof equippedItem.performEquip === 'function') {
-      await equippedItem.performEquip(slots);
-    }
+    await item.performEquip?.(slots);
   };
 
-  const toggleEquipped = async (item: ItemDnd35e): Promise<void> => {
+  const toggleEquipped = async (item: EQUIPPABLE_ITEMS): Promise<void> => {
     if (!isEquippable(item)) return;
 
     if (isItemEquipped(item)) {
-      await item.update({
-        'system.isEquipped': false,
-        'system.equippedSlotIds': [],
-      });
+      await item.performUnequip?.();
       return;
     }
 
-    const preferredSlots = getPreferredSlotsForEquip(item);
-    await equipItemToSlots(item, preferredSlots);
+    await equipItemToSlots(item, item.defaultSlotIds);
   };
 
   const FALLBACK_ITEM_ICON = '/icons/svg/item-bag.svg';
@@ -301,8 +356,8 @@
     return `/${src}`;
   };
 
-  const getCanonicalItemImg = (item: ItemDnd35e): string => {
-    const sourceImg = item._source?.img;
+  const getCanonicalItemImg = (item: PHYSICAL_ITEMS): string => {
+    const sourceImg = item.img;
     if (typeof sourceImg === 'string' && sourceImg.length > 0) {
       return normalizeImgPath(sourceImg);
     }
@@ -310,12 +365,11 @@
     return typeof runtimeImg === 'string' ? normalizeImgPath(runtimeImg) : '';
   };
 
-  const getItemIcon = (item: ItemDnd35e): string => {
-    const src = getCanonicalItemImg(item) || FALLBACK_ITEM_ICON;
-    return failedIconSrcByItemId[item.id] === src ? FALLBACK_ITEM_ICON : src;
+  const getItemIcon = (item: PHYSICAL_ITEMS): string => {
+    return  item.img ?? FALLBACK_ITEM_ICON;
   };
 
-  const onItemIconError = (item: ItemDnd35e, event: Event): void => {
+  const onItemIconError = (item: PHYSICAL_ITEMS, event: Event): void => {
     const attemptedSrc = getCanonicalItemImg(item) || FALLBACK_ITEM_ICON;
     failedIconSrcByItemId[item.id] = attemptedSrc;
 
@@ -324,48 +378,182 @@
     target.src = FALLBACK_ITEM_ICON;
   };
 
-  const getIconKey = (item: ItemDnd35e): string => {
-    return `${item.id}:${item.img || 'fallback'}:${embeddedItemRefresh.value}`;
+  const getIconKey = (item: PHYSICAL_ITEMS): string => {
+    return `${item.id}:${item.img || 'fallback'}`;
   };
 
-  const resolveWeaponSubcategory = (weaponSubtype: string | undefined): {
-    subcategoryId: keyof typeof SUBCATEGORY_LABELS;
+  const resolveWeaponSubcategory = (weaponSubtype: WeaponSubtype | undefined): {
+    subcategoryId: WeaponSubcategory;
     subcategoryLabel: string;
   } => {
     switch (weaponSubtype) {
-    case 'unarmed':
+    case WEAPON_SUBTYPE.UNARMED_WEAPON:
       return {
-        subcategoryId: 'unarmed',
-        subcategoryLabel: localize(SUBCATEGORY_LABELS.unarmed),
+        subcategoryId: WEAPON_SUBCATEGORY.UNARMED_WEAPON_SUBCATEGORY,
+        subcategoryLabel: localize(SUBCATEGORY_LABELS[WEAPON_SUBCATEGORY.UNARMED_WEAPON_SUBCATEGORY]),
       };
-    case 'ranged':
+    case WEAPON_SUBTYPE.RANGED_WEAPON:
       return {
-        subcategoryId: 'ranged',
-        subcategoryLabel: localize(SUBCATEGORY_LABELS.ranged),
+        subcategoryId: WEAPON_SUBCATEGORY.RANGED_WEAPON_SUBCATEGORY,
+        subcategoryLabel: localize(SUBCATEGORY_LABELS[WEAPON_SUBCATEGORY.RANGED_WEAPON_SUBCATEGORY]),
       };
-    case 'twoHanded':
+    case WEAPON_SUBTYPE.TWO_HANDED_WEAPON:
       return {
-        subcategoryId: 'twoHanded',
-        subcategoryLabel: localize(SUBCATEGORY_LABELS.twoHanded),
+        subcategoryId: WEAPON_SUBCATEGORY.TWO_HANDED_WEAPON_SUBCATEGORY,
+        subcategoryLabel: localize(SUBCATEGORY_LABELS[WEAPON_SUBCATEGORY.TWO_HANDED_WEAPON_SUBCATEGORY]),
       };
-    case 'oneHanded':
-    case 'light':
+    case WEAPON_SUBTYPE.ONE_HANDED_WEAPON:
+    case WEAPON_SUBTYPE.LIGHT_WEAPON:
       return {
-        subcategoryId: 'mainOrOff',
-        subcategoryLabel: localize(SUBCATEGORY_LABELS.mainOrOff),
+        subcategoryId: WEAPON_SUBCATEGORY.MAIN_OR_OFF_WEAPON_SUBCATEGORY,
+        subcategoryLabel: localize(SUBCATEGORY_LABELS[WEAPON_SUBCATEGORY.MAIN_OR_OFF_WEAPON_SUBCATEGORY]),
       };
     default:
       return {
-        subcategoryId: 'other',
-        subcategoryLabel: localize(SUBCATEGORY_LABELS.other),
+        subcategoryId: WEAPON_SUBCATEGORY.OTHER_WEAPON_SUBCATEGORY,
+        subcategoryLabel: localize(SUBCATEGORY_LABELS[WEAPON_SUBCATEGORY.OTHER_WEAPON_SUBCATEGORY]),
       };
     }
   };
 
-  const toggleCarried = async (item: ItemDnd35e): Promise<void> => {
+  const toggleCarried = async (item: PHYSICAL_ITEMS): Promise<void> => {
     const itemData = item.system as InventoryItemData;
     const nextState = !(itemData.isCarried ?? false);
     await item.update({ 'system.isCarried': nextState });
+  };
+
+  const destroyItem = async (item: PHYSICAL_ITEMS): Promise<void> => {
+    const itemName = item.name;
+    const confirmMessage = localize('dnd35e.ACTOR.inventory.confirm.destroyItem')
+      .replace('{itemName}', itemName);
+    if (!window.confirm(confirmMessage)) return;
+    
+    await item.delete();
+  };
+
+  const removeFromContainer = async (item: PHYSICAL_ITEMS): Promise<void> => {
+    await syncContainmentAe(item, null);
+    // await item.update({ 'system.containerUuid': null });
+  };
+
+  /**
+   * Returns the container UUID for a row item if it is a container, else undefined.
+   * Used to set data-container-uuid on rows so they can receive drops.
+   */
+  const getRowContainerUuid = (row: InventoryRow): string | undefined => {
+    const item = getRowItem(row);
+    return item.type === containerItemType ? item.uuid : undefined;
+  };
+
+  // ── Container inline expansion ──────────────────────────────────────────
+  const expandedContainerIds = reactive(new Set<string>());
+
+  const isContainerRow = (row: InventoryRow): boolean =>
+    getRowItem(row).type === containerItemType;
+
+  const isContainerExpanded = (id: string): boolean =>
+    expandedContainerIds.has(id);
+
+  const toggleContainerExpand = (id: string): void => {
+    if (expandedContainerIds.has(id)) {
+      expandedContainerIds.delete(id);
+    } else {
+      expandedContainerIds.add(id);
+    }
+  };
+
+  const isContainerDescendantOf = (maybeDescendantUuid: string, ancestorUuid: string): boolean => {
+    const visited = new Set<string>();
+    let currentUuid: string | undefined = maybeDescendantUuid;
+
+    while (currentUuid) {
+      if (currentUuid === ancestorUuid) return true;
+      if (visited.has(currentUuid)) return false;
+      visited.add(currentUuid);
+
+      const currentItem = sourceItems.value.find((item) => item.uuid === currentUuid);
+      currentUuid = currentItem?.system.containerUuid ?? undefined;
+    }
+
+    return false;
+  };
+
+  /**
+   * Adds a dropped item to this container (container-variant table).
+   * If the container is owned by an actor the item is first ensured to be on
+   * that same actor, then linked via containerUuid.
+   */
+  const handleContainerDrop = async (dropped: PHYSICAL_ITEMS): Promise<void> => {
+    const containerUuid = props.containerUuid;
+    if (!containerUuid) {
+      console.error('[inventory-drop] Container variant drop received but no containerUuid prop is set.');
+      return;
+    }
+    if (!ALLOWED_ITEM_TYPES.has(dropped.type as AllowedItemType)) return;
+    if (dropped.uuid === containerUuid) return; // no self-nesting
+
+    const container = sourceItems.value
+      .find((item) => item.uuid === containerUuid) as Container | undefined;
+    if (!container) {
+      console.error('[inventory-drop] Container variant drop received but no container item found for containerUuid:', containerUuid);
+      return;
+    }
+
+    if (
+      dropped.type === containerItemType
+      && isContainerDescendantOf(container.uuid, dropped.uuid)
+    ) {
+      console.error('[inventory-drop] Prevented cyclic container nesting.', {
+        droppedUuid: dropped.uuid,
+        targetContainerUuid: container.uuid,
+      });
+      return;
+    }
+
+    const ownerUuid = effectiveOwnerUuid.value;
+    const alreadyOnOwner = ownerUuid
+      ? dropped.parent?.uuid === ownerUuid
+      : dropped.parent == null;
+
+    if (
+      dropped instanceof EquippableItem
+      && dropped.system.isEquipped
+    ) {
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+        window: { title: 'dnd35e.ACTOR.inventory.confirmUnequipTitle' },
+        content: game.i18n.localize('dnd35e.ACTOR.inventory.confirmUnequipContent')
+          .replace('{itemName}', dropped.name),
+      });
+
+      if (!confirmed) {
+        return;
+      }
+      
+      await dropped.performUnequip?.();
+    }
+
+    if (alreadyOnOwner) {
+      await syncContainmentAe(dropped as PhysicalItemLike, container);
+      if (dropped.system.isCarried !== props.isCarried) {
+        await dropped.update({ 'system.isCarried': props.isCarried });
+      }
+      return;
+    }
+
+    if (ownerUuid) {
+      const owner = await fromUuid(ownerUuid);
+      if (owner instanceof Actor) {
+        const data = dropped.toObject() as Record<string, unknown>;
+        delete (data as { _id?: string })._id;
+        data.system = {
+          ...((data.system as Record<string, unknown>) ?? {}),
+          isCarried: props.isCarried,
+        } as Partial<PhysicalItemLike['system']>;
+        const newItem = await owner.createEmbeddedDocuments('Item', [data]);
+        const createdItem = newItem[0] as PhysicalItemLike;
+        await syncContainmentAe(createdItem, container);
+      }
+    }
   };
 
   const openItemSheet = (item: ItemDnd35e): void => {
@@ -389,7 +577,7 @@
     }
   };
 
-  const createDragGhost = (item: ItemDnd35e): HTMLDivElement => {
+  const createDragGhost = (item: PHYSICAL_ITEMS): HTMLDivElement => {
     const el = document.createElement('div');
     el.className = 'inventory-drag-ghost';
 
@@ -411,7 +599,7 @@
     return el;
   };
 
-  const onDragStart = (event: DragEvent, item: ItemDnd35e): void => {
+  const onDragStart = (event: DragEvent, item: PHYSICAL_ITEMS): void => {
     const payload = {
       ...item.toDragData(),
       [DRAG_SOURCE_KEY]: props.isCarried,
@@ -429,6 +617,7 @@
 
   const onDragOver = (event: DragEvent): void => {
     event.preventDefault();
+    event.stopPropagation();
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
@@ -436,12 +625,14 @@
 
   const onDragEnter = (event: DragEvent): void => {
     event.preventDefault();
+    event.stopPropagation();
     dropZoneState.depth += 1;
     dropZoneState.active = true;
   };
 
   const onDragLeave = (event: DragEvent): void => {
     event.preventDefault();
+    event.stopPropagation();
     dropZoneState.depth = Math.max(0, dropZoneState.depth - 1);
     if (dropZoneState.depth === 0) {
       dropZoneState.active = false;
@@ -449,6 +640,8 @@
   };
 
   const onDrop = async (event: DragEvent): Promise<void> => {
+    event.preventDefault();
+    event.stopPropagation();
     dropZoneState.active = false;
     dropZoneState.depth = 0;
 
@@ -456,19 +649,63 @@
     const type = rawData?.type;
     if (type !== 'Item') return;
 
-    const sourceIsCarried = rawData[DRAG_SOURCE_KEY];
-    if (typeof sourceIsCarried !== 'boolean') return;
+    const dropped = await Item.implementation.fromDropData(rawData) as PHYSICAL_ITEMS | null;
+    if (
+      !(dropped instanceof Item)
+      || !ALLOWED_ITEM_TYPES.has(dropped.type)
+    ) return;
 
-    const dropped = await Item.implementation.fromDropData(rawData);
-    if (!(dropped instanceof Item)) return;
+    // Container variant: accept drops from anywhere and stow into the container.
+    if (props.variant === 'container') {
+      await handleContainerDrop(dropped);
+      endDragPreview();
+      return;
+    }
 
-    const actor = store._storeUtils.document.value;
-    const parent = dropped.parent;
-    const sameActorItem = parent instanceof Actor && parent.id === actor.id;
+    // Carried variant: if item is dropped onto a container row, stow it there.
+    if (props.variant === 'carried') {
+      const containerTarget = (event.target as HTMLElement | null)?.closest('[data-container-uuid]');
+      const targetContainerUuid = containerTarget?.getAttribute('data-container-uuid') ?? null;
+      if (targetContainerUuid && dropped.uuid !== targetContainerUuid) {
+        const targetContainer = sourceItems.value.find((item) => item.uuid === targetContainerUuid);
+        await syncContainmentAe(dropped as PhysicalItemLike, targetContainer as Container);
+        endDragPreview();
+        return;
+      }
+    }
+
+    const sameActorItem = dropped.parent?.uuid === documentUuid.value;
+    // DEBUG — remove after diagnosing
+    console.log('[inventory-drop]', {
+      droppedUuid: dropped.uuid,
+      droppedParentUuid: dropped.parent?.uuid,
+      documentUuid: documentUuid.value,
+      sameActorItem,
+      containerUuid: dropped.system.containerUuid,
+      variant: props.variant,
+      isCarried: props.isCarried,
+    });
     if (!sameActorItem) return;
 
-    event.preventDefault();
-    event.stopPropagation();
+    const currentContainerUuid = (dropped.system as { containerUuid?: string | null }).containerUuid;
+
+    // If the item was in a container, pull it out regardless of drag source key.
+    if (currentContainerUuid) {
+      console.log('[inventory-drop] calling update: containerUuid→null, isCarried→', props.isCarried);
+      await syncContainmentAe(dropped as PhysicalItemLike, null); 
+      if (dropped.system.isCarried !== props.isCarried) {
+        await dropped.update({ 'system.isCarried': props.isCarried });
+      }
+      endDragPreview();
+      return;
+    }
+
+    // Standard carried ↔ stored toggle — only for drags that originated in this list.
+    const sourceIsCarried = rawData[DRAG_SOURCE_KEY];
+    if (typeof sourceIsCarried !== 'boolean') {
+      endDragPreview();
+      return;
+    }
 
     const droppedData = dropped.system as InventoryItemData;
     const nextIsCarried = props.isCarried;
@@ -478,28 +715,7 @@
     endDragPreview();
   };
 
-  const onAnyEmbeddedItemMutation = (...args: unknown[]): void => {
-    const item = args[0];
-    if (!(item instanceof Item)) return;
-
-    const parent = item.parent;
-    if (!(parent instanceof Actor)) return;
-    if (parent.id !== actorId.value) return;
-
-    delete failedIconSrcByItemId[item.id];
-    bumpEmbeddedItemRefresh();
-  };
-
-  onMounted(() => {
-    Hooks.on('updateItem', onAnyEmbeddedItemMutation);
-    Hooks.on('createItem', onAnyEmbeddedItemMutation);
-    Hooks.on('deleteItem', onAnyEmbeddedItemMutation);
-  });
-
   onBeforeUnmount(() => {
-    Hooks.off('updateItem', onAnyEmbeddedItemMutation);
-    Hooks.off('createItem', onAnyEmbeddedItemMutation);
-    Hooks.off('deleteItem', onAnyEmbeddedItemMutation);
     endDragPreview();
   });
 </script>
@@ -524,8 +740,31 @@
     }
 
     .item-name {
-      width: 100%;
+      align-items: center;
+      display: flex;
+      gap: 0.2rem;
       min-width: 8rem;
+      width: 100%;
+    }
+  }
+
+  .container-expand-btn {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    padding: 0.1rem 0.2rem;
+  }
+
+  .contained-item-row {
+    td {
+      background: color-mix(in srgb, var(--color-cool-4, #9ba5a0) 10%, transparent);
+    }
+
+    .contained-item-cell {
+      padding: 0.35rem 0.5rem 0.35rem 1.25rem;
+    }
+
+    .item-name {
+      padding-left: 1.75rem;
     }
   }
 

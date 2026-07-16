@@ -2,6 +2,7 @@
   "TYPES": {
     "Item": {
       "weapon": "Weapon",
+      "container": "Container",
       "equipment": "Equipment",
       "loot": "Loot",
       "consumable": "Consumable",
@@ -14,6 +15,42 @@
     }
   },
   "dnd35e": {
+    "CONTAINER": {
+      "FIELDS": {
+        "contentsAreWeightless": {
+          "label": "Are Contents Weightless?",
+          "hint": "When enabled, contained items weigh nothing for the carrier (e.g. a bag of holding)."
+        },
+        "maxContentWeight": {
+          "label": "Max Content Weight",
+          "hint": "Maximum weight this container can hold. Leave blank for no hard limit."
+        }
+      },
+      "Tabs": {
+        "details": "Details",
+        "inventory": "Inventory"
+      },
+      "Contents": "Contents",
+      "ContentsEmpty": "This container is empty.",
+      "ContentsCount": "items",
+      "action": {
+        "removeFromContainer": "Remove from container",
+        "expand": "Show contents",
+        "collapse": "Hide contents"
+      }
+    },
+    "CONTAINMENT": {
+      "FIELDS": {
+        "sourceContainerId": {
+          "label": "Source Container",
+          "hint": "The container this item is stowed in."
+        },
+        "makesWeightless": {
+          "label": "Makes Weightless",
+          "hint": "Whether this containment zeroes the item's weight."
+        }
+      }
+    },
     "ITEM": {
       "FIELDS": {
         "isPsionic": {
@@ -89,7 +126,8 @@
           "hint": "The weight of a single unit of this item, in pounds."
         },
         "isCarried": {
-          "label": "Is Carried",
+          "label": "Carried",
+          "antilabel": "Tracked",
           "hint": "Whether this item is currently being carried by the owner."
         },
         "size": {
@@ -108,12 +146,23 @@
           "label": "Container ID",
           "hint": "The ID of the container this item is stored in, if any."
         }
+      },
+      "EVENTS": {
+        "hpAdjusted": "HP Adjusted",
+        "damageTaken": "Item Damaged",
+        "damageMended": "Item Mended",
+        "itemBroken": "Item Broken",
+        "itemRepaired": "Item Repaired"
+      },
+      "carriedEffect": {
+        "name": "{itemName} Carried Effect",
+        "description": "Carried effect for {itemName}."
       }
     },
     "EQUIPPABLE": {
       "FIELDS": {
         "isEquipped": {
-          "label": "Equipped?",
+          "label": "Equipped",
           "hint": "Whether this item is currently equipped."
         },
         "isMelded": {
@@ -145,6 +194,12 @@
           "hint": "The magic equivalency granted to this item."
         }
       },
+      "EVENTS": {
+        "itemEquipped": "Item Equipped",
+        "itemUnequipped": "Item Unequipped",
+        "itemMelded": "Item Melded",
+        "itemUnmelded": "Item Unmelded"
+      },
       "EquipSlot": {
         "mainHand": "Main Hand",
         "offHand": "Off Hand",
@@ -160,6 +215,10 @@
         "ring-left": "Ring (Left)",
         "ring-right": "Ring (Right)",
         "feet": "Feet"
+      },
+      "equippedEffect": {
+        "name": "{itemName} Equipped Effect",
+        "description": "Equipped effect for {itemName}."
       }
     },
     "SIZE": {

@@ -1,21 +1,36 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import type { DocumentConstructionContext } from '@common/_types.mjs';
+import type { DeepPartial, DocumentConstructionContext } from '@common/_types.mjs';
+import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { EffectChangeData } from '@common/documents/active-effect.mjs';
-import { getDisplayName } from '@documents/document/logic/index.mjs';
+import type { DocumentUpdateCallbackOptions } from '@documents/document/DocumentDnd35e.mjs';
+import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
+import type { NameFormulaDocument } from '@documents/document/logic/index.mjs';
+import { ensureNameFormulaOnCreate, getDisplayName } from '@documents/document/logic/index.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+import {
+  EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TYPE,
+  FINAL_EFFECT_CHANGE_PHASE,
+  INITIAL_EFFECT_CHANGE_PHASE,
+  SYSTEM_CHANGE_TYPE,
+} from '@effects/baseActiveEffect/data/constants.mjs';
 import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { ChangeHistory, Override, StackingChange } from '@helpers/stacking.mjs';
-import { parseNumericChangeValue, resolveActiveEffectChanges, STACK_RESULT_APPLIED, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+import {
+  parseNumericChangeValue,
+  resolveActiveEffectChanges,
+  STACK_RESULT_APPLIED,
+  STACK_RESULT_IGNORED,
+} from '@helpers/stacking.mjs';
 import type { ItemType } from '@items/index.mjs';
 import { ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
 
-import type { ItemSystemData, ItemSystemSource } from './index.mjs';
+import type { ItemSheetStore, ItemSystemData, ItemSystemSource } from './index.mjs';
 
 type FormulaLikeSource = {
   formula?: unknown;
@@ -35,6 +50,44 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   declare system: ItemSystemData;
   declare _source: ItemSourceDnd35e<TItemType>;
   // declare _sheet: ItemSheetDnd35e<any> | null;
+
+  /** Life Cycle */
+  static readonly LifeCycle = {
+    // This sadly doesn't properly inherit this from the Mixin
+    ...DocumentLifeCycle,
+  } as const;
+
+  protected override async _preCreate(
+    updateData: DeepPartial<this['_source']>,
+    options: DatabaseCreateCallbackOptions,
+    user: foundry.documents.BaseUser
+  ): Promise<boolean> {
+    const precreateResult = await super._preCreate(updateData, options, user);
+    if (precreateResult === false) return false;
+
+    ensureNameFormulaOnCreate(this as unknown as NameFormulaDocument);
+    return true;
+  } 
+
+  protected override async _onUpdate(
+    data: Record<string, unknown>,
+    options: DocumentUpdateCallbackOptions,
+    userId: string
+  ): Promise<void> {
+    super._onUpdate(data, options, userId);
+    
+    // ensure sheetstore updates
+    if (game.dnd35e?.stores?.[this.documentName]?.[this.id]) {
+      (game.dnd35e.stores[this.documentName]?.[this.id] as ItemSheetStore<any>)
+        ?._storeUtils.refreshDocument?.(this);
+    }
+
+    // ensure parent sheetstore updates if this is an embedded item
+    if (this.parent && game.dnd35e?.stores?.[this.parent.documentName]?.[this.parent.id]) {
+      (game.dnd35e.stores[this.parent.documentName]?.[this.parent.id] as ItemSheetStore<any>)
+        ?._storeUtils.refreshDocument?.(this.parent);
+    }
+  }
 
   // Active Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method,
   // but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
@@ -222,11 +275,32 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     for ( const effect of this.allApplicableEffects() ) {
       if ( !effect.active ) continue;
       for ( const change of effect.system.changes ) {
-        // Only apply item-targeted changes (default to actor for compatibility with base ActiveEffect change data structure)
+        // default to actor for compatibility with vanilla ActiveEffect change data structure
         const changeTarget = change.target ?? EFFECT_CHANGE_TARGET.ACTOR;
-        if ( !change.key || (change.phase !== phase) || (changeTarget !== EFFECT_CHANGE_TARGET.ITEM) ) continue;
-        // MASK changes are not applied via stacking — they define masked values read at prep time
-        if (change.type === SYSTEM_CHANGE_TYPE.MASK) continue;
+        if (
+          // Only apply item-targeted changes
+          (
+            !change.key 
+            || (change.phase !== phase) 
+            || (changeTarget !== EFFECT_CHANGE_TARGET.ITEM)
+          )
+          // MASK changes are not applied via stacking — they define masked values read at prep time
+          || (change.type === SYSTEM_CHANGE_TYPE.MASK)
+          || (
+            change.condition
+            && (
+              (
+                typeof change.condition === 'function'
+                && !change.condition(this)
+              )
+              //TODO implement after the fomrula deep dive
+              // || (
+              //   typeof change.condition === 'string'
+              //   && !FormulaData.evaluateFormula(change.condition, this.getRollData())
+              // )
+            )
+          )
+        ) continue;
         const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as unknown as AppliedItemEffectChange;
         copy.effect = effect;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;

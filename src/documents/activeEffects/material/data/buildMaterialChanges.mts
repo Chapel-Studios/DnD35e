@@ -12,17 +12,14 @@ import type { EffectPhases } from '@common/documents/active-effect.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import type { EffectChangeTarget, EffectChangeType } from '@effects/baseActiveEffect/data/constants.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
-import type { CurrencyData } from '@fields/CurrencyData.mjs';
+import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 
 import type { MaterialSubtype } from './materialTypes.mjs';
 import { MATERIAL_SUBTYPE_BONUS_MAP } from './materialTypes.mjs';
 
-/** Minimal shape of `CurrencyData` consumed by the builder. */
-type PriceLike = Pick<CurrencyData, 'isEmpty'>;
-
 export type BuildMaterialChangesInput = {
   materialSubtype: MaterialSubtype;
-  price: PriceLike;
+  price: CurrencyData;
   magicEquivalency: number;
   hardness: number;
   bonusHp: number;
@@ -89,7 +86,7 @@ export const buildMaterialChanges = (input: BuildMaterialChangesInput): EffectCh
     changes.push(buildChange(
       materialSubtype,
       'system.price',
-      price as unknown as CurrencyData,
+      price,
       pickType(existingChanges, 'system.price', EFFECT_CHANGE_TYPE.ADD)
     ));
   }

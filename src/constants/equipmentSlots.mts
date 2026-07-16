@@ -3,9 +3,15 @@ import type { SelectOption } from '@vc/fields/formGroups/types.mjs';
 const MAIN_HAND_EQUIP_SLOT = 'mainHand';
 const OFF_HAND_EQUIP_SLOT = 'offHand';
 
-const EQUIP_SLOTS = [
+const WEAPON_EQUIP_SLOTS = [
   MAIN_HAND_EQUIP_SLOT,
   OFF_HAND_EQUIP_SLOT,
+] as const;
+
+type WeaponEquipSlot = (typeof WEAPON_EQUIP_SLOTS)[number];
+
+const EQUIP_SLOTS = [
+  ...WEAPON_EQUIP_SLOTS,
   'head',
   'face',
   'neck',
@@ -35,8 +41,10 @@ export {
   EQUIP_SLOTS,
   MAIN_HAND_EQUIP_SLOT,
   OFF_HAND_EQUIP_SLOT,
+  WEAPON_EQUIP_SLOTS,
 };
 
 export type {
   EquipSlot,
+  WeaponEquipSlot,
 };
