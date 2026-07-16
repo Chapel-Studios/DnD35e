@@ -79,6 +79,8 @@
     hideFieldControls: { type: Boolean, default: false },
     /** FormulaData instance for formula/unidentified formula access. */
     formulaData: { type: Object as PropType<FormulaData | null>, default: undefined },
+    /** Whether to focus the input on mount. Used by the name field to focus on edit. */
+    focusOnMount: { type: Boolean, default: false },
   });
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
@@ -199,7 +201,7 @@
 
       console.warn(`[FormulaFormGroup] No updater available for ${props.fieldPath}. Provide onUpdate or ensure DocumentSheetStore is injected.`);
     },
-    focusOnMount: () => isEditable.value,
+    focusOnMount: () => isEditable.value && props.focusOnMount,
   });
 </script>
 

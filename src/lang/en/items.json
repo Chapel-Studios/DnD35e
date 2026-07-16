@@ -146,6 +146,8 @@
         }
       },
       "EquipSlot": {
+        "mainHand": "Main Hand",
+        "offHand": "Off Hand",
         "head": "Head",
         "face": "Face",
         "neck": "Neck",

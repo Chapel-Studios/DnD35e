@@ -1,6 +1,11 @@
 import type { SelectOption } from '@vc/fields/formGroups/types.mjs';
 
+const MAIN_HAND_EQUIP_SLOT = 'mainHand';
+const OFF_HAND_EQUIP_SLOT = 'offHand';
+
 const EQUIP_SLOTS = [
+  MAIN_HAND_EQUIP_SLOT,
+  OFF_HAND_EQUIP_SLOT,
   'head',
   'face',
   'neck',
@@ -28,6 +33,8 @@ const EQUIP_SLOT_SELECT_OPTIONS: SelectOption<EquipSlot | 'none'>[] = [
 export {
   EQUIP_SLOT_SELECT_OPTIONS,
   EQUIP_SLOTS,
+  MAIN_HAND_EQUIP_SLOT,
+  OFF_HAND_EQUIP_SLOT,
 };
 
 export type {

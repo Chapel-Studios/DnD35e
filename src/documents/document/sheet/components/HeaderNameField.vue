@@ -12,6 +12,7 @@
         :value="formulaString"
         :onUpdate="onUpdate"
         :field-path="fieldPath"
+        :focus-on-mount="true"
         class="contents"
       >
       </FormulaFormGroup>

@@ -1,5 +1,7 @@
 <template>
-  <div class="actor-tab inventory-tab">
-    <p>Inventory (TODO)</p>
-  </div>
+  <ActorInventoryTab />
 </template>
+
+<script setup lang="ts">
+  import ActorInventoryTab from '@actors/baseActor/sheet/tabs/ActorInventoryTab.vue';
+</script>

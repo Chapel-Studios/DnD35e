@@ -235,7 +235,67 @@
         "Skills": "Skills",
         "Speed": "Movement",
         "p-attributes": "Physical Attributes",
-        "c-attributes": "Combat Attributes"
+        "c-attributes": "Combat Attributes",
+        "inventory": "Inventory"
+      },
+      "inventory": {
+        "tab": {
+          "all": "All"
+        },
+        "section": {
+          "carried": "Carried",
+          "tracked": "Tracked"
+        },
+        "silhouette": {
+          "title": "Equipment",
+          "action": {
+            "open": "Open equipment silhouette",
+            "close": "Close equipment silhouette",
+            "unequip": "Unequip item"
+          },
+          "slot": {
+            "mainHand": "Main Hand",
+            "offHand": "Off Hand",
+            "twoHands": "Two Hands",
+            "head": "Head",
+            "face": "Face",
+            "neck": "Neck",
+            "shoulders": "Shoulders",
+            "chest": "Chest",
+            "torso": "Torso",
+            "belt": "Belt",
+            "wrists": "Wrists",
+            "hands": "Hands",
+            "ring-left": "Ring (Left)",
+            "ring-right": "Ring (Right)",
+            "feet": "Feet"
+          }
+        },
+        "column": {
+          "name": "Item",
+          "type": "Type",
+          "quantity": "Qty",
+          "weight": "Wt"
+        },
+        "subcategory": {
+          "unarmed": "Unarmed",
+          "mainOrOff": "Main or Off Hand",
+          "twoHanded": "Two-Handed",
+          "mainOnly": "Main Hand Only",
+          "offOnly": "Off Hand Only",
+          "ranged": "Ranged",
+          "other": "Other"
+        },
+        "action": {
+          "moveToCarried": "Move to carried",
+          "moveToTracked": "Move to tracked",
+          "openItemSheet": "Open item sheet",
+          "equip": "Equip item",
+          "unequip": "Unequip item"
+        },
+        "empty": "No items",
+        "emptyCarried": "No carried items",
+        "emptyTracked": "No tracked items"
       },
       "header": {
         "xp": "XP",

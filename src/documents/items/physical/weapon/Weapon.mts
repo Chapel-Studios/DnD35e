@@ -1,3 +1,4 @@
+import type { EquipSlot } from '@constants/equipmentSlots.mjs';
 import type { WeaponItemType } from '@items/itemTypes.mjs';
 import { EquippableItem } from '@items/physical/equippableItem/index.mjs';
 
@@ -36,6 +37,10 @@ class Weapon extends EquippableItem {
 
   override prepareBaseData (): void {
     super.prepareBaseData();
+  }
+
+  override async performEquip (_slotIds: EquipSlot[]): Promise<void> {
+    return Promise.resolve();
   }
 }
 
