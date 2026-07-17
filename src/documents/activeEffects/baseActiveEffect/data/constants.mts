@@ -1,11 +1,11 @@
 import type { EffectTarget } from '@effects/effectTypes.mjs';
-import { EFFECT_TARGET } from '@effects/effectTypes.mjs';
+import { ACTOR_EFFECT_TARGET, EFFECT_TARGET } from '@effects/effectTypes.mjs';
 
 type ActiveEffectTarget = EffectTarget;
-// | 'Actor';
 
 const ACTIVE_EFFECT_TARGETS = {
   [EFFECT_TARGET]: 'dnd35e.COMMON.Item',
+  [ACTOR_EFFECT_TARGET]: 'dnd35e.COMMON.Actor',
 } as const satisfies Record<ActiveEffectTarget, string>;
 
 type ActiveEffectTargetLocalizationValues = typeof ACTIVE_EFFECT_TARGETS[keyof typeof ACTIVE_EFFECT_TARGETS];

@@ -162,13 +162,22 @@
   }
 
   .doc-name-container {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template: min-content / max-content 1fr;
+    justify-content: start;
+    align-items: start;
+    grid-gap: 0.125rem 0.5rem;
     padding: 0.25rem 1rem;
+
+    :deep(.formula-form-group) {
+        grid-column: span 2;
+        width: 95%;
+    }
   }
 
   :global(.actor-sheet .doc-name-container) {
     grid-column: span 2;
+    grid-template: min-content / max-content 1fr;
   }
 
   .sheet-sidebar {

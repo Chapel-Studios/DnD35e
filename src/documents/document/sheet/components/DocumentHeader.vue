@@ -24,8 +24,10 @@
 <style scoped lang="scss">
   .doc-header {
     display: grid;
-    grid-template-columns: auto 3fr minmax(80px, auto);
+    grid-template-columns: minmax(auto, 1fr) 3fr minmax(80px, auto);
+    grid-template-rows: min-content auto;
     margin-bottom: 0.5rem;
+    align-items: start;
 
     & > :first-child {
       aspect-ratio: 1;
@@ -42,12 +44,8 @@
     grid-gap: 0.5rem 0;
     color: #7a7971;
     grid-template-rows: min-content;
-    height: max-content;
-
-    :deep(.gm-section) {
-      display: grid;
-      height: fit-content;
-    }
+    height: fit-content;
+    align-self: start;
   }
 
   .doc-header .doc-type {
@@ -61,5 +59,6 @@
   // to opt out of scoping while keeping .doc-header scoped to this component.
   :global(.actor-sheet) .doc-header {
     grid-template-columns: 10.25rem 3fr minmax(80px, auto);
+    grid-template-rows: min-content auto;
   }
 </style>

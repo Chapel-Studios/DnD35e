@@ -5,7 +5,8 @@ import type { MaterialEffectType } from './material/materialEffectType.mjs';
 import type { SecretEffectType } from './secret/secretEffectType.mjs';
 
 const EFFECT_TARGET = 'item';
-type EffectTarget = typeof EFFECT_TARGET;
+const ACTOR_EFFECT_TARGET = 'actor';
+type EffectTarget = typeof EFFECT_TARGET | typeof ACTOR_EFFECT_TARGET;
 
 const GENERAL_EFFECT_TYPE = 'general' as const;
 type EffectType = GeneralEffectType
@@ -23,6 +24,7 @@ const EFFECT_TYPES = {
 type EffectTypeLocalizationValues = typeof EFFECT_TYPES[keyof typeof EFFECT_TYPES];
 
 export {
+  ACTOR_EFFECT_TARGET,
   EFFECT_TARGET,
   EFFECT_TYPES,
   GENERAL_EFFECT_TYPE,

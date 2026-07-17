@@ -82,6 +82,10 @@ class CurrencyData extends DataModel {
   static getEnabledCoinages(): CoinageDefinition[] {
     return this.getCurrencyConfig().coinages.filter(c => c.enabled);
   }
+  static getDefaultCoinage(): CoinageDefinition | undefined {
+    const defaultId = this.getCurrencyConfig().defaultDisplayCoin;
+    return this.getCurrencyConfig().coinages.find(c => c.id === defaultId);
+  }
 
   // ─── Computed Properties ────────────────────────────────────────────────────
 
@@ -237,7 +241,7 @@ class CurrencyData extends DataModel {
   override toString(): string {
     const coinages = CurrencyData.getEnabledCoinages();
     return this.stacks.length === 0
-      ? '0'
+      ? `0 ${CurrencyData.getDefaultCoinage()?.shortLabel}`
       : this.stacks
         .map(s => {
           const coin = coinages.find(c => c.id === s.coinId);

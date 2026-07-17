@@ -1,3 +1,4 @@
+import type { CurrencyData } from '@fields/index.mjs';
 import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
 import { usePhysicalItemStore } from '@items/physical/physicalItem/index.mjs';
@@ -22,6 +23,7 @@ const useContainerStore = (context: VueApplicationContext<Container>): Container
     contentsAreWeightless: computed(() => document.value.system.contentsAreWeightless),
     contentsWeight: computed(() => document.value.system.contentsWeight),
     contentsCount: computed(() => document.value.system.contentsCount),
+    contentsValue: computed(() => document.value.system.contentsValue),
     isOverCapacity: computed(() => document.value.system.isOverCapacity),
     contents: computed(() => document.value.getContents() as PHYSICAL_ITEMS[]),
   };
@@ -42,6 +44,7 @@ interface ContainerGetters {
   contentsWeight: ComputedRef<number>;
   contentsCount: ComputedRef<number>;
   isOverCapacity: ComputedRef<boolean>;
+  contentsValue: ComputedRef<CurrencyData>;
   contents: ComputedRef<PHYSICAL_ITEMS[]>;
 }
 

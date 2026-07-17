@@ -1,5 +1,5 @@
+import type { CurrencyData } from '@fields/index.mjs';
 import type { PhysicalItemSystemData } from '@items/physical/physicalItem/index.mjs';
-import type { Price } from '@settings/index.mjs';
 
 interface ContainerSystemSource {
   maxContentWeight: number | null;
@@ -15,7 +15,7 @@ interface ContainerSystemData extends ContainerSystemSource, PhysicalItemSystemD
   /** Derived: true when contentsWeight exceeds maxContentWeight. Never stored. */
   isOverCapacity: boolean;
   /** Derived: total value of contained items. Never stored. */
-  contentsValue: Price;
+  contentsValue: CurrencyData;
 }
 
 export type {

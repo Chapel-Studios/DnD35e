@@ -6,6 +6,7 @@
     :default-visibility="props.defaultVisibility"
     :default-editability="props.defaultEditability"
     :hide-field-controls="props.hideFieldControls"
+    :hide-label="props.hideLabel"
   >
     <template #readonly>
       <slot v-if="slots.readonly" name="readonly" />
@@ -77,6 +78,7 @@
     defaultVisibility: { type: String as PropType<'everyone' | 'ownerPlus' | 'gmOnly'>, default: undefined },
     defaultEditability: { type: String as PropType<'normal' | 'gmOnly'>, default: undefined },
     hideFieldControls: { type: Boolean, default: false },
+    hideLabel: { type: Boolean, default: false },
     /** FormulaData instance for formula/unidentified formula access. */
     formulaData: { type: Object as PropType<FormulaData | null>, default: undefined },
     /** Whether to focus the input on mount. Used by the name field to focus on edit. */

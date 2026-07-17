@@ -36,6 +36,7 @@
   .header-status-badge {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.4rem;
     font-size: 0.875rem;
     color: var(--color-text-light);
