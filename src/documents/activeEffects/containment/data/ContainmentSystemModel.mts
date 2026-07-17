@@ -1,5 +1,6 @@
 import { ActiveEffectSystemModel } from '@effects/baseActiveEffect/data/ActiveEffectSystemModel.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
+import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import { requiredNumberField } from '@fields/fieldBuilders.mjs';
 
 import { buildContainmentChanges } from './buildContainmentChanges.mjs';
@@ -22,6 +23,7 @@ class ContainmentSystemModel extends ActiveEffectSystemModel {
     schema.sourceItemUuid = new StringField({ required: true, nullable: true, initial: null });
     schema.contributedWeight = requiredNumberField(0);
     schema.contributedCount = requiredNumberField(0);
+    schema.contributedPrice = new CurrencyField();
 
     return schema;
   }

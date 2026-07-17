@@ -350,6 +350,14 @@
         "removeLanguage": "Remove"
       }
     },
+    "CHARACTER": {
+      "FIELDS": {
+        "xp": {
+          "label": "Experience Points",
+          "hint": "The total experience points this character has earned."
+        }
+      }
+    },
     "LANGUAGE_OPTIONS": {
       "Common": "Common",
       "Dwarven": "Dwarven",

@@ -6,6 +6,7 @@ import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
 import type { PriceSource } from '@settings/index.mjs';
 
 import type { Containment } from '../Containment.mjs';
+import type { ContainmentSystemSource } from '../index.mjs';
 
 type ContainmentAeTarget = PHYSICAL_ITEMS | PhysicalItemLike;
 
@@ -79,16 +80,18 @@ export async function syncContainmentAe (
   const addToContainer = async (container: Container): Promise<void> => {
     if (container.canAddItemToContents(item)) {
       await container.createEmbeddedDocuments('ActiveEffect', [{
-        name: buildContainmentAeName(item.name ?? item.id ?? 'unknown'),
+        name: buildContainmentAeName(item.id ?? 'unknown'),
         disabled: false,
+        type: containmentEffectType,
         system: {
+          label: item.name,          
           sourceItemUuid: item.uuid,
           contributedWeight: weight,
           contributedCount: count,
           contributedPrice: price,
-        },
+        } as Partial<ContainmentSystemSource>,
         flags: { dnd35e: { systemManaged: true } },
-      }]);
+      } as Partial<Containment>]);
       await item.update({ 'system.containerUuid': container.uuid });
     }
   };
@@ -116,12 +119,15 @@ export async function syncContainmentAe (
     // Case 5: it should be in a container and is in the right container,
     // update the AE if needed
     const existing = findContainmentAe(container, item.uuid);
+    const existingStacks = existing?.system.contributedPrice?.stacks ?? [];
+    const haveStacksChanged = existing?.system.contributedPrice?.stacks?.length !== price.stacks.length
+      || existingStacks.some((s, i) => s.coinId !== price.stacks[i]?.coinId || s.count !== price.stacks[i]?.count);
     if (
       existing
       && (
         existing.system.contributedWeight !== weight
         || existing.system.contributedCount !== count
-        || existing.system.contributedPrice?.stacks !== price.stacks
+        || haveStacksChanged
       )
     ) {
       await existing.update({ system: {
@@ -141,62 +147,7 @@ export async function syncContainmentAe (
     const wrongContainer = await foundry.utils.fromUuid(item.system.containerUuid!) as Container | null;
     if (wrongContainer) await removeFromWrongContainer(wrongContainer);
 
-    await item.update({ 'system.containerUuid': '' });
+    await item.update({ 'system.containerUuid': null });
     // Case 2 End
   }
-
-  // old way
-  // // If item is staying in the same bag, update in place and return early.
-  // if (container?.uuid === item.system.containerUuid) {
-  //   const existing = findContainmentAe(container, item.uuid);
-  //   if (existing) {
-  //     if (
-  //       existing.system.contributedWeight !== weight
-  //       || existing.system.contributedCount !== count
-  //       || existing.system.contributedPrice?.stacks !== price.stacks
-  //     ) {
-  //       await existing.update({ system: {
-  //         contributedWeight: weight,
-  //         contributedCount: count,
-  //         contributedPrice: price,
-  //       } });
-  //     }
-  //     return;
-  //   }
-  // }
-
-  // // Clean up any stale contribution AE for this item from any actor container.
-  // const actor = (item as unknown as { actor?: { items?: Iterable<unknown> } | null }).actor;
-  // if (actor?.items) {
-  //   for (const actorItem of actor.items) {
-  //     if ((actorItem as { type?: string }).type !== containerItemType) continue;
-  //     const staleAe = findContainmentAe(actorItem as unknown as Container, item.uuid);
-  //     if (staleAe) await staleAe.delete();
-  //   }
-  // }
-
-  // if (!container || container.id === null) return;
-
-  // await container.createEmbeddedDocuments('ActiveEffect', [{
-  //   name: buildContainmentAeName(item.id ?? 'unknown'),
-  //   type: containmentEffectType,
-  //   disabled: false,
-  //   system: {
-  //     sourceItemUuid: item.uuid,
-  //     contributedWeight: weight,
-  //     contributedCount: count,
-  //   },
-  //   flags: { dnd35e: { systemManaged: true } },
-  // }]);
 }
-
-// Module-level hook: remove contribution AE from the bag when the contributing item is deleted.
-Hooks.on('deleteItem', async (item: { system?: { containerUuid?: string | null }; uuid: string }) => {
-  if (!game.user.isActiveGM) return;
-  const containerUuid = item.system?.containerUuid;
-  if (!containerUuid) return;
-  const container = foundry.utils.fromUuidSync(containerUuid) as Container | null;
-  if (!container) return;
-  const ae = findContainmentAe(container, item.uuid);
-  if (ae) await ae.delete();
-});

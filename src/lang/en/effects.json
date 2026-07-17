@@ -1,4 +1,10 @@
 {
+  "TYPES": {
+    "GENERAL": "Active Effect",
+    "SECRET": "Secret",
+    "MATERIAL": "Material",
+    "CONTAINMENT": "Containment"
+  },
   "dnd35e": {
     "BONUS_TYPES": {
       "Untyped": "Untyped",
@@ -125,6 +131,18 @@
       "revealSecret": {
         "label": "Reveal Secret",
         "description": "Fires when a Secret AE is disabled, revealing the true value of a masked field."
+      }
+    },
+    "CONTAINMENT": {
+      "FIELDS": {
+        "sourceContainerId": {
+          "label": "Source Container",
+          "hint": "The container this item is stowed in."
+        },
+        "makesWeightless": {
+          "label": "Makes Weightless",
+          "hint": "Whether this containment zeroes the item's weight."
+        }
       }
     },
     "MATERIAL": {

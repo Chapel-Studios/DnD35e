@@ -38,7 +38,6 @@ function mkSystemChange (key: string, type: EffectChangeDataDnd35e['type']): Eff
     phase: 'final',
     priority: 10,
     target: EFFECT_CHANGE_TARGET.ITEM,
-    effect: null,
     isSystem: true,
     bonusType: BONUS_TYPE_MATERIAL,
   };
@@ -57,7 +56,6 @@ describe('buildMaterialChanges', () => {
       phase: 'final',
       priority: 20,
       target: EFFECT_CHANGE_TARGET.ITEM,
-      effect: null,
       isSystem: false,
       bonusType: BONUS_TYPE_UNTYPED,
     };
@@ -192,7 +190,6 @@ describe('buildMaterialChanges', () => {
       phase: 'final',
       priority: 20,
       target: EFFECT_CHANGE_TARGET.ITEM,
-      effect: null,
       isSystem: false,
       bonusType: BONUS_TYPE_UNTYPED,
     };

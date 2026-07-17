@@ -24,6 +24,7 @@ class Weapon extends EquippableItem {
    * Usage:
    *   weapon.events.on(Weapon.LifeCycle.onHit, ({ target, damage }) => { ... });
    */
+  // TODO these need to be put in traditional lifecycle event files after the combat system is implemented
   static override readonly LifeCycle = {
     ...super.LifeCycle,
     /** Before a weapon action executes. Allows cancellation. (Emission: Phase 10) */

@@ -46,7 +46,7 @@
 
     :deep(.gm-section) {
       display: grid;
-      height: fit -content;
+      height: fit-content;
     }
   }
 

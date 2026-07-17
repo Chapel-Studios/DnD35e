@@ -1,3 +1,4 @@
+import type { ActiveEffectSource } from '@client/documents/_module.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { DatabaseUpdateCallbackOptions } from '@common/abstract/_types.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
@@ -52,7 +53,7 @@ abstract class PhysicalItem extends IdentifiableItemBase {
   } as const;
 
   protected _buildCarriedEffectName (): string {
-    return game.i18n.format('dnd35e.ITEMS.carriedEffect.name', { itemName: this.name });
+    return game.i18n.format('dnd35e.ITEM.carriedEffect.name', { itemName: this.name });
   }
 
   protected _buildCarriedChanges(): EffectChangeDataDnd35e[] {
@@ -102,17 +103,16 @@ abstract class PhysicalItem extends IdentifiableItemBase {
     // create new carried effect
     await this.createEmbeddedDocuments('ActiveEffect', [
       {
-        name: this._buildCarriedEffectName(),
+        name: this.name ?? this._buildCarriedEffectName(),
         target: 'actor',
         type: 'general',
-        label: this.name,
         system: {
           target: 'actor',
           isHidden: true,
           changes: this._buildCarriedChanges(),
-          description: game.i18n.format('dnd35e.ITEMS.carriedEffect.description', { itemName: this.name }),
+          description: game.i18n.format('dnd35e.ITEM.carriedEffect.description', { itemName: this.name }),
         },
-      },
+      } as Partial<ActiveEffectSource>,
     ]);
   }
 
@@ -139,16 +139,16 @@ abstract class PhysicalItem extends IdentifiableItemBase {
       || 'price' in changedSystem;
 
     if (
-      !hasContainerChanged
-      && (!hasKeyValueChanged || !containerAlreadyExists)
-    ) return;
-
-    const containerUuid = this.system.containerUuid;
-    const targetContainer = containerUuid
-      ? await foundry.utils.fromUuid(containerUuid) as Container
-      : null;
-      
-    await syncContainmentAe(this, targetContainer);
+      hasContainerChanged
+      || (hasKeyValueChanged && containerAlreadyExists)
+    ) {
+      const containerUuid = this.system.containerUuid;
+      const targetContainer = containerUuid
+        ? await foundry.utils.fromUuid(containerUuid) as Container
+        : null;
+        
+      await syncContainmentAe(this, targetContainer);
+    }
 
     if (this.system.isCarried) {
       this._buildCarriedEffect();

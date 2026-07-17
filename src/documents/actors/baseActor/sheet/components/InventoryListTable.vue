@@ -56,7 +56,6 @@
                 :src="getItemIcon(getRowItem(row))"
                 :alt="getRowItem(row).name"
                 draggable="false"
-                @error="onItemIconError(getRowItem(row), $event)"
                 loading="lazy"
               >
               {{ getRowItem(row).name }}
@@ -348,34 +347,9 @@
   };
 
   const FALLBACK_ITEM_ICON = '/icons/svg/item-bag.svg';
-  const failedIconSrcByItemId = reactive<Record<string, string>>({});
-
-  const normalizeImgPath = (src: string): string => {
-    if (!src) return '';
-    if (/^(https?:|data:|blob:|\/)/i.test(src)) return src;
-    return `/${src}`;
-  };
-
-  const getCanonicalItemImg = (item: PHYSICAL_ITEMS): string => {
-    const sourceImg = item.img;
-    if (typeof sourceImg === 'string' && sourceImg.length > 0) {
-      return normalizeImgPath(sourceImg);
-    }
-    const runtimeImg = item.img;
-    return typeof runtimeImg === 'string' ? normalizeImgPath(runtimeImg) : '';
-  };
 
   const getItemIcon = (item: PHYSICAL_ITEMS): string => {
     return  item.img ?? FALLBACK_ITEM_ICON;
-  };
-
-  const onItemIconError = (item: PHYSICAL_ITEMS, event: Event): void => {
-    const attemptedSrc = getCanonicalItemImg(item) || FALLBACK_ITEM_ICON;
-    failedIconSrcByItemId[item.id] = attemptedSrc;
-
-    const target = event.target as HTMLImageElement | null;
-    if (!target) return;
-    target.src = FALLBACK_ITEM_ICON;
   };
 
   const getIconKey = (item: PHYSICAL_ITEMS): string => {
@@ -675,17 +649,39 @@
     }
 
     const sameActorItem = dropped.parent?.uuid === documentUuid.value;
-    // DEBUG — remove after diagnosing
-    console.log('[inventory-drop]', {
-      droppedUuid: dropped.uuid,
-      droppedParentUuid: dropped.parent?.uuid,
-      documentUuid: documentUuid.value,
-      sameActorItem,
-      containerUuid: dropped.system.containerUuid,
-      variant: props.variant,
-      isCarried: props.isCarried,
-    });
-    if (!sameActorItem) return;
+    if (!sameActorItem) {
+      // Cross-actor drop: copy item to this actor and add to carried/stored state
+      const targetActorUuid = documentUuid.value;
+      
+      // Check if dropping onto a container
+      const containerTarget = (event.target as HTMLElement | null)?.closest('[data-container-uuid]');
+      const targetContainerUuid = containerTarget?.getAttribute('data-container-uuid') ?? null;
+      const targetContainer = targetContainerUuid
+        ? sourceItems.value.find((item) => item.uuid === targetContainerUuid) as Container | undefined
+        : undefined;
+      
+      if (targetActorUuid) {
+        const targetActor = await fromUuid(targetActorUuid);
+        if (targetActor instanceof Actor) {
+          const data = dropped.toObject() as Record<string, unknown>;
+          delete (data as { _id?: string })._id;
+          data.system = {
+            ...((data.system as Record<string, unknown>) ?? {}),
+            isCarried: props.isCarried,
+            containerUuid: null,
+          } as Partial<PhysicalItemLike['system']>;
+          const newItems = await targetActor.createEmbeddedDocuments('Item', [data]);
+          const createdItem = newItems[0] as PhysicalItemLike;
+          
+          // If dropping onto a container, link it there
+          if (targetContainer) {
+            await syncContainmentAe(createdItem, targetContainer);
+          }
+        }
+      }
+      endDragPreview();
+      return;
+    }
 
     const currentContainerUuid = (dropped.system as { containerUuid?: string | null }).containerUuid;
 

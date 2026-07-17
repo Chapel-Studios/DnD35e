@@ -21,7 +21,6 @@ const buildChange = (
   phase: 'final',
   priority: 5,
   target: 'item',
-  effect: null,
   isSystem: true,
   condition: condition ?? null,
 });
@@ -35,6 +34,10 @@ const buildContainmentChanges = ({
   const changes: EffectChangeDataDnd35e[] = [
     ...existingChanges.filter(c => !c.isSystem),
   ];
+  changes.push(buildChange(
+    'system.contentsWeight',
+    contributedWeight
+  ));
   changes.push(buildChange(
     'system.weight',
     contributedWeight,

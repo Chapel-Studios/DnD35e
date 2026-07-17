@@ -40,7 +40,7 @@ abstract class EquippableItem extends PhysicalItem {
   declare system: EquippableItemSystemData;
 
   protected _buildEquippedEffectName (): string {
-    return game.i18n.format('dnd35e.EQUIPPABLE_ITEM.equippedEffect.name', { itemName: this.name });
+    return game.i18n.format('dnd35e.EQUIPPABLE.equippedEffect.name', { itemName: this.name });
   }
 
   protected _buildEquippedChanges(): EffectChangeDataDnd35e[] {
@@ -71,7 +71,7 @@ abstract class EquippableItem extends PhysicalItem {
       system: {
         isHidden: true,
         target: 'actor',
-        description: game.i18n.format('dnd35e.EQUIPPABLE_ITEM.equippedEffect.description', { itemName: this.name }),
+        description: game.i18n.format('dnd35e.EQUIPPABLE.equippedEffect.description', { itemName: this.name }),
         changes: this._buildEquippedChanges(),
       },
     }]);
@@ -102,7 +102,7 @@ abstract class EquippableItem extends PhysicalItem {
       sourceDocumentId: equipMetadata?.sourceDocumentId
         ?? this.parent?.id,
       sourceMessage: equipMetadata?.sourceMessage
-        ?? `${game.i18n.localize('dnd35e.EQUIPPABLE_ITEM.EVENTS.itemEquipped')}: ${this.name}`,
+        ?? `${game.i18n.localize('dnd35e.EQUIPPABLE.EVENTS.itemEquipped')}: ${this.name}`,
     };
     await this._buildEquippedEffect();
     if (isItemContained(this)) {
@@ -122,7 +122,7 @@ abstract class EquippableItem extends PhysicalItem {
       sourceDocumentId: equipMetadata?.sourceDocumentId
         ?? this.parent?.id,
       sourceMessage: equipMetadata?.sourceMessage
-        ?? `${game.i18n.localize('dnd35e.EQUIPPABLE_ITEM.EVENTS.itemUnequipped')}: ${this.name}`,
+        ?? `${game.i18n.localize('dnd35e.EQUIPPABLE.EVENTS.itemUnequipped')}: ${this.name}`,
     };
     await this._destroyEquippedEffect();
     await this.update(updateObj, { updateMetadata });

@@ -124,7 +124,7 @@ class ActorDnd35e<
   ): Promise<boolean | void> {
     const result = await super._preCreate(data, options, user);
     if (result === false) return false;
-    ensureNameFormulaOnCreate(this as unknown as NameFormulaDocument, options);
+    await ensureNameFormulaOnCreate(this as unknown as NameFormulaDocument, options);
   }
 }
 

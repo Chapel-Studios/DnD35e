@@ -2,7 +2,6 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DeepPartial, DocumentConstructionContext } from '@common/_types.mjs';
 import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import type { DocumentUpdateCallbackOptions } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import type { NameFormulaDocument } from '@documents/document/logic/index.mjs';
@@ -65,7 +64,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     const precreateResult = await super._preCreate(updateData, options, user);
     if (precreateResult === false) return false;
 
-    ensureNameFormulaOnCreate(this as unknown as NameFormulaDocument);
+    await ensureNameFormulaOnCreate(this as unknown as NameFormulaDocument);
     return true;
   } 
 
@@ -236,7 +235,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
    */
   *allApplicableEffects() {
     for (const effect of this.effects) {
-      if (effect.hasItemChanges) yield effect;
+      if (effect.hasItemChanges) yield effect as ActiveEffectDnd35e<this>;
     }
   }
 
@@ -269,8 +268,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     }
     this._completedActiveEffectPhases.add(phase);
 
-    type AppliedItemEffectChange = EffectChangeData<ItemDnd35e<TItemType, TParent>>
-      & { type: string; effect: ActiveEffectDnd35e<ItemDnd35e<TItemType, TParent>> };
+    type AppliedItemEffectChange = EffectChangeDataDnd35e;
     const changes: AppliedItemEffectChange[] = [];
     for ( const effect of this.allApplicableEffects() ) {
       if ( !effect.active ) continue;
@@ -305,6 +303,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
         copy.effect = effect;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
         copy.priority ??= 0;
+        copy.label ??= effect.system.label ?? effect.name;
         changes.push(copy);
       }
       // Not sure how statuses should interact with item active effects, since they don't have tokens,
@@ -319,17 +318,18 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 
     // Build StackingChange[] for the stacking engine
     const stackingChanges: StackingChange[] = changes.map((change, index) => {
-      const dnd35eChange = change as unknown as EffectChangeDataDnd35e;
+      const dnd35eChange = change;
       const numericValue = parseNumericChangeValue(change.value);
       const bonusType = dnd35eChange.bonusType || undefined;
+      const effectName = change.label ?? change.effect?.system.label ?? change.effect?.name ?? 'Unknown Effect';
       
       return {
         index,
         field: change.key,
         bonusType,
         value: numericValue,
-        source: change.effect.displayName,
-        effectId: change.effect.id ?? undefined,
+        source: effectName,
+        effectId: change.effect?.id ?? undefined,
       };
     });
 
@@ -348,6 +348,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
       const sc = stackingChanges[i];
       const isStackable = !isNaN(sc.value) && sc.bonusType !== undefined;
       const isWinner = winnerIndices.has(i);
+      const effectName = change.label ?? change.effect?.system.label ?? change.effect?.name ?? 'Unknown Effect';
 
       if (isStackable && !isWinner) {
         // Stacking loser — record in overrides but don't apply
@@ -357,7 +358,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
           {
             fieldPath: change.key,
             value: change.value,
-            effectName: change.effect.name,
+            effectName: effectName,
             type: change.type,
             bonusType: sc.bonusType,
             stackResult: STACK_RESULT_IGNORED,
@@ -368,7 +369,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
       }
 
       // Apply the change (winner or non-stackable)
-      const EffectClass = change.effect.constructor as typeof ActiveEffect;
+      const EffectClass = change.effect?.constructor as typeof ActiveEffect;
       const result = (ActiveEffect.CHANGE_TYPES[change.type].handler?.(this, change)
         ?? EffectClass.applyChange(this, change, { replacementData }) ?? {}) as Record<string, unknown>;
       for (const fieldPath of Object.keys(result)) {
@@ -378,7 +379,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
           {
             fieldPath,
             value: change.value,
-            effectName: change.effect.name,
+            effectName: effectName,
             type: change.type,
             bonusType: sc.bonusType,
             stackResult: isStackable ? STACK_RESULT_APPLIED : undefined,

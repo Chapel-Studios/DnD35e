@@ -1,9 +1,11 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
-import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
+import type { DatabaseCreateCallbackOptions, DatabaseDeleteCallbackOptions } from '@common/abstract/_types.mjs';
+import type { DocumentUpdateCallbackOptions } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
-import { ensureNameFormulaOnCreate, getDisplayName, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
+import type { NameFormulaDocument } from '@documents/document/logic/index.mjs';
+import { ensureNameFormulaOnCreate, getDisplayName } from '@documents/document/logic/index.mjs';
 import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { EffectType } from '@effects/effectTypes.mjs';
@@ -65,7 +67,7 @@ class ActiveEffectDnd35e<
 
   protected override _onUpdate(
     _data: this['_source'],
-    _options: DatabaseCreateCallbackOptions,
+    _options: DocumentUpdateCallbackOptions,
     _userId: string
   ): void {
     super._onUpdate(_data, _options, _userId);
@@ -73,7 +75,7 @@ class ActiveEffectDnd35e<
   }
 
   protected override _onDelete(
-    _options: DatabaseCreateCallbackOptions,
+    _options: DatabaseDeleteCallbackOptions,
     _userId: string
   ): void {
     super._onDelete(_options, _userId);

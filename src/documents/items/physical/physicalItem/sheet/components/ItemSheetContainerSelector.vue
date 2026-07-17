@@ -4,7 +4,7 @@
     label="Container"
     :value="currentContainerId"
     :options="possibleContainers"
-    field-path="system.containerId"
+    field-path="system.containerUuId"
     :update-value="syncContainer"
   />
 </template>

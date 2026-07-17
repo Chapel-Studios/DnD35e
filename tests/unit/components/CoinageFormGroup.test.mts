@@ -80,7 +80,7 @@ function mountCoinage(options: {
             getViewAwareFieldUpdater,
           },
           _storeUtils: {
-            getSourceProperty: vi.fn((path: string) => computed(() => options.source)),
+            getSourceProperty: vi.fn((_path: string) => computed(() => options.source)),
           },
         },
         [RenderModeStoreSymbol]: makeRenderModeStore({ isEditMode: options.isEditMode }),
@@ -99,7 +99,7 @@ describe('CoinageFormGroup', () => {
     const projected = { stacks: [{ coinId: 'srd_sp', count: 1 }] };
     const source = { stacks: [{ coinId: 'srd_gp', count: 2 }] };
 
-    const { wrapper, getViewAwareFieldValue } = mountCoinage({
+    const { wrapper } = mountCoinage({
       isGM: true,
       isEditMode: true,
       isMasked: false,

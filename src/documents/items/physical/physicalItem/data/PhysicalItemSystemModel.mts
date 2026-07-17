@@ -6,7 +6,7 @@ import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import {
   derivedBooleanField,
   derivedNumberField,
-  optionalStringField,
+  nullableOptionalStringField,
   requiredNumberField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
@@ -55,7 +55,7 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     );
 
     // Container — UUID of the bag this item is stowed in; null = not contained.
-    schema.containerUuid = optionalStringField();
+    schema.containerUuid = nullableOptionalStringField();
 
     return schema;
   }

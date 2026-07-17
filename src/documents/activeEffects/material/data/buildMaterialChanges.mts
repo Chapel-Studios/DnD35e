@@ -43,7 +43,6 @@ const buildChange = (
   phase,
   priority,
   target,
-  effect: null,
   isSystem: true,
   bonusType: MATERIAL_SUBTYPE_BONUS_MAP[materialSubtype],
 });

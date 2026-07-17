@@ -23,13 +23,13 @@
   const { isCarried } = store.documentGetters;
   const useActiveShadow = computed(() => !!props.labelOverride || isCarried.value);
   const carriedIcon = computed(() =>
-    props.iconOverride ?? isCarried.value
+    props.iconOverride ?? (isCarried.value
       ? 'fa-solid fa-person-walking-luggage'
-      : 'fas fa-box');
+      : 'fas fa-box'));
   const carriedLabel = computed(() => 
-    props.labelOverride ?? isCarried.value
+    props.labelOverride ?? (isCarried.value
       ? game.i18n.localize('dnd35e.PHYSICAL_ITEM.FIELDS.isCarried.label')
-      : game.i18n.localize('dnd35e.PHYSICAL_ITEM.FIELDS.isCarried.antilabel'));
+      : game.i18n.localize('dnd35e.PHYSICAL_ITEM.FIELDS.isCarried.antilabel')));
 </script>
 
 <style scoped lang="scss">

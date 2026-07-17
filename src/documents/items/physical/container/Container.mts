@@ -55,8 +55,6 @@ class Container extends PhysicalItem {
 
     this.system.isOverCapacity = this.system.maxContentWeight !== null
       && this.system.contentsWeight > this.system.maxContentWeight;
-
-    this.system.weight += this.system.contentsWeight;
   }
 
   /**

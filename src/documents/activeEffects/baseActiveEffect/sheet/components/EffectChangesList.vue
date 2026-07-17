@@ -217,7 +217,6 @@
       phase: 'initial',
       priority: 10,
       target: EFFECT_CHANGE_TARGET.ITEM,
-      effect: null,
       isSystem: false,
       ...props.createChangeData,
     });

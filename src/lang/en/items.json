@@ -39,18 +39,6 @@
         "collapse": "Hide contents"
       }
     },
-    "CONTAINMENT": {
-      "FIELDS": {
-        "sourceContainerId": {
-          "label": "Source Container",
-          "hint": "The container this item is stowed in."
-        },
-        "makesWeightless": {
-          "label": "Makes Weightless",
-          "hint": "Whether this containment zeroes the item's weight."
-        }
-      }
-    },
     "ITEM": {
       "FIELDS": {
         "isPsionic": {
@@ -142,17 +130,32 @@
           "label": "Is Broken",
           "hint": "Whether this item is currently broken."
         },
-        "containerId": {
-          "label": "Container ID",
-          "hint": "The ID of the container this item is stored in, if any."
+        "containerUuid": {
+          "label": "Container UUID",
+          "hint": "The UUID of the container this item is stored in, if any."
         }
       },
       "EVENTS": {
-        "hpAdjusted": "HP Adjusted",
-        "damageTaken": "Item Damaged",
-        "damageMended": "Item Mended",
-        "itemBroken": "Item Broken",
-        "itemRepaired": "Item Repaired"
+        "hpAdjusted": {
+          "label": "Item HP Adjusted",
+          "description": "Triggered when the hit points of this item are adjusted."
+        },
+        "damageTaken": {
+          "label": "Item Damaged",
+          "description": "Triggered when this item takes damage."
+        },
+        "damageMended": {
+          "label": "Item Mended",
+          "description": "Triggered when this item is mended."
+        },
+        "itemBroken": {
+          "label": "Item Broken",
+          "description": "Triggered when this item becomes broken."
+        },
+        "itemRepaired": {
+          "label": "Item Repaired",
+          "description": "Triggered when this item is repaired."
+        }
       },
       "carriedEffect": {
         "name": "{itemName} Carried Effect",
@@ -195,10 +198,14 @@
         }
       },
       "EVENTS": {
-        "itemEquipped": "Item Equipped",
-        "itemUnequipped": "Item Unequipped",
-        "itemMelded": "Item Melded",
-        "itemUnmelded": "Item Unmelded"
+        "itemEquipped": {
+          "label": "Item Equipped",
+          "description": "Triggered when this item is equipped."
+        },
+        "itemUnequipped": {
+          "label": "Item Unequipped",
+          "description": "Triggered when this item is unequipped."
+        }
       },
       "EquipSlot": {
         "mainHand": "Main Hand",
