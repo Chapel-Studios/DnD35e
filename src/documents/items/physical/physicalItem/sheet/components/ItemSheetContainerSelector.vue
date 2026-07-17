@@ -1,10 +1,10 @@
 <template>
   <SelectFormGroup
-    v-if="hasOwner || currentContainerId"
+    v-if="hasOwner || !!currentContainerId"
     label="Container"
     :value="currentContainerId"
     :options="possibleContainers"
-    field-path="system.containerUuId"
+    field-path="system.containerUuid"
     :update-value="syncContainer"
   />
 </template>

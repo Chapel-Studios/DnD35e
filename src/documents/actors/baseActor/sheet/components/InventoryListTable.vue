@@ -687,7 +687,6 @@
 
     // If the item was in a container, pull it out regardless of drag source key.
     if (currentContainerUuid) {
-      console.log('[inventory-drop] calling update: containerUuid→null, isCarried→', props.isCarried);
       await syncContainmentAe(dropped as PhysicalItemLike, null); 
       if (dropped.system.isCarried !== props.isCarried) {
         await dropped.update({ 'system.isCarried': props.isCarried });

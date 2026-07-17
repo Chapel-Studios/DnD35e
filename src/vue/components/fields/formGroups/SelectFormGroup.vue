@@ -14,12 +14,12 @@
     <select
       :value="editValue"
       :disabled="isDisabled"
-      @change="onChange(($event.target as HTMLSelectElement).value)"
+      @change="onChange($event)"
       class="form-control"
     >
       <option
         v-for="(opt, key) in options"
-        :key="key"
+        :key="`${key}-${opt.label}`"
         :value="opt.value"
         :class="opt.className"
       >
@@ -81,16 +81,16 @@
     return game.i18n.localize(key);
   }
 
-  function onChange(val: string) {
-    // Coerce based on the resolved value's type so numeric selects still write
-    // numbers to the document even when no explicit `:value` prop is passed.
-    const parsed = typeof resolvedValue.value === 'number'
-      ? Number(val)
-      : val;
+  function onChange(event: Event) {
+    // Read the selected option's original typed value via index rather than
+    // event.target.value, which is always a string and can't represent `null`.
+    const select = event.target as HTMLSelectElement;
+    const selectedOption = props.options[select.selectedIndex];
+    const value = selectedOption ? selectedOption.value : null;
     const updater = props.onUpdate
       ?? getViewAwareFieldUpdater(props.fieldPath);
 
-    updater(parsed as TValue);
+    updater(value);
   }
 </script>
 

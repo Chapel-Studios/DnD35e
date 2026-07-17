@@ -6,7 +6,7 @@ import { Container } from '@items/physical/container/Container.mjs';
 
 import { containmentEffectType } from './containmentEffectType.mjs';
 import type { ContainmentSystemData, ContainmentSystemSource } from './data/index.mjs';
-import { syncContainmentAe } from './index.mjs';
+import { syncContainmentAe } from './logic/containmentAe.mjs';
 
 type ContainmentEffectType = typeof containmentEffectType;
 

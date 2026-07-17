@@ -46,8 +46,6 @@ export function isItemContained (item: ContainmentAeTarget): boolean {
  * - Staying in the same container with changed weight/qty → updates AE in place.
  * - Moving to a new container → cleans up old AE, creates on new container.
  * - container = null → removes AE from any actor container.
- *
- * Should only be invoked by the active GM to avoid duplicate writes.
  */
 export async function syncContainmentAe (
   item: ContainmentAeTarget,

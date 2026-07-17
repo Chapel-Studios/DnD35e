@@ -102,13 +102,15 @@ abstract class EquippableItem extends PhysicalItem {
       sourceDocumentId: equipMetadata?.sourceDocumentId
         ?? this.parent?.id,
       sourceMessage: equipMetadata?.sourceMessage
-        ?? `${game.i18n.localize('dnd35e.EQUIPPABLE.EVENTS.itemEquipped')}: ${this.name}`,
+        ?? `${game.i18n.localize('dnd35e.EQUIPPABLE.EVENTS.itemEquipped.label')}: ${this.name}`,
     };
-    await this._buildEquippedEffect();
+
     if (isItemContained(this)) {
       await syncContainmentAe(this, null);
     }
+
     await this.update(updateObj, { updateMetadata });
+    await this._buildEquippedEffect();
 
     return true;
   }
@@ -122,8 +124,9 @@ abstract class EquippableItem extends PhysicalItem {
       sourceDocumentId: equipMetadata?.sourceDocumentId
         ?? this.parent?.id,
       sourceMessage: equipMetadata?.sourceMessage
-        ?? `${game.i18n.localize('dnd35e.EQUIPPABLE.EVENTS.itemUnequipped')}: ${this.name}`,
+        ?? `${game.i18n.localize('dnd35e.EQUIPPABLE.EVENTS.itemUnequipped.label')}: ${this.name}`,
     };
+    
     await this._destroyEquippedEffect();
     await this.update(updateObj, { updateMetadata });
 

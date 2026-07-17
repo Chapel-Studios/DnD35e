@@ -103,11 +103,12 @@ abstract class PhysicalItem extends IdentifiableItemBase {
     // create new carried effect
     await this.createEmbeddedDocuments('ActiveEffect', [
       {
-        name: this.name ?? this._buildCarriedEffectName(),
+        name: this._buildCarriedEffectName(),
         target: 'actor',
         type: 'general',
         system: {
           target: 'actor',
+          label: this.name,
           isHidden: true,
           changes: this._buildCarriedChanges(),
           description: game.i18n.format('dnd35e.ITEM.carriedEffect.description', { itemName: this.name }),
@@ -151,10 +152,10 @@ abstract class PhysicalItem extends IdentifiableItemBase {
     }
 
     if (this.system.isCarried) {
-      this._buildCarriedEffect();
+      await this._buildCarriedEffect();
     }
     else {
-      this._destroyCarriedEffect();
+      await this._destroyCarriedEffect();
     }
   }
 }

@@ -26,7 +26,8 @@ interface ContainmentSystemSource extends ContainmentSystemStats, ActiveEffectSy
 
 interface ContainmentSystemData extends ContainmentSystemStats, ActiveEffectSystemData {
   /** Pre-computed price contribution: item.price × item.quantity. */
-  contributedPrice?: CurrencyData;}
+  contributedPrice?: CurrencyData;
+}
 
 export type {
   ContainmentSystemData,
