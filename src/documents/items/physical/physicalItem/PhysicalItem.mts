@@ -6,7 +6,7 @@ import type { IdentifiableDocumentSourceProps } from '@documents/identifiable/Id
 import { IdentifiableDocumentMixin } from '@documents/identifiable/IdentifiableDocument.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
 import { syncContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
-import { multiplyCurrency } from '@fields/currency/logic/multiply.mjs';
+import { multiplyCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemDnd35e as ItemDnd35eClass } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/index.mjs';

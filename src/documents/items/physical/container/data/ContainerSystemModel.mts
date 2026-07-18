@@ -1,6 +1,5 @@
 import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import {
-  derivedBooleanField,
   derivedNumberField,
   requiredBooleanField,
   useDnd35eField,
@@ -29,14 +28,23 @@ class ContainerSystemModel extends PhysicalItemSystemModel {
 
     schema.maxContentWeight = useDnd35eField(new NumberField({ required: true, nullable: true, initial: null, min: 0 }));
     schema.contentsAreWeightless = useDnd35eField(requiredBooleanField(false));
+    schema.containedCurrency = useDnd35eField(new CurrencyField());
+
 
     // Derived (persisted: false) — recomputed each cycle from contained items.
     schema.contentsWeight = derivedNumberField(0);
     schema.contentsCount = derivedNumberField(0);
-    schema.isOverCapacity = derivedBooleanField(false);
     schema.contentsValue = useDnd35eField(new CurrencyField({ persisted: false }));
-
     return schema;
+  }
+
+  /**
+   * Derived: true when contents exceed capacity. Computed lazily so it always
+   * reflects the final contentsWeight after AE application (prepareDerivedData
+   * is sealed, so there is no post-AE hook to write a stored field).
+   */
+  get isOverCapacity (): boolean {
+    return this.maxContentWeight !== null && this.contentsWeight > this.maxContentWeight;
   }
 }
 

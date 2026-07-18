@@ -19,11 +19,15 @@
       "FIELDS": {
         "contentsAreWeightless": {
           "label": "Are Contents Weightless?",
-          "hint": "When enabled, contained items weigh nothing for the carrier (e.g. a bag of holding)."
+          "hint": "When enabled, contained items do not increase this container's weight (e.g. a bag of holding)."
         },
         "maxContentWeight": {
           "label": "Max Content Weight",
           "hint": "Maximum weight this container can hold. Leave blank for no hard limit."
+        },
+        "containedCurrency": {
+          "label": "Contained Currency",
+          "hint": "The amount of currency within this container."
         }
       },
       "Tabs": {

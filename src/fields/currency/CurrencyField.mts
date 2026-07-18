@@ -18,7 +18,7 @@
 import type { CoinStack } from '@settings/currency/types.mjs';
 
 import { CurrencyData } from './CurrencyData.mjs';
-import { multiplyCurrency } from './logic/multiply.mjs';
+import { addCurrency, multiplyCurrency } from './logic/mathOperations.mjs';
 
 const { EmbeddedDataField } = foundry.data.fields;
 
@@ -103,11 +103,8 @@ class CurrencyField extends EmbeddedDataField {
 
   /** Add: merge coin stacks by coinId, summing counts. */
   override _applyChangeAdd(value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
-    const map = CurrencyData.toMap(value.stacks);
-    for (const stack of delta) {
-      map.set(stack.coinId, (map.get(stack.coinId) ?? 0) + stack.count);
-    }
-    return CurrencyField._withGpValue(CurrencyData.fromMap(map));
+    const newStacks = CurrencyData.fromStacks(delta);
+    return addCurrency(value, newStacks);
   }
 
   /**
