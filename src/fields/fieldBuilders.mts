@@ -21,7 +21,7 @@ const requiredNullableStringField = (initialValue?: string) => {
 };
 
 const nullableOptionalStringField = (initialValue?: string) => {
-  return new StringField<string, string, false, true, true>({ required: false, blank: true, initial: initialValue ?? undefined });
+  return new StringField<string, string, false, true, true>({ required: false, nullable: true, blank: true, initial: initialValue ?? undefined });
 };
 
 const derivedNullableOptionalStringField = (initialValue?: string | null) => {

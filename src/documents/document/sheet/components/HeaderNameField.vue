@@ -14,6 +14,8 @@
         :field-path="fieldPath"
         :focus-on-mount="true"
         class="contents"
+        hide-label
+        hide-field-controls
       >
       </FormulaFormGroup>
     </div>
@@ -84,7 +86,7 @@
     display: block;
     width: 100%;
     margin-top: 0.25rem;
-    margin-left: 0 !important;
+    margin-left: 0.25rem !important;
     text-align: left;
   }
 </style>

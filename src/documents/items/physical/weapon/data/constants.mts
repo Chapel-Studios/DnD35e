@@ -1,11 +1,21 @@
 import type { SelectOption } from '@vc/fields/index.mjs';
 
+const SIMPLE_WEAPON = 'simple';
+const MARTIAL_WEAPON = 'martial';
+const EXOTIC_WEAPON = 'exotic';
+const MISC_WEAPON = 'misc';
 const WEAPON_TYPES = new Set([
-  'simple',
-  'martial',
-  'exotic',
-  'misc',
+  SIMPLE_WEAPON,
+  MARTIAL_WEAPON,
+  EXOTIC_WEAPON,
+  MISC_WEAPON,
 ] as const);
+const WEAPON_TYPE = {
+  SIMPLE_WEAPON,
+  MARTIAL_WEAPON,
+  EXOTIC_WEAPON,
+  MISC_WEAPON,
+};
 type WeaponType = SetElement<typeof WEAPON_TYPES>;
 const WEAPON_TYPE_LOCALIZED: Record<WeaponType, string> = {
   'simple': 'dnd35e.WEAPON.Type.simple',
@@ -17,14 +27,25 @@ const weaponTypeSelectOptions = Object.entries(WEAPON_TYPE_LOCALIZED)
   .map(([value, label]) => ({ value, label } as SelectOption<WeaponType>));
 
 
+const UNARMED_WEAPON = 'unarmed';
+const LIGHT_WEAPON = 'light';
+const ONE_HANDED_WEAPON = 'oneHanded';
+const TWO_HANDED_WEAPON = 'twoHanded';
+const RANGED_WEAPON = 'ranged';
 const WEAPON_SUBTYPES = new Set([
-  'unarmed',
-  'light',
-  'oneHanded',
-  'twoHanded',
-  'ranged',
-  // 'thrown',
+  UNARMED_WEAPON,
+  LIGHT_WEAPON,
+  ONE_HANDED_WEAPON,
+  TWO_HANDED_WEAPON,
+  RANGED_WEAPON,
 ] as const);
+const WEAPON_SUBTYPE = {
+  UNARMED_WEAPON,
+  LIGHT_WEAPON,
+  ONE_HANDED_WEAPON,
+  TWO_HANDED_WEAPON,
+  RANGED_WEAPON,
+};
 type WeaponSubtype = SetElement<typeof WEAPON_SUBTYPES>;
 const WEAPON_SUBTYPE_LOCALIZED: Record<WeaponSubtype, string> = {
   'unarmed': 'dnd35e.WEAPON.Subtype.unarmed',
@@ -118,8 +139,10 @@ export type {
 
 export {
   WEAPON_BASE_TYPES,
+  WEAPON_SUBTYPE,
   WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,
+  WEAPON_TYPE,
   WEAPON_TYPE_LOCALIZED,
   WEAPON_TYPES,
   weaponSubtypeSelectOptions,

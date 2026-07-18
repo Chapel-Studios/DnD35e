@@ -56,8 +56,10 @@
   import MaskedBadge from './MaskedBadge.vue';
   import type { BaseFormGroupProps } from './types.mts';
 
-  const props = withDefaults(defineProps<BaseFormGroupProps<TValue>>(), {
-  });
+  const props = withDefaults(
+    defineProps<BaseFormGroupProps<TValue>>(),
+    {}
+  );
 
   function localize(key: string): string {
     return game.i18n.localize(key);
@@ -90,6 +92,7 @@
    */
   const resolvedLabel = computed(() => {
     if (props.label) return localize(props.label);
+    if (props.hideLabel) return '';
     return getFieldLabel(props.fieldPath);
   });
 

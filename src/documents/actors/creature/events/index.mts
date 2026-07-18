@@ -14,7 +14,7 @@ import { checkForUnconsciousFromNonLethalEvent, UNCONSCIOUS_FROM_NONLETHAL_EVENT
 const registerCreatureEventChecks = (creature: Creature) => {
   creature.events.registerChangeEventCheck(ADJUST_HP_EVENT, checkForAdjustHpEvent);
   creature.events.registerChangeEventCheck(BLOODIED_EVENT, checkForBloodiedEvent);
-  // adjustment-type-gated events (only fire when called through the HP adjuster)
+  /** adjustment-type-gated events (only fire when called with a {@link HpAdjustmentType} that matches the event's type) */
   creature.events.registerChangeEventCheck(DAMAGE_TAKEN_EVENT, checkForDamageTakenEvent);
   creature.events.registerChangeEventCheck(HEALING_RECEIVED_EVENT, checkForHealingReceivedEvent);
   creature.events.registerChangeEventCheck(NONLETHAL_TAKEN_EVENT, checkForNonlethalTakenEvent);

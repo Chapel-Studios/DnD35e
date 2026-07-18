@@ -1,21 +1,36 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import type { DocumentConstructionContext } from '@common/_types.mjs';
+import type { DeepPartial, DocumentConstructionContext } from '@common/_types.mjs';
+import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import type { EffectChangeData } from '@common/documents/active-effect.mjs';
-import { getDisplayName } from '@documents/document/logic/index.mjs';
+import type { DocumentUpdateCallbackOptions } from '@documents/document/DocumentDnd35e.mjs';
+import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
+import type { NameFormulaDocument } from '@documents/document/logic/index.mjs';
+import { ensureNameFormulaOnCreate, getDisplayName } from '@documents/document/logic/index.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE, INITIAL_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+import {
+  EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TYPE,
+  FINAL_EFFECT_CHANGE_PHASE,
+  INITIAL_EFFECT_CHANGE_PHASE,
+  SYSTEM_CHANGE_TYPE,
+} from '@effects/baseActiveEffect/data/constants.mjs';
 import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
+import type { ACTIVE_EFFECTS_DND35E } from '@effects/effectTypes.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { ChangeHistory, Override, StackingChange } from '@helpers/stacking.mjs';
-import { parseNumericChangeValue, resolveActiveEffectChanges, STACK_RESULT_APPLIED, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+import {
+  parseNumericChangeValue,
+  resolveActiveEffectChanges,
+  STACK_RESULT_APPLIED,
+  STACK_RESULT_IGNORED,
+} from '@helpers/stacking.mjs';
 import type { ItemType } from '@items/index.mjs';
 import { ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
 
-import type { ItemSystemData, ItemSystemSource } from './index.mjs';
+import type { ItemSheetStore, ItemSystemData, ItemSystemSource } from './index.mjs';
 
 type FormulaLikeSource = {
   formula?: unknown;
@@ -25,16 +40,66 @@ type FormulaLikeSource = {
 
 type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
 
-class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<TParent> {
+// dnd35e type-fix: fixed non-null 'Actor' type argument (instead of TParent/this or a
+// dropped/defaulted argument) breaks circular assignability when checking subclasses
+// (e.g. this class's own subtypes) against foundry.documents.Item, while still satisfying
+// EmbeddedCollection's requirement that embedded elements have a non-null parent.
+class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<foundry.documents.Actor> {
   constructor(source: PreCreate<ItemSourceDnd35e<TItemType>>, context?: DocumentConstructionContext<TParent>) {
     super(source, context);
     this._completedActiveEffectPhases = new Set();
   }
-  declare readonly effects: EmbeddedCollection<ActiveEffectDnd35e<this>>;
+  declare readonly effects: EmbeddedCollection<ACTIVE_EFFECTS_DND35E>;
   declare type: TItemType;
   declare system: ItemSystemData;
   declare _source: ItemSourceDnd35e<TItemType>;
   // declare _sheet: ItemSheetDnd35e<any> | null;
+
+  // dnd35e type-fix: base's "actor" resolves to the FIXED `foundry.documents.Actor`
+  // argument used to break the extends-clause circularity above. Overriding it to return
+  // this class's own (nullable) `TParent` is NOT possible — TypeScript's covariant-override
+  // rule rejects widening a non-null base return type to include `null`, and re-declaring
+  // "parent" itself reintroduces excessive-depth circularity via DataModel's parent-typed
+  // construction context. `TParent` is therefore decorative for "actor"/"parent" purposes;
+  // consuming code that needs the narrower dnd35e actor type should cast explicitly.
+
+  /** Life Cycle */
+  static readonly LifeCycle = {
+    // This sadly doesn't properly inherit this from the Mixin
+    ...DocumentLifeCycle,
+  } as const;
+
+  protected override async _preCreate(
+    updateData: DeepPartial<this['_source']>,
+    options: DatabaseCreateCallbackOptions,
+    user: foundry.documents.BaseUser
+  ): Promise<boolean> {
+    const precreateResult = await super._preCreate(updateData, options, user);
+    if (precreateResult === false) return false;
+
+    await ensureNameFormulaOnCreate(this as unknown as NameFormulaDocument);
+    return true;
+  } 
+
+  protected override async _onUpdate(
+    data: Record<string, unknown>,
+    options: DocumentUpdateCallbackOptions,
+    userId: string
+  ): Promise<void> {
+    super._onUpdate(data, options, userId);
+    
+    // ensure sheetstore updates
+    if (game.dnd35e?.stores?.[this.documentName]?.[this.id]) {
+      (game.dnd35e.stores[this.documentName]?.[this.id] as ItemSheetStore<any>)
+        ?._storeUtils.refreshDocument?.(this);
+    }
+
+    // ensure parent sheetstore updates if this is an embedded item
+    if (this.parent && game.dnd35e?.stores?.[this.parent.documentName]?.[this.parent.id]) {
+      (game.dnd35e.stores[this.parent.documentName]?.[this.parent.id] as ItemSheetStore<any>)
+        ?._storeUtils.refreshDocument?.(this.parent);
+    }
+  }
 
   // Active Effect Implementation from actor.mjs on version 14.354, since items don't have their own applyActiveEffects method,
   // but they do have active effects that need to be applied to themselves when prepareEmbeddedDocuments is called
@@ -183,7 +248,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
    */
   *allApplicableEffects() {
     for (const effect of this.effects) {
-      if (effect.hasItemChanges) yield effect;
+      if (effect.hasItemChanges) yield effect as ActiveEffectDnd35e;
     }
   }
 
@@ -216,21 +281,42 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     }
     this._completedActiveEffectPhases.add(phase);
 
-    type AppliedItemEffectChange = EffectChangeData<ItemDnd35e<TItemType, TParent>>
-      & { type: string; effect: ActiveEffectDnd35e<ItemDnd35e<TItemType, TParent>> };
+    type AppliedItemEffectChange = EffectChangeDataDnd35e;
     const changes: AppliedItemEffectChange[] = [];
     for ( const effect of this.allApplicableEffects() ) {
       if ( !effect.active ) continue;
       for ( const change of effect.system.changes ) {
-        // Only apply item-targeted changes (default to actor for compatibility with base ActiveEffect change data structure)
+        // default to actor for compatibility with vanilla ActiveEffect change data structure
         const changeTarget = change.target ?? EFFECT_CHANGE_TARGET.ACTOR;
-        if ( !change.key || (change.phase !== phase) || (changeTarget !== EFFECT_CHANGE_TARGET.ITEM) ) continue;
-        // MASK changes are not applied via stacking — they define masked values read at prep time
-        if (change.type === SYSTEM_CHANGE_TYPE.MASK) continue;
+        if (
+          // Only apply item-targeted changes
+          (
+            !change.key 
+            || (change.phase !== phase) 
+            || (changeTarget !== EFFECT_CHANGE_TARGET.ITEM)
+          )
+          // MASK changes are not applied via stacking — they define masked values read at prep time
+          || (change.type === SYSTEM_CHANGE_TYPE.MASK)
+          || (
+            change.condition
+            && (
+              (
+                typeof change.condition === 'function'
+                && !change.condition(this)
+              )
+              //TODO implement after the fomrula deep dive
+              // || (
+              //   typeof change.condition === 'string'
+              //   && !FormulaData.evaluateFormula(change.condition, this.getRollData())
+              // )
+            )
+          )
+        ) continue;
         const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as unknown as AppliedItemEffectChange;
         copy.effect = effect;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
         copy.priority ??= 0;
+        copy.label ??= effect.system.label ?? effect.name;
         changes.push(copy);
       }
       // Not sure how statuses should interact with item active effects, since they don't have tokens,
@@ -245,17 +331,18 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 
     // Build StackingChange[] for the stacking engine
     const stackingChanges: StackingChange[] = changes.map((change, index) => {
-      const dnd35eChange = change as unknown as EffectChangeDataDnd35e;
+      const dnd35eChange = change;
       const numericValue = parseNumericChangeValue(change.value);
       const bonusType = dnd35eChange.bonusType || undefined;
+      const effectName = change.label ?? change.effect?.system.label ?? change.effect?.name ?? 'Unknown Effect';
       
       return {
         index,
         field: change.key,
         bonusType,
         value: numericValue,
-        source: change.effect.displayName,
-        effectId: change.effect.id ?? undefined,
+        source: effectName,
+        effectId: change.effect?.id ?? undefined,
       };
     });
 
@@ -274,6 +361,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
       const sc = stackingChanges[i];
       const isStackable = !isNaN(sc.value) && sc.bonusType !== undefined;
       const isWinner = winnerIndices.has(i);
+      const effectName = change.label ?? change.effect?.system.label ?? change.effect?.name ?? 'Unknown Effect';
 
       if (isStackable && !isWinner) {
         // Stacking loser — record in overrides but don't apply
@@ -283,7 +371,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
           {
             fieldPath: change.key,
             value: change.value,
-            effectName: change.effect.name,
+            effectName: effectName,
             type: change.type,
             bonusType: sc.bonusType,
             stackResult: STACK_RESULT_IGNORED,
@@ -294,7 +382,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
       }
 
       // Apply the change (winner or non-stackable)
-      const EffectClass = change.effect.constructor as typeof ActiveEffect;
+      const EffectClass = change.effect?.constructor as typeof ActiveEffect;
       const result = (ActiveEffect.CHANGE_TYPES[change.type].handler?.(this, change)
         ?? EffectClass.applyChange(this, change, { replacementData }) ?? {}) as Record<string, unknown>;
       for (const fieldPath of Object.keys(result)) {
@@ -304,7 +392,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
           {
             fieldPath,
             value: change.value,
-            effectName: change.effect.name,
+            effectName: effectName,
             type: change.type,
             bonusType: sc.bonusType,
             stackResult: isStackable ? STACK_RESULT_APPLIED : undefined,
@@ -325,7 +413,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     return getDisplayName(fallbackName, this.system, this);
   }
 
-  override get img (): foundry.documents.Item<TParent>['img'] {
+  override get img (): foundry.documents.Item['img'] {
     const fallbackImg = super.img;
     return this._getMaskedTopLevelField('img', super.img, fallbackImg);
   }

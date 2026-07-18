@@ -120,8 +120,14 @@ declare class Actor<TToken extends TokenDocument | null = TokenDocument | null> 
      * If CONFIG.ActiveEffect.legacyTransferral is true, this is equivalent to actor.effects.contents.
      * If CONFIG.ActiveEffect.legacyTransferral is false, this will also return all the transferred ActiveEffects on any
      * of the Actor's owned Items.
+     * @remarks dnd35e type-fix: upstream typed this as `ActiveEffect<this | Item<this>>`, using `this`
+     * recursively. That's inconsistent with the sibling `appliedEffects`/`temporaryEffects` getters above
+     * (which use the non-recursive `ActiveEffect<Actor | Item>`), and forces any subclass override to
+     * structurally re-prove itself against its own `effects`/`items` declarations, which is circular
+     * for actor/item/activeEffect class hierarchies that narrow ActiveEffect's parent generic. Matching
+     * the sibling convention here avoids that self-reference without changing runtime behavior.
      */
-  allApplicableEffects(): Generator<ActiveEffect<this | Item<this>>, void, void>;
+  allApplicableEffects(): Generator<ActiveEffect<Actor | Item>, void, void>;
 
   /** Prepare a data object which defines the data schema used by dice roll commands against this Actor */
   getRollData(): Record<string, unknown>;
@@ -132,9 +138,17 @@ declare class Actor<TToken extends TokenDocument | null = TokenDocument | null> 
      * @param options The options passed to the TokenDocument constructor
      * @returns The created TokenDocument instance
      */
+  /**
+   * @remarks dnd35e type-fix: upstream typed `options` with `DocumentConstructionContext<this>`.
+   * A self-referential `this` in a contravariant parameter position forces subclasses to
+   * structurally re-prove themselves against `Actor` whenever they're checked as satisfying a
+   * generic `Actor<...>` constraint elsewhere (e.g. `Item<TParent>`), which is circular for
+   * actor/item/activeEffect class hierarchies that narrow each other's generics. Using the
+   * class's own `Actor<TToken>` form instead of `this` avoids that self-reference.
+   */
   getTokenDocument(
         data?: DeepPartial<foundry.documents.TokenSource>,
-        options?: Partial<DocumentConstructionContext<this>>,
+        options?: Partial<DocumentConstructionContext<Actor<TToken>>>,
     ): Promise<NonNullable<TToken>>;
 
   /** Get an Array of Token images which could represent this Actor */
@@ -181,11 +195,12 @@ declare class Actor<TToken extends TokenDocument | null = TokenDocument | null> 
      *                                 - true if was already an existing effect
      *                                 - false if an existing effect needed to be removed
      *                                 - undefined if no changes need to be made
+     * @remarks dnd35e type-fix: upstream typed this as `ActiveEffect<this>`; see `getTokenDocument` above.
      */
   toggleStatusEffect(
         statusId: string,
         options?: { active?: boolean; overlay?: boolean },
-    ): Promise<ActiveEffect<this> | boolean | void>;
+    ): Promise<ActiveEffect<Actor<TToken>> | boolean | void>;
 
   /**
      * Request wildcard token images from the server and return them.
@@ -287,8 +302,15 @@ declare class Actor<TToken extends TokenDocument | null = TokenDocument | null> 
 }
 
 declare interface Actor<TToken extends TokenDocument | null = TokenDocument | null> extends ClientBaseActor<TToken> {
-    readonly effects: EmbeddedCollection<ActiveEffect<this>>;
-    readonly items: EmbeddedCollection<Item<this>>;
+    // dnd35e type-fix: upstream typed these as `ActiveEffect<this>`/`Item<this>`, which is
+    // self-referential and causes unresolvable circularity for subclasses (e.g. dnd35e's
+    // ActorDnd35e/ItemDnd35e/ActiveEffectDnd35e) whose own `effects`/`items` overrides need
+    // to satisfy this field. Widened to a fixed, non-null `Actor | Item` union (matching
+    // core's own embeddable-document convention — EmbeddedCollection requires non-null
+    // parents) rather than a self-referential or nullable-default type, so the assignability
+    // check is a normal (non-circular) structural comparison.
+    readonly effects: EmbeddedCollection<ActiveEffect<Actor | Item>>;
+    readonly items: EmbeddedCollection<Item<Actor>>;
 
     get sheet(): ActorSheet<Actor>;
 

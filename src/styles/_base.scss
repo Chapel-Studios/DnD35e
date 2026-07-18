@@ -42,6 +42,10 @@ h3 {
   overflow: unset;
 }
 
+.sheet.minimized .dnd35e-vertical-tab-host {
+  display: none;
+}
+  
 .dnd35e-vertical-tab-host {
   position: absolute;
   top: 5rem;

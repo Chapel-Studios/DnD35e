@@ -31,7 +31,12 @@ export default class Game<
     TActors extends collections.Actors<TActor>,
     TChatMessage extends ChatMessage,
     TCombat extends Combat,
-    TItem extends Item<null>,
+    // dnd35e type-fix: relaxed from `Item<null>` to bare `Item` (which defaults to
+    // `Actor | null`). dnd35e's ItemDnd35e fixes its "actor"/"parent" getter to a
+    // concrete non-null `Actor` type to break circular assignability elsewhere (see
+    // ItemDnd35e.mts), so it can never structurally satisfy `Item<null>` — only the
+    // wider `Actor | null` bound.
+    TItem extends Item,
     TMacro extends Macro,
     TScene extends Scene,
     TUser extends User,

@@ -58,7 +58,7 @@
     align-items: center;
     gap: 0.25rem;
 
-    ::slotted(.field-control-btn) {
+    :slotted(.field-control-btn) {
       font-size: 1.1rem;
     }
   }

@@ -1,7 +1,7 @@
 import { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import { DOCUMENT_UPDATE_TYPES } from '@constants/documentUpdateTypes.mjs';
-import type { DocumentUpdateOptions, HpAdjustmentMetadata } from '@documents/document/DocumentDnd35e.mjs';
+import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
 import { calculateStandardAC, calculateTouchAC } from '@helpers/AC.mjs';
 
 import { _debugCreature, isCreatureDebugEnabled } from './_debug.mjs';
@@ -18,6 +18,13 @@ import type { HpUpdateMetadata } from './types.mjs';
 
 type CreatureSource = Omit<foundry.documents.ActorSource, 'system'>
   & { system: CreatureSystemSource; };
+
+interface HpAdjustmentMetadata extends DocumentUpdateMetadata {
+  updateType: typeof DOCUMENT_UPDATE_TYPES.HP_ADJUSTMENT_UPDATE;
+  adjustmentAmount: number;
+  damageType?: string;
+  hpAdjustmentType: HpAdjustmentType,
+}
 
 /**
  * Abstract base for all creature-type actors (characters, NPCs, etc.).
@@ -94,6 +101,7 @@ abstract class Creature extends ActorDnd35e {
 
   override prepareDerivedData(): void {
     super.prepareDerivedData();
+
     // stub value to for sheet building; replace with real HP calculation when progression is implemented
     this.system.hp.max = 100;
   }
@@ -146,4 +154,8 @@ registerCreatureEvents();
 type CreatureLike = ActorDnd35e & Creature;
 
 export { Creature };
-export type { CreatureLike, CreatureSource };
+export type {
+  CreatureLike,
+  CreatureSource,
+  HpAdjustmentMetadata,
+};

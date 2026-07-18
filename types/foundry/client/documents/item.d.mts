@@ -70,7 +70,11 @@ declare class Item<TParent extends Actor | null = Actor | null> extends ClientBa
 
 declare interface Item<TParent extends Actor | null = Actor | null> extends ClientBaseItem<TParent> {
     get uuid(): ItemUUID;
-    readonly effects: EmbeddedCollection<ActiveEffect<this>>;
+    // dnd35e type-fix: upstream typed this as `ActiveEffect<this>`, self-referential and
+    // circular for subclasses. Widened to a fixed, non-null `Actor | Item` union, matching
+    // the same convention used for Actor's `effects`/`items` fields (see actor.d.mts) —
+    // EmbeddedCollection requires embedded elements to have a non-null parent.
+    readonly effects: EmbeddedCollection<ActiveEffect<Actor | Item>>;
     // get sheet(): ItemSheet<this, DocumentSheetV1Options>;
 }
 

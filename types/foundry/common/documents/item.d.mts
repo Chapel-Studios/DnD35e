@@ -52,7 +52,9 @@ export default interface BaseItem<TParent extends BaseActor | null = BaseActor |
         fields.ModelPropsFromSchema<ItemSchema> {
     get documentName(): ItemMetadata['name'];
 
-    readonly effects: abstract.EmbeddedCollection<BaseActiveEffect<this>>;
+    // dnd35e type-fix: fixed non-null union instead of self-referential 'this' to break
+    // circular assignability when checking subclasses (e.g. ItemDnd35e) against BaseItem.
+    readonly effects: abstract.EmbeddedCollection<BaseActiveEffect<BaseActor | BaseItem>>;
 }
 
 interface ItemMetadata extends abstract.DocumentMetadata {
@@ -82,8 +84,12 @@ export type ItemSchema<
   img: fields.FilePathField<ImageFilePath, ImageFilePath, false, false, true>;
   /** The system data object which is defined by the system template.json model */
   system: fields.TypeDataField<TSystemSource>;
+  // dnd35e type-fix: fixed non-null `BaseActor | BaseItem` union (matching the widened
+  // interface `effects` declaration above) instead of a self-referential/item-only parent.
+  // Keeps `ModelPropsFromSchema<ItemSchema>['effects']` assignable to the interface's
+  // explicit `effects` member, and breaks the circular assignability chain.
   /** A collection of ActiveEffect embedded Documents */
-  effects: fields.EmbeddedCollectionField<BaseActiveEffect<BaseItem<BaseActor | null>>>;
+  effects: fields.EmbeddedCollectionField<BaseActiveEffect<BaseActor | BaseItem>>;
   /** The _id of a Folder which contains this Item */
   folder: fields.ForeignDocumentField<BaseFolder>;
   /** The numeric sort value which orders this Item relative to its siblings */

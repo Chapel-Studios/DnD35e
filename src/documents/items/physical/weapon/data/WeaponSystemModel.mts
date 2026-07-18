@@ -1,4 +1,5 @@
 import { DAMAGE_TYPE_SLASHING,DAMAGE_TYPES } from '@constants/attacks/damageTypes.mjs';
+import { WEAPON_EQUIP_SLOTS, type WeaponEquipSlot } from '@constants/equipmentSlots.mjs';
 import {
   optionalStringField,
   requiredBooleanField,
@@ -16,6 +17,7 @@ const {
     NumberField,
     SchemaField,
     StringField,
+    ArrayField,
   },
 } = foundry.data;
 
@@ -24,6 +26,12 @@ class WeaponSystemModel extends EquippableItemSystemModel {
 
   static override defineSchema () {
     const schema = super.defineSchema();
+
+    // Force Slots into subset of Weapon slots (mainHand, offHand, etc.)
+    schema.availableEquipmentSlots = useDnd35eField( new ArrayField(
+      new StringField<WeaponEquipSlot, WeaponEquipSlot, true, false, true>({ required: true }),
+      { initial: [...WEAPON_EQUIP_SLOTS], required: true }
+    ));
 
     // Declare Owner context on inherited nameFormula (it's now a plain FormulaField)
     (schema.nameFormula as FormulaField).formulaContexts = [

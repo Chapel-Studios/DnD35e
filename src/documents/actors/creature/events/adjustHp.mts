@@ -28,7 +28,7 @@ interface AdjustHpEvent extends DocumentEvent {
 //   sourceActorId?: string;
 // }
 
-interface checkForAdjustHpEventParams {
+interface CheckForAdjustHpEventParams {
   parent: Creature;
   updateData: Record<string, unknown>;
   hpAdjustmentType?: HpAdjustmentType;
@@ -38,7 +38,7 @@ interface checkForAdjustHpEventParams {
 }
 
 const checkForAdjustHpEvent: EventChecker<AdjustHpPayload> = (
-  { parent, updateData, ...payloadMetaData }: checkForAdjustHpEventParams
+  { parent, updateData, ...payloadMetaData }: CheckForAdjustHpEventParams
 ) => {
   const result: EventCheckResult<AdjustHpPayload> = {
     documentId: parent.id,
@@ -80,6 +80,7 @@ const checkForAdjustHpEvent: EventChecker<AdjustHpPayload> = (
 export type {
   AdjustHpEvent,
   AdjustHpPayload,
+  CheckForAdjustHpEventParams,
   // fireAdjustHpEventParams,
 };
 

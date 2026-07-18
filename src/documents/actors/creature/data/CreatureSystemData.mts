@@ -2,8 +2,9 @@ import type { AbilityKey } from '@constants/abilities.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import type { SenseType } from '@constants/senses.mjs';
 import type { Size } from '@constants/sizes.mjs';
-import type { CurrencyData } from '@fields/CurrencyData.mjs';
+import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 import type { FormulaDataSource } from '@helpers/formulae/index.mjs';
+import type { WeaponDamage } from '@items/physical/weapon/data/index.mjs';
 import type { PriceSource } from '@settings/currency/index.mjs';
 
 import type { ActorSystemData, ActorSystemSource } from '../../baseActor/data/ActorSystemData.mjs';
@@ -139,6 +140,8 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   /** Derived from class items. Resets to 1 until class system is implemented. Never stored. */
   level: number;
   currency: CurrencyData;
+  /** Derived list of equipped weapon attacks contributed by equipped weapons. Never stored. */
+  attacks: WeaponDamage[];
   encumbrance: EncumbranceData;
   isIncorporeal: boolean;
   isQuadraped: boolean;

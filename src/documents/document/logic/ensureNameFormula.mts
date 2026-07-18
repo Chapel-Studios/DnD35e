@@ -6,7 +6,7 @@ import type { ItemSystemData } from '@items/baseItem/index.mjs';
 type NameFormulaDocument = {
   name: string | null;
   system?: unknown;
-  updateSource: (data: object) => void;
+  updateSource: (changes: Record<string, unknown>, _?: unknown, __?: unknown) => Promise<void>;
 };
 
 /**
@@ -14,7 +14,7 @@ type NameFormulaDocument = {
  * Uses updateSource to properly set the pending creation data.
  * Intended for use in preCreate hooks.
  */
-const ensureNameFormulaOnCreate = (document: NameFormulaDocument): void => {
+const ensureNameFormulaOnCreate = async (document: NameFormulaDocument, options?: unknown): Promise<void> => {
   // When foundry creates a new document, it only provides the name field and leaves system empty.
   // This means that if we want to support name formulas on newly created documents,
   // we need to populate the nameFormula field based on the provided name.
@@ -31,7 +31,7 @@ const ensureNameFormulaOnCreate = (document: NameFormulaDocument): void => {
   }
   
   if (hasUpdate) {
-    document.updateSource(updateData);
+    await document.updateSource(updateData, options);
   }
 };
 

@@ -5,6 +5,7 @@ import {
   buildMaterialChanges,
   type BuildMaterialChangesInput,
 } from '@effects/material/data/buildMaterialChanges.mjs';
+import type { CurrencyData } from '@fields/index.mjs';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -14,7 +15,7 @@ import { describe, expect, it } from 'vitest';
 function mkInput (partial: Partial<BuildMaterialChangesInput> = {}): BuildMaterialChangesInput {
   return {
     materialSubtype: 'standard',
-    price: { isEmpty: true },
+    price: { isEmpty: true } as CurrencyData,
     magicEquivalency: 0,
     hardness: 0,
     bonusHp: 0,
@@ -37,7 +38,6 @@ function mkSystemChange (key: string, type: EffectChangeDataDnd35e['type']): Eff
     phase: 'final',
     priority: 10,
     target: EFFECT_CHANGE_TARGET.ITEM,
-    effect: null,
     isSystem: true,
     bonusType: BONUS_TYPE_MATERIAL,
   };
@@ -56,7 +56,6 @@ describe('buildMaterialChanges', () => {
       phase: 'final',
       priority: 20,
       target: EFFECT_CHANGE_TARGET.ITEM,
-      effect: null,
       isSystem: false,
       bonusType: BONUS_TYPE_UNTYPED,
     };
@@ -88,7 +87,7 @@ describe('buildMaterialChanges', () => {
   });
 
   it('emits a system change for non-empty price', () => {
-    const price = { isEmpty: false };
+    const price = { isEmpty: false } as CurrencyData;
     const result = buildMaterialChanges(mkInput({ price }));
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
@@ -110,7 +109,7 @@ describe('buildMaterialChanges', () => {
 
   it('defaults: price/hardness/bonusHp/DR → ADD; magicEquivalency → UPGRADE', () => {
     const result = buildMaterialChanges(mkInput({
-      price: { isEmpty: false },
+      price: { isEmpty: false } as CurrencyData,
       magicEquivalency: 2,
       hardness: 5,
       bonusHp: 10,
@@ -191,7 +190,6 @@ describe('buildMaterialChanges', () => {
       phase: 'final',
       priority: 20,
       target: EFFECT_CHANGE_TARGET.ITEM,
-      effect: null,
       isSystem: false,
       bonusType: BONUS_TYPE_UNTYPED,
     };

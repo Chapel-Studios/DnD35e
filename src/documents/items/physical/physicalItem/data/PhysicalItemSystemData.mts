@@ -1,25 +1,27 @@
 import type { Size } from '@constants/sizes.mjs';
 import type { IdentifiableDocumentSystemData } from '@documents/identifiable/index.mjs';
-import type { CurrencyData } from '@fields/CurrencyData.mjs';
+import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 import type { ItemSystemSource } from '@items/baseItem/index.mjs';
 import type { PriceSource } from '@settings/currency/index.mjs';
 
+interface ItemHpSource {
+  current: number;
+  max: number;
+}
+
 interface PhysicalItemSystemSource {
   quantity: number;
-  weight: number | null;
+  weight: number;
   // isWeightlessInContainer: boolean;
   // isWeightlessWhenEquipped: boolean;
   isCarried: boolean;
   size: Size;
-  hp: {
-      current: number;
-      max: number;
-  };
+  hp: ItemHpSource;
   hardness: number;
   // Price - EmbeddedDataField wrapping CurrencyData with coin stacks
   price: PriceSource;
   // Container
-  containerId: string | null;
+  containerUuid: string | null;
 }
 
 interface PhysicalItemSystemData extends ItemSystemSource, PhysicalItemSystemSource,
@@ -34,6 +36,7 @@ interface PhysicalItemSystemData extends ItemSystemSource, PhysicalItemSystemSou
   }
 
 export type {
+  ItemHpSource,
   PhysicalItemSystemData,
   PhysicalItemSystemSource,
 };

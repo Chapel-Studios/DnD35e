@@ -35,7 +35,7 @@
 
     li {
       color: #4b4a44;
-      padding: 0.5rem 1rem;
+      padding: 0.5rem 0.25em;
       display: grid;
       height: 100%;
     }

@@ -136,12 +136,8 @@
   </section>
 </template>
 
-<script setup lang="ts">
-  import { computed, ref, watch } from 'vue';
-
-  const ALL_TAB_ID = '__all';
-
-  type CategorizedRow = {
+<script lang="ts">
+  export type CategorizedRow = {
     id: string;
     categoryId: string;
     categoryLabel: string;
@@ -149,11 +145,17 @@
     subcategoryLabel?: string;
     sortKey?: string;
   };
+</script>
+
+<script setup lang="ts" generic="TRow extends CategorizedRow">
+  import { computed, ref, watch } from 'vue';
+
+  const ALL_TAB_ID = '__all';
 
   const props = withDefaults(defineProps<{
     title: string;
     columnCount: number;
-    rows: CategorizedRow[];
+    rows: TRow[];
     allTabLabel?: string;
     emptyLabel?: string;
     emptyIcon?: string;
@@ -170,13 +172,13 @@
   type CategoryGroup = {
     id: string;
     label: string;
-    rows: CategorizedRow[];
+    rows: TRow[];
   };
 
   type SubcategoryGroup = {
     id: string;
     label: string | null;
-    rows: CategorizedRow[];
+    rows: TRow[];
   };
 
   const categories = computed<CategoryGroup[]>(() => {
@@ -225,7 +227,7 @@
   const collapsedCategoryIds = ref<Record<string, boolean>>({});
   const collapsedSubcategoryIds = ref<Record<string, Record<string, boolean>>>({});
 
-  function buildSubcategoryGroups(rows: CategorizedRow[]): SubcategoryGroup[] {
+  function buildSubcategoryGroups(rows: TRow[]): SubcategoryGroup[] {
     const grouped = new Map<string, SubcategoryGroup>();
 
     for (const row of rows) {
@@ -317,7 +319,6 @@
     background: color-mix(in srgb, var(--color-cool-4, #9ba5a0) 10%, transparent);
     border: 1px solid var(--color-cool-4, #9ba5a0);
     border-radius: 999px;
-    color: var(--color-text-dark-primary, #1b1b1b);
     cursor: pointer;
     display: inline-flex;
     font-size: 0.8rem;

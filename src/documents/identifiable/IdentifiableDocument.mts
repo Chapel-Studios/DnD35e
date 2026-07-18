@@ -2,7 +2,7 @@ import type { DocumentProperties } from '@documents/document/DocumentDnd35e.mjs'
 import type { EvaluationDocument, FormulaRegistration } from '@documents/document/index.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import type { ItemSourceDnd35e } from '@items/baseItem/index.mjs';
-import { ItemDnd35e } from '@items/baseItem/index.mjs';
+import { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/index.mjs';
 
 import type { IdentifiableDocumentSystemData, IdentifiableDocumentSystemSource } from './index.mjs';

@@ -33,6 +33,7 @@ class ActiveEffectSystemModel extends DocumentSystemModel<foundry.documents.Acti
         initial: EFFECT_TARGET,
       }),
       isHidden: requiredBooleanField(false),
+      label: new StringField({ required: false, nullable: true, initial: null }),
       // ─── Future: triggers ──────────────────────────────────────────────────
       // AEs will be able to subscribe to document lifecycle events on their
       // owning item/actor. When a lifecycle event fires (e.g. Weapon.LifeCycle.onHit),
@@ -53,6 +54,7 @@ class ActiveEffectSystemModel extends DocumentSystemModel<foundry.documents.Acti
       // ───────────────────────────────────────────────────────────────────────
       changes: new ArrayField(
         new SchemaField({
+          label: new StringField({ required: false, nullable: true, initial: null }),
           key: new StringField({ required: true }),
           type: new StringField({ required: true, choices: ALL_CHANGE_TYPES, initial: EFFECT_CHANGE_TYPE.ADD }),
           value: new AnyField({ required: true }),

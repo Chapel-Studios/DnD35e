@@ -6,7 +6,7 @@
       'view-mode': !isEditMode,
     }"
   >
-    <DocumentHeader :show-status-area="showStatusArea">
+    <DocumentHeader>
       <DocumentArt />
       <div class="doc-name-container">
         <slot name="header-name">
@@ -70,7 +70,6 @@
     context?: any;
     mode?: SheetMode;
     verticalTabs?: boolean;
-    showStatusArea?: boolean;
   }>(), {
     mode: 'item',
     verticalTabs: false,
@@ -108,13 +107,20 @@
 
 <style lang="scss" scoped>
   .document-sheet-body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
+    display: grid;
+    // Explicit 3-row template with .sheet-body-content pinned to row 3 below.
+    // TabDivider uses <Teleport> in vertical-tabs mode and renders nothing
+    // at the source position, so without an explicit grid-row, .sheet-body-content
+    // would fall into row 2 (auto) on actor sheets and grow with its content,
+    // defeating .sheet-tab-panes's overflow.
+    grid-template-rows: auto auto minmax(0, 1fr);
     height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .sheet-body-content {
+    grid-row: 3;
     display: flex;
     overflow: hidden;
     flex: 1 1 auto;
@@ -156,13 +162,22 @@
   }
 
   .doc-name-container {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template: min-content / max-content 1fr;
+    justify-content: start;
+    align-items: start;
+    grid-gap: 0.125rem 0.5rem;
     padding: 0.25rem 1rem;
+
+    :deep(.formula-form-group) {
+        grid-column: span 2;
+        width: 95%;
+    }
   }
 
   :global(.actor-sheet .doc-name-container) {
     grid-column: span 2;
+    grid-template: min-content / max-content 1fr;
   }
 
   .sheet-sidebar {

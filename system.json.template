@@ -75,12 +75,14 @@
       "character": {}
     },
     "Item": {
-      "weapon": {}
+      "weapon": {},
+      "container": {}
     },
     "ActiveEffect": {
       "general": {},
       "material": {},
-      "secret": {}
+      "secret": {},
+      "containment": {}
     }
   }
 }

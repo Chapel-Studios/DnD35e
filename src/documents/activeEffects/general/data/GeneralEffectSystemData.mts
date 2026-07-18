@@ -4,13 +4,13 @@ import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@ef
  * General active effect system data — the standard effect data type for dnd35e.
  * No additional fields; pure base AE schema.
  */
-interface GeneralSystemSource extends ActiveEffectSystemSourceDnd35e {
+interface GeneralEffectSystemSource extends ActiveEffectSystemSourceDnd35e {
 }
 
-interface GeneralSystemData extends ActiveEffectSystemData {
+interface GeneralEffectSystemData extends ActiveEffectSystemData {
 }
 
 export type {
-  GeneralSystemData,
-  GeneralSystemSource,
+  GeneralEffectSystemData,
+  GeneralEffectSystemSource,
 };

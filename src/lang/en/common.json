@@ -18,6 +18,8 @@
       "Details": "Details",
       "Description": "Description",
       "Item": "Item",
+      "Actor": "Actor",
+      "Containment": "Containment",
       "Material": "Material",
       "Materials": "Materials",
       "SystemProperties": "System Properties",

@@ -64,7 +64,7 @@
 <script setup lang="ts">
   import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
-  import { CurrencyData } from '@fields/CurrencyData.mjs';
+  import { CurrencyData } from '@fields/currency/CurrencyData.mjs';
   import type { CoinageDefinition, CoinStack, PriceSource } from '@settings/currency/index.mjs';
   import {
     coinageVisibilityGmOnly,

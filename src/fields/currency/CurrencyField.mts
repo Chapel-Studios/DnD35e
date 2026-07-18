@@ -18,6 +18,7 @@
 import type { CoinStack } from '@settings/currency/types.mjs';
 
 import { CurrencyData } from './CurrencyData.mjs';
+import { multiplyCurrency } from './logic/multiply.mjs';
 
 const { EmbeddedDataField } = foundry.data.fields;
 
@@ -96,7 +97,7 @@ class CurrencyField extends EmbeddedDataField {
   // ─── Change Modes ───────────────────────────────────────────────────────────
 
   /** Wrap stacks in a source object with an up-to-date srdEquivalent. */
-  static #withGpValue(stacks: CoinStack[]): { stacks: CoinStack[]; srdEquivalent: number } {
+  static _withGpValue(stacks: CoinStack[]): { stacks: CoinStack[]; srdEquivalent: number } {
     return { stacks, srdEquivalent: CurrencyData.computeGpValue(stacks) };
   }
 
@@ -106,7 +107,7 @@ class CurrencyField extends EmbeddedDataField {
     for (const stack of delta) {
       map.set(stack.coinId, (map.get(stack.coinId) ?? 0) + stack.count);
     }
-    return CurrencyField.#withGpValue(CurrencyData.fromMap(map));
+    return CurrencyField._withGpValue(CurrencyData.fromMap(map));
   }
 
   /**
@@ -125,7 +126,7 @@ class CurrencyField extends EmbeddedDataField {
     const subtractGp = CurrencyData.computeGpValue(delta);
     const remainingGp = currentGp - subtractGp;
 
-    if (remainingGp <= 0) return CurrencyField.#withGpValue([]);
+    if (remainingGp <= 0) return CurrencyField._withGpValue([]);
 
     const enabledCoinages = CurrencyData.getEnabledCoinages();
     const coinLookup = new Map(enabledCoinages.map(c => [c.id, c]));
@@ -162,7 +163,7 @@ class CurrencyField extends EmbeddedDataField {
       }
     }
 
-    return CurrencyField.#withGpValue(newStacks);
+    return CurrencyField._withGpValue(newStacks);
   }
 
   /**
@@ -171,29 +172,26 @@ class CurrencyField extends EmbeddedDataField {
    */
   override _applyChangeMultiply(value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
     const factor = delta.length === 1 ? delta[0].count : 1;
-    const stacks = value.stacks
-      .map(s => ({ coinId: s.coinId, count: Math.round(s.count * factor) }))
-      .filter(s => s.count > 0);
-    return CurrencyField.#withGpValue(stacks);
+    return multiplyCurrency(value, factor);
   }
 
   /** Override: replace the entire price with the delta. */
   override _applyChangeOverride(_value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
-    return CurrencyField.#withGpValue(delta);
+    return CurrencyField._withGpValue(delta);
   }
 
   /** Upgrade: compare total GP value, keep whichever stacks are worth more. */
   override _applyChangeUpgrade(value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
     const currentGp = CurrencyData.computeGpValue(value.stacks);
     const deltaGp = CurrencyData.computeGpValue(delta);
-    return CurrencyField.#withGpValue(deltaGp > currentGp ? delta : [...value.stacks]);
+    return CurrencyField._withGpValue(deltaGp > currentGp ? delta : [...value.stacks]);
   }
 
   /** Downgrade: compare total GP value, keep whichever stacks are worth less. */
   override _applyChangeDowngrade(value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
     const currentGp = CurrencyData.computeGpValue(value.stacks);
     const deltaGp = CurrencyData.computeGpValue(delta);
-    return CurrencyField.#withGpValue(deltaGp < currentGp ? delta : [...value.stacks]);
+    return CurrencyField._withGpValue(deltaGp < currentGp ? delta : [...value.stacks]);
   }
 }
 

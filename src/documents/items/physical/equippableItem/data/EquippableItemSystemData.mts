@@ -1,9 +1,10 @@
 import type { EquipSlot } from '@constants/equipmentSlots.mjs';
 import type { Size } from '@constants/sizes.mjs';
-import type { PhysicalItemSystemData } from '@items/physical/physicalItem/index.mjs';
+import type { PhysicalItemSystemData } from '@items/physical/physicalItem/data/PhysicalItemSystemData.mjs';
 
 interface EquippableItemSystemSource {
   isEquipped: boolean;
+  availableEquipmentSlots: EquipSlot[];
   equippedSlotIds: EquipSlot[];
   isMelded: boolean;
   designedForSize: Size;

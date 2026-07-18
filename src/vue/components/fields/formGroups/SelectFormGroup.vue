@@ -12,15 +12,15 @@
     class="select-form-group"
   >
     <select
-      :value="editValue"
+      :value="selectedIndex"
       :disabled="isDisabled"
-      @change="onChange(($event.target as HTMLSelectElement).value)"
+      @change="onChange($event)"
       class="form-control"
     >
       <option
-        v-for="opt in options"
-        :key="opt.value"
-        :value="opt.value"
+        v-for="(opt, key) in options"
+        :key="`${key}-${opt.label}`"
+        :value="key"
         :class="opt.className"
       >
         {{ localize(opt.label) }}
@@ -34,7 +34,7 @@
   </FormGroup>
 </template>
 
-<script setup lang="ts" generic="TValue extends string | number">
+<script setup lang="ts" generic="TValue extends string | number | null">
   import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject } from 'vue';
@@ -77,20 +77,29 @@
     return sourceValue.value ?? resolvedValue.value;
   });
 
+  // The <select>/<option> elements are bound by index (not by the typed value) because
+  // native DOM `value` coercion for `HTMLSelectElement`/`HTMLOptionElement` differs for
+  // `null` (e.g. select.value = null becomes "", while an option's value = null can become
+  // "null"), which can prevent a `null`-valued option from being selected on initial render.
+  const selectedIndex = computed(() => {
+    const idx = props.options.findIndex(opt => opt.value === editValue.value);
+    return idx === -1 ? '' : String(idx);
+  });
+
   function localize(key: string): string {
     return game.i18n.localize(key);
   }
 
-  function onChange(val: string) {
-    // Coerce based on the resolved value's type so numeric selects still write
-    // numbers to the document even when no explicit `:value` prop is passed.
-    const parsed = typeof resolvedValue.value === 'number'
-      ? Number(val)
-      : val;
+  function onChange(event: Event) {
+    // Read the selected option's original typed value via index rather than
+    // event.target.value, which is always a string and can't represent `null`.
+    const select = event.target as HTMLSelectElement;
+    const selectedOption = props.options[select.selectedIndex];
+    const value = selectedOption ? selectedOption.value : null;
     const updater = props.onUpdate
       ?? getViewAwareFieldUpdater(props.fieldPath);
 
-    updater(parsed as TValue);
+    updater(value);
   }
 </script>
 
