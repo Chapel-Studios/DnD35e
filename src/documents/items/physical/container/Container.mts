@@ -54,6 +54,22 @@ class Container extends PhysicalItem {
   }
 
   /**
+   * Synchronous version of getContents. Returns all items on the owning actor whose containerUuid points at this bag.
+   * The AEs on this bag are the authoritative weight record; this query is used for UI display and for capacity checks.
+   */
+  getContentsSync (): PhysicalItemLike[] {
+    const itemAes = findAllContainmentAe(this);
+    const results = [];
+    for (const ae of itemAes) {
+      if (!ae.system.sourceItemUuid) continue;
+      const item = fromUuidSync(ae.system.sourceItemUuid) as PhysicalItemLike | null;
+      if (!item) continue;
+      results.push(item);
+    }
+    return results;
+  }
+
+  /**
    * Sums weight and count from item-contribution AEs pushed onto this bag.
    * Item weights are never zeroed here — the bag's actor contribution handles
    * the weightless flag so item sheets always show true item weight.

@@ -37,7 +37,7 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
       max: useDnd35eField(requiredNumberField(0)),
     });
     schema.hardness = useDnd35eField(requiredNumberField(0));
-    schema.quantity = useDnd35eField(requiredNumberField(0));
+    schema.quantity = useDnd35eField(requiredNumberField(1));
     schema.weight = useDnd35eField(requiredNumberField(0));
     // schema.isWeightlessInContainer = requiredBooleanField(false);
     // schema.isWeightlessWhenCarried = requiredBooleanField(false);
