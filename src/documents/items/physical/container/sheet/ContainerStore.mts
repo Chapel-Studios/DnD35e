@@ -25,7 +25,10 @@ const useContainerStore = (context: VueApplicationContext<Container>): Container
     contentsCount: computed(() => document.value.system.contentsCount),
     contentsValue: computed(() => document.value.system.contentsValue),
     isOverCapacity: computed(() => document.value.system.isOverCapacity),
-    contents: computed(() => document.value.getContents() as PHYSICAL_ITEMS[]),
+    getContents: async () => {
+      const contents = await document.value.getContents() as PHYSICAL_ITEMS[];
+      return computed(() => contents);
+    },
   };
 
   const store: ContainerStore = {
@@ -45,7 +48,7 @@ interface ContainerGetters {
   contentsCount: ComputedRef<number>;
   isOverCapacity: ComputedRef<boolean>;
   contentsValue: ComputedRef<CurrencyData>;
-  contents: ComputedRef<PHYSICAL_ITEMS[]>;
+  getContents: () => Promise<ComputedRef<PHYSICAL_ITEMS[]>>;
 }
 
 type ContainerStore = PhysicalDocumentStore<Container> & {

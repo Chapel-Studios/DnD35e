@@ -1,7 +1,10 @@
-import type { GeneralEffectType } from '@effects/general/index.mjs';
+import type { General, GeneralEffectType } from '@effects/general/index.mjs';
 
+import type { Containment } from './containment/Containment.mjs';
 import type { ContainmentEffectType } from './containment/containmentEffectType.mjs';
+import type { Material } from './material/index.mjs';
 import type { MaterialEffectType } from './material/materialEffectType.mjs';
+import type { Secret } from './secret/Secret.mjs';
 import type { SecretEffectType } from './secret/secretEffectType.mjs';
 
 const EFFECT_TARGET = 'item';
@@ -14,6 +17,10 @@ type EffectType = GeneralEffectType
   | SecretEffectType
   | ContainmentEffectType
 // | 'enhancement';
+
+type HIDDEN_ACTIVE_EFFECTS = Secret | Containment;
+type VISIBLE_ACTIVE_EFFECTS = General | Material;
+type ACTIVE_EFFECTS_DND35E = HIDDEN_ACTIVE_EFFECTS | VISIBLE_ACTIVE_EFFECTS;
 
 /** Types exposed in the AE creation dialog. Secret is excluded — created only via dedicated UI. */
 const EFFECT_TYPES = {
@@ -31,7 +38,10 @@ export {
 };
 
 export type {
+  ACTIVE_EFFECTS_DND35E,
   EffectTarget,
   EffectType,
   EffectTypeLocalizationValues,
+  HIDDEN_ACTIVE_EFFECTS,
+  VISIBLE_ACTIVE_EFFECTS,
 };

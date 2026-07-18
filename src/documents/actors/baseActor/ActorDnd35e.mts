@@ -33,7 +33,7 @@ class ActorDnd35e<
   TActorType extends ActorType = ActorType,
   TSystemData extends ActorSystemData = ActorSystemData
 > extends ActorDocumentBase<TToken> {
-  declare readonly effects: EmbeddedCollection<ActiveEffectDnd35e<this>>;
+  declare readonly effects: EmbeddedCollection<ActiveEffectDnd35e>;
   declare readonly items: EmbeddedCollection<ItemDnd35e<ItemType, this>>;
   declare type: TActorType;
   declare system: TSystemData;
@@ -64,7 +64,7 @@ class ActorDnd35e<
 
     // Organize non-disabled effects by their application priority
     const changes: AppliedActorEffectChange[] = [];
-    for ( const effect of this.allApplicableEffects() ) {
+    for ( const effect of this.allApplicableEffectsDnd35e() ) {
       if ( !effect.active ) continue;
       for ( const change of effect.system.changes ) {
         // Only apply actor-targeted changes (default to actor for backwards compatibility with base Foundry effects)
@@ -98,9 +98,20 @@ class ActorDnd35e<
   }
 
   /**
-   * Override to iterate all applicable effects from actor and transferred item effects.
+   * Iterate all applicable effects from actor and transferred item effects.
+   *
+   * NOTE: This is deliberately NOT named `allApplicableEffects` and does NOT use
+   * `override`. Even with core `Actor.allApplicableEffects()` fixed upstream to use a
+   * non-recursive `ActiveEffect<Actor | Item>` return type (see actor.d.mts), an
+   * override here would still narrow the return type to reference `this`/`ActiveEffectDnd35e<...>`
+   * recursively, forcing TypeScript to re-prove `Character` satisfies core `Actor` as
+   * part of checking the override itself — a circular self-reference. Using an
+   * unrelated method name sidesteps the override covariance check entirely.
+   * `applyActiveEffects()` below is already a full `override` that replaces core's
+   * effect-application pipeline, so core never calls its own `allApplicableEffects()`
+   * internally for us — this rename does not change runtime behavior.
    */
-  override *allApplicableEffects(): Generator<ActiveEffectDnd35e<this | ItemDnd35e<ItemType, this>>, void, void> {
+  *allApplicableEffectsDnd35e(): Generator<ActiveEffectDnd35e, void, void> {
     for ( const effect of this.effects ) {
       yield effect;
     }

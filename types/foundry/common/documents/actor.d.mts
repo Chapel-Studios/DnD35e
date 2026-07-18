@@ -70,8 +70,10 @@ export default class BaseActor<TParent extends BaseToken | null = BaseToken | nu
 export default interface BaseActor<TParent extends BaseToken | null = BaseToken | null>
     extends Document<TParent, ActorSchema>,
         fields.ModelPropsFromSchema<ActorSchema> {
-    readonly items: EmbeddedCollection<BaseItem<this>>;
-    readonly effects: EmbeddedCollection<BaseActiveEffect<this>>;
+    // dnd35e type-fix: fixed non-null union instead of self-referential 'this' to break
+    // circular assignability when checking subclasses (e.g. ActorDnd35e) against BaseActor.
+    readonly items: EmbeddedCollection<BaseItem<BaseActor>>;
+    readonly effects: EmbeddedCollection<BaseActiveEffect<BaseActor | BaseItem>>;
 
     prototypeToken: data.PrototypeToken<this>;
 
@@ -109,8 +111,12 @@ type ActorSchema<
     prototypeToken: fields.EmbeddedDataField<data.PrototypeToken<BaseActor>>;
     /** A Collection of Item embedded Documents */
     items: fields.EmbeddedCollectionField<BaseItem<BaseActor<BaseToken | null>>, TItemSource[]>;
+    // dnd35e type-fix: fixed non-null `BaseActor | BaseItem` union (matching the widened
+    // interface `effects` declaration above) instead of a self-referential/actor-only parent.
+    // Keeps `ModelPropsFromSchema<ActorSchema>['effects']` assignable to the interface's
+    // explicit `effects` member, and breaks the circular assignability chain.
     /** A Collection of ActiveEffect embedded Documents */
-    effects: fields.EmbeddedCollectionField<BaseActiveEffect<BaseActor<BaseToken | null>>>;
+    effects: fields.EmbeddedCollectionField<BaseActiveEffect<BaseActor | BaseItem>>;
     /** The _id of a Folder which contains this Actor */
     folder: fields.ForeignDocumentField<BaseFolder>;
     /** The numeric sort value which orders this Actor relative to its siblings */

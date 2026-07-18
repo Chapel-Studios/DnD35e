@@ -22,6 +22,8 @@ type PHYSICAL_ITEMS = EQUIPPABLE_ITEMS | Container;
 
 type ItemType = PhysicalItemType;
 
+type ITEMS_DND35E = PHYSICAL_ITEMS;
+
 
 const ITEM_TYPES_LOCALIZED = {
   [weaponItemType]: 'TYPES.Item.weapon',
@@ -49,6 +51,7 @@ export type {
   ContainerItemType,
   EQUIPPABLE_ITEMS,
   EquippableItemType,
+  ITEMS_DND35E,
   ItemType,
   ItemTypeLocalizationValues,
   PHYSICAL_ITEMS,

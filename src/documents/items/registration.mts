@@ -29,7 +29,12 @@ export const registerItems = () => {
     },
   };
   foundry.helpers.Hooks.once('init', () => {
-    CONFIG.Item.documentClass = ItemProxyDnd35e;
+    // dnd35e type-fix: ItemDnd35e's base extends clause fixes its construction-context
+    // parent to core `Actor` (to break circular assignability — see ItemDnd35e.mts), so its
+    // construct signature no longer structurally matches CONFIG.Item.documentClass's expected
+    // `DocumentConstructionContext<ActorDnd35e | null>`. The runtime class is correct; cast
+    // through unknown to satisfy the assignment.
+    CONFIG.Item.documentClass = ItemProxyDnd35e as unknown as typeof CONFIG.Item.documentClass;
     Object.assign(CONFIG.Item.dataModels, {
       [weaponItemType]: WeaponSystemModel,
       [containerItemType]: ContainerSystemModel,

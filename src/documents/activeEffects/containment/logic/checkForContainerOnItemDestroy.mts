@@ -2,7 +2,7 @@ import type { DestroyedEventPayload } from '@documents/document/events/destroyed
 import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { Container } from '@items/physical/container/index.mjs';
 
-import { findContainmentAe } from './containmentAe.mjs';
+import { findContainmentAeByItemUuid } from './containmentAe.mjs';
 
 /**
  * When a physical item is destroyed, remove its contribution AE from the bag
@@ -18,7 +18,7 @@ const checkForContainerOnItemDestroy = async (
   const container = foundry.utils.fromUuidSync(containerUuid) as Container | null;
   if (!container) return;
 
-  const contributionAe = findContainmentAe(container, item.uuid);
+  const contributionAe = findContainmentAeByItemUuid(container, item.uuid);
   if (contributionAe) await contributionAe.delete();
 };
 

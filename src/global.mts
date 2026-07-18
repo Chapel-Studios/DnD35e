@@ -37,7 +37,12 @@ type GameDnd35e = Game<
 
 type ThisConfig = Config<
   documents.AmbientLightDocument<SceneDnd35e | null>,
-  documents.ActiveEffect<ActorDnd35e | ItemDnd35e | null>,
+  // dnd35e type-fix: use the concrete `ActiveEffectDnd35e` class directly rather than
+  // `documents.ActiveEffect<ActorDnd35e | ItemDnd35e | null>` — ActiveEffectDnd35e's own
+  // "parent" is fixed to a core `Actor | Item` union (see ActiveEffectDnd35e.mts), so
+  // parameterizing the ambient core type with dnd35e's ActorDnd35e/ItemDnd35e here would
+  // not match what ActiveEffectDnd35e actually reports.
+  ActiveEffectDnd35e,
   ActorDnd35e,
   documents.ActorDelta<TokenDocumentDnd35e | null>,
   fa.sidebar.tabs.ChatLog,

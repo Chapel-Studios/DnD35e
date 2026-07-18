@@ -174,7 +174,12 @@ export interface ConfigDocumentTypes {
 
 export default interface Config<
     TAmbientLightDocument extends documents.AmbientLightDocument<TScene | null>,
-    TActiveEffect extends documents.ActiveEffect<TActor | TItem | null>,
+    // dnd35e type-fix: relaxed from `documents.ActiveEffect<TActor | TItem | null>` to bare
+    // `documents.ActiveEffect` (defaults to `Actor | Item | null`). dnd35e's ActiveEffectDnd35e
+    // fixes its "parent" getter to a concrete core `Actor | Item` union to break circular
+    // assignability elsewhere (see ActiveEffectDnd35e.mts), so it can never structurally
+    // satisfy a bound parameterized by this system's own `TActor`/`TItem`.
+    TActiveEffect extends documents.ActiveEffect,
     TActor extends documents.Actor<TTokenDocument | null>,
     TActorDelta extends documents.ActorDelta<TTokenDocument | null>,
     TChatLog extends sidebar.tabs.ChatLog,
@@ -184,7 +189,9 @@ export default interface Config<
     TCombatTracker extends sidebar.tabs.CombatTracker<TCombat | null>,
     TCompendiumDirectory extends CompendiumDirectory,
     THotbar extends Hotbar<TMacro>,
-    TItem extends documents.Item<TActor | null>,
+    // dnd35e type-fix: relaxed from `documents.Item<TActor | null>` to bare `documents.Item`
+    // (defaults to `Actor | null`) — see ItemDnd35e.mts for why "actor" can't be tied to TActor.
+    TItem extends documents.Item,
     TMacro extends documents.Macro,
     TMeasuredTemplateDocument extends documents.MeasuredTemplateDocument<TScene | null>,
     TRegionDocument extends documents.RegionDocument<TScene | null>,

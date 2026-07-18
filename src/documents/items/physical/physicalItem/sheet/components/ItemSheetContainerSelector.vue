@@ -1,7 +1,7 @@
 <template>
   <SelectFormGroup
     v-if="hasOwner || !!currentContainerId"
-    label="Container"
+    :label="label"
     :value="currentContainerId"
     :options="possibleContainers"
     field-path="system.containerUuid"
@@ -14,6 +14,8 @@
   import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
   import SelectFormGroup from '@vc/fields/formGroups/SelectFormGroup.vue';
   import { inject } from 'vue';
+
+  const label = game.i18n.localize('TYPES.Item.container');
 
   const {
     documentGetters: {

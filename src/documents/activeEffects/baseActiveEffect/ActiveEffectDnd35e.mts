@@ -1,3 +1,4 @@
+import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { DatabaseCreateCallbackOptions, DatabaseDeleteCallbackOptions } from '@common/abstract/_types.mjs';
@@ -13,7 +14,7 @@ import { GENERAL_EFFECT_TYPE } from '@effects/effectTypes.mjs';
 import type { DocumentEventEmitter } from '@helpers/documentEvents/DocumentEventEmitter.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
-import type { ItemType } from '@items/itemTypes.mjs';
+import type { ITEMS_DND35E, ItemType } from '@items/itemTypes.mjs';
 
 import { refreshOwningDocument } from './logic/refreshOwningDocument.mjs';
 
@@ -32,15 +33,40 @@ type ActiveEffectSourceDnd35e<
 const ActiveEffectBase = DocumentMixin(foundry.documents.ActiveEffect) as unknown as typeof foundry.documents.ActiveEffect;
 
 class ActiveEffectDnd35e<
-  TParent extends ActorDnd35e | ItemDnd35e<ItemType> | null = ActorDnd35e | ItemDnd35e<ItemType> | null,
+  TParent extends ACTORS_DND35E | ITEMS_DND35E | null = ACTORS_DND35E | ITEMS_DND35E | null,
   TEffectType extends EffectType = EffectType,
   TSystemData extends ActiveEffectSystemData = ActiveEffectSystemData
 >
-  extends ActiveEffectBase<TParent> {
+  // NOTE: `ActiveEffectBase` is deliberately parameterized with a FIXED, non-null
+  // `foundry.documents.Actor | foundry.documents.Item` here — NOT our own narrow `TParent`.
+  // Core Foundry's `ActiveEffect<TParent extends Actor | Item | null>` (and Actor/Item's
+  // own `this`-referential `effects`/`items`/construction-context typings) form a
+  // mutually-recursive generic graph across Actor/Item/ActiveEffect. Threading our own
+  // narrowed `TParent` (`ACTORS_DND35E | ITEMS_DND35E | null`) through the base class's
+  // generic argument forces TypeScript to structurally re-prove every dnd35e leaf class
+  // satisfies core Actor/Item as part of checking `_initializeSource`'s construction-context
+  // parameter, which circles back into this very class's declaration.
+  // The fixed core union (rather than dropping the argument, which defaults to core's OWN
+  // `Actor | Item | null`) is required because `EmbeddedCollection<T>`'s generic constraint
+  // needs embedded elements' `parent` to be non-null (an embedded document always has a
+  // parent) — dropping to core's nullable default fails that check.
+  // `TParent` remains available as a phantom type parameter for consumers (e.g.
+  // `ActiveEffectDnd35e<Character>`) to narrow via explicit casts at call sites — see
+  // `resolveChangeValue.mts`'s `effect.parent as SupportedEffectParent` for the pattern.
+  // `actor.d.mts`/`item.d.mts`'s own `effects` field conventions were widened to this same
+  // fixed union so the assignability chain is non-circular end-to-end.
+  extends ActiveEffectBase<foundry.documents.Actor | foundry.documents.Item> {
   declare flags: ActiveEffectFlags;
   declare system: TSystemData;
   declare type: TEffectType;
   declare events: DocumentEventEmitter<this>;
+
+  // dnd35e type-fix: phantom marker keeping `TParent` "used" for TypeScript's
+  // unused-type-parameter check. `TParent` has no structural effect at runtime (the
+  // extends clause above is fixed to a non-null core union) — it exists purely so
+  // consumers can narrow via `ActiveEffectDnd35e<Character>` at call sites. `declare`
+  // with no initializer emits nothing at runtime.
+  protected declare readonly _typeParentBrand?: TParent;
 
   static readonly LifeCycle = {
     ...DocumentLifeCycle,

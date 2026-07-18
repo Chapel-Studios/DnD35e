@@ -1,3 +1,6 @@
+import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
+import { findAllContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
+import type { ACTIVE_EFFECTS_DND35E } from '@effects/effectTypes.mjs';
 import type { ContainerItemType } from '@items/itemTypes.mjs';
 
 import type { PhysicalItemLike, PhysicalItemSourceProps } from '../physicalItem/PhysicalItem.mjs';
@@ -23,6 +26,7 @@ type ContainerSource = Omit<foundry.documents.ItemSource, 'system'>
 class Container extends PhysicalItem {
   declare system: ContainerSystemData;
   declare type: ContainerItemType;
+  declare effects: EmbeddedCollection<ACTIVE_EFFECTS_DND35E>;
 
   static override readonly LifeCycle = {
     ...super.LifeCycle,
@@ -37,12 +41,16 @@ class Container extends PhysicalItem {
    * The AEs on this bag are the authoritative weight record; this query is used
    * for UI display and for capacity checks.
    */
-  getContents (): PhysicalItemLike[] {
-    const actor = this.actor;
-    if (!actor) return [];
-    return [...actor.items].filter(
-      (item) => (item.system as { containerUuid?: string | null }).containerUuid === this.uuid
-    ) as unknown as PhysicalItemLike[];
+  async getContents (): Promise<PhysicalItemLike[]> {
+    const itemAes = findAllContainmentAe(this);
+    const results = [];
+    for (const ae of itemAes) {
+      if (!ae.system.sourceItemUuid) continue;
+      const item = await fromUuid(ae.system.sourceItemUuid) as PhysicalItemLike | null;
+      if (!item) continue;
+      results.push(item);
+    }
+    return results;
   }
 
   /**
@@ -68,15 +76,6 @@ class Container extends PhysicalItem {
       this.system.maxContentWeight === null
       || expectedNewWeight <= this.system.maxContentWeight
     );
-  }
-
-  /**
-   * Removes an item from this container by clearing the item's containerUuid.
-   * PhysicalItem._onUpdate will remove the contribution AE from this bag.
-   */
-  async removeItemFromContents (item: PhysicalItemLike): Promise<void> {
-    await (item as unknown as { update(data: Record<string, unknown>): Promise<unknown> })
-      .update({ 'system.containerUuid': null });
   }
 }
 

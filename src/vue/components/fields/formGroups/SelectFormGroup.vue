@@ -12,7 +12,7 @@
     class="select-form-group"
   >
     <select
-      :value="editValue"
+      :value="selectedIndex"
       :disabled="isDisabled"
       @change="onChange($event)"
       class="form-control"
@@ -20,7 +20,7 @@
       <option
         v-for="(opt, key) in options"
         :key="`${key}-${opt.label}`"
-        :value="opt.value"
+        :value="key"
         :class="opt.className"
       >
         {{ localize(opt.label) }}
@@ -75,6 +75,15 @@
     if (props.value !== undefined || !sourceValue) return resolvedValue.value;
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
     return sourceValue.value ?? resolvedValue.value;
+  });
+
+  // The <select>/<option> elements are bound by index (not by the typed value) because
+  // native DOM `value` coercion for `HTMLSelectElement`/`HTMLOptionElement` differs for
+  // `null` (e.g. select.value = null becomes "", while an option's value = null can become
+  // "null"), which can prevent a `null`-valued option from being selected on initial render.
+  const selectedIndex = computed(() => {
+    const idx = props.options.findIndex(opt => opt.value === editValue.value);
+    return idx === -1 ? '' : String(idx);
   });
 
   function localize(key: string): string {

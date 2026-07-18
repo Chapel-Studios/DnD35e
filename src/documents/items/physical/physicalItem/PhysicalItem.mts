@@ -122,13 +122,13 @@ abstract class PhysicalItem extends IdentifiableItemBase {
    * the container assignment, weight, or quantity changes.
    */
   protected override async _onUpdate (
-    changed: Partial<this>,
+    changed: Record<string, unknown>,
     options: DatabaseUpdateCallbackOptions,
     userId: string
   ): Promise<void> {
     await super._onUpdate(changed, options, userId);
 
-    const changedSystem = changed.system;
+    const changedSystem = changed.system as Partial<PhysicalItemSystemData> | undefined;
     if (!changedSystem) return;
 
     // containment logic

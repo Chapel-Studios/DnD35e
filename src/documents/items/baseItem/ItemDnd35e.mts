@@ -16,6 +16,7 @@ import {
   SYSTEM_CHANGE_TYPE,
 } from '@effects/baseActiveEffect/data/constants.mjs';
 import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
+import type { ACTIVE_EFFECTS_DND35E } from '@effects/effectTypes.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
@@ -39,16 +40,28 @@ type FormulaLikeSource = {
 
 type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents.ItemSource<TItemType, ItemSystemSource>;
 
-class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<TParent> {
+// dnd35e type-fix: fixed non-null 'Actor' type argument (instead of TParent/this or a
+// dropped/defaulted argument) breaks circular assignability when checking subclasses
+// (e.g. this class's own subtypes) against foundry.documents.Item, while still satisfying
+// EmbeddedCollection's requirement that embedded elements have a non-null parent.
+class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<foundry.documents.Actor> {
   constructor(source: PreCreate<ItemSourceDnd35e<TItemType>>, context?: DocumentConstructionContext<TParent>) {
     super(source, context);
     this._completedActiveEffectPhases = new Set();
   }
-  declare readonly effects: EmbeddedCollection<ActiveEffectDnd35e<this>>;
+  declare readonly effects: EmbeddedCollection<ACTIVE_EFFECTS_DND35E>;
   declare type: TItemType;
   declare system: ItemSystemData;
   declare _source: ItemSourceDnd35e<TItemType>;
   // declare _sheet: ItemSheetDnd35e<any> | null;
+
+  // dnd35e type-fix: base's "actor" resolves to the FIXED `foundry.documents.Actor`
+  // argument used to break the extends-clause circularity above. Overriding it to return
+  // this class's own (nullable) `TParent` is NOT possible — TypeScript's covariant-override
+  // rule rejects widening a non-null base return type to include `null`, and re-declaring
+  // "parent" itself reintroduces excessive-depth circularity via DataModel's parent-typed
+  // construction context. `TParent` is therefore decorative for "actor"/"parent" purposes;
+  // consuming code that needs the narrower dnd35e actor type should cast explicitly.
 
   /** Life Cycle */
   static readonly LifeCycle = {
@@ -235,7 +248,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
    */
   *allApplicableEffects() {
     for (const effect of this.effects) {
-      if (effect.hasItemChanges) yield effect as ActiveEffectDnd35e<this>;
+      if (effect.hasItemChanges) yield effect as ActiveEffectDnd35e;
     }
   }
 
@@ -400,7 +413,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     return getDisplayName(fallbackName, this.system, this);
   }
 
-  override get img (): foundry.documents.Item<TParent>['img'] {
+  override get img (): foundry.documents.Item['img'] {
     const fallbackImg = super.img;
     return this._getMaskedTopLevelField('img', super.img, fallbackImg);
   }

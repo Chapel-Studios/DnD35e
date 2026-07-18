@@ -18,7 +18,7 @@ import {
 } from './data/index.mjs';
 import {
   buildContainmentAeName,
-  findContainmentAe,
+  findContainmentAeByItemUuid,
   isContainmentAe,
   syncContainmentAe,
 } from './logic/containmentAe.mjs';
@@ -28,7 +28,7 @@ export {
   Containment,
   containmentEffectType,
   ContainmentSystemModel,
-  findContainmentAe,
+  findContainmentAeByItemUuid,
   isContainmentAe,
   syncContainmentAe,
 };

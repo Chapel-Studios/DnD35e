@@ -1,8 +1,10 @@
+import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type { ActiveEffectSource } from '@common/documents/active-effect.mjs';
 import type { DocumentFlagsDnd35e } from '@documents/document/index.mjs';
 import { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import { LogHelper } from '@helpers/index.mjs';
+import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import { COMBAT_KEYS } from '@settings/combat/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
@@ -66,8 +68,13 @@ function validateSingleMaterial(document: Material): false | void {
   const incomingSubtype = document.system.materialSubtype;
   if (typeof incomingSubtype !== 'string') return;
 
+  // dnd35e type-fix: `document.parent` is typed as core `Actor | Item` (ActiveEffectDnd35e's
+  // extends clause uses a fixed core union to break circularity — see ActiveEffectDnd35e.mts).
+  // Cast to the actual dnd35e-narrowed parent type so `.effects` resolves to
+  // `ACTIVE_EFFECTS_DND35E` instead of core's wider `ActiveEffect<Actor | Item>`.
+  const parent = document.parent as ActorDnd35e | ItemDnd35e;
   const existingSameSubtype = [
-    ...(document.parent.effects ?? []),
+    ...(parent.effects ?? []),
   ].find(
     (e: ActiveEffectDnd35e) =>
       e.type === materialEffectType

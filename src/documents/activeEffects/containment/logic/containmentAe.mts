@@ -1,6 +1,7 @@
 import { containmentEffectType } from '@effects/containment/containmentEffectType.mjs';
+import type { ActiveEffectDnd35e } from '@effects/index.mjs';
 import { multiplyCurrency } from '@fields/currency/logic/multiply.mjs';
-import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
+import { PHYSICAL_ITEM_TYPES, type PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { Container } from '@items/physical/container/index.mjs';
 import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
 import type { PriceSource } from '@settings/index.mjs';
@@ -10,8 +11,12 @@ import type { ContainmentSystemSource } from '../index.mjs';
 
 type ContainmentAeTarget = PHYSICAL_ITEMS | PhysicalItemLike;
 
+export const containmentAeTargetTypes: readonly string[] = [
+  ...PHYSICAL_ITEM_TYPES,
+];
+
 /** Returns true if `effect` is a Containment AE (item-contribution AE on a bag). */
-export function isContainmentAe (effect: ActiveEffect): boolean {
+export function isContainmentAe (effect: ActiveEffectDnd35e): boolean {
   return effect.type === containmentEffectType;
 }
 
@@ -19,12 +24,18 @@ export function isContainmentAe (effect: ActiveEffect): boolean {
  * Finds the contribution AE on the bag that was pushed by the given item UUID.
  * Returns undefined if no AE for that item exists on the bag.
  */
-export function findContainmentAe (bag: Container, itemUuid: string): Containment | undefined {
+export function findContainmentAeByItemUuid (bag: Container, itemUuid: string): Containment | undefined {
   return [...bag.effects].find(
     (e) =>
-      isContainmentAe(e as unknown as ActiveEffect)
+      isContainmentAe(e)
       && (e as unknown as Containment).system.sourceItemUuid === itemUuid
   ) as Containment | undefined;
+}
+
+export function findAllContainmentAe (bag: Container): Containment[] {
+  return [...bag.effects].filter(
+    (e) => isContainmentAe(e)
+  ) as Containment[];
 }
 
 /** Builds the deterministic AE name for an item's contribution on a bag. */
@@ -67,7 +78,7 @@ export async function syncContainmentAe (
 
   const removeFromWrongContainer = async (wrongContainer: Container): Promise<void> => {
     if (wrongContainer) {
-      const ae = findContainmentAe(wrongContainer, item.uuid);
+      const ae = findContainmentAeByItemUuid(wrongContainer, item.uuid);
       
       if (ae) {
         await wrongContainer.deleteEmbeddedDocuments('ActiveEffect', [ae.id]);
@@ -90,7 +101,10 @@ export async function syncContainmentAe (
         } as Partial<ContainmentSystemSource>,
         flags: { dnd35e: { systemManaged: true } },
       } as Partial<Containment>]);
-      await item.update({ 'system.containerUuid': container.uuid });
+
+      if (item.system.containerUuid !== container.uuid) {
+        await item.update({ 'system.containerUuid': container.uuid });
+      }
     }
   };
 
@@ -116,7 +130,7 @@ export async function syncContainmentAe (
 
     // Case 5: it should be in a container and is in the right container,
     // update the AE if needed
-    const existing = findContainmentAe(container, item.uuid);
+    const existing = findContainmentAeByItemUuid(container, item.uuid);
     const existingStacks = existing?.system.contributedPrice?.stacks ?? [];
     const haveStacksChanged = existing?.system.contributedPrice?.stacks?.length !== price.stacks.length
       || existingStacks.some((s, i) => s.coinId !== price.stacks[i]?.coinId || s.count !== price.stacks[i]?.count);
