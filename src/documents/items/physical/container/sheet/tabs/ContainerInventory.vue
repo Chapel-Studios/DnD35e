@@ -19,10 +19,8 @@
   import type { ContainerStore } from '../ContainerStore.mjs';
 
   const {
-    documentGetters: { getContents, documentUuid, parentUuid },
+    documentGetters: { contents, documentUuid, parentUuid },
   } = inject(DocumentSheetStoreSymbol) as ContainerStore;
-
-  const contents = await getContents();
 </script>
 
 <style scoped lang="scss">

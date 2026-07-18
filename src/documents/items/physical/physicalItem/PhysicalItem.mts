@@ -151,11 +151,16 @@ abstract class PhysicalItem extends IdentifiableItemBase {
       await syncContainmentAe(this, targetContainer);
     }
 
-    if (this.system.isCarried) {
-      await this._buildCarriedEffect();
-    }
-    else {
-      await this._destroyCarriedEffect();
+    const shouldRefreshCarriedEffect = ('isCarried' in changedSystem)
+      || hasKeyValueChanged
+      || hasContainerChanged;
+    if (shouldRefreshCarriedEffect) {
+      if (this.system.isCarried) {
+        await this._buildCarriedEffect();
+      }
+      else {
+        await this._destroyCarriedEffect();
+      }
     }
   }
 }

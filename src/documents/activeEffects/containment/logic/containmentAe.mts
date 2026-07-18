@@ -118,6 +118,12 @@ export async function syncContainmentAe (
 
     // Case 4: it should be in a container and is in the wrong container
     if (container.uuid !== item.system.containerUuid) {
+      // Verify that the new container can accept the item before removing it from the old container.
+      if (!container.canAddItemToContents(item)) {
+        // todo: move this to a foundry warning
+        console.warn(`Cannot move item ${item.name} to container ${container.name}: would exceed capacity.`);
+        return;
+      }
       // remove it from the old container and add it to the new one
       const wrongContainer = await foundry.utils.fromUuid(item.system.containerUuid!) as Container | null;
       if (wrongContainer) {
