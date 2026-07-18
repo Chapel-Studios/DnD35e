@@ -1,4 +1,4 @@
-﻿import type { DocumentConstructionContext } from '@common/_types.mjs';
+import type { DocumentConstructionContext } from '@common/_types.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
