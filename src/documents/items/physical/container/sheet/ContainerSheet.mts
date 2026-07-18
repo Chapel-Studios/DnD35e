@@ -1,3 +1,4 @@
+import { syncContainmentAe } from '@effects/containment/index.mjs';
 import type { DocumentSheetConfiguration } from '@client/applications/api/document-sheet.mjs';
 import { syncContainmentAe } from '@effects/containment/index.mjs';
 import { ItemSheetDnd35e } from '@items/baseItem/sheet/ItemSheetDnd35e.mjs';
