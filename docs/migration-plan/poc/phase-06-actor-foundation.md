@@ -1,6 +1,6 @@
 # POC Phase 6: Actor Foundation
 
-**Status**: 🔶 In Progress
+**Status**: ✅ Complete
 
 > **Milestone**: POC
 > **Dependencies**: poc.1, poc.3
@@ -284,10 +284,10 @@ Priority order is execution order unless blocked by dependencies.
 
 - [x] Story A acceptance met
 - [x] Story B acceptance met
-- [ ] Story C acceptance met
+- [x] Story C acceptance met
 - [x] Story D acceptance met
-- [ ] Story E acceptance met
-- [ ] Story F acceptance met
+- [ ] Story E acceptance met (deferred to combat phase)
+- [x] Story F acceptance met
 - [ ] `docs/migration-plan/roadmap.md` row and `docs/migration-plan/phases.json` status match final Phase 6 state
 
 ---
