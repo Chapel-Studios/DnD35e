@@ -229,3 +229,177 @@ describe('getEncumberedSpeed', () => {
   });
 });
 
+describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
+  const buildModel = (
+    scores: Partial<Record<string, number>>,
+    encumbranceOverrides: Partial<CreatureSystemModel['encumbrance']> = {}
+  ) => {
+    const ABILITY_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
+    const model = Object.create(CreatureSystemModel.prototype) as CreatureSystemModel;
+    model.size = 'medium';
+    model.isQuadruped = false;
+    model.abilities = Object.fromEntries(
+      ABILITY_KEYS.map((key) => [key, { score: scores[key] ?? 10, mod: 0 }])
+    ) as CreatureSystemModel['abilities'];
+    model.speed = {
+      land: 30,
+      climb: 0,
+      swim: 0,
+      burrow: 0,
+      fly: 0,
+      flyManeuverability: null,
+    } as CreatureSystemModel['speed'];
+    (model as unknown as { _source: unknown })._source = { speed: model.speed };
+    model.encumbrance = {
+      carriedWeight: 0,
+      light: 0,
+      medium: 0,
+      heavy: 0,
+      maxLift: 0,
+      drag: 0,
+      tier: 0,
+      carryBonus: 0,
+      carryMultiplier: 1,
+      ...encumbranceOverrides,
+    } as CreatureSystemModel['encumbrance'];
+    // Initialize baseline defense/saves/init/bab fields
+    model.defense = {
+      armorClass: 10,
+      touchAC: 10,
+      flatFootedAC: 10,
+      naturalArmor: 0,
+      fortification: 0,
+      concealment: 0,
+      spellResistance: { formula: '', expectedType: 'number', resolvedValue: '0' },
+    } as any;
+    model.saves = {
+      fort: { total: 0 },
+      ref: { total: 0 },
+      will: { total: 0 },
+    } as any;
+    model.init = { total: 0 } as any;
+    model.bab = { total: 0 } as any;
+    model.prepareDerivedData();
+    return model;
+  };
+
+  it('baseline AC defaults to 10 (no armor/DEX adjustment)', () => {
+    const model = buildModel({});
+    expect(model.defense.armorClass).toBe(10);
+  });
+
+  it('baseline touch AC defaults to 10', () => {
+    const model = buildModel({});
+    expect(model.defense.touchAC).toBe(10);
+  });
+
+  it('baseline flat-footed AC defaults to 10', () => {
+    const model = buildModel({});
+    expect(model.defense.flatFootedAC).toBe(10);
+  });
+
+  it('baseline saves all default to 0 (no modifiers applied)', () => {
+    const model = buildModel({});
+    expect(model.saves.fort.total).toBe(0);
+    expect(model.saves.ref.total).toBe(0);
+    expect(model.saves.will.total).toBe(0);
+  });
+
+  it('baseline initiative defaults to 0 (no DEX adjustment)', () => {
+    const model = buildModel({});
+    expect(model.init.total).toBe(0);
+  });
+
+  it('baseline BAB defaults to 0', () => {
+    const model = buildModel({});
+    expect(model.bab.total).toBe(0);
+  });
+
+  describe('ability modifiers are correctly derived as floor((score - 10) / 2)', () => {
+    it.each([
+      [1,  -5],
+      [2,  -4],
+      [3,  -4],
+      [8,  -1],
+      [9,  -1],
+      [10,  0],
+      [11,  0],
+      [12,  1],
+      [13,  1],
+      [18,  4],
+      [19,  4],
+      [20,  5],
+    ])('score %i -> mod %i', (score, expectedMod) => {
+      const model = buildModel({ str: score });
+      expect(model.abilities.str.mod).toBe(expectedMod);
+    });
+  });
+
+  it('all six abilities are derived during prepareDerivedData', () => {
+    const model = buildModel({
+      str: 11,
+      dex: 14,
+      con: 13,
+      int: 12,
+      wis: 16,
+      cha: 9,
+    });
+    expect(model.abilities.str.mod).toBe(0);
+    expect(model.abilities.dex.mod).toBe(2);
+    expect(model.abilities.con.mod).toBe(1);
+    expect(model.abilities.int.mod).toBe(1);
+    expect(model.abilities.wis.mod).toBe(3);
+    expect(model.abilities.cha.mod).toBe(-1);
+  });
+
+  it('ability mods are recomputed fresh on every prepareDerivedData pass', () => {
+    const model = Object.create(CreatureSystemModel.prototype) as CreatureSystemModel;
+    model.size = 'medium';
+    model.isQuadruped = false;
+    model.abilities = {
+      str: { score: 10, mod: 999 }, // stale value
+      dex: { score: 10, mod: 999 },
+      con: { score: 10, mod: 999 },
+      int: { score: 10, mod: 999 },
+      wis: { score: 10, mod: 999 },
+      cha: { score: 10, mod: 999 },
+    } as any;
+    model.speed = {
+      land: 30,
+      climb: 0,
+      swim: 0,
+      burrow: 0,
+      fly: 0,
+      flyManeuverability: null,
+    } as any;
+    (model as unknown as { _source: unknown })._source = { speed: model.speed };
+    model.encumbrance = {
+      carriedWeight: 0,
+      light: 0,
+      medium: 0,
+      heavy: 0,
+      maxLift: 0,
+      drag: 0,
+      tier: 0,
+      carryBonus: 0,
+      carryMultiplier: 1,
+    } as any;
+    model.defense = { armorClass: 10 } as any;
+    model.saves = { fort: { total: 0 }, ref: { total: 0 }, will: { total: 0 } } as any;
+    model.init = { total: 0 } as any;
+    model.bab = { total: 0 } as any;
+
+    // First pass
+    model.prepareDerivedData();
+    expect(model.abilities.str.mod).toBe(0);
+
+    // Simulate ability score change
+    model.abilities.str.score = 14;
+
+    // Second pass
+    model.prepareDerivedData();
+    expect(model.abilities.str.mod).toBe(2); // 14 is +2, not the stale 999
+  });
+});
+
+
