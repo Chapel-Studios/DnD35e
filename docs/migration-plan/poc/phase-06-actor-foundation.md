@@ -67,7 +67,7 @@ Current state:
 
 - Attributes/Bio/Settings/Effects tabs exist and are usable scaffolds.
 - Combat tab exists with combat scaffolding components.
-- Inventory tab is still a placeholder and remains fully scoped to Story D.
+- Inventory tab is implemented: grouped item list, equip/carry toggles, container assignment, and live carried-weight/encumbrance aggregation (Story D delivered).
 - Notes and Bio are currently split; Phase 6 Story C merges them into one tab in the first-pass cleanup.
 
 Key files:
@@ -75,7 +75,8 @@ Key files:
 - `src/documents/actors/creature/sheet/tabs/index.mts`
 - `src/documents/actors/creature/sheet/tabs/AttributesTab.vue`
 - `src/documents/actors/creature/sheet/tabs/CombatTab.vue`
-- `src/documents/actors/creature/sheet/tabs/InventoryTab.vue`
+- `src/documents/actors/creature/sheet/tabs/CreatureInventoryTab.vue`
+- `src/documents/actors/baseActor/sheet/components/InventoryListTable.vue`
 - `src/documents/actors/creature/sheet/tabs/bio/BioTab.vue`
 - `src/documents/actors/creature/sheet/tabs/SettingsTab.vue`
 - `src/documents/actors/baseActor/sheet/tabs/ActorEffectsTab.vue`
@@ -139,12 +140,8 @@ Done:
 - HP/defense/saves/init/BAB/speed/currency/encumbrance schema scaffolding exists.
 - AC helper math exists (`calculateTouchAC`, `calculateStandardAC`) and Creature exposes AC calculation method.
 - HP max runtime stub currently set for sheet usability.
-- Derived writes for Phase 6 combat baseline are complete enough for current consumers; encumbrance finalization is intentionally coupled to Story D inventory delivery.
+- Derived writes for Phase 6 combat baseline are complete, including encumbrance tier/penalty derivation (delivered with Story D).
 - Intended derived fields are tagged/treated as non-persisted where required for current scope.
-
-Deferred / Coupled:
-
-- Encumbrance totals/level finalization stays coupled to Story D inventory implementation.
 
 Acceptance:
 
@@ -167,7 +164,7 @@ Remaining:
 - Clean up Bio content structure for first pass (identity + physical + languages + senses + biography + session notes in one coherent flow).
 - Clean up Settings tab copy/layout for first pass and remove low-value placeholder text.
 - Verify tab-level i18n coverage for labels/tooltips in Bio/Settings cleanup scope.
-- Add explicit defer notes in tab docs/components for tabs owned elsewhere: Inventory (Story D), Buffs (Story E), Features/Skills/Spells (later dedicated phases), Combat replacement path (action/combat phases).
+- Add explicit defer notes in tab docs/components for tabs owned elsewhere: Buffs (Story E), Features/Skills/Spells (later dedicated phases), Combat replacement path (action/combat phases).
 
 Acceptance:
 
@@ -177,19 +174,18 @@ Acceptance:
 
 ## Story D: Inventory, Equipment, Currency Integration
 
+**Status**: ✅ Complete
+
 **Outcome**: Inventory behavior is usable and feeds weight/encumbrance/combat readiness.
 
 Done:
 
 - Item-side schema has `containerId` and equipment slot structures.
 - Coinage field infrastructure is stable and tested in unit/e2e contexts.
-
-Remaining:
-
-- Implement actor inventory list/grouping and equip toggles.
-- Implement actor-level carried weight aggregation from owned items (respect carried/equipped semantics).
-- Wire encumbrance tier derivation from STR + carried weight.
-- Implement container UI and container assignment behavior (or explicitly defer with constraints documented).
+- Actor inventory list/grouping and equip toggles (`CreatureInventoryTab.vue`, `InventoryListTable.vue`, `InventoryItemRow.vue`).
+- Actor-level carried weight aggregation from owned items, computed live with no backing ActiveEffect (`PhysicalItem.getContributedActorChanges()`).
+- Encumbrance tier derivation from STR + carried weight (`CreatureSystemModel._prepareEncumbrance()`), with penalties (max Dex bonus, armor check penalty, land speed downgrade) applied the same live way (`Creature.getSelfContributedChanges()`).
+- Container UI and container assignment behavior (`ContainerInventory.vue`, containment AE).
 
 Acceptance:
 
@@ -224,13 +220,14 @@ Done:
 
 - Unit tests exist for ability modifier derivation edge cases.
 - Coinage field behavior has unit + e2e coverage.
+- Unit coverage for encumbrance tier/weight aggregation (`carryingCapacity.test.mts`, `creature.model.test.mts`) and the underlying stacking engine (`applyStackedChanges.test.mts`).
+- E2E coverage for encumbrance tier progression (`encumbrance-penalties.spec.ts`) and container nesting (`container-nesting.spec.ts`).
 
 Remaining:
 
 - Add unit coverage for AC/saves/init/BAB baseline derivation.
-- Add unit coverage for encumbrance and weight aggregation.
 - Add actor event tests for damage/death transitions and threshold modes.
-- Add integration/e2e coverage for inventory/equip flow once Story D is implemented.
+- Add e2e coverage for equip/unequip toggling specifically (not just carried-weight/container behavior).
 
 Acceptance:
 
@@ -251,6 +248,8 @@ This list is complete for work currently implemented and relevant to Phase 6:
 - Actor events: type definitions + well-known event registration.
 - Actor active-effect phase application baseline.
 - Currency field foundation on actors and validated coinage field behavior through tests.
+- Inventory tab: grouped item list, equip toggles, container assignment.
+- Live carried-weight and encumbrance-penalty computation with no backing ActiveEffect (`ActorDnd35e.getSelfContributedChanges()` / `getContributedActorChanges()`).
 
 ---
 
@@ -263,21 +262,11 @@ Priority order is execution order unless blocked by dependencies.
 - Perform first-pass Settings polish and i18n cleanup.
 - Document defer boundaries for tabs owned by other stories/phases.
 
-2. **Inventory tab implementation**
-- Replace placeholder with real grouped actor-owned item list.
-- Add equip/unequip interactions and surface carried/equipped state.
-
-3. **Derived combat baseline completion**
-- Complete encumbrance totals/level derivation once inventory aggregation (Story D) is in place.
-
-4. **Damage/death event pipeline**
+2. **Damage/death event pipeline**
 - Implement threshold-based transition logic and setting-driven behavior.
 
-5. **Encumbrance integration**
-- Tie inventory weight totals into actor encumbrance fields and UI state.
-
-6. **Test completion pass**
-- Add missing unit/integration/e2e coverage for stories B/D/E.
+3. **Test completion pass**
+- Add missing unit/integration/e2e coverage for stories B/E (AC/saves/init/BAB, damage/death transitions, equip-toggle e2e).
 
 ---
 
@@ -296,7 +285,7 @@ Priority order is execution order unless blocked by dependencies.
 - [x] Story A acceptance met
 - [x] Story B acceptance met
 - [ ] Story C acceptance met
-- [ ] Story D acceptance met
+- [x] Story D acceptance met
 - [ ] Story E acceptance met
 - [ ] Story F acceptance met
 - [ ] `docs/migration-plan/roadmap.md` row and `docs/migration-plan/phases.json` status match final Phase 6 state
@@ -309,6 +298,6 @@ These are the first implementation tasks to pick up now:
 
 1. Merge Notes + Bio into a single tab surface and remove duplicate notes entry points.
 2. Apply first-pass Settings tab cleanup (layout/copy/i18n consistency only).
-3. Add defer markers for Combat/Inventory/Features/Skills/Buffs/Spells ownership so Story C scope stays tight.
-4. Continue Story D inventory implementation (grouping, equip controls, weight integration).
-5. Add unit tests for derived combat/encumbrance and actor damage event transitions.
+3. Add defer markers for Combat/Features/Skills/Buffs/Spells ownership so Story C scope stays tight.
+4. Add unit tests for AC/saves/init/BAB derivation and actor damage/death event transitions.
+5. Add an equip/unequip-toggle e2e test to close the remaining Story F gap.
