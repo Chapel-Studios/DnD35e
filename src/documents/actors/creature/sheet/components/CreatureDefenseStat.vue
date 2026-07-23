@@ -2,7 +2,7 @@
   <div class="shield">
     <span v-if="!!sublabel" class="sublabel" :title="resolvedSublabelTooltip">{{ sublabel }}</span>
     <span class="label" :title="resolvedLabelTooltip">{{ label }}</span>
-    <span class="value">{{ resolvedValue }}</span>
+    <span class="value">{{ resolvedValue }}<HasActiveEffectsNotification :field-path="props.fieldPath" /></span>
     <slot />
   </div>
 </template>
@@ -10,6 +10,7 @@
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import { HasActiveEffectsNotification } from '@vc/fields/index.mjs';
   import { computed, inject } from 'vue';
 
   const props = withDefaults(defineProps<{
@@ -125,6 +126,12 @@
       bottom: 0.75rem;
       font-size: 1.3rem;
       font-weight: 600;
+
+      :deep(.effect-tooltip) {
+        position: absolute;
+        font-size: 0.7rem;
+        margin-left: 0.2rem;
+      }
     }
   }
 </style>

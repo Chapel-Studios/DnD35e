@@ -66,11 +66,30 @@
           "light":           { "label": "Light Load" },
           "medium":          { "label": "Medium Load" },
           "heavy":           { "label": "Heavy Load" },
-          "carry":           { "label": "Max Carry" },
+          "carry":           { "label": "Lift Over Head" },
+          "maxLift":         { "label": "Max Lift" },
           "drag":            { "label": "Max Drag" },
-          "level":           { "label": "Encumbrance Level" },
           "carryBonus":      { "label": "Carry Bonus" },
-          "carryMultiplier": { "label": "Carry Multiplier" }
+          "carryMultiplier": { "label": "Carry Multiplier" },
+          "tier": {
+            "light": "Light Load",
+            "medium": "Medium Load",
+            "heavy": "Heavy Load",
+            "maxLift": "Max Lift",
+            "maxDrag": "Max Drag",
+            "overloaded": "Overloaded",
+            "1": "Moderately Loaded",
+            "2": "Heavily Loaded",
+            "3": "Nearing Max Lift",
+            "4": "Nearing Max Drag",
+            "5": "Overloaded"
+          },
+          "effectName": "{creatureId} Encumbered Effect",
+          "effectDescription": "Encumbered effect for {creatureName}.",
+          "tooltip": "Carried: {carried} / {max} lbs ({tier})",
+          "breakpoint": "{tier}: {value} lbs",
+          "maxDexBonus": { "label": "Max Dex Bonus", "hint": "The maximum Dexterity bonus to AC allowed by armor and other sources." },
+          "armorCheckPenalty": { "label": "Armor Check Penalty", "hint": "The total armor check penalty from armor and other sources." }
         },
         "bio": {
           "label": "Biography",
@@ -100,6 +119,10 @@
             "hint": "Choose a character-specific death threshold override or use the world default.",
             "valueLabel": "Death Threshold Value"
           }
+        },
+        "currency": {
+          "label": "Currency",
+          "hint": "The amount of currency this creature has."
         },
         "size": { "label": "Size" },
         "reach": { "label": "Reach", "hint": "The distance at which this creature can make melee attacks." },
@@ -192,17 +215,21 @@
           "neutral": "Neutral",
           "evil": "Evil"
         }
+      },
+      "encumberedEffect": {
+        "name": "{creatureName} Encumbered Effect",
+        "description": "Encumbered effect for {creatureName}."
       }
     },
     "ACTOR": {
       "FIELDS": {
         "speed": {
           "label": "Speed",
-          "land":   { "label": "Land Speed",   "familiarLabel": "Land",   "familiarAliases": [], "base": { "label": "Land",   "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Land Speed",   "familiarLabel": "Total", "familiarAliases": [] } },
-          "climb":  { "label": "Climb Speed",  "familiarLabel": "Climb",  "familiarAliases": [], "base": { "label": "Climb",  "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Climb Speed",  "familiarLabel": "Total", "familiarAliases": [] } },
-          "swim":   { "label": "Swim Speed",   "familiarLabel": "Swim",   "familiarAliases": [], "base": { "label": "Swim",   "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Swim Speed",   "familiarLabel": "Total", "familiarAliases": [] } },
-          "fly":    { "label": "Fly Speed",    "familiarLabel": "Fly",    "familiarAliases": [], "base": { "label": "Fly",    "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Fly Speed",    "familiarLabel": "Total", "familiarAliases": [] } },
-          "burrow": { "label": "Burrow Speed", "familiarLabel": "Burrow", "familiarAliases": [], "base": { "label": "Burrow", "familiarLabel": "Base", "familiarAliases": [] }, "total": { "label": "Total Burrow Speed", "familiarLabel": "Total", "familiarAliases": [] } },
+          "land":   { "label": "Land Speed",   "familiarLabel": "Land",   "familiarAliases": [] },
+          "climb":  { "label": "Climb Speed",  "familiarLabel": "Climb",  "familiarAliases": [] },
+          "swim":   { "label": "Swim Speed",   "familiarLabel": "Swim",   "familiarAliases": [] },
+          "fly":    { "label": "Fly Speed",    "familiarLabel": "Fly",    "familiarAliases": [] },
+          "burrow": { "label": "Burrow Speed", "familiarLabel": "Burrow", "familiarAliases": [] },
           "flyManeuverability": { "label": "Fly Maneuverability", "familiarLabel": "Maneuverability", "familiarAliases": [] }
         },
         "notes": { "label": "Notes", "placeholder": "Enter notes here..." },
@@ -244,7 +271,8 @@
         },
         "section": {
           "carried": "Carried",
-          "tracked": "Tracked"
+          "tracked": "Tracked",
+          "inventoryValue": "Total Inventory Value"
         },
         "silhouette": {
           "title": "Equipment",
@@ -296,6 +324,7 @@
         "empty": "No items",
         "emptyCarried": "No carried items",
         "emptyTracked": "No tracked items",
+        "locked": "Locked",
         "confirmUnequipTitle": "Confirm Unequip",
         "confirmUnequipContent": "Are you sure you want to unequip {itemName}?"
       },

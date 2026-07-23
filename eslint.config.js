@@ -87,7 +87,7 @@ export default [
         functions: 'never',
       }],
       // 'trailingComma': 'all',
-      indent: ['error', 2],
+      indent: ['error', 2, { SwitchCase: 1 }],
       quotes: ['error', 'single'],
       'object-curly-spacing': ['error', 'always'],
       'no-console': 'off',

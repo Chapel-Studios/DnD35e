@@ -7,36 +7,12 @@
     class="actor-hp-section"
   >
     <div class="hp-bar-container">
-      <div class="hp-bar-track">
-        <!-- Nonlethal damage (from left) -->
-        <div 
-          v-if="nonlethalDamage > 0"
-          class="hp-bar-segment hp-nonlethal-segment"
-          :style="{ width: nonlethalPercent + '%' }"
-          :title="`Nonlethal: ${nonlethalDamage}`"
-        >
-          <span class="hp-bar-text">{{ nonlethalDamage }}</span>
-        </div>
-        <!-- Current HP (extends from nonlethal, implied underneath) -->
-        <div 
-          class="hp-bar-segment hp-current-segment"
-          :style="{ left: nonlethalPercent + '%', width: currentHpPercent + '%' }"
-          :title="`Current: ${currentHp} / ${maxHp}`"
-        >
-          <span v-if="currentHp > 0" class="hp-bar-text">{{ currentHp }}</span>
-        </div>
-        <!-- Temp HP (extends from current) -->
-        <div 
-          v-if="tempHp > 0"
-          class="hp-bar-segment hp-temp-segment"
-          :style="{ left: (nonlethalPercent + currentHpPercent) + '%', width: tempHpPercent + '%' }"
-          :title="`Temp: ${tempHp}`"
-        >
-          <span class="hp-bar-text">{{ tempHp }}</span>
-        </div>
-          
-        <span class="hp-bar-text total">{{ totalMax }}</span>
-      </div>
+      <MeasureBar
+        :segments="hpSegments"
+        :max="totalMax"
+        :trailing-label="totalMax"
+        bar-class="hp-bar"
+      />
     </div>
     <div class="hp-controls">
       <div
@@ -126,6 +102,7 @@
   import { FormGroupSection, NumberFormGroup } from '@vc/fields/index.mjs';
   import { gmOnlyEditability, ownerPlusVisibility } from '@vc/fields/index.mjs';
   import MultiOptionToggle from '@vc/fields/MultiOptionToggle.vue';
+  import MeasureBar from '@vc/MeasureBar.vue';
   import { computed, inject, ref } from 'vue';
 
   import type { CreatureDocumentStore } from '../CreatureStore.mjs';
@@ -147,21 +124,30 @@
 
   // Computed bar widths and values
   const totalMax = computed(() => (maxHp.value ?? 0) + (tempHp.value ?? 0));
-  
-  const nonlethalPercent = computed(() => {
-    if (totalMax.value === 0) return 0;
-    return ((nonlethalDamage.value ?? 0) / totalMax.value) * 100;
-  });
-  
-  const currentHpPercent = computed(() => {
-    if (totalMax.value === 0) return 0;
-    return (((currentHp.value ?? 0) / totalMax.value) * 100) - nonlethalPercent.value;
-  });
-  
-  const tempHpPercent = computed(() => {
-    if (totalMax.value === 0) return 0;
-    return ((tempHp.value ?? 0) / totalMax.value) * 100;
-  });
+
+  const hpSegments = computed(() => [
+    {
+      key: 'nonlethal',
+      value: nonlethalDamage.value ?? 0,
+      colorClass: 'color-orange',
+      tooltip: `Nonlethal: ${nonlethalDamage.value ?? 0}`,
+      label: (nonlethalDamage.value ?? 0) > 0 ? nonlethalDamage.value : undefined,
+    },
+    {
+      key: 'current',
+      value: Math.max(0, (currentHp.value ?? 0) - (nonlethalDamage.value ?? 0)),
+      colorClass: 'color-green',
+      tooltip: `Current: ${currentHp.value ?? 0} / ${maxHp.value ?? 0}`,
+      label: (currentHp.value ?? 0) > 0 ? currentHp.value : undefined,
+    },
+    {
+      key: 'temp',
+      value: tempHp.value ?? 0,
+      colorClass: 'color-blue',
+      tooltip: `Temp: ${tempHp.value ?? 0}`,
+      label: (tempHp.value ?? 0) > 0 ? tempHp.value : undefined,
+    },
+  ]);
 
   // Adjustment drawer state
   const adjustmentType = ref<HpAdjustmentType>(HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT);
@@ -341,62 +327,5 @@
   .hp-bar-container {
     justify-self: stretch;
     margin-bottom: 0.5rem;
-
-    .hp-bar-track {
-      display: block;
-      position: relative;
-      width: 100%;
-      height: 1.5rem;
-      background: var(--color-bg-option, rgba(0, 0, 0, 0.08));
-      border: 1px solid var(--color-border-light-2, #ccc);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .hp-bar-segment {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: width 0.3s ease;
-      color: rgba(255, 255, 255, 0.6);
-
-      &:hover {
-        color: rgba(255, 255, 255, 1);
-        filter: brightness(1.1);
-      }
-    }
-
-    .hp-current-segment {
-      background: #4CAF50;
-      z-index: 2;
-    }
-
-    .hp-nonlethal-segment {
-      background: #FF9800;
-      z-index: 1;
-    }
-
-    .hp-temp-segment {
-      background: #2196F3;
-      z-index: 2;
-    }
-
-    .hp-bar-text {
-      font-size: 0.8rem;
-      font-weight: 600;
-      white-space: nowrap;
-      padding: 0 0.25rem;
-
-      &.total {
-        position: absolute;
-        right: 0.25rem;
-        transform: translateY(-50%);
-        top: 50%;
-      }
-    }
   }
 </style>

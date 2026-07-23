@@ -39,42 +39,23 @@ abstract class EquippableItem extends PhysicalItem {
 
   declare system: EquippableItemSystemData;
 
-  protected _buildEquippedEffectName (): string {
-    return game.i18n.format('dnd35e.EQUIPPABLE.equippedEffect.name', { itemName: this.name });
-  }
-
   protected _buildEquippedChanges(): EffectChangeDataDnd35e[] {
     const changes: EffectChangeDataDnd35e[] = [];
     // to do move actions to actor on equip
     return changes;
   }
 
-  protected async _destroyEquippedEffect(): Promise<void> {
-    const equippedEffect = this.effects.find(e => e.name === this._buildEquippedEffectName());
-    if (equippedEffect) {
-      await this.deleteEmbeddedDocuments('ActiveEffect', [equippedEffect.id]);
-    }
-  }
-
-  protected async _buildEquippedEffect(): Promise<void> {
-    await this._destroyEquippedEffect();
-
-    if (!this.system.equippedSlotIds?.length) {
-      return;
-    }
-
-    await this.createEmbeddedDocuments('ActiveEffect', [{
-      name: this._buildEquippedEffectName(),
-      target: 'actor',
-      type: 'general',
-      label: this.name,
-      system: {
-        isHidden: true,
-        target: 'actor',
-        description: game.i18n.format('dnd35e.EQUIPPABLE.equippedEffect.description', { itemName: this.name }),
-        changes: this._buildEquippedChanges(),
-      },
-    }]);
+  /**
+   * Live actor-targeted changes this item contributes on top of its carried-weight
+   * contribution while equipped - see `ItemDnd35e.getContributedActorChanges()`.
+   * Computed fresh from current equippedSlotIds state every call; nothing is
+   * persisted, so there is no AE document to create, toggle, or delete for this.
+   */
+  override getContributedActorChanges(phase: string): EffectChangeDataDnd35e[] {
+    const carriedChanges = super.getContributedActorChanges(phase);
+    if (!this.system.equippedSlotIds?.length) return carriedChanges;
+    const equippedChanges = this._buildEquippedChanges().filter((change) => change.phase === phase);
+    return [...carriedChanges, ...equippedChanges];
   }
 
   get defaultSlotIds(): EquipSlot[] {
@@ -110,7 +91,6 @@ abstract class EquippableItem extends PhysicalItem {
     }
 
     await this.update(updateObj, { updateMetadata });
-    await this._buildEquippedEffect();
 
     return true;
   }
@@ -127,7 +107,6 @@ abstract class EquippableItem extends PhysicalItem {
         ?? `${game.i18n.localize('dnd35e.EQUIPPABLE.EVENTS.itemUnequipped.label')}: ${this.name}`,
     };
     
-    await this._destroyEquippedEffect();
     await this.update(updateObj, { updateMetadata });
 
     return true;

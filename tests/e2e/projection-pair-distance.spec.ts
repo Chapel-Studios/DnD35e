@@ -7,7 +7,7 @@ import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
 import { dismissOverlays } from './helpers/ui.mjs';
 
 const DISPLAY_UNITS_KEY = 'units';
-const DISTANCE_PATH = 'system.speed.land.base';
+const DISTANCE_PATH = 'system.speed.land';
 const WEIGHT_PATH = 'system.weight';
 
 async function openAttributesTab (page: any, sheet: string): Promise<void> {
@@ -35,7 +35,7 @@ test.describe('Projection-pair display (Distance field)', () => {
 
     const actorUuid = await createActor(page, 'character', {
       name: 'Projection Distance Character',
-      system: { speed: { land: { base: 30 } } },
+      system: { speed: { land: 30 } },
     });
 
     const sheet = await openDocumentSheet(page, actorUuid);
@@ -54,7 +54,7 @@ test.describe('Projection-pair display (Distance field)', () => {
     await expect.poll(async () => {
       return await page.evaluate(async (uuid) => {
         const actor = await (globalThis as any).fromUuid(uuid);
-        return actor?._source?.system?.speed?.land?.base ?? null;
+        return actor?._source?.system?.speed?.land ?? null;
       }, actorUuid);
     }).toBe(35);
   });
@@ -65,7 +65,7 @@ test.describe('Projection-pair display (Distance field)', () => {
 
     const actorUuid = await createActor(page, 'character', {
       name: 'Projection Distance Metric Character',
-      system: { speed: { land: { base: 30 } } },
+      system: { speed: { land: 30 } },
     });
 
     const sheet = await openDocumentSheet(page, actorUuid);
@@ -84,7 +84,7 @@ test.describe('Projection-pair display (Distance field)', () => {
     await expect.poll(async () => {
       return await page.evaluate(async (uuid) => {
         const actor = await (globalThis as any).fromUuid(uuid);
-        return actor?._source?.system?.speed?.land?.base ?? null;
+        return actor?._source?.system?.speed?.land ?? null;
       }, actorUuid);
     }).toBe(40);
 

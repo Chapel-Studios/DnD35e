@@ -86,6 +86,13 @@ const derivedNumberField = (initialValue: number = 0) =>
   new NumberField<number, number, true, false, true>({ required: true, nullable: false, initial: initialValue, persisted: false });
 
 /**
+ * A derived number field — in schema for FormulaFamiliar visibility and AE targeting,
+ * but never written to the database. Resets to `initial` each prep cycle.
+ */
+const derivedNullableNumberField = (initialValue: number | null = null) =>
+  new NumberField<number, number, true, true, true>({ required: true, nullable: true, initial: initialValue, persisted: false });
+
+/**
  * A derived boolean field — in schema for FormulaFamiliar visibility and AE targeting,
  * but never written to the database. Resets to `initial` each prep cycle.
  */
@@ -161,6 +168,7 @@ export type { SchemaFieldMeta };
 
 export {
   derivedBooleanField,
+  derivedNullableNumberField,
   derivedNullableOptionalStringField,
   derivedNumberField,
   derivedOptionalStringField,

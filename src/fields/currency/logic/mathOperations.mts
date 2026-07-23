@@ -8,7 +8,9 @@ const multiplyCurrency = (value: CurrencyData, factor: number): CurrencyData => 
 };
 
 const addCurrency = (value1: CurrencyData, value2: CurrencyData): CurrencyData => {
-  const stacks = [...value1.stacks];
+  // Clone each stack (not just the array) so mutating `existing.count` below never
+  // aliases into value1's original stack objects.
+  const stacks = value1.stacks.map(s => ({ ...s }));
   for (const s of value2.stacks) {
     const existing = stacks.find(st => st.coinId === s.coinId);
     if (existing) {

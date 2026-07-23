@@ -23,6 +23,14 @@
       <Regeneration />
       <Concealment />
       <Fortification />
+      <NumberFormGroup
+        field-path="system.encumbrance.maxDexBonus"
+        read-only
+      />
+      <NumberFormGroup
+        field-path="system.encumbrance.armorCheckPenalty"
+        read-only
+      />
     </template>
   </SheetSection>
 </template>

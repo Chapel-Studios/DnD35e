@@ -59,8 +59,8 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(
     ? allEffects.value
     : allEffects.value.filter((e: ActiveEffectDnd35e) => !e.system.isHidden)
   );
-  const getEffectsForField = (fieldPath: string) => computed(() => document.value.overrides?.[fieldPath]
-    ? document.value.overrides?.[fieldPath] as []
+  const getEffectsForField = (fieldPath: string) => computed(() => document.value.effectOverrides?.[fieldPath]
+    ? document.value.effectOverrides?.[fieldPath] as []
     : []
   );
   const itemDocumentGetters = {

@@ -59,27 +59,27 @@ export function useFamiliar(options: UseFamiliarOptions = {}) {
     }
 
     switch (event.key) {
-    case 'ArrowDown':
-      familiarIndex.value = (familiarIndex.value + 1) % familiarOptions.value.length;
-      return { handled: true };
+      case 'ArrowDown':
+        familiarIndex.value = (familiarIndex.value + 1) % familiarOptions.value.length;
+        return { handled: true };
 
-    case 'ArrowUp':
-      familiarIndex.value = (familiarIndex.value - 1 + familiarOptions.value.length) % familiarOptions.value.length;
-      return { handled: true };
+      case 'ArrowUp':
+        familiarIndex.value = (familiarIndex.value - 1 + familiarOptions.value.length) % familiarOptions.value.length;
+        return { handled: true };
 
-    case 'Enter':
-    case 'Tab':
-      return {
-        handled: true,
-        selectedOption: familiarOptions.value[familiarIndex.value],
-      };
+      case 'Enter':
+      case 'Tab':
+        return {
+          handled: true,
+          selectedOption: familiarOptions.value[familiarIndex.value],
+        };
 
-    case 'Escape':
-      dismiss();
-      return { handled: true };
+      case 'Escape':
+        dismiss();
+        return { handled: true };
 
-    default:
-      return { handled: false };
+      default:
+        return { handled: false };
     }
   }
 

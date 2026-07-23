@@ -59,14 +59,18 @@ interface EncumbranceData {
   light: number;
   medium: number;
   heavy: number;
-  carry: number;
+  maxLift: number;
   drag: number;
-  /** Encumbrance tier: 0 = unencumbered, 1 = light, 2 = medium, 3 = heavy, 4 = overloaded. */
-  level: number;
+  /** Encumbrance tier: 0=light, 1=medium, 2=heavy, 3=maxLift, 4=drag/overloaded, 5=beyond drag limit (cannot move). */
+  tier: number;
   /** AE target: flat bonus to effective STR for carry capacity (e.g. Muleback Cords). Never stored. */
   carryBonus: number;
   /** AE target: multiplier on carry thresholds (e.g. Ant Haul). Never stored. */
   carryMultiplier: number;
+  /** Derived: max dex bonus from armor and other sources. `null` when uncapped. Never stored. */
+  maxDexBonus: number | null;
+  /** Derived: armor check penalty from armor and other sources. Never stored. */
+  armorCheckPenalty: number;
 }
 
 // ─── Alignment ───────────────────────────────────────────────────────────────
@@ -144,7 +148,7 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   attacks: WeaponDamage[];
   encumbrance: EncumbranceData;
   isIncorporeal: boolean;
-  isQuadraped: boolean;
+  isQuadruped: boolean;
   creatureType: string;
   aooCount: number;
 }

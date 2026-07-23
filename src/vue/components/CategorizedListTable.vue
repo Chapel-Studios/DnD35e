@@ -1,7 +1,7 @@
 <template>
-  <section class="sheet-section categorized-list-section">
-    <h2 class="section-header">
-      {{ localize(title) }}
+  <section class="sheet-section categorized-list-section" :class="{ compact }">
+    <h2 v-if="!!displayTitle" class="section-header">
+      {{ displayTitle }}
       <slot name="controls" />
     </h2>
 
@@ -38,6 +38,9 @@
 
         <div v-show="!isCategoryCollapsed(category.id)">
           <table class="categorized-table">
+            <colgroup v-if="columnWidths">
+              <col v-for="(colWidth, colIndex) in columnWidths" :key="colIndex" :style="{ width: colWidth }">
+            </colgroup>
             <thead>
               <slot name="header" />
             </thead>
@@ -71,6 +74,7 @@
                     :key="row.id"
                     name="row"
                     :row="row"
+                    :index="rowIndexMap.get(row.id) ?? 0"
                   />
                 </template>
               </template>
@@ -88,6 +92,9 @@
 
     <div v-else class="single-category-view">
       <table class="categorized-table">
+        <colgroup v-if="columnWidths">
+          <col v-for="(colWidth, colIndex) in columnWidths" :key="colIndex" :style="{ width: colWidth }">
+        </colgroup>
         <thead>
           <slot name="header" />
         </thead>
@@ -121,6 +128,7 @@
                 :key="row.id"
                 name="row"
                 :row="row"
+                :index="rowIndexMap.get(row.id) ?? 0"
               />
             </template>
           </template>
@@ -153,18 +161,24 @@
   const ALL_TAB_ID = '__all';
 
   const props = withDefaults(defineProps<{
-    title: string;
+    title?: string;
     columnCount: number;
     rows: TRow[];
     allTabLabel?: string;
     emptyLabel?: string;
     emptyIcon?: string;
     enableSubcategoryCollapse?: boolean;
+    /** Explicit per-column CSS widths (colgroup), so nested tables of the same kind align exactly. */
+    columnWidths?: string[];
+    /** Trims section padding/borders for embedding inside another row (e.g. expanded container contents). */
+    compact?: boolean;
   }>(), {
     allTabLabel: 'dnd35e.ACTOR.inventory.tab.all',
     emptyLabel: 'dnd35e.ACTOR.inventory.empty',
     emptyIcon: 'fas fa-box-open',
     enableSubcategoryCollapse: false,
+    columnWidths: undefined,
+    compact: false,
   });
 
   const localize = (key: string) => game.i18n.localize(key);
@@ -180,6 +194,8 @@
     label: string | null;
     rows: TRow[];
   };
+
+  const displayTitle = computed(() => props.title ? localize(props.title) : null);
 
   const categories = computed<CategoryGroup[]>(() => {
     const grouped = new Map<string, CategoryGroup>();
@@ -282,6 +298,37 @@
     return activeCategory?.rows ?? [];
   });
 
+  // Flat, in-render-order list of currently visible rows (respects active tab and
+  // collapsed categories/subcategories). Used to assign each row a stable index so
+  // consumers can compute alternating stripe colors independent of raw DOM position
+  // (which shifts whenever a sibling container is expanded/collapsed).
+  const orderedVisibleRows = computed<TRow[]>(() => {
+    const result: TRow[] = [];
+
+    if (isAllTab.value) {
+      for (const category of categories.value) {
+        if (isCategoryCollapsed(category.id)) continue;
+        for (const group of buildSubcategoryGroups(category.rows)) {
+          if (isSubcategoryCollapsed(category.id, group.id)) continue;
+          result.push(...group.rows);
+        }
+      }
+      return result;
+    }
+
+    for (const group of buildSubcategoryGroups(activeCategoryRows.value)) {
+      if (isSubcategoryCollapsed(activeTabId.value, group.id)) continue;
+      result.push(...group.rows);
+    }
+    return result;
+  });
+
+  const rowIndexMap = computed<Map<string, number>>(() => {
+    const map = new Map<string, number>();
+    orderedVisibleRows.value.forEach((row, index) => map.set(row.id, index));
+    return map;
+  });
+
   const isCategoryCollapsed = (categoryId: string): boolean => {
     return collapsedCategoryIds.value[categoryId] ?? false;
   };
@@ -305,6 +352,10 @@
 <style scoped lang="scss">
   .categorized-list-section {
     padding: 0.5rem;
+
+    &.compact {
+      padding: 0;
+    }
   }
 
   .categorized-list-tabs {
@@ -312,6 +363,11 @@
     flex-wrap: wrap;
     gap: 0.35rem;
     margin-bottom: 0.5rem;
+
+    .compact & {
+      margin-top: 0.3rem;
+      margin-bottom: 0.3rem;
+    }
   }
 
   .category-tab-btn {
@@ -346,12 +402,21 @@
   .single-category-view {
     display: grid;
     gap: 0.5rem;
+
+    .compact & {
+      gap: 0.3rem;
+    }
   }
 
   .category-group {
     border: 1px solid color-mix(in srgb, var(--color-cool-4, #9ba5a0) 30%, transparent);
     border-radius: 0.35rem;
     overflow: hidden;
+
+    .compact & {
+      border: none;
+      border-radius: 0;
+    }
   }
 
   .category-heading-btn {
@@ -372,12 +437,19 @@
     &.collapsed {
       border-bottom: none;
     }
+
+    .compact & {
+      font-size: 0.78rem;
+      padding: 0.25rem 0.35rem;
+    }
   }
 
   .categorized-table {
     border-collapse: collapse;
     font-size: 0.82rem;
+    table-layout: fixed;
     width: 100%;
+    margin: 0;
 
     :deep(th),
     :deep(td) {

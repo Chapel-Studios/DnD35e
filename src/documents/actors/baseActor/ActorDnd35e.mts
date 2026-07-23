@@ -3,16 +3,17 @@ import { ACTOR_TYPES_LOCALIZED } from '@actors/actorTypes.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import type { EffectChangeData } from '@common/documents/active-effect.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import { ensureNameFormulaOnCreate, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+import { applyStackedActiveEffectChanges, type ResolvedEffectChange } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
 import { resolveActiveEffectChange } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import { DocumentEventEmitter } from '@helpers/documentEvents/DocumentEventEmitter.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
+import type { Override } from '@helpers/stacking.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
 import type { TokenDocumentDnd35e } from '@scene/tokenDocument/TokenDocumentDnd35e.mjs';
@@ -24,9 +25,7 @@ import type { ActorSystemData } from './index.mjs';
 // methods/properties and doesn't alter the constructor signature's generic behavior.
 const ActorDocumentBase = DocumentMixin(Actor) as unknown as typeof Actor;
 
-interface AppliedActorEffectChange extends EffectChangeDataDnd35e {
-  effect: ActiveEffectDnd35e;
-}
+type AppliedActorEffectChange = ResolvedEffectChange;
 
 class ActorDnd35e<
   TToken extends TokenDocumentDnd35e | null = TokenDocumentDnd35e | null,
@@ -38,9 +37,23 @@ class ActorDnd35e<
   declare type: TActorType;
   declare system: TSystemData;
   declare events: DocumentEventEmitter<this>;
+  /**
+   * Field-path -> contributing-effect history, mirroring ItemDnd35e's `effectOverrides`
+   * shape. Populated by the shared stacking engine in `applyActiveEffects()` (see
+   * `applyStackedActiveEffectChanges`). Deliberately named differently from core's own
+   * `overrides: ActorOverrides` (a deep-partial-value shape) - that core property is left
+   * untouched since nothing in this system reads it, and reusing its name would conflict
+   * with core's declared type.
+   */
+  effectOverrides: Record<string, Override[]> = {};
 
   get localizedType (): string {
     return ACTOR_TYPES_LOCALIZED[this.type as ActorType] ?? 'dnd35e.COMMON.Actor';
+  }
+
+  override prepareBaseData (): void {
+    super.prepareBaseData();
+    this.effectOverrides = {};
   }
 
   /**
@@ -69,7 +82,14 @@ class ActorDnd35e<
       for ( const change of effect.system.changes ) {
         // Only apply actor-targeted changes (default to actor for backwards compatibility with base Foundry effects)
         const changeTarget = change.target ?? EFFECT_CHANGE_TARGET.ACTOR;
-        if ( !change.key || (change.phase !== phase) || (changeTarget !== EFFECT_CHANGE_TARGET.ACTOR) ) continue;
+        if (
+          !change.key
+          || (change.phase !== phase)
+          || (changeTarget !== EFFECT_CHANGE_TARGET.ACTOR)
+          // MASK changes are not applied via stacking — Secret AEs' masked values are
+          // read directly by maskMap.mts to build the actor's masks dictionary.
+          || (change.type === SYSTEM_CHANGE_TYPE.MASK)
+        ) continue;
         const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as AppliedActorEffectChange;
         copy.effect = effect as ActiveEffectDnd35e;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
@@ -80,21 +100,52 @@ class ActorDnd35e<
         for ( const statusId of effect.statuses ) this.statuses.add(statusId);
       }
     }
-    changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
-    ActiveEffect._shimChanges(changes as EffectChangeData[]);
 
-    // Apply all changes
-    const overrides: Record<string, unknown> = {};
-    const replacementData = this.getRollData();
-    for ( const change of changes ) {
-      const EffectClass = change.effect.constructor as typeof ActiveEffect;
-      const result = ActiveEffect.CHANGE_TYPES[change.type].handler?.(this, change as EffectChangeData)
-        ?? EffectClass.applyChange(this, change as EffectChangeData, { replacementData });
-      if ( foundry.utils.isPlainObject(result) ) Object.assign(overrides, result as Record<string, unknown>);
+    // Items can also contribute actor-targeted changes with no backing AE document at
+    // all (e.g. carried-weight, equipped-status) - see `ItemDnd35e.getContributedActorChanges()`.
+    // Already phase-filtered by the item; no `resolveActiveEffectChange()` needed since
+    // these values are computed live, not read from a stored AE.
+    for ( const item of this.items ) {
+      for ( const change of item.getContributedActorChanges(phase) ) {
+        if ( !change.key ) continue;
+        const copy = foundry.utils.deepClone(change) as AppliedActorEffectChange;
+        copy.effect = item;
+        copy.type ??= EFFECT_CHANGE_TYPE.ADD;
+        copy.priority ??= 0;
+        changes.push(copy);
+      }
     }
 
-    // Expand the set of final overrides
-    foundry.utils.mergeObject(this.overrides, foundry.utils.expandObject(overrides));
+    // The actor can also contribute changes derived from its own data with no backing
+    // AE document at all (e.g. Creature's encumbrance penalties) - see
+    // `getSelfContributedChanges()`. Already phase-filtered by the override; no
+    // `resolveActiveEffectChange()` needed since these values are computed live, not
+    // read from a stored AE.
+    for ( const change of this.getSelfContributedChanges(phase) ) {
+      if ( !change.key ) continue;
+      const copy = foundry.utils.deepClone(change) as AppliedActorEffectChange;
+      copy.effect = this;
+      copy.type ??= EFFECT_CHANGE_TYPE.ADD;
+      copy.priority ??= 0;
+      changes.push(copy);
+    }
+    changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+
+    // Resolve bonus-type stacking and apply the winners, recording Override
+    // history for every field touched (shared with ItemDnd35e.applyActiveEffects).
+    applyStackedActiveEffectChanges(this, changes);
+  }
+
+  /**
+   * Live, self-targeted changes this actor contributes with no backing ActiveEffect
+   * document at all - e.g. Creature's encumbrance penalties (max Dex bonus, armor check
+   * penalty, land speed downgrade). Recomputed fresh from this actor's own current
+   * system data on every call (called from `applyActiveEffects()` each preparation
+   * cycle) - never persisted, so there is no document to create, toggle, or delete.
+   * Base implementation returns none; overridden by subclasses that need this.
+   */
+  getSelfContributedChanges(_phase: string): EffectChangeDataDnd35e[] {
+    return [];
   }
 
   /**

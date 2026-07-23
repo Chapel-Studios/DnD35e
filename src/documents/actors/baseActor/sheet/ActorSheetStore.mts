@@ -28,17 +28,25 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
   });
 
   const { getViewAwareFieldValue } = baseStore.documentGetters;
+  const document = baseStore._storeUtils.document;
+
+  // Base `DocumentSheetStore` only stubs these (always `[]`/`false`) since not every
+  // document type accumulates effect overrides the same way - actors record theirs in
+  // `effectOverrides` via `applyStackedActiveEffectChanges()` (see `ActorDnd35e.applyActiveEffects()`),
+  // same shape as `ItemSheetStore`'s equivalent override.
+  const getEffectsForField = (fieldPath: string) => computed(() => document.value.effectOverrides?.[fieldPath] ?? []);
 
   const documentGetters = {
     ...baseStore.documentGetters,
-    landSpeedBase:  computed(() => getViewAwareFieldValue<number>('system.speed.land.base')  ?? 0),
-    landSpeedTotal: computed(() => getViewAwareFieldValue<number>('system.speed.land.total') ?? 0),
-    // TODO(actor speed): expose climb/swim/burrow/fly when sheet UI consumes them
+    landSpeed: computed(() => getViewAwareFieldValue<number>('system.speed.land') ?? 0),
 
     items: computed(() => [...baseStore._storeUtils.document.value.items]),
     physicalItems: computed(() => [...baseStore._storeUtils.document.value.items]
       .filter((item) => PHYSICAL_ITEM_TYPES.has(item.type)) as unknown[] as PHYSICAL_ITEMS[]
     ),
+
+    getEffectsForField,
+    hasEffectsForField: (fieldPath: string) => computed(() => getEffectsForField(fieldPath).value.length > 0),
   };
 
   const store: ActorDocumentStore<TDocument> = {
@@ -50,8 +58,7 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
 };
 
 interface ActorGetters {
-  landSpeedBase:  ComputedRef<number>;
-  landSpeedTotal: ComputedRef<number>;
+  landSpeed: ComputedRef<number>;
   items: ComputedRef<ItemDnd35e[]>;
   physicalItems: ComputedRef<PHYSICAL_ITEMS[]>;
 }

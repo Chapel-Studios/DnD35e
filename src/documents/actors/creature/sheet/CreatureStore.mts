@@ -5,12 +5,14 @@ import type { SenseEntrySource } from '@actors/creature/data/CreatureSystemData.
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import { ALIGNMENT_I18N, NEUTRAL } from '@constants/alignment.mjs';
 import type { Size } from '@constants/sizes.mjs';
-import { GAME_RULES_KEYS } from '@settings/index.mjs';
+import { addCurrency } from '@fields/currency/logic/mathOperations.mjs';
+import { CurrencyData } from '@fields/index.mjs';
+import { GAME_RULES_KEYS, type SettingsStore,SettingsStoreSymbol } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { SelectOption } from '@vc/fields/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 
 import type { HpAdjustmentType } from './components/constants.mjs';
 
@@ -39,6 +41,10 @@ const useCreatureStore = <TDocument extends Creature>(
   const actorStore = useActorSheetStore<TDocument>(context, options);
   const { getViewAwareFieldValue } = actorStore.documentGetters;
   const { document } = actorStore._storeUtils;
+  
+  const {
+    currency: { highestVisibleCoin },
+  } = inject(SettingsStoreSymbol) as SettingsStore;
 
   const alignmentLaw   = computed(() => getViewAwareFieldValue<LawAxis | null>('system.bio.alignment.law')   ?? null);
   const alignmentMoral = computed(() => getViewAwareFieldValue<MoralAxis | null>('system.bio.alignment.moral') ?? null);
@@ -96,6 +102,18 @@ const useCreatureStore = <TDocument extends Creature>(
         return systemDefaults[id]?.label ?? entry.label;
       });
     }),
+    creatureValue: computed(() => {
+      const value = addCurrency(document.value.system.currency, document.value.system.inventoryValue);
+      return CurrencyData.fromStacks(value.consolidate(highestVisibleCoin.value));
+    }),
+
+    encumbranceCarriedWeight: computed(() => getViewAwareFieldValue<number>('system.encumbrance.carriedWeight') ?? 0),
+    encumbranceLight:  computed(() => getViewAwareFieldValue<number>('system.encumbrance.light')  ?? 0),
+    encumbranceMedium: computed(() => getViewAwareFieldValue<number>('system.encumbrance.medium') ?? 0),
+    encumbranceHeavy:  computed(() => getViewAwareFieldValue<number>('system.encumbrance.heavy')  ?? 0),
+    encumbranceMaxLift:  computed(() => getViewAwareFieldValue<number>('system.encumbrance.maxLift')  ?? 0),
+    encumbranceDrag:   computed(() => getViewAwareFieldValue<number>('system.encumbrance.drag')   ?? 0),
+    encumbranceTier:   computed(() => getViewAwareFieldValue<number>('system.encumbrance.tier')   ?? 0),
   };
 
   const documentActions = {
@@ -138,6 +156,14 @@ interface CreatureGetters {
   getArmorClass: (isTouch?: boolean, denyDex?: boolean) => number;
   availableLanguages: ComputedRef<SelectOption<string>[]>;
   displayLanguages: ComputedRef<string[]>;
+  creatureValue: ComputedRef<CurrencyData>;
+  encumbranceCarriedWeight: ComputedRef<number>;
+  encumbranceLight:  ComputedRef<number>;
+  encumbranceMedium: ComputedRef<number>;
+  encumbranceHeavy:  ComputedRef<number>;
+  encumbranceMaxLift:  ComputedRef<number>;
+  encumbranceDrag:   ComputedRef<number>;
+  encumbranceTier:   ComputedRef<number>;
 }
 
 type CreatureActions = {

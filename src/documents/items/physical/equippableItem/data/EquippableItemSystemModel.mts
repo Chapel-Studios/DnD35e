@@ -50,8 +50,8 @@ abstract class EquippableItemSystemModel extends PhysicalItemSystemModel {
     if (this.isWeightlessWhenEquipped && this.isEquipped) {
       this.weight = 0;
       const systemWeight = 'system.weight';
-      this.parent.overrides[systemWeight] = [
-        ...(this.parent?.overrides[systemWeight] ?? []),
+      this.parent.effectOverrides[systemWeight] = [
+        ...(this.parent?.effectOverrides[systemWeight] ?? []),
         {
           fieldPath: systemWeight,
           value: 0,

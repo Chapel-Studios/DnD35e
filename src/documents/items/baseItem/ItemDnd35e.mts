@@ -15,18 +15,14 @@ import {
   INITIAL_EFFECT_CHANGE_PHASE,
   SYSTEM_CHANGE_TYPE,
 } from '@effects/baseActiveEffect/data/constants.mjs';
+import type { ResolvedEffectChange } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
+import { applyStackedActiveEffectChanges } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
 import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import type { ACTIVE_EFFECTS_DND35E } from '@effects/effectTypes.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
-import type { ChangeHistory, Override, StackingChange } from '@helpers/stacking.mjs';
-import {
-  parseNumericChangeValue,
-  resolveActiveEffectChanges,
-  STACK_RESULT_APPLIED,
-  STACK_RESULT_IGNORED,
-} from '@helpers/stacking.mjs';
+import type { Override } from '@helpers/stacking.mjs';
 import type { ItemType } from '@items/index.mjs';
 import { ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
 
@@ -115,7 +111,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   //      stackReason?: string;
   //    }[];
   // }
-  overrides: Record<string, Override[]> = {};
+  effectOverrides: Record<string, Override[]> = {};
 
   _completedActiveEffectPhases: Set<string>;
 
@@ -185,7 +181,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   override prepareBaseData (): void {
     super.prepareBaseData();
     this._completedActiveEffectPhases = new Set();
-    this.overrides = {};
+    this.effectOverrides = {};
     this._masks = {};
   }
 
@@ -253,6 +249,19 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   }
 
   /**
+   * Live, actor-targeted changes this item contributes with no backing ActiveEffect
+   * document at all - e.g. carried-weight (`PhysicalItem`) or equipped-status
+   * (`EquippableItem`) contributions. Recomputed fresh from this item's own current
+   * system data on every call (called from `ActorDnd35e.applyActiveEffects()` each
+   * preparation cycle) - never persisted, so there is no document to create, toggle, or
+   * delete, and therefore no create/delete churn, no ID, and no race to guard against.
+   * Base implementation returns none; overridden by subclasses that need this.
+   */
+  getContributedActorChanges(_phase: string): EffectChangeDataDnd35e[] {
+    return [];
+  }
+
+  /**
    * Apply active effects to this item for the given phase.
    * 
    * Implementation from actor.mjs on version 14.354, since items don't have their own
@@ -281,7 +290,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     }
     this._completedActiveEffectPhases.add(phase);
 
-    type AppliedItemEffectChange = EffectChangeDataDnd35e;
+    type AppliedItemEffectChange = ResolvedEffectChange;
     const changes: AppliedItemEffectChange[] = [];
     for ( const effect of this.allApplicableEffects() ) {
       if ( !effect.active ) continue;
@@ -326,81 +335,10 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
       // }
     }
     changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
-    // TODO(Phase 7): remove in v16, this is for backwards compatibility with older active effects
-    ActiveEffect._shimChanges(changes);
 
-    // Build StackingChange[] for the stacking engine
-    const stackingChanges: StackingChange[] = changes.map((change, index) => {
-      const dnd35eChange = change;
-      const numericValue = parseNumericChangeValue(change.value);
-      const bonusType = dnd35eChange.bonusType || undefined;
-      const effectName = change.label ?? change.effect?.system.label ?? change.effect?.name ?? 'Unknown Effect';
-      
-      return {
-        index,
-        field: change.key,
-        bonusType,
-        value: numericValue,
-        source: effectName,
-        effectId: change.effect?.id ?? undefined,
-      };
-    });
-
-    // Resolve stacking — only numeric, typed changes participate
-    const numericStackable = stackingChanges.filter(sc => !isNaN(sc.value) && sc.bonusType !== undefined);
-    const { winners, history } = resolveActiveEffectChanges(numericStackable);
-    const winnerIndices = new Set(winners.map((w: { changeIndex: number }) => w.changeIndex));
-    const historyByIndex = new Map<number, ChangeHistory>();
-    for (const h of history) historyByIndex.set(h.changeIndex, h);
-    const winnerByIndex = new Map(winners.map((w: { changeIndex: number; reason: string }) => [w.changeIndex, w]));
-
-    // Apply winning changes + all non-stackable changes (untyped or non-numeric)
-    const replacementData = this.getRollData() as Record<string, unknown>;
-    for (let i = 0; i < changes.length; i++) {
-      const change = changes[i];
-      const sc = stackingChanges[i];
-      const isStackable = !isNaN(sc.value) && sc.bonusType !== undefined;
-      const isWinner = winnerIndices.has(i);
-      const effectName = change.label ?? change.effect?.system.label ?? change.effect?.name ?? 'Unknown Effect';
-
-      if (isStackable && !isWinner) {
-        // Stacking loser — record in overrides but don't apply
-        const historyEntry = historyByIndex.get(i);
-        this.overrides[change.key] = [
-          ...(this.overrides[change.key] ?? []),
-          {
-            fieldPath: change.key,
-            value: change.value,
-            effectName: effectName,
-            type: change.type,
-            bonusType: sc.bonusType,
-            stackResult: STACK_RESULT_IGNORED,
-            stackReason: historyEntry?.rejection ?? 'stacking resolution',
-          },
-        ];
-        continue;
-      }
-
-      // Apply the change (winner or non-stackable)
-      const EffectClass = change.effect?.constructor as typeof ActiveEffect;
-      const result = (ActiveEffect.CHANGE_TYPES[change.type].handler?.(this, change)
-        ?? EffectClass.applyChange(this, change, { replacementData }) ?? {}) as Record<string, unknown>;
-      for (const fieldPath of Object.keys(result)) {
-        const winner = isStackable ? winnerByIndex.get(i) : undefined;
-        this.overrides[fieldPath] = [
-          ...(this.overrides[fieldPath] ?? []),
-          {
-            fieldPath,
-            value: change.value,
-            effectName: effectName,
-            type: change.type,
-            bonusType: sc.bonusType,
-            stackResult: isStackable ? STACK_RESULT_APPLIED : undefined,
-            stackReason: (winner as { reason: string } | undefined)?.reason,
-          },
-        ];
-      }
-    }
+    // Resolve bonus-type stacking and apply the winners, recording Override
+    // history for every field touched (shared with ActorDnd35e.applyActiveEffects).
+    applyStackedActiveEffectChanges(this, changes);
   }
   
   get localizedType (): string {
