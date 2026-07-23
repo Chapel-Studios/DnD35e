@@ -19,23 +19,17 @@ import type { ItemDnd35e } from '@items/baseItem/index.mjs';
  */
 interface ResolvedEffectChange extends EffectChangeDataDnd35e {
   /**
-   * The real ActiveEffect this change came from, or the Item/Actor that live-computed it
-   * with no backing AE document (e.g. carried-weight/equipped-status contributions - see
-   * `ItemDnd35e.getContributedActorChanges()`; or an actor's own derived conditions like
-   * encumbrance - see `ActorDnd35e.getSelfContributedChanges()`). Always set by the
-   * gathering loop, so every change always has SOME attributable source document for
-   * override history.
+   * The ActiveEffect/Item/Actor that sourced this change. May be a live-computed source
+   * (e.g. `ItemDnd35e.getContributedActorChanges()`) with no backing AE. Always set for
+   * override history attribution.
    */
   effect: ActiveEffectDnd35e | ItemDnd35e | ActorDnd35e;
 }
 
 /**
  * Minimal shape required of a document to receive stacked AE changes.
- *
- * Named `effectOverrides` (not `overrides`) because core `Actor#overrides` is already
- * typed as `ActorOverrides` (a deep-partial-value shape) - this system uses a richer
- * per-field `Override[]` history instead, so both ActorDnd35e and ItemDnd35e expose it
- * under this distinct name.
+ * Uses `effectOverrides` (distinct from core's `Actor#overrides`) to store rich
+ * per-field `Override[]` history instead of a deep-partial-value shape.
  */
 interface StackableChangeTarget {
   effectOverrides: Record<string, Override[]>;
@@ -46,14 +40,13 @@ interface StackableChangeTarget {
 
 /**
  * Resolve bonus-type stacking for a set of already-gathered, same-phase, same-target
- * changes, then apply the winners to `document` and record rich `Override` metadata
- * (source effect, stack result, rejection reason) for every field touched - both
- * winners and stacking losers.
+ * changes, then apply the winners to `document` and record `Override` metadata
+ * (source effect, stack result, rejection reason) for every field touched.
  *
  * Shared by `ActorDnd35e.applyActiveEffects()` and `ItemDnd35e.applyActiveEffects()` so
- * both document types resolve stacking (and record override history) identically.
+ * both document types resolve stacking identically.
  *
- * @param document - The Actor or Item receiving the changes. Its `overrides` is mutated.
+ * @param document - The Actor or Item receiving the changes. Its `effectOverrides` is mutated.
  * @param changes - Pre-filtered, pre-cloned changes (see each caller's gathering loop).
  */
 function applyStackedActiveEffectChanges<TDocument extends StackableChangeTarget>(
@@ -128,12 +121,9 @@ function applyStackedActiveEffectChanges<TDocument extends StackableChangeTarget
     }
 
     // Apply the change (winner or non-stackable).
-    // `document as never` sidesteps the generic `TDocument` not being known to
-    // satisfy core's `Actor | Item` handler signature - both ActorDnd35e and
-    // ItemDnd35e are Foundry documents at runtime.
-    // Note: this always uses the base `ActiveEffect.applyChange` (not `change.effect`'s
-    // own constructor) - no subclass overrides it, and `change.effect` may now be an
-    // `ItemDnd35e` (no `applyChange` of its own) for live item-contributed changes.
+    // Type cast: core handler expects Actor | Item. change.effect may now be an
+    // ItemDnd35e (no `applyChange` method) for live-contributed changes, so use the
+    // base handler instead of relying on subclass overrides.
     const result = (ActiveEffect.CHANGE_TYPES[change.type].handler?.(document as never, change as unknown as EffectChangeData)
       ?? ActiveEffect.applyChange(document as never, change as unknown as EffectChangeData, { replacementData })
       ?? {}) as Record<string, unknown>;

@@ -38,13 +38,9 @@ abstract class ActorSystemModel extends DocumentSystemModel<foundry.documents.Ac
   override prepareDerivedData(): void {
     super.prepareDerivedData();
 
-    // Speed has no separate "total" field — ActiveEffects (e.g. the encumbrance
-    // DOWNGRADE) mutate `this.speed.<key>` in place during the 'final' phase.
-    // Reset the live value back to the persisted source here (before that final
-    // phase runs) so a DOWNGRADE-only effect can't compound/linger across
-    // repeated `prepareData()` passes once its cause (e.g. encumbrance tier) is
-    // gone. Mirrors the reset pattern used for `encumbrance.carriedWeight`/
-    // `maxDexBonus`/`armorCheckPenalty` in `CreatureSystemModel.prepareBaseData()`.
+    // Speed fields are mutated by effects in 'final' phase. Reset from _source
+    // here (before that phase) so DOWNGRADE effects don't persist after their
+    // cause is gone. See CreatureSystemModel.prepareBaseData() for similar resets.
     const sourceSpeed = (this._source as unknown as ActorSystemSource).speed;
     this.speed.land = sourceSpeed.land;
     this.speed.climb = sourceSpeed.climb;

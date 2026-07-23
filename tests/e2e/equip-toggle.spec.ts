@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-import { clearWorld, createItem } from './helpers/documents.mjs';
+import { clearWorld } from './helpers/documents.mjs';
 import { gotoGame } from './helpers/session.mjs';
-import { closeAllSheets, dismissOverlays, openDocumentSheet } from './helpers/sheets.mjs';
+import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
+import { dismissOverlays } from './helpers/ui.mjs';
 
 /**
  * E2E test for equip/unequip toggle on actor inventory items.
