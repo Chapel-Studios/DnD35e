@@ -7,7 +7,7 @@ import { ALIGNMENT_I18N, NEUTRAL } from '@constants/alignment.mjs';
 import type { Size } from '@constants/sizes.mjs';
 import { addCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import { CurrencyData } from '@fields/index.mjs';
-import { GAME_RULES_KEYS, type SettingsStore,SettingsStoreSymbol } from '@settings/index.mjs';
+import { GAME_RULES_KEYS, type SettingsStore, SettingsStoreSymbol } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { SelectOption } from '@vc/fields/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
