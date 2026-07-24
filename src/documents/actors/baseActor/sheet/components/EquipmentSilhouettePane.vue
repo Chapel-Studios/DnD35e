@@ -76,7 +76,7 @@
   } from '@constants/equipmentSlots.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { ItemDnd35e } from '@items/baseItem/index.mjs';
-  import { computed, inject, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+  import { computed, inject, reactive, ref } from 'vue';
 
   type EquippableItemData = {
     isEquipped?: boolean;
@@ -110,7 +110,6 @@
   const dropZoneDepth = reactive<Record<SlotZone['id'], number>>(
     Object.fromEntries([...EQUIP_SLOTS, 'twoHands'].map(slot => [slot, 0])) as Record<SlotZone['id'], number>
   );
-  const embeddedItemRefresh = ref(0);
 
   const localize = (key: string): string => game.i18n.localize(key);
   const paneStore = inject(EquipmentPaneStoreSymbol) as EquipmentPaneStore;
@@ -146,10 +145,7 @@
     if (target) target.src = FALLBACK_ITEM_ICON;
   };
 
-  const actorItems = computed(() => {
-    embeddedItemRefresh.value;
-    return [...store._storeUtils.document.value.items];
-  });
+  const actorItems = computed(() => [...store._storeUtils.document.value.items]);
 
   const equippableItems = computed<EquippableItemDocument[]>(() => {
     return actorItems.value.filter((item) => {
@@ -184,20 +180,6 @@
   const shouldShowUnequipButton = (zoneId: SlotZone['id']): boolean => {
     if (!getZoneOccupant(zoneId)) return false;
     return !isZoneDisabled(zoneId);
-  };
-
-  const bumpEmbeddedItemRefresh = (): void => {
-    embeddedItemRefresh.value += 1;
-  };
-
-  const onAnyEmbeddedItemMutation = (...args: unknown[]): void => {
-    const item = args[0];
-    if (!(item instanceof Item)) return;
-    const parent = item.parent;
-    if (!(parent instanceof Actor)) return;
-    if (parent.id !== actorId.value) return;
-    delete failedIconSrcByItemId[item.id];
-    bumpEmbeddedItemRefresh();
   };
 
   const onDragOver = (event: DragEvent): void => {
@@ -308,18 +290,6 @@
       'system.equippedSlotIds': [],
     });
   };
-
-  onMounted(() => {
-    Hooks.on('updateItem', onAnyEmbeddedItemMutation);
-    Hooks.on('createItem', onAnyEmbeddedItemMutation);
-    Hooks.on('deleteItem', onAnyEmbeddedItemMutation);
-  });
-
-  onBeforeUnmount(() => {
-    Hooks.off('updateItem', onAnyEmbeddedItemMutation);
-    Hooks.off('createItem', onAnyEmbeddedItemMutation);
-    Hooks.off('deleteItem', onAnyEmbeddedItemMutation);
-  });
 </script>
 
 <style scoped lang="scss">

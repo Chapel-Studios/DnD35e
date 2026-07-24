@@ -48,6 +48,7 @@
           :item="getRowItem(row)"
           :variant="variant"
           :is-carried="isCarried"
+          :is-equipped="row.isEquipped"
           :toggle-title="toggleTitle"
           :owner-uuid="effectiveOwnerUuid"
           :field-path="resolvedFieldPath"
@@ -107,6 +108,7 @@
     weightDisplay: string;
     typeLabel: string;
     isCarried: boolean;
+    isEquipped: boolean;
   };
 
   const props = withDefaults(defineProps<{
@@ -214,6 +216,7 @@
           weightDisplay: `${weight}`,
           typeLabel: localize('dnd35e.WEAPON.Type.' + ((item.system as { weaponType?: string }).weaponType ?? 'simple')),
           isCarried: itemData.isCarried ?? false,
+          isEquipped: (itemData as InventoryItemData).isEquipped ?? false,
         };
       });
   });

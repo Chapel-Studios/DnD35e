@@ -56,9 +56,10 @@ test.describe('equip/unequip toggle', () => {
       }
     );
 
-    // Open actor inventory sheet
+    // Open actor sheet and switch to the Inventory tab (sheet defaults to Attributes)
     const sheet = await openDocumentSheet(page, actorUuid);
     await dismissOverlays(page);
+    await page.locator(`${sheet} nav.sheet-tabs a[data-tab="inventory"]`).first().click();
 
     // Find the weapon row in the inventory table
     const weaponRow = page.locator(`${sheet} table tbody tr`).filter({ hasText: 'Longsword' });
@@ -73,37 +74,31 @@ test.describe('equip/unequip toggle', () => {
 
     // Click equip button to toggle on
     await initialEquipButton.click();
-    await page.waitForLoadState('networkidle');
-
-    // Verify weapon is now equipped (visual indicator active)
-    const equippedAfterClick = await initialEquipButton.evaluate((el) =>
-      el.classList.contains('is-active')
-    );
-    expect(equippedAfterClick).toBe(true);
 
     // Verify backend: weapon item should have isEquipped = true
-    const equippedState = await page.evaluate(
+    await expect.poll(async () => page.evaluate(
       (uuid) => (globalThis as any).fromUuid(uuid).then((item: any) => item.system.isEquipped),
       weaponUuid
-    );
-    expect(equippedState).toBe(true);
+    )).toBe(true);
+
+    // Verify weapon is now equipped (visual indicator active)
+    await expect.poll(() => initialEquipButton.evaluate((el) =>
+      el.classList.contains('is-active')
+    )).toBe(true);
 
     // Click equip button again to toggle off
     const toggleButton = weaponRow.locator('[data-equip-toggle]');
     await toggleButton.click();
-    await page.waitForLoadState('networkidle');
-
-    // Verify weapon is unequipped again
-    const unequippedAfterSecondClick = await toggleButton.evaluate((el) =>
-      el.classList.contains('is-active')
-    );
-    expect(unequippedAfterSecondClick).toBe(false);
 
     // Verify backend: weapon item should have isEquipped = false
-    const unequippedState = await page.evaluate(
+    await expect.poll(async () => page.evaluate(
       (uuid) => (globalThis as any).fromUuid(uuid).then((item: any) => item.system.isEquipped),
       weaponUuid
-    );
-    expect(unequippedState).toBe(false);
+    )).toBe(false);
+
+    // Verify weapon is unequipped again
+    await expect.poll(() => toggleButton.evaluate((el) =>
+      el.classList.contains('is-active')
+    )).toBe(false);
   });
 });

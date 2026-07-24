@@ -40,6 +40,8 @@
         v-if="showEquipToggle && isInventoryEditable"
         type="button"
         class="field-control-btn equip-toggle"
+        :class="{ 'is-active': isEquipped }"
+        data-equip-toggle
         :title="localize(equipToggleTitle)"
         @click="toggleEquipped(item as EQUIPPABLE_ITEMS)"
       >
@@ -139,6 +141,10 @@
     /** 'carried' = actor carried/tracked lists; 'container' = a container's own contents. */
     variant?: 'carried' | 'container';
     isCarried?: boolean;
+    /** Whether `item` is currently equipped. Computed by the parent's `rows` list (a
+     * primitive, unlike `item` itself) so Vue's prop diffing actually detects the change
+     * when the underlying item is mutated in place - see InventoryListTable.vue's `rows`. */
+    isEquipped?: boolean;
     toggleTitle?: string;
     /** Uuid of the actor that ultimately owns this item's chain of containers. */
     ownerUuid?: string | null;
@@ -150,6 +156,7 @@
   }>(), {
     variant: 'carried',
     isCarried: false,
+    isEquipped: false,
     toggleTitle: '',
     ownerUuid: null,
     stripe: 'even',
@@ -202,8 +209,7 @@
     );
   };
 
-  const isEquipped = computed<boolean>(() =>
-    isEquippable(props.item) && (props.item.system.isEquipped ?? false));
+  const isEquipped = computed<boolean>(() => props.isEquipped);
 
   const showEquipToggle = computed<boolean>(() =>
     !isContained.value
