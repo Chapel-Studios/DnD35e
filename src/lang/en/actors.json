@@ -66,7 +66,7 @@
           "light":           { "label": "Light Load" },
           "medium":          { "label": "Medium Load" },
           "heavy":           { "label": "Heavy Load" },
-          "carry":           { "label": "Lift Over Head" },
+          "carry":           { "label": "Max Lift Over Head" },
           "maxLift":         { "label": "Max Lift" },
           "drag":            { "label": "Max Drag" },
           "carryBonus":      { "label": "Carry Bonus" },
@@ -127,7 +127,7 @@
         "size": { "label": "Size" },
         "reach": { "label": "Reach", "hint": "The distance at which this creature can make melee attacks." },
         "isIncorporeal": { "label": "Incorporeal?", "hint": "Whether this creature is incorporeal or not." },
-        "isQuadraped": { "label": "Quadruped?", "hint": "Whether this creature is a quadruped or not." },
+        "isQuadruped": { "label": "Quadruped?", "hint": "Whether this creature is a quadruped or not." },
         "creatureType": { "label": "Creature Type", "hint": "The creature type of this creature, such as 'Humanoid', 'Undead', 'Dragon', etc." },
         "aooCount": { "label": "Attacks of Opportunity", "hint": "The number of attacks of opportunity this creature can make per round." }
       },

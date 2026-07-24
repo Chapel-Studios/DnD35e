@@ -18,7 +18,8 @@ const useSettingsStore = (): SettingsStore => {
     highestVisibleCoin: computed(() => {
       const enabledCoinages = currencySettings.value?.coinages
         .filter(c => c.enabled && visibilityWithinBounds(c.visibility, COINAGE_VISIBILITIES.gmSelect)) ?? [];
-      return enabledCoinages.reduce((prev, curr) => (curr.valueInGp > prev.valueInGp ? curr : prev), enabledCoinages[0]).id;
+      return enabledCoinages.reduce((prev, curr) => (curr.valueInGp > prev.valueInGp ? curr : prev), enabledCoinages[0])
+        .id ?? 'srd_gp';
     }),
   };
 

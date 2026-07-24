@@ -43,31 +43,14 @@ abstract class CreatureSystemModel extends ActorSystemModel {
   static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.CREATURE'];
 
   /**
-   * Reset every AE-mutated field this class cares about to its baseline before
-   * `applyActiveEffects('initial')` runs (which happens in `prepareEmbeddedDocuments()`,
-   * right after `prepareBaseData()` - before `prepareDerivedData()` computes ability mods
-   * and encumbrance from them - see docs/architecture/actor-data-pipeline.md). DataModel
-   * instances persist in memory across `prepareData()` passes, so any field an 'initial'-phase
-   * ADD/DOWNGRADE change writes to must be put back to a known baseline here, or it
-   * compounds every re-prepare instead of just applying once:
-   *  - `abilities.*.score` is a real persisted field (the character's entered score) - reset
-   *    from `_source`, not a hardcoded baseline, so an item AE like "of Strength +4" (an
-   *    'initial'-phase ADD targeting `system.abilities.str.score`) adds cleanly on top of
-   *    the true stored score every pass instead of stacking on its own previous result.
-   *    This is what guarantees the enhancement resolves - and is reflected in `score` -
-   *    before `_prepareEncumbrance()` below ever reads it.
-   *  - `encumbrance.carriedWeight` (populated only via `PhysicalItem._buildCarriedChanges()`'s
-   *    'add' changes) would compound every re-prepare since nothing else recomputes it from
-   *    scratch.
-   *  - `encumbrance.carryBonus`/`carryMultiplier` (AE targets per the Carrying Capacity table -
-   *    e.g. a Carrying feat or Ant Haul) are `persisted: false` derived fields with no
-   *    `_source` to fall back on, so they reset to their schema defaults (0 / 1) instead.
-   *  - `maxDexBonus`/`armorCheckPenalty` (populated only via `Creature.getSelfContributedChanges()`'s
-   *    'final'-phase DOWNGRADE changes) have the same problem in reverse: once downgraded,
-   *    they'd never return to baseline after the tier drops back to 0, since DOWNGRADE
-   *    never restores a value, only lowers it further.
-   * Mirrors the existing reset pattern used for `speed.<key>`/`inventoryValue` in
-   * `ActorSystemModel.prepareDerivedData()`.
+   * Reset every AE-mutated field to baseline before `applyActiveEffects('initial')` runs.
+   * DataModel instances persist across `prepareData()` passes, so 'initial'-phase changes
+   * would compound on re-prepare if not reset:
+   *  - `abilities.*.score`: reset from `_source` so enhancements stack cleanly each pass
+   *  - `encumbrance.carriedWeight`: would compound, only recomputed via item changes
+   *  - `encumbrance.carryBonus`/`carryMultiplier`: reset to schema defaults (0 / 1)
+   *  - `maxDexBonus`/`armorCheckPenalty`: reset so DOWNGRADE applies correctly each pass
+   * See docs/architecture/actor-data-pipeline.md.
    */
   override prepareBaseData(): void {
     super.prepareBaseData();
@@ -94,15 +77,8 @@ abstract class CreatureSystemModel extends ActorSystemModel {
 
   /**
    * Derive carrying-capacity thresholds from effective Strength (base score + carryBonus)
-   * per SRD Table: Carrying Capacity, scaled by carryMultiplier (size/quadruped AEs target
-   * this). SRD "lift over head" equals the `heavy` threshold (see `CreatureEncumbrance.vue`'s
-   * `carry` label); `maxLift` ("lift off ground") is 2x heavy; `drag` ("push or drag") is
-   * 5x heavy.
-   *
-   * `tier` is derived from `carriedWeight` here too - carried-item AE changes that
-   * populate `carriedWeight` apply in the 'initial' phase (see `PhysicalItem._buildCarriedChanges()`),
-   * which runs before `prepareDerivedData()`, so `carriedWeight` is already settled for
-   * this pass by the time this method runs.
+   * per SRD Table: Carrying Capacity, scaled by carryMultiplier. Note: `carriedWeight`
+   * is already settled here, populated during the 'initial' AE phase.
    */
   private _prepareEncumbrance(): void {
     const encumbrance = this.encumbrance;
@@ -230,7 +206,6 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       light:           useDnd35eField(derivedNumberField(0)),
       medium:          useDnd35eField(derivedNumberField(0)),
       heavy:           useDnd35eField(derivedNumberField(0)),
-      carry:           useDnd35eField(derivedNumberField(0)),
       maxLift:         useDnd35eField(derivedNumberField(0)),
       drag:            useDnd35eField(derivedNumberField(0)),
       tier:            useDnd35eField(derivedNumberField(0)),
