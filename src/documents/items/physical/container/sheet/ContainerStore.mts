@@ -3,7 +3,7 @@ import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
 import { usePhysicalItemStore } from '@items/physical/physicalItem/index.mjs';
 import { physicalItemEffectsTab } from '@items/physical/physicalItem/sheet/tabs/index.mjs';
-import { type SettingsStore,SettingsStoreSymbol } from '@settings/shared/sheet/index.mjs';
+import { type SettingsStore, SettingsStoreSymbol } from '@settings/shared/sheet/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
 import { computed, inject } from 'vue';
