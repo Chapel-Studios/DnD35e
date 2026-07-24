@@ -122,7 +122,7 @@ All actors inherit these fields.
 | `speed.swim` | number | 6 🔲 | Stored + AE-mutated | `attributes.speed.swim.base` | Default 0 |
 | `speed.burrow` | number | 6 🔲 | Stored + AE-mutated | `attributes.speed.burrow.base` | Default 0 |
 | `speed.fly` | number | 6 🔲 | Stored + AE-mutated | `attributes.speed.fly.base` | Default 0 |
-| `speed.fly.maneuverability` | string | 6 🔲 | Stored | `attributes.speed.fly.maneuverability` | "clumsy"\|"poor"\|"average"\|"good"\|"perfect" |
+| `speed.flyManeuverability` | string | 6 🔲 | Stored | `attributes.speed.fly.maneuverability` | "clumsy"\|"poor"\|"average"\|"good"\|"perfect" |
 | `biography` | string | 6 🔲 | Stored | `details.biography.value` | Rich text |
 | `notes` | string | 6 🔲 | Stored | `details.notes.value` | Rich text |
 | `bond` | — | ⛔ | — | `master` | Replaced by Bond Pattern AE on the bonded creature. Not a stored field. |
