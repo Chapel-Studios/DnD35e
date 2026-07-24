@@ -35,6 +35,8 @@ import {
   BONUS_TYPES,
   type BonusType,
 } from './bonusTypes.mjs';
+import type { CarryingCapacity } from './carryingCapacity.mjs';
+import { getCarryingCapacity } from './carryingCapacity.mjs';
 import {
   BROKEN_ARMOR_AE_UUID,
   BROKEN_WEAPON_AE_UUID,
@@ -116,6 +118,7 @@ export {
   FLY_MANEUVERABILITY,
   FLY_MANEUVERABILITY_LOCALIZED,
   FLY_MANEUVERABILITY_OPTIONS,
+  getCarryingCapacity,
   GOOD,
   hbsTemplatePath,
   INT,
@@ -157,6 +160,7 @@ export {
 export type {
   AbilityKey,
   BonusType,
+  CarryingCapacity,
   FlyManeuverability,
   LawAxis,
   MaskedEditStrategy,

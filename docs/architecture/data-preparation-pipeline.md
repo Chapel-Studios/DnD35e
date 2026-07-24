@@ -184,6 +184,7 @@ Warnings are displayed on the character sheet as an expandable panel. They never
 | System | Integration |
 |---|---|
 | [Active Effects](active-effect-lifecycle.md) | Phase application system aligns with preparation stages |
+| [Actor Data Pipeline](actor-data-pipeline.md) | Verified real call sites (Item vs. Actor asymmetry), open ordering risks, and empirical findings that supplement this conceptual doc |
 | [Bonus Stacking](bonus-stacking.md) | Stacking engine runs during `prepareDerivedData()` |
 | [Progression](progression-system.md) | Level history feeds BAB/save/HP derivation |
 | [Action System](action-system.md) | `action.*` effects deferred to roll time, not resolved during prep |

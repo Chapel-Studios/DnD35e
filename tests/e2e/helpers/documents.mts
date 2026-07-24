@@ -72,6 +72,46 @@ export async function createActiveEffect (
 }
 
 /**
+ * Stow an item into a container by driving the container sheet's real
+ * `_onDrop` handler with a synthetic Foundry drag payload.
+ *
+ * This exercises the exact production code path a user's drag-and-drop takes:
+ * `ContainerSheet._onDrop` → `#onItemDrop` → `syncContainmentAe`, which is what
+ * actually creates the item-contribution ActiveEffect on the container (and
+ * sets the item's `system.containerUuid`).
+ *
+ * Prefer this over setting `system.containerUuid` directly: a direct update
+ * bypasses the "add" branch of `syncContainmentAe` (the item already reports as
+ * being in the right container, so no contribution AE is created).
+ *
+ * Caller must be authenticated as GM. Both documents must already exist.
+ */
+export async function stowItemViaDrop (
+  page: Page,
+  itemUuid: string,
+  containerUuid: string
+): Promise<void> {
+  await page.evaluate(async ({ itemUuid, containerUuid }) => {
+    const fromUuid = (globalThis as any).fromUuid;
+    const container = await fromUuid(containerUuid);
+    if (!container) throw new Error(`stowItemViaDrop: container not found at ${containerUuid}`);
+    const item = await fromUuid(itemUuid);
+    if (!item) throw new Error(`stowItemViaDrop: item not found at ${itemUuid}`);
+
+    // Build the Foundry drag payload the sheet's _onDrop expects.
+    const dragData = JSON.stringify({ type: 'Item', uuid: itemUuid });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.setData('text/plain', dragData);
+    const dropEvent = new DragEvent('drop', { dataTransfer, bubbles: true, cancelable: true });
+
+    // container.sheet is a ContainerSheet; _onDrop routes to syncContainmentAe.
+    const sheet = container.sheet;
+    if (!sheet) throw new Error('stowItemViaDrop: container has no sheet');
+    await sheet._onDrop(dropEvent);
+  }, { itemUuid, containerUuid });
+}
+
+/**
  * Wipe all world-level documents Foundry's UI exposes to a GM.
  *
  * Call from `afterEach` in any spec that creates documents, so the next test
@@ -83,13 +123,16 @@ export async function clearWorld (page: Page): Promise<void> {
   await page.evaluate(async () => {
     const g = (globalThis as any).game;
     if (!g?.ready) return;
-    await Promise.all([
-      ...g.actors.map((a: any) => a.delete()),
-      ...g.items.map((i: any) => i.delete()),
-      ...g.messages.map((m: any) => m.delete()),
-      // Scenes intentionally NOT cleared — the snapshot's "Test Scene" is
-      // expected to persist. If a test creates extra scenes, it should
-      // delete them itself.
-    ]);
+    // Delete sequentially (not Promise.all): containers run cleanup handlers on
+    // their contents when destroyed. Deleting a container and its contents
+    // concurrently races the cleanup `update` against the sibling delete, which
+    // the server rejects ("Cannot read properties of undefined (reading '_id')").
+    // Actors first (embedded items go with them), then remaining world items.
+    for (const a of [...g.actors]) await a.delete();
+    for (const i of [...g.items]) await i.delete();
+    for (const m of [...g.messages]) await m.delete();
+    // Scenes intentionally NOT cleared — the snapshot's "Test Scene" is
+    // expected to persist. If a test creates extra scenes, it should
+    // delete them itself.
   });
 }

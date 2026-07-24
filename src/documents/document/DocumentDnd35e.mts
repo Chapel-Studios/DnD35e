@@ -57,6 +57,18 @@ type DocumentConstructor<TBase extends AbstractConstructorOf<ClientDocument>> =
   (abstract new (...args: ConstructorParameters<TBase>) => DocumentDnd35e<TBase>) & { [K in keyof TBase]: TBase[K] };
 
 
+/**
+ * Refreshes the Vue store (if any) registered for a given document, forcing its
+ * sheet's `document` ref to trigger and any dependent computeds to recompute.
+ */
+const refreshDocumentStore = (doc: ClientDocument | null | undefined): void => {
+  if (!doc) return;
+  const storeRef = game.dnd35e?.stores
+    ?.[doc.documentName as DocumentStoreType]
+    ?.[doc.id] as DocumentSheetStore<any> | undefined;
+  storeRef?._storeUtils.refreshDocument?.(doc as any);
+};
+
 const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base: TBase): DocumentConstructor<TBase> => {
   abstract class DocumentDnd35e extends Base {
     constructor (...args: any[]) {
@@ -97,6 +109,11 @@ const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base
       userId: string
     ): void {
       super._onCreate(data as any, options, userId);
+
+      // A newly-created embedded document (e.g. an Item added to an Actor) has no
+      // store of its own yet, but its parent's rendered list needs to pick it up.
+      refreshDocumentStore(this.parent as unknown as ClientDocument | null | undefined);
+
       // Defer until after the full synchronous _onCreate call stack (including all
       // subclass overrides that call super first) has completely unwound.
       queueMicrotask(() => void this.events.emit(DocumentDnd35e.LifeCycle.created, { document: this, options }));
@@ -149,11 +166,11 @@ const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base
         await this.events.emit(event.event, event);
       }
 
-      const storeRef = game.dnd35e?.stores
-        ?.[this.documentName as DocumentStoreType]
-        ?.[this.id] as DocumentSheetStore<any> | undefined;
-      if (!storeRef) return;
-      storeRef._storeUtils.refreshDocument?.(this);
+      refreshDocumentStore(this);
+      // A document's own store only covers its own open sheet; embedded documents
+      // (Items on an Actor, ActiveEffects on an Actor/Item) also need their parent's
+      // store refreshed so rows/panes rendering this document's live fields update.
+      refreshDocumentStore(this.parent as unknown as ClientDocument | null | undefined);
       
       // console.log(`DocumentDnd35e._onUpdate: ${this.documentName} ${this.id}`, data, options);
       queueMicrotask(() => void this.events.emit(DocumentDnd35e.LifeCycle.updated, { document: this, options }));
@@ -182,7 +199,10 @@ const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base
       // clear() below is safe — async handlers still run from the snapshot.
       void this.events.emit(DocumentDnd35e.LifeCycle.destroyed, { document: this });
       this.events.clear();
+      const parent = this.parent as unknown as ClientDocument | null | undefined;
       super._onDelete(options, userId);
+      // Parent's rendered list needs to drop this row now that it's gone.
+      refreshDocumentStore(parent);
     }
   }
   

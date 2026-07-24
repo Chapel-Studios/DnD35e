@@ -1,5 +1,8 @@
 import { ActorSystemModel } from '@actors/baseActor/data/index.mjs';
+import { ABILITY_KEYS } from '@constants/abilities.mjs';
+import { computeEncumbranceTier } from '@constants/carryingCapacity.mjs';
 import {
+  getCarryingCapacity,
   LAW_AXES,
   MASKED_EDIT_STRATEGY,
   MORAL_AXES,
@@ -15,9 +18,10 @@ import {
   requiredTypedStringField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
+import { NullableCapNumberField } from '@fields/NullableCapNumberField.mjs';
 import { FormulaField } from '@helpers/formulae/index.mjs';
 
-import type { CreatureSystemData } from './CreatureSystemData.mjs';
+import type { CreatureSystemData, CreatureSystemSource } from './CreatureSystemData.mjs';
 
 const {
   ArrayField,
@@ -38,11 +42,60 @@ const nullableBioField = () =>
 abstract class CreatureSystemModel extends ActorSystemModel {
   static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.CREATURE'];
 
+  /**
+   * Reset every AE-mutated field to baseline before `applyActiveEffects('initial')` runs.
+   * DataModel instances persist across `prepareData()` passes, so 'initial'-phase changes
+   * would compound on re-prepare if not reset:
+   *  - `abilities.*.score`: reset from `_source` so enhancements stack cleanly each pass
+   *  - `encumbrance.carriedWeight`: would compound, only recomputed via item changes
+   *  - `encumbrance.carryBonus`/`carryMultiplier`: reset to schema defaults (0 / 1)
+   *  - `maxDexBonus`/`armorCheckPenalty`: reset so DOWNGRADE applies correctly each pass
+   * See docs/architecture/actor-data-pipeline.md.
+   */
+  override prepareBaseData(): void {
+    super.prepareBaseData();
+
+    const sourceAbilities = (this._source as unknown as CreatureSystemSource).abilities;
+    for (const key of ABILITY_KEYS) {
+      this.abilities[key].score = sourceAbilities[key].score;
+    }
+
+    this.encumbrance.carriedWeight = this.currency.getWeightInLbs();
+    this.encumbrance.carryBonus = 0;
+    this.encumbrance.carryMultiplier = 1;
+    this.encumbrance.maxDexBonus = null;
+    this.encumbrance.armorCheckPenalty = 0;
+  }
+
   override prepareDerivedData(): void {
     super.prepareDerivedData();
     for (const ability of Object.values(this.abilities)) {
       ability.mod = Math.floor((ability.score - 10) / 2);
     }
+    this._prepareEncumbrance();
+  }
+
+  /**
+   * Derive carrying-capacity thresholds from effective Strength (base score + carryBonus)
+   * per SRD Table: Carrying Capacity, scaled by carryMultiplier. Note: `carriedWeight`
+   * is already settled here, populated during the 'initial' AE phase.
+   */
+  private _prepareEncumbrance(): void {
+    const encumbrance = this.encumbrance;
+    const effectiveStrength = this.abilities.str.score + encumbrance.carryBonus;
+    const base = getCarryingCapacity(effectiveStrength, this.size, this.isQuadruped);
+
+    encumbrance.light = Math.floor(base.light * encumbrance.carryMultiplier);
+    encumbrance.medium = Math.floor(base.medium * encumbrance.carryMultiplier);
+    encumbrance.heavy = Math.floor(base.heavy * encumbrance.carryMultiplier);
+    encumbrance.maxLift = encumbrance.heavy * 2;
+    encumbrance.drag = encumbrance.heavy * 5;
+    encumbrance.tier = computeEncumbranceTier(
+      encumbrance.carriedWeight,
+      encumbrance.light,
+      encumbrance.medium,
+      encumbrance.heavy
+    );
   }
 
   static override defineSchema(): Record<string, any> {
@@ -133,7 +186,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
 
     schema.notes = useDnd35eField(new HTMLField({ required: false, nullable: false, blank: true }));
 
-    schema.currency = new CurrencyField({ required: true });
+    schema.currency = useDnd35eField(new CurrencyField({ required: true }));
 
     schema.attacks = new ArrayField(new SchemaField({
       damageRoll: new StringField({ required: true, initial: '', blank: true }),
@@ -153,15 +206,17 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       light:           useDnd35eField(derivedNumberField(0)),
       medium:          useDnd35eField(derivedNumberField(0)),
       heavy:           useDnd35eField(derivedNumberField(0)),
-      carry:           useDnd35eField(derivedNumberField(0)),
+      maxLift:         useDnd35eField(derivedNumberField(0)),
       drag:            useDnd35eField(derivedNumberField(0)),
-      level:           useDnd35eField(derivedNumberField(0)),
+      tier:            useDnd35eField(derivedNumberField(0)),
       carryBonus:      useDnd35eField(derivedNumberField(0)),
       carryMultiplier: useDnd35eField(derivedNumberField(1)),
+      maxDexBonus:     useDnd35eField(new NullableCapNumberField({ required: true, nullable: true, initial: null, persisted: false })),
+      armorCheckPenalty: useDnd35eField(derivedNumberField(0)),
     });
 
     schema.isIncorporeal = useDnd35eField(derivedBooleanField(false), { familiar: { aliases: ['incorporeal'] } });
-    schema.isQuadraped = useDnd35eField(derivedBooleanField(false), { familiar: { aliases: ['quadraped'] } });
+    schema.isQuadruped = useDnd35eField(derivedBooleanField(false), { familiar: { aliases: ['quadraped'] } });
 
     schema.creatureType = useDnd35eField(derivedNullableOptionalStringField(null));
 

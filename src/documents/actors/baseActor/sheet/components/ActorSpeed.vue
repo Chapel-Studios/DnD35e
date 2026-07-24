@@ -76,18 +76,18 @@
 
   const allModes = computed(() => Object.entries(SPEED_KEYS_LOCALIZED)
     .map(([key, label]) => {
-      const value = getViewAwareFieldValue<number>(`system.speed.${key}.total`) ?? 0;
+      const value = getViewAwareFieldValue<number>(`system.speed.${key}`) ?? 0;
       const isFlySpeed = key === SPEED_TYPE.FLY;
       const hasNoValue = value === 0;
       
       return {
         key,
         label,
-        fieldPath: `system.speed.${key}.base`,
+        fieldPath: `system.speed.${key}`,
         value,
         isFlySpeed,
         hasNoValue,
-        showAltReadOnly: hasNoValue || isFlySpeed, // only show the alt read-only display if the speed is 0 (i.e. doesn't exist)
+        showAltReadOnly: hasNoValue || isFlySpeed, // show the alt read-only display when the speed is 0 (doesn't exist), or always for fly (to show maneuverability alongside the value)
       };
     }));
 
@@ -99,7 +99,7 @@
     showFlyManueverabilityPicker.value ? FLY_MANEUVERABILITY_OPTIONS : [{ value: '-', label: '-' }]);
 
   const flyManeuverability = computed(() => getViewAwareFieldValue<FlyManeuverability | null>('system.speed.flyManeuverability')
-    ?? FLY_MANEUVERABILITY.CLUMSY); // default to clumsy if fly speed exists but maneuverability is not set
+    ?? FLY_MANEUVERABILITY.CLUMSY); // default to clumsy whenever maneuverability isn't set
   const flyManeuverabilityLabel = computed(() => {
     return game.i18n.localize(FLY_MANEUVERABILITY_OPTIONS
       .find(opt => opt.value === flyManeuverability.value)

@@ -1,29 +1,27 @@
 import { FLY_MANEUVERABILITIES } from '@constants/index.mjs';
 import { DocumentSystemModel } from '@documents/document/data/DocumentSystemModel.mjs';
 import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
-import { derivedNumberField, requiredNumberField, useDnd35eField } from '@fields/fieldBuilders.mjs';
+import { requiredNumberField, useDnd35eField } from '@fields/fieldBuilders.mjs';
+import { CurrencyData } from '@fields/index.mjs';
 
-import type { ActorSystemData } from './ActorSystemData.mjs';
+import type { ActorSystemData, ActorSystemSource } from './ActorSystemData.mjs';
 
 const {
   SchemaField, StringField,
 } = foundry.data.fields;
 
-const speedEntry = (defaultValue: number) => new SchemaField({
-  base:  useDnd35eField(requiredNumberField(defaultValue)),
-  total: useDnd35eField(derivedNumberField(defaultValue)),
-});
+const speedField = (defaultValue: number) => useDnd35eField(requiredNumberField(defaultValue));
 
 abstract class ActorSystemModel extends DocumentSystemModel<foundry.documents.Actor> {
   static override defineSchema(): Record<string, any> {
     const schema = super.defineSchema();
 
     schema.speed = new SchemaField({
-      land:   speedEntry(30),
-      climb:  speedEntry(0),
-      swim:   speedEntry(0),
-      burrow: speedEntry(0),
-      fly:    speedEntry(0),
+      land:   speedField(30),
+      climb:  speedField(0),
+      swim:   speedField(0),
+      burrow: speedField(0),
+      fly:    speedField(0),
       flyManeuverability: useDnd35eField(new StringField({
         nullable: true,
         required: true,
@@ -40,11 +38,17 @@ abstract class ActorSystemModel extends DocumentSystemModel<foundry.documents.Ac
   override prepareDerivedData(): void {
     super.prepareDerivedData();
 
-    this.speed.land.total = this.speed.land.base;
-    this.speed.climb.total = this.speed.climb.base;
-    this.speed.swim.total = this.speed.swim.base;
-    this.speed.burrow.total = this.speed.burrow.base;
-    this.speed.fly.total = this.speed.fly.base;
+    // Speed fields are mutated by effects in 'final' phase. Reset from _source
+    // here (before that phase) so DOWNGRADE effects don't persist after their
+    // cause is gone. See CreatureSystemModel.prepareBaseData() for similar resets.
+    const sourceSpeed = (this._source as unknown as ActorSystemSource).speed;
+    this.speed.land = sourceSpeed.land;
+    this.speed.climb = sourceSpeed.climb;
+    this.speed.swim = sourceSpeed.swim;
+    this.speed.burrow = sourceSpeed.burrow;
+    this.speed.fly = sourceSpeed.fly;
+
+    this.inventoryValue = new CurrencyData();
   }
 }
 

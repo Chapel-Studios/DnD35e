@@ -1,20 +1,35 @@
 <template>
   <div
     class="inventory-drop-zone"
-    :class="{ 'is-drop-target': dropZoneState.active }"
+    :class="{ 'is-drop-target': dropZoneState.active, 'is-locked': !isInventoryEditable }"
     @dragenter="onDragEnter"
     @dragleave="onDragLeave"
     @dragover="onDragOver"
     @drop="onDrop"
   >
+    <div
+      v-if="!isInventoryEditable"
+      class="inventory-lock-badge"
+      :title="localize('dnd35e.ACTOR.inventory.locked')"
+    >
+      <i class="fas fa-lock" />
+      <span>{{ localize('dnd35e.ACTOR.inventory.locked') }}</span>
+    </div>
+
     <CategorizedListTable
       :title="title"
       :column-count="8"
+      :column-widths="COLUMN_WIDTHS"
+      :compact="variant === 'container'"
       :rows="rows"
       :empty-label="emptyLabel"
       :empty-icon="emptyIcon"
       :enable-subcategory-collapse="true"
     >
+      <template v-if="title" #controls>
+        <FieldControls :field-path="resolvedFieldPath" />
+      </template>
+
       <template #header>
         <tr>
           <th class="name-col">{{ localize('dnd35e.ACTOR.inventory.column.name') }}</th>
@@ -24,112 +39,22 @@
           <th class="equip-col" />
           <th class="open-col" />
           <th class="carry-col" />
-          <th class="delete-col" />
+          <th class="destroy-col" />
         </tr>
       </template>
 
-      <template #row="{ row }">
-        <tr
-          class="inventory-row"
-          :data-container-uuid="getRowContainerUuid(row)"
-        >
-          <td class="name-col item-name">
-            <button
-              v-if="isContainerRow(row)"
-              type="button"
-              class="field-control-btn container-expand-btn"
-              :title="getContainerExpandTitle(row)"
-              @click.stop="toggleContainerExpand(getRowItem(row).id)"
-            >
-              <i class="fas" :class="isContainerExpanded(getRowItem(row).id) ? 'fa-chevron-down' : 'fa-chevron-right'" />
-            </button>
-            <span
-              class="drag-handle"
-              draggable="true"
-              :data-item-id="getRowItem(row).id"
-              @dragstart="onDragStart($event, getRowItem(row))"
-            >
-              <i class="fas fa-grip-vertical" />
-              <img
-                :key="getIconKey(getRowItem(row))"
-                class="item-icon"
-                :src="getItemIcon(getRowItem(row))"
-                :alt="getRowItem(row).name"
-                draggable="false"
-                loading="lazy"
-              >
-              {{ getRowItem(row).name }}
-            </span>
-          </td>
-          <td class="type-col">{{ getRowTypeLabel(row) }}</td>
-          <td class="qty-col">{{ getRowQuantity(row) }}</td>
-          <td class="weight-col">{{ getRowWeightDisplay(row) }}</td>
-          <td class="equip-col">
-            <button
-              v-if="variant === 'carried' && isCarried && isEquippable(getRowItem(row))"
-              type="button"
-              class="field-control-btn equip-toggle"
-              :title="localize(getEquipToggleTitle(getRowItem(row)))"
-              @click="toggleEquipped(getRowItem(row) as EQUIPPABLE_ITEMS)"
-            >
-              <i :class="isItemEquipped(getRowItem(row)) ? 'fas fa-toggle-on' : 'fas fa-toggle-off'" />
-            </button>
-          </td>
-          <td class="open-col">
-            <button
-              type="button"
-              class="field-control-btn open-sheet-btn"
-              :title="localize('dnd35e.ACTOR.inventory.action.openItemSheet')"
-              @click="openItemSheet(getRowItem(row))"
-            >
-              <i class="fas fa-up-right-from-square" />
-            </button>
-          </td>
-          <td class="carry-col">
-            <button
-              v-if="variant === 'carried'"
-              type="button"
-              class="field-control-btn carry-toggle"
-              :title="localize(toggleTitle)"
-              @click="toggleCarried(getRowItem(row))"
-            >
-              <i :class="isCarried ? 'fas fa-backpack' : 'fas fa-box-open'" />
-            </button>
-            <button
-              v-else
-              type="button"
-              class="field-control-btn carry-toggle"
-              :title="localize('dnd35e.CONTAINER.action.removeFromContainer')"
-              @click="removeFromContainer(getRowItem(row))"
-            >
-              <i class="fas fa-arrow-up-from-bracket" />
-            </button>
-          </td>
-          <td class="destroy-col">
-            <button
-              type="button"
-              class="field-control-btn destroy-item-btn"
-              :title="localize('dnd35e.ACTOR.inventory.action.destroyItem')"
-              @click="destroyItem(getRowItem(row))"
-            >
-              <i class="fas fa-trash" />
-            </button>
-          </td>
-        </tr>
-        <template v-if="isContainerContentsRow(row)">
-          <tr class="inventory-row contained-item-row">
-            <td class="contained-item-cell" colspan="8">
-              <InventoryListTable
-                :title="getRowItem(row).name"
-                variant="container"
-                :is-carried="isCarried"
-                :container-uuid="getRowItem(row).uuid"
-                :owner-uuid="effectiveOwnerUuid"
-                empty-label="dnd35e.CONTAINER.ContentsEmpty"
-              />
-            </td>
-          </tr>
-        </template>
+      <template #row="{ row, index }">
+        <InventoryItemRow
+          :item="getRowItem(row)"
+          :variant="variant"
+          :is-carried="isCarried"
+          :is-equipped="row.isEquipped"
+          :toggle-title="toggleTitle"
+          :owner-uuid="effectiveOwnerUuid"
+          :field-path="resolvedFieldPath"
+          :stripe="forcedStripe ?? (index % 2 === 0 ? 'even' : 'odd')"
+          :on-drag-start="onDragStart"
+        />
       </template>
     </CategorizedListTable>
   </div>
@@ -142,8 +67,7 @@
   import { SUBCATEGORY_LABELS, SUBCATEGORY_ORDER, WEAPON_SUBCATEGORY } from '@constants/inventory.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { syncContainmentAe } from '@effects/containment/index.mjs';
-  import type { ItemDnd35e } from '@items/baseItem/index.mjs';
-  import type { EQUIPPABLE_ITEMS, PHYSICAL_ITEMS, PhysicalItemType } from '@items/itemTypes.mjs';
+  import type { PHYSICAL_ITEMS, PhysicalItemType } from '@items/itemTypes.mjs';
   import {
     containerItemType,
     ITEM_TYPES_LOCALIZED,
@@ -155,9 +79,17 @@
   import { WEAPON_SUBTYPE } from '@items/physical/weapon/data/constants.mjs';
   import type { Weapon, WeaponSubtype, WeaponSystemData } from '@items/physical/weapon/index.mjs';
   import CategorizedListTable, { type CategorizedRow } from '@vc/CategorizedListTable.vue';
+  import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
   import { computed, inject, onBeforeUnmount, reactive } from 'vue';
 
+  import { INVENTORY_FIELD_PATH } from './inventoryFieldPath.mjs';
+  import InventoryItemRow from './InventoryItemRow.vue';
+
   const ALLOWED_ITEM_TYPES = PHYSICAL_ITEM_TYPES;
+
+  // Fixed column widths shared by every InventoryListTable instance (outer + nested
+  // container tables) so columns line up exactly across separate <table> elements.
+  const COLUMN_WIDTHS = ['auto', '7rem', '3.75rem', '3.75rem', '2rem', '2rem', '2rem', '2rem'];
 
   type AllowedItemType = PhysicalItemType;
 
@@ -176,10 +108,11 @@
     weightDisplay: string;
     typeLabel: string;
     isCarried: boolean;
+    isEquipped: boolean;
   };
 
   const props = withDefaults(defineProps<{
-    title: string;
+    title?: string;
     emptyLabel: string;
     toggleTitle?: string;
     isCarried?: boolean;
@@ -191,6 +124,10 @@
     containerUuid?: string;
     /** Uuid of the actor that owns the container (container variant); null when unowned. */
     ownerUuid?: string | null;
+    /** When set, every row uses this stripe color instead of alternating (nested container contents). */
+    forcedStripe?: 'even' | 'odd';
+    /** Pseudo field-path used for this table's own lock/override state. Defaults to the shared inventory-section path. */
+    fieldPath?: string;
   }>(), {
     toggleTitle: '',
     isCarried: false,
@@ -198,6 +135,8 @@
     items: undefined,
     containerUuid: undefined,
     ownerUuid: null,
+    forcedStripe: undefined,
+    fieldPath: undefined,
   });
 
   const DRAG_SOURCE_KEY = 'inventorySourceIsCarried';
@@ -208,8 +147,18 @@
     documentGetters: {
       documentUuid,
       physicalItems: injectedItems,
+      getIsFieldEditable,
     },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
+
+  // Falls back to the shared section-level path when this table isn't given its own
+  // (e.g. nested container tables that haven't opted into individual locking).
+  const resolvedFieldPath = computed(() => props.fieldPath ?? INVENTORY_FIELD_PATH);
+
+  // Inventory has no real schema field (it's a derived embedded-item list), so this reads
+  // purely from the GM override cascade - forceEdit bypasses the edit/play mode gate since
+  // adding/removing carried items is a normal play-mode action, not an authoring-only one.
+  const isInventoryEditable = getIsFieldEditable(resolvedFieldPath.value, undefined, true);
 
   const effectiveOwnerUuid = computed<string | null>(() => {
     return props.ownerUuid ?? documentUuid.value ?? null;
@@ -247,9 +196,10 @@
       })
       .map((item) => {
         const itemData = item.system;
-        const { subcategoryId, subcategoryLabel } = isWeapon(item)
-          ? resolveWeaponSubcategory((itemData as WeaponSystemData).weaponSubtype)
-          : { subcategoryId: WEAPON_SUBCATEGORY.OTHER_WEAPON_SUBCATEGORY, subcategoryLabel: localize(SUBCATEGORY_LABELS[WEAPON_SUBCATEGORY.OTHER_WEAPON_SUBCATEGORY]) };
+        const { subcategoryId, subcategoryLabel } = resolveSubcategoryForItem(item);
+        const subcategorySortOrder = subcategoryId && subcategoryId in SUBCATEGORY_ORDER
+          ? SUBCATEGORY_ORDER[subcategoryId as WeaponSubcategory]
+          : 0;
         const quantity = itemData.quantity ?? 1;
         const weight = itemData.weight ?? 0;
         const allowedType = item.type as AllowedItemType;
@@ -260,100 +210,46 @@
           categoryLabel: localize(ITEM_TYPES_LOCALIZED[allowedType]),
           subcategoryId,
           subcategoryLabel,
-          sortKey: `${SUBCATEGORY_ORDER[subcategoryId]}-${item.name.toLowerCase()}`,
+          sortKey: `${subcategorySortOrder}-${item.name.toLowerCase()}`,
           item,
           quantity,
           weightDisplay: `${weight}`,
           typeLabel: localize('dnd35e.WEAPON.Type.' + ((item.system as { weaponType?: string }).weaponType ?? 'simple')),
           isCarried: itemData.isCarried ?? false,
+          isEquipped: (itemData as InventoryItemData).isEquipped ?? false,
         };
       });
   });
 
   const getRowItem = (row: InventoryRow): PHYSICAL_ITEMS => (row).item as PHYSICAL_ITEMS;
-  const getRowTypeLabel = (row: InventoryRow): string => (row).typeLabel;
-  const getRowQuantity = (row: InventoryRow): number => (row).quantity;
-  const getRowWeightDisplay = (row: InventoryRow): string => (row).weightDisplay;
-  const isContainerContentsRow = (row: InventoryRow): boolean => {
-    return isContainerRow(row)
-      && isContainerExpanded(getRowItem(row).id);
-  };
-  const getContainerExpandTitle = (row: InventoryRow): string => {
-    return isContainerExpanded(getRowItem(row).id)
-      ? localize('dnd35e.CONTAINER.action.collapse')
-      : localize('dnd35e.CONTAINER.action.expand');
-  };
-
-  const isEquippable = (item: PHYSICAL_ITEMS): item is EQUIPPABLE_ITEMS => {
-    const data = item.system as InventoryItemData | undefined;
-    return (
-      !!data
-      && Array.isArray(data.equippedSlotIds)
-      && item instanceof EquippableItem
-      && typeof item.performEquip === 'function'
-      && typeof item.performUnequip === 'function'
-    );
-  };
 
   const isWeapon = (item: PHYSICAL_ITEMS): item is Weapon => {
     return item.type === 'weapon';
   };
 
-  const isItemEquipped = (item: PHYSICAL_ITEMS): boolean => {
-    return isEquippable(item) && (item.system.isEquipped ?? false);
+  type SubcategoryInfo = {
+    subcategoryId?: string;
+    subcategoryLabel?: string;
   };
 
-  const getEquipToggleTitle = (item: PHYSICAL_ITEMS): string => {
-    return isItemEquipped(item)
-      ? 'dnd35e.ACTOR.inventory.action.unequip'
-      : 'dnd35e.ACTOR.inventory.action.equip';
-  };
-
-  const equippableItems = computed<EquippableItem[]>(() => {
-    return sourceItems.value.filter(isEquippable);
-  });
-
-  const equipItemToSlots = async (item: EquippableItem, slots: EquipSlot[]): Promise<void> => {
-    if (
-      item.system.equippedSlotIds?.length === slots.length
-      && item.system.equippedSlotIds?.every((slot) => slots.includes(slot))
-    ) {
-      // Already equipped to the requested slots; no action needed.
-      return;
+  /**
+   * Subcategory grouping is category-specific (per item type), not a single global
+   * scheme: weapons split by wield type, other item types currently have no
+   * subcategories at all (rendered as a flat list within their category). Extend
+   * this switch as new item types (e.g. equipment) gain their own subcategory
+   * schemes — do not fall back to a weapon subcategory for non-weapon types.
+   */
+  const resolveSubcategoryForItem = (item: PHYSICAL_ITEMS): SubcategoryInfo => {
+    if (isWeapon(item)) {
+      return resolveWeaponSubcategory((item.system as WeaponSystemData).weaponSubtype);
     }
-    
-    const conflictingItems = equippableItems.value.filter((other) => {
-      if (other.id === item.id) return false;
-      const otherSlots =  other.system.equippedSlotIds ?? [];
-      return otherSlots.some(slot => slots.includes(slot));
-    });
-
-    for (const conflictingItem of conflictingItems) {
-      await conflictingItem.performUnequip?.();
-    }
-
-    await item.performEquip?.(slots);
-  };
-
-  const toggleEquipped = async (item: EQUIPPABLE_ITEMS): Promise<void> => {
-    if (!isEquippable(item)) return;
-
-    if (isItemEquipped(item)) {
-      await item.performUnequip?.();
-      return;
-    }
-
-    await equipItemToSlots(item, item.defaultSlotIds);
+    return {};
   };
 
   const FALLBACK_ITEM_ICON = '/icons/svg/item-bag.svg';
 
   const getItemIcon = (item: PHYSICAL_ITEMS): string => {
     return  item.img ?? FALLBACK_ITEM_ICON;
-  };
-
-  const getIconKey = (item: PHYSICAL_ITEMS): string => {
-    return `${item.id}:${item.img || 'fallback'}`;
   };
 
   const resolveWeaponSubcategory = (weaponSubtype: WeaponSubtype | undefined): {
@@ -387,52 +283,6 @@
         subcategoryId: WEAPON_SUBCATEGORY.OTHER_WEAPON_SUBCATEGORY,
         subcategoryLabel: localize(SUBCATEGORY_LABELS[WEAPON_SUBCATEGORY.OTHER_WEAPON_SUBCATEGORY]),
       };
-    }
-  };
-
-  const toggleCarried = async (item: PHYSICAL_ITEMS): Promise<void> => {
-    const itemData = item.system as InventoryItemData;
-    const nextState = !(itemData.isCarried ?? false);
-    await item.update({ 'system.isCarried': nextState });
-  };
-
-  const destroyItem = async (item: PHYSICAL_ITEMS): Promise<void> => {
-    const itemName = item.name;
-    const confirmMessage = localize('dnd35e.ACTOR.inventory.confirm.destroyItem')
-      .replace('{itemName}', itemName);
-    if (!window.confirm(confirmMessage)) return;
-    
-    await item.delete();
-  };
-
-  const removeFromContainer = async (item: PHYSICAL_ITEMS): Promise<void> => {
-    await syncContainmentAe(item, null);
-    // await item.update({ 'system.containerUuid': null });
-  };
-
-  /**
-   * Returns the container UUID for a row item if it is a container, else undefined.
-   * Used to set data-container-uuid on rows so they can receive drops.
-   */
-  const getRowContainerUuid = (row: InventoryRow): string | undefined => {
-    const item = getRowItem(row);
-    return item.type === containerItemType ? item.uuid : undefined;
-  };
-
-  // ── Container inline expansion ──────────────────────────────────────────
-  const expandedContainerIds = reactive(new Set<string>());
-
-  const isContainerRow = (row: InventoryRow): boolean =>
-    getRowItem(row).type === containerItemType;
-
-  const isContainerExpanded = (id: string): boolean =>
-    expandedContainerIds.has(id);
-
-  const toggleContainerExpand = (id: string): void => {
-    if (expandedContainerIds.has(id)) {
-      expandedContainerIds.delete(id);
-    } else {
-      expandedContainerIds.add(id);
     }
   };
 
@@ -530,10 +380,6 @@
     }
   };
 
-  const openItemSheet = (item: ItemDnd35e): void => {
-    item.sheet?.render(true);
-  };
-
   const dropZoneState = reactive({
     active: false,
     depth: 0,
@@ -593,13 +439,16 @@
     event.preventDefault();
     event.stopPropagation();
     if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
+      event.dataTransfer.dropEffect = isInventoryEditable.value
+        ? 'move'
+        : 'none';
     }
   };
 
   const onDragEnter = (event: DragEvent): void => {
     event.preventDefault();
     event.stopPropagation();
+    if (!isInventoryEditable.value) return;
     dropZoneState.depth += 1;
     dropZoneState.active = true;
   };
@@ -618,6 +467,8 @@
     event.stopPropagation();
     dropZoneState.active = false;
     dropZoneState.depth = 0;
+
+    if (!isInventoryEditable.value) return;
 
     const rawData = foundry.applications.ux.TextEditor.getDragEventData(event) as Record<string, unknown>;
     const type = rawData?.type;
@@ -716,87 +567,39 @@
 </script>
 
 <style scoped lang="scss">
-  .inventory-row {
-    .equip-col,
-    .open-col,
-    .carry-col {
-      width: 2rem;
-    }
-
-    .qty-col,
-    .weight-col {
-      text-align: right;
-      width: 3.75rem;
-    }
-
-    .type-col {
-      white-space: nowrap;
-      width: 7rem;
-    }
-
-    .item-name {
-      align-items: center;
-      display: flex;
-      gap: 0.2rem;
-      min-width: 8rem;
-      width: 100%;
-    }
-  }
-
-  .container-expand-btn {
-    flex-shrink: 0;
-    font-size: 0.65rem;
-    padding: 0.1rem 0.2rem;
-  }
-
-  .contained-item-row {
-    td {
-      background: color-mix(in srgb, var(--color-cool-4, #9ba5a0) 10%, transparent);
-    }
-
-    .contained-item-cell {
-      padding: 0.35rem 0.5rem 0.35rem 1.25rem;
-    }
-
-    .item-name {
-      padding-left: 1.75rem;
-    }
-  }
-
   .inventory-drop-zone {
     border-radius: 0.45rem;
+    position: relative;
     transition: box-shadow 0.15s ease, background-color 0.15s ease;
 
     &.is-drop-target {
       background: color-mix(in srgb, var(--color-cool-4, #9ba5a0) 14%, transparent);
       box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-cool-4, #9ba5a0) 65%, transparent);
     }
-  }
 
-  .item-icon {
-    border-radius: 0.2rem;
-    display: block;
-    height: 1.15rem;
-    object-fit: cover;
-    width: 1.15rem;
-  }
-
-  .carry-toggle,
-  .equip-toggle,
-  .open-sheet-btn {
-    padding: 0.1rem 0.25rem;
-  }
-
-  .drag-handle {
-    align-items: center;
-    cursor: grab;
-    display: inline-flex;
-    gap: 0.3rem;
-    min-width: 0;
-
-    i {
-      opacity: 0.5;
+    &.is-locked {
+      :deep(.categorized-list-section) {
+        filter: grayscale(0.35);
+        opacity: 0.7;
+      }
     }
+  }
+
+  .inventory-lock-badge {
+    align-items: center;
+    background: color-mix(in srgb, var(--background, #000) 75%, transparent);
+    border: 1px solid var(--color-level-warning);
+    border-radius: 0.25rem;
+    color: var(--color-level-warning);
+    display: flex;
+    font-size: 0.7rem;
+    gap: 0.3rem;
+    padding: 0.1rem 0.5rem;
+    position: absolute;
+    right: 0.25rem;
+    top: 0.25rem;
+    white-space: nowrap;
+    z-index: 2;
   }
 
   :global(.inventory-drag-ghost) {

@@ -1,7 +1,7 @@
 import { containmentEffectType } from '@effects/containment/containmentEffectType.mjs';
 import type { ActiveEffectDnd35e } from '@effects/index.mjs';
-import { multiplyCurrency } from '@fields/currency/logic/multiply.mjs';
-import { PHYSICAL_ITEM_TYPES, type PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
+import { addCurrency, multiplyCurrency } from '@fields/currency/logic/mathOperations.mjs';
+import { containerItemType, PHYSICAL_ITEM_TYPES, type PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { Container } from '@items/physical/container/index.mjs';
 import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
 import type { PriceSource } from '@settings/index.mjs';
@@ -18,6 +18,40 @@ export const containmentAeTargetTypes: readonly string[] = [
 /** Returns true if `effect` is a Containment AE (item-contribution AE on a bag). */
 export function isContainmentAe (effect: ActiveEffectDnd35e): boolean {
   return effect.type === containmentEffectType;
+}
+
+/**
+ * Computes the weight/count/price an item contributes to its container.
+ *
+ * Regular items contribute `field × quantity`. Containers additionally roll up
+ * their own contents so a parent container reflects everything nested inside:
+ * - **weight**: the container's intrinsic shell weight (from `_source`, so it is
+ *   not skewed by the containment `system.weight` change) plus `contentsWeight`
+ *   (which already includes coins and deeply-nested item weight).
+ * - **price**: own purchase price + `contentsValue` (coins + nested item value).
+ * - **count**: the container's own quantity only — nested counts are NOT rolled
+ *   up, so each container reports the number of items directly inside it.
+ */
+function computeItemContribution (item: ContainmentAeTarget): {
+  count: number;
+  weight: number;
+  price: PriceSource;
+} {
+  const count = Math.max(item.system.quantity, 0);
+  let weight = (item.system.weight ?? 0) * count;
+  let price = multiplyCurrency(item.system.price, count);
+
+  if (item.type === containerItemType) {
+    const containerSystem = item.system as Container['system'];
+    const shellWeight = ((item as { _source?: { system?: { weight?: number } } })
+      ._source?.system?.weight ?? 0) * count;
+    weight = shellWeight + (containerSystem.contentsWeight ?? 0);
+    if (containerSystem.contentsValue) {
+      price = addCurrency(price, containerSystem.contentsValue);
+    }
+  }
+
+  return { count, weight, price };
 }
 
 /**
@@ -62,9 +96,7 @@ export async function syncContainmentAe (
   item: ContainmentAeTarget,
   container: Container | null
 ): Promise<void> {
-  const count = Math.max(item.system.quantity, 0);
-  const weight = (item.system.weight ?? 0) * count;
-  const price: PriceSource = multiplyCurrency(item.system.price, count);
+  const { count, weight, price } = computeItemContribution(item);
 
   //cases
   //1 it shouldn't be in a container and isn't, do nothing
@@ -76,13 +108,24 @@ export async function syncContainmentAe (
   const shouldBeInContainer = container !== null;
   const itemHasContainerUuidSet = isItemContained(item);
 
+  /**
+   * When a container's contents change, its own contribution to *its* parent
+   * container is now stale. Re-sync it upward so weight/value roll up through
+   * every level of nesting. No-op for containers that aren't themselves stowed.
+   */
+  const cascadeUpward = async (changedContainer: Container): Promise<void> => {
+    const parentUuid = changedContainer.system.containerUuid;
+    if (!parentUuid) return;
+    const parent = await foundry.utils.fromUuid(parentUuid) as Container | null;
+    if (parent) await syncContainmentAe(changedContainer, parent);
+  };
+
   const removeFromWrongContainer = async (wrongContainer: Container): Promise<void> => {
-    if (wrongContainer) {
-      const ae = findContainmentAeByItemUuid(wrongContainer, item.uuid);
-      
-      if (ae) {
-        await wrongContainer.deleteEmbeddedDocuments('ActiveEffect', [ae.id]);
-      }
+    const ae = findContainmentAeByItemUuid(wrongContainer, item.uuid);
+
+    if (ae) {
+      await wrongContainer.deleteEmbeddedDocuments('ActiveEffect', [ae.id]);
+      await cascadeUpward(wrongContainer);
     }
   };
   
@@ -105,6 +148,7 @@ export async function syncContainmentAe (
       if (item.system.containerUuid !== container.uuid) {
         await item.update({ 'system.containerUuid': container.uuid });
       }
+      await cascadeUpward(container);
     }
   };
 
@@ -153,6 +197,7 @@ export async function syncContainmentAe (
         contributedCount: count,
         contributedPrice: price,
       } });
+      await cascadeUpward(container);
     }
     // Case 5 End
   }

@@ -1,12 +1,12 @@
-import type { ActiveEffectSource } from '@client/documents/_module.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { DatabaseUpdateCallbackOptions } from '@common/abstract/_types.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import type { IdentifiableDocumentSourceProps } from '@documents/identifiable/IdentifiableDocument.mjs';
 import { IdentifiableDocumentMixin } from '@documents/identifiable/IdentifiableDocument.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
+import { INITIAL_EFFECT_CHANGE_PHASE } from '@effects/baseActiveEffect/index.mjs';
 import { syncContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
-import { multiplyCurrency } from '@fields/currency/logic/multiply.mjs';
+import { multiplyCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemDnd35e as ItemDnd35eClass } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/index.mjs';
@@ -42,6 +42,23 @@ abstract class PhysicalItem extends IdentifiableItemBase {
     super(source as any, context);
 
     registerPhysicalItemEventChecks(this);
+
+    // syncContainmentAe() is otherwise only refreshed from _onUpdate() (weight/quantity/
+    // price/containerUuid changes). Newly created items would never get their containment
+    // contribution AE built until an unrelated later edit - so build it once here too.
+    // (Carried-weight contribution no longer needs any such bootstrap at all - it's
+    // computed live every preparation cycle by `getContributedActorChanges()`, not
+    // persisted anywhere.)
+    this.events.once(PhysicalItem.LifeCycle.created, () => {
+      void this._onPhysicalItemCreated();
+    });
+  }
+
+  private async _onPhysicalItemCreated(): Promise<void> {
+    if (this.system.containerUuid) {
+      const targetContainer = await foundry.utils.fromUuid(this.system.containerUuid) as Container;
+      await syncContainmentAe(this, targetContainer);
+    }
   }
 
   declare system: PhysicalItemSystemData;
@@ -52,10 +69,14 @@ abstract class PhysicalItem extends IdentifiableItemBase {
     ...PhysicalItemLifeCycle,
   } as const;
 
-  protected _buildCarriedEffectName (): string {
-    return game.i18n.format('dnd35e.ITEM.carriedEffect.name', { itemName: this.name });
-  }
-
+  /**
+   * Weight/value contributed by carried items must apply in the 'initial' phase (not
+   * 'final') - the Creature's encumbrance tier is computed during `prepareDerivedData()`,
+   * which runs between the 'initial' and 'final' phases. Applying these changes any
+   * later would leave `carriedWeight` (and therefore `tier`) one cycle stale, and would
+   * make it impossible for tier-based Active Effects (e.g. encumbrance penalties) to
+   * react to the current pass's tier during 'final'.
+   */
   protected _buildCarriedChanges(): EffectChangeDataDnd35e[] {
     const results: EffectChangeDataDnd35e[] = [];
     const pushChange = (key: string, value: number): void => {
@@ -64,7 +85,7 @@ abstract class PhysicalItem extends IdentifiableItemBase {
         target: 'actor',
         isSystem: true,
         type: 'add',
-        phase: 'final',
+        phase: INITIAL_EFFECT_CHANGE_PHASE,
         value,
         priority: 20,
       });
@@ -86,40 +107,22 @@ abstract class PhysicalItem extends IdentifiableItemBase {
     return results;
   }
 
-  protected async _destroyCarriedEffect(): Promise<void> {
-    const carriedEffect = this.effects.find((e) => e.name === this._buildCarriedEffectName());
-    if (carriedEffect) {
-      await this.deleteEmbeddedDocuments('ActiveEffect', [carriedEffect.id]);
-    }
-  }
-
-  protected async _buildCarriedEffect(): Promise<void> {
-    // delete previous carried effect if it exists
-    await this._destroyCarriedEffect();
-
-    // At this time we don't transfer props while in a container. that is handled differently.
-    if (!!this.system.containerUuid) return;
-
-    // create new carried effect
-    await this.createEmbeddedDocuments('ActiveEffect', [
-      {
-        name: this._buildCarriedEffectName(),
-        target: 'actor',
-        type: 'general',
-        system: {
-          target: 'actor',
-          label: this.name,
-          isHidden: true,
-          changes: this._buildCarriedChanges(),
-          description: game.i18n.format('dnd35e.ITEM.carriedEffect.description', { itemName: this.name }),
-        },
-      } as Partial<ActiveEffectSource>,
-    ]);
+  /**
+   * Live actor-targeted changes this item contributes while carried - see
+   * `ItemDnd35e.getContributedActorChanges()`. Computed fresh from current isCarried/
+   * weight/quantity/price/containerUuid state every call; nothing is persisted, so there
+   * is no AE document to create, toggle, or delete for this, and no churn/ID/race to
+   * worry about. At this time we don't transfer props while in a container - that is
+   * handled separately, by containment's own item-to-container AE.
+   */
+  override getContributedActorChanges(phase: string): EffectChangeDataDnd35e[] {
+    if (!this.system.isCarried || this.system.containerUuid) return [];
+    return this._buildCarriedChanges().filter((change) => change.phase === phase);
   }
 
   /**
    * Keeps this item's contribution AE on its container bag in sync whenever
-   * the container assignment, weight, or quantity changes.
+   * the container assignment, weight, quantity, or price changes.
    */
   protected override async _onUpdate (
     changed: Record<string, unknown>,
@@ -149,18 +152,6 @@ abstract class PhysicalItem extends IdentifiableItemBase {
         : null;
         
       await syncContainmentAe(this, targetContainer);
-    }
-
-    const shouldRefreshCarriedEffect = ('isCarried' in changedSystem)
-      || hasKeyValueChanged
-      || hasContainerChanged;
-    if (shouldRefreshCarriedEffect) {
-      if (this.system.isCarried) {
-        await this._buildCarriedEffect();
-      }
-      else {
-        await this._destroyCarriedEffect();
-      }
     }
   }
 }

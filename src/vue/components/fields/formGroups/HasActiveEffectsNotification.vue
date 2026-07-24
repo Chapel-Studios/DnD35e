@@ -1,21 +1,34 @@
 <template>
-  <div v-if="hasActiveEffects" class="effect-tooltip">
+  <div
+    v-if="hasActiveEffects"
+    ref="iconRef"
+    class="effect-tooltip"
+    @pointerenter="openTooltip"
+    @pointerleave="closeTooltip"
+  >
     <i class="fas fa-sparkles"></i>
-    <div class="effect-tooltip-popup">
+    <Teleport to="body">
       <div
-        v-for="(effect, index) in typedEffects"
-        :key="index"
-        class="effect-tooltip-entry"
-        :class="{ 'is-ignored': effect.stackResult === STACK_RESULT_IGNORED }"
+        v-if="isOpen"
+        ref="popupRef"
+        class="effect-tooltip-popup"
+        :style="popupStyle"
       >
-        <span class="effect-name">{{ effect.effectName }}</span>
-        <span class="effect-detail">{{ formatMode(effect.type) }} {{ effect.value }}</span>
-        <span v-if="effect.bonusTypeLabel" class="effect-bonus-type">[{{ effect.bonusTypeLabel }}]</span>
-        <span v-if="effect.stackResult === STACK_RESULT_IGNORED" class="effect-rejected">
-          {{ effect.stackReason ?? ignoredLabel }}
-        </span>
+        <div
+          v-for="(effect, index) in typedEffects"
+          :key="index"
+          class="effect-tooltip-entry"
+          :class="{ 'is-ignored': effect.stackResult === STACK_RESULT_IGNORED }"
+        >
+          <span class="effect-name">{{ effect.effectName }}</span>
+          <span class="effect-detail">{{ formatMode(effect.type) }} {{ effect.value }}</span>
+          <span v-if="effect.bonusTypeLabel" class="effect-bonus-type">[{{ effect.bonusTypeLabel }}]</span>
+          <span v-if="effect.stackResult === STACK_RESULT_IGNORED" class="effect-rejected">
+            {{ effect.stackReason ?? ignoredLabel }}
+          </span>
+        </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
@@ -29,7 +42,7 @@
   import { EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
   import type { Override } from '@helpers/stacking.mjs';
   import { STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
-  import { computed, inject } from 'vue';
+  import { computed, inject, nextTick, ref } from 'vue';
 
   const props = defineProps<{
     fieldPath: string;
@@ -66,35 +79,73 @@
     default: return mode;
     }
   };
+
+  // Own popup instead of Foundry's `data-tooltip-html` - that API only accepts an HTML
+  // string (or a raw HTML element), which would force hand-building markup instead of a
+  // normal Vue template. `<Teleport to="body">` gets the same "escape any ancestor
+  // overflow/stacking-context clipping" benefit Foundry's tooltip manager provides, while
+  // keeping this a real, reactively-rendered template - scoped styles still apply, since
+  // Vue keeps the component's `data-v-xxx` attribute on teleported nodes regardless of
+  // where in the DOM they end up.
+  const TOOLTIP_MARGIN_PX = 8;
+
+  const iconRef = ref<HTMLElement | null>(null);
+  const popupRef = ref<HTMLElement | null>(null);
+  const isOpen = ref(false);
+  const popupStyle = ref<{ top: string; left: string; }>({ top: '0px', left: '0px' });
+
+  const positionPopup = async (): Promise<void> => {
+    await nextTick();
+    const icon = iconRef.value;
+    const popup = popupRef.value;
+    if (!icon || !popup) return;
+
+    const iconRect = icon.getBoundingClientRect();
+    const popupRect = popup.getBoundingClientRect();
+
+    // Prefer opening above the icon; flip below it if there isn't room.
+    const openAbove = iconRect.top - popupRect.height - TOOLTIP_MARGIN_PX >= 0;
+    const top = openAbove
+      ? iconRect.top - popupRect.height - TOOLTIP_MARGIN_PX
+      : iconRect.bottom + TOOLTIP_MARGIN_PX;
+
+    // Center under/over the icon, then clamp horizontally so the popup never spills past
+    // either edge of the viewport - this is the actual fix for the clipping bug.
+    const idealLeft = iconRect.left + (iconRect.width / 2) - (popupRect.width / 2);
+    const maxLeft = Math.max(window.innerWidth - popupRect.width - TOOLTIP_MARGIN_PX, TOOLTIP_MARGIN_PX);
+    const left = Math.min(Math.max(idealLeft, TOOLTIP_MARGIN_PX), maxLeft);
+
+    popupStyle.value = { top: `${top}px`, left: `${left}px` };
+  };
+
+  const openTooltip = (): void => {
+    isOpen.value = true;
+    void positionPopup();
+  };
+
+  const closeTooltip = (): void => {
+    isOpen.value = false;
+  };
 </script>
 
 <style lang="scss" scoped>
   .effect-tooltip {
-    position: relative;
+    display: inline-flex;
     cursor: help;
+  }
 
-    .effect-tooltip-popup {
-      display: none;
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--color-cool-5, #1a1a2e);
-      color: var(--color-text-light-highlight, #f0f0f0);
-      border: 1px solid var(--color-border-highlight, #7a7971);
-      border-radius: 4px;
-      padding: 0.375rem 0.5rem;
-      white-space: nowrap;
-      z-index: 100;
-      font-size: var(--font-size-11);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-      pointer-events: none;
-      margin-bottom: 4px;
-    }
-
-    &:hover .effect-tooltip-popup {
-      display: block;
-    }
+  .effect-tooltip-popup {
+    position: fixed;
+    z-index: 100;
+    background: var(--color-cool-5, #1a1a2e);
+    color: var(--color-text-light-highlight, #f0f0f0);
+    border: 1px solid var(--color-border-highlight, #7a7971);
+    border-radius: 4px;
+    padding: 0.375rem 0.5rem;
+    white-space: nowrap;
+    font-size: var(--font-size-11);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
   }
 
   .effect-tooltip-entry {
@@ -128,3 +179,4 @@
     }
   }
 </style>
+

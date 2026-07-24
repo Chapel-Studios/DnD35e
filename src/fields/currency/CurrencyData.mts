@@ -27,7 +27,7 @@ class CurrencyData extends DataModel {
           coinId: new StringField({ required: true, blank: false }),
           count: new NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
         }),
-        { initial: [] }
+        { initial: () => [] }
       ),
       srdEquivalent: new NumberField<number, number, true, false, true>({ required: true, nullable: false, initial: 0 }),
     };
@@ -132,8 +132,8 @@ class CurrencyData extends DataModel {
    * Does **not** mutate this instance — returns a new stacks array suitable
    * for passing to a field updater or `updateSource`.
    */
-  consolidate(): CoinStack[] {
-    return CurrencyData.consolidateFromGp(this.srdEquivalent);
+  consolidate(rollupTargetId?: string): CoinStack[] {
+    return CurrencyData.consolidateFromGp(this.srdEquivalent, rollupTargetId);
   }
 
   /**
@@ -141,12 +141,12 @@ class CurrencyData extends DataModel {
    * world currency settings.  Shared by {@link consolidate} and the stale-stack
    * recovery path in {@link _initializeSource}.
    */
-  static consolidateFromGp(totalGp: number): CoinStack[] {
+  static consolidateFromGp(totalGp: number, rollupTargetId?: string): CoinStack[] {
     if (totalGp <= 0) return [];
 
     const config = CurrencyData.getCurrencyConfig();
     const enabledCoinages = config.coinages.filter(c => c.enabled);
-    const targetCoinId = config.rollUpTargetCoin;
+    const targetCoinId = rollupTargetId ?? config.rollUpTargetCoin;
     const targetCoin = enabledCoinages.find(c => c.id === targetCoinId);
 
     // Only non-excluded coins are eligible as output denominations
@@ -248,6 +248,27 @@ class CurrencyData extends DataModel {
           return `${s.count} ${coin?.shortLabel ?? s.coinId}`;
         })
         .join(', ');
+  }
+
+  static fromStacks(stacks: CoinStack[]): CurrencyData {
+    // Construct from source so both `_source` and the live properties are set.
+    // Assigning `result.stacks` directly would leave `_source.stacks` empty,
+    // which silently drops the coins when the model is serialized via
+    // toObject()/JSON (e.g. when embedded in an ActiveEffect create payload).
+    return new CurrencyData({
+      stacks: stacks.map(s => ({ ...s })),
+      srdEquivalent: CurrencyData.computeGpValue(stacks),
+    });
+  }
+
+  getWeightInLbs(): number {
+    const coinages = CurrencyData.getEnabledCoinages();
+    let totalWeight = 0;
+    for (const stack of this.stacks) {
+      const coin = coinages.find(c => c.id === stack.coinId);
+      if (coin) totalWeight += stack.count * (coin.weightLbs ?? 0);
+    }
+    return totalWeight;
   }
 }
 

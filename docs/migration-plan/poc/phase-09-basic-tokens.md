@@ -145,7 +145,7 @@ CONFIG.Actor.documentClass = ActorProxyDnd35e;  // may already be in Phase 6
 
 ### Schema dependency
 
-Phase 6 §5.1 plans `speed: { land, climb, swim, burrow, fly }` on `ActorSystemModelBase`, each with `{ base: number, total: number (persisted: false) }`. Poc.9 depends on Phase 6 delivering those fields.
+Phase 6 §5.1 plans `speed: { land, climb, swim, burrow, fly }` on `ActorSystemModelBase`, each a single persisted number field (no `.base`/`.total` split). Poc.9 depends on Phase 6 delivering those fields.
 
 Phase 6 Story 2 shows "speed" on the sheet but vaguely. If Phase 6 only displays land speed, poc.9 adds a dedicated Speed section showing all five modes (land, swim, climb, burrow, fly), with non-zero modes displayed and zero-value modes grayed out or hidden.
 
@@ -156,7 +156,7 @@ Phase 6 Story 2 shows "speed" on the sheet but vaguely. If Phase 6 only displays
 ```typescript
 // TokenDnd35e — override canvas animation speed
 protected override _getAnimationMovementSpeed(): number {
-  const landSpeed = this.document.actor?.system?.speed?.land?.total;
+  const landSpeed = this.document.actor?.system?.speed?.land;
   if (landSpeed && landSpeed > 0) {
     // 5ft per grid square — 30ft = 6 squares/sec (matches Foundry default)
     return landSpeed / 5;
@@ -213,7 +213,7 @@ Story 1 → Story 2
 
 **Commits:**
 1. **Speed sheet UI** — if Phase 6 Story 2 only shows land speed, add all five modes (land, swim, climb, burrow, fly) to the sheet with zero-value modes grayed. *(Skip if Phase 6 already covers all five.)*
-2. **Animation speed wiring** — override `TokenDnd35e._getAnimationMovementSpeed()` to derive from `actor.system.speed.land.total`. *(Unit test: Large token with 30ft land speed returns 6 from `_getAnimationMovementSpeed()`)*
+2. **Animation speed wiring** — override `TokenDnd35e._getAnimationMovementSpeed()` to derive from `actor.system.speed.land` (single persisted field, no `.total` split; effective/AE-adjusted value is read via `getViewAwareFieldValue` or the live post-prepare value). *(Unit test: Large token with 30ft land speed returns 6 from `_getAnimationMovementSpeed()`)*
 3. **Ruler budget display** — *explore at phase start*. Implement `_getWaypointLabelContext()` / `_getWaypointStyle()` / `_getSegmentStyle()` overrides (or simpler hook if found). If ruler subclassing proves too complex for poc.9, defer to poc.10 and document the finding.
 
 **E2E acceptance**: Character with 30ft speed drags token across canvas → ruler shows distance in feet → token animation speed visually matches 6 squares/second (30ft ÷ 5ft).
@@ -244,9 +244,9 @@ Story 1 → Story 2
 - [ ] Register `CONFIG.Actor.documentClass = ActorProxyDnd35e` in init hook (confirm not already in Phase 6)
 
 **Movement speed:**
-- [ ] Verify Phase 6 Story 2 delivers `speed.{land,climb,swim,burrow,fly}` fields (each `{ base, total }`)
+- [ ] Verify Phase 6 Story 2 delivers `speed.{land,climb,swim,burrow,fly}` fields (each a single persisted number, no `.total` split)
 - [ ] If Phase 6 only shows land speed on sheet, add all five modes to Speed section (zero-value modes grayed)
-- [ ] Override `TokenDnd35e._getAnimationMovementSpeed()` → `actor.system.speed.land.total / 5`
+- [ ] Override `TokenDnd35e._getAnimationMovementSpeed()` → `actor.system.speed.land / 5`
 - [ ] Explore ruler budget display extension points at phase start; implement or defer to poc.10
 
 **Tests:**

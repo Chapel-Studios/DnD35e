@@ -1,10 +1,12 @@
 import ActorDescriptionTab from '@actors/baseActor/sheet/tabs/ActorDescriptionTab.vue';
+import { actorInventoryTab } from '@actors/baseActor/sheet/tabs/index.mjs';
 import type { SheetTab } from '@documents/document/index.mjs';
 
 import AttributesTab from './AttributesTab.vue';
 import BuffsTab from './BuffsTab.vue';
 import CombatTab from './CombatTab.vue';
 import CreatureDescriptionTab from './CreatureDescriptionTab.vue';
+import CreatureInventoryTab from './CreatureInventoryTab.vue';
 import FeaturesTab from './FeaturesTab.vue';
 import SettingsTab from './SettingsTab.vue';
 import SkillsTab from './SkillsTab.vue';
@@ -17,6 +19,12 @@ const attributesTab: SheetTab = {
   component: AttributesTab,
   order: 10,
   icon: 'fas fa-address-card',
+};
+
+const creatureInventoryTab: SheetTab = {
+  ...actorInventoryTab,
+  order: 15,
+  component: CreatureInventoryTab,
 };
 
 const combatTab: SheetTab = {
@@ -96,6 +104,7 @@ export {
   attributesTab,
   buffsTab,
   combatTab,
+  creatureInventoryTab,
   creatureNotesTab,
   featuresTab,
   settingsTab,

@@ -3,6 +3,7 @@
     <div class="form-group-section-header">
       <label :title="labelTooltip">{{ resolvedLabel }}</label>
       <FieldControls
+        v-if="props.hideFieldControls !== true"
         :field-path="props.fieldPath"
         :default-editability="props.defaultEditability"
         :default-visibility="props.defaultVisibility"
@@ -34,6 +35,8 @@
     defaultVisibility?: FieldVisibility;
     defaultEditability?: FieldEditability;
     column?: boolean;
+    /** When true, hides the GM visibility/editability toggle controls entirely (e.g. fully-derived sections). */
+    hideFieldControls?: boolean;
   }>();
 
   function localize(key: string): string {

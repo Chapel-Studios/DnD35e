@@ -1,5 +1,6 @@
 import { CURRENCY_KEY } from '@settings/currency/constants.mjs';
-import type { CoinageDefinition, CurrencyConfig } from '@settings/currency/types.mjs';
+import { visibilityWithinBounds } from '@settings/currency/logic/coinageVisibility.mjs';
+import { COINAGE_VISIBILITIES, type CoinageDefinition, type CurrencyConfig } from '@settings/currency/types.mjs';
 import { DISPLAY_WORLD_KEYS } from '@settings/display/constants.mjs';
 import type { UnitOfMeasureOption } from '@settings/display/unitOfMeasure.mjs';
 import { imperialUnitOfMeasure } from '@settings/display/unitOfMeasure.mjs';
@@ -14,6 +15,12 @@ const useSettingsStore = (): SettingsStore => {
     coinages: computed(() => currencySettings.value?.coinages ?? []),
     defaultDisplayCoin: computed(() => currencySettings.value?.defaultDisplayCoin ?? currencySettings.value?.coinages[0]?.id ?? ''),
     rollUpTargetCoin: computed(() => currencySettings.value?.rollUpTargetCoin ?? currencySettings.value?.coinages[0]?.id ?? ''),
+    highestVisibleCoin: computed(() => {
+      const enabledCoinages = currencySettings.value?.coinages
+        .filter(c => c.enabled && visibilityWithinBounds(c.visibility, COINAGE_VISIBILITIES.gmSelect)) ?? [];
+      return enabledCoinages.reduce((prev, curr) => (curr.valueInGp > prev.valueInGp ? curr : prev), enabledCoinages[0])
+        .id ?? 'srd_gp';
+    }),
   };
 
   const unitOfMeasure: ComputedRef<UnitOfMeasureOption> = computed(() => game.settings.get(SYSTEM_ID, DISPLAY_WORLD_KEYS.UNITS) as UnitOfMeasureOption ?? imperialUnitOfMeasure);
@@ -82,6 +89,7 @@ type SettingsStore = {
     coinages: ComputedRef<CoinageDefinition[]>;
     defaultDisplayCoin: ComputedRef<string>;
     rollUpTargetCoin: ComputedRef<string>;
+    highestVisibleCoin: ComputedRef<string>;
   };
   measurement: {
     unitOfMeasure: ComputedRef<UnitOfMeasureOption>;

@@ -1,7 +1,10 @@
 import { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
+import { getEncumberedSpeed } from '@constants/carryingCapacity.mjs';
 import { DOCUMENT_UPDATE_TYPES } from '@constants/documentUpdateTypes.mjs';
 import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
+import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
+import { EFFECT_CHANGE_TYPE, FINAL_EFFECT_CHANGE_PHASE } from '@effects/baseActiveEffect/data/index.mjs';
 import { calculateStandardAC, calculateTouchAC } from '@helpers/AC.mjs';
 
 import { _debugCreature, isCreatureDebugEnabled } from './_debug.mjs';
@@ -75,8 +78,8 @@ abstract class Creature extends ActorDnd35e {
   }
 
   /**
-   * Stub: returns '0' until the Shield item type is implemented.
-   * Will be replaced with a getter that resolves a value from equipped Shield items.
+   * Stub: returns 'null' (uncapped) until the Armor item type is implemented.
+   * Will be replaced with a getter that resolves a value from worn Armor items.
    */
   get maxDexModifier(): number | null
   {
@@ -87,6 +90,64 @@ abstract class Creature extends ActorDnd35e {
     return isTouch
       ? calculateTouchAC(this, denyDex)
       : calculateStandardAC(this, denyDex);
+  }
+
+  protected _buildEncumberedChanges(): EffectChangeDataDnd35e[] {
+    // Tier 0 (light) has no penalty at all. Tier 1 (medium) gets the moderate penalty;
+    // tier 2+ (heavy and beyond) gets the severe penalty - SRD does not further intensify
+    // max Dex/check penalty past heavy, only speed keeps degrading (see getEncumberedSpeed).
+    if (this.system.encumbrance.tier <= 0) return [];
+
+    const results: EffectChangeDataDnd35e[] = [];
+    const encumbranceTier = this.system.encumbrance.tier;
+    const effectLabel = game.i18n.localize(`dnd35e.CREATURE.FIELDS.encumbrance.tier.${encumbranceTier}`);
+
+    const pushChange = (key: string, value: number): void => {
+      results.push({
+        key,
+        target: 'actor',
+        isSystem: true,
+        type: EFFECT_CHANGE_TYPE.DOWNGRADE,
+        value: value,
+        priority: 20,
+        phase: FINAL_EFFECT_CHANGE_PHASE,
+        label: effectLabel,
+      });
+    };
+
+    // `this.system.speed.land` is safe to read directly here: `getSelfContributedChanges()`
+    // runs from `ActorDnd35e.applyActiveEffects('final')`, which fires after
+    // `prepareDerivedData()` has fully settled and before this pass applies its own
+    // downgrade - so the value is always fresh, never a stale downgrade from a prior pass.
+    const landSpeed = this.system.speed.land;
+    const encumberedSpeed = getEncumberedSpeed(landSpeed, encumbranceTier);
+    const isModeratelyEncumbered = encumbranceTier === 1;
+    const maxDexBonus = isModeratelyEncumbered
+      ? 3
+      : 1;
+    const armorCheckPenalty = isModeratelyEncumbered
+      ? -3
+      : -6;
+
+
+    pushChange('system.encumbrance.maxDexBonus', maxDexBonus);
+    pushChange('system.abilities.dex.mod', maxDexBonus);
+    pushChange('system.encumbrance.armorCheckPenalty', armorCheckPenalty);
+    if (encumberedSpeed < landSpeed) {
+      pushChange('system.speed.land', encumberedSpeed);
+    }
+
+    return results;
+  }
+
+  /**
+   * Live, actor-targeted encumbrance-penalty changes (max Dex bonus, armor check
+   * penalty, land speed downgrade) - see `ActorDnd35e.getSelfContributedChanges()`.
+   * Recomputed fresh from this actor's own current encumbrance tier on every call;
+   * never persisted, so there is no AE document to seed, toggle, or race against.
+   */
+  override getSelfContributedChanges(phase: string): EffectChangeDataDnd35e[] {
+    return this._buildEncumberedChanges().filter((change) => change.phase === phase);
   }
 
   /**
@@ -102,7 +163,7 @@ abstract class Creature extends ActorDnd35e {
   override prepareDerivedData(): void {
     super.prepareDerivedData();
 
-    // stub value to for sheet building; replace with real HP calculation when progression is implemented
+    // stub value to 100 for sheet building; replace with real HP calculation when progression is implemented
     this.system.hp.max = 100;
   }
 

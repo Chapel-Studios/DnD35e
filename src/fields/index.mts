@@ -8,5 +8,6 @@ export { CurrencyData } from './currency/CurrencyData.mjs';
 export { CurrencyField } from './currency/CurrencyField.mjs';
 export * from './fieldBuilders.mjs';
 export { getSchemaField } from './getSchemaField.mjs';
+export { NullableCapNumberField } from './NullableCapNumberField.mjs';
 export type { SectionFieldOptions } from './SectionField.mjs';
 export { SectionField } from './SectionField.mjs';

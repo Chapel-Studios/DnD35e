@@ -117,17 +117,12 @@ All actors inherit these fields.
 
 | Field | Type | Phase | Stored/Derived | D35E Source | Notes |
 |-------|------|-------|----------------|-------------|-------|
-| `speed.land.base` | number | 6 🔲 | Stored | `attributes.speed.land.base` | Default 30 (human). Race modifies via AE |
-| `speed.land.total` | number | 6 🔲 | Derived | `attributes.speed.land.total` | base + modifiers (armor, encumbrance, effects) |
-| `speed.climb.base` | number | 6 🔲 | Stored | `attributes.speed.climb.base` | Default 0 |
-| `speed.climb.total` | number | 6 🔲 | Derived | `attributes.speed.climb.total` | |
-| `speed.swim.base` | number | 6 🔲 | Stored | `attributes.speed.swim.base` | Default 0 |
-| `speed.swim.total` | number | 6 🔲 | Derived | `attributes.speed.swim.total` | |
-| `speed.burrow.base` | number | 6 🔲 | Stored | `attributes.speed.burrow.base` | Default 0 |
-| `speed.burrow.total` | number | 6 🔲 | Derived | `attributes.speed.burrow.total` | |
-| `speed.fly.base` | number | 6 🔲 | Stored | `attributes.speed.fly.base` | Default 0 |
-| `speed.fly.total` | number | 6 🔲 | Derived | `attributes.speed.fly.total` | |
-| `speed.fly.maneuverability` | string | 6 🔲 | Stored | `attributes.speed.fly.maneuverability` | "clumsy"\|"poor"\|"average"\|"good"\|"perfect" |
+| `speed.land` | number | 6 🔲 | Stored + AE-mutated | `attributes.speed.land.base` | Default 30 (human). Persisted/source value read in edit mode; effective (post-AE) value read in play/true mode — no separate `.total` field (see `getSourceProperty` vs. `getViewAwareFieldValue`). Race/armor/encumbrance modify via AE |
+| `speed.climb` | number | 6 🔲 | Stored + AE-mutated | `attributes.speed.climb.base` | Default 0 |
+| `speed.swim` | number | 6 🔲 | Stored + AE-mutated | `attributes.speed.swim.base` | Default 0 |
+| `speed.burrow` | number | 6 🔲 | Stored + AE-mutated | `attributes.speed.burrow.base` | Default 0 |
+| `speed.fly` | number | 6 🔲 | Stored + AE-mutated | `attributes.speed.fly.base` | Default 0 |
+| `speed.flyManeuverability` | string | 6 🔲 | Stored | `attributes.speed.fly.maneuverability` | "clumsy"\|"poor"\|"average"\|"good"\|"perfect" |
 | `biography` | string | 6 🔲 | Stored | `details.biography.value` | Rich text |
 | `notes` | string | 6 🔲 | Stored | `details.notes.value` | Rich text |
 | `bond` | — | ⛔ | — | `master` | Replaced by Bond Pattern AE on the bonded creature. Not a stored field. |
@@ -285,7 +280,7 @@ Shared by Character and NPC.
 | `encumbrance.heavy` | number | 6 🔲 | Derived | `attributes.encumbrance.levels.heavy` | |
 | `encumbrance.carry` | number | 6 🔲 | Derived | `attributes.encumbrance.levels.carry` | Max lift overhead |
 | `encumbrance.drag` | number | 6 🔲 | Derived | `attributes.encumbrance.levels.drag` | Max push/drag |
-| `encumbrance.level` | number | 6 🔲 | Derived | `attributes.encumbrance.level` | 0=light, 1=medium, 2=heavy, 3=over |
+| `encumbrance.tier` | number | 6 🔲 | Derived | `attributes.encumbrance.level` | 0=light, 1=medium, 2=heavy, 3=over |
 | `encumbrance.carryBonus` | number | 6 🔲 | Stored | `abilities.str.carryBonus` | Flat bonus to base carrying capacity. Default 0. AE-targetable (e.g., Carrying feats). |
 | `encumbrance.carryMultiplier` | number | 6 🔲 | Stored | `abilities.str.carryMultiplier` | Capacity multiplier. Default 1.0 (medium, bipedal). AEs set to 2.0 (Large), 1.5 (quadruped). |
 

@@ -12,8 +12,6 @@ describe('FormulaFamiliar localization data', () => {
       'dnd35e.CREATURE.FIELDS.abilities.con.familiarLabel': 'Con',
       'dnd35e.CREATURE.FIELDS.abilities.con.score.familiarLabel': 'Score',
       'dnd35e.ACTOR.FIELDS.speed.land.familiarLabel': 'Land',
-      'dnd35e.ACTOR.FIELDS.speed.land.base.familiarLabel': 'Base',
-      'dnd35e.ACTOR.FIELDS.speed.land.total.familiarLabel': 'Total',
       'dnd35e.ACTOR.FIELDS.speed.flyManeuverability.familiarLabel': 'Maneuverability',
       'dnd35e.WEAPON.FIELDS.weaponDamage.familiarLabel': 'Weapon Damage',
       'dnd35e.WEAPON.FIELDS.weaponDamage.damageRoll.familiarLabel': 'Roll',

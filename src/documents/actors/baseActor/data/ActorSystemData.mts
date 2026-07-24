@@ -2,31 +2,30 @@ import type { FlyManeuverability } from '@constants/index.mjs';
 import type { DocumentSystemData } from '@documents/document/index.mjs';
 import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 
-interface SpeedEntrySource {
-  base: number;
-}
-
-interface SpeedEntryData extends SpeedEntrySource {
-  total: number;
-}
-
-type SpeedDataOf<TEntry extends SpeedEntrySource> = {
-  land: TEntry;
-  climb: TEntry;
-  swim: TEntry;
-  burrow: TEntry;
-  fly: TEntry;
+/**
+ * A single persisted number per speed type. There is no separate "total" slot —
+ * the live value is mutated in place by ActiveEffect application during data
+ * prep (e.g. the encumbrance DOWNGRADE), while `_source.speed.<key>` always
+ * holds the true persisted/edited value. See `getSourceProperty` (edit mode)
+ * vs. `getViewAwareFieldValue` (play/true mode) for how the sheet reads each.
+ */
+interface SpeedData {
+  land: number;
+  climb: number;
+  swim: number;
+  burrow: number;
+  fly: number;
   flyManeuverability: FlyManeuverability | null;
-};
+}
 
 interface ActorSystemSourceProperties extends DocumentSystemData {}
 
 interface ActorSystemSource extends ActorSystemSourceProperties {
-  speed: SpeedDataOf<SpeedEntrySource>;
+  speed: SpeedData;
 }
 
 interface ActorSystemData extends ActorSystemSourceProperties {
-  speed: SpeedDataOf<SpeedEntryData>;
+  speed: SpeedData;
   // this is stored as an srd gp equivalent value, and is always
   // displayed via a consolidated currency format that follows currency settings
   inventoryValue: CurrencyData;
@@ -36,7 +35,5 @@ export type {
   ActorSystemData,
   ActorSystemSource,
   ActorSystemSourceProperties,
-  SpeedDataOf,
-  SpeedEntryData,
-  SpeedEntrySource,
+  SpeedData,
 };

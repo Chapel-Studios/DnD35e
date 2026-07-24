@@ -281,8 +281,7 @@
     }
   }
   
-  :global(.view-mode) .coinage-form-group {
+  :global(.view-mode .coinage-form-group) {
     grid-template-columns: minmax(max-content, 2fr) 5fr;
   }
-
 </style>

@@ -17,7 +17,7 @@
         readonly
       />
       <CheckBoxFormGroup
-        field-path="system.isQuadraped"
+        field-path="system.isQuadruped"
         readonly
       />
       <TextFormGroup

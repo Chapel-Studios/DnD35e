@@ -158,6 +158,7 @@ interface AEGeneratorConfig {
 |---|---|
 | [Bonus Stacking](bonus-stacking.md) | Every AE change carries `bonusType`; stacking runs after all changes collected |
 | [Data Preparation](data-preparation-pipeline.md) | Phases align with preparation lifecycle stages |
+| [Actor Data Pipeline](actor-data-pipeline.md) | Verified vs. assumed call sites for phase application, Item vs. Actor asymmetry, open ordering risks |
 | [Action System](action-system.md) | `action.*` phase effects deferred to roll time |
 | [Conditions](condition-system.md) | Conditions are predefined AE templates |
 | [Area Effects](area-effects.md) | Regions apply/remove AEs on token enter/exit |

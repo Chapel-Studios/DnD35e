@@ -9,7 +9,7 @@
     <div class="ability-cards">
       <div v-for="ability in abilities" :key="ability.key" class="ability-card">
         <div class="ability-card-mod" :class="ability.class">
-          {{ ability.mod }}
+          {{ ability.mod }}<HasActiveEffectsNotification :field-path="`system.abilities.${ability.key}.mod`" />
         </div>
         <div class="ability-card-base">
           <NumberFormGroup
@@ -27,7 +27,7 @@
 <script setup lang="ts">
   import { ABILITY_KEYS_LOCALIZED } from '@constants/abilities.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import { FormGroupSection, NumberFormGroup } from '@vc/fields/index.mjs';
+  import { FormGroupSection, HasActiveEffectsNotification, NumberFormGroup } from '@vc/fields/index.mjs';
   import { gmOnlyEditability, ownerPlusVisibility } from '@vc/fields/index.mjs';
   import { computed, inject } from 'vue';
 
@@ -98,9 +98,17 @@
     font-weight: bold;
     line-height: 1;
     grid-area: mod;
+    align-items: center;
+    display: grid;
+    grid-auto-flow: column;
+    gap: .25rem;
 
     // &.positive { color: var(--color-level-success, #2d8a2d); }
     &.negative { color: var(--color-level-error, #a30000); }
+
+    :deep(.effect-tooltip) {
+      font-size: 0.75rem;
+    }
   }
 
   .ability-card-base {
