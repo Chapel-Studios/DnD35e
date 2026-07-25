@@ -180,7 +180,7 @@ Dependencies use `wave.N` notation (e.g. `poc.1`, `alpha.3`, `beta.2`).
 | 6 | [Actor Foundation](poc/phase-06-actor-foundation.md) | 🔶 In Progress | poc.1, poc.3 | Character actor: abilities, AC shell, HP, saves, inventory, tokens, equipment slots |
 | 7 | [Roll Formulas & Custom Rolls](poc/phase-07-roll-formulas.md) | 📋 Outlined | poc.6 | D20Roll, DamageRoll, FormulaFamiliar roll data, formula paths |
 | 8 | [Pipeline & Branching](poc/phase-08-pipeline-and-branching.md) | 🔶 In Progress | — | Branching model, PR gate (`test.yml`), release pipeline (`build.yml`), `phases.json` sync. Independent of POC content; can land any time before POC closes. |
-| 9 | [Basic Tokens](poc/phase-09-basic-tokens.md) | 📝 Planned | poc.6 | Token placed on scene, moved, `token.actor` resolves correctly, size and HP bar wired. Thin proof before poc.10. |
+| 9 | [Basic Tokens](poc/phase-09-basic-tokens.md) | 🔶 In Progress | poc.6 | Token placed on scene with correct size and HP bar, actor linkage wired; movement budget display on ruler; vision system (darkvision, low-light, tremorsense) automatically maps to canvas. Polished proof before poc.10. |
 | 10 | [Basic Combat](poc/phase-10-basic-combat.md) | 📝 Planned | poc.6, poc.7, poc.9 | Combat tracker functional; detects basic move, double move, and main-hand attack. Seeds alpha.3 Action System. |
 | 11 | [POC Cleanup](poc/phase-11-poc-cleanup.md) | 📖 Rough Sketch | poc.1–poc.10 | End-of-POC hardening bucket. Initial task: make FormGroup updaters consistently async and Promise-returning. |
 

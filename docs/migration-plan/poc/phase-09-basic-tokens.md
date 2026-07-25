@@ -1,16 +1,16 @@
 # POC Phase 9: Basic Tokens
 
-**Status**: 📝 Planned
+**Status**: 🔶 In Progress (Story 1 complete)
 
 > **Milestone**: POC  
 > **Dependencies**: poc.6  
-> **Goal**: A token can be created on a scene, moved, and correctly reflects its actor. Token has the right document and canvas classes, actor linkage, size derived from `system.size`, and HP bar by default. Minimal proof before poc.10 (Basic Combat) depends on tokens.
+> **Goal**: A token can be created on a scene, moved, and correctly reflects its actor. Token has the right document and canvas classes, actor linkage, size derived from `system.size`, and HP bar by default. Movement budget is visualized on the ruler, and D&D senses (darkvision, low-light vision, tremorsense) are automatically wired to Foundry canvas vision — no manual GM configuration needed. Polished proof before poc.10 (Basic Combat) depends on tokens.
 
 ---
 
 ## Overview
 
-Phase 6 creates `ActorDnd35e` and the character schema. Phase 9 wires it to the Foundry canvas so actors appear as tokens on the table. Expected to be a thin phase — Foundry handles most token mechanics out of the box.
+Phase 6 creates `ActorDnd35e` and the character schema. Phase 9 wires it to the Foundry canvas so actors appear as tokens on the table, with polished movement and vision behavior — not just a thin placement proof. Foundry handles the placement mechanics out of the box; the added value is the ruler budget display and the senses-to-vision pipeline, both of which are new for this system.
 
 **Existing scaffolding (already in `src/`):**
 - `TokenDnd35e` canvas class at `src/canvas/token/TokenDnd35e.mts` — stub extending `fc.placeables.Token`. Typed, not yet registered.
@@ -20,11 +20,11 @@ Phase 6 creates `ActorDnd35e` and the character schema. Phase 9 wires it to the 
 **What Phase 9 adds:**
 1. `SIZE_TOKEN_DIMENSIONS` size → grid square mapping in `sizes.mts`
 2. `TokenDocumentDnd35e` becomes a real class with `_preCreate()` for size derivation
-3. `ActorDnd35e._preCreate()` sets prototype token defaults (size, vision, disposition, HP bar)
-4. Register `CONFIG.Token.documentClass`, `CONFIG.Token.objectClass`, `CONFIG.Actor.documentClass`
-5. All five movement speeds (land/swim/climb/burrow/fly) visible on character sheet
-6. `TokenDnd35e._getAnimationMovementSpeed()` wired to actor land speed
-7. Ruler / movement budget display (explore at phase start, fallback to poc.10)
+3. `Creature._preCreate()` sets prototype token defaults (disposition, HP bar, basic vision) — lives on `Creature`, not `ActorDnd35e`, since senses/size-adjacent creature data lives there and it type-safely covers all creature actor types (character, future NPC)
+4. Register `CONFIG.Token.documentClass`, `CONFIG.Token.objectClass` (`CONFIG.Actor.documentClass` already registered by Phase 6)
+5. `TokenRulerDnd35e` subclass for movement budget display (distance / speed, path color changes when budget exceeded)
+6. Full vision system: map D&D senses (darkvision, low-light, tremorsense) to Foundry visionMode/detectionModes
+7. Wire senses to tokens: `Creature._preCreate()` applies default vision; update hooks sync changes
 
 ---
 
@@ -98,31 +98,33 @@ export { TokenDocumentDnd35e };
 
 ## 9.3 Actor Prototype Token Defaults
 
-`ActorDnd35e._preCreate()` sets sensible prototype token defaults for new Character actors so they don't need manual configuration after creation.
+`Creature._preCreate()` sets sensible prototype token defaults for new creature-type actors (currently Character; automatically covers future NPC types too) so they don't need manual configuration after creation. Placed on `Creature` rather than `ActorDnd35e` because it's the shared base for all creature actor types and keeps this type-safe without a `this.type === 'character'` string check.
 
-Includes basic vision (`sight.enabled: true`) so placed tokens can see the scene. No darkvision or other senses yet — Phase 6 has no senses schema; that defers to Phase 23 when race and NPC types land.
+Includes basic vision (`sight.enabled: true`) so placed tokens can see the scene. No darkvision or other senses yet — that's Story 3.
+
+The default values themselves are extracted into a pure helper, `buildPrototypeTokenDefaults()`, so they can be unit tested without needing the full Document class chain:
 
 ```typescript
-// ActorDnd35e — add _preCreate override
-override async _preCreate(
-  data: PreCreate<foundry.documents.ActorSource>,
-  options: object,
-  user: foundry.documents.User
+// src/documents/actors/creature/logic/buildPrototypeTokenDefaults.mts
+const buildPrototypeTokenDefaults = (): PrototypeTokenDefaults => ({
+  actorLink: true,
+  disposition: CONST.TOKEN_DISPOSITIONS.FRIENDLY,
+  displayBars: CONST.TOKEN_DISPLAY_MODES.OWNER_HOVER,
+  displayName: CONST.TOKEN_DISPLAY_MODES.OWNER,
+  bar1: { attribute: 'hp' },
+  sight: { enabled: true, visionMode: 'basic' },
+});
+
+// Creature.mts
+protected override async _preCreate(
+  data: this['_source'],
+  options: DatabaseCreateCallbackOptions,
+  user: foundry.documents.BaseUser
 ): Promise<boolean | void> {
   const result = await super._preCreate(data, options, user);
-  if (result === false) return result;
+  if (result === false) return false;
 
-  if (this.type === 'character') {
-    this.updateSource({
-      'prototypeToken.actorLink': true,
-      'prototypeToken.disposition': CONST.TOKEN_DISPOSITIONS.FRIENDLY,
-      'prototypeToken.displayBars': CONST.TOKEN_DISPLAY_MODES.OWNER_HOVER,
-      'prototypeToken.displayName': CONST.TOKEN_DISPLAY_MODES.OWNER,
-      'prototypeToken.bar1': { attribute: 'hp' },
-      'prototypeToken.sight': { enabled: true, visionMode: 'basic' },
-    });
-  }
-  return result;
+  this.updateSource({ prototypeToken: buildPrototypeTokenDefaults() });
 }
 ```
 
@@ -134,60 +136,67 @@ override async _preCreate(
 // In registerActors() init hook (or a dedicated canvas registration function):
 CONFIG.Token.objectClass   = TokenDnd35e;
 CONFIG.Token.documentClass = TokenDocumentDnd35e;
-CONFIG.Actor.documentClass = ActorProxyDnd35e;  // may already be in Phase 6
+CONFIG.Actor.documentClass = ActorProxyDnd35e;  // already completed in Phase 6
 ```
-
-> **Note on `CONFIG.Actor.documentClass`**: The current `registerActors()` in Phase 6 only wires FormulaFamiliar schemas — it does not register `ActorProxyDnd35e`. Confirm at implementation time whether Phase 6 adds this or Phase 9 does.
 
 ---
 
-## 9.5 Movement Speed
+## 9.5 Movement Speed, Ruler, and Vision
 
 ### Schema dependency
 
-Phase 6 §5.1 plans `speed: { land, climb, swim, burrow, fly }` on `ActorSystemModelBase`, each a single persisted number field (no `.base`/`.total` split). Poc.9 depends on Phase 6 delivering those fields.
+Phase 6 §5.1 plans `speed: { land, climb, swim, burrow, fly }` on `ActorSystemModelBase`, each a single persisted number field.
 
-Phase 6 Story 2 shows "speed" on the sheet but vaguely. If Phase 6 only displays land speed, poc.9 adds a dedicated Speed section showing all five modes (land, swim, climb, burrow, fly), with non-zero modes displayed and zero-value modes grayed out or hidden.
+> **Animation speed skipped**: `Token._getAnimationMovementSpeed()` (visual slide speed across canvas) is NOT wired to actor land speed in poc.9. Other Foundry systems don't typically do this, and Foundry's default (6 squares/sec) is acceptable — the effort isn't justified for POC. Revisit later if desired.
 
-### Animation speed (visual)
+### Vision System: Senses to Canvas Vision
 
-`Token._getAnimationMovementSpeed()` controls how fast the token slides across the canvas in grid squares per second (Foundry default: 6). **This is purely visual** — it is NOT the D&D movement budget. Override in `TokenDnd35e` so the slide speed matches the character's land speed:
+**What we want**: Actor senses (darkvision, low-light, tremorsense) automatically wire to token vision modes and detection modes. GMs create a dwarf with darkvision 60ft, place it on the canvas, and the token can immediately see in darkness without manual Foundry UI config.
 
-```typescript
-// TokenDnd35e — override canvas animation speed
-protected override _getAnimationMovementSpeed(): number {
-  const landSpeed = this.document.actor?.system?.speed?.land;
-  if (landSpeed && landSpeed > 0) {
-    // 5ft per grid square — 30ft = 6 squares/sec (matches Foundry default)
-    return landSpeed / 5;
-  }
-  return (CONFIG.Token as Record<string, unknown> & { movement?: { defaultSpeed?: number } })
-    .movement?.defaultSpeed ?? 6;
-}
-```
+**D&D 3.5e Senses → Foundry Mapping**:
 
-### Ruler / movement budget display (open decision)
+| D&D Sense | visionMode | detectionMode | How it works |
+|-----------|-----------|---|---|
+| Darkvision | `'darkvision'` | `'basicSight'` (range) | See in grayscale, distance limited |
+| Low-light vision | `'lightAmplification'` | `'basicSight'` (range) | Enhanced dim-light vision |
+| Tremorsense | (none — keep `'basic'`) | `'feelTremor'` (range) | Detect via vibrations, works in darkness |
+
+**Exclusivity rule**: Only one visionMode can be active. If actor has multiple senses, priority is: darkvision > low-light > basic.
+
+DetectionModes stack — actor can have tremorsense + seeInvisibility all active at once.
+
+**Implementation**:
+- Helper `_buildTokenVisionFromSenses(senses[])` — maps D&D sense array to Foundry `sight` and `detectionModes[]` objects
+- `Creature._preCreate()` — wire default vision (if no senses, use `sight.visionMode: 'basic'`)
+- Update hook on actor senses changes → sync token vision live
+
+**Scope for POC**: Implement darkvision + low-light + tremorsense. Defer blindsight/scent (would need custom DetectionMode subclasses) to Alpha vision phase.
+
+### Ruler / Movement Budget Display
 
 **What we want**: while dragging a token, the ruler label shows "25 / 30 ft" (distance used vs. budget) and the path line or waypoint marker changes color when the budget is exceeded.
 
-**Extension points found in type definitions**:
-- `TokenRuler._getWaypointLabelContext(waypoint, state)` — injects data into the Handlebars label template
-- `TokenRuler._getWaypointStyle(waypoint)` — controls marker radius/color per waypoint
-- `TokenRuler._getSegmentStyle(waypoint)` — controls path line color per segment
-- `TokenPlannedMovement.unreachableWaypoints` — Foundry tracks waypoints beyond the movement budget if cost functions are configured
+**Implementation**:
+- Subclass `TokenRuler` as `TokenRulerDnd35e`
+- Override `_getWaypointLabelContext()` — inject `{ distance, budget }` for label template
+- Override `_getWaypointStyle()` — color waypoint red if beyond budget
+- Override `_getSegmentStyle()` — color path line red if segment goes beyond budget
 
-**Open decision at phase start**: Explore whether subclassing `TokenRuler` is required, or if a simpler hook point exists (e.g. `Token#_refreshRuler` or a movement action config). Determine whether wiring `CONFIG.Token.movement` action costs is needed before the ruler can show budget-aware colors.
-
-**Fallback**: if full budget display is complex, poc.9 ships the animation speed wiring only. The ruler budget display defers to poc.10 (Basic Combat), where per-action movement tracking is needed anyway. Decide at phase start.
+**Spike at phase start**: Confirm `TokenPlannedMovement` exposes movement cost API and verify no hard requirement on combat mechanics. If API is insufficient, defer to poc.10 and document the blocker.
 
 ---
 
 ## Phase Delivery Plan
 
-Two sequential stories.
+Three sequential stories with some parallelization.
 
 ```
-Story 1 → Story 2
+Story 1
+  ↓
+Story 2 (parallel: spike TokenRuler)
+Story 3 (spike: vision architecture)
+  ↓
+Implementation: Vision wiring to tokens
 ```
 
 ### Story 1 — Token placement, sizing, actor linkage, and vision
@@ -197,57 +206,106 @@ Story 1 → Story 2
 **Depends on**: Phase 6 (CharacterSystemModel, ActorDnd35e in place).
 
 **Commits:**
-1. **`SIZE_TOKEN_DIMENSIONS` + real `TokenDocumentDnd35e` class** — add size mapping to `sizes.mts`; convert `TokenDocumentDnd35e` from type alias to real class with `_preCreate()`. *(Unit tests: all 9 size categories map correctly; Medium → 1, Large → 2, Huge → 3)*
-2. **Actor prototype token defaults** — `ActorDnd35e._preCreate()` for character `actorLink`, `disposition`, `displayBars`, `displayName`, `bar1`, `sight`. *(Unit tests: new Character actor prototypeToken has `actorLink: true`, `bar1.attribute: 'hp'`, `sight.enabled: true`)*
-3. **Registration** — wire `CONFIG.Token.objectClass`, `CONFIG.Token.documentClass`, `CONFIG.Actor.documentClass` in init hook. *(Unit test: CONFIG values are correct class references after init)*
+1. **`SIZE_TOKEN_DIMENSIONS` + real `TokenDocumentDnd35e` class** — add size mapping to `sizes.mts`; convert `TokenDocumentDnd35e` from type alias to real class with `_preCreate()`. Size field itself lives on base `ActorSystemModel` (not `CreatureSystemModel`) so every actor type gets token sizing for free. *(Unit tests: all 9 size categories map correctly; Medium → 1, Large → 2, Huge → 3 — done in `tokenDocument.model.test.mts`)*
+2. **Actor prototype token defaults** — `Creature._preCreate()` (not `ActorDnd35e`) calling pure helper `buildPrototypeTokenDefaults()` for `actorLink`, `disposition`, `displayBars`, `displayName`, `bar1`, `sight`. *(Unit tests: `actorLink: true`, `bar1.attribute: 'hp'`, `sight.enabled: true` — done in `buildPrototypeTokenDefaults.test.mts`)*
+3. **Registration** — wire `CONFIG.Token.objectClass`, `CONFIG.Token.documentClass` in init hook (`CONFIG.Actor.documentClass = ActorProxyDnd35e` already registered by Phase 6's `registerActors()`). Confirmed via dev testing; no dedicated unit test (one-line CONFIG wiring, would require new CONFIG/Hooks mocks for no logic coverage).
 
-**E2E acceptance**: Create Character actor (Medium, HP 20) → drag to scene → 1×1 token placed → HP bar shows 20/20 → move token → position persists after page reload.
+**E2E acceptance**: Create Character actor (Large, HP 20) → drag to scene → 2×2 token placed → HP bar shows 20/20 → move token → position persists after page reload.
 
 ---
 
-### Story 2 — Movement speed
+### Story 2 — Movement Budget Display (Ruler)
 
 **User**: GM / Player  
-**Delivers**: All five actor movement speeds visible on character sheet; moving a token on canvas animates at the correct speed; ruler shows distance traveled.  
-**Depends on**: Story 1 + Phase 6 Story 2 (speed schema fields exist).
+**Delivers**: While dragging a token, ruler labels show distance traveled and remaining movement budget; path turns red when budget exceeded.  
+**Depends on**: Story 1 (tokens placed and movable).
 
-**Commits:**
-1. **Speed sheet UI** — if Phase 6 Story 2 only shows land speed, add all five modes (land, swim, climb, burrow, fly) to the sheet with zero-value modes grayed. *(Skip if Phase 6 already covers all five.)*
-2. **Animation speed wiring** — override `TokenDnd35e._getAnimationMovementSpeed()` to derive from `actor.system.speed.land` (single persisted field, no `.total` split; effective/AE-adjusted value is read via `getViewAwareFieldValue` or the live post-prepare value). *(Unit test: Large token with 30ft land speed returns 6 from `_getAnimationMovementSpeed()`)*
-3. **Ruler budget display** — *explore at phase start*. Implement `_getWaypointLabelContext()` / `_getWaypointStyle()` / `_getSegmentStyle()` overrides (or simpler hook if found). If ruler subclassing proves too complex for poc.9, defer to poc.10 and document the finding.
+**Spike (parallel)**:
+1. **TokenRuler API investigation** — Confirm `TokenPlannedMovement` exposes waypoint cost/distance API; verify no hard blocker on combat mechanics before ruler can function.
+2. **TokenRuler registration mechanism (unconfirmed)** — Our bundled type definitions expose `CONFIG.Canvas.rulerClass: typeof Ruler`, which is the generic canvas measuring Ruler, **not** the per-token `TokenRuler` used while dragging a token (`Token#ruler: BaseTokenRuler`). No `CONFIG.Token.rulerClass` hook exists in the type defs. Determine at spike time whether Token exposes a static `rulerClass` property to override (subclass responsibility, similar to how `TokenDnd35e` overrides other protected methods), or another extension point. If no clean hook exists, document the finding and consider deferring Story 2 to poc.10.
 
-**E2E acceptance**: Character with 30ft speed drags token across canvas → ruler shows distance in feet → token animation speed visually matches 6 squares/second (30ft ÷ 5ft).
+**Commits** (if spike succeeds):
+1. **`TokenRulerDnd35e` subclass** — extend `TokenRuler`, override `_getWaypointLabelContext()`, `_getWaypointStyle()`, `_getSegmentStyle()` to inject distance budget labels and path coloring. *(Unit test: waypoint beyond 30ft budget returns red color)*
+2. **Movement budget calculation** — read `actor.system.speed.land` (single persisted field) as the token's movement budget. *(Unit test: 30ft speed actor returns 30 from budget getter)*
+3. **Path coloring logic** — cumulative distance per segment; flag segment red if total distance exceeds budget. *(Unit test: 40ft drag on 30ft actor marks last 10ft red)*
+
+**E2E acceptance**: Drag token 40ft (actor has 30ft speed) → first 30ft normal color, last 10ft red → label shows "40 / 30 ft".
+
+---
+
+### Story 3 — Vision System (Darkvision, Low-light, Tremorsense)
+
+**User**: GM / Player  
+**Delivers**: Actor with darkvision/low-light/tremorsense automatically appears on canvas with those senses active. Token can see in darkness, detect via tremors, etc. No manual Foundry UI config needed.
+**Depends on**: Story 1 (tokens placed) + Phase 6 (senses schema exists on CreatureSystemModel.bio.senses).
+
+**Spike (sequential after Story 1)**:
+1. **D&D sense → Foundry architecture** — verify visionMode is exclusive, detectionModes are stackable arrays; confirm Foundry has pre-built darkvision, lightAmplification, feelTremor; determine if custom DetectionMode is required for scent/blindsight (defer if yes).
+2. **Sense priority logic** — if actor has darkvision + low-light, which visionMode wins? Answer: darkvision (strictly better). Define precedence: darkvision > low-light > basic.
+
+**Commits**:
+1. **`_buildTokenVisionFromSenses()` helper** — pure function mapping `system.bio.senses[]` array to Foundry `sight` and `detectionModes[]` objects. *(Unit test: darkvision 60ft → `{visionMode: 'darkvision', range: 60}`; tremorsense 120ft → `{id: 'feelTremor', range: 120}`; both → visionMode darkvision + both detectionModes)*
+2. **Wire to `Creature._preCreate()`** — apply default vision (build from senses array or fall back to basic if none). Also add `_refreshTokenVision()` method for future use. *(Unit test: new actor with darkvision has token `sight.visionMode: 'darkvision'`)*
+3. **Update hook on senses change** — when actor senses change, sync all placed tokens: `actor.updateEmbeddedDocuments('Token', [{...new vision}])`. *(Unit test: add darkvision to actor, verify placed token updates live)*
+4. **Unit tests** — sense mapping for all 3 types, priority resolution (multiple visionModes), no regression on basic vision.
+5. **E2E tests** — create dwarf with darkvision, place on dark scene, token can see; add tremorsense via drag-drop item, token detects in darkness.
+
+**E2E acceptance**: Dwarf (darkvision 60ft) dragged to dark scene → token sight cone renders in grayscale, sees 60ft in darkness → add Tremorsense 90ft item → token can feel vibrations up to 90ft (independent of darkvision range).
 
 ---
 
 ## Completion Checklist
 
-### ❌ Not Started
+### 🔶 In Progress
 
 **Size mapping:**
-- [ ] Add `SIZE_TOKEN_DIMENSIONS: Record<Size, number>` to `src/constants/sizes.mts`
-- [ ] Export `SIZE_TOKEN_DIMENSIONS` from `sizes.mts`
+- [x] Add `SIZE_TOKEN_DIMENSIONS: Record<Size, number>` to `src/constants/sizes.mts`
+- [x] Export `SIZE_TOKEN_DIMENSIONS` from `sizes.mts`
+- [x] `size` field moved from `CreatureSystemModel`/`CreatureSystemData` to base `ActorSystemModel`/`ActorSystemData` (all actor types have a size, not just creatures)
 
 **TokenDocumentDnd35e:**
-- [ ] Convert `TokenDocumentDnd35e` from type alias to real class extending `TokenDocument`
-- [ ] Override `_preCreate()` to derive `width`/`height` from `actor.system.size`
-- [ ] Update `src/documents/scene/tokenDocument/index.mts` to export the class (not just the type)
+- [x] Convert `TokenDocumentDnd35e` from type alias to real class extending `TokenDocument`
+- [x] Override `_preCreate()` to derive `width`/`height` from `actor.system.size`
+- [x] Update `src/documents/scene/tokenDocument/index.mts` to export the class (not just the type)
 
 **Actor prototype token defaults:**
-- [ ] Override `ActorDnd35e._preCreate()` to set prototype token defaults for `character` type
-- [ ] Defaults: `actorLink: true`, `disposition: FRIENDLY`, `displayBars: OWNER_HOVER`, `displayName: OWNER`, `bar1.attribute: 'hp'`
-- [ ] Vision defaults: `sight.enabled: true`, `sight.visionMode: 'basic'`
+- [x] Override `Creature._preCreate()` to set prototype token defaults (covers all creature actor types, not gated by `type === 'character'`)
+- [x] Defaults: `actorLink: true`, `disposition: FRIENDLY`, `displayBars: OWNER_HOVER`, `displayName: OWNER`, `bar1.attribute: 'hp'` — extracted into pure `buildPrototypeTokenDefaults()` helper for testability
+- [x] Vision defaults: `sight.enabled: true`, `sight.visionMode: 'basic'`
 
 **Registration:**
-- [ ] Register `CONFIG.Token.objectClass = TokenDnd35e` in init hook
-- [ ] Register `CONFIG.Token.documentClass = TokenDocumentDnd35e` in init hook
-- [ ] Register `CONFIG.Actor.documentClass = ActorProxyDnd35e` in init hook (confirm not already in Phase 6)
+- [x] Register `CONFIG.Token.objectClass = TokenDnd35e` in init hook
+- [x] Register `CONFIG.Token.documentClass = TokenDocumentDnd35e` in init hook
+- [x] Confirm `CONFIG.Actor.documentClass = ActorProxyDnd35e` is already registered by Phase 6's `registerActors()` (verified in code — no action needed)
 
-**Movement speed:**
-- [ ] Verify Phase 6 Story 2 delivers `speed.{land,climb,swim,burrow,fly}` fields (each a single persisted number, no `.total` split)
-- [ ] If Phase 6 only shows land speed on sheet, add all five modes to Speed section (zero-value modes grayed)
-- [ ] Override `TokenDnd35e._getAnimationMovementSpeed()` → `actor.system.speed.land / 5`
-- [ ] Explore ruler budget display extension points at phase start; implement or defer to poc.10
+**Story 1 unit tests:**
+- [x] `tests/unit/models/tokenDocument.model.test.mts` — all 9 size categories map correctly
+- [x] `tests/unit/models/buildPrototypeTokenDefaults.test.mts` — actorLink, disposition, display modes, HP bar, basic vision
+
+**Story 1 status: done, dev-tested in Foundry, unit tests passing.**
+
+### ❌ Not Started
+
+**Movement budget display (Story 2):**
+- [ ] Create `src/canvas/token/TokenRulerDnd35e.mts` subclass extending `TokenRuler`
+- [ ] Override `_getWaypointLabelContext()` to inject `{ distance, budget, remaining }` into label template
+- [ ] Override `_getWaypointStyle()` to color waypoint red if `distance > budget`
+- [ ] Override `_getSegmentStyle()` to color segment line red if cumulative distance exceeds budget
+- [ ] Add helper to read actor land speed as movement budget
+- [ ] Spike: confirm `TokenPlannedMovement` API is sufficient; no combat mechanics blocker
+- [ ] Spike: determine correct extension point to wire `TokenRulerDnd35e` onto `TokenDnd35e` (no `CONFIG.Token.rulerClass` exists in current type defs — verify actual mechanism before implementing)
+
+**Vision system (Story 3):**
+- [ ] Create `src/helpers/tokenVision.mts` with `_buildTokenVisionFromSenses(senses[])` helper
+- [ ] Mapping: darkvision → visionMode `'darkvision'` + detectionMode `'basicSight'`
+- [ ] Mapping: low-light → visionMode `'lightAmplification'` + detectionMode `'basicSight'`
+- [ ] Mapping: tremorsense → visionMode unchanged + detectionMode `'feelTremor'`
+- [ ] Priority logic: if actor has multiple visionModes, darkvision > low-light > basic
+- [ ] Update `ActorDnd35e._preCreate()` to call `_buildTokenVisionFromSenses()` and wire to prototypeToken
+- [ ] Add `_refreshTokenVision()` method to ActorDnd35e (called by update hooks)
+- [ ] Create update hook: actor senses change → sync all placed tokens via `updateEmbeddedDocuments`
+- [ ] Unit tests: all 3 sense mappings work; priority resolution; basic vision fallback
+- [ ] E2E tests: dwarf with darkvision placed on dark scene sees correctly; tremorsense update propagates live
 
 **Tests:**
 - [ ] Unit: `SIZE_TOKEN_DIMENSIONS` covers all 9 size categories
@@ -257,10 +315,15 @@ Story 1 → Story 2
 - [ ] Unit: new Character actor `prototypeToken.sight.enabled` is `true`
 - [ ] Unit: `TokenDocumentDnd35e._preCreate()` sets 2×2 for a Large actor
 - [ ] Unit: `CONFIG.Token.objectClass` is `TokenDnd35e` after init hook runs
-- [ ] Unit: `_getAnimationMovementSpeed()` returns 6 for a 30ft land speed actor
+- [ ] Unit: `_buildTokenVisionFromSenses([{type: 'darkvision', distance: 60}])` → `{visionMode: 'darkvision', range: 60, detectionModes: [{id: 'basicSight', range: 60}]}`
+- [ ] Unit: priority logic: actor with [darkvision 60, lowLight 90] → visionMode `'darkvision'` (not low-light)
+- [ ] Unit: tremorsense 120ft → detectionMode `'feelTremor'` stacks with darkvision visionMode
 - [ ] E2E: drag Character actor to scene → 1×1 token with HP bar appears
 - [ ] E2E: move token → position persists after reload
-- [ ] E2E: drag token across canvas → ruler shows distance in feet
+- [ ] E2E: drag token across canvas → ruler waypoints show distance labels (if TokenRuler succeeds)
+- [ ] E2E: drag 40ft on 30ft-speed actor → path turns red after 30ft
+- [ ] E2E: dwarf (darkvision 60) on dark scene → token sight works, sees in grayscale
+- [ ] E2E: add tremorsense item to actor → placed token detects in darkness live (no reload)
 
 ---
 
@@ -271,7 +334,7 @@ Story 1 → Story 2
 | Modify | `src/constants/sizes.mts` — add `SIZE_TOKEN_DIMENSIONS` |
 | Modify | `src/documents/scene/tokenDocument/TokenDocumentDnd35e.mts` — convert to real class, add `_preCreate()` |
 | Modify | `src/documents/scene/tokenDocument/index.mts` — export class (not just type) |
-| Modify | `src/documents/actors/baseActor/ActorDnd35e.mts` — add `_preCreate()` for prototype token defaults |
-| Modify | `src/documents/actors/registration.mts` — add `CONFIG.Token.*` and `CONFIG.Actor.documentClass` registration |
-| Modify | `src/canvas/token/TokenDnd35e.mts` — add `_getAnimationMovementSpeed()` override |
-| Modify (maybe) | `src/canvas/token/TokenRulerDnd35e.mts` (new file) — ruler subclass for budget display (explore at phase start) |
+| Modify | `src/documents/actors/baseActor/ActorDnd35e.mts` — add `_preCreate()` for prototype token defaults, add `_refreshTokenVision()` method, add senses update hook |
+| Modify | `src/documents/actors/registration.mts` — add `CONFIG.Token.objectClass`/`documentClass` registration (`CONFIG.Actor.documentClass` already registered) |
+| Create | `src/canvas/token/TokenRulerDnd35e.mts` — ruler subclass for movement budget display |
+| Create | `src/helpers/tokenVision.mts` — `_buildTokenVisionFromSenses()` helper and vision priority logic |

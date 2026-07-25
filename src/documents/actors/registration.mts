@@ -2,7 +2,9 @@ import { characterActorType } from '@actors/actorTypes.mjs';
 import { ActorProxyDnd35e } from '@actors/baseActor/index.mjs';
 import { Character, CharacterSystemModel } from '@actors/character/index.mjs';
 import { CharacterSheet } from '@actors/character/sheet/CharacterSheet.mjs';
+import { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
+import { TokenDocumentDnd35e } from '@scene/tokenDocument/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import { ACTOR_TYPES } from './actorTypes.mjs';
@@ -17,6 +19,8 @@ export const registerActors = () => {
 
   foundry.helpers.Hooks.once('init', () => {
     CONFIG.Actor.documentClass = ActorProxyDnd35e;
+    CONFIG.Token.objectClass = TokenDnd35e;
+    CONFIG.Token.documentClass = TokenDocumentDnd35e;
 
     Object.assign(CONFIG.Actor.dataModels, {
       [characterActorType]: CharacterSystemModel,

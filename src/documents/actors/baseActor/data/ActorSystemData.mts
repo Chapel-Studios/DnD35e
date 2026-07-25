@@ -1,4 +1,5 @@
 import type { FlyManeuverability } from '@constants/index.mjs';
+import type { Size } from '@constants/sizes.mjs';
 import type { DocumentSystemData } from '@documents/document/index.mjs';
 import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 
@@ -18,7 +19,10 @@ interface SpeedData {
   flyManeuverability: FlyManeuverability | null;
 }
 
-interface ActorSystemSourceProperties extends DocumentSystemData {}
+interface ActorSystemSourceProperties extends DocumentSystemData {
+  /** Every actor type has a size (creatures, objects, traps, etc.) — used for token dimensions. */
+  size: Size;
+}
 
 interface ActorSystemSource extends ActorSystemSourceProperties {
   speed: SpeedData;

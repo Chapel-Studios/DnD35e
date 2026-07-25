@@ -20,9 +20,23 @@ const SIZE_MODIFIERS: Record<Size, number> = {
   fine: 8,
 };
 
+/** D&D 3.5e size category -> Foundry token grid squares (width = height, tokens are always square). */
+const SIZE_TOKEN_DIMENSIONS: Record<Size, number> = {
+  fine: 0.5,
+  diminutive: 0.5,
+  tiny: 1,
+  small: 1,
+  medium: 1,
+  large: 2,
+  huge: 3,
+  gargantuan: 4,
+  colossal: 6,
+};
+
 export {
   SIZE_MODIFIERS,
   SIZE_SELECT_OPTIONS,
+  SIZE_TOKEN_DIMENSIONS,
   SIZES,
 };
 

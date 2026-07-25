@@ -7,7 +7,6 @@ import {
   MASKED_EDIT_STRATEGY,
   MORAL_AXES,
   SENSE_TYPES,
-  SIZES,
 } from '@constants/index.mjs';
 import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import {
@@ -177,8 +176,6 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     });
 
     schema.level = useDnd35eField(derivedNumberField(1), { familiar: { aliases: ['lvl'] } });
-
-    schema.size = useDnd35eField(requiredTypedStringField(SIZES, 'medium'));
 
     schema.settings = new SchemaField({
       isPartyMember: new BooleanField({ initial: false }),

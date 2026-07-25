@@ -167,3 +167,29 @@ function mergeObject<T extends Record<string, any>> (
   updateSource (..._args: any[]): void {}
   async update (..._args: any[]): Promise<this> { return this; }
 };
+
+(globalThis as any).TokenDocument = class {
+  static metadata = {};
+  constructor (..._args: any[]) {}
+  async _preCreate (..._args: any[]): Promise<boolean | void> { return true; }
+  updateSource (..._args: any[]): void {}
+  async update (..._args: any[]): Promise<this> { return this; }
+};
+
+// --- CONST -----------------------------------------------------------------
+(globalThis as any).CONST = {
+  TOKEN_DISPOSITIONS: {
+    SECRET: -2,
+    HOSTILE: -1,
+    NEUTRAL: 0,
+    FRIENDLY: 1,
+  },
+  TOKEN_DISPLAY_MODES: {
+    NONE: 0,
+    CONTROL: 10,
+    OWNER_HOVER: 20,
+    HOVER: 30,
+    OWNER: 40,
+    ALWAYS: 50,
+  },
+};

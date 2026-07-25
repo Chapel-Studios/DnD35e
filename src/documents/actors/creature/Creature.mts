@@ -1,5 +1,6 @@
 import { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
+import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import { getEncumberedSpeed } from '@constants/carryingCapacity.mjs';
 import { DOCUMENT_UPDATE_TYPES } from '@constants/documentUpdateTypes.mjs';
 import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
@@ -12,6 +13,7 @@ import type { CreatureSystemData, CreatureSystemSource } from './data/index.mjs'
 import { CreatureLifeCycle } from './events/CreatureLifeCycle.mjs';
 import { registerCreatureEventChecks } from './events/index.mjs';
 import { registerCreatureEvents } from './events/registerCreatureEvents.mjs';
+import { buildPrototypeTokenDefaults } from './logic/buildPrototypeTokenDefaults.mjs';
 import { handleUpdateHpViaDamage } from './logic/updateHpViaDamage.mjs';
 import { handleUpdateHpViaHealing } from './logic/updateHpViaHealing.mjs';
 import { handleNonLethalDamageUpdate } from './logic/updateNonlethalDamage.mjs';
@@ -159,6 +161,25 @@ abstract class Creature extends ActorDnd35e {
     ...super.LifeCycle,
     ...CreatureLifeCycle,
   } as const;
+
+  /**
+   * Prototype token defaults shared by all creature-type actors (characters, NPCs,
+   * etc.): linked token, friendly disposition, owner-hover HP bar, and basic vision
+   * enabled so a freshly-placed token isn't blind. Size derivation happens separately
+   * in `TokenDocumentDnd35e._preCreate()` from `system.size` once the token is placed.
+   */
+  protected override async _preCreate(
+    data: this['_source'],
+    options: DatabaseCreateCallbackOptions,
+    user: foundry.documents.BaseUser
+  ): Promise<boolean | void> {
+    const result = await super._preCreate(data, options, user);
+    if (result === false) return false;
+
+    this.updateSource({
+      prototypeToken: buildPrototypeTokenDefaults(),
+    });
+  }
 
   override prepareDerivedData(): void {
     super.prepareDerivedData();
