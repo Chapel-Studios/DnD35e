@@ -41,3 +41,21 @@ Scope: armor/gear slots (head, face, neck, shoulders, chest, abdomen, hands, wai
 An Object actor (doors, walls, chests) is the actor representation of a physical item in the world. Long-term, these should be linkable: an Object actor could reference an item from its own inventory to drive its stats (HP, hardness, breakDC) — so a "reinforced oak door" item defines the stats, and the actor is just the live instance. Traps follow the same model (a trap actor references the trap device item for its mechanics).
 
 This avoids stat duplication and lets a chest item and a chest actor share the same stat block. Design is non-trivial — deferred post-release.
+
+---
+
+## Tokens & Movement
+
+### Climb movement action (`CONFIG.Token.movement.actions.climb`)
+poc.9 wires `climb` the same way as fly/swim/burrow: `canSelect` is gated on `system.speed.climb > 0` (`SPEED_GATED_ACTIONS` in `movementActionGating.mts`), and the ruler's movement budget uses that same speed field (`movementBudget.mts`). This covers the "has a climb speed" case (e.g. spider climb, natural climbers).
+
+Still deferred: 3.5e's Climb *skill* (DC-based check per move, half speed without a climb speed, fall risk on failure) for creatures without a persistent climb speed. That needs its own design pass tied to the skill-check system — revisit once skills land (see Phase 9/skills dependency).
+
+### Crawl movement action (`CONFIG.Token.movement.actions.crawl`)
+Foundry core ships a generic `crawl` token movement action (half speed). SRD 3.5e doesn't call out crawling as a standalone sustained movement mode with official rules the way it does for walk/fly/swim/burrow — it's tied to being prone (a creature can only crawl while prone, moving at a fraction of speed). Gating this sensibly requires the status/condition system (prone) to exist first. Until conditions land, poc.9 disables it outright (`canSelect: () => false`) rather than leaving Foundry's always-selectable default active. Deferred until conditions land — revisit proper `canSelect` gating then.
+
+### Jump movement action (`CONFIG.Token.movement.actions.jump`)
+Foundry core ships a generic `jump` token movement action (2x cost multiplier) intended for sustained leaping movement during a drag. In 3.5e, Jump is a skill check for a single leap of a specific distance, not a repeatable drag-across-the-canvas movement mode. Gating this properly requires the skill-check system. Until then, poc.9 disables it outright (`canSelect: () => false`).
+
+### Blink / Displace movement actions (`CONFIG.Token.movement.actions.blink` / `.displace`)
+Foundry core ships generic `blink` and `displace` teleport-style movement actions (speed multiplier `Infinity` / unmeasured, respectively). These map to spell/effect-granted teleportation (Dimension Door, Teleport, Blink) rather than a default movement mode any actor should always have available. Gating this properly requires wiring canSelect to an active spell/effect flag. Until then, poc.9 disables both outright (`canSelect: () => false`).

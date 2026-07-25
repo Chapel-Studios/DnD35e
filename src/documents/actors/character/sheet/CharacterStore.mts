@@ -44,7 +44,7 @@ const useCharacterStore = (
     documentGetters,
   };
 
-  game.dnd35e.stores[document.value.documentName][context.document.id] = store;
+  game.dnd35e.stores[document.value.documentName][context.document.uuid] = store;
 
   return store;
 };

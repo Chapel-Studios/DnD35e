@@ -348,11 +348,15 @@ SilverSmith: ✓ 6.A complete. Updated checklist and session memory.
   Ready to proceed?
 ```
 
+## Naming Convention: Phases Are Numbered, Stories Are Lettered
+
+Phases are numbered (`Phase 9`); stories within a phase are lettered (`Story A`, `Story B`, ...), never numbered. Shorthand: `<milestone><phaseNumber><letter>` — e.g. `poc9a`, `poc9b`. Don't retroactively renumber existing phase docs still using `Story 1/2/3` — correct them the next time that phase doc is reviewed.
+
 ## Branch & Pull Request Conventions
 
 - **Default PR base is `dev`, NOT `main`.** When opening a PR for any feature/phase branch, target `dev` unless the user explicitly says otherwise. `main` is reserved for releases.
 - **Always pass `--base dev` to `gh pr create`.** If you forget and the PR opens against `main`, immediately retarget with `gh pr edit <num> --base dev`.
-- Feature branches: `feat/<phase-or-topic>` (e.g. `feat/poc-06-story-2`).
+- Feature branches: `feat/<phase-or-topic>` (e.g. `feat/poc/9a-basic-tokens` for Phase 9 Story A). See `/memories/repo/branching-convention.md` for the open question on whether branch/PR should be per-phase or per-story — confirm with the user before assuming.
 - Push with `git push origin <branch>`. The repo has two remotes (`origin` = Chapel-Studios upstream, `ogmathus` = fork); default to `origin` for PRs.
 - After approval of a section, the standard close-out is: `git add -A` → commit with a clear subject + body → `git push origin <branch>` → `gh pr create --base dev` (or `gh pr edit` if already open).
 

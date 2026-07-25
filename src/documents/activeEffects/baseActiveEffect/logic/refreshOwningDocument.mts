@@ -4,15 +4,15 @@ import type { ItemSheetStore } from '@items/baseItem/sheet/index.mjs';
 
 const refreshOwningDocument = (document: unknown): void => {
   const effect = document as foundry.documents.ActiveEffect | null;
-  const parent = effect?.parent;
-  if (!parent || !parent.id || !parent.documentName) return;
+  const parent = effect?.parent as { id?: string; uuid?: string; documentName?: string } | null | undefined;
+  if (!parent || !parent.id || !parent.uuid || !parent.documentName) return;
 
   // Re-run prepareData so derived data (e.g. system.isBroken, secret-driven
   // name/img) recomputes from the current set of effects.
   (parent as { prepareData?: () => void }).prepareData?.();
 
   const stores = game.dnd35e?.stores as unknown as Record<string, Record<string, ItemSheetStore<any>>> | undefined;
-  const store = stores?.[parent.documentName]?.[parent.id];
+  const store = stores?.[parent.documentName]?.[parent.uuid];
   store?._storeUtils.refreshDocument?.(parent as unknown as ItemDnd35e);
 
   // Sync the open sheet's window title (secret-driven name changes etc.)

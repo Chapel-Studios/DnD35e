@@ -3,6 +3,7 @@ import './styles/core.scss';
 import { SystemConfig } from '@constants/config/system.mjs';
 import { registerEffects } from '@documents/activeEffects/registration.mjs';
 import { registerActors } from '@documents/actors/registration.mjs';
+import { registerScenes } from '@documents/scene/registration.mjs';
 import { preLocalizeConfig } from '@helpers/localization/preLocalizeConfig.mjs';
 
 import { registerItems } from './documents/items/index.mjs';
@@ -53,3 +54,4 @@ Hooks.once('ready', async () => {
 registerItems();
 registerActors();
 registerEffects();
+registerScenes();

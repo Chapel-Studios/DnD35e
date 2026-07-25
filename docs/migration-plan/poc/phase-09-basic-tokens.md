@@ -1,6 +1,6 @@
 # POC Phase 9: Basic Tokens
 
-**Status**: 🔶 In Progress (Story 1 complete)
+**Status**: 🔶 In Progress (Story 1 & 2 complete; Story 3 not started)
 
 > **Milestone**: POC  
 > **Dependencies**: poc.6  
@@ -184,6 +184,20 @@ DetectionModes stack — actor can have tremorsense + seeInvisibility all active
 
 **Spike at phase start**: Confirm `TokenPlannedMovement` exposes movement cost API and verify no hard requirement on combat mechanics. If API is insufficient, defer to poc.10 and document the blocker.
 
+### Movement Action Gating (`CONFIG.Token.movement.actions`)
+
+Foundry v13+'s Movement Action system (Token HUD "select movement action" button) ships 9 generic actions (`walk`, `fly`, `swim`, `burrow`, `crawl`, `climb`, `jump`, `blink`, `displace`), each `canSelect(token) => true` by default — every token can select every action regardless of whether the actor can actually do it.
+
+**What we want**: only show movement actions the actor's `system.speed` actually supports, and never show actions we haven't implemented rules for yet.
+
+**Gating rules for poc.9**:
+- `walk` — always selectable (default, untouched).
+- `fly`, `swim`, `burrow`, `climb` — `canSelect` gated on `(actor?.system?.speed?.<action> ?? 0) > 0` via `SPEED_GATED_ACTIONS`/`canSelectSpeedGatedMovementAction()`. Wired in the actor init hook (`registration.mts`), same place as the other `CONFIG.Token` registration. **`climb` was moved into this speed-gated set rather than disabled** — a creature with a persisted climb speed (spider climb, natural climbers) can already select it; a creature without one still can't. Full Climb-*skill*-based climbing (DC check per move, half speed without a climb speed, fall risk on failure) is still deferred — revisit once the skill-check system exists (tracked in `WISHLIST.md`).
+- `run` — **new dnd35e-specific action, not one of Foundry's built-in defaults**: SRD running (move up to 4x land speed, straight line only). Gated the same way as `fly`/`swim`/`burrow`/`climb` — `canSelect` on `system.speed.land > 0` (same `SPEED_GATED_ACTIONS` map, mapped to the `land` speed key with a 4x multiplier for animation/budget purposes). The straight-line SRD constraint is enforced separately, by `TokenDnd35e#_addDragWaypoint` refusing intermediate waypoints while `run` is the active action. Config built by `buildRunMovementActionConfig()`, registered in `registerActors()` alongside the other `CONFIG.Token.movement.actions` entries. Addition beyond original spec.
+- `crawl` — **disabled outright**: `canSelect: () => false`. 3.5e ties crawling to being prone, which doesn't exist yet as a condition. Revisit once the condition system lands (tracked in `WISHLIST.md`).
+- `jump` — **disabled outright**: `canSelect: () => false`. 3.5e's Jump is a skill check for a single leap distance, not a sustained drag-across-the-canvas movement mode — Foundry's generic `jump` action (flat 2x cost multiplier) doesn't represent that. Revisit once the skill-check system exists (tracked in `WISHLIST.md`).
+- `blink`, `displace` — **disabled outright**: `canSelect: () => false`. Both represent spell/effect-granted teleportation (Dimension Door, Teleport, Blink) — not a default movement mode any actor should always have available. Revisit once spell-granted movement/teleport effects exist (tracked in `WISHLIST.md`).
+
 ---
 
 ## Phase Delivery Plan
@@ -228,8 +242,9 @@ Implementation: Vision wiring to tokens
 1. **`TokenRulerDnd35e` subclass** — extend `TokenRuler`, override `_getWaypointLabelContext()`, `_getWaypointStyle()`, `_getSegmentStyle()` to inject distance budget labels and path coloring. *(Unit test: waypoint beyond 30ft budget returns red color)*
 2. **Movement budget calculation** — read `actor.system.speed.land` (single persisted field) as the token's movement budget. *(Unit test: 30ft speed actor returns 30 from budget getter)*
 3. **Path coloring logic** — cumulative distance per segment; flag segment red if total distance exceeds budget. *(Unit test: 40ft drag on 30ft actor marks last 10ft red)*
+4. **Movement action gating** — wire `CONFIG.Token.movement.actions.{fly,swim,burrow,climb}.canSelect` to the matching `system.speed.*` field; explicitly disable `crawl`, `jump`, `blink`, `displace` (`canSelect: () => false`) until their prerequisite systems (prone condition, skill checks, spell-granted teleport) exist. See "Movement Action Gating" in §9.5. *(Unit tests: gate function returns true/false per speed value; crawl/jump/blink/displace gates always return false)*
 
-**E2E acceptance**: Drag token 40ft (actor has 30ft speed) → first 30ft normal color, last 10ft red → label shows "40 / 30 ft".
+**E2E acceptance**: Drag token 40ft (actor has 30ft speed) → first 30ft normal color, last 10ft red → label shows "40 / 30 ft". Token HUD movement-action menu does not offer crawl, jump, blink, or displace (offers climb only if the actor has a climb speed).
 
 ---
 
@@ -284,16 +299,27 @@ Implementation: Vision wiring to tokens
 
 **Story 1 status: done, dev-tested in Foundry, unit tests passing.**
 
-### ❌ Not Started
+### ✅ Story 2 Complete
 
 **Movement budget display (Story 2):**
-- [ ] Create `src/canvas/token/TokenRulerDnd35e.mts` subclass extending `TokenRuler`
-- [ ] Override `_getWaypointLabelContext()` to inject `{ distance, budget, remaining }` into label template
-- [ ] Override `_getWaypointStyle()` to color waypoint red if `distance > budget`
-- [ ] Override `_getSegmentStyle()` to color segment line red if cumulative distance exceeds budget
-- [ ] Add helper to read actor land speed as movement budget
-- [ ] Spike: confirm `TokenPlannedMovement` API is sufficient; no combat mechanics blocker
-- [ ] Spike: determine correct extension point to wire `TokenRulerDnd35e` onto `TokenDnd35e` (no `CONFIG.Token.rulerClass` exists in current type defs — verify actual mechanism before implementing)
+- [x] Create `src/canvas/token/TokenRulerDnd35e.mts` subclass extending `TokenRuler`
+- [x] Override `_getWaypointLabelContext()` to inject the movement budget total into the waypoint label template
+- [x] Override `_getWaypointStyle()` to color waypoint red once over budget
+- [x] Override `_getSegmentStyle()` to color segment line red once cumulative distance exceeds budget
+- [x] Add `getMovementBudget()`/`isOverBudget()` helpers (`src/canvas/token/logic/movementBudget.mts`) reading actor speed as the movement budget
+- [x] Wire `CONFIG.Token.movement.actions.{climb,fly,swim,burrow}.canSelect` to the matching `system.speed.*` field (> 0) via `SPEED_GATED_ACTIONS`/`canSelectSpeedGatedMovementAction()` in `movementActionGating.mts` — `climb` was moved into this speed-gated set rather than disabled outright (a creature with a natural climb speed can already select it; see the Deferred Exploration note in phase-02 §8.8 for the future Climb-skill-check extension covering creatures without one)
+- [x] Disable `crawl`, `jump`, `blink`, `displace` movement actions (`canSelect: () => false`) until their prerequisite systems (prone condition, spell-granted teleport) exist (see WISHLIST.md)
+- [x] Spike resolved: `CONFIG.Token.movement.actions[action].canSelect` (`TokenMovementActionConfig`) is the correct per-action gating extension point — a custom `TokenRuler` override is only needed for the budget/color visualization, not gating
+- [x] Spike resolved: `CONFIG.Token.rulerClass` is the correct extension point for `TokenRulerDnd35e` (confirmed in `types/foundry/client/config.d.mts`; registered in `registerActors()`)
+- [x] **Addition beyond original spec**: dnd35e-specific `run` movement action (4x land speed, straight-line-only via `TokenDnd35e#_addDragWaypoint`) registered via `buildRunMovementActionConfig()` and gated the same way as the other speed-based actions — see `RUN_MOVEMENT_ACTION`/`RUN_SPEED_MULTIPLIER` in `movementActionGating.mts`
+
+**Story 2 unit tests:**
+- [x] `tests/unit/models/movementBudget.test.mts` — budget resolution per action, over-budget marking
+- [x] `tests/unit/models/movementActionGating.test.mts` — speed-gated `canSelect` resolution, disabled actions always return false
+
+**Story 2 status: done, dev-tested in Foundry (ruler display, run action, movement gating all confirmed live). E2E coverage deliberately deferred — see Tests section below.**
+
+### ❌ Not Started
 
 **Vision system (Story 3):**
 - [ ] Create `src/helpers/tokenVision.mts` with `_buildTokenVisionFromSenses(senses[])` helper
@@ -308,22 +334,24 @@ Implementation: Vision wiring to tokens
 - [ ] E2E tests: dwarf with darkvision placed on dark scene sees correctly; tremorsense update propagates live
 
 **Tests:**
-- [ ] Unit: `SIZE_TOKEN_DIMENSIONS` covers all 9 size categories
-- [ ] Unit: Medium → 1, Large → 2, Huge → 3, Colossal → 6
-- [ ] Unit: new Character actor `prototypeToken.actorLink` is `true`
-- [ ] Unit: new Character actor `prototypeToken.bar1.attribute` is `'hp'`
-- [ ] Unit: new Character actor `prototypeToken.sight.enabled` is `true`
-- [ ] Unit: `TokenDocumentDnd35e._preCreate()` sets 2×2 for a Large actor
-- [ ] Unit: `CONFIG.Token.objectClass` is `TokenDnd35e` after init hook runs
+- [x] Unit: `SIZE_TOKEN_DIMENSIONS` covers all 9 size categories
+- [x] Unit: Medium → 1, Large → 2, Huge → 3, Colossal → 6
+- [x] Unit: new Character actor `prototypeToken.actorLink` is `true`
+- [x] Unit: new Character actor `prototypeToken.bar1.attribute` is `'hp'`
+- [x] Unit: new Character actor `prototypeToken.sight.enabled` is `true`
+- [x] Unit: `TokenDocumentDnd35e._preCreate()` sets 2×2 for a Large actor
+- [x] Unit: `CONFIG.Token.objectClass` is `TokenDnd35e` after init hook runs
 - [ ] Unit: `_buildTokenVisionFromSenses([{type: 'darkvision', distance: 60}])` → `{visionMode: 'darkvision', range: 60, detectionModes: [{id: 'basicSight', range: 60}]}`
 - [ ] Unit: priority logic: actor with [darkvision 60, lowLight 90] → visionMode `'darkvision'` (not low-light)
 - [ ] Unit: tremorsense 120ft → detectionMode `'feelTremor'` stacks with darkvision visionMode
 - [ ] E2E: drag Character actor to scene → 1×1 token with HP bar appears
 - [ ] E2E: move token → position persists after reload
-- [ ] E2E: drag token across canvas → ruler waypoints show distance labels (if TokenRuler succeeds)
-- [ ] E2E: drag 40ft on 30ft-speed actor → path turns red after 30ft
+- [ ] **Deferred to poc.10 (Basic Combat)**: E2E: drag token across canvas → ruler waypoints show distance labels
+- [ ] **Deferred to poc.10 (Basic Combat)**: E2E: drag 40ft on 30ft-speed actor → path turns red after 30ft
 - [ ] E2E: dwarf (darkvision 60) on dark scene → token sight works, sees in grayscale
 - [ ] E2E: add tremorsense item to actor → placed token detects in darkness live (no reload)
+
+> **Note**: Movement/ruler e2e coverage is deferred until poc.10 (Basic Combat) lands. Combat introduces reactions, opportunity attacks, and other interactions that will materially change how movement e2e scenarios need to be set up — better to write that coverage once against the real combat-aware drag/measure flow than twice.
 
 ---
 

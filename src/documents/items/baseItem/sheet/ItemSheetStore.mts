@@ -39,9 +39,12 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(
     defaultActiveTab: options?.defaultActiveTab ?? 'details',
   });
   const document = baseStore._storeUtils.document;
-  baseStore._storeUtils.setGetFreshDocument(async (id: string) => {
-    const doc = game.items.get(id);
-    return Promise.resolve(doc) as Promise<TDocument | null>;
+  baseStore._storeUtils.setGetFreshDocument(async (uuid: string) => {
+    // `game.items.get(id)` would only resolve world-collection items - an item embedded
+    // in an unlinked token's synthetic Actor shares its base counterpart's `.id` but has
+    // a distinct `.uuid`, so it must be resolved via `fromUuid`.
+    const doc = await foundry.utils.fromUuid(uuid);
+    return (doc ?? null) as TDocument | null;
   });
 
   const hasOwner = computed(() => !!document.value.parent);

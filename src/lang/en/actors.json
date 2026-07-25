@@ -86,8 +86,8 @@
           },
           "effectName": "{creatureId} Encumbered Effect",
           "effectDescription": "Encumbered effect for {creatureName}.",
-          "tooltip": "Carried: {carried} / {max} lbs ({tier})",
-          "breakpoint": "{tier}: {value} lbs",
+          "tooltip": "Carried: {carried} / {max} {unit} ({tier})",
+          "breakpoint": "{tier}: {value} {unit}",
           "maxDexBonus": { "label": "Max Dex Bonus", "hint": "The maximum Dexterity bonus to AC allowed by armor and other sources." },
           "armorCheckPenalty": { "label": "Armor Check Penalty", "hint": "The total armor check penalty from armor and other sources." }
         },

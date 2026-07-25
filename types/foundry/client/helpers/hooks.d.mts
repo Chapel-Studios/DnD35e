@@ -130,6 +130,8 @@ export default class Hooks {
   static on(...args: HookParamsCreate<Item, 'Item'>): number;
   static on(...args: HookParamsPreCreate<ActiveEffect, 'ActiveEffect'>): number;
   static on(...args: HookParamsCreate<ActiveEffect, 'ActiveEffect'>): number;
+  static on(...args: HookParamsPreCreate<Scene, 'Scene'>): number;
+  static on(...args: HookParamsCreate<Scene, 'Scene'>): number;
   static on(...args: HookParamsPreUpdateCombat): number;
   static on(...args: HookParamsPreUpdateToken): number;
   static on(...args: HookParamsRender<ChatLog, 'ChatLog'>): number;

@@ -136,7 +136,13 @@
 
   .effect-tooltip-popup {
     position: fixed;
-    z-index: 100;
+    // Must render above any focused sheet window - `ApplicationV2` windows start at
+    // `--z-index-window` (100) and get `++ApplicationV2._maxZ` (unbounded growth) every
+    // time one is brought to front, so a static low z-index here would render this
+    // Teleported popup BEHIND the sheet itself (invisible - only the `cursor: help`
+    // native OS cursor icon would be visible on hover). `--z-index-tooltip` (9999) is
+    // Foundry's own reserved layer for exactly this purpose.
+    z-index: var(--z-index-tooltip, 9999);
     background: var(--color-cool-5, #1a1a2e);
     color: var(--color-text-light-highlight, #f0f0f0);
     border: 1px solid var(--color-border-highlight, #7a7971);

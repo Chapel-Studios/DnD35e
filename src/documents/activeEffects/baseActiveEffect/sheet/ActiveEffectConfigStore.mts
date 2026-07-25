@@ -40,8 +40,8 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
     const item = await foundry.utils.fromUuid(parent.uuid) as ItemDnd35e | null ?? parent as ItemDnd35e;
     item.prepareData();
 
-    if (item.id && game.dnd35e?.stores?.Item?.[item.id]) {
-      await (game.dnd35e.stores.Item[item.id] as ItemSheetStore<any>)?._storeUtils.refreshDocument?.(item);
+    if (item.uuid && game.dnd35e?.stores?.Item?.[item.uuid]) {
+      await (game.dnd35e.stores.Item[item.uuid] as ItemSheetStore<any>)?._storeUtils.refreshDocument?.(item);
     }
 
     syncOpenSheetTitle(item.sheet);
