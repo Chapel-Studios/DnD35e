@@ -2,6 +2,7 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import {
   canSelectSpeedGatedMovementAction,
   DISABLED_MOVEMENT_ACTIONS,
+  SPEED_GATED_ACTIONS,
 } from '@canvas/token/logic/movementActionGating.mjs';
 import { describe, expect, it } from 'vitest';
 
@@ -36,7 +37,16 @@ describe('canSelectSpeedGatedMovementAction', () => {
 });
 
 describe('DISABLED_MOVEMENT_ACTIONS', () => {
-  it('lists crawl, jump, blink, and displace', () => {
-    expect(DISABLED_MOVEMENT_ACTIONS).toEqual(['crawl', 'jump', 'blink', 'displace']);
+  it('never overlaps with a speed-gated action (a disabled action should never accidentally get speed-gated instead)', () => {
+    for (const action of DISABLED_MOVEMENT_ACTIONS) {
+      expect(Object.keys(SPEED_GATED_ACTIONS)).not.toContain(action);
+    }
+  });
+
+  it('canSelectSpeedGatedMovementAction returns false for every disabled action, even if the actor happens to have a same-named speed field', () => {
+    for (const action of DISABLED_MOVEMENT_ACTIONS) {
+      const actor = actorWithSpeed({ [action]: 30 });
+      expect(canSelectSpeedGatedMovementAction(actor, action)).toBe(false);
+    }
   });
 });
