@@ -63,7 +63,6 @@ test.describe('equip/unequip toggle', () => {
 
     // Find the weapon row in the inventory table
     const weaponRow = page.locator(`${sheet} table tbody tr`).filter({ hasText: 'Longsword' });
-    // expect(weaponRow).toBeDefined();
     await expect(weaponRow).toHaveCount(1);
 
     // Weapon should start unequipped (no visual indicator or disabled state)

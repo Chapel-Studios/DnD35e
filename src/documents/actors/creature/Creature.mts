@@ -177,7 +177,10 @@ abstract class Creature extends ActorDnd35e {
     if (result === false) return false;
 
     this.updateSource({
-      prototypeToken: buildPrototypeTokenDefaults(),
+      prototypeToken: {
+        ...buildPrototypeTokenDefaults(),
+        ...data.prototypeToken, 
+      },
     });
   }
 
