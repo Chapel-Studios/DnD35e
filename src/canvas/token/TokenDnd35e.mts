@@ -1,6 +1,5 @@
-import { hasSharedTokenVision } from '@actors/creature/logic/visionPermission.mjs';
-import { getActiveLowLightMultiplier } from '@canvas/vision/activeLowLightMultiplier.mjs';
 import { scaleLightRadius } from '@canvas/vision/logic/lowLightVision.mjs';
+import { getActiveLowLightMultiplier, isSharedVisionSource } from '@canvas/vision/sharedVisionPool.mjs';
 import type TokenLayer from '@client/canvas/layers/tokens.mjs';
 import type { LightSourceData } from '@client/canvas/sources/base-light-source.mjs';
 import type { Point } from '@common/_types.mjs';
@@ -39,12 +38,15 @@ class TokenDnd35e<TDocument extends TokenDocumentDnd35e = TokenDocumentDnd35e>
   }
 
   /**
-   * Extends Foundry's default observer permission check to also grant vision-source status to
-   * non-owning users the actor has explicitly shared vision with (D35E `VisionPermissionSheet`/
-   * `Token#observer` parity — see phase-09 "Vision System" and the `sharedVisionMode` setting).
+   * Extends Foundry's stock vision-source rule (controlled token(s) always win; otherwise, an
+   * observed token with sight only contributes while nothing else is controlled) with dnd35e's
+   * shared-vision scope/mode (D35E `VisionPermissionSheet` parity - see phase-09 "Vision System"
+   * and the `sharedVisionScope`/`sharedVisionMode` settings). Note: overriding the public
+   * `observer` getter has no effect on vision-source selection - Foundry doesn't consult it for
+   * that purpose - `_isVisionSource()` is the actual hook.
    */
-  override get observer(): boolean {
-    return super.observer || hasSharedTokenVision(this);
+  protected override _isVisionSource(): boolean {
+    return isSharedVisionSource(this);
   }
 }
 

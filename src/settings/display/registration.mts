@@ -5,6 +5,8 @@
 // Foundry global UI reference
 declare const ui: typeof foundry.ui;
 
+import { broadcastVisionRefresh } from '@canvas/vision/sharedVisionPool.mjs';
+
 import { SYSTEM_ID } from '../shared.mjs';
 import {
   DISPLAY_CLIENT_KEYS,
@@ -12,6 +14,7 @@ import {
   DISPLAY_WORLD_KEYS,
   PARTY_HUD_CHOICES,
   SHARED_VISION_MODE_CHOICES,
+  SHARED_VISION_SCOPE_CHOICES,
   UNIT_CHOICES,
 } from './constants.mjs';
 import { DisplaySettingsConfig } from './sheet/index.mjs';
@@ -114,17 +117,29 @@ function registerDisplayWorldSettings(): void {
     },
   });
 
+  game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.SHARED_VISION_SCOPE, {
+    name: 'dnd35e.SETTINGS.SharedVisionScope.Name',
+    hint: 'dnd35e.SETTINGS.SharedVisionScope.Hint',
+    scope: 'world',
+    config: false,
+    type: String,
+    default: 'owned',
+    choices: SHARED_VISION_SCOPE_CHOICES,
+    onChange: () => {
+      broadcastVisionRefresh();
+    },
+  });
+
   game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.SHARED_VISION_MODE, {
     name: 'dnd35e.SETTINGS.SharedVisionMode.Name',
     hint: 'dnd35e.SETTINGS.SharedVisionMode.Hint',
     scope: 'world',
     config: false,
     type: String,
-    default: 'withoutSelection',
+    default: 'passiveWhenUnselected',
     choices: SHARED_VISION_MODE_CHOICES,
     onChange: () => {
-      game.socket?.emit(`system.${SYSTEM_ID}`, { eventType: 'redrawCanvas' });
-      canvas?.perception?.update({ refreshVision: true, refreshOcclusion: true });
+      broadcastVisionRefresh();
     },
   });
 

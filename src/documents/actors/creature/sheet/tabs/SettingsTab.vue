@@ -34,25 +34,14 @@
       v-if="isGM"
       class="settings-section"
     >
-      <h3 class="settings-section-label">{{ localize('dnd35e.SETTINGS.VisionPermission.SectionLabel') }}</h3>
-      <p class="settings-section-hint">{{ localize('dnd35e.SETTINGS.VisionPermission.SectionHint') }}</p>
+      <h3 class="settings-section-label">{{ localize('dnd35e.SETTINGS.ActorSharedVision.SectionLabel') }}</h3>
+      <p class="settings-section-hint">{{ localize('dnd35e.SETTINGS.ActorSharedVision.SectionHint') }}</p>
       <SelectFormGroup
-        :value="visionPermissionDefault"
-        :options="visionPermissionDefaultOptions"
-        :on-update="onVisionPermissionDefaultUpdate"
-        field-path="flags.dnd35e.visionPermission.default"
-        label="dnd35e.SETTINGS.VisionPermission.DefaultLabel"
-        hint="dnd35e.SETTINGS.VisionPermission.DefaultHint"
-        hide-field-controls
-      />
-      <SelectFormGroup
-        v-for="user in nonGmUsers"
-        :key="user.id"
-        :value="getVisionPermissionUserLevel(user.id)"
-        :options="visionPermissionUserOptions"
-        :on-update="(value: string | null) => onVisionPermissionUserUpdate(user.id, value)"
-        :field-path="`flags.dnd35e.visionPermission.users.${user.id}`"
-        :label="user.name"
+        :value="sharedVisionScope"
+        :options="sharedVisionScopeOptions"
+        :on-update="onSharedVisionScopeUpdate"
+        field-path="flags.dnd35e.sharedVisionScope"
+        label="dnd35e.SETTINGS.ActorSharedVision.Label"
         hide-field-controls
       />
     </section>
@@ -61,11 +50,8 @@
 
 <script lang="ts" setup>
   import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-  import {
-    broadcastVisionRefresh,
-    type VisionPermissionLevel,
-    type VisionPermissionSource,
-  } from '@actors/creature/logic/visionPermission.mjs';
+  import type { ActorSharedVisionScope } from '@canvas/vision/logic/sharedVisionScope.mjs';
+  import { broadcastVisionRefresh } from '@canvas/vision/sharedVisionPool.mjs';
   import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import FormulaFormGroup from '@helpers/formulae/FormulaFormGroup.vue';
@@ -140,37 +126,19 @@
     return await store.documentActions.updateFlag(DEATH_THRESHOLD_OVERRIDE_FORMULA_FLAG, value);
   }
 
-  const nonGmUsers = computed(() => game.users.filter(user => !user.isGM));
-
-  const visionPermission = computed(() => {
-    return foundry.utils.getProperty(document.value, 'flags.dnd35e.visionPermission') as VisionPermissionSource | undefined;
+  const sharedVisionScope = computed<ActorSharedVisionScope>(() => {
+    return (foundry.utils.getProperty(document.value, 'flags.dnd35e.sharedVisionScope') as ActorSharedVisionScope | undefined) ?? 'default';
   });
 
-  const visionPermissionDefault = computed<VisionPermissionLevel>(() => visionPermission.value?.default ?? 'no');
-
-  const visionPermissionDefaultOptions: SelectOption<VisionPermissionLevel>[] = [
-    { value: 'yes', label: 'dnd35e.SETTINGS.VisionPermission.Yes' },
-    { value: 'no', label: 'dnd35e.SETTINGS.VisionPermission.No' },
+  const sharedVisionScopeOptions: SelectOption<ActorSharedVisionScope>[] = [
+    { value: 'default', label: 'dnd35e.SETTINGS.ActorSharedVision.Default' },
+    { value: 'none', label: 'dnd35e.SETTINGS.SharedVisionScope.None' },
+    { value: 'owned', label: 'dnd35e.SETTINGS.SharedVisionScope.Owned' },
+    { value: 'partyMembers', label: 'dnd35e.SETTINGS.SharedVisionScope.PartyMembers' },
   ];
 
-  const visionPermissionUserOptions: SelectOption<VisionPermissionLevel>[] = [
-    { value: 'default', label: 'dnd35e.SETTINGS.VisionPermission.Default' },
-    { value: 'yes', label: 'dnd35e.SETTINGS.VisionPermission.Yes' },
-    { value: 'no', label: 'dnd35e.SETTINGS.VisionPermission.No' },
-  ];
-
-  function getVisionPermissionUserLevel(userId: string): VisionPermissionLevel {
-    return visionPermission.value?.users?.[userId] ?? 'default';
-  }
-
-  async function onVisionPermissionDefaultUpdate(value: string | null): Promise<boolean> {
-    const result = await store.documentActions.updateFlag('visionPermission.default', value ?? 'no');
-    broadcastVisionRefresh();
-    return result;
-  }
-
-  async function onVisionPermissionUserUpdate(userId: string, value: string | null): Promise<boolean> {
-    const result = await store.documentActions.updateFlag(`visionPermission.users.${userId}`, value ?? 'default');
+  async function onSharedVisionScopeUpdate(value: string | null): Promise<boolean> {
+    const result = await store.documentActions.updateFlag('sharedVisionScope', value ?? 'default');
     broadcastVisionRefresh();
     return result;
   }

@@ -9,6 +9,7 @@ export {
   DISPLAY_WORLD_KEYS,
   PARTY_HUD_CHOICES,
   SHARED_VISION_MODE_CHOICES,
+  SHARED_VISION_SCOPE_CHOICES,
   UNIT_CHOICES,
 } from './constants.mjs';
 export {

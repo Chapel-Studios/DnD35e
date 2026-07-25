@@ -122,13 +122,24 @@ class DisplaySettingsConfig extends VueSettingsBase {
         // { key: DISPLAY_KEYS.GLOBAL_DISABLE_TOKEN_LIGHT, label: 'dnd35e.SETTINGS.GlobalDisableTokenLight.Name', hint: 'dnd35e.SETTINGS.GlobalDisableTokenLight.Hint', type: 'boolean' },
         { key: DISPLAY_KEYS.DISABLE_TOKEN_AUTO_SYNC, label: 'dnd35e.SETTINGS.DisableTokenAutoSync.Name', hint: 'dnd35e.SETTINGS.DisableTokenAutoSync.Hint', type: 'boolean' },
         {
+          key: DISPLAY_KEYS.SHARED_VISION_SCOPE,
+          label: 'dnd35e.SETTINGS.SharedVisionScope.Name',
+          hint: 'dnd35e.SETTINGS.SharedVisionScope.Hint',
+          type: 'string',
+          choices: [
+            { value: 'none', label: 'dnd35e.SETTINGS.SharedVisionScope.None' },
+            { value: 'owned', label: 'dnd35e.SETTINGS.SharedVisionScope.Owned' },
+            { value: 'partyMembers', label: 'dnd35e.SETTINGS.SharedVisionScope.PartyMembers' },
+          ],
+        },
+        {
           key: DISPLAY_KEYS.SHARED_VISION_MODE,
           label: 'dnd35e.SETTINGS.SharedVisionMode.Name',
           hint: 'dnd35e.SETTINGS.SharedVisionMode.Hint',
           type: 'string',
           choices: [
-            { value: 'withoutSelection', label: 'dnd35e.SETTINGS.SharedVision.WithoutSelection' },
-            { value: 'withSelection', label: 'dnd35e.SETTINGS.SharedVision.WithSelection' },
+            { value: 'passiveWhenUnselected', label: 'dnd35e.SETTINGS.SharedVision.PassiveWhenUnselected' },
+            { value: 'alwaysShared', label: 'dnd35e.SETTINGS.SharedVision.AlwaysShared' },
           ],
         },
         // HIDE_TOKEN_CONDITIONS / CORE_EFFECTS: gate the condition/buff token status-icon

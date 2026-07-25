@@ -339,13 +339,24 @@ Implementation: Vision wiring to tokens
 **Design correction after low-light radius multiplier landed**: `buildTokenVisionFromSenses()` originally mapped low-light vision to `sight.visionMode: 'lightAmplification'`. Once the radius-doubling `_getLightSourceData()` override (below) was added, this became double-counting — `lightAmplification` is a per-token brightness re-shade (dim→bright, bright→brightest), stacked on top of a light source whose radius is *already* doubled, producing an area that's both wider and brighter (neither RAW nor the intended design). Corrected: low-light vision now maps to plain `'basic'` sight; the radius multiplier alone delivers RAW's "see twice as far."
 
 **Low-light radius multiplier (D35E parity, added beyond original spec)**: Foundry's stock `lightAmplification` visionMode has no distance/radius component at all — it's a pure categorical re-shade (dim→bright, bright→brightest), confirmed by reading `client/config.mjs` and `client/canvas/perception/vision-mode.mjs` (the `lighting.multipliers` schema field exists but is never consumed anywhere in core). This does not deliver RAW's literal "see twice as far in dim light." D35E achieves the literal doubling via a `_getLightSourceData()` override on both `Token` and `AmbientLight` placeables that multiplies the returned `dim`/`bright` radii (`module/canvas/low-light-vision.js`, default multiplier 2 from `module/actor/entity.js`). Reproduced this for dnd35e:
-- [x] `src/canvas/vision/logic/lowLightVision.mts` — pure: `getLowLightMultiplier(senses)`, `resolveLowLightMultiplier(observers)` (controlled-token priority, falls back to owned tokens, highest multiplier wins), `scaleLightRadius(data, multiplier)`
-- [x] `src/canvas/vision/activeLowLightMultiplier.mts` — impure: queries `canvas.tokens.placeables` + `game.user` permissions, delegates to the pure resolver
+- [x] `src/canvas/vision/logic/lowLightVision.mts` — pure: `getLowLightMultiplier(senses)`, `scaleLightRadius(data, multiplier)`
+- [x] `src/canvas/vision/sharedVisionPool.mts` — impure: queries `canvas.tokens.placeables` + `game.user` permissions, delegates to the shared-vision-source resolver (see "Shared Vision Scope" below) for `getActiveLowLightMultiplier()`
 - [x] `src/canvas/light/AmbientLightDnd35e.mts` — new `AmbientLight` placeable subclass, overrides `_getLightSourceData()`
 - [x] `TokenDnd35e#_getLightSourceData()` override (token's own emitted light, e.g. a held torch)
 - [x] Registered `CONFIG.AmbientLight.objectClass = AmbientLightDnd35e` in `registration.mts`
-- [x] Unit tests: `tests/unit/models/lowLightVision.test.mts` (multiplier resolution rules, radius scaling)
-- [ ] E2E/manual verification: place a low-light-vision token near a light source on a dark scene, confirm the light visually renders at 2× its configured `dim`/`bright` radius while that token is controlled/owned
+- [x] Unit tests: `tests/unit/models/lowLightVision.test.mts` (multiplier lookup, radius scaling)
+- [x] E2E: `tests/e2e/low-light-vision.spec.ts` — selecting a low-light token doubles its radius; switching selection shrinks it back down
+
+**Shared Vision Scope (added beyond original spec, replaces an earlier `visionPermission` per-user grant grid)**: dnd35e also needed a way for a token's vision (and its low-light boost) to pool with other tokens the user isn't currently controlling — e.g. a party's passive vision when nothing's selected. An initial per-user `flags.dnd35e.visionPermission` grant grid (D35E `VisionPermissionSheet` port) was built, then redesigned after review. Investigating Foundry's own `Token#_isVisionSource()` (`client/canvas/placeables/token.mjs`) revealed it *already* implements "controlled token(s) always win; otherwise, an OBSERVER-permitted token with sight contributes only while nothing else is controlled" natively — and that overriding the public `observer` getter (the original approach) has **no effect on vision-source selection at all**, since nothing in core consults it for that purpose. The redesign extends `_isVisionSource()` directly instead:
+- [x] `src/canvas/vision/logic/sharedVisionScope.mts` — pure: `resolveEffectiveVisionScope(actorScope, worldScope)`, `resolveSharedVisionSource(context)` (extends Foundry's own controlled/observer-fallback rule with scope + selection-mode)
+- [x] `src/canvas/vision/sharedVisionPool.mts` — impure: `isSharedVisionSource(token)`, `getActiveLowLightMultiplier()`, `reinitializeSharedVision()`, `broadcastVisionRefresh()`
+- [x] World setting `sharedVisionScope` (`none`/`owned`/`partyMembers`, default `owned`) — who the shared-vision pool draws from
+- [x] World setting `sharedVisionMode` reworked (`passiveWhenUnselected` default / `alwaysShared`) — whether the pool applies alongside a selection or only when nothing's selected
+- [x] Per-actor override flag `flags.dnd35e.sharedVisionScope` (`default`/`none`/`owned`/`partyMembers`) — lets an individual actor (e.g. a future companion) opt out of automatic sharing even under `owned` scope, until a future ability/class feature explicitly grants it
+- [x] `TokenDnd35e#_isVisionSource()` override (replaces the removed `observer` getter override)
+- [x] `SettingsTab.vue` — actor-level `sharedVisionScope` select replaces the old per-user grant grid
+- [x] Unit tests: `tests/unit/models/sharedVisionScope.test.mts`
+- [ ] E2E/manual verification: GM sets `sharedVisionScope: partyMembers`, grants OBSERVER permission across party actors, confirms deselecting all tokens pools party vision; a `sharedVisionScope: none`-flagged actor never pools even when owned
 
 **Tests:**
 - [x] Unit: `SIZE_TOKEN_DIMENSIONS` covers all 9 size categories
@@ -358,7 +369,8 @@ Implementation: Vision wiring to tokens
 - [x] Unit: `buildTokenVisionFromSenses([{type: 'darkvision', distance: 60}])` → `{sight: {visionMode: 'darkvision', range: 60}, detectionModes: {basicSight: {range: 60}}}` (shape corrected to match Foundry's real keyed-object `detectionModes` schema, not an array)
 - [x] Unit: priority logic: actor with [darkvision 60, lowLight 90] → visionMode `'darkvision'` (not low-light)
 - [x] Unit: tremorsense 120ft → detectionMode `'feelTremor'` stacks with darkvision visionMode
-- [x] Unit: low-light radius multiplier resolution (`resolveLowLightMultiplier`) and radius scaling (`scaleLightRadius`)
+- [x] Unit: low-light radius multiplier lookup (`getLowLightMultiplier`) and radius scaling (`scaleLightRadius`)
+- [x] Unit: shared-vision-scope resolution (`resolveEffectiveVisionScope`, `resolveSharedVisionSource`)
 - [ ] E2E: drag Character actor to scene → 1×1 token with HP bar appears
 - [ ] E2E: move token → position persists after reload
 - [ ] **Deferred to poc.10 (Basic Combat)**: E2E: drag token across canvas → ruler waypoints show distance labels

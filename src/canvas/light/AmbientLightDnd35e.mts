@@ -1,5 +1,5 @@
-import { getActiveLowLightMultiplier } from '@canvas/vision/activeLowLightMultiplier.mjs';
 import { scaleLightRadius } from '@canvas/vision/logic/lowLightVision.mjs';
+import { getActiveLowLightMultiplier } from '@canvas/vision/sharedVisionPool.mjs';
 import type { LightSourceData } from '@client/canvas/sources/base-light-source.mjs';
 
 /**
