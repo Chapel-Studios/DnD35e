@@ -131,7 +131,9 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       const doc = this.document as TDocument;
       result.document = doc;
       result.appConfigOptions = this.options;
-      result.store = game.dnd35e.stores[doc.documentName]?.[doc.id] as DocumentSheetStore<TDocument> | undefined;
+      result.store = doc.uuid
+        ? game.dnd35e.stores[doc.documentName]?.[doc.uuid] as DocumentSheetStore<TDocument> | undefined
+        : undefined;
       this.#ensureVerticalTabHost(content);
 
       // Let base handle Vue mounting
@@ -191,7 +193,9 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
         this.verticalTabHost.value.remove();
       }
       this.verticalTabHost.value = null;
-      delete game.dnd35e.stores[this.#document.documentName]?.[this.#document.id];
+      if (this.#document.uuid) {
+        delete game.dnd35e.stores[this.#document.documentName]?.[this.#document.uuid];
+      }
       return super.close(options);
     }
   }

@@ -85,14 +85,14 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     super._onUpdate(data, options, userId);
     
     // ensure sheetstore updates
-    if (game.dnd35e?.stores?.[this.documentName]?.[this.id]) {
-      (game.dnd35e.stores[this.documentName]?.[this.id] as ItemSheetStore<any>)
+    if (game.dnd35e?.stores?.[this.documentName]?.[this.uuid]) {
+      (game.dnd35e.stores[this.documentName]?.[this.uuid] as ItemSheetStore<any>)
         ?._storeUtils.refreshDocument?.(this);
     }
 
     // ensure parent sheetstore updates if this is an embedded item
-    if (this.parent && game.dnd35e?.stores?.[this.parent.documentName]?.[this.parent.id]) {
-      (game.dnd35e.stores[this.parent.documentName]?.[this.parent.id] as ItemSheetStore<any>)
+    if (this.parent && game.dnd35e?.stores?.[this.parent.documentName]?.[this.parent.uuid]) {
+      (game.dnd35e.stores[this.parent.documentName]?.[this.parent.uuid] as ItemSheetStore<any>)
         ?._storeUtils.refreshDocument?.(this.parent);
     }
   }

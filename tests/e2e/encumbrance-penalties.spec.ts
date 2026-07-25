@@ -41,6 +41,29 @@ interface TierExpectation {
   speed: string; // rendered readonly text (numeric prefix) of system.speed.land's effective/total value in play mode
 }
 
+// The `HasActiveEffectsNotification` popup renders one entry per `Override` recorded
+// on the field - `effect.effectName` is `change.label`, which `_buildEncumberedChanges()`
+// sets to the localized tier label (`dnd35e.CREATURE.FIELDS.encumbrance.tier.<n>`, see
+// src/lang/en/actors.json), and `effect.value` is the raw pushed change value (the
+// *encumbered* land speed itself, not a delta - `pushChange('system.speed.land', encumberedSpeed)`).
+const TIER_EFFECT_NAME: Record<number, string> = {
+  1: 'Moderately Loaded',
+  2: 'Heavily Loaded',
+  3: 'Nearing Max Lift',
+  4: 'Nearing Max Drag',
+  5: 'Overloaded',
+};
+
+// Encumbered speed value pushed as the DOWNGRADE change - unlike the sheet's readonly
+// display (which renders 0 as '—'), the tooltip shows the literal numeric value.
+const TIER_SPEED_EFFECT_VALUE: Record<number, string> = {
+  1: '20',
+  2: '20',
+  3: '5',
+  4: '5',
+  5: '0',
+};
+
 const TIER_EXPECTATIONS: Record<number, TierExpectation> = {
   0: { tier: 0, maxDex: '', checkPenalty: '0', speed: '30' },
   1: { tier: 1, maxDex: '3', checkPenalty: '-3', speed: '20' },
@@ -125,6 +148,44 @@ async function assertSheetShowsTier (
     if (expected.speed === '—') return text;
     return text?.match(/^-?\d+(\.\d+)?/)?.[0];
   }).toBe(expected.speed);
+
+  // Encumbrance penalties are self-contributed (non-AE) DOWNGRADE changes recorded via
+  // `Creature._buildEncumberedChanges()` -> `document.effectOverrides` - the same
+  // `HasActiveEffectsNotification` sparkle used for real ActiveEffects must appear on
+  // `system.speed.land` whenever tier > 0 downgrades it, and must NOT appear at tier 0
+  // (no penalty change is pushed at all - see `_buildEncumberedChanges`'s early return).
+  const speedEffectSparkle = page.locator(`${sheet} [data-field-path="${SPEED_PATH}"] .effect-tooltip`).first();
+  await expect.poll(async () => speedEffectSparkle.count()).toBe(expectedTier > 0 ? 1 : 0);
+
+  if (expectedTier > 0) {
+    await assertSpeedEffectTooltip(page, speedEffectSparkle, expectedTier);
+  }
+}
+
+/**
+ * Hover the land-speed sparkle icon and verify the teleported tooltip popup
+ * (`HasActiveEffectsNotification.vue`, `<Teleport to="body">`) shows the correct
+ * tier label and encumbered-speed value - not just that the icon is present.
+ */
+async function assertSpeedEffectTooltip (page: any, speedEffectSparkle: any, expectedTier: number): Promise<void> {
+  await speedEffectSparkle.hover();
+
+  // Teleported to <body>, not scoped under the sheet selector.
+  const popup = page.locator('.effect-tooltip-popup');
+  await popup.waitFor({ state: 'visible', timeout: 10_000 });
+
+  const entries = popup.locator('.effect-tooltip-entry');
+  await expect.poll(async () => entries.count()).toBe(1);
+
+  const entry = entries.first();
+  await expect.poll(async () => (await entry.locator('.effect-name').textContent())?.trim())
+    .toBe(TIER_EFFECT_NAME[expectedTier]);
+  await expect.poll(async () => (await entry.locator('.effect-detail').textContent())?.trim())
+    .toBe(`↓ ${TIER_SPEED_EFFECT_VALUE[expectedTier]}`);
+
+  // Move the pointer away so the popup closes and doesn't intercept subsequent clicks.
+  await page.mouse.move(0, 0);
+  await popup.waitFor({ state: 'hidden', timeout: 10_000 }).catch(() => {});
 }
 
 test.describe('Encumbrance penalty progression (six-tier scenario)', () => {

@@ -142,6 +142,8 @@ No hard locks. All edits are allowed. The system flags what broke.
 ## 8.8 Skills System
 
 > **Note**: This section covers skills infrastructure introduced with classes. A dedicated Skills phase (inserted after Phase 12) will implement the full skill system with ranks UI, synergies, and skill check actions. Phase 8 introduces a basic skill check (d20 + ability mod only). This phase adds the data model and class-skills derivation.
+>
+> **Deferred exploration**: poc.9 (`docs/migration-plan/poc/phase-09-basic-tokens.md`) added canvas-only movement action gating; the `climb` movement action is speed-gated on `system.speed.climb` (see `SPEED_GATED_ACTIONS` in `src/canvas/token/logic/movementActionGating.mts`) — a creature with a natural climb speed can already select it. What's still missing: creatures **without** a climb speed can attempt to climb via a Climb skill check (SRD: DC-dependent, success grants movement at half climb speed for that round, failure may mean no progress or falling). When the dedicated Skills phase implements skill checks, explore granting a temporary/derived climb speed for the round based on a successful Climb check, rather than requiring a persisted `system.speed.climb` value.
 
 ```
 ActorSystemModel.skills: Record<SkillKey, SkillData>

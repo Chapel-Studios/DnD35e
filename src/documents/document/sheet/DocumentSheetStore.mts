@@ -55,7 +55,7 @@ type DocumentSheetStoreUtils<TDocument extends SheetDocument> = FieldOverridesSt
   getSourceProperty: <T>(path: string) => ComputedRef<T>;
   getFlagValue: <T>(flagPath: string) => T;
 
-  setGetFreshDocument: (fn: (id: string) => Promise<TDocument | null>) => void;
+  setGetFreshDocument: (fn: (uuid: string) => Promise<TDocument | null>) => void;
   refreshDocument: (doc?: TDocument | null) => Promise<void>;
   refreshContext: (context: VueApplicationContext<TDocument> | undefined) => void;
 
@@ -255,8 +255,8 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
   // --- Overridable implementations (replaced by extending stores via _storeUtils) ---
 
-  const _getFreshDocumentImpl = ref<(id: string) => Promise<TDocument | null>>(
-    async (_id: string): Promise<TDocument | null> => {
+  const _getFreshDocumentImpl = ref<(uuid: string) => Promise<TDocument | null>>(
+    async (_uuid: string): Promise<TDocument | null> => {
       console.error('getFreshDocument is not implemented for this store');
       return null;
     }
@@ -483,14 +483,14 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     },
     refreshDocument: async (doc?: TDocument | null) => {
       if (!doc) {
-        doc = await _getFreshDocumentImpl.value(document.value._id);
+        doc = await _getFreshDocumentImpl.value(document.value.uuid);
       }
       document.value = doc ?? null;
       triggerRef(document);
     },
     refreshContext: async (context: Partial<VueApplicationContext<TDocument>> | undefined) => {
       document.value = context?.document
-        ?? await _getFreshDocumentImpl.value(document.value._id)
+        ?? await _getFreshDocumentImpl.value(document.value.uuid)
         ?? document.value;
       triggerRef(document);
       state.renderOptions = context?.renderOptions ?? state.renderOptions;

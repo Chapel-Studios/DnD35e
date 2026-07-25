@@ -147,6 +147,8 @@ type TokenSchema = {
             texture: fields.FilePathField<ImageFilePath>;
         }>;
     }>;
+    /** The movement action of the Token, a key from CONFIG.Token.movement.actions. Null infers the default via `_inferMovementAction()`. */
+    movementAction: fields.StringField<string, string, true, true, true>;
     /** An object of optional key/value flags */
     flags: fields.DocumentFlagsField;
 };

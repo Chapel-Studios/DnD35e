@@ -730,6 +730,13 @@ export default class Token<TDocument extends TokenDocument = TokenDocument> exte
 
   protected override _onDragLeftStart(event: TokenPointerEvent<this>): void;
 
+  /**
+     * Add ruler waypoints and update ruler paths.
+     * @param point   The (unsnapped) center point of the waypoint
+     * @param options Additional options
+     */
+  protected _addDragWaypoint(point: Point, options?: { snap?: boolean }): void;
+
   protected override _prepareDragLeftDropUpdates(event: PIXI.FederatedEvent): Record<string, unknown>[] | null;
 
   protected override _onDragLeftMove(event: TokenPointerEvent<this>): void;

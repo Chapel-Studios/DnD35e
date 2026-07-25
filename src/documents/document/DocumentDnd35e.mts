@@ -62,10 +62,10 @@ type DocumentConstructor<TBase extends AbstractConstructorOf<ClientDocument>> =
  * sheet's `document` ref to trigger and any dependent computeds to recompute.
  */
 const refreshDocumentStore = (doc: ClientDocument | null | undefined): void => {
-  if (!doc) return;
+  if (!doc?.uuid) return;
   const storeRef = game.dnd35e?.stores
     ?.[doc.documentName as DocumentStoreType]
-    ?.[doc.id] as DocumentSheetStore<any> | undefined;
+    ?.[doc.uuid] as DocumentSheetStore<any> | undefined;
   storeRef?._storeUtils.refreshDocument?.(doc as any);
 };
 
@@ -183,8 +183,8 @@ const DocumentMixin = <TBase extends AbstractConstructorOf<ClientDocument>>(Base
       this.events.emit(DocumentDnd35e.LifeCycle.preDestroy, { document: this, options });
 
       const storesRef = game.dnd35e?.stores?.[this.documentName as DocumentStoreType];
-      if (!!storesRef?.[this.id]) {
-        delete storesRef[this.id];
+      if (this.uuid && storesRef?.[this.uuid]) {
+        delete storesRef[this.uuid];
       }
 
       return await super._preDelete(options, user);

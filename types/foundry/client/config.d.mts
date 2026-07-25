@@ -15,6 +15,7 @@ import { EnrichmentOptions } from './applications/ux/text-editor.mjs';
 import ActorSheet from './appv1/sheets/actor-sheet.mjs';
 import ItemSheet from './appv1/sheets/item-sheet.mjs';
 import JournalSheet from './appv1/sheets/journal-sheet.mjs';
+import { TokenMovementActionConfig } from './_types.mjs';
 import { CanvasAnimationAttribute } from './canvas/animation/_types.mjs';
 import ChatBubbles from './canvas/animation/chat-bubbles.mjs';
 import { DoorControl, ParticleEffect } from './canvas/containers/_module.mjs';
@@ -33,6 +34,7 @@ import * as layers from './canvas/layers/_module.mjs';
 import * as perception from './canvas/perception/_module.mjs';
 import * as placeables from './canvas/placeables/_module.mjs';
 import TokenRingConfig from './canvas/placeables/tokens/ring-config.mjs';
+import TokenRuler from './canvas/placeables/tokens/ruler.mjs';
 import {
   AbstractWeatherShader,
   AdaptiveBackgroundShader,
@@ -500,6 +502,14 @@ export default interface Config<
         objectClass: ConstructorOf<NonNullable<TTokenDocument['object']>>;
         prototypeSheetClass: ConstructorOf<PrototypeTokenConfig>;
         ring: TokenRingConfig;
+        /** The Token#ruler implementation used while dragging/measuring a Token's movement. Not `Canvas.rulerClass` (the generic measuring ruler). */
+        rulerClass: typeof TokenRuler;
+        /** Movement action registry (walk, fly, swim, burrow, crawl, climb, jump, blink, displace, ...) and defaults. */
+        movement: {
+            defaultAction: string;
+            defaultSpeed: number;
+            actions: Record<string, TokenMovementActionConfig>;
+        };
     };
 
     /** Configuration for the Wall embedded document type and its representation on the game Canvas */

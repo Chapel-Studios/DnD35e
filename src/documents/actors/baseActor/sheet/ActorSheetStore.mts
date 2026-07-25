@@ -22,9 +22,12 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
   options?: UseActorSheetStoreOptions
 ): ActorDocumentStore<TDocument> => {
   const baseStore = useDocumentSheetStore(context, options);
-  baseStore._storeUtils.setGetFreshDocument(async (id: string) => {
-    const doc = game.actors.get(id);
-    return Promise.resolve(doc ?? null) as Promise<TDocument | null>;
+  baseStore._storeUtils.setGetFreshDocument(async (uuid: string) => {
+    // `game.actors.get(id)` would only ever resolve the base world Actor - an unlinked
+    // token's synthetic Actor shares the base Actor's `.id` but has a distinct `.uuid`
+    // (built from its TokenDocument parent), so it must be resolved via `fromUuid`.
+    const doc = await foundry.utils.fromUuid(uuid);
+    return (doc ?? null) as TDocument | null;
   });
 
   const { getViewAwareFieldValue } = baseStore.documentGetters;
