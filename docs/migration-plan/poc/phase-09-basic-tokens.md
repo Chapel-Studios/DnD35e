@@ -184,6 +184,20 @@ DetectionModes stack — actor can have tremorsense + seeInvisibility all active
 
 **Spike at phase start**: Confirm `TokenPlannedMovement` exposes movement cost API and verify no hard requirement on combat mechanics. If API is insufficient, defer to poc.10 and document the blocker.
 
+### Movement Action Gating (`CONFIG.Token.movement.actions`)
+
+Foundry v13+'s Movement Action system (Token HUD "select movement action" button) ships 9 generic actions (`walk`, `fly`, `swim`, `burrow`, `crawl`, `climb`, `jump`, `blink`, `displace`), each `canSelect(token) => true` by default — every token can select every action regardless of whether the actor can actually do it.
+
+**What we want**: only show movement actions the actor's `system.speed` actually supports, and never show actions we haven't implemented rules for yet.
+
+**Gating rules for poc.9**:
+- `walk` — always selectable (default, untouched).
+- `fly`, `swim`, `burrow` — `canSelect` gated on `(actor?.system?.speed?.<action> ?? 0) > 0`. Wired in the actor init hook (`registration.mts`), same place as the other `CONFIG.Token` registration.
+- `climb` — **disabled outright**: `canSelect: () => false`. 3.5e ties climbing to the Climb skill (DC check, half speed, fall risk), not a flat persisted speed — gating on `system.speed.climb` alone would misrepresent the rule. Revisit once the skill-check system exists (tracked in `WISHLIST.md`).
+- `crawl` — **disabled outright**: `canSelect: () => false`. 3.5e ties crawling to being prone, which doesn't exist yet as a condition. Revisit once the condition system lands (tracked in `WISHLIST.md`).
+- `jump` — **disabled outright**: `canSelect: () => false`. 3.5e's Jump is a skill check for a single leap distance, not a sustained drag-across-the-canvas movement mode — Foundry's generic `jump` action (flat 2x cost multiplier) doesn't represent that. Revisit once the skill-check system exists (tracked in `WISHLIST.md`).
+- `blink`, `displace` — **disabled outright**: `canSelect: () => false`. Both represent spell/effect-granted teleportation (Dimension Door, Teleport, Blink) — not a default movement mode any actor should always have available. Revisit once spell-granted movement/teleport effects exist (tracked in `WISHLIST.md`).
+
 ---
 
 ## Phase Delivery Plan
@@ -228,8 +242,9 @@ Implementation: Vision wiring to tokens
 1. **`TokenRulerDnd35e` subclass** — extend `TokenRuler`, override `_getWaypointLabelContext()`, `_getWaypointStyle()`, `_getSegmentStyle()` to inject distance budget labels and path coloring. *(Unit test: waypoint beyond 30ft budget returns red color)*
 2. **Movement budget calculation** — read `actor.system.speed.land` (single persisted field) as the token's movement budget. *(Unit test: 30ft speed actor returns 30 from budget getter)*
 3. **Path coloring logic** — cumulative distance per segment; flag segment red if total distance exceeds budget. *(Unit test: 40ft drag on 30ft actor marks last 10ft red)*
+4. **Movement action gating** — wire `CONFIG.Token.movement.actions.{fly,swim,burrow}.canSelect` to the matching `system.speed.*` field; explicitly disable `climb`, `crawl`, `jump`, `blink`, `displace` (`canSelect: () => false`) until their prerequisite systems (skill checks, prone condition, spell-granted teleport) exist. See "Movement Action Gating" in §9.5. *(Unit tests: gate function returns true/false per speed value; climb/crawl/jump/blink/displace gates always return false)*
 
-**E2E acceptance**: Drag token 40ft (actor has 30ft speed) → first 30ft normal color, last 10ft red → label shows "40 / 30 ft".
+**E2E acceptance**: Drag token 40ft (actor has 30ft speed) → first 30ft normal color, last 10ft red → label shows "40 / 30 ft". Token HUD movement-action menu does not offer climb, crawl, jump, blink, or displace.
 
 ---
 
@@ -292,6 +307,8 @@ Implementation: Vision wiring to tokens
 - [ ] Override `_getWaypointStyle()` to color waypoint red if `distance > budget`
 - [ ] Override `_getSegmentStyle()` to color segment line red if cumulative distance exceeds budget
 - [ ] Add helper to read actor land speed as movement budget
+- [ ] Wire `CONFIG.Token.movement.actions.{fly,swim,burrow}.canSelect` to matching `system.speed.*` field (> 0)
+- [ ] Explicitly disable `climb`, `crawl`, `jump`, `blink`, `displace` movement actions (`canSelect: () => false`) until skill checks / prone condition / spell-granted teleport exist (see WISHLIST.md)
 - [ ] Spike: confirm `TokenPlannedMovement` API is sufficient; no combat mechanics blocker
 - [ ] Spike: determine correct extension point to wire `TokenRulerDnd35e` onto `TokenDnd35e` (no `CONFIG.Token.rulerClass` exists in current type defs — verify actual mechanism before implementing)
 

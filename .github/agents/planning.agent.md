@@ -8,6 +8,14 @@ tools: [search, read, vscode_listCodeUsages, agent, todo, edit, vscode.mermaid-c
 
 Specialist for decomposing system phases into concrete tasks, identifying parallelization opportunities, and routing work by skill level and complexity.
 
+## Naming Convention: Phases Are Numbered, Stories Are Lettered
+
+**Phases** are numbered (`Phase 9`, `poc.9`). **Stories** within a phase are lettered (`Story A`, `Story B`, `Story C`, ...), never numbered. The combined shorthand used in conversation, branch names, and commit subjects is `<milestone><phaseNumber><letter>` — e.g. `poc9a` (Phase 9, Story A), `poc9b` (Phase 9, Story B).
+
+- Always label stories with letters when decomposing a phase: `Story A`, `Story B`, not `Story 1`, `Story 2`.
+- When referring to a specific story in shorthand, use the lettered form: `poc9b`, `alpha14c`.
+- This does not require renaming existing phase docs that still say "Story 1/2/3" — those are corrected the next time that phase doc is reviewed/touched, not retroactively.
+
 ## Core Philosophy
 
 **What matters for execution:**
@@ -48,9 +56,9 @@ Track 4: All registration (register A, register B, register C)
 
 **Right** — decompose by deliverable:
 ```
-Story 1: "User can create and edit a Feat" (schema + store + sheet + registration)
-Story 2: "GM can toggle feat visibility" (visibility flag + UI toggle + permission check)
-Story 3: "Feats appear in compendium browser" (pack pipeline + browser integration)
+Story A: "User can create and edit a Feat" (schema + store + sheet + registration)
+Story B: "GM can toggle feat visibility" (visibility flag + UI toggle + permission check)
+Story C: "Feats appear in compendium browser" (pack pipeline + browser integration)
 ```
 
 Each story delivers something a user can **see, click, or interact with**. The technical layers (schema, store, sheet) are tasks *within* the story, not separate tracks.
@@ -70,15 +78,15 @@ When the planner sees a prep track forming, it should:
 ### Story Format
 
 ```yaml
-story_1:
+story_a:
   name: "User can create and configure a Material AE"
   user: "GM"  # Who notices/interacts with this?
   delivers: "Creation dialog shows Material type, sheet opens with correct fields"
   tasks:
-    - task_1a: Define MaterialSystemModel schema
-    - task_1b: Create Material sheet component  
-    - task_1c: Register type in system.json.template + registration.mts
-    - task_1d: Wire creation dialog type config
+    - task_a1: Define MaterialSystemModel schema
+    - task_a2: Create Material sheet component  
+    - task_a3: Register type in system.json.template + registration.mts
+    - task_a4: Wire creation dialog type config
   verify: "GM can create Material AE from dialog, sheet displays and edits correctly"
 ```
 
@@ -236,47 +244,47 @@ risk_5:
 Group by user-facing deliverable, not technical layer:
 
 ```yaml
-Story 1 — "User can create and edit a basic Feat":
+Story A — "User can create and edit a basic Feat":
   user: "GM / Player"
   tasks:
-    - task_1a: Define FeatSystemModel schema
+    - task_a1: Define FeatSystemModel schema
       routing: Lead dev
-    - task_1b: Create Feat sheet (basic fields)
+    - task_a2: Create Feat sheet (basic fields)
       routing: Flexible
-    - task_1c: Register type in system.json.template + registration.mts
+    - task_a3: Register type in system.json.template + registration.mts
       routing: Jr dev
-    - task_1d: Wire creation dialog config
+    - task_a4: Wire creation dialog config
       routing: Jr dev
   verify: "Can create a Feat, open its sheet, edit fields, save"
 
-Story 2 — "Feats have SRD content in compendium":
+Story B — "Feats have SRD content in compendium":
   user: "GM browsing compendium"
-  depends_on: [Story 1]
+  depends_on: [Story A]
   tasks:
-    - task_2a: Create compendium structure + pack config
+    - task_b1: Create compendium structure + pack config
       routing: Jr dev
-    - task_2b: Author SRD feat content (CSV → pack)
+    - task_b2: Author SRD feat content (CSV → pack)
       routing: Jr dev
   verify: "Compendium lists feats, dragging to sheet works"
 
-Story 3 — "Feat prerequisites show on sheet":
+Story C — "Feat prerequisites show on sheet":
   user: "Player checking if they qualify"
-  depends_on: [Story 1]
+  depends_on: [Story A]
   tasks:
-    - task_3a: Add prerequisite schema fields
+    - task_c1: Add prerequisite schema fields
       routing: Lead dev
-    - task_3b: Prerequisite display UI on sheet
+    - task_c2: Prerequisite display UI on sheet
       routing: Flexible
-    - task_3c: Prerequisite validation logic
+    - task_c3: Prerequisite validation logic
       routing: Lead dev
   verify: "Sheet shows prereqs, unmet prereqs visually distinguished"
 ```
 
 **Parallelization**: 
-- Story 2 + Story 3 can run in parallel after Story 1
-- Within Story 1, tasks 1a→1b sequence, but 1c+1d can start as soon as schema exists
+- Story B + Story C can run in parallel after Story A
+- Within Story A, tasks a1→a2 sequence, but a3+a4 can start as soon as schema exists
 
-**Note**: No standalone "Research" or "Setup Infrastructure" track. Research is embedded as the first step of Story 1 if needed. Registration (1c, 1d) is part of the deliverable, not a separate prep track.
+**Note**: No standalone "Research" or "Setup Infrastructure" track. Research is embedded as the first step of Story A if needed. Registration (a3, a4) is part of the deliverable, not a separate prep track.
 
 ---
 
