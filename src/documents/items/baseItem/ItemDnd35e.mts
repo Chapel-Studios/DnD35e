@@ -4,6 +4,7 @@ import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs'
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { DocumentUpdateCallbackOptions } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
+import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { NameFormulaDocument } from '@documents/document/logic/index.mjs';
 import { ensureNameFormulaOnCreate, getDisplayName } from '@documents/document/logic/index.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
@@ -92,7 +93,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 
     // ensure parent sheetstore updates if this is an embedded item
     if (this.parent && game.dnd35e?.stores?.[this.parent.documentName]?.[this.parent.uuid]) {
-      (game.dnd35e.stores[this.parent.documentName]?.[this.parent.uuid] as ItemSheetStore<any>)
+      (game.dnd35e.stores[this.parent.documentName]?.[this.parent.uuid] as DocumentSheetStore<any>)
         ?._storeUtils.refreshDocument?.(this.parent);
     }
   }
