@@ -1,6 +1,7 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { TokenRulerWaypoint } from '@client/_module.mjs';
 import type { DeepReadonly } from '@common/_shared-types.mjs';
+import { useSettingsStore } from '@settings/index.mjs';
 
 import { getMovementBudget, isOverBudget } from './logic/movementBudget.mjs';
 import waypointLabelTemplateSource from './templates/waypoint-label.hbs?raw';
@@ -36,7 +37,7 @@ class TokenRulerDnd35e extends foundry.canvas.placeables.tokens.TokenRuler {
     const actor = this.token.actor as ActorDnd35e | null;
     if (!actor) return context;
 
-    context.budget = { total: getMovementBudget(actor, waypoint.action).toLocaleString(game.i18n.lang) };
+    context.budget = { total: this.#getLocalizedBudget(waypoint).toLocaleString(game.i18n.lang) };
     return context;
   }
 
@@ -59,10 +60,25 @@ class TokenRulerDnd35e extends foundry.canvas.placeables.tokens.TokenRuler {
     return style;
   }
 
+  /**
+   * The actor's movement budget converted into the scene's grid distance units, so it
+   * can be compared directly against Foundry's own `waypoint.measurement.cost` (which
+   * is always expressed in the scene's configured grid distance). `registerScenes()`
+   * defaults every new scene's grid to match the world's measurement setting (5ft or
+   * 1.5m), so this conversion lines up out of the box — a scene whose grid was
+   * manually overridden to disagree with the world setting will read incorrectly.
+   */
+  #getLocalizedBudget(waypoint: DeepReadonly<TokenRulerWaypoint>): number {
+    const actor = this.token.actor as ActorDnd35e | null;
+    if (!actor) return 0;
+    const { measurement: { convertToLocalizedDistance } } = useSettingsStore();
+    return convertToLocalizedDistance(getMovementBudget(actor, waypoint.action));
+  }
+
   #isOverBudget(waypoint: DeepReadonly<TokenRulerWaypoint>): boolean {
     const actor = this.token.actor as ActorDnd35e | null;
     if (!actor) return false;
-    return isOverBudget(waypoint.measurement.cost, getMovementBudget(actor, waypoint.action));
+    return isOverBudget(waypoint.measurement.cost, this.#getLocalizedBudget(waypoint));
   }
 }
 

@@ -22,6 +22,9 @@
 
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import { roundToDecimal } from '@helpers/math.mjs';
+  import type { SettingsStore } from '@settings/index.mjs';
+  import { SettingsStoreSymbol } from '@settings/index.mjs';
   import { FormGroupSection, gmOnlyEditability, ownerPlusVisibility } from '@vc/fields/index.mjs';
   import MeasureBar from '@vc/MeasureBar.vue';
   import { computed, inject } from 'vue';
@@ -40,6 +43,23 @@
     },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
+  const {
+    measurement: {
+      weightDisplayShortLabel,
+      convertToLocalizedWeight,
+    },
+  } = inject(SettingsStoreSymbol) as SettingsStore;
+
+  // All bar/label/tooltip values below read from these localized computeds rather than
+  // the raw stored lbs values - conversion is a linear scale (see convertToLocalizedWeight),
+  // so bar proportions/pivots stay correct even though the displayed numbers change.
+  const localizedCarriedWeight = computed(() => roundToDecimal(convertToLocalizedWeight(encumbranceCarriedWeight.value), 2));
+  const localizedLight = computed(() => roundToDecimal(convertToLocalizedWeight(encumbranceLight.value), 2));
+  const localizedMedium = computed(() => roundToDecimal(convertToLocalizedWeight(encumbranceMedium.value), 2));
+  const localizedHeavy = computed(() => roundToDecimal(convertToLocalizedWeight(encumbranceHeavy.value), 2));
+  const localizedMaxLift = computed(() => roundToDecimal(convertToLocalizedWeight(encumbranceMaxLift.value), 2));
+  const localizedDrag = computed(() => roundToDecimal(convertToLocalizedWeight(encumbranceDrag.value), 2));
+
   // The bar spans 0-drag, but the range beyond heavy is a rare "how overloaded are you"
   // zone - reserve only the trailing 20% of the bar for it, split into two waypoints so
   // heavy->maxLift and maxLift->drag each get their own fixed slice instead of the whole
@@ -47,8 +67,8 @@
   const HEAVY_PIVOT_PERCENT = 80;
   const MAX_LIFT_PIVOT_PERCENT = 90;
   const encumbranceScalePivots = computed(() => [
-    { value: encumbranceHeavy.value, percent: HEAVY_PIVOT_PERCENT },
-    { value: encumbranceMaxLift.value, percent: MAX_LIFT_PIVOT_PERCENT },
+    { value: localizedHeavy.value, percent: HEAVY_PIVOT_PERCENT },
+    { value: localizedMaxLift.value, percent: MAX_LIFT_PIVOT_PERCENT },
   ]);
 
   const TIER_COLOR_CLASSES = [
@@ -71,22 +91,23 @@
   // the carried weight is currently progressing toward - light while under light,
   // medium once past light, heavy once past medium, and drag once overloaded - rather
   // than always comparing against a fixed max.
-  const CURRENT_TIER_THRESHOLDS = [encumbranceLight, encumbranceMedium, encumbranceHeavy, encumbranceDrag] as const;
+  const CURRENT_TIER_THRESHOLDS = [localizedLight, localizedMedium, localizedHeavy, localizedDrag] as const;
   const currentThreshold = computed(() => CURRENT_TIER_THRESHOLDS[tierLevel.value].value);
   const encumbranceValueLabel = computed(() => ({
     value: currentThreshold.value,
-    text: `${encumbranceCarriedWeight.value} / ${currentThreshold.value}`,
+    text: `${localizedCarriedWeight.value} / ${currentThreshold.value}`,
   }));
 
   const encumbranceSegments = computed(() => [
     {
       key: 'carried',
-      value: encumbranceCarriedWeight.value,
+      value: localizedCarriedWeight.value,
       colorClass: TIER_COLOR_CLASSES[tierLevel.value],
       tooltip: game.i18n.format('dnd35e.CREATURE.FIELDS.encumbrance.tooltip', {
-        carried: encumbranceCarriedWeight.value,
-        max: encumbranceHeavy.value,
+        carried: localizedCarriedWeight.value,
+        max: localizedHeavy.value,
         tier: tierLabel.value,
+        unit: weightDisplayShortLabel.value,
       }),
     },
   ]);
@@ -94,20 +115,22 @@
   const encumbranceMarkers = computed(() => [
     {
       key: 'light',
-      value: encumbranceLight.value,
+      value: localizedLight.value,
       label: game.i18n.localize(TIER_LABEL_KEYS[0]),
       tooltip: game.i18n.format('dnd35e.CREATURE.FIELDS.encumbrance.breakpoint', {
         tier: game.i18n.localize(TIER_LABEL_KEYS[0]),
-        value: encumbranceLight.value,
+        value: localizedLight.value,
+        unit: weightDisplayShortLabel.value,
       }),
     },
     {
       key: 'medium',
-      value: encumbranceMedium.value,
+      value: localizedMedium.value,
       label: game.i18n.localize(TIER_LABEL_KEYS[1]),
       tooltip: game.i18n.format('dnd35e.CREATURE.FIELDS.encumbrance.breakpoint', {
         tier: game.i18n.localize(TIER_LABEL_KEYS[1]),
-        value: encumbranceMedium.value,
+        value: localizedMedium.value,
+        unit: weightDisplayShortLabel.value,
       }),
     },
     {
@@ -115,29 +138,32 @@
       // both breakpoints sit at the same position - one marker with a combined tooltip
       // covers both rather than stacking two identical, overlapping ticks.
       key: 'heavy',
-      value: encumbranceHeavy.value,
+      value: localizedHeavy.value,
       label: game.i18n.localize(TIER_LABEL_KEYS[2]),
       tooltip: game.i18n.format('dnd35e.CREATURE.FIELDS.encumbrance.breakpoint', {
         tier: `${game.i18n.localize('dnd35e.CREATURE.FIELDS.encumbrance.heavy.label')} / ${game.i18n.localize('dnd35e.CREATURE.FIELDS.encumbrance.carry.label')}`,
-        value: encumbranceHeavy.value,
+        value: localizedHeavy.value,
+        unit: weightDisplayShortLabel.value,
       }),
     },
     {
       key: 'maxLift',
-      value: encumbranceMaxLift.value,
+      value: localizedMaxLift.value,
       label: game.i18n.localize('dnd35e.CREATURE.FIELDS.encumbrance.maxLift.label'),
       tooltip: game.i18n.format('dnd35e.CREATURE.FIELDS.encumbrance.breakpoint', {
         tier: game.i18n.localize('dnd35e.CREATURE.FIELDS.encumbrance.maxLift.label'),
-        value: encumbranceMaxLift.value,
+        value: localizedMaxLift.value,
+        unit: weightDisplayShortLabel.value,
       }),
     },
     {
       key: 'drag',
-      value: encumbranceDrag.value,
+      value: localizedDrag.value,
       label: game.i18n.localize('dnd35e.CREATURE.FIELDS.encumbrance.drag.label'),
       tooltip: game.i18n.format('dnd35e.CREATURE.FIELDS.encumbrance.breakpoint', {
         tier: game.i18n.localize('dnd35e.CREATURE.FIELDS.encumbrance.drag.label'),
-        value: encumbranceDrag.value,
+        value: localizedDrag.value,
+        unit: weightDisplayShortLabel.value,
       }),
     },
   ]);
