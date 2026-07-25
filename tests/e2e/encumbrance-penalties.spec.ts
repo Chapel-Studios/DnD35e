@@ -46,13 +46,19 @@ interface TierExpectation {
 // sets to the localized tier label (`dnd35e.CREATURE.FIELDS.encumbrance.tier.<n>`, see
 // src/lang/en/actors.json), and `effect.value` is the raw pushed change value (the
 // *encumbered* land speed itself, not a delta - `pushChange('system.speed.land', encumberedSpeed)`).
-const TIER_EFFECT_NAME: Record<number, string> = {
-  1: 'Moderately Loaded',
-  2: 'Heavily Loaded',
-  3: 'Nearing Max Lift',
-  4: 'Nearing Max Drag',
-  5: 'Overloaded',
+// Store the stable lang KEY (not the English display text) - localized at runtime via
+// `localizeTierLabel()` so this spec doesn't break when translations change.
+const TIER_LABEL_KEY: Record<number, string> = {
+  1: 'dnd35e.CREATURE.FIELDS.encumbrance.tier.1',
+  2: 'dnd35e.CREATURE.FIELDS.encumbrance.tier.2',
+  3: 'dnd35e.CREATURE.FIELDS.encumbrance.tier.3',
+  4: 'dnd35e.CREATURE.FIELDS.encumbrance.tier.4',
+  5: 'dnd35e.CREATURE.FIELDS.encumbrance.tier.5',
 };
+
+async function localizeTierLabel (page: any, tier: number): Promise<string> {
+  return page.evaluate((key: string) => (globalThis as any).game.i18n.localize(key), TIER_LABEL_KEY[tier]);
+}
 
 // Encumbered speed value pushed as the DOWNGRADE change - unlike the sheet's readonly
 // display (which renders 0 as '—'), the tooltip shows the literal numeric value.
@@ -178,8 +184,9 @@ async function assertSpeedEffectTooltip (page: any, speedEffectSparkle: any, exp
   await expect.poll(async () => entries.count()).toBe(1);
 
   const entry = entries.first();
+  const expectedLabel = await localizeTierLabel(page, expectedTier);
   await expect.poll(async () => (await entry.locator('.effect-name').textContent())?.trim())
-    .toBe(TIER_EFFECT_NAME[expectedTier]);
+    .toBe(expectedLabel);
   await expect.poll(async () => (await entry.locator('.effect-detail').textContent())?.trim())
     .toBe(`↓ ${TIER_SPEED_EFFECT_VALUE[expectedTier]}`);
 

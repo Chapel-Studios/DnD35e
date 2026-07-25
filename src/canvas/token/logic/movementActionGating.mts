@@ -17,7 +17,7 @@ const RUN_SPEED_MULTIPLIER = 4;
 /**
  * Movement actions gated on a matching `system.speed` field being > 0. Only actions
  * with a clean 1:1 mapping to a persisted speed are eligible for this gate — see
- * "Movement Action Gating" in phase-09-basic-tokens.md for why climb/crawl/jump/
+ * "Movement Action Gating" in phase-09-basic-tokens.md for why crawl/jump/
  * blink/displace are handled separately (disabled outright, not speed-gated).
  */
 const SPEED_GATED_ACTIONS: Partial<Record<string, SpeedType>> = {

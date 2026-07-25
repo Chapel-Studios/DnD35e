@@ -47,7 +47,9 @@ This avoids stat duplication and lets a chest item and a chest actor share the s
 ## Tokens & Movement
 
 ### Climb movement action (`CONFIG.Token.movement.actions.climb`)
-Foundry core's Movement Action system (v13+) ships a generic `climb` token movement action, gated selectable by default. In 3.5e, climbing isn't a persistent movement speed — it's governed by the Climb skill (DC-based check per move, half speed, fall risk on failure). Wiring `canSelect` to a flat `system.speed.climb` value (as done for fly/swim/burrow in poc.9) would misrepresent the rule. Needs its own design pass tied to the skill system before it's gated/enabled properly — until then, poc.9 disables it outright (`canSelect: () => false`) rather than leaving Foundry's always-selectable default active.
+poc.9 wires `climb` the same way as fly/swim/burrow: `canSelect` is gated on `system.speed.climb > 0` (`SPEED_GATED_ACTIONS` in `movementActionGating.mts`), and the ruler's movement budget uses that same speed field (`movementBudget.mts`). This covers the "has a climb speed" case (e.g. spider climb, natural climbers).
+
+Still deferred: 3.5e's Climb *skill* (DC-based check per move, half speed without a climb speed, fall risk on failure) for creatures without a persistent climb speed. That needs its own design pass tied to the skill-check system — revisit once skills land (see Phase 9/skills dependency).
 
 ### Crawl movement action (`CONFIG.Token.movement.actions.crawl`)
 Foundry core ships a generic `crawl` token movement action (half speed). SRD 3.5e doesn't call out crawling as a standalone sustained movement mode with official rules the way it does for walk/fly/swim/burrow — it's tied to being prone (a creature can only crawl while prone, moving at a fraction of speed). Gating this sensibly requires the status/condition system (prone) to exist first. Until conditions land, poc.9 disables it outright (`canSelect: () => false`) rather than leaving Foundry's always-selectable default active. Deferred until conditions land — revisit proper `canSelect` gating then.
