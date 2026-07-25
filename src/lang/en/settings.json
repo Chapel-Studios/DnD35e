@@ -39,7 +39,8 @@
         "General": "General",
         "Interface": "Interface",
         "PartyHud": "Party HUD",
-        "ChatCards": "Chat Cards"
+        "ChatCards": "Chat Cards",
+        "TokenVision": "Token Vision"
       },
       "Health": {
         "Name": "Health Configuration",
@@ -140,6 +141,16 @@
           "Placeholder": "e.g. '-10' or '-#Self.AbilityScores.Con.Score'"
         }
       },
+      "TokenSync": {
+        "DisableLabel": "Disable Token Sync",
+        "DisableHint": "Stop automatically keeping this actor's prototype token size and vision in sync with its computed size and senses. Existing prototype token settings are left as-is."
+      },
+      "ActorSharedVision": {
+        "SectionLabel": "Shared Vision",
+        "SectionHint": "Override this actor's participation in the shared-vision pool, regardless of the world default (e.g. a companion whose vision-sharing should be gated behind an ability instead of blanket ownership).",
+        "Label": "Sharing",
+        "Default": "Use World Default"
+      },
       "AllowNoAmmo": {
         "Name": "Allow No Ammo",
         "Hint": "Allow ranged attacks even without ammunition."
@@ -233,13 +244,20 @@
         "Name": "Auto Ammo Recovery",
         "Hint": "Automatically recover ammunition after combat."
       },
+      "SharedVisionScope": {
+        "Name": "Shared Vision Scope",
+        "Hint": "Who the shared-vision pool draws from when a token isn't (or is no longer) selected. Used for both vision-sharing and the low-light radius boost.",
+        "None": "None",
+        "Owned": "Owned Tokens",
+        "PartyMembers": "Party Members"
+      },
       "SharedVision": {
-        "WithoutSelection": "Without Selection",
-        "WithSelection": "With Selection"
+        "PassiveWhenUnselected": "Passive When Unselected",
+        "AlwaysShared": "Always Shared"
       },
       "SharedVisionMode": {
         "Name": "Shared Vision Mode",
-        "Hint": "How shared vision is determined for players."
+        "Hint": "Passive When Unselected: selecting a token shows only that token's own vision; the shared pool (per Shared Vision Scope) only applies when nothing is selected. Always Shared: the shared pool always applies, even while something's selected."
       },
       "PlayersNoDamageDetails": {
         "Name": "Hide Damage Details from Players",
@@ -261,9 +279,9 @@
         "Name": "Disable Token Light",
         "Hint": "Globally disable token light emission."
       },
-      "GlobalDisableTokenVision": {
-        "Name": "Disable Token Vision",
-        "Hint": "Globally disable token vision."
+      "DisableTokenAutoSync": {
+        "Name": "Disable Automatic Token Sync",
+        "Hint": "Globally disable automatically keeping a creature's prototype token size and vision in sync with its computed size and senses. Existing prototype token settings are left as-is."
       },
       "HideTokenConditions": {
         "Name": "Hide Token Conditions",

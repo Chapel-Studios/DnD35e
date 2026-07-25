@@ -23,14 +23,37 @@
         hint="dnd35e.SETTINGS.DeathThreshold.Formula.Hint"
         hide-field-controls
       />
+      <ToggleSwitchFormGroup
+        field-path="flags.dnd35e.disableTokenSync"
+        label="dnd35e.SETTINGS.TokenSync.DisableLabel"
+        hint="dnd35e.SETTINGS.TokenSync.DisableHint"
+        hide-field-controls
+      />
+    </section>
+    <section
+      v-if="isGM"
+      class="settings-section"
+    >
+      <h3 class="settings-section-label">{{ localize('dnd35e.SETTINGS.ActorSharedVision.SectionLabel') }}</h3>
+      <p class="settings-section-hint">{{ localize('dnd35e.SETTINGS.ActorSharedVision.SectionHint') }}</p>
+      <SelectFormGroup
+        :value="sharedVisionScope"
+        :options="sharedVisionScopeOptions"
+        :on-update="onSharedVisionScopeUpdate"
+        field-path="flags.dnd35e.sharedVisionScope"
+        label="dnd35e.SETTINGS.ActorSharedVision.Label"
+        hide-field-controls
+      />
     </section>
   </div>
 </template>
 
 <script lang="ts" setup>
   import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-  import type { DocumentSheetStore } from '@documents/document/index.mjs';
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import type { ActorSharedVisionScope } from '@canvas/vision/logic/sharedVisionScope.mjs';
+  import { broadcastVisionRefresh } from '@canvas/vision/sharedVisionPool.mjs';
+  import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import FormulaFormGroup from '@helpers/formulae/FormulaFormGroup.vue';
   import {
     DEATH_THRESHOLD_OVERRIDE_FORMULA_FLAG,
@@ -46,6 +69,7 @@
 
   const store = inject(DocumentSheetStoreSymbol) as DocumentSheetStore<ActorDnd35e>;
   const { document } = store._storeUtils;
+  const { isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const isPartyMember = computed(() => Boolean(foundry.utils.getProperty(document.value, 'system.settings.isPartyMember')));
 
@@ -102,6 +126,23 @@
     return await store.documentActions.updateFlag(DEATH_THRESHOLD_OVERRIDE_FORMULA_FLAG, value);
   }
 
+  const sharedVisionScope = computed<ActorSharedVisionScope>(() => {
+    return (foundry.utils.getProperty(document.value, 'flags.dnd35e.sharedVisionScope') as ActorSharedVisionScope | undefined) ?? 'default';
+  });
+
+  const sharedVisionScopeOptions: SelectOption<ActorSharedVisionScope>[] = [
+    { value: 'default', label: 'dnd35e.SETTINGS.ActorSharedVision.Default' },
+    { value: 'none', label: 'dnd35e.SETTINGS.SharedVisionScope.None' },
+    { value: 'owned', label: 'dnd35e.SETTINGS.SharedVisionScope.Owned' },
+    { value: 'partyMembers', label: 'dnd35e.SETTINGS.SharedVisionScope.PartyMembers' },
+  ];
+
+  async function onSharedVisionScopeUpdate(value: string | null): Promise<boolean> {
+    const result = await store.documentActions.updateFlag('sharedVisionScope', value ?? 'default');
+    broadcastVisionRefresh();
+    return result;
+  }
+
   const localize = (key: string) => game.i18n.localize(key);
 </script>
 
@@ -129,6 +170,12 @@
     border-bottom: 1px solid var(--color-border-light-2, #ccc);
     padding-bottom: 0.15rem;
     margin: 0 0 0.3rem;
+  }
+
+  .settings-section-hint {
+    font-size: 0.7rem;
+    color: var(--color-text-dark-secondary, #555);
+    margin: -0.1rem 0 0.3rem;
   }
 
   :deep(option.is-default-option) {

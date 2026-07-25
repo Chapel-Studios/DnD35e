@@ -12,9 +12,10 @@ export const DISPLAY_WORLD_KEYS = {
   ALLOW_PLAYERS_APPLY_ACTIONS: 'allowPlayersApplyActions',
   PLAYERS_SHOW_CONTEXT_NOTES: 'playersShowContextNotes',
   GLOBAL_DISABLE_TOKEN_LIGHT: 'globalDisableTokenLight',
-  GLOBAL_DISABLE_TOKEN_VISION: 'globalDisableTokenVision',
+  DISABLE_TOKEN_AUTO_SYNC: 'disableTokenAutoSync',
   HIDE_TOKEN_CONDITIONS: 'hideTokenConditions',
   CORE_EFFECTS: 'coreEffects',
+  SHARED_VISION_SCOPE: 'sharedVisionScope',
   SHARED_VISION_MODE: 'sharedVisionMode',
   CHANGE_SCROLL_ICON: 'changeScrollIcon',
   BUY_CHAT: 'buyChat',
@@ -69,9 +70,29 @@ export const PARTY_HUD_CHOICES = {
 } as const;
 
 /**
- * Shared vision mode choices
+ * Shared vision scope choices — who the shared-vision pool draws from (see
+ * `canvas/vision/sharedVisionPool.mts`). Used for both the world default and the per-actor
+ * `flags.dnd35e.sharedVisionScope` override:
+ * - `none`: never contributes to the shared-vision pool.
+ * - `owned` (default): contributes to the pool for users who own the actor.
+ * - `partyMembers`: contributes to the pool for any observing user, when the actor is flagged
+ *   `system.settings.isPartyMember`.
+ */
+export const SHARED_VISION_SCOPE_CHOICES = {
+  none: 'dnd35e.SETTINGS.SharedVisionScope.None',
+  owned: 'dnd35e.SETTINGS.SharedVisionScope.Owned',
+  partyMembers: 'dnd35e.SETTINGS.SharedVisionScope.PartyMembers',
+} as const;
+
+/**
+ * Shared vision selection-interaction mode choices — controls whether the shared-vision pool
+ * (per `sharedVisionScope`) applies alongside a controlled/selected token, or only when nothing
+ * is selected (see `canvas/vision/sharedVisionPool.mts`):
+ * - `passiveWhenUnselected` (default): selecting a token shows only that token's own vision;
+ *   the shared pool only applies when nothing is selected.
+ * - `alwaysShared`: the shared pool always applies, additively, even while something's selected.
  */
 export const SHARED_VISION_MODE_CHOICES = {
-  '0': 'dnd35e.SETTINGS.SharedVision.WithoutSelection',
-  '1': 'dnd35e.SETTINGS.SharedVision.WithSelection',
+  passiveWhenUnselected: 'dnd35e.SETTINGS.SharedVision.PassiveWhenUnselected',
+  alwaysShared: 'dnd35e.SETTINGS.SharedVision.AlwaysShared',
 } as const;

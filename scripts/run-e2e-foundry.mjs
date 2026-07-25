@@ -7,7 +7,7 @@
  */
 
 import { spawn, spawnSync } from 'child_process';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, rmSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -64,6 +64,18 @@ if (process.env.FOUNDRY_E2E_SKIP_PREFLIGHT !== '1') {
   runStep('node', ['scripts/setup-e2e.mjs'], 'Provisioning E2E Foundry data');
 } else {
   console.log('[e2e:webServer] Skipping preflight (FOUNDRY_E2E_SKIP_PREFLIGHT=1).');
+}
+
+// Belt-and-suspenders: if we've reached this point, `reuseExistingServer`
+// already failed to find a live server on this port, so any lock file left
+// in the data dir is necessarily stale (a prior process crashed or was
+// force-killed without releasing it) - not a real conflict. The preflight
+// above already wipes the whole data dir on a normal run, but this also
+// covers FOUNDRY_E2E_SKIP_PREFLIGHT=1 and any future preflight changes.
+const lockFile = path.join(foundryE2EDataDir, 'Config', 'options.json.lock');
+if (existsSync(lockFile)) {
+  console.log('[e2e:webServer] Removing stale options.json.lock...');
+  rmSync(lockFile, { force: true });
 }
 
 console.log('[e2e:webServer] Starting Foundry server...');

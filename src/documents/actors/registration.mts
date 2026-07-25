@@ -3,6 +3,7 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import { ActorProxyDnd35e } from '@actors/baseActor/index.mjs';
 import { Character, CharacterSystemModel } from '@actors/character/index.mjs';
 import { CharacterSheet } from '@actors/character/sheet/CharacterSheet.mjs';
+import { AmbientLightDnd35e } from '@canvas/light/AmbientLightDnd35e.mjs';
 import {
   buildRunMovementActionConfig,
   canSelectSpeedGatedMovementAction,
@@ -31,6 +32,7 @@ export const registerActors = () => {
     CONFIG.Token.objectClass = TokenDnd35e;
     CONFIG.Token.documentClass = TokenDocumentDnd35e;
     CONFIG.Token.rulerClass = TokenRulerDnd35e;
+    CONFIG.AmbientLight.objectClass = AmbientLightDnd35e;
 
     // Register the dnd35e "run" movement action (4x land speed, straight line only).
     CONFIG.Token.movement.actions[RUN_MOVEMENT_ACTION] = buildRunMovementActionConfig();

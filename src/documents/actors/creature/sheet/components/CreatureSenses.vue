@@ -18,13 +18,14 @@
         :unit-options="availableSensesForItem(item.type)"
         :sizing-unit-options="senseTypeOptions"
         :disabled="disabled"
+        :hide-distance="item.type === LOW_LIGHT_VISION"
         :on-distance-change="(val: number) => updateSenseDistance(index, val)"
         :on-unit-change="(val: SenseType) => updateSenseType(index, val)"
         class="sense-type-select"
       />
     </template>
     <template #item-readonly="{ item }">
-      {{ item.distance }}&thinsp;{{ distanceUnit }} {{ localize(SENSE_TYPES_LOCALIZED[item.type]) }}
+      <template v-if="item.type !== LOW_LIGHT_VISION">{{ item.distance }}&thinsp;{{ distanceUnit }} </template>{{ localize(SENSE_TYPES_LOCALIZED[item.type]) }}
     </template>
   </ListFormGroup>
 </template>
@@ -32,7 +33,7 @@
 <script setup lang="ts">
   import type { SenseEntrySource } from '@actors/creature/data/CreatureSystemData.mjs';
   import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
-  import { SENSE_TYPES_LOCALIZED, SENSE_TYPES_OPTIONS, type SenseType } from '@constants/senses.mjs';
+  import { LOW_LIGHT_VISION, SENSE_TYPES_LOCALIZED, SENSE_TYPES_OPTIONS, type SenseType } from '@constants/senses.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { SettingsStore } from '@settings/index.mjs';
   import { SettingsStoreSymbol } from '@settings/index.mjs';
@@ -81,14 +82,15 @@
 
     const newSense: SenseEntrySource = {
       type: nextSense.value,
-      distance: 60,
+      // Low-light vision has no fixed range in Foundry (it enhances existing light instead), so it never needs a distance.
+      distance: nextSense.value === LOW_LIGHT_VISION ? 0 : 60,
     };
     sensesUpdater([...senses.value, newSense]);
   }
 
   function updateSenseType(index: number, type: SenseType): void {
     const newSenses = senses.value.map((sense, i) =>
-      i === index ? { ...sense, type } : sense
+      i === index ? { ...sense, type, distance: type === LOW_LIGHT_VISION ? 0 : sense.distance } : sense
     );
     sensesUpdater(newSenses);
   }

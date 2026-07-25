@@ -70,6 +70,11 @@ export default defineConfig({
     : undefined,
 
   globalSetup: './tests/e2e/global-setup.ts',
+  // Ensures whatever holds the E2E port gets killed after every run (pass,
+  // fail, or interrupted) so a stale/degraded process is never silently
+  // reused by `reuseExistingServer` on the next run — see the file for why
+  // this has repeatedly caused "test host stuck" failures.
+  globalTeardown: './tests/e2e/global-teardown.ts',
 
   use: {
     baseURL,

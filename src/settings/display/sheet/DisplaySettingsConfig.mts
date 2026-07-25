@@ -113,27 +113,41 @@ class DisplaySettingsConfig extends VueSettingsBase {
     //     { key: DISPLAY_KEYS.PLAYERS_SHOW_CONTEXT_NOTES, label: 'dnd35e.SETTINGS.PlayersShowContextNotes.Name', hint: 'dnd35e.SETTINGS.PlayersShowContextNotes.Hint', type: 'boolean' },
     //   ],
     // },
-    // {
-    //   key: 'tokenVision',
-    //   label: 'dnd35e.SETTINGS.Display.TokenVision',
-    //   fields: [
-    //     { key: DISPLAY_KEYS.GLOBAL_DISABLE_TOKEN_LIGHT, label: 'dnd35e.SETTINGS.GlobalDisableTokenLight.Name', hint: 'dnd35e.SETTINGS.GlobalDisableTokenLight.Hint', type: 'boolean' },
-    //     { key: DISPLAY_KEYS.GLOBAL_DISABLE_TOKEN_VISION, label: 'dnd35e.SETTINGS.GlobalDisableTokenVision.Name', hint: 'dnd35e.SETTINGS.GlobalDisableTokenVision.Hint', type: 'boolean' },
-    //     { key: DISPLAY_KEYS.HIDE_TOKEN_CONDITIONS, label: 'dnd35e.SETTINGS.HideTokenConditions.Name', hint: 'dnd35e.SETTINGS.HideTokenConditions.Hint', type: 'boolean' },
-    //     { key: DISPLAY_KEYS.CORE_EFFECTS, label: 'dnd35e.SETTINGS.CoreEffects.Name', hint: 'dnd35e.SETTINGS.CoreEffects.Hint', type: 'boolean' },
-    //     {
-    //       key: DISPLAY_KEYS.SHARED_VISION_MODE,
-    //       label: 'dnd35e.SETTINGS.SharedVisionMode.Name',
-    //       hint: 'dnd35e.SETTINGS.SharedVisionMode.Hint',
-    //       type: 'string',
-    //       choices: [
-    //         { value: 'none', label: 'dnd35e.SETTINGS.SharedVisionMode.None' },
-    //         { value: 'party', label: 'dnd35e.SETTINGS.SharedVisionMode.Party' },
-    //         { value: 'controlled', label: 'dnd35e.SETTINGS.SharedVisionMode.Controlled' },
-    //       ],
-    //     },
-    //   ],
-    // },
+    {
+      key: 'tokenVision',
+      label: 'dnd35e.SETTINGS.Display.TokenVision',
+      fields: [
+        // GLOBAL_DISABLE_TOKEN_LIGHT: gates item/race/class/buff-driven light emission sync
+        // onto tokens (D35E parity) - deferred until item light-emission schema exists.
+        // { key: DISPLAY_KEYS.GLOBAL_DISABLE_TOKEN_LIGHT, label: 'dnd35e.SETTINGS.GlobalDisableTokenLight.Name', hint: 'dnd35e.SETTINGS.GlobalDisableTokenLight.Hint', type: 'boolean' },
+        { key: DISPLAY_KEYS.DISABLE_TOKEN_AUTO_SYNC, label: 'dnd35e.SETTINGS.DisableTokenAutoSync.Name', hint: 'dnd35e.SETTINGS.DisableTokenAutoSync.Hint', type: 'boolean' },
+        {
+          key: DISPLAY_KEYS.SHARED_VISION_SCOPE,
+          label: 'dnd35e.SETTINGS.SharedVisionScope.Name',
+          hint: 'dnd35e.SETTINGS.SharedVisionScope.Hint',
+          type: 'string',
+          choices: [
+            { value: 'none', label: 'dnd35e.SETTINGS.SharedVisionScope.None' },
+            { value: 'owned', label: 'dnd35e.SETTINGS.SharedVisionScope.Owned' },
+            { value: 'partyMembers', label: 'dnd35e.SETTINGS.SharedVisionScope.PartyMembers' },
+          ],
+        },
+        {
+          key: DISPLAY_KEYS.SHARED_VISION_MODE,
+          label: 'dnd35e.SETTINGS.SharedVisionMode.Name',
+          hint: 'dnd35e.SETTINGS.SharedVisionMode.Hint',
+          type: 'string',
+          choices: [
+            { value: 'passiveWhenUnselected', label: 'dnd35e.SETTINGS.SharedVision.PassiveWhenUnselected' },
+            { value: 'alwaysShared', label: 'dnd35e.SETTINGS.SharedVision.AlwaysShared' },
+          ],
+        },
+        // HIDE_TOKEN_CONDITIONS / CORE_EFFECTS: gate the condition/buff token status-icon
+        // system (D35E parity) - deferred until conditions are wired up to token icons.
+        // { key: DISPLAY_KEYS.HIDE_TOKEN_CONDITIONS, label: 'dnd35e.SETTINGS.HideTokenConditions.Name', hint: 'dnd35e.SETTINGS.HideTokenConditions.Hint', type: 'boolean' },
+        // { key: DISPLAY_KEYS.CORE_EFFECTS, label: 'dnd35e.SETTINGS.CoreEffects.Name', hint: 'dnd35e.SETTINGS.CoreEffects.Hint', type: 'boolean' },
+      ],
+    },
     // {
     //   key: 'items',
     //   label: 'dnd35e.SETTINGS.Display.Items',
