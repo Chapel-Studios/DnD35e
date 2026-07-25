@@ -259,13 +259,14 @@ Implementation: Vision wiring to tokens
 2. **Sense priority logic** — if actor has darkvision + low-light, which visionMode wins? Answer: darkvision (strictly better). Define precedence: darkvision > low-light > basic.
 
 **Commits**:
-1. **`_buildTokenVisionFromSenses()` helper** — pure function mapping `system.bio.senses[]` array to Foundry `sight` and `detectionModes[]` objects. *(Unit test: darkvision 60ft → `{visionMode: 'darkvision', range: 60}`; tremorsense 120ft → `{id: 'feelTremor', range: 120}`; both → visionMode darkvision + both detectionModes)*
-2. **Wire to `Creature._preCreate()`** — apply default vision (build from senses array or fall back to basic if none). Also add `_refreshTokenVision()` method for future use. *(Unit test: new actor with darkvision has token `sight.visionMode: 'darkvision'`)*
-3. **Update hook on senses change** — when actor senses change, sync all placed tokens: `actor.updateEmbeddedDocuments('Token', [{...new vision}])`. *(Unit test: add darkvision to actor, verify placed token updates live)*
-4. **Unit tests** — sense mapping for all 3 types, priority resolution (multiple visionModes), no regression on basic vision.
-5. **E2E tests** — create dwarf with darkvision, place on dark scene, token can see; add tremorsense via drag-drop item, token detects in darkness.
+1. **`buildTokenVisionFromSenses()` helper** (`src/canvas/token/logic/tokenVision.mts`, matching the Story 2 convention of colocating token-canvas pure logic) — pure function mapping `system.bio.senses[]` array to Foundry `sight` and `detectionModes[]` objects. *(Unit test: darkvision 60ft → `{visionMode: 'darkvision', range: 60}`; tremorsense 120ft → `{id: 'feelTremor', range: 120}`; both → visionMode darkvision + both detectionModes)*
+2. **Wire to `Creature._preCreate()`** — apply default vision (build from senses array or fall back to basic if none), merged into `buildPrototypeTokenDefaults()`.
+3. **Unit tests** — sense mapping for all 3 types, priority resolution (multiple visionModes), no regression on basic vision.
+4. **E2E tests** — create dwarf with darkvision, place on dark scene, token can see.
 
-**E2E acceptance**: Dwarf (darkvision 60ft) dragged to dark scene → token sight cone renders in grayscale, sees 60ft in darkness → add Tremorsense 90ft item → token can feel vibrations up to 90ft (independent of darkvision range).
+> **No live-sync hook**: a placed token's `sight`/`detectionModes` are copied once from `prototypeToken` at creation and never re-derived from the actor afterward — this matches standard Foundry behavior (editing an actor doesn't retroactively update already-placed tokens; the GM re-drags/recreates the token, or edits it directly, to pick up changes). poc.9 accepts this rather than building a bespoke `updateActor` → `updateEmbeddedDocuments('Token', ...)` sync hook. Tracked in `WISHLIST.md` if this proves painful in practice.
+
+**E2E acceptance**: Dwarf (darkvision 60ft) dragged to dark scene → token sight cone renders in grayscale, sees 60ft in darkness.
 
 ---
 
@@ -322,16 +323,29 @@ Implementation: Vision wiring to tokens
 ### ❌ Not Started
 
 **Vision system (Story 3):**
-- [ ] Create `src/helpers/tokenVision.mts` with `_buildTokenVisionFromSenses(senses[])` helper
-- [ ] Mapping: darkvision → visionMode `'darkvision'` + detectionMode `'basicSight'`
-- [ ] Mapping: low-light → visionMode `'lightAmplification'` + detectionMode `'basicSight'`
-- [ ] Mapping: tremorsense → visionMode unchanged + detectionMode `'feelTremor'`
-- [ ] Priority logic: if actor has multiple visionModes, darkvision > low-light > basic
-- [ ] Update `ActorDnd35e._preCreate()` to call `_buildTokenVisionFromSenses()` and wire to prototypeToken
-- [ ] Add `_refreshTokenVision()` method to ActorDnd35e (called by update hooks)
-- [ ] Create update hook: actor senses change → sync all placed tokens via `updateEmbeddedDocuments`
-- [ ] Unit tests: all 3 sense mappings work; priority resolution; basic vision fallback
-- [ ] E2E tests: dwarf with darkvision placed on dark scene sees correctly; tremorsense update propagates live
+- [x] **Addition beyond original spec**: `CreatureSenses.vue`/`DistanceValueUnitInput.vue` — low-light vision rows no longer prompt for a distance (Foundry's `lightAmplification` visionMode has no fixed-range component, unlike `darkvision`; RAW low-light only doubles existing light radius)
+- [x] Create `src/canvas/token/logic/tokenVision.mts` with `buildTokenVisionFromSenses(senses[])` helper
+- [x] Mapping: darkvision → visionMode `'darkvision'` + `sight.range` + detectionMode `'basicSight'`
+- [x] Mapping: low-light → no `sight.visionMode`/`sight.range` contribution (plain `'basic'` sight; RAW distance-doubling handled separately by the light-source radius multiplier, not the vision-mode shader — see note below)
+- [x] Mapping: tremorsense → visionMode unchanged + detectionMode `'feelTremor'`
+- [x] Priority logic: if actor has multiple visionModes, darkvision > low-light > basic
+- [x] Unit tests: all 3 sense mappings work; priority resolution; basic vision fallback (`tests/unit/models/tokenVision.test.mts`)
+- [x] Update `Creature._preCreate()` (via `buildPrototypeTokenDefaults(senses)`) to call `buildTokenVisionFromSenses()`
+- [ ] E2E tests: dwarf with darkvision placed on dark scene sees correctly
+- [ ] **Wishlisted, not built**: live sync hook so senses changes propagate to already-placed tokens — matches standard Foundry behavior of tokens not auto-updating from actor edits (see `WISHLIST.md`)
+
+**Type-def fix discovered while researching Story 3**: `types/foundry/common/documents/token.d.mts` declared `detectionModes` as an `ArrayField<{id, enabled, range}>`, but real Foundry v14.359 core (`common/documents/token.mjs`) defines it as a `TypedObjectField<{enabled, range}>` — a keyed record (e.g. `{ basicSight: { range: 60 } }`), not an array, and there is no `id` sub-field (the object key is the id). Fixed the bundled stub to match reality.
+
+**Design correction after low-light radius multiplier landed**: `buildTokenVisionFromSenses()` originally mapped low-light vision to `sight.visionMode: 'lightAmplification'`. Once the radius-doubling `_getLightSourceData()` override (below) was added, this became double-counting — `lightAmplification` is a per-token brightness re-shade (dim→bright, bright→brightest), stacked on top of a light source whose radius is *already* doubled, producing an area that's both wider and brighter (neither RAW nor the intended design). Corrected: low-light vision now maps to plain `'basic'` sight; the radius multiplier alone delivers RAW's "see twice as far."
+
+**Low-light radius multiplier (D35E parity, added beyond original spec)**: Foundry's stock `lightAmplification` visionMode has no distance/radius component at all — it's a pure categorical re-shade (dim→bright, bright→brightest), confirmed by reading `client/config.mjs` and `client/canvas/perception/vision-mode.mjs` (the `lighting.multipliers` schema field exists but is never consumed anywhere in core). This does not deliver RAW's literal "see twice as far in dim light." D35E achieves the literal doubling via a `_getLightSourceData()` override on both `Token` and `AmbientLight` placeables that multiplies the returned `dim`/`bright` radii (`module/canvas/low-light-vision.js`, default multiplier 2 from `module/actor/entity.js`). Reproduced this for dnd35e:
+- [x] `src/canvas/vision/logic/lowLightVision.mts` — pure: `getLowLightMultiplier(senses)`, `resolveLowLightMultiplier(observers)` (controlled-token priority, falls back to owned tokens, highest multiplier wins), `scaleLightRadius(data, multiplier)`
+- [x] `src/canvas/vision/activeLowLightMultiplier.mts` — impure: queries `canvas.tokens.placeables` + `game.user` permissions, delegates to the pure resolver
+- [x] `src/canvas/light/AmbientLightDnd35e.mts` — new `AmbientLight` placeable subclass, overrides `_getLightSourceData()`
+- [x] `TokenDnd35e#_getLightSourceData()` override (token's own emitted light, e.g. a held torch)
+- [x] Registered `CONFIG.AmbientLight.objectClass = AmbientLightDnd35e` in `registration.mts`
+- [x] Unit tests: `tests/unit/models/lowLightVision.test.mts` (multiplier resolution rules, radius scaling)
+- [ ] E2E/manual verification: place a low-light-vision token near a light source on a dark scene, confirm the light visually renders at 2× its configured `dim`/`bright` radius while that token is controlled/owned
 
 **Tests:**
 - [x] Unit: `SIZE_TOKEN_DIMENSIONS` covers all 9 size categories
@@ -341,15 +355,15 @@ Implementation: Vision wiring to tokens
 - [x] Unit: new Character actor `prototypeToken.sight.enabled` is `true`
 - [x] Unit: `TokenDocumentDnd35e._preCreate()` sets 2×2 for a Large actor
 - [x] Unit: `CONFIG.Token.objectClass` is `TokenDnd35e` after init hook runs
-- [ ] Unit: `_buildTokenVisionFromSenses([{type: 'darkvision', distance: 60}])` → `{visionMode: 'darkvision', range: 60, detectionModes: [{id: 'basicSight', range: 60}]}`
-- [ ] Unit: priority logic: actor with [darkvision 60, lowLight 90] → visionMode `'darkvision'` (not low-light)
-- [ ] Unit: tremorsense 120ft → detectionMode `'feelTremor'` stacks with darkvision visionMode
+- [x] Unit: `buildTokenVisionFromSenses([{type: 'darkvision', distance: 60}])` → `{sight: {visionMode: 'darkvision', range: 60}, detectionModes: {basicSight: {range: 60}}}` (shape corrected to match Foundry's real keyed-object `detectionModes` schema, not an array)
+- [x] Unit: priority logic: actor with [darkvision 60, lowLight 90] → visionMode `'darkvision'` (not low-light)
+- [x] Unit: tremorsense 120ft → detectionMode `'feelTremor'` stacks with darkvision visionMode
+- [x] Unit: low-light radius multiplier resolution (`resolveLowLightMultiplier`) and radius scaling (`scaleLightRadius`)
 - [ ] E2E: drag Character actor to scene → 1×1 token with HP bar appears
 - [ ] E2E: move token → position persists after reload
 - [ ] **Deferred to poc.10 (Basic Combat)**: E2E: drag token across canvas → ruler waypoints show distance labels
 - [ ] **Deferred to poc.10 (Basic Combat)**: E2E: drag 40ft on 30ft-speed actor → path turns red after 30ft
 - [ ] E2E: dwarf (darkvision 60) on dark scene → token sight works, sees in grayscale
-- [ ] E2E: add tremorsense item to actor → placed token detects in darkness live (no reload)
 
 > **Note**: Movement/ruler e2e coverage is deferred until poc.10 (Basic Combat) lands. Combat introduces reactions, opportunity attacks, and other interactions that will materially change how movement e2e scenarios need to be set up — better to write that coverage once against the real combat-aware drag/measure flow than twice.
 
@@ -362,7 +376,13 @@ Implementation: Vision wiring to tokens
 | Modify | `src/constants/sizes.mts` — add `SIZE_TOKEN_DIMENSIONS` |
 | Modify | `src/documents/scene/tokenDocument/TokenDocumentDnd35e.mts` — convert to real class, add `_preCreate()` |
 | Modify | `src/documents/scene/tokenDocument/index.mts` — export class (not just type) |
-| Modify | `src/documents/actors/baseActor/ActorDnd35e.mts` — add `_preCreate()` for prototype token defaults, add `_refreshTokenVision()` method, add senses update hook |
-| Modify | `src/documents/actors/registration.mts` — add `CONFIG.Token.objectClass`/`documentClass` registration (`CONFIG.Actor.documentClass` already registered) |
+| Modify | `src/documents/actors/creature/Creature.mts` — `_preCreate()` for prototype token defaults (actorLink, disposition, HP bar, vision) |
+| Modify | `src/documents/actors/creature/logic/buildPrototypeTokenDefaults.mts` — merge in `buildTokenVisionFromSenses()` output |
+| Modify | `src/documents/actors/registration.mts` — `CONFIG.Token.objectClass`/`documentClass`/`rulerClass`/`CONFIG.AmbientLight.objectClass` registration, movement action gating |
 | Create | `src/canvas/token/TokenRulerDnd35e.mts` — ruler subclass for movement budget display |
-| Create | `src/helpers/tokenVision.mts` — `_buildTokenVisionFromSenses()` helper and vision priority logic |
+| Create | `src/canvas/token/logic/tokenVision.mts` — `buildTokenVisionFromSenses()` helper and vision priority logic |
+| Modify | `src/canvas/token/TokenDnd35e.mts` — `_getLightSourceData()` override for low-light radius scaling |
+| Create | `src/canvas/light/AmbientLightDnd35e.mts` — `AmbientLight` placeable subclass, `_getLightSourceData()` override |
+| Create | `src/canvas/vision/logic/lowLightVision.mts` — pure multiplier resolution + radius scaling |
+| Create | `src/canvas/vision/activeLowLightMultiplier.mts` — canvas-querying accessor shared by both placeables |
+| Modify | `types/foundry/common/documents/token.d.mts` — fixed `detectionModes` field type (`TypedObjectField`, not `ArrayField`) |

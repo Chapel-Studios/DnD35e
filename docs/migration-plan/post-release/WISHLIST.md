@@ -59,3 +59,8 @@ Foundry core ships a generic `jump` token movement action (2x cost multiplier) i
 
 ### Blink / Displace movement actions (`CONFIG.Token.movement.actions.blink` / `.displace`)
 Foundry core ships generic `blink` and `displace` teleport-style movement actions (speed multiplier `Infinity` / unmeasured, respectively). These map to spell/effect-granted teleportation (Dimension Door, Teleport, Blink) rather than a default movement mode any actor should always have available. Gating this properly requires wiring canSelect to an active spell/effect flag. Until then, poc.9 disables both outright (`canSelect: () => false`).
+
+### Live token vision sync on senses change (poc.9 Story 3)
+Placed tokens copy `sight`/`detectionModes` from the actor's `prototypeToken` once, at creation — Foundry never re-derives those fields from the actor afterward (confirmed by reading `TokenDocument#prepareBaseData`/`prepareDerivedData` in Foundry core; no auto-sync exists). Standard Foundry behavior is that an actor edit doesn't retroactively update already-placed tokens for fields like this — the GM deletes and re-drags the token (or uses `updateVisionMode()`/manual token edits) to pick up changes. poc.9 accepts this standard behavior rather than building a bespoke live-sync hook (`updateActor` → `updateEmbeddedDocuments('Token', ...)`).
+
+Revisit if this friction proves painful in practice — a hook could push `buildTokenVisionFromSenses()` output onto linked placed tokens on `system.bio.senses` changes, surgically merging `detectionModes` (preserving unrelated GM-added entries like `seeInvisibility`).

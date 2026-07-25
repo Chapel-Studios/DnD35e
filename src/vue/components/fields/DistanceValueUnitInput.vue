@@ -1,18 +1,20 @@
 <template>
   <div class="distance-value-unit" :class="{ 'is-disabled': disabled }">
-    <input
-      class="vui-value"
-      type="number"
-      :value="localizedDistance"
-      :min="min"
-      :max="max"
-      :step="step"
-      :placeholder="placeholder"
-      :disabled="disabled"
-      @change="handleDistanceChange"
-    />
-    <span class="vui-moniker">{{ distanceDisplayShortLabel }}</span>
-    <span class="vui-divider" aria-hidden="true" />
+    <template v-if="!hideDistance">
+      <input
+        class="vui-value"
+        type="number"
+        :value="localizedDistance"
+        :min="min"
+        :max="max"
+        :step="step"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        @change="handleDistanceChange"
+      />
+      <span class="vui-moniker">{{ distanceDisplayShortLabel }}</span>
+      <span class="vui-divider" aria-hidden="true" />
+    </template>
     <div class="select-auto">
       <select class="vui-unit select-sizer" tabindex="-1" aria-hidden="true" disabled>
         <option v-for="opt in sizerUnitOptions" :key="`sizer-${opt.value}`" :value="opt.value">
@@ -54,6 +56,8 @@
     step?: number;
     placeholder?: string;
     disabled?: boolean;
+    /** Hides the numeric distance input, showing only the unit selector (e.g. senses with no fixed range). */
+    hideDistance?: boolean;
     /** Emits stored/base distance after localized input conversion. */
     onDistanceChange?: (storedDistance: number) => void;
     onUnitChange?: (unit: TUnit) => void;

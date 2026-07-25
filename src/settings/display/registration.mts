@@ -84,9 +84,9 @@ function registerDisplayWorldSettings(): void {
     default: false,
   });
 
-  game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.GLOBAL_DISABLE_TOKEN_VISION, {
-    name: 'dnd35e.SETTINGS.GlobalDisableTokenVision.Name',
-    hint: 'dnd35e.SETTINGS.GlobalDisableTokenVision.Hint',
+  game.settings.register(SYSTEM_ID, DISPLAY_WORLD_KEYS.DISABLE_TOKEN_AUTO_SYNC, {
+    name: 'dnd35e.SETTINGS.DisableTokenAutoSync.Name',
+    hint: 'dnd35e.SETTINGS.DisableTokenAutoSync.Hint',
     scope: 'world',
     config: false,
     type: Boolean,
@@ -120,10 +120,11 @@ function registerDisplayWorldSettings(): void {
     scope: 'world',
     config: false,
     type: String,
-    default: '0',
+    default: 'withoutSelection',
     choices: SHARED_VISION_MODE_CHOICES,
     onChange: () => {
       game.socket?.emit(`system.${SYSTEM_ID}`, { eventType: 'redrawCanvas' });
+      canvas?.perception?.update({ refreshVision: true, refreshOcclusion: true });
     },
   });
 

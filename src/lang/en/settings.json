@@ -39,7 +39,8 @@
         "General": "General",
         "Interface": "Interface",
         "PartyHud": "Party HUD",
-        "ChatCards": "Chat Cards"
+        "ChatCards": "Chat Cards",
+        "TokenVision": "Token Vision"
       },
       "Health": {
         "Name": "Health Configuration",
@@ -140,6 +141,19 @@
           "Placeholder": "e.g. '-10' or '-#Self.AbilityScores.Con.Score'"
         }
       },
+      "TokenSync": {
+        "DisableLabel": "Disable Token Sync",
+        "DisableHint": "Stop automatically keeping this actor's prototype token size and vision in sync with its computed size and senses. Existing prototype token settings are left as-is."
+      },
+      "VisionPermission": {
+        "SectionLabel": "Vision Permission",
+        "SectionHint": "Let players see through this actor's token vision without granting ownership (e.g. a bonded familiar or a charmed NPC).",
+        "DefaultLabel": "Default (all players)",
+        "DefaultHint": "Whether players without an individual override below can see through this actor's tokens.",
+        "Default": "Use Default",
+        "Yes": "Yes",
+        "No": "No"
+      },
       "AllowNoAmmo": {
         "Name": "Allow No Ammo",
         "Hint": "Allow ranged attacks even without ammunition."
@@ -239,7 +253,7 @@
       },
       "SharedVisionMode": {
         "Name": "Shared Vision Mode",
-        "Hint": "How shared vision is determined for players."
+        "Hint": "Without Selection: shared vision (see an actor's Vision Permission settings) always applies. With Selection: shared vision only applies while the granting token is controlled/selected."
       },
       "PlayersNoDamageDetails": {
         "Name": "Hide Damage Details from Players",
@@ -261,9 +275,9 @@
         "Name": "Disable Token Light",
         "Hint": "Globally disable token light emission."
       },
-      "GlobalDisableTokenVision": {
-        "Name": "Disable Token Vision",
-        "Hint": "Globally disable token vision."
+      "DisableTokenAutoSync": {
+        "Name": "Disable Automatic Token Sync",
+        "Hint": "Globally disable automatically keeping a creature's prototype token size and vision in sync with its computed size and senses. Existing prototype token settings are left as-is."
       },
       "HideTokenConditions": {
         "Name": "Hide Token Conditions",

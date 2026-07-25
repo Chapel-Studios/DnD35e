@@ -12,7 +12,7 @@ export const DISPLAY_WORLD_KEYS = {
   ALLOW_PLAYERS_APPLY_ACTIONS: 'allowPlayersApplyActions',
   PLAYERS_SHOW_CONTEXT_NOTES: 'playersShowContextNotes',
   GLOBAL_DISABLE_TOKEN_LIGHT: 'globalDisableTokenLight',
-  GLOBAL_DISABLE_TOKEN_VISION: 'globalDisableTokenVision',
+  DISABLE_TOKEN_AUTO_SYNC: 'disableTokenAutoSync',
   HIDE_TOKEN_CONDITIONS: 'hideTokenConditions',
   CORE_EFFECTS: 'coreEffects',
   SHARED_VISION_MODE: 'sharedVisionMode',
@@ -69,9 +69,12 @@ export const PARTY_HUD_CHOICES = {
 } as const;
 
 /**
- * Shared vision mode choices
+ * Shared vision mode choices — controls when a `visionPermission`-granted token counts as an
+ * additional vision source (see `documents/actors/creature/logic/visionPermission.mts`):
+ * - `withoutSelection`: shared vision always applies (D35E's actual runtime behavior).
+ * - `withSelection`: shared vision only applies while the granting token is controlled/selected.
  */
 export const SHARED_VISION_MODE_CHOICES = {
-  '0': 'dnd35e.SETTINGS.SharedVision.WithoutSelection',
-  '1': 'dnd35e.SETTINGS.SharedVision.WithSelection',
+  withoutSelection: 'dnd35e.SETTINGS.SharedVision.WithoutSelection',
+  withSelection: 'dnd35e.SETTINGS.SharedVision.WithSelection',
 } as const;

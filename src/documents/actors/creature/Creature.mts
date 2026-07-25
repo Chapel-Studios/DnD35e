@@ -14,6 +14,11 @@ import { CreatureLifeCycle } from './events/CreatureLifeCycle.mjs';
 import { registerCreatureEventChecks } from './events/index.mjs';
 import { registerCreatureEvents } from './events/registerCreatureEvents.mjs';
 import { buildPrototypeTokenDefaults } from './logic/buildPrototypeTokenDefaults.mjs';
+import {
+  buildDerivedPrototypeTokenFields,
+  diffDerivedPrototypeTokenFields,
+} from './logic/derivedPrototypeTokenFields.mjs';
+import { isTokenSyncDisabled } from './logic/tokenSyncSettings.mjs';
 import { handleUpdateHpViaDamage } from './logic/updateHpViaDamage.mjs';
 import { handleUpdateHpViaHealing } from './logic/updateHpViaHealing.mjs';
 import { handleNonLethalDamageUpdate } from './logic/updateNonlethalDamage.mjs';
@@ -164,9 +169,11 @@ abstract class Creature extends ActorDnd35e {
 
   /**
    * Prototype token defaults shared by all creature-type actors (characters, NPCs,
-   * etc.): linked token, friendly disposition, owner-hover HP bar, and basic vision
-   * enabled so a freshly-placed token isn't blind. Size derivation happens separately
-   * in `TokenDocumentDnd35e._preCreate()` from `system.size` once the token is placed.
+   * etc.): linked token, friendly disposition, owner-hover HP bar, and name/size/vision
+   * derived from `Actor#name`/`system.size`/`system.bio.senses`. This is a one-time seed;
+   * ongoing sync as name/size/senses change afterward (e.g. a name-formula re-resolution,
+   * or a future Race-item-driven senses change) is handled by
+   * `prepareDerivedData()`/`_syncPrototypeToken()` below.
    */
   protected override async _preCreate(
     data: this['_source'],
@@ -178,7 +185,7 @@ abstract class Creature extends ActorDnd35e {
 
     this.updateSource({
       prototypeToken: {
-        ...buildPrototypeTokenDefaults(),
+        ...buildPrototypeTokenDefaults(this.name, this.system.size, this.system.bio.senses),
         ...data.prototypeToken,
       },
     });
@@ -189,6 +196,72 @@ abstract class Creature extends ActorDnd35e {
 
     // stub value to 100 for sheet building; replace with real HP calculation when progression is implemented
     this.system.hp.max = 100;
+
+    this._syncPrototypeToken();
+  }
+
+  /**
+   * True while a `queueMicrotask()`-deferred prototype token update is pending for this
+   * actor, so rapid repeated `prepareDerivedData()` passes (e.g. multiple renders before
+   * the update commits) don't stack redundant microtasks/writes.
+   */
+  private _pendingPrototypeTokenSync = false;
+
+  /**
+   * Keeps `prototypeToken.name`/`width`/`height`/`sight`/`detectionModes` in sync with
+   * this actor's current `name`/`system.size`/`system.bio.senses` over its whole
+   * lifetime — not just at creation — so a rename (including name-formula
+   * re-resolution — see `documents/document/logic/ensureNameFormula.mts`), a size
+   * change (e.g. later a Polymorph-style effect), or a senses change (e.g. later a
+   * Race-item ActiveEffect) is reflected both live and in the persisted prototype
+   * token (visible in the Prototype Token config sheet, and in exported JSON).
+   *
+   * Runs at the end of `prepareDerivedData()` since senses/size derivation happens
+   * earlier in the same pass; if a future 'final'-phase AE ever changes senses (which
+   * applies to `applyActiveEffects('final')` in `ActorDnd35e.prepareData()`, after
+   * `prepareDerivedData()` returns), this will pick up the change on the *next*
+   * `prepareData()` cycle rather than the same one, since the field then changes again.
+   *
+   * Respects both the `DISABLE_TOKEN_AUTO_SYNC` world setting and this actor's own
+   * `flags.dnd35e.disableTokenSync` opt-out — when either is set, the live in-memory
+   * values AND the persisted update are both skipped entirely, leaving whatever's
+   * currently on the prototype token untouched.
+   *
+   * Only mutates the in-memory `prototypeToken` directly (safe — recomputed fresh
+   * every `prepareData()` cycle, same as `CreatureSystemModel._prepareEncumbrance()`).
+   * Persistence to `_source` is deferred to a `queueMicrotask()` callback, since
+   * `update()` must never be called synchronously from within data preparation.
+   */
+  private _syncPrototypeToken(): void {
+    if (isTokenSyncDisabled(this)) return;
+
+    const derived = buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.bio.senses);
+
+    this.prototypeToken.name = derived.name;
+    this.prototypeToken.width = derived.width;
+    this.prototypeToken.height = derived.height;
+    Object.assign(this.prototypeToken.sight, derived.sight);
+    Object.assign(this.prototypeToken.detectionModes, derived.detectionModes);
+
+    if (this._pendingPrototypeTokenSync) return;
+
+    const update = diffDerivedPrototypeTokenFields(this._source.prototypeToken, derived);
+    if (!update) return;
+
+    this._pendingPrototypeTokenSync = true;
+    queueMicrotask(() => {
+      this._pendingPrototypeTokenSync = false;
+
+      if (!this.id || this.pack || isTokenSyncDisabled(this)) return;
+
+      const recheckedUpdate = diffDerivedPrototypeTokenFields(
+        this._source.prototypeToken,
+        buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.bio.senses)
+      );
+      if (!recheckedUpdate) return;
+
+      void this.update({ prototypeToken: recheckedUpdate });
+    });
   }
 
   async updateHP(

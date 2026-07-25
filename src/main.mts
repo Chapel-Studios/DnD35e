@@ -5,6 +5,7 @@ import { registerEffects } from '@documents/activeEffects/registration.mjs';
 import { registerActors } from '@documents/actors/registration.mjs';
 import { registerScenes } from '@documents/scene/registration.mjs';
 import { preLocalizeConfig } from '@helpers/localization/preLocalizeConfig.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import { registerItems } from './documents/items/index.mjs';
 import { registerSettings } from './settings/index.mjs';
@@ -39,6 +40,30 @@ Hooks.once('i18nInit', () => {
 // In dev builds, warn when pack compilation was skipped because Foundry was open.
 // The compile-packs Vite plugin writes build-warnings.json when any pack fails to compile.
 Hooks.once('ready', async () => {
+  // Cross-client canvas vision refresh broadcast (D35E `redrawCanvas` socket event parity).
+  // Needed because Foundry's core perception pipeline doesn't watch actor flags/world settings
+  // for changes - e.g. shared vision permission edits (see `visionPermission.mts`).
+  game.socket.on(`system.${SYSTEM_ID}`, (data: { eventType?: string }) => {
+    if (data?.eventType === 'redrawCanvas') {
+      canvas?.perception?.update({ refreshVision: true, refreshOcclusion: true });
+    }
+  });
+
+  // Low-light vision's light-radius doubling (`TokenDnd35e`/`AmbientLightDnd35e#_getLightSourceData()`)
+  // depends on which token(s) the current user has controlled/selected (see
+  // `getActiveLowLightMultiplier()`). `_getLightSourceData()` is only actually re-evaluated by
+  // `PlaceableObject#initializeLightSource()` (called on the placeable itself) - NOT by
+  // `canvas.perception.update({ initializeLighting: true })`, which just re-initializes each
+  // already-registered `LightSource` from its existing cached data
+  // (`EffectsCanvasGroup#initializeLightSources()` calls `source.initialize()`, not
+  // `placeable.initializeLightSource()`). So without directly calling `initializeLightSource()`
+  // on every light/token placeable here, the 2x radius would only ever apply after some *other*
+  // trigger re-initializes them individually (e.g. moving or re-configuring a light/token).
+  Hooks.on('controlToken', () => {
+    for (const light of canvas?.lighting?.placeables ?? []) light.initializeLightSource();
+    for (const token of canvas?.tokens?.placeables ?? []) token.initializeLightSource();
+  });
+
   const resp = await fetch(`systems/${game.system.id}/build-warnings.json`).catch(() => null);
   if (!resp?.ok) return;
   const data: { stalePacks?: string[] } = await resp.json().catch(() => ({}));

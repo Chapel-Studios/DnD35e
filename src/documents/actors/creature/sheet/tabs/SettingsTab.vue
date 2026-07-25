@@ -23,14 +23,51 @@
         hint="dnd35e.SETTINGS.DeathThreshold.Formula.Hint"
         hide-field-controls
       />
+      <ToggleSwitchFormGroup
+        field-path="flags.dnd35e.disableTokenSync"
+        label="dnd35e.SETTINGS.TokenSync.DisableLabel"
+        hint="dnd35e.SETTINGS.TokenSync.DisableHint"
+        hide-field-controls
+      />
+    </section>
+    <section
+      v-if="isGM"
+      class="settings-section"
+    >
+      <h3 class="settings-section-label">{{ localize('dnd35e.SETTINGS.VisionPermission.SectionLabel') }}</h3>
+      <p class="settings-section-hint">{{ localize('dnd35e.SETTINGS.VisionPermission.SectionHint') }}</p>
+      <SelectFormGroup
+        :value="visionPermissionDefault"
+        :options="visionPermissionDefaultOptions"
+        :on-update="onVisionPermissionDefaultUpdate"
+        field-path="flags.dnd35e.visionPermission.default"
+        label="dnd35e.SETTINGS.VisionPermission.DefaultLabel"
+        hint="dnd35e.SETTINGS.VisionPermission.DefaultHint"
+        hide-field-controls
+      />
+      <SelectFormGroup
+        v-for="user in nonGmUsers"
+        :key="user.id"
+        :value="getVisionPermissionUserLevel(user.id)"
+        :options="visionPermissionUserOptions"
+        :on-update="(value: string | null) => onVisionPermissionUserUpdate(user.id, value)"
+        :field-path="`flags.dnd35e.visionPermission.users.${user.id}`"
+        :label="user.name"
+        hide-field-controls
+      />
     </section>
   </div>
 </template>
 
 <script lang="ts" setup>
   import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-  import type { DocumentSheetStore } from '@documents/document/index.mjs';
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import {
+    broadcastVisionRefresh,
+    type VisionPermissionLevel,
+    type VisionPermissionSource,
+  } from '@actors/creature/logic/visionPermission.mjs';
+  import type { DocumentSheetStore, RenderModeStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import FormulaFormGroup from '@helpers/formulae/FormulaFormGroup.vue';
   import {
     DEATH_THRESHOLD_OVERRIDE_FORMULA_FLAG,
@@ -46,6 +83,7 @@
 
   const store = inject(DocumentSheetStoreSymbol) as DocumentSheetStore<ActorDnd35e>;
   const { document } = store._storeUtils;
+  const { isGM } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const isPartyMember = computed(() => Boolean(foundry.utils.getProperty(document.value, 'system.settings.isPartyMember')));
 
@@ -102,6 +140,41 @@
     return await store.documentActions.updateFlag(DEATH_THRESHOLD_OVERRIDE_FORMULA_FLAG, value);
   }
 
+  const nonGmUsers = computed(() => game.users.filter(user => !user.isGM));
+
+  const visionPermission = computed(() => {
+    return foundry.utils.getProperty(document.value, 'flags.dnd35e.visionPermission') as VisionPermissionSource | undefined;
+  });
+
+  const visionPermissionDefault = computed<VisionPermissionLevel>(() => visionPermission.value?.default ?? 'no');
+
+  const visionPermissionDefaultOptions: SelectOption<VisionPermissionLevel>[] = [
+    { value: 'yes', label: 'dnd35e.SETTINGS.VisionPermission.Yes' },
+    { value: 'no', label: 'dnd35e.SETTINGS.VisionPermission.No' },
+  ];
+
+  const visionPermissionUserOptions: SelectOption<VisionPermissionLevel>[] = [
+    { value: 'default', label: 'dnd35e.SETTINGS.VisionPermission.Default' },
+    { value: 'yes', label: 'dnd35e.SETTINGS.VisionPermission.Yes' },
+    { value: 'no', label: 'dnd35e.SETTINGS.VisionPermission.No' },
+  ];
+
+  function getVisionPermissionUserLevel(userId: string): VisionPermissionLevel {
+    return visionPermission.value?.users?.[userId] ?? 'default';
+  }
+
+  async function onVisionPermissionDefaultUpdate(value: string | null): Promise<boolean> {
+    const result = await store.documentActions.updateFlag('visionPermission.default', value ?? 'no');
+    broadcastVisionRefresh();
+    return result;
+  }
+
+  async function onVisionPermissionUserUpdate(userId: string, value: string | null): Promise<boolean> {
+    const result = await store.documentActions.updateFlag(`visionPermission.users.${userId}`, value ?? 'default');
+    broadcastVisionRefresh();
+    return result;
+  }
+
   const localize = (key: string) => game.i18n.localize(key);
 </script>
 
@@ -129,6 +202,12 @@
     border-bottom: 1px solid var(--color-border-light-2, #ccc);
     padding-bottom: 0.15rem;
     margin: 0 0 0.3rem;
+  }
+
+  .settings-section-hint {
+    font-size: 0.7rem;
+    color: var(--color-text-dark-secondary, #555);
+    margin: -0.1rem 0 0.3rem;
   }
 
   :deep(option.is-default-option) {

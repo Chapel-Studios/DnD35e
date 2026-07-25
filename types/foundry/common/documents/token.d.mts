@@ -121,15 +121,19 @@ type TokenSchema = {
         /** An advanced customization for contrast within the visible area */
         contrast: fields.NumberField<number, number, true, false>;
     }>;
-    /** An array of detection modes which are available to this Token */
-    detectionModes: fields.ArrayField<
+    /**
+     * An object of detection modes which are available to this Token, keyed by mode id (a key from
+     * `CONFIG.Canvas.detectionModes`, e.g. `basicSight`, `feelTremor`). NOTE: this is a `TypedObjectField`
+     * (keyed record), NOT an array — confirmed against the actual Foundry v14.359 core schema
+     * (`common/documents/token.mjs`), which differs from array-of-`{id, enabled, range}`-shaped
+     * documentation/examples found elsewhere.
+     */
+    detectionModes: fields.TypedObjectField<
         fields.SchemaField<{
-            /** The id of the detection mode, a key from CONFIG.Canvas.detectionModes */
-            id: fields.StringField<string>;
             /** Whether or not this detection mode is presently enabled */
             enabled: fields.BooleanField;
             /** The maximum range in distance units at which this mode can detect targets */
-            range: fields.NumberField<number, number, true, true, true>;
+            range: fields.NumberField<number, number, true, false>;
         }>
     >;
     occludable: fields.SchemaField<{
