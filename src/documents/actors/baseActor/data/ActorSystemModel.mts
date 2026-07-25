@@ -1,7 +1,7 @@
-import { FLY_MANEUVERABILITIES } from '@constants/index.mjs';
+import { FLY_MANEUVERABILITIES, SIZES } from '@constants/index.mjs';
 import { DocumentSystemModel } from '@documents/document/data/DocumentSystemModel.mjs';
 import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
-import { requiredNumberField, useDnd35eField } from '@fields/fieldBuilders.mjs';
+import { requiredNumberField, requiredTypedStringField, useDnd35eField } from '@fields/fieldBuilders.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 
 import type { ActorSystemData, ActorSystemSource } from './ActorSystemData.mjs';
@@ -31,6 +31,8 @@ abstract class ActorSystemModel extends DocumentSystemModel<foundry.documents.Ac
     });
 
     schema.inventoryValue = useDnd35eField(new CurrencyField({ persisted: false }));
+
+    schema.size = useDnd35eField(requiredTypedStringField(SIZES, 'medium'));
 
     return schema;
   }

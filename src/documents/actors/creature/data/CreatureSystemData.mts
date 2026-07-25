@@ -1,7 +1,6 @@
 import type { AbilityKey } from '@constants/abilities.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import type { SenseType } from '@constants/senses.mjs';
-import type { Size } from '@constants/sizes.mjs';
 import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 import type { FormulaDataSource } from '@helpers/formulae/index.mjs';
 import type { WeaponDamage } from '@items/physical/weapon/data/index.mjs';
@@ -108,7 +107,6 @@ interface SettingsData {
 
 interface CreatureSystemSourceProperties {
   bio:          BioSource;
-  size:         Size;
   notes:        string;
   settings:     SettingsData;
 }
