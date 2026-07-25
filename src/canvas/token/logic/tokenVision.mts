@@ -3,7 +3,7 @@ import { DARKVISION, TREMORSENSE } from '@constants/senses.mjs';
 
 interface TokenVisionFromSenses {
   sight: { visionMode: string; range: number };
-  detectionModes: Record<string, { range: number }>;
+  detectionModes: Record<string, { range: number, enabled: boolean }>;
 }
 
 /**
@@ -32,9 +32,9 @@ const buildTokenVisionFromSenses = (senses: SenseEntrySource[]): TokenVisionFrom
     ? { visionMode: 'darkvision', range: darkvision.distance }
     : { visionMode: 'basic', range: 0 };
 
-  const detectionModes: Record<string, { range: number }> = {};
-  if (darkvision) detectionModes.basicSight = { range: darkvision.distance };
-  if (tremorsense) detectionModes.feelTremor = { range: tremorsense.distance };
+  const detectionModes: Record<string, { range: number, enabled: boolean }> = {};
+  if (darkvision) detectionModes.basicSight = { range: darkvision.distance, enabled: true };
+  if (tremorsense) detectionModes.feelTremor = { range: tremorsense.distance, enabled: true };
 
   return { sight, detectionModes };
 };

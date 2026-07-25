@@ -12,7 +12,7 @@ interface DerivedPrototypeTokenFields {
   width: number;
   height: number;
   sight: { enabled: boolean; visionMode: string; range: number };
-  detectionModes: Record<string, { range: number }>;
+  detectionModes: Record<string, { range: number, enabled: boolean }>;
 }
 
 interface PrototypeTokenSightSource {
@@ -26,7 +26,7 @@ interface PrototypeTokenSource {
   width?: number;
   height?: number;
   sight?: PrototypeTokenSightSource;
-  detectionModes?: Record<string, { range: number }>;
+  detectionModes?: Record<string, { range: number, enabled: boolean }>;
 }
 
 /**
@@ -35,7 +35,7 @@ interface PrototypeTokenSource {
  * name-formula resolution — see `documents/document/logic/ensureNameFormula.mts` /
  * `formulaRegistrationHelpers.mts`), token dimensions (from `system.size`), and vision
  * (`sight`/`detectionModes`, from `system.bio.senses` via `buildTokenVisionFromSenses()`).
- * Pure — used both for the one-time `_preCreate()` seed (`buildPrototypeTokenDefaults()`)
+ * Pure — used both for the one-time `_preCreate()` seed (`buildPrototypeTokenDefaults(name, size, senses)`)
  * and the continuous `Creature.prepareDerivedData()` sync.
  */
 const buildDerivedPrototypeTokenFields = (name: string, size: Size, senses: SenseEntrySource[]): DerivedPrototypeTokenFields => {
@@ -85,7 +85,11 @@ const diffDerivedPrototypeTokenFields = (
     const currentEntry = current.detectionModes?.[key];
     const derivedEntry = derived.detectionModes[key];
     if (derivedEntry) {
-      if (!currentEntry || currentEntry.range !== derivedEntry.range) {
+      if (
+        !currentEntry
+        || currentEntry.range !== derivedEntry.range
+        || currentEntry.enabled !== derivedEntry.enabled
+      ) {
         detectionModesUpdate[key] = derivedEntry;
         detectionModesChanged = true;
       }
@@ -99,5 +103,9 @@ const diffDerivedPrototypeTokenFields = (
   return Object.keys(update).length > 0 ? update : null;
 };
 
-export { buildDerivedPrototypeTokenFields, diffDerivedPrototypeTokenFields };
+export {
+  buildDerivedPrototypeTokenFields,
+  diffDerivedPrototypeTokenFields,
+  MANAGED_DETECTION_MODE_KEYS,
+};
 export type { DerivedPrototypeTokenFields, PrototypeTokenSource };

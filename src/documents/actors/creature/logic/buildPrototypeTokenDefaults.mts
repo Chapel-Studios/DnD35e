@@ -13,7 +13,7 @@ interface PrototypeTokenDefaults {
   width: number;
   height: number;
   sight: { enabled: boolean; visionMode: string; range: number };
-  detectionModes: Record<string, { range: number }>;
+  detectionModes: Record<string, { range: number, enabled: boolean }>;
 }
 
 /**

@@ -17,6 +17,7 @@ import { buildPrototypeTokenDefaults } from './logic/buildPrototypeTokenDefaults
 import {
   buildDerivedPrototypeTokenFields,
   diffDerivedPrototypeTokenFields,
+  MANAGED_DETECTION_MODE_KEYS,
 } from './logic/derivedPrototypeTokenFields.mjs';
 import { isTokenSyncDisabled } from './logic/tokenSyncSettings.mjs';
 import { handleUpdateHpViaDamage } from './logic/updateHpViaDamage.mjs';
@@ -241,6 +242,13 @@ abstract class Creature extends ActorDnd35e {
     this.prototypeToken.width = derived.width;
     this.prototypeToken.height = derived.height;
     Object.assign(this.prototypeToken.sight, derived.sight);
+    // Object.assign only adds/overwrites keys present in `derived.detectionModes`; a managed
+    // key that dropped out (e.g. darkvision lost) must be deleted explicitly, mirroring the
+    // `-=key` deletion used for the persisted update below - otherwise the live in-memory
+    // token keeps a stale managed mode until (if ever) a persisted update forces a full reinit.
+    for (const key of MANAGED_DETECTION_MODE_KEYS) {
+      if (!(key in derived.detectionModes)) delete this.prototypeToken.detectionModes[key];
+    }
     Object.assign(this.prototypeToken.detectionModes, derived.detectionModes);
 
     if (this._pendingPrototypeTokenSync) return;

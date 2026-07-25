@@ -12,7 +12,7 @@ describe('buildTokenVisionFromSenses', () => {
   it('maps darkvision to visionMode darkvision, sight.range, and a basicSight detection mode', () => {
     const result = buildTokenVisionFromSenses([{ type: 'darkvision', distance: 60 }]);
     expect(result.sight).toEqual({ visionMode: 'darkvision', range: 60 });
-    expect(result.detectionModes).toEqual({ basicSight: { range: 60 } });
+    expect(result.detectionModes).toEqual({ basicSight: { range: 60, enabled: true } });
   });
 
   it('maps low-light vision to basic sight with no range and no detection mode (radius doubling handles RAW accuracy instead)', () => {
@@ -24,7 +24,7 @@ describe('buildTokenVisionFromSenses', () => {
   it('maps tremorsense to a feelTremor detection mode without changing visionMode', () => {
     const result = buildTokenVisionFromSenses([{ type: 'tremorsense', distance: 120 }]);
     expect(result.sight).toEqual({ visionMode: 'basic', range: 0 });
-    expect(result.detectionModes).toEqual({ feelTremor: { range: 120 } });
+    expect(result.detectionModes).toEqual({ feelTremor: { range: 120, enabled: true } });
   });
 
   it('prioritizes darkvision over low-light when both are present', () => {
@@ -42,8 +42,8 @@ describe('buildTokenVisionFromSenses', () => {
     ]);
     expect(result.sight).toEqual({ visionMode: 'darkvision', range: 60 });
     expect(result.detectionModes).toEqual({
-      basicSight: { range: 60 },
-      feelTremor: { range: 120 },
+      basicSight: { range: 60, enabled: true },
+      feelTremor: { range: 120, enabled: true },
     });
   });
 });

@@ -25,7 +25,7 @@ describe('buildDerivedPrototypeTokenFields', () => {
       { type: 'tremorsense', distance: 30 },
     ]);
     expect(derived.sight).toEqual({ enabled: true, visionMode: 'darkvision', range: 60 });
-    expect(derived.detectionModes).toEqual({ basicSight: { range: 60 }, feelTremor: { range: 30 } });
+    expect(derived.detectionModes).toEqual({ basicSight: { range: 60, enabled: true }, feelTremor: { range: 30, enabled: true } });
   });
 
   it('carries the given name through unchanged', () => {
@@ -42,7 +42,7 @@ describe('diffDerivedPrototypeTokenFields', () => {
       width: 1,
       height: 1,
       sight: { enabled: true, visionMode: 'darkvision', range: 60 },
-      detectionModes: { basicSight: { range: 60 } },
+      detectionModes: { basicSight: { range: 60, enabled: true } },
     }, derived)).toBeNull();
   });
 
@@ -52,7 +52,7 @@ describe('diffDerivedPrototypeTokenFields', () => {
       width: 1,
       height: 1,
       sight: { enabled: true, visionMode: 'darkvision', range: 60 },
-      detectionModes: { basicSight: { range: 60 } },
+      detectionModes: { basicSight: { range: 60, enabled: true } },
     }, derived)).toEqual({ name: 'Duder' });
   });
 
@@ -62,7 +62,7 @@ describe('diffDerivedPrototypeTokenFields', () => {
       width: 2,
       height: 2,
       sight: { enabled: true, visionMode: 'darkvision', range: 60 },
-      detectionModes: { basicSight: { range: 60 } },
+      detectionModes: { basicSight: { range: 60, enabled: true } },
     }, derived)).toEqual({ width: 1, height: 1 });
   });
 
@@ -72,7 +72,7 @@ describe('diffDerivedPrototypeTokenFields', () => {
       width: 1,
       height: 1,
       sight: { enabled: true, visionMode: 'basic', range: 0 },
-      detectionModes: { basicSight: { range: 60 } },
+      detectionModes: { basicSight: { range: 60, enabled: true } },
     }, derived)).toEqual({ sight: { enabled: true, visionMode: 'darkvision', range: 60 } });
   });
 
@@ -83,7 +83,7 @@ describe('diffDerivedPrototypeTokenFields', () => {
       height: 1,
       sight: { enabled: true, visionMode: 'darkvision', range: 60 },
       detectionModes: {},
-    }, derived)).toEqual({ detectionModes: { basicSight: { range: 60 } } });
+    }, derived)).toEqual({ detectionModes: { basicSight: { range: 60, enabled: true } } });
   });
 
   it('removes a managed detection mode key that no longer applies, using -= deletion syntax', () => {
@@ -93,7 +93,7 @@ describe('diffDerivedPrototypeTokenFields', () => {
       width: 1,
       height: 1,
       sight: { enabled: true, visionMode: 'basic', range: 0 },
-      detectionModes: { basicSight: { range: 60 } },
+      detectionModes: { basicSight: { range: 60, enabled: true } },
     }, noSensesDerived)).toEqual({ detectionModes: { '-=basicSight': null } });
   });
 
@@ -103,7 +103,7 @@ describe('diffDerivedPrototypeTokenFields', () => {
       width: 1,
       height: 1,
       sight: { enabled: true, visionMode: 'darkvision', range: 60 },
-      detectionModes: { basicSight: { range: 60 }, seeInvisibility: { range: 30 } },
+      detectionModes: { basicSight: { range: 60, enabled: true }, seeInvisibility: { range: 30, enabled: true } },
     }, derived)).toBeNull();
   });
 });

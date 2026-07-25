@@ -32,7 +32,7 @@ describe('buildPrototypeTokenDefaults', () => {
   it('derives sight and detectionModes from the actor\'s senses', () => {
     const defaults = buildPrototypeTokenDefaults('Duder', 'medium', [{ type: 'darkvision', distance: 60 }]);
     expect(defaults.sight).toEqual({ enabled: true, visionMode: 'darkvision', range: 60 });
-    expect(defaults.detectionModes).toEqual({ basicSight: { range: 60 } });
+    expect(defaults.detectionModes).toEqual({ basicSight: { range: 60, enabled: true } });
   });
 
   it('derives width/height from the actor\'s size', () => {
