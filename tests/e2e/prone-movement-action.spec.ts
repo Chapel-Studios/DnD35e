@@ -60,6 +60,14 @@ test.describe('Prone movement actions (Drop Prone / Crawl / Stand Up)', () => {
       const actor = await (globalThis as any).fromUuid(uuid);
       return actor.statuses.has('prone') as boolean;
     }, actorUuid);
+    // Regression guard: `_onUpdateMovement`'s snap-back follow-up update must not cause
+    // `actor.toggleStatusEffect('prone', ...)` to run twice and create a duplicate Prone
+    // ActiveEffect. Counts embedded effects whose `statuses` set includes 'prone', not
+    // just whether the actor is prone at all.
+    const countProneEffects = () => page.evaluate(async (uuid) => {
+      const actor = await (globalThis as any).fromUuid(uuid);
+      return actor.effects.filter((effect: any) => effect.statuses?.has('prone')).length as number;
+    }, actorUuid);
 
     // The HUD closes after every completed movement update (Foundry redraws the token
     // placeable on update, which detaches the HUD's bound object) — this is true even for
@@ -76,6 +84,7 @@ test.describe('Prone movement actions (Drop Prone / Crawl / Stand Up)', () => {
     await dragTokenByOffset(page, tokenId, { dx: gridSize, dy: 0 });
 
     await expect.poll(isProne).toBe(true);
+    await expect.poll(countProneEffects).toBe(1);
 
     // --- Crawl 5ft: select via HUD, drag exactly one grid square ---
     await openTokenHud(page, tokenId);
@@ -93,5 +102,6 @@ test.describe('Prone movement actions (Drop Prone / Crawl / Stand Up)', () => {
     await dragTokenByOffset(page, tokenId, { dx: gridSize, dy: 0 });
 
     await expect.poll(isProne).toBe(false);
+    await expect.poll(countProneEffects).toBe(0);
   });
 });

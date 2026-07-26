@@ -14,6 +14,16 @@ import { SIZE_TOKEN_DIMENSIONS } from '@constants/sizes.mjs';
 import type { SceneDnd35e } from '../SceneDnd35e.mjs';
 
 class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | null> extends TokenDocument<TParent> {
+  /**
+   * The `movement.id` of the last Drop Prone/Stand Up toggle processed by `_onUpdateMovement`.
+   * Foundry's client-side movement pipeline can invoke `_onUpdateMovement` more than once for
+   * the same physical drag (e.g. an optimistic/predicted local apply followed by the
+   * server-confirmed update) — both invocations share the same `movement.id`. Without this
+   * guard, both would race to call `actor.toggleStatusEffect()` before the first (unawaited)
+   * call's ActiveEffect creation resolves, producing a duplicate Prone effect.
+   */
+  #lastProneToggleMovementId: string | null = null;
+
   protected override async _preCreate(
     data: this['_source'],
     options: DatabaseCreateCallbackOptions,
@@ -56,10 +66,15 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     const actor = this.actor as ActorDnd35e | null;
     if (!actor) return;
 
-    const waypoints = movement.passed?.waypoints ?? [];
-    const droppedProne = waypoints.some(waypoint => waypoint.action === DROP_PRONE_MOVEMENT_ACTION);
-    const stoodUp = waypoints.some(waypoint => waypoint.action === STAND_UP_MOVEMENT_ACTION);
+    // Only the most recently completed waypoint matters here — checking `.some()` over the
+    // whole passed list would also match a stale waypoint carried over from a prior update.
+    const lastAction = (movement.passed?.waypoints ?? []).at(-1)?.action;
+    const droppedProne = lastAction === DROP_PRONE_MOVEMENT_ACTION;
+    const stoodUp = lastAction === STAND_UP_MOVEMENT_ACTION;
     if (!droppedProne && !stoodUp) return;
+
+    if (movement.id === this.#lastProneToggleMovementId) return;
+    this.#lastProneToggleMovementId = movement.id;
 
     void actor.toggleStatusEffect(PRONE_CONDITION_ID, { active: droppedProne });
 
