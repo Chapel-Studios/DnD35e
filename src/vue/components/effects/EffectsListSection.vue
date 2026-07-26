@@ -6,9 +6,9 @@
     :empty-label="emptyLabel"
     empty-icon="fas fa-sparkles"
   >
-    <template v-if="isEditMode" #controls>
+    <template v-if="isEditMode || $slots['header-actions']" #controls>
       <slot name="header-actions" />
-      <button type="button" class="create-effect-btn" @click="createEffect(additionalCreatableTypes)">
+      <button v-if="isEditMode" type="button" class="create-effect-btn" @click="createEffect(additionalCreatableTypes)">
         <i class="fas fa-plus" />
         {{ localize('dnd35e.EFFECT.Create') }}
       </button>
