@@ -21,7 +21,7 @@
           :class="{ 'is-ignored': effect.stackResult === STACK_RESULT_IGNORED }"
         >
           <span class="effect-name">{{ effect.effectName }}</span>
-          <span class="effect-detail">{{ formatMode(effect.type) }} {{ effect.value }}</span>
+          <span class="effect-detail">{{ formatChangeTypeSymbol(effect.type) }} {{ effect.value }}</span>
           <span v-if="effect.bonusTypeLabel" class="effect-bonus-type">[{{ effect.bonusTypeLabel }}]</span>
           <span v-if="effect.stackResult === STACK_RESULT_IGNORED" class="effect-rejected">
             {{ effect.stackReason ?? ignoredLabel }}
@@ -39,7 +39,7 @@
   // See Phase 2 §2.5.3 for the design. Blocked on RenderModeStore injection + getEffectsForField filtering.
   import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import { EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+  import { formatChangeTypeSymbol } from '@effects/baseActiveEffect/logic/index.mjs';
   import type { Override } from '@helpers/stacking.mjs';
   import { STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
   import { computed, inject, nextTick, ref } from 'vue';
@@ -69,16 +69,6 @@
 
   const ignoredLabel = game.i18n.localize('dnd35e.EFFECT.StackResult.Ignored');
 
-  const formatMode = (mode: string): string => {
-    switch (mode) {
-    case EFFECT_CHANGE_TYPE.ADD: return '+';
-    case EFFECT_CHANGE_TYPE.MULTIPLY: return '×';
-    case EFFECT_CHANGE_TYPE.OVERRIDE: return '=';
-    case EFFECT_CHANGE_TYPE.UPGRADE: return '↑';
-    case EFFECT_CHANGE_TYPE.DOWNGRADE: return '↓';
-    default: return mode;
-    }
-  };
 
   // Own popup instead of Foundry's `data-tooltip-html` - that API only accepts an HTML
   // string (or a raw HTML element), which would force hand-building markup instead of a

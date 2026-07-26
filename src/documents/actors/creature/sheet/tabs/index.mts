@@ -1,9 +1,8 @@
 import ActorDescriptionTab from '@actors/baseActor/sheet/tabs/ActorDescriptionTab.vue';
-import { actorInventoryTab } from '@actors/baseActor/sheet/tabs/index.mjs';
+import { actorEffectsTab, actorInventoryTab } from '@actors/baseActor/sheet/tabs/index.mjs';
 import type { SheetTab } from '@documents/document/index.mjs';
 
 import AttributesTab from './AttributesTab.vue';
-import BuffsTab from './BuffsTab.vue';
 import CombatTab from './CombatTab.vue';
 import CreatureDescriptionTab from './CreatureDescriptionTab.vue';
 import CreatureInventoryTab from './CreatureInventoryTab.vue';
@@ -54,13 +53,9 @@ const skillsTab: SheetTab = {
   icon: 'fas fa-scroll',
 };
 
-const buffsTab: SheetTab = {
-  id: 'buffs',
-  label: 'dnd35e.ACTOR.tab.Buffs',
-  tooltip: 'dnd35e.ACTOR.tab.Buffs',
-  component: BuffsTab,
+const effectsTab: SheetTab = {
+  ...actorEffectsTab,
   order: 60,
-  icon: 'fas fa-bolt',
 };
 
 const spellsTab: SheetTab = {
@@ -102,10 +97,10 @@ const settingsTab: SheetTab = {
 
 export {
   attributesTab,
-  buffsTab,
   combatTab,
   creatureInventoryTab,
   creatureNotesTab,
+  effectsTab,
   featuresTab,
   settingsTab,
   skillsTab,

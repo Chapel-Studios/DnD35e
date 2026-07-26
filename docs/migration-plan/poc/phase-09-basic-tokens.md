@@ -1,6 +1,6 @@
 # POC Phase 9: Basic Tokens
 
-**Status**: 🔶 In Progress (Story 1 & 2 complete; Story 3 nearly complete — E2E verification outstanding; Story 4 in progress — 4.A complete)
+**Status**: 🔶 In Progress (Story 1, 2 & 4 complete; Story 3 nearly complete — E2E verification outstanding)
 
 > **Milestone**: POC  
 > **Dependencies**: poc.6  
@@ -401,8 +401,11 @@ Implementation: Vision wiring to tokens
 - [x] 4.A — Per-category row-component registry (`effectRowRegistry.mts`) with `SecretEffectRow` as the first non-default entry
 - [x] 4.A — Secret creation folded into the generic "Create Effect" dialog (`additionalCreatableTypes`, GM-only); bespoke `createSecret` action removed
 - [x] 4.A — `MaterialsList.vue`, `SecretsList.vue`, `EffectCategory.vue` deleted; barrel exports cleaned up
-- [ ] 4.B — Condition config data + `CONFIG.statusEffects` registration
-- [ ] 4.C — Actor Effects tab (rename Buffs→Effects, condition grid, delete dead `ActorEffectsTab.vue`)
+- [x] 4.B — Condition config data + `CONFIG.statusEffects` registration (`buildConditionStatusEffects()` in `src/constants/conditions.mts`, registered in `src/documents/actors/registration.mts`)
+- [x] 4.C — Actor Effects tab (rename Buffs→Effects, condition grid, delete dead `BuffsTab.vue`/`BuffListSection.vue`)
+- [x] 4.C — Condition-grid collapse toggle + section-level visibility/editability overrides (GM-only, pseudo field-path `system.conditions`); inactive conditions hidden from restricted viewers, active conditions always shown; section auto-hides when no conditions are visible
+- [x] 4.C — DRY unification: extracted shared `EffectsListSection.vue` (+ `EffectRowData` type, `buildOwnedEffectRow()` helper) consumed by both `ActorEffectsTab.vue` and `ItemEffects.vue`, eliminating drift between the actor/item effects tables
+- [x] 4.C — Unit tests: `formatChangeTypeSymbol`, `SystemEffectRow.vue`, `EffectRow.vue` `readOnly` prop, `useActorSheetStore` conditions/transferredEffects/selfContributedEffect getters
 
 ---
 

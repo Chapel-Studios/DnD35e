@@ -7,7 +7,7 @@
       <img :src="effect.img || 'icons/svg/aura.svg'" :alt="effect.name" class="effect-icon" />
       <span class="effect-name">{{ effect.name }}</span>
       <slot name="effect-badge" :effect="effect" />
-      <div class="effect-controls">
+      <div v-if="!readOnly" class="effect-controls">
         <button
           v-if="showVisibilityToggle && isGM && canEdit"
           type="button"
@@ -70,10 +70,15 @@
     effect,
     canEdit,
     showVisibilityToggle = true,
+    readOnly = false,
   } = defineProps<{
     effect: ActiveEffectDnd35e;
     canEdit: boolean;
     showVisibilityToggle?: boolean;
+    /** Hides all mutation controls (edit/toggle/delete/visibility) - for rows representing
+     * effects this sheet doesn't own (e.g. a transferred effect displayed on the actor
+     * that owns it via an equipped item). */
+    readOnly?: boolean;
   }>();
 
   const isGM = game.user.isGM;

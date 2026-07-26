@@ -1,5 +1,5 @@
 <template>
-  <EffectRow :effect="effect" :can-edit="canEdit" :show-visibility-toggle="false">
+  <EffectRow :effect="effect" :can-edit="canEdit" :show-visibility-toggle="false" :read-only="readOnly">
     <template #effect-badge="{ effect: rowEffect }">
       <i
         v-if="(rowEffect.system as any).isPlayerEditSecret"
@@ -27,6 +27,7 @@
   defineProps<{
     effect: ActiveEffectDnd35e;
     canEdit: boolean;
+    readOnly?: boolean;
   }>();
 
   const {

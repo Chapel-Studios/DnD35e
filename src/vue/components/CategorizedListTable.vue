@@ -366,6 +366,11 @@
     &.compact {
       padding: 0;
     }
+
+    &:deep(.section-header) {
+      display: flex;
+      gap: 0.5rem;
+    }
   }
 
   .categorized-list-tabs {

@@ -23,11 +23,18 @@
       "Enabled": "Enabled",
       "Disabled": "Disabled",
       "None": "No effects on this item.",
+      "NoneOnActor": "No effects on this actor.",
+      "System": "System",
+      "ExpandDetails": "Show details",
+      "CollapseDetails": "Hide details",
+      "ExpandConditions": "Show conditions",
+      "CollapseConditions": "Hide conditions",
       "Hidden": "Hidden",
       "HideEffect": "Hide from players",
       "ShowEffect": "Show to players",
       "Category": {
-        "Condition": "Conditions"
+        "Condition": "Conditions",
+        "System": "System"
       },
       "StackResult": {
         "Applied": "Applied",
