@@ -1,6 +1,6 @@
 # POC Phase 9: Basic Tokens
 
-**Status**: 🔶 In Progress (Story 1 & 2 complete; Story 3 not started)
+**Status**: ✅ Complete (Stories 1-4 complete; ruler/movement E2E and live actor→token vision sync deferred to poc.10 per design — see Tests section and `WISHLIST.md`)
 
 > **Milestone**: POC  
 > **Dependencies**: poc.6  
@@ -270,9 +270,24 @@ Implementation: Vision wiring to tokens
 
 ---
 
+### Story 4 — Item Effects Tab Consolidation (Materials/Secrets merged, per-category rows)
+
+**User**: GM / Player
+**Delivers**: A single unified Effects table on item sheets (no more separate Materials/Secrets sub-lists), with a GM-only "Secret" category and a reusable per-category row-rendering pattern for future categories (e.g. armor/inventory).
+**Depends on**: Phase 1/2 item + AE foundation (unrelated to this phase's token/vision work; tracked here per author's request).
+
+**Commits:**
+1. **4.A — Merge Materials/Secrets into the main effects table** — refactor `ItemEffects.vue` onto `CategorizedListTable`; add a per-category row-component registry (`resolveEffectRowComponent`) defaulting to the generic `EffectRow`, with a dedicated `SecretEffectRow`; fold Secret creation into the single generic "Create Effect" dialog (GM-only type option via `createEffect(additionalTypes)`); materials become GM/`isHidden`-filtered rows like any other effect, secrets stay GM-only via `updateGmOnlyEffectTypes`; delete `MaterialsList.vue`/`SecretsList.vue`/`EffectCategory.vue`.
+2. **4.B — Condition config data** — condition config data + `CONFIG.statusEffects` registration so conditions surface as a category in the same table.
+3. **4.C — Actor Effects tab** — rename Actor's Buffs tab to Effects, add condition grid, delete dead `ActorEffectsTab.vue`.
+
+**E2E acceptance**: GM opens an item with a material and a secret effect → both appear as rows in one table, secret row only visible to GM → GM creates a new effect via "Create Effect", sees "Secret" as a type option (player does not) → GM clicks "Reveal All Secrets" → secret effects disable.
+
+---
+
 ## Completion Checklist
 
-### 🔶 In Progress
+### ✅ Story 1 Complete
 
 **Size mapping:**
 - [x] Add `SIZE_TOKEN_DIMENSIONS: Record<Size, number>` to `src/constants/sizes.mts`
@@ -320,7 +335,7 @@ Implementation: Vision wiring to tokens
 
 **Story 2 status: done, dev-tested in Foundry (ruler display, run action, movement gating all confirmed live). E2E coverage deliberately deferred — see Tests section below.**
 
-### ❌ Not Started
+### ✅ Story 3 & 4 Complete
 
 **Vision system (Story 3):**
 - [x] **Addition beyond original spec**: `CreatureSenses.vue`/`DistanceValueUnitInput.vue` — low-light vision rows no longer prompt for a distance (Foundry's `lightAmplification` visionMode has no fixed-range component, unlike `darkvision`; RAW low-light only doubles existing light radius)
@@ -331,7 +346,7 @@ Implementation: Vision wiring to tokens
 - [x] Priority logic: if actor has multiple visionModes, darkvision > low-light > basic
 - [x] Unit tests: all 3 sense mappings work; priority resolution; basic vision fallback (`tests/unit/models/tokenVision.test.mts`)
 - [x] Update `Creature._preCreate()` (via `buildPrototypeTokenDefaults(senses)`) to call `buildTokenVisionFromSenses()`
-- [ ] E2E tests: dwarf with darkvision placed on dark scene sees correctly
+- [x] E2E tests: dwarf with darkvision placed on dark scene sees correctly (`tests/e2e/dwarf-darkvision.spec.ts`)
 - [ ] **Wishlisted, not built**: live sync hook so senses changes propagate to already-placed tokens — matches standard Foundry behavior of tokens not auto-updating from actor edits (see `WISHLIST.md`)
 
 **Type-def fix discovered while researching Story 3**: `types/foundry/common/documents/token.d.mts` declared `detectionModes` as an `ArrayField<{id, enabled, range}>`, but real Foundry v14.359 core (`common/documents/token.mjs`) defines it as a `TypedObjectField<{enabled, range}>` — a keyed record (e.g. `{ basicSight: { range: 60 } }`), not an array, and there is no `id` sub-field (the object key is the id). Fixed the bundled stub to match reality.
@@ -356,7 +371,7 @@ Implementation: Vision wiring to tokens
 - [x] `TokenDnd35e#_isVisionSource()` override (replaces the removed `observer` getter override)
 - [x] `SettingsTab.vue` — actor-level `sharedVisionScope` select replaces the old per-user grant grid
 - [x] Unit tests: `tests/unit/models/sharedVisionScope.test.mts`
-- [ ] E2E/manual verification: GM sets `sharedVisionScope: partyMembers`, grants OBSERVER permission across party actors, confirms deselecting all tokens pools party vision; a `sharedVisionScope: none`-flagged actor never pools even when owned
+- [x] E2E/manual verification: GM sets `sharedVisionScope: partyMembers`, grants OBSERVER permission across party actors, confirms deselecting all tokens pools party vision; a `sharedVisionScope: none`-flagged actor never pools even when owned (`tests/e2e/shared-vision-scope.spec.ts`, dual-browser)
 
 **Tests:**
 - [x] Unit: `SIZE_TOKEN_DIMENSIONS` covers all 9 size categories
@@ -371,13 +386,26 @@ Implementation: Vision wiring to tokens
 - [x] Unit: tremorsense 120ft → detectionMode `'feelTremor'` stacks with darkvision visionMode
 - [x] Unit: low-light radius multiplier lookup (`getLowLightMultiplier`) and radius scaling (`scaleLightRadius`)
 - [x] Unit: shared-vision-scope resolution (`resolveEffectiveVisionScope`, `resolveSharedVisionSource`)
-- [ ] E2E: drag Character actor to scene → 1×1 token with HP bar appears
-- [ ] E2E: move token → position persists after reload
+- [x] E2E: drag Character actor to scene → correctly-sized, actor-linked token with HP bar appears (`tests/e2e/token-placement.spec.ts` — Large actor → 2×2 token, verified via `getBarAttribute('bar1')`; also uncovered and fixed a real bug where the default `bar1: { attribute: 'hp' }` never resolved because this system's HP schema uses `.current`/`.max`, not Foundry's expected `.value`/`.max` — added a derived `hp.value` mirror in `CreatureSystemModel.prepareDerivedData()`)
+- [x] E2E: move token → position persists after reload (`tests/e2e/token-placement.spec.ts`)
 - [ ] **Deferred to poc.10 (Basic Combat)**: E2E: drag token across canvas → ruler waypoints show distance labels
 - [ ] **Deferred to poc.10 (Basic Combat)**: E2E: drag 40ft on 30ft-speed actor → path turns red after 30ft
-- [ ] E2E: dwarf (darkvision 60) on dark scene → token sight works, sees in grayscale
+- [x] E2E: dwarf (darkvision 60) on dark scene → token sight works, sees in grayscale (`tests/e2e/dwarf-darkvision.spec.ts`)
 
 > **Note**: Movement/ruler e2e coverage is deferred until poc.10 (Basic Combat) lands. Combat introduces reactions, opportunity attacks, and other interactions that will materially change how movement e2e scenarios need to be set up — better to write that coverage once against the real combat-aware drag/measure flow than twice.
+
+**Story 4 (Effects tab):**
+- [x] 4.A — `ItemEffects.vue` refactored onto `CategorizedListTable` + shared `EffectRow.vue`
+- [x] 4.A — Materials merged into the main table (no longer a separate hidden-type/list); still GM/`isHidden`-filtered per-row
+- [x] 4.A — Secrets merged into the main table as a GM-only category (`updateGmOnlyEffectTypes`)
+- [x] 4.A — Per-category row-component registry (`effectRowRegistry.mts`) with `SecretEffectRow` as the first non-default entry
+- [x] 4.A — Secret creation folded into the generic "Create Effect" dialog (`additionalCreatableTypes`, GM-only); bespoke `createSecret` action removed
+- [x] 4.A — `MaterialsList.vue`, `SecretsList.vue`, `EffectCategory.vue` deleted; barrel exports cleaned up
+- [x] 4.B — Condition config data + `CONFIG.statusEffects` registration (`buildConditionStatusEffects()` in `src/constants/conditions.mts`, registered in `src/documents/actors/registration.mts`)
+- [x] 4.C — Actor Effects tab (rename Buffs→Effects, condition grid, delete dead `BuffsTab.vue`/`BuffListSection.vue`)
+- [x] 4.C — Condition-grid collapse toggle + section-level visibility/editability overrides (GM-only, pseudo field-path `system.conditions`); inactive conditions hidden from restricted viewers, active conditions always shown; section auto-hides when no conditions are visible
+- [x] 4.C — DRY unification: extracted shared `EffectsListSection.vue` (+ `EffectRowData` type, `buildOwnedEffectRow()` helper) consumed by both `ActorEffectsTab.vue` and `ItemEffects.vue`, eliminating drift between the actor/item effects tables
+- [x] 4.C — Unit tests: `formatChangeTypeSymbol`, `SystemEffectRow.vue`, `EffectRow.vue` `readOnly` prop, `useActorSheetStore` conditions/transferredEffects/selfContributedEffect getters
 
 ---
 

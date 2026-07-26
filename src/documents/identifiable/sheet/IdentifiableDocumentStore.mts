@@ -54,7 +54,7 @@ type IdentifiableDocumentGetters = {
 type IdentifiableDocumentActions = {
   revealAllSecrets: () => Promise<void>;
 };
-type IdentifiableDocumentStoreUtils = Record<string, unknown>;
+type IdentifiableDocumentStoreUtils = object;
 
 interface IdentifiableStore {
   documentGetters: IdentifiableDocumentGetters;

@@ -96,6 +96,26 @@ export async function getTokenLightData (
 }
 
 /**
+ * Read the currently-initialized `PointVisionSource` for the given token placeable
+ * (must already be controlled — Foundry only initializes a token's own vision source
+ * while it's controlled or otherwise counted as an active vision source, see
+ * `TokenDnd35e#_isVisionSource`). Returns `null` if no vision source is active.
+ */
+export async function getTokenVisionData (
+  page: Page,
+  tokenId: string
+): Promise<{ visionMode: string | null; radius: number } | null> {
+  return page.evaluate((id) => {
+    const canvas = (globalThis as any).canvas;
+    const placeable = canvas?.tokens?.get(id);
+    if (!placeable) throw new Error(`getTokenVisionData: no placeable for token ${id}`);
+    const vision = placeable.vision;
+    if (!vision) return null;
+    return { visionMode: vision.visionMode?.id ?? null, radius: vision.radius as number };
+  }, tokenId);
+}
+
+/**
  * Delete embedded Token placeables from the currently-viewed scene.
  * Use in `afterEach` for specs that place tokens, alongside `clearWorld` for
  * the underlying actors.
@@ -109,4 +129,76 @@ export async function deleteTokens (page: Page, tokenIds: string[]): Promise<voi
     const existing = ids.filter((id: string) => scene.tokens.get(id));
     if (existing.length > 0) await scene.deleteEmbeddedDocuments('Token', existing);
   }, tokenIds);
+}
+
+/** Pixel size (`grid.size`) and feet-per-square (`grid.distance`) of the active scene's grid. */
+export async function getGridInfo (page: Page): Promise<{ size: number; distance: number }> {
+  return page.evaluate(() => {
+    const canvas = (globalThis as any).canvas;
+    return { size: canvas.grid.size as number, distance: canvas.grid.distance as number };
+  });
+}
+
+/**
+ * Instantly (no animation) recenter the canvas camera on the given world point, at
+ * 100% zoom. Needed before any test converts a canvas-space point to a client point
+ * for real mouse interaction — the default camera position after `activateScene` is
+ * centered on the *scene's* midpoint, not any particular token, so a token placed at
+ * an arbitrary world coordinate may render off-screen or right underneath a fixed UI
+ * toolbar rather than in open canvas space.
+ */
+export async function panToPoint (page: Page, point: { x: number; y: number }): Promise<void> {
+  await page.evaluate((p) => {
+    (globalThis as any).canvas.pan({ x: p.x, y: p.y, scale: 1 });
+  }, point);
+}
+
+/** Current canvas-space (world) center point of the given token placeable. */
+export async function getTokenPosition (page: Page, tokenId: string): Promise<{ x: number; y: number }> {
+  return page.evaluate((id) => {
+    const canvas = (globalThis as any).canvas;
+    const placeable = canvas?.tokens?.get(id);
+    if (!placeable) throw new Error(`getTokenPosition: no placeable for token ${id}`);
+    return { x: placeable.center.x as number, y: placeable.center.y as number };
+  }, tokenId);
+}
+
+/**
+ * Convert a canvas-space (world) point into client (viewport) pixel coordinates
+ * suitable for `page.mouse`, via Foundry's own `Canvas#clientCoordinatesFromCanvas`.
+ */
+export async function canvasPointToClient (page: Page, point: { x: number; y: number }): Promise<{ x: number; y: number }> {
+  return page.evaluate((p) => {
+    const canvas = (globalThis as any).canvas;
+    return canvas.clientCoordinatesFromCanvas(p) as { x: number; y: number };
+  }, point);
+}
+
+/**
+ * Simulate a real left-click-drag of the given token by a canvas-space pixel offset,
+ * starting from its current center. Used to confirm a movement-action HUD selection
+ * (see `tokenHud.mts`) — Foundry only applies a `movementAction` to a completed waypoint
+ * once an actual mouse-driven drag confirms the move, even for zero-cost custom actions
+ * like `dropProne`/`standUp` (there's no "instant action" hook).
+ */
+export async function dragTokenByOffset (
+  page: Page,
+  tokenId: string,
+  offset: { dx: number; dy: number }
+): Promise<void> {
+  const origin = await getTokenPosition(page, tokenId);
+  const destination = { x: origin.x + offset.dx, y: origin.y + offset.dy };
+  const start = await canvasPointToClient(page, origin);
+  const end = await canvasPointToClient(page, destination);
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  // Foundry's MouseInteractionManager#handlePointerMove throttles pointermove handling to
+  // canvas.app.ticker.elapsedMS per event, and only checks the drag-resistance distance
+  // (10px default) on calls that pass that throttle. Under a slow/headless renderer,
+  // ticker.elapsedMS can be large enough that a multi-step interpolated move (many small
+  // sub-threshold deltas) gets entirely throttled away before any single event's delta
+  // exceeds the resistance threshold, so the drag never starts. A single jump straight to
+  // the destination guarantees the one pointermove event carries the full offset.
+  await page.mouse.move(end.x, end.y);
+  await page.mouse.up();
 }

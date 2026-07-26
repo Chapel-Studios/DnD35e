@@ -1,0 +1,30 @@
+{
+  "dnd35e": {
+    "CONDITIONS": {
+      "blinded": { "label": "Blinded" },
+      "cowering": { "label": "Cowering" },
+      "dazed": { "label": "Dazed" },
+      "dazzled": { "label": "Dazzled" },
+      "deafened": { "label": "Deafened" },
+      "entangled": { "label": "Entangled" },
+      "exhausted": { "label": "Exhausted" },
+      "fatigued": { "label": "Fatigued" },
+      "flatFooted": { "label": "Flat-Footed" },
+      "frightened": { "label": "Frightened" },
+      "grappled": { "label": "Grappled" },
+      "helpless": { "label": "Helpless" },
+      "invisible": { "label": "Invisible" },
+      "nauseated": { "label": "Nauseated" },
+      "panicked": { "label": "Panicked" },
+      "paralyzed": { "label": "Paralyzed" },
+      "petrified": { "label": "Petrified" },
+      "pinned": { "label": "Pinned" },
+      "prone": { "label": "Prone" },
+      "shaken": { "label": "Shaken" },
+      "sickened": { "label": "Sickened" },
+      "staggered": { "label": "Staggered" },
+      "stunned": { "label": "Stunned" },
+      "unconscious": { "label": "Unconscious" }
+    }
+  }
+}

@@ -43,12 +43,9 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     documentGetters: {
       getViewAwareFieldValue,
     },
-    documentActions: {
-      editEffect,
-    },
     _storeUtils: {
       document,
-      updateHiddenEffects,
+      updateGmOnlyEffectTypes,
     },
   } = baseStore;
   const identifiableStore = useIdentifiableStore(
@@ -56,7 +53,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     baseStore as DocumentSheetStore<TDocument>
   );
   const isGM = game.user.isGM;
-  updateHiddenEffects([materialEffectType, secretEffectType]);
+  updateGmOnlyEffectTypes([secretEffectType]);
   const { replaceTabs, tabs } = baseStore._storeUtils.tabStore;
   replaceTabs([
     ...tabs.value.filter((tab) => 'effects' !== tab.id),
@@ -147,20 +144,6 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     toggleBroken: async (value: boolean) => {
       await syncBrokenAeState(document.value as unknown as PhysicalItem, value);
     },
-    createSecret: async () => {
-      const createdSecrets = await document.value.createEmbeddedDocuments('ActiveEffect', [{
-        name: game.i18n.localize('dnd35e.EFFECT.Secret.New'),
-        img: 'icons/svg/eye.svg',
-        type: secretEffectType,
-        origin: document.value.uuid,
-        disabled: false,
-      }]);
-
-      const createdSecret = createdSecrets[0];
-      if (createdSecret?.id) {
-        editEffect(createdSecret.id);
-      }
-    },
     revealAllSecrets: async () => {
       const active = [...document.value.effects].filter(
         (e) => e.type === secretEffectType && !e.disabled
@@ -212,7 +195,6 @@ interface PhysicalItemStoreUtils extends IdentifiableDocumentStoreUtils {}
 
 interface PhysicalItemActions extends IdentifiableDocumentActions {
   toggleBroken: (value: boolean) => Promise<void>;
-  createSecret: () => Promise<void>;
   revealAllSecrets: () => Promise<void>;
   syncContainer: (containerUuid: string | null) => Promise<void>;
 }
