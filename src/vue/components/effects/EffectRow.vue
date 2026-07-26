@@ -7,7 +7,7 @@
       <img :src="effect.img || 'icons/svg/aura.svg'" :alt="effect.name" class="effect-icon" />
       <span class="effect-name">{{ effect.name }}</span>
       <slot name="effect-badge" :effect="effect" />
-      <div v-if="!readOnly" class="effect-controls">
+      <div v-if="!readOnly && canEdit" class="effect-controls">
         <button
           v-if="showVisibilityToggle && isGM && canEdit"
           type="button"
