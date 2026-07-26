@@ -34,6 +34,14 @@ interface HpData extends HpSource {
   max: number;
   regeneration: number;
   fastHealing: number;
+  /**
+   * Derived alias for `current`. Foundry's default `TokenDocument#getBarAttribute`
+   * only recognizes bar objects with `.value`/`.max` keys; this system stores HP as
+   * `.current`/`.max`, so this mirror keeps the token HP bar (`prototypeToken.bar1`,
+   * see `buildPrototypeTokenDefaults.mts`) resolvable. Never stored, set every
+   * `prepareDerivedData()` pass in `CreatureSystemModel`.
+   */
+  value: number;
 }
 
 // ─── Saves ───────────────────────────────────────────────────────────────────

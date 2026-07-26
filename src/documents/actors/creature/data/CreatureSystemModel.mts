@@ -71,6 +71,10 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     for (const ability of Object.values(this.abilities)) {
       ability.mod = Math.floor((ability.score - 10) / 2);
     }
+    // Mirror hp.current -> hp.value: Foundry's default TokenDocument#getBarAttribute
+    // only resolves bar objects with .value/.max keys, but this system stores HP as
+    // .current/.max. See buildPrototypeTokenDefaults.mts (prototypeToken.bar1).
+    if (this.hp) this.hp.value = this.hp.current;
     this._prepareEncumbrance();
   }
 

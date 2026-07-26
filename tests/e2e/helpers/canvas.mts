@@ -96,6 +96,26 @@ export async function getTokenLightData (
 }
 
 /**
+ * Read the currently-initialized `PointVisionSource` for the given token placeable
+ * (must already be controlled — Foundry only initializes a token's own vision source
+ * while it's controlled or otherwise counted as an active vision source, see
+ * `TokenDnd35e#_isVisionSource`). Returns `null` if no vision source is active.
+ */
+export async function getTokenVisionData (
+  page: Page,
+  tokenId: string
+): Promise<{ visionMode: string | null; radius: number } | null> {
+  return page.evaluate((id) => {
+    const canvas = (globalThis as any).canvas;
+    const placeable = canvas?.tokens?.get(id);
+    if (!placeable) throw new Error(`getTokenVisionData: no placeable for token ${id}`);
+    const vision = placeable.vision;
+    if (!vision) return null;
+    return { visionMode: vision.visionMode?.id ?? null, radius: vision.radius as number };
+  }, tokenId);
+}
+
+/**
  * Delete embedded Token placeables from the currently-viewed scene.
  * Use in `afterEach` for specs that place tokens, alongside `clearWorld` for
  * the underlying actors.
