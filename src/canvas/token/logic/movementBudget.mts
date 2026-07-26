@@ -5,13 +5,14 @@ import { RUN_MOVEMENT_ACTION, RUN_SPEED_MULTIPLIER } from './movementActionGatin
 
 /**
  * Maps a Foundry `CONFIG.Token.movement.actions` key to the matching `system.speed`
- * field. `crawl` and `run` have no dedicated speed of their own — `crawl` is a
- * fraction of land speed while prone, `run` is a multiple of it (see
- * `ACTION_SPEED_MULTIPLIER`) — so both map to `land`. Actions with no speed concept
- * (`jump`, `blink`, `displace`) are intentionally unmapped — they're disabled
- * outright via `canSelect` (see registration.mts / WISHLIST.md), so a waypoint
- * should never carry them, but `getMovementBudget` still degrades safely to 0
- * rather than a wrong land-speed value.
+ * field. `run` has no dedicated speed of its own — it's a multiple of land speed (see
+ * `ACTION_SPEED_MULTIPLIER`). `crawl` maps to `land` too — the Prone condition caps
+ * `system.speed.land` at a flat 5 ft. via an OVERRIDE change (see `conditions.mts`), so
+ * reading land speed directly already yields the correct SRD crawl distance. Actions
+ * with no speed concept (`jump`, `blink`, `displace`, `dropProne`, `standUp`) are
+ * unmapped — they're disabled/non-spatial via `canSelect` (see registration.mts /
+ * WISHLIST.md), so a waypoint should never carry them, but `getMovementBudget` still
+ * degrades safely to 0 rather than a wrong land-speed value.
  */
 const ACTION_TO_SPEED_KEY: Partial<Record<string, SpeedType>> = {
   walk: 'land',

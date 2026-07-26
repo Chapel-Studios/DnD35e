@@ -1,6 +1,6 @@
 # POC Phase 9: Basic Tokens
 
-**Status**: 🔶 In Progress (Story 1 & 2 complete; Story 3 not started)
+**Status**: 🔶 In Progress (Story 1 & 2 complete; Story 3 nearly complete — E2E verification outstanding; Story 4 in progress — 4.A complete)
 
 > **Milestone**: POC  
 > **Dependencies**: poc.6  
@@ -270,6 +270,21 @@ Implementation: Vision wiring to tokens
 
 ---
 
+### Story 4 — Item Effects Tab Consolidation (Materials/Secrets merged, per-category rows)
+
+**User**: GM / Player
+**Delivers**: A single unified Effects table on item sheets (no more separate Materials/Secrets sub-lists), with a GM-only "Secret" category and a reusable per-category row-rendering pattern for future categories (e.g. armor/inventory).
+**Depends on**: Phase 1/2 item + AE foundation (unrelated to this phase's token/vision work; tracked here per author's request).
+
+**Commits:**
+1. **4.A — Merge Materials/Secrets into the main effects table** — refactor `ItemEffects.vue` onto `CategorizedListTable`; add a per-category row-component registry (`resolveEffectRowComponent`) defaulting to the generic `EffectRow`, with a dedicated `SecretEffectRow`; fold Secret creation into the single generic "Create Effect" dialog (GM-only type option via `createEffect(additionalTypes)`); materials become GM/`isHidden`-filtered rows like any other effect, secrets stay GM-only via `updateGmOnlyEffectTypes`; delete `MaterialsList.vue`/`SecretsList.vue`/`EffectCategory.vue`.
+2. **4.B — Condition config data** — condition config data + `CONFIG.statusEffects` registration so conditions surface as a category in the same table.
+3. **4.C — Actor Effects tab** — rename Actor's Buffs tab to Effects, add condition grid, delete dead `ActorEffectsTab.vue`.
+
+**E2E acceptance**: GM opens an item with a material and a secret effect → both appear as rows in one table, secret row only visible to GM → GM creates a new effect via "Create Effect", sees "Secret" as a type option (player does not) → GM clicks "Reveal All Secrets" → secret effects disable.
+
+---
+
 ## Completion Checklist
 
 ### 🔶 In Progress
@@ -378,6 +393,16 @@ Implementation: Vision wiring to tokens
 - [ ] E2E: dwarf (darkvision 60) on dark scene → token sight works, sees in grayscale
 
 > **Note**: Movement/ruler e2e coverage is deferred until poc.10 (Basic Combat) lands. Combat introduces reactions, opportunity attacks, and other interactions that will materially change how movement e2e scenarios need to be set up — better to write that coverage once against the real combat-aware drag/measure flow than twice.
+
+**Story 4 (Effects tab):**
+- [x] 4.A — `ItemEffects.vue` refactored onto `CategorizedListTable` + shared `EffectRow.vue`
+- [x] 4.A — Materials merged into the main table (no longer a separate hidden-type/list); still GM/`isHidden`-filtered per-row
+- [x] 4.A — Secrets merged into the main table as a GM-only category (`updateGmOnlyEffectTypes`)
+- [x] 4.A — Per-category row-component registry (`effectRowRegistry.mts`) with `SecretEffectRow` as the first non-default entry
+- [x] 4.A — Secret creation folded into the generic "Create Effect" dialog (`additionalCreatableTypes`, GM-only); bespoke `createSecret` action removed
+- [x] 4.A — `MaterialsList.vue`, `SecretsList.vue`, `EffectCategory.vue` deleted; barrel exports cleaned up
+- [ ] 4.B — Condition config data + `CONFIG.statusEffects` registration
+- [ ] 4.C — Actor Effects tab (rename Buffs→Effects, condition grid, delete dead `ActorEffectsTab.vue`)
 
 ---
 

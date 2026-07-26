@@ -6,14 +6,13 @@ import type {
   SheetTab,
 } from '@documents/document/index.mjs';
 import { defaultDetailsTab, useDocumentSheetStore } from '@documents/document/index.mjs';
-import { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
-import type { EffectType } from '@effects/effectTypes.mjs';
-import { EFFECT_TYPES } from '@effects/effectTypes.mjs';
+import type { EffectDocumentActions, EffectDocumentGetters, EffectDocumentUtils } from '@documents/document/logic/index.mjs';
+import { useEffectDocumentActions } from '@documents/document/logic/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
-import { computed, ref, triggerRef } from 'vue';
+import { computed } from 'vue';
 
 import {
   defaultEffectsTab,
@@ -48,93 +47,25 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(
   });
 
   const hasOwner = computed(() => !!document.value.parent);
-  const isGM = game.user.isGM;
 
-  // Item-specific document getters
-  // Note: We spread the effects into a plain array to avoid Vue proxy conflicts
-  // with Foundry's EmbeddedCollection proxy (non-configurable property error)
-  const hiddenEffectTypeIds = ref<Set<string>>(new Set());
-  const allEffects = computed(() => [...(document.value.effects ?? [])]
-    .filter((effect: ActiveEffectDnd35e) => !hiddenEffectTypeIds.value.has(effect.type))
-  );
-  // Non-GM users cannot see effects with isHidden: true
-  const effects = computed(() => isGM
-    ? allEffects.value
-    : allEffects.value.filter((e: ActiveEffectDnd35e) => !e.system.isHidden)
-  );
-  const getEffectsForField = (fieldPath: string) => computed(() => document.value.effectOverrides?.[fieldPath]
-    ? document.value.effectOverrides?.[fieldPath] as []
-    : []
-  );
+  // Item-specific document getters/actions - shared with actor-level effect
+  // hosting via `useEffectDocumentActions` (extracted for DRY across Item/Actor sheets).
+  const { getters: effectGetters, actions: effectActions, utils: effectUtils } = useEffectDocumentActions(document);
+
   const itemDocumentGetters = {
     ...baseStore.documentGetters,
-    effects,
-    temporaryEffects: computed(() => effects.value.filter((e: ActiveEffectDnd35e) => !e.disabled && e.isTemporary)),
-    passiveEffects: computed(() => effects.value.filter((e: ActiveEffectDnd35e) => !e.disabled && !e.isTemporary)),
-    inactiveEffects: computed(() => effects.value.filter((e: ActiveEffectDnd35e) => e.disabled)),
+    ...effectGetters,
     hasOwner,
-    getEffectsForField,
-    hasEffectsForField: (fieldPath: string) => computed(() => getEffectsForField(fieldPath).value.length > 0),
   };
 
   const itemDocumentActions = {
     ...baseStore.documentActions,
-    removeEffect: async (effectId: string) => {
-      const effect = document.value.effects.get(effectId);
-      if (!effect) return false;
-
-      await effect.deleteDialog();
-      triggerRef(document);
-      return true;
-    },
-    toggleEffect: async (effectId: string) => {
-      const effect = document.value.effects.get(effectId);
-      if (!effect) return false;
-      await effect.update({ disabled: !effect.disabled });
-      triggerRef(document);
-      return true;
-    },
-    editEffect: (effectId: string) => {
-      const effect = document.value.effects.get(effectId);
-      if (!effect) return false;
-      effect.sheet?.render(true);
-      triggerRef(document);
-      return true;
-    },
-    createEffect: async () => {
-      const effectData = {
-        name: game.i18n.localize('dnd35e.EFFECT.New'),
-        img: 'icons/svg/aura.svg',
-        origin: document.value.uuid,
-        disabled: false,
-      };
-      // TODO(Phase 7): fix type definitions — add createDialog static method signature to ActiveEffectDnd35e
-      await (ActiveEffectDnd35e as any).createDialog(effectData, {
-        parent: document.value,
-      }, {
-        types: Object.keys(EFFECT_TYPES),
-      });
-      // const createData = ActiveEffectDnd35e.createDialog(effectData);
-      // await document.value.createEmbeddedDocuments('ActiveEffect', [createData]);
-      triggerRef(document);
-    },
-    toggleEffectHidden: async (effectId: string) => {
-      const effect = document.value.effects.get(effectId);
-      if (!effect) return false;
-      await effect.update({ 'system.isHidden': !effect.system.isHidden });
-      triggerRef(document);
-      return true;
-    },
+    ...effectActions,
   };
 
   const itemStoreUtils = {
     ...baseStore._storeUtils,
-    updateHiddenEffects: async (effectTypes: EffectType[]) => {
-      hiddenEffectTypeIds.value = new Set([
-        ...hiddenEffectTypeIds.value,
-        ...effectTypes,
-      ]);
-    },
+    ...effectUtils,
   };
 
   const store: ItemSheetStore<TDocument> = {
@@ -148,26 +79,14 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(
   return store;
 };
 
-type ItemDocumentGetters = DocumentSheetStoreDocumentGetters & {
-  effects: ComputedRef<ActiveEffectDnd35e[]>,
-  temporaryEffects: ComputedRef<ActiveEffectDnd35e[]>,
-  passiveEffects: ComputedRef<ActiveEffectDnd35e[]>,
-  inactiveEffects: ComputedRef<ActiveEffectDnd35e[]>,
+
+type ItemDocumentGetters = DocumentSheetStoreDocumentGetters & EffectDocumentGetters & {
   hasOwner: ComputedRef<boolean>;
-  getEffectsForField: (fieldPath: string) => ComputedRef<object[]>;
 };
 
-type ItemDocumentActions<TDocument extends ItemDnd35e> = DocumentSheetStoreDocumentActions<TDocument> & {
-  removeEffect: (effectId: string) => Promise<boolean>;
-  toggleEffect: (effectId: string) => Promise<boolean>;
-  toggleEffectHidden: (effectId: string) => Promise<boolean>;
-  editEffect: (effectId: string) => boolean;
-  createEffect: () => Promise<void>;
-};
+type ItemDocumentActions<TDocument extends ItemDnd35e> = DocumentSheetStoreDocumentActions<TDocument> & EffectDocumentActions;
 
-type ItemSheetStoreUtils<TDocument extends ItemDnd35e> = DocumentSheetStoreUtils<TDocument> & {
-  updateHiddenEffects: (effectTypes: EffectType[]) => Promise<void>;
-};
+type ItemSheetStoreUtils<TDocument extends ItemDnd35e> = DocumentSheetStoreUtils<TDocument> & EffectDocumentUtils;
 
 type ItemSheetStore<TDocument extends ItemDnd35e<ItemType> = ItemDnd35e<ItemType>> = DocumentSheetStore<TDocument>
   & {

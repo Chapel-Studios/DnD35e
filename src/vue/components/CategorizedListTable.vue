@@ -20,6 +20,11 @@
     </nav>
 
     <div v-if="isAllTab" class="all-categories-view">
+      <div v-if="categories.length === 0 && !hideEmptyState" class="empty-state empty-row">
+        <i :class="emptyIcon" />
+        {{ localize(emptyLabel) }}
+      </div>
+
       <div
         v-for="category in categories"
         :key="category.id"
@@ -172,6 +177,10 @@
     columnWidths?: string[];
     /** Trims section padding/borders for embedding inside another row (e.g. expanded container contents). */
     compact?: boolean;
+    /** Suppresses the empty-state placeholder in the "All" tab when there are zero rows -
+     * for consumers who render other content (e.g. a sibling list) that already covers
+     * the "nothing here" case and don't want a redundant empty message. */
+    hideEmptyState?: boolean;
   }>(), {
     allTabLabel: 'dnd35e.ACTOR.inventory.tab.all',
     emptyLabel: 'dnd35e.ACTOR.inventory.empty',
@@ -179,6 +188,7 @@
     enableSubcategoryCollapse: false,
     columnWidths: undefined,
     compact: false,
+    hideEmptyState: false,
   });
 
   const localize = (key: string) => game.i18n.localize(key);
@@ -509,5 +519,9 @@
       margin-right: 0.35rem;
       opacity: 0.7;
     }
+  }
+
+  .empty-state {
+    padding: 1rem;
   }
 </style>

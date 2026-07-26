@@ -20,7 +20,6 @@ import type {
 } from './sheet/index.mjs';
 import {
   defaultEffectsTab,
-  EffectCategory,
   ItemEffects,
   ItemSheetDnd35e,
   useItemSheetStore,
@@ -28,7 +27,6 @@ import {
 
 export {
   defaultEffectsTab,
-  EffectCategory,
   ItemDnd35e,
   ItemEffects,
   ItemProxyDnd35e,

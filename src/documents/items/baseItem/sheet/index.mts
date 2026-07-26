@@ -1,6 +1,3 @@
-import {
-  EffectCategory,
-} from './components/index.mjs';
 import type { BaseItemSheetRenderContext } from './ItemSheetDnd35e.mjs';
 import { ItemSheetDnd35e } from './ItemSheetDnd35e.mjs';
 import type {
@@ -21,7 +18,6 @@ import {
 
 export {
   defaultEffectsTab,
-  EffectCategory,
   getDefaultItemTabs,
   ItemEffects,
   ItemSheetDnd35e,

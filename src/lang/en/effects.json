@@ -22,13 +22,13 @@
       "Disable": "Disable Effect",
       "Enabled": "Enabled",
       "Disabled": "Disabled",
-      "Temporary": "Temporary Effects",
-      "Passive": "Passive Effects",
-      "Inactive": "Inactive Effects",
       "None": "No effects on this item.",
       "Hidden": "Hidden",
       "HideEffect": "Hide from players",
       "ShowEffect": "Show to players",
+      "Category": {
+        "Condition": "Conditions"
+      },
       "StackResult": {
         "Applied": "Applied",
         "Ignored": "Ignored"

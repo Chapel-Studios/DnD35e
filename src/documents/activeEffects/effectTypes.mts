@@ -22,7 +22,11 @@ type HIDDEN_ACTIVE_EFFECTS = Secret | Containment;
 type VISIBLE_ACTIVE_EFFECTS = General | Material;
 type ACTIVE_EFFECTS_DND35E = HIDDEN_ACTIVE_EFFECTS | VISIBLE_ACTIVE_EFFECTS;
 
-/** Types exposed in the AE creation dialog. Secret is excluded — created only via dedicated UI. */
+/**
+ * Types always exposed in the AE creation dialog. Secret is excluded here - it's only
+ * added to the dialog's type list for GM users, via `createEffect`'s `additionalTypes`
+ * param (see `PhysicalItemStore`), so players never see it as a creatable option.
+ */
 const EFFECT_TYPES = {
   general: 'Document.ActiveEffect',
   material: 'TYPES.Item.material',

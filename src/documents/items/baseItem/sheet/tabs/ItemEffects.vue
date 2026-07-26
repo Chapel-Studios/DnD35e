@@ -5,77 +5,48 @@
     data-group="primary"
     data-tab="effects"
   >
-    <div class="effects-header">
-      <h3>{{ localize('dnd35e.EFFECT.Effects') }}</h3>
-      <button
-        v-if="isEditMode"
-        type="button"
-        class="create-effect-btn"
-        @click="createEffect"
-      >
-        <i class="fas fa-plus" />
-        {{ localize('dnd35e.EFFECT.Create') }}
-      </button>
-    </div>
+    <CategorizedListTable
+      title="dnd35e.EFFECT.Effects"
+      :column-count="1"
+      :rows="rows"
+      empty-label="dnd35e.EFFECT.None"
+      empty-icon="fas fa-sparkles"
+    >
+      <template v-if="isEditMode" #controls>
+        <slot name="header-actions" />
+        <button type="button" class="create-effect-btn" @click="createEffect(additionalCreatableTypes)">
+          <i class="fas fa-plus" />
+          {{ localize('dnd35e.EFFECT.Create') }}
+        </button>
+      </template>
 
-    <div class="effects-list">
-
-      <slot name="effects-list-prepend" />
-
-      <!-- Temporary Effects -->
-      <EffectCategory
-        v-if="temporaryEffects.length"
-        :label="localize('dnd35e.EFFECT.Temporary').value"
-        :effects="temporaryEffects"
-        :can-edit="isEditMode"
-      />
-
-      <!-- Passive Effects -->
-      <EffectCategory
-        v-if="passiveEffects.length"
-        :label="localize('dnd35e.EFFECT.Passive').value"
-        :effects="passiveEffects"
-        :can-edit="isEditMode"
-      />
-
-      <!-- Inactive Effects -->
-      <EffectCategory
-        v-if="inactiveEffects.length"
-        :label="localize('dnd35e.EFFECT.Inactive').value"
-        :effects="inactiveEffects"
-        :can-edit="isEditMode"
-      />
-
-      <slot name="effects-list-append" />
-
-      <!-- Empty State -->
-      <div v-if="isEmpty" class="effects-empty">
-        <p>{{ localize('dnd35e.EFFECT.None') }}</p>
-      </div>
-    </div>
+      <template #row="{ row }">
+        <component :is="resolveEffectRowComponent(row.categoryId)" :effect="row.effect" :can-edit="isEditMode" />
+      </template>
+    </CategorizedListTable>
   </section>
 </template>
 
 <script setup lang="ts">
   import type { RenderModeStore, TabStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol, TabStoreSymbol } from '@documents/document/index.mjs';
+  import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/index.mjs';
+  import { resolveEffectCategory } from '@effects/baseActiveEffect/logic/index.mjs';
+  import type { EffectType } from '@effects/effectTypes.mjs';
   import type { ItemSheetStore } from '@items/baseItem/index.mjs';
+  import type { CategorizedRow } from '@vc/CategorizedListTable.vue';
+  import CategorizedListTable from '@vc/CategorizedListTable.vue';
+  import { resolveEffectRowComponent } from '@vc/effects/effectRowRegistry.mjs';
   import { computed, inject } from 'vue';
 
-  import EffectCategory from '../components/EffectCategory.vue';
-
-  const {
-    hasAddedEffects,
-  } = defineProps<{
-    hasAddedEffects?: boolean;
+  const { additionalCreatableTypes = [] } = defineProps<{
+    /** Extra effect types added to the create-dialog's type picker for GM users only (see `createEffect`). */
+    additionalCreatableTypes?: EffectType[];
   }>();
 
   const {
     documentGetters: {
       effects,
-      temporaryEffects,
-      passiveEffects,
-      inactiveEffects,
     },
     documentActions: {
       createEffect,
@@ -89,7 +60,27 @@
 
   const isActiveTab = getIsTabOpen('effects');
 
-  const isEmpty = computed(() => !effects.value.length && !hasAddedEffects);
+  type EffectRowData = CategorizedRow & { effect: ActiveEffectDnd35e };
+
+  /**
+   * `categoryId` is the effect's document `type` (or the synthetic `condition`
+   * pseudo-type for status-driven effects) - `CategorizedListTable` groups/tabs by
+   * this automatically and sorts categories alphabetically, so new effect types
+   * don't require updating this file. Active vs. disabled is a per-row state
+   * (see `EffectRow`'s toggle), not a bucket. `effects` already excludes GM-only
+   * types (e.g. `secret`) from non-GM users entirely (see `updateGmOnlyEffectTypes`),
+   * so a GM-only category tab never appears for players.
+   */
+  const rows = computed<EffectRowData[]>(() => effects.value.map((effect) => {
+    const { categoryId, categoryLabel } = resolveEffectCategory(effect);
+    return {
+      id: effect.id,
+      categoryId,
+      categoryLabel: localize(categoryLabel).value,
+      sortKey: effect.name.toLowerCase(),
+      effect,
+    };
+  }));
 </script>
 
 <style scoped lang="scss">
@@ -97,46 +88,19 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding: 0.5rem;
   }
 
-  .effects-header {
+  .create-effect-btn {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 0.5rem;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
 
-    h3 {
-      margin: 0;
-      font-size: 1.25rem;
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
-
-    .create-effect-btn {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      padding: 0.25rem 0.5rem;
-      font-size: 0.875rem;
-      cursor: pointer;
-
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-    }
-  }
-
-  .effects-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .effects-empty {
-    text-align: center;
-    color: var(--color-text-secondary);
-    font-style: italic;
-    padding: 2rem;
   }
 </style>
