@@ -4,6 +4,7 @@ import {
   requiredBooleanField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
+import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import { PhysicalItemSystemModel } from '@items/physical/physicalItem/data/PhysicalItemSystemModel.mjs';
 
 import type { ContainerSystemData } from './ContainerSystemData.mjs';
@@ -25,6 +26,11 @@ class ContainerSystemModel extends PhysicalItemSystemModel {
 
   static override defineSchema (): Record<string, any> {
     const schema = super.defineSchema();
+
+    // Declare Owner context on inherited nameFormula (matches Weapon's pattern)
+    (schema.nameFormula as FormulaField).formulaContexts = [
+      { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
+    ];
 
     schema.maxContentWeight = useDnd35eField(new NumberField({ required: true, nullable: true, initial: null, min: 0 }));
     schema.contentsAreWeightless = useDnd35eField(requiredBooleanField(false));

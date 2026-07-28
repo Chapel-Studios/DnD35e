@@ -1,7 +1,5 @@
-import type { Dnd35eDocType } from '@documents/types.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
 import type { CurrencyData } from '@fields/index.mjs';
-import { Container } from '@items/physical/container/Container.mjs';
 
 type BuildContainmentChangesInput = {
   existingChanges: EffectChangeDataDnd35e[];
@@ -13,7 +11,7 @@ type BuildContainmentChangesInput = {
 const buildChange = (
   key: string,
   value: number | CurrencyData,
-  condition?: (target: Dnd35eDocType) => boolean
+  condition?: string
 ): EffectChangeDataDnd35e => ({
   key,
   type: 'add',
@@ -41,9 +39,7 @@ const buildContainmentChanges = ({
   changes.push(buildChange(
     'system.weight',
     contributedWeight,
-    (target): target is Container => 
-      target instanceof Container
-      && !((target as Container).system.contentsAreWeightless)
+    '!#item.contentsAreWeightless'
   ));
   changes.push(buildChange(
     'system.contentsCount',

@@ -51,10 +51,19 @@
     placeholder: { type: String, default: 'Select property...' },
     /** Form field name attribute */
     name: { type: String, default: undefined },
+    /**
+     * Suppress the auto-generated "Available Contexts: [...]" hint text.
+     * Used when a consumer renders that hint itself once, shared across
+     * several sibling fields (e.g. the AE Changes table's row-context line).
+     * Validation errors still surface via `update:error` regardless.
+     */
+    hideContextHint: { type: Boolean, default: false },
   });
 
   const emit = defineEmits<{
     'update:modelValue': [value: string];
+    /** Current validation error message for this field, or null when valid. */
+    'update:error': [error: string | null];
   }>();
 
   const familiarVerticalGap = 2;
@@ -147,13 +156,32 @@
   });
 
   const dynamicHint = computed(() => {
+    if (props.hideContextHint) return '';
     if (!props.familiarContext) return '';
     const ctx = wrappedSchema.value[props.contextName];
     const displayName = ctx?.display ?? (props.contextName.charAt(0).toUpperCase() + props.contextName.slice(1));
     return `Available Contexts: [${displayName}]`;
   });
 
-  const displayHint = computed(() => props.disabled ? '' : dynamicHint.value);
+  // Unresolvable key errors carry an empty context (they aren't tied to a specific
+  // #context.property variable) — exposed separately so consumers can surface it
+  // (e.g. combined into a shared row-context error line) even when the dynamic
+  // context hint itself is suppressed via `hideContextHint`.
+  const currentError = computed((): string | null => {
+    const keyError = validationErrors.value.find(e => e.context === '' && e.severity === 'error');
+    return keyError?.error ?? null;
+  });
+
+  const displayHint = computed(() => {
+    if (props.disabled) return '';
+    // Suppressed when the context hint is hidden — the consumer (e.g. the AE
+    // Changes table row) is already showing this error via the `update:error`
+    // emit in a shared line.
+    if (currentError.value && !props.hideContextHint) return currentError.value;
+    return dynamicHint.value;
+  });
+
+  watch(currentError, (error) => emit('update:error', error), { immediate: true });
 
   // Track whether user is actively editing
   let isUserEditing = false;
@@ -173,7 +201,28 @@
       return;
     }
 
-    validationErrors.value = validateFormula(displayValue.value, wrappedSchema.value);
+    const errors = validateFormula(displayValue.value, wrappedSchema.value);
+
+    // A stored raw path (not '#context.property' syntax) that can't be resolved in the
+    // current context — e.g. right after switching the Target dropdown — isn't caught by
+    // validateFormula's token-based extraction (no '#' tokens to inspect). Surface it as
+    // an explicit error instead of silently leaving the field looking valid.
+    if (
+      errors.length === 0
+      && props.modelValue
+      && !findAspectByAccessPath(props.familiarContext.properties, props.modelValue)
+    ) {
+      errors.push({
+        variable: props.modelValue,
+        context: '',
+        path: [],
+        error: game.i18n.format('dnd35e.Formula.Errors.propertyNotFound', { key: props.modelValue, path: props.contextName }),
+        severity: 'error',
+        index: 0,
+      });
+    }
+
+    validationErrors.value = errors;
   }
 
   function syncScroll() {

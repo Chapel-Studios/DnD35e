@@ -2,6 +2,7 @@ import { ActiveEffectSystemModel } from '@effects/baseActiveEffect/data/ActiveEf
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
 import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import { requiredNumberField } from '@fields/fieldBuilders.mjs';
+import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 
 import { buildContainmentChanges } from './buildContainmentChanges.mjs';
 import type { ContainmentSystemData } from './ContainmentSystemData.mjs';
@@ -19,6 +20,11 @@ class ContainmentSystemModel extends ActiveEffectSystemModel {
 
   static override defineSchema (): Record<string, any> {
     const schema = super.defineSchema();
+
+    // Always placed on the container item it contributes to.
+    (schema.nameFormula as FormulaField).formulaContexts = [
+      { contextName: 'Container', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['container'], aliases: ['Owner', 'Parent'] },
+    ];
 
     schema.sourceItemUuid = new StringField({ required: true, nullable: true, initial: null });
     schema.contributedWeight = requiredNumberField(0);

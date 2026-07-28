@@ -44,8 +44,6 @@ const EFFECT_CHANGE_TYPE = {
  * These are registered in CONFIG.ActiveEffect.changeTypes at init.
  */
 const CHANGE_TYPE = {
-  /** FormulaFamiliar change type — provides autocomplete context, not value changes. */
-  FAMILIAR: 'familiar',
   /** MASK change type — defines masked (fake) values for Secret AEs. Not applied via stacking. */
   MASK: 'mask',
 } as const;

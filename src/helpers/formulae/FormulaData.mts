@@ -8,6 +8,7 @@
  * @module
  */
 
+import { evaluateBooleanExpression } from './evaluateBooleanExpression.mjs';
 import type { DocumentContext } from './registry.mjs';
 import { buildDocumentFamiliar } from './registry.mjs';
 import type { FamiliarSchema } from './types.mjs';
@@ -23,20 +24,20 @@ const {
 interface FormulaDataSource {
   formula: string;
   resolvedValue: string | number | null;
-  expectedType: 'string' | 'number';
+  expectedType: 'string' | 'number' | 'boolean';
 }
 
 class FormulaData extends foundry.abstract.DataModel {
   // Declare model properties for TypeScript
   declare formula: string;
   declare resolvedValue: string | null;
-  declare expectedType: 'string' | 'number';
+  declare expectedType: 'string' | 'number' | 'boolean';
 
   static override defineSchema() {
     return {
       formula: new StringField({ blank: true, initial: '' }),
       resolvedValue: new StringField({ nullable: true, initial: null }),
-      expectedType: new StringField({ choices: ['string', 'number'], initial: 'string' }),
+      expectedType: new StringField({ choices: ['string', 'number', 'boolean'], initial: 'string' }),
     };
   }
 
@@ -155,7 +156,16 @@ class FormulaData extends foundry.abstract.DataModel {
     return schema;
   }
 
-  private static _finalizeResolvedValue(resolved: string, expectedType: 'string' | 'number'): string {
+  private static _finalizeResolvedValue(resolved: string, expectedType: 'string' | 'number' | 'boolean'): string {
+    if (expectedType === 'boolean') {
+      if (extractVariables(resolved).length > 0) return resolved;
+      try {
+        return evaluateBooleanExpression(resolved) ? 'true' : 'false';
+      } catch {
+        return resolved;
+      }
+    }
+
     if (expectedType !== 'number') return resolved;
     if (extractVariables(resolved).length > 0) return resolved;
 
@@ -166,9 +176,7 @@ class FormulaData extends foundry.abstract.DataModel {
     if (!Number.isNaN(numericValue)) return String(numericValue);
 
     try {
-      const safeEval = (Roll as unknown as { safeEval?: (formula: string) => number }).safeEval;
-      if (!safeEval) return resolved;
-      const evaluated = safeEval(trimmed);
+      const evaluated = Roll.safeEval(trimmed);
       return Number.isNaN(evaluated) ? resolved : String(evaluated);
     } catch {
       return resolved;

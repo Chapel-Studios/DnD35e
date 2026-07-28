@@ -50,7 +50,7 @@
   import FamiliarOverlayInput from '@vc/fields/formGroups/FamiliarOverlayInput.vue';
   import FormGroup from '@vc/fields/formGroups/FormGroup.vue';
   import type { PropType } from 'vue';
-  import { computed, inject, ref, useSlots } from 'vue';
+  import { computed, inject, ref, useSlots, watch } from 'vue';
 
   import type { FormulaData } from './FormulaData.mjs';
   import { FormulaField } from './FormulaField.mjs';
@@ -83,7 +83,26 @@
     formulaData: { type: Object as PropType<FormulaData | null>, default: undefined },
     /** Whether to focus the input on mount. Used by the name field to focus on edit. */
     focusOnMount: { type: Boolean, default: false },
+    /**
+     * Explicit expectedType override. Takes priority over formulaData/schema inference —
+     * needed for fields whose schema type isn't a FormulaField (e.g. a plain StringField
+     * that is always semantically boolean, such as an AE change's `condition`).
+     */
+    expectedType: { type: String as PropType<'string' | 'number' | 'boolean'>, default: undefined },
+    /**
+     * Suppress the auto-generated "Available Contexts: [...]" hint text.
+     * Used when a consumer renders that hint itself once, shared across
+     * several sibling fields (e.g. the AE Changes table's row-context line).
+     * Validation errors still surface via `update:error` regardless.
+     */
+    hideContextHint: { type: Boolean, default: false },
   });
+
+  const emit = defineEmits<{
+    /** Current validation/type-mismatch error message for this field, or null when valid. */
+    'update:error': [error: string | null];
+  }>();
+
   const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   // Effective formula — from FormulaData, or legacy value prop
@@ -97,6 +116,12 @@
   // Resolve the FormulaField schema entry for this field path to read excludedFields
   const formulaField = computed((): FormulaField | undefined => {
     return sheetStore?._storeUtils?.getSchemaField?.(props.fieldPath) as FormulaField | undefined;
+  });
+
+  // Expected type — explicit prop override > FormulaData > the schema's FormulaField,
+  // used for type-mismatch validation
+  const resolvedExpectedType = computed((): 'string' | 'number' | 'boolean' | undefined => {
+    return props.expectedType ?? props.formulaData?.expectedType ?? formulaField.value?.expectedType;
   });
 
   // If no explicit updater is provided, infer write path from fieldPath:
@@ -154,14 +179,13 @@
   /** Auto-generate hint from context keys, e.g. "Available Contexts: [Self, Owner]" */
   const dynamicHint = computed(() => {
     if (props.hint) return props.hint;
+    if (props.hideContextHint) return '';
     const keys = Object.keys(contexts.value);
     if (keys.length === 0) return '';
     const names = Object.entries(contexts.value).map(([k, ctx]) => ctx.display ?? (k.charAt(0).toUpperCase() + k.slice(1)));
     const localizedPrefix = game.i18n.localize('dnd35e.Formula.availableContexts');
     return `${localizedPrefix}: [${names.join(', ')}]`;
   });
-
-  const displayHint = computed(() => isEditMode.value ? dynamicHint.value : (props.hint ?? ''));
 
   const readonlyDisplayHtml = computed(() => {
     if (!effectiveFormula.value) {
@@ -204,9 +228,29 @@
       console.warn(`[FormulaFormGroup] No updater available for ${props.fieldPath}. Provide onUpdate or ensure DocumentSheetStore is injected.`);
     },
     focusOnMount: () => isEditable.value && props.focusOnMount,
+    expectedType: resolvedExpectedType,
   });
-</script>
 
+  // Type-mismatch errors carry an empty context (they aren't tied to a specific variable) —
+  // exposed separately so consumers can surface it (e.g. combined into a shared row-context
+  // error line) even when the dynamic context hint itself is suppressed via `hideContextHint`.
+  const currentError = computed((): string | null => {
+    const typeError = formulaErrors.value.find(e => e.context === '' && e.severity === 'error');
+    return typeError?.error ?? null;
+  });
+
+  const displayHint = computed(() => {
+    if (!isEditMode.value) return props.hint ?? '';
+    // Type-mismatch errors take priority over the dynamic context hint — surface
+    // them to the user instead of silently falling back. Suppressed when the
+    // context hint is hidden — the consumer (e.g. the AE Changes table row) is
+    // already showing this error via the `update:error` emit in a shared line.
+    if (currentError.value && !props.hideContextHint) return currentError.value;
+    return dynamicHint.value;
+  });
+
+  watch(currentError, (error) => emit('update:error', error), { immediate: true });
+</script>
 <style scoped lang="scss">
 // Readonly slot content (sibling of .formula-form-group)
 .formula-display {

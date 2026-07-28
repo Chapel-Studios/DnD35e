@@ -91,6 +91,22 @@
   text-underline-offset: 3px;
 }
 
+/* Parenthesis pairing — blue once both `(` and its matching `)` exist, yellow
+   while unmatched (still being typed, or genuinely mismatched). */
+.familiar-overlay-highlight .formula-paren,
+.formula-display .formula-paren {
+  background: rgba(102, 166, 255, 0.18);
+  color: #66b3ff;
+  border-radius: 2px;
+  padding: 1px 0;
+}
+
+.familiar-overlay-highlight .formula-paren.is-warning,
+.formula-display .formula-paren.is-warning {
+  background: rgba(255, 200, 50, 0.15);
+  color: #e6c44d;
+}
+
 /**
  * Formula editor input + highlight overlay (GLOBAL, not scoped).
  *

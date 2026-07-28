@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 // - optional `field.label` (the localized label set after i18nInit)
 // ---------------------------------------------------------------------------
 
-const { NumberField, StringField, SchemaField } = foundry.data.fields;
+const { NumberField, StringField, BooleanField, SchemaField } = foundry.data.fields;
 
 type AnyField = foundry.data.fields.DataField;
 
@@ -21,6 +21,11 @@ const makeNumber = (opts: Record<string, unknown> = {}): AnyField => {
 
 const makeString = (opts: Record<string, unknown> = {}): AnyField => {
   const f = new (StringField as any)({ ...opts });
+  return f as AnyField;
+};
+
+const makeBoolean = (opts: Record<string, unknown> = {}): AnyField => {
+  const f = new (BooleanField as any)({ ...opts });
   return f as AnyField;
 };
 
@@ -72,6 +77,15 @@ describe('gatherAspectsFromSchema — FormulaFamiliar schema walker', () => {
       const aspect = group.flavor as FieldAspect;
       expect(aspect.type).toBe('string');
       expect(aspect.accessPath).toBe('system.flavor');
+    });
+
+    it('includes a plain BooleanField as a boolean leaf (Story A)', () => {
+      const group = gatherAspectsFromSchema(makeModelClass({
+        hasCondition: makeBoolean(),
+      }));
+      const aspect = group.hasCondition as FieldAspect;
+      expect(aspect.type).toBe('boolean');
+      expect(aspect.accessPath).toBe('system.hasCondition');
     });
 
     it('excludes a field marked `formulaVisible: false`', () => {

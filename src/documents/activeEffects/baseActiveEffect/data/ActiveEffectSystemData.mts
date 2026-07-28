@@ -2,7 +2,6 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { ActiveEffectSystemSource, EffectChangeData } from '@common/documents/active-effect.mjs';
 import type { BonusType } from '@constants/bonusTypes.mjs';
 import type { DocumentSystemData } from '@documents/document/index.mjs';
-import type { Dnd35eDocType } from '@documents/types.mjs';
 import type { EffectChangeTarget } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 
@@ -27,10 +26,8 @@ interface EffectChangeSourceDnd35e extends Omit<EffectChangeData, 'effect'> {
   label?: string;
   /** Optional bonus type for stacking resolution. Only set when stacking applies (Phase 2+). */
   bonusType?: BonusType | null;
-  /** Optional formula-familiar condition for action-phase changes. Phase 8+. */
-  condition?: string 
-    | null 
-    | ((target: Dnd35eDocType) => boolean);
+  /** Optional formula-familiar condition for action-phase changes. Phase 8+. Must round-trip through the database, so string-form (FormulaFamiliar boolean grammar) only — no function form. */
+  condition?: string | null;
 }
 
 interface ActiveEffectSystemSourceDnd35e extends DocumentSystemData, Omit<ActiveEffectSystemSource, 'changes'> {

@@ -66,16 +66,13 @@ function tryEvaluateNumber(expression: string): number | null {
   if (!Number.isNaN(numericValue)) return numericValue;
 
   try {
-    const safeEval = (Roll as unknown as { safeEval?: (formula: string) => number }).safeEval;
-    if (safeEval) {
-      const evaluated = safeEval(trimmed);
-      return Number.isNaN(evaluated) ? null : evaluated;
-    }
+    const evaluated = Roll.safeEval(trimmed);
+    return Number.isNaN(evaluated)
+      ? null
+      : evaluated;
   } catch {
     return null;
   }
-
-  return null;
 }
 
 function resolveActiveEffectChangeValue(

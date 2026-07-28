@@ -19,7 +19,7 @@ export interface FormulaFieldMeta {
   /** I18n key for Familiar-only display label override (preferred over familiarLabel). */
   familiarLabelKey?: string;
   /** Override the inferred aspect type (normally inferred from inner field class). */
-  aspectType?: 'string' | 'number';
+  aspectType?: 'string' | 'number' | 'boolean';
   /** Override the key used in the AspectGroup (normally the field name). */
   aspectKey?: string;
   /** Alternative names that also resolve to this field, e.g. ['dmg', 'damage']. */
@@ -108,8 +108,8 @@ export interface Dnd35eFieldOverrides {
  */
 export interface FieldAspect {
   display?: string;           // Localized label (e.g., "Hardness", "Rarity")
-  value?: string | number;    // Current computed value (e.g., 10, "common") — optional, filled at runtime
-  type: 'string' | 'number';  // Type determines what operations can be performed
+  value?: string | number;    // Current computed value (e.g., 10, "common") — optional, filled at runtime; booleans stored as 'true'/'false'
+  type: 'string' | 'number' | 'boolean';  // Type determines what operations can be performed
   accessPath: string;         // The real document path (e.g., "system.hardness", "name")
   aliases?: string[];         // Alternative names that also resolve to this field
 }

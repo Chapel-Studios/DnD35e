@@ -1,12 +1,36 @@
 # POC Phase 7: Roll Formulas & Custom Rolls
 
-**Status**: 📋 Outlined (FormulaFamiliar system, action formulas)
+**Status**: 🔶 In Progress (FormulaFamiliar system, action formulas)
 
 > **Milestone**: POC  
 > **Dependencies**: Phase 5  
-> **Goal**: Formalize how roll formulas are constructed, resolved, and how roll data is assembled across the system. Ensure all formulas use FormulaFamiliar `#context.property` syntax with proper context inheritance (actor → item → action). Create D20Roll and DamageRoll custom roll classes used by Phase 8 (Action System).
+> **Goal**: Formalize how roll formulas are constructed, resolved, and how roll data is assembled across the system. Ensure all formulas use FormulaFamiliar `#context.property` syntax with proper context inheritance (actor → item → action). Create D20Roll and DamageRoll custom roll classes used by Phase 10 (Action System).
 
-> **Action System note**: This phase creates all the formula plumbing that Phase 8 consumes. D20Roll handles auto-crit/fumble confirmation. DamageRoll handles critical multipliers and damage type tagging. FormulaFamiliar contexts declared here (`#self.*`, `#item.*`) are extended with `#action.*` and `#target.*` in Phase 8.
+> **Action System note**: This phase creates all the formula plumbing that Phase 10 consumes. D20Roll handles auto-crit/fumble confirmation. DamageRoll handles critical multipliers and damage type tagging. FormulaFamiliar contexts declared here (`#self.*`, `#item.*`) are extended with `#action.*` and `#target.*` in Phase 10.
+
+---
+
+## Design Decisions (this planning pass)
+
+- **No `@attr` bridging.** The system sends zero `@`-prefixed tokens to Foundry's `Roll`/`_castChangeDelta` pipeline. Every authored formula (weapon damage, DC, AE change value, AE change condition) resolves exclusively through FormulaFamiliar's `#context.property` syntax to a literal value *before* it ever reaches `Roll` or `NumberField._castChangeDelta`. This is already how the shipped code behaves — this phase formalizes it as the permanent design rather than the two-syntax bridge originally sketched below (see §7.2).
+- **Typed resolution.** FormulaFamiliar formulas resolve to one of three output types — `string` (default, name/text interpolation), `number` (already implemented, e.g. Spell Resistance), and `boolean` (new — comparison/logical expressions like `#self.skill.concentration.ranks > 5`). Each `FormulaField`/`FormulaData` declares its `expectedType`, and resolution enforces it instead of only coercing at read time.
+- **First boolean consumer: AE change conditional gate.** A `condition` formula (boolean-typed) on an individual AE change determines whether that change applies at all. This slot already exists as a typed placeholder (`EffectChangeSourceDnd35e.condition`) — this phase implements it for real.
+- **Advanced conditional formula editor.** Every `FormulaFormGroup` gets a button (opt-out via `hideAdvancedEditor` prop) that opens one of two modes depending on the field's `expectedType`: `number`/`string` fields get **Conditional Values** (an ordered list of condition → value rules, first true condition wins, original formula becomes the trailing default); `boolean` fields (e.g. the AE Condition column) get the **Condition Builder** standalone — a single structured condition row, no rule list. Both modes share the same Condition Builder row component (aspect/formula + operator + aspect/formula, AND/OR chaining, "Edit as text" escape hatch) and compile down to a single formula string — no separate structured-data storage format. See §7.10.
+- **Boolean grammar supports arithmetic operands.** Comparison operands in a boolean-typed formula may themselves be arithmetic sub-expressions, e.g. `#actor.hp.current > (#actor.hp.max / 2)`. Required because a `condition` string resolves as one fully-substituted expression handed whole to `evaluateBooleanExpression()` — there is no separate per-operand resolution step, so `+ - * /` (with standard precedence and unary minus) must be part of the same grammar as the comparison/logical operators. **Implemented** — see §7.2a.
+- **AE Sheet Revamp (Story B, redesigned).** Story B's first UI pass (a collapsed toggle row per change) was built, reviewed, and **rejected** — it buried the condition behind an icon and conflated the simple boolean gate with Story C's conditional-value editor. Story B is now scoped as part of a broader Changes-tab redesign, using the AE sheet (General + Material) as the flagship use case for FormulaFamiliar across the system. See §7.7b.
+
+## Stories (this decomposition)
+
+| Story | Delivers | Depends on |
+|---|---|---|
+| **A** | Boolean-typed formulas: schema support, resolution, comparison/logical operators, validation | Existing FormulaFamiliar infra (already built — see note below) |
+| **B** | GM can gate an individual AE change on a boolean formula — change is skipped entirely when false | Story A |
+| **C** | Any formula field can be turned into an ordered list of condition → value rules ("Conditional Values") that compiles to a formula string | Story A (rule conditions are boolean formulas) |
+| **D** | (Existing POC story, §7.9) Clickable defense stat → roll dialog → chat card | §7.1/7.2 (rewritten, no `@` bridge) |
+
+Stories A→B and A→C are the only hard dependencies; B and C can proceed in parallel once A lands. Story D is unchanged in scope but its roll-building step no longer uses `@` tokens (see §7.2).
+
+> **Status note**: Much of the FormulaFamiliar plumbing this phase originally scoped as net-new (schema walker, `FormulaField`/`FormulaData`, per-context autocomplete, universal `#`-token resolution for AE change values regardless of declared `type`) **already shipped** ahead of this phase, landing alongside Phase 2/5/6 AE work. The Completion Checklist at the bottom of this doc has been updated to reflect what's actually done vs. still pending. D20Roll, DamageRoll, and the roll-dialog/chat-card pipeline (Story D) have **not** started.
 
 ---
 
@@ -39,55 +63,81 @@ interface ItemRollData extends ActorRollData {
 }
 ```
 
+> **Scope of `getRollData()`**: This shape exists **only** to satisfy Foundry-native `@attr` consumers we don't control — e.g. the Combat Tracker's initiative formula setting (`CONFIG.Combat.initiative.formula`). It is not a resolution path any of our own authored formulas travel (see §7.2). Keep it minimal; do not expand it in lockstep with every FormulaFamiliar aspect.
+
 ## 7.2 Formula Resolution Pipeline
 
-1. **Author time**: User writes formula in a field (e.g., `"#self.abilities.str.mod + #self.bab"`)
-2. **FormulaFamiliar**: Schema walker provides autocomplete for `#context.property` paths
-3. **Prep time**: `prepareDerivedData()` resolves formulas that are needed for derived values via `Dnd35eDocumentMixin._buildFormulaContexts()`
-4. **Roll time**: `Roll.fromTerms()` resolves remaining formulas with full roll data context (including `#target.*` added at execution time)
-5. **Error handling**: Invalid formulas surface warnings via the preparation warning system (not blocking)
+1. **Author time**: User writes a formula in a field (e.g., `"#self.abilities.str.mod + #self.bab"`), or turns it into Conditional Values for branching logic (§7.10).
+2. **FormulaFamiliar**: Schema walker provides autocomplete for `#context.property` paths as the user types.
+3. **Prep time**: `prepareDerivedData()` resolves formulas needed for derived values via the document's familiar context (`buildDocumentFamiliar()` / `buildDocumentDataMap()`).
+4. **Resolution**: `FormulaData.resolve()` / `FormulaData.resolveSource()` substitute every `#context.property` token with its live value, then coerce/validate the result against the field's `expectedType` (`string` / `number` / `boolean` — see §7.2a).
+5. **Roll time**: The fully-resolved formula (a plain dice-notation string with zero `#` or `@` tokens remaining, e.g. `"1d8 + 4"`) is handed directly to `Roll.create()`. There is no second substitution pass.
+6. **Error handling**: Invalid formulas surface warnings via the preparation warning system (§7.6, not blocking).
 
-### FormulaFamiliar ↔ Foundry Roll Data Bridge
+### No `@attr` Bridge
 
-Two formula syntaxes coexist in the system:
-- **`@attr`** — Foundry's native syntax. Evaluated by `Roll.replaceFormulaData()` and `NumberField._castChangeDelta()`. Used in initiative formulas, standard AE change values, inline rolls.
-- **`#context.property`** — FormulaFamiliar syntax. Evaluated by `FormulaFamiliar.resolve()`. Used in the formula editor UI, cross-document references, FormulaField values.
+FormulaFamiliar's `#context.property` syntax is the **only** authoring syntax the system supports. We do not translate to, accept, or emit Foundry's native `@attr` syntax anywhere in an authored formula's resolution path:
 
-Both resolve to the same underlying data. The bridge ensures they never drift:
+- Weapon damage formulas, DC formulas, AE change values, and AE change conditions (§7.7a) resolve exclusively through `FormulaData.resolve()` / `resolveActiveEffectChangeValue()`.
+- The resolved output is always a literal (a number, a boolean, or a plain string/dice-formula) — never a string containing `@` tokens.
+- Foundry itself still calls `getRollData()` for its own native mechanics we don't control (initiative formula, etc. — see the callout at the end of §7.1). That is a narrow accommodation, not a general bridge.
 
-```typescript
-// Resolution pipeline (Phase 7)
-function resolveFormula(formula: string, familiar: FamiliarSchema, rollData: Record<string, any>): string {
-  // Step 1: Resolve #context.property tokens via FormulaFamiliar
-  let resolved = FormulaFamiliar.resolve(formula, familiar);
-  // Step 2: Remaining @attr tokens resolved by Foundry's Roll.replaceFormulaData()
-  resolved = Roll.replaceFormulaData(resolved, rollData);
-  return resolved;
-}
+This is already how the shipped code behaves: `resolveActiveEffectChangeValue()` (`resolveChangeValue.mts`) resolves every AE change's `value` through `FormulaData.resolveSource()` regardless of the change's declared `type`. This section formalizes that as the permanent design — the two-syntax bridge originally sketched for this phase is not being built.
+
+### Custom AE Change Type: `familiar` — Removed
+
+`CONFIG.ActiveEffect.changeTypes.familiar` (`handler: null` placeholder) was registered speculatively and never used. It leaked into the AE sheet's Type dropdown as a nonsensical user-selectable option — since any `CONFIG.ActiveEffect.changeTypes` entry automatically becomes user-selectable via `ActiveEffect.CHANGE_TYPES` in any UI that iterates that getter. **Resolved**: removed entirely (registration, the `CHANGE_TYPE.FAMILIAR` constant, its `SystemActiveEffectChangeTypes` type augmentation in `global.mts`, and its localization key). Do not conflate change *types* (Add/Multiply/Override/etc. — how a value combines onto a field) with the `condition` field (§7.7a) — `condition` gates whether *any* change, of any type, applies at all.
+
+## 7.2a Typed Formula Outputs (Story A)
+
+Every `FormulaField`/`FormulaData` already declares an `expectedType` (`'string' | 'number'`, e.g. Spell Resistance uses `'number'`). This phase adds a third type and makes resolution enforce the declared type rather than only coercing at read time.
+
+### `expectedType: 'string' | 'number' | 'boolean'`
+
+| Type | Use | Example field | Resolution behavior |
+|---|---|---|---|
+| `string` | Text interpolation (names, descriptions) | Item name formula | Substituted tokens joined as-is; no coercion |
+| `number` | Numeric derived values | Spell Resistance, weapon damage bonus | After substitution, evaluate via `Roll.safeEval` (dice-formula arithmetic); non-numeric result is a validation error |
+| `boolean` *(new)* | Gates and conditions | AE change `condition` (§7.7a), rule conditions in Conditional Values (§7.10) | After substitution, evaluate via a new small comparison/logical expression evaluator — `Roll.safeEval` has no `>`/`&&`/etc. |
+
+### Boolean Expression Grammar
+
+Boolean-typed formulas support comparison and logical operators over already-substituted numeric/string literals, and comparison operands may be arithmetic sub-expressions:
+
+```
+#self.skill.concentration.ranks > 5
+#self.abilities.str.mod >= 2 && #self.bab > 0
+!#self.hasCondition
+#actor.hp.current > (#actor.hp.max / 2)
 ```
 
-**`getRollData()` generated from schema metadata**: Phase 5's `getRollData()` and FormulaFamiliar's schema walker should derive their structures from the same source to prevent drift. The schema walker already traverses `defineSchema()` — extend it to generate the `getRollData()` shape as well.
+Supported operators: `>`, `<`, `>=`, `<=`, `==`, `!=`, `&&`, `||`, `!`, `+`, `-`, `*`, `/` (standard arithmetic precedence, unary minus), parentheses for grouping. This is a small, purpose-built evaluator (`evaluateBooleanExpression()`, `src/helpers/formulae/evaluateBooleanExpression.mts`) — not a general JS `eval`, and distinct from `Roll.safeEval`. Grammar:
 
-### Custom AE Change Type: `familiar`
-
-The `familiar` change type (registered in Phase 2, handler implemented here) bridges FormulaFamiliar into AE change values:
-
-```typescript
-// Handler implementation for CONFIG.ActiveEffect.changeTypes.familiar
-CONFIG.ActiveEffect.changeTypes.familiar = {
-  label: 'DND35E.EFFECT.CHANGE_TYPE.familiar',
-  defaultPriority: 25,
-  handler: (targetDoc, change, options) => {
-    const familiar = buildDocumentFamiliar(targetDoc);
-    const resolved = FormulaFamiliar.resolve(change.value, familiar);
-    const delta = Number(resolved) || 0;
-    const current = foundry.utils.getProperty(targetDoc, change.key) ?? 0;
-    foundry.utils.setProperty(targetDoc, change.key, current + delta);
-  }
-};
+```
+orExpr         := andExpr ( '||' andExpr )*
+andExpr        := notExpr ( '&&' notExpr )*
+notExpr        := '!' notExpr | comparison
+comparison     := additive ( ('>' | '<' | '>=' | '<=' | '==' | '!=') additive )?
+additive       := multiplicative ( ('+' | '-') multiplicative )*
+multiplicative := unary ( ('*' | '/') unary )*
+unary          := ('-' | '+') unary | primary
+primary        := '(' orExpr ')' | NUMBER | STRING | 'true' | 'false' | IDENT
 ```
 
-Users authoring AE changes via our Vue sheet can choose `familiar` as the change type and write `#self.abilities.str.mod` in the value field. Standard `add`/`override`/etc. change types continue to use `@attr` syntax — evaluated by Foundry's native `NumberField._castChangeDelta()` for free.
+**Status: implemented and tested** (`tests/unit/familiar/evaluate-boolean-expression.test.mts`).
+
+### Schema Walker & `FieldAspect` Changes
+
+- `schemaWalker.mts`: `inferFieldType()` gains a `BooleanField → 'boolean'` branch (currently only distinguishes `NumberField` from everything else — every other field, including `BooleanField`, falls into `'string'`).
+- `FieldAspect.type` widens from `'string' | 'number'` to `'string' | 'number' | 'boolean'` (`types.mts`).
+- `FormulaFieldMeta.aspectType` override widens to match.
+- Autocomplete/validation in `FormulaFormGroup.vue` / `useFormulaEditor.mts` flags a type mismatch (e.g. a `number`-typed field whose formula resolves to a boolean) as a validation error, not just a silent runtime fallback.
+
+### `FormulaData` / `FormulaField` Changes
+
+- `FormulaData.defineSchema()`: `expectedType` choices become `['string', 'number', 'boolean']`.
+- `FormulaData._finalizeResolvedValue()`: branch on `'boolean'` — run `evaluateBooleanExpression()` instead of `Roll.safeEval`; store `'true'`/`'false'` as the resolved string (consistent with how `resolveActiveEffectChangeValue()` already special-cases `BooleanField` results).
+- `FormulaField` constructor options: `expectedType` widens to include `'boolean'`.
 
 ## 7.3 FormulaFamiliar Context Declarations
 
@@ -130,6 +180,8 @@ Establish and document the canonical `#context.property` paths:
 | `#item.enhancement` | Item's enhancement bonus |
 | `#target.defense.armorClass` | Target's AC (at execution time) |
 | `#action.attackBonus` | Action's computed attack bonus |
+| `#self.skill.concentration.ranks > 5` | Boolean gate example — true when ranks exceed 5 |
+| `#self.abilities.str.mod >= 2 && #self.bab > 0` | Boolean gate example — compound condition |
 
 ## 7.5 Custom Roll Classes
 
@@ -292,6 +344,118 @@ D35E's `getChangeFlat()` + `buffTargets` config served the same purpose but was 
 
 This system is orthogonal to field permission metadata for schema field groups on item sheets (e.g., the `hp` section). Group Change Targets are about AE targeting — expanding a single AE change across multiple fields at runtime. Field permission concerns are handled by schema metadata (`useDnd35eField()` defaults) plus runtime overrides in `flags.dnd35e.fieldOverrides`. Neither system depends on the other.
 
+### Relationship to AE Change Conditional Gate (§7.7a)
+
+Also orthogonal, and easy to conflate since both live on the `changes` array. Group Change Targets expand a change's **key** (one change → many field paths, all values identical). The conditional gate (§7.7a) decides whether a change **applies at all** (one change → applied or entirely skipped). A single change entry can use both: a `group:allSaves` key with a `condition` formula that must be true for the whole group to apply.
+
+## 7.7a AE Change Conditional Gate (Story B)
+
+**User**: GM authoring an Active Effect.
+**Delivers**: An individual change row in the AE sheet's change list gets an optional boolean formula. When present and it resolves to `false` at apply time, that change is skipped entirely — as if it weren't in the `changes` array for this preparation cycle. When absent (`null`), the change always applies (current behavior, unchanged).
+**Depends on**: Story A (boolean-typed formula resolution).
+
+### Schema
+
+`EffectChangeSourceDnd35e.condition` already exists as a typed placeholder (`ActiveEffectSystemData.mts`):
+```ts
+condition?: string | null;
+```
+This phase adds it to the actual Foundry schema — `ActiveEffectSystemModel.defineSchema()`'s `changes` `ArrayField`/`SchemaField` currently has no `condition` field:
+```ts
+condition: new StringField({ required: false, nullable: true, initial: null }),
+```
+String-only, no function form — `condition` is persisted to the database as part of the change entry, and a function could never round-trip through it. Live-computed changes with no backing AE document (`ItemDnd35e.getContributedActorChanges()`, `ActorDnd35e.getSelfContributedChanges()`) use the same string-form grammar if they ever need a condition (none currently do — they're filtered unconditionally in TS before the change entry is even built, e.g. Creature's encumbrance changes only get pushed `when tier > 0`). The one system-computed change that DID need a condition (`buildContainmentChanges.mts`'s weightless-bag-of-holding check) now uses the formula string `'!#item.contentsAreWeightless'` instead of a TS predicate.
+
+### Apply-Loop Integration
+
+Both gathering loops that build the `changes[]` array before stacking need the same check, right alongside the existing `!change.key` / phase / target filters:
+
+- `ActorDnd35e.applyActiveEffects()` — all three gathering loops (AE-backed changes, `item.getContributedActorChanges()`, `this.getSelfContributedChanges()`)
+- `ItemDnd35e.applyActiveEffects()` — its equivalent gathering loop
+
+```typescript
+// Alongside the existing continue-filters in each gathering loop:
+if (change.condition && !evaluateChangeCondition(change, contextMap)) continue;
+```
+
+`evaluateChangeCondition()` (new — `src/documents/activeEffects/baseActiveEffect/logic/`):
+- Resolve via `FormulaData.resolveSource({ formula: change.condition, expectedType: 'boolean', resolvedValue: null }, contextMap)`, reusing the **same** `contextMap` `getEffectContexts()` already builds for value resolution (`resolveChangeValue.mts`) — don't duplicate context assembly.
+- No `contextMap` available (live-contributed changes with no backing AE) → treat as `false` and warn, rather than silently passing.
+- Resolution failure (invalid formula) → treat as `false` and surface a preparation warning (§7.6), never throw.
+
+### UI
+
+Superseded by §7.7b (AE Sheet Revamp) — the condition input is a dedicated **Condition column** in `EffectChangesList.vue`, not a per-row collapsed toggle. See §7.7b for the current design.
+
+### Tests
+
+- [x] Change with `condition: null` applies unconditionally (current behavior unchanged)
+- [x] Change with a `condition` formula that resolves `true` applies
+- [x] Change with a `condition` formula that resolves `false` is skipped — target field unaffected, no `Override` recorded for it
+- [x] Invalid `condition` formula → warning generated, change treated as `false` (skipped), no crash
+- [ ] Condition on a `group:`-targeted change (§7.7) gates the whole expanded group
+
+## 7.7b AE Sheet Revamp — Changes Tab Redesign
+
+**User**: GM authoring an Active Effect (General or Material type).
+**Status**: Design in progress — partially implemented, partially still under discussion. Do not implement further UI beyond what's listed as done below without a fresh go-ahead.
+**Depends on**: Story A, §7.7a's schema/logic (unchanged).
+
+### Motivation
+
+Story B's first UI pass added a condition as a collapsed toggle row hidden behind a branch icon in `FieldControls`. This was reviewed and rejected: it buried a first-class per-change setting, and blurred the line between the simple boolean gate (Story B) and Story C's Conditional Values editor (a different feature entirely — branching the *value*, not gating the *change*). The AE sheet is being treated as the flagship use case for FormulaFamiliar across the system, so this redesign covers the full Changes tab, not just the condition field.
+
+### Changes Tab — Column Layout
+
+Reordered left-to-right (previously Key/Type/Value/Bonus Type/Target/Priority/Controls):
+
+| Order | Column | Notes |
+|---|---|---|
+| 1 | **Target** | Moved first — determines which document's context the Key/Value/Condition pickers resolve against. Was last. |
+| 2 | Key | `AspectPicker`, unchanged. Re-validates against the new target's context when Target changes (see AspectPicker fix below). |
+| 3 | Type | Add/Multiply/etc. dropdown — now excludes `mask` (never user-selectable) and no longer offers the removed `familiar` placeholder. |
+| 4 | Value | `FormulaFormGroup`, now enforces the picked aspect's `expectedType` (derived via `findAspectByAccessPath()`) instead of accepting any type. Gets the advanced-editor entry point (Story C, §7.10) once that's built. |
+| 5 | **Condition** *(new)* | Plain `FormulaFormGroup` (`expectedType: 'boolean'`) — same kind of control as the Value column, just its own field/column. Comparison/logical operators get their own highlight class alongside the existing `#token` highlighting. Advanced-editor button opens the **Condition Builder** (§7.10) in standalone mode. Replaces the removed branch-toggle row. |
+| 6 | Priority | Unchanged. |
+| 7 | Controls | Delete button only — branch-toggle button removed (condition now has its own column). |
+
+Bonus Type (mask variant only) and Target-select stay in their existing relative positions otherwise unaffected by this reorder.
+
+### Value Column — `expectedType` Enforcement
+
+The Value formula's `expectedType` is derived from the picked aspect (`change.key`), not left to default to `'string'`:
+- Look up the aspect via `findAspectByAccessPath(contextForTarget.properties, change.key)`.
+- Pass its resolved `FieldAspect.type` (`'string' | 'number' | 'boolean' | undefined`) as `FormulaFormGroup`'s `expected-type` prop.
+- This logic lives in `EffectChangesList.vue` (the row component) — not `AspectPicker.vue` — since the row is what owns both the Key and Value columns and needs to bridge them. (Open to emitting it from `AspectPicker` instead if that proves easier at implementation time — not a hard requirement either way.)
+
+### Condition Column
+
+No new component. The Condition column is a plain `FormulaFormGroup` with `expectedType: 'boolean'` — identical in kind to the Value column, just its own field/column. Three side-by-side inputs (`[formula] [op ▾] [formula]`) don't fit the column width, so the "structured picker" experience lives entirely in the advanced editor instead (§7.10's Condition Builder); the column itself is always raw-text entry with highlighting.
+
+**Highlighting**: extend formula syntax highlighting to tag comparison/logical operators (`>`, `<`, `>=`, `<=`, `==`, `!=`, `&&`, `||`) with their own highlight class, in addition to the existing `#context.property` token highlighting. Example: in `#self.hp.current > (#self.hp.max / 2)`, both `#self.hp.current` and `#self.hp.max` highlight as tokens, and `>` highlights as an operator. This is a system-wide enhancement to the formula renderer (benefits any boolean-typed `FormulaFormGroup`), not Condition-column-specific.
+
+**Advanced editor entry point**: clicking the advanced-editor button on a boolean-typed `FormulaFormGroup` (Condition column included) opens the Condition Builder (§7.10) in **standalone mode** — a single structured `[aspect/formula] [operator ▾] [aspect/formula]` row with AND/OR chaining and an "Edit as text" escape hatch, no surrounding rule list. This is the *same component* used per-rule inside Conditional Values (§7.10) for number/string fields.
+
+### Bug Fixes (shipped)
+
+- Removed `CONFIG.ActiveEffect.changeTypes.familiar` (registration, the `CHANGE_TYPE.FAMILIAR` constant, its `SystemActiveEffectChangeTypes` type augmentation, and its localization key) — it was an unused placeholder that leaked into the Type dropdown as a nonsensical user-selectable option.
+- `changeTypes.mask` stays registered (Secret AE internals still need it) but is filtered out of the Type dropdown for `variant='default'` rows.
+- `AspectPicker.vue`: a stored key that becomes unresolvable after switching Target (a raw path with no `#` token) previously produced **zero** validation errors — `validateFormula()` only inspects `#context.property` tokens, so an orphaned raw path silently looked valid. Now detected explicitly and surfaced via `has-error` styling + hint text (reusing `dnd35e.Formula.Errors.propertyNotFound`), matching the "leave the raw value in place, flag it as an error" reset behavior (never silently clear or destroy the stored key on a Target switch).
+
+### General AE Custom Sheet
+
+`general` (and `containment`) AE types currently fall back to Foundry's default `ActiveEffectConfig` — only `material` and `secret` have custom Vue sheets. Add a General sheet mirroring Material's minimal pattern (`GeneralSheet.mts`/`.vue`, `GeneralStore.mts`, `sheet/tabs/index.mts`) with a bare `EffectDetails`-only Details tab (no appends) so General AEs get sheet parity (same Changes tab redesign, same Duration tab) without any type-specific fields.
+
+### Design Decisions (resolved)
+
+- **Condition column is not a compound control.** No `ConditionFormGroup.vue`. It's a plain boolean `FormulaFormGroup`, same as any other formula field, just given its own column instead of being hidden behind a toggle.
+- **One shared Condition Builder component** (§7.10), used two ways:
+  - **Standalone** — the advanced-editor entry point for any boolean-typed `FormulaFormGroup` (Condition column included): a single structured condition row with AND/OR chaining and a text escape hatch.
+  - **Embedded per-rule** — inside Conditional Values (number/string fields, §7.10): one Condition Builder per rule, gating that rule's value.
+- **Advanced editor mode depends on the field's `expectedType`**: `boolean` fields open the Condition Builder (helps write a gate/condition expression); `number`/`string` fields open Conditional Values (branches which value is used). Both compile to plain formula text — no new storage format either way.
+- **Advanced editor button is system-wide** on every `FormulaFormGroup`, with a `hideAdvancedEditor` prop for the rare case a consumer needs to opt out.
+- **Operator highlighting** is a system-wide formula-renderer enhancement, not Condition-column-specific — see above.
+
 ## 7.8 Files to Create/Modify
 
 | Action | Path |
@@ -299,16 +463,25 @@ This system is orthogonal to field permission metadata for schema field groups o
 | Create | `src/dice/D20Roll.mts` — d20 roll with crit/fumble detection |
 | Create | `src/dice/DamageRoll.mts` — damage roll with crit multiplier and types |
 | Create | `src/dice/index.mts` — register `CONFIG.Dice.rolls` with `[D20Roll, DamageRoll]` |
-| Create | `src/helpers/rollData.mts` — roll data assembly utilities |
-| Create | `src/helpers/formulaBridge.mts` — `resolveFormula()` pipeline bridging `#context.property` and `@attr` |
+| Create | `src/helpers/rollData.mts` — minimal `getRollData()` assembly for Foundry-native `@attr` consumers only (§7.1) |
 | Create | `src/constants/rollVariables.mts` — canonical formula path documentation |
 | Create | `src/helpers/changeTargetGroups.mts` — `ChangeTargetGroup` interface, registry, `registerChangeTargetGroup()`, `resolveChangeTargets()` |
-| Expand | Actor `getRollData()` — structured roll data assembly (generate from schema walker metadata) |
-| Expand | Item `getRollData()` — inherit actor data + add item fields |
-| Expand | FormulaFamiliar context registrations per document type |
+| Create | `src/helpers/formulae/evaluateBooleanExpression.mts` — comparison/logical operator evaluator for boolean-typed formulas (Story A, §7.2a) |
+| Create | `src/helpers/formulae/conditionalFormula.mts` — `#if(cond, then, else)` parser + serializer for the advanced editor (Story C, §7.10) |
+| Create | `src/vue/components/.../ConditionBuilder.vue` — shared condition-builder row (aspect/formula + operator ▾ + aspect/formula, AND/OR chaining, text escape hatch); used standalone for boolean fields and embedded per-rule in Conditional Values (Story C, §7.10) |
+| Create | `src/vue/components/.../ConditionalValuesEditor.vue` — rule-list builder UI embedding `ConditionBuilder` per rule (Story C, §7.10) |
+| Create | `src/documents/activeEffects/general/sheet/GeneralSheet.mts` / `.vue`, `GeneralStore.mts`, `sheet/tabs/index.mts`, `GeneralDetails.vue` — General AE custom sheet mirroring Material's pattern, bare `EffectDetails`-only Details tab (§7.7b) |
+| Create | `src/documents/activeEffects/baseActiveEffect/logic/evaluateChangeCondition.mts` — AE change conditional gate (Story B, §7.7a) |
+| Expand | Actor `getRollData()` — minimal, Foundry-native mechanics only (not our authored-formula resolution path) |
+| Expand | Item `getRollData()` — inherit actor data + add item fields (same narrow scope) |
+| Expand | `schemaWalker.mts` — `inferFieldType()` gains `BooleanField → 'boolean'` (Story A) |
+| Expand | `FormulaData.mts` / `FormulaField.mts` — `expectedType` widens to include `'boolean'` (Story A) |
+| Expand | `FormulaFormGroup.vue` — advanced-editor button (opens Condition Builder standalone or Conditional Values depending on `expectedType`), plus `hideAdvancedEditor` opt-out prop (Story C) |
+| Expand | `ActiveEffectSystemModel.defineSchema()` — add `condition` field to `changes` schema (Story B) |
+| Expand | `EffectChangesList.vue` — reorder columns (Target first), remove branch-toggle, add plain boolean Condition column, derive Value `expected-type` from picked aspect (Story B/§7.7b) |
+| Expand | Formula syntax highlighter (wherever `renderFormulaHTML`/token highlighting lives today) — tag comparison/logical operators (`>`, `<`, `==`, `&&`, `||`, etc.) with their own highlight class (§7.7b) |
 | Expand | FormulaFamiliar picker — append group targets from registry under category headers |
-| Expand | AE change-application loop — call `resolveChangeTargets()` before applying each change |
-| Implement | `CONFIG.ActiveEffect.changeTypes.familiar.handler` — FormulaFamiliar AE change evaluation |
+| Expand | AE change-application loop — call `resolveChangeTargets()` and `evaluateChangeCondition()` before applying each change |
 | Create | Preparation warnings infrastructure on base document classes |
 | Create | `src/vue/components/actors/CreatureDefenseStat.vue` — clickable stat chip for saves and AC |
 | Create | `src/vue/components/dialogs/D20RollDialog.vue` — roll dialog with situational mod + roll mode |
@@ -395,7 +568,7 @@ async rollSave(
 **Pipeline**:
 1. If `!skipDialog` → render `D20RollDialog`; await user confirmation (situational mod, roll mode)
 2. Assemble modifier list: `[{ label: saveName, value: saveTotal }, { label: 'Situational', value: situationalMod }]`
-3. Build formula string: `"1d20 + @saveTotal + @situational"` with roll data from modifier list
+3. Build the roll formula by interpolating the already-known literal numbers directly, e.g. `` `1d20 + ${saveTotal} + ${situationalMod}` `` — no `@` tokens, no roll-data object needed (see §7.2's "No `@attr` Bridge"); the values are plain JS numbers at this point, not formula references
 4. Create and evaluate `D20Roll` — `situationalModifiers` carries the labeled list
 5. Call `rollMessages.buildSaveCard(roll, modifierList, { dc, saveKey })` → HTML
 6. `ChatMessage.create({ content, roll, rollMode })`
@@ -405,14 +578,121 @@ A matching `rollAC(acVariant, options)` method follows the same pipeline with AC
 
 ---
 
+## 7.10 Conditional Values & Condition Builder (Story C)
+
+**User**: Anyone authoring a formula (GM or player, depending on field permissions).
+**Delivers**: An advanced-editor button appears on every `FormulaFormGroup` (opt out via a `hideAdvancedEditor` prop). What it opens depends on the field's `expectedType`:
+- **`number` / `string` fields → Conditional Values**: turns the field into an ordered list of condition → value rules. Rules evaluate top-to-bottom; the first whose condition is true supplies the result. The field's original formula becomes the trailing default, always evaluated last if no rule matches. A preview at the bottom shows the live-evaluated result and the fully compiled formula string.
+- **`boolean` fields (e.g. the AE Condition column, §7.7b) → Condition Builder, standalone**: a single structured condition row (no rule list, no value column — the field *is* the condition), same builder described below minus the per-rule wrapping.
+
+Both modes share the same **Condition Builder** component (aspect + operator + value pickers, described below) — embedded per-rule in Conditional Values, or standalone for a boolean field.
+**Depends on**: Story A (aspect type-awareness drives which operators are offered; boolean grammar is the compiled target).
+
+### Layout — Conditional Values mode (`number`/`string` fields)
+
+Top to bottom in the editor window:
+1. **Header** — field label / context
+2. **"Add Condition" button** (relabels to **"+ Add Rule"** once at least one rule exists) — inserts a new rule row
+3. **Rule rows**, evaluated top-to-bottom. Each newly added rule is appended directly above the default — so the first rule you add is checked first, and each later addition is checked after all earlier ones, right before falling through to the default:
+   - Each row: `[Condition builder]` → `[Value formula (FormulaFormGroup, same expectedType as the field)]` → `[✕ remove row]`
+4. **Default formula** — the field's original plain `FormulaFormGroup`, now labeled as the fallback ("Otherwise…"). Always evaluated last, always present — removing all rules just leaves the plain formula field behaved exactly as it did before Conditional Values was turned on.
+5. **Preview** — live-evaluated result (when a preview context is available) plus the fully compiled formula string, read-only.
+
+### Layout — Condition Builder standalone mode (`boolean` fields)
+
+Same editor window, drastically simpler — there's no rule list and no separate value column, since the field itself already *is* the condition:
+1. **Header** — field label / context
+2. A single **Condition Builder** row (see below)
+3. **Preview** — live-evaluated true/false result plus the compiled boolean string, read-only
+
+No "Add Rule" button, no default formula slot — closing the editor just writes the compiled condition string back into the field, same as it would for a plain formula.
+
+### Condition Builder (shared row component)
+
+Structured, dropdown-driven — no raw text required for the common case:
+
+```
+[ Aspect picker ▾ ]  [ Operator ▾ ]  [ Value: literal input | Aspect picker ▾ ]   ( + AND/OR another clause )
+```
+
+- **Aspect picker**: same autocomplete data source as every other `#`-token picker (schema walker's `AspectGroup` tree) — pick e.g. `#self.skill.concentration.ranks`.
+- **Operator dropdown**: options are filtered by the picked aspect's resolved type (Story A's `FieldAspect.type`):
+  - `number` → `>`, `<`, `>=`, `<=`, `==`, `!=`
+  - `string` → `==`, `!=`
+  - `boolean` → no operator needed; the row becomes a plain "is true" / "is false" toggle
+- **Right-hand value**: a literal input (number/string, matching the aspect's type) **or** a toggle to compare against another aspect instead (e.g. `#self.hp.value < #self.hp.max`).
+- **+ AND / OR**: appends another clause to the same rule's condition, joined by the selected logical operator; renders as a stacked additional `[Aspect] [Operator] [Value]` group with an "AND"/"OR" connector label.
+
+The picker compiles to the exact same boolean-formula text from §7.2a (e.g. `#self.abilities.str.mod >= 2 && #self.bab > 0`) — it's a friendlier front-end onto that grammar, not a separate one. Consequences:
+- The stored/compiled formula stays plain text; existing validation/warning/resolution code needs no changes to support it.
+- **Escape hatch**: an "Edit as text" toggle per condition row falls back to a plain boolean `FormulaFormGroup` for anyone who wants a compound expression the picker can't represent (nested parens, unusual operators). A row left in text mode simply doesn't re-parse into pickers on reopen — no forced conversion.
+
+### Compiled Syntax
+
+Grammar: `#conditional( when(cond₁, val₁) when(cond₂, val₂) ... else(default) )` — a single inline token (like any `#context.property` reference) that resolves to whichever branch wins, with surrounding literal text/tokens untouched.
+
+- **`when(condition, value)`** — zero or more, evaluated in left-to-right source order via the existing boolean grammar (§7.2a); first true `condition` wins and its `value` is resolved (recursively — a `value` may itself contain another `#conditional(...)`).
+- **`else(value)`** — required exactly once, may appear anywhere among the clauses; supplies the result when no `when()` matches.
+- **Clause separator is don't-care**: `when(...)`/`else(...)` are self-delimiting via their own balanced parens, so a comma, whitespace, or nothing at all between clauses is equivalent — the parser just scans forward for the next `when(`/`else(` keyword.
+- **Backward compatible**: zero `#conditional(...)` blocks in a formula = today's plain-formula behavior, unchanged.
+- **Non-selected branches are never evaluated** — avoids errors from untaken branches (e.g. a divide-by-zero in a branch that never gets picked).
+- **Matching is lenient**: `#conditional`/`when`/`else` keywords are case-insensitive, optional whitespace before `(`.
+- **Malformed input** (unbalanced parens, missing `else()`, bad arg count) is a validation error; resolution leaves the formula raw/unresolved rather than guessing.
+- **Token/literal-text adjacency requires parens to disambiguate**: a `#context.property` token immediately followed by more literal text with no separator (e.g. `#self.sneakAttackDice` directly followed by `d6`) greedily merges into one invalid path segment, since a property path segment matches any run of letters/digits/underscores — `sneakAttackDiced6` isn't a real property, so it fails validation. This is a general, pre-existing `VARIABLE_REGEX` characteristic (not specific to `#conditional(...)`), and it's the expected/required pattern going forward: wrap the token in parens to disambiguate, e.g. `(#self.sneakAttackDice)d6`.
+- **Escaping**: `\#`, `\(`, `\)`, and `\,` escape a literal `#`/`(`/`)`/`,` character (same backslash convention throughout the formula grammar). An escaped paren doesn't count toward balanced-paren depth tracking, so a branch value can contain literal/unbalanced parens (e.g. `else(\(unbalanced\))`). Escaping the paren immediately after `when`/`else` (e.g. `when\(`) also prevents that occurrence from being parsed as a clause at all, and escaping `#conditional(`'s own `#` (`\#conditional(`) prevents the whole construct from being recognized as a block. The comma escape matters when a condition's string literal itself contains a comma — e.g. `when(#self.name == "\,", 500)` — since an unescaped comma there would be mistaken for the top-level separator between the clause's own `condition`/`value` arguments.
+- **Condition grammar reminders (from §7.2a)**: string literals accept single **or** double quotes interchangeably; equality is `==` (loose/truthy comparison, coerces number↔string as needed) — there is no single `=` (reserved, unused) and no `===` (not needed at this time). A condition that resolves to a non-boolean value is coerced truthy: numbers are truthy unless `0`, strings are truthy unless empty — e.g. `when(#self.name, 1)` is true whenever the name isn't an empty string.
+
+```
+#conditional(when(#self.hp.value <= 0, 0) when(#target.isFlanked, 1d6+(#self.sneakAttackDice)d6) else(2d6))
+```
+Reads: "2d6, unless HP ≤ 0 (then 0), unless flanked (then 1d6 + sneak attack dice)." (`(#self.sneakAttackDice)d6` wraps the token in parens per the adjacency rule above — without the parens, `d6` would merge into the token's path segment and fail validation.)
+
+Supersedes the earlier `#if(condition, value, elseExpr)` right-nested-chain proposal — same problem (first-match-wins rule list with a mandatory default), but expressed as a flat rule list rather than nested ternaries, matching how "Conditional Values" actually presents to the user (a list of rules + a fallback, not a chain).
+
+### Opening on an Existing Formula (Round-Trip)
+
+Because storage is text-only, opening the editor on an existing value requires parsing it back into rule rows:
+
+- If the formula contains a `#conditional(...)` block → parse its `when()` clauses into rule rows (in source order) and its `else()` into the default.
+- If it doesn't (a plain value, a hand-typed expression, or anything not expressible in this grammar) → the whole string becomes the default value; the rule list starts empty (best-effort: never silently discard the user's existing formula).
+- Each parsed rule's *condition* is additionally checked against the "simple comparison (+ AND/OR chain)" shape to decide whether it opens in structured-picker mode or falls back to "Edit as text" mode for that one row.
+
+> **Open decision** (explore at implementation start): whether partial/best-effort parsing (recovering a rule list from loosely-formed input) is worth the complexity vs. the simpler "exact grammar or start fresh" rule above. Default: exact-grammar-only — if it doesn't parse cleanly, treat the whole existing string as the default value.
+
+### Tests
+
+- [ ] Adding a rule inserts a condition+value row above the default; default remains last
+- [ ] Adding a second rule appends it above the default but below the first rule (first-added = evaluated first)
+- [ ] Structured condition compiles to correct boolean text for `number`, `string`, and `boolean` aspect types
+- [ ] AND/OR clause chaining compiles correctly and matches §7.2a's grammar
+- [ ] Comparing against another aspect (not just a literal) compiles correctly
+- [ ] "Edit as text" escape hatch accepts arbitrary boolean formulas and round-trips them as raw text on reopen
+- [ ] Removing a rule re-flattens the chain correctly (no orphaned nesting)
+- [ ] Preview shows correct live result and correct compiled string for a 3+ rule chain
+- [ ] Opening the editor on an existing plain (non-conditional) formula shows it as the default, no rules
+- [ ] Opening the editor on an existing compiled `#conditional(...)` block reconstructs the rule list correctly
+
+---
+
 ## Completion Checklist
 
 ### ✅ Complete
-- (None — Phase 7 has not started)
 
-### ❌ Not Started (All Tasks for Phase 7)
+The FormulaFamiliar core plumbing shipped ahead of this phase, landing alongside Phase 2/5/6 AE work. Confirmed in the current codebase:
 
-**Roll Data Structure & Interfaces:**
+- **Schema walker** (`src/helpers/formulae/schemaWalker.mts`) auto-derives `AspectGroup` trees from `defineSchema()` — opt-out model via `formulaVisible: false`, opaque leaves via `isFamiliarLeaf`
+- **`FormulaField`/`FormulaData`** (`src/helpers/formulae/FormulaField.mts`, `FormulaData.mts`) — formula storage + resolution, `expectedType: 'string' | 'number'` already implemented (e.g. `spellResistance` on `CreatureSystemModel` uses `'number'`)
+- **`#context.property` resolution** — `FormulaData.resolve()` / `resolveSource()` / `resolveDisplaySource()`; zero `@attr` tokens anywhere in the pipeline
+- **AE change value resolution** — `resolveActiveEffectChangeValue()` (`resolveChangeValue.mts`) universally resolves every change's `value` through `FormulaData.resolveSource()` regardless of the change's declared `type` — this already validates the "No `@attr` Bridge" design in §7.2 as the shipped reality, not just a plan
+- **Autocomplete + formula editor UI** — `FormulaFormGroup.vue`, `useFormulaEditor.mts`, `useFamiliarOverlayInput.mts`, `#`-token validation/highlighting, per-context aliasing
+- **`condition` type placeholder** — `EffectChangeSourceDnd35e.condition` (`ActiveEffectSystemData.mts`) already typed as `string | null | ((target) => boolean)`, ready for Story B to wire up
+- **Boolean Formula Type (Story A, §7.2a)** — schema walker `BooleanField → 'boolean'` branch, `FieldAspect.type`/`FormulaFieldMeta.aspectType` widened, `FormulaData`/`FormulaField` `expectedType` includes `'boolean'`, `evaluateBooleanExpression()` implemented **including arithmetic operands** (`+ - * /`, unary minus, standard precedence — see §7.2a), `FormulaData._finalizeResolvedValue()` branches on `'boolean'`. All tests passing (`tests/unit/familiar/evaluate-boolean-expression.test.mts`).
+- **AE Change Conditional Gate — schema & logic (Story B, §7.7a)** — `condition` field added to `ActiveEffectSystemModel.defineSchema()`'s `changes` schema; `evaluateChangeCondition()` implemented (string-form only via `FormulaData.resolveSource()`) and wired into `ActorDnd35e.applyActiveEffects()`'s three gathering loops and `ItemDnd35e.applyActiveEffects()`. All five test cases passing (`tests/unit/effects/evaluate-change-condition.test.mts`). A function-form condition type was briefly supported for live-computed changes with no backing AE document, but was removed — conditions are persisted to the database, so a function could never round-trip through it. **UI is not done** — see §7.7b checklist below.
+- **Bug fixes (§7.7b)** — removed the unused `changeTypes.familiar` placeholder (registration, constant, type augmentation, localization key); `AspectPicker.vue` now surfaces a validation error when a stored key becomes unresolvable after a Target switch instead of silently looking valid.
+
+### ❌ Not Started
+
+**Roll Data Structure & Interfaces** *(narrow scope — Foundry-native `@attr` consumers only, see §7.1's callout)*:
 - [ ] Create `src/types/rollData.d.ts` with interfaces:
   - `ActorRollData` (abilities with mod/total/base, attributes, saves, skills, size mods)
   - `ItemRollData extends ActorRollData` (adds item-specific fields)
@@ -421,7 +701,7 @@ A matching `rollAC(acVariant, options)` method follows the same pipeline with AC
 - [ ] Document each field's calculation/source
 - [ ] Test: Interfaces compile without errors
 
-**Actor.getRollData() Implementation:**
+**Actor.getRollData() Implementation** *(minimal — only for Foundry-native mechanics like the Combat Tracker initiative formula; not a resolution path our own formulas use)*:
 - [ ] Override `getRollData()` on `ActorDnd35e`
 - [ ] Populate abilities: for each (str-cha), include base score, derived mod, derived total
 - [ ] Populate attributes: bab, ac (normal/touch/flatFooted), saves (fort/ref/will), init
@@ -431,7 +711,7 @@ A matching `rollAC(acVariant, options)` method follows the same pipeline with AC
 - [ ] Test: `getRollData()` includes all expected fields
 - [ ] Test: Values are correct for a test character
 
-**Item.getRollData() Implementation:**
+**Item.getRollData() Implementation** *(same narrow scope as above)*:
 - [ ] Override `getRollData()` on `ItemDnd35e`
 - [ ] Call parent actor's `getRollData()` to inherit all actor fields
 - [ ] Add item-specific fields:
@@ -440,17 +720,10 @@ A matching `rollAC(acVariant, options)` method follows the same pipeline with AC
 - [ ] Test: `getRollData()` includes both actor + item fields
 - [ ] Test: Item fields override actor fields if names conflict (shouldn't happen, but verify logic)
 
-**FormulaFamiliar Context Registration:**
-- [ ] Create schema walker that traverses DataModel schema to build context autocomplete
-- [ ] Register `#self.*` contexts mapping to actor's `getRollData()` schema
-- [ ] Register `#item.*` contexts mapping to item's system schema
+**FormulaFamiliar Context Registration** *(schema walker + `#self`/`#item` already shipped — remaining work is Phase 8's placeholder contexts + user docs)*:
 - [ ] Register `#action.*` contexts (placeholder, Phase 8 will populate)
 - [ ] Register `#target.*` contexts (placeholder, Phase 8 will populate)
-- [ ] Implement autocomplete in Vue formula input fields:
-  - User types `#self.` → show available abilities, attributes, skills
-  - User types `#item.` → show available item fields
-- [ ] Test: Autocomplete suggestions are accurate
-- [ ] Test: Invalid paths are rejected or warned
+- [ ] Test: Invalid paths are rejected or warned (verify existing behavior covers Phase 8's future contexts too)
 
 **Canonical Formula Paths Documentation:**
 - [ ] Create `src/constants/formulaPaths.mts` documenting all valid `#context.property` paths
@@ -459,19 +732,42 @@ A matching `rollAC(acVariant, options)` method follows the same pipeline with AC
   - Attack bonus: `#self.bab + #self.abilities.str.mod + #self.size.attackMod`
   - AC: `10 + #self.abilities.dex.mod - #item.armorCheckPenalty`
   - Save DC: `10 + #self.details.level + #self.abilities.wis.mod`
+  - Boolean gate: `#self.skill.concentration.ranks > 5`
 - [ ] Document context inheritance hierarchy (actor → item → action)
 - [ ] Update README/docs with formula examples for users
 
-**FormulaFamiliar ↔ Foundry Roll Data Bridge:**
-- [ ] Implement `resolveFormula()` pipeline: Step 1 resolves `#context.property` via FormulaFamiliar, Step 2 resolves `@attr` via `Roll.replaceFormulaData()`
-- [ ] Verify `getRollData()` paths mirror FormulaFamiliar schema paths (e.g., `@abilities.str.mod` ↔ `#self.abilities.str.mod`)
-- [ ] Generate `getRollData()` structure from schema walker metadata (same source as FormulaFamiliar contexts)
-- [ ] Implement `familiar` custom change type handler in `CONFIG.ActiveEffect.changeTypes.familiar` (registration done in Phase 2)
-- [ ] Test: AE change with type `familiar` and value `#self.abilities.str.mod` correctly resolves and applies
-- [ ] Test: AE change with type `add` and value `@abilities.str.mod` correctly resolves via Foundry's native `_castChangeDelta`
-- [ ] Test: Both syntax styles resolve to the same numeric value for the same field
-- [ ] Test: Invalid `#context.property` in familiar change type produces warning, not crash
-- [ ] Document when to use `@attr` vs `#context.property` for system authors
+**Boolean Formula Type (Story A, §7.2a):** — ✅ moved to Complete above.
+
+**AE Change Conditional Gate (Story B, §7.7a):** — schema/logic/wiring ✅ moved to Complete above. Remaining:
+- [ ] UI — see AE Sheet Revamp checklist below (§7.7b)
+
+**AE Sheet Revamp (§7.7b):**
+- [x] Remove `changeTypes.familiar` placeholder (registration, constant, type augmentation, localization key)
+- [x] Filter `changeTypes.mask` out of the Type dropdown for `variant='default'` rows
+- [x] `AspectPicker.vue`: surface a validation error for an unresolvable stored key after a Target switch
+- [x] Reorder `EffectChangesList.vue` columns: Target first
+- [x] Remove the rejected branch-toggle button + collapsible condition row
+- [x] Derive Value column's `expected-type` from the picked aspect (`findAspectByAccessPath()`)
+- [x] Add Condition column: plain `FormulaFormGroup` (`expectedType: 'boolean'`), no new compound component
+- [ ] Extend formula syntax highlighting to tag comparison/logical operators (`>`, `<`, `==`, `&&`, `||`, etc.), not just `#tokens`
+- [ ] Add `hideAdvancedEditor` opt-out prop to `FormulaFormGroup.vue`
+- [ ] Create General AE custom sheet (`GeneralSheet.mts`/`.vue`, `GeneralStore.mts`, `sheet/tabs/index.mts`) mirroring Material's pattern
+- [ ] Test: Condition column accepts and evaluates a boolean formula with operator highlighting
+- [ ] Test: Value column rejects/flags a formula that doesn't match the picked aspect's type
+- [ ] Test: General AE sheet renders Changes/Duration tabs with parity to Material
+
+**Condition Builder & Conditional Values (Story C, §7.10):**
+- [ ] Build shared **Condition Builder** row component (aspect/formula + operator ▾ + aspect/formula, AND/OR clause chaining, "Edit as text" escape hatch per row)
+- [ ] Wire Condition Builder in **standalone mode** as the advanced-editor target for boolean-typed `FormulaFormGroup`s (Condition column included)
+- [ ] Wire Condition Builder **embedded per-rule** inside Conditional Values for number/string fields
+- [x] Implement `#conditional(when(cond, value) ... else(default))` parser + evaluator (new, `src/helpers/formulae/conditionalFormula.mts`) — flat rule-list shape, `else()` required exactly once, position-independent among clauses; includes `\#`/`\(`/`\)` escaping and parens-required-for-adjacency handling
+- [x] Hook parser into `FormulaData.resolve()`/`resolveSource()` and into `utils.mts`'s `resolveFormula()`/`validateFormula()` so `#conditional(` isn't flagged as an unknown context and malformed blocks surface a structural `ValidationError`
+- [ ] Create `ConditionalValuesEditor.vue` (or equivalent) — rule-list builder UI embedding the Condition Builder per rule
+- [ ] Add "Add Condition" button to `FormulaFormGroup.vue`'s controls; relabels to "+ Add Rule" once a rule exists
+- [ ] Implement live preview (result + compiled formula string) at the bottom of the editor
+- [ ] Save path: serialize rule list → `#conditional(when(...) ... else(...))` block → same `onCommit` the plain text input uses
+- [ ] Non-`#conditional(...)`-parseable existing values: preserve as the default value rather than discarding (see §7.10's round-trip note)
+- [ ] Test: all ten cases listed under §7.10's Tests subsection
 
 **D20Roll Custom Class** in `src/dice/D20Roll.mts`:
 - [ ] Extend Foundry's `Roll` class
@@ -531,7 +827,7 @@ A matching `rollAC(acVariant, options)` method follows the same pipeline with AC
 - [ ] Test: Enriched elements render correctly in item descriptions and chat messages
 
 **Codebase TODO Notes (Landing Here):**
-- [ ] **Remove `ActiveEffect._shimChanges` compat shim** (`ItemDnd35e.mts:131`): The `_shimChanges(changes)` call is explicitly marked `// todo remove in v16`. When Phase 7 implements the formula-familiar change type handler and the full AE change pipeline is proven, verify whether the shim is still needed. If v16 migration transforms old AE data, remove the shim call and its TODO comment. If the shim is still required for pre-migration data, keep it but update the comment with the specific migration that will obsolete it.
+- [ ] **Remove `ActiveEffect._shimChanges` compat shim** (`ItemDnd35e.mts:131`): The `_shimChanges(changes)` call is explicitly marked `// todo remove in v16`. Once Story B's conditional gate and the full AE change pipeline are proven, verify whether the shim is still needed. If v16 migration transforms old AE data, remove the shim call and its TODO comment. If the shim is still required for pre-migration data, keep it but update the comment with the specific migration that will obsolete it.
 - [ ] **Integrate Hooks.onError pattern into LogHelper** (`ItemDnd35e.mts:93`): The `applyActiveEffects()` method uses `LogHelper.error()` as a substitute for Foundry's `Hooks.onError()` pattern. Evaluate whether `LogHelper` should wrap `Hooks.onError()` for consistency with Foundry's error surfacing (e.g., error hooks that modules can listen to), or if the current direct logging is sufficient.
 - [ ] **Fix `DnD35eActiveEffect.createDialog` type cast** (`ItemSheetStore.mts:92`): `createDialog` is called via `(DnD35eActiveEffect as any).createDialog(...)` because the type definitions don't expose it. Add proper type declaration for `createDialog` on `DnD35eActiveEffect` (either via interface merge or by adding the static method signature to the class).
 
@@ -556,16 +852,10 @@ A matching `rollAC(acVariant, options)` method follows the same pipeline with AC
 - [ ] Test: User sees warning message
 - [ ] Test: Field shows fallback value
 
-**Vue Form Component - Formula Input:**
-- [ ] Create `FormulaFormGroup.vue` component for formula fields
-- [ ] Show formula input field
-- [ ] Show autocomplete dropdown on `#` key press
-- [ ] Show validation status (green = valid, red = invalid)
+**Vue Form Component - Formula Input** *(`FormulaFormGroup.vue` already exists and ships autocomplete + validation; remaining items are new here)*:
 - [ ] Show contextual help: "Formula must start with #self, #item, #action, or #target"
 - [ ] Evaluate `HeaderNameField.vue` refactor (`HeaderNameField.vue:25`): Component uses its own display mode to hide formula hints when not editing. Assess whether this should be folded into `FormulaFormGroup` as a `displayMode` prop or slot, or kept as a separate wrapper. The TODO also notes styling concerns with a read-only slot that were deferred.
-- [ ] Test: Autocomplete works
-- [ ] Test: Validation works
-- [ ] Test: Complex formulas with operators work
+- [ ] Test: Complex boolean expressions with operators work (Story A)
 
 **Group Change Targets (§7.7):**
 - [ ] Create `src/helpers/changeTargetGroups.mts`:

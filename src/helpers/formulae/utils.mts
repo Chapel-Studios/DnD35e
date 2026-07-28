@@ -2,6 +2,8 @@
  * FormulaFormGroup Utility Functions
  * Core parsing, validation, and resolution logic
  */
+import { findConditionalBlocks, isConditionalKeywordToken, resolveConditionalFormula } from './conditionalFormula.mjs';
+import { evaluateBooleanExpression } from './evaluateBooleanExpression.mjs';
 import type { FormulaDataSource } from './FormulaData.mjs';
 import { FormulaData } from './FormulaData.mjs';
 import type { DocumentContext } from './registry.mjs';
@@ -61,6 +63,17 @@ export function filterExcludedFields(
  * document path that isn't exposed through the familiar shortcuts.
  *
  * Uses a negative lookbehind so `\#` is treated as a literal `#`, not a variable.
+ *
+ * A `#token` immediately followed by more identifier characters with no
+ * separator (e.g. `#self.sneakAttackDiced6`) greedily matches as a single
+ * (invalid) path segment rather than `#self.sneakAttackDice` + literal `d6` —
+ * wrap the token in parens to disambiguate: `(#self.sneakAttackDice)d6`.
+ *
+ * `\#`, `\(`, `\)`, and `\,` all escape to their literal character (see the
+ * final unescape step in `resolveFormula()`) — the comma escape matters for
+ * `#conditional(...)` (see `conditionalFormula.mts`) so a literal comma inside
+ * a quoted string value (e.g. `when(#self.name == "\,", 500)`) isn't mistaken
+ * for the top-level comma separating a clause's own arguments.
  */
 // Unicode-aware: \p{L} = any letter, \p{N} = any digit — allows Polish/Czech/etc variable names
 const VARIABLE_REGEX = /(?<!\\)#[\p{L}\p{N}_]+(?:\.(?:'[^']*'|'[^ ']*|[\p{L}\p{N}_]+))*/gu;
@@ -203,8 +216,17 @@ export function resolveFormula(
   familiarSchema: FamiliarSchema,
   documentDataMap: Record<string, DocumentContext>
 ): string {
-  let result = formula;
-  const variables = extractVariables(formula);
+  // Pre-resolve #conditional(when(...) ... else(...)) blocks into their winning
+  // branch's (still-unresolved) text before the generic token substitution below
+  // runs — #conditional/when/else are not #context.property tokens themselves.
+  const withConditionalsResolved = resolveConditionalFormula(
+    formula,
+    sub => resolveFormula(sub, familiarSchema, documentDataMap),
+    resolvedCondition => evaluateBooleanExpression(resolvedCondition)
+  );
+
+  let result = withConditionalsResolved;
+  const variables = extractVariables(withConditionalsResolved);
 
   // Process in reverse order to maintain string indices
   for (let i = variables.length - 1; i >= 0; i--) {
@@ -262,8 +284,8 @@ export function resolveFormula(
     }
   }
 
-  // Unescape literal \# → #
-  result = result.replace(/\\#/g, '#');
+  // Unescape literal \# → #, \( → (, \) → ), \, → ,
+  result = result.replace(/\\([#(),])/g, '$1');
 
   return result;
 }
@@ -291,7 +313,7 @@ export function getNestedValue(obj: object, dottedPath: string): unknown {
  */
 export function fieldAspect<TContext extends DocumentContext>(
   display: string,
-  type: 'string' | 'number',
+  type: 'string' | 'number' | 'boolean',
   accessPath: string,
   context?: TContext
 ): FieldAspect {
@@ -299,7 +321,11 @@ export function fieldAspect<TContext extends DocumentContext>(
   if (context) {
     const raw = getNestedValue(context, accessPath);
     if (raw !== undefined && raw !== null) {
-      prop.value = type === 'number' ? Number(raw) : String(raw);
+      prop.value = type === 'number'
+        ? Number(raw)
+        : type === 'boolean'
+          ? (raw ? 'true' : 'false')
+          : String(raw);
     }
   }
   return prop;
@@ -409,11 +435,24 @@ export function findAspectByAccessPath(group: AspectGroup, accessPath: string): 
  * - Nested groups merge recursively.
  * - Leaf conflicts (same key in multiple groups): first group wins.
  * - A leaf in one group and a branch in another: first group wins (no mixing).
+ * - Branch metadata (`_display`/`_aliases`, set by the schema walker) is copied
+ *   as-is from the first group that declares it — never recursed into. These are
+ *   plain strings/string-arrays, not FieldAspect/AspectGroup nodes, so treating
+ *   them as branches (as a naive `!isFieldAspect` check would) sends
+ *   `Object.entries()` down a string's character indices, which — when two
+ *   groups both declare the same metadata on the same branch (e.g. every
+ *   ACTOR_TYPES subtype sharing one builder) — degenerates into merging
+ *   single-character strings with themselves forever (infinite recursion).
  */
 export function mergeAspectGroups(...groups: AspectGroup[]): AspectGroup {
   const result: AspectGroup = {};
   for (const group of groups) {
     for (const [key, value] of Object.entries(group)) {
+      if (key.startsWith('_')) {
+        // Branch metadata — first group wins, never merged/recursed into.
+        if (result[key] === undefined) result[key] = value;
+        continue;
+      }
       const existing = result[key];
       if (existing === undefined) {
         // New key — take it
@@ -580,13 +619,137 @@ export function validateFormula(formula: string, context: FamiliarSchema): Valid
   const variables = extractVariables(formula);
 
   for (const variable of variables) {
+    // The bare `#conditional` keyword token (immediately followed by `(`) is this
+    // syntax construct, not an invalid context reference — skip normal validation.
+    // Its when()/else() contents are plain text, so any #context.property tokens
+    // nested inside them are still picked up and validated by this same loop.
+    if (isConditionalKeywordToken(formula, variable)) continue;
+
     const error = validateVariable(variable, context);
     if (error) {
       errors.push(error);
     }
   }
 
+  for (const block of findConditionalBlocks(formula)) {
+    if (!block.error) continue;
+    errors.push({
+      variable: block.raw,
+      context: 'conditional',
+      path: [],
+      error: game.i18n.localize(`dnd35e.Formula.Errors.conditional.${block.error}`),
+      severity: 'error',
+      index: block.startIndex,
+    });
+  }
+
   return errors;
+}
+
+/**
+ * Substitute #context.property variables using the *schema's cached values*
+ * (`FieldAspect.value`) rather than a live document data map. Used for
+ * lightweight type-mismatch checks in the editor, where only a FamiliarSchema
+ * (not a full documentDataMap) is available.
+ *
+ * When a variable resolves to a known FieldAspect but has no cached `.value`
+ * (e.g. no live parent document — a merged fallback schema built without
+ * context, as when editing an orphaned/standalone effect), a type-appropriate
+ * placeholder ('0' / 'false' / '""') is substituted instead of leaving the
+ * variable unresolved. This still lets grammar/type validation run — e.g.
+ * catching `!#item.broken 0` (two adjacent expressions, no operator) — without
+ * needing real live data, since the *shape* of a formula doesn't depend on the
+ * variable's actual runtime value. Variables with no matching aspect at all
+ * (invalid/unresolvable path — already flagged separately by `validateFormula`)
+ * or custom quoted paths are left as-is.
+ */
+function resolveFormulaFromSchemaValues(formula: string, schema: FamiliarSchema): string {
+  let result = formula;
+  const variables = extractVariables(formula);
+
+  for (let i = variables.length - 1; i >= 0; i--) {
+    const variable = variables[i];
+    if (variable.customAccessPath !== undefined) continue;
+
+    const aspect = getFieldAspect(schema, variable.context, variable.path);
+    if (!aspect) continue;
+
+    const placeholder = aspect.type === 'number'
+      ? '0'
+      : aspect.type === 'boolean'
+        ? 'false'
+        : '""';
+    const value = aspect.value ?? placeholder;
+
+    result =
+      result.substring(0, variable.startIndex) +
+      String(value) +
+      result.substring(variable.endIndex);
+  }
+
+  return result;
+}
+
+/**
+ * Check whether a formula's resolved value matches its field's `expectedType`.
+ * Surfaces a validation error instead of silently falling back — a `number`-typed
+ * field whose formula resolves to a boolean/non-numeric string, or a
+ * `boolean`-typed field whose formula isn't a valid comparison/logical
+ * expression, both produce an error here.
+ *
+ * Known variables are substituted with either their live/cached value or a
+ * type-appropriate placeholder (see `resolveFormulaFromSchemaValues`), so
+ * grammar errors (e.g. `!#item.broken 0`) are still caught even without a live
+ * document to resolve real values from.
+ *
+ * Returns `null` when the type is `'string'` (no coercion possible to fail),
+ * the formula is empty, or any variable couldn't be resolved to a known
+ * schema aspect at all (invalid/unresolvable path — flagged separately by
+ * `validateFormula`).
+ */
+export function validateFormulaType(
+  formula: string,
+  context: FamiliarSchema,
+  expectedType: 'string' | 'number' | 'boolean'
+): ValidationError | null {
+  if (!formula || expectedType === 'string') return null;
+
+  const resolved = resolveFormulaFromSchemaValues(formula, context);
+  if (extractVariables(resolved).length > 0) return null;
+
+  if (expectedType === 'number') {
+    const trimmed = resolved.trim();
+    if (!trimmed) return null;
+    if (!Number.isNaN(Number(trimmed))) return null;
+    try {
+      if (!Number.isNaN(Roll.safeEval(trimmed))) return null;
+    } catch {
+      // fall through to error
+    }
+    return {
+      variable: formula,
+      context: '',
+      path: [],
+      error: game.i18n.format('dnd35e.Formula.Errors.notANumber', { resolved }),
+      severity: 'error',
+      index: 0,
+    };
+  }
+
+  // expectedType === 'boolean'
+  try {
+    evaluateBooleanExpression(resolved);
+    return null;
+  } catch {
+    return {
+      variable: formula,
+      context: '',
+      path: [],
+      error: game.i18n.localize('dnd35e.Formula.Errors.notABoolean'),
+      severity: 'error',
+      index: 0,
+    };
+  }
 }
 
 /**
@@ -627,7 +790,7 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
       variable: variable.variable,
       context: variable.context,
       path: variable.path,
-      error: `Context '${variable.context}' not found`,
+      error: game.i18n.format('dnd35e.Formula.Errors.contextNotFound', { context: variable.context }),
       severity: 'error',
       index: variable.startIndex,
     };
@@ -639,7 +802,7 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
       variable: variable.variable,
       context: variable.context,
       path: variable.path,
-      error: `Incomplete reference — specify a property (e.g. #${variable.context}.name)`,
+      error: game.i18n.format('dnd35e.Formula.Errors.incompleteReference', { context: variable.context }),
       severity: 'warning',
       index: variable.startIndex,
     };
@@ -654,7 +817,12 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
         variable: variable.variable,
         context: variable.context,
         path: variable.path,
-        error: `Property '${key}' not found on ${variable.context}${pathTraversed.length > 0 ? '.' + pathTraversed.join('.') : ''}`,
+        error: game.i18n.format('dnd35e.Formula.Errors.propertyNotFound', {
+          key,
+          path: `${variable.context}${pathTraversed.length > 0
+            ? '.' + pathTraversed.join('.')
+            : ''}`,
+        }),
         severity: 'error',
         index: variable.startIndex,
       };
@@ -693,7 +861,12 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
               variable: variable.variable,
               context: variable.context,
               path: variable.path,
-              error: `Property '${key}' not found on ${variable.context}${pathTraversed.length > 0 ? '.' + pathTraversed.join('.') : ''}`,
+              error: game.i18n.format('dnd35e.Formula.Errors.propertyNotFound', {
+                key,
+                path: `${variable.context}${pathTraversed.length > 0
+                  ? '.' + pathTraversed.join('.')
+                  : ''}`,
+              }),
               severity: 'error',
               index: variable.startIndex,
             };
@@ -710,7 +883,7 @@ function validateVariable(variable: FormulaVariable, context: FamiliarSchema): V
       variable: variable.variable,
       context: variable.context,
       path: variable.path,
-      error: `'${variable.variable}' is an object, not a property — specify a deeper path`,
+      error: game.i18n.format('dnd35e.Formula.Errors.notAProperty', { variable: variable.variable }),
       severity: 'warning',
       index: variable.startIndex,
     };
@@ -1002,6 +1175,34 @@ function isVariableComplete(token: FormulaToken, formula: string): boolean {
   return false;
 }
 
+/**
+ * Determine which `(`/`)` characters in a formula form a complete, balanced
+ * pair — used to color parens blue (matched, like a resolved variable) vs
+ * yellow (unmatched — still being typed, or genuinely mismatched), mirroring
+ * the blue/yellow convention already used for variable tokens.
+ *
+ * Standard stack-based matching: nested parens resolve correctly (each `)`
+ * pairs with the nearest still-open `(`); any `(` left on the stack at the
+ * end, or any `)` with nothing to pop, is unmatched.
+ */
+function computeMatchedParenIndices(formula: string): Set<number> {
+  const matched = new Set<number>();
+  const stack: number[] = [];
+  for (let i = 0; i < formula.length; i++) {
+    const ch = formula[i];
+    if (ch === '(') {
+      stack.push(i);
+    } else if (ch === ')') {
+      const openIndex = stack.pop();
+      if (openIndex !== undefined) {
+        matched.add(openIndex);
+        matched.add(i);
+      }
+    }
+  }
+  return matched;
+}
+
 export function renderFormulaHTML(
   formula: string,
   tokens: FormulaToken[],
@@ -1009,11 +1210,26 @@ export function renderFormulaHTML(
   familiarSchema?: FamiliarSchema
 ): string {
   let variableIndex = 0;
+  const matchedParenIndices = computeMatchedParenIndices(formula);
 
   return tokens
     .map(token => {
       if (token.type === 'text') {
-        return escapeHTML(token.value);
+        // Wrap `(`/`)` individually so each can be colored by its matched state;
+        // everything else in the text run passes through unhighlighted.
+        const pieces = token.value.split(/([()])/);
+        let out = '';
+        let cursor = token.startIndex;
+        for (const piece of pieces) {
+          if (piece === '(' || piece === ')') {
+            const stateClass = matchedParenIndices.has(cursor) ? '' : ' is-warning';
+            out += `<span class="formula-paren${stateClass}" data-start="${cursor}" data-end="${cursor + 1}">${piece}</span>`;
+          } else {
+            out += escapeHTML(piece);
+          }
+          cursor += piece.length;
+        }
+        return out;
       }
 
       const varIdx = variableIndex++;
@@ -1024,7 +1240,7 @@ export function renderFormulaHTML(
       if (token.partial) {
         if (complete) {
           // Unclosed quote terminated by space → all red
-          return `<span class="formula-variable is-error" title="Invalid variable" data-var-index="${varIdx}" data-start="${token.startIndex}" data-end="${token.endIndex}">${escapeHTML(token.value)}</span>`;
+          return `<span class="formula-variable is-error" title="${escapeHTML(game.i18n.localize('dnd35e.Formula.Errors.invalidVariable'))}" data-var-index="${varIdx}" data-start="${token.startIndex}" data-end="${token.endIndex}">${escapeHTML(token.value)}</span>`;
         }
         // Still typing custom path → ALL yellow
         return `<span class="formula-variable is-warning" data-var-index="${varIdx}" data-start="${token.startIndex}" data-end="${token.endIndex}">${escapeHTML(token.value)}</span>`;
@@ -1032,7 +1248,7 @@ export function renderFormulaHTML(
 
       // ── CUSTOM PATH (closed quote, e.g. #self.'system.isIdentified') → always yellow with tooltip ──
       if (matchingError?.severity === 'warning' && token.value.includes('\'')) {
-        const tooltip = ` title="Warning unknown path: ${escapeHTML(matchingError.error)}"`;
+        const tooltip = ` title="${escapeHTML(game.i18n.format('dnd35e.Formula.Errors.unknownPathWarning', { path: matchingError.error }))}"`;
         return `<span class="formula-variable is-warning"${tooltip} data-var-index="${varIdx}" data-start="${token.startIndex}" data-end="${token.endIndex}">${escapeHTML(token.value)}</span>`;
       }
 
@@ -1055,7 +1271,7 @@ export function renderFormulaHTML(
             }
           } else {
             const schema = familiarSchema[contextName];
-            tooltip = schema ? `Context: ${escapeHTML(contextName)}` : '';
+            tooltip = schema ? game.i18n.format('dnd35e.Formula.Errors.contextTooltip', { context: escapeHTML(contextName) }) : '';
           }
         }
         const titleAttr = tooltip ? ` title="${tooltip}"` : '';
@@ -1066,7 +1282,7 @@ export function renderFormulaHTML(
 
       if (complete) {
         // Complete + error → all red with "Invalid variable" tooltip
-        return `<span class="formula-variable is-error" title="Invalid variable" data-var-index="${varIdx}" data-start="${token.startIndex}" data-end="${token.endIndex}">${escapeHTML(token.value)}</span>`;
+        return `<span class="formula-variable is-error" title="${escapeHTML(game.i18n.localize('dnd35e.Formula.Errors.invalidVariable'))}" data-var-index="${varIdx}" data-start="${token.startIndex}" data-end="${token.endIndex}">${escapeHTML(token.value)}</span>`;
       }
 
       // In-progress + error: check if last segment partially matches familiar

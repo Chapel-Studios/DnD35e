@@ -100,6 +100,24 @@
       "availableContexts": "Available Contexts",
       "Context": {
         "Self": "Self"
+      },
+      "Errors": {
+        "notANumber": "Formula does not resolve to a number (got \"{resolved}\")",
+        "notABoolean": "Formula does not resolve to a valid boolean expression",
+        "contextNotFound": "Context '{context}' not found",
+        "incompleteReference": "Incomplete reference — specify a property (e.g. #{context}.name)",
+        "propertyNotFound": "Property '{key}' not found on {path}",
+        "notAProperty": "'{variable}' is an object, not a property — specify a deeper path",
+        "invalidVariable": "Invalid variable",
+        "unknownPathWarning": "Warning unknown path: {path}",
+        "contextTooltip": "Context: {context}",
+        "conditional": {
+          "unbalancedParens": "#conditional(...) has unbalanced parentheses",
+          "missingElse": "#conditional(...) is missing a required else(...) clause",
+          "multipleElse": "#conditional(...) has more than one else(...) clause",
+          "whenArgCount": "when(...) requires exactly two arguments: when(condition, value)",
+          "elseArgCount": "else(...) requires exactly one argument: else(value)"
+        }
       }
     },
     "DOCUMENT": {

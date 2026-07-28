@@ -10,8 +10,10 @@ import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectD
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import { applyStackedActiveEffectChanges, type ResolvedEffectChange } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
-import { resolveActiveEffectChange } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
+import { evaluateChangeCondition } from '@effects/baseActiveEffect/logic/evaluateChangeCondition.mjs';
+import { getEffectContexts, resolveActiveEffectChange } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import { DocumentEventEmitter } from '@helpers/documentEvents/DocumentEventEmitter.mjs';
+import { buildDocumentDataMap } from '@helpers/formulae/index.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { Override } from '@helpers/stacking.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
@@ -90,6 +92,10 @@ class ActorDnd35e<
           // read directly by maskMap.mts to build the actor's masks dictionary.
           || (change.type === SYSTEM_CHANGE_TYPE.MASK)
         ) continue;
+        if (change.condition) {
+          const { contextMap } = getEffectContexts(effect, change);
+          if (!evaluateChangeCondition(change, contextMap)) continue;
+        }
         const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as AppliedActorEffectChange;
         copy.effect = effect as ActiveEffectDnd35e;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
@@ -101,19 +107,34 @@ class ActorDnd35e<
       }
     }
 
-    // Items can also contribute actor-targeted changes with no backing AE document at
-    // all (e.g. carried-weight, equipped-status) - see `ItemDnd35e.getContributedActorChanges()`.
-    // Already phase-filtered by the item; no `resolveActiveEffectChange()` needed since
-    // these values are computed live, not read from a stored AE.
-    for ( const item of this.items ) {
-      for ( const change of item.getContributedActorChanges(phase) ) {
-        if ( !change.key ) continue;
+    const processChanges = (
+      changesToProcess: EffectChangeDataDnd35e[],
+      contextMap?: Record<string, unknown>,
+      source: ActiveEffectDnd35e | ItemDnd35e | ActorDnd35e = this
+    ) => {
+      for (const change of changesToProcess) {
+        if (!change.key) continue;
+        if (change.condition && !evaluateChangeCondition(change, contextMap)) continue;
         const copy = foundry.utils.deepClone(change) as AppliedActorEffectChange;
-        copy.effect = item;
+        copy.effect = source;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
         copy.priority ??= 0;
         changes.push(copy);
       }
+    };
+
+    // Items can also contribute actor-targeted changes with no backing AE document at
+    // all (e.g. carried-weight, equipped-status) - see `ItemDnd35e.getContributedActorChanges()`.
+    // Already phase-filtered by the item; no `resolveActiveEffectChange()` needed since
+    // these values are computed live, not read from a stored AE. Build a contextMap so a
+    // `condition` on one of these live changes can resolve `#item.___`/`#actor.___` just
+    // like AE-backed changes do (via `getEffectContexts()`).
+    for ( const item of this.items ) {
+      const contextMap = buildDocumentDataMap(this, {
+        item, Item: item, [item.type]: item,
+        actor: this, Actor: this, Owner: this, [this.type]: this,
+      });
+      processChanges(item?.getContributedActorChanges(phase) ?? [], contextMap, item);
     }
 
     // The actor can also contribute changes derived from its own data with no backing
@@ -121,14 +142,11 @@ class ActorDnd35e<
     // `getSelfContributedChanges()`. Already phase-filtered by the override; no
     // `resolveActiveEffectChange()` needed since these values are computed live, not
     // read from a stored AE.
-    for ( const change of this.getSelfContributedChanges(phase) ) {
-      if ( !change.key ) continue;
-      const copy = foundry.utils.deepClone(change) as AppliedActorEffectChange;
-      copy.effect = this;
-      copy.type ??= EFFECT_CHANGE_TYPE.ADD;
-      copy.priority ??= 0;
-      changes.push(copy);
-    }
+    processChanges(
+      this.getSelfContributedChanges(phase),
+      buildDocumentDataMap(this, { actor: this, Actor: this, [this.type]: this })
+    );
+    
     changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
 
     // Resolve bonus-type stacking and apply the winners, recording Override

@@ -8,6 +8,7 @@ import {
   parseFormula,
   renderFormulaHTML,
   validateFormula,
+  validateFormulaType,
 } from './utils.mjs';
 
 type FormulaEditorOptions = {
@@ -18,6 +19,8 @@ type FormulaEditorOptions = {
   getDropdownMenuElement: () => HTMLElement | undefined;
   onCommit: (canonicalValue: string) => void;
   focusOnMount?: () => boolean;
+  /** When provided, a resolved value that doesn't match this type surfaces a validation error. */
+  expectedType?: ComputedRef<'string' | 'number' | 'boolean' | undefined>;
 };
 
 export const useFormulaEditor = (options: FormulaEditorOptions) => {
@@ -72,7 +75,12 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
   };
 
   const updateValidation = () => {
-    formulaErrors.value = validateFormula(localValue.value, options.contexts.value);
+    const errors = validateFormula(localValue.value, options.contexts.value);
+    const expectedType = options.expectedType?.value;
+    const typeError = expectedType
+      ? validateFormulaType(localValue.value, options.contexts.value, expectedType)
+      : null;
+    formulaErrors.value = typeError ? [...errors, typeError] : errors;
   };
 
   const updateAutocompleteMenu = (formula: string, cursorPosition: number) => {
