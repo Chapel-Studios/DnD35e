@@ -55,4 +55,39 @@ describe('renderFormulaHTML — parenthesis pairing', () => {
     expect(parenSpans.filter(span => span.includes('is-warning'))).toHaveLength(1);
     expect(parenSpans.filter(span => !span.includes('is-warning'))).toHaveLength(2);
   });
+
+  /**
+   * Backslash-escaped parens (`\(`/`\)`) are literal text to the real
+   * `$conditional(...)` grammar (FormulaResolver.conditionalGrammar.mts's
+   * `findMatchingParen` skips them entirely) — the editor highlighter must
+   * not wrap them in a `.formula-paren` span, and they must not consume a
+   * slot on the paren-matching stack (so they can't falsely "absorb" or
+   * "orphan" a real, unescaped paren elsewhere in the formula).
+   */
+  it('does not highlight a backslash-escaped paren as a formula-paren span', () => {
+    const formula = '\\(literal\\)';
+    const html = renderFormulaHTML(formula, parseFormula(formula), []);
+    const parenSpans = html.match(/<span class="formula-paren[^"]*"/g) ?? [];
+    expect(parenSpans).toHaveLength(0);
+    expect(html).toContain('\\(literal\\)');
+  });
+
+  it('an escaped paren does not throw off matching of real parens elsewhere in the formula', () => {
+    const formula = '(#self.level) \\(literal\\)';
+    const html = renderFormulaHTML(formula, parseFormula(formula), []);
+    const parenSpans = html.match(/<span class="formula-paren[^"]*"/g) ?? [];
+    // Only the real, unescaped pair gets wrapped — and it's matched.
+    expect(parenSpans).toHaveLength(2);
+    expect(parenSpans.every(span => !span.includes('is-warning'))).toBe(true);
+  });
+
+  it('a real unmatched paren after an escaped paren is still flagged as unmatched', () => {
+    const formula = '\\(literal) #self.level';
+    const html = renderFormulaHTML(formula, parseFormula(formula), []);
+    const parenSpans = html.match(/<span class="formula-paren[^"]*"/g) ?? [];
+    // The escaped "\(" is inert; the real ")" has nothing on the stack to
+    // pair with, so it's unmatched.
+    expect(parenSpans).toHaveLength(1);
+    expect(parenSpans[0]).toContain('is-warning');
+  });
 });

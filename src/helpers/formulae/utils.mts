@@ -453,12 +453,23 @@ function isVariableComplete(token: FormulaToken, formula: string): boolean {
  * Standard stack-based matching: nested parens resolve correctly (each `)`
  * pairs with the nearest still-open `(`); any `(` left on the stack at the
  * end, or any `)` with nothing to pop, is unmatched.
+ *
+ * Backslash-escaped parens (`\(`/`\)`) are skipped entirely — the escaped
+ * character is consumed alongside the backslash and never reaches the `(`/`)`
+ * checks below — mirroring `findMatchingParen` in
+ * FormulaResolver.conditionalGrammar.mts, so a literal escaped paren inside a
+ * `$conditional(...)` clause's value can't throw off the real grouping
+ * parens' balance.
  */
 function computeMatchedParenIndices(formula: string): Set<number> {
   const matched = new Set<number>();
   const stack: number[] = [];
   for (let i = 0; i < formula.length; i++) {
     const ch = formula[i];
+    if (ch === '\\') {
+      i++; // skip the escaped character entirely — not syntax-significant
+      continue;
+    }
     if (ch === '(') {
       stack.push(i);
     } else if (ch === ')') {
@@ -666,9 +677,16 @@ export function renderFormulaHTML(
   // the `(` itself for its own delimiter branch) so stray prose-like text
   // elsewhere in a formula isn't mistaken for the `$conditional(...)` clause
   // keywords. `$and`/`$or` are keyword aliases for `&&`/`||` (word-bounded so
-  // they don't clip a longer bareword like `$android`).
+  // they don't clip a longer bareword like `$android`). Backslash-escaped
+  // parens/`$conditional`/`$and`/`$or` (`\(`, `\)`, `\$conditional(`, `\$and`,
+  // `\$or`) are excluded via `(?<!\\)` so they fall through as plain text
+  // instead of structural syntax — mirrors the same single-backslash escape
+  // convention `FormulaResolver.conditionalGrammar.mts` uses for
+  // `$conditional(`'s own open-regex (comparison operators and `when`/`else`
+  // have no escape mechanism in the real grammar, so they're intentionally
+  // left un-escapable here too).
   const OPERATOR_SPLIT =
-    /(\(|\)|>=|<=|==|!=|&&|\|\||[!<>]|\$conditional(?=\s*\()|\bwhen(?=\s*\()|\belse(?=\s*\()|\$and\b|\$or\b)/i;
+    /((?<!\\)\(|(?<!\\)\)|>=|<=|==|!=|&&|\|\||[!<>]|(?<!\\)\$conditional(?=\s*\()|\bwhen(?=\s*\()|\belse(?=\s*\()|(?<!\\)\$and\b|(?<!\\)\$or\b)/i;
 
   return tokens
     .map(token => {

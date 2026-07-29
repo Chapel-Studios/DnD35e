@@ -119,4 +119,22 @@ describe('renderFormulaHTML — $conditional/when/else keyword highlighting', ()
       expect(spans[0]).not.toContain('is-warning');
     });
   });
+
+  /**
+   * A backslash-escaped `\$conditional(` is not a real block opener to
+   * `FormulaResolver.conditionalGrammar.mts` (`CONDITIONAL_OPEN_REGEX` has a
+   * `(?<!\\)` guard) — the editor highlighter must not wrap it in a
+   * `.formula-keyword` span either, or it would visually promise structure
+   * the parser will never honor.
+   */
+  it('does not highlight an escaped "\\$conditional(" as a formula-keyword span', () => {
+    const formula = '\\$conditional(when(#self.hp.value <= 0, 0) else(2))';
+    const html = render(formula);
+    // "$conditional" itself is inert literal text — no keyword span.
+    expect(html).not.toMatch(/<span class="formula-keyword[^"]*"[^>]*>\$conditional<\/span>/);
+    // The "(" right after it is an ordinary, unescaped grouping paren (not
+    // part of any "$conditional(" keyword token), so it's still highlighted
+    // and matched normally — same as any other real paren in the formula.
+    expect(html).toContain('\\$conditional<span class="formula-paren"');
+  });
 });
