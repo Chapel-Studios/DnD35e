@@ -23,7 +23,7 @@ const { EmbeddedDataField } = foundry.data.fields;
 
 type BaseFormulaFieldOptions = {
   /** Expected result type when resolving the formula. Default: 'string'. */
-  expectedType?: 'string' | 'number';
+  expectedType?: 'string' | 'number' | 'boolean';
   /** Default visibility when no GM override is saved. Default: 'everyone'. */
   defaultVisibility?: FieldVisibility;
   /** Default editability when no GM override is saved. Default: 'normal'. */
@@ -140,6 +140,15 @@ class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
 
   set excludedFields (value: string[]) {
     (this.options as Record<string, unknown>).excludedFields = value;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Expected type
+  // ---------------------------------------------------------------------------
+
+  /** Expected result type when resolving the formula (used for type-mismatch validation). */
+  get expectedType (): 'string' | 'number' | 'boolean' {
+    return (this.options as Record<string, unknown>).expectedType as 'string' | 'number' | 'boolean' ?? 'string';
   }
 
   // ---------------------------------------------------------------------------

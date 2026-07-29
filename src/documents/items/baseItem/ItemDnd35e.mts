@@ -18,9 +18,11 @@ import {
 } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { ResolvedEffectChange } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
 import { applyStackedActiveEffectChanges } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
-import { resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
+import { evaluateChangeCondition } from '@effects/baseActiveEffect/logic/evaluateChangeCondition.mjs';
+import { getEffectContexts, resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import type { ACTIVE_EFFECTS_DND35E } from '@effects/effectTypes.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
+import type { FormulaDataSource } from '@helpers/formulae/FormulaData.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { Override } from '@helpers/stacking.mjs';
@@ -119,7 +121,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   /** Runtime masks dictionary built from active Secret AE MASK changes. Keyed by field path. */
   _masks: Record<string, unknown> = {};
 
-  private get _maskedNameFormula (): { formula: string; resolvedValue: string | number | null; expectedType: 'string' | 'number' } | null {
+  private get _maskedNameFormula (): FormulaDataSource | null {
     const directMask = this._masks['system.nameFormula'] as FormulaLikeSource | undefined;
     if (directMask && typeof directMask === 'object') {
       const formula = typeof directMask.formula === 'string' ? directMask.formula : null;
@@ -307,21 +309,11 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
           )
           // MASK changes are not applied via stacking — they define masked values read at prep time
           || (change.type === SYSTEM_CHANGE_TYPE.MASK)
-          || (
-            change.condition
-            && (
-              (
-                typeof change.condition === 'function'
-                && !change.condition(this)
-              )
-              //TODO implement after the fomrula deep dive
-              // || (
-              //   typeof change.condition === 'string'
-              //   && !FormulaData.evaluateFormula(change.condition, this.getRollData())
-              // )
-            )
-          )
         ) continue;
+        if ( change.condition ) {
+          const { contextMap } = getEffectContexts(effect, change);
+          if ( !evaluateChangeCondition(change, contextMap) ) continue;
+        }
         const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as unknown as AppliedItemEffectChange;
         copy.effect = effect;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;

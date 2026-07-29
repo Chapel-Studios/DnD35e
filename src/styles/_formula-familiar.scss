@@ -91,6 +91,86 @@
   text-underline-offset: 3px;
 }
 
+/* Parenthesis pairing — blue once both `(` and its matching `)` exist, yellow
+   while unmatched (still being typed, or genuinely mismatched). */
+.familiar-overlay-highlight .formula-paren,
+.formula-display .formula-paren {
+  background: rgba(102, 166, 255, 0.18);
+  color: #66b3ff;
+  border-radius: 2px;
+  padding: 1px 0;
+}
+
+.familiar-overlay-highlight .formula-paren.is-warning,
+.formula-display .formula-paren.is-warning {
+  background: rgba(255, 200, 50, 0.15);
+  color: #e6c44d;
+}
+
+.familiar-overlay-highlight .formula-paren.is-error,
+.formula-display .formula-paren.is-error {
+  background: rgba(255, 100, 100, 0.2);
+  color: #ff9999;
+}
+
+/* `!`, comparison (`<`/`>`/`>=`/`<=`/`==`/`!=`), and logical (`&&`/`||`)
+   operators — blue when both operand slots are complete/valid, yellow while
+   the trailing operand is still being typed (formula ends right after the
+   operator, an unclosed quote, an unmatched paren), red when an operand slot
+   is missing/broken. See `classifyBangOperator()`/`classifyBinaryOperator()`
+   in `utils.mts`. Also escalates from yellow to red once the field loses
+   focus (`escalateOnBlur()`) — "still typing" only applies while editing. */
+.familiar-overlay-highlight .formula-operator,
+.formula-display .formula-operator {
+  background: rgba(102, 166, 255, 0.18);
+  color: #66b3ff;
+  border-radius: 2px;
+  padding: 1px 0;
+}
+
+.familiar-overlay-highlight .formula-operator.is-warning,
+.formula-display .formula-operator.is-warning {
+  background: rgba(255, 200, 50, 0.15);
+  color: #e6c44d;
+}
+
+.familiar-overlay-highlight .formula-operator.is-error,
+.formula-display .formula-operator.is-error {
+  background: rgba(255, 100, 100, 0.2);
+  color: #ff9999;
+}
+
+/* `$conditional`/`when(`/`else(` keywords — a distinct purple, not blue,
+   since they're structural syntax (like a plain-language "if/then"), not a
+   real data reference. `$conditional` itself still escalates to yellow/red
+   when its block is malformed (unbalanced parens, missing/duplicate else(),
+   wrong arg count — see `conditionalErrorState()` in `utils.mts`), with the
+   specific error as its tooltip. `when(`/`else(` are always plain purple —
+   validity is only tracked at the `$conditional` token level. `$and`/`$or`
+   (keyword aliases for `&&`/`||`) render as `.formula-operator`, not
+   `.formula-keyword` — they're logical operators, not control-flow syntax. */
+.familiar-overlay-highlight .formula-keyword,
+.formula-display .formula-keyword {
+  background: rgba(199, 146, 234, 0.18);
+  color: #c792ea;
+  border-radius: 2px;
+  padding: 1px 0;
+}
+
+.familiar-overlay-highlight .formula-keyword.is-warning,
+.formula-display .formula-keyword.is-warning {
+  background: rgba(255, 200, 50, 0.15);
+  color: #e6c44d;
+}
+
+.familiar-overlay-highlight .formula-keyword.is-error,
+.formula-display .formula-keyword.is-error {
+  background: rgba(255, 100, 100, 0.2);
+  color: #ff9999;
+  text-decoration: wavy underline rgba(255, 100, 100, 0.6);
+  text-underline-offset: 3px;
+}
+
 /**
  * Formula editor input + highlight overlay (GLOBAL, not scoped).
  *

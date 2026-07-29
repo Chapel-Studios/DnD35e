@@ -1,14 +1,15 @@
 import { computed, type ComputedRef, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
+import { FormulaResolver } from './FormulaResolver.mjs';
 import type { AutocompleteOption, FamiliarSchema, ValidationError } from './types.mjs';
 import { useFamiliarOverlayInput } from './useFamiliarOverlayInput.mjs';
 import {
   canonicalizeFormula,
   localizeFormula,
-  parseFormula,
   renderFormulaHTML,
-  validateFormula,
 } from './utils.mjs';
+
+const { parseFormula, validateFormula, validateFormulaType } = FormulaResolver;
 
 type FormulaEditorOptions = {
   contexts: ComputedRef<FamiliarSchema>;
@@ -18,6 +19,8 @@ type FormulaEditorOptions = {
   getDropdownMenuElement: () => HTMLElement | undefined;
   onCommit: (canonicalValue: string) => void;
   focusOnMount?: () => boolean;
+  /** When provided, a resolved value that doesn't match this type surfaces a validation error. */
+  expectedType?: ComputedRef<'string' | 'number' | 'boolean' | undefined>;
 };
 
 export const useFormulaEditor = (options: FormulaEditorOptions) => {
@@ -34,14 +37,17 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
 
   const localValue = ref('');
   const formulaErrors = ref<ValidationError[]>([]);
-  let isUserEditing = false;
+  // Tracks whether the field is currently being actively edited (focused/typed
+  // in). Reactive so `highlightedHTML` can escalate still-typing (yellow)
+  // states to definitive errors (red) once the user has moved on (blurred).
+  const isFocused = ref(false);
 
   const highlightedHTML = computed(() => {
     const val = localValue.value;
     if (!val) return '';
     const tokens = parseFormula(val);
     const errors = validateFormula(val, options.contexts.value);
-    return renderFormulaHTML(val, tokens, errors, options.contexts.value);
+    return renderFormulaHTML(val, tokens, errors, options.contexts.value, isFocused.value);
   });
 
   const syncScroll = () => {
@@ -72,7 +78,12 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
   };
 
   const updateValidation = () => {
-    formulaErrors.value = validateFormula(localValue.value, options.contexts.value);
+    const errors = validateFormula(localValue.value, options.contexts.value);
+    const expectedType = options.expectedType?.value;
+    const typeError = expectedType
+      ? validateFormulaType(localValue.value, options.contexts.value, expectedType)
+      : null;
+    formulaErrors.value = typeError ? [...errors, typeError] : errors;
   };
 
   const updateAutocompleteMenu = (formula: string, cursorPosition: number) => {
@@ -119,7 +130,7 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
     const target = event.target as HTMLInputElement;
     const value = target.value;
 
-    isUserEditing = true;
+    isFocused.value = true;
     localValue.value = value;
     updateValidation();
     nextTick(syncScroll);
@@ -135,14 +146,14 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
   };
 
   const onFocus = () => {
-    isUserEditing = true;
+    isFocused.value = true;
   };
 
   const onBlur = () => {
     setTimeout(() => {
       dismissFamiliar();
-      if (isUserEditing) {
-        isUserEditing = false;
+      if (isFocused.value) {
+        isFocused.value = false;
         commitValue();
       }
     }, 200);
@@ -190,7 +201,7 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
 
     if (event.key === 'Enter') {
       event.preventDefault();
-      isUserEditing = false;
+      isFocused.value = false;
       commitValue();
       options.getInputElement()?.blur();
       return;
@@ -198,21 +209,21 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
 
     if (event.key === 'Escape') {
       localValue.value = localizeFormula(options.currentValue.value || '', options.contexts.value);
-      isUserEditing = false;
+      isFocused.value = false;
       options.getInputElement()?.blur();
       event.preventDefault();
     }
   };
 
   watch(options.currentValue, (newValue) => {
-    if (!isUserEditing) {
+    if (!isFocused.value) {
       localValue.value = localizeFormula(newValue || '', options.contexts.value);
       updateValidation();
     }
   });
 
   watch(options.contexts, (newContexts, oldContexts) => {
-    if (!isUserEditing) {
+    if (!isFocused.value) {
       const oldLocalized = localizeFormula(options.currentValue.value || '', oldContexts);
       if (localValue.value === oldLocalized) {
         localValue.value = localizeFormula(options.currentValue.value || '', newContexts);
@@ -230,7 +241,7 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
   });
 
   onUnmounted(() => {
-    isUserEditing = false;
+    isFocused.value = false;
     dismissFamiliar();
   });
 

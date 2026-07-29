@@ -1,5 +1,6 @@
 import { ActiveEffectSystemModel } from '@effects/baseActiveEffect/data/ActiveEffectSystemModel.mjs';
 import { requiredBooleanField } from '@fields/fieldBuilders.mjs';
+import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 
 import type { SecretSystemData } from './SecretSystemData.mjs';
 
@@ -21,6 +22,12 @@ class SecretSystemModel extends ActiveEffectSystemModel {
 
   static override defineSchema (): Record<string, any> {
     const superSchema = super.defineSchema();
+
+    // Secrets always have a live parent (Item or Actor) — no fallback needed.
+    (superSchema.nameFormula as FormulaField).formulaContexts = [
+      { contextName: 'Parent', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: [] },
+    ];
+
     return foundry.utils.mergeObject(superSchema, {
       isPlayerEditSecret: requiredBooleanField(false),
     });

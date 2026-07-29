@@ -64,6 +64,28 @@ function mergeObject<T extends Record<string, any>> (
   return output;
 }
 
+// Shared between the bare `ActiveEffect` global (used by e.g. EffectChangesList.vue's
+// `ActiveEffect.CHANGE_TYPES`) and `foundry.documents.ActiveEffect` (used by
+// ActorDnd35e.mts's `foundry.documents.ActiveEffect.CHANGE_PHASES`) — real Foundry exposes
+// both as the same class, so the stub must too, to keep them consistent.
+class ActiveEffectStub {
+  static metadata = {};
+  static CHANGE_PHASES: Record<string, { label: string; hint: string }> = {
+    initial: { label: '', hint: '' },
+    final: { label: '', hint: '' },
+  };
+  static CHANGE_TYPES: Record<string, { label: string; defaultPriority?: number }> = {
+    add: { label: 'EFFECT.CHANGE.TYPES.add', defaultPriority: 10 },
+  };
+  constructor (..._args: any[]) {}
+  _onCreate (..._args: any[]): void {}
+  _onDelete (..._args: any[]): void {}
+  async _preCreate (..._args: any[]): Promise<boolean | void> { return true; }
+  updateSource (..._args: any[]): void {}
+  async update (..._args: any[]): Promise<this> { return this; }
+}
+(globalThis as any).ActiveEffect = ActiveEffectStub;
+
 (globalThis as any).foundry = {
   utils: {
     Color: class {
@@ -103,15 +125,7 @@ function mergeObject<T extends Record<string, any>> (
   documents: {
     // Constructor-only; only used as a generic type argument in source.
     Item: class {},
-    ActiveEffect: class {
-      static metadata = {};
-      constructor (..._args: any[]) {}
-      _onCreate (..._args: any[]): void {}
-      _onDelete (..._args: any[]): void {}
-      async _preCreate (..._args: any[]): Promise<boolean | void> { return true; }
-      updateSource (..._args: any[]): void {}
-      async update (..._args: any[]): Promise<this> { return this; }
-    },
+    ActiveEffect: ActiveEffectStub,
   },
   applications: {
     // Application classes pulled in via deep imports (e.g. settings menus
@@ -144,13 +158,27 @@ function mergeObject<T extends Record<string, any>> (
       SchemaField: class { constructor (public fields: any, public options: any = {}) {} },
       ArrayField: class { constructor (public element: any, public options: any = {}) {} },
       ObjectField: class { constructor (public options: any = {}) {} },
+      AnyField: class { constructor (public options: any = {}) {} },
+      SetField: class { constructor (public element: any, public options: any = {}) {} },
     },
   },
 };
 
 // --- Roll ----------------------------------------------------------------
+// The real Foundry `Roll.safeEval` reads `this.MATH_PROXY` internally, so calling
+// it detached from `Roll` (e.g. `const fn = Roll.safeEval; fn(x)` instead of
+// `Roll.safeEval(x)`) silently breaks it in production. Enforce correct `this`
+// binding here with a regular (non-arrow) function so any future regression of
+// that bug class fails loudly in unit tests instead of passing silently.
 (globalThis as any).Roll = {
-  safeEval: vi.fn((expr: string) => {
+  safeEval: vi.fn(function (this: unknown, expr: string) {
+    if (this !== (globalThis as any).Roll) {
+      throw new Error(
+        'Roll.safeEval stub was called without `this` bound to `Roll` (e.g. via a destructured ' +
+        'reference like `const fn = Roll.safeEval; fn(expr)`). Call it as `Roll.safeEval(expr)` — ' +
+        'the real implementation depends on `this.MATH_PROXY` and breaks silently otherwise.'
+      );
+    }
     // Minimal stub — tests that need real evaluation should override per-test.
     const n = Number(expr);
     return Number.isFinite(n) ? n : 0;

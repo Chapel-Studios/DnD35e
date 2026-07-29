@@ -49,15 +49,11 @@ const resolveDeathThresholdValue = (setting: DeathThresholdSetting, actor?: Acto
     )
     : normalizedFormula;
 
-  const safeEval = (Roll as unknown as { safeEval?: (formula: string) => number }).safeEval;
-
-  if (safeEval) {
-    try {
-      const evaluated = safeEval(resolvedFormula);
-      if (Number.isFinite(evaluated)) return evaluated;
-    } catch {
-      // Fall through to numeric parsing when formula evaluation fails.
-    }
+  try {
+    const evaluated = Roll.safeEval(resolvedFormula);
+    if (Number.isFinite(evaluated)) return evaluated;
+  } catch {
+    // Fall through to numeric parsing when formula evaluation fails.
   }
 
   const parsed = Number.parseFloat(resolvedFormula);

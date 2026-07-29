@@ -79,7 +79,7 @@ abstract class DocumentSystemModel<TDocType extends foundry.abstract.DataModel |
         const excluded = field.excludedFields ?? [];
         const formulaSource = currentValue as unknown as {
           formula: string;
-          expectedType: 'string' | 'number';
+          expectedType: 'string' | 'number' | 'boolean';
           resolvedValue: string | null;
         };
         formulaSource.resolvedValue = formulaSource.formula

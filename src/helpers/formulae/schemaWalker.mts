@@ -18,6 +18,7 @@ import type { DocumentContext } from './registry.mjs';
 import type { AspectGroup, FieldAspect, FormulaFieldMeta } from './types.mjs';
 
 const {
+  BooleanField,
   NumberField,
   SchemaField,
 } = foundry.data.fields;
@@ -65,10 +66,11 @@ const DOCUMENT_LEVEL_ASPECTS: Record<string, Omit<FieldAspect, 'value'>> = {
 
 /**
  * Infer a familiar type from a DataField class.
- * NumberField → 'number', everything else → 'string'.
+ * NumberField → 'number', BooleanField → 'boolean', everything else → 'string'.
  */
-function inferFieldType(field: foundry.data.fields.DataField): 'string' | 'number' {
+function inferFieldType(field: foundry.data.fields.DataField): 'string' | 'number' | 'boolean' {
   if (field instanceof NumberField) return 'number';
+  if (field instanceof BooleanField) return 'boolean';
   return 'string';
 }
 
@@ -82,12 +84,13 @@ function inferFieldType(field: foundry.data.fields.DataField): 'string' | 'numbe
 function resolveValue(
   context: DocumentContext,
   accessPath: string,
-  type: 'string' | 'number'
+  type: 'string' | 'number' | 'boolean'
 ): string | number | undefined {
   const raw = foundry.utils.getProperty(context as object, accessPath) as unknown;
   if (raw === undefined || raw === null) return undefined;
 
   if (type === 'number') return Number(raw);
+  if (type === 'boolean') return raw ? 'true' : 'false';
 
   // Scalar → coerce directly
   if (typeof raw !== 'object') return String(raw);

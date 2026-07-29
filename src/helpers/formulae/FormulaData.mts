@@ -8,10 +8,10 @@
  * @module
  */
 
+import { FormulaResolver } from './FormulaResolver.mjs';
 import type { DocumentContext } from './registry.mjs';
 import { buildDocumentFamiliar } from './registry.mjs';
 import type { FamiliarSchema } from './types.mjs';
-import { extractVariables, resolveFormula } from './utils.mjs';
 
 const {
   StringField,
@@ -23,20 +23,20 @@ const {
 interface FormulaDataSource {
   formula: string;
   resolvedValue: string | number | null;
-  expectedType: 'string' | 'number';
+  expectedType: 'string' | 'number' | 'boolean';
 }
 
 class FormulaData extends foundry.abstract.DataModel {
   // Declare model properties for TypeScript
   declare formula: string;
   declare resolvedValue: string | null;
-  declare expectedType: 'string' | 'number';
+  declare expectedType: 'string' | 'number' | 'boolean';
 
   static override defineSchema() {
     return {
       formula: new StringField({ blank: true, initial: '' }),
       resolvedValue: new StringField({ nullable: true, initial: null }),
-      expectedType: new StringField({ choices: ['string', 'number'], initial: 'string' }),
+      expectedType: new StringField({ choices: ['string', 'number', 'boolean'], initial: 'string' }),
     };
   }
 
@@ -56,7 +56,7 @@ class FormulaData extends foundry.abstract.DataModel {
   resolve(documentDataMap: Record<string, DocumentContext>, fallback: string = '', excludedFields: string[] = []): string {
     if (!this.formula) return fallback;
     const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap, excludedFields);
-    const partiallyResolved = resolveFormula(this.formula, familiarSchema, documentDataMap);
+    const partiallyResolved = FormulaResolver.resolveFormula(this.formula, familiarSchema, documentDataMap);
     return FormulaData._finalizeResolvedValue(partiallyResolved, this.expectedType);
   }
 
@@ -76,7 +76,7 @@ class FormulaData extends foundry.abstract.DataModel {
   ): string {
     if (!source.formula) return fallback;
     const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>, excludedFields);
-    const partiallyResolved = resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
+    const partiallyResolved = FormulaResolver.resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
     return FormulaData._finalizeResolvedValue(partiallyResolved, source.expectedType);
   }
 
@@ -88,7 +88,7 @@ class FormulaData extends foundry.abstract.DataModel {
   ): string {
     if (!source.formula) return fallback;
     const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>, excludedFields);
-    return resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
+    return FormulaResolver.resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
   }
 
   // ---------------------------------------------------------------------------
@@ -155,9 +155,18 @@ class FormulaData extends foundry.abstract.DataModel {
     return schema;
   }
 
-  private static _finalizeResolvedValue(resolved: string, expectedType: 'string' | 'number'): string {
+  private static _finalizeResolvedValue(resolved: string, expectedType: 'string' | 'number' | 'boolean'): string {
+    if (expectedType === 'boolean') {
+      if (FormulaResolver.extractVariables(resolved).length > 0) return resolved;
+      try {
+        return FormulaResolver.evaluateBooleanExpression(resolved) ? 'true' : 'false';
+      } catch {
+        return resolved;
+      }
+    }
+
     if (expectedType !== 'number') return resolved;
-    if (extractVariables(resolved).length > 0) return resolved;
+    if (FormulaResolver.extractVariables(resolved).length > 0) return resolved;
 
     const trimmed = resolved.trim();
     if (!trimmed) return resolved;
@@ -166,9 +175,7 @@ class FormulaData extends foundry.abstract.DataModel {
     if (!Number.isNaN(numericValue)) return String(numericValue);
 
     try {
-      const safeEval = (Roll as unknown as { safeEval?: (formula: string) => number }).safeEval;
-      if (!safeEval) return resolved;
-      const evaluated = safeEval(trimmed);
+      const evaluated = Roll.safeEval(trimmed);
       return Number.isNaN(evaluated) ? resolved : String(evaluated);
     } catch {
       return resolved;

@@ -6,6 +6,9 @@ export {
   applyStackedActiveEffectChanges,
 } from './applyStackedChanges.mjs';
 export {
+  evaluateChangeCondition,
+} from './evaluateChangeCondition.mjs';
+export {
   formatChangeTypeSymbol,
 } from './formatChangeTypeSymbol.mjs';
 export {

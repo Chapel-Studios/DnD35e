@@ -19,6 +19,8 @@ import { FormulaData } from './FormulaData.mjs';
 import type { FormulaFieldOptions } from './FormulaField.mjs';
 import { FormulaField } from './FormulaField.mjs';
 import FormulaFormGroup from './FormulaFormGroup.vue';
+import { FormulaResolver } from './FormulaResolver.mjs';
+import type { AspectLookupResult } from './FormulaResolver.types.mjs';
 import type {
   ContextDocumentType,
   DocumentContext,
@@ -56,34 +58,37 @@ import type { FamiliarKeyDownResult, UseFamiliarOptions } from './useFamiliar.mj
 import { measureTextOffset, useFamiliar } from './useFamiliar.mjs';
 import type { FamiliarOverlayInputApi, OverlayAutocompleteArgs } from './useFamiliarOverlayInput.mjs';
 import { useFamiliarOverlayInput } from './useFamiliarOverlayInput.mjs';
-import type { AspectLookupResult, GetAutocompleteOptionsConfig } from './utils.mjs';
+import type { GetAutocompleteOptionsConfig } from './utils.mjs';
 import {
   buildDocumentDataMap,
   canonicalizeFormula,
   ensureNameFormula,
   extractVariableAtPosition,
-  extractVariables,
-  fieldAspect,
-  filterExcludedFields,
-  findAspectByAccessPath,
   getAutocompleteOptions,
   getCaretCoordinates,
-  getNestedValue,
-  getPropertyValue,
   getTokenAtPosition,
   getVariableTokenIndex,
   getVariableTokens,
   insertAtCursor,
   localizeFormula,
-  mergeAspectGroups,
   nameToFormulaData,
-  parseFormula,
   renderFormulaDisplayHTML,
   renderFormulaHTML,
-  resolveFormula,
   resolveFormulaField,
-  validateFormula,
 } from './utils.mjs';
+
+const {
+  extractVariables,
+  fieldAspect,
+  filterExcludedFields,
+  findAspectByAccessPath,
+  getNestedValue,
+  getPropertyValue,
+  mergeAspectGroups,
+  parseFormula,
+  resolveFormula,
+  validateFormula,
+} = FormulaResolver;
 
 export {
   buildContextFromFormula,
@@ -104,6 +109,7 @@ export {
   FormulaData,
   FormulaField,
   FormulaFormGroup,
+  FormulaResolver,
   gatherAspectsFromSchema,
   getAutocompleteOptions,
   getCaretCoordinates,

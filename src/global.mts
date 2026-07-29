@@ -104,7 +104,6 @@ declare global {
 /** Augment Foundry's change type registry with system-registered change types. */
 declare module '@common/constants.mjs' {
   interface SystemActiveEffectChangeTypes {
-    FAMILIAR: 'familiar';
     MASK: 'mask';
   }
 }

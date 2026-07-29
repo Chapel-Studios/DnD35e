@@ -3,6 +3,7 @@ import { EFFECT_CHANGE_PHASES } from '@effects/baseActiveEffect/data/index.mjs';
 import { containmentEffectType } from '@effects/containment/containmentEffectType.mjs';
 import { Containment, ContainmentSystemModel } from '@effects/containment/index.mjs';
 import { GENERAL_EFFECT_TYPE, GeneralEffectSystemModel } from '@effects/general/index.mjs';
+import { GeneralSheet } from '@effects/general/sheet/GeneralSheet.mjs';
 import { MaterialSystemModel } from '@effects/material/data/MaterialSystemModel.mjs';
 import { Material } from '@effects/material/Material.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';
@@ -16,6 +17,7 @@ import { SYSTEM_ID } from '@settings/shared.mjs';
 import { Secret } from './secret/index.mjs';
 const registerEffectSheets = () => {
   const effectSheets = [
+    [GENERAL_EFFECT_TYPE, GeneralSheet],
     [materialEffectType, MaterialSheet],
     [secretEffectType, SecretSheet],
   ] as const;
@@ -55,14 +57,10 @@ export const registerEffects = () => {
     // Default new AEs to 'general' type instead of 'base'
     CONFIG.ActiveEffect.defaultType = GENERAL_EFFECT_TYPE;
 
-    // Register FormulaFamiliar change type (handler deferred to Phase 7)
+    // MASK change type — Secret AEs use this to define masked values. Not applied via
+    // applyChange() (filtered out of the stacking loops) and not user-selectable — the
+    // "type" dropdown in EffectChangesList.vue excludes it for regular (non-mask) rows.
     const changeTypes = ((CONFIG.ActiveEffect as Record<string, unknown>).changeTypes ??= {}) as Record<string, unknown>;
-    changeTypes.familiar = {
-      label: 'dnd35e.EFFECT.ChangeMode.Familiar',
-      defaultPriority: 50,
-      handler: null,
-    };
-    // MASK change type — Secret AEs use this to define masked values. Not applied via applyChange().
     changeTypes.mask = {
       label: 'dnd35e.EFFECT.ChangeMode.Mask',
       defaultPriority: 10,

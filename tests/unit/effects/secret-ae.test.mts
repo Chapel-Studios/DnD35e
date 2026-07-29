@@ -240,6 +240,25 @@ describe('resolveActiveEffectChangeValue', () => {
 
     expect(resolveActiveEffectChangeValue(effect, change)).toBe(5);
     expect(safeEval).toHaveBeenCalledWith('2+3');
+    // Regression: Roll.safeEval must be called bound to `Roll` (`Roll.safeEval(x)`), not a
+    // destructured/detached reference (`const fn = Roll.safeEval; fn(x)`) — the real Foundry
+    // implementation depends on `this.MATH_PROXY` and breaks silently when detached.
+    expect(safeEval.mock.contexts[0]).toBe((globalThis as any).Roll);
+  });
+
+  it('NumberField + parenthesized formula → Roll.safeEval called with correct `this` (regression)', () => {
+    const actor = mkDoc({
+      documentName: 'Actor',
+      type: 'character',
+      systemFields: { 'attributes.str': new NumberField({}) },
+    });
+    const effect = mkEffect(actor);
+    const change = mkChange({ key: 'system.attributes.str', value: '(6 + 2)' });
+
+    // Uses the DEFAULT (un-overridden) tests/setup.mts stub, which throws if Roll.safeEval
+    // is ever invoked detached from `Roll` — this proves the real call site in
+    // resolveChangeValue.mts's `tryEvaluateNumber` preserves `this` correctly.
+    expect(() => resolveActiveEffectChangeValue(effect, change)).not.toThrow();
   });
 
   it('NumberField + un-evaluable garbage → falls back to raw value', () => {

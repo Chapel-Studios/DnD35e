@@ -18,6 +18,8 @@ This skill helps you:
 - **Compare Foundry system implementations** across D35E (legacy), dnd5e, and PF2e
 - **Understand migration targets** — what D35E did and how dnd35e (our new system) improves on it
 - **Port mechanics** between Foundry system paradigms
+
+> **Local source availability**: D35E and dnd5e are typically installed locally as sibling systems under the Foundry systems directory (see `/d35e-reference` and `silversmith`'s "Other Foundry Systems" section for lookup instructions) — verify claims against that real source when possible. **PF2e is not available on Foundry v14 at the time of this writing** (not yet ported/compatible), so it cannot be checked locally. Use the `web` tool to check the real PF2e source on GitHub (`foundryvtt/pf2e`) instead of relying on unverified recall, and clearly disclose when a PF2e claim is unverified general knowledge vs. confirmed against fetched source.
 - **Identify D35E patterns** that carry over or need redesign
 - **Plan compatibility** with world data from the old D35E system
 
