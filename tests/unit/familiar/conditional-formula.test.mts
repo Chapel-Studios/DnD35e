@@ -1,21 +1,23 @@
-import {
-  findConditionalBlocks,
-  isConditionalKeywordToken,
-  resolveConditionalFormula,
-} from '@helpers/formulae/conditionalFormula.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
+import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
 import type { FamiliarSchema, FieldAspect } from '@helpers/formulae/types.mjs';
-import { extractVariables, resolveFormula, validateFormula } from '@helpers/formulae/utils.mjs';
 import { describe, expect, it } from 'vitest';
 
+const {
+  findConditionalBlocks,
+  resolveConditionalFormula,
+  resolveFormula,
+  validateFormula,
+} = FormulaResolver;
+
 /**
- * Story C (redesigned) — `#conditional(when(cond, value) ... else(default))`
+ * Story C (redesigned) — `$conditional(when(cond, value) ... else(default))`
  * flat rule-list conditional syntax. See
  * `docs/migration-plan/poc/phase-07-roll-formulas.md` §7.10 "Compiled Syntax".
  */
 describe('findConditionalBlocks — parsing', () => {
   it('parses a single when() + else()', () => {
-    const blocks = findConditionalBlocks('#conditional(when(1 > 0, 5) else(2))');
+    const blocks = findConditionalBlocks('$conditional(when(1 > 0, 5) else(2))');
     expect(blocks).toHaveLength(1);
     expect(blocks[0].error).toBeUndefined();
     expect(blocks[0].whenClauses).toEqual([{ condition: '1 > 0', value: '5' }]);
@@ -23,7 +25,7 @@ describe('findConditionalBlocks — parsing', () => {
   });
 
   it('parses multiple when() clauses in left-to-right order', () => {
-    const blocks = findConditionalBlocks('#conditional(when(a, 1) when(b, 2) when(c, 3) else(4))');
+    const blocks = findConditionalBlocks('$conditional(when(a, 1) when(b, 2) when(c, 3) else(4))');
     expect(blocks[0].whenClauses).toEqual([
       { condition: 'a', value: '1' },
       { condition: 'b', value: '2' },
@@ -33,7 +35,7 @@ describe('findConditionalBlocks — parsing', () => {
   });
 
   it('allows else() to appear anywhere among the clauses', () => {
-    const blocks = findConditionalBlocks('#conditional(else(4) when(a, 1) when(b, 2))');
+    const blocks = findConditionalBlocks('$conditional(else(4) when(a, 1) when(b, 2))');
     expect(blocks[0].error).toBeUndefined();
     expect(blocks[0].elseValue).toBe('4');
     expect(blocks[0].whenClauses).toEqual([
@@ -43,35 +45,35 @@ describe('findConditionalBlocks — parsing', () => {
   });
 
   it('treats the clause separator as dont-care (comma, space, or nothing)', () => {
-    const commaSeparated = findConditionalBlocks('#conditional(when(a, 1), when(b, 2), else(3))');
-    const spaceSeparated = findConditionalBlocks('#conditional(when(a, 1) when(b, 2) else(3))');
-    const noSeparator = findConditionalBlocks('#conditional(when(a, 1)when(b, 2)else(3))');
+    const commaSeparated = findConditionalBlocks('$conditional(when(a, 1), when(b, 2), else(3))');
+    const spaceSeparated = findConditionalBlocks('$conditional(when(a, 1) when(b, 2) else(3))');
+    const noSeparator = findConditionalBlocks('$conditional(when(a, 1)when(b, 2)else(3))');
     expect(commaSeparated[0].whenClauses).toEqual(spaceSeparated[0].whenClauses);
     expect(spaceSeparated[0].whenClauses).toEqual(noSeparator[0].whenClauses);
     expect(noSeparator[0].elseValue).toBe('3');
   });
 
   it('is case-insensitive and tolerant of whitespace before (', () => {
-    const blocks = findConditionalBlocks('#CONDITIONAL ( WHEN ( a , 1 ) ELSE ( 2 ) )');
+    const blocks = findConditionalBlocks('$CONDITIONAL ( WHEN ( a , 1 ) ELSE ( 2 ) )');
     expect(blocks[0].error).toBeUndefined();
     expect(blocks[0].whenClauses).toEqual([{ condition: 'a', value: '1' }]);
     expect(blocks[0].elseValue).toBe('2');
   });
 
-  it('handles a value containing a nested #conditional(...) via balanced-paren scanning', () => {
+  it('handles a value containing a nested $conditional(...) via balanced-paren scanning', () => {
     const blocks = findConditionalBlocks(
-      '#conditional(when(a, #conditional(when(x, 1) else(2))) else(3))'
+      '$conditional(when(a, $conditional(when(x, 1) else(2))) else(3))'
     );
     expect(blocks[0].error).toBeUndefined();
     expect(blocks[0].whenClauses).toEqual([
-      { condition: 'a', value: '#conditional(when(x, 1) else(2))' },
+      { condition: 'a', value: '$conditional(when(x, 1) else(2))' },
     ]);
     expect(blocks[0].elseValue).toBe('3');
   });
 
-  it('finds multiple independent #conditional(...) blocks in one formula', () => {
+  it('finds multiple independent $conditional(...) blocks in one formula', () => {
     const blocks = findConditionalBlocks(
-      '#conditional(when(a, 1) else(2))+#conditional(when(b, 3) else(4))'
+      '$conditional(when(a, 1) else(2))+$conditional(when(b, 3) else(4))'
     );
     expect(blocks).toHaveLength(2);
     expect(blocks[0].elseValue).toBe('2');
@@ -79,27 +81,27 @@ describe('findConditionalBlocks — parsing', () => {
   });
 
   it('flags a missing else() as an error', () => {
-    const blocks = findConditionalBlocks('#conditional(when(a, 1))');
+    const blocks = findConditionalBlocks('$conditional(when(a, 1))');
     expect(blocks[0].error).toBe('missingElse');
   });
 
   it('flags more than one else() as an error', () => {
-    const blocks = findConditionalBlocks('#conditional(when(a, 1) else(2) else(3))');
+    const blocks = findConditionalBlocks('$conditional(when(a, 1) else(2) else(3))');
     expect(blocks[0].error).toBe('multipleElse');
   });
 
   it('flags a when() with the wrong argument count as an error', () => {
-    const blocks = findConditionalBlocks('#conditional(when(a) else(2))');
+    const blocks = findConditionalBlocks('$conditional(when(a) else(2))');
     expect(blocks[0].error).toBe('whenArgCount');
   });
 
   it('flags an else() with the wrong argument count as an error', () => {
-    const blocks = findConditionalBlocks('#conditional(when(a, 1) else(2, 3))');
+    const blocks = findConditionalBlocks('$conditional(when(a, 1) else(2, 3))');
     expect(blocks[0].error).toBe('elseArgCount');
   });
 
   it('flags unbalanced parens as an error', () => {
-    const blocks = findConditionalBlocks('#conditional(when(a, 1) else(2)');
+    const blocks = findConditionalBlocks('$conditional(when(a, 1) else(2)');
     expect(blocks[0].error).toBe('unbalancedParens');
   });
 });
@@ -110,13 +112,13 @@ describe('resolveConditionalFormula — resolution', () => {
   const identityResolve = (text: string): string => text;
   const literalEvaluate = (resolvedCondition: string): boolean => resolvedCondition.trim() === 'true';
 
-  it('returns the formula unchanged when there are no #conditional(...) blocks', () => {
+  it('returns the formula unchanged when there are no $conditional(...) blocks', () => {
     expect(resolveConditionalFormula('2d6+3', identityResolve, literalEvaluate)).toBe('2d6+3');
   });
 
   it('picks the first true when() clause', () => {
     const result = resolveConditionalFormula(
-      '#conditional(when(false, 1) when(true, 2) else(3))',
+      '$conditional(when(false, 1) when(true, 2) else(3))',
       identityResolve,
       literalEvaluate
     );
@@ -125,7 +127,7 @@ describe('resolveConditionalFormula — resolution', () => {
 
   it('falls back to else() when no when() clause matches', () => {
     const result = resolveConditionalFormula(
-      '#conditional(when(false, 1) when(false, 2) else(3))',
+      '$conditional(when(false, 1) when(false, 2) else(3))',
       identityResolve,
       literalEvaluate
     );
@@ -134,16 +136,16 @@ describe('resolveConditionalFormula — resolution', () => {
 
   it('preserves surrounding literal text around the block', () => {
     const result = resolveConditionalFormula(
-      '#conditional(when(true, 0) else(2))d6',
+      '$conditional(when(true, 0) else(2))d6',
       identityResolve,
       literalEvaluate
     );
     expect(result).toBe('0d6');
   });
 
-  it('recursively resolves a nested #conditional(...) within the winning branch', () => {
+  it('recursively resolves a nested $conditional(...) within the winning branch', () => {
     const result = resolveConditionalFormula(
-      '#conditional(when(true, #conditional(when(true, 1) else(2))) else(3))',
+      '$conditional(when(true, $conditional(when(true, 1) else(2))) else(3))',
       identityResolve,
       literalEvaluate
     );
@@ -151,7 +153,7 @@ describe('resolveConditionalFormula — resolution', () => {
   });
 
   it('leaves a malformed block raw/unresolved rather than guessing', () => {
-    const formula = '#conditional(when(true, 1))';
+    const formula = '$conditional(when(true, 1))';
     expect(resolveConditionalFormula(formula, identityResolve, literalEvaluate)).toBe(formula);
   });
 
@@ -160,7 +162,7 @@ describe('resolveConditionalFormula — resolution', () => {
       throw new Error('boom');
     };
     const result = resolveConditionalFormula(
-      '#conditional(when(anything, 1) else(2))',
+      '$conditional(when(anything, 1) else(2))',
       identityResolve,
       throwingEvaluate
     );
@@ -168,27 +170,7 @@ describe('resolveConditionalFormula — resolution', () => {
   });
 });
 
-describe('isConditionalKeywordToken', () => {
-  it('is true for the bare #conditional token immediately followed by (', () => {
-    const formula = '#conditional(when(a, 1) else(2))';
-    const [variable] = extractVariables(formula);
-    expect(isConditionalKeywordToken(formula, variable)).toBe(true);
-  });
-
-  it('is true even with whitespace before the (', () => {
-    const formula = '#conditional (when(a, 1) else(2))';
-    const [variable] = extractVariables(formula);
-    expect(isConditionalKeywordToken(formula, variable)).toBe(true);
-  });
-
-  it('is false for an ordinary #context.property token', () => {
-    const formula = '#self.hp.value';
-    const [variable] = extractVariables(formula);
-    expect(isConditionalKeywordToken(formula, variable)).toBe(false);
-  });
-});
-
-describe('resolveFormula — end-to-end with #conditional(...)', () => {
+describe('resolveFormula — end-to-end with $conditional(...)', () => {
   const schema: FamiliarSchema = {
     self: {
       properties: {
@@ -202,7 +184,7 @@ describe('resolveFormula — end-to-end with #conditional(...)', () => {
   it('resolves the doc example — HP <= 0 branch wins', () => {
     const docMap = { self: { system: { hp: { value: 0 }, isFlanked: false, sneakAttackDice: '1d6' } } };
     const resolved = resolveFormula(
-      '#conditional(when(#self.hp.value <= 0, 0) when(#self.isFlanked, 1d6+#self.sneakAttackDice) else(2d6))',
+      '$conditional(when(#self.hp.value <= 0, 0) when(#self.isFlanked, 1d6+#self.sneakAttackDice) else(2d6))',
       schema,
       docMap as never
     );
@@ -212,7 +194,7 @@ describe('resolveFormula — end-to-end with #conditional(...)', () => {
   it('resolves the doc example — flanked branch wins when HP is positive', () => {
     const docMap = { self: { system: { hp: { value: 10 }, isFlanked: true, sneakAttackDice: '1d6' } } };
     const resolved = resolveFormula(
-      '#conditional(when(#self.hp.value <= 0, 0) when(#self.isFlanked, 1d6+#self.sneakAttackDice) else(2d6))',
+      '$conditional(when(#self.hp.value <= 0, 0) when(#self.isFlanked, 1d6+#self.sneakAttackDice) else(2d6))',
       schema,
       docMap as never
     );
@@ -222,28 +204,28 @@ describe('resolveFormula — end-to-end with #conditional(...)', () => {
   it('resolves the doc example — else() default wins when no rule matches', () => {
     const docMap = { self: { system: { hp: { value: 10 }, isFlanked: false, sneakAttackDice: '1d6' } } };
     const resolved = resolveFormula(
-      '#conditional(when(#self.hp.value <= 0, 0) when(#self.isFlanked, 1d6+#self.sneakAttackDice) else(2d6))',
+      '$conditional(when(#self.hp.value <= 0, 0) when(#self.isFlanked, 1d6+#self.sneakAttackDice) else(2d6))',
       schema,
       docMap as never
     );
     expect(resolved).toBe('2d6');
   });
 
-  it('is fully backward compatible — a formula with zero #conditional(...) blocks is untouched', () => {
+  it('is fully backward compatible — a formula with zero $conditional(...) blocks is untouched', () => {
     const docMap = { self: { system: { hp: { value: 10 }, isFlanked: false, sneakAttackDice: '1d6' } } };
     expect(resolveFormula('2d6+3', schema, docMap as never)).toBe('2d6+3');
   });
 
   it('resolves through FormulaData.resolveSource (number expectedType) end-to-end', () => {
     const result = FormulaData.resolveSource(
-      { formula: '#conditional(when(0 <= 0, 0) else(5))', resolvedValue: null, expectedType: 'number' },
+      { formula: '$conditional(when(0 <= 0, 0) else(5))', resolvedValue: null, expectedType: 'number' },
       {}
     );
     expect(result).toBe('0');
   });
 });
 
-describe('validateFormula — #conditional(...) syntax', () => {
+describe('validateFormula — $conditional(...) syntax', () => {
   const schema: FamiliarSchema = {
     self: {
       properties: {
@@ -252,24 +234,24 @@ describe('validateFormula — #conditional(...) syntax', () => {
     },
   };
 
-  it('does not flag a well-formed #conditional(...) as an unknown context', () => {
-    const errors = validateFormula('#conditional(when(#self.hp.value <= 0, 0) else(2))', schema);
+  it('does not flag a well-formed $conditional(...) as an unknown context', () => {
+    const errors = validateFormula('$conditional(when(#self.hp.value <= 0, 0) else(2))', schema);
     expect(errors).toHaveLength(0);
   });
 
   it('still validates nested #context.property tokens inside when()/else()', () => {
-    const errors = validateFormula('#conditional(when(#self.bogus.path <= 0, 0) else(2))', schema);
+    const errors = validateFormula('$conditional(when(#self.bogus.path <= 0, 0) else(2))', schema);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors.some(e => e.severity === 'error')).toBe(true);
   });
 
   it('surfaces a structural error for a missing else()', () => {
-    const errors = validateFormula('#conditional(when(#self.hp.value <= 0, 0))', schema);
+    const errors = validateFormula('$conditional(when(#self.hp.value <= 0, 0))', schema);
     expect(errors.some(e => e.error.length > 0 && e.severity === 'error')).toBe(true);
   });
 
   it('surfaces a structural error for unbalanced parens', () => {
-    const errors = validateFormula('#conditional(when(#self.hp.value <= 0, 0) else(2)', schema);
+    const errors = validateFormula('$conditional(when(#self.hp.value <= 0, 0) else(2)', schema);
     expect(errors.some(e => e.severity === 'error')).toBe(true);
   });
 });
@@ -278,7 +260,7 @@ describe('validateFormula — #conditional(...) syntax', () => {
  * A `#token` immediately followed by more identifier characters with no
  * separator greedily merges into one (invalid) path segment — parens are
  * required to disambiguate. This is a pre-existing `VARIABLE_REGEX` behavior,
- * not specific to `#conditional(...)`, but it's exactly the shape a
+ * not specific to `$conditional(...)`, but it's exactly the shape a
  * `when()`/`else()` value tends to take when dice notation trails a token.
  */
 describe('token/literal-text adjacency — parens required to disambiguate', () => {
@@ -313,38 +295,38 @@ describe('escaping literal parentheses — \\( and \\)', () => {
   it('findMatchingParen skips an escaped paren when counting depth', () => {
     // The when() value contains a literal, unbalanced "(" that must not be
     // mistaken for the start of a new nesting level.
-    const blocks = findConditionalBlocks('#conditional(when(true, "Note: unbalanced \\(") else(2))');
+    const blocks = findConditionalBlocks('$conditional(when(true, "Note: unbalanced \\(") else(2))');
     expect(blocks[0].error).toBeUndefined();
     expect(blocks[0].whenClauses[0].value).toBe('"Note: unbalanced \\("');
   });
 
   it('an unescaped unbalanced literal paren in a value produces a parse error', () => {
-    const blocks = findConditionalBlocks('#conditional(when(true, "Note: unbalanced (") else(2))');
+    const blocks = findConditionalBlocks('$conditional(when(true, "Note: unbalanced (") else(2))');
     expect(blocks[0].error).toBe('unbalancedParens');
   });
 
   it('a balanced pair of literal parens in a value needs no escaping', () => {
-    const blocks = findConditionalBlocks('#conditional(when(true, "Longsword (Masterwork)") else("none"))');
+    const blocks = findConditionalBlocks('$conditional(when(true, "Longsword (Masterwork)") else("none"))');
     expect(blocks[0].error).toBeUndefined();
     expect(blocks[0].whenClauses[0].value).toBe('"Longsword (Masterwork)"');
   });
 
   it('resolveFormula unescapes \\( and \\) back to literal parens in the final output', () => {
     const schema: FamiliarSchema = { self: { properties: {} } };
-    const resolved = resolveFormula('#conditional(when(true, \\(escaped\\)) else(2))', schema, {} as never);
+    const resolved = resolveFormula('$conditional(when(true, \\(escaped\\)) else(2))', schema, {} as never);
     expect(resolved).toBe('(escaped)');
   });
 
   it('escaping the paren right after "when"/"else" prevents it from being parsed as a clause', () => {
-    // "when\(" is literal text, not a clause opener — the whole #conditional(...)
+    // "when\(" is literal text, not a clause opener — the whole $conditional(...)
     // is malformed as a result (no recognized when()/else() clauses at all).
-    const blocks = findConditionalBlocks('#conditional(when\\(not a clause\\))');
+    const blocks = findConditionalBlocks('$conditional(when\\(not a clause\\))');
     expect(blocks[0].error).toBe('missingElse');
     expect(blocks[0].whenClauses).toHaveLength(0);
   });
 
-  it('escaping the # in \\#conditional( prevents the block from being recognized at all', () => {
-    const blocks = findConditionalBlocks('\\#conditional(when(true, 1) else(2))');
+  it('escaping the $ in \\$conditional( prevents the block from being recognized at all', () => {
+    const blocks = findConditionalBlocks('\\$conditional(when(true, 1) else(2))');
     expect(blocks).toHaveLength(0);
   });
 
@@ -354,7 +336,7 @@ describe('escaping literal parentheses — \\( and \\)', () => {
     // picked up as a real clause. Without the word-boundary lookbehind, the
     // "when(" substring inside "somewhen(" would be wrongly matched as a
     // when() clause with a single (invalid) argument.
-    const blocks = findConditionalBlocks('#conditional(xsomewhen(3) else(2))');
+    const blocks = findConditionalBlocks('$conditional(xsomewhen(3) else(2))');
     expect(blocks[0].error).toBeUndefined();
     expect(blocks[0].whenClauses).toHaveLength(0);
     expect(blocks[0].elseValue).toBe('2');
@@ -363,7 +345,7 @@ describe('escaping literal parentheses — \\( and \\)', () => {
 
 describe('escaping a literal comma — \\,', () => {
   it('an escaped comma inside a quoted string value is not mistaken for the arg separator', () => {
-    const blocks = findConditionalBlocks('#conditional(when(#self.name == "\\,", 500) else(0))');
+    const blocks = findConditionalBlocks('$conditional(when(#self.name == "\\,", 500) else(0))');
     expect(blocks[0].error).toBeUndefined();
     expect(blocks[0].whenClauses).toHaveLength(1);
     expect(blocks[0].whenClauses[0].condition).toBe('#self.name == "\\,"');
@@ -376,7 +358,7 @@ describe('escaping a literal comma — \\,', () => {
     };
     const docMap = { self: { name: ',' } };
     const resolved = resolveFormula(
-      '#conditional(when(#self.name == "\\,", 500) else(0))',
+      '$conditional(when(#self.name == "\\,", 500) else(0))',
       schema,
       docMap as never
     );
@@ -384,7 +366,7 @@ describe('escaping a literal comma — \\,', () => {
   });
 
   it('without the escape, an unescaped comma in the value would split into an extra (invalid) arg', () => {
-    const blocks = findConditionalBlocks('#conditional(when(#self.name == ",", 500) else(0))');
+    const blocks = findConditionalBlocks('$conditional(when(#self.name == ",", 500) else(0))');
     expect(blocks[0].error).toBe('whenArgCount');
   });
 });

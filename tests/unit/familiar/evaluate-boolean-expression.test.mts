@@ -1,5 +1,7 @@
-import { evaluateBooleanExpression } from '@helpers/formulae/evaluateBooleanExpression.mjs';
+import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
 import { describe, expect, it } from 'vitest';
+
+const { evaluateBooleanExpression } = FormulaResolver;
 
 /**
  * Story A (§7.2a, Phase 7) — boolean-typed formula grammar.
@@ -50,6 +52,20 @@ describe('evaluateBooleanExpression — comparison & logical grammar', () => {
       expect(evaluateBooleanExpression('!true')).toBe(false);
     });
 
+    it('"!" binds like JS (tighter than comparison) -- negates only its immediate operand', () => {
+      // !0 > -1 reads as (!0) > -1, i.e. true > -1, i.e. 1 > -1 -> true.
+      // Under the old (looser-than-comparison) precedence this would have
+      // been !(0 > -1) -> !true -> false, so this is a genuine behavior check.
+      expect(evaluateBooleanExpression('!0 > -1')).toBe(true);
+      // !5 > 0 reads as (!5) > 0, i.e. false > 0, i.e. 0 > 0 -> false.
+      expect(evaluateBooleanExpression('!5 > 0')).toBe(false);
+    });
+
+    it('parens still force negating the whole comparison, same as before', () => {
+      expect(evaluateBooleanExpression('!(0 > -1)')).toBe(false);
+      expect(evaluateBooleanExpression('!(5 > -1)')).toBe(false);
+    });
+
     it('evaluates parenthesized grouping with correct precedence', () => {
       expect(evaluateBooleanExpression('(3 > 2) && (1 == 1)')).toBe(true);
       expect(evaluateBooleanExpression('!(3 > 2) && true')).toBe(false);
@@ -59,6 +75,34 @@ describe('evaluateBooleanExpression — comparison & logical grammar', () => {
     it('evaluates the doc example: compound ability/BAB gate', () => {
       expect(evaluateBooleanExpression('2 >= 2 && 1 > 0')).toBe(true);
       expect(evaluateBooleanExpression('1 >= 2 && 1 > 0')).toBe(false);
+    });
+  });
+
+  describe('"$and"/"$or" — keyword aliases for "&&"/"||"', () => {
+    it('"$and" behaves exactly like "&&"', () => {
+      expect(evaluateBooleanExpression('true $and true')).toBe(true);
+      expect(evaluateBooleanExpression('true $and false')).toBe(false);
+    });
+
+    it('"$or" behaves exactly like "||"', () => {
+      expect(evaluateBooleanExpression('false $or true')).toBe(true);
+      expect(evaluateBooleanExpression('false $or false')).toBe(false);
+    });
+
+    it('is case-insensitive', () => {
+      expect(evaluateBooleanExpression('true $AND true')).toBe(true);
+      expect(evaluateBooleanExpression('false $Or true')).toBe(true);
+    });
+
+    it('mixes freely with "&&"/"||" and respects the same precedence/grouping', () => {
+      expect(evaluateBooleanExpression('2 > 1 $and 1 > 5 $or 3 == 3')).toBe(true);
+      expect(evaluateBooleanExpression('(3 > 2) $and (1 == 1)')).toBe(true);
+      expect(evaluateBooleanExpression('2 > 1 && 1 > 5 $or 3 == 3')).toBe(true);
+    });
+
+    it('does not clip a longer bareword starting with "and"/"or" (word-boundary check)', () => {
+      expect(() => evaluateBooleanExpression('$android')).not.toThrow();
+      expect(evaluateBooleanExpression('$android')).toBe(true); // truthy bareword, not parsed as "$and" + "roid"
     });
   });
 

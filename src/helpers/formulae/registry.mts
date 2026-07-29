@@ -15,9 +15,9 @@ import type { EffectType } from '@effects/effectTypes.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
 
+import { FormulaResolver } from './FormulaResolver.mjs';
 import { normalizeLabel } from './schemaWalker.mjs';
 import type { AspectGroup, FamiliarContext, FamiliarSchema, FormulaFieldData } from './types.mjs';
-import { mergeAspectGroups } from './utils.mjs';
 
 /** Union of all Foundry document classes that can serve as familiar context. */
 export type NonNullDocumentContext = ItemDnd35e | ActorDnd35e | ActiveEffectDnd35e;
@@ -268,7 +268,7 @@ function buildMergedFamiliarContext(
     }
   }
   if (groups.length === 0) return null;
-  return { properties: mergeAspectGroups(...groups) };
+  return { properties: FormulaResolver.mergeAspectGroups(...groups) };
 }
 
 export {

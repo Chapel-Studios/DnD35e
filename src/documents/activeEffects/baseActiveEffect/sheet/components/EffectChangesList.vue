@@ -164,8 +164,8 @@
   import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
   import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
   import FormulaFormGroup from '@helpers/formulae/FormulaFormGroup.vue';
+  import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
   import type { FamiliarSchema } from '@helpers/formulae/types.mts';
-  import { findAspectByAccessPath } from '@helpers/formulae/utils.mjs';
   import AspectPicker from '@vc/fields/formGroups/AspectPicker.vue';
   import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
   import { computed, inject, reactive } from 'vue';
@@ -301,7 +301,7 @@
     if (!change.key) return undefined;
     const ctx = store.documentGetters.getTargetFamiliarContext(change.target ?? 'item');
     if (!ctx) return undefined;
-    return findAspectByAccessPath(ctx.properties, change.key)?.aspect.type;
+    return FormulaResolver.findAspectByAccessPath(ctx.properties, change.key)?.aspect.type;
   }
 
   const changeTypes = computed(() => {

@@ -1,63 +1,25 @@
 /**
- * Conditional Formula Syntax — `#conditional(when(cond, value) ... else(default))`
+ * FormulaResolver — `$conditional(when()else())` grammar.
  *
- * A flat rule-list conditional embedded directly in formula text, e.g.:
+ * Parses and resolves `$conditional(when(cond, value) ... else(default))`
+ * blocks: a flat rule-list conditional syntax layered on top of the plain
+ * `#context.property` substitution grammar. `$` is a distinct sigil from
+ * `#` on purpose — `#` always means "context/property data reference";
+ * `$` marks a control-flow/keyword construct, so `$conditional(...)` is
+ * never mistaken for (or extracted as) a `#`-style variable token in the
+ * first place. `resolveConditionalFormula` takes its sub-formula resolver
+ * and condition evaluator as parameters (rather than importing them) to
+ * keep this module fully decoupled from both the aspect-resolution and
+ * boolean-grammar modules.
  *
- *   #conditional(when(#self.hp.value <= 0, 0) when(#self.isFlanked, 1d6+#self.sneakAttackDice) else(2))d6
- *
- * - `when(condition, value)` — zero or more, evaluated in left-to-right source order;
- *   the first clause whose condition is true supplies the result.
- * - `else(value)` — required exactly once, may appear anywhere among the clauses;
- *   supplies the result when no `when()` matches.
- * - Clause separators are don't-care — `when(...)`/`else(...)` are self-delimiting via
- *   their own balanced parens, so commas, whitespace, or nothing between clauses are
- *   all equivalent.
- * - `#conditional(...)` behaves as a single inline token — surrounding literal text
- *   and other `#context.property` tokens are untouched.
- * - Matching is lenient: `#conditional`/`when`/`else` keywords are case-insensitive,
- *   with optional whitespace before `(`.
- * - `\(` and `\)` escape a literal parenthesis (same backslash convention as `\#`
- *   for a literal `#`) — an escaped paren doesn't count toward balanced-paren
- *   depth tracking, so a value can contain unbalanced literal parens, and
- *   `\#conditional(`/escaping the paren right after `when`/`else` prevents that
- *   occurrence from being parsed as the syntax construct at all.
- * - `\,` escapes a literal comma inside a `when(...)`/`else(...)` argument (e.g.
- *   a quoted string being compared against, `when(#self.name == "\,", 500)`) —
- *   without it, the comma would be mistaken for the top-level separator between
- *   that clause's own arguments (e.g. condition vs. value).
- *
- * See `docs/migration-plan/poc/phase-07-roll-formulas.md` §7.10 for the full design.
+ * Split out from FormulaResolver.mts to keep each grammar self-contained.
+ * Consumed by FormulaResolver.mts as static methods.
  *
  * @module
  */
+import type { ConditionalBlock, ConditionalBlockError, ConditionalWhenClause } from './FormulaResolver.types.mjs';
 
-/** A single `when(condition, value)` clause. */
-export interface ConditionalWhenClause {
-  condition: string;
-  value: string;
-}
-
-/** A reason a `#conditional(...)` block failed to parse cleanly. */
-export type ConditionalBlockError =
-  | 'unbalancedParens'
-  | 'missingElse'
-  | 'multipleElse'
-  | 'whenArgCount'
-  | 'elseArgCount';
-
-/** A single `#conditional(...)` block found within a formula string. */
-export interface ConditionalBlock {
-  /** Full "#conditional(...)" span exactly as it appeared in the source. */
-  raw: string;
-  startIndex: number;
-  endIndex: number;
-  whenClauses: ConditionalWhenClause[];
-  elseValue: string | null;
-  /** Present when the block is malformed — resolution leaves it raw/unresolved. */
-  error?: ConditionalBlockError;
-}
-
-const CONDITIONAL_OPEN_REGEX = /(?<!\\)#conditional\s*\(/gi;
+const CONDITIONAL_OPEN_REGEX = /(?<!\\)\$conditional\s*\(/gi;
 const CLAUSE_KEYWORD_REGEX = /(?<![\p{L}\p{N}_])(when|else)\s*\(/giu;
 
 /**
@@ -125,9 +87,9 @@ interface RawClause {
 }
 
 /**
- * Scan `innerText` (the content between `#conditional(`'s parens) for
+ * Scan `innerText` (the content between `$conditional(`'s parens) for
  * `when(...)`/`else(...)` clauses. Nested clauses (e.g. inside a value that
- * contains its own `#conditional(...)`) are skipped over automatically since
+ * contains its own `$conditional(...)`) are skipped over automatically since
  * each match consumes through its own balanced closing paren before resuming
  * the search.
  */
@@ -153,7 +115,7 @@ function findClauses(innerText: string): { clauses: RawClause[]; error?: Conditi
 }
 
 /**
- * Find all `#conditional(...)` blocks in a formula string, parsing each into
+ * Find all `$conditional(...)` blocks in a formula string, parsing each into
  * its `when`/`else` clauses. Malformed blocks are still returned (with
  * `.error` set) so validation and resolution can handle them explicitly
  * rather than throwing.
@@ -226,7 +188,7 @@ export function findConditionalBlocks(formula: string): ConditionalBlock[] {
 }
 
 /**
- * Resolve all `#conditional(...)` blocks in `formula`, replacing each with
+ * Resolve all `$conditional(...)` blocks in `formula`, replacing each with
  * its winning branch's (still-unresolved) text. Ordinary `#context.property`
  * tokens are left untouched — the caller is expected to run its own
  * substitution pass over the result afterward.
@@ -267,25 +229,16 @@ export function resolveConditionalFormula(
       }
     }
 
-    // Recursively resolve any nested #conditional(...) block within the winning
+    // Recursively resolve any nested $conditional(...) block within the winning
     // branch — ordinary tokens are left for the caller's own substitution pass.
-    const resolvedWinningValue = resolveConditionalFormula(winningValue, resolveSubFormula, evaluateCondition);
+    const resolvedWinningValue = resolveConditionalFormula(
+      winningValue,
+      resolveSubFormula,
+      evaluateCondition
+    );
 
     result = result.substring(0, block.startIndex) + resolvedWinningValue + result.substring(block.endIndex);
   }
 
   return result;
-}
-
-/**
- * True when `variable` (as produced by `extractVariables`) is the bare
- * `#conditional` keyword token immediately followed by `(` — i.e. it's being
- * used as this syntax construct, not as an actual (invalid) context reference.
- */
-export function isConditionalKeywordToken(
-  formula: string,
-  variable: { context: string; path: string[]; endIndex: number }
-): boolean {
-  if (variable.context.toLowerCase() !== 'conditional' || variable.path.length !== 0) return false;
-  return /^\s*\(/.test(formula.slice(variable.endIndex));
 }

@@ -32,9 +32,12 @@
 </template>
 
 <script setup lang="ts">
+  import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
   import type { AutocompleteOption, FamiliarContext, FamiliarSchema, ValidationError } from '@helpers/formulae/types.mjs';
   import { useFamiliarOverlayInput } from '@helpers/formulae/useFamiliarOverlayInput.mjs';
-  import { canonicalizeFormula, findAspectByAccessPath, localizeFormula, parseFormula, renderFormulaHTML, validateFormula } from '@helpers/formulae/utils.mjs';
+  import { canonicalizeFormula, localizeFormula, renderFormulaHTML } from '@helpers/formulae/utils.mjs';
+
+  const { findAspectByAccessPath, parseFormula, validateFormula } = FormulaResolver;
   import FamiliarOverlayInput from '@vc/fields/formGroups/FamiliarOverlayInput.vue';
   import { computed, nextTick, onUnmounted, type PropType, ref, watch } from 'vue';
 

@@ -112,9 +112,9 @@
         "unknownPathWarning": "Warning unknown path: {path}",
         "contextTooltip": "Context: {context}",
         "conditional": {
-          "unbalancedParens": "#conditional(...) has unbalanced parentheses",
-          "missingElse": "#conditional(...) is missing a required else(...) clause",
-          "multipleElse": "#conditional(...) has more than one else(...) clause",
+          "unbalancedParens": "$conditional(...) has unbalanced parentheses",
+          "missingElse": "$conditional(...) is missing a required else(...) clause",
+          "multipleElse": "$conditional(...) has more than one else(...) clause",
           "whenArgCount": "when(...) requires exactly two arguments: when(condition, value)",
           "elseArgCount": "else(...) requires exactly one argument: else(value)"
         }

@@ -54,12 +54,10 @@
 
   import type { FormulaData } from './FormulaData.mjs';
   import { FormulaField } from './FormulaField.mjs';
+  import { FormulaResolver } from './FormulaResolver.mjs';
   import type { FamiliarSchema } from './types.mts';
   import { useFormulaEditor } from './useFormulaEditor.mjs';
-  import {
-    filterExcludedFields,
-    renderFormulaDisplayHTML,
-  } from './utils.mjs';
+  import { renderFormulaDisplayHTML } from './utils.mjs';
 
   const slots = useSlots();
 
@@ -159,7 +157,7 @@
     }
 
     const excluded = formulaField.value?.excludedFields ?? [];
-    return filterExcludedFields(schema, excluded);
+    return FormulaResolver.filterExcludedFields(schema, excluded);
   });
 
   // Refs

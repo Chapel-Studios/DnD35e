@@ -1,60 +1,21 @@
 /**
- * evaluateBooleanExpression — small, purpose-built comparison/logical expression
- * evaluator for boolean-typed formulas (§7.2a of Phase 7).
+ * FormulaResolver — boolean comparison/logical expression grammar.
  *
- * Operates on an already-substituted formula string (all `#context.property`
- * tokens have been replaced with their literal values by `resolveFormula()`).
- * This is NOT a general JS `eval` and is distinct from `Roll.safeEval` (which
- * only handles dice-formula arithmetic, no comparison/logical operators).
+ * Small, purpose-built evaluator for boolean-typed formulas. Operates on an
+ * already-substituted formula string (all `#context.property` tokens have
+ * been replaced with their literal values by `resolveFormula()`). This is NOT
+ * a general JS `eval` and is distinct from `Roll.safeEval` (which only
+ * handles dice-formula arithmetic, no comparison/logical operators).
  *
- * Supported grammar (standard precedence, lowest to highest):
- *   orExpr         := andExpr ( '||' andExpr )*
- *   andExpr        := notExpr ( '&&' notExpr )*
- *   notExpr        := '!' notExpr | comparison
- *   comparison     := additive ( ('>' | '<' | '>=' | '<=' | '==' | '!=') additive )?
- *   additive       := multiplicative ( ('+' | '-') multiplicative )*
- *   multiplicative := unary ( ('*' | '/') unary )*
- *   unary          := ('-' | '+') unary | primary
- *   primary        := '(' orExpr ')' | NUMBER | STRING | 'true' | 'false' | IDENT
- *
- * `IDENT` covers bareword literals — after substitution, a resolved string
- * value (e.g. a weapon name) appears unquoted in the formula text, so any
- * token that isn't a recognized literal/operator is treated as a string literal.
- *
- * Comparison operands may be arithmetic sub-expressions (e.g.
- * `#actor.hp.max / 2`) — `+`/`-`/`*`/`/` are evaluated with standard
- * precedence before the surrounding comparison is applied.
+ * Split out from FormulaResolver.mts to keep each grammar's tokenizer/parser
+ * self-contained. Consumed by FormulaResolver.mts as a static method.
  *
  * @module
  */
+import type { LiteralValue, Token, TokenType } from './FormulaResolver.types.mjs';
 
-type TokenType =
-  | 'number'
-  | 'string'
-  | 'boolean'
-  | 'ident'
-  | '('
-  | ')'
-  | '&&'
-  | '||'
-  | '!'
-  | '>'
-  | '<'
-  | '>='
-  | '<='
-  | '=='
-  | '!='
-  | '+'
-  | '-'
-  | '*'
-  | '/';
-
-interface Token {
-  type: TokenType;
-  value: string;
-}
-
-const TOKEN_REGEX = /\s*(?:(>=|<=|==|!=|&&|\|\||[()!<>+*/-])|('[^']*'|"[^"]*")|(\d+(?:\.\d+)?)|([^\s()!<>=&|]+))/g;
+const TOKEN_REGEX =
+  /\s*(?:(>=|<=|==|!=|&&|\|\||[()!<>+*/-])|(\$and\b|\$or\b)|('[^']*'|"[^"]*")|(\d+(?:\.\d+)?)|([^\s()!<>=&|]+))/gi;
 
 function tokenize(expression: string): Token[] {
   const tokens: Token[] = [];
@@ -62,9 +23,14 @@ function tokenize(expression: string): Token[] {
   TOKEN_REGEX.lastIndex = 0;
 
   while ((match = TOKEN_REGEX.exec(expression)) !== null) {
-    const [, operator, quoted, number, word] = match;
+    const [, operator, andOr, quoted, number, word] = match;
     if (operator) {
       tokens.push({ type: operator as TokenType, value: operator });
+    } else if (andOr) {
+      // `$and`/`$or` are keyword aliases for `&&`/`||` — same token type, so
+      // the parser below needs no separate handling for them.
+      const mapped: TokenType = andOr.toLowerCase() === '$and' ? '&&' : '||';
+      tokens.push({ type: mapped, value: mapped });
     } else if (quoted) {
       tokens.push({ type: 'string', value: quoted.slice(1, -1) });
     } else if (number) {
@@ -83,8 +49,6 @@ function tokenize(expression: string): Token[] {
 
   return tokens;
 }
-
-type LiteralValue = number | string | boolean;
 
 class ExpressionParser {
   private readonly tokens: Token[];
@@ -127,21 +91,13 @@ class ExpressionParser {
   }
 
   private parseAnd(): LiteralValue {
-    let left = this.parseNot();
+    let left = this.parseComparison();
     while (this.peek()?.type === '&&') {
       this.consume('&&');
-      const right = this.parseNot();
+      const right = this.parseComparison();
       left = this.toBoolean(left) && this.toBoolean(right);
     }
     return left;
-  }
-
-  private parseNot(): LiteralValue {
-    if (this.peek()?.type === '!') {
-      this.consume('!');
-      return !this.toBoolean(this.parseNot());
-    }
-    return this.parseComparison();
   }
 
   private parseComparison(): LiteralValue {
@@ -176,6 +132,10 @@ class ExpressionParser {
   }
 
   private parseUnary(): LiteralValue {
+    if (this.peek()?.type === '!') {
+      this.consume('!');
+      return !this.toBoolean(this.parseUnary());
+    }
     if (this.peek()?.type === '-') {
       this.consume('-');
       const value = this.parseUnary();
@@ -215,9 +175,6 @@ class ExpressionParser {
       const value = this.parseOr();
       this.consume(')');
       return value;
-    }
-    if (token.type === '!') {
-      return this.parseNot();
     }
     if (token.type === 'number') {
       this.consume();
@@ -265,6 +222,34 @@ class ExpressionParser {
 
 /**
  * Evaluate a boolean expression over already-substituted literals.
+ *
+ * Supported grammar (standard precedence, lowest to highest):
+ *   orExpr         := andExpr ( '||' andExpr )*
+ *   andExpr        := comparison ( '&&' comparison )*
+ *   comparison     := additive ( ('>' | '<' | '>=' | '<=' | '==' | '!=') additive )?
+ *   additive       := multiplicative ( ('+' | '-') multiplicative )*
+ *   multiplicative := unary ( ('*' | '/') unary )*
+ *   unary          := ('!' | '-' | '+') unary | primary
+ *   primary        := '(' orExpr ')' | NUMBER | STRING | 'true' | 'false' | IDENT
+ *
+ * `$and`/`$or` are case-insensitive keyword aliases for `&&`/`||` — useful
+ * inside a `$conditional(when(...))` condition where a bare `&&`/`||` can
+ * read awkwardly next to the surrounding keyword syntax. Both spellings
+ * tokenize to the exact same operator, so they're fully interchangeable.
+ *
+ * `!` binds like JS's unary `!` (tighter than comparison, not looser) — it
+ * negates only its immediate operand, so `!#self.broken > 0` reads as
+ * `(!#self.broken) > 0`, not `!(#self.broken > 0)`. Wrap the comparison in
+ * parens if you want to negate the whole thing: `!(#self.hp.value > 0)`.
+ *
+ * `IDENT` covers bareword literals — after substitution, a resolved string
+ * value (e.g. a weapon name) appears unquoted in the formula text, so any
+ * token that isn't a recognized literal/operator is treated as a string literal.
+ *
+ * Comparison operands may be arithmetic sub-expressions (e.g.
+ * `#actor.hp.max / 2`) — `+`/`-`/`*`/`/` are evaluated with standard
+ * precedence before the surrounding comparison is applied.
+ *
  * Throws a descriptive Error on invalid syntax — callers should catch and
  * fall back / surface a validation error rather than letting this throw
  * during derived-data preparation.

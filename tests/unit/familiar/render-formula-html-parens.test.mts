@@ -1,5 +1,8 @@
-import { parseFormula, renderFormulaHTML } from '@helpers/formulae/utils.mjs';
+import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
+import { renderFormulaHTML } from '@helpers/formulae/utils.mjs';
 import { describe, expect, it } from 'vitest';
+
+const { parseFormula } = FormulaResolver;
 
 /**
  * Paren-pairing highlight (added alongside §7.7b's operator-highlighting work).

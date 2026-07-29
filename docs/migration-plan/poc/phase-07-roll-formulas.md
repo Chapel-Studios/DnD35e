@@ -15,7 +15,7 @@
 - **No `@attr` bridging.** The system sends zero `@`-prefixed tokens to Foundry's `Roll`/`_castChangeDelta` pipeline. Every authored formula (weapon damage, DC, AE change value, AE change condition) resolves exclusively through FormulaFamiliar's `#context.property` syntax to a literal value *before* it ever reaches `Roll` or `NumberField._castChangeDelta`. This is already how the shipped code behaves — this phase formalizes it as the permanent design rather than the two-syntax bridge originally sketched below (see §7.2).
 - **Typed resolution.** FormulaFamiliar formulas resolve to one of three output types — `string` (default, name/text interpolation), `number` (already implemented, e.g. Spell Resistance), and `boolean` (new — comparison/logical expressions like `#self.skill.concentration.ranks > 5`). Each `FormulaField`/`FormulaData` declares its `expectedType`, and resolution enforces it instead of only coercing at read time.
 - **First boolean consumer: AE change conditional gate.** A `condition` formula (boolean-typed) on an individual AE change determines whether that change applies at all. This slot already exists as a typed placeholder (`EffectChangeSourceDnd35e.condition`) — this phase implements it for real.
-- **Advanced conditional formula editor.** Every `FormulaFormGroup` gets a button (opt-out via `hideAdvancedEditor` prop) that opens one of two modes depending on the field's `expectedType`: `number`/`string` fields get **Conditional Values** (an ordered list of condition → value rules, first true condition wins, original formula becomes the trailing default); `boolean` fields (e.g. the AE Condition column) get the **Condition Builder** standalone — a single structured condition row, no rule list. Both modes share the same Condition Builder row component (aspect/formula + operator + aspect/formula, AND/OR chaining, "Edit as text" escape hatch) and compile down to a single formula string — no separate structured-data storage format. See §7.10.
+- **Story C rescoped: basic multiline editor + engine consolidation, advanced Condition Builder deferred.** Story C originally planned a full structured Condition Builder / Conditional Values rule-list UI. That's now split in two: (1) consolidate the FormulaFamiliar resolution engine (parsing, `#context.property` substitution, boolean grammar, `$conditional(when()else())`, type validation — currently spread across `utils.mts`, `evaluateBooleanExpression.mts`, `conditionalFormula.mts`) into a single `FormulaResolver` class; (2) every `FormulaFormGroup` gets a button (opt-out via `hideAdvancedEditor` prop) that opens a small modal with a multiline rich-text editor — same `#context.property` rules, highlighting, and validation as the inline field, just with line breaks allowed (line breaks are collapsed/hidden when the formula is displayed back in the single-line field). The structured aspect/operator/value pickers, AND/OR clause builder, and ordered Conditional-Values rule list are deferred to the wishlist (`docs/migration-plan/post-release/WISHLIST.md`) — the `$conditional(when()else())` grammar they'd target already ships today (§7.2a), so the wishlist item is purely front-end sugar on top of existing infra. See §7.10.
 - **Boolean grammar supports arithmetic operands.** Comparison operands in a boolean-typed formula may themselves be arithmetic sub-expressions, e.g. `#actor.hp.current > (#actor.hp.max / 2)`. Required because a `condition` string resolves as one fully-substituted expression handed whole to `evaluateBooleanExpression()` — there is no separate per-operand resolution step, so `+ - * /` (with standard precedence and unary minus) must be part of the same grammar as the comparison/logical operators. **Implemented** — see §7.2a.
 - **AE Sheet Revamp (Story B, redesigned).** Story B's first UI pass (a collapsed toggle row per change) was built, reviewed, and **rejected** — it buried the condition behind an icon and conflated the simple boolean gate with Story C's conditional-value editor. Story B is now scoped as part of a broader Changes-tab redesign, using the AE sheet (General + Material) as the flagship use case for FormulaFamiliar across the system. See §7.7b.
 
@@ -25,10 +25,10 @@
 |---|---|---|
 | **A** | Boolean-typed formulas: schema support, resolution, comparison/logical operators, validation | Existing FormulaFamiliar infra (already built — see note below) |
 | **B** | GM can gate an individual AE change on a boolean formula — change is skipped entirely when false | Story A |
-| **C** | Any formula field can be turned into an ordered list of condition → value rules ("Conditional Values") that compiles to a formula string | Story A (rule conditions are boolean formulas) |
-| **D** | (Existing POC story, §7.9) Clickable defense stat → roll dialog → chat card | §7.1/7.2 (rewritten, no `@` bridge) |
+| **C** | (Rescoped) FormulaFamiliar resolution engine consolidated into one `FormulaResolver` class; every `FormulaFormGroup` gets a basic multiline rich-text modal editor (line breaks allowed, same rules/validation as the inline field). Structured Condition Builder / Conditional Values rule-list UI deferred to `WISHLIST.md` | Story A (boolean grammar); no dependency on the deferred rule-list UI |
+| **D** | (Existing POC story, §7.9) Clickable defense stat → roll dialog → chat card. Also owns §7.7 Group Change Targets (registry mechanism only — filed here for bookkeeping, not a design dependency) | §7.1/7.2 (rewritten, no `@` bridge) |
 
-Stories A→B and A→C are the only hard dependencies; B and C can proceed in parallel once A lands. Story D is unchanged in scope but its roll-building step no longer uses `@` tokens (see §7.2).
+Stories A→B and A→C are the only hard dependencies; B and C can proceed in parallel once A lands. Story D is unchanged in scope but its roll-building step no longer uses `@` tokens (see §7.2). §7.7 (Group Change Targets) is filed under Story D as of this pass — it has no functional relationship to the roll dialog work, it's just the catch-all bucket for phase-7 scope not covered by A/B/C.
 
 > **Status note**: Much of the FormulaFamiliar plumbing this phase originally scoped as net-new (schema walker, `FormulaField`/`FormulaData`, per-context autocomplete, universal `#`-token resolution for AE change values regardless of declared `type`) **already shipped** ahead of this phase, landing alongside Phase 2/5/6 AE work. The Completion Checklist at the bottom of this doc has been updated to reflect what's actually done vs. still pending. D20Roll, DamageRoll, and the roll-dialog/chat-card pipeline (Story D) have **not** started.
 
@@ -111,18 +111,19 @@ Boolean-typed formulas support comparison and logical operators over already-sub
 #actor.hp.current > (#actor.hp.max / 2)
 ```
 
-Supported operators: `>`, `<`, `>=`, `<=`, `==`, `!=`, `&&`, `||`, `!`, `+`, `-`, `*`, `/` (standard arithmetic precedence, unary minus), parentheses for grouping. This is a small, purpose-built evaluator (`evaluateBooleanExpression()`, `src/helpers/formulae/evaluateBooleanExpression.mts`) — not a general JS `eval`, and distinct from `Roll.safeEval`. Grammar:
+Supported operators: `>`, `<`, `>=`, `<=`, `==`, `!=`, `&&`, `||`, `!`, `+`, `-`, `*`, `/` (standard arithmetic precedence, unary minus), parentheses for grouping. This is a small, purpose-built evaluator (`FormulaResolver.evaluateBooleanExpression()`, `src/helpers/formulae/FormulaResolver.mts` — consolidated there per §7.10) — not a general JS `eval`, and distinct from `Roll.safeEval`. Grammar:
 
 ```
 orExpr         := andExpr ( '||' andExpr )*
-andExpr        := notExpr ( '&&' notExpr )*
-notExpr        := '!' notExpr | comparison
+andExpr        := comparison ( '&&' comparison )*
 comparison     := additive ( ('>' | '<' | '>=' | '<=' | '==' | '!=') additive )?
 additive       := multiplicative ( ('+' | '-') multiplicative )*
 multiplicative := unary ( ('*' | '/') unary )*
-unary          := ('-' | '+') unary | primary
+unary          := ('!' | '-' | '+') unary | primary
 primary        := '(' orExpr ')' | NUMBER | STRING | 'true' | 'false' | IDENT
 ```
+
+`!` binds like JS's unary `!` — tighter than comparison, not looser. `!#self.broken > 0` reads as `(!#self.broken) > 0`, not `!(#self.broken > 0)`; wrap the comparison in parens (`!(#self.hp.value > 0)`) to negate the whole thing.
 
 **Status: implemented and tested** (`tests/unit/familiar/evaluate-boolean-expression.test.mts`).
 
@@ -237,7 +238,7 @@ this._preparationWarnings.push({
 });
 ```
 
-## 7.7 Group Change Targets
+## 7.7 Group Change Targets (Story D)
 
 ### Problem
 
@@ -466,10 +467,9 @@ No new component. The Condition column is a plain `FormulaFormGroup` with `expec
 | Create | `src/helpers/rollData.mts` — minimal `getRollData()` assembly for Foundry-native `@attr` consumers only (§7.1) |
 | Create | `src/constants/rollVariables.mts` — canonical formula path documentation |
 | Create | `src/helpers/changeTargetGroups.mts` — `ChangeTargetGroup` interface, registry, `registerChangeTargetGroup()`, `resolveChangeTargets()` |
-| Create | `src/helpers/formulae/evaluateBooleanExpression.mts` — comparison/logical operator evaluator for boolean-typed formulas (Story A, §7.2a) |
-| Create | `src/helpers/formulae/conditionalFormula.mts` — `#if(cond, then, else)` parser + serializer for the advanced editor (Story C, §7.10) |
-| Create | `src/vue/components/.../ConditionBuilder.vue` — shared condition-builder row (aspect/formula + operator ▾ + aspect/formula, AND/OR chaining, text escape hatch); used standalone for boolean fields and embedded per-rule in Conditional Values (Story C, §7.10) |
-| Create | `src/vue/components/.../ConditionalValuesEditor.vue` — rule-list builder UI embedding `ConditionBuilder` per rule (Story C, §7.10) |
+| Create | `src/helpers/formulae/FormulaResolver.mts` — consolidated resolution engine (tokenizing, substitution, boolean grammar, `$conditional(...)`, type validation) — Story C, §7.10 |
+| Delete | `src/helpers/formulae/evaluateBooleanExpression.mts`, `src/helpers/formulae/conditionalFormula.mts` — content absorbed into `FormulaResolver.mts` (Story C, §7.10) |
+| Create | Basic multiline formula editor modal (opt out via `hideAdvancedEditor`) — Story C, §7.10. `ConditionBuilder.vue`/`ConditionalValuesEditor.vue` deferred — see `docs/migration-plan/post-release/WISHLIST.md` |
 | Create | `src/documents/activeEffects/general/sheet/GeneralSheet.mts` / `.vue`, `GeneralStore.mts`, `sheet/tabs/index.mts`, `GeneralDetails.vue` — General AE custom sheet mirroring Material's pattern, bare `EffectDetails`-only Details tab (§7.7b) |
 | Create | `src/documents/activeEffects/baseActiveEffect/logic/evaluateChangeCondition.mts` — AE change conditional gate (Story B, §7.7a) |
 | Expand | Actor `getRollData()` — minimal, Foundry-native mechanics only (not our authored-formula resolution path) |
@@ -578,99 +578,54 @@ A matching `rollAC(acVariant, options)` method follows the same pipeline with AC
 
 ---
 
-## 7.10 Conditional Values & Condition Builder (Story C)
+## 7.10 Basic Formula Editor & Engine Consolidation (Story C)
 
 **User**: Anyone authoring a formula (GM or player, depending on field permissions).
-**Delivers**: An advanced-editor button appears on every `FormulaFormGroup` (opt out via a `hideAdvancedEditor` prop). What it opens depends on the field's `expectedType`:
-- **`number` / `string` fields → Conditional Values**: turns the field into an ordered list of condition → value rules. Rules evaluate top-to-bottom; the first whose condition is true supplies the result. The field's original formula becomes the trailing default, always evaluated last if no rule matches. A preview at the bottom shows the live-evaluated result and the fully compiled formula string.
-- **`boolean` fields (e.g. the AE Condition column, §7.7b) → Condition Builder, standalone**: a single structured condition row (no rule list, no value column — the field *is* the condition), same builder described below minus the per-rule wrapping.
 
-Both modes share the same **Condition Builder** component (aspect + operator + value pickers, described below) — embedded per-rule in Conditional Values, or standalone for a boolean field.
-**Depends on**: Story A (aspect type-awareness drives which operators are offered; boolean grammar is the compiled target).
+Story C is now split into two independent halves.
 
-### Layout — Conditional Values mode (`number`/`string` fields)
+### Half 1 — Consolidate the resolution engine into `FormulaResolver`
 
-Top to bottom in the editor window:
-1. **Header** — field label / context
-2. **"Add Condition" button** (relabels to **"+ Add Rule"** once at least one rule exists) — inserts a new rule row
-3. **Rule rows**, evaluated top-to-bottom. Each newly added rule is appended directly above the default — so the first rule you add is checked first, and each later addition is checked after all earlier ones, right before falling through to the default:
-   - Each row: `[Condition builder]` → `[Value formula (FormulaFormGroup, same expectedType as the field)]` → `[✕ remove row]`
-4. **Default formula** — the field's original plain `FormulaFormGroup`, now labeled as the fallback ("Otherwise…"). Always evaluated last, always present — removing all rules just leaves the plain formula field behaved exactly as it did before Conditional Values was turned on.
-5. **Preview** — live-evaluated result (when a preview context is available) plus the fully compiled formula string, read-only.
+Everything involved in parsing/resolving/validating a `#context.property` formula — tokenizing (`parseFormula`), variable substitution (`resolveFormula`), the boolean comparison/logical grammar (formerly `evaluateBooleanExpression.mts`), the `$conditional(when()else())` parser/evaluator (formerly `conditionalFormula.mts`), and type validation (`validateFormula`/`validateFormulaType`) — consolidate into a single `FormulaResolver` class (`src/helpers/formulae/FormulaResolver.mts`). `FormulaData` delegates to it instead of importing loose functions from three separate files.
 
-### Layout — Condition Builder standalone mode (`boolean` fields)
+Editor-only concerns stay separate and unmoved: `schemaWalker.mts` (schema → `AspectGroup` derivation), `registry.mts` (context/document assembly), and `utils.mts`'s HTML-highlighting/autocomplete/localization-display functions (`renderFormulaHTML`, `getAutocompleteOptions`, `localizeFormula`/`canonicalizeFormula`, etc.) — those serve the live-typing editor UI, not resolution, and folding them in would mix data-resolution concerns with HTML-rendering concerns in one file.
 
-Same editor window, drastically simpler — there's no rule list and no separate value column, since the field itself already *is* the condition:
-1. **Header** — field label / context
-2. A single **Condition Builder** row (see below)
-3. **Preview** — live-evaluated true/false result plus the compiled boolean string, read-only
+#### Compiled Syntax Reference (already implemented)
 
-No "Add Rule" button, no default formula slot — closing the editor just writes the compiled condition string back into the field, same as it would for a plain formula.
+`$conditional(when(cond₁, val₁) when(cond₂, val₂) ... else(default))` — a single inline token (like any `#context.property` reference) that resolves to whichever branch wins, with surrounding literal text/tokens untouched. Implemented and tested today in `FormulaResolver` (formerly `conditionalFormula.mts`); kept here for reference since Half 2's wishlist follow-up (structured Condition Builder) will target this same grammar.
 
-### Condition Builder (shared row component)
-
-Structured, dropdown-driven — no raw text required for the common case:
-
-```
-[ Aspect picker ▾ ]  [ Operator ▾ ]  [ Value: literal input | Aspect picker ▾ ]   ( + AND/OR another clause )
-```
-
-- **Aspect picker**: same autocomplete data source as every other `#`-token picker (schema walker's `AspectGroup` tree) — pick e.g. `#self.skill.concentration.ranks`.
-- **Operator dropdown**: options are filtered by the picked aspect's resolved type (Story A's `FieldAspect.type`):
-  - `number` → `>`, `<`, `>=`, `<=`, `==`, `!=`
-  - `string` → `==`, `!=`
-  - `boolean` → no operator needed; the row becomes a plain "is true" / "is false" toggle
-- **Right-hand value**: a literal input (number/string, matching the aspect's type) **or** a toggle to compare against another aspect instead (e.g. `#self.hp.value < #self.hp.max`).
-- **+ AND / OR**: appends another clause to the same rule's condition, joined by the selected logical operator; renders as a stacked additional `[Aspect] [Operator] [Value]` group with an "AND"/"OR" connector label.
-
-The picker compiles to the exact same boolean-formula text from §7.2a (e.g. `#self.abilities.str.mod >= 2 && #self.bab > 0`) — it's a friendlier front-end onto that grammar, not a separate one. Consequences:
-- The stored/compiled formula stays plain text; existing validation/warning/resolution code needs no changes to support it.
-- **Escape hatch**: an "Edit as text" toggle per condition row falls back to a plain boolean `FormulaFormGroup` for anyone who wants a compound expression the picker can't represent (nested parens, unusual operators). A row left in text mode simply doesn't re-parse into pickers on reopen — no forced conversion.
-
-### Compiled Syntax
-
-Grammar: `#conditional( when(cond₁, val₁) when(cond₂, val₂) ... else(default) )` — a single inline token (like any `#context.property` reference) that resolves to whichever branch wins, with surrounding literal text/tokens untouched.
-
-- **`when(condition, value)`** — zero or more, evaluated in left-to-right source order via the existing boolean grammar (§7.2a); first true `condition` wins and its `value` is resolved (recursively — a `value` may itself contain another `#conditional(...)`).
+- **`when(condition, value)`** — zero or more, evaluated in left-to-right source order via the boolean grammar (§7.2a); first true `condition` wins and its `value` is resolved (recursively — a `value` may itself contain another `$conditional(...)`).
 - **`else(value)`** — required exactly once, may appear anywhere among the clauses; supplies the result when no `when()` matches.
 - **Clause separator is don't-care**: `when(...)`/`else(...)` are self-delimiting via their own balanced parens, so a comma, whitespace, or nothing at all between clauses is equivalent — the parser just scans forward for the next `when(`/`else(` keyword.
-- **Backward compatible**: zero `#conditional(...)` blocks in a formula = today's plain-formula behavior, unchanged.
+- **Backward compatible**: zero `$conditional(...)` blocks in a formula = plain-formula behavior, unchanged.
 - **Non-selected branches are never evaluated** — avoids errors from untaken branches (e.g. a divide-by-zero in a branch that never gets picked).
-- **Matching is lenient**: `#conditional`/`when`/`else` keywords are case-insensitive, optional whitespace before `(`.
+- **Matching is lenient**: `$conditional`/`when`/`else` keywords are case-insensitive, optional whitespace before `(`.
 - **Malformed input** (unbalanced parens, missing `else()`, bad arg count) is a validation error; resolution leaves the formula raw/unresolved rather than guessing.
-- **Token/literal-text adjacency requires parens to disambiguate**: a `#context.property` token immediately followed by more literal text with no separator (e.g. `#self.sneakAttackDice` directly followed by `d6`) greedily merges into one invalid path segment, since a property path segment matches any run of letters/digits/underscores — `sneakAttackDiced6` isn't a real property, so it fails validation. This is a general, pre-existing `VARIABLE_REGEX` characteristic (not specific to `#conditional(...)`), and it's the expected/required pattern going forward: wrap the token in parens to disambiguate, e.g. `(#self.sneakAttackDice)d6`.
-- **Escaping**: `\#`, `\(`, `\)`, and `\,` escape a literal `#`/`(`/`)`/`,` character (same backslash convention throughout the formula grammar). An escaped paren doesn't count toward balanced-paren depth tracking, so a branch value can contain literal/unbalanced parens (e.g. `else(\(unbalanced\))`). Escaping the paren immediately after `when`/`else` (e.g. `when\(`) also prevents that occurrence from being parsed as a clause at all, and escaping `#conditional(`'s own `#` (`\#conditional(`) prevents the whole construct from being recognized as a block. The comma escape matters when a condition's string literal itself contains a comma — e.g. `when(#self.name == "\,", 500)` — since an unescaped comma there would be mistaken for the top-level separator between the clause's own `condition`/`value` arguments.
-- **Condition grammar reminders (from §7.2a)**: string literals accept single **or** double quotes interchangeably; equality is `==` (loose/truthy comparison, coerces number↔string as needed) — there is no single `=` (reserved, unused) and no `===` (not needed at this time). A condition that resolves to a non-boolean value is coerced truthy: numbers are truthy unless `0`, strings are truthy unless empty — e.g. `when(#self.name, 1)` is true whenever the name isn't an empty string.
+- **Token/literal-text adjacency requires parens to disambiguate**: a `#context.property` token immediately followed by more literal text with no separator (e.g. `#self.sneakAttackDice` directly followed by `d6`) greedily merges into one invalid path segment — wrap the token in parens to disambiguate, e.g. `(#self.sneakAttackDice)d6`.
+- **Escaping**: `\#`, `\(`, `\)`, and `\,` escape a literal `#`/`(`/`)`/`,` character. An escaped paren doesn't count toward balanced-paren depth tracking, so a branch value can contain literal/unbalanced parens (e.g. `else(\(unbalanced\))`).
+- **Condition grammar reminders (from §7.2a)**: string literals accept single **or** double quotes interchangeably; equality is `==` (loose/truthy comparison) — no single `=`, no `===`. A condition resolving to a non-boolean value is coerced truthy (numbers truthy unless `0`, strings truthy unless empty). `$and`/`$or` are case-insensitive keyword aliases for `&&`/`||`, fully interchangeable with the symbol form.
 
 ```
-#conditional(when(#self.hp.value <= 0, 0) when(#target.isFlanked, 1d6+(#self.sneakAttackDice)d6) else(2d6))
+$conditional(when(#self.hp.value <= 0, 0) when(#target.isFlanked, 1d6+(#self.sneakAttackDice)d6) else(2d6))
 ```
-Reads: "2d6, unless HP ≤ 0 (then 0), unless flanked (then 1d6 + sneak attack dice)." (`(#self.sneakAttackDice)d6` wraps the token in parens per the adjacency rule above — without the parens, `d6` would merge into the token's path segment and fail validation.)
+Reads: "2d6, unless HP ≤ 0 (then 0), unless flanked (then 1d6 + sneak attack dice)."
 
-Supersedes the earlier `#if(condition, value, elseExpr)` right-nested-chain proposal — same problem (first-match-wins rule list with a mandatory default), but expressed as a flat rule list rather than nested ternaries, matching how "Conditional Values" actually presents to the user (a list of rules + a fallback, not a chain).
+### Half 2 — Basic multiline formula editor
 
-### Opening on an Existing Formula (Round-Trip)
+**Delivers**: An editor button appears on every `FormulaFormGroup` (opt out via a `hideAdvancedEditor` prop). Clicking it opens a small modal containing a multiline rich-text editor for the same formula — identical `#context.property` rules, autocomplete, validation, and highlighting as the inline single-line field, but line breaks are allowed. Line breaks are collapsed/hidden when the value is displayed back in the normal single-line `FormulaFormGroup` field (a display-only transform — the stored formula keeps its real newlines).
 
-Because storage is text-only, opening the editor on an existing value requires parsing it back into rule rows:
+No variable/logic insertion helpers (aspect-picker buttons, operator buttons, snippet insertion) ship in this pass — the modal is a plain rich-text box using the exact same editing rules as today's inline field, just bigger and multiline.
 
-- If the formula contains a `#conditional(...)` block → parse its `when()` clauses into rule rows (in source order) and its `else()` into the default.
-- If it doesn't (a plain value, a hand-typed expression, or anything not expressible in this grammar) → the whole string becomes the default value; the rule list starts empty (best-effort: never silently discard the user's existing formula).
-- Each parsed rule's *condition* is additionally checked against the "simple comparison (+ AND/OR chain)" shape to decide whether it opens in structured-picker mode or falls back to "Edit as text" mode for that one row.
-
-> **Open decision** (explore at implementation start): whether partial/best-effort parsing (recovering a rule list from loosely-formed input) is worth the complexity vs. the simpler "exact grammar or start fresh" rule above. Default: exact-grammar-only — if it doesn't parse cleanly, treat the whole existing string as the default value.
+**Deferred to wishlist** (`docs/migration-plan/post-release/WISHLIST.md`): the structured Condition Builder (aspect + operator + value pickers, AND/OR clause chaining, "Edit as text" escape hatch) and the Conditional Values ordered rule-list editor (add/remove rule rows, live preview, round-trip parsing of an existing `$conditional(...)` block back into rule rows). The `$conditional(when()else())` grammar those would target is already fully implemented and tested (§7.2a) — the wishlist item is purely a friendlier front-end onto that existing grammar, not new resolution logic.
 
 ### Tests
 
-- [ ] Adding a rule inserts a condition+value row above the default; default remains last
-- [ ] Adding a second rule appends it above the default but below the first rule (first-added = evaluated first)
-- [ ] Structured condition compiles to correct boolean text for `number`, `string`, and `boolean` aspect types
-- [ ] AND/OR clause chaining compiles correctly and matches §7.2a's grammar
-- [ ] Comparing against another aspect (not just a literal) compiles correctly
-- [ ] "Edit as text" escape hatch accepts arbitrary boolean formulas and round-trips them as raw text on reopen
-- [ ] Removing a rule re-flattens the chain correctly (no orphaned nesting)
-- [ ] Preview shows correct live result and correct compiled string for a 3+ rule chain
-- [ ] Opening the editor on an existing plain (non-conditional) formula shows it as the default, no rules
-- [ ] Opening the editor on an existing compiled `#conditional(...)` block reconstructs the rule list correctly
+- [ ] `FormulaResolver` consolidation: existing test suites for the boolean grammar, `$conditional(...)` parsing/resolution, `resolveFormula`, and `validateFormula`/`validateFormulaType` all pass unchanged (import path updated to `FormulaResolver.mjs`, behavior identical)
+- [ ] Basic multiline modal: opening the editor shows the current formula with real line breaks
+- [ ] Basic multiline modal: typing/pasting a newline is preserved in the stored formula
+- [ ] Inline `FormulaFormGroup` display collapses/hides line breaks from a formula that contains them
+- [ ] Basic multiline modal: `#context.property` highlighting/validation/autocomplete behave identically to the inline field
+- [ ] `hideAdvancedEditor` prop suppresses the editor button
 
 ---
 
@@ -749,25 +704,28 @@ The FormulaFamiliar core plumbing shipped ahead of this phase, landing alongside
 - [x] Remove the rejected branch-toggle button + collapsible condition row
 - [x] Derive Value column's `expected-type` from the picked aspect (`findAspectByAccessPath()`)
 - [x] Add Condition column: plain `FormulaFormGroup` (`expectedType: 'boolean'`), no new compound component
-- [ ] Extend formula syntax highlighting to tag comparison/logical operators (`>`, `<`, `==`, `&&`, `||`, etc.), not just `#tokens`
-- [ ] Add `hideAdvancedEditor` opt-out prop to `FormulaFormGroup.vue`
-- [ ] Create General AE custom sheet (`GeneralSheet.mts`/`.vue`, `GeneralStore.mts`, `sheet/tabs/index.mts`) mirroring Material's pattern
-- [ ] Test: Condition column accepts and evaluates a boolean formula with operator highlighting
-- [ ] Test: Value column rejects/flags a formula that doesn't match the picked aspect's type
-- [ ] Test: General AE sheet renders Changes/Duration tabs with parity to Material
+- [x] Extend formula syntax highlighting to tag comparison/logical operators (`>`, `<`, `>=`, `<=`, `==`, `!=`, `&&`, `||`), not just `#tokens` — same blue/valid, yellow/still-typing, red/invalid-operand contract as `!` and `()`, reusing shared `classifyOperandForward()`/`classifyOperandBackward()`/`classifyBinaryOperator()` classifiers in `utils.mts`; `&&`/`||` cascade validity through their parenthesized operands via the existing paren-matched-state check (no deep sub-expression validation needed). Added real DOM-focus-based severity escalation (`isFocused` param on `renderFormulaHTML()`, `escalateOnBlur()`): a still-typing operand renders yellow while the field is focused, and escalates to red once the field blurs — applied uniformly to `!`, `()`, comparisons, `&&`/`||`, and the two variable-token "still typing"/"fallback" branches. `useFormulaEditor.mts`'s focus tracking was converted from a non-reactive closure flag to a reactive `isFocused` ref feeding this. AND/OR word-keyword syntax was initially deferred by the user for future consideration (`&&`/`||` symbols only); later implemented as `$and`/`$or` keyword aliases (not `#and`/`#or` — see the sigil rescope note below) once the `#` vs `$` sigil split was settled. See `tests/unit/familiar/render-formula-html-comparison-operators.test.mts`.
+- [x] Highlight `$conditional`/`when(`/`else(` as their own keyword class (new `.formula-keyword`, purple — distinct from data-bound `#context.property` tokens): `$conditional` tracks its block's own well-formedness (purple when clean; yellow-while-focused/red-once-blurred for still-typing states `unbalancedParens`/`missingElse`; always-red for genuinely malformed states `multipleElse`/`whenArgCount`/`elseArgCount` — see `conditionalErrorState()` in `utils.mts`), with the specific localized error as a tooltip. `when(`/`else(` are always plain purple (validity tracked only at the `$conditional` token). Nested `#context.property` tokens and operators inside `when()`/`else()` clauses continue to highlight normally, unaffected. See `tests/unit/familiar/render-formula-html-conditional-keyword.test.mts`.
+- [x] Sigil rescope: the conditional keyword moved from `#conditional(...)` to `$conditional(...)` — `#` is reserved for context/property data references, `$` for control-flow/keyword constructs — eliminating the `isConditionalKeywordToken()` disambiguation hack entirely (a `$`-prefixed token is never extracted as a `#`-style variable in the first place). Also added `$and`/`$or` as case-insensitive keyword aliases for `&&`/`||` in the boolean grammar (`FormulaResolver.booleanGrammar.mts`), rendered as `.formula-operator` like their symbol equivalents. `when`/`else` intentionally kept bare (no `$` prefix) — no disambiguation need, and shorter is better.
+- [x] Create General AE custom sheet (`GeneralSheet.mts`/`.vue`, `GeneralStore.mts`) mirroring Material's pattern — thin pass-through leaf store reusing the base `getDefaultActiveEffectTabs()` directly (no custom tabs needed; General has no fields beyond the base Details/Duration/Changes schema)
+- [x] Test: Condition column accepts and evaluates a boolean formula with operator highlighting
+- [x] Test: Value column rejects/flags a formula that doesn't match the picked aspect's type
+- [x] Test: General AE sheet renders Changes/Duration tabs with parity to Material
 
-**Condition Builder & Conditional Values (Story C, §7.10):**
-- [ ] Build shared **Condition Builder** row component (aspect/formula + operator ▾ + aspect/formula, AND/OR clause chaining, "Edit as text" escape hatch per row)
-- [ ] Wire Condition Builder in **standalone mode** as the advanced-editor target for boolean-typed `FormulaFormGroup`s (Condition column included)
-- [ ] Wire Condition Builder **embedded per-rule** inside Conditional Values for number/string fields
-- [x] Implement `#conditional(when(cond, value) ... else(default))` parser + evaluator (new, `src/helpers/formulae/conditionalFormula.mts`) — flat rule-list shape, `else()` required exactly once, position-independent among clauses; includes `\#`/`\(`/`\)` escaping and parens-required-for-adjacency handling
-- [x] Hook parser into `FormulaData.resolve()`/`resolveSource()` and into `utils.mts`'s `resolveFormula()`/`validateFormula()` so `#conditional(` isn't flagged as an unknown context and malformed blocks surface a structural `ValidationError`
-- [ ] Create `ConditionalValuesEditor.vue` (or equivalent) — rule-list builder UI embedding the Condition Builder per rule
-- [ ] Add "Add Condition" button to `FormulaFormGroup.vue`'s controls; relabels to "+ Add Rule" once a rule exists
-- [ ] Implement live preview (result + compiled formula string) at the bottom of the editor
-- [ ] Save path: serialize rule list → `#conditional(when(...) ... else(...))` block → same `onCommit` the plain text input uses
-- [ ] Non-`#conditional(...)`-parseable existing values: preserve as the default value rather than discarding (see §7.10's round-trip note)
-- [ ] Test: all ten cases listed under §7.10's Tests subsection
+**Basic Formula Editor & Engine Consolidation (Story C, §7.10):**
+- [x] Implement `$conditional(when(cond, value) ... else(default))` parser + evaluator (flat rule-list shape, `else()` required exactly once, position-independent among clauses; includes `\$`/`\(`/`\)` escaping and parens-required-for-adjacency handling) — shipped ahead of this rescope, now living in `FormulaResolver`
+- [x] Hook parser into `FormulaData.resolve()`/`resolveSource()` and into resolution/validation so `$conditional(` isn't flagged as an unknown context and malformed blocks surface a structural `ValidationError` — shipped ahead of this rescope
+- [ ] Create `src/helpers/formulae/FormulaResolver.mts`: consolidate `parseFormula`, `extractVariables`, `resolveFormula`, `getNestedValue`, `fieldAspect`, `getFieldAspect`, `getPropertyValue`, `findAspectByAccessPath`, `mergeAspectGroups`, `filterExcludedFields`, `validateFormula`, `validateFormulaType`, the boolean grammar (formerly `evaluateBooleanExpression.mts`), and the `$conditional(...)` parser (formerly `conditionalFormula.mts`) as static methods on one class
+- [ ] Update `FormulaData.mts` to call `FormulaResolver.*` instead of importing loose functions from three files
+- [ ] Update all cross-file call sites (Vue components, `registry.mts`, tests) to the new import path
+- [ ] Delete `evaluateBooleanExpression.mts` and `conditionalFormula.mts` (content absorbed)
+- [ ] Build clean; all existing familiar/effects unit tests pass unchanged (behavior-preserving refactor)
+- [ ] Add basic multiline editor button to `FormulaFormGroup.vue`'s controls, including its `hideAdvancedEditor` opt-out prop (moved here from §7.7b — can't have an opt-out for a button that doesn't exist yet; this is where the button itself is built)
+- [ ] Create the multiline modal component: rich-text box, same `#context.property` validation/highlighting/autocomplete as the inline field, line breaks allowed
+- [ ] Inline `FormulaFormGroup` display: collapse/hide line breaks when rendering a multiline formula back in the single-line field
+- [ ] Save path: modal writes back through the same `onCommit` the plain text input uses
+- [ ] Test: all cases listed under §7.10's Tests subsection
+- [ ] Wishlist: file the deferred Condition Builder / Conditional Values rule-list editor in `docs/migration-plan/post-release/WISHLIST.md` (done as part of this rescope)
 
 **D20Roll Custom Class** in `src/dice/D20Roll.mts`:
 - [ ] Extend Foundry's `Roll` class
@@ -898,9 +856,9 @@ The FormulaFamiliar core plumbing shipped ahead of this phase, landing alongside
 **POC Story 7.9 — Clickable Defense Stat → Roll → Chat Card:**
 
 *`CreatureDefenseStat.vue`*
-- [ ] Create `src/vue/components/actors/CreatureDefenseStat.vue`
-- [ ] Props: `label: string`, `value: number`, `rollable: boolean` (default `true`)
-- [ ] Edit mode: read-only display, no click handler
+- [x] `src/documents/actors/creature/sheet/components/CreatureDefenseStat.vue` already exists (read-only shield display: `label`/`value`/`sublabel`/tooltips) — different path than originally sketched (`src/vue/components/actors/`), and it is NOT yet interactive. Extend this component rather than creating a new one.
+- [ ] Add `rollable: boolean` prop (default `true`)
+- [ ] Edit mode: read-only display, no click handler (already true today, since there's no click handler at all yet)
 - [ ] Play / True mode: cursor pointer, click emits roll intent
 - [ ] Wire into header stat pills: Fort | Ref | Will | AC (normal)
 - [ ] Wire into Combat tab rows: all three AC variants + fort/ref/will rows

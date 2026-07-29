@@ -67,3 +67,20 @@ Foundry core ships generic `blink` and `displace` teleport-style movement action
 Placed tokens copy `sight`/`detectionModes` from the actor's `prototypeToken` once, at creation — Foundry never re-derives those fields from the actor afterward (confirmed by reading `TokenDocument#prepareBaseData`/`prepareDerivedData` in Foundry core; no auto-sync exists). Standard Foundry behavior is that an actor edit doesn't retroactively update already-placed tokens for fields like this — the GM deletes and re-drags the token (or uses `updateVisionMode()`/manual token edits) to pick up changes. poc.9 accepts this standard behavior rather than building a bespoke live-sync hook (`updateActor` → `updateEmbeddedDocuments('Token', ...)`).
 
 Revisit if this friction proves painful in practice — a hook could push `buildTokenVisionFromSenses()` output onto linked placed tokens on `system.bio.senses` changes, surgically merging `detectionModes` (preserving unrelated GM-added entries like `seeInvisibility`).
+
+---
+
+## Formula System
+
+### Structured Condition Builder & Conditional Values rule-list editor
+Phase 7 (poc.7) Story C originally planned a full structured editor for formula fields: a **Condition Builder** row (aspect picker + operator dropdown, filtered by the picked aspect's type, + a literal-or-aspect value + AND/OR clause chaining + an "Edit as text" escape hatch), used two ways:
+- **Standalone**, as the advanced-editor target for boolean-typed fields (e.g. the AE Condition column)
+- **Embedded per-rule** inside a **Conditional Values** editor for `number`/`string` fields — an ordered list of condition → value rules (first true condition wins), with the field's original formula as the trailing default, a "+ Add Rule" button, and a live preview of the result and compiled formula string
+
+Both compile down to the same `$conditional(when(cond, value) ... else(default))` grammar that already ships and is fully tested today (`FormulaResolver`, see `docs/migration-plan/poc/phase-07-roll-formulas.md` §7.10) — this wishlist item is purely a friendlier front-end onto existing infrastructure, not new resolution logic.
+
+Also deferred: **round-trip parsing** — opening the editor on an existing formula needs to parse a `$conditional(...)` block back into rule rows (in source order), falling back to "whole string becomes the default, rule list starts empty" for anything not expressible in the grammar. Whether to attempt best-effort/partial parsing of loosely-formed input, or require an exact-grammar match before offering structured rows (falling back to raw text otherwise), is still an open question — default toward exact-grammar-only for simplicity.
+
+Also deferred: helper buttons on the new basic multiline modal editor (§7.10 Half 2) to insert `#context.property` variables or `$conditional(...)` scaffolding without hand-typing — the modal shipped as a plain rich-text box for the initial pass.
+
+Affects: `src/helpers/formulae/FormulaFormGroup.vue`, a new `ConditionBuilder.vue` / `ConditionalValuesEditor.vue` (not yet created), the AE Condition column (`EffectChangesList.vue`).

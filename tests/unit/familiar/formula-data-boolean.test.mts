@@ -1,9 +1,10 @@
-import { evaluateBooleanExpression } from '@helpers/formulae/evaluateBooleanExpression.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
+import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
 import type { FamiliarSchema,FieldAspect } from '@helpers/formulae/types.mjs';
-import { resolveFormula, validateFormulaType } from '@helpers/formulae/utils.mjs';
 import type { Mock } from 'vitest';
 import { describe, expect, it } from 'vitest';
+
+const { evaluateBooleanExpression, resolveFormula, validateFormulaType } = FormulaResolver;
 
 /**
  * Story A (§7.2a, Phase 7) — boolean formula resolution + type-mismatch validation.
