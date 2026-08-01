@@ -6,7 +6,7 @@
           ref="inputRef"
           type="text"
           class="familiar-overlay-input"
-          :class="[props.inputClass, props.inputStateClasses]"
+          :class="[props.inputClass, props.inputStateClasses, { 'has-decoration': hasDecoration }]"
           :id="props.id"
           :value="props.modelValue"
           :disabled="props.disabled"
@@ -24,9 +24,19 @@
         <div
           ref="highlightLayerRef"
           class="familiar-overlay-highlight"
-          :class="[props.highlightClass, props.highlightStateClasses]"
+          :class="[props.highlightClass, props.highlightStateClasses, { 'has-decoration': hasDecoration }]"
           v-html="props.highlightedHtml"
         ></div>
+
+        <!--
+          Field decoration slot (e.g. the advanced-editor expand button, poc §7.10):
+          rendered as an overlay button INSIDE the text field itself so it stays
+          visible regardless of `hideFieldControls`/`hideLabel`/hint visibility —
+          those only affect the FormGroup label row and hint text, not this input.
+        -->
+        <div v-if="hasDecoration" class="familiar-overlay-decoration">
+          <slot name="decoration" />
+        </div>
       </div>
 
       <FamiliarDropdown
@@ -49,7 +59,7 @@
   import type { AutocompleteOption } from '@helpers/formulae/types.mjs';
   import FamiliarDropdown from '@vc/FamiliarDropdown.vue';
   import type { PropType } from 'vue';
-  import { ref } from 'vue';
+  import { computed, ref, useSlots } from 'vue';
 
   const props = defineProps({
     modelValue: { type: String, default: '' },
@@ -88,6 +98,10 @@
     scroll: [event: Event];
     select: [option: AutocompleteOption];
   }>();
+
+  const slots = useSlots();
+  /** Whether a `#decoration` button (e.g. the advanced-editor expand button) was provided. */
+  const hasDecoration = computed(() => !!slots.decoration);
 
   const inputRef = ref<HTMLInputElement>();
   const highlightLayerRef = ref<HTMLDivElement>();

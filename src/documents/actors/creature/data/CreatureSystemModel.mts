@@ -49,6 +49,8 @@ abstract class CreatureSystemModel extends ActorSystemModel {
    *  - `encumbrance.carriedWeight`: would compound, only recomputed via item changes
    *  - `encumbrance.carryBonus`/`carryMultiplier`: reset to schema defaults (0 / 1)
    *  - `maxDexBonus`/`armorCheckPenalty`: reset so DOWNGRADE applies correctly each pass
+   *  - `saves.fort`/`.reflex`/`.will`: reset to 0 so 'initial'-phase Value formula
+   *    changes don't compound across repeated prepare passes
    * See docs/architecture/actor-data-pipeline.md.
    */
   override prepareBaseData(): void {
@@ -64,6 +66,10 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     this.encumbrance.carryMultiplier = 1;
     this.encumbrance.maxDexBonus = null;
     this.encumbrance.armorCheckPenalty = 0;
+
+    this.saves.fort = 0;
+    this.saves.reflex = 0;
+    this.saves.will = 0;
   }
 
   override prepareDerivedData(): void {
@@ -148,14 +154,10 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       }),
     });
 
-    const saveEntry = () => new SchemaField({
-      total: useDnd35eField(derivedNumberField(0)),
-    });
-
     schema.saves = new SchemaField({
-      fort: saveEntry(),
-      ref:  saveEntry(),
-      will: saveEntry(),
+      fort:   useDnd35eField(derivedNumberField(0)),
+      reflex: useDnd35eField(derivedNumberField(0)),
+      will:   useDnd35eField(derivedNumberField(0)),
     });
 
     schema.init = new SchemaField({

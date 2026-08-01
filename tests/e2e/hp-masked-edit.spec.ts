@@ -16,7 +16,7 @@ test.describe('HP masked edit (delta-mirror strategy)', () => {
     await clearWorld(page);
   });
 
-  test.skip('TODO(poc.6): actor mask read/write path is incomplete mid-phase; re-enable after actor mask implementation + final phase 6 E2E pass', async ({ page }) => {
+  test.skip('TODO(poc.6): actor mask read/write path is incomplete mid-phase; re-enable after actor mask implementation + final poc Phase 6 E2E pass', async ({ page }) => {
     await gotoGame(page);
 
     const actorUuid = await createActor(page, 'character', {

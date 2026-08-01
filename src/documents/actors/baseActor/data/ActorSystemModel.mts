@@ -16,8 +16,12 @@ abstract class ActorSystemModel extends DocumentSystemModel<foundry.documents.Ac
   static override defineSchema(): Record<string, any> {
     const schema = super.defineSchema();
 
+    // Speed is stored in squares (canonical unit — 1 square = 5 ft = 1.5 m), translated
+    // to the world's localized unit for display via `settingsStore.mts`'s
+    // `convertToLocalizedDistance`/`convertToStoredDistance`. Land speed defaults to
+    // 6 squares (30 ft, the SRD default for a Medium humanoid).
     schema.speed = new SchemaField({
-      land:   speedField(30),
+      land:   speedField(6),
       climb:  speedField(0),
       swim:   speedField(0),
       burrow: speedField(0),

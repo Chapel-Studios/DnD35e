@@ -47,7 +47,7 @@ test.describe('Prone movement actions (Drop Prone / Crawl / Stand Up)', () => {
 
     const actorUuid = await createActor(page, 'character', {
       name: 'Prone Test Fighter',
-      system: { speed: { land: 30 } },
+      system: { speed: { land: 6 } },
     });
     const tokenId = await placeToken(page, actorUuid, { x: 300, y: 300 });
     tokenIds.push(tokenId);

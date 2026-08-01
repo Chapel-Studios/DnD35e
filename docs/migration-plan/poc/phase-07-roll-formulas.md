@@ -18,6 +18,7 @@
 - **Story C rescoped: basic multiline editor + engine consolidation, advanced Condition Builder deferred.** Story C originally planned a full structured Condition Builder / Conditional Values rule-list UI. That's now split in two: (1) consolidate the FormulaFamiliar resolution engine (parsing, `#context.property` substitution, boolean grammar, `$conditional(when()else())`, type validation — currently spread across `utils.mts`, `evaluateBooleanExpression.mts`, `conditionalFormula.mts`) into a single `FormulaResolver` class; (2) every `FormulaFormGroup` gets a button (opt-out via `hideAdvancedEditor` prop) that opens a small modal with a multiline rich-text editor — same `#context.property` rules, highlighting, and validation as the inline field, just with line breaks allowed (line breaks are collapsed/hidden when the formula is displayed back in the single-line field). The structured aspect/operator/value pickers, AND/OR clause builder, and ordered Conditional-Values rule list are deferred to the wishlist (`docs/migration-plan/post-release/WISHLIST.md`) — the `$conditional(when()else())` grammar they'd target already ships today (§7.2a), so the wishlist item is purely front-end sugar on top of existing infra. See §7.10.
 - **Boolean grammar supports arithmetic operands.** Comparison operands in a boolean-typed formula may themselves be arithmetic sub-expressions, e.g. `#actor.hp.current > (#actor.hp.max / 2)`. Required because a `condition` string resolves as one fully-substituted expression handed whole to `evaluateBooleanExpression()` — there is no separate per-operand resolution step, so `+ - * /` (with standard precedence and unary minus) must be part of the same grammar as the comparison/logical operators. **Implemented** — see §7.2a.
 - **AE Sheet Revamp (Story B, redesigned).** Story B's first UI pass (a collapsed toggle row per change) was built, reviewed, and **rejected** — it buried the condition behind an icon and conflated the simple boolean gate with Story C's conditional-value editor. Story B is now scoped as part of a broader Changes-tab redesign, using the AE sheet (General + Material) as the flagship use case for FormulaFamiliar across the system. See §7.7b.
+- **Array operators (Story A follow-up).** `ArrayField`s currently have no real `FieldAspect.type` — they fall through the schema walker's default branch, get mis-tagged `'string'`, and silently resolve via `Array.prototype.toString()` comma-joining. This adds a proper `'array'` `FieldAspect.type` plus a small `$contains`/`$find`/`$any`/`$count`/`$stringContains` function set (same `$`-prefixed pre-processing tier as `$conditional`, one shared `FormulaResolver.functionGrammar.mts` module) for querying arrays and searching strings. See §7.2b. **Item-collection contexts** (`#self.items` and per-type-aware `#it` resolution for querying an actor's/container's inventory) are a related but larger follow-up, deliberately split out to §7.2c so they don't block §7.2b's simpler schema-array case.
 
 ## Stories (this decomposition)
 
@@ -140,6 +141,125 @@ primary        := '(' orExpr ')' | NUMBER | STRING | 'true' | 'false' | IDENT
 - `FormulaData._finalizeResolvedValue()`: branch on `'boolean'` — run `evaluateBooleanExpression()` instead of `Roll.safeEval`; store `'true'`/`'false'` as the resolved string (consistent with how `resolveActiveEffectChangeValue()` already special-cases `BooleanField` results).
 - `FormulaField` constructor options: `expectedType` widens to include `'boolean'`.
 
+## 7.2b Array & String Operators (Story A follow-up)
+
+`ArrayField`s (`languages`, `damageReductionTypes`, `senses`, `attacks`, AE `changes`, etc.) currently fall through `schemaWalker.inferFieldType()`'s default branch and get mis-tagged `'string'` — at resolution time `String(rawArray)` silently comma-joins the elements (`Array.prototype.toString()`), which happens to look plausible but has no real containment/count/lookup semantics. This section gives arrays a real `FieldAspect.type` and a small set of `$`-prefixed functions (same sigil convention as `$conditional`) for querying them, plus a matching string-search function for plain-text fields.
+
+### Function Set
+
+| Function | Operand shape | Signature | Returns |
+|---|---|---|---|
+| `$contains` | primitive array (`ArrayField(StringField\|NumberField)`) | `$contains(#context.path, value)` | `boolean` — exact membership (case-sensitive, same semantics as `==`) |
+| `$contains` | object array (`ArrayField(SchemaField)`) | `$contains(#context.path, #it.field == value ...)` | `boolean` — true if any element matches the predicate |
+| `$find` | object array | `$find(#context.path, #it.field == value ...).resultField` | scalar — the matched element's `resultField`; `""` if no match |
+| `$any` | array (either) | `$any(#context.path)` | `boolean` — array has ≥1 element |
+| `$any` | object array | `$any(#context.path, #it.field == value ...)` | `boolean` — true if any element matches the predicate (alias for `$contains`'s predicate mode) |
+| `$count` | array (either) | `$count(#context.path)` | `number` — array length |
+| `$count` | object array | `$count(#context.path, #it.field == value ...)` | `number` — count of elements matching the predicate |
+| `$stringContains` | string | `$stringContains(#context.path, "substring")` | `boolean` — case-sensitive substring match |
+
+```
+$contains(#self.languages, "Elvish")
+$contains(#self.senses, #it.type == "darkvision")
+$find(#self.senses, #it.type == "darkvision").distance > 0
+$any(#self.attacks)
+$count(#self.damageReductionTypes)
+$count(#self.senses, #it.range > 30)
+$stringContains(#self.name, "zodiac")
+```
+
+- **`#it`** is a bound per-element variable, valid only inside a `$contains`/`$find` predicate — resolved against each array element in turn using the same schema/type info as the array's own `SchemaField` definition. It does not exist anywhere else in the grammar.
+- **Dispatch**: `$contains`/`$any`/`$count`'s 2nd argument (when present) is primitive-membership mode if it contains no `#it` reference, predicate mode if it does — no separate function name needed for the two array shapes. `$any`/`$count` also accept a bare 1-argument form (no predicate) for the plain non-empty-check/length case.
+- **`$find` requires a trailing `.resultField`** immediately after its closing paren (`$find(...).range`, not bare `$find(...)`) — a "found object" is never itself a usable formula value, only its projected field is.
+- **Predicates support the full boolean grammar** (`&&`, `||`, `!`, nested comparisons) — reuses `evaluateBooleanExpression()` unchanged.
+- **No match / empty array** → resolves to `""` (consistent with how other unresolvable tokens behave).
+- **`$stringContains` is case-sensitive** — same exact-match convention as `==`/`$contains`, no separate case-insensitive variant in this pass. Its 2nd argument is a plain string literal (or a resolved `#context.property` token) — no `#it` involved, it's a two-arg function like `$any`/`$count`, not a predicate form.
+- These are all pre-processing blocks, same tier as `$conditional(...)` — resolved to a literal *before* the generic `#context.property` substitution pass runs, so they compose with `$conditional(...)` for free (e.g. a `$contains(...)` or `$stringContains(...)` can appear inside a `when()`/`else()` clause and vice versa).
+
+### Schema Walker & `FieldAspect` Changes
+
+- `FieldAspect.type` widens to `'string' | 'number' | 'boolean' | 'array'`.
+- New `FieldAspect.arrayElement` metadata, present only when `type === 'array'`:
+  - Primitive array: `{ kind: 'primitive', type: 'string' | 'number' }`
+  - Object array: `{ kind: 'object', elementFields: <raw inner SchemaField.fields> }` — cached so predicate evaluation can re-walk the same fields per array element (reusing `walkFields`'s existing type-coercion/alias logic) without re-deriving them from the live DataModel at resolve time.
+- `schemaWalker.mts`'s `walkFields` gains an `ArrayField` branch (currently falls through to the default leaf branch and is mis-tagged `'string'` — see intro above).
+
+### New Grammar Module
+
+- `FormulaResolver.functionGrammar.mts` (mirrors `FormulaResolver.conditionalGrammar.mts`'s block-scanning structure) — one shared module resolving `$contains`/`$find`/`$any`/`$count`/`$stringContains` blocks, since they're all the same `$name(args)` pre-processing tier regardless of whether the underlying operand is an array or a string.
+- `findMatchingParen`/`splitTopLevelArgs` extracted out of `conditionalGrammar.mts` into a shared helper module so all grammars use one copy.
+- Wired into `FormulaResolver.resolveFormula()` as a pre-pass alongside `$conditional` resolution (before the generic `#context.property` substitution loop).
+
+### Autocomplete (`#it.*` inside predicates)
+
+While the caret is inside an open `$contains(`/`$find(` call, past its array-reference argument, the autocomplete dropdown temporarily offers `it` as a selectable context scoped to that specific array field's element schema (`arrayElement.elementFields`) — everywhere else, `it` is not a valid context. This needs its own caret/bracket-depth detection in `useFamiliar.mts`/`useFamiliarOverlayInput.mts` and is the least-precedented piece of this section; expect it to take its own design pass once the resolution engine below is solid. `$stringContains` has no predicate argument, so it needs no `#it` autocomplete support.
+
+### Tests
+
+- [x] `$contains` primitive-array membership: true/false cases, case-sensitivity
+- [x] `$contains` object-array predicate: true/false cases, compound `&&`/`||` predicates
+- [x] `$find` object-array predicate + trailing `.field` projection: match and no-match (`""`) cases
+- [x] `$any`/`$count` on both primitive and object arrays, including empty arrays, and with/without a `#it` predicate
+- [x] `$stringContains` true/false cases, case-sensitivity
+- [x] `$contains`/`$find`/`$stringContains` nested inside a `$conditional(when()else())` block resolve correctly
+- [x] Schema walker: `ArrayField(StringField|NumberField)` → `FieldAspect.type === 'array'`, `arrayElement.kind === 'primitive'`
+- [x] Schema walker: `ArrayField(SchemaField)` → `FieldAspect.type === 'array'`, `arrayElement.kind === 'object'` with correct `elementFields`
+- [x] Autocomplete: `#it.*` suggestions appear only while the caret is inside a `$contains`/`$find`/`$any`/`$count` call, scoped to that array's element schema (`itContext.mts`'s `resolveItAutocompleteContext`, tested in `tests/unit/familiar/function-grammar.test.mts`)
+
+## 7.2c Item Collection Contexts (future follow-up — depends on §7.2b)
+
+**Status**: ✅ Implemented (full scope). Builds directly on §7.2b's `$contains`/`$find`/`$any`/`$count` function grammar.
+
+### Implementation Notes
+
+- **New `ArrayElementInfo` variant**: `{ kind: 'heterogeneous', documentType: foundry.CONST.DocumentType, filterTypes?: string[] }` (`src/helpers/formulae/types.mts`) — sibling to the existing `'primitive'`/`'object'` variants. `filterTypes` narrows a sub-collection (e.g. `weapons`) to a subset of registered subtypes.
+- **`withItemCollectionAspects(group, context?)`** (`src/helpers/formulae/itemCollectionFamiliar.mts`) injects `items`/`weapons`/`equipment` `FieldAspect`s (`type: 'array'`, `accessPath: 'items'`, `arrayElement.kind: 'heterogeneous'`) onto any document-level group. `weapons` filters to `[weaponItemType]`, `equipment` filters to `EQUIPPABLE_ITEM_TYPES` (newly exported from `itemTypes.mts`). Computes a live `.value` count from the passed document context when available. Wired into `registerFamiliarSchema('Actor', ...)` (all actor subtypes) and `registerFamiliarSchema('Item', containerItemType, ...)` in `src/documents/actors/registration.mts` / `src/documents/items/registration.mts`.
+- **Per-element type-aware predicate resolution**: `FormulaResolver.functionGrammar.mts`'s `evaluatePredicateForHeterogeneousElement()` resolves each array element's own `#it.*` schema via `getFamiliarBuilder(documentType, element.type)(element)` rather than one shared `elementFields` shape — a predicate referencing a field the element's type lacks fails variable substitution and is treated as non-matching, never throws (verified in tests).
+- **`familiarBuilderRegistry.mts` extraction**: the `documentType → subtype → builder` Map and its accessors (`registerFamiliarSchema`, `hasFamiliarSchema`, `getFamiliarBuilder`, new `getRegisteredSubtypes(documentType)`) were extracted from `registry.mts` into a dependency-free leaf module so `functionGrammar.mts` can call `getFamiliarBuilder()` directly without a `registry.mts → FormulaResolver.mjs → functionGrammar.mts → registry.mts` runtime cycle. `registry.mts` re-exports everything for backward compatibility.
+- **`EmbeddedCollection` support**: Foundry's `actor.items`/`item.items` are Map-based `EmbeddedCollection`s, not real arrays — `resolveFunctionBlock()`'s array-retrieval step now accepts any iterable (`Symbol.iterator`) and materializes it via spread, in addition to `Array.isArray()`.
+- **Autocomplete union with provenance (`ownerTypes`)**: `buildMergedFamiliarContext(documentType, subtypes)` (`registry.mts`) tags each merged leaf field with `ownerTypes: string[]` listing which subtype(s) it came from, then strips `ownerTypes` from fields universal to every merged subtype (so only subtype-specific fields are flagged). `itContext.mts`'s `buildItFamiliarContext()` calls this for `arrayElement.kind === 'heterogeneous'`, using `filterTypes` when present or `getRegisteredSubtypes(documentType)` otherwise, to build the `#it` autocomplete context for `$find(#self.items, #it. ...)`.
+- **Provenance badge UI**: `FamiliarDropdown.vue` renders a small badge (`.option-owner-badge`) next to any autocomplete option carrying `ownerTypes`, showing which item subtype(s) the field applies to.
+- **i18n**: `dnd35e.Formula.ItemCollections.items`/`.weapons`/`.equipment` added to `src/lang/en/common.json` (labels for the three built-in collections; `itemCollectionFamiliar.mts`'s `localize()` helper falls back to hardcoded English if a key is ever missing).
+- **Tests**: `tests/unit/familiar/item-collection-contexts.test.mts` (8 tests) covers `withItemCollectionAspects` shape/live-count, `$count`/`$any` over a heterogeneous fixture collection, the "field doesn't exist on this subtype → non-matching, not throwing" case, and `buildMergedFamiliarContext`'s `ownerTypes` tagging (unique-to-one-subtype vs. universal fields, and the empty/no-registered-subtypes case).
+
+**Goal**: `#self.items` (and, symmetrically, a container item's own `#self.items` for its contents) exposes a document's embedded Item collection as a queryable array:
+
+```
+$count(#self.items, $stringContains(#it.name, "zodiac"))
+$find(#self.items, #it.type == "weapon" && #it.system.enhancement > 1).name
+```
+
+- **Per-element type-aware resolution.** Unlike a uniform `ArrayField(SchemaField)` array (`senses`, `attacks`), `#self.items` is heterogeneous — each element's real fields depend on its own `type` (weapon vs. spell vs. feat, etc.). At runtime, `#it.*` for a given element must resolve against **that element's own registered builder** (`getFamiliarBuilder('Item', item.type)(item)`), not one shared `elementFields` shape. A predicate referencing a field the element's type doesn't have resolves as unresolvable for that element → treated as non-matching, never throws.
+- **Autocomplete union.** While typing inside a `$find(#self.items, #it. ...)` predicate, the dropdown should offer the *union* of every registered Item subtype's schema — reuse the existing `buildMergedFamiliarContext('Item', allRegisteredItemTypes)` (`registry.mts`), the same mechanism `AspectPicker` already uses for cross-subtype union display (orphaned effects / compendium entries with no live parent). Not every offered field will exist on every element at runtime — expected, mirrors how `AspectPicker` already behaves.
+- **Filtered sub-collections (later extension).** `#self.weapons`, `#self.equipment`, etc. — same iteration/predicate mechanism, pre-filtered to a subset of item types or a whole composition tier (e.g. "equippable" — the amalgamated context across all `EquippableItem`-derived subtypes). `buildMergedFamiliarContext` already generalizes to tier-level merges for this case.
+- **Containers included for free.** A container item's own `#self.items` refers to its contents — same document shape (`.items` `EmbeddedCollection`), same mechanism, no separate design needed.
+
+## 7.2d Unit Conversion Functions (`$fromFeet`/`$fromMeters`/`$fromKg`)
+
+**Status**: ✅ Implemented. Not tied to a Story — an ad hoc addition alongside a system-wide change to the canonical distance storage unit.
+
+**Architecture change**: canonical storage for every distance-bearing field (`speed.*`, `senses[].distance`, `attacks[].rangeIncrement`, weapon `rangeIncrement`) is now **squares** (1 square = 5 ft = 1.5 m, the SRD's own grid unit), not feet. `settingsStore.mts`'s `convertToLocalizedDistance`/`convertToStoredDistance` translate squares to the world's configured unit (ft or m) for display — there is no "stored value is feet" assumption anywhere in the schema layer anymore. This is a pre-release/POC-stage schema change; no data migration was needed.
+
+`$fromFeet(n)`/`$fromMeters(n)` let a value formula (e.g. an AE change's `value`, or a compendium author's homebrew formula) be written in real-world units and resolve to the stored square count:
+
+```
+$fromFeet(60)    → '12'   (60 ft / 5 = 12 squares)
+$fromMeters(9)   → '6'    (9 m / 1.5 = 6 squares)
+$fromMeters(2)   → '1.33' (non-exact conversions round to 2 decimal places)
+```
+
+`$fromKg(n)` is the weight equivalent: canonical storage for weight-bearing fields is pounds (`settingsStore.mts`'s `convertToLocalizedWeight`/`convertToStoredWeight` translate lbs to kg for metric display, factor 1 kg = 2 lbs). It lets a value formula be authored in kilograms and resolve to the stored pound value:
+
+```
+$fromKg(10)  → '20'   (10 kg * 2 = 20 lbs)
+$fromKg(2.5) → '5'    (2.5 kg * 2 = 5 lbs)
+```
+
+- Same `$name(...)` pre-processing tier as `$contains`/`$find`/`$any`/`$count`/`$stringContains` (§7.2b) — lives in the same `FormulaResolver.functionGrammar.mts` module, reusing its `resolveOperand()` helper (single scalar argument, quoted-literal-or-sub-formula resolution).
+- A non-numeric operand resolves to `'0'` rather than throwing, matching the rest of the module's fallback convention.
+- `$fromKg`/`$fromFeet`/`$fromMeters` all round to 2 decimal places, matching display precision for weight and distance.
+- Foundry's own scene grid (`grid.distance`/`grid.units`, `src/documents/scene/registration.mts`) is unaffected — that's a Foundry API contract denominated directly in ft/m, orthogonal to system schema storage.
+
 ## 7.3 FormulaFamiliar Context Declarations
 
 Establish the canonical formula contexts used throughout the system:
@@ -173,7 +293,7 @@ Establish and document the canonical `#context.property` paths:
 | `#self.abilities.str.total` | Total Strength score |
 | `#self.bab` | Base attack bonus |
 | `#self.defense.armorClass` | Normal AC |
-| `#self.saves.fort.total` | Fort save total |
+| `#self.saves.fort` | Fort save total |
 | `#self.attributes.init.total` | Initiative total |
 | `#self.details.level` | Character level |
 | `#self.skills.perception.total` | Skill total |
@@ -239,6 +359,22 @@ this._preparationWarnings.push({
 ```
 
 ## 7.7 Group Change Targets (Story D)
+
+**Status**: ✅ Implemented (POC scope — `group:allSaves` only).
+
+### Implementation Notes
+
+The design below was implemented essentially as sketched, with these concrete details:
+
+- Registry lives in `src/helpers/formulae/changeTargetGroups.mts`: `changeTargetGroups` Map, `registerChangeTargetGroup()`, `resolveChangeTargets()`, plus two helpers not in the original sketch:
+  - `expandChangeTargetGroups(changes, actor)` — flat-maps an array of resolved changes, cloning each change once per expanded field path. Extracted as its own exported function (rather than inlined in the apply loop) so it's testable without importing `ActorDnd35e` as a live module (see below).
+  - `withChangeTargetGroups(context)` — appends registered groups as synthetic `isGroup: true` leaf entries onto a `FamiliarContext.properties`, without mutating the input context.
+- **Apply-loop wiring is actor-only**: `ActorDnd35e.applyActiveEffects()` calls `expandChangeTargetGroups(changes, this)` right before `applyStackedActiveEffectChanges()`. `ItemDnd35e.applyActiveEffects()` was NOT wired up — `ChangeTargetGroup.expand(actor)` takes an actor, and no groups currently target item-only fields. If a future group needs to target items, `expand()`'s signature and the item apply loop will both need revisiting.
+- **Formula Familiar wiring is key-picker-only, actor-target-only**: `EffectChangesList.vue`'s `getKeyPickerContext(target)` calls `withChangeTargetGroups()` only when `target === EFFECT_CHANGE_TARGET.ACTOR`; the Value/Condition column contexts (`getContextsForTarget()`) are untouched, so groups never leak into formula value/condition autocomplete — matching the "natural boundary" described above.
+- **Visual hint**: `FamiliarDropdown.vue` renders a small `fa-layer-group` icon plus an italicized label for any `AutocompleteOption` with `isGroup: true` (propagated from `FieldAspect.isGroup` via `getAutocompleteOptions()`).
+- **Colon-in-key parsing caveat**: `group:allSaves`'s colon is illegal in `VARIABLE_REGEX`'s path-segment character class, so `AspectPicker.vue`'s `rawToFamiliar()` special-cases registered group keys with a direct registry lookup + `game.i18n.localize()`, bypassing `findAspectByAccessPath`/`localizeFormula`'s regex-tokenizing path entirely for that one branch. The reverse direction (`familiarToRaw()` / dropdown selection via `option.accessPath`) needed no changes — the colon only ever appears in output strings there, never re-tokenized.
+- **Tests**: `tests/unit/familiar/change-target-groups.test.mts` (registry + `withChangeTargetGroups` unit tests), `tests/unit/effects/actor-apply-change-groups.test.mts` (`expandChangeTargetGroups` unit tests + integration with `applyStackedActiveEffectChanges` proving each expanded field stacks independently by bonus type), `tests/unit/components/AspectPicker.test.mts` (group-key display round-trip, no false "property not found" error).
+- Only `group:allSaves` is registered so far (POC scope, per the recommendation below) — skills groups (`group:allSkills`, `group:dexSkills`, etc.) are deferred to Phase 9 when the skills data model lands, as originally planned.
 
 ### Problem
 
@@ -317,7 +453,7 @@ for (const [key, group] of changeTargetGroups) {
 }
 ```
 
-Group targets only appear in the AE change key picker (where expansion makes sense). They do not appear in formula value contexts (where a single numeric value is needed, e.g., `#self.saves.fort.total` in a formula string). This is a natural boundary: the FF already separates "what can be targeted by an AE change" from "what can be referenced in a formula."
+Group targets only appear in the AE change key picker (where expansion makes sense). They do not appear in formula value contexts (where a single numeric value is needed, e.g., `#self.saves.fort` in a formula string). This is a natural boundary: the FF already separates "what can be targeted by an AE change" from "what can be referenced in a formula."
 
 ### Expected Groups
 
@@ -325,7 +461,7 @@ Registered by later phases as their data models land:
 
 | Registering Phase | Group Key | Label | Expands To |
 |-------------------|-----------|-------|------------|
-| Phase 9 | `group:allSaves` | "All Saving Throws" | `system.saves.fort.value`, `.ref.value`, `.will.value` |
+| Phase 9 | `group:allSaves` | "All Saving Throws" | `system.saves.fort`, `.reflex`, `.will` |
 | Phase 9 | `group:allSkills` | "All Skills" | Every `system.skills.<key>.value` |
 | Phase 9 | `group:strSkills` | "Strength Skills" | Skills keyed to Str |
 | Phase 9 | `group:dexSkills` | "Dexterity Skills" | Skills keyed to Dex |
@@ -394,7 +530,7 @@ Superseded by §7.7b (AE Sheet Revamp) — the condition input is a dedicated **
 - [x] Change with a `condition` formula that resolves `true` applies
 - [x] Change with a `condition` formula that resolves `false` is skipped — target field unaffected, no `Override` recorded for it
 - [x] Invalid `condition` formula → warning generated, change treated as `false` (skipped), no crash
-- [ ] Condition on a `group:`-targeted change (§7.7) gates the whole expanded group
+- [x] Condition on a `group:`-targeted change (§7.7) gates the whole expanded group — `condition` is evaluated in `ActorDnd35e.applyActiveEffects()` at change-collection time, before `expandChangeTargetGroups()` runs; a `false` condition drops the change before it ever reaches expansion, so the entire group is skipped as one unit
 
 ## 7.7b AE Sheet Revamp — Changes Tab Redesign
 
@@ -620,12 +756,12 @@ No variable/logic insertion helpers (aspect-picker buttons, operator buttons, sn
 
 ### Tests
 
-- [ ] `FormulaResolver` consolidation: existing test suites for the boolean grammar, `$conditional(...)` parsing/resolution, `resolveFormula`, and `validateFormula`/`validateFormulaType` all pass unchanged (import path updated to `FormulaResolver.mjs`, behavior identical)
-- [ ] Basic multiline modal: opening the editor shows the current formula with real line breaks
-- [ ] Basic multiline modal: typing/pasting a newline is preserved in the stored formula
-- [ ] Inline `FormulaFormGroup` display collapses/hides line breaks from a formula that contains them
-- [ ] Basic multiline modal: `#context.property` highlighting/validation/autocomplete behave identically to the inline field
-- [ ] `hideAdvancedEditor` prop suppresses the editor button
+- [x] `FormulaResolver` consolidation: existing test suites for the boolean grammar, `$conditional(...)` parsing/resolution, `resolveFormula`, and `validateFormula`/`validateFormulaType` all pass unchanged (import path updated to `FormulaResolver.mjs`, behavior identical)
+- [x] Basic multiline modal: opening the editor shows the current formula with real line breaks (`tests/unit/familiar/formula-multiline-modal.test.mts`, mounts the real `FormulaMultilineModal.vue`)
+- [x] Basic multiline modal: typing/pasting a newline is preserved in the stored formula (`tests/unit/familiar/use-formula-editor-multiline.test.mts`)
+- [x] Inline `FormulaFormGroup` display collapses/hides line breaks from a formula that contains them, including collapsing indentation/extra whitespace left by an indented multiline formula (`collapseFormulaLineBreaks`, same test file)
+- [x] Basic multiline modal: `#context.property` highlighting/validation/autocomplete behave identically to the inline field (`tests/unit/familiar/formula-multiline-modal.test.mts`)
+- [x] `hideAdvancedEditor` prop suppresses the editor button (`tests/unit/familiar/formula-form-group-advanced-editor.test.mts`)
 
 ---
 
@@ -693,6 +829,18 @@ The FormulaFamiliar core plumbing shipped ahead of this phase, landing alongside
 
 **Boolean Formula Type (Story A, §7.2a):** — ✅ moved to Complete above.
 
+**Array Operators (Story A follow-up, §7.2b):**
+- [x] `FieldAspect.type` widens to include `'array'`; new `arrayElement` metadata (`{ kind: 'primitive', type }` or `{ kind: 'object', elementFields }`)
+- [x] `schemaWalker.mts`: `walkFields`/`inferFieldType`/`resolveValue` gain array handling (fixes the current mis-tagging as `'string'`; array `.value` resolves to element count)
+- [x] Extract `findMatchingParen`/`splitTopLevelArgs` out of `conditionalGrammar.mts` into a shared helper used by all grammars
+- [x] Create `FormulaResolver.functionGrammar.mts`: `$contains`/`$find`/`$any`/`$count`/`$stringContains` block scanning + resolution (one shared module for array + string functions)
+- [x] Wire the new grammar into `FormulaResolver.resolveFormula()` as a pre-pass alongside `$conditional`
+- [x] `$find`'s trailing `.resultField` projection parsing (dotted-path suffix after the block's closing paren)
+- [x] `#it` predicate evaluation: synthetic per-element `FamiliarSchema`/context, reusing `resolveFormula` + `evaluateBooleanExpression` — also extended to `$any`/`$count`'s optional 2nd argument
+- [x] `$stringContains`: case-sensitive substring match, no `#it` involved
+- [ ] Autocomplete: `#it.*` suggestions scoped to the array's element schema while the caret is inside a `$contains`/`$find` call
+- [x] Test: all cases listed under §7.2b's Tests subsection (except the deferred autocomplete item above)
+
 **AE Change Conditional Gate (Story B, §7.7a):** — schema/logic/wiring ✅ moved to Complete above. Remaining:
 - [ ] UI — see AE Sheet Revamp checklist below (§7.7b)
 
@@ -715,17 +863,17 @@ The FormulaFamiliar core plumbing shipped ahead of this phase, landing alongside
 **Basic Formula Editor & Engine Consolidation (Story C, §7.10):**
 - [x] Implement `$conditional(when(cond, value) ... else(default))` parser + evaluator (flat rule-list shape, `else()` required exactly once, position-independent among clauses; includes `\$`/`\(`/`\)` escaping and parens-required-for-adjacency handling) — shipped ahead of this rescope, now living in `FormulaResolver`
 - [x] Hook parser into `FormulaData.resolve()`/`resolveSource()` and into resolution/validation so `$conditional(` isn't flagged as an unknown context and malformed blocks surface a structural `ValidationError` — shipped ahead of this rescope
-- [ ] Create `src/helpers/formulae/FormulaResolver.mts`: consolidate `parseFormula`, `extractVariables`, `resolveFormula`, `getNestedValue`, `fieldAspect`, `getFieldAspect`, `getPropertyValue`, `findAspectByAccessPath`, `mergeAspectGroups`, `filterExcludedFields`, `validateFormula`, `validateFormulaType`, the boolean grammar (formerly `evaluateBooleanExpression.mts`), and the `$conditional(...)` parser (formerly `conditionalFormula.mts`) as static methods on one class
-- [ ] Update `FormulaData.mts` to call `FormulaResolver.*` instead of importing loose functions from three files
-- [ ] Update all cross-file call sites (Vue components, `registry.mts`, tests) to the new import path
-- [ ] Delete `evaluateBooleanExpression.mts` and `conditionalFormula.mts` (content absorbed)
-- [ ] Build clean; all existing familiar/effects unit tests pass unchanged (behavior-preserving refactor)
-- [ ] Add basic multiline editor button to `FormulaFormGroup.vue`'s controls, including its `hideAdvancedEditor` opt-out prop (moved here from §7.7b — can't have an opt-out for a button that doesn't exist yet; this is where the button itself is built)
-- [ ] Create the multiline modal component: rich-text box, same `#context.property` validation/highlighting/autocomplete as the inline field, line breaks allowed
-- [ ] Inline `FormulaFormGroup` display: collapse/hide line breaks when rendering a multiline formula back in the single-line field
-- [ ] Save path: modal writes back through the same `onCommit` the plain text input uses
-- [ ] Test: all cases listed under §7.10's Tests subsection
-- [ ] Wishlist: file the deferred Condition Builder / Conditional Values rule-list editor in `docs/migration-plan/post-release/WISHLIST.md` (done as part of this rescope)
+- [x] Create `src/helpers/formulae/FormulaResolver.mts`: consolidate `parseFormula`, `extractVariables`, `resolveFormula`, `getNestedValue`, `fieldAspect`, `getFieldAspect`, `getPropertyValue`, `findAspectByAccessPath`, `mergeAspectGroups`, `filterExcludedFields`, `validateFormula`, `validateFormulaType`, the boolean grammar (formerly `evaluateBooleanExpression.mts`), and the `$conditional(...)` parser (formerly `conditionalFormula.mts`) as static methods on one class (split across `FormulaResolver.aspectResolution.mts`/`.validation.mts`/`.booleanGrammar.mts`/`.conditionalGrammar.mts`/`.functionGrammar.mts`/`.parenUtils.mts`, re-exported as one facade class)
+- [x] Update `FormulaData.mts` to call `FormulaResolver.*` instead of importing loose functions from three files
+- [x] Update all cross-file call sites (Vue components, `registry.mts`, tests) to the new import path
+- [x] Delete `evaluateBooleanExpression.mts` and `conditionalFormula.mts` (content absorbed)
+- [x] Build clean; all existing familiar/effects unit tests pass unchanged (behavior-preserving refactor)
+- [x] Add basic multiline editor button to `FormulaFormGroup.vue`, including its `hideAdvancedEditor` opt-out prop — note: the button was later relocated from FormGroup's `#controls` slot to a `#decoration` slot rendered inside `FamiliarOverlayInput` itself, so it stays visible even when a consumer sets `hideFieldControls` (e.g. the AE Changes table row)
+- [x] Create the multiline modal component: rich-text box, same `#context.property` validation/highlighting/autocomplete as the inline field, line breaks allowed (`FormulaMultilineModal.vue`, shares `useFormulaEditor`'s `multiline` mode)
+- [x] Inline `FormulaFormGroup` display: collapse/hide line breaks when rendering a multiline formula back in the single-line field (including indentation/extra whitespace, not just newlines)
+- [x] Save path: modal writes back through the same `onCommit` the plain text input uses (`commitFormula` shared between both)
+- [x] Test: all cases listed under §7.10's Tests subsection
+- [x] Wishlist: file the deferred Condition Builder / Conditional Values rule-list editor in `docs/migration-plan/post-release/WISHLIST.md` (done as part of this rescope)
 
 **D20Roll Custom Class** in `src/dice/D20Roll.mts`:
 - [ ] Extend Foundry's `Roll` class

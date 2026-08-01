@@ -23,7 +23,7 @@ import {
 import { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import { TokenRulerDnd35e } from '@canvas/token/TokenRulerDnd35e.mjs';
 import { BLINDED_CONDITION_ID, buildConditionStatusEffects } from '@constants/conditions.mjs';
-import { gatherAspectsFromSchema, registerFamiliarSchema } from '@helpers/formulae/index.mjs';
+import { gatherAspectsFromSchema, registerFamiliarSchema, withItemCollectionAspects } from '@helpers/formulae/index.mjs';
 import { TokenDocumentDnd35e } from '@scene/tokenDocument/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
@@ -104,12 +104,12 @@ export const registerActors = () => {
     });
 
     // Register familiar schemas for formula resolution
-    registerFamiliarSchema('Actor', characterActorType, (ctx?) => gatherAspectsFromSchema(CharacterSystemModel, ctx));
+    registerFamiliarSchema('Actor', characterActorType, (ctx?) => withItemCollectionAspects(gatherAspectsFromSchema(CharacterSystemModel, ctx), ctx));
 
-    // Register remaining types with the base schema for now (stubs — full models added in Phase 23)
+    // Register remaining types with the base schema for now (stubs — full models added in a future, not-yet-scheduled phase)
     for (const type of ACTOR_TYPES) {
       if (type === characterActorType) continue;
-      registerFamiliarSchema('Actor', type, (ctx?) => gatherAspectsFromSchema(CharacterSystemModel, ctx));
+      registerFamiliarSchema('Actor', type, (ctx?) => withItemCollectionAspects(gatherAspectsFromSchema(CharacterSystemModel, ctx), ctx));
     }
   });
 };

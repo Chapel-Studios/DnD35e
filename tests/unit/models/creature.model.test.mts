@@ -214,18 +214,18 @@ describe('computeEncumbranceTier', () => {
 
 describe('getEncumberedSpeed', () => {
   it.each([
-    [0, 30], // light -> full speed
-    [1, 20], // medium -> reduced speed (base 30 -> 20 per SRD table)
-    [2, 20], // heavy -> same reduced speed as medium
-    [3, 5],  // max lift -> 5-foot stagger
-    [4, 5],  // drag -> 5-foot stagger
-    [5, 0],  // beyond drag -> immobile
-  ])('base speed 30, tier %i -> speed %i', (tier, expectedSpeed) => {
-    expect(getEncumberedSpeed(30, tier)).toBe(expectedSpeed);
+    [0, 6], // light -> full speed
+    [1, 4], // medium -> reduced speed (base 6 squares/30 ft -> 4 squares/20 ft per SRD table)
+    [2, 4], // heavy -> same reduced speed as medium
+    [3, 1], // max lift -> 1-square (5-foot) stagger
+    [4, 1], // drag -> 1-square (5-foot) stagger
+    [5, 0], // beyond drag -> immobile
+  ])('base speed 6 squares (30 ft), tier %i -> speed %i', (tier, expectedSpeed) => {
+    expect(getEncumberedSpeed(6, tier)).toBe(expectedSpeed);
   });
 
   it('returns full speed unchanged for light load regardless of base speed', () => {
-    expect(getEncumberedSpeed(40, 0)).toBe(40);
+    expect(getEncumberedSpeed(8, 0)).toBe(8);
   });
 });
 
@@ -273,9 +273,9 @@ describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
       spellResistance: { formula: '', expectedType: 'number', resolvedValue: '0' },
     } as any;
     model.saves = {
-      fort: { total: 0 },
-      ref: { total: 0 },
-      will: { total: 0 },
+      fort: 0,
+      reflex: 0,
+      will: 0,
     } as any;
     model.init = { total: 0 } as any;
     model.bab = { total: 0 } as any;
@@ -300,9 +300,9 @@ describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
 
   it('baseline saves all default to 0 (no modifiers applied)', () => {
     const model = buildModel({});
-    expect(model.saves.fort.total).toBe(0);
-    expect(model.saves.ref.total).toBe(0);
-    expect(model.saves.will.total).toBe(0);
+    expect(model.saves.fort).toBe(0);
+    expect(model.saves.reflex).toBe(0);
+    expect(model.saves.will).toBe(0);
   });
 
   it('baseline initiative defaults to 0 (no DEX adjustment)', () => {

@@ -36,7 +36,7 @@
   // TODO: Dual-stack awareness — when viewing as unidentified (non-GM), this component
   // must filter out effect overrides from unidentified sources. Currently shows ALL overrides.
   // The sparkle icon should not appear if the only modifiers come from hidden effects.
-  // See Phase 2 §2.5.3 for the design. Blocked on RenderModeStore injection + getEffectsForField filtering.
+  // See poc Phase 2 §2.5.3 for the design. Blocked on RenderModeStore injection + getEffectsForField filtering.
   import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { formatChangeTypeSymbol } from '@effects/baseActiveEffect/logic/index.mjs';

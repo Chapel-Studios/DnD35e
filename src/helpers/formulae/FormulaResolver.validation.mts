@@ -12,9 +12,13 @@
 import { extractVariables, getFieldAspect } from './FormulaResolver.aspectResolution.mjs';
 import { evaluateBooleanExpression } from './FormulaResolver.booleanGrammar.mjs';
 import { findConditionalBlocks } from './FormulaResolver.conditionalGrammar.mjs';
+import { findFunctionBlocks } from './FormulaResolver.functionGrammar.mjs';
+import { findUnbalancedParenIndices } from './FormulaResolver.parenUtils.mjs';
+import { buildItFamiliarContext } from './itContext.mjs';
 import { normalizeLabel } from './schemaWalker.mjs';
 import type {
   AspectGroup,
+  FamiliarContext,
   FamiliarSchema,
   FieldAspect,
   FormulaVariable,
@@ -26,14 +30,68 @@ import { isFieldAspect } from './types.mjs';
  * Validate all variables in a formula
  * @param formula The formula string
  * @param context The familiar context
+ * @param isFocused Whether the field is currently being actively typed in. When `true`,
+ *   the generic whole-formula unbalanced-parens check (below) is suppressed — mirrors the
+ *   yellow-while-focused/red-once-blurred convention `renderFormulaHTML`'s `isFocused`
+ *   param already uses for paren highlighting, since a still-open `(` with nothing typed
+ *   after it yet (e.g. `$conditional(`) is a normal, valid mid-typing state, not an error.
+ *   Defaults to `false` (treat as a finished/at-rest formula) for callers that don't track
+ *   focus (e.g. tests, one-shot validation).
  * @returns Array of validation errors (empty if valid)
  */
-export function validateFormula(formula: string, context: FamiliarSchema): ValidationError[] {
+export function validateFormula(formula: string, context: FamiliarSchema, isFocused = false): ValidationError[] {
   if (!context) return [];
   const errors: ValidationError[] = [];
   const variables = extractVariables(formula);
 
+  // A stray paren sitting outside every recognized `$conditional(...)`/
+  // `$name(...)` keyword block (e.g. an extra leftover `(` typed before an
+  // otherwise well-formed `$conditional(...)`) never surfaces via the
+  // block-scoped checks below — each of those only inspects parens *within*
+  // its own keyword's span. Check the whole formula's paren balance
+  // separately so this class of typo still produces a real error (with
+  // `context: ''`, so it surfaces in the form group's main hint banner)
+  // instead of only the purely-visual per-character red paren highlighting
+  // in `renderFormulaHTML`. Skipped entirely while still focused/typing —
+  // otherwise a bare in-progress `$conditional(` (or any freshly-opened
+  // paren with no closer typed yet) would flash a hard field-level error on
+  // every keystroke before the user has had a chance to finish it.
+  if (!isFocused) {
+    for (const index of findUnbalancedParenIndices(formula)) {
+      errors.push({
+        variable: formula,
+        context: '',
+        path: [],
+        error: game.i18n.localize('dnd35e.Formula.Errors.unbalancedParens'),
+        severity: 'error',
+        index,
+      });
+    }
+  }
+
+  // poc §7.2b: a well-formed $contains/$find/$any/$count(...) block (not
+  // $stringContains, which has no predicate) makes `#it` a valid context —
+  // but only *inside that block's own span* — scoped to its array's
+  // object-element schema. Precompute those per-block `it` contexts once so
+  // `#it.*` variables validate against the right schema instead of a false
+  // "unknown context" error.
+  const itBlocks: { startIndex: number; endIndex: number; itContext: FamiliarContext }[] = [];
+  for (const block of findFunctionBlocks(formula)) {
+    if (block.error || block.name === 'stringContains' || block.args.length < 2) continue;
+    const itContext = buildItFamiliarContext(block.args[0], context);
+    if (itContext) itBlocks.push({ startIndex: block.startIndex, endIndex: block.endIndex, itContext });
+  }
+
   for (const variable of variables) {
+    if (variable.context === 'it') {
+      const owning = itBlocks.find(b => variable.startIndex >= b.startIndex && variable.endIndex <= b.endIndex);
+      if (owning) {
+        const error = validateVariable(variable, { ...context, it: owning.itContext });
+        if (error) errors.push(error);
+        continue;
+      }
+    }
+
     const error = validateVariable(variable, context);
     if (error) {
       errors.push(error);
@@ -47,6 +105,18 @@ export function validateFormula(formula: string, context: FamiliarSchema): Valid
       context: 'conditional',
       path: [],
       error: game.i18n.localize(`dnd35e.Formula.Errors.conditional.${block.error}`),
+      severity: 'error',
+      index: block.startIndex,
+    });
+  }
+
+  for (const block of findFunctionBlocks(formula)) {
+    if (!block.error) continue;
+    errors.push({
+      variable: block.raw,
+      context: 'function',
+      path: [],
+      error: game.i18n.format(`dnd35e.Formula.Errors.function.${block.error}`, { name: block.name }),
       severity: 'error',
       index: block.startIndex,
     });
@@ -125,6 +195,16 @@ export function validateFormulaType(
 
   const resolved = resolveFormulaFromSchemaValues(formula, context);
   if (extractVariables(resolved).length > 0) return null;
+  // `resolveFormulaFromSchemaValues` only substitutes `#context.property`
+  // variables — it never resolves `$conditional`/`$contains`/`$find`/`$any`/
+  // `$count`/`$stringContains` blocks (that needs a live document, which this
+  // schema-only editor check doesn't have). Any unescaped `$` left in the
+  // resolved text means the formula's final value can't be determined here —
+  // bail rather than force-coercing raw `$...` syntax through `Number()`/
+  // `Roll.safeEval()`/`evaluateBooleanExpression()`, which would always fail.
+  // This also covers the still-typing case (`$`, `$c`, `$contains(` with no
+  // closing paren yet) — an in-progress `$` block isn't a type error either.
+  if (/(?<!\\)\$/.test(resolved)) return null;
 
   if (expectedType === 'number') {
     const trimmed = resolved.trim();

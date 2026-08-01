@@ -25,7 +25,7 @@
       />
     </template>
     <template #item-readonly="{ item }">
-      <template v-if="item.type !== LOW_LIGHT_VISION">{{ item.distance }}&thinsp;{{ distanceUnit }} </template>{{ localize(SENSE_TYPES_LOCALIZED[item.type]) }}
+      <template v-if="item.type !== LOW_LIGHT_VISION">{{ convertToLocalizedDistance(item.distance) }}&thinsp;{{ distanceUnit }} </template>{{ localize(SENSE_TYPES_LOCALIZED[item.type]) }}
     </template>
   </ListFormGroup>
 </template>
@@ -61,6 +61,7 @@
   const {
     measurement: {
       distanceDisplayShortLabel,
+      convertToLocalizedDistance,
     },
   } = inject(SettingsStoreSymbol) as SettingsStore;
 
@@ -83,7 +84,8 @@
     const newSense: SenseEntrySource = {
       type: nextSense.value,
       // Low-light vision has no fixed range in Foundry (it enhances existing light instead), so it never needs a distance.
-      distance: nextSense.value === LOW_LIGHT_VISION ? 0 : 60,
+      // Stored in squares (canonical unit) — 12 squares = 60 ft, the common SRD darkvision/blindsense default.
+      distance: nextSense.value === LOW_LIGHT_VISION ? 0 : 12,
     };
     sensesUpdater([...senses.value, newSense]);
   }

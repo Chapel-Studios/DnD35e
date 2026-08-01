@@ -1,5 +1,11 @@
 {
   "TYPES": {
+    "ActiveEffect": {
+      "general": "Active Effect",
+      "material": "Material",
+      "secret": "Secret",
+      "containment": "Containment"
+    },
     "GENERAL": "Active Effect",
     "SECRET": "Secret",
     "MATERIAL": "Material",
@@ -54,6 +60,9 @@
         "Type": "Type",
         "Value": "Value"
       },
+      "FieldPlaceholder": "e.g. system.abilities.str.score",
+      "ValuePlaceholder": "Enter a value or formula\u2026",
+      "ConditionPlaceholder": "Enter a condition (optional)\u2026",
       "IncompleteChangesWarning": "This effect has incomplete changes that will not be applied.",
       "ChangeTarget": {
         "Target": "Target",

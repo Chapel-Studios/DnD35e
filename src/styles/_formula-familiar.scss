@@ -42,6 +42,25 @@
   overflow: hidden;
 }
 
+/**
+ * Field decoration button (e.g. the advanced-editor expand button, poc §7.10):
+ * overlaid INSIDE the text field itself so it stays visible regardless of
+ * FormGroup-level `hideFieldControls`/`hideLabel`/hint visibility — those
+ * only affect the label row and hint text, never this input. Sits above both
+ * the real input (z-index 2) and the highlight layer (z-index 1) so it stays
+ * clickable. `.formula-input`/`.highlight-layer` reserve horizontal space via
+ * `.has-decoration` (below) so real text never scrolls under the button.
+ */
+.familiar-overlay-decoration {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+}
+
 .familiar-overlay-hint {
   margin: 0.25rem 0 0;
   font-size: var(--font-size-11);
@@ -196,6 +215,10 @@
   padding: 0.65rem;
   border: 1px solid transparent; // match input border width for alignment
   color: #d4d4d4; // plain text visible — variables override with their own color
+
+  &.has-decoration {
+    padding-right: 2.25rem;
+  }
 }
 
 .formula-input {
@@ -238,4 +261,29 @@
     background: rgba(102, 166, 255, 0.35);
     color: inherit;
   }
+
+  &.has-decoration {
+    padding-right: 2.25rem;
+  }
+}
+
+/**
+ * Multiline modifiers (poc §7.10 advanced editor modal): the single-line variants
+ * above use `white-space: pre` (no wrapping, horizontal scroll) — the
+ * multiline textarea variant needs to actually wrap, size to the modal, and
+ * remain vertically resizable/scrollable.
+ */
+.highlight-layer-multiline {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: auto;
+}
+
+.formula-input-multiline {
+  min-height: 12rem;
+  height: 100%;
+  resize: vertical;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: auto;
 }

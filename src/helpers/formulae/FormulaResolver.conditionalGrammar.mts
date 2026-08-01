@@ -17,69 +17,11 @@
  *
  * @module
  */
+import { findMatchingParen, splitTopLevelArgs } from './FormulaResolver.parenUtils.mjs';
 import type { ConditionalBlock, ConditionalBlockError, ConditionalWhenClause } from './FormulaResolver.types.mjs';
 
 const CONDITIONAL_OPEN_REGEX = /(?<!\\)\$conditional\s*\(/gi;
 const CLAUSE_KEYWORD_REGEX = /(?<![\p{L}\p{N}_])(when|else)\s*\(/giu;
-
-/**
- * Find the index of the closing paren matching the '(' at `openIndex`.
- * Returns -1 if the parens never balance out.
- *
- * A backslash-escaped paren (`\(` or `\)`) doesn't count toward depth — it's
- * skipped entirely (along with its backslash) so literal/unbalanced parens can
- * appear inside a value without breaking the scan.
- */
-function findMatchingParen(text: string, openIndex: number): number {
-  let depth = 0;
-  for (let i = openIndex; i < text.length; i++) {
-    const ch = text[i];
-    if (ch === '\\') {
-      i++; // skip the escaped character entirely — not syntax-significant
-      continue;
-    }
-    if (ch === '(') depth++;
-    else if (ch === ')') {
-      depth--;
-      if (depth === 0) return i;
-    }
-  }
-  return -1;
-}
-
-/**
- * Split text on top-level commas only, respecting nested parens.
- * Backslash-escaped characters (`\(`, `\)`, `\,`, etc.) are passed through
- * untouched and never treated as syntax (paren depth or a split point).
- */
-function splitTopLevelArgs(argsText: string): string[] {
-  const parts: string[] = [];
-  let depth = 0;
-  let current = '';
-
-  for (let i = 0; i < argsText.length; i++) {
-    const ch = argsText[i];
-    if (ch === '\\' && i + 1 < argsText.length) {
-      current += ch + argsText[i + 1];
-      i++;
-      continue;
-    }
-    if (ch === '(') {
-      depth++;
-      current += ch;
-    } else if (ch === ')') {
-      depth--;
-      current += ch;
-    } else if (ch === ',' && depth === 0) {
-      parts.push(current.trim());
-      current = '';
-    } else {
-      current += ch;
-    }
-  }
-  parts.push(current.trim());
-  return parts;
-}
 
 interface RawClause {
   keyword: 'when' | 'else';

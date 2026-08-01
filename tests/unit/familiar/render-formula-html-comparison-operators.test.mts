@@ -7,7 +7,7 @@ const { parseFormula, validateFormula } = FormulaResolver;
 
 /**
  * Comparison (`<`, `>`, `>=`, `<=`, `==`, `!=`) and logical (`&&`, `||`)
- * operator highlighting — §7.7b operator-highlighting work, extending the
+ * operator highlighting — poc §7.7b operator-highlighting work, extending the
  * `!`/paren conventions to binary operators.
  *
  * - blue (no modifier) — both operand slots are present/complete (a number,

@@ -45,7 +45,9 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
     }
 
     syncOpenSheetTitle(item.sheet);
-    await item.parent?.sheet?.render(true);
+    // `force: false` is a no-op when closed — editing an effect's changes must
+    // never force-open the owning actor's sheet, only refresh it if already open.
+    if (item.parent?.sheet?.rendered) item.parent.sheet.render(false);
 
     if (!item.parent) {
       game.documentIndex?.replaceDocument(item as unknown as foundry.abstract.Document);

@@ -24,9 +24,9 @@ interface EffectChangeSourceDnd35e extends Omit<EffectChangeData, 'effect'> {
   target: EffectChangeTarget;
   isSystem: boolean;
   label?: string;
-  /** Optional bonus type for stacking resolution. Only set when stacking applies (Phase 2+). */
+  /** Optional bonus type for stacking resolution. Only set when stacking applies (poc Phase 2+). */
   bonusType?: BonusType | null;
-  /** Optional formula-familiar condition for action-phase changes. Phase 8+. Must round-trip through the database, so string-form (FormulaFamiliar boolean grammar) only — no function form. */
+  /** Optional formula-familiar condition for action-phase changes. poc Phase 8+. Must round-trip through the database, so string-form (FormulaFamiliar boolean grammar) only — no function form. */
   condition?: string | null;
 }
 

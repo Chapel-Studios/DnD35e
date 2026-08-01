@@ -40,7 +40,7 @@ class ActiveEffectSystemModel extends DocumentSystemModel<foundry.documents.Acti
       // matching triggers here activate — applying additional changes, rolling
       // dice, or running a formula.
       //
-      // Planned schema shape (not yet implemented — Phase 10 / Action System):
+      // Planned schema shape (not yet implemented — alpha Phase 3 / Action System):
       //   triggers: ArrayField(SchemaField({
       //     event: StringField          — e.g. 'onHit', 'broken', 'death'
       //     target: StringField         — 'owner' | 'actor' | 'any'

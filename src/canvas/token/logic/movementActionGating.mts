@@ -6,7 +6,7 @@ import type { SpeedType } from '@constants/speeds.mjs';
 /**
  * The dnd35e-specific "run" movement action — not one of Foundry's built-in defaults.
  * SRD running: move up to 4x land speed, but only in a straight line (see WISHLIST.md /
- * phase-09-basic-tokens.md "Movement Action Gating"). Registered in `registration.mts`;
+ * poc/phase-09-basic-tokens.md "Movement Action Gating"). Registered in `registration.mts`;
  * the straight-line constraint is enforced by `TokenDnd35e#_addDragWaypoint` refusing to
  * add intermediate waypoints while this action is active.
  */
@@ -33,7 +33,7 @@ const CRAWL_MOVEMENT_ACTION = 'crawl';
 /**
  * Movement actions gated on a matching `system.speed` field being > 0. Only actions
  * with a clean 1:1 mapping to a persisted speed are eligible for this gate — see
- * "Movement Action Gating" in phase-09-basic-tokens.md for why jump/blink/displace
+ * "Movement Action Gating" in poc/phase-09-basic-tokens.md for why jump/blink/displace
  * are handled separately (disabled outright, not speed-gated). `crawl`/`walk`/`run`
  * are gated on the Prone condition instead — see `canSelectCrawlMovementAction`/
  * `canSelectGroundMovementAction` below.

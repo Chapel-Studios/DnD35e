@@ -6,24 +6,28 @@
  * correct schema for each context referenced in a FormulaFieldData.
  *
  * Structure: documentType (Item / ActiveEffect / Actor) → subtype (weapon / material / npc) → builder
+ *
+ * The Map + register/has/get/getRegisteredSubtypes accessors themselves live in
+ * `familiarBuilderRegistry.mts` (a dependency-free leaf module) and are re-exported
+ * here for backward compatibility — see that module's docstring for why (avoids a
+ * runtime import cycle with `FormulaResolver.functionGrammar.mts`, which needs
+ * `getFamiliarBuilder()` for poc §7.2c's `#self.items` heterogeneous element resolution).
  */
 
-import type { ActorType } from '@actors/actorTypes.mjs';
-import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/index.mjs';
-import type { EffectType } from '@effects/effectTypes.mjs';
-import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
-import type { ItemType } from '@items/itemTypes.mjs';
-
-import { FormulaResolver } from './FormulaResolver.mjs';
+import type { ContextDocumentType, DocumentContext, NonNullDocumentContext } from './familiarBuilderRegistry.mjs';
+import {
+  familiarSchemaRegistry,
+  getFamiliarBuilder,
+  getRegisteredSubtypes,
+  hasFamiliarSchema,
+  registerFamiliarSchema,
+} from './familiarBuilderRegistry.mjs';
 import { normalizeLabel } from './schemaWalker.mjs';
 import type { AspectGroup, FamiliarContext, FamiliarSchema, FormulaFieldData } from './types.mjs';
+import { isFieldAspect } from './types.mjs';
 
-/** Union of all Foundry document classes that can serve as familiar context. */
-export type NonNullDocumentContext = ItemDnd35e | ActorDnd35e | ActiveEffectDnd35e;
-export type DocumentContext = NonNullDocumentContext | null;
-
-export type ContextDocumentType = ItemType | EffectType | ActorType;
+export type { ContextDocumentType, DocumentContext, NonNullDocumentContext };
+export { familiarSchemaRegistry, getFamiliarBuilder, getRegisteredSubtypes, hasFamiliarSchema, registerFamiliarSchema };
 
 /**
  * Declares which item/actor subtypes compose each target context for an effect model.
@@ -32,53 +36,6 @@ export type ContextDocumentType = ItemType | EffectType | ActorType;
 export interface TargetContexts {
   item?: ContextDocumentType[];
   actor?: ContextDocumentType[];
-}
-
-/**
- * Two-level registry: documentType → subtype → schema builder.
- * e.g. 'Item' → 'weapon' → buildWeaponFamiliar
- *
- * Builders accept an optional live Foundry document and resolve
- * property values from it when provided.
- */
-const familiarSchemaRegistry = new Map<
-  foundry.CONST.DocumentType,
-  Map<ContextDocumentType, (context?: DocumentContext) => AspectGroup>
->();
-
-/**
- * Register a familiar schema builder for a given document type and subtype.
- * Call this once per entity type, typically during system initialization.
- *
- * @param documentType The Foundry document type — 'Item', 'ActiveEffect', or 'Actor'
- * @param subtype The entity subtype — e.g. 'weapon', 'material', 'npc'
- * @param builder A function that returns the AspectGroup schema
- */
-function registerFamiliarSchema(
-  documentType: foundry.CONST.DocumentType,
-  subtype: ContextDocumentType,
-  builder: (context?: DocumentContext) => AspectGroup
-): void {
-  let subtypeMap = familiarSchemaRegistry.get(documentType);
-  if (!subtypeMap) {
-    subtypeMap = new Map();
-    familiarSchemaRegistry.set(documentType, subtypeMap);
-  }
-  subtypeMap.set(subtype, builder);
-}
-
-/**
- * Check whether a familiar schema is registered for the given document type and subtype.
- */
-function hasFamiliarSchema(documentType: foundry.CONST.DocumentType, subtype: ContextDocumentType): boolean {
-  return familiarSchemaRegistry.get(documentType)?.has(subtype) ?? false;
-}
-
-/**
- * Retrieve the schema builder for a given document type and subtype.
- */
-function getFamiliarBuilder(documentType: foundry.CONST.DocumentType, subtype: ContextDocumentType): ((context?: DocumentContext) => AspectGroup) | undefined {
-  return familiarSchemaRegistry.get(documentType)?.get(subtype);
 }
 
 /**
@@ -246,11 +203,76 @@ function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
 }
 
 /**
+ * Recursively clone an AspectGroup, stamping every leaf `FieldAspect` with the given
+ * subtype as its (initial, single-entry) `ownerTypes` provenance list — used by
+ * `buildMergedFamiliarContext` (poc §7.2c) to track which subtype(s) a merged field
+ * actually came from, for the autocomplete dropdown's provenance badge.
+ */
+function tagOwnerType(group: AspectGroup, subtype: ContextDocumentType): AspectGroup {
+  const tagged: AspectGroup = {};
+  if (group._display !== undefined) tagged._display = group._display;
+  if (group._aliases !== undefined) tagged._aliases = group._aliases;
+  for (const [key, value] of Object.entries(group)) {
+    if (key === '_display' || key === '_aliases') continue;
+    if (isFieldAspect(value)) {
+      tagged[key] = { ...value, ownerTypes: [subtype] };
+    } else if (value && typeof value === 'object') {
+      tagged[key] = tagOwnerType(value as AspectGroup, subtype);
+    }
+  }
+  return tagged;
+}
+
+/** Deep-merges `source` into `target` in place, unioning `ownerTypes` on matching leaf keys. */
+function mergeOwnerTaggedGroup(target: AspectGroup, source: AspectGroup): void {
+  for (const [key, value] of Object.entries(source)) {
+    if (key === '_display' || key === '_aliases') {
+      if (target[key] === undefined) (target as Record<string, unknown>)[key] = value;
+      continue;
+    }
+    const existing = target[key];
+    if (isFieldAspect(value)) {
+      if (existing && isFieldAspect(existing)) {
+        const ownerTypes = [...new Set([...(existing.ownerTypes ?? []), ...(value.ownerTypes ?? [])])];
+        target[key] = { ...existing, ownerTypes };
+      } else {
+        target[key] = value;
+      }
+    } else if (value && typeof value === 'object') {
+      if (!existing || isFieldAspect(existing)) {
+        target[key] = {};
+      }
+      mergeOwnerTaggedGroup(target[key] as AspectGroup, value as AspectGroup);
+    }
+  }
+}
+
+/**
+ * Strip `ownerTypes` from any leaf present in every one of `totalSubtypeCount` merged
+ * subtypes — a field common to the whole union needs no provenance badge, only fields
+ * unique to a subset of subtypes do.
+ */
+function stripUniversalOwnerTypes(group: AspectGroup, totalSubtypeCount: number): void {
+  for (const [key, value] of Object.entries(group)) {
+    if (key === '_display' || key === '_aliases') continue;
+    if (isFieldAspect(value)) {
+      if ((value.ownerTypes?.length ?? 0) >= totalSubtypeCount) delete value.ownerTypes;
+    } else if (value && typeof value === 'object') {
+      stripUniversalOwnerTypes(value as AspectGroup, totalSubtypeCount);
+    }
+  }
+}
+
+/**
  * Build a FamiliarContext by merging the schemas of multiple subtypes.
  *
  * Used by the AspectPicker when no live parent document is available —
- * e.g., an orphaned effect or compendium entry. Builds each subtype's
- * schema statically (no live document) and deep-merges them.
+ * e.g., an orphaned effect or compendium entry — and by poc §7.2c's `#self.items`
+ * autocomplete union across every registered Item subtype. Builds each
+ * subtype's schema statically (no live document) and deep-merges them,
+ * tagging every leaf with the subtype(s) it came from (`FieldAspect.ownerTypes`)
+ * so the dropdown can show a provenance badge for fields that aren't universal
+ * across the whole union.
  *
  * @param documentType Foundry document type ('Item' or 'Actor')
  * @param subtypes     Subtype keys to merge (e.g. ['weapon', 'armor'])
@@ -260,22 +282,22 @@ function buildMergedFamiliarContext(
   documentType: foundry.CONST.DocumentType,
   subtypes: ContextDocumentType[]
 ): FamiliarContext | null {
-  const groups: AspectGroup[] = [];
+  const taggedGroups: AspectGroup[] = [];
   for (const subtype of subtypes) {
     const builder = getFamiliarBuilder(documentType, subtype);
     if (builder) {
-      groups.push(builder());
+      taggedGroups.push(tagOwnerType(builder(), subtype));
     }
   }
-  if (groups.length === 0) return null;
-  return { properties: FormulaResolver.mergeAspectGroups(...groups) };
+  if (taggedGroups.length === 0) return null;
+  const merged: AspectGroup = {};
+  for (const group of taggedGroups) mergeOwnerTaggedGroup(merged, group);
+  stripUniversalOwnerTypes(merged, taggedGroups.length);
+  return { properties: merged };
 }
 
 export {
   buildContextFromFormula,
   buildDocumentFamiliar,
   buildMergedFamiliarContext,
-  familiarSchemaRegistry,
-  getFamiliarBuilder,
-  registerFamiliarSchema,
 };

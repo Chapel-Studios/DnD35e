@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 const { parseFormula } = FormulaResolver;
 
 /**
- * Paren-pairing highlight (added alongside §7.7b's operator-highlighting work).
+ * Paren-pairing highlight (added alongside poc §7.7b's operator-highlighting work).
  * `renderFormulaHTML()` wraps each `(`/`)` in a `formula-paren` span, tagged
  * `is-warning` when unmatched and untagged (blue) when part of a complete pair.
  * Matching is computed over the whole formula string, so it must hold across

@@ -42,6 +42,7 @@ type ItemTypeLocalizationValues = typeof ITEM_TYPES_LOCALIZED[keyof typeof ITEM_
 
 export {
   containerItemType,
+  EQUIPPABLE_ITEM_TYPES,
   ITEM_TYPES_LOCALIZED,
   PHYSICAL_ITEM_TYPES,
   weaponItemType,

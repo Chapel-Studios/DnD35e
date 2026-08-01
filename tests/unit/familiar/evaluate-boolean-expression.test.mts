@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 const { evaluateBooleanExpression } = FormulaResolver;
 
 /**
- * Story A (§7.2a, Phase 7) — boolean-typed formula grammar.
+ * Story A (poc §7.2a) — boolean-typed formula grammar.
  *
  * `evaluateBooleanExpression()` operates on an already-substituted formula
  * string (all `#context.property` tokens replaced with literal values by

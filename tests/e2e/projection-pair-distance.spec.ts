@@ -35,7 +35,7 @@ test.describe('Projection-pair display (Distance field)', () => {
 
     const actorUuid = await createActor(page, 'character', {
       name: 'Projection Distance Character',
-      system: { speed: { land: 30 } },
+      system: { speed: { land: 6 } },
     });
 
     const sheet = await openDocumentSheet(page, actorUuid);
@@ -43,6 +43,7 @@ test.describe('Projection-pair display (Distance field)', () => {
 
     const input = page.locator(`${sheet} [data-field-path="${DISTANCE_PATH}"] input[type="number"]`).first();
 
+    // Stored 6 squares is displayed as 30 ft in imperial mode: 6 * 5 = 30.
     await expect(input).toBeVisible();
     await expect(input).toHaveValue('30');
 
@@ -56,7 +57,7 @@ test.describe('Projection-pair display (Distance field)', () => {
         const actor = await (globalThis as any).fromUuid(uuid);
         return actor?._source?.system?.speed?.land ?? null;
       }, actorUuid);
-    }).toBe(35);
+    }).toBe(7); // 35 ft / 5 = 7 squares
   });
 
   test('distance projection honors metric unit conversion (localized input -> stored feet)', async ({ page }) => {
@@ -65,7 +66,7 @@ test.describe('Projection-pair display (Distance field)', () => {
 
     const actorUuid = await createActor(page, 'character', {
       name: 'Projection Distance Metric Character',
-      system: { speed: { land: 30 } },
+      system: { speed: { land: 6 } },
     });
 
     const sheet = await openDocumentSheet(page, actorUuid);
@@ -73,7 +74,7 @@ test.describe('Projection-pair display (Distance field)', () => {
 
     const input = page.locator(`${sheet} [data-field-path="${DISTANCE_PATH}"] input[type="number"]`).first();
 
-    // Stored 30 ft is displayed as 9 m in metric mode: (30 / 5) * 1.5 = 9.
+    // Stored 6 squares is displayed as 9 m in metric mode: 6 * 1.5 = 9.
     await expect(input).toHaveValue('9');
 
     await dismissOverlays(page);
@@ -86,7 +87,7 @@ test.describe('Projection-pair display (Distance field)', () => {
         const actor = await (globalThis as any).fromUuid(uuid);
         return actor?._source?.system?.speed?.land ?? null;
       }, actorUuid);
-    }).toBe(40);
+    }).toBe(8); // 12 m / 1.5 = 8 squares
 
     await expect(input).toHaveValue('12');
   });

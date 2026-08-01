@@ -2,7 +2,7 @@ import { evaluateChangeCondition } from '@effects/baseActiveEffect/logic/evaluat
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * Unit tests for `evaluateChangeCondition()` (Story B, §7.7a).
+ * Unit tests for `evaluateChangeCondition()` (Story B, poc §7.7a).
  *
  * Uses the real `FormulaData.resolveSource()` (not mocked) with pure literal
  * boolean expressions (no `#context.property` tokens), matching the approach

@@ -26,7 +26,7 @@
 /**
  * Display Node memo:
  * We are using our own display mode to hide formula familiar hints when not editing
- * TODO(Phase 7): evaluate refactoring into FormulaFormGroup as a displayMode prop or slot.
+ * TODO(poc Phase 7): evaluate refactoring into FormulaFormGroup as a displayMode prop or slot.
  * Do we really want to show context hints when not editing a formula?
  * Maybe we want to show them when hovering the display value?
  * We tried setting up a read only slot but there were a lot of styling concerns so was put off as a todo

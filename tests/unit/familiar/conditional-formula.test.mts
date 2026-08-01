@@ -13,7 +13,7 @@ const {
 /**
  * Story C (redesigned) — `$conditional(when(cond, value) ... else(default))`
  * flat rule-list conditional syntax. See
- * `docs/migration-plan/poc/phase-07-roll-formulas.md` §7.10 "Compiled Syntax".
+ * `docs/migration-plan/poc/phase-07-roll-formulas.md` poc §7.10 "Compiled Syntax".
  */
 describe('findConditionalBlocks — parsing', () => {
   it('parses a single when() + else()', () => {
@@ -253,6 +253,30 @@ describe('validateFormula — $conditional(...) syntax', () => {
   it('surfaces a structural error for unbalanced parens', () => {
     const errors = validateFormula('$conditional(when(#self.hp.value <= 0, 0) else(2)', schema);
     expect(errors.some(e => e.severity === 'error')).toBe(true);
+  });
+
+  it('surfaces a generic unbalanced-parens error for a stray paren OUTSIDE an otherwise well-formed $conditional(...) block', () => {
+    // The `$conditional(...)` block itself is perfectly balanced here — the
+    // extra leading "(" is what's unmatched. `findConditionalBlocks` only
+    // inspects parens within its own keyword's span, so this case previously
+    // produced zero errors even though a paren renders red in the editor.
+    const errors = validateFormula('($conditional(when(1, 5) else(3))', schema);
+    expect(errors.some(e => e.context === '' && e.severity === 'error')).toBe(true);
+  });
+
+  it('does not flag a stray unmatched paren error for an otherwise valid, fully-balanced formula', () => {
+    const errors = validateFormula('$conditional(when(#self.hp.value <= 0, 0) else(2))', schema);
+    expect(errors.some(e => e.context === '' && e.error.includes('parentheses'))).toBe(false);
+  });
+
+  it('suppresses the generic unbalanced-parens error while still focused/typing (e.g. a bare in-progress "$conditional(")', () => {
+    const errors = validateFormula('$conditional(', schema, true);
+    expect(errors.some(e => e.context === '' && e.severity === 'error')).toBe(false);
+  });
+
+  it('surfaces the generic unbalanced-parens error for the same still-unmatched formula once no longer focused', () => {
+    const errors = validateFormula('$conditional(', schema, false);
+    expect(errors.some(e => e.context === '' && e.severity === 'error')).toBe(true);
   });
 });
 

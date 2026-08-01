@@ -101,6 +101,11 @@
       "Context": {
         "Self": "Self"
       },
+      "DefaultPlaceholder": "Enter name or formula (e.g. #self.name)",
+      "AdvancedEditor": "Open advanced formula editor",
+      "AdvancedEditorTitle": "Edit Formula",
+      "Close": "Close",
+      "Done": "Done",
       "Errors": {
         "notANumber": "Formula does not resolve to a number (got \"{resolved}\")",
         "notABoolean": "Formula does not resolve to a valid boolean expression",
@@ -111,13 +116,66 @@
         "invalidVariable": "Invalid variable",
         "unknownPathWarning": "Warning unknown path: {path}",
         "contextTooltip": "Context: {context}",
+        "unbalancedParens": "Unbalanced parentheses",
         "conditional": {
           "unbalancedParens": "$conditional(...) has unbalanced parentheses",
           "missingElse": "$conditional(...) is missing a required else(...) clause",
           "multipleElse": "$conditional(...) has more than one else(...) clause",
           "whenArgCount": "when(...) requires exactly two arguments: when(condition, value)",
           "elseArgCount": "else(...) requires exactly one argument: else(value)"
+        },
+        "function": {
+          "unbalancedParens": "${name}(...) has unbalanced parentheses",
+          "argCount": "${name}(...) has the wrong number of arguments",
+          "missingProjection": "$find(...) must be followed by a .property projection (e.g. $find(...).range)"
         }
+      },
+      "Functions": {
+        "conditional": {
+          "label": "conditional",
+          "hint": "$conditional(when(condition, value) else(default)) — evaluates in order, first matching when() wins"
+        },
+        "contains": {
+          "label": "contains",
+          "hint": "$contains(array, predicate) — true if any element matches"
+        },
+        "find": {
+          "label": "find",
+          "hint": "$find(array, predicate).property — first matching element's property"
+        },
+        "any": {
+          "label": "any",
+          "hint": "$any(array, predicate) — true if any element matches (predicate optional)"
+        },
+        "count": {
+          "label": "count",
+          "hint": "$count(array, predicate) — number of matching elements (predicate optional)"
+        },
+        "stringContains": {
+          "label": "stringContains",
+          "hint": "$stringContains(string, substring) — true if the string contains the substring"
+        },
+        "fromFeet": {
+          "label": "fromFeet",
+          "hint": "$fromFeet(feet) — converts a real-world feet value into stored squares (5 ft = 1 square)"
+        },
+        "fromMeters": {
+          "label": "fromMeters",
+          "hint": "$fromMeters(meters) — converts a real-world meters value into stored squares (1.5 m = 1 square)"
+        },
+        "fromKg": {
+          "label": "fromKg",
+          "hint": "$fromKg(kg) — converts a real-world kilogram value into stored pounds (1 kg = 2 lbs)"
+        }
+      },
+      "ChangeGroups": {
+        "category": "Groups",
+        "allSaves": "All Saving Throws"
+      },
+      "ItemCollections": {
+        "items": "Items",
+        "weapons": "Weapons",
+        "equipment": "Equipment"
       }
     },
     "DOCUMENT": {

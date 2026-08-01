@@ -13,11 +13,17 @@
       v-for="(option, index) in options"
       :key="`${option.fullPath}-${index}`"
       class="familiar-item"
-      :class="{ 'is-selected': index === selectedIndex }"
+      :class="{ 'is-selected': index === selectedIndex, 'is-group-target': option.isGroup }"
       @click="$emit('select', option)"
       :title="option.accessPath ?? option.fullPath"
     >
+      <i v-if="option.isGroup" class="fa-solid fa-layer-group option-group-icon" />
       <span class="option-path">{{ option.display }}</span>
+      <span
+        v-if="option.ownerTypes?.length"
+        class="option-owner-badge"
+        :title="option.ownerTypes.join(', ')"
+      >{{ option.ownerTypes.join(', ') }}</span>
       <template v-if="option.isLeaf && option.value != null">
         <span class="option-value">=</span>
         <span class="option-value">{{ option.value }}</span>
@@ -127,6 +133,27 @@
         color: #888;
         font-style: italic;
         white-space: nowrap;
+      }
+
+      .option-group-icon {
+        font-size: 0.68rem;
+        color: #888;
+        opacity: 0.7;
+      }
+
+      .option-owner-badge {
+        font-size: 0.62rem;
+        color: #d0a355;
+        background: rgba(208, 163, 85, 0.12);
+        border: 1px solid rgba(208, 163, 85, 0.3);
+        border-radius: 3px;
+        padding: 0 0.25rem;
+        white-space: nowrap;
+        text-transform: capitalize;
+      }
+
+      &.is-group-target .option-path {
+        font-style: italic;
       }
     }
   }
