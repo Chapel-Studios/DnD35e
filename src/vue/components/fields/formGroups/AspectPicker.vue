@@ -32,7 +32,6 @@
 </template>
 
 <script setup lang="ts">
-  import { changeTargetGroups } from '@helpers/formulae/changeTargetGroups.mjs';
   import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
   import type { AutocompleteOption, FamiliarContext, FamiliarSchema, ValidationError } from '@helpers/formulae/types.mjs';
   import { useFamiliarOverlayInput } from '@helpers/formulae/useFamiliarOverlayInput.mjs';
@@ -103,12 +102,6 @@
    */
   function rawToFamiliar(rawPath: string): string {
     if (!rawPath || !props.familiarContext) return rawPath;
-    // Group Change Targets (poc §7.7) use a "group:"-prefixed accessPath that isn't valid
-    // formula-variable syntax (a colon breaks the '#context.path' tokenizer) — resolve
-    // the display label directly from the registry instead of round-tripping through
-    // localizeFormula(), which would silently fail to match past the colon.
-    const group = changeTargetGroups.get(rawPath);
-    if (group) return `#${props.contextName}.${game.i18n.localize(group.label)}`;
     const result = findAspectByAccessPath(props.familiarContext.properties, rawPath);
     if (result) {
       const canonical = `#${props.contextName}.${result.treePath.join('.')}`;

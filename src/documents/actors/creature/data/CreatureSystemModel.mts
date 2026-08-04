@@ -1,5 +1,4 @@
 import { ActorSystemModel } from '@actors/baseActor/data/index.mjs';
-import { ABILITY_KEYS } from '@constants/abilities.mjs';
 import { computeEncumbranceTier } from '@constants/carryingCapacity.mjs';
 import {
   getCarryingCapacity,
@@ -20,7 +19,7 @@ import {
 import { NullableCapNumberField } from '@fields/NullableCapNumberField.mjs';
 import { FormulaField } from '@helpers/formulae/index.mjs';
 
-import type { CreatureSystemData, CreatureSystemSource } from './CreatureSystemData.mjs';
+import type { CreatureSystemData } from './CreatureSystemData.mjs';
 
 const {
   ArrayField,
@@ -42,11 +41,10 @@ abstract class CreatureSystemModel extends ActorSystemModel {
   static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.CREATURE'];
 
   /**
-   * Reset every AE-mutated field to baseline before `applyActiveEffects('initial')` runs.
-   * DataModel instances persist across `prepareData()` passes, so 'initial'-phase changes
-   * would compound on re-prepare if not reset:
-   *  - `abilities.*.score`: reset from `_source` so enhancements stack cleanly each pass
-   *  - `encumbrance.carriedWeight`: would compound, only recomputed via item changes
+   * Reset derived (`persisted: false`) fields to their baseline before `applyActiveEffects('initial')`
+   * runs. These fields have no other source of truth — nothing sets them from `_source` — so they
+   * must be given a starting value every `prepareBaseData()` pass before AE contributions layer on:
+   *  - `encumbrance.carriedWeight`: recomputed from currency weight each pass
    *  - `encumbrance.carryBonus`/`carryMultiplier`: reset to schema defaults (0 / 1)
    *  - `maxDexBonus`/`armorCheckPenalty`: reset so DOWNGRADE applies correctly each pass
    *  - `saves.fort`/`.reflex`/`.will`: reset to 0 so 'initial'-phase Value formula
@@ -55,11 +53,6 @@ abstract class CreatureSystemModel extends ActorSystemModel {
    */
   override prepareBaseData(): void {
     super.prepareBaseData();
-
-    const sourceAbilities = (this._source as unknown as CreatureSystemSource).abilities;
-    for (const key of ABILITY_KEYS) {
-      this.abilities[key].score = sourceAbilities[key].score;
-    }
 
     this.encumbrance.carriedWeight = this.currency.getWeightInLbs();
     this.encumbrance.carryBonus = 0;

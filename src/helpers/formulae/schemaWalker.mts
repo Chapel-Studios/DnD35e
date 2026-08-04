@@ -193,6 +193,28 @@ function getPathBasedFamiliarAliases(
 }
 
 /**
+ * Resolve the plain (non-familiar) `.label` localization key for a schema-relative path.
+ * Mirrors how Foundry's own `localizeDataModel` sets `field.label` from
+ * `${prefix}.FIELDS.${schemaPath}.label` — used for synthetic entries (e.g. Group Change
+ * Targets) that have no real DataField to read `field.label` from directly.
+ */
+function getPathBasedLabel(
+  accessPath: string,
+  localizationPrefixes: string[]
+): string | undefined {
+  const schemaPath = accessPath.startsWith('system.')
+    ? accessPath.substring('system.'.length)
+    : accessPath;
+
+  for (const prefix of localizationPrefixes) {
+    const localized = resolveLocalizedLabelKey(`${prefix}.FIELDS.${schemaPath}.label`);
+    if (localized) return localized;
+  }
+
+  return undefined;
+}
+
+/**
  * Add a leaf entry to an AspectGroup.
  *
  * Key: always the canonical schema field name (`key`), or `meta.aspectKey` when
@@ -217,9 +239,9 @@ function addLeafToGroup(
   const resolvedOverride = localizedOverride ?? pathOverride ?? meta?.familiarLabel;
   // field.label is set by Foundry's localizeDataModel (via LOCALIZATION_PREFIXES) after i18nInit.
   // field.options.label is only set when explicitly passed in the constructor.
-  const label = resolvedOverride
-    ?? (field as unknown as { label?: string }).label
+  const officialLabel = (field as unknown as { label?: string }).label
     ?? (field.options as Record<string, unknown>).label as string | undefined;
+  const label = resolvedOverride ?? officialLabel;
   const aspectKey = meta?.aspectKey ?? key;
 
   const prop: FieldAspect = {
@@ -239,6 +261,16 @@ function addLeafToGroup(
   const localizedIdentifier = normalizeLabel(prop.display);
   if (localizedIdentifier && localizedIdentifier !== key && !aliases.includes(localizedIdentifier)) {
     aliases.unshift(localizedIdentifier);
+  }
+  // When a familiarLabel override wins, keep the official label's normalized form typeable
+  // too (e.g. "Abilities" preferred, but "AbilityScores" — from official label "Ability Scores" —
+  // still resolves as a fallback identifier).
+  if (resolvedOverride) {
+    const officialIdentifier = normalizeLabel(officialLabel);
+    if (officialIdentifier && officialIdentifier !== key
+      && officialIdentifier !== localizedIdentifier && !aliases.includes(officialIdentifier)) {
+      aliases.push(officialIdentifier);
+    }
   }
   if (aliases.length) {
     prop.aliases = aliases;
@@ -293,9 +325,9 @@ function walkFields(
         const localizedOverride = resolveLocalizedLabelKey(meta?.familiarLabelKey);
         const pathOverride = getPathBasedFamiliarLabel(currentPath, localizationPrefixes);
         const resolvedOverride = localizedOverride ?? pathOverride ?? meta?.familiarLabel;
-        const branchLabel = resolvedOverride
-          ?? (field as unknown as { label?: string }).label
+        const officialLabel = (field as unknown as { label?: string }).label
           ?? (field.options as Record<string, unknown>).label as string | undefined;
+        const branchLabel = resolvedOverride ?? officialLabel;
         if (branchLabel) branch._display = branchLabel;
 
         const aliases: string[] = [
@@ -305,6 +337,15 @@ function walkFields(
         const localizedIdentifier = normalizeLabel(branchLabel);
         if (localizedIdentifier && localizedIdentifier !== key && !aliases.includes(localizedIdentifier)) {
           aliases.unshift(localizedIdentifier);
+        }
+        // Same official-label fallback as leaves — e.g. "abilities" prefers "Abilities" but
+        // "AbilityScores" (from official label "Ability Scores") still resolves.
+        if (resolvedOverride) {
+          const officialIdentifier = normalizeLabel(officialLabel);
+          if (officialIdentifier && officialIdentifier !== key
+            && officialIdentifier !== localizedIdentifier && !aliases.includes(officialIdentifier)) {
+            aliases.push(officialIdentifier);
+          }
         }
         if (aliases.length) {
           branch._aliases = aliases;
@@ -379,4 +420,11 @@ function gatherAspectsFromSchema(
   return result;
 }
 
-export { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema, walkFields };
+export {
+  DOCUMENT_LEVEL_ASPECTS,
+  gatherAspectsFromSchema,
+  getPathBasedFamiliarAliases,
+  getPathBasedFamiliarLabel,
+  getPathBasedLabel,
+  walkFields,
+};

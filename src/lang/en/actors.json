@@ -9,7 +9,13 @@
       "FIELDS": {
         "abilities": {
           "label": "Ability Scores",
-          "str": { "label": "Strength", "familiarLabel": "Str", "familiarAliases": ["Strength"], "score": { "label": "Strength", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "STR Mod", "familiarLabel": "Mod" } },
+          "familiarLabel": "Abilities",
+          "str": {
+            "label": "Strength",
+            "familiarLabel": "Str",
+            "score": { "label": "Strength", "familiarLabel": "Score" },
+            "mod": { "label": "STR Mod", "familiarLabel": "Mod" }
+          },
           "dex": { "label": "Dexterity", "familiarLabel": "Dex", "familiarAliases": ["Dexterity"], "score": { "label": "Dexterity", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "DEX Mod", "familiarLabel": "Mod" } },
           "con": { "label": "Constitution", "familiarLabel": "Con", "familiarAliases": ["Constitution"], "score": { "label": "Constitution", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "CON Mod", "familiarLabel": "Mod" } },
           "int": { "label": "Intelligence", "familiarLabel": "Int", "familiarAliases": ["Intelligence"], "score": { "label": "Intelligence", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "INT Mod", "familiarLabel": "Mod" } },
@@ -51,9 +57,11 @@
         },
         "saves": {
           "label": "Saving Throws",
-          "fort":   { "label": "Fort" },
-          "reflex": { "label": "Ref" },
-          "will":   { "label": "Will" }
+          "familiarLabel": "Saves",
+          "fort":   { "label": "Fort", "familiarAliases": ["Fortitude"] },
+          "reflex": { "label": "Ref",  "familiarAliases": ["Reflex"] },
+          "will":   { "label": "Will", "familiarAliases": ["Willpower"] },
+          "all": { "label": "All Saves", "familiarLabel": "All" }
         },
         "init": {
           "label": "Initiative",

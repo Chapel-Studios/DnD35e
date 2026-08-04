@@ -229,11 +229,9 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
   };
 
   /**
-   * Immediately commit + settle display state (the body of `onBlur`'s debounce),
-   * without waiting for the 200ms timeout. Used by the multiline editor modal
-   * (poc §7.10) when closing (Done/backdrop/Escape) so a pending edit is guaranteed
-   * to commit before the modal (and this composable instance) unmounts — a
-   * component-unmount can race a `setTimeout`-scheduled commit and lose the edit.
+   * Commit + settle display state. Also called directly by the multiline editor
+   * modal (poc §7.10) on close (Done/backdrop/Escape) so a pending edit is
+   * guaranteed to commit before the modal (and this composable instance) unmounts.
    */
   const commitNow = () => {
     dismissFamiliar();
@@ -260,9 +258,11 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
     }
   };
 
-  const onBlur = () => {
-    setTimeout(commitNow, 200);
-  };
+  // A dropdown-option click never actually blurs the input in the first place —
+  // `FamiliarDropdown.vue` guards its options with `@mousedown.prevent` — so this
+  // can commit immediately rather than deferring (a deferred commit could otherwise
+  // fire after the row it belongs to has already been deleted elsewhere in the UI).
+  const onBlur = commitNow;
 
   const selectAutocomplete = (option: AutocompleteOption) => {
     const inputEl = options.getInputElement();

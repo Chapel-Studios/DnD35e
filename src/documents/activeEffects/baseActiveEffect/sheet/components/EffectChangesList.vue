@@ -37,7 +37,7 @@
       <li
         v-for="(change, index) in visibleChanges"
         v-show="isChangeVisible(index)"
-        :key="index"
+        :key="change.id"
         class="change-row"
         :data-index="index"
       >
@@ -49,7 +49,7 @@
             :disabled="!isChangeEditable(index) || change.isSystem"
             class="target-select"
             :title="targetLabel"
-            @change="(e: Event) => updateChangeField(index, 'target', (e.target as HTMLSelectElement).value)"
+            @change="(e: Event) => updateChangeField(change.id, 'target', (e.target as HTMLSelectElement).value)"
           >
             <option v-for="(label, target) in changeTargets" :key="target" :value="target">
               {{ label }}
@@ -63,7 +63,7 @@
             :familiar-context="getKeyPickerContext(change.target ?? 'item')"
             :context-name="store.documentGetters.getTargetFamiliarContextName(change.target ?? 'item')"
             hide-context-hint
-            @update:model-value="(val: string) => updateChangeKey(index, val)"
+            @update:model-value="(val: string) => updateChangeKey(change.id, val)"
             @update:error="(err: string | null) => setRowError(index, 'field', err)"
           />
 
@@ -76,7 +76,7 @@
             :name="`system.changes.${index}.type`"
             :value="change.type"
             :disabled="!isChangeEditable(index) || change.isSystem"
-            @change="(e: Event) => updateChangeField(index, 'type', (e.target as HTMLSelectElement).value)"
+            @change="(e: Event) => updateChangeField(change.id, 'type', (e.target as HTMLSelectElement).value)"
           >
             <option v-for="(label, type) in changeTypes" :key="type" :value="type">
               {{ label }}
@@ -87,7 +87,7 @@
             class="change-value"
             :value="String(change.value ?? '')"
             :field-path="`system.changes.${index}.value`"
-            :on-update="(val: string) => updateChangeField(index, 'value', val)"
+            :on-update="(val: string) => updateChangeField(change.id, 'value', val)"
             :disabled="!isChangeEditable(index) || change.isSystem"
             :contexts="getContextsForTarget(change.target ?? 'item')"
             :expected-type="getExpectedTypeForChange(change)"
@@ -104,7 +104,7 @@
             :disabled="!isChangeEditable(index) || change.isSystem"
             class="bonus-type-select"
             :title="bonusTypeLabel"
-            @change="(e: Event) => updateChangeField(index, 'bonusType', (e.target as HTMLSelectElement).value || null)"
+            @change="(e: Event) => updateChangeField(change.id, 'bonusType', (e.target as HTMLSelectElement).value || null)"
           >
             <option value="">{{ noneLabel }}</option>
             <option v-for="bt in bonusTypeOptions" :key="bt.value" :value="bt.value">
@@ -118,7 +118,7 @@
             :value="String(change.condition ?? '')"
             expected-type="boolean"
             :field-path="`system.changes.${index}.condition`"
-            :on-update="(val: string) => updateChangeField(index, 'condition', val || null)"
+            :on-update="(val: string) => updateChangeField(change.id, 'condition', val || null)"
             :disabled="!isChangeEditable(index) || change.isSystem"
             :contexts="getContextsForTarget(change.target ?? 'item')"
             :placeholder="resolvedConditionPlaceholder"
@@ -144,7 +144,7 @@
             :field-path="changeFieldPath(index)"
             :read-only="change.isSystem"
           >
-            <button type="button" @click="deleteChange(index)" :disabled="!isChangeEditable(index) || change.isSystem" class="delete-change field-control-btn">
+            <button type="button" @click="deleteChange(change.id)" :disabled="!isChangeEditable(index) || change.isSystem" class="delete-change field-control-btn">
               <i class="fa-solid fa-trash"></i>
             </button>
           </FieldControls>
@@ -376,13 +376,13 @@
     });
   };
 
-  const deleteChange = async (index: number) => {
-    await removeChange?.(index);
+  const deleteChange = async (id: string) => {
+    await removeChange?.(id);
   };
 
-  // Domain callback: each editor row targets a specific indexed change entry.
-  const updateChangeKey = async (index: number, val: string) => {
-    await updateChangeField(index, 'key', val);
+  // Domain callback: each editor row targets a specific change entry by stable id.
+  const updateChangeKey = async (id: string, val: string) => {
+    await updateChangeField(id, 'key', val);
   };
 </script>
 

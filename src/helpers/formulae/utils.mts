@@ -401,12 +401,13 @@ export function getAutocompleteOptions(
 
     if (isFieldAspect(value)) {
       const aliasHint = value.aliases?.length ? ` (${value.aliases.join(', ')})` : '';
+      const fullPath = buildFullPath(primaryIdentifier);
       options.push({
         path: primaryIdentifier,
         display: (value.display || key) + aliasHint,
         value: value.value ?? null,
         isLeaf: true,
-        fullPath: buildFullPath(primaryIdentifier),
+        fullPath,
         accessPath: value.accessPath,
         isGroup: value.isGroup,
         ownerTypes: value.ownerTypes,

@@ -24,7 +24,7 @@
             <FamiliarOverlayTextarea
               ref="overlayRef"
               :model-value="localValue"
-              placeholder="Enter formula (e.g. #self.name)"
+              :placeholder="resolvedPlaceholder"
               input-class="formula-input formula-input-multiline"
               highlight-class="highlight-layer highlight-layer-multiline"
               input-wrapper-class="formula-input-wrapper"
@@ -75,6 +75,7 @@
     contexts: { type: Object as PropType<FamiliarSchema>, default: () => ({}) },
     expectedType: { type: String as PropType<'string' | 'number' | 'boolean'>, default: undefined },
     label: { type: String, default: undefined },
+    placeholder: { type: String, default: undefined },
     onCommit: { type: Function as PropType<(value: string) => void>, required: true },
   });
 
@@ -85,6 +86,7 @@
   const modalLabel = computed(() => props.label || game.i18n.localize('dnd35e.Formula.AdvancedEditorTitle'));
   const closeLabel = computed(() => game.i18n.localize('dnd35e.Formula.Close'));
   const doneLabel = computed(() => game.i18n.localize('dnd35e.Formula.Done'));
+  const resolvedPlaceholder = computed(() => props.placeholder ?? game.i18n.localize('dnd35e.Formula.DefaultPlaceholder'));
 
   const contextsRef = computed(() => props.contexts);
   const currentValue = computed(() => props.formula || '');
@@ -139,9 +141,9 @@
   });
 
   const close = () => {
-    // Commit synchronously — closing (which unmounts this Teleport'd content via
-    // the parent's `v-if`) would otherwise race the 200ms `onBlur` debounce and
-    // could drop a pending edit.
+    // Explicit commit before emitting close — the textarea's own blur may not
+    // have fired yet (e.g. closing via the backdrop/Escape without ever
+    // blurring the field), so this guarantees a pending edit isn't dropped.
     commitNow();
     emit('close');
   };

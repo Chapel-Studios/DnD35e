@@ -68,6 +68,7 @@
     :contexts="contexts"
     :expected-type="resolvedExpectedType"
     :label="props.label"
+    :placeholder="resolvedPlaceholder"
     :on-commit="commitFormula"
     @close="isModalOpen = false"
   />

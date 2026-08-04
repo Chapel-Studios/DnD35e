@@ -4,7 +4,7 @@ import { withChangeTargetGroups } from '@helpers/formulae/changeTargetGroups.mjs
 import type { FamiliarContext } from '@helpers/formulae/types.mjs';
 import AspectPicker from '@vc/fields/formGroups/AspectPicker.vue';
 import { mount } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, nextTick } from 'vue';
 
 /**
@@ -89,6 +89,14 @@ describe('AspectPicker — hideContextHint error suppression', () => {
  * through, and must round-trip back to the raw group key on commit without corruption.
  * `withChangeTargetGroups()` is the real production helper used to build this context
  * (see `EffectChangesList.vue`'s `getKeyPickerContext`), not a hand-rolled fixture.
+ *
+ * The fixture's `saves` branch carries `_display: 'SavingThrows'` to mirror what the real
+ * `CreatureSystemModel` schema branch resolves to today (its official label "Saving Throws",
+ * normalized) — proving the group's parent segment always tracks whatever the real branch
+ * actually resolves to, rather than a separately hardcoded string that can drift out of sync.
+ * The group's own leaf label ("All") is resolved from the localization JSON at
+ * `dnd35e.CREATURE.FIELDS.saves.all.familiarLabel` — mocked here the same way
+ * `familiar-localization.test.mts` mocks `game.i18n.localize`.
  */
 
 const ModelValueStub = defineComponent({
@@ -103,15 +111,35 @@ const ModelValueStub = defineComponent({
   },
 });
 
-const groupAwareContext: FamiliarContext = withChangeTargetGroups({
-  display: 'Actor',
-  properties: {
-    hardness: { type: 'number', accessPath: 'system.hardness', value: 5 },
-  },
-});
+const originalLocalize = game.i18n.localize.bind(game.i18n);
+const groupLabels: Record<string, string> = {
+  'dnd35e.CREATURE.FIELDS.saves.all.familiarLabel': 'All',
+};
+
+let groupAwareContext: FamiliarContext;
 
 describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
-  it('displays the localized group label instead of the raw "group:" key on mount', () => {
+  beforeAll(() => {
+    game.i18n.localize = ((key: string) => groupLabels[key] ?? originalLocalize(key)) as typeof game.i18n.localize;
+    groupAwareContext = withChangeTargetGroups({
+      display: 'Actor',
+      properties: {
+        hardness: { type: 'number', accessPath: 'system.hardness', value: 5 },
+        saves: {
+          _display: 'SavingThrows',
+          fort: { type: 'number', accessPath: 'system.saves.fort', display: 'Fort' },
+          reflex: { type: 'number', accessPath: 'system.saves.reflex', display: 'Reflex' },
+          will: { type: 'number', accessPath: 'system.saves.will', display: 'Will' },
+        },
+      },
+    });
+  });
+
+  afterAll(() => {
+    game.i18n.localize = originalLocalize;
+  });
+
+  it('displays the group leaf nested under the real branch\'s own resolved identifier, not a hardcoded string', () => {
     const wrapper = mount(AspectPicker, {
       props: {
         modelValue: 'group:allSaves',
@@ -122,9 +150,12 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
     });
 
     const displayed = wrapper.find('input').attributes('data-model-value');
-    // game.i18n.localize is an identity stub in tests — the raw i18n key stands in for
-    // the localized label, but critically it is NOT the raw "group:allSaves" accessPath.
-    expect(displayed).toBe('#actor.dnd35e.Formula.ChangeGroups.allSaves');
+    // "SavingThrows" comes from the real `saves` branch's own `_display` (matching `fort`'s
+    // parent segment) — "All" comes from the group's own familiarLabel — both resolved via
+    // the same generic localizeFormula pipeline used for any real field. The context prefix
+    // itself is localized from the context's own `display: 'Actor'` (see the sibling
+    // "still resolves a real field normally" test below).
+    expect(displayed).toBe('#Actor.SavingThrows.All');
     expect(displayed).not.toContain('group:allSaves');
   });
 
@@ -156,5 +187,32 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
     // prefix here (normalizeLabel('Actor') === 'Actor') — unrelated to the raw
     // `contextName: 'actor'` prop, which only the group-key fast path (above) uses directly.
     expect(displayed).toBe('#Actor.hardness');
+  });
+
+  it('round-trips a manually-typed "#actor.SavingThrows.All" back to the raw "group:allSaves" key on commit', async () => {
+    vi.useFakeTimers();
+    try {
+      const wrapper = mount(AspectPicker, {
+        props: {
+          modelValue: '',
+          familiarContext: groupAwareContext,
+          contextName: 'actor',
+        },
+        global: { stubs: { FamiliarOverlayInput: ModelValueStub } },
+      });
+
+      const input = wrapper.find('input');
+      await input.trigger('focus');
+      input.element.value = '#actor.SavingThrows.All';
+      await input.trigger('input');
+      await input.trigger('blur');
+      await vi.advanceTimersByTimeAsync(250);
+      await nextTick();
+
+      const emitted = wrapper.emitted('update:modelValue');
+      expect(emitted?.[emitted.length - 1]?.[0]).toBe('group:allSaves');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

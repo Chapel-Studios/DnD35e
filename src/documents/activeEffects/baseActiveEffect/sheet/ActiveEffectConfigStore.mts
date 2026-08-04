@@ -190,7 +190,13 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
     addChange: async (changeData: EffectChangeDataDnd35e) => {
       if (!('changes' in document.value.system)) return false;
       const changes = document.value.system.changes || [];
-      const updatedChanges = [...changes, changeData];
+      const updatedChanges = [
+        ...changes,
+        {
+          ...changeData,
+          id: foundry.utils.randomID(),
+        },
+      ];
       const updated = await baseStore._storeUtils.updateDocument(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
         {
@@ -200,9 +206,17 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
       if (updated) await refreshOwningItem();
       return updated;
     },
-    removeChange: async (index: number) => {
+    // Rows are targeted by their stable `id` (not array position) rather than the row's
+    // render-time array index — a field's blur-commit can still be in flight (e.g. async
+    // validation/canonicalization) when a different row's delete lands first and shifts
+    // array positions. Resolving the current index by `id` at the moment of the update
+    // means a delayed commit either still lands on the right row, or safely no-ops if
+    // that row is gone by then.
+    removeChange: async (id: string) => {
       if (!('changes' in document.value.system)) return false;
       const changes = document.value.system.changes || [];
+      const index = changes.findIndex((c: any) => c.id === id);
+      if (index === -1) return false;
       const updatedChanges = [...changes];
       updatedChanges.splice(index, 1);
       const updated = await baseStore._storeUtils.updateDocument(
@@ -214,11 +228,12 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
       if (updated) await refreshOwningItem();
       return updated;
     },
-    updateChangeField: async (index: number, field: string, value: unknown) => {
+    updateChangeField: async (id: string, field: string, value: unknown) => {
       if (!('changes' in document.value.system)) return false;
       const changes = document.value.system.changes || [];
-      const updatedChanges = changes.map((c: any, i: number) =>
-        i === index ? { ...c, [field]: value } : c
+      if (!changes.some((c: any) => c.id === id)) return false;
+      const updatedChanges = changes.map((c: any) =>
+        c.id === id ? { ...c, [field]: value } : c
       );
       const updated = await baseStore._storeUtils.updateDocument(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
@@ -271,8 +286,10 @@ type ActiveEffectConfigStoreDocumentGetters = DocumentSheetStoreDocumentGetters 
 
 type ActiveEffectConfigStoreDocumentActions<TDocument extends ActiveEffectDnd35e> = DocumentSheetStoreDocumentActions<TDocument> & {
   addChange: (changeData: EffectChangeDataDnd35e) => Promise<boolean>;
-  removeChange?: (index: number) => Promise<boolean>;
-  updateChangeField: (index: number, field: string, value: unknown) => Promise<boolean>;
+  /** Removes the row with the given stable `id` — see `ActiveEffectSystemModel`'s `changes` schema. */
+  removeChange?: (id: string) => Promise<boolean>;
+  /** Updates a field on the row with the given stable `id` — see `ActiveEffectSystemModel`'s `changes` schema. */
+  updateChangeField: (id: string, field: string, value: unknown) => Promise<boolean>;
   updateDurationValue: (value: number | null) => Promise<boolean>;
   updateDurationUnits: (units: string | null) => Promise<boolean>;
 };

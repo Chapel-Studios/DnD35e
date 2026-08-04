@@ -169,8 +169,7 @@
         }
       },
       "ChangeGroups": {
-        "category": "Groups",
-        "allSaves": "All Saving Throws"
+        "category": "Groups"
       },
       "ItemCollections": {
         "items": "Items",
