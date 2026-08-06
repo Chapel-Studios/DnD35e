@@ -1,4 +1,6 @@
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
+import type { ItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
+import { createItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
 import type { ConditionDefinition } from '@constants/conditions.mjs';
 import { CONDITIONS } from '@constants/conditions.mjs';
 import type { DocumentSheetStore, SheetTab } from '@documents/document/index.mjs';
@@ -7,6 +9,8 @@ import type { EffectDocumentActions, EffectDocumentGetters, EffectDocumentUtils 
 import { useEffectDocumentActions } from '@documents/document/logic/index.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
 import { FINAL_EFFECT_CHANGE_PHASE } from '@effects/baseActiveEffect/data/index.mjs';
+import type { EffectRowStore } from '@effects/baseActiveEffect/sheet/effectRowStoreRegistry.mjs';
+import { createEffectRowStore } from '@effects/baseActiveEffect/sheet/effectRowStoreRegistry.mjs';
 import type { ActiveEffectDnd35e } from '@effects/index.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
@@ -107,6 +111,46 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
     return label ? { label, icon: 'icons/svg/downgrade.svg', changes } : null;
   });
 
+  // Row-scoped stores for this actor's inventory rows - cached per item uuid so a row
+  // remounting (filtering, reordering, collapsing) reuses the same store instead of
+  // rebuilding it. Never touches `game.dnd35e.stores`; see itemRowStoreRegistry.mts.
+  const itemRowStoreCache = new Map<string, ItemRowStore>();
+
+  // Forwarded explicitly rather than letting the row store `inject()` it ambiently -
+  // this is the SAME instance this actor store itself uses (see DocumentSheetStore.mts).
+  const { renderModeStore } = baseStore._storeUtils;
+
+  const getOrCreateItemRowStore = (item: PHYSICAL_ITEMS): ItemRowStore => {
+    const existing = itemRowStoreCache.get(item.uuid);
+    if (existing) return existing;
+    const rowStore = createItemRowStore(item, renderModeStore);
+    itemRowStoreCache.set(item.uuid, rowStore);
+    return rowStore;
+  };
+
+  // Cache guarantees a row store's document type already matches item's actual type.
+  const refreshItemRowStore = (rowStore: ItemRowStore, item: PHYSICAL_ITEMS): Promise<void> =>
+    (rowStore._storeUtils.refreshDocument as (doc?: PHYSICAL_ITEMS | null) => Promise<void>)(item);
+
+  // Row-scoped stores for this actor's own owned effect rows (Effects tab) - cached per
+  // effect uuid so a row remounting reuses the same store instead of rebuilding it. Never
+  // touches `game.dnd35e.stores`; see effectRowStoreRegistry.mts. Transferred/self-contributed
+  // effect rows (see `transferredEffects`/`selfContributedEffect` above) are read-only and
+  // don't get a row store here - editing still happens from the owning item's own tab.
+  const effectRowStoreCache = new Map<string, EffectRowStore>();
+
+  const getOrCreateEffectRowStore = (effect: ActiveEffectDnd35e): EffectRowStore => {
+    const existing = effectRowStoreCache.get(effect.uuid as string);
+    if (existing) return existing;
+    const rowStore = createEffectRowStore(effect, renderModeStore);
+    effectRowStoreCache.set(effect.uuid as string, rowStore);
+    return rowStore;
+  };
+
+  // Cache guarantees a row store's document type already matches effect's actual type.
+  const refreshEffectRowStore = (rowStore: EffectRowStore, effect: ActiveEffectDnd35e): Promise<void> =>
+    (rowStore._storeUtils.refreshDocument as (doc?: ActiveEffectDnd35e | null) => Promise<void>)(effect);
+
   const documentGetters = {
     ...baseStore.documentGetters,
     ...effectGetters,
@@ -120,6 +164,8 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
     conditions,
     transferredEffects,
     selfContributedEffect,
+    getOrCreateItemRowStore,
+    getOrCreateEffectRowStore,
   };
 
   const documentActions = {
@@ -133,6 +179,33 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
   const storeUtils = {
     ...baseStore._storeUtils,
     ...effectUtils,
+    // Wraps the base refresh - `ItemDnd35e._onUpdate()` already calls this on every child
+    // item change (`refreshDocumentStore(this.parent)`), so it's the natural hook to also
+    // re-sync each cached row store's own document ref and prune deleted/removed items.
+    refreshDocument: async (doc?: TDocument | null): Promise<void> => {
+      await baseStore._storeUtils.refreshDocument(doc);
+
+      const currentItems = new Map([...document.value.items].map((item) => [item.uuid as string, item] as const));
+      for (const [uuid, rowStore] of itemRowStoreCache) {
+        const currentItem = currentItems.get(uuid);
+        if (!currentItem) {
+          itemRowStoreCache.delete(uuid);
+          continue;
+        }
+        void refreshItemRowStore(rowStore, currentItem as unknown as PHYSICAL_ITEMS);
+      }
+
+      const currentEffects = new Map([...document.value.effects]
+        .map((effect) => [effect.uuid as string, effect] as const));
+      for (const [uuid, rowStore] of effectRowStoreCache) {
+        const currentEffect = currentEffects.get(uuid);
+        if (!currentEffect) {
+          effectRowStoreCache.delete(uuid);
+          continue;
+        }
+        void refreshEffectRowStore(rowStore, currentEffect as unknown as ActiveEffectDnd35e);
+      }
+    },
   };
 
   const store: ActorDocumentStore<TDocument> = {
@@ -152,6 +225,8 @@ interface ActorGetters {
   conditions: ComputedRef<ConditionRow[]>;
   transferredEffects: ComputedRef<TransferredEffectRow[]>;
   selfContributedEffect: ComputedRef<SelfContributedEffectRow | null>;
+  getOrCreateItemRowStore: (item: PHYSICAL_ITEMS) => ItemRowStore;
+  getOrCreateEffectRowStore: (effect: ActiveEffectDnd35e) => EffectRowStore;
 }
 
 interface ActorActions {

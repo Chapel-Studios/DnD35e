@@ -62,6 +62,12 @@ type DocumentSheetStoreUtils<TDocument extends SheetDocument> = FieldOverridesSt
   enrichHTML: (content: string) => Promise<string>;
   createLocalizedComputed: (text: string) => ComputedRef<string>;
   tabStore: TabStore;
+  /** The RenderModeStore this store was built with - either injected from the ambient
+   * Vue app, or an explicit override (see `useDocumentSheetStore`'s `options.renderModeStore`).
+   * Exposed so callers building row/child-scoped stores from outside their own component
+   * (e.g. `ActorSheetStore.getOrCreateItemRowStore`) can forward the SAME instance instead
+   * of relying on ambient `inject()` resolving correctly at that call site. */
+  renderModeStore: RenderModeStore;
 };
 
 type DocumentSheetStoreDocumentGetters = FieldOverridesStoreGetters & {
@@ -80,6 +86,7 @@ type DocumentSheetStoreDocumentGetters = FieldOverridesStoreGetters & {
   img: ComputedRef<string>;
   systemSlug: ComputedRef<string>;
   documentUuid: ComputedRef<string>;
+  documentId: ComputedRef<string>;
   description: ComputedRef<string>;
   parentUuid: ComputedRef<string | null>;
   getEffectsForField: (fieldPath: string) => ComputedRef<object[]>;
@@ -132,6 +139,12 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
   options: {
     defaultTabs?: SheetTab[];
     defaultActiveTab?: string;
+    /** Explicit RenderModeStore to use instead of `inject()`-ing the ambient one. Row/child-
+     * scoped stores built from a parent store's own closure (not from within their own
+     * component's synchronous setup) must pass the parent's own instance here rather than
+     * relying on Vue's ambient provide/inject, which only resolves correctly at the exact
+     * call site of the composable. */
+    renderModeStore?: RenderModeStore;
   } = {}
 ): DocumentSheetStore<TDocument> => {
 
@@ -142,13 +155,14 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     renderOptions: unref(context.renderOptions),
   });
 
+  const renderModeStore = options.renderModeStore ?? (inject(RenderModeStoreSymbol) as RenderModeStore);
   const {
     isPlayMode,
     isEditMode,
     isTrueMode,
     isOwnerOrGM,
     isGM,
-  } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  } = renderModeStore;
 
   // --- Core actions ---
   const updateDocument = async (
@@ -427,6 +441,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     localizedType: computed(() => game.i18n.localize(document.value.localizedType)),
     systemSlug: computed(() => document.value.system.slug || ''),
     documentUuid: computed(() => document.value.uuid || ''),
+    documentId: computed(() => document.value.id || ''),
 
     // Parent information (for embedded documents)
     parentUuid: computed(() => document.value.parent?.uuid || null),
@@ -470,6 +485,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     updateDocument,
     updateFlag,
     tabStore,
+    renderModeStore,
     getProperty: <T,>(path: string) => computed(() => foundry.utils.getProperty(document.value, path) as T),
     getSourceProperty: <T,>(path: string) => computed(() => {
       const raw = foundry.utils.getProperty(document.value._source, path);

@@ -1,3 +1,4 @@
+import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
@@ -11,10 +12,18 @@ import { computed, inject } from 'vue';
 import type { Container } from '../Container.mjs';
 import { containerDetailsTab, containerInventoryTab } from './index.mjs';
 
-const useContainerStore = (context: VueApplicationContext<Container>): ContainerStore => {
+interface UseContainerStoreOptions {
+  /** Set false for row-scoped stores so they don't clobber a standalone sheet's registry entry (or vice versa). */
+  registerGlobally?: boolean;
+  /** See `useDocumentSheetStore`'s option of the same name. */
+  renderModeStore?: RenderModeStore;
+}
+
+const useContainerStore = (context: VueApplicationContext<Container>, options: UseContainerStoreOptions = {}): ContainerStore => {
   const physicalStore = usePhysicalItemStore<Container>(context, {
     defaultTabs: [containerDetailsTab, containerInventoryTab, physicalItemEffectsTab],
     defaultActiveTab: 'details',
+    renderModeStore: options.renderModeStore,
   });
   const document = physicalStore._storeUtils.document;
   
@@ -40,7 +49,9 @@ const useContainerStore = (context: VueApplicationContext<Container>): Container
     documentGetters,
   };
 
-  game.dnd35e.stores[document.value.documentName][context.document.uuid] = store;
+  if (options.registerGlobally ?? true) {
+    game.dnd35e.stores[document.value.documentName][context.document.uuid] = store;
+  }
 
   return store;
 };
@@ -60,4 +71,4 @@ type ContainerStore = PhysicalDocumentStore<Container> & {
 };
 
 export { useContainerStore };
-export type { ContainerGetters, ContainerStore };
+export type { ContainerGetters, ContainerStore, UseContainerStoreOptions };

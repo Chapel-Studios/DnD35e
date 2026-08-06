@@ -47,8 +47,6 @@
         <InventoryItemRow
           :item="getRowItem(row)"
           :variant="variant"
-          :is-carried="isCarried"
-          :is-equipped="row.isEquipped"
           :toggle-title="toggleTitle"
           :owner-uuid="effectiveOwnerUuid"
           :field-path="resolvedFieldPath"
@@ -62,7 +60,6 @@
 
 <script setup lang="ts">
   import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
-  import type { EquipSlot } from '@constants/equipmentSlots.mjs';
   import type { WeaponSubcategory } from '@constants/inventory.mjs';
   import { SUBCATEGORY_LABELS, SUBCATEGORY_ORDER, WEAPON_SUBCATEGORY } from '@constants/inventory.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
@@ -93,22 +90,8 @@
 
   type AllowedItemType = PhysicalItemType;
 
-  type InventoryItemData = {
-    isCarried?: boolean;
-    quantity?: number;
-    weight?: number;
-    weaponSubtype?: string;
-    isEquipped?: boolean;
-    equippedSlotIds?: EquipSlot[];
-  };
-
   type InventoryRow = CategorizedRow & {
     item: PHYSICAL_ITEMS;
-    quantity: number;
-    weightDisplay: string;
-    typeLabel: string;
-    isCarried: boolean;
-    isEquipped: boolean;
   };
 
   const props = withDefaults(defineProps<{
@@ -195,13 +178,10 @@
         return !item.system.containerUuid;
       })
       .map((item) => {
-        const itemData = item.system;
         const { subcategoryId, subcategoryLabel } = resolveSubcategoryForItem(item);
         const subcategorySortOrder = subcategoryId && subcategoryId in SUBCATEGORY_ORDER
           ? SUBCATEGORY_ORDER[subcategoryId as WeaponSubcategory]
           : 0;
-        const quantity = itemData.quantity ?? 1;
-        const weight = itemData.weight ?? 0;
         const allowedType = item.type as AllowedItemType;
 
         return {
@@ -212,11 +192,6 @@
           subcategoryLabel,
           sortKey: `${subcategorySortOrder}-${item.name.toLowerCase()}`,
           item,
-          quantity,
-          weightDisplay: `${weight}`,
-          typeLabel: localize('dnd35e.WEAPON.Type.' + ((item.system as { weaponType?: string }).weaponType ?? 'simple')),
-          isCarried: itemData.isCarried ?? false,
-          isEquipped: (itemData as InventoryItemData).isEquipped ?? false,
         };
       });
   });
@@ -553,7 +528,7 @@
       return;
     }
 
-    const droppedData = dropped.system as InventoryItemData;
+    const droppedData = dropped.system;
     const nextIsCarried = props.isCarried;
     if ((droppedData.isCarried ?? false) !== nextIsCarried) {
       await dropped.update({ 'system.isCarried': nextIsCarried });

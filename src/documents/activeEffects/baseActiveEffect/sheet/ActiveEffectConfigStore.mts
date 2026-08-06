@@ -2,6 +2,7 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type Color from '@common/utils/color.mjs';
 import type { DocumentSheetStore, DocumentSheetStoreDocumentActions, DocumentSheetStoreDocumentGetters } from '@documents/document/index.mjs';
 import { useDocumentSheetStore } from '@documents/document/index.mjs';
+import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { ActiveEffectSystemModel } from '@effects/baseActiveEffect/data/ActiveEffectSystemModel.mjs';
@@ -17,12 +18,19 @@ import { computed } from 'vue';
 
 import { getDefaultActiveEffectTabs } from './tabs/index.mjs';
 
+interface UseActiveEffectConfigStoreOptions {
+  /** See `useDocumentSheetStore`'s option of the same name. */
+  renderModeStore?: RenderModeStore;
+}
+
 const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
-  context: VueApplicationContext<TDocument>
+  context: VueApplicationContext<TDocument>,
+  options: UseActiveEffectConfigStoreOptions = {}
 ) => {
   const baseStore = useDocumentSheetStore(context, {
     defaultTabs: [...getDefaultActiveEffectTabs()],
     defaultActiveTab: 'details',
+    renderModeStore: options.renderModeStore,
   });
 
   const document = baseStore._storeUtils.document;
@@ -157,6 +165,7 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
     durationUnits: computed(() => document.value.duration?.units ?? 'none'),
     // Effect-specific
     isDisabled: computed(() => document.value.disabled ?? false),
+    isHidden: computed(() => document.value.system?.isHidden ?? false),
     tint: computed(() => document.value.tint ?? null),
     transfer: computed(() => document.value.transfer ?? false),
     statuses: computed(() => [...(document.value.statuses ?? [])]),
@@ -267,6 +276,7 @@ type ActiveEffectConfigStoreDocumentGetters = DocumentSheetStoreDocumentGetters 
   durationValue: ComputedRef<number | null>;
   durationUnits: ComputedRef<string>;
   isDisabled: ComputedRef<boolean>;
+  isHidden: ComputedRef<boolean>;
   tint: ComputedRef<Color | null>;
   transfer: ComputedRef<boolean>;
   statuses: ComputedRef<string[]>;
@@ -300,9 +310,9 @@ type ActiveEffectConfigStore<TDocument extends ActiveEffectDnd35e = ActiveEffect
 };
 
 export { useActiveEffectConfigStore };
-
 export type {
   ActiveEffectConfigStore,
   ActiveEffectConfigStoreDocumentActions,
   ActiveEffectConfigStoreDocumentGetters,
+  UseActiveEffectConfigStoreOptions,
 };

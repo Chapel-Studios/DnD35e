@@ -165,7 +165,7 @@ export function measureTextareaCaretPosition(
     'boxSizing',
   ] as const;
   for (const prop of propsToCopy) mirror.style[prop] = style[prop];
-  mirror.style.width = `${textarea.clientWidth}px`;
+  mirror.style.width = `${textarea.getBoundingClientRect().width}px`;
 
   mirror.textContent = textarea.value.substring(0, charIndex);
   const marker = document.createElement('span');

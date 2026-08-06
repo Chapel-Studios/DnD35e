@@ -95,13 +95,20 @@ export function useFamiliarOverlayInput(options: UseFamiliarOptions = {}) {
     // Multiline (textarea): anchor to the caret's own row, since it can land on any line —
     // not just the bottom of the whole element like the single-line `<input>` case below.
     const isMultiline = inputEl instanceof HTMLTextAreaElement;
-    const lineHeight = isMultiline ? (parseFloat(window.getComputedStyle(inputEl).lineHeight) || 0) : 0;
-    const caretBelowTop = inputEl instanceof HTMLTextAreaElement
-      ? inputOffsetTop + measureTextareaCaretPosition(inputEl, anchorIndex).top + lineHeight
+    const lineHeight = isMultiline
+      ? (parseFloat(window.getComputedStyle(inputEl).lineHeight) || 0)
+      : 0;
+    const textareaCaret = isMultiline
+      ? measureTextareaCaretPosition(inputEl, anchorIndex)
+      : null;
+    const caretBelowTop = textareaCaret
+      ? inputOffsetTop + textareaCaret.top + lineHeight
       : inputRect.bottom - wrapperRect.top;
-    const anchorLeft = inputEl instanceof HTMLTextAreaElement
-      ? inputOffsetLeft + measureTextareaCaretPosition(inputEl, anchorIndex).left
-      : measureTextOffset(inputEl, anchorIndex);
+    // Both branches must be relative to the wrapper - measureTextOffset returns an
+    // offset relative to the input's own left edge, so it needs inputOffsetLeft too.
+    const anchorLeft = inputOffsetLeft + (textareaCaret
+      ? textareaCaret.left
+      : measureTextOffset(inputEl as HTMLInputElement, anchorIndex));
 
     const position = {
       top: caretBelowTop + verticalGap,
