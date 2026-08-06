@@ -10,9 +10,11 @@ const {
   SchemaField, StringField,
 } = foundry.data.fields;
 
-const speedField = (defaultValue: number) => useDnd35eField(requiredNumberField(defaultValue));
+const speedField = (defaultValue: number) => useDnd35eField(requiredNumberField(defaultValue), { measurementUnit: 'distance' });
 
 abstract class ActorSystemModel extends DocumentSystemModel<foundry.documents.Actor> {
+  static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.ACTOR'];
+
   static override defineSchema(): Record<string, any> {
     const schema = super.defineSchema();
 

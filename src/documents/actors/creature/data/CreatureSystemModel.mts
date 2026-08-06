@@ -170,7 +170,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       languages: new ArrayField(new StringField({ required: true, blank: false }), { initial: [] }),
       senses: new ArrayField(new SchemaField({
         type:     useDnd35eField(requiredTypedStringField(SENSE_TYPES, 'darkvision')),
-        distance: useDnd35eField(requiredNumberField(0)),
+        distance: useDnd35eField(requiredNumberField(0), { measurementUnit: 'distance' }),
       }), { initial: [] }),
     });
 
@@ -198,12 +198,12 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     });
 
     schema.encumbrance = new SchemaField({
-      carriedWeight:   useDnd35eField(derivedNumberField(0)),
-      light:           useDnd35eField(derivedNumberField(0)),
-      medium:          useDnd35eField(derivedNumberField(0)),
-      heavy:           useDnd35eField(derivedNumberField(0)),
-      maxLift:         useDnd35eField(derivedNumberField(0)),
-      drag:            useDnd35eField(derivedNumberField(0)),
+      carriedWeight:   useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
+      light:           useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
+      medium:          useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
+      heavy:           useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
+      maxLift:         useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
+      drag:            useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
       tier:            useDnd35eField(derivedNumberField(0)),
       carryBonus:      useDnd35eField(derivedNumberField(0)),
       carryMultiplier: useDnd35eField(derivedNumberField(1)),

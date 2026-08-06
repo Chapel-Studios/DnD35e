@@ -99,6 +99,8 @@ type FieldOverridesStoreUtils = {
   getFieldLabel: (fieldPath: string) => string;
   /** Resolve a localized field hint. */
   getFieldHint: (fieldPath: string) => string;
+  /** Resolve the canonical measurement unit tagged on a numeric schema field (distance/weight), if any. */
+  getFieldMeasurementUnit: (fieldPath: string) => 'distance' | 'weight' | undefined;
 };
 
 type FieldOverridesStoreActions = {
@@ -154,6 +156,11 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
   const getFieldLabel = (fieldPath: string): string => getFieldLocalization(fieldPath, 'label');
 
   const getFieldHint = (fieldPath: string): string => getFieldLocalization(fieldPath, 'hint');
+
+  const getFieldMeasurementUnit = (fieldPath: string): 'distance' | 'weight' | undefined => {
+    const schemaField = getSchemaField(fieldPath) as { options?: { measurementUnit?: 'distance' | 'weight' } } | undefined;
+    return schemaField?.options?.measurementUnit;
+  };
 
   /** Read our custom override options from a DataField. */
   const getOverrideOptions = (field: DataField): OverrideOptions =>
@@ -321,6 +328,7 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
       getFieldLocalization,
       getFieldLabel,
       getFieldHint,
+      getFieldMeasurementUnit,
     },
     fieldOverridesActions: {
       setFieldOverride,

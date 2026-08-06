@@ -4,6 +4,17 @@
     :class="{ 'effect-disabled': effect.disabled, 'effect-hidden': effect.system.isHidden }"
   >
     <td class="effect-cell">
+      <button
+        v-if="changes.length"
+        type="button"
+        class="effect-expand"
+        :title="expanded
+          ? createLocalizedComputed('dnd35e.EFFECT.CollapseDetails').value
+          : createLocalizedComputed('dnd35e.EFFECT.ExpandDetails').value"
+        @click="expanded = !expanded"
+      >
+        <i class="fas" :class="expanded ? 'fa-chevron-down' : 'fa-chevron-right'" />
+      </button>
       <img :src="effect.img || 'icons/svg/aura.svg'" :alt="effect.name" class="effect-icon" />
       <span class="effect-name">{{ effect.name }}</span>
       <slot name="effect-badge" :effect="effect" />
@@ -49,14 +60,21 @@
       </div>
     </td>
   </tr>
+  <EffectChangeRow
+    v-for="(change, index) in (expanded ? changes : [])"
+    :key="index"
+    :change="change"
+    :index="index"
+  />
 </template>
 
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { EffectDocumentActions } from '@documents/document/logic/index.mjs';
   import type { ActiveEffectDnd35e } from '@effects/index.mjs';
+  import EffectChangeRow from '@vc/effects/EffectChangeRow.vue';
   import type { ComputedRef } from 'vue';
-  import { inject } from 'vue';
+  import { computed, inject, ref } from 'vue';
 
   /** Minimal shape any document sheet store (Item or Actor) must provide for this row. */
   interface EffectRowHostStore {
@@ -94,6 +112,12 @@
       createLocalizedComputed,
     },
   } = inject(DocumentSheetStoreSymbol) as EffectRowHostStore;
+
+  const expanded = ref(false);
+
+  // Available regardless of `readOnly`/`canEdit` - viewing a change's details isn't a
+  // mutation, so transferred (read-only) effects can still be expanded.
+  const changes = computed(() => effect.system.changes ?? []);
 
   const effectEnablementTitle = (effectItem: ActiveEffectDnd35e) => effectItem.disabled
     ? createLocalizedComputed('dnd35e.EFFECT.Enable')
@@ -138,6 +162,19 @@
     padding: 0.5rem 0.75rem;
   }
 
+  .effect-expand {
+    background: none;
+    border: none;
+    padding: 0;
+    opacity: 0.6;
+    cursor: pointer;
+    width: 1rem;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
   .effect-icon {
     width: 24px;
     height: 24px;
@@ -175,3 +212,4 @@
     }
   }
 </style>
+

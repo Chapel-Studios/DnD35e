@@ -96,3 +96,40 @@ describe('EffectRow', () => {
     expect(store.documentActions.editEffect).toHaveBeenCalledWith('effect-1');
   });
 });
+
+describe('EffectRow — expandable changes', () => {
+  beforeEach(() => {
+    setIsGM(false);
+  });
+
+  it('renders no expand button and no change rows when the effect has no changes', () => {
+    const wrapper = mountEffectRow({});
+    expect(wrapper.find('.effect-expand').exists()).toBe(false);
+    expect(wrapper.findAll('.system-change-row')).toHaveLength(0);
+  });
+
+  it('toggles expansion of the effect\'s changes, even when readOnly', async () => {
+    const wrapper = mountEffectRow({
+      readOnly: true,
+      effect: mkEffect({
+        system: {
+          isHidden: false,
+          changes: [
+            { key: 'system.encumbrance.maxDexBonus', type: 'downgrade', value: 3 },
+            { key: 'system.abilities.dex.mod', type: 'downgrade', value: 3 },
+          ],
+        },
+      } as unknown as Partial<ActiveEffectDnd35e>),
+    });
+
+    const expandBtn = wrapper.find('.effect-expand');
+    expect(expandBtn.exists()).toBe(true);
+    expect(wrapper.findAll('.system-change-row')).toHaveLength(0);
+
+    await expandBtn.trigger('click');
+    expect(wrapper.findAll('.system-change-row')).toHaveLength(2);
+
+    await expandBtn.trigger('click');
+    expect(wrapper.findAll('.system-change-row')).toHaveLength(0);
+  });
+});

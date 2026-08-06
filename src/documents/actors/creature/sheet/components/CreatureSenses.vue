@@ -19,6 +19,8 @@
         :sizing-unit-options="senseTypeOptions"
         :disabled="disabled"
         :hide-distance="item.type === LOW_LIGHT_VISION"
+        :hint="distanceHint"
+        :unit-hint="typeHint"
         :on-distance-change="(val: number) => updateSenseDistance(index, val)"
         :on-unit-change="(val: SenseType) => updateSenseType(index, val)"
         class="sense-type-select"
@@ -61,6 +63,7 @@
   const {
     measurement: {
       distanceDisplayShortLabel,
+      distanceDisplayLabel,
       convertToLocalizedDistance,
     },
   } = inject(SettingsStoreSymbol) as SettingsStore;
@@ -71,6 +74,13 @@
       label: localize(SENSE_TYPES_LOCALIZED[option.value]),
     })));
   const distanceUnit = computed(() => distanceDisplayShortLabel.value);
+
+  // Schema hint has a {distanceType} placeholder that Foundry's auto-localization can't fill in, so interpolate it manually.
+  const distanceHint = computed(() => game.i18n.format(
+    'dnd35e.CREATURE.FIELDS.bio.senses.element.distance.hint',
+    { distanceType: distanceDisplayLabel.value }
+  ));
+  const typeHint = computed(() => game.i18n.localize('dnd35e.CREATURE.FIELDS.bio.senses.element.type.hint'));
 
   // Domain callback: senses are edited as a coordinated array of structured entries.
   const sensesUpdater = getViewAwareFieldUpdater('system.bio.senses');

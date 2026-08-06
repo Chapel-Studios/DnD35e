@@ -10,7 +10,7 @@ type BuildContainmentChangesInput = {
 
 const buildChange = (
   key: string,
-  value: number | CurrencyData,
+  value: number,
   condition?: string
 ): EffectChangeDataDnd35e => ({
   key,
@@ -46,7 +46,7 @@ const buildContainmentChanges = ({
     contributedCount
   ));
   if (contributedPrice && contributedPrice.srdEquivalent > 0) {
-    changes.push(buildChange('system.contentsValue', contributedPrice));
+    changes.push(buildChange('system.contentsValue', contributedPrice.srdEquivalent));
   }
   return changes;
 };

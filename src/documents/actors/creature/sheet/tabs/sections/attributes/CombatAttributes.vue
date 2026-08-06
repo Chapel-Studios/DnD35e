@@ -60,7 +60,10 @@
 
 <style lang="scss" scoped>
   .traits-section {
-    .sr {
+    // SpellResistance's root (FormulaFormGroup) is a multi-root/fragment component, so Vue
+    // doesn't auto-tag its rendered root with this component's scope id - :deep() drops that
+    // requirement from the descendant side of the selector.
+    :deep(.sr) {
       grid-column: span 2;
     }
   }

@@ -71,12 +71,13 @@
   const {
     measurement: {
       distanceDisplayShortLabel,
+      convertToLocalizedDistance,
     },
   } = inject(SettingsStoreSymbol) as SettingsStore;
 
   const allModes = computed(() => Object.entries(SPEED_KEYS_LOCALIZED)
     .map(([key, label]) => {
-      const value = getViewAwareFieldValue<number>(`system.speed.${key}`) ?? 0;
+      const value = convertToLocalizedDistance(getViewAwareFieldValue<number>(`system.speed.${key}`) ?? 0);
       const isFlySpeed = key === SPEED_TYPE.FLY;
       const hasNoValue = value === 0;
       

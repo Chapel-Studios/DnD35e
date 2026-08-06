@@ -86,15 +86,18 @@ describe('diffDerivedPrototypeTokenFields', () => {
     }, derived)).toEqual({ detectionModes: { basicSight: { range: 60, enabled: true } } });
   });
 
-  it('removes a managed detection mode key that no longer applies, using -= deletion syntax', () => {
+  it('removes a managed detection mode key that no longer applies, using ForcedDeletion', () => {
     const noSensesDerived = buildDerivedPrototypeTokenFields('Duder', 'medium', []);
-    expect(diffDerivedPrototypeTokenFields({
+    const result = diffDerivedPrototypeTokenFields({
       name: 'Duder',
       width: 1,
       height: 1,
       sight: { enabled: true, visionMode: 'basic', range: 0 },
       detectionModes: { basicSight: { range: 60, enabled: true } },
-    }, noSensesDerived)).toEqual({ detectionModes: { '-=basicSight': null } });
+    }, noSensesDerived);
+    expect(result?.detectionModes).toBeInstanceOf(Object);
+    expect((result?.detectionModes as Record<string, unknown>).basicSight)
+      .toBeInstanceOf(foundry.data.operators.ForcedDeletion);
   });
 
   it('leaves unmanaged detection mode keys untouched', () => {

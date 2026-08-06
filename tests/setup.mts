@@ -161,6 +161,11 @@ class ActiveEffectStub {
       AnyField: class { constructor (public options: any = {}) {} },
       SetField: class { constructor (public element: any, public options: any = {}) {} },
     },
+    operators: {
+      // Sentinel used to force-delete a key from a TypedObjectField, replacing the
+      // legacy `{-=key: null}` string-prefix convention.
+      ForcedDeletion: class {},
+    },
   },
 };
 

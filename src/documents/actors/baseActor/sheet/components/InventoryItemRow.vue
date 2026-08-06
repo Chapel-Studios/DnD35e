@@ -145,14 +145,6 @@
      * primitive, unlike `item` itself) so Vue's prop diffing actually detects the change
      * when the underlying item is mutated in place - see InventoryListTable.vue's `rows`. */
     isEquipped?: boolean;
-    /** Carried quantity. Same rationale as `isEquipped` - computed fresh by the parent's
-     * `rows` list so an in-place `system.quantity` mutation actually changes the prop
-     * value (reference equality on `item` itself would otherwise mask the change). */
-    quantity?: number;
-    /** Rendered weight text. Same rationale as `quantity`/`isEquipped`. */
-    weightDisplay?: string;
-    /** Rendered type label. Same rationale as `quantity`/`isEquipped`. */
-    typeLabel?: string;
     toggleTitle?: string;
     /** Uuid of the actor that ultimately owns this item's chain of containers. */
     ownerUuid?: string | null;
@@ -165,9 +157,6 @@
     variant: 'carried',
     isCarried: false,
     isEquipped: false,
-    quantity: 1,
-    weightDisplay: '0',
-    typeLabel: '',
     toggleTitle: '',
     ownerUuid: null,
     stripe: 'even',
@@ -204,9 +193,10 @@
   const itemIcon = computed<string>(() => props.item.img ?? FALLBACK_ITEM_ICON);
   const iconKey = computed<string>(() => `${props.item.id}:${props.item.img || 'fallback'}`);
 
-  const quantity = computed<number>(() => props.quantity);
-  const weightDisplay = computed<string>(() => props.weightDisplay);
-  const typeLabel = computed<string>(() => props.typeLabel);
+  const quantity = computed<number>(() => (props.item.system as InventoryItemData).quantity ?? 1);
+  const weightDisplay = computed<string>(() => `${(props.item.system as InventoryItemData).weight ?? 0}`);
+  const typeLabel = computed<string>(() =>
+    localize('dnd35e.WEAPON.Type.' + ((props.item.system as { weaponType?: string }).weaponType ?? 'simple')));
 
   const isEquippable = (item: PHYSICAL_ITEMS): item is EQUIPPABLE_ITEMS => {
     const data = item.system as InventoryItemData | undefined;

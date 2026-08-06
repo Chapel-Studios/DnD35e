@@ -40,7 +40,8 @@ class CurrencyField extends EmbeddedDataField {
    * - Object with `.stacks` `CoinStack[]` array
    * - JSON string encoding any of the above
    * - Shorthand string: `"5 srd_gp, 3 srd_sp"`
-   * - Number: treated as srd_gp count (e.g., `5` → `[{ coinId: 'srd_gp', count: 5 }]`)
+   * - Number: treated as a total gp-equivalent value, consolidated into whatever
+   *   denominations express it exactly (e.g. `0.11` → 11 copper, not rounded to 0 gold)
    */
   override _castChangeDelta(raw: unknown, replacementData: Record<string, unknown> = {}): CoinStack[] {
     // Already a stacks array
@@ -54,7 +55,11 @@ class CurrencyField extends EmbeddedDataField {
     }
 
     if (typeof raw === 'number' || !isNaN(Number(raw))) {
-      return [{ coinId: 'srd_gp', count: Number(raw) }];
+      // A bare number is a gp-equivalent total, not a literal `srd_gp` coin count -
+      // consolidate so fractional gp values (e.g. 11 copper) aren't rounded away.
+      const gpValue = Number(raw);
+      const sign = gpValue < 0 ? -1 : 1;
+      return CurrencyData.consolidateFromGp(Math.abs(gpValue)).map(s => ({ ...s, count: s.count * sign }));
     }
 
     // String handling
@@ -165,11 +170,13 @@ class CurrencyField extends EmbeddedDataField {
 
   /**
    * Multiply: scale all coin counts by a numeric factor.
-   * The delta is expected to be a single-element array where `count` is the factor.
+   * Reads the factor from the original `change.value`, not the cast `delta` -
+   * a multiply factor is a scalar, not a gp-equivalent currency amount, so it
+   * must not be routed through `_castChangeDelta`'s gp-consolidation.
    */
-  override _applyChangeMultiply(value: CurrencyData, delta: CoinStack[], _model: any, _change: any): { stacks: CoinStack[]; srdEquivalent: number } {
-    const factor = delta.length === 1 ? delta[0].count : 1;
-    return multiplyCurrency(value, factor);
+  override _applyChangeMultiply(value: CurrencyData, _delta: CoinStack[], _model: any, change: any): { stacks: CoinStack[]; srdEquivalent: number } {
+    const factor = Number(change?.value);
+    return multiplyCurrency(value, Number.isFinite(factor) ? factor : 1);
   }
 
   /** Override: replace the entire price with the delta. */

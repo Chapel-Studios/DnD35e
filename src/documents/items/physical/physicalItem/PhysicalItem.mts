@@ -77,7 +77,7 @@ abstract class PhysicalItem extends IdentifiableItemBase {
    * make it impossible for tier-based Active Effects (e.g. encumbrance penalties) to
    * react to the current pass's tier during 'final'.
    */
-  protected _buildCarriedChanges(): EffectChangeDataDnd35e[] {
+  protected _buildPhysicalChanges(): EffectChangeDataDnd35e[] {
     const results: EffectChangeDataDnd35e[] = [];
     const pushChange = (key: string, value: number): void => {
       results.push({
@@ -92,17 +92,19 @@ abstract class PhysicalItem extends IdentifiableItemBase {
     };
 
     const contributedQuantity = Math.max(this.system.quantity ?? 0, 0);
-    const contributedWeight = this.system.weight ?? 0;
-    const totalWeight = contributedWeight * contributedQuantity;
-
-    if (totalWeight > 0) {
-      pushChange('system.encumbrance.carriedWeight', totalWeight);
-    }
-
     const contributedValue = multiplyCurrency(this.system.price, contributedQuantity);
+
     if (contributedValue.srdEquivalent > 0) {
       pushChange('system.inventoryValue', contributedValue.srdEquivalent);
     }
+    
+    const contributedWeight = this.system.weight ?? 0;
+    const totalWeight = contributedWeight * contributedQuantity;
+
+    if (totalWeight > 0 && this.system.isCarried) {
+      pushChange('system.encumbrance.carriedWeight', totalWeight);
+    }
+
 
     return results;
   }
@@ -116,8 +118,8 @@ abstract class PhysicalItem extends IdentifiableItemBase {
    * handled separately, by containment's own item-to-container AE.
    */
   override getContributedActorChanges(phase: string): EffectChangeDataDnd35e[] {
-    if (!this.system.isCarried || this.system.containerUuid) return [];
-    return this._buildCarriedChanges().filter((change) => change.phase === phase);
+    if (this.system.containerUuid) return [];
+    return this._buildPhysicalChanges().filter((change) => change.phase === phase);
   }
 
   /**

@@ -57,8 +57,8 @@ const buildDerivedPrototypeTokenFields = (name: string, size: Size, senses: Sens
  * update payload for `actor.update({ prototypeToken: ... })`, or `null` if already in sync.
  *
  * `detectionModes` is merged surgically: only `MANAGED_DETECTION_MODE_KEYS` are ever
- * added, changed, or removed (via Foundry's `-=key` deletion syntax) — any other key a
- * GM added directly (e.g. `seeInvisibility`) is left untouched.
+ * added, changed, or removed (via `foundry.data.operators.ForcedDeletion`) — any other
+ * key a GM added directly (e.g. `seeInvisibility`) is left untouched.
  */
 const diffDerivedPrototypeTokenFields = (
   current: PrototypeTokenSource,
@@ -94,7 +94,7 @@ const diffDerivedPrototypeTokenFields = (
         detectionModesChanged = true;
       }
     } else if (currentEntry) {
-      detectionModesUpdate[`-=${key}`] = null;
+      detectionModesUpdate[key] = new foundry.data.operators.ForcedDeletion();
       detectionModesChanged = true;
     }
   }

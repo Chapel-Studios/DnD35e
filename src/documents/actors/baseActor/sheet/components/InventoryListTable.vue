@@ -49,9 +49,6 @@
           :variant="variant"
           :is-carried="isCarried"
           :is-equipped="row.isEquipped"
-          :quantity="row.quantity"
-          :weight-display="row.weightDisplay"
-          :type-label="row.typeLabel"
           :toggle-title="toggleTitle"
           :owner-uuid="effectiveOwnerUuid"
           :field-path="resolvedFieldPath"
@@ -70,7 +67,6 @@
   import { SUBCATEGORY_LABELS, SUBCATEGORY_ORDER, WEAPON_SUBCATEGORY } from '@constants/inventory.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { syncContainmentAe } from '@effects/containment/index.mjs';
-  import { roundToDecimal } from '@helpers/math.mjs';
   import type { PHYSICAL_ITEMS, PhysicalItemType } from '@items/itemTypes.mjs';
   import {
     containerItemType,
@@ -82,8 +78,6 @@
   import type { PhysicalItemLike } from '@items/physical/physicalItem/PhysicalItem.mjs';
   import { WEAPON_SUBTYPE } from '@items/physical/weapon/data/constants.mjs';
   import type { Weapon, WeaponSubtype, WeaponSystemData } from '@items/physical/weapon/index.mjs';
-  import type { SettingsStore } from '@settings/index.mjs';
-  import { SettingsStoreSymbol } from '@settings/index.mjs';
   import CategorizedListTable, { type CategorizedRow } from '@vc/CategorizedListTable.vue';
   import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
   import { computed, inject, onBeforeUnmount, reactive } from 'vue';
@@ -157,13 +151,6 @@
     },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
-  const {
-    measurement: {
-      weightDisplayShortLabel,
-      convertToLocalizedWeight,
-    },
-  } = inject(SettingsStoreSymbol) as SettingsStore;
-
   // Falls back to the shared section-level path when this table isn't given its own
   // (e.g. nested container tables that haven't opted into individual locking).
   const resolvedFieldPath = computed(() => props.fieldPath ?? INVENTORY_FIELD_PATH);
@@ -215,7 +202,6 @@
           : 0;
         const quantity = itemData.quantity ?? 1;
         const weight = itemData.weight ?? 0;
-        const localizedWeight = roundToDecimal(convertToLocalizedWeight(weight), 2);
         const allowedType = item.type as AllowedItemType;
 
         return {
@@ -227,7 +213,7 @@
           sortKey: `${subcategorySortOrder}-${item.name.toLowerCase()}`,
           item,
           quantity,
-          weightDisplay: `${localizedWeight} ${weightDisplayShortLabel.value}`,
+          weightDisplay: `${weight}`,
           typeLabel: localize('dnd35e.WEAPON.Type.' + ((item.system as { weaponType?: string }).weaponType ?? 'simple')),
           isCarried: itemData.isCarried ?? false,
           isEquipped: (itemData as InventoryItemData).isEquipped ?? false,

@@ -114,7 +114,7 @@
             "empty": "No senses configured",
             "element": {
               "type": { "label": "Type", "familiarLabel": "Type", "familiarAliases": [], "hint": "The kind of sense, such as darkvision or blindsense." },
-              "distance": { "label": "Distance", "familiarLabel": "Range", "familiarAliases": [], "hint": "The range of this sense, in squares (1 square = 5 ft = 1.5 m)." }
+              "distance": { "label": "Distance", "familiarLabel": "Range", "familiarAliases": [], "hint": "The range of this sense, in {distanceType}." }
             }
           },
           "alignment": {
@@ -151,7 +151,7 @@
             "damageType": { "label": "Damage Type", "familiarLabel": "Type", "familiarAliases": [], "hint": "The type of damage this attack deals, e.g. slashing or fire." },
             "critRange": { "label": "Critical Range", "familiarLabel": "Range", "familiarAliases": [], "hint": "The natural roll(s) that threaten a critical hit, e.g. '20' or '19-20'." },
             "critMultiplier": { "label": "Critical Multiplier", "familiarLabel": "Multiplier", "familiarAliases": [], "hint": "The multiplier applied to damage on a confirmed critical hit." },
-            "rangeIncrement": { "label": "Range Increment", "familiarLabel": "Range", "familiarAliases": [], "hint": "The range increment of this attack, in squares (1 square = 5 ft = 1.5 m), if any." },
+            "rangeIncrement": { "label": "Range Increment", "familiarLabel": "Range", "familiarAliases": [], "hint": "The range increment of this attack, in {distanceType}, if any." },
             "attackFormula": { "label": "Attack Formula", "familiarLabel": "Attack Formula", "familiarAliases": [], "hint": "The formula used to resolve this attack's to-hit roll." },
             "damageFormula": { "label": "Damage Formula", "familiarLabel": "Damage Formula", "familiarAliases": [], "hint": "The formula used to resolve this attack's damage roll." }
           }
