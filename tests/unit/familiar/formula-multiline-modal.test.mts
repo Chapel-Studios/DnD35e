@@ -88,7 +88,6 @@ describe('FormulaMultilineModal — real component', () => {
     // Validation: an unresolvable context surfaces a field-level error once blurred.
     await wrapper.find('textarea').setValue('#self.nonexistent');
     await wrapper.find('textarea').trigger('blur');
-    await new Promise(resolve => setTimeout(resolve, 250));
     await nextTick();
     expect(wrapper.find('.formula-input-multiline').classes()).toContain('has-error');
   });

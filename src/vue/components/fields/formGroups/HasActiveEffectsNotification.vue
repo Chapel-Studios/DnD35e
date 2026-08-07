@@ -42,7 +42,7 @@
   import { formatChangeTypeSymbol } from '@effects/baseActiveEffect/logic/index.mjs';
   import { roundToDecimal } from '@helpers/math.mjs';
   import type { Override } from '@helpers/stacking.mjs';
-  import { STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+  import { parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
   import type { SettingsStore } from '@settings/index.mjs';
   import { SettingsStoreSymbol } from '@settings/index.mjs';
   import { computed, inject, nextTick, ref } from 'vue';
@@ -73,10 +73,12 @@
   const measurementUnit = computed(() => getFieldMeasurementUnit(props.fieldPath));
 
   const localizeDisplayValue = (value: unknown): unknown => {
-    if (typeof value !== 'number') return value;
-    if (measurementUnit.value === 'distance') return roundToDecimal(convertToLocalizedDistance(value), 2);
-    if (measurementUnit.value === 'weight') return roundToDecimal(convertToLocalizedWeight(value), 2);
-    return value;
+    // change.value comes off the raw AE change (often a numeric string), not just a number.
+    const numericValue = parseNumericChangeValue(value);
+    if (Number.isNaN(numericValue)) return value;
+    if (measurementUnit.value === 'distance') return roundToDecimal(convertToLocalizedDistance(numericValue), 2);
+    if (measurementUnit.value === 'weight') return roundToDecimal(convertToLocalizedWeight(numericValue), 2);
+    return numericValue;
   };
 
   const typedEffects = computed(() =>

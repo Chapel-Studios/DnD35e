@@ -202,7 +202,7 @@
   const itemIcon = computed<string>(() => img.value ?? FALLBACK_ITEM_ICON);
   const iconKey = computed<string>(() => `${documentId.value}:${img.value || 'fallback'}`);
 
-  const weightDisplay = computed<string>(() => `${weight.value} ${weightDisplayShortLabel}`);
+  const weightDisplay = computed<string>(() => `${weight.value} ${weightDisplayShortLabel.value}`);
   const typeLabel = computed<string>(() => isContainer.value
     ? localize(ITEM_TYPES_LOCALIZED[containerItemType])
     : (itemRowStore as WeaponStore).documentGetters.weaponType.value
