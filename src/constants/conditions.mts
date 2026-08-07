@@ -1,7 +1,7 @@
 /**
  * SRD condition registry — poc.9 Story 4.B.
  *
- * Feasibility audit (see phase-09-basic-tokens.md Story 4): most SRD conditions modify
+ * Feasibility audit (see poc/phase-09-basic-tokens.md Story 4): most SRD conditions modify
  * AC/attack/saves/skill-check values that have no live consumer yet in the current
  * data pipeline — `Creature.calculateAC()` bypasses the AE stacking engine entirely
  * (`armorBonus`/`shieldBonus` are hardcoded `0` stubs), and there is no attack-roll,
@@ -61,14 +61,14 @@ const halveLandSpeed = (): EffectChangeDataDnd35e => ({
 
 /**
  * Caps land speed at a flat value (OVERRIDE, high priority so it applies after any
- * MULTIPLY changes — e.g. crawling is 5 ft. regardless of the creature's speed or
- * other active speed penalties, per SRD). No bonus type, same as `halveLandSpeed` —
- * bypasses stacking summation and applies directly via priority order.
+ * MULTIPLY changes — e.g. crawling is 1 square (5 ft.) regardless of the creature's
+ * speed or other active speed penalties, per SRD). No bonus type, same as
+ * `halveLandSpeed` — bypasses stacking summation and applies directly via priority order.
  */
-const capLandSpeed = (feet: number): EffectChangeDataDnd35e => ({
+const capLandSpeed = (squares: number): EffectChangeDataDnd35e => ({
   key: 'system.speed.land',
   type: EFFECT_CHANGE_TYPE.OVERRIDE,
-  value: feet,
+  value: squares,
   priority: 100,
   phase: FINAL_EFFECT_CHANGE_PHASE,
   target: EFFECT_CHANGE_TARGET.ACTOR,
@@ -221,7 +221,7 @@ const CONDITIONS: Record<string, ConditionDefinition> = {
     // capped at a flat 5 ft. while prone (SRD: crawling) — a real, visible change,
     // consistent with Entangled/Exhausted. Drives movement-action gating too
     // (crawl/standUp/dropProne) — see `movementActionGating.mts`.
-    changes: [capLandSpeed(5)],
+    changes: [capLandSpeed(1)],
   },
   shaken: {
     id: 'shaken',

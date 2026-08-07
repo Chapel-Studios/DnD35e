@@ -34,7 +34,7 @@ interface IdentifiableEffect {
 
 /**
  * Structural constraint for documents that can host the identifiable mixin.
- * Satisfied by Items (now) and Actors (Phase 6+) — both have `effects` collections.
+ * Satisfied by Items (now) and Actors (poc Phase 6+) — both have `effects` collections.
  * Excludes ActiveEffects which lack embedded effect collections.
  */
 interface IdentifiableHostDocument extends DocumentProperties {

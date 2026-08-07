@@ -1,5 +1,6 @@
 <template>
   <FormGroup
+    v-bind="attrs"
     :label="props.label"
     :hint="displayHint"
     :field-path="props.fieldPath"
@@ -20,7 +21,7 @@
         ref="overlayRef"
         :model-value="localValue"
         :disabled="!isEditable"
-        placeholder="Enter name or formula (e.g. #self.name)"
+        :placeholder="resolvedPlaceholder"
         input-class="formula-input"
         highlight-class="highlight-layer"
         input-wrapper-class="formula-input-wrapper"
@@ -37,10 +38,42 @@
         @focus="onFocus"
         @scroll="syncScroll"
         @select="onFamiliarSelect"
-      />
+      >
+        <!--
+          Rendered as an overlay button INSIDE the text field itself (not
+          FormGroup's #controls slot) so it stays visible regardless of
+          `hideFieldControls`/`hideLabel`/hint visibility — those compact
+          inline usages (e.g. the AE Changes table row) still need the
+          advanced editor affordance.
+        -->
+        <template v-if="!props.hideAdvancedEditor && isEditable" #decoration>
+          <button
+            type="button"
+            class="field-control-btn"
+            :aria-label="advancedEditorLabel"
+            :title="advancedEditorLabel"
+            @click="isModalOpen = true"
+          >
+            <i class="fas fa-expand-arrows-alt" />
+          </button>
+        </template>
+      </FamiliarOverlayInput>
     </div>
   </FormGroup>
+
+  <FormulaMultilineModal
+    v-if="!props.hideAdvancedEditor"
+    :open="isModalOpen"
+    :formula="effectiveFormula"
+    :contexts="contexts"
+    :expected-type="resolvedExpectedType"
+    :label="props.label"
+    :placeholder="resolvedPlaceholder"
+    :on-commit="commitFormula"
+    @close="isModalOpen = false"
+  />
 </template>
+
 
 <script setup lang="ts">
   import type { DocumentSheetStore } from '@documents/document/sheet/DocumentSheetStore.mjs';
@@ -50,14 +83,21 @@
   import FamiliarOverlayInput from '@vc/fields/formGroups/FamiliarOverlayInput.vue';
   import FormGroup from '@vc/fields/formGroups/FormGroup.vue';
   import type { PropType } from 'vue';
-  import { computed, inject, ref, useSlots, watch } from 'vue';
+  import { computed, inject, ref, useAttrs, useSlots, watch } from 'vue';
 
   import type { FormulaData } from './FormulaData.mjs';
   import { FormulaField } from './FormulaField.mjs';
+  import FormulaMultilineModal from './FormulaMultilineModal.vue';
   import { FormulaResolver } from './FormulaResolver.mjs';
   import type { FamiliarSchema } from './types.mts';
   import { useFormulaEditor } from './useFormulaEditor.mjs';
   import { renderFormulaDisplayHTML } from './utils.mjs';
+
+  // Template renders two root nodes (`FormGroup` + `FormulaMultilineModal`), which makes
+  // Vue treat this component as a fragment root and disables automatic `$attrs` (class,
+  // style, etc.) fallthrough onto `FormGroup`. Forward them explicitly instead.
+  defineOptions({ inheritAttrs: false });
+  const attrs = useAttrs();
 
   const slots = useSlots();
 
@@ -94,6 +134,14 @@
      * Validation errors still surface via `update:error` regardless.
      */
     hideContextHint: { type: Boolean, default: false },
+    /**
+     * Suppress the advanced (multiline) formula editor modal button (poc §7.10).
+     * Used by consumers that don't want the expand-to-modal affordance, e.g.
+     * very compact inline fields.
+     */
+    hideAdvancedEditor: { type: Boolean, default: false },
+    /** Input placeholder text. Defaults to a generic formula hint. */
+    placeholder: { type: String, default: undefined },
   });
 
   const emit = defineEmits<{
@@ -174,6 +222,8 @@
     return isEditMode.value;
   });
 
+  const resolvedPlaceholder = computed(() => props.placeholder ?? game.i18n.localize('dnd35e.Formula.DefaultPlaceholder'));
+
   /** Auto-generate hint from context keys, e.g. "Available Contexts: [Self, Owner]" */
   const dynamicHint = computed(() => {
     if (props.hint) return props.hint;
@@ -191,6 +241,24 @@
     }
     return renderFormulaDisplayHTML(effectiveFormula.value, contexts.value);
   });
+
+  const isModalOpen = ref(false);
+  const advancedEditorLabel = computed(() => game.i18n.localize('dnd35e.Formula.AdvancedEditor'));
+
+  /** Shared commit path for both the inline single-line field and the advanced editor modal. */
+  const commitFormula = (canonical: string) => {
+    if (typeof props.onUpdate === 'function') {
+      props.onUpdate(canonical);
+      return;
+    }
+
+    if (typeof inferredUpdater.value === 'function') {
+      void inferredUpdater.value(canonical || '');
+      return;
+    }
+
+    console.warn(`[FormulaFormGroup] No updater available for ${props.fieldPath}. Provide onUpdate or ensure DocumentSheetStore is injected.`);
+  };
 
   const {
     familiarOptions,
@@ -212,19 +280,7 @@
     getInputElement,
     getHighlightElement,
     getDropdownMenuElement,
-    onCommit: (canonical) => {
-      if (typeof props.onUpdate === 'function') {
-        props.onUpdate(canonical);
-        return;
-      }
-
-      if (typeof inferredUpdater.value === 'function') {
-        void inferredUpdater.value(canonical || '');
-        return;
-      }
-
-      console.warn(`[FormulaFormGroup] No updater available for ${props.fieldPath}. Provide onUpdate or ensure DocumentSheetStore is injected.`);
-    },
+    onCommit: commitFormula,
     focusOnMount: () => isEditable.value && props.focusOnMount,
     expectedType: resolvedExpectedType,
   });

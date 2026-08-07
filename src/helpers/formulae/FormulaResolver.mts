@@ -37,6 +37,7 @@ import {
   findConditionalBlocks,
   resolveConditionalFormula,
 } from './FormulaResolver.conditionalGrammar.mjs';
+import { findFunctionBlocks, resolveFunctionBlocks } from './FormulaResolver.functionGrammar.mjs';
 import { validateFormula, validateFormulaType } from './FormulaResolver.validation.mjs';
 
 export class FormulaResolver {
@@ -63,11 +64,19 @@ export class FormulaResolver {
   // $conditional(when()else()) grammar
   static findConditionalBlocks = findConditionalBlocks;
   static resolveConditionalFormula = resolveConditionalFormula;
+
+  // $contains()/$find()/$any()/$count()/$stringContains() array & string function grammar
+  static findFunctionBlocks = findFunctionBlocks;
+  static resolveFunctionBlocks = resolveFunctionBlocks;
 }
 
+export type { FunctionGrammarHelpers } from './FormulaResolver.functionGrammar.mjs';
 export type {
   AspectLookupResult,
   ConditionalBlock,
   ConditionalBlockError,
   ConditionalWhenClause,
+  FunctionBlock,
+  FunctionBlockError,
+  FunctionName,
 } from './FormulaResolver.types.mjs';

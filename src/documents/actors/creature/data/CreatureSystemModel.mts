@@ -1,5 +1,4 @@
 import { ActorSystemModel } from '@actors/baseActor/data/index.mjs';
-import { ABILITY_KEYS } from '@constants/abilities.mjs';
 import { computeEncumbranceTier } from '@constants/carryingCapacity.mjs';
 import {
   getCarryingCapacity,
@@ -20,7 +19,7 @@ import {
 import { NullableCapNumberField } from '@fields/NullableCapNumberField.mjs';
 import { FormulaField } from '@helpers/formulae/index.mjs';
 
-import type { CreatureSystemData, CreatureSystemSource } from './CreatureSystemData.mjs';
+import type { CreatureSystemData } from './CreatureSystemData.mjs';
 
 const {
   ArrayField,
@@ -42,28 +41,28 @@ abstract class CreatureSystemModel extends ActorSystemModel {
   static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.CREATURE'];
 
   /**
-   * Reset every AE-mutated field to baseline before `applyActiveEffects('initial')` runs.
-   * DataModel instances persist across `prepareData()` passes, so 'initial'-phase changes
-   * would compound on re-prepare if not reset:
-   *  - `abilities.*.score`: reset from `_source` so enhancements stack cleanly each pass
-   *  - `encumbrance.carriedWeight`: would compound, only recomputed via item changes
+   * Reset derived (`persisted: false`) fields to their baseline before `applyActiveEffects('initial')`
+   * runs. These fields have no other source of truth — nothing sets them from `_source` — so they
+   * must be given a starting value every `prepareBaseData()` pass before AE contributions layer on:
+   *  - `encumbrance.carriedWeight`: recomputed from currency weight each pass
    *  - `encumbrance.carryBonus`/`carryMultiplier`: reset to schema defaults (0 / 1)
    *  - `maxDexBonus`/`armorCheckPenalty`: reset so DOWNGRADE applies correctly each pass
+   *  - `saves.fort`/`.reflex`/`.will`: reset to 0 so 'initial'-phase Value formula
+   *    changes don't compound across repeated prepare passes
    * See docs/architecture/actor-data-pipeline.md.
    */
   override prepareBaseData(): void {
     super.prepareBaseData();
-
-    const sourceAbilities = (this._source as unknown as CreatureSystemSource).abilities;
-    for (const key of ABILITY_KEYS) {
-      this.abilities[key].score = sourceAbilities[key].score;
-    }
 
     this.encumbrance.carriedWeight = this.currency.getWeightInLbs();
     this.encumbrance.carryBonus = 0;
     this.encumbrance.carryMultiplier = 1;
     this.encumbrance.maxDexBonus = null;
     this.encumbrance.armorCheckPenalty = 0;
+
+    this.saves.fort = 0;
+    this.saves.reflex = 0;
+    this.saves.will = 0;
   }
 
   override prepareDerivedData(): void {
@@ -148,14 +147,10 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       }),
     });
 
-    const saveEntry = () => new SchemaField({
-      total: useDnd35eField(derivedNumberField(0)),
-    });
-
     schema.saves = new SchemaField({
-      fort: saveEntry(),
-      ref:  saveEntry(),
-      will: saveEntry(),
+      fort:   useDnd35eField(derivedNumberField(0)),
+      reflex: useDnd35eField(derivedNumberField(0)),
+      will:   useDnd35eField(derivedNumberField(0)),
     });
 
     schema.init = new SchemaField({
@@ -175,7 +170,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       languages: new ArrayField(new StringField({ required: true, blank: false }), { initial: [] }),
       senses: new ArrayField(new SchemaField({
         type:     useDnd35eField(requiredTypedStringField(SENSE_TYPES, 'darkvision')),
-        distance: useDnd35eField(requiredNumberField(0)),
+        distance: useDnd35eField(requiredNumberField(0), { measurementUnit: 'distance' }),
       }), { initial: [] }),
     });
 
@@ -203,12 +198,12 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     });
 
     schema.encumbrance = new SchemaField({
-      carriedWeight:   useDnd35eField(derivedNumberField(0)),
-      light:           useDnd35eField(derivedNumberField(0)),
-      medium:          useDnd35eField(derivedNumberField(0)),
-      heavy:           useDnd35eField(derivedNumberField(0)),
-      maxLift:         useDnd35eField(derivedNumberField(0)),
-      drag:            useDnd35eField(derivedNumberField(0)),
+      carriedWeight:   useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
+      light:           useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
+      medium:          useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
+      heavy:           useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
+      maxLift:         useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
+      drag:            useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),
       tier:            useDnd35eField(derivedNumberField(0)),
       carryBonus:      useDnd35eField(derivedNumberField(0)),
       carryMultiplier: useDnd35eField(derivedNumberField(1)),

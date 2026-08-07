@@ -38,7 +38,7 @@ abstract class PhysicalItemSystemModel extends IdentifiableItemSystemModel {
     });
     schema.hardness = useDnd35eField(requiredNumberField(0));
     schema.quantity = useDnd35eField(requiredNumberField(1));
-    schema.weight = useDnd35eField(requiredNumberField(0));
+    schema.weight = useDnd35eField(requiredNumberField(0), { measurementUnit: 'weight' });
     // schema.isWeightlessInContainer = requiredBooleanField(false);
     // schema.isWeightlessWhenCarried = requiredBooleanField(false);
     schema.isCarried = new foundry.data.fields.BooleanField({ initial: true, required: true });

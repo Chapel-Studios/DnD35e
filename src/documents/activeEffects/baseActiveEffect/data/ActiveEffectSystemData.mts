@@ -21,12 +21,19 @@ type ActiveEffectTarget = 'actor' | 'item';
  * document's gathering loop (`ActorDnd35e.applyActiveEffects()`/`ItemDnd35e.applyActiveEffects()`).
  */
 interface EffectChangeSourceDnd35e extends Omit<EffectChangeData, 'effect'> {
+  /**
+   * Stable per-row identifier (not a Foundry document id) — see `ActiveEffectSystemModel`'s
+   * `changes` schema. Optional here since runtime-synthesized changes (item/actor
+   * self-contributed changes built on the fly, e.g. `Creature.mts`/`PhysicalItem.mts`)
+   * aren't stored rows and never need one; the schema always populates it for real ones.
+   */
+  id?: string;
   target: EffectChangeTarget;
   isSystem: boolean;
   label?: string;
-  /** Optional bonus type for stacking resolution. Only set when stacking applies (Phase 2+). */
+  /** Optional bonus type for stacking resolution. Only set when stacking applies (poc Phase 2+). */
   bonusType?: BonusType | null;
-  /** Optional formula-familiar condition for action-phase changes. Phase 8+. Must round-trip through the database, so string-form (FormulaFamiliar boolean grammar) only — no function form. */
+  /** Optional formula-familiar condition for action-phase changes. poc Phase 8+. Must round-trip through the database, so string-form (FormulaFamiliar boolean grammar) only — no function form. */
   condition?: string | null;
 }
 

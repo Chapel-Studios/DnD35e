@@ -28,9 +28,11 @@ const refreshOwningDocument = (document: unknown): void => {
   if (sheet?.rendered) sheet.render(false);
 
   // Also refresh the grand-parent (e.g. Actor sheet showing this item) so
-  // embedded displays update their masked surfaces.
+  // embedded displays update their masked surfaces. `force: false` is a
+  // no-op when closed — an effect changing on an owned item must never
+  // force-open the actor's sheet, only refresh it if the GM already has it open.
   const grandParent = (parent as { parent?: { sheet?: foundry.applications.api.ApplicationV2 | null } }).parent;
-  grandParent?.sheet?.render(true);
+  if (grandParent?.sheet?.rendered) grandParent.sheet.render(false);
 };
 
 export { refreshOwningDocument };

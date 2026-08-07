@@ -10,6 +10,7 @@
         :step="step"
         :placeholder="placeholder"
         :disabled="disabled"
+        :title="hint"
         @change="handleDistanceChange"
       />
       <span class="vui-moniker">{{ distanceDisplayShortLabel }}</span>
@@ -25,6 +26,7 @@
         class="vui-unit"
         :value="unit"
         :disabled="disabled"
+        :title="unitHint"
         @change="onUnitChange?.(($event.target as HTMLSelectElement).value as TUnit)"
       >
         <option v-for="opt in unitOptions" :key="opt.value" :value="opt.value">
@@ -58,6 +60,10 @@
     disabled?: boolean;
     /** Hides the numeric distance input, showing only the unit selector (e.g. senses with no fixed range). */
     hideDistance?: boolean;
+    /** Tooltip shown on the distance input, e.g. a localized field hint with the distance unit interpolated in. */
+    hint?: string;
+    /** Tooltip shown on the unit select. */
+    unitHint?: string;
     /** Emits stored/base distance after localized input conversion. */
     onDistanceChange?: (storedDistance: number) => void;
     onUnitChange?: (unit: TUnit) => void;

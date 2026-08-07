@@ -9,12 +9,18 @@
       "FIELDS": {
         "abilities": {
           "label": "Ability Scores",
-          "str": { "label": "Strength", "familiarLabel": "Str", "familiarAliases": [], "score": { "label": "Strength", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "STR Mod", "familiarLabel": "Mod" } },
-          "dex": { "label": "Dexterity", "familiarLabel": "Dex", "familiarAliases": [], "score": { "label": "Dexterity", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "DEX Mod", "familiarLabel": "Mod" } },
-          "con": { "label": "Constitution", "familiarLabel": "Con", "familiarAliases": [], "score": { "label": "Constitution", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "CON Mod", "familiarLabel": "Mod" } },
-          "int": { "label": "Intelligence", "familiarLabel": "Int", "familiarAliases": [], "score": { "label": "Intelligence", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "INT Mod", "familiarLabel": "Mod" } },
-          "wis": { "label": "Wisdom", "familiarLabel": "Wis", "familiarAliases": [], "score": { "label": "Wisdom", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "WIS Mod", "familiarLabel": "Mod" } },
-          "cha": { "label": "Charisma", "familiarLabel": "Cha", "familiarAliases": [], "score": { "label": "Charisma", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "CHA Mod", "familiarLabel": "Mod" } }
+          "familiarLabel": "Abilities",
+          "str": {
+            "label": "Strength",
+            "familiarLabel": "Str",
+            "score": { "label": "Strength", "familiarLabel": "Score" },
+            "mod": { "label": "STR Mod", "familiarLabel": "Mod" }
+          },
+          "dex": { "label": "Dexterity", "familiarLabel": "Dex", "familiarAliases": ["Dexterity"], "score": { "label": "Dexterity", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "DEX Mod", "familiarLabel": "Mod" } },
+          "con": { "label": "Constitution", "familiarLabel": "Con", "familiarAliases": ["Constitution"], "score": { "label": "Constitution", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "CON Mod", "familiarLabel": "Mod" } },
+          "int": { "label": "Intelligence", "familiarLabel": "Int", "familiarAliases": ["Intelligence"], "score": { "label": "Intelligence", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "INT Mod", "familiarLabel": "Mod" } },
+          "wis": { "label": "Wisdom", "familiarLabel": "Wis", "familiarAliases": ["Wisdom"], "score": { "label": "Wisdom", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "WIS Mod", "familiarLabel": "Mod" } },
+          "cha": { "label": "Charisma", "familiarLabel": "Cha", "familiarAliases": ["Charisma"], "score": { "label": "Charisma", "familiarLabel": "Score", "familiarAliases": [] }, "mod": { "label": "CHA Mod", "familiarLabel": "Mod" } }
         },
         "hp": {
           "label": "Hit Points",
@@ -51,9 +57,11 @@
         },
         "saves": {
           "label": "Saving Throws",
-          "fort": { "label": "Fortitude", "total": { "label": "Fort" } },
-          "ref":  { "label": "Reflex",    "total": { "label": "Ref" } },
-          "will": { "label": "Will",      "total": { "label": "Will" } }
+          "familiarLabel": "Saves",
+          "fort":   { "label": "Fort", "familiarAliases": ["Fortitude"] },
+          "reflex": { "label": "Ref",  "familiarAliases": ["Reflex"] },
+          "will":   { "label": "Will", "familiarAliases": ["Willpower"] },
+          "all": { "label": "All Saves", "familiarLabel": "All" }
         },
         "init": {
           "label": "Initiative",
@@ -103,7 +111,11 @@
             "label": "Senses",
             "add": "Add Sense",
             "remove": "Remove Sense",
-            "empty": "No senses configured"
+            "empty": "No senses configured",
+            "element": {
+              "type": { "label": "Type", "familiarLabel": "Type", "familiarAliases": [], "hint": "The kind of sense, such as darkvision or blindsense." },
+              "distance": { "label": "Distance", "familiarLabel": "Range", "familiarAliases": [], "hint": "The range of this sense, in {distanceType}." }
+            }
           },
           "alignment": {
             "label": "Alignment",
@@ -129,7 +141,21 @@
         "isIncorporeal": { "label": "Incorporeal?", "hint": "Whether this creature is incorporeal or not." },
         "isQuadruped": { "label": "Quadruped?", "hint": "Whether this creature is a quadruped or not." },
         "creatureType": { "label": "Creature Type", "hint": "The creature type of this creature, such as 'Humanoid', 'Undead', 'Dragon', etc." },
-        "aooCount": { "label": "Attacks of Opportunity", "hint": "The number of attacks of opportunity this creature can make per round." }
+        "aooCount": { "label": "Attacks of Opportunity", "hint": "The number of attacks of opportunity this creature can make per round." },
+        "attacks": {
+          "label": "Attacks",
+          "familiarLabel": "Attacks",
+          "familiarAliases": [],
+          "element": {
+            "damageRoll": { "label": "Damage Roll", "familiarLabel": "Roll", "familiarAliases": [], "hint": "The damage dice for this attack, e.g. '1d8'." },
+            "damageType": { "label": "Damage Type", "familiarLabel": "Type", "familiarAliases": [], "hint": "The type of damage this attack deals, e.g. slashing or fire." },
+            "critRange": { "label": "Critical Range", "familiarLabel": "Range", "familiarAliases": [], "hint": "The natural roll(s) that threaten a critical hit, e.g. '20' or '19-20'." },
+            "critMultiplier": { "label": "Critical Multiplier", "familiarLabel": "Multiplier", "familiarAliases": [], "hint": "The multiplier applied to damage on a confirmed critical hit." },
+            "rangeIncrement": { "label": "Range Increment", "familiarLabel": "Range", "familiarAliases": [], "hint": "The range increment of this attack, in {distanceType}, if any." },
+            "attackFormula": { "label": "Attack Formula", "familiarLabel": "Attack Formula", "familiarAliases": [], "hint": "The formula used to resolve this attack's to-hit roll." },
+            "damageFormula": { "label": "Damage Formula", "familiarLabel": "Damage Formula", "familiarAliases": [], "hint": "The formula used to resolve this attack's damage roll." }
+          }
+        }
       },
       "EVENTS": {
         "HpEvents": {
@@ -230,7 +256,7 @@
           "swim":   { "label": "Swim Speed",   "familiarLabel": "Swim",   "familiarAliases": [] },
           "fly":    { "label": "Fly Speed",    "familiarLabel": "Fly",    "familiarAliases": [] },
           "burrow": { "label": "Burrow Speed", "familiarLabel": "Burrow", "familiarAliases": [] },
-          "flyManeuverability": { "label": "Fly Maneuverability", "familiarLabel": "Maneuverability", "familiarAliases": [] }
+          "flyManeuverability": { "label": "Fly Maneuverability", "familiarLabel": "FlyManeuverability", "familiarAliases": [] }
         },
         "notes": { "label": "Notes", "placeholder": "Enter notes here..." },
         "sessionNotes": { "label": "Session Notes", "placeholder": "Notes from recent sessions, reminders, loose ends..." },

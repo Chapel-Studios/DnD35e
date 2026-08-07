@@ -19,7 +19,7 @@ class Weapon extends EquippableItem {
    * Lifecycle events for weapons. Extends physical item events with
    * weapon-specific combat events.
    *
-   * Emission points for action events land in Phase 10 (Action System).
+   * Emission points for action events land in alpha Phase 3 (Action System).
    *
    * Usage:
    *   weapon.events.on(Weapon.LifeCycle.onHit, ({ target, damage }) => { ... });
@@ -27,13 +27,13 @@ class Weapon extends EquippableItem {
   // TODO these need to be put in traditional lifecycle event files after the combat system is implemented
   static override readonly LifeCycle = {
     ...super.LifeCycle,
-    /** Before a weapon action executes. Allows cancellation. (Emission: Phase 10) */
+    /** Before a weapon action executes. Allows cancellation. (Emission: alpha Phase 3) */
     beforeAction: 'beforeAction',
-    /** After a weapon action completes successfully. (Emission: Phase 10) */
+    /** After a weapon action completes successfully. (Emission: alpha Phase 3) */
     afterAction: 'afterAction',
-    /** Weapon lands a hit on a target. (Emission: Phase 10) */
+    /** Weapon lands a hit on a target. (Emission: alpha Phase 3) */
     onHit: 'onHit',
-    /** Weapon scores a critical hit. (Emission: Phase 10) */
+    /** Weapon scores a critical hit. (Emission: alpha Phase 3) */
     onCrit: 'onCrit',
   } as const;
 

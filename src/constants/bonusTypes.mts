@@ -11,9 +11,9 @@
  * or mechanical system that needs a new bonus type, add it then.
  *
  * Phase mapping (types added by phase that uses them):
- * - Phase 2: 'untyped' (default), 'material' | 'broken' | 'masterwork' (Material AE system)
- * - Phase 10 (Feats): 'dodge' (will add when feat system lands)
- * - Phase 15+ (Equipment AC): 'armor' | 'shield' | 'natural' | 'deflection' | 'enhancement'
+ * - poc Phase 2: 'untyped' (default), 'material' | 'broken' | 'masterwork' (Material AE system)
+ * - alpha Phase 4 (Feats): 'dodge' (will add when feat system lands)
+ * - A later phase (Equipment AC): 'armor' | 'shield' | 'natural' | 'deflection' | 'enhancement'
  */
 
 /**

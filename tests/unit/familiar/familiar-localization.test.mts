@@ -1,6 +1,7 @@
 import { CreatureSystemModel } from '@documents/actors/creature/data/CreatureSystemModel.mjs';
+import { buildItFamiliarContext } from '@helpers/formulae/itContext.mjs';
 import { gatherAspectsFromSchema } from '@helpers/formulae/schemaWalker.mjs';
-import type { AspectGroup, FieldAspect } from '@helpers/formulae/types.mjs';
+import type { AspectGroup, FamiliarSchema, FieldAspect } from '@helpers/formulae/types.mjs';
 import { WeaponSystemModel } from '@items/physical/weapon/data/WeaponSystemModel.mjs';
 import { describe, expect, it } from 'vitest';
 
@@ -20,6 +21,10 @@ describe('FormulaFamiliar localization data', () => {
       'dnd35e.WEAPON.FIELDS.weaponDamage.critMultiplier.familiarLabel': 'Multiplier',
       'dnd35e.WEAPON.FIELDS.weaponDamage.attackFormula.familiarLabel': 'Attack Formula',
       'dnd35e.WEAPON.FIELDS.weaponDamage.damageFormula.familiarLabel': 'Damage Formula',
+      'dnd35e.CREATURE.FIELDS.bio.senses.element.type.familiarLabel': 'Type',
+      'dnd35e.CREATURE.FIELDS.bio.senses.element.distance.familiarLabel': 'Range',
+      'dnd35e.CREATURE.FIELDS.attacks.element.damageRoll.familiarLabel': 'Roll',
+      'dnd35e.CREATURE.FIELDS.attacks.element.damageType.familiarLabel': 'Type',
     };
 
     game.i18n.localize = ((key: string) => labels[key] ?? originalLocalize(key)) as typeof game.i18n.localize;
@@ -53,6 +58,23 @@ describe('FormulaFamiliar localization data', () => {
       expect((damage.critMultiplier as FieldAspect).display).toBe('Multiplier');
       expect((damage.attackFormula as FieldAspect).display).toBe('Attack Formula');
       expect((damage.damageFormula as FieldAspect).display).toBe('Damage Formula');
+    });
+  });
+
+  it('displays familiar labels for #it predicate fields over senses/attacks (poc §7.2b)', () => {
+    return withLocalizedFamiliarLabels(() => {
+      const familiar = gatherAspectsFromSchema(CreatureSystemModel) as AspectGroup;
+      const schema: FamiliarSchema = { self: { properties: familiar } };
+
+      const sensesIt = buildItFamiliarContext('#self.bio.senses', schema);
+      expect(sensesIt).not.toBeNull();
+      expect((sensesIt!.properties.type as FieldAspect).display).toBe('Type');
+      expect((sensesIt!.properties.distance as FieldAspect).display).toBe('Range');
+
+      const attacksIt = buildItFamiliarContext('#self.attacks', schema);
+      expect(attacksIt).not.toBeNull();
+      expect((attacksIt!.properties.damageRoll as FieldAspect).display).toBe('Roll');
+      expect((attacksIt!.properties.damageType as FieldAspect).display).toBe('Type');
     });
   });
 });

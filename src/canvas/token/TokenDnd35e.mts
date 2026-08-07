@@ -17,7 +17,7 @@ class TokenDnd35e<TDocument extends TokenDocumentDnd35e = TokenDocumentDnd35e>
   /**
    * SRD running only permits a single straight-line move — refuse to add the
    * intermediate checkpoint waypoints normally added via ctrl+click while the
-   * token's active movement action is `run` (see WISHLIST.md / phase-09-basic-tokens.md).
+   * token's active movement action is `run` (see WISHLIST.md / poc/phase-09-basic-tokens.md).
    */
   protected override _addDragWaypoint(point: Point, options?: { snap?: boolean }): void {
     if (this.document.movementAction === RUN_MOVEMENT_ACTION) {
@@ -30,7 +30,7 @@ class TokenDnd35e<TDocument extends TokenDocumentDnd35e = TokenDocumentDnd35e>
   /**
    * Scales this token's own emitted light (e.g. a held torch) for the benefit of an
    * observing token with low-light vision — RAW "see twice as far" (see `WISHLIST.md`/
-   * phase-09-basic-tokens.md "Vision System"). Modeled on D35E's `LLVMixin`
+   * poc/phase-09-basic-tokens.md "Vision System"). Modeled on D35E's `LLVMixin`
    * (`module/canvas/low-light-vision.js`), which overrides the same method.
    */
   protected override _getLightSourceData(): LightSourceData {
@@ -40,7 +40,7 @@ class TokenDnd35e<TDocument extends TokenDocumentDnd35e = TokenDocumentDnd35e>
   /**
    * Extends Foundry's stock vision-source rule (controlled token(s) always win; otherwise, an
    * observed token with sight only contributes while nothing else is controlled) with dnd35e's
-   * shared-vision scope/mode (D35E `VisionPermissionSheet` parity - see phase-09 "Vision System"
+   * shared-vision scope/mode (D35E `VisionPermissionSheet` parity - see poc/phase-09-basic-tokens.md "Vision System"
    * and the `sharedVisionScope`/`sharedVisionMode` settings). Note: overriding the public
    * `observer` getter has no effect on vision-source selection - Foundry doesn't consult it for
    * that purpose - `_isVisionSource()` is the actual hook.

@@ -13,7 +13,7 @@ import { applyStackedActiveEffectChanges, type ResolvedEffectChange } from '@eff
 import { evaluateChangeCondition } from '@effects/baseActiveEffect/logic/evaluateChangeCondition.mjs';
 import { getEffectContexts, resolveActiveEffectChange } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import { DocumentEventEmitter } from '@helpers/documentEvents/DocumentEventEmitter.mjs';
-import { buildDocumentDataMap } from '@helpers/formulae/index.mjs';
+import { buildDocumentDataMap, expandChangeTargetGroups } from '@helpers/formulae/index.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { Override } from '@helpers/stacking.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
@@ -149,9 +149,15 @@ class ActorDnd35e<
     
     changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
 
+    // Expand any Group Change Target keys (poc §7.7, e.g. "group:allSaves") into their
+    // concrete field paths before stacking — each expanded field then becomes an
+    // independent stacking candidate, exactly like a change that targeted it directly.
+    // Non-group keys pass through unchanged.
+    const expandedChanges = expandChangeTargetGroups(changes, this);
+
     // Resolve bonus-type stacking and apply the winners, recording Override
     // history for every field touched (shared with ItemDnd35e.applyActiveEffects).
-    applyStackedActiveEffectChanges(this, changes);
+    applyStackedActiveEffectChanges(this, expandedChanges);
   }
 
   /**

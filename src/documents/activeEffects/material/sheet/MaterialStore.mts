@@ -1,5 +1,5 @@
 import type { DocumentSheetStoreUtils } from '@documents/document/index.mjs';
-import type { ActiveEffectConfigStoreDocumentActions, ActiveEffectConfigStoreDocumentGetters } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
+import type { ActiveEffectConfigStoreDocumentActions, ActiveEffectConfigStoreDocumentGetters, UseActiveEffectConfigStoreOptions } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
 import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
 import { useActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
 import { getDefaultActiveEffectTabs } from '@effects/baseActiveEffect/sheet/tabs/index.mjs';
@@ -17,8 +17,11 @@ import { computed } from 'vue';
 
 import { materialChangesTab, materialDetailsTab } from './tabs/index.mjs';
 
-const useMaterialStore = (context: VueApplicationContext<Material>): MaterialStore => {
-  const baseStore = useActiveEffectConfigStore<MaterialType>(context);
+const useMaterialStore = (
+  context: VueApplicationContext<Material>,
+  options: UseActiveEffectConfigStoreOptions = {}
+): MaterialStore => {
+  const baseStore = useActiveEffectConfigStore<MaterialType>(context, options);
   const { replaceTabs } = baseStore._storeUtils.tabStore;
   replaceTabs([
     materialDetailsTab,

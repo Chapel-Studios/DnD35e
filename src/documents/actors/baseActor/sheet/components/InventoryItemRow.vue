@@ -114,10 +114,12 @@
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { syncContainmentAe } from '@effects/containment/index.mjs';
   import type { ItemDnd35e } from '@items/baseItem/index.mjs';
-  import type { EQUIPPABLE_ITEMS, PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
-  import { containerItemType } from '@items/itemTypes.mjs';
+  import type { EQUIPPABLE_ITEMS, EquippableItemType, PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
+  import { containerItemType, EQUIPPABLE_ITEM_TYPES, ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
   import { EquippableItem } from '@items/physical/equippableItem/EquippableItem.mjs';
-  import { computed, defineAsyncComponent, inject, ref } from 'vue';
+  import type { WeaponStore } from '@items/physical/weapon/sheet/WeaponStore.mjs';
+  import { type SettingsStore,SettingsStoreSymbol } from '@settings/index.mjs';
+  import { computed, defineAsyncComponent, inject, provide, ref } from 'vue';
 
   import type { CreatureDocumentStore } from '../../../creature/sheet/CreatureStore.mjs';
   import { INVENTORY_FIELD_PATH } from './inventoryFieldPath.mjs';
@@ -126,33 +128,12 @@
   // circular reference (a row can render a nested list, whose rows render this component).
   const InventoryListTable = defineAsyncComponent(() => import('./InventoryListTable.vue'));
 
-  type InventoryItemData = {
-    isCarried?: boolean;
-    quantity?: number;
-    weight?: number;
-    isEquipped?: boolean;
-    equippedSlotIds?: EquipSlot[];
-  };
-
   const FALLBACK_ITEM_ICON = '/icons/svg/item-bag.svg';
 
   const props = withDefaults(defineProps<{
     item: PHYSICAL_ITEMS;
     /** 'carried' = actor carried/tracked lists; 'container' = a container's own contents. */
     variant?: 'carried' | 'container';
-    isCarried?: boolean;
-    /** Whether `item` is currently equipped. Computed by the parent's `rows` list (a
-     * primitive, unlike `item` itself) so Vue's prop diffing actually detects the change
-     * when the underlying item is mutated in place - see InventoryListTable.vue's `rows`. */
-    isEquipped?: boolean;
-    /** Carried quantity. Same rationale as `isEquipped` - computed fresh by the parent's
-     * `rows` list so an in-place `system.quantity` mutation actually changes the prop
-     * value (reference equality on `item` itself would otherwise mask the change). */
-    quantity?: number;
-    /** Rendered weight text. Same rationale as `quantity`/`isEquipped`. */
-    weightDisplay?: string;
-    /** Rendered type label. Same rationale as `quantity`/`isEquipped`. */
-    typeLabel?: string;
     toggleTitle?: string;
     /** Uuid of the actor that ultimately owns this item's chain of containers. */
     ownerUuid?: string | null;
@@ -163,11 +144,6 @@
     onDragStart: (event: DragEvent, item: PHYSICAL_ITEMS) => void;
   }>(), {
     variant: 'carried',
-    isCarried: false,
-    isEquipped: false,
-    quantity: 1,
-    weightDisplay: '0',
-    typeLabel: '',
     toggleTitle: '',
     ownerUuid: null,
     stripe: 'even',
@@ -180,8 +156,33 @@
     documentGetters: {
       physicalItems: injectedItems,
       getIsFieldEditable,
+      getOrCreateItemRowStore,
     },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
+
+
+
+  // Row-scoped store, cached/owned by the actor store (see ActorSheetStore.mts). Reads the
+  // item's document through this store's own reactive ref rather than the `item` prop
+  // directly, so field changes (e.g. isEquipped) are picked up without relying on the parent
+  // to lift primitives out to work around stale prop references. Also provided so any nested
+  // FormGroups/content in this row's subtree can inject the standard document sheet store.
+  const itemRowStore = getOrCreateItemRowStore(props.item);
+  provide(DocumentSheetStoreSymbol, itemRowStore);
+
+  const {
+    documentUuid: containerUuidAttr,
+    documentId,
+    type: itemType,
+    img,
+    quantity,
+    weight,
+    isCarried,
+  } = itemRowStore.documentGetters;
+
+  const {
+    measurement: { weightDisplayShortLabel },
+  } = inject(SettingsStoreSymbol) as SettingsStore;
 
   // Falls back to the shared section-level path when no table-specific path was forwarded.
   const resolvedFieldPath = computed(() => props.fieldPath ?? INVENTORY_FIELD_PATH);
@@ -196,35 +197,27 @@
   // they are "contained" (remove button shown instead of carry toggle, no equip).
   const isContained = computed<boolean>(() => props.variant === 'container');
 
-  const isContainer = computed<boolean>(() => props.item.type === containerItemType);
+  const isContainer = computed<boolean>(() => itemType.value === containerItemType);
 
-  const containerUuidAttr = computed<string | undefined>(() =>
-    isContainer.value ? props.item.uuid : undefined);
+  const itemIcon = computed<string>(() => img.value ?? FALLBACK_ITEM_ICON);
+  const iconKey = computed<string>(() => `${documentId.value}:${img.value || 'fallback'}`);
 
-  const itemIcon = computed<string>(() => props.item.img ?? FALLBACK_ITEM_ICON);
-  const iconKey = computed<string>(() => `${props.item.id}:${props.item.img || 'fallback'}`);
-
-  const quantity = computed<number>(() => props.quantity);
-  const weightDisplay = computed<string>(() => props.weightDisplay);
-  const typeLabel = computed<string>(() => props.typeLabel);
+  const weightDisplay = computed<string>(() => `${weight.value} ${weightDisplayShortLabel.value}`);
+  const typeLabel = computed<string>(() => isContainer.value
+    ? localize(ITEM_TYPES_LOCALIZED[containerItemType])
+    : (itemRowStore as WeaponStore).documentGetters.weaponType.value
+  );
 
   const isEquippable = (item: PHYSICAL_ITEMS): item is EQUIPPABLE_ITEMS => {
-    const data = item.system as InventoryItemData | undefined;
-    return (
-      !!data
-      && Array.isArray(data.equippedSlotIds)
-      && item instanceof EquippableItem
-      && typeof item.performEquip === 'function'
-      && typeof item.performUnequip === 'function'
-    );
+    return EQUIPPABLE_ITEM_TYPES.has(item.type as EquippableItemType);
   };
 
-  const isEquipped = computed<boolean>(() => props.isEquipped);
+  const isEquipped = computed<boolean>(() => itemRowStore.documentGetters.getViewAwareFieldValue<boolean>('system.isEquipped') ?? false);
 
   const showEquipToggle = computed<boolean>(() =>
     !isContained.value
     && props.variant === 'carried'
-    && props.isCarried
+    && isCarried.value
     && isEquippable(props.item));
 
   const equipToggleTitle = computed<string>(() =>
@@ -281,8 +274,7 @@
   };
 
   const toggleCarried = async (item: PHYSICAL_ITEMS): Promise<void> => {
-    const itemData = item.system as InventoryItemData;
-    await item.update({ 'system.isCarried': !(itemData.isCarried ?? false) });
+    await item.update({ 'system.isCarried': !(isCarried.value) });
   };
 
   const removeFromContainer = async (item: PHYSICAL_ITEMS): Promise<void> => {

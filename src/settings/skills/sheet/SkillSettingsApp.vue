@@ -142,7 +142,7 @@
     { id: 'custom', label: 'dnd35e.SETTINGS.SkillSettings.CustomSkills', icon: 'fas fa-plus-circle' },
   ];
 
-  // TODO(Phase 9): populate from CONFIG.DND35E.skills once skills constants are exported
+  // TODO: populate from CONFIG.DND35E.skills once skills constants are exported (skill system phase)
   // Get system skills from config
   const systemSkills = computed(() => {});
 

@@ -43,7 +43,7 @@ test.describe('low-light vision light radius', () => {
     });
     const darkvisionActorUuid = await createActor(page, 'character', {
       name: 'Darkvision Scout',
-      system: { bio: { senses: [{ type: 'darkvision', distance: 60 }] } },
+      system: { bio: { senses: [{ type: 'darkvision', distance: 12 }] } },
     });
 
     const light = { dim: 40, bright: 20 };

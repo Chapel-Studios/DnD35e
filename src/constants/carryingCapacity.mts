@@ -137,35 +137,38 @@ const getCarryingCapacity = (
   });
 };
 
+// SRD encumbered-speed table, re-keyed from feet to squares (canonical storage unit,
+// 1 square = 5 ft = 1.5 m) — every threshold/value below is an exact multiple of 5 ft,
+// so the divide-by-5 re-key is lossless (20/30/40/.../100 ft -> 4/6/8/.../20 squares).
 const ENCUMBERED_SPEED: Record<number, number> = {
-  20: 15,
-  30: 20,
-  40: 30,
-  50: 35,
-  60: 40,
-  70: 50,
-  80: 55,
-  90: 60,
-  100: 70,
+  4: 3,
+  6: 4,
+  8: 6,
+  10: 7,
+  12: 8,
+  14: 10,
+  16: 11,
+  18: 12,
+  20: 14,
 };
 
 /**
  * Compute the encumbered speed for a creature based on its base speed and encumbrance tier.
  *
  * Tiers 1-2 (medium/heavy) use the SRD encumbered-speed table (same reduced value for both,
- * per SRD rules). Tiers 3-4 (max lift / drag) reduce movement to a 5-foot stagger. Tier 5
- * (beyond the drag limit) means the creature cannot move at all.
+ * per SRD rules). Tiers 3-4 (max lift / drag) reduce movement to a 1-square (5-foot) stagger.
+ * Tier 5 (beyond the drag limit) means the creature cannot move at all.
  *
- * @param baseSpeed - The base speed of the creature (in feet per round).
+ * @param baseSpeed - The base speed of the creature (in squares per round).
  * @param encumbranceTier - The encumbrance tier (0=light, 1=medium, 2=heavy, 3=maxLift, 4=drag, 5=beyond drag).
- * @returns The encumbered speed (in feet per round).
+ * @returns The encumbered speed (in squares per round).
  */
 const getEncumberedSpeed = (baseSpeed: number, encumbranceTier: number): number => {
   if (encumbranceTier <= 0) return baseSpeed;
   if (encumbranceTier >= 5) return 0;
-  if (encumbranceTier >= 3) return 5;
+  if (encumbranceTier >= 3) return 1;
 
-  const speedThreshold = Math.floor(baseSpeed / 10) * 10;
+  const speedThreshold = Math.floor(baseSpeed / 2) * 2;
   return ENCUMBERED_SPEED[speedThreshold] ?? baseSpeed;
 };
 

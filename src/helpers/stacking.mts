@@ -147,7 +147,7 @@ interface StackingChange {
  * Current: 'untyped' (the default type when no other applies).
  *
  * Future additions (project policy, add when the phase that introduces the type lands):
- * - 'dodge'        — Phase 10 (Feats / Fighting Defensively). RAW: dodge bonuses stack.
+ * - 'dodge'        — alpha Phase 4 (Feats / Fighting Defensively). RAW: dodge bonuses stack.
  * - 'circumstance' — community-expert consensus that circumstance bonuses and
  *                    penalties stack with one another (not the literal SRD default of
  *                    "highest wins", but the broadly-accepted table interpretation).
@@ -228,7 +228,7 @@ function resolveActiveEffectChanges(
     const field = groupKey.slice(0, colonIdx);
     const bonusType = groupKey.slice(colonIdx + 1) as BonusType;
 
-    // Rule 1: Stacking types (untyped, dodge in Phase 10+) sum ALL values
+    // Rule 1: Stacking types (untyped, dodge in alpha Phase 4+) sum ALL values
     if (isStackingType(bonusType)) {
       const sum = applications.reduce((acc, a) => acc + a.value, 0);
       if (sum !== 0) {

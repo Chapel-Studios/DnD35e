@@ -113,7 +113,7 @@ function useEffectDocumentActions(
         ...Object.keys(EFFECT_TYPES),
         ...(isGM ? additionalTypes : []),
       ];
-      // TODO(Phase 7): fix type definitions — add createDialog static method signature to ActiveEffectDnd35e
+      // TODO: fix type definitions — add createDialog static method signature to ActiveEffectDnd35e
       await (ActiveEffectDnd35e as any).createDialog(effectData, {
         parent: document.value,
       }, {

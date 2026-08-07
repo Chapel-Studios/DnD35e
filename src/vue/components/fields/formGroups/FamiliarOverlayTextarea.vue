@@ -1,0 +1,107 @@
+<template>
+  <div class="familiar-overlay-wrapper" :class="props.wrapperClass">
+    <div class="familiar-overlay-input-wrapper" :class="props.inputWrapperClass">
+      <div class="familiar-overlay-edit-container" :class="props.editContainerClass">
+        <textarea
+          ref="inputRef"
+          class="familiar-overlay-input"
+          :class="[props.inputClass, props.inputStateClasses]"
+          :id="props.id"
+          :value="props.modelValue"
+          :disabled="props.disabled"
+          :placeholder="props.placeholder"
+          :name="props.name"
+          @input="emit('input', $event)"
+          @blur="emit('blur', $event)"
+          @keydown="emit('keydown', $event)"
+          @focus="emit('focus', $event)"
+          @scroll="emit('scroll', $event)"
+          spellcheck="false"
+          autocomplete="off"
+        ></textarea>
+
+        <div
+          ref="highlightLayerRef"
+          class="familiar-overlay-highlight"
+          :class="[props.highlightClass, props.highlightStateClasses]"
+          v-html="props.highlightedHtml"
+        ></div>
+      </div>
+
+      <FamiliarDropdown
+        ref="familiarDropdownRef"
+        :show="props.showFamiliar"
+        :options="props.familiarOptions"
+        :selected-index="props.familiarIndex"
+        :position="props.familiarPosition"
+        @select="emit('select', $event)"
+      />
+    </div>
+
+    <p v-if="props.hint" class="familiar-overlay-hint" :class="props.hintClass">
+      {{ props.hint }}
+    </p>
+  </div>
+</template>
+
+<script setup lang="ts">
+  import type { AutocompleteOption } from '@helpers/formulae/types.mjs';
+  import FamiliarDropdown from '@vc/FamiliarDropdown.vue';
+  import type { PropType } from 'vue';
+  import { ref } from 'vue';
+
+  // Textarea sibling of `FamiliarOverlayInput.vue` for the multiline formula editor
+  // modal (poc §7.10). Same overlay/highlight/autocomplete structure, `<textarea>`
+  // instead of `<input type="text">` so real newlines are supported and rendered.
+  const props = defineProps({
+    modelValue: { type: String, default: '' },
+    disabled: { type: Boolean, default: false },
+    placeholder: { type: String, default: '' },
+    id: { type: String, default: undefined },
+    name: { type: String as PropType<string | undefined>, default: undefined },
+
+    inputClass: { type: String, default: '' },
+    highlightClass: { type: String, default: '' },
+    wrapperClass: { type: String, default: '' },
+    inputWrapperClass: { type: String, default: '' },
+    editContainerClass: { type: String, default: '' },
+    hintClass: { type: String, default: '' },
+
+    inputStateClasses: { type: Object as PropType<Record<string, boolean>>, default: () => ({}) },
+    highlightStateClasses: { type: Object as PropType<Record<string, boolean>>, default: () => ({}) },
+
+    highlightedHtml: { type: String, default: '' },
+    hint: { type: String, default: '' },
+
+    familiarOptions: { type: Array as PropType<AutocompleteOption[]>, default: () => [] },
+    showFamiliar: { type: Boolean, default: false },
+    familiarIndex: { type: Number, default: 0 },
+    familiarPosition: {
+      type: Object as PropType<{ top: number; left: number }>,
+      default: () => ({ top: 0, left: 0 }),
+    },
+  });
+
+  const emit = defineEmits<{
+    input: [event: Event];
+    blur: [event: FocusEvent];
+    keydown: [event: KeyboardEvent];
+    focus: [event: FocusEvent];
+    scroll: [event: Event];
+    select: [option: AutocompleteOption];
+  }>();
+
+  const inputRef = ref<HTMLTextAreaElement>();
+  const highlightLayerRef = ref<HTMLDivElement>();
+  const familiarDropdownRef = ref<InstanceType<typeof FamiliarDropdown>>();
+
+  const getInputElement = (): HTMLTextAreaElement | undefined => inputRef.value;
+  const getHighlightElement = (): HTMLDivElement | undefined => highlightLayerRef.value;
+  const getDropdownMenuElement = (): HTMLElement | undefined => familiarDropdownRef.value?.menuRef;
+
+  defineExpose({
+    getInputElement,
+    getHighlightElement,
+    getDropdownMenuElement,
+  });
+</script>

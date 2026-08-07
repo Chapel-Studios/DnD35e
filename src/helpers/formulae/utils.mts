@@ -6,7 +6,7 @@
 import type { FormulaDataSource } from './FormulaData.mjs';
 import { FormulaData } from './FormulaData.mjs';
 import { FormulaResolver } from './FormulaResolver.mjs';
-import type { ConditionalBlockError } from './FormulaResolver.types.mjs';
+import type { ConditionalBlockError, FunctionBlockError } from './FormulaResolver.types.mjs';
 import type { DocumentContext } from './registry.mjs';
 import { buildContextFromFormula } from './registry.mjs';
 import { normalizeLabel } from './schemaWalker.mjs';
@@ -162,6 +162,48 @@ export function canonicalizeFormula(formula: string, schema: FamiliarSchema): st
   return result;
 }
 
+/**
+ * Display-only transform for the single-line `FormulaFormGroup` field: collapse real
+ * line breaks AND any indentation/extra whitespace (from the multiline editor modal,
+ * poc §7.10 — users may indent `when()`/`else()` clauses onto their own lines for
+ * readability) down to single spaces between tokens, so a multiline/indented formula
+ * still renders as a clean single line in a plain `<input>`. Whitespace *inside*
+ * quoted string literals (`'...'`/`"..."`) is preserved exactly, since that's real
+ * content, not formatting. The stored/canonical formula keeps its real newlines and
+ * indentation — this only affects what's shown at rest in the collapsed single-line
+ * field, not the multiline modal's own editing surface (which always shows the real
+ * value).
+ */
+export function collapseFormulaLineBreaks(formula: string): string {
+  let result = '';
+  let inQuote: '\'' | '"' | null = null;
+  let pendingSpace = false;
+
+  for (const ch of formula) {
+    if (inQuote) {
+      result += ch;
+      if (ch === inQuote) inQuote = null;
+      continue;
+    }
+    if (ch === '\'' || ch === '"') {
+      if (pendingSpace && result.length > 0) result += ' ';
+      pendingSpace = false;
+      inQuote = ch;
+      result += ch;
+      continue;
+    }
+    if (/\s/.test(ch)) {
+      pendingSpace = true;
+      continue;
+    }
+    if (pendingSpace && result.length > 0) result += ' ';
+    pendingSpace = false;
+    result += ch;
+  }
+
+  return result;
+}
+
 /** Configuration for `getAutocompleteOptions()`. */
 export interface GetAutocompleteOptionsConfig {
   /**
@@ -172,6 +214,47 @@ export interface GetAutocompleteOptionsConfig {
 }
 
 const defaultFormatFullPath = (ctx: string, prefix: string, key: string): string => `#${ctx}.${prefix}${key}`;
+
+/**
+ * Canonical `$`-prefixed keywords offered by the `$` autocomplete dropdown (poc §7.2b).
+ * `conditional` is the control-flow `$conditional(when()else())` construct;
+ * the other five are the array/string query functions. Both groups share the
+ * exact same insertion shape (`$name(`), so they're offered from one list.
+ */
+const FUNCTION_AUTOCOMPLETE_NAMES = [
+  'conditional',
+  'contains',
+  'find',
+  'any',
+  'count',
+  'stringContains',
+  'fromFeet',
+  'fromMeters',
+  'fromKg',
+] as const;
+
+/**
+ * Autocomplete options for the `$`-keyword dropdown (`$conditional`/`$contains`/
+ * `$find`/`$any`/`$count`/`$stringContains`) — mirrors the `#` context dropdown's
+ * UX (triggered by typing `$`, filtered by what's typed so far) but the option
+ * list is a small fixed set rather than schema-driven, since these keywords aren't
+ * `FamiliarSchema` properties. Selecting an option inserts `$name(` with the cursor
+ * placed right after the open paren, ready to type the next argument (which itself
+ * triggers the normal `#` dropdown on the next keystroke).
+ */
+export function getFunctionAutocompleteOptions(partialText: string): AutocompleteOption[] {
+  const query = partialText.toLowerCase();
+  return FUNCTION_AUTOCOMPLETE_NAMES
+    .filter(name => name.toLowerCase().startsWith(query))
+    .map(name => ({
+      path: name,
+      display: game.i18n.localize(`dnd35e.Formula.Functions.${name}.label`),
+      value: null,
+      isLeaf: true,
+      fullPath: `$${name}(`,
+      accessPath: game.i18n.localize(`dnd35e.Formula.Functions.${name}.hint`),
+    }));
+}
 
 /**
  * Get autocomplete options for the current context and path
@@ -318,13 +401,16 @@ export function getAutocompleteOptions(
 
     if (isFieldAspect(value)) {
       const aliasHint = value.aliases?.length ? ` (${value.aliases.join(', ')})` : '';
+      const fullPath = buildFullPath(primaryIdentifier);
       options.push({
         path: primaryIdentifier,
         display: (value.display || key) + aliasHint,
         value: value.value ?? null,
         isLeaf: true,
-        fullPath: buildFullPath(primaryIdentifier),
+        fullPath,
         accessPath: value.accessPath,
+        isGroup: value.isGroup,
+        ownerTypes: value.ownerTypes,
       });
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       // It's a branch object
@@ -661,6 +747,19 @@ function conditionalErrorState(error: ConditionalBlockError): OperandState {
   return error === 'unbalancedParens' || error === 'missingElse' ? 'partial' : 'invalid';
 }
 
+/**
+ * Classify a malformed `$contains(...)`/`$find(...)`/`$any(...)`/`$count(...)`/
+ * `$stringContains(...)` block by its `FunctionBlockError`, mirroring
+ * `conditionalErrorState`'s partial-vs-invalid split — `unbalancedParens` (not
+ * closed yet) and `missingProjection` (closed the call but hasn't typed
+ * `$find(...)`'s trailing `.projection` yet) are both "still typing" states;
+ * `argCount` (a closed, balanced call with the wrong number of arguments) is
+ * genuinely malformed regardless of focus.
+ */
+function functionErrorState(error: FunctionBlockError): OperandState {
+  return error === 'unbalancedParens' || error === 'missingProjection' ? 'partial' : 'invalid';
+}
+
 export function renderFormulaHTML(
   formula: string,
   tokens: FormulaToken[],
@@ -671,6 +770,7 @@ export function renderFormulaHTML(
   let variableIndex = 0;
   const matchedParenIndices = computeMatchedParenIndices(formula);
   const conditionalBlocks = FormulaResolver.findConditionalBlocks(formula);
+  const functionBlocks = FormulaResolver.findFunctionBlocks(formula);
   // Longest-alternative-first so `>=`/`<=`/`==`/`!=`/`&&`/`||` win over their
   // single-char prefixes (e.g. `!=` over bare `!`). `$conditional`/`when`/`else`
   // only match when followed by optional whitespace + `(` (the lookahead leaves
@@ -685,8 +785,16 @@ export function renderFormulaHTML(
   // `$conditional(`'s own open-regex (comparison operators and `when`/`else`
   // have no escape mechanism in the real grammar, so they're intentionally
   // left un-escapable here too).
+  //
+  // `$contains`/`$find`/`$any`/`$count`/`$stringContains` (poc §7.2b) get the same
+  // complete-keyword-plus-open-paren treatment as `$conditional`. The final
+  // catch-all `\$[A-Za-z]*` (bare `$`, or any partial/unrecognized `$word`
+  // with no `(` yet) is listed LAST so every more specific alternative gets
+  // first shot at a given position — it exists purely so an in-progress `$`
+  // command renders as a yellow "still typing" token (mirroring a bare/partial
+  // `#context` token) instead of falling through as unstyled plain text.
   const OPERATOR_SPLIT =
-    /((?<!\\)\(|(?<!\\)\)|>=|<=|==|!=|&&|\|\||[!<>]|(?<!\\)\$conditional(?=\s*\()|\bwhen(?=\s*\()|\belse(?=\s*\()|(?<!\\)\$and\b|(?<!\\)\$or\b)/i;
+    /((?<!\\)\(|(?<!\\)\)|>=|<=|==|!=|&&|\|\||[!<>]|(?<!\\)\$conditional(?=\s*\()|(?<!\\)\$(?:contains|find|any|count|stringContains)(?=\s*\()|\bwhen(?=\s*\()|\belse(?=\s*\()|(?<!\\)\$and\b|(?<!\\)\$or\b|(?<!\\)\$[A-Za-z]*)/i;
 
   return tokens
     .map(token => {
@@ -700,16 +808,38 @@ export function renderFormulaHTML(
         for (const piece of pieces) {
           if (piece === '(' || piece === ')') {
             const state = escalateOnBlur(matchedParenIndices.has(cursor) ? 'valid' : 'partial', isFocused);
-            out += `<span class="formula-paren${stateToClass(state)}" data-start="${cursor}" data-end="${cursor + piece.length}">${piece}</span>`;
+            const parenError = errors.find(e => e.index === cursor);
+            const titleAttr = parenError?.error ? ` title="${escapeHTML(parenError.error)}"` : '';
+            out += `<span class="formula-paren${stateToClass(state)}"${titleAttr} data-start="${cursor}" data-end="${cursor + piece.length}">${piece}</span>`;
           } else if (piece === '!') {
             const state = escalateOnBlur(classifyBangOperator(formula, cursor, tokens, matchedParenIndices, errors), isFocused);
             out += `<span class="formula-operator${stateToClass(state)}" data-start="${cursor}" data-end="${cursor + piece.length}">!</span>`;
           } else if (/^\$conditional$/i.test(piece)) {
+            // Because the catch-all `\$[A-Za-z]*` alternative can ALSO capture
+            // a bare "$conditional" with no "(" yet (still typing the keyword
+            // itself), a missing `conditionalBlocks` entry doesn't mean "valid"
+            // — `findConditionalBlocks` only records a block once the "(" is
+            // present. No entry here means the keyword isn't closed yet.
             const block = conditionalBlocks.find(b => b.startIndex === cursor);
-            const state = escalateOnBlur(block?.error ? conditionalErrorState(block.error) : 'valid', isFocused);
+            const state = escalateOnBlur(!block ? 'partial' : block.error ? conditionalErrorState(block.error) : 'valid', isFocused);
             const keywordError = errors.find(e => e.index === cursor);
             const titleAttr = keywordError?.error ? ` title="${escapeHTML(keywordError.error)}"` : '';
             out += `<span class="formula-keyword${stateToClass(state)}"${titleAttr} data-start="${cursor}" data-end="${cursor + piece.length}">${escapeHTML(piece)}</span>`;
+          } else if (/^\$(?:contains|find|any|count|stringcontains)$/i.test(piece)) {
+            // Same reasoning as the `$conditional` branch above — no matching
+            // `functionBlocks` entry means the "(" hasn't been typed yet.
+            const block = functionBlocks.find(b => b.startIndex === cursor);
+            const state = escalateOnBlur(!block ? 'partial' : block.error ? functionErrorState(block.error) : 'valid', isFocused);
+            const keywordError = errors.find(e => e.index === cursor);
+            const titleAttr = keywordError?.error ? ` title="${escapeHTML(keywordError.error)}"` : '';
+            out += `<span class="formula-keyword${stateToClass(state)}"${titleAttr} data-start="${cursor}" data-end="${cursor + piece.length}">${escapeHTML(piece)}</span>`;
+          } else if (/^\$[A-Za-z]*$/.test(piece)) {
+            // Bare `$`, or a partial/unrecognized `$word` with no `(` yet — an
+            // in-progress `$` command. Same yellow-while-focused,
+            // red-once-blurred treatment as a still-typing `#` token/custom
+            // path (see the `token.partial` branch below).
+            const state = escalateOnBlur('partial', isFocused);
+            out += `<span class="formula-keyword${stateToClass(state)}" data-start="${cursor}" data-end="${cursor + piece.length}">${escapeHTML(piece)}</span>`;
           } else if (/^(?:when|else)$/i.test(piece)) {
             out += `<span class="formula-keyword" data-start="${cursor}" data-end="${cursor + piece.length}">${escapeHTML(piece)}</span>`;
           } else if (/^\$(?:and|or)$/i.test(piece)) {

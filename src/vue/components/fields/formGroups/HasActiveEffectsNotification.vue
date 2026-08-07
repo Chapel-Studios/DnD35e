@@ -21,7 +21,7 @@
           :class="{ 'is-ignored': effect.stackResult === STACK_RESULT_IGNORED }"
         >
           <span class="effect-name">{{ effect.effectName }}</span>
-          <span class="effect-detail">{{ formatChangeTypeSymbol(effect.type) }} {{ effect.value }}</span>
+          <span class="effect-detail">{{ formatChangeTypeSymbol(effect.type) }} {{ effect.displayValue }}</span>
           <span v-if="effect.bonusTypeLabel" class="effect-bonus-type">[{{ effect.bonusTypeLabel }}]</span>
           <span v-if="effect.stackResult === STACK_RESULT_IGNORED" class="effect-rejected">
             {{ effect.stackReason ?? ignoredLabel }}
@@ -36,12 +36,15 @@
   // TODO: Dual-stack awareness — when viewing as unidentified (non-GM), this component
   // must filter out effect overrides from unidentified sources. Currently shows ALL overrides.
   // The sparkle icon should not appear if the only modifiers come from hidden effects.
-  // See Phase 2 §2.5.3 for the design. Blocked on RenderModeStore injection + getEffectsForField filtering.
+  // See poc Phase 2 §2.5.3 for the design. Blocked on RenderModeStore injection + getEffectsForField filtering.
   import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { formatChangeTypeSymbol } from '@effects/baseActiveEffect/logic/index.mjs';
+  import { roundToDecimal } from '@helpers/math.mjs';
   import type { Override } from '@helpers/stacking.mjs';
-  import { STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+  import { parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+  import type { SettingsStore } from '@settings/index.mjs';
+  import { SettingsStoreSymbol } from '@settings/index.mjs';
   import { computed, inject, nextTick, ref } from 'vue';
 
   const props = defineProps<{
@@ -50,7 +53,12 @@
 
   const {
     documentGetters: { getEffectsForField, hasEffectsForField },
+    _storeUtils: { getFieldMeasurementUnit },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  const {
+    measurement: { convertToLocalizedDistance, convertToLocalizedWeight },
+  } = inject(SettingsStoreSymbol) as SettingsStore;
 
   const activeEffects = getEffectsForField(props.fieldPath);
   const hasActiveEffects = hasEffectsForField(props.fieldPath);
@@ -60,15 +68,28 @@
     return trimmed ? game.i18n.localize(trimmed) : undefined;
   };
 
+  // AE change values are stored in canonical units (squares/lbs); the tooltip must show
+  // them in the world's configured display unit, same as the field's own input does.
+  const measurementUnit = computed(() => getFieldMeasurementUnit(props.fieldPath));
+
+  const localizeDisplayValue = (value: unknown): unknown => {
+    // change.value comes off the raw AE change (often a numeric string), not just a number.
+    const numericValue = parseNumericChangeValue(value);
+    if (Number.isNaN(numericValue)) return value;
+    if (measurementUnit.value === 'distance') return roundToDecimal(convertToLocalizedDistance(numericValue), 2);
+    if (measurementUnit.value === 'weight') return roundToDecimal(convertToLocalizedWeight(numericValue), 2);
+    return numericValue;
+  };
+
   const typedEffects = computed(() =>
     (activeEffects.value as Override[]).map((effect) => ({
       ...effect,
+      displayValue: localizeDisplayValue(effect.value),
       bonusTypeLabel: formatBonusType(effect.bonusType),
     }))
   );
 
   const ignoredLabel = game.i18n.localize('dnd35e.EFFECT.StackResult.Ignored');
-
 
   // Own popup instead of Foundry's `data-tooltip-html` - that API only accepts an HTML
   // string (or a raw HTML element), which would force hand-building markup instead of a

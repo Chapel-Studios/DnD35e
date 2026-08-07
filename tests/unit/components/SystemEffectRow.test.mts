@@ -1,9 +1,16 @@
 // @vitest-environment happy-dom
 
+vi.mock('@documents/document/index.mjs', () => ({
+  DocumentSheetStoreSymbol: Symbol.for('test.DocumentSheetStore'),
+}));
+
+import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
+import type { FamiliarContext } from '@helpers/formulae/types.mjs';
 import SystemEffectRow from '@vc/effects/SystemEffectRow.vue';
 import { mount } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { computed } from 'vue';
 
 /**
  * Component tests for `SystemEffectRow.vue` (src/vue/components/effects/SystemEffectRow.vue).
@@ -65,5 +72,74 @@ describe('SystemEffectRow', () => {
 
     await expandBtn.trigger('click');
     expect(wrapper.findAll('.system-change-row')).toHaveLength(0);
+  });
+});
+
+describe('SystemEffectRow — field label & tooltip via DocumentSheetStore', () => {
+  const selfContext: FamiliarContext = {
+    display: 'Self',
+    properties: {
+      speed: {
+        _display: 'Speed',
+        land: { type: 'number', accessPath: 'system.speed.land', display: 'Land' },
+      },
+    },
+  };
+
+  const mkStore = () => ({
+    documentGetters: {
+      familiarSchema: computed(() => ({ self: selfContext })),
+    },
+    _storeUtils: {
+      getFieldLabel: vi.fn((path: string) => (path === 'system.speed.land' ? 'Land Speed' : '')),
+    },
+  });
+
+  it('shows the field\'s real schema label instead of the humanized key, with a familiar-path tooltip', () => {
+    const wrapper = mount(SystemEffectRow, {
+      props: {
+        label: 'Prone',
+        changes: [mkChange({ key: 'system.speed.land', value: 1, type: 'override' })],
+      },
+      global: {
+        provide: { [DocumentSheetStoreSymbol as symbol]: mkStore() },
+      },
+    });
+
+    const expandBtn = wrapper.find('.system-effect-expand');
+    expect(expandBtn.exists()).toBe(true);
+  });
+
+  it('renders label and tooltip after expanding', async () => {
+    const wrapper = mount(SystemEffectRow, {
+      props: {
+        label: 'Prone',
+        changes: [mkChange({ key: 'system.speed.land', value: 1, type: 'override' })],
+      },
+      global: {
+        provide: { [DocumentSheetStoreSymbol as symbol]: mkStore() },
+      },
+    });
+
+    await wrapper.find('.system-effect-expand').trigger('click');
+
+    const key = wrapper.find('.system-change-key');
+    expect(key.text()).toBe('Land Speed');
+    expect(key.attributes('title')).toBe('#Self.Speed.Land');
+  });
+
+  it('falls back to the humanized key when no store is provided', async () => {
+    const wrapper = mount(SystemEffectRow, {
+      props: {
+        label: 'Prone',
+        changes: [mkChange({ key: 'system.speed.land', value: 1, type: 'override' })],
+      },
+    });
+
+    await wrapper.find('.system-effect-expand').trigger('click');
+
+    const key = wrapper.find('.system-change-key');
+    expect(key.text()).toBe('Speed Land');
+    expect(key.attributes('title')).toBeUndefined();
   });
 });

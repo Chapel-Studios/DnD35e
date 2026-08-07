@@ -1,6 +1,6 @@
 import type { Character } from './character/Character.mjs';
 
-// TODO(Phase 6 → Phase 23): remove placeholder. Phase 6 verifies character-only scope; Phase 23 adds NPC/Trap/Object.
+// TODO(poc Phase 6 → a future phase): remove placeholder. poc Phase 6 verifies character-only scope; a future, not-yet-scheduled phase adds NPC/Trap/Object.
 const characterActorType = 'character';
 type CharacterActorType = typeof characterActorType;
 

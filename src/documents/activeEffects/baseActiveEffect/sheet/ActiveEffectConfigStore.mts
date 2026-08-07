@@ -2,6 +2,7 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type Color from '@common/utils/color.mjs';
 import type { DocumentSheetStore, DocumentSheetStoreDocumentActions, DocumentSheetStoreDocumentGetters } from '@documents/document/index.mjs';
 import { useDocumentSheetStore } from '@documents/document/index.mjs';
+import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { ActiveEffectSystemModel } from '@effects/baseActiveEffect/data/ActiveEffectSystemModel.mjs';
@@ -17,12 +18,19 @@ import { computed } from 'vue';
 
 import { getDefaultActiveEffectTabs } from './tabs/index.mjs';
 
+interface UseActiveEffectConfigStoreOptions {
+  /** See `useDocumentSheetStore`'s option of the same name. */
+  renderModeStore?: RenderModeStore;
+}
+
 const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
-  context: VueApplicationContext<TDocument>
+  context: VueApplicationContext<TDocument>,
+  options: UseActiveEffectConfigStoreOptions = {}
 ) => {
   const baseStore = useDocumentSheetStore(context, {
     defaultTabs: [...getDefaultActiveEffectTabs()],
     defaultActiveTab: 'details',
+    renderModeStore: options.renderModeStore,
   });
 
   const document = baseStore._storeUtils.document;
@@ -45,7 +53,9 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
     }
 
     syncOpenSheetTitle(item.sheet);
-    await item.parent?.sheet?.render(true);
+    // `force: false` is a no-op when closed — editing an effect's changes must
+    // never force-open the owning actor's sheet, only refresh it if already open.
+    if (item.parent?.sheet?.rendered) item.parent.sheet.render(false);
 
     if (!item.parent) {
       game.documentIndex?.replaceDocument(item as unknown as foundry.abstract.Document);
@@ -155,6 +165,7 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
     durationUnits: computed(() => document.value.duration?.units ?? 'none'),
     // Effect-specific
     isDisabled: computed(() => document.value.disabled ?? false),
+    isHidden: computed(() => document.value.system?.isHidden ?? false),
     tint: computed(() => document.value.tint ?? null),
     transfer: computed(() => document.value.transfer ?? false),
     statuses: computed(() => [...(document.value.statuses ?? [])]),
@@ -188,7 +199,13 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
     addChange: async (changeData: EffectChangeDataDnd35e) => {
       if (!('changes' in document.value.system)) return false;
       const changes = document.value.system.changes || [];
-      const updatedChanges = [...changes, changeData];
+      const updatedChanges = [
+        ...changes,
+        {
+          ...changeData,
+          id: foundry.utils.randomID(),
+        },
+      ];
       const updated = await baseStore._storeUtils.updateDocument(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
         {
@@ -198,9 +215,17 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
       if (updated) await refreshOwningItem();
       return updated;
     },
-    removeChange: async (index: number) => {
+    // Rows are targeted by their stable `id` (not array position) rather than the row's
+    // render-time array index — a field's blur-commit can still be in flight (e.g. async
+    // validation/canonicalization) when a different row's delete lands first and shifts
+    // array positions. Resolving the current index by `id` at the moment of the update
+    // means a delayed commit either still lands on the right row, or safely no-ops if
+    // that row is gone by then.
+    removeChange: async (id: string) => {
       if (!('changes' in document.value.system)) return false;
       const changes = document.value.system.changes || [];
+      const index = changes.findIndex((c: any) => c.id === id);
+      if (index === -1) return false;
       const updatedChanges = [...changes];
       updatedChanges.splice(index, 1);
       const updated = await baseStore._storeUtils.updateDocument(
@@ -212,11 +237,12 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
       if (updated) await refreshOwningItem();
       return updated;
     },
-    updateChangeField: async (index: number, field: string, value: unknown) => {
+    updateChangeField: async (id: string, field: string, value: unknown) => {
       if (!('changes' in document.value.system)) return false;
       const changes = document.value.system.changes || [];
-      const updatedChanges = changes.map((c: any, i: number) =>
-        i === index ? { ...c, [field]: value } : c
+      if (!changes.some((c: any) => c.id === id)) return false;
+      const updatedChanges = changes.map((c: any) =>
+        c.id === id ? { ...c, [field]: value } : c
       );
       const updated = await baseStore._storeUtils.updateDocument(
         { system: { changes: updatedChanges } } as Partial<TDocument>,
@@ -250,6 +276,7 @@ type ActiveEffectConfigStoreDocumentGetters = DocumentSheetStoreDocumentGetters 
   durationValue: ComputedRef<number | null>;
   durationUnits: ComputedRef<string>;
   isDisabled: ComputedRef<boolean>;
+  isHidden: ComputedRef<boolean>;
   tint: ComputedRef<Color | null>;
   transfer: ComputedRef<boolean>;
   statuses: ComputedRef<string[]>;
@@ -269,8 +296,10 @@ type ActiveEffectConfigStoreDocumentGetters = DocumentSheetStoreDocumentGetters 
 
 type ActiveEffectConfigStoreDocumentActions<TDocument extends ActiveEffectDnd35e> = DocumentSheetStoreDocumentActions<TDocument> & {
   addChange: (changeData: EffectChangeDataDnd35e) => Promise<boolean>;
-  removeChange?: (index: number) => Promise<boolean>;
-  updateChangeField: (index: number, field: string, value: unknown) => Promise<boolean>;
+  /** Removes the row with the given stable `id` — see `ActiveEffectSystemModel`'s `changes` schema. */
+  removeChange?: (id: string) => Promise<boolean>;
+  /** Updates a field on the row with the given stable `id` — see `ActiveEffectSystemModel`'s `changes` schema. */
+  updateChangeField: (id: string, field: string, value: unknown) => Promise<boolean>;
   updateDurationValue: (value: number | null) => Promise<boolean>;
   updateDurationUnits: (units: string | null) => Promise<boolean>;
 };
@@ -281,9 +310,9 @@ type ActiveEffectConfigStore<TDocument extends ActiveEffectDnd35e = ActiveEffect
 };
 
 export { useActiveEffectConfigStore };
-
 export type {
   ActiveEffectConfigStore,
   ActiveEffectConfigStoreDocumentActions,
   ActiveEffectConfigStoreDocumentGetters,
+  UseActiveEffectConfigStoreOptions,
 };

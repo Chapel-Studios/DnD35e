@@ -39,6 +39,7 @@ If a note grows past ~50 lines or sprouts diagrams, promote it to `docs/architec
 - [planning-doc-commit-pairing.md](planning-doc-commit-pairing.md) — Planning doc updates ship in the motivating commit
 - [phase-status-drift.md](phase-status-drift.md) — Verify checklist state against code, don't trust checkboxes
 - [phase-renumbering.md](phase-renumbering.md) — Renumber phase files highest-first with `git mv`
+- [phase-reference-disambiguation.md](phase-reference-disambiguation.md) — Code comments citing a phase must carry a wave prefix (`poc Phase 6`, not bare `Phase 6`)
 - [scope-boundary-enforcement.md](scope-boundary-enforcement.md) — Reject out-of-scope work that triggers dependencies on unplanned phases
 - [srd-reference-source.md](srd-reference-source.md) — `docs/reference/fvtt-JournalEntry-3.5-srd-working-c3lf0RUqQVJ8Pm20.json` is the canonical RAW citation source
 - [powershell-pitfalls.md](powershell-pitfalls.md) — `&` is a command separator; avoid Unix utilities

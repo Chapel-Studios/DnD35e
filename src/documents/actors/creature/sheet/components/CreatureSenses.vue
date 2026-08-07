@@ -19,13 +19,15 @@
         :sizing-unit-options="senseTypeOptions"
         :disabled="disabled"
         :hide-distance="item.type === LOW_LIGHT_VISION"
+        :hint="distanceHint"
+        :unit-hint="typeHint"
         :on-distance-change="(val: number) => updateSenseDistance(index, val)"
         :on-unit-change="(val: SenseType) => updateSenseType(index, val)"
         class="sense-type-select"
       />
     </template>
     <template #item-readonly="{ item }">
-      <template v-if="item.type !== LOW_LIGHT_VISION">{{ item.distance }}&thinsp;{{ distanceUnit }} </template>{{ localize(SENSE_TYPES_LOCALIZED[item.type]) }}
+      <template v-if="item.type !== LOW_LIGHT_VISION">{{ convertToLocalizedDistance(item.distance) }}&thinsp;{{ distanceUnit }} </template>{{ localize(SENSE_TYPES_LOCALIZED[item.type]) }}
     </template>
   </ListFormGroup>
 </template>
@@ -61,6 +63,8 @@
   const {
     measurement: {
       distanceDisplayShortLabel,
+      distanceDisplayLabel,
+      convertToLocalizedDistance,
     },
   } = inject(SettingsStoreSymbol) as SettingsStore;
 
@@ -70,6 +74,13 @@
       label: localize(SENSE_TYPES_LOCALIZED[option.value]),
     })));
   const distanceUnit = computed(() => distanceDisplayShortLabel.value);
+
+  // Schema hint has a {distanceType} placeholder that Foundry's auto-localization can't fill in, so interpolate it manually.
+  const distanceHint = computed(() => game.i18n.format(
+    'dnd35e.CREATURE.FIELDS.bio.senses.element.distance.hint',
+    { distanceType: distanceDisplayLabel.value }
+  ));
+  const typeHint = computed(() => game.i18n.localize('dnd35e.CREATURE.FIELDS.bio.senses.element.type.hint'));
 
   // Domain callback: senses are edited as a coordinated array of structured entries.
   const sensesUpdater = getViewAwareFieldUpdater('system.bio.senses');
@@ -83,7 +94,8 @@
     const newSense: SenseEntrySource = {
       type: nextSense.value,
       // Low-light vision has no fixed range in Foundry (it enhances existing light instead), so it never needs a distance.
-      distance: nextSense.value === LOW_LIGHT_VISION ? 0 : 60,
+      // Stored in squares (canonical unit) — 12 squares = 60 ft, the common SRD darkvision/blindsense default.
+      distance: nextSense.value === LOW_LIGHT_VISION ? 0 : 12,
     };
     sensesUpdater([...senses.value, newSense]);
   }

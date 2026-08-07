@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 // - optional `field.label` (the localized label set after i18nInit)
 // ---------------------------------------------------------------------------
 
-const { NumberField, StringField, BooleanField, SchemaField } = foundry.data.fields;
+const { NumberField, StringField, BooleanField, SchemaField, ArrayField } = foundry.data.fields;
 
 type AnyField = foundry.data.fields.DataField;
 
@@ -34,6 +34,11 @@ const makeSchema = (
   opts: Record<string, unknown> = {}
 ): AnyField => {
   const f = new (SchemaField as any)(fields, { ...opts });
+  return f as AnyField;
+};
+
+const makeArray = (element: AnyField, opts: Record<string, unknown> = {}): AnyField => {
+  const f = new (ArrayField as any)(element, { ...opts });
   return f as AnyField;
 };
 
@@ -190,6 +195,57 @@ describe('gatherAspectsFromSchema — FormulaFamiliar schema walker', () => {
       }), ctx);
       const aspect = group.hp as FieldAspect;
       expect(aspect.value).toBeUndefined();
+    });
+  });
+
+  describe('array fields (poc §7.2b)', () => {
+    it('infers a primitive ArrayField(StringField) as an array aspect with primitive arrayElement', () => {
+      const group = gatherAspectsFromSchema(makeModelClass({
+        languages: makeArray(makeString()),
+      }));
+      const aspect = group.languages as FieldAspect;
+      expect(aspect.type).toBe('array');
+      expect(aspect.arrayElement).toEqual({ kind: 'primitive', type: 'string' });
+    });
+
+    it('infers a primitive ArrayField(NumberField) with a numeric arrayElement type', () => {
+      const group = gatherAspectsFromSchema(makeModelClass({
+        scores: makeArray(makeNumber()),
+      }));
+      const aspect = group.scores as FieldAspect;
+      expect(aspect.type).toBe('array');
+      expect(aspect.arrayElement).toEqual({ kind: 'primitive', type: 'number' });
+    });
+
+    it('infers an object ArrayField(SchemaField) with cached elementFields', () => {
+      const senseFields = { type: makeString(), distance: makeNumber() };
+      const group = gatherAspectsFromSchema(makeModelClass({
+        senses: makeArray(makeSchema(senseFields)),
+      }));
+      const aspect = group.senses as FieldAspect;
+      expect(aspect.type).toBe('array');
+      expect(aspect.arrayElement).toEqual({
+        kind: 'object',
+        elementFields: senseFields,
+        elementAccessPath: 'senses.element',
+        localizationPrefixes: [],
+      });
+    });
+
+    it('resolves .value to the array length when a context document is provided', () => {
+      const ctx = { system: { languages: ['Common', 'Elvish', 'Draconic'] } } as unknown as Parameters<typeof gatherAspectsFromSchema>[1];
+      const group = gatherAspectsFromSchema(makeModelClass({
+        languages: makeArray(makeString()),
+      }), ctx);
+      expect((group.languages as FieldAspect).value).toBe(3);
+    });
+
+    it('omits .value when the context array is missing', () => {
+      const ctx = { system: {} } as unknown as Parameters<typeof gatherAspectsFromSchema>[1];
+      const group = gatherAspectsFromSchema(makeModelClass({
+        languages: makeArray(makeString()),
+      }), ctx);
+      expect((group.languages as FieldAspect).value).toBeUndefined();
     });
   });
 });

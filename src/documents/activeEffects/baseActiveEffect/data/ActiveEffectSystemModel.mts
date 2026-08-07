@@ -40,7 +40,7 @@ class ActiveEffectSystemModel extends DocumentSystemModel<foundry.documents.Acti
       // matching triggers here activate — applying additional changes, rolling
       // dice, or running a formula.
       //
-      // Planned schema shape (not yet implemented — Phase 10 / Action System):
+      // Planned schema shape (not yet implemented — alpha Phase 3 / Action System):
       //   triggers: ArrayField(SchemaField({
       //     event: StringField          — e.g. 'onHit', 'broken', 'death'
       //     target: StringField         — 'owner' | 'actor' | 'any'
@@ -54,6 +54,11 @@ class ActiveEffectSystemModel extends DocumentSystemModel<foundry.documents.Acti
       // ───────────────────────────────────────────────────────────────────────
       changes: new ArrayField(
         new SchemaField({
+          // Stable per-row identifier (not a Foundry document id) — lets the sheet's
+          // changes-table target a specific row by identity instead of array position,
+          // so a delayed field commit (e.g. a formula's blur-commit) can't land on the
+          // wrong row after another row has been deleted out from under it.
+          id: new StringField({ required: true, blank: false, initial: () => foundry.utils.randomID() }),
           label: new StringField({ required: false, nullable: true, initial: null }),
           key: new StringField({ required: true }),
           type: new StringField({ required: true, choices: ALL_CHANGE_TYPES, initial: EFFECT_CHANGE_TYPE.ADD }),

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 const { extractVariables, parseFormula, validateFormula } = FormulaResolver;
 
 /**
- * `!` (logical NOT) operator highlighting — added alongside §7.7b's
+ * `!` (logical NOT) operator highlighting — added alongside poc §7.7b's
  * operator-highlighting work. `renderFormulaHTML()` wraps each `!` in a
  * `formula-operator` span:
  *

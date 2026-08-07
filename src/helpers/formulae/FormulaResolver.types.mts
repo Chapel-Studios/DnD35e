@@ -79,3 +79,39 @@ export interface ConditionalBlock {
   /** Present when the block is malformed — resolution leaves it raw/unresolved. */
   error?: ConditionalBlockError;
 }
+
+// ============================================================================
+// Array/string function grammar types (poc §7.2b) — $contains()/$find()/$any()/
+// $count()/$stringContains() pre-processing blocks.
+// ============================================================================
+
+/** Canonical (internal) name of a `$`-prefixed array/string function. */
+export type FunctionName = 'contains'
+  | 'find'
+  | 'any'
+  | 'count'
+  | 'stringContains'
+  | 'fromFeet'
+  | 'fromMeters'
+  | 'fromKg';
+
+/** A reason a `$function(...)` block failed to parse cleanly. */
+export type FunctionBlockError = 'unbalancedParens' | 'argCount' | 'missingProjection';
+
+/**
+ * A single `$contains(...)`/`$find(...)`/`$any(...)`/`$count(...)`/
+ * `$stringContains(...)` block found within a formula string.
+ */
+export interface FunctionBlock {
+  /** Full "$name(...)" span exactly as it appeared in the source — for `$find`, includes the trailing `.projection`. */
+  raw: string;
+  startIndex: number;
+  endIndex: number;
+  name: FunctionName;
+  /** Top-level (comma-split) argument texts, unresolved. */
+  args: string[];
+  /** `$find` only — the dotted-path segment projected off the matched element (e.g. `range` in `$find(...).range`). */
+  projection?: string;
+  /** Present when the block is malformed — resolution leaves it raw/unresolved. */
+  error?: FunctionBlockError;
+}

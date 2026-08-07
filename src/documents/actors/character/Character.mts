@@ -21,13 +21,13 @@ class Character extends Creature {
    * Subclasses extend via spread:
    *   `static override readonly LifeCycle = { ...Character.LifeCycle, levelUp: 'levelUp' } as const`
    *
-   * Emission points for level-up / XP events land in Phase 9 (Class System).
+   * Emission points for level-up / XP events land in alpha Phase 2 (Classes & Level History).
    */
   static override readonly LifeCycle = {
     ...super.LifeCycle,
-    /** Character gained a level. Payload TBD (Emission: Phase 9) */
+    /** Character gained a level. Payload TBD (Emission: alpha Phase 2) */
     levelUp: 'levelUp',
-    /** Character was awarded XP. Payload TBD (Emission: Phase 9) */
+    /** Character was awarded XP. Payload TBD (Emission: alpha Phase 2) */
     awardXp: 'awardXp',
   } as const;
 

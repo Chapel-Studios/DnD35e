@@ -10,8 +10,11 @@
  *
  * @module
  */
+import { getFamiliarBuilder } from './familiarBuilderRegistry.mjs';
 import { evaluateBooleanExpression } from './FormulaResolver.booleanGrammar.mjs';
 import { resolveConditionalFormula } from './FormulaResolver.conditionalGrammar.mjs';
+import type { FunctionGrammarHelpers } from './FormulaResolver.functionGrammar.mjs';
+import { resolveFunctionBlocks } from './FormulaResolver.functionGrammar.mjs';
 import type { AspectLookupResult } from './FormulaResolver.types.mjs';
 import type { DocumentContext } from './registry.mjs';
 import { normalizeLabel } from './schemaWalker.mjs';
@@ -197,6 +200,38 @@ export function extractVariables(formula: string): FormulaVariable[] {
 }
 
 /**
+ * Resolve context data for a variable's `context` name: direct lookup first,
+ * then via a familiarSchema alias (e.g. a localized display name like 'Self'
+ * while documentDataMap uses the internal key 'self').
+ */
+export function resolveContextDocData(
+  context: string,
+  familiarSchema: FamiliarSchema,
+  documentDataMap: Record<string, DocumentContext>
+): DocumentContext | undefined {
+  const direct = documentDataMap[context];
+  if (direct) return direct;
+
+  const ctxEntry = familiarSchema[context]
+    ? { key: context, ctx: familiarSchema[context] }
+    : (() => {
+      const found = Object.entries(familiarSchema).find(([, ctx]) =>
+        ctx.aliases?.includes(context)
+      );
+      return found ? { key: found[0], ctx: found[1] } : null;
+    })();
+  if (!ctxEntry) return undefined;
+
+  const primary = documentDataMap[ctxEntry.key];
+  if (primary) return primary;
+
+  for (const alias of (ctxEntry.ctx.aliases ?? [])) {
+    if (documentDataMap[alias]) return documentDataMap[alias];
+  }
+  return undefined;
+}
+
+/**
  * Resolve all variables in a formula against document data using familiar accessPaths.
  *
  * For each #context.path variable, looks up the FieldAspect in the schema
@@ -212,46 +247,54 @@ export function resolveFormula(
   familiarSchema: FamiliarSchema,
   documentDataMap: Record<string, DocumentContext>
 ): string {
+  // Fully resolves a sub-formula, optionally merging in an extra schema/data layer
+  // (e.g. a synthetic `it` context for a $contains/$find/$any/$count predicate).
+  const resolveSubFormula = (
+    text: string,
+    extraSchema?: FamiliarSchema,
+    extraDataMap?: Record<string, DocumentContext>
+  ): string => resolveFormula(
+    text,
+    extraSchema ? { ...familiarSchema, ...extraSchema } : familiarSchema,
+    extraDataMap ? { ...documentDataMap, ...extraDataMap } : documentDataMap
+  );
+  const evaluateCondition = (resolvedCondition: string): boolean => evaluateBooleanExpression(resolvedCondition);
+
   // Pre-resolve $conditional(when(...) ... else(...)) blocks into their winning
   // branch's (still-unresolved) text before the generic token substitution below
   // runs — $conditional/when/else are not #context.property tokens themselves.
   const withConditionalsResolved = resolveConditionalFormula(
     formula,
-    sub => resolveFormula(sub, familiarSchema, documentDataMap),
-    resolvedCondition => evaluateBooleanExpression(resolvedCondition)
+    sub => resolveSubFormula(sub),
+    evaluateCondition
   );
 
-  let result = withConditionalsResolved;
-  const variables = extractVariables(withConditionalsResolved);
+  // Pre-resolve $contains/$find/$any/$count/$stringContains(...) blocks into their
+  // literal result — same pre-processing tier as $conditional, run after it so a
+  // function block can appear inside a $conditional branch and vice versa.
+  const functionHelpers: FunctionGrammarHelpers = {
+    getFieldAspect,
+    getNestedValue,
+    resolveContextDocData,
+    resolveSubFormula,
+    evaluateCondition,
+    getFamiliarBuilder: (documentType, subtype) => getFamiliarBuilder(documentType, subtype as Parameters<typeof getFamiliarBuilder>[1]),
+  };
+  const withFunctionsResolved = resolveFunctionBlocks(
+    withConditionalsResolved,
+    familiarSchema,
+    documentDataMap,
+    functionHelpers
+  );
+
+  let result = withFunctionsResolved;
+  const variables = extractVariables(withFunctionsResolved);
 
   // Process in reverse order to maintain string indices
   for (let i = variables.length - 1; i >= 0; i--) {
     const variable = variables[i];
 
-    // Resolve context data: direct lookup first, then via familiarSchema alias
-    let docData = documentDataMap[variable.context];
-    if (!docData) {
-      // variable.context may be a localized alias (e.g. 'Self') while documentDataMap
-      // uses the internal key ('self'). Use the familiarSchema to bridge them.
-      const ctxEntry = familiarSchema[variable.context]
-        ? { key: variable.context, ctx: familiarSchema[variable.context] }
-        : (() => {
-          const found = Object.entries(familiarSchema).find(([, ctx]) =>
-            ctx.aliases?.includes(variable.context)
-          );
-          return found ? { key: found[0], ctx: found[1] } : null;
-        })();
-      if (ctxEntry) {
-        // Try the primary FamiliarSchema key in documentDataMap
-        docData = documentDataMap[ctxEntry.key];
-        if (!docData) {
-          // Try each alias of that context in documentDataMap
-          for (const alias of (ctxEntry.ctx.aliases ?? [])) {
-            if (documentDataMap[alias]) { docData = documentDataMap[alias]; break; }
-          }
-        }
-      }
-    }
+    const docData = resolveContextDocData(variable.context, familiarSchema, documentDataMap);
     if (!docData) continue;
 
     // Custom quoted path — use the raw path directly as the accessPath

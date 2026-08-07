@@ -37,7 +37,7 @@
       <li
         v-for="(change, index) in visibleChanges"
         v-show="isChangeVisible(index)"
-        :key="index"
+        :key="change.id"
         class="change-row"
         :data-index="index"
       >
@@ -49,7 +49,7 @@
             :disabled="!isChangeEditable(index) || change.isSystem"
             class="target-select"
             :title="targetLabel"
-            @change="(e: Event) => updateChangeField(index, 'target', (e.target as HTMLSelectElement).value)"
+            @change="(e: Event) => updateChangeField(change.id, 'target', (e.target as HTMLSelectElement).value)"
           >
             <option v-for="(label, target) in changeTargets" :key="target" :value="target">
               {{ label }}
@@ -60,10 +60,10 @@
             :model-value="change.key"
             :placeholder="resolvedKeyPlaceholder"
             :disabled="!isChangeEditable(index) || change.isSystem"
-            :familiar-context="store.documentGetters.getTargetFamiliarContext(change.target ?? 'item')"
+            :familiar-context="getKeyPickerContext(change.target ?? 'item')"
             :context-name="store.documentGetters.getTargetFamiliarContextName(change.target ?? 'item')"
             hide-context-hint
-            @update:model-value="(val: string) => updateChangeKey(index, val)"
+            @update:model-value="(val: string) => updateChangeKey(change.id, val)"
             @update:error="(err: string | null) => setRowError(index, 'field', err)"
           />
 
@@ -76,7 +76,7 @@
             :name="`system.changes.${index}.type`"
             :value="change.type"
             :disabled="!isChangeEditable(index) || change.isSystem"
-            @change="(e: Event) => updateChangeField(index, 'type', (e.target as HTMLSelectElement).value)"
+            @change="(e: Event) => updateChangeField(change.id, 'type', (e.target as HTMLSelectElement).value)"
           >
             <option v-for="(label, type) in changeTypes" :key="type" :value="type">
               {{ label }}
@@ -87,10 +87,11 @@
             class="change-value"
             :value="String(change.value ?? '')"
             :field-path="`system.changes.${index}.value`"
-            :on-update="(val: string) => updateChangeField(index, 'value', val)"
+            :on-update="(val: string) => updateChangeField(change.id, 'value', val)"
             :disabled="!isChangeEditable(index) || change.isSystem"
             :contexts="getContextsForTarget(change.target ?? 'item')"
             :expected-type="getExpectedTypeForChange(change)"
+            :placeholder="resolvedValuePlaceholder"
             hide-field-controls
             hide-context-hint
             @update:error="(err: string | null) => setRowError(index, 'value', err)"
@@ -103,7 +104,7 @@
             :disabled="!isChangeEditable(index) || change.isSystem"
             class="bonus-type-select"
             :title="bonusTypeLabel"
-            @change="(e: Event) => updateChangeField(index, 'bonusType', (e.target as HTMLSelectElement).value || null)"
+            @change="(e: Event) => updateChangeField(change.id, 'bonusType', (e.target as HTMLSelectElement).value || null)"
           >
             <option value="">{{ noneLabel }}</option>
             <option v-for="bt in bonusTypeOptions" :key="bt.value" :value="bt.value">
@@ -117,9 +118,10 @@
             :value="String(change.condition ?? '')"
             expected-type="boolean"
             :field-path="`system.changes.${index}.condition`"
-            :on-update="(val: string) => updateChangeField(index, 'condition', val || null)"
+            :on-update="(val: string) => updateChangeField(change.id, 'condition', val || null)"
             :disabled="!isChangeEditable(index) || change.isSystem"
             :contexts="getContextsForTarget(change.target ?? 'item')"
+            :placeholder="resolvedConditionPlaceholder"
             hide-field-controls
             hide-label
             hide-context-hint
@@ -142,14 +144,21 @@
             :field-path="changeFieldPath(index)"
             :read-only="change.isSystem"
           >
-            <button type="button" @click="deleteChange(index)" :disabled="!isChangeEditable(index) || change.isSystem" class="delete-change field-control-btn">
+            <button type="button" @click="deleteChange(change.id)" :disabled="!isChangeEditable(index) || change.isSystem" class="delete-change field-control-btn">
               <i class="fa-solid fa-trash"></i>
             </button>
           </FieldControls>
         </div>
 
-        <div v-if="getRowContextText(index, change)" class="row-context" :class="{ 'has-error': hasRowError(index) }">
-          {{ getRowContextText(index, change) }}
+        <div
+          v-if="getRowContextInfo(change) || getRowErrorText(index)"
+          class="row-context"
+          :class="{ 'has-error': hasRowError(index) }"
+        >
+          <p>
+            <span v-if="getRowContextInfo(change)" class="context-info">{{ getRowContextInfo(change) }}.</span>
+            <span v-if="getRowErrorText(index)" class="row-errors">{{ getRowErrorText(index) }}</span>
+          </p>
         </div>
       </li>
     </ol>
@@ -163,9 +172,10 @@
   import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
   import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
   import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
+  import { withChangeTargetGroups } from '@helpers/formulae/changeTargetGroups.mjs';
   import FormulaFormGroup from '@helpers/formulae/FormulaFormGroup.vue';
   import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
-  import type { FamiliarSchema } from '@helpers/formulae/types.mts';
+  import type { FamiliarContext, FamiliarSchema } from '@helpers/formulae/types.mts';
   import AspectPicker from '@vc/fields/formGroups/AspectPicker.vue';
   import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
   import { computed, inject, reactive } from 'vue';
@@ -235,11 +245,23 @@
   const resolvedTitle = computed(() => props.title ?? game.i18n.localize('EFFECT.TABS.changes'));
   const resolvedAddLabel = computed(() => props.addLabel ?? game.i18n.localize('EFFECT.AddChange'));
   const resolvedEmptyLabel = computed(() => props.emptyLabel ?? '');
-  const resolvedKeyPlaceholder = computed(() => props.keyPlaceholder ?? game.i18n.localize('EFFECT.ChangeKey'));
+  const resolvedKeyPlaceholder = computed(() => props.keyPlaceholder ?? game.i18n.localize('dnd35e.EFFECT.FieldPlaceholder'));
+  const resolvedValuePlaceholder = computed(() => game.i18n.localize('dnd35e.EFFECT.ValuePlaceholder'));
+  const resolvedConditionPlaceholder = computed(() => game.i18n.localize('dnd35e.EFFECT.ConditionPlaceholder'));
 
   const changeFieldPath = (index: number): string => `system.changes.${index}`;
   const isChangeVisible = (index: number): boolean => getIsFieldVisible(changeFieldPath(index)).value;
   const isChangeEditable = (index: number): boolean => getIsFieldEditable(changeFieldPath(index)).value;
+
+  // Group Change Targets (poc §7.7) only make sense for the *key* picker, and only for the
+  // 'actor' target — registered groups expand to actor field paths (e.g. group:allSaves
+  // → system.saves.fort/.reflex/.will). Never applied to Value/Condition contexts
+  // (getContextsForTarget below), since a group has no meaning as a single formula value.
+  function getKeyPickerContext (target: string): FamiliarContext | undefined {
+    const context = store.documentGetters.getTargetFamiliarContext(target);
+    if (!context) return undefined;
+    return target === EFFECT_CHANGE_TARGET.ACTOR ? withChangeTargetGroups(context) : context;
+  }
 
   // Value/Condition formulas may reference both the change's target (item/actor)
   // AND the effect document itself ("Self") — e.g. a Material AE's Value formula
@@ -274,19 +296,10 @@
     return !!errors && Object.values(errors).some(Boolean);
   }
 
-  // Combined display text for the row's shared context line: validation errors
-  // (prefixed by which column they came from) take priority over the plain
-  // "Available Contexts: [...]" hint, since all three fields share one context.
-  function getRowContextText (index: number, change: EffectChangeDataDnd35e): string {
-    const errors = rowFieldErrors[index];
-    if (errors) {
-      const parts: string[] = [];
-      if (errors.field) parts.push(`${keyHeaderLabel}: ${errors.field}`);
-      if (errors.value) parts.push(`${valueHeaderLabel}: ${errors.value}`);
-      if (errors.condition) parts.push(`${conditionHeaderLabel}: ${errors.condition}`);
-      if (parts.length) return parts.join(' \u00b7 ');
-    }
-
+  // The row's shared "Available Contexts: [...]" hint — always shown alongside
+  // any validation errors (below) rather than being replaced by them, so the
+  // user can still see what contexts are available while fixing an error.
+  function getRowContextInfo (change: EffectChangeDataDnd35e): string {
     const schema = getContextsForTarget(change.target ?? 'item');
     if (!schema) return '';
     const names = Object.entries(schema).map(([k, ctx]) => ctx.display ?? (k.charAt(0).toUpperCase() + k.slice(1)));
@@ -295,13 +308,29 @@
     return `${localizedPrefix}: [${names.join(', ')}]`;
   }
 
+  // Combined validation errors (prefixed by which column they came from),
+  // surfaced alongside the context info rather than replacing it.
+  function getRowErrorText (index: number): string {
+    const errors = rowFieldErrors[index];
+    if (!errors) return '';
+    const parts: string[] = [];
+    if (errors.field) parts.push(`${keyHeaderLabel}: ${errors.field}`);
+    if (errors.value) parts.push(`${valueHeaderLabel}: ${errors.value}`);
+    if (errors.condition) parts.push(`${conditionHeaderLabel}: ${errors.condition}`);
+    return parts.join(' \u00b7 ');
+  }
+
   // The Value column's expectedType is derived from the picked aspect (change.key),
   // not left to default to 'string' — enforces the aspect's real type in the formula input.
+  // An AE change's Value formula always resolves to a scalar, so an 'array'-typed aspect
+  // (e.g. targeting `senses`/`languages` directly) falls back to 'string' here rather than
+  // propagating a type this input can't actually produce.
   function getExpectedTypeForChange (change: EffectChangeDataDnd35e): 'string' | 'number' | 'boolean' | undefined {
     if (!change.key) return undefined;
     const ctx = store.documentGetters.getTargetFamiliarContext(change.target ?? 'item');
     if (!ctx) return undefined;
-    return FormulaResolver.findAspectByAccessPath(ctx.properties, change.key)?.aspect.type;
+    const aspectType = FormulaResolver.findAspectByAccessPath(ctx.properties, change.key)?.aspect.type;
+    return aspectType === 'array' ? 'string' : aspectType;
   }
 
   const changeTypes = computed(() => {
@@ -347,13 +376,13 @@
     });
   };
 
-  const deleteChange = async (index: number) => {
-    await removeChange?.(index);
+  const deleteChange = async (id: string) => {
+    await removeChange?.(id);
   };
 
-  // Domain callback: each editor row targets a specific indexed change entry.
-  const updateChangeKey = async (index: number, val: string) => {
-    await updateChangeField(index, 'key', val);
+  // Domain callback: each editor row targets a specific change entry by stable id.
+  const updateChangeKey = async (id: string, val: string) => {
+    await updateChangeField(id, 'key', val);
   };
 </script>
 
@@ -488,10 +517,17 @@
   .row-context {
     grid-column: 1 / -1;
     font-size: var(--font-size-11);
-    color: var(--color-text-secondary);
     padding: 0.35rem 0.5rem;
 
-    &.has-error {
+    p {
+      margin: 0;
+    }
+
+    .context-info {
+      color: var(--color-text-secondary);
+    }
+
+    .row-errors {
       color: rgba(255, 100, 100, 0.85);
     }
   }

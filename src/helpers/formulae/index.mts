@@ -14,6 +14,14 @@ const replaceDataAttribute = <TContext extends ItemDnd35e> (formula: Formula, co
 export { replaceDataAttribute };
 
 import FamiliarDropdown from '../../vue/components/FamiliarDropdown.vue';
+import type { ChangeTargetGroup } from './changeTargetGroups.mjs';
+import {
+  changeTargetGroups,
+  expandChangeTargetGroups,
+  registerChangeTargetGroup,
+  resolveChangeTargets,
+  withChangeTargetGroups,
+} from './changeTargetGroups.mjs';
 import type { FormulaDataSource } from './FormulaData.mjs';
 import { FormulaData } from './FormulaData.mjs';
 import type { FormulaFieldOptions } from './FormulaField.mjs';
@@ -21,6 +29,7 @@ import { FormulaField } from './FormulaField.mjs';
 import FormulaFormGroup from './FormulaFormGroup.vue';
 import { FormulaResolver } from './FormulaResolver.mjs';
 import type { AspectLookupResult } from './FormulaResolver.types.mjs';
+import { withItemCollectionAspects } from './itemCollectionFamiliar.mjs';
 import type {
   ContextDocumentType,
   DocumentContext,
@@ -33,6 +42,7 @@ import {
   buildMergedFamiliarContext,
   familiarSchemaRegistry,
   getFamiliarBuilder,
+  getRegisteredSubtypes,
   registerFamiliarSchema,
 } from './registry.mjs';
 import { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema, normalizeLabel } from './schemaWalker.mjs';
@@ -96,9 +106,11 @@ export {
   buildDocumentFamiliar,
   buildMergedFamiliarContext,
   canonicalizeFormula,
+  changeTargetGroups,
   DOCUMENT_LEVEL_ASPECTS,
   EDIT,
   ensureNameFormula,
+  expandChangeTargetGroups,
   extractVariableAtPosition,
   extractVariables,
   FamiliarDropdown,
@@ -116,6 +128,7 @@ export {
   getFamiliarBuilder,
   getNestedValue,
   getPropertyValue,
+  getRegisteredSubtypes,
   getTokenAtPosition,
   getVariableTokenIndex,
   getVariableTokens,
@@ -128,21 +141,26 @@ export {
   normalizeLabel,
   parseFormula,
   PLAY,
+  registerChangeTargetGroup,
   registerFamiliarSchema,
   renderFormulaDisplayHTML,
   renderFormulaHTML,
+  resolveChangeTargets,
   resolveFormula,
   resolveFormulaField,
   TRUE,
   useFamiliar,
   useFamiliarOverlayInput,
   validateFormula,
+  withChangeTargetGroups,
+  withItemCollectionAspects,
 };
 
 export type {
   AspectGroup,
   AspectLookupResult,
   AutocompleteOption,
+  ChangeTargetGroup,
   ContextDocumentType,
   DisplayMode,
   DocumentContext,

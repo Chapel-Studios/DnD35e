@@ -32,3 +32,18 @@ git commit -m "Pipeline & Branching"
 - **Never use `&&`** to chain commands. Use `;` instead. (Already in copilot-instructions.md but worth recording the cost: a chained `&&` is silently treated as call-operator + empty operand.)
 - **Avoid Unix utilities**: `head`, `cat -n`, etc. Prefer `Select-Object -First N`, `Get-Content`.
 - **Astral-plane emoji round-tripping**: when scripting emoji into files, use `[char]::ConvertFromUtf32(0x1F4DD)` (gives proper UTF-16 surrogate pair) and write with `System.Text.UTF8Encoding($false)` (no BOM). Don't paste raw emoji into here-strings if the script will be passed through multiple shell layers.
+
+## `Get-Content -Raw` / `Set-Content` corrupt non-ASCII characters (use bulk regex sparingly)
+
+Windows PowerShell 5.1's `Get-Content`/`Set-Content` default to the console's ANSI codepage, not UTF-8. Reading a file containing `§` (U+00A7, UTF-8 bytes `C2 A7`) with `Get-Content -Raw` and writing it back with `Set-Content` silently mangles the byte sequence into the Unicode replacement character (`U+FFFD`, displays as `�`) on round-trip — with **no error or warning**. This happened across 21 files in one bulk-regex pass before being caught by `Select-String`.
+
+**Fix**: always read/write explicitly as UTF-8 when scripting text edits with non-ASCII content:
+```powershell
+$utf8 = New-Object System.Text.UTF8Encoding($false)   # no BOM
+$content = [System.IO.File]::ReadAllText($path)        # defaults to UTF-8 detection, safer than Get-Content
+$new = [regex]::Replace($content, $pattern, $replacement)
+[System.IO.File]::WriteAllText($path, $new, $utf8)
+```
+Also avoid PowerShell 6+-only escape syntax like `` `u{00A7} `` inside replacement strings — PowerShell **5.1** doesn't support it and will insert the literal text `u{00A7}` instead of the character. Build the character via `[char]0x00A7` and concatenate it into the replacement string instead.
+
+**After any bulk non-ASCII text edit**: verify with a repo-wide scan for `[char]0xFFFD` before trusting the result — don't rely on the command's own "no errors" exit status.

@@ -9,8 +9,8 @@ describe('buildTokenVisionFromSenses', () => {
     });
   });
 
-  it('maps darkvision to visionMode darkvision, sight.range, and a basicSight detection mode', () => {
-    const result = buildTokenVisionFromSenses([{ type: 'darkvision', distance: 60 }]);
+  it('maps darkvision to visionMode darkvision, sight.range, and a basicSight detection mode (distance stored in squares, converted to localized ft)', () => {
+    const result = buildTokenVisionFromSenses([{ type: 'darkvision', distance: 12 }]);
     expect(result.sight).toEqual({ visionMode: 'darkvision', range: 60 });
     expect(result.detectionModes).toEqual({ basicSight: { range: 60, enabled: true } });
   });
@@ -21,8 +21,8 @@ describe('buildTokenVisionFromSenses', () => {
     expect(result.detectionModes).toEqual({});
   });
 
-  it('maps tremorsense to a feelTremor detection mode without changing visionMode', () => {
-    const result = buildTokenVisionFromSenses([{ type: 'tremorsense', distance: 120 }]);
+  it('maps tremorsense to a feelTremor detection mode without changing visionMode (distance stored in squares, converted to localized ft)', () => {
+    const result = buildTokenVisionFromSenses([{ type: 'tremorsense', distance: 24 }]);
     expect(result.sight).toEqual({ visionMode: 'basic', range: 0 });
     expect(result.detectionModes).toEqual({ feelTremor: { range: 120, enabled: true } });
   });
@@ -30,15 +30,15 @@ describe('buildTokenVisionFromSenses', () => {
   it('prioritizes darkvision over low-light when both are present', () => {
     const result = buildTokenVisionFromSenses([
       { type: 'lowLight', distance: 0 },
-      { type: 'darkvision', distance: 60 },
+      { type: 'darkvision', distance: 12 },
     ]);
     expect(result.sight).toEqual({ visionMode: 'darkvision', range: 60 });
   });
 
   it('stacks tremorsense detection alongside darkvision visionMode and detection mode', () => {
     const result = buildTokenVisionFromSenses([
-      { type: 'darkvision', distance: 60 },
-      { type: 'tremorsense', distance: 120 },
+      { type: 'darkvision', distance: 12 },
+      { type: 'tremorsense', distance: 24 },
     ]);
     expect(result.sight).toEqual({ visionMode: 'darkvision', range: 60 });
     expect(result.detectionModes).toEqual({

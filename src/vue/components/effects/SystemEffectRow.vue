@@ -15,22 +15,17 @@
       <span class="system-effect-tag">{{ localize('dnd35e.EFFECT.System') }}</span>
     </td>
   </tr>
-  <tr
+  <EffectChangeRow
     v-for="(change, index) in (expanded ? changes : [])"
     :key="index"
-    class="system-change-row"
-    :class="index % 2 === 0 ? 'stripe-even' : 'stripe-odd'"
-  >
-    <td class="system-change-cell">
-      <span class="system-change-key">{{ humanizeChangeKey(change.key) }}</span>
-      <span class="system-change-value">{{ formatChangeTypeSymbol(change.type) }} {{ change.value }}</span>
-    </td>
-  </tr>
+    :change="change"
+    :index="index"
+  />
 </template>
 
 <script setup lang="ts">
   import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
-  import { formatChangeTypeSymbol } from '@effects/baseActiveEffect/logic/index.mjs';
+  import EffectChangeRow from '@vc/effects/EffectChangeRow.vue';
   import { ref } from 'vue';
 
   const { icon = 'icons/svg/aura.svg', changes = [] } = defineProps<{
@@ -46,21 +41,6 @@
   const localize = (key: string) => game.i18n.localize(key);
 
   const expanded = ref(false);
-
-  /**
-   * Turns a change key path (e.g. `system.encumbrance.maxDexBonus`) into a compact
-   * display label (e.g. "Encumbrance Max Dex Bonus") without a per-key label registry -
-   * this row type is meant to stay generic as future self-contributed sources are added.
-   */
-  function humanizeChangeKey(key: string): string {
-    const segments = key.split('.').filter((segment) => segment !== 'system');
-    return segments
-      .slice(-2)
-      .map((segment) => segment
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
-        .replace(/^./, (char) => char.toUpperCase()))
-      .join(' ');
-  }
 </script>
 
 <style scoped lang="scss">
@@ -108,33 +88,5 @@
     border: 1px solid currentColor;
     border-radius: 3px;
   }
-
-  .system-effect-details-row {
-    opacity: 0.85;
-  }
-
-  // Explicit stripe backgrounds (not nth-child) so colors stay stable regardless of how
-  // many change rows are inserted/removed by expanding - matches the convention in
-  // InventoryItemRow.vue for nested container contents.
-  .system-change-row {
-    &.stripe-even > td {
-      background: transparent !important;
-    }
-
-    &.stripe-odd > td {
-      background: color-mix(in srgb, var(--color-cool-4, #9ba5a0) 10%, transparent) !important;
-    }
-  }
-
-  .system-change-cell {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    font-size: 0.85rem;
-    padding: 0.3rem 0.75rem 0.3rem 2.75rem !important;
-  }
-
-  .system-change-value {
-    opacity: 0.8;
-  }
 </style>
+

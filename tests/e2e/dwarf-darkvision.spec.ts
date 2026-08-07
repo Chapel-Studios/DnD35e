@@ -50,7 +50,7 @@ test.describe('Darkvision on a dark scene', () => {
   test('a character with 60ft darkvision gets a live darkvision vision source in the dark', async ({ page }) => {
     const darkvisionActorUuid = await createActor(page, 'character', {
       name: 'Dwarf Test Scout',
-      system: { bio: { senses: [{ type: 'darkvision', distance: 60 }] } },
+      system: { bio: { senses: [{ type: 'darkvision', distance: 12 }] } },
     });
     const basicActorUuid = await createActor(page, 'character', { name: 'Human Test Scout' });
 

@@ -1,3 +1,4 @@
+import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import type { EquippableDocumentStore } from '@items/physical/equippableItem/index.mjs';
 import { useEquippableItemStore } from '@items/physical/equippableItem/index.mjs';
 import { physicalItemEffectsTab } from '@items/physical/physicalItem/sheet/tabs/index.mjs';
@@ -9,10 +10,18 @@ import { computed } from 'vue';
 
 import { weaponDetailsTab } from './tabs/index.mjs';
 
-const useWeaponStore = (context: VueApplicationContext<Weapon>): WeaponStore => {
+interface UseWeaponStoreOptions {
+  /** Set false for row-scoped stores so they don't clobber a standalone sheet's registry entry (or vice versa). */
+  registerGlobally?: boolean;
+  /** See `useDocumentSheetStore`'s option of the same name. */
+  renderModeStore?: RenderModeStore;
+}
+
+const useWeaponStore = (context: VueApplicationContext<Weapon>, options: UseWeaponStoreOptions = {}): WeaponStore => {
   const equippableStore = useEquippableItemStore<Weapon>(context, {
     defaultTabs: [weaponDetailsTab, physicalItemEffectsTab],
     defaultActiveTab: 'details',
+    renderModeStore: options.renderModeStore,
   });
   const document = equippableStore._storeUtils.document;
 
@@ -27,7 +36,9 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>): WeaponStore => 
     documentGetters,
   };
 
-  game.dnd35e.stores[document.value.documentName][context.document.uuid] = store;
+  if (options.registerGlobally ?? true) {
+    game.dnd35e.stores[document.value.documentName][context.document.uuid] = store;
+  }
 
   return store;
 };
@@ -42,4 +53,4 @@ type WeaponStore = EquippableDocumentStore<Weapon> & {
 };
 
 export { useWeaponStore };
-export type { WeaponGetters, WeaponStore };
+export type { UseWeaponStoreOptions, WeaponGetters, WeaponStore };

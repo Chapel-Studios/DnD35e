@@ -134,6 +134,8 @@ interface SchemaFieldMeta {
   canVisibilityBeChanged?: boolean;
   /** Whether the GM can change editability on this field. */
   canEditabilityBeChanged?: boolean;
+  /** Canonical storage unit this numeric field is measured in, for display-side conversion (e.g. AE tooltip values). */
+  measurementUnit?: 'distance' | 'weight';
 }
 
 /**
@@ -161,6 +163,7 @@ function useDnd35eField<T extends foundry.data.fields.DataField>(
   if (meta.defaultEditability) opts.defaultEditability = meta.defaultEditability;
   if (meta.canVisibilityBeChanged !== undefined) opts.canVisibilityBeChanged = meta.canVisibilityBeChanged;
   if (meta.canEditabilityBeChanged !== undefined) opts.canEditabilityBeChanged = meta.canEditabilityBeChanged;
+  if (meta.measurementUnit) opts.measurementUnit = meta.measurementUnit;
   return field;
 }
 

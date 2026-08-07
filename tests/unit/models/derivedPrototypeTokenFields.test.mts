@@ -19,10 +19,10 @@ describe('buildDerivedPrototypeTokenFields', () => {
     expect(buildDerivedPrototypeTokenFields('Duder', 'huge', [])).toMatchObject({ width: 3, height: 3 });
   });
 
-  it('derives sight and detectionModes from senses', () => {
+  it('derives sight and detectionModes from senses (distance stored in squares, converted to localized ft)', () => {
     const derived = buildDerivedPrototypeTokenFields('Duder', 'small', [
-      { type: 'darkvision', distance: 60 },
-      { type: 'tremorsense', distance: 30 },
+      { type: 'darkvision', distance: 12 },
+      { type: 'tremorsense', distance: 6 },
     ]);
     expect(derived.sight).toEqual({ enabled: true, visionMode: 'darkvision', range: 60 });
     expect(derived.detectionModes).toEqual({ basicSight: { range: 60, enabled: true }, feelTremor: { range: 30, enabled: true } });
@@ -34,7 +34,7 @@ describe('buildDerivedPrototypeTokenFields', () => {
 });
 
 describe('diffDerivedPrototypeTokenFields', () => {
-  const derived = buildDerivedPrototypeTokenFields('Duder', 'medium', [{ type: 'darkvision', distance: 60 }]);
+  const derived = buildDerivedPrototypeTokenFields('Duder', 'medium', [{ type: 'darkvision', distance: 12 }]);
 
   it('returns null when everything already matches', () => {
     expect(diffDerivedPrototypeTokenFields({
@@ -86,15 +86,18 @@ describe('diffDerivedPrototypeTokenFields', () => {
     }, derived)).toEqual({ detectionModes: { basicSight: { range: 60, enabled: true } } });
   });
 
-  it('removes a managed detection mode key that no longer applies, using -= deletion syntax', () => {
+  it('removes a managed detection mode key that no longer applies, using ForcedDeletion', () => {
     const noSensesDerived = buildDerivedPrototypeTokenFields('Duder', 'medium', []);
-    expect(diffDerivedPrototypeTokenFields({
+    const result = diffDerivedPrototypeTokenFields({
       name: 'Duder',
       width: 1,
       height: 1,
       sight: { enabled: true, visionMode: 'basic', range: 0 },
       detectionModes: { basicSight: { range: 60, enabled: true } },
-    }, noSensesDerived)).toEqual({ detectionModes: { '-=basicSight': null } });
+    }, noSensesDerived);
+    expect(result?.detectionModes).toBeInstanceOf(Object);
+    expect((result?.detectionModes as Record<string, unknown>).basicSight)
+      .toBeInstanceOf(foundry.data.operators.ForcedDeletion);
   });
 
   it('leaves unmanaged detection mode keys untouched', () => {

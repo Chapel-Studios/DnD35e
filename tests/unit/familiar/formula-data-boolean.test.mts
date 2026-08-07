@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 const { evaluateBooleanExpression, resolveFormula, validateFormulaType } = FormulaResolver;
 
 /**
- * Story A (§7.2a, Phase 7) — boolean formula resolution + type-mismatch validation.
+ * Story A (poc §7.2a) — boolean formula resolution + type-mismatch validation.
  *
  * `FormulaData.resolveSource()` is exercised with an empty documentDataMap so no
  * FormulaFamiliar schema registration is required — these tests use formulas
@@ -177,6 +177,51 @@ describe('validateFormulaType — expectedType mismatch surfaces a validation er
     it('unresolvable variables (no matching aspect at all) still skip validation', () => {
       const schema: FamiliarSchema = { self: { properties: {} } };
       expect(validateFormulaType('!#self.missing 0', schema, 'boolean')).toBeNull();
+    });
+  });
+
+  describe('unescaped $ in the resolved text — always skips validation (poc §7.2b)', () => {
+    // `resolveFormulaFromSchemaValues` only substitutes `#context.property` —
+    // it has no `$conditional`/`$contains`/`$find`/`$any`/`$count`/
+    // `$stringContains` awareness (that needs a live document). Any unescaped
+    // `$` left over — whether still-typing (`$`, `$c`) or a fully-valid,
+    // complete function call — means the type can't be determined here, so
+    // validation must bail out instead of forcing a false type-mismatch error.
+    const schema: FamiliarSchema = {
+      self: { properties: { tags: { type: 'array', accessPath: 'system.tags' } } },
+    };
+
+    it('a bare "$" mid-typing does not produce a number-type error', () => {
+      expect(validateFormulaType('$', schema, 'number')).toBeNull();
+    });
+
+    it('a partial function keyword mid-typing does not produce a number-type error', () => {
+      expect(validateFormulaType('$con', schema, 'number')).toBeNull();
+    });
+
+    it('a partial function keyword mid-typing does not produce a boolean-type error', () => {
+      expect(validateFormulaType('$contains(', schema, 'boolean')).toBeNull();
+    });
+
+    it('a complete, well-formed $contains(...) call does not produce a boolean-type error', () => {
+      expect(validateFormulaType('$contains(#self.tags, "fire")', schema, 'boolean')).toBeNull();
+    });
+
+    it('a complete $conditional(...) call does not produce a number-type error', () => {
+      expect(validateFormulaType('$conditional(when(#self.tags, 1) else(0))', schema, 'number')).toBeNull();
+    });
+
+    it('an escaped "\\$" is still coerced normally (not treated as live $-grammar)', () => {
+      // No unescaped $ remains once resolved — falls through to real coercion.
+      // Override the test-harness Roll.safeEval stub (see the earlier test in
+      // this file) so this non-numeric literal text throws instead of the
+      // stub's default non-throwing fallback.
+      (globalThis.Roll.safeEval as Mock).mockImplementationOnce(() => {
+        throw new Error('not a valid dice formula');
+      });
+      const error = validateFormulaType('\\$5', schema, 'number');
+      expect(error).not.toBeNull();
+      expect(error?.severity).toBe('error');
     });
   });
 });

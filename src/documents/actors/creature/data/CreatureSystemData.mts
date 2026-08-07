@@ -44,21 +44,6 @@ interface HpData extends HpSource {
   value: number;
 }
 
-// ─── Saves ───────────────────────────────────────────────────────────────────
-
-interface SaveSource {
-  // base save progression comes from class levels (alpha.2)
-}
-
-interface SaveData extends SaveSource {
-  /** Derived: class save progression + ability mod + bonuses. Never stored. */
-  total: number;
-}
-
-type SavesOf<TEntry extends SaveSource> = {
-  fort: TEntry; ref: TEntry; will: TEntry;
-};
-
 // ─── Encumbrance ─────────────────────────────────────────────────────────────
 
 interface EncumbranceData {
@@ -122,7 +107,6 @@ interface CreatureSystemSourceProperties {
 interface CreatureSystemSource extends CreatureSystemSourceProperties, ActorSystemSource {
   abilities:  AbilityScoresOf<AbilityScoreSource>;
   hp:         HpSource;
-  saves:      SavesOf<SaveSource>;
   currency:   PriceSource;
   defense: {
     spellResistance: FormulaDataSource;
@@ -144,7 +128,8 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
     concealment: number;
     spellResistance: FormulaDataSource;
   };
-  saves: SavesOf<SaveData>;
+  /** Entirely derived — not stored in source. */
+  saves: { fort: number; reflex: number; will: number };
   /** Entirely derived — not stored in source. */
   init: { total: number };
   /** Derived from class items. Resets to 1 until class system is implemented. Never stored. */
@@ -171,9 +156,6 @@ export type {
   EncumbranceData,
   HpData,
   HpSource,
-  SaveData,
-  SavesOf,
-  SaveSource,
   SenseEntrySource,
   SettingsData,
 };

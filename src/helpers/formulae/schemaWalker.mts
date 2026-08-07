@@ -15,9 +15,10 @@
  */
 
 import type { DocumentContext } from './registry.mjs';
-import type { AspectGroup, FieldAspect, FormulaFieldMeta } from './types.mjs';
+import type { ArrayElementInfo, AspectGroup, FieldAspect, FormulaFieldMeta } from './types.mjs';
 
 const {
+  ArrayField,
   BooleanField,
   NumberField,
   SchemaField,
@@ -42,7 +43,7 @@ const {
  *   System ships with the EN implementation (current behavior). Mods / locale packs
  *   can override per locale. Changing the function for a locale is a storage-breaking
  *   migration for any formula that used localized identifiers in that locale.
- *   Tracked: docs/migration-plan/phase-31-community-hardening.md
+ *   Tracked: docs/migration-plan/release/phase-07-community-hardening.md
  */
 export function normalizeLabel(label: string | undefined): string | undefined {
   if (!label) return undefined;
@@ -66,12 +67,40 @@ const DOCUMENT_LEVEL_ASPECTS: Record<string, Omit<FieldAspect, 'value'>> = {
 
 /**
  * Infer a familiar type from a DataField class.
- * NumberField → 'number', BooleanField → 'boolean', everything else → 'string'.
+ * NumberField → 'number', BooleanField → 'boolean', ArrayField → 'array', everything else → 'string'.
  */
-function inferFieldType(field: foundry.data.fields.DataField): 'string' | 'number' | 'boolean' {
+function inferFieldType(field: foundry.data.fields.DataField): 'string' | 'number' | 'boolean' | 'array' {
   if (field instanceof NumberField) return 'number';
   if (field instanceof BooleanField) return 'boolean';
+  if (field instanceof ArrayField) return 'array';
   return 'string';
+}
+
+/**
+ * Describe an ArrayField's element shape (poc §7.2b) — primitive scalar elements vs.
+ * a uniform object shape (`ArrayField(SchemaField)`, e.g. `senses`/`attacks`).
+ *
+ * `accessPath`/`localizationPrefixes` are the array field's OWN values (already
+ * computed by the caller) — used only to derive `elementAccessPath` for the
+ * object-kind case, matching Foundry's real localization path for
+ * `ArrayField(SchemaField)` members (`<field>.element.<subfield>`).
+ */
+function inferArrayElementInfo(
+  field: foundry.data.fields.DataField,
+  accessPath: string,
+  localizationPrefixes: string[]
+): ArrayElementInfo {
+  const element = (field as InstanceType<typeof ArrayField>).element;
+  if (element instanceof SchemaField) {
+    const schemaPath = accessPath.startsWith('system.') ? accessPath.substring('system.'.length) : accessPath;
+    return {
+      kind: 'object',
+      elementFields: element.fields as Record<string, foundry.data.fields.DataField>,
+      elementAccessPath: `${schemaPath}.element`,
+      localizationPrefixes,
+    };
+  }
+  return { kind: 'primitive', type: element instanceof NumberField ? 'number' : 'string' };
 }
 
 /**
@@ -84,13 +113,14 @@ function inferFieldType(field: foundry.data.fields.DataField): 'string' | 'numbe
 function resolveValue(
   context: DocumentContext,
   accessPath: string,
-  type: 'string' | 'number' | 'boolean'
+  type: 'string' | 'number' | 'boolean' | 'array'
 ): string | number | undefined {
   const raw = foundry.utils.getProperty(context as object, accessPath) as unknown;
   if (raw === undefined || raw === null) return undefined;
 
   if (type === 'number') return Number(raw);
   if (type === 'boolean') return raw ? 'true' : 'false';
+  if (type === 'array') return Array.isArray(raw) ? raw.length : undefined;
 
   // Scalar → coerce directly
   if (typeof raw !== 'object') return String(raw);
@@ -163,6 +193,28 @@ function getPathBasedFamiliarAliases(
 }
 
 /**
+ * Resolve the plain (non-familiar) `.label` localization key for a schema-relative path.
+ * Mirrors how Foundry's own `localizeDataModel` sets `field.label` from
+ * `${prefix}.FIELDS.${schemaPath}.label` — used for synthetic entries (e.g. Group Change
+ * Targets) that have no real DataField to read `field.label` from directly.
+ */
+function getPathBasedLabel(
+  accessPath: string,
+  localizationPrefixes: string[]
+): string | undefined {
+  const schemaPath = accessPath.startsWith('system.')
+    ? accessPath.substring('system.'.length)
+    : accessPath;
+
+  for (const prefix of localizationPrefixes) {
+    const localized = resolveLocalizedLabelKey(`${prefix}.FIELDS.${schemaPath}.label`);
+    if (localized) return localized;
+  }
+
+  return undefined;
+}
+
+/**
  * Add a leaf entry to an AspectGroup.
  *
  * Key: always the canonical schema field name (`key`), or `meta.aspectKey` when
@@ -187,9 +239,9 @@ function addLeafToGroup(
   const resolvedOverride = localizedOverride ?? pathOverride ?? meta?.familiarLabel;
   // field.label is set by Foundry's localizeDataModel (via LOCALIZATION_PREFIXES) after i18nInit.
   // field.options.label is only set when explicitly passed in the constructor.
-  const label = resolvedOverride
-    ?? (field as unknown as { label?: string }).label
+  const officialLabel = (field as unknown as { label?: string }).label
     ?? (field.options as Record<string, unknown>).label as string | undefined;
+  const label = resolvedOverride ?? officialLabel;
   const aspectKey = meta?.aspectKey ?? key;
 
   const prop: FieldAspect = {
@@ -198,6 +250,10 @@ function addLeafToGroup(
     accessPath,
   };
 
+  if (type === 'array' && field instanceof ArrayField) {
+    prop.arrayElement = inferArrayElementInfo(field, accessPath, localizationPrefixes);
+  }
+
   const aliases: string[] = [
     ...getPathBasedFamiliarAliases(accessPath, localizationPrefixes),
     ...(meta?.aliases ?? []).map(normalizeAliasValue),
@@ -205,6 +261,16 @@ function addLeafToGroup(
   const localizedIdentifier = normalizeLabel(prop.display);
   if (localizedIdentifier && localizedIdentifier !== key && !aliases.includes(localizedIdentifier)) {
     aliases.unshift(localizedIdentifier);
+  }
+  // When a familiarLabel override wins, keep the official label's normalized form typeable
+  // too (e.g. "Abilities" preferred, but "AbilityScores" — from official label "Ability Scores" —
+  // still resolves as a fallback identifier).
+  if (resolvedOverride) {
+    const officialIdentifier = normalizeLabel(officialLabel);
+    if (officialIdentifier && officialIdentifier !== key
+      && officialIdentifier !== localizedIdentifier && !aliases.includes(officialIdentifier)) {
+      aliases.push(officialIdentifier);
+    }
   }
   if (aliases.length) {
     prop.aliases = aliases;
@@ -259,9 +325,9 @@ function walkFields(
         const localizedOverride = resolveLocalizedLabelKey(meta?.familiarLabelKey);
         const pathOverride = getPathBasedFamiliarLabel(currentPath, localizationPrefixes);
         const resolvedOverride = localizedOverride ?? pathOverride ?? meta?.familiarLabel;
-        const branchLabel = resolvedOverride
-          ?? (field as unknown as { label?: string }).label
+        const officialLabel = (field as unknown as { label?: string }).label
           ?? (field.options as Record<string, unknown>).label as string | undefined;
+        const branchLabel = resolvedOverride ?? officialLabel;
         if (branchLabel) branch._display = branchLabel;
 
         const aliases: string[] = [
@@ -271,6 +337,15 @@ function walkFields(
         const localizedIdentifier = normalizeLabel(branchLabel);
         if (localizedIdentifier && localizedIdentifier !== key && !aliases.includes(localizedIdentifier)) {
           aliases.unshift(localizedIdentifier);
+        }
+        // Same official-label fallback as leaves — e.g. "abilities" prefers "Abilities" but
+        // "AbilityScores" (from official label "Ability Scores") still resolves.
+        if (resolvedOverride) {
+          const officialIdentifier = normalizeLabel(officialLabel);
+          if (officialIdentifier && officialIdentifier !== key
+            && officialIdentifier !== localizedIdentifier && !aliases.includes(officialIdentifier)) {
+            aliases.push(officialIdentifier);
+          }
         }
         if (aliases.length) {
           branch._aliases = aliases;
@@ -345,4 +420,11 @@ function gatherAspectsFromSchema(
   return result;
 }
 
-export { DOCUMENT_LEVEL_ASPECTS, gatherAspectsFromSchema };
+export {
+  DOCUMENT_LEVEL_ASPECTS,
+  gatherAspectsFromSchema,
+  getPathBasedFamiliarAliases,
+  getPathBasedFamiliarLabel,
+  getPathBasedLabel,
+  walkFields,
+};

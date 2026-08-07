@@ -19,7 +19,7 @@ export interface FormulaFieldMeta {
   /** I18n key for Familiar-only display label override (preferred over familiarLabel). */
   familiarLabelKey?: string;
   /** Override the inferred aspect type (normally inferred from inner field class). */
-  aspectType?: 'string' | 'number' | 'boolean';
+  aspectType?: 'string' | 'number' | 'boolean' | 'array';
   /** Override the key used in the AspectGroup (normally the field name). */
   aspectKey?: string;
   /** Alternative names that also resolve to this field, e.g. ['dmg', 'damage']. */
@@ -104,14 +104,68 @@ export interface Dnd35eFieldOverrides {
 // Familiar Types
 // ============================================================================
 /**
+ * Describes the element shape of an array-typed `FieldAspect`.
+ * - `primitive`: `ArrayField(StringField|NumberField)` — elements are plain scalars.
+ * - `object`: `ArrayField(SchemaField)` — elements share a uniform schema (e.g. `senses`,
+ *   `attacks`). `elementFields` is the raw inner `SchemaField.fields`, cached so
+ *   `$find`/`$contains` predicate evaluation (poc §7.2b) can re-walk it per array element
+ *   (via the schema walker) without re-deriving it from the live DataModel at resolve time.
+ *   `elementAccessPath`/`localizationPrefixes` are cached too so a later schema-only walk
+ *   of `elementFields` (no live element — used to build the `#it` context for validation
+ *   and autocomplete) can resolve `familiarLabel`/`familiarAliases` overrides using the
+ *   *real* Foundry path convention for `ArrayField(SchemaField)` members
+ *   (`<field>.element.<subfield>`, matching how Foundry's own `localizeDataModel` sets
+ *   `field.label`) instead of a bare, prefix-less key.
+ */
+export type ArrayElementInfo =
+  | { kind: 'primitive'; type: 'string' | 'number' }
+  | {
+    kind: 'object';
+    elementFields: Record<string, foundry.data.fields.DataField>;
+    elementAccessPath: string;
+    localizationPrefixes: string[];
+  }
+  | {
+    /**
+     * poc §7.2c — a heterogeneous embedded-document collection (`#self.items` and its
+     * filtered variants `#self.weapons`/`#self.equipment`). Unlike `object` (one shared
+     * `elementFields` shape for every element), each element's real fields depend on its
+     * own `.type` — resolved per-element at predicate-evaluation time via
+     * `getFamiliarBuilder(documentType, element.type)`, not a single static shape.
+     */
+    kind: 'heterogeneous';
+    /** Foundry document type of the collection's elements, e.g. 'Item'. */
+    documentType: foundry.CONST.DocumentType;
+    /** When set, only elements whose `.type` is in this list are iterated (filtered sub-collections). */
+    filterTypes?: string[];
+  };
+
+/**
  * A single resolvable variable value (leaf node in the familiar tree)
  */
 export interface FieldAspect {
   display?: string;           // Localized label (e.g., "Hardness", "Rarity")
-  value?: string | number;    // Current computed value (e.g., 10, "common") — optional, filled at runtime; booleans stored as 'true'/'false'
-  type: 'string' | 'number' | 'boolean';  // Type determines what operations can be performed
+  value?: string | number;    // Current computed value (e.g., 10, "common") — optional, filled at runtime; booleans stored as 'true'/'false'; arrays store their element count
+  type: 'string' | 'number' | 'boolean' | 'array';  // Type determines what operations can be performed
   accessPath: string;         // The real document path (e.g., "system.hardness", "name")
   aliases?: string[];         // Alternative names that also resolve to this field
+  /** Present only when `type === 'array'`. Describes the array's element shape (poc §7.2b). */
+  arrayElement?: ArrayElementInfo;
+  /**
+   * Marks this as a synthetic Group Change Target entry (poc §7.7) rather than a real
+   * schema field — `accessPath` is a `group:`-prefixed key that expands to multiple
+   * concrete field paths at AE apply time. Only ever appended to the AE change *key*
+   * picker's context (`AspectPicker`'s `withChangeTargetGroups()`), never to formula
+   * value contexts. Used purely as a visual hint (e.g. italic/icon) in the dropdown.
+   */
+  isGroup?: boolean;
+  /**
+   * poc §7.2c — for fields surfaced via `buildMergedFamiliarContext` (e.g. the `#self.items`
+   * autocomplete union across every registered Item subtype), lists which subtype(s)
+   * actually declare this field. Absent when the field is universal across the whole
+   * union (no provenance badge needed) or when the aspect isn't from a merged union at all.
+   */
+  ownerTypes?: string[];
 }
 
 /**
@@ -213,6 +267,10 @@ export interface AutocompleteOption {
   isLeaf: boolean;            // true if FieldAspect, false if branch
   fullPath: string;           // "#self.hardness" — full path for insertion
   accessPath?: string;        // "system.hardness" — real document path (leaves only)
+  /** Propagated from `FieldAspect.isGroup` (poc §7.7) — a Group Change Target entry, not a real field. */
+  isGroup?: boolean;
+  /** Propagated from `FieldAspect.ownerTypes` (poc §7.2c) — subtype(s) this field is unique to within a merged union. */
+  ownerTypes?: string[];
 }
 
 /**

@@ -137,4 +137,18 @@ describe('renderFormulaHTML — $conditional/when/else keyword highlighting', ()
     // and matched normally — same as any other real paren in the formula.
     expect(html).toContain('\\$conditional<span class="formula-paren"');
   });
+
+  /**
+   * A stray paren sitting outside every recognized block (e.g. a leftover
+   * "(" typed before an otherwise well-formed "$conditional(...)") isn't
+   * caught by `findConditionalBlocks`/`findFunctionBlocks` at all — only the
+   * generic whole-formula paren-balance check in `validateFormula` catches
+   * it. The rendered paren span must carry that error as a tooltip, not just
+   * a bare red highlight with no explanation.
+   */
+  it('an unmatched stray paren outside any keyword block gets a tooltip from the generic unbalanced-parens error', () => {
+    const formula = '($conditional(when(1, 5) else(3))';
+    const html = render(formula, false);
+    expect(html).toMatch(/<span class="formula-paren is-error" title="[^"]*"[^>]*>\(<\/span>/);
+  });
 });

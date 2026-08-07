@@ -277,7 +277,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   applyActiveEffects(phase: string) {
     const ActiveEffect = foundry.documents.ActiveEffect;
     if ( !(phase in ActiveEffect.CHANGE_PHASES) ) {
-      // TODO(Phase 7): incorporate Hooks.onError pattern into LogHelper for consistency with Foundry error surfacing
+      // TODO: incorporate Hooks.onError pattern into LogHelper for consistency with Foundry error surfacing
       // Currently using LogHelper.error() directly to avoid hook dependency in type definitions
       // Also, does that throw the error?
       // const error = new Error(`"${phase}" is not a registered ActiveEffect application phase.`);

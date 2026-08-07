@@ -10,9 +10,6 @@ export type {
   EncumbranceData,
   HpData,
   HpSource,
-  SaveData,
-  SavesOf,
-  SaveSource,
 } from './CreatureSystemData.mjs';
 export {
   CreatureSystemModel,

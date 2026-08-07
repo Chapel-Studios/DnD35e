@@ -9,15 +9,19 @@ import { dismissOverlays } from './helpers/ui.mjs';
  * Encumbrance penalty progression — full six-tier TDD scenario.
  *
  * A STR 10 character has light=33, medium=66, heavy=100, maxLift=200 (heavy*2),
- * drag=500 (heavy*5). Base land speed is 30ft.
+ * drag=500 (heavy*5). Base land speed is 6 squares (30 ft) - stored in squares
+ * (canonical unit), displayed on the sheet in the world's localized unit (ft by
+ * default here), so the DOM-visible speed progression (30/20/20/5/5/dash) is
+ * unchanged by the squares migration; only the raw pushed-change value shown in
+ * the effect tooltip (`TIER_SPEED_EFFECT_VALUE`) is now in squares.
  *
  * Six carried items are added one at a time, each pushing the running total
  * carried weight into the next tier:
  *   item1 -> cum 20  (tier 0, light)  - bar moves, no penalties
- *   item2 -> cum 50  (tier 1, medium) - maxDex +3, check -3, speed 30->20
+ *   item2 -> cum 50  (tier 1, medium) - maxDex +3, check -3, speed 30->20 ft
  *   item3 -> cum 90  (tier 2, heavy)  - maxDex +1, check -6, speed 20 (same table value)
- *   item4 -> cum 150 (tier 3, maxLift)- same severe penalties, speed -> 5
- *   item5 -> cum 400 (tier 4, drag)   - same severe penalties, speed -> 5
+ *   item4 -> cum 150 (tier 3, maxLift)- same severe penalties, speed -> 5 ft
+ *   item5 -> cum 400 (tier 4, drag)   - same severe penalties, speed -> 5 ft
  *   item6 -> cum 550 (tier 5, beyond)- same severe penalties, speed -> 0 (immobile)
  *
  * Items are then deleted in reverse order, and the penalties are expected to
@@ -62,11 +66,12 @@ async function localizeTierLabel (page: any, tier: number): Promise<string> {
 
 // Encumbered speed value pushed as the DOWNGRADE change - unlike the sheet's readonly
 // display (which renders 0 as '—'), the tooltip shows the literal numeric value.
+// Values are in squares (canonical storage unit; 1 square = 5 ft).
 const TIER_SPEED_EFFECT_VALUE: Record<number, string> = {
-  1: '20',
-  2: '20',
-  3: '5',
-  4: '5',
+  1: '4',
+  2: '4',
+  3: '1',
+  4: '1',
   5: '0',
 };
 
