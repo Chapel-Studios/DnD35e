@@ -1,7 +1,7 @@
 import { nextTick } from 'vue';
 
 import type { AutocompleteOption, FamiliarSchema } from './types.mjs';
-import { measureTextareaCaretPosition, measureTextOffset, useFamiliar,type UseFamiliarOptions } from './useFamiliar.mjs';
+import { measureTextareaCaretPosition, measureTextOffset, useFamiliar, type UseFamiliarOptions } from './useFamiliar.mjs';
 
 export type OverlayInputElement = HTMLInputElement | HTMLTextAreaElement;
 
