@@ -3,14 +3,15 @@
  *
  * Feasibility audit (see poc/phase-09-basic-tokens.md Story 4): most SRD conditions modify
  * AC/attack/saves/skill-check values that have no live consumer yet in the current
- * data pipeline — `Creature.calculateAC()` bypasses the AE stacking engine entirely
- * (`armorBonus`/`shieldBonus` are hardcoded `0` stubs), and there is no attack-roll,
- * save, or skill-check system yet. Only conditions that touch fields already flowing
- * through `applyActiveEffects()` (ability scores, land speed) get real `changes[]` here.
+ * data pipeline — `Creature._buildDefenseChanges()` now flows AC through the AE stacking
+ * engine (`armorBonus`/`shieldBonus` are real `system.defense.*` fields, still `0` until
+ * the Armor/Shield item types exist), but there is no attack-roll, save, or skill-check
+ * system yet. Only conditions that touch fields already flowing through
+ * `applyActiveEffects()` (ability scores, land speed) get real `changes[]` here.
  * Everything else is registered as an icon-only status (empty `changes`) so it can be
  * toggled via the Token HUD and shows on the token, but has no mechanical effect until
  * later phases (alpha.8 Prone/ConditionManager, beta.3 full condition expansion) land
- * the systems (AC pipeline, action economy, roll system) those effects need.
+ * the systems (action economy, roll system) those effects need.
  *
  * Prone is a special case: it has no stat-modifying `changes` here (AC/attack penalties
  * still deferred), but drives real movement-action gating (crawl/standUp/dropProne) —
@@ -30,6 +31,17 @@ import { GENERAL_EFFECT_TYPE } from '@effects/effectTypes.mjs';
 const PRONE_CONDITION_ID = 'prone';
 /** `CONFIG.statusEffects[].id` for the Blinded condition — mapped to Foundry's native `CONFIG.specialStatusEffects.BLIND`. */
 const BLINDED_CONDITION_ID = 'blinded';
+
+const setFieldOverride = (key: string, value: unknown): EffectChangeDataDnd35e => ({
+  key,
+  type: EFFECT_CHANGE_TYPE.OVERRIDE,
+  value,
+  priority: 100,
+  phase: FINAL_EFFECT_CHANGE_PHASE,
+  target: EFFECT_CHANGE_TARGET.ACTOR,
+  isSystem: true,
+  bonusType: BONUS_TYPE_UNTYPED,
+});
 
 /** Builds an ability-score penalty change (ADD, untyped — stacks with other conditions' penalties per SRD "no type" rule). */
 const abilityPenalty = (ability: string, value: number): EffectChangeDataDnd35e => ({
@@ -56,7 +68,7 @@ const halveLandSpeed = (): EffectChangeDataDnd35e => ({
   phase: FINAL_EFFECT_CHANGE_PHASE,
   target: EFFECT_CHANGE_TARGET.ACTOR,
   isSystem: true,
-  bonusType: null,
+  bonusType: BONUS_TYPE_UNTYPED,
 });
 
 /**
@@ -65,15 +77,25 @@ const halveLandSpeed = (): EffectChangeDataDnd35e => ({
  * speed or other active speed penalties, per SRD). No bonus type, same as
  * `halveLandSpeed` — bypasses stacking summation and applies directly via priority order.
  */
-const capLandSpeed = (squares: number): EffectChangeDataDnd35e => ({
-  key: 'system.speed.land',
+const capLandSpeed = (squares: number): EffectChangeDataDnd35e =>
+  setFieldOverride('system.speed.land', squares);
+
+/**
+ * Denies the Dexterity bonus to AC (OVERRIDE, boolean) — SRD: "You can't use your
+ * Dexterity bonus to AC (if any) while flat-footed." Read directly by
+ * `Creature._buildDefenseChanges()` to gate the Dex term, rather than summed like a
+ * bonus. A future Uncanny Dodge feat overrides this back to false with a
+ * higher-priority change.
+ */
+const denyDexToAC = (): EffectChangeDataDnd35e => ({
+  key: 'system.defense.denyDexToAC',
   type: EFFECT_CHANGE_TYPE.OVERRIDE,
-  value: squares,
-  priority: 100,
-  phase: FINAL_EFFECT_CHANGE_PHASE,
+  value: true,
+  priority: 10,
+  phase: INITIAL_EFFECT_CHANGE_PHASE,
   target: EFFECT_CHANGE_TARGET.ACTOR,
   isSystem: true,
-  bonusType: null,
+  bonusType: BONUS_TYPE_UNTYPED,
 });
 
 interface ConditionDefinition {
@@ -92,7 +114,8 @@ interface ConditionDefinition {
 
 /**
  * Full SRD condition audit list (`docs/reference/conditions.md`). Only Entangled,
- * Exhausted, and Fatigued carry real `changes` today — see module doc comment.
+ * Exhausted, Fatigued, Flat-Footed, and Prone carry real `changes` today — see module
+ * doc comment.
  */
 const CONDITIONS: Record<string, ConditionDefinition> = {
   blinded: {
@@ -157,7 +180,10 @@ const CONDITIONS: Record<string, ConditionDefinition> = {
     id: 'flatFooted',
     label: 'dnd35e.CONDITIONS.flatFooted.label',
     icon: 'icons/svg/shield.svg',
-    changes: [],
+    changes: [
+      denyDexToAC(),
+      setFieldOverride('system.aooCount', 0),
+    ],
   },
   frightened: {
     id: 'frightened',

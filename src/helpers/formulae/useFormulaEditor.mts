@@ -270,10 +270,10 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
 
     const caretPos = inputEl.selectionStart ?? localValue.value.length;
     const beforeCursor = localValue.value.substring(0, caretPos);
-    // Function-name options (poc §7.2b) carry a `$name(` fullPath; every other
-    // option is a `#`-context path — pick the matching trigger char to know
-    // where the replacement span starts.
-    const triggerChar = option.fullPath.startsWith('$') ? '$' : '#';
+    // Function-name options (poc §7.2b) carry an explicit `trigger` (`when`/`else` insert
+    // bare, with no `$` sigil, so it can't be inferred from `fullPath`'s leading character
+    // like every other option can); every other option is a `#`-context path.
+    const triggerChar = option.trigger ?? (option.fullPath.startsWith('$') ? '$' : '#');
     const lastTriggerIndex = beforeCursor.lastIndexOf(triggerChar);
     if (lastTriggerIndex === -1) return;
 

@@ -7,6 +7,7 @@ import { registerActors } from '@documents/actors/registration.mjs';
 import { registerScenes } from '@documents/scene/registration.mjs';
 import { preLocalizeConfig } from '@helpers/localization/preLocalizeConfig.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
+import { D20Roll } from '@source/dice/index.mjs';
 
 import { registerItems } from './documents/items/index.mjs';
 import { registerSettings } from './settings/index.mjs';
@@ -24,6 +25,11 @@ CONFIG.dnd35e = SystemConfig;
 // Register system settings (must happen during init)
 Hooks.once('init', () => {
   registerSettings();
+
+  // Register custom Roll subclasses so Roll.fromData() can reconstruct them by class name
+  // (e.g. from a stored ChatMessage). `Roll` stays first/default so Roll.create() and any
+  // other code building a plain roll elsewhere in Foundry is unaffected.
+  CONFIG.Dice.rolls = [Roll, D20Roll];
 
   game.dnd35e = {
     stores: {

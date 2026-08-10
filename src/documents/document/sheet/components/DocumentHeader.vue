@@ -26,6 +26,7 @@
     display: grid;
     grid-template-columns: minmax(auto, 1fr) 3fr minmax(80px, auto);
     grid-template-rows: min-content auto;
+    padding: 0 0.25rem;
     margin-bottom: 0.5rem;
     align-items: start;
 

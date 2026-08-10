@@ -61,7 +61,7 @@
       effects,
       conditions,
       transferredEffects,
-      selfContributedEffect,
+      selfContributedEffects,
       getIsFieldVisible,
       getIsFieldEditable,
     },
@@ -114,18 +114,16 @@
       };
     });
 
-    const systemRows: EffectRowData[] = selfContributedEffect.value
-      ? [{
-        id: 'system-self-contributed',
-        categoryId: 'system',
-        categoryLabel: localize('dnd35e.EFFECT.Category.System').value,
-        sortKey: selfContributedEffect.value.label.toLowerCase(),
-        kind: 'system',
-        label: selfContributedEffect.value.label,
-        icon: selfContributedEffect.value.icon,
-        changes: selfContributedEffect.value.changes,
-      }]
-      : [];
+    const systemRows: EffectRowData[] = selfContributedEffects.value.map((row) => ({
+      id: `system-self-contributed-${row.label}`,
+      categoryId: 'system',
+      categoryLabel: localize('dnd35e.EFFECT.Category.System').value,
+      sortKey: row.label.toLowerCase(),
+      kind: 'system',
+      label: row.label,
+      icon: row.icon,
+      changes: row.changes,
+    }));
 
     return [...ownedRows, ...transferredRows, ...systemRows];
   });

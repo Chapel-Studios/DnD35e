@@ -12,7 +12,12 @@ export {
   formatChangeTypeSymbol,
 } from './formatChangeTypeSymbol.mjs';
 export {
+  KEY_RESOLUTION_FAILED,
+  resolveActiveEffectChangeKey,
+} from './resolveChangeKey.mjs';
+export {
   getEffectContexts,
+  getEffectParents,
   resolveActiveEffectChange,
   resolveActiveEffectChangeValue,
   resolveMaskedActiveEffectChangeValue,

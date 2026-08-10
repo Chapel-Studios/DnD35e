@@ -12,7 +12,7 @@ import { defineComponent, h, nextTick } from 'vue';
  * (fixing a duplicate error message shown both in this field's hint AND in a consumer's
  * shared context/error line, e.g. the AE Changes table row).
  *
- * `updateValidation()` only runs on user interaction or a `modelValue`/`familiarContext`
+ * `updateValidation()` only runs on user interaction or a `modelValue`/`contexts`
  * change (no initial validation on mount) — mount with a resolvable `modelValue`, then
  * change it to an unresolvable raw path to trigger the "property not found" error via the
  * real `validateFormula`/`findAspectByAccessPath` pipeline (not mocked).
@@ -42,8 +42,7 @@ const mountAspectPicker = (options: { hideContextHint: boolean }) => {
   return mount(AspectPicker, {
     props: {
       modelValue: 'system.flag',
-      familiarContext,
-      contextName: 'item',
+      contexts: { item: familiarContext },
       hideContextHint: options.hideContextHint,
     },
     global: {
@@ -143,8 +142,7 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
     const wrapper = mount(AspectPicker, {
       props: {
         modelValue: 'group:allSaves',
-        familiarContext: groupAwareContext,
-        contextName: 'actor',
+        contexts: { actor: groupAwareContext },
       },
       global: { stubs: { FamiliarOverlayInput: ModelValueStub } },
     });
@@ -163,8 +161,7 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
     const wrapper = mount(AspectPicker, {
       props: {
         modelValue: 'group:allSaves',
-        familiarContext: groupAwareContext,
-        contextName: 'actor',
+        contexts: { actor: groupAwareContext },
       },
       global: { stubs: { FamiliarOverlayInput: ModelValueStub } },
     });
@@ -177,15 +174,14 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
     const wrapper = mount(AspectPicker, {
       props: {
         modelValue: 'system.hardness',
-        familiarContext: groupAwareContext,
-        contextName: 'actor',
+        contexts: { actor: groupAwareContext },
       },
       global: { stubs: { FamiliarOverlayInput: ModelValueStub } },
     });
     const displayed = wrapper.find('input').attributes('data-model-value');
     // The context's own `display: 'Actor'` is what localizeFormula uses for the context
     // prefix here (normalizeLabel('Actor') === 'Actor') — unrelated to the raw
-    // `contextName: 'actor'` prop, which only the group-key fast path (above) uses directly.
+    // `actor` schema key, which only the group-key fast path (above) uses directly.
     expect(displayed).toBe('#Actor.hardness');
   });
 
@@ -195,8 +191,7 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
       const wrapper = mount(AspectPicker, {
         props: {
           modelValue: '',
-          familiarContext: groupAwareContext,
-          contextName: 'actor',
+          contexts: { actor: groupAwareContext },
         },
         global: { stubs: { FamiliarOverlayInput: ModelValueStub } },
       });

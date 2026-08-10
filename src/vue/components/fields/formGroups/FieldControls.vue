@@ -7,7 +7,7 @@
       <button
         v-if="showVisibilityButton"
         type="button"
-        class="field-control visibility-control"
+        class="field-control-btn visibility-control"
         :class="{ 'is-restricted': isVisibilityRestricted }"
         :title="visibilityTooltip"
         @click.stop.prevent="cycleVisibility"
@@ -18,7 +18,7 @@
       <button
         v-if="showEditabilityButton"
         type="button"
-        class="field-control editability-control"
+        class="field-control-btn editability-control"
         :class="{ 'is-restricted': isEditabilityRestricted }"
         :title="editabilityTooltip"
         @click.stop.prevent="toggleEditability"
@@ -161,7 +161,7 @@
   };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
   .controls {
     display: inline-flex;
     gap: 0.25rem;
@@ -171,24 +171,24 @@
   }
 
   /* Permission control buttons */
-  .field-control {
+  .field-control-btn {
     background: transparent;
     border: none;
     padding: 0.125rem 0.25rem;
     cursor: pointer;
     opacity: 0.5;
     transition: opacity 0.15s ease;
-    font-size: var(--font-size-11);
+    font-size: 0.66rem;
     position: relative;
     z-index: 1;
-  }
+ 
+    &:hover {
+      opacity: 1;
+    }
 
-  .field-control:hover {
-    opacity: 1;
-  }
-
-  .field-control.is-restricted {
-    opacity: 1;
-    color: var(--color-level-warning);
+    &.is-restricted {
+      opacity: 1;
+      color: var(--color-level-warning);
+    }
   }
 </style>

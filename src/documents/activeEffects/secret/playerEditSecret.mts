@@ -1,5 +1,5 @@
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
-import { CORE_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+import { SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 
@@ -59,7 +59,7 @@ async function addOrUpdatePlayerEditMask (
       type: SYSTEM_CHANGE_TYPE.MASK,
       value,
       priority: PLAYER_EDIT_MASK_PRIORITY,
-      phase: CORE_EFFECT_CHANGE_PHASE as any,
+      phase: 'initial',
       target,
       isSystem: false,
       bonusType: undefined,

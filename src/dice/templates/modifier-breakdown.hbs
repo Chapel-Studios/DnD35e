@@ -1,0 +1,13 @@
+{{!--
+  Modifier breakdown partial — spliced into Foundry's own `.dice-roll .dice-tooltip .wrapper`
+  (see `buildSaveCard()` in rollMessages.mts) so it shows/hides with the same click-to-expand
+  toggle as the die faces, no separate reveal control of our own.
+--}}
+<ul class="modifier-breakdown">
+  {{#each modifiers}}
+  <li class="modifier-row">
+    <span class="modifier-label">{{this.label}}</span>
+    <span class="modifier-value">{{this.signed}}</span>
+  </li>
+  {{/each}}
+</ul>

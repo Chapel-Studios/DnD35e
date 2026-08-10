@@ -143,3 +143,30 @@ describe('SystemEffectRow — field label & tooltip via DocumentSheetStore', () 
     expect(key.attributes('title')).toBeUndefined();
   });
 });
+
+describe('SystemEffectRow — Group Change Target key label (poc §7.7)', () => {
+  const originalHas = game.i18n.has.bind(game.i18n);
+  const originalLocalize = game.i18n.localize.bind(game.i18n);
+
+  it('resolves a registered group key (e.g. "group:allSaves") to its own official label rather than humanizing the raw key', async () => {
+    game.i18n.has = ((key: string) => key === 'dnd35e.CREATURE.FIELDS.saves.all.label') as typeof game.i18n.has;
+    game.i18n.localize = ((key: string) => (key === 'dnd35e.CREATURE.FIELDS.saves.all.label' ? 'All Saves' : originalLocalize(key))) as typeof game.i18n.localize;
+
+    try {
+      const wrapper = mount(SystemEffectRow, {
+        props: {
+          label: 'Prone',
+          changes: [mkChange({ key: 'group:allSaves', value: -2 })],
+        },
+      });
+
+      await wrapper.find('.system-effect-expand').trigger('click');
+
+      const key = wrapper.find('.system-change-key');
+      expect(key.text()).toBe('All Saves');
+    } finally {
+      game.i18n.has = originalHas;
+      game.i18n.localize = originalLocalize;
+    }
+  });
+});

@@ -16,7 +16,11 @@
       "Untyped": "Untyped",
       "Material": "Material",
       "Broken": "Broken",
-      "Masterwork": "Masterwork"
+      "Enhancment": "Enhancment",
+      "Armor": "Armor",
+      "Shield": "Shield",
+      "Natural": "Natural Armor",
+      "Size": "Size"
     },
     "EFFECT": {
       "Effects": "Effects",
@@ -44,18 +48,22 @@
       },
       "StackResult": {
         "Applied": "Applied",
-        "Ignored": "Ignored"
+        "Ignored": "Ignored",
+        "Rejections": {
+          "LowerBonus": "Lower bonus ({lowerValue} < {winnerValue})",
+          "LessSeverePenalty": "Less severe penalty ({lessSevereValue} > {winnerValue})",
+          "ZeroValue": "Zero value"
+        }
       },
       "EnforceSingleMaterialError": "This item already has a standard Material effect. Only one is allowed when Enforce Single Material is enabled.",
       "BonusType": {
-        "Label": "Bonus Type",
-        "None": "None"
+        "Label": "Bonus Type"
       },
       "Headers": {
         "Actions": "Actions",
         "BonusType": "Bonus",
         "Condition": "Condition",
-        "Field": "Field",
+        "TargetField": "Target Aspect",
         "Priority": "Priority",
         "Type": "Type",
         "Value": "Value"
@@ -71,6 +79,20 @@
       },
       "ChangeMode": {
         "Mask": "Mask"
+      },
+      "Phase": {
+        "initial": {
+          "label": "Initial",
+          "hint": "Applied early, before item-derived data settles (e.g. carried weight, equipped status)."
+        },
+        "final": {
+          "label": "Final",
+          "hint": "Applied after derived data is computed - most bonuses and penalties belong here."
+        },
+        "post": {
+          "label": "Post",
+          "hint": "Applied after Final fully settles - for stats derived from other Final-phase stats (e.g. saves, AC)."
+        }
       },
       "General": {
         "Type": "Effect"
@@ -185,7 +207,7 @@
           "choices": {
             "standard": "Standard",
             "broken": "Broken",
-            "masterwork": "Masterwork"
+            "masterwork": "Enhancment"
           }
         }
       }

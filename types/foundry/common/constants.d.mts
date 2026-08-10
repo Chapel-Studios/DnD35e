@@ -25,9 +25,6 @@ export const ASCII: string;
  * Other arbitrary mode numbers can be used by systems and modules to identify special behaviors and are ignored
  */
 export const ACTIVE_EFFECT_CHANGE_TYPES: Readonly<{
-    /** Used to denote that the handling of the effect is programmatically provided by a system or module. */
-    CUSTOM: 'custom';
-
     /**
      * Multiplies a numeric base value by the numeric effect value
      * @example

@@ -46,6 +46,15 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 
 ---
 
+### Task 11.2 — AE pipeline codebase TODOs (moved from poc.7)
+
+**Objective**: Resolve remaining TODO notes left in the AE apply pipeline during poc.7 work, none of which needed to block poc.7 itself.
+
+- [ ] **Remove `ActiveEffect._shimChanges` compat shim** (`ItemDnd35e.mts:131`): The `_shimChanges(changes)` call is explicitly marked `// todo remove in v16`. **Blocked — not actionable yet**: the system currently targets Foundry v14; revisit once the project actually upgrades to v16. If v16 migration transforms old AE data, remove the shim call and its TODO comment. If the shim is still required for pre-migration data, keep it but update the comment with the specific migration that will obsolete it.
+- [ ] **Integrate Hooks.onError pattern into LogHelper** (`ItemDnd35e.mts:93`): The `applyActiveEffects()` method uses `LogHelper.error()` as a substitute for Foundry's `Hooks.onError()` pattern. Evaluate whether `LogHelper` should wrap `Hooks.onError()` for consistency with Foundry's error surfacing (e.g., error hooks that modules can listen to), or if the current direct logging is sufficient.
+
+---
+
 ## Checklist
 
 ### ✅ Complete
@@ -56,6 +65,7 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 
 ### ❌ Not Started
 - [ ] 11.1 FormGroup updater contract pass (async Promise-returning callbacks).
+- [ ] 11.2 AE pipeline codebase TODOs (`_shimChanges` blocked on v16 upgrade; `Hooks.onError`/`LogHelper` still open) — moved from poc.7. `createDialog` type cast fixed directly (no `as any` needed).
 - [ ] Add more POC cleanup tasks as they are discovered during final POC work.
 
 ---

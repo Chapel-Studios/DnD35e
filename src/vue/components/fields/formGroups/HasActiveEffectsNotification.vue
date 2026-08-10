@@ -49,10 +49,18 @@
 
   const props = defineProps<{
     fieldPath: string;
+    /**
+     * Sibling field paths whose overrides are shown in this same tooltip, listed
+     * before `fieldPath`'s own entries. For an ability modifier (purely derived,
+     * never itself the target of a raw bonus) this surfaces the ability score's
+     * own overrides (e.g. an item's +2 Dex) alongside the mod's own Encumbrance
+     * downgrade, which is applied after and would otherwise be the only entry shown.
+     */
+    additionalFieldPaths?: string[];
   }>();
 
   const {
-    documentGetters: { getEffectsForField, hasEffectsForField },
+    documentGetters: { getEffectsForField },
     _storeUtils: { getFieldMeasurementUnit },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
@@ -60,8 +68,11 @@
     measurement: { convertToLocalizedDistance, convertToLocalizedWeight },
   } = inject(SettingsStoreSymbol) as SettingsStore;
 
-  const activeEffects = getEffectsForField(props.fieldPath);
-  const hasActiveEffects = hasEffectsForField(props.fieldPath);
+  const activeEffects = computed(() => [
+    ...(props.additionalFieldPaths ?? []).flatMap((path) => getEffectsForField(path).value),
+    ...getEffectsForField(props.fieldPath).value,
+  ]);
+  const hasActiveEffects = computed(() => activeEffects.value.length > 0);
 
   const formatBonusType = (bonusType?: string): string | undefined => {
     const trimmed = bonusType?.trim();
@@ -143,6 +154,7 @@
   .effect-tooltip {
     display: inline-flex;
     cursor: help;
+    font-size: 0.66rem;
   }
 
   .effect-tooltip-popup {
@@ -160,7 +172,7 @@
     border-radius: 4px;
     padding: 0.375rem 0.5rem;
     white-space: nowrap;
-    font-size: var(--font-size-11);
+    font-size: 1rem;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     pointer-events: none;
   }
@@ -186,13 +198,16 @@
     }
 
     .effect-rejected {
-      color: var(--color-level-error, #cc3333);
       font-size: var(--font-size-10);
     }
 
     &.is-ignored {
       opacity: 0.5;
-      text-decoration: line-through;
+
+      .effect-name,
+      .effect-detail {
+        text-decoration: line-through;
+      }
     }
   }
 </style>

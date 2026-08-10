@@ -1,4 +1,4 @@
-import { CORE_EFFECT_CHANGE_PHASE, EFFECT_CHANGE_TARGET, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+import { EFFECT_CHANGE_TARGET, INITIAL_EFFECT_CHANGE_PHASE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -74,7 +74,7 @@ describe('playerEditSecret helpers', () => {
           type: SYSTEM_CHANGE_TYPE.MASK,
           value: 12,
           priority: PLAYER_EDIT_MASK_PRIORITY,
-          phase: CORE_EFFECT_CHANGE_PHASE,
+          phase: INITIAL_EFFECT_CHANGE_PHASE,
           target: EFFECT_CHANGE_TARGET.ACTOR,
           isSystem: false,
         }),

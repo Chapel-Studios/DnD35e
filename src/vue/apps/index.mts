@@ -19,6 +19,8 @@ import type {
   VueApplicationContextTransfer,
   VueRenderOptions,
 } from './VueAppTypes.mjs';
+import type { VueDialogContext, VueDialogMembers, VueDialogMixin } from './VueDialogMixin.mjs';
+import { useVueDialogMixin } from './VueDialogMixin.mjs';
 import type { VueDocumentSheetMembers, VueDocumentSheetMixin } from './VueDocumentSheetMixin.mjs';
 import { useVueDocumentSheetMixin } from './VueDocumentSheetMixin.mjs';
 import { VueItemSheet } from './VueItemSheet.mjs';
@@ -32,6 +34,7 @@ import { useVueSettingsMixin } from './VueSettingsMixin.mjs';
 
 export {
   useVueAppBaseMixin,
+  useVueDialogMixin,
   useVueDocumentSheetMixin,
   useVueSettingsMixin,
   VueActiveEffectConfig,
@@ -48,6 +51,9 @@ export type {
   VueApplicationConfiguration,
   VueApplicationContext,
   VueApplicationContextTransfer,
+  VueDialogContext,
+  VueDialogMembers,
+  VueDialogMixin,
   VueDocumentSheetMembers,
   VueDocumentSheetMixin,
   VueRenderOptions,

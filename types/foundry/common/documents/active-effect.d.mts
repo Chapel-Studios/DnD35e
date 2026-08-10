@@ -114,7 +114,10 @@ type ActiveEffectSchema<
     _stats: fields.DocumentStatsField;
 };
 
-type EffectPhases = 'initial' | 'final';
+// Widened beyond core's own `'initial' | 'final'` to include dnd35e's custom phases
+// (see `CONFIG.ActiveEffect.phases` in config.d.mts and `EFFECT_CHANGE_PHASES` in
+// src/documents/activeEffects/baseActiveEffect/data/constants.mts).
+type EffectPhases = 'initial' | 'final' | 'post';
 
 type EffectChangeSchema = {
   key: fields.StringField<string, string, true, false, false>;

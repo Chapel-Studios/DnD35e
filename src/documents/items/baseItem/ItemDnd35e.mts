@@ -7,6 +7,7 @@ import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.
 import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { NameFormulaDocument } from '@documents/document/logic/index.mjs';
 import { ensureNameFormulaOnCreate, getDisplayName } from '@documents/document/logic/index.mjs';
+import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import {
@@ -14,11 +15,13 @@ import {
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
   INITIAL_EFFECT_CHANGE_PHASE,
+  POST_EFFECT_CHANGE_PHASE,
   SYSTEM_CHANGE_TYPE,
 } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { ResolvedEffectChange } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
 import { applyStackedActiveEffectChanges } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
 import { evaluateChangeCondition } from '@effects/baseActiveEffect/logic/evaluateChangeCondition.mjs';
+import { KEY_RESOLUTION_FAILED, resolveActiveEffectChangeKey } from '@effects/baseActiveEffect/logic/resolveChangeKey.mjs';
 import { getEffectContexts, resolveActiveEffectChange, resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import type { ACTIVE_EFFECTS_DND35E } from '@effects/effectTypes.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
@@ -121,6 +124,12 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   /** Runtime masks dictionary built from active Secret AE MASK changes. Keyed by field path. */
   _masks: Record<string, unknown> = {};
 
+  /**
+   * Non-blocking diagnostics collected during this prep cycle (broken formulas, etc.).
+   * Reset every `prepareBaseData()` — see `preparationWarnings.mts`.
+   */
+  _preparationWarnings: PreparationWarning[] = [];
+
   private get _maskedNameFormula (): FormulaDataSource | null {
     const directMask = this._masks['system.nameFormula'] as FormulaLikeSource | undefined;
     if (directMask && typeof directMask === 'object') {
@@ -186,6 +195,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     this._completedActiveEffectPhases = new Set();
     this.effectOverrides = {};
     this._masks = {};
+    this._preparationWarnings = [];
   }
 
   /**
@@ -205,6 +215,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     this._buildMasks();
     this._prepareDerivedItemData();
     this.applyActiveEffects(FINAL_EFFECT_CHANGE_PHASE);
+    this.applyActiveEffects(POST_EFFECT_CHANGE_PHASE);
   }
 
   /**
@@ -272,7 +283,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
    * to themselves when prepareEmbeddedDocuments is called.
    * 
    * @sealed Do not override - core active effect application logic.
-   * @param phase - The effect application phase ('initial' or 'final')
+   * @param phase - The effect application phase ('initial', 'final', or 'post')
    */
   applyActiveEffects(phase: string) {
     const ActiveEffect = foundry.documents.ActiveEffect;
@@ -312,9 +323,14 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
         ) continue;
         if ( change.condition ) {
           const { contextMap } = getEffectContexts(effect, change);
-          if ( !evaluateChangeCondition(change, contextMap) ) continue;
+          if ( !evaluateChangeCondition(change, contextMap, this, effect) ) continue;
         }
-        const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as unknown as AppliedItemEffectChange;
+        const resolvedKey = resolveActiveEffectChangeKey(effect, change, this);
+        if (resolvedKey === KEY_RESOLUTION_FAILED) continue;
+        const changeWithResolvedKey = resolvedKey === change.key ? change : { ...change, key: resolvedKey };
+        const resolvedChange = resolveActiveEffectChange(effect, changeWithResolvedKey, this);
+        if (!resolvedChange) continue; // value formula failed to resolve — skip, warning already recorded
+        const copy = foundry.utils.deepClone(resolvedChange) as unknown as AppliedItemEffectChange;
         copy.effect = effect;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
         copy.priority ??= 0;

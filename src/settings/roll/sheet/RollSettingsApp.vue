@@ -82,9 +82,9 @@
   ];
 
   // Get roll modes from Foundry config
-  const rollModes: RollModeOption[] = Object.entries(CONFIG.Dice.rollModes).map(([value, label]) => ({
+  const rollModes: RollModeOption[] = Object.entries(CONFIG.ChatMessage.modes).map(([value, mode]) => ({
     value,
-    label: label as string,
+    label: mode.label,
   }));
 
   function localize(key: string): string {

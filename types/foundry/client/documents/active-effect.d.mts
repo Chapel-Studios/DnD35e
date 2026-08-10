@@ -29,7 +29,7 @@ type ActiveEffectChangeRenderer = (context: {
  * A function that applies the change to a document
  */
 type ActiveEffectChangeHandler = (
-   actor: Actor | Item,
+  actor: Actor | Item,
   change: EffectChangeData,
   options?: {
     field?: DataField;

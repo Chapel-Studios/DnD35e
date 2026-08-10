@@ -302,6 +302,8 @@ export default interface Config<
         };
         sidebarIcon: string;
         template: string;
+        /** Supported chat message visibility modes, keyed by mode (e.g. "public", "gm", "blind", "self"). */
+        modes: Record<string, { label: string; icon: string; handler: (data: Partial<TChatMessage['_source']>) => void }>;
     };
 
     /** Configuration for Item document */
@@ -423,11 +425,12 @@ export default interface Config<
         /** The default type for newly created ActiveEffects. */
         defaultType?: string;
         /**
-         * Array of valid phase identifiers for effect changes.
-         * Custom phases for dnd35e: core, initial, final.
+         * Phase identifiers for effect changes, keyed by phase name, with a localization
+         * key pair per phase. Consumed by `ActiveEffect.CHANGE_PHASES`.
+         * Custom phases for dnd35e: core, initial, final, post.
          * @remarks dnd35e system-specific property
          */
-        phases?: readonly string[];
+        phases?: Record<string, { label: string; hint: string }>;
         /**
          * Whether to use legacy ActiveEffect transferral behavior.
          * dnd35e disables legacy transferral in favor of explicit transfer settings.

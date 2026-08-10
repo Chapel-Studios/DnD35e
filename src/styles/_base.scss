@@ -36,6 +36,7 @@ h3 {
 /* App-level host used by teleported vertical tab rails. */
 .window-content {
   position: relative;
+  padding: 0;
 }
 
 .application.sheet.dnd35e {
@@ -56,12 +57,6 @@ h3 {
   > * {
     pointer-events: auto;
   }
-}
-
-// fix spacing on actor sheet for scrollbar in tab pane
-.dnd35e.actor-sheet .window-content {
-  padding-right: 0;
-  padding-left: 0;
 }
 
 .actor-tab {

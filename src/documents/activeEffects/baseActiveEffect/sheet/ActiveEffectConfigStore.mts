@@ -1,3 +1,4 @@
+import { ACTOR_TYPES } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type Color from '@common/utils/color.mjs';
 import type { DocumentSheetStore, DocumentSheetStoreDocumentActions, DocumentSheetStoreDocumentGetters } from '@documents/document/index.mjs';
@@ -113,10 +114,11 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
           };
         }
       }
-      // Fallback: merge all declared actor subtypes
-      const subtypes = targetContexts.actor;
-      if (subtypes?.length) return buildMergedFamiliarContext('Actor', subtypes);
-      return null;
+      // Fallback: merge declared actor subtypes, or every registered actor type if this
+      // effect subtype doesn't narrow them (e.g. Material only declares `item: ['weapon']`)
+      // — Value/Condition formulas may still want actor context even when the change targets item.
+      const subtypes = targetContexts.actor?.length ? targetContexts.actor : [...ACTOR_TYPES];
+      return buildMergedFamiliarContext('Actor', subtypes);
     }
 
     return null;

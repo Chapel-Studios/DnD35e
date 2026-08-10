@@ -1,4 +1,4 @@
-import { BONUS_TYPE_BROKEN, BONUS_TYPE_MASTERWORK, BONUS_TYPE_MATERIAL, BONUS_TYPE_UNTYPED } from '@constants/bonusTypes.mjs';
+import { BONUS_TYPE_BROKEN, BONUS_TYPE_ENHANCEMENT, BONUS_TYPE_MATERIAL, BONUS_TYPE_UNTYPED } from '@constants/bonusTypes.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import {
@@ -163,12 +163,12 @@ describe('buildMaterialChanges', () => {
     expect(result[0]?.bonusType).toBe(BONUS_TYPE_BROKEN);
   });
 
-  it('tags emitted changes with bonusType: masterwork → masterwork', () => {
+  it('tags emitted changes with bonusType: enhancment → enhancment', () => {
     const result = buildMaterialChanges(mkInput({
       materialSubtype: 'masterwork',
       magicEquivalency: 1,
     }));
-    expect(result[0]?.bonusType).toBe(BONUS_TYPE_MASTERWORK);
+    expect(result[0]?.bonusType).toBe(BONUS_TYPE_ENHANCEMENT);
   });
 
   it('emits all changes with isSystem: true and target: ITEM', () => {

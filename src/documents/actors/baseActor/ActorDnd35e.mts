@@ -6,11 +6,18 @@ import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import { ensureNameFormulaOnCreate, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
+import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+import {
+  EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TYPE,
+  POST_EFFECT_CHANGE_PHASE,
+  SYSTEM_CHANGE_TYPE,
+} from '@effects/baseActiveEffect/data/constants.mjs';
 import { applyStackedActiveEffectChanges, type ResolvedEffectChange } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
 import { evaluateChangeCondition } from '@effects/baseActiveEffect/logic/evaluateChangeCondition.mjs';
+import { KEY_RESOLUTION_FAILED, resolveActiveEffectChangeKey } from '@effects/baseActiveEffect/logic/resolveChangeKey.mjs';
 import { getEffectContexts, resolveActiveEffectChange } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import { DocumentEventEmitter } from '@helpers/documentEvents/DocumentEventEmitter.mjs';
 import { buildDocumentDataMap, expandChangeTargetGroups } from '@helpers/formulae/index.mjs';
@@ -49,6 +56,12 @@ class ActorDnd35e<
    */
   effectOverrides: Record<string, Override[]> = {};
 
+  /**
+   * Non-blocking diagnostics collected during this prep cycle (broken formulas, etc.).
+   * Reset every `prepareBaseData()` — see `preparationWarnings.mts`.
+   */
+  _preparationWarnings: PreparationWarning[] = [];
+
   get localizedType (): string {
     return ACTOR_TYPES_LOCALIZED[this.type as ActorType] ?? 'dnd35e.COMMON.Actor';
   }
@@ -56,12 +69,26 @@ class ActorDnd35e<
   override prepareBaseData (): void {
     super.prepareBaseData();
     this.effectOverrides = {};
+    this._preparationWarnings = [];
+  }
+
+  /**
+   * Core's own `prepareData()` (actor.mjs) already calls `applyActiveEffects('final')` after
+   * `prepareDerivedData()` returns - there is no later hook to add a phase after that, so this
+   * override runs the full core chain first, then applies 'post'. 'post' is for changes that
+   * derive a stat from another stat only settled at the end of 'final' (e.g. a save total built
+   * from an ability mod that encumbrance may have downgraded in that same 'final' pass) - see
+   * `Creature._buildSaveAbilityChanges()`/`_buildDefenseChanges()`.
+   */
+  override prepareData (): void {
+    super.prepareData();
+    this.applyActiveEffects(POST_EFFECT_CHANGE_PHASE);
   }
 
   /**
    * Override to filter out item-targeted changes from transferred effects.
    * Effects can have both item and actor targeted changes - we only apply actor-targeted changes here.
-   * @param phase - The effect application phase ('initial' or 'final')
+   * @param phase - The effect application phase ('initial', 'final', or 'post')
    */
   override applyActiveEffects(phase: string): void {
     const ActiveEffect = foundry.documents.ActiveEffect;
@@ -94,9 +121,14 @@ class ActorDnd35e<
         ) continue;
         if (change.condition) {
           const { contextMap } = getEffectContexts(effect, change);
-          if (!evaluateChangeCondition(change, contextMap)) continue;
+          if (!evaluateChangeCondition(change, contextMap, this, effect)) continue;
         }
-        const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as AppliedActorEffectChange;
+        const resolvedKey = resolveActiveEffectChangeKey(effect, change, this);
+        if (resolvedKey === KEY_RESOLUTION_FAILED) continue;
+        const changeWithResolvedKey = resolvedKey === change.key ? change : { ...change, key: resolvedKey };
+        const resolvedChange = resolveActiveEffectChange(effect, changeWithResolvedKey, this);
+        if (!resolvedChange) continue; // value formula failed to resolve — skip, warning already recorded
+        const copy = foundry.utils.deepClone(resolvedChange) as AppliedActorEffectChange;
         copy.effect = effect as ActiveEffectDnd35e;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
         copy.priority ??= 0;
@@ -114,7 +146,7 @@ class ActorDnd35e<
     ) => {
       for (const change of changesToProcess) {
         if (!change.key) continue;
-        if (change.condition && !evaluateChangeCondition(change, contextMap)) continue;
+        if (change.condition && !evaluateChangeCondition(change, contextMap, this, source)) continue;
         const copy = foundry.utils.deepClone(change) as AppliedActorEffectChange;
         copy.effect = source;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;

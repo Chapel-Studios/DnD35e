@@ -28,7 +28,7 @@ type ACTIVE_EFFECTS_DND35E = HIDDEN_ACTIVE_EFFECTS | VISIBLE_ACTIVE_EFFECTS;
  * param (see `PhysicalItemStore`), so players never see it as a creatable option.
  */
 const EFFECT_TYPES = {
-  general: 'Document.ActiveEffect',
+  general: 'DOCUMENT.ActiveEffect',
   material: 'TYPES.Item.material',
 } as const satisfies Partial<Record<EffectType, string>>;
 

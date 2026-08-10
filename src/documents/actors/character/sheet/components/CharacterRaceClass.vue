@@ -39,6 +39,7 @@
       minmax(120px, 1fr)   /* 3: XP bar, minimum width but fills leftover space */
       min-content;         /* 4: XP number */
     align-items: center;
+    padding: 0 0.5rem;
   }
 
   .class {

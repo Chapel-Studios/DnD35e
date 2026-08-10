@@ -59,7 +59,7 @@
     gap: 0.25rem;
 
     :slotted(.field-control-btn) {
-      font-size: 1.1rem;
+      font-size: 0.8rem;
     }
   }
 

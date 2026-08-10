@@ -391,7 +391,8 @@ export default class Roll {
      *
      * @param messageData           The data object to use when creating the message
      * @param [options]             Additional options which modify the created message.
-     * @param [options.rollMode]    The template roll mode to use for the message from CONFIG.Dice.rollModes
+     * @param [options.messageMode] A message visibility mode to apply, a value in CONFIG.ChatMessage.modes
+     * @param [options.rollMode]    @deprecated since v14, in favor of messageMode; removed in v16
      * @param [options.create=true] Whether to automatically create the chat message, or only return the
      *                                          prepared chatData object.
      * @return A promise which resolves to the created ChatMessage entity, if create is true
@@ -399,17 +400,17 @@ export default class Roll {
      */
   toMessage(
         messageData: DeepPartial<ChatMessageSource> | undefined,
-        { rollMode, create }: { rollMode?: RollMode | 'roll'; create: false },
+        { messageMode, rollMode, create }: { messageMode?: string; rollMode?: RollMode | 'roll'; create: false },
     ): Promise<ChatMessageSource>;
 
   toMessage(
         messageData?: DeepPartial<ChatMessageSource>,
-        { rollMode, create }?: { rollMode?: RollMode | 'roll'; create?: true },
+        { messageMode, rollMode, create }?: { messageMode?: string; rollMode?: RollMode | 'roll'; create?: true },
     ): Promise<ChatMessage>;
 
   toMessage(
         messageData?: DeepPartial<ChatMessageSource>,
-        { rollMode, create }?: { rollMode?: RollMode | 'roll'; create?: boolean },
+        { messageMode, rollMode, create }?: { messageMode?: string; rollMode?: RollMode | 'roll'; create?: boolean },
     ): Promise<ChatMessage | ChatMessageSource>;
 
   /* -------------------------------------------- */

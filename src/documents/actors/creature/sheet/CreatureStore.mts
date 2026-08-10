@@ -4,6 +4,7 @@ import type { Creature } from '@actors/creature/Creature.mjs';
 import type { SenseEntrySource } from '@actors/creature/data/CreatureSystemData.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import { ALIGNMENT_I18N, NEUTRAL } from '@constants/alignment.mjs';
+import type { SaveKey } from '@constants/index.mjs';
 import type { Size } from '@constants/sizes.mjs';
 import { addCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import { CurrencyData } from '@fields/index.mjs';
@@ -79,8 +80,6 @@ const useCreatureStore = <TDocument extends Creature>(
       // Clone so Vue's reactivity detects in-place mutations from Foundry's mergeObject
       return foundry.utils.deepClone(raw);
     }),
-    armorClass:     computed(() => document.value.calculateAC() ?? 10),
-    getArmorClass: (isTouch = false, denyDex = false): number => document.value.calculateAC(isTouch, denyDex) ?? 10,
     availableLanguages: computed<SelectOption<string>[]>(() => {
       const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.AVAILABLE_LANGUAGE_OPTIONS) as Record<string, { label: string; enabled: boolean; isSystem: boolean }>;
       const systemDefaults = (CONFIG.dnd35e.gameRules.availableLanguageOptions ?? {}) as Record<string, { label: string }>;
@@ -121,6 +120,9 @@ const useCreatureStore = <TDocument extends Creature>(
     adjustHp: async (amount: number, adjustmentType: HpAdjustmentType): Promise<boolean> => {
       return await document.value.updateHP(amount, adjustmentType);
     },
+    rollSaveFromSheet: async (saveKey: SaveKey): Promise<void> => {
+      await document.value.rollSave(saveKey);
+    },
   };
 
   const store: CreatureDocumentStore<TDocument> = {
@@ -152,8 +154,6 @@ interface CreatureGetters {
   isPartyMember:  ComputedRef<boolean>;
   languages:      ComputedRef<string[]>;
   senses:         ComputedRef<SenseEntrySource[]>;
-  armorClass:     ComputedRef<number>;
-  getArmorClass: (isTouch?: boolean, denyDex?: boolean) => number;
   availableLanguages: ComputedRef<SelectOption<string>[]>;
   displayLanguages: ComputedRef<string[]>;
   creatureValue: ComputedRef<CurrencyData>;
@@ -168,6 +168,7 @@ interface CreatureGetters {
 
 type CreatureActions = {
   adjustHp: (amount: number, adjustmentType: HpAdjustmentType) => Promise<boolean>;
+  rollSaveFromSheet: (saveKey: SaveKey) => Promise<void>;
 };
 type CreatureStoreUtils = Record<string, unknown>;
 

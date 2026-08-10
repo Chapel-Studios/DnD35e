@@ -1,7 +1,7 @@
 import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { IdentifiableDocumentActions, IdentifiableDocumentGetters, IdentifiableDocumentStoreUtils, IdentifiableStore } from '@documents/identifiable/index.mjs';
 import { useIdentifiableStore } from '@documents/identifiable/index.mjs';
-import { syncContainmentAe } from '@effects/containment/index.mjs';
+import { syncContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
 import { syncBrokenAeState } from '@effects/material/logic/brokenAe.mjs';
 import type { MaterialType } from '@effects/material/Material.mjs';
 import { materialEffectType } from '@effects/material/materialEffectType.mjs';

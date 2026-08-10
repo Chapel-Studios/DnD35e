@@ -1,4 +1,5 @@
 <template>
+  <PreparationWarningsBanner />
   <div
     class="document-sheet-body"
     :class="{
@@ -66,6 +67,8 @@
     watch,
   } from 'vue';
 
+  import PreparationWarningsBanner from './PreparationWarningsBanner.vue';
+
   const props = withDefaults(defineProps<{
     context?: any;
     mode?: SheetMode;
@@ -108,19 +111,21 @@
 <style lang="scss" scoped>
   .document-sheet-body {
     display: grid;
-    // Explicit 3-row template with .sheet-body-content pinned to row 3 below.
+    // Explicit 4-row template: header / preparation-warnings banner (0-height when hidden) /
+    // tab-divider / .sheet-body-content pinned to row 4 below.
     // TabDivider uses <Teleport> in vertical-tabs mode and renders nothing
     // at the source position, so without an explicit grid-row, .sheet-body-content
-    // would fall into row 2 (auto) on actor sheets and grow with its content,
+    // would fall into row 2/3 (auto) on actor sheets and grow with its content,
     // defeating .sheet-tab-panes's overflow.
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
     height: 100%;
     min-height: 0;
     overflow: hidden;
+    padding: 1rem 0.25rem 0.75rem;
   }
 
   .sheet-body-content {
-    grid-row: 3;
+    grid-row: 4;
     display: flex;
     overflow: hidden;
     flex: 1 1 auto;

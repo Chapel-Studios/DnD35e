@@ -5,7 +5,7 @@ import type {
   DocumentSheetStoreUtils,
   SheetTab,
 } from '@documents/document/index.mjs';
-import { defaultDetailsTab, useDocumentSheetStore } from '@documents/document/index.mjs';
+import { defaultDetailsTab, preparationWarningsTab, useDocumentSheetStore } from '@documents/document/index.mjs';
 import type { EffectDocumentActions, EffectDocumentGetters, EffectDocumentUtils } from '@documents/document/logic/index.mjs';
 import { useEffectDocumentActions } from '@documents/document/logic/index.mjs';
 import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
@@ -16,7 +16,7 @@ import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 
 import {
   defaultEffectsTab,
@@ -86,6 +86,18 @@ const useItemSheetStore = <TDocument extends ItemDnd35e>(
     hasOwner,
     getOrCreateEffectRowStore,
   };
+
+  // Conditional "Warnings" tab: appears while any preparation warning exists, persists
+  // until fixed (not dismissable, unlike the summary banner) - see `preparationWarnings.mts`.
+  const { tabStore } = baseStore._storeUtils;
+  watch(
+    () => itemDocumentGetters.preparationWarnings.value.length > 0,
+    (hasWarnings) => {
+      const otherTabs = tabStore.tabs.value.filter((tab) => tab.id !== preparationWarningsTab.id);
+      tabStore.replaceTabs(hasWarnings ? [...otherTabs, preparationWarningsTab] : otherTabs, false);
+    },
+    { immediate: true }
+  );
 
   const itemDocumentActions = {
     ...baseStore.documentActions,

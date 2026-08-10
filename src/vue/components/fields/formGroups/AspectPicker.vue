@@ -2,7 +2,7 @@
   <FamiliarOverlayInput
     ref="overlayRef"
     :model-value="displayValue"
-    :disabled="props.disabled"
+    :disabled="isInputDisabled"
     :placeholder="props.placeholder"
     :name="props.name"
     input-class="aspect-picker-input"
@@ -12,10 +12,10 @@
     hint-class="aspect-picker-hint"
     :input-state-classes="{
       'has-error': validationErrors.length > 0,
-      'is-disabled': props.disabled,
-      'no-context': !props.familiarContext,
+      'is-disabled': isInputDisabled,
+      'no-context': !hasContext,
     }"
-    :highlight-state-classes="{ 'no-context': !props.familiarContext }"
+    :highlight-state-classes="{ 'no-context': !hasContext }"
     :highlighted-html="highlightedHTML"
     :show-familiar="showFamiliar"
     :familiar-options="familiarOptions"
@@ -28,32 +28,70 @@
     @focus="onFocus"
     @scroll="syncScroll"
     @select="onFamiliarSelect"
+  >
+    <!--
+      Advanced editor button: the inline input strips spaces/commas (single-aspect
+      editing only), so composing a `$conditional(when()else())` key can only happen
+      in the multiline modal — same affordance as `FormulaFormGroup`.
+    -->
+    <template v-if="!props.disabled && !props.hideAdvancedEditor" #decoration>
+      <button
+        type="button"
+        class="field-control-btn"
+        :aria-label="advancedEditorLabel"
+        :title="advancedEditorLabel"
+        @click="isModalOpen = true"
+      >
+        <i class="fas fa-expand-arrows-alt" />
+      </button>
+    </template>
+  </FamiliarOverlayInput>
+
+  <FormulaMultilineModal
+    v-if="!props.hideAdvancedEditor"
+    :open="isModalOpen"
+    :formula="modalFormula"
+    :contexts="wrappedSchema"
+    :label="props.label"
+    :placeholder="props.placeholder"
+    :on-commit="commitFormula"
+    @close="isModalOpen = false"
   />
 </template>
 
 <script setup lang="ts">
   import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
-  import type { AutocompleteOption, FamiliarContext, FamiliarSchema, ValidationError } from '@helpers/formulae/types.mjs';
+  import type { AutocompleteOption, FamiliarSchema, ValidationError } from '@helpers/formulae/types.mjs';
   import { useFamiliarOverlayInput } from '@helpers/formulae/useFamiliarOverlayInput.mjs';
-  import { canonicalizeFormula, localizeFormula, renderFormulaHTML } from '@helpers/formulae/utils.mjs';
+  import { canonicalizeFormula, localizeFormula, renderFormulaHTML, resolveFamiliarLeafToAccessPath } from '@helpers/formulae/utils.mjs';
 
   const { findAspectByAccessPath, parseFormula, validateFormula } = FormulaResolver;
+  import FormulaMultilineModal from '@helpers/formulae/FormulaMultilineModal.vue';
   import FamiliarOverlayInput from '@vc/fields/formGroups/FamiliarOverlayInput.vue';
   import { computed, nextTick, onUnmounted, type PropType, ref, watch } from 'vue';
 
+  // Template renders two root nodes (`FamiliarOverlayInput` + `FormulaMultilineModal`),
+  // same as `FormulaFormGroup` — see its own note on why `$attrs` fallthrough needs help.
+  defineOptions({ inheritAttrs: false });
+
   const props = defineProps({
-    /** Stored raw document path (e.g. 'system.hardness.value') */
+    /** Stored raw document path (e.g. 'system.hardness.value'), or a `$conditional(...)` formula (canonical form) */
     modelValue: { type: String, default: '' },
     /** Whether the picker is disabled (read-only display of familiar syntax) */
     disabled: { type: Boolean, default: false },
-    /** Merged familiar context for autocomplete. Null = degrade to plain text. */
-    familiarContext: { type: Object as PropType<FamiliarContext | null>, default: null },
-    /** Context name prefix for display (e.g. 'item' or 'actor') */
-    contextName: { type: String, default: 'item' },
+    /**
+     * Named familiar contexts for autocomplete (e.g. `{ weapon: itemCtx, character: actorCtx }`).
+     * Multiple contexts may be offered at once - the user picks which one via the `#name.`
+     * prefix, same as `FormulaFormGroup`'s Value/Condition editors. Empty/undefined = degrade
+     * to plain text.
+     */
+    contexts: { type: Object as PropType<FamiliarSchema>, default: undefined },
     /** Placeholder text for empty input */
     placeholder: { type: String, default: 'Select property...' },
     /** Form field name attribute */
     name: { type: String, default: undefined },
+    /** Label shown in the advanced editor modal's title bar. */
+    label: { type: String, default: undefined },
     /**
      * Suppress the auto-generated "Available Contexts: [...]" hint text.
      * Used when a consumer renders that hint itself once, shared across
@@ -61,6 +99,8 @@
      * Validation errors still surface via `update:error` regardless.
      */
     hideContextHint: { type: Boolean, default: false },
+    /** Suppress the advanced editor button/modal (e.g. compact contexts with no room for it). */
+    hideAdvancedEditor: { type: Boolean, default: false },
   });
 
   const emit = defineEmits<{
@@ -90,88 +130,110 @@
   const getHighlightElement = (): HTMLDivElement | undefined => overlayRef.value?.getHighlightElement();
   const getDropdownMenuElement = (): HTMLElement | undefined => overlayRef.value?.getDropdownMenuElement();
 
-  // Wrap the single context into FamiliarSchema for getAutocompleteOptions
-  const wrappedSchema = computed((): FamiliarSchema => {
-    if (!props.familiarContext) return {};
-    return { [props.contextName]: props.familiarContext };
-  });
+  const wrappedSchema = computed((): FamiliarSchema => props.contexts ?? {});
+  const hasContext = computed((): boolean => Object.keys(wrappedSchema.value).length > 0);
+
+  /** Whether the stored value is a `$conditional(...)` formula rather than a plain raw accessPath. */
+  const isConditionalValue = computed((): boolean => props.modelValue.includes('$conditional('));
+  // The inline `<input>` strips spaces/commas on every keystroke (single-aspect editing
+  // only, see `onInput`) — a `$conditional(when()else())` block needs both, so once a
+  // key is conditional it can only be edited via the advanced editor modal.
+  const isInputDisabled = computed((): boolean => props.disabled || isConditionalValue.value);
+
+  const advancedEditorLabel = computed(() => game.i18n.localize('dnd35e.Formula.AdvancedEditor'));
 
   /**
-   * Translate a stored raw accessPath to familiar display syntax (localized).
-   * e.g. 'system.hardness' → '#item.Hardness' (English) / '#item.Twardość' (Polish)
+   * Translate a stored raw accessPath to its canonical `#context.property` form by
+   * searching every named context in `props.contexts` for a match. A `$conditional(...)`
+   * value is already canonical formula text (see `commitFormula`) and passes through
+   * unchanged. e.g. 'system.hardness' → '#weapon.hardness'
    */
-  function rawToFamiliar(rawPath: string): string {
-    if (!rawPath || !props.familiarContext) return rawPath;
-    const result = findAspectByAccessPath(props.familiarContext.properties, rawPath);
-    if (result) {
-      const canonical = `#${props.contextName}.${result.treePath.join('.')}`;
-      return localizeFormula(canonical, wrappedSchema.value);
+  function rawToCanonical(rawPath: string): string {
+    if (!rawPath || rawPath.includes('$conditional(')) return rawPath;
+    for (const [name, ctx] of Object.entries(wrappedSchema.value)) {
+      const result = findAspectByAccessPath(ctx.properties, rawPath);
+      if (result) return `#${name}.${result.treePath.join('.')}`;
     }
     // Unresolvable — show raw path as-is
     return rawPath;
   }
 
   /**
+   * Translate a stored raw accessPath (or `$conditional(...)` formula) to familiar
+   * display syntax (localized). e.g. 'system.hardness' → '#weapon.Hardness' (English)
+   * / '#weapon.Twardość' (Polish).
+   */
+  function rawToFamiliar(rawPath: string): string {
+    if (!rawPath) return rawPath;
+    return localizeFormula(rawToCanonical(rawPath), wrappedSchema.value);
+  }
+
+  /**
    * Translate familiar display syntax back to raw accessPath.
-   * Handles both localized (#item.Twardość) and canonical (#item.hardness) input.
+   * Handles both localized (#Weapon.Twardość) and canonical (#weapon.hardness) input, and
+   * determines which named context the picked property belongs to from its own `#name.`
+   * prefix rather than a fixed `contextName` prop — this is what lets a single Field/Key
+   * picker offer several contexts (e.g. item and actor) at once.
    *
    * Canonicalizes first so localized display names map to canonical tree keys,
-   * then walks the tree to find the leaf FieldAspect's accessPath.
+   * then walks that context's tree to find the leaf FieldAspect's accessPath. A
+   * `$conditional(...)` value is stored as canonical formula text as-is — each
+   * embedded `#context.property` reference is resolved separately at apply time
+   * (see `resolveActiveEffectChangeKey.mts`), not translated to a raw path here.
    */
   function familiarToRaw(familiarPath: string): string {
-    if (!props.familiarContext) return familiarPath;
+    if (!hasContext.value) return familiarPath;
 
-    // Canonicalize: e.g. '#item.Twardość' → '#item.hardness'
+    // Canonicalize: e.g. '#Weapon.Twardość' → '#weapon.hardness'
     const canonical = canonicalizeFormula(familiarPath, wrappedSchema.value);
+    if (canonical.includes('$conditional(')) return canonical;
 
-    // Strip the '#contextName.' prefix
-    const prefix = `#${props.contextName}.`;
-    if (!canonical.startsWith(prefix)) return familiarPath;
-    const innerPath = canonical.slice(prefix.length);
-    if (!innerPath) return familiarPath;
-
-    // Walk the context tree
-    const segments = innerPath.split('.');
-    let current: unknown = props.familiarContext.properties;
-    for (const seg of segments) {
-      if (typeof current !== 'object' || current === null || !(seg in current)) {
-        return familiarPath; // Can't resolve — return display as-is
-      }
-      current = (current as Record<string, unknown>)[seg];
-    }
-
-    // If we landed on a FieldAspect, return its accessPath
-    if (current && typeof current === 'object' && 'accessPath' in current) {
-      return (current as { accessPath: string }).accessPath;
-    }
-    return familiarPath;
+    return resolveFamiliarLeafToAccessPath(canonical, wrappedSchema.value) ?? familiarPath;
   }
 
   // The display value shown in the input
   const displayValue = ref(rawToFamiliar(props.modelValue));
 
+  // The advanced editor modal expects canonical (unlocalized) formula text — it
+  // localizes internally, same as the inline field.
+  const modalFormula = computed((): string => rawToCanonical(props.modelValue));
+
+  const isModalOpen = ref(false);
+
+  /** Commit handler for the advanced editor modal (always receives canonical formula text). */
+  function commitFormula(canonical: string): void {
+    const rawPath = canonical.includes('$conditional(')
+      ? canonical
+      : resolveFamiliarLeafToAccessPath(canonical, wrappedSchema.value) ?? canonical;
+    emit('update:modelValue', rawPath);
+    displayValue.value = rawToFamiliar(rawPath);
+    updateValidation();
+    nextTick(syncScroll);
+  }
+
   const highlightedHTML = computed(() => {
     const value = displayValue.value;
     if (!value) return '';
-    if (!props.familiarContext) return escapeHTML(value);
+    if (!hasContext.value) return escapeHTML(value);
     const tokens = parseFormula(value);
     return renderFormulaHTML(value, tokens, validationErrors.value, wrappedSchema.value);
   });
 
   const dynamicHint = computed(() => {
     if (props.hideContextHint) return '';
-    if (!props.familiarContext) return '';
-    const ctx = wrappedSchema.value[props.contextName];
-    const displayName = ctx?.display ?? (props.contextName.charAt(0).toUpperCase() + props.contextName.slice(1));
-    return `Available Contexts: [${displayName}]`;
+    if (!hasContext.value) return '';
+    const names = Object.entries(wrappedSchema.value).map(([name, ctx]) =>
+      ctx.display ?? (name.charAt(0).toUpperCase() + name.slice(1))
+    );
+    return `Available Contexts: [${names.join(', ')}]`;
   });
 
-  // Unresolvable key errors carry an empty context (they aren't tied to a specific
-  // #context.property variable) — exposed separately so consumers can surface it
-  // (e.g. combined into a shared row-context error line) even when the dynamic
-  // context hint itself is suppressed via `hideContextHint`.
+  // Any error-severity validation issue (unresolvable context/property, etc.) —
+  // exposed separately so consumers can surface it (e.g. combined into a shared
+  // row-context error line) even when the dynamic context hint itself is
+  // suppressed via `hideContextHint`.
   const currentError = computed((): string | null => {
-    const keyError = validationErrors.value.find(e => e.context === '' && e.severity === 'error');
+    const keyError = validationErrors.value.find(e => e.severity === 'error');
     return keyError?.error ?? null;
   });
 
@@ -199,27 +261,29 @@
   }
 
   function updateValidation() {
-    if (!props.familiarContext || !displayValue.value) {
+    if (!hasContext.value || !displayValue.value) {
       validationErrors.value = [];
       return;
     }
 
     const errors = validateFormula(displayValue.value, wrappedSchema.value);
 
-    // A stored raw path (not '#context.property' syntax) that can't be resolved in the
-    // current context — e.g. right after switching the Target dropdown — isn't caught by
-    // validateFormula's token-based extraction (no '#' tokens to inspect). Surface it as
-    // an explicit error instead of silently leaving the field looking valid.
+    // A stored raw path (not '#context.property' syntax) that can't be resolved in ANY of
+    // the current contexts isn't caught by validateFormula's token-based extraction (no '#'
+    // tokens to inspect). Surface it as an explicit error instead of silently leaving the
+    // field looking valid. Doesn't apply to `$conditional(...)` values — those ARE stored
+    // as '#context.property' formula text, already covered by `validateFormula` above.
     if (
       errors.length === 0
       && props.modelValue
-      && !findAspectByAccessPath(props.familiarContext.properties, props.modelValue)
+      && !isConditionalValue.value
+      && !Object.values(wrappedSchema.value).some(ctx => findAspectByAccessPath(ctx.properties, props.modelValue))
     ) {
       errors.push({
         variable: props.modelValue,
         context: '',
         path: [],
-        error: game.i18n.format('dnd35e.Formula.Errors.propertyNotFound', { key: props.modelValue, path: props.contextName }),
+        error: game.i18n.format('dnd35e.Formula.Errors.propertyNotFound', { key: props.modelValue, path: Object.keys(wrappedSchema.value).join(', ') }),
         severity: 'error',
         index: 0,
       });
@@ -241,8 +305,8 @@
     }
   });
 
-  // Re-translate when context changes (e.g. target dropdown switch)
-  watch(() => props.familiarContext, () => {
+  // Re-translate when the available contexts change
+  watch(() => props.contexts, () => {
     if (!isUserEditing) {
       displayValue.value = rawToFamiliar(props.modelValue);
       updateValidation();
@@ -262,7 +326,7 @@
     updateValidation();
     nextTick(syncScroll);
 
-    if (!props.familiarContext || !value) {
+    if (!hasContext.value || !value) {
       dismissFamiliar();
       return;
     }

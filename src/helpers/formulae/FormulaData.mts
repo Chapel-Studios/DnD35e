@@ -51,13 +51,19 @@ class FormulaData extends foundry.abstract.DataModel {
    * @param documentDataMap Map of context names → live documents/objects
    * @param fallback Fallback value if formula is empty
    * @param excludedFields Top-level aspect keys to remove from the familiar before resolution
-   * @returns Resolved string, or fallback if no formula
+   * @param onFailure Called when resolution fails (missing context path, invalid syntax, etc.)
+   * @returns Resolved string, `null` if a `number`/`boolean` formula failed to resolve, or fallback if no formula
    */
-  resolve(documentDataMap: Record<string, DocumentContext>, fallback: string = '', excludedFields: string[] = []): string {
+  resolve(
+    documentDataMap: Record<string, DocumentContext>,
+    fallback: string = '',
+    excludedFields: string[] = [],
+    onFailure?: (reason: string) => void
+  ): string | null {
     if (!this.formula) return fallback;
     const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap, excludedFields);
     const partiallyResolved = FormulaResolver.resolveFormula(this.formula, familiarSchema, documentDataMap);
-    return FormulaData._finalizeResolvedValue(partiallyResolved, this.expectedType);
+    return FormulaData._finalizeResolvedValue(partiallyResolved, this.expectedType, onFailure);
   }
 
   // ---------------------------------------------------------------------------
@@ -67,17 +73,21 @@ class FormulaData extends foundry.abstract.DataModel {
   /**
    * Resolve the formula from a raw FormulaDataSource POJO.
    * Use when you have serialized data (e.g. from toObject()) rather than a live DataModel.
+   *
+   * @param onFailure Called when resolution fails (missing context path, invalid syntax, etc.)
+   * @returns Resolved string, `null` if a `number`/`boolean` formula failed to resolve, or fallback if no formula
    */
   static resolveSource(
     source: FormulaDataSource,
     documentDataMap: Record<string, unknown>,
     fallback: string = '',
-    excludedFields: string[] = []
-  ): string {
+    excludedFields: string[] = [],
+    onFailure?: (reason: string) => void
+  ): string | null {
     if (!source.formula) return fallback;
     const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>, excludedFields);
     const partiallyResolved = FormulaResolver.resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
-    return FormulaData._finalizeResolvedValue(partiallyResolved, source.expectedType);
+    return FormulaData._finalizeResolvedValue(partiallyResolved, source.expectedType, onFailure);
   }
 
   static resolveDisplaySource(
@@ -155,18 +165,43 @@ class FormulaData extends foundry.abstract.DataModel {
     return schema;
   }
 
-  private static _finalizeResolvedValue(resolved: string, expectedType: 'string' | 'number' | 'boolean'): string {
+  /**
+   * Coerce a partially-substituted formula to its declared `expectedType`.
+   *
+   * On failure (unresolved `#context.property` token left over, invalid syntax, or a
+   * non-numeric/non-boolean result), `onFailure` is invoked with a human-readable reason.
+   * `number`/`boolean` formulas fall back to `null` on failure (as if never authored, per
+   * design); `string` formulas keep falling back to the raw/partially-resolved formula text.
+   */
+  private static _finalizeResolvedValue(
+    resolved: string,
+    expectedType: 'string' | 'number' | 'boolean',
+    onFailure?: (reason: string) => void
+  ): string | null {
     if (expectedType === 'boolean') {
-      if (FormulaResolver.extractVariables(resolved).length > 0) return resolved;
+      if (FormulaResolver.extractVariables(resolved).length > 0) {
+        onFailure?.(`Unresolved property reference in formula: "${resolved}"`);
+        return null;
+      }
       try {
         return FormulaResolver.evaluateBooleanExpression(resolved) ? 'true' : 'false';
       } catch {
-        return resolved;
+        onFailure?.(`Formula did not resolve to a valid boolean expression: "${resolved}"`);
+        return null;
       }
     }
 
-    if (expectedType !== 'number') return resolved;
-    if (FormulaResolver.extractVariables(resolved).length > 0) return resolved;
+    if (expectedType !== 'number') {
+      if (FormulaResolver.extractVariables(resolved).length > 0) {
+        onFailure?.(`Unresolved property reference in formula: "${resolved}"`);
+      }
+      return resolved;
+    }
+
+    if (FormulaResolver.extractVariables(resolved).length > 0) {
+      onFailure?.(`Unresolved property reference in formula: "${resolved}"`);
+      return null;
+    }
 
     const trimmed = resolved.trim();
     if (!trimmed) return resolved;
@@ -176,9 +211,14 @@ class FormulaData extends foundry.abstract.DataModel {
 
     try {
       const evaluated = Roll.safeEval(trimmed);
-      return Number.isNaN(evaluated) ? resolved : String(evaluated);
+      if (Number.isNaN(evaluated)) {
+        onFailure?.(`Formula did not resolve to a valid number: "${resolved}"`);
+        return null;
+      }
+      return String(evaluated);
     } catch {
-      return resolved;
+      onFailure?.(`Formula did not resolve to a valid number: "${resolved}"`);
+      return null;
     }
   }
 }

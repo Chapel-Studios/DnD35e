@@ -1,0 +1,20 @@
+{
+  "dnd35e": {
+    "ROLL": {
+      "SituationalModifier": "Situational Modifier",
+      "Total": "Total",
+      "RollButton": "Roll",
+      "NaturalOne": "Natural 1!",
+      "NaturalTwenty": "Natural 20!",
+      "Passed": "Success",
+      "Failed": "Failure",
+      "Result": "Result",
+      "RollSaveTitle": "Roll {save} Saving Throw",
+      "SaveNames": {
+        "fort": "Fortitude",
+        "reflex": "Reflex",
+        "will": "Will"
+      }
+    }
+  }
+}

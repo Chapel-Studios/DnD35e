@@ -1,6 +1,6 @@
 import {
   BONUS_TYPE_BROKEN as BROKEN,
-  BONUS_TYPE_MASTERWORK as MASTERWORK,
+  BONUS_TYPE_ENHANCEMENT as ENHANCEMENT,
   BONUS_TYPE_MATERIAL as MATERIAL,
   BONUS_TYPE_UNTYPED as UNTYPED,
 } from '@constants/bonusTypes.mjs';
@@ -81,8 +81,8 @@ describe('resolveActiveEffectChanges — basic stacking rules', () => {
     const ironEntry = history.find(h => h.source === 'Iron')!;
     expect(steelEntry.applied).toBe(true);
     expect(ironEntry.applied).toBe(false);
-    expect(ironEntry.rejection).toMatch(/material/i);
-    expect(ironEntry.rejection).toMatch(/lower/i);
+    expect(ironEntry.bonusType).toBe(MATERIAL);
+    expect(ironEntry.rejection).toMatch(/lowerbonus/i);
   });
 
   it('untyped bonuses all stack (sum)', () => {
@@ -295,9 +295,9 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
     const helmRow = history.find(h => h.source === 'Helm')!;
     const drunkRow = history.find(h => h.source === 'Drunk')!;
     expect(helmRow.applied).toBe(false);
-    expect(helmRow.rejection).toMatch(/lower bonus/i);
+    expect(helmRow.rejection).toMatch(/lowerbonus/i);
     expect(drunkRow.applied).toBe(false);
-    expect(drunkRow.rejection).toMatch(/less severe penalty/i);
+    expect(drunkRow.rejection).toMatch(/lesssevere/i);
   });
 
   it('all positive same type → highest wins, no penalty winner', () => {
@@ -326,7 +326,7 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
     // The less-severe penalties are rejected, not "applied as penalty"
     const lightRow = history.find(h => h.source === 'Light')!;
     expect(lightRow.applied).toBe(false);
-    expect(lightRow.rejection).toMatch(/less severe penalty/i);
+    expect(lightRow.rejection).toMatch(/lesssevere/i);
   });
 
   it('single penalty alone → applies as penalty winner with reason "penalty"', () => {
@@ -365,7 +365,7 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
     const rejected = history.filter(h => !h.applied);
     expect(rejected).toHaveLength(2);
     for (const r of rejected) {
-      expect(r.rejection).toMatch(/less severe penalty/i);
+      expect(r.rejection).toMatch(/lesssevere/i);
     }
   });
 
@@ -402,18 +402,18 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
     expect(winners[0]).toMatchObject({ value: 3, source: 'Pos' });
     const zeroRow = history.find(h => h.source === 'Zero')!;
     expect(zeroRow.applied).toBe(false);
-    expect(zeroRow.rejection).toMatch(/zero value|lower bonus/i);
+    expect(zeroRow.rejection).toMatch(/zerovalue|lowerbonus/i);
   });
 });
 
 describe('SRD cross-type combinations on the same field', () => {
   it('different named types all apply (each picks its own best)', () => {
-    // Phase-2 only has material/broken/masterwork; future phases (enhancement,
+    // Phase-2 only has material/broken/enhancment; future phases (enhancement,
     // armor, deflection, …) all behave the same way under SRD: different types
     // stack with each other; same type does not.
     const changes = [
       mkChange({ index: 0, field: 'system.defense.armorClass', bonusType: MATERIAL, value: 2, source: 'Mat' }),
-      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: MASTERWORK, value: 1, source: 'MW' }),
+      mkChange({ index: 1, field: 'system.defense.armorClass', bonusType: ENHANCEMENT, value: 1, source: 'MW' }),
       mkChange({ index: 2, field: 'system.defense.armorClass', bonusType: BROKEN, value: -2, source: 'Broken' }),
     ];
 
@@ -426,7 +426,7 @@ describe('SRD cross-type combinations on the same field', () => {
   it('same value (+5) in two different types: both apply (cross-type stack)', () => {
     const changes = [
       mkChange({ index: 0, field: 'system.attack', bonusType: MATERIAL, value: 5, source: 'Mat' }),
-      mkChange({ index: 1, field: 'system.attack', bonusType: MASTERWORK, value: 5, source: 'MW' }),
+      mkChange({ index: 1, field: 'system.attack', bonusType: ENHANCEMENT, value: 5, source: 'MW' }),
     ];
 
     const { winners } = resolveActiveEffectChanges(changes);
@@ -436,14 +436,14 @@ describe('SRD cross-type combinations on the same field', () => {
   });
 
   it('comprehensive: typed bonus + typed penalty + untyped both signs', () => {
-    // material bonuses, material penalties (best+worst), masterwork bonus,
+    // material bonuses, material penalties (best+worst), enhancment bonus,
     // untyped mixed → sum across types.
     const changes = [
       mkChange({ index: 0, field: 'system.attack', bonusType: MATERIAL, value: 4, source: 'Mat-Best' }),
       mkChange({ index: 1, field: 'system.attack', bonusType: MATERIAL, value: 2, source: 'Mat-Low' }),
       mkChange({ index: 2, field: 'system.attack', bonusType: MATERIAL, value: -3, source: 'Mat-Worst' }),
       mkChange({ index: 3, field: 'system.attack', bonusType: MATERIAL, value: -1, source: 'Mat-Mild' }),
-      mkChange({ index: 4, field: 'system.attack', bonusType: MASTERWORK, value: 1, source: 'MW' }),
+      mkChange({ index: 4, field: 'system.attack', bonusType: ENHANCEMENT, value: 1, source: 'MW' }),
       mkChange({ index: 5, field: 'system.attack', bonusType: undefined, value: 3, source: 'Untyped+' }),
       mkChange({ index: 6, field: 'system.attack', bonusType: undefined, value: -1, source: 'Untyped-' }),
     ];
@@ -451,7 +451,7 @@ describe('SRD cross-type combinations on the same field', () => {
     const { winners } = resolveActiveEffectChanges(changes);
     const total = winners.reduce((acc, w) => acc + w.value, 0);
     // material: best +4, worst -3 (sum +1)
-    // masterwork: +1
+    // enhancment: +1
     // untyped: 3 + -1 = +2 (single winner)
     // total: 1 + 1 + 2 = 4
     expect(total).toBe(4);
@@ -592,14 +592,14 @@ describe('SRD edge cases', () => {
     const changes = [
       mkChange({ index: 0, field: 'system.attack', bonusType: MATERIAL, value: 2, source: 'A' }),
       mkChange({ index: 1, field: 'system.attack', bonusType: MATERIAL, value: -1, source: 'B' }),
-      mkChange({ index: 2, field: 'system.damage', bonusType: MASTERWORK, value: 1, source: 'C' }),
+      mkChange({ index: 2, field: 'system.damage', bonusType: ENHANCEMENT, value: 1, source: 'C' }),
       mkChange({ index: 3, field: 'system.damage', bonusType: undefined, value: 1, source: 'D' }),
       mkChange({ index: 4, field: 'system.damage', bonusType: undefined, value: -1, source: 'E' }),
     ];
 
     const { winners } = resolveActiveEffectChanges(changes);
     // attack/material: bonus +2, penalty -1 → 2 winners
-    // damage/masterwork: +1 → 1 winner
+    // damage/enhancment: +1 → 1 winner
     // damage/undefined: 1 + -1 = 0 → 0 winners
     expect(winners).toHaveLength(3);
   });

@@ -51,6 +51,18 @@ function resolveChangeTargets(key: string, actor: ActorDnd35e): string[] {
 }
 
 /**
+ * Resolve a registered Group Change Target's own official label (e.g. "All Saves" for
+ * `group:allSaves`) for plain-text display contexts (not formulas) — e.g. `EffectChangeRow`'s
+ * key column, which otherwise has no schema field to look a label up on. Returns undefined
+ * for keys that aren't a registered group.
+ */
+function getChangeTargetGroupLabel(key: string): string | undefined {
+  const group = changeTargetGroups.get(key);
+  if (!group) return undefined;
+  return getPathBasedLabel(group.treePath.join('.'), group.localizationPrefixes) ?? group.key;
+}
+
+/**
  * Expand any Group Change Target keys within `changes` into one entry per concrete
  * field path — e.g. a change with key "group:allSaves" becomes three cloned changes,
  * one per `system.saves.*` field. Non-group keys pass through unchanged (single-element
@@ -137,6 +149,7 @@ export type { ChangeTargetGroup };
 export {
   changeTargetGroups,
   expandChangeTargetGroups,
+  getChangeTargetGroupLabel,
   registerChangeTargetGroup,
   resolveChangeTargets,
   withChangeTargetGroups,

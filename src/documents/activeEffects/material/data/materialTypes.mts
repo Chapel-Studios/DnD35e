@@ -1,5 +1,5 @@
 import type { BonusType } from '@constants/bonusTypes.mjs';
-import { BONUS_TYPE_BROKEN, BONUS_TYPE_MASTERWORK, BONUS_TYPE_MATERIAL } from '@constants/bonusTypes.mjs';
+import { BONUS_TYPE_BROKEN, BONUS_TYPE_ENHANCEMENT, BONUS_TYPE_MATERIAL } from '@constants/bonusTypes.mjs';
 import type { SelectOption } from '@vc/fields/index.mjs';
 
 /**
@@ -18,7 +18,7 @@ type MaterialSubtype = (typeof MATERIAL_SUBTYPES)[number];
 const MATERIAL_SUBTYPE_BONUS_MAP: Record<MaterialSubtype, BonusType> = {
   [MATERIAL_SUBTYPE_STANDARD]: BONUS_TYPE_MATERIAL,
   [MATERIAL_SUBTYPE_BROKEN]: BONUS_TYPE_BROKEN,
-  [MATERIAL_SUBTYPE_MASTERWORK]: BONUS_TYPE_MASTERWORK,
+  [MATERIAL_SUBTYPE_MASTERWORK]: BONUS_TYPE_ENHANCEMENT,
 } as const;
 
 export { MATERIAL_SUBTYPE_BONUS_MAP, MATERIAL_SUBTYPE_BROKEN, MATERIAL_SUBTYPE_MASTERWORK, MATERIAL_SUBTYPE_STANDARD, MATERIAL_SUBTYPES };

@@ -37,7 +37,7 @@ describe('FormulaData — boolean expectedType resolution', () => {
     expect(FormulaData.resolveSource({ formula: '!(3 > 2) && true', resolvedValue: null, expectedType: 'boolean' }, {})).toBe('false');
   });
 
-  it('does not throw on an invalid boolean expression — falls back to the raw resolved text', () => {
+  it('does not throw on an invalid boolean expression — falls back to null (see preparationWarnings.mts)', () => {
     expect(() => FormulaData.resolveSource(
       { formula: '5 >', resolvedValue: null, expectedType: 'boolean' },
       {}
@@ -46,7 +46,7 @@ describe('FormulaData — boolean expectedType resolution', () => {
       { formula: '5 >', resolvedValue: null, expectedType: 'boolean' },
       {}
     );
-    expect(result).toBe('5 >');
+    expect(result).toBeNull();
   });
 });
 
