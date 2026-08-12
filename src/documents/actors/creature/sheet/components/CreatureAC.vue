@@ -1,9 +1,10 @@
 <template>
   <CreatureDefenseStat
-    field-path="system.defense.armorClass"
+    :field-path="acFieldPath"
     :value="resolvedAc"
     :sublabel="acSublabel"
     :class="{ 'flat-footed': isFlatFooted }"
+    label="dnd35e.CREATURE.FIELDS.defense.armorClass.label"
     no-sign
   >
     <button

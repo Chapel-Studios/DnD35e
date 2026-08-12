@@ -8,7 +8,8 @@
  * reaches `resolveActiveEffectChange()`/`applyStackedActiveEffectChanges()` — those, and
  * Foundry core's `ActiveEffect.applyChange()`, only ever see a plain literal path.
  *
- * A key with no `$conditional(` is returned unchanged (fast path) — the common case.
+ * A key with no `$conditional(` skips block resolution (fast path — the common case) but
+ * still passes through `remapNameKeyForItem()` below.
  *
  * Failure handling: any single unresolvable piece (malformed block, a `when()` condition
  * that doesn't evaluate to a valid boolean, or a branch target that doesn't resolve to a
@@ -20,6 +21,7 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { PreparationWarningHost } from '@documents/document/preparationWarnings.mjs';
 import { pushPreparationWarningToHosts } from '@documents/document/preparationWarnings.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
 import type { ContextDocumentType } from '@helpers/formulae/registry.mjs';
@@ -32,6 +34,20 @@ import { getEffectContexts, getEffectParents } from './resolveChangeValue.mjs';
 
 /** Sentinel returned when a conditional `change.key` failed to resolve — callers must skip applying the change entirely, a `PreparationWarning` has already been recorded. */
 const KEY_RESOLUTION_FAILED = Symbol('keyResolutionFailed');
+
+/**
+ * `name` is a live-computed getter on `ItemDnd35e` (derived from `system.nameFormula`,
+ * see `getDisplayName.mts`) with no writable backing field — core's
+ * `ActiveEffect.applyChange()` would try to assign a value there and silently lose it.
+ * Item-targeted changes resolving to `name` are redirected onto the real, writable
+ * `system.nameFormula.formula` field instead, which the `name` getter already resolves
+ * through. Actor-targeted `name` changes are left alone — `ActorDnd35e.name` is still a
+ * plain writable schema field.
+ */
+function remapNameKeyForItem(key: string, target: EffectChangeDataDnd35e['target']): string {
+  const isItemTarget = (target ?? EFFECT_CHANGE_TARGET.ACTOR) === EFFECT_CHANGE_TARGET.ITEM;
+  return key === 'name' && isItemTarget ? 'system.nameFormula.formula' : key;
+}
 
 /**
  * Build a FamiliarSchema keyed by the effect's live item/actor parents — the same shape
@@ -61,8 +77,9 @@ function buildKeyResolutionSchema(effect: ActiveEffectDnd35e): FamiliarSchema {
  * @param change The change whose `key` should be resolved.
  * @param warnHost Document to record a `PreparationWarning` on if resolution fails (the
  *   actor/item applying the change — see `ActorDnd35e`/`ItemDnd35e.applyActiveEffects()`).
- * @returns The literal raw accessPath to write to, or `change.key` unchanged when it isn't
- *   a `$conditional(...)` block, or `KEY_RESOLUTION_FAILED` when resolution fails.
+ * @returns The literal raw accessPath to write to (with `name` remapped to
+ *   `system.nameFormula.formula` for item-targeted changes — see `remapNameKeyForItem()`),
+ *   or `KEY_RESOLUTION_FAILED` when a `$conditional(...)` block fails to resolve.
  */
 function resolveActiveEffectChangeKey(
   effect: ActiveEffectDnd35e,
@@ -70,7 +87,7 @@ function resolveActiveEffectChangeKey(
   warnHost?: PreparationWarningHost
 ): string | typeof KEY_RESOLUTION_FAILED {
   const rawKey = change.key;
-  if (!rawKey || !rawKey.includes('$conditional(')) return rawKey;
+  if (!rawKey || !rawKey.includes('$conditional(')) return remapNameKeyForItem(rawKey, change.target);
 
   const fail = (reason: string): typeof KEY_RESOLUTION_FAILED => {
     console.error(`resolveActiveEffectChangeKey: ${reason}`);
@@ -115,7 +132,7 @@ function resolveActiveEffectChangeKey(
   const accessPath = resolveFamiliarLeafToAccessPath(winningTarget, schema);
   if (!accessPath) return fail(`Conditional key "${rawKey}": target "${winningTarget}" did not resolve to a real field`);
 
-  return accessPath;
+  return remapNameKeyForItem(accessPath, change.target);
 }
 
 export { KEY_RESOLUTION_FAILED, resolveActiveEffectChangeKey };

@@ -1,5 +1,5 @@
-Andy
-equip_sillhouette.svg
+Andy 'Izual989' Ronding
+equip_silhouette.svg
 shield.svg
 
 --------------

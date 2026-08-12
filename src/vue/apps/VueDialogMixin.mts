@@ -69,11 +69,13 @@ function useVueDialogMixin<
       this.context.data = this.reactiveData;
     }
 
-    #settle(result: TResult | null): void {
+    #settle(result: TResult | null, isClosing = false): void {
       if (this.#settled) return;
       this.#settled = true;
       this.#resolvePromise(result);
-      void this.close();
+      if (!isClosing) {
+        void this.close(undefined, true);
+      }
     }
 
     protected override _createVueApp(renderOptions: VueBaseRenderOptions): App {
@@ -82,10 +84,13 @@ function useVueDialogMixin<
     }
 
     override async close(
-      options?: foundry.applications.ApplicationClosingOptions
+      options?: foundry.applications.ApplicationClosingOptions,
+      isSettling = false
     ): Promise<foundry.applications.api.ApplicationV2> {
-      // Window closed (e.g. X button) without an explicit resolve/cancel — settle with null.
-      this.#settle(null);
+      if (!isSettling) {
+        // Window closed (e.g. X button) without an explicit resolve/cancel — settle with null.
+        this.#settle(null, true);
+      }
       return super.close(options);
     }
   }

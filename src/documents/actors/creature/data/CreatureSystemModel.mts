@@ -206,7 +206,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
 
     schema.currency = useDnd35eField(new CurrencyField({ required: true }));
 
-    schema.attacks =new SchemaField({
+    schema.attacks = new SchemaField({
       actions: new ArrayField(new SchemaField({
         damageRoll: new StringField({ required: true, initial: '', blank: true }),
         damageType: new StringField({ required: true, initial: '', blank: true }),

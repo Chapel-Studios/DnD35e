@@ -4,7 +4,7 @@ import WeaponDetails from './WeaponDetails.vue';
 
 const weaponDetailsTab: SheetTab = {
   id: 'details',
-  label: 'TYPES.Item.weaponDetails',
+  label: 'dnd35e.COMMON.Details',
   component: WeaponDetails,
   order: 40,
 };

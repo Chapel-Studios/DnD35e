@@ -25,7 +25,7 @@
 const BONUS_TYPE_UNTYPED = 'dnd35e.BONUS_TYPES.Untyped' as const;
 const BONUS_TYPE_MATERIAL = 'dnd35e.BONUS_TYPES.Material' as const;
 const BONUS_TYPE_BROKEN = 'dnd35e.BONUS_TYPES.Broken' as const;
-const BONUS_TYPE_ENHANCEMENT = 'dnd35e.BONUS_TYPES.Enhancment' as const;
+const BONUS_TYPE_ENHANCEMENT = 'dnd35e.BONUS_TYPES.Enhancement' as const;
 const BONUS_TYPE_ARMOR = 'dnd35e.BONUS_TYPES.Armor' as const;
 const BONUS_TYPE_SHIELD = 'dnd35e.BONUS_TYPES.Shield' as const;
 const BONUS_TYPE_NATURAL = 'dnd35e.BONUS_TYPES.Natural' as const;

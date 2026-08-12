@@ -277,11 +277,43 @@
     return Object.keys(schema).length ? schema : undefined;
   });
 
+  // A `$conditional(...)` key (authored via AspectPicker's advanced editor) has no single
+  // literal accessPath — its branch values are canonical `#context.property` formula text
+  // instead (see `resolveActiveEffectChangeKey.mts`). Resolve target from the first branch
+  // whose `#context.` prefix matches the item or actor context's own name/alias, checking
+  // `when()` clauses in order, then `else()`.
+  function resolveTargetForConditionalKey (key: string): EffectChangeTarget {
+    const [block] = FormulaResolver.findConditionalBlocks(key);
+    if (!block) return EFFECT_CHANGE_TARGET.ITEM;
+
+    const branchValues = [
+      ...block.whenClauses.map((c) => c.value),
+      block.elseValue,
+    ].filter((v): v is string => !!v);
+
+    const itemContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ITEM);
+    const itemContextName = store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ITEM);
+    const actorContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ACTOR);
+    const actorContextName = store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ACTOR);
+
+    for (const branchValue of branchValues) {
+      const prefix = /^#([^.]+)\./.exec(branchValue)?.[1];
+      if (!prefix) continue;
+
+      if (prefix === itemContextName || itemContext?.aliases?.includes(prefix)) return EFFECT_CHANGE_TARGET.ITEM;
+      if (prefix === actorContextName || actorContext?.aliases?.includes(prefix)) return EFFECT_CHANGE_TARGET.ACTOR;
+    }
+
+    return EFFECT_CHANGE_TARGET.ITEM;
+  }
+
   // Derives which document a picked Field/Key path actually belongs to, replacing the
   // removed Target selector. Checked against the same (group-extended) contexts the
   // picker itself offers — item is checked first, actor (including groups) second.
   function resolveTargetForKey (key: string): EffectChangeTarget {
     if (!key) return EFFECT_CHANGE_TARGET.ITEM;
+
+    if (key.includes('$conditional(')) return resolveTargetForConditionalKey(key);
 
     const itemContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ITEM);
     if (itemContext && FormulaResolver.findAspectByAccessPath(itemContext.properties, key)) {
