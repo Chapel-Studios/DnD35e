@@ -16,7 +16,7 @@
       "Untyped": "Untyped",
       "Material": "Material",
       "Broken": "Broken",
-      "Enhancment": "Enhancment",
+      "Enhancment": "Enhancement",
       "Armor": "Armor",
       "Shield": "Shield",
       "Natural": "Natural Armor",
@@ -207,7 +207,7 @@
           "choices": {
             "standard": "Standard",
             "broken": "Broken",
-            "masterwork": "Enhancment"
+            "masterwork": "Masterwork"
           }
         }
       }

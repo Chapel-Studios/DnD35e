@@ -64,14 +64,16 @@ async function localizeTierLabel (page: any, tier: number): Promise<string> {
   return page.evaluate((key: string) => (globalThis as any).game.i18n.localize(key), TIER_LABEL_KEY[tier]);
 }
 
-// Encumbered speed value pushed as the DOWNGRADE change - unlike the sheet's readonly
-// display (which renders 0 as '—'), the tooltip shows the literal numeric value.
-// Values are in squares (canonical storage unit; 1 square = 5 ft).
+// Encumbered speed value pushed as the DOWNGRADE change, as rendered by the tooltip.
+// `HasActiveEffectsNotification.vue` converts the raw canonical-storage value (squares)
+// to the world's configured localized distance unit (imperial default: 5 ft/square) via
+// `convertToLocalizedDistance()`, same as the sheet's own speed field — so these are in
+// feet, not raw squares (4/4/1/1/0 squares -> 20/20/5/5/0 ft).
 const TIER_SPEED_EFFECT_VALUE: Record<number, string> = {
-  1: '4',
-  2: '4',
-  3: '1',
-  4: '1',
+  1: '20',
+  2: '20',
+  3: '5',
+  4: '5',
   5: '0',
 };
 

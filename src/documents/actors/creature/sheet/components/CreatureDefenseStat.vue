@@ -67,7 +67,6 @@
       : null;
   });
 
-  // Edit mode: GMs edit source values here, rolling would be confusing — no click.
   const isRollable = computed(() =>
     !!props.saveKey
     && props.rollable

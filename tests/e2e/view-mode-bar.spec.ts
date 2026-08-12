@@ -59,7 +59,7 @@ async function attachNameMask (page: Page, itemUuid: string, masked = 'Hidden Sw
       type: 'mask',
       target: 'item',
       priority: 10,
-      phase: 'core',
+      phase: 'initial',
     }],
   });
 }

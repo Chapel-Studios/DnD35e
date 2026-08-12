@@ -35,7 +35,7 @@ test.describe('HP masked edit (delta-mirror strategy)', () => {
         type: 'mask',
         target: 'actor',
         priority: 10,
-        phase: 'core',
+        phase: 'initial',
       }],
     });
 
@@ -86,7 +86,7 @@ test.describe('HP masked edit (delta-mirror strategy)', () => {
         type: 'mask',
         target: 'item',
         priority: 10,
-        phase: 'core',
+        phase: 'initial',
       }],
     });
 
