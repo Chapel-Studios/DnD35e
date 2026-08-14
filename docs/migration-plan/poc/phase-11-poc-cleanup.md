@@ -87,6 +87,27 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 
 ---
 
+### Task 11.6 — Advanced Change Editor; slim down `EffectChangesList` inline columns
+
+**Objective**: `EffectChangesList.vue` (`src/documents/activeEffects/baseActiveEffect/sheet/components/EffectChangesList.vue`) currently renders every change row as a wide inline grid — `default` variant shows Field/Key, Type, Value, Bonus Type, Condition, and Priority all at once, leaving each column (especially Field/Key and Value, which host formula editors) too cramped to be usable. Add a per-row "Advanced" editor (dialog or popover) that holds the less-frequently-touched columns, and slim the inline row down to just the columns that need to stay visible at a glance.
+
+**Why now**: Field/Key and Value are formula-driven ([`AspectPicker.vue`](../../../src/vue/components/fields/formGroups/AspectPicker.vue) / [`FormulaFormGroup.vue`](../../../src/helpers/formulae/FormulaFormGroup.vue)) and need real width to be legible; Type, Bonus Type, Condition, and Priority are lower-frequency edits that don't need permanent screen real estate on every row.
+
+**Draft acceptance criteria**:
+- Add an "Advanced" trigger per row (icon button, likely alongside the existing delete/`FieldControls` cluster) that opens a dialog or popover scoped to that single change.
+- Advanced editor exposes the columns removed from the inline row (see open decision below) using the same existing sub-components/updater calls (`updateChangeField`, `FormulaFormGroup` for Condition) — no new data plumbing, just relocated UI.
+- Inline row keeps at minimum Field/Key and Value; both get a larger effective share of `gridColumns` once other columns are removed.
+- Row-level validation (`row-context` / `rowFieldErrors`) must remain visible/reachable even for fields moved into the advanced editor — e.g. surface an error indicator on the Advanced trigger itself when a hidden field (Condition, etc.) has an error, so problems aren't silently hidden behind the dialog.
+- `mask` variant is reviewed but likely untouched — it's already a slim 3-4 column layout (Key, arrow, Value, Priority); confirm whether Priority should also move to advanced for consistency or stay inline since the row is already short.
+- Update `gridColumns` computed and the `changes-table-header` row to match whatever the final inline column set is.
+- Existing unit tests in [`EffectChangesList.test.mts`](../../../tests/unit/components/EffectChangesList.test.mts) updated for the new DOM shape; add coverage for opening the advanced editor and confirming an edit made there round-trips through `updateChangeField`.
+
+**Open decisions** *(explore-at-phase-start)*:
+- Exact column split: candidates to move to Advanced are Type, Bonus Type, Condition, and Priority. Type may need to stay inline since it affects how Value's `expectedType` is interpreted at a glance — decide after prototyping.
+- Dialog vs. popover/inline-expand UX for the Advanced editor — pick whichever reads better once a mock is in hand; default assumption if unresolved: a small `Dialog`-based editor (consistent with other per-row "advanced" affordances like `AspectPicker`'s conditional editor) rather than an inline expand-in-place row.
+
+---
+
 ## Checklist
 
 ### ✅ Complete
@@ -101,6 +122,7 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 - [ ] 11.3 Wire up weapon Property flags (`dnd35e.WEAPON.Property.*` has no schema field on `WeaponSystemModel`).
 - [ ] 11.4 Lang file cleanup — organize and deduplicate `src/lang/en/*.json`.
 - [ ] 11.5 Review `_displayName`/`displayName` getters on `ItemDnd35e` (duplicate `name` getter's logic — still needed?).
+- [ ] 11.6 Advanced Change Editor; slim down `EffectChangesList` inline columns (move Type/Bonus Type/Condition/Priority to a per-row advanced dialog).
 - [ ] Add more POC cleanup tasks as they are discovered during final POC work.
 
 ---

@@ -356,7 +356,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   }
 
   override get name (): string {
-    const fallbackName = (this._source?.name ?? '') as string;
+    const fallbackName = this._source?.name ?? '';
     return getDisplayName(fallbackName, this.system, this);
   }
 

@@ -65,7 +65,11 @@ function getEffectContexts(
     additionalContexts[actor.type] = actor;
   }
 
-  const contextMap = buildDocumentDataMap(targetDocument, additionalContexts);
+  // `self` must be the effect authoring the change, not `targetDocument` — matching
+  // authoring-time semantics (see `EffectChangesList.vue`'s `schema.self`), a change
+  // targeting the item should still let `#self.name` mean the *effect's* name, not the
+  // item's (which is already reachable via `item`/`Item`/`<item.type>` below).
+  const contextMap = buildDocumentDataMap(effect, additionalContexts);
 
   const schemaField = getSchemaField(targetDocument, change.key);
 
