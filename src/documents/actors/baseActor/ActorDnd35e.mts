@@ -3,7 +3,6 @@ import { ACTOR_TYPES_LOCALIZED } from '@actors/actorTypes.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import type { DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import { ensureNameFormulaOnCreate, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
@@ -60,7 +59,9 @@ class ActorDnd35e<
    * "many calls per tick, only write once" (see core's `Combat.debounceSetup`,
    * `PlaylistSound.debounceVolume`, `PrimaryOccludableObject.debounceSetOcclusion`).
    * `delay: 0` still coalesces every synchronous call within the same tick into a single
-   * deferred write, since each call resets the pending `setTimeout`.
+   * deferred write, since each call resets the pending `setTimeout`. This is the only
+   * persist path — an update always triggers `prepareData()` again, so there's no need
+   * to also piggyback the diff onto the in-flight update via `_preUpdate()`.
    */
   private readonly _debouncedPersistPrototypeTokenSync = foundry.utils.debounce(
     () => this._persistPrototypeTokenSync(),
@@ -287,8 +288,7 @@ class ActorDnd35e<
    * sync with this actor's current (fully post-phase-settled) `name`/`system.size`/
    * `system.senses` on every `prepareData()` pass — pure in-memory mutation, safe to
    * run redundantly any number of times per tick. Also kicks the debounced proactive
-   * persist (`_debouncedPersistPrototypeTokenSync`) so `_source` doesn't wait indefinitely
-   * for some unrelated update to piggyback on (see `_preUpdate()` below).
+   * persist (`_debouncedPersistPrototypeTokenSync`) so `_source` catches up shortly after.
    *
    * Respects both the `DISABLE_TOKEN_AUTO_SYNC` world setting and this actor's own
    * `flags.dnd35e.disableTokenSync` opt-out.
@@ -320,7 +320,7 @@ class ActorDnd35e<
    * `_source.prototypeToken` catches up even when nothing else ever updates this actor
    * (e.g. senses shifting via an AE with no other change following). Recomputes the diff
    * fresh at fire time rather than from captured state, so it always reflects whatever
-   * settled last; no-ops if `_preUpdate()` below already persisted the same diff first.
+   * settled last.
    */
   private _persistPrototypeTokenSync(): void {
     if (!this.id || this.pack || isTokenSyncDisabled(this)) return;
@@ -330,30 +330,6 @@ class ActorDnd35e<
     if (!diff) return;
 
     void this.update({ prototypeToken: diff });
-  }
-
-  /**
-   * Piggybacks the prototype-token diff onto whatever update is already in flight, the
-   * same way `evaluateRegisteredFormulas()` persists `nameFormula.resolvedValue` from
-   * `DocumentDnd35e._preUpdate()` — see `formulaRegistrationHelpers.mts`. Saves the
-   * debounced path (above) from having to fire its own separate `update()` call in the
-   * common case where this actor is already being updated for some other reason.
-   */
-  protected override async _preUpdate(
-    updateData: Record<string, unknown>,
-    options: DocumentUpdateOptions,
-    user: foundry.documents.BaseUser
-  ): Promise<boolean | void> {
-    const result = await super._preUpdate(updateData, options, user);
-    if (result === false) return false;
-
-    if (this.pack || isTokenSyncDisabled(this)) return;
-
-    const derived = buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.senses);
-    const diff = diffDerivedPrototypeTokenFields(this._source.prototypeToken, derived);
-    if (!diff) return;
-
-    Object.assign(updateData, foundry.utils.flattenObject({ prototypeToken: diff }));
   }
 }
 
