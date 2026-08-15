@@ -5,7 +5,6 @@ import {
   LAW_AXES,
   MASKED_EDIT_STRATEGY,
   MORAL_AXES,
-  SENSE_TYPES,
 } from '@constants/index.mjs';
 import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import {
@@ -13,7 +12,6 @@ import {
   derivedNullableOptionalStringField,
   derivedNumberField,
   requiredNumberField,
-  requiredTypedStringField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
 import { NullableCapNumberField } from '@fields/NullableCapNumberField.mjs';
@@ -190,10 +188,6 @@ abstract class CreatureSystemModel extends ActorSystemModel {
         moral: useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...MORAL_AXES] })),
       }),
       languages: new ArrayField(new StringField({ required: true, blank: false }), { initial: [] }),
-      senses: new ArrayField(new SchemaField({
-        type:     useDnd35eField(requiredTypedStringField(SENSE_TYPES, 'darkvision')),
-        distance: useDnd35eField(requiredNumberField(0), { measurementUnit: 'distance' }),
-      }), { initial: [] }),
     });
 
     schema.level = useDnd35eField(derivedNumberField(1), { familiar: { aliases: ['lvl'] } });

@@ -10,7 +10,7 @@
     <button
       class="shield-badge touch-ac-toggle"
       type="button"
-      :class="{ 'is-active': acMode === 'touch' }"
+      :class="{ 'is-active': isTouchAc }"
       :title="touchAcToggleTitle"
       @click="toggleTouchAC"
     >
@@ -29,31 +29,31 @@
 </template>
 
 <script setup lang="ts">
+  import { FLAT_FOOTED_CONDITION_ID } from '@constants/conditions.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { computed, inject, ref } from 'vue';
 
   import type { CreatureDocumentStore } from '../CreatureStore.mjs';
   import CreatureDefenseStat from './CreatureDefenseStat.vue';
 
-  type AcMode = 'normal' | 'touch';
 
-  const acMode = ref<AcMode>('normal');
+  const isTouchAc = ref(false);
   const toggleTouchAC = (): void => {
-    acMode.value = acMode.value === 'touch' ? 'normal' : 'touch';
+    isTouchAc.value = !isTouchAc.value;
   };
 
-  const touchAcToggleTitle = computed(() => acMode.value === 'touch'
+  const touchAcToggleTitle = computed(() => isTouchAc.value
     ? game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.armorClass.tooltip')
     : game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.touchAC.tooltip'));
-  const touchAcIcon = computed(() => acMode.value === 'touch'
+  const touchAcIcon = computed(() => isTouchAc.value
     ? 'fa-solid fa-hand'
     : 'fa-light fa-hand');
 
-  const acFieldPath = computed(() => acMode.value === 'touch'
+  const acFieldPath = computed(() => isTouchAc.value
     ? 'system.defense.touchAC'
     : 'system.defense.armorClass');
 
-  const acSublabel = computed(() => acMode.value === 'touch'
+  const acSublabel = computed(() => isTouchAc.value
     ? game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.touchAC.label')
     : undefined);
 
@@ -72,10 +72,10 @@
   // Flat-footed is the real SRD condition (statuses, not a manual view toggle) — the
   // badge only shows while it's active, and clicking it removes the condition rather
   // than switching which AC value is displayed.
-  const isFlatFooted = computed(() => conditions.value.find((c) => c.id === 'flatFooted')?.active ?? false);
+  const isFlatFooted = computed(() => conditions.value.find((c) => c.id === FLAT_FOOTED_CONDITION_ID)?.active ?? false);
   const flatFootedRemoveTitle = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.flatFootedRemoveTooltip');
   const removeFlatFooted = (): void => {
-    void toggleCondition('flatFooted');
+    void toggleCondition(FLAT_FOOTED_CONDITION_ID);
   };
 
 </script>

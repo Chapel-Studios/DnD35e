@@ -1,6 +1,5 @@
 import { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
-import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
 import type { BonusType } from '@constants/bonusTypes.mjs';
 import { BONUS_TYPE_ARMOR, BONUS_TYPE_NATURAL, BONUS_TYPE_SHIELD, BONUS_TYPE_SIZE } from '@constants/bonusTypes.mjs';
@@ -18,20 +17,13 @@ import {
 } from '@effects/baseActiveEffect/data/index.mjs';
 import { parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
 import type { RollModifier } from '@source/dice/index.mjs';
-import { buildSaveCard, D20Roll, D20RollDialogConfig } from '@source/dice/index.mjs';
+import { buildD20Formula, buildSaveCard, D20Roll, D20RollDialogConfig } from '@source/dice/index.mjs';
 
 import { _debugCreature, isCreatureDebugEnabled } from './_debug.mjs';
 import type { CreatureSystemData, CreatureSystemSource } from './data/index.mjs';
 import { CreatureLifeCycle } from './events/CreatureLifeCycle.mjs';
 import { registerCreatureEventChecks } from './events/index.mjs';
 import { registerCreatureEvents } from './events/registerCreatureEvents.mjs';
-import { buildPrototypeTokenDefaults } from './logic/buildPrototypeTokenDefaults.mjs';
-import {
-  buildDerivedPrototypeTokenFields,
-  diffDerivedPrototypeTokenFields,
-  MANAGED_DETECTION_MODE_KEYS,
-} from './logic/derivedPrototypeTokenFields.mjs';
-import { isTokenSyncDisabled } from './logic/tokenSyncSettings.mjs';
 import { handleUpdateHpViaDamage } from './logic/updateHpViaDamage.mjs';
 import { handleUpdateHpViaHealing } from './logic/updateHpViaHealing.mjs';
 import { handleNonLethalDamageUpdate } from './logic/updateNonlethalDamage.mjs';
@@ -80,18 +72,6 @@ abstract class Creature extends ActorDnd35e {
   }
 
   /**
-   * Build a `1d20 + base + situational` formula string, omitting any zero term (see
-   * poc/phase-07-roll-formulas.md §7.2's "No `@attr` Bridge" — values are plain numbers
-   * interpolated directly, not formula references).
-   */
-  private buildD20Formula(base: number, situationalModifier: number): string {
-    const terms = ['1d20'];
-    if (base !== 0) terms.push(base >= 0 ? `+ ${base}` : `- ${Math.abs(base)}`);
-    if (situationalModifier !== 0) terms.push(situationalModifier >= 0 ? `+ ${situationalModifier}` : `- ${Math.abs(situationalModifier)}`);
-    return terms.join(' ');
-  }
-
-  /**
    * Roll a saving throw: opens the D20 roll dialog (unless `skipDialog`) for a situational
    * modifier and roll mode, evaluates a `D20Roll`, and posts a chat card with the full
    * modifier breakdown. Returns `null` if the user cancels the dialog. See
@@ -137,7 +117,7 @@ abstract class Creature extends ActorDnd35e {
       modifierList.push({ label: game.i18n.localize('dnd35e.ROLL.SituationalModifier'), value: situationalModifier });
     }
 
-    const roll = new D20Roll(this.buildD20Formula(saveTotal, situationalModifier), {}, { situationalModifiers: modifierList });
+    const roll = new D20Roll(buildD20Formula(saveTotal, situationalModifier), {}, { situationalModifiers: modifierList });
     await roll.evaluate();
 
     const content = await buildSaveCard(roll, modifierList, {
@@ -279,18 +259,17 @@ abstract class Creature extends ActorDnd35e {
     const armorBonus = this.system.defense.armorBonus;
     const shieldBonus = this.system.defense.shieldBonus;
     const naturalArmor = this.system.defense.naturalArmor;
-    // Set by the Flat-Footed condition (see CONDITIONS in constants/conditions.mts) - SRD:
-    // "You can't use your Dexterity bonus to AC while flat-footed." A future Uncanny Dodge
-    // feat overrides `denyDexToAC` back to false via a higher-priority change.
     const denyDexToAC = this.system.defense.denyDexToAC;
 
     for (const key of ['armorClass', 'touchAC'] as const) {
       const fieldKey = `system.defense.${key}`;
+
       // Base/size/Dex are the always-present formula components of AC, not
       // meaningful "effects" on their own - keep them out of the Effects tab.
       pushChange(fieldKey, 10, baseLabel, undefined, true);
       pushChange(fieldKey, sizeMod, sizeLabel, BONUS_TYPE_SIZE, true);
       if (!denyDexToAC) pushChange(fieldKey, dexMod, dexLabel, undefined, true);
+
       if (key !== 'touchAC') {
         pushChange(fieldKey, armorBonus, armorLabel, BONUS_TYPE_ARMOR);
         pushChange(fieldKey, shieldBonus, shieldLabel, BONUS_TYPE_SHIELD);
@@ -359,108 +338,11 @@ abstract class Creature extends ActorDnd35e {
     ...CreatureLifeCycle,
   } as const;
 
-  /**
-   * Prototype token defaults shared by all creature-type actors (characters, NPCs,
-   * etc.): linked token, friendly disposition, owner-hover HP bar, and name/size/vision
-   * derived from `Actor#name`/`system.size`/`system.bio.senses`. This is a one-time seed;
-   * ongoing sync as name/size/senses change afterward (e.g. a name-formula re-resolution,
-   * or a future Race-item-driven senses change) is handled by
-   * `prepareDerivedData()`/`_syncPrototypeToken()` below.
-   */
-  protected override async _preCreate(
-    data: this['_source'],
-    options: DatabaseCreateCallbackOptions,
-    user: foundry.documents.BaseUser
-  ): Promise<boolean | void> {
-    const result = await super._preCreate(data, options, user);
-    if (result === false) return false;
-
-    this.updateSource({
-      prototypeToken: {
-        ...buildPrototypeTokenDefaults(this.name, this.system.size, this.system.bio.senses),
-        ...data.prototypeToken,
-      },
-    });
-  }
-
   override prepareDerivedData(): void {
     super.prepareDerivedData();
 
     // stub value to 100 for sheet building; replace with real HP calculation when progression is implemented
     this.system.hp.max = 100;
-
-    this._syncPrototypeToken();
-  }
-
-  /**
-   * True while a `queueMicrotask()`-deferred prototype token update is pending for this
-   * actor, so rapid repeated `prepareDerivedData()` passes (e.g. multiple renders before
-   * the update commits) don't stack redundant microtasks/writes.
-   */
-  private _pendingPrototypeTokenSync = false;
-
-  /**
-   * Keeps `prototypeToken.name`/`width`/`height`/`sight`/`detectionModes` in sync with
-   * this actor's current `name`/`system.size`/`system.bio.senses` over its whole
-   * lifetime — not just at creation — so a rename (including name-formula
-   * re-resolution — see `documents/document/logic/ensureNameFormula.mts`), a size
-   * change (e.g. later a Polymorph-style effect), or a senses change (e.g. later a
-   * Race-item ActiveEffect) is reflected both live and in the persisted prototype
-   * token (visible in the Prototype Token config sheet, and in exported JSON).
-   *
-   * Runs at the end of `prepareDerivedData()` since senses/size derivation happens
-   * earlier in the same pass; if a future 'final'-phase AE ever changes senses (which
-   * applies to `applyActiveEffects('final')` in `ActorDnd35e.prepareData()`, after
-   * `prepareDerivedData()` returns), this will pick up the change on the *next*
-   * `prepareData()` cycle rather than the same one, since the field then changes again.
-   *
-   * Respects both the `DISABLE_TOKEN_AUTO_SYNC` world setting and this actor's own
-   * `flags.dnd35e.disableTokenSync` opt-out — when either is set, the live in-memory
-   * values AND the persisted update are both skipped entirely, leaving whatever's
-   * currently on the prototype token untouched.
-   *
-   * Only mutates the in-memory `prototypeToken` directly (safe — recomputed fresh
-   * every `prepareData()` cycle, same as `CreatureSystemModel._prepareEncumbrance()`).
-   * Persistence to `_source` is deferred to a `queueMicrotask()` callback, since
-   * `update()` must never be called synchronously from within data preparation.
-   */
-  private _syncPrototypeToken(): void {
-    if (isTokenSyncDisabled(this)) return;
-
-    const derived = buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.bio.senses);
-
-    this.prototypeToken.name = derived.name;
-    this.prototypeToken.width = derived.width;
-    this.prototypeToken.height = derived.height;
-    Object.assign(this.prototypeToken.sight, derived.sight);
-    // Object.assign only adds/overwrites keys present in `derived.detectionModes`; a managed
-    // key that dropped out (e.g. darkvision lost) must be deleted explicitly, mirroring the
-    // ForcedDeletion used for the persisted update below - otherwise the live in-memory
-    // token keeps a stale managed mode until (if ever) a persisted update forces a full reinit.
-    for (const key of MANAGED_DETECTION_MODE_KEYS) {
-      if (!(key in derived.detectionModes)) delete this.prototypeToken.detectionModes[key];
-    }
-    Object.assign(this.prototypeToken.detectionModes, derived.detectionModes);
-
-    if (this._pendingPrototypeTokenSync) return;
-
-    const update = diffDerivedPrototypeTokenFields(this._source.prototypeToken, derived);
-    if (!update) return;
-
-    this._pendingPrototypeTokenSync = true;
-    queueMicrotask(() => {
-      this._pendingPrototypeTokenSync = false;
-
-      if (!this.id || this.pack || isTokenSyncDisabled(this)) return;
-
-      const recheckedUpdate = diffDerivedPrototypeTokenFields(
-        this._source.prototypeToken,
-        buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.bio.senses)
-      );
-      if (!recheckedUpdate) return;
-
-      void this.update({ prototypeToken: recheckedUpdate });
-    });
   }
 
   async updateHP(

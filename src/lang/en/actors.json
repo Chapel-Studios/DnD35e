@@ -111,16 +111,6 @@
           "height":    { "label": "Height" },
           "weight":    { "label": "Weight" },
           "languages": { "label": "Languages" },
-          "senses": {
-            "label": "Senses",
-            "add": "Add Sense",
-            "remove": "Remove Sense",
-            "empty": "No senses configured",
-            "element": {
-              "type": { "label": "Type", "familiarLabel": "Type", "familiarAliases": [], "hint": "The kind of sense, such as darkvision or blindsense." },
-              "distance": { "label": "Distance", "familiarLabel": "Range", "familiarAliases": [], "hint": "The range of this sense, in {distanceType}." }
-            }
-          },
           "alignment": {
             "label": "Alignment",
             "law":   { "label": "Law/Chaos" },
@@ -267,6 +257,16 @@
         "bio": {
           "label": "Biography",
           "placeholder": "Character biography, backstory, appearance, personality..."
+        },
+        "senses": {
+          "label": "Senses",
+          "add": "Add Sense",
+          "remove": "Remove Sense",
+          "empty": "No senses configured",
+          "element": {
+            "type": { "label": "Type", "familiarLabel": "Type", "familiarAliases": [], "hint": "The kind of sense, such as darkvision or blindsense." },
+            "distance": { "label": "Distance", "familiarLabel": "Range", "familiarAliases": [], "hint": "The range of this sense, in {distanceType}." }
+          }
         }
       },
       "sheet": {

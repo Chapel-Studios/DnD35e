@@ -1,7 +1,7 @@
 import {
   buildDerivedPrototypeTokenFields,
   diffDerivedPrototypeTokenFields,
-} from '@actors/creature/logic/derivedPrototypeTokenFields.mjs';
+} from '@actors/baseActor/logic/derivedPrototypeTokenFields.mjs';
 import { describe, expect, it } from 'vitest';
 
 describe('buildDerivedPrototypeTokenFields', () => {

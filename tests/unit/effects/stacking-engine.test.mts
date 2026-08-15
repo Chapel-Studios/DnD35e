@@ -82,7 +82,7 @@ describe('resolveActiveEffectChanges — basic stacking rules', () => {
     expect(steelEntry.applied).toBe(true);
     expect(ironEntry.applied).toBe(false);
     expect(ironEntry.bonusType).toBe(MATERIAL);
-    expect(ironEntry.rejection).toMatch(/lowerbonus/i);
+    expect(ironEntry.rejection).toMatch(/lower\s*bonus/i);
   });
 
   it('untyped bonuses all stack (sum)', () => {
@@ -295,9 +295,9 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
     const helmRow = history.find(h => h.source === 'Helm')!;
     const drunkRow = history.find(h => h.source === 'Drunk')!;
     expect(helmRow.applied).toBe(false);
-    expect(helmRow.rejection).toMatch(/lowerbonus/i);
+    expect(helmRow.rejection).toMatch(/lower\s*bonus/i);
     expect(drunkRow.applied).toBe(false);
-    expect(drunkRow.rejection).toMatch(/lesssevere/i);
+    expect(drunkRow.rejection).toMatch(/less\s*severe/i);
   });
 
   it('all positive same type → highest wins, no penalty winner', () => {
@@ -326,7 +326,7 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
     // The less-severe penalties are rejected, not "applied as penalty"
     const lightRow = history.find(h => h.source === 'Light')!;
     expect(lightRow.applied).toBe(false);
-    expect(lightRow.rejection).toMatch(/lesssevere/i);
+    expect(lightRow.rejection).toMatch(/less\s*severe/i);
   });
 
   it('single penalty alone → applies as penalty winner with reason "penalty"', () => {
@@ -365,7 +365,7 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
     const rejected = history.filter(h => !h.applied);
     expect(rejected).toHaveLength(2);
     for (const r of rejected) {
-      expect(r.rejection).toMatch(/lesssevere/i);
+      expect(r.rejection).toMatch(/less\s*severe/i);
     }
   });
 
@@ -402,7 +402,7 @@ describe('SRD non-stacking type: best bonus + worst penalty both apply', () => {
     expect(winners[0]).toMatchObject({ value: 3, source: 'Pos' });
     const zeroRow = history.find(h => h.source === 'Zero')!;
     expect(zeroRow.applied).toBe(false);
-    expect(zeroRow.rejection).toMatch(/zerovalue|lowerbonus/i);
+    expect(zeroRow.rejection).toMatch(/zero\s*value|lower\s*bonus/i);
   });
 });
 

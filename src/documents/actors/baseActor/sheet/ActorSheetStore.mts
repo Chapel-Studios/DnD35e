@@ -1,8 +1,10 @@
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
+import type { SenseEntrySource } from '@actors/baseActor/data/index.mjs';
 import type { ItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
 import { createItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
 import type { ConditionDefinition } from '@constants/conditions.mjs';
 import { CONDITIONS } from '@constants/conditions.mjs';
+import type { Size } from '@constants/sizes.mjs';
 import type { DocumentSheetStore, SheetTab } from '@documents/document/index.mjs';
 import { preparationWarningsTab, useDocumentSheetStore } from '@documents/document/index.mjs';
 import type { EffectDocumentActions, EffectDocumentGetters, EffectDocumentUtils } from '@documents/document/logic/index.mjs';
@@ -179,6 +181,12 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
     ...baseStore.documentGetters,
     ...effectGetters,
     landSpeed: computed(() => getViewAwareFieldValue<number>('system.speed.land') ?? 0),
+    size: computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
+    senses: computed(() => {
+      const raw = getViewAwareFieldValue<SenseEntrySource[]>('system.senses') ?? [];
+      // Clone so Vue's reactivity detects in-place mutations from Foundry's mergeObject
+      return foundry.utils.deepClone(raw);
+    }),
 
     items: computed(() => [...baseStore._storeUtils.document.value.items]),
     physicalItems: computed(() => [...baseStore._storeUtils.document.value.items]
@@ -257,6 +265,8 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
 
 interface ActorGetters {
   landSpeed: ComputedRef<number>;
+  size: ComputedRef<Size>;
+  senses: ComputedRef<SenseEntrySource[]>;
   items: ComputedRef<ItemDnd35e[]>;
   physicalItems: ComputedRef<PHYSICAL_ITEMS[]>;
   conditions: ComputedRef<ConditionRow[]>;

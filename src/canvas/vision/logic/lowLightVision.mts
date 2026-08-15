@@ -1,4 +1,4 @@
-import type { SenseEntrySource } from '@actors/creature/data/CreatureSystemData.mjs';
+import type { SenseEntrySource } from '@actors/baseActor/data/index.mjs';
 import { LOW_LIGHT_VISION } from '@constants/senses.mjs';
 
 /**

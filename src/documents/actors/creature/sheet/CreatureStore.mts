@@ -1,11 +1,9 @@
 import type { ActorActions, ActorDocumentStore, ActorGetters, UseActorSheetStoreOptions } from '@actors/baseActor/sheet/index.mjs';
 import { useActorSheetStore } from '@actors/baseActor/sheet/index.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
-import type { SenseEntrySource } from '@actors/creature/data/CreatureSystemData.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import { ALIGNMENT_I18N, NEUTRAL } from '@constants/alignment.mjs';
 import type { SaveKey } from '@constants/index.mjs';
-import type { Size } from '@constants/sizes.mjs';
 import { addCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 import { GAME_RULES_KEYS, type SettingsStore, SettingsStoreSymbol } from '@settings/index.mjs';
@@ -70,16 +68,10 @@ const useCreatureStore = <TDocument extends Creature>(
     alignmentMoral,
     alignmentLabel: computed(() => buildAlignmentLabel(alignmentLaw.value, alignmentMoral.value)),
 
-    size:           computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
     notes:          computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
     level:          computed(() => document.value.system.level ?? 1),
     isPartyMember:  computed(() => getViewAwareFieldValue<boolean>('system.settings.isPartyMember') ?? false),
     languages:      computed(() => [...(getViewAwareFieldValue<string[]>('system.bio.languages') ?? [])]),
-    senses:         computed(() => {
-      const raw = getViewAwareFieldValue<SenseEntrySource[]>('system.bio.senses') ?? [];
-      // Clone so Vue's reactivity detects in-place mutations from Foundry's mergeObject
-      return foundry.utils.deepClone(raw);
-    }),
     availableLanguages: computed<SelectOption<string>[]>(() => {
       const config = game.settings.get(SYSTEM_ID, GAME_RULES_KEYS.AVAILABLE_LANGUAGE_OPTIONS) as Record<string, { label: string; enabled: boolean; isSystem: boolean }>;
       const systemDefaults = (CONFIG.dnd35e.gameRules.availableLanguageOptions ?? {}) as Record<string, { label: string }>;
@@ -148,12 +140,10 @@ interface CreatureGetters {
   alignmentLaw:   ComputedRef<LawAxis | null>;
   alignmentMoral: ComputedRef<MoralAxis | null>;
   alignmentLabel: ComputedRef<string | null>;
-  size:           ComputedRef<Size>;
   notes:          ComputedRef<string>;
   level:          ComputedRef<number>;
   isPartyMember:  ComputedRef<boolean>;
   languages:      ComputedRef<string[]>;
-  senses:         ComputedRef<SenseEntrySource[]>;
   availableLanguages: ComputedRef<SelectOption<string>[]>;
   displayLanguages: ComputedRef<string[]>;
   creatureValue: ComputedRef<CurrencyData>;

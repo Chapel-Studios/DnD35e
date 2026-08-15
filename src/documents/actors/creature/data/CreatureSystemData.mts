@@ -1,6 +1,5 @@
 import type { AbilityKey } from '@constants/abilities.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
-import type { SenseType } from '@constants/senses.mjs';
 import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 import type { FormulaDataSource } from '@helpers/formulae/index.mjs';
 import type { WeaponDamage } from '@items/physical/weapon/data/index.mjs';
@@ -74,11 +73,6 @@ interface AlignmentData {
 
 // ─── Bio ─────────────────────────────────────────────────────────────────────
 
-interface SenseEntrySource {
-  type: SenseType;
-  distance: number;
-}
-
 interface BioSource {
   gender:    string | null;
   deity:     string | null;
@@ -87,7 +81,6 @@ interface BioSource {
   weight:    string | null;
   alignment: AlignmentData;
   languages: string[];
-  senses:    SenseEntrySource[];
 }
 
 // ─── Settings ────────────────────────────────────────────────────────────────
@@ -167,6 +160,5 @@ export type {
   EncumbranceData,
   HpData,
   HpSource,
-  SenseEntrySource,
   SettingsData,
 };

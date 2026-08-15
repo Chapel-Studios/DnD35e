@@ -31,6 +31,7 @@ import { GENERAL_EFFECT_TYPE } from '@effects/effectTypes.mjs';
 const PRONE_CONDITION_ID = 'prone';
 /** `CONFIG.statusEffects[].id` for the Blinded condition — mapped to Foundry's native `CONFIG.specialStatusEffects.BLIND`. */
 const BLINDED_CONDITION_ID = 'blinded';
+const FLAT_FOOTED_CONDITION_ID = 'flatFooted';
 
 const setFieldOverride = (key: string, value: unknown): EffectChangeDataDnd35e => ({
   key,
@@ -177,7 +178,7 @@ const CONDITIONS: Record<string, ConditionDefinition> = {
     ],
   },
   flatFooted: {
-    id: 'flatFooted',
+    id: FLAT_FOOTED_CONDITION_ID,
     label: 'dnd35e.CONDITIONS.flatFooted.label',
     icon: 'icons/svg/shield.svg',
     changes: [
@@ -310,6 +311,7 @@ export {
   BLINDED_CONDITION_ID,
   buildConditionStatusEffects,
   CONDITIONS,
+  FLAT_FOOTED_CONDITION_ID,
   PRONE_CONDITION_ID,
 };
 

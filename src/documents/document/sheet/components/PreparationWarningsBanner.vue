@@ -11,7 +11,7 @@
       type="button"
       class="field-control-btn preparation-warnings-banner-dismiss"
       :aria-label="localize('dnd35e.COMMON.Dismiss')"
-      @click="dismissed = true"
+      @click="dismiss"
     >
       <i class="fas fa-xmark"></i>
     </button>
@@ -21,16 +21,21 @@
 <script lang="ts" setup>
   import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import { computed, inject, ref } from 'vue';
+  import { computed, inject } from 'vue';
+
+  import { dismissPreparationWarnings, isPreparationWarningsDismissed } from './preparationWarningsDismissal.mjs';
 
   const localize = (key: string): string => game.i18n.localize(key);
 
-  // Dismissable for now (per design) - resets whenever this component remounts,
-  // i.e. every sheet render, so a fresh set of warnings is never silently hidden.
-  const dismissed = ref(false);
-
   const { documentGetters } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
   const warnings = documentGetters.preparationWarnings;
+  const documentUuid = documentGetters.documentUuid;
+
+  // Dismissable per-document for the browser session (see preparationWarningsDismissal.mts) -
+  // a signature check still surfaces the banner if the actual warning set changes.
+  const dismissed = computed(() => isPreparationWarningsDismissed(documentUuid.value, warnings.value));
+  const dismiss = () => dismissPreparationWarnings(documentUuid.value, warnings.value);
+
   const warningSummary = computed(() => game.i18n.format('dnd35e.COMMON.PreparationWarningsSummary', { count: warnings.value.length }));
 </script>
 

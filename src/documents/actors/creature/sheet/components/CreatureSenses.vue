@@ -1,10 +1,10 @@
 <template>
   <ListFormGroup
-    field-path="system.bio.senses"
+    field-path="system.senses"
     :value="senses"
-    add-button-title="dnd35e.CREATURE.FIELDS.bio.senses.add"
-    remove-button-title="dnd35e.CREATURE.FIELDS.bio.senses.remove"
-    empty-label="dnd35e.CREATURE.FIELDS.bio.senses.empty"
+    add-button-title="dnd35e.ACTOR.FIELDS.senses.add"
+    remove-button-title="dnd35e.ACTOR.FIELDS.senses.remove"
+    empty-label="dnd35e.ACTOR.FIELDS.senses.empty"
     :default-visibility="ownerPlusVisibility"
     :default-editability="gmOnlyEditability"
     :add-item="addSense"
@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-  import type { SenseEntrySource } from '@actors/creature/data/CreatureSystemData.mjs';
+  import type { SenseEntrySource } from '@actors/baseActor/data/index.mjs';
   import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
   import { LOW_LIGHT_VISION, SENSE_TYPES_LOCALIZED, SENSE_TYPES_OPTIONS, type SenseType } from '@constants/senses.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
@@ -77,13 +77,13 @@
 
   // Schema hint has a {distanceType} placeholder that Foundry's auto-localization can't fill in, so interpolate it manually.
   const distanceHint = computed(() => game.i18n.format(
-    'dnd35e.CREATURE.FIELDS.bio.senses.element.distance.hint',
+    'dnd35e.ACTOR.FIELDS.senses.element.distance.hint',
     { distanceType: distanceDisplayLabel.value }
   ));
-  const typeHint = computed(() => game.i18n.localize('dnd35e.CREATURE.FIELDS.bio.senses.element.type.hint'));
+  const typeHint = computed(() => game.i18n.localize('dnd35e.ACTOR.FIELDS.senses.element.type.hint'));
 
   // Domain callback: senses are edited as a coordinated array of structured entries.
-  const sensesUpdater = getViewAwareFieldUpdater('system.bio.senses');
+  const sensesUpdater = getViewAwareFieldUpdater('system.senses');
 
   function addSense(): void {
     const nextSense = senseTypeOptions.value

@@ -3,6 +3,7 @@ import { ACTOR_TYPES_LOCALIZED } from '@actors/actorTypes.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
+import type { DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import { ensureNameFormulaOnCreate, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
@@ -28,6 +29,13 @@ import type { ItemType } from '@items/itemTypes.mjs';
 import type { TokenDocumentDnd35e } from '@scene/tokenDocument/TokenDocumentDnd35e.mjs';
 
 import type { ActorSystemData } from './index.mjs';
+import { buildPrototypeTokenDefaults } from './logic/buildPrototypeTokenDefaults.mjs';
+import {
+  buildDerivedPrototypeTokenFields,
+  diffDerivedPrototypeTokenFields,
+  MANAGED_DETECTION_MODE_KEYS,
+} from './logic/derivedPrototypeTokenFields.mjs';
+import { isTokenSyncDisabled } from './logic/tokenSyncSettings.mjs';
 
 // Apply mixin at runtime but cast to preserve generic parameter compatibility.
 // TypeScript mixins erase generics; this cast is safe because the mixin only adds
@@ -46,6 +54,19 @@ class ActorDnd35e<
   declare type: TActorType;
   declare system: TSystemData;
   declare events: DocumentEventEmitter<this>;
+
+  /**
+   * Trailing-edge debounce for `_persistPrototypeTokenSync()` — Foundry's own idiom for
+   * "many calls per tick, only write once" (see core's `Combat.debounceSetup`,
+   * `PlaylistSound.debounceVolume`, `PrimaryOccludableObject.debounceSetOcclusion`).
+   * `delay: 0` still coalesces every synchronous call within the same tick into a single
+   * deferred write, since each call resets the pending `setTimeout`.
+   */
+  private readonly _debouncedPersistPrototypeTokenSync = foundry.utils.debounce(
+    () => this._persistPrototypeTokenSync(),
+    0
+  );
+
   /**
    * Field-path -> contributing-effect history, mirroring ItemDnd35e's `effectOverrides`
    * shape. Populated by the shared stacking engine in `applyActiveEffects()` (see
@@ -79,10 +100,15 @@ class ActorDnd35e<
    * derive a stat from another stat only settled at the end of 'final' (e.g. a save total built
    * from an ability mod that encumbrance may have downgraded in that same 'final' pass) - see
    * `Creature._buildSaveAbilityChanges()`/`_buildDefenseChanges()`.
+   *
+   * `_syncPrototypeToken()` runs last, after this whole chain settles - a 'post'-phase AE could
+   * still shift `system.senses`/`system.size` (e.g. a future Polymorph-style effect); syncing
+   * any earlier would read pre-post-phase values.
    */
   override prepareData (): void {
     super.prepareData();
     this.applyActiveEffects(POST_EFFECT_CHANGE_PHASE);
+    this._syncPrototypeToken();
   }
 
   /**
@@ -243,6 +269,91 @@ class ActorDnd35e<
     const result = await super._preCreate(data, options, user);
     if (result === false) return false;
     await ensureNameFormulaOnCreate(this as unknown as NameFormulaDocument, options);
+
+    // Prototype token defaults shared by all actor types: linked token, friendly
+    // disposition, owner-hover HP bar, and name/size/vision derived from
+    // `Actor#name`/`system.size`/`system.senses`. One-time seed; ongoing sync as
+    // name/size/senses change afterward is handled by `prepareData()`/`_syncPrototypeToken()`.
+    this.updateSource({
+      prototypeToken: {
+        ...buildPrototypeTokenDefaults(this.name, this.system.size, this.system.senses),
+        ...data.prototypeToken,
+      },
+    });
+  }
+
+  /**
+   * Keeps the *live* `prototypeToken.name`/`width`/`height`/`sight`/`detectionModes` in
+   * sync with this actor's current (fully post-phase-settled) `name`/`system.size`/
+   * `system.senses` on every `prepareData()` pass — pure in-memory mutation, safe to
+   * run redundantly any number of times per tick. Also kicks the debounced proactive
+   * persist (`_debouncedPersistPrototypeTokenSync`) so `_source` doesn't wait indefinitely
+   * for some unrelated update to piggyback on (see `_preUpdate()` below).
+   *
+   * Respects both the `DISABLE_TOKEN_AUTO_SYNC` world setting and this actor's own
+   * `flags.dnd35e.disableTokenSync` opt-out.
+   */
+  private _syncPrototypeToken(): void {
+    if (isTokenSyncDisabled(this)) return;
+
+    const derived = buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.senses);
+
+    this.prototypeToken.name = derived.name;
+    this.prototypeToken.width = derived.width;
+    this.prototypeToken.height = derived.height;
+    Object.assign(this.prototypeToken.sight, derived.sight);
+    // Object.assign only adds/overwrites keys present in `derived.detectionModes`; a managed
+    // key that dropped out (e.g. darkvision lost) must be deleted explicitly, mirroring the
+    // ForcedDeletion used for the persisted diff below - otherwise the live in-memory token
+    // keeps a stale managed mode until the next persisted sync lands.
+    for (const key of MANAGED_DETECTION_MODE_KEYS) {
+      if (!(key in derived.detectionModes)) delete this.prototypeToken.detectionModes[key];
+    }
+    Object.assign(this.prototypeToken.detectionModes, derived.detectionModes);
+
+    this._debouncedPersistPrototypeTokenSync();
+  }
+
+  /**
+   * Proactive persist for the prototype-token diff — fires once per debounced burst of
+   * `_syncPrototypeToken()` calls (see `_debouncedPersistPrototypeTokenSync` above), so
+   * `_source.prototypeToken` catches up even when nothing else ever updates this actor
+   * (e.g. senses shifting via an AE with no other change following). Recomputes the diff
+   * fresh at fire time rather than from captured state, so it always reflects whatever
+   * settled last; no-ops if `_preUpdate()` below already persisted the same diff first.
+   */
+  private _persistPrototypeTokenSync(): void {
+    if (!this.id || this.pack || isTokenSyncDisabled(this)) return;
+
+    const derived = buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.senses);
+    const diff = diffDerivedPrototypeTokenFields(this._source.prototypeToken, derived);
+    if (!diff) return;
+
+    void this.update({ prototypeToken: diff });
+  }
+
+  /**
+   * Piggybacks the prototype-token diff onto whatever update is already in flight, the
+   * same way `evaluateRegisteredFormulas()` persists `nameFormula.resolvedValue` from
+   * `DocumentDnd35e._preUpdate()` — see `formulaRegistrationHelpers.mts`. Saves the
+   * debounced path (above) from having to fire its own separate `update()` call in the
+   * common case where this actor is already being updated for some other reason.
+   */
+  protected override async _preUpdate(
+    updateData: Record<string, unknown>,
+    options: DocumentUpdateOptions,
+    user: foundry.documents.BaseUser
+  ): Promise<boolean | void> {
+    const result = await super._preUpdate(updateData, options, user);
+    if (result === false) return false;
+
+    if (this.pack || isTokenSyncDisabled(this)) return;
+
+    const derived = buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.senses);
+    const diff = diffDerivedPrototypeTokenFields(this._source.prototypeToken, derived);
+    if (!diff) return;
+
+    Object.assign(updateData, foundry.utils.flattenObject({ prototypeToken: diff }));
   }
 }
 
