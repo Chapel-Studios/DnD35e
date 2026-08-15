@@ -30,6 +30,9 @@
       "Hide": "Hide",
       "Default": "Default",
       "Discard": "Discard",
+      "Dismiss": "Dismiss",
+      "PreparationWarningsSummary": "{count} formula(s) failed to resolve",
+      "PreparationWarningsTab": "Warnings",
       "Add": "Add",
       "Delete": "Delete",
       "Enable": "Enable",
@@ -101,7 +104,7 @@
       "Context": {
         "Self": "Self"
       },
-      "DefaultPlaceholder": "Enter name or formula (e.g. #self.name)",
+      "DefaultPlaceholder": "Enter value or formula (e.g. #self.name)",
       "AdvancedEditor": "Open advanced formula editor",
       "AdvancedEditorTitle": "Edit Formula",
       "Close": "Close",
@@ -134,6 +137,14 @@
         "conditional": {
           "label": "conditional",
           "hint": "$conditional(when(condition, value) else(default)) — evaluates in order, first matching when() wins"
+        },
+        "when": {
+          "label": "when",
+          "hint": "when(condition, value) — a clause inside $conditional(...)"
+        },
+        "else": {
+          "label": "else",
+          "hint": "else(default) — the required fallback clause inside $conditional(...)"
         },
         "contains": {
           "label": "contains",

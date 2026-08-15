@@ -46,6 +46,68 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 
 ---
 
+### Task 11.2 — AE pipeline codebase TODOs (moved from poc.7)
+
+**Objective**: Resolve remaining TODO notes left in the AE apply pipeline during poc.7 work, none of which needed to block poc.7 itself.
+
+- [ ] **Remove `ActiveEffect._shimChanges` compat shim** (`ItemDnd35e.mts:131`): The `_shimChanges(changes)` call is explicitly marked `// todo remove in v16`. **Blocked — not actionable yet**: the system currently targets Foundry v14; revisit once the project actually upgrades to v16. If v16 migration transforms old AE data, remove the shim call and its TODO comment. If the shim is still required for pre-migration data, keep it but update the comment with the specific migration that will obsolete it.
+- [ ] **Integrate Hooks.onError pattern into LogHelper** (`ItemDnd35e.mts:93`): The `applyActiveEffects()` method uses `LogHelper.error()` as a substitute for Foundry's `Hooks.onError()` pattern. Evaluate whether `LogHelper` should wrap `Hooks.onError()` for consistency with Foundry's error surfacing (e.g., error hooks that modules can listen to), or if the current direct logging is sufficient.
+
+### Task 11.3 — Wire up weapon Property flags
+
+**Objective**: `dnd35e.WEAPON.Property.*` (`blocking`, `brace`, `double`, `disarm`, `finesse`, `fragile`, `grapple`, `improvised`, `monk`, `nonLethal`, `nonLethalNoPenalty`, `performance`, `reach`, `sunder`, `thrown`, `trip`) exist in `src/lang/en/weapons.json` but have no corresponding schema field on `WeaponSystemModel` at all — not even as unwired booleans. There is no `system.properties` (or similar) shape on the weapon DataModel, and none of these strings are referenced anywhere in `src/documents/items/physical/weapon/`.
+
+**Draft acceptance criteria**:
+- Decide the field shape (e.g. a `SetField`/boolean-map of weapon properties) and add it to `WeaponSystemModel`.
+- Sheet exposes the properties (even as a plain checklist, no mechanical hookup required yet).
+- Each property's actual rules effect (disarm, trip, reach, etc.) is out of scope for this task — tracked separately once combat mechanics phases need them.
+
+---
+
+### Task 11.4 — Lang file cleanup (organization & deduplication)
+
+**Objective**: `src/lang/en/*.json` has grown ad hoc across phases — audit for inconsistent key organization and duplicate/near-duplicate strings (e.g. the same label defined under more than one document type's file, or both a `FIELDS.*` entry and a bespoke top-level entry for the same concept).
+
+**Draft acceptance criteria**:
+- Inventory all `src/lang/en/*.json` files and flag duplicate string values/keys that should share one localization key.
+- Establish (or confirm) a consistent key-ordering/section convention per file and apply it uniformly.
+- Cross-check against `_old_lang/en.json` only for coverage gaps, not as a structural template.
+- No functional/rendering changes — this is a content-organization pass, verified by `npm run build` (lang bundling) still succeeding and no `game.i18n.localize` misses.
+
+---
+
+### Task 11.5 — Review `_displayName`/`displayName` getters on `ItemDnd35e`
+
+**Objective**: `ItemDnd35e._displayName`/`.displayName` (`src/documents/items/baseItem/ItemDnd35e.mts`) duplicate the exact same `getDisplayName(fallbackName, this.system, this)` logic as the `name` getter directly above them. Confirm whether any caller actually needs a separate accessor from `name`, or if these are leftover from before `name` itself became formula-driven.
+
+**Draft acceptance criteria**:
+- Find all consumers of `.displayName`/`._displayName` across `src/` and Vue components.
+- If no consumer needs a distinct value from `.name`, remove both getters and repoint callers to `.name`.
+- If a real distinction is needed (e.g. a non-masked/true-value variant), document why and rename for clarity instead of leaving `_displayName`/`displayName` as unexplained duplicates.
+
+---
+
+### Task 11.6 — Advanced Change Editor; slim down `EffectChangesList` inline columns
+
+**Objective**: `EffectChangesList.vue` (`src/documents/activeEffects/baseActiveEffect/sheet/components/EffectChangesList.vue`) currently renders every change row as a wide inline grid — `default` variant shows Field/Key, Type, Value, Bonus Type, Condition, and Priority all at once, leaving each column (especially Field/Key and Value, which host formula editors) too cramped to be usable. Add a per-row "Advanced" editor (dialog or popover) that holds the less-frequently-touched columns, and slim the inline row down to just the columns that need to stay visible at a glance.
+
+**Why now**: Field/Key and Value are formula-driven ([`AspectPicker.vue`](../../../src/vue/components/fields/formGroups/AspectPicker.vue) / [`FormulaFormGroup.vue`](../../../src/helpers/formulae/FormulaFormGroup.vue)) and need real width to be legible; Type, Bonus Type, Condition, and Priority are lower-frequency edits that don't need permanent screen real estate on every row.
+
+**Draft acceptance criteria**:
+- Add an "Advanced" trigger per row (icon button, likely alongside the existing delete/`FieldControls` cluster) that opens a dialog or popover scoped to that single change.
+- Advanced editor exposes the columns removed from the inline row (see open decision below) using the same existing sub-components/updater calls (`updateChangeField`, `FormulaFormGroup` for Condition) — no new data plumbing, just relocated UI.
+- Inline row keeps at minimum Field/Key and Value; both get a larger effective share of `gridColumns` once other columns are removed.
+- Row-level validation (`row-context` / `rowFieldErrors`) must remain visible/reachable even for fields moved into the advanced editor — e.g. surface an error indicator on the Advanced trigger itself when a hidden field (Condition, etc.) has an error, so problems aren't silently hidden behind the dialog.
+- `mask` variant is reviewed but likely untouched — it's already a slim 3-4 column layout (Key, arrow, Value, Priority); confirm whether Priority should also move to advanced for consistency or stay inline since the row is already short.
+- Update `gridColumns` computed and the `changes-table-header` row to match whatever the final inline column set is.
+- Existing unit tests in [`EffectChangesList.test.mts`](../../../tests/unit/components/EffectChangesList.test.mts) updated for the new DOM shape; add coverage for opening the advanced editor and confirming an edit made there round-trips through `updateChangeField`.
+
+**Open decisions** *(explore-at-phase-start)*:
+- Exact column split: candidates to move to Advanced are Type, Bonus Type, Condition, and Priority. Type may need to stay inline since it affects how Value's `expectedType` is interpreted at a glance — decide after prototyping.
+- Dialog vs. popover/inline-expand UX for the Advanced editor — pick whichever reads better once a mock is in hand; default assumption if unresolved: a small `Dialog`-based editor (consistent with other per-row "advanced" affordances like `AspectPicker`'s conditional editor) rather than an inline expand-in-place row.
+
+---
+
 ## Checklist
 
 ### ✅ Complete
@@ -56,6 +118,11 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 
 ### ❌ Not Started
 - [ ] 11.1 FormGroup updater contract pass (async Promise-returning callbacks).
+- [ ] 11.2 AE pipeline codebase TODOs (`_shimChanges` blocked on v16 upgrade; `Hooks.onError`/`LogHelper` still open) — moved from poc.7. `createDialog` type cast fixed directly (no `as any` needed).
+- [ ] 11.3 Wire up weapon Property flags (`dnd35e.WEAPON.Property.*` has no schema field on `WeaponSystemModel`).
+- [ ] 11.4 Lang file cleanup — organize and deduplicate `src/lang/en/*.json`.
+- [ ] 11.5 Review `_displayName`/`displayName` getters on `ItemDnd35e` (duplicate `name` getter's logic — still needed?).
+- [ ] 11.6 Advanced Change Editor; slim down `EffectChangesList` inline columns (move Type/Bonus Type/Condition/Priority to a per-row advanced dialog).
 - [ ] Add more POC cleanup tasks as they are discovered during final POC work.
 
 ---

@@ -185,7 +185,7 @@ Materials are ActiveEffects that modify items. They use `bonusType` field to con
 ```typescript
 // Only one "material" bonus type per item (highest wins)
 schema.bonusType = new fields.StringField({
-  choices: ['material', 'broken', 'masterwork', ...]
+  choices: ['material', 'broken', 'enhancment', ...]
 });
 ```
 

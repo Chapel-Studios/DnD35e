@@ -264,9 +264,11 @@ describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
     } as CreatureSystemModel['encumbrance'];
     // Initialize baseline defense/saves/init/bab fields
     model.defense = {
-      armorClass: 10,
-      touchAC: 10,
-      flatFootedAC: 10,
+      armorClass: 0,
+      touchAC: 0,
+      denyDexToAC: false,
+      armorBonus: 0,
+      shieldBonus: 0,
       naturalArmor: 0,
       fortification: 0,
       concealment: 0,
@@ -282,21 +284,6 @@ describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
     model.prepareDerivedData();
     return model;
   };
-
-  it('baseline AC defaults to 10 (no armor/DEX adjustment)', () => {
-    const model = buildModel({});
-    expect(model.defense.armorClass).toBe(10);
-  });
-
-  it('baseline touch AC defaults to 10', () => {
-    const model = buildModel({});
-    expect(model.defense.touchAC).toBe(10);
-  });
-
-  it('baseline flat-footed AC defaults to 10', () => {
-    const model = buildModel({});
-    expect(model.defense.flatFootedAC).toBe(10);
-  });
 
   it('baseline saves all default to 0 (no modifiers applied)', () => {
     const model = buildModel({});

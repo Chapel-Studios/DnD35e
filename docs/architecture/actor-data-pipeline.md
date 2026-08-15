@@ -49,7 +49,17 @@ So for an Actor, `'initial'`-phase changes apply inside `prepareEmbeddedDocument
 `super.prepareData()` returns, i.e. **after** `prepareDerivedData()` has already completed.
 
 Native `ActiveEffect.CHANGE_PHASES` (`common/constants.mjs:83`) is
-`Object.freeze(["initial", "final"])` — there is no native `'core'` phase.
+`Object.freeze(["initial", "final"])` — there is no native `'post'` phase; it is a
+system-specific extension registered via `CONFIG.ActiveEffect.phases` (see
+`src/documents/activeEffects/registration.mts`). `ActiveEffect.CHANGE_PHASES`'s getter
+(`client/documents/active-effect.mjs:~38-54`) merges `CONST.ACTIVE_EFFECT_CHANGE_PHASES` with
+`Object.entries(CONFIG.ActiveEffect.phases)`, so `CONFIG.ActiveEffect.phases` must be a
+`Record<string, {label, hint}>`
+`'final'`-phase changes are all collected into one array and applied together in a single batch
+(see `applyActiveEffects(phase)` above) — one `'final'`-phase change **cannot** reliably read
+another `'final'`-phase change's result, since neither has been applied yet at collection time.
+This is why the system adds its own `'post'` phase (see §4) for stats that must be derived from
+other, already-settled `'final'`-phase stats.
 
 ---
 
@@ -77,13 +87,14 @@ sequenceDiagram
     Item->>Item: buildMasks
     Item->>Model: prepareDerivedItemData subclass hook
     Item->>Item: applyActiveEffects final
+    Item->>Item: applyActiveEffects post
 ```
 
 | Method | Location | What it does |
 |---|---|---|
 | `prepareBaseData()` | `ItemDnd35e.mts` | Resets `_completedActiveEffectPhases`, `effectOverrides`, `_masks` |
 | `prepareEmbeddedDocuments()` | `ItemDnd35e.mts` | `super()` then `applyActiveEffects(INITIAL_EFFECT_CHANGE_PHASE)` |
-| `prepareDerivedData()` | `ItemDnd35e.mts` | `super()`, `_buildMasks()`, `_prepareDerivedItemData()` (subclass hook, e.g. `Container` seeds `contentsWeight` here), then `applyActiveEffects(FINAL_EFFECT_CHANGE_PHASE)` |
+| `prepareDerivedData()` | `ItemDnd35e.mts` | `super()`, `_buildMasks()`, `_prepareDerivedItemData()` (subclass hook, e.g. `Container` seeds `contentsWeight` here), then `applyActiveEffects(FINAL_EFFECT_CHANGE_PHASE)`, then `applyActiveEffects(POST_EFFECT_CHANGE_PHASE)` |
 | `_buildMasks()` | `ItemDnd35e.mts` | Reads MASK-type changes directly off `this.effects` (does **not** go through `applyActiveEffects`/phase filtering at all) and builds the `_masks` dictionary, highest-priority-per-key wins |
 | `applyActiveEffects(phase)` | `ItemDnd35e.mts` | Filters `allApplicableEffects()` to item-targeted, non-MASK changes matching `phase`, sorts by priority, applies via `applyStackedActiveEffectChanges` |
 
@@ -92,7 +103,8 @@ sequenceDiagram
 ## 4. Our Actor pipeline (`ActorDnd35e.mts` / `Creature.mts`)
 
 `ActorDnd35e` does not override `prepareEmbeddedDocuments()` or `prepareDerivedData()` — those run exactly
-as core defines them (§2). It overrides `prepareBaseData()` and `applyActiveEffects(phase)` only.
+as core defines them (§2). It overrides `prepareBaseData()`, `applyActiveEffects(phase)`, and (as of the
+`'post'` phase addition) `prepareData()`.
 
 ```mermaid
 sequenceDiagram
@@ -108,14 +120,16 @@ sequenceDiagram
     ActorDoc->>ActorDoc: applyActiveEffects initial
     ActorDoc->>SysModel: prepareDerivedData
     SysModel->>SysModel: prepareEncumbrance reads encumbrance.carriedWeight
-    FVTT->>ActorDoc: applyActiveEffects final
+    ActorDoc->>ActorDoc: super.prepareData applies final (incl. encumbrance downgrade)
+    ActorDoc->>ActorDoc: applyActiveEffects post (saves, AC - reads settled final values)
 ```
 
 | Method | Location | What it does |
 |---|---|---|
 | `prepareBaseData()` | `ActorDnd35e.mts` | Resets `effectOverrides` (core's `_clearData()` still runs too, per §2) |
+| `prepareData()` | `ActorDnd35e.mts` | `super.prepareData()` (runs core's full chain, including `applyActiveEffects('final')`), then `applyActiveEffects(POST_EFFECT_CHANGE_PHASE)` |
 | `applyActiveEffects(phase)` | `ActorDnd35e.mts` | Validates phase, filters to actor-targeted AE changes, sorts by priority, applies via `applyStackedActiveEffectChanges` (shared engine with `ItemDnd35e`). Also merges in each owned item's `getContributedActorChanges(phase)` and the actor's own `getSelfContributedChanges(phase)` (see §6) before stacking. |
-| `getSelfContributedChanges(phase)` | `ActorDnd35e.mts` (base returns `[]`) | Overridden by `Creature` to supply encumbrance-penalty changes (max Dex bonus, armor check penalty, land speed downgrade), computed fresh from the current `encumbrance.tier` on every call |
+| `getSelfContributedChanges(phase)` | `ActorDnd35e.mts` (base returns `[]`) | Overridden by `Creature` to supply: encumbrance-penalty changes in `'final'` (max Dex bonus, armor check penalty, land speed downgrade); save-ability-mod and AC changes in `'post'` (read the already-settled ability mods after `'final'` completes) |
 | `CreatureSystemModel.prepareDerivedData()` | `CreatureSystemModel.mts` (private `_prepareEncumbrance()`) | Reads `encumbrance.carriedWeight` (set during the `'initial'` phase above via `PhysicalItem.getContributedActorChanges()`) and computes `tier` |
 
 ---
@@ -146,11 +160,13 @@ automatically.
 |---|---|---|---|---|---|---|
 | Carried-item contribution (`PhysicalItem.getContributedActorChanges` / `_buildCarriedChanges`) | None - live | `add` | `initial` | `actor` | `system.encumbrance.carriedWeight`, `system.inventoryValue` | Recomputed unconditionally on every `prepareData()` pass from the item's current `isCarried`/`weight`/`quantity`/`price`/`containerUuid` state; nothing persisted, no document to create/toggle/delete |
 | Encumbrance penalty (`Creature.getSelfContributedChanges` / `_buildEncumberedChanges`) | None - live | `downgrade` | `final` | `actor` | `system.encumbrance.maxDexBonus`, `system.abilities.dex.mod`, `system.encumbrance.armorCheckPenalty`, `system.speed.land` | Only returned when `tier > 0`; reads the tier computed earlier in the same pass by `CreatureSystemModel._prepareEncumbrance()` |
+| Save-ability-mod contribution (`Creature.getSelfContributedChanges` / `_buildSaveAbilityChanges`) | None - live | `add` | `post` | `actor` | `system.saves.fort`, `system.saves.reflex`, `system.saves.will` | Reads `system.abilities.{con,dex,wis}.mod` - must run in `'post'` since encumbrance's `'final'`-phase Dex downgrade above is only guaranteed settled after `'final'` fully applies |
+| AC contribution (`Creature.getSelfContributedChanges` / `_buildDefenseChanges`) | None - live | `add` | `post` | `actor` | `system.defense.armorClass`, `.touchAC` | Same ordering reason as save-ability-mod above; reads `system.abilities.dex.mod` directly (no local Dex-cap re-derivation needed once `'post'` runs); Dex term is gated out entirely when `system.defense.denyDexToAC` is true (set by the Flat-Footed condition, see `constants/conditions.mts`) |
 | Equipped-status contribution (`EquippableItem.getContributedActorChanges` / `_buildEquippedChanges`) | None - live | `add` | n/a (currently empty) | `actor` | none yet | Placeholder for moving actions to the actor on equip; recomputed live like carried-item contribution |
 | Containment contribution (`buildContainmentChanges`) | Real AE, on the container item | `add` | `final` | `item` | `system.contentsWeight`, `system.contentsValue` | Applied on the container item (not the actor); rolls weight/value up through nested containers |
 | Secret mask, GM-authored (`SecretMasks.vue` UI default) | Real AE | `mask` (`SYSTEM_CHANGE_TYPE.MASK`) | `initial` (UI default, unenforced) | `item` (UI default) | arbitrary field path | `_buildMasks()` reads MASK changes directly and never filters by `phase`, so this value is not functionally checked |
 | Secret mask, player-edit (`playerEditSecret.mts`) | Real AE | `mask` | `core` | `actor` or `item` (host-dependent) | arbitrary field path | Same as above — `phase: 'core'` never passes through `applyActiveEffects`'s native phase validation because `_buildMasks()` bypasses it entirely |
-| Generic user-created change (`EffectChangesList.vue` UI default) | Real AE | `add` | `initial` | `item` | user-chosen key | Default values pre-filled when a GM adds a new change row on an effect sheet |
+| Generic user-created change (`EffectChangesList.vue` UI default) | Real AE | `add` | `final` | `item` | user-chosen key | Default values pre-filled when a GM adds a new change row on an effect sheet - changed from `'initial'` to `'final'` alongside the `'post'` phase addition, so newly authored bonuses settle before any `'post'`-phase derivation reads them |
 
 ---
 
@@ -159,7 +175,7 @@ automatically.
 | System | Integration |
 |---|---|
 | [Data Preparation Pipeline](data-preparation-pipeline.md) | Conceptual 3-stage model this doc traces to actual call sites |
-| [Active Effect Lifecycle](active-effect-lifecycle.md) | Phase semantics (`core`/`initial`/`final`) |
+| [Active Effect Lifecycle](active-effect-lifecycle.md) | Phase semantics (`core`/`initial`/`final`/`post`) |
 | [Bonus Stacking](bonus-stacking.md) | `applyStackedActiveEffectChanges` is the shared engine both `ActorDnd35e` and `ItemDnd35e` call into |
 | `ActorDnd35e.mts` | Actor-level phase application |
 | `ItemDnd35e.mts` | Item-level phase application, `_buildMasks()` |

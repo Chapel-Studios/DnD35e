@@ -50,6 +50,9 @@ const mkStore = () => ({
     removeEffect: vi.fn(),
     toggleEffectHidden: vi.fn(),
   },
+  documentGetters: {
+    getOrCreateEffectRowStore: vi.fn(() => undefined),
+  },
   _storeUtils: {
     createLocalizedComputed: vi.fn((key: string) => computed(() => key)),
   },

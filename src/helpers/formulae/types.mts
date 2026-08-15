@@ -267,6 +267,13 @@ export interface AutocompleteOption {
   isLeaf: boolean;            // true if FieldAspect, false if branch
   fullPath: string;           // "#self.hardness" — full path for insertion
   accessPath?: string;        // "system.hardness" — real document path (leaves only)
+  /**
+   * Which trigger character this option replaces from (poc §7.2b). Defaults to inferring
+   * from `fullPath`'s leading character when omitted — but `when`/`else` are `$`-dropdown
+   * entries whose `fullPath` has no `$` sigil (bare `when(`/`else(` per the grammar), so
+   * `getFunctionAutocompleteOptions` sets this explicitly rather than relying on inference.
+   */
+  trigger?: '$' | '#';
   /** Propagated from `FieldAspect.isGroup` (poc §7.7) — a Group Change Target entry, not a real field. */
   isGroup?: boolean;
   /** Propagated from `FieldAspect.ownerTypes` (poc §7.2c) — subtype(s) this field is unique to within a merged union. */

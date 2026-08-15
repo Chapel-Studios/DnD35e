@@ -183,7 +183,7 @@ Warnings are displayed on the character sheet as an expandable panel. They never
 
 | System | Integration |
 |---|---|
-| [Active Effects](active-effect-lifecycle.md) | Phase application system aligns with preparation stages |
+| [Active Effects](active-effect-lifecycle.md) | Phase application system aligns with preparation stages. A `post` phase runs after `prepareData()`'s own `final`-phase application completes, for stats derived from other `final`-phase stats (e.g. saves/AC built from an ability mod that encumbrance may have downgraded in that same `final` pass) - see that doc's phase table for the authoritative list. |
 | [Actor Data Pipeline](actor-data-pipeline.md) | Verified real call sites (Item vs. Actor asymmetry), open ordering risks, and empirical findings that supplement this conceptual doc |
 | [Bonus Stacking](bonus-stacking.md) | Stacking engine runs during `prepareDerivedData()` |
 | [Progression](progression-system.md) | Level history feeds BAB/save/HP derivation |

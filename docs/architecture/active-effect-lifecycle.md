@@ -16,16 +16,17 @@ Effects apply in ordered phases during the data preparation lifecycle. Each phas
 |---|---|---|---|
 | `core` | `prepareBaseData()` | Identity-level changes (race, size) | Racial ability modifiers, size category |
 | `initial` | `prepareEmbeddedDocuments()` | Direct stat bonuses | Equipment AC, shield bonus |
-| `final` | `prepareDerivedData()` | Derived stat changes, reactive calculations | BAB from class levels, save bonuses |
+| `final` | `prepareDerivedData()` | Derived stat changes, reactive calculations | BAB from class levels, encumbrance downgrades |
+| `post` | `prepareData()` (Actor) / after `final` (Item) | Stats derived from *other* `final`-phase stats | Save totals and AC built from an ability mod `final` may have downgraded |
 | `action.*` | Roll time (on-demand) | Per-roll modifiers, not applied during prep | Power Attack trade-off, situational bonuses |
 
 ### Why Phases Matter
 
 Without phases, circular dependencies arise. If a feat modifies BAB, and BAB determines iterative attacks, the order of operations matters. The phase system guarantees:
 
-- `core` runs first → racial modifiers and size are set before anything else
 - `initial` runs next → equipment bonuses applied before derived stats
-- `final` runs last → derived values (BAB sum, save totals) computed from stable inputs
+- `final` runs next → derived values (BAB sum, encumbrance downgrades) computed from stable inputs
+- `post` runs last → **all `final`-phase changes are collected and applied together in one batch, so a `final`-phase change cannot reliably read another `final`-phase change's result.** Anything that composes an already-settled `final` value into a higher-level total (e.g. save totals, AC) belongs in `post` instead, not `final`.
 - `action.*` deferred → roll-time modifiers don't pollute the prepared state
 
 ### Phase Assignment
@@ -34,7 +35,7 @@ Each `Dnd35eEffectChangeData` declares its phase:
 
 ```typescript
 interface Dnd35eEffectChangeData extends EffectChangeData {
-  phase: 'core' | 'initial' | 'final' | string;  // string for action.* namespaces
+  phase: 'initial' | 'final' | 'post' | string;  // string for action.* namespaces
   bonusType: BonusType;
   operator: OperationType;
   // targetField removed — legacy compound wrapper replaced by field metadata helpers (Phase 1, 1.O–1.V)

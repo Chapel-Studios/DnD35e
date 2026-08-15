@@ -285,18 +285,21 @@
     expectedType: resolvedExpectedType,
   });
 
-  // Type-mismatch errors carry an empty context (they aren't tied to a specific variable) —
-  // exposed separately so consumers can surface it (e.g. combined into a shared row-context
-  // error line) even when the dynamic context hint itself is suppressed via `hideContextHint`.
+  // Any error-severity validation issue (type mismatch, unresolvable context/property,
+  // unbalanced parens, etc.) — exposed separately so consumers can surface it (e.g.
+  // combined into a shared row-context error line) even when the dynamic context hint
+  // itself is suppressed via `hideContextHint`. Variable-specific errors (non-empty
+  // `context`) come first in `formulaErrors` (see `updateValidation`), so they take
+  // priority over the appended type-mismatch error when both are present.
   const currentError = computed((): string | null => {
-    const typeError = formulaErrors.value.find(e => e.context === '' && e.severity === 'error');
-    return typeError?.error ?? null;
+    const error = formulaErrors.value.find(e => e.severity === 'error');
+    return error?.error ?? null;
   });
 
   const displayHint = computed(() => {
     if (!isEditMode.value) return props.hint ?? '';
-    // Type-mismatch errors take priority over the dynamic context hint — surface
-    // them to the user instead of silently falling back. Suppressed when the
+    // A current validation error takes priority over the dynamic context hint —
+    // surface it to the user instead of silently falling back. Suppressed when the
     // context hint is hidden — the consumer (e.g. the AE Changes table row) is
     // already showing this error via the `update:error` emit in a shared line.
     if (currentError.value && !props.hideContextHint) return currentError.value;

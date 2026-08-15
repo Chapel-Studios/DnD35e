@@ -1,4 +1,5 @@
 import { FLY_MANEUVERABILITIES, SIZES } from '@constants/index.mjs';
+import { SENSE_TYPES } from '@constants/senses.mjs';
 import { DocumentSystemModel } from '@documents/document/data/DocumentSystemModel.mjs';
 import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import { requiredNumberField, requiredTypedStringField, useDnd35eField } from '@fields/fieldBuilders.mjs';
@@ -7,7 +8,7 @@ import { CurrencyData } from '@fields/index.mjs';
 import type { ActorSystemData } from './ActorSystemData.mjs';
 
 const {
-  SchemaField, StringField,
+  ArrayField, SchemaField, StringField,
 } = foundry.data.fields;
 
 const speedField = (defaultValue: number) => useDnd35eField(requiredNumberField(defaultValue), { measurementUnit: 'distance' });
@@ -39,6 +40,11 @@ abstract class ActorSystemModel extends DocumentSystemModel<foundry.documents.Ac
     schema.inventoryValue = useDnd35eField(new CurrencyField({ persisted: false }));
 
     schema.size = useDnd35eField(requiredTypedStringField(SIZES, 'medium'));
+
+    schema.senses = new ArrayField(new SchemaField({
+      type:     useDnd35eField(requiredTypedStringField(SENSE_TYPES, 'darkvision')),
+      distance: useDnd35eField(requiredNumberField(0), { measurementUnit: 'distance' }),
+    }), { initial: [] });
 
     return schema;
   }

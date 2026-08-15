@@ -21,10 +21,10 @@ describe('FormulaFamiliar localization data', () => {
       'dnd35e.WEAPON.FIELDS.weaponDamage.critMultiplier.familiarLabel': 'Multiplier',
       'dnd35e.WEAPON.FIELDS.weaponDamage.attackFormula.familiarLabel': 'Attack Formula',
       'dnd35e.WEAPON.FIELDS.weaponDamage.damageFormula.familiarLabel': 'Damage Formula',
-      'dnd35e.CREATURE.FIELDS.bio.senses.element.type.familiarLabel': 'Type',
-      'dnd35e.CREATURE.FIELDS.bio.senses.element.distance.familiarLabel': 'Range',
-      'dnd35e.CREATURE.FIELDS.attacks.element.damageRoll.familiarLabel': 'Roll',
-      'dnd35e.CREATURE.FIELDS.attacks.element.damageType.familiarLabel': 'Type',
+      'dnd35e.ACTOR.FIELDS.senses.element.type.familiarLabel': 'Type',
+      'dnd35e.ACTOR.FIELDS.senses.element.distance.familiarLabel': 'Range',
+      'dnd35e.CREATURE.FIELDS.attacks.actions.element.damageRoll.familiarLabel': 'Roll',
+      'dnd35e.CREATURE.FIELDS.attacks.actions.element.damageType.familiarLabel': 'Type',
     };
 
     game.i18n.localize = ((key: string) => labels[key] ?? originalLocalize(key)) as typeof game.i18n.localize;
@@ -66,12 +66,12 @@ describe('FormulaFamiliar localization data', () => {
       const familiar = gatherAspectsFromSchema(CreatureSystemModel) as AspectGroup;
       const schema: FamiliarSchema = { self: { properties: familiar } };
 
-      const sensesIt = buildItFamiliarContext('#self.bio.senses', schema);
+      const sensesIt = buildItFamiliarContext('#self.senses', schema);
       expect(sensesIt).not.toBeNull();
       expect((sensesIt!.properties.type as FieldAspect).display).toBe('Type');
       expect((sensesIt!.properties.distance as FieldAspect).display).toBe('Range');
 
-      const attacksIt = buildItFamiliarContext('#self.attacks', schema);
+      const attacksIt = buildItFamiliarContext('#self.attacks.actions', schema);
       expect(attacksIt).not.toBeNull();
       expect((attacksIt!.properties.damageRoll as FieldAspect).display).toBe('Roll');
       expect((attacksIt!.properties.damageType as FieldAspect).display).toBe('Type');

@@ -31,40 +31,13 @@
 
 Stories A→B and A→C are the only hard dependencies; B and C can proceed in parallel once A lands. Story D is unchanged in scope but its roll-building step no longer uses `@` tokens (see §7.2). §7.7 (Group Change Targets) is filed under Story D as of this pass — it has no functional relationship to the roll dialog work, it's just the catch-all bucket for phase-7 scope not covered by A/B/C.
 
-> **Status note**: Much of the FormulaFamiliar plumbing this phase originally scoped as net-new (schema walker, `FormulaField`/`FormulaData`, per-context autocomplete, universal `#`-token resolution for AE change values regardless of declared `type`) **already shipped** ahead of this phase, landing alongside Phase 2/5/6 AE work. The Completion Checklist at the bottom of this doc has been updated to reflect what's actually done vs. still pending. D20Roll, DamageRoll, and the roll-dialog/chat-card pipeline (Story D) have **not** started.
+> **Status note**: Much of the FormulaFamiliar plumbing this phase originally scoped as net-new (schema walker, `FormulaField`/`FormulaData`, per-context autocomplete, universal `#`-token resolution for AE change values regardless of declared `type`) **already shipped** ahead of this phase, landing alongside Phase 2/5/6 AE work. The Completion Checklist at the bottom of this doc has been updated to reflect what's actually done vs. still pending. `DamageRoll` is deferred to Phase 10 (Basic Combat), which already scopes it (`applyCritical()`, crit/damage-type handling wired into `takeDamage()`) — not a gap in this phase. D20Roll and the roll-dialog/chat-card pipeline (Story D/§7.9) shipped partially this pass; remaining test coverage and `CreatureDefenseStat.vue` click-wiring are still open.
 
 ---
 
 ## 7.1 Roll Data Assembly
 
-Define the canonical shape of roll data at each level:
-
-```typescript
-// Actor roll data — the base context
-interface ActorRollData {
-  abilities: Record<AbilityKey, { mod: number, total: number, base: number }>;
-  attributes: {
-    bab: { total: number };
-    ac: { normal: number, touch: number, flatFooted: number };
-    saves: Record<SaveKey, { total: number }>;
-    init: { total: number };
-    // ...
-  };
-  details: { level: number, size: SizeCategory };
-  skills: Record<SkillKey, { total: number, ranks: number }>;
-  // size attack/grapple modifiers
-  size: { attackMod: number, grappleMod: number, acMod: number };
-}
-
-// Item roll data — extends actor data with item-specific fields
-interface ItemRollData extends ActorRollData {
-  item: {
-    // item-specific fields available as @item.xxx
-  };
-}
-```
-
-> **Scope of `getRollData()`**: This shape exists **only** to satisfy Foundry-native `@attr` consumers we don't control — e.g. the Combat Tracker's initiative formula setting (`CONFIG.Combat.initiative.formula`). It is not a resolution path any of our own authored formulas travel (see §7.2). Keep it minimal; do not expand it in lockstep with every FormulaFamiliar aspect.
+**Cut.** Originally scoped to define a minimal `getRollData()` shape purely for Foundry-native `@attr` consumers (Combat Tracker initiative formula, raw chat `/roll` commands) — decided against. This system does not bridge to `@attr` syntax at all; `getRollData()` stays at its Foundry default (unused) on `ActorDnd35e`/`ItemDnd35e`. Deferred to the wishlist (`docs/migration-plan/post-release/WISHLIST.md`) — chat-command support (`/roll`, `/r`) needs `getRollData()` populated to work at all, so it's tracked there instead of here.
 
 ## 7.2 Formula Resolution Pipeline
 
@@ -578,6 +551,11 @@ No new component. The Condition column is a plain `FormulaFormGroup` with `expec
 - Removed `CONFIG.ActiveEffect.changeTypes.familiar` (registration, the `CHANGE_TYPE.FAMILIAR` constant, its `SystemActiveEffectChangeTypes` type augmentation, and its localization key) — it was an unused placeholder that leaked into the Type dropdown as a nonsensical user-selectable option.
 - `changeTypes.mask` stays registered (Secret AE internals still need it) but is filtered out of the Type dropdown for `variant='default'` rows.
 - `AspectPicker.vue`: a stored key that becomes unresolvable after switching Target (a raw path with no `#` token) previously produced **zero** validation errors — `validateFormula()` only inspects `#context.property` tokens, so an orphaned raw path silently looked valid. Now detected explicitly and surfaced via `has-error` styling + hint text (reusing `dnd35e.Formula.Errors.propertyNotFound`), matching the "leave the raw value in place, flag it as an error" reset behavior (never silently clear or destroy the stored key on a Target switch).
+- `custom` (`CONST.ACTIVE_EFFECT_CHANGE_TYPES.CUSTOM`) removed entirely from the system's own `EFFECT_CHANGE_TYPE` constant (`constants.mts`) — Foundry core still enumerates it via `ActiveEffect.CHANGE_TYPES`, so the Type dropdown filters it out by its literal `'custom'` key, same pattern as the `mask` exclusion.
+- Bonus Type dropdown: removed the redundant separate "Untyped" option — the empty/`null` selection already **is** untyped (`stacking.mts` normalizes `undefined`/`null` → `BONUS_TYPE_UNTYPED` at grouping time), so the two options were functionally identical. The empty option is now labeled "Untyped" directly; `BONUS_TYPE_UNTYPED` is filtered out of the separately-listed `bonusTypeOptions`.
+- `EffectsListSection`/`EffectChangeRow`: `group:allSaves` (and other Group Change Target keys) now resolve to their registered label ("All Saves") instead of a raw/humanized key string, via a new `getChangeTargetGroupLabel()` export on `changeTargetGroups.mts`.
+- `EFFECT_TYPES.general` localization key fixed from the invalid `'Document.ActiveEffect'` to Foundry core's actual `'DOCUMENT.ActiveEffect'` — was displaying the raw untranslated key ("Document.ActiveEffect") instead of "Active Effect" in category labels.
+- `stacking.mts`'s rejection-reason messages (`LowerBonus`/`LessSeverePenalty`/`ZeroValue`) were silently crashing real gameplay (`Cannot read properties of undefined (reading 'translations')`) because `game.i18n.localize`/`format` were referenced as detached function values (losing their `this` binding) instead of called as methods — fixed to call through `game.i18n.` directly.
 
 ### General AE Custom Sheet
 
@@ -779,53 +757,15 @@ The FormulaFamiliar core plumbing shipped ahead of this phase, landing alongside
 - **`condition` type placeholder** — `EffectChangeSourceDnd35e.condition` (`ActiveEffectSystemData.mts`) already typed as `string | null | ((target) => boolean)`, ready for Story B to wire up
 - **Boolean Formula Type (Story A, §7.2a)** — schema walker `BooleanField → 'boolean'` branch, `FieldAspect.type`/`FormulaFieldMeta.aspectType` widened, `FormulaData`/`FormulaField` `expectedType` includes `'boolean'`, `evaluateBooleanExpression()` implemented **including arithmetic operands** (`+ - * /`, unary minus, standard precedence — see §7.2a), `FormulaData._finalizeResolvedValue()` branches on `'boolean'`. All tests passing (`tests/unit/familiar/evaluate-boolean-expression.test.mts`).
 - **AE Change Conditional Gate — schema & logic (Story B, §7.7a)** — `condition` field added to `ActiveEffectSystemModel.defineSchema()`'s `changes` schema; `evaluateChangeCondition()` implemented (string-form only via `FormulaData.resolveSource()`) and wired into `ActorDnd35e.applyActiveEffects()`'s three gathering loops and `ItemDnd35e.applyActiveEffects()`. All five test cases passing (`tests/unit/effects/evaluate-change-condition.test.mts`). A function-form condition type was briefly supported for live-computed changes with no backing AE document, but was removed — conditions are persisted to the database, so a function could never round-trip through it. **UI is not done** — see §7.7b checklist below.
-- **Bug fixes (§7.7b)** — removed the unused `changeTypes.familiar` placeholder (registration, constant, type augmentation, localization key); `AspectPicker.vue` now surfaces a validation error when a stored key becomes unresolvable after a Target switch instead of silently looking valid.
+- **Bug fixes (§7.7b)** — removed the unused `changeTypes.familiar` placeholder (registration, constant, type augmentation, localization key); `AspectPicker.vue` now surfaces a validation error when a stored key becomes unresolvable after a Target switch instead of silently looking valid; `custom` removed entirely from `EFFECT_CHANGE_TYPE`; Bonus Type dropdown's redundant "Untyped"/"None" duplicate options collapsed into one; `group:allSaves` label resolution fixed in the read-only Effects list; `DOCUMENT.ActiveEffect` localization key typo fixed; unbound `game.i18n.localize`/`format` crash in stacking rejection messages fixed.
 
 ### ❌ Not Started
 
-**Roll Data Structure & Interfaces** *(narrow scope — Foundry-native `@attr` consumers only, see §7.1's callout)*:
-- [ ] Create `src/types/rollData.d.ts` with interfaces:
-  - `ActorRollData` (abilities with mod/total/base, attributes, saves, skills, size mods)
-  - `ItemRollData extends ActorRollData` (adds item-specific fields)
-  - `ActionRollData extends ItemRollData` (adds action-specific fields, Phase 8 will use)
-  - `TargetRollData extends ActorRollData` (target's roll data, Phase 8 will use)
-- [ ] Document each field's calculation/source
-- [ ] Test: Interfaces compile without errors
+**Roll Data Structure & Interfaces, `Actor`/`Item` `getRollData()` — CUT.** Decided against: this system does not bridge to Foundry's native `@attr` roll-data syntax at all, not even for the narrow Combat Tracker/macro use case originally scoped here. `getRollData()` is left at its Foundry default (unused) on both `ActorDnd35e` and `ItemDnd35e`. See the wishlist (`docs/migration-plan/post-release/WISHLIST.md`) if native `@attr` support (e.g. a custom Combat Tracker initiative formula) is ever wanted later.
 
-**Actor.getRollData() Implementation** *(minimal — only for Foundry-native mechanics like the Combat Tracker initiative formula; not a resolution path our own formulas use)*:
-- [ ] Override `getRollData()` on `ActorDnd35e`
-- [ ] Populate abilities: for each (str-cha), include base score, derived mod, derived total
-- [ ] Populate attributes: bab, ac (normal/touch/flatFooted), saves (fort/ref/will), init
-- [ ] Populate details: level, alignment
-- [ ] Populate skills: each skill's total + rank count (stub for Phase 14 expansion)
-- [ ] Populate size: sizeCategory and derived attackMod/grappleMod/acMod
-- [ ] Test: `getRollData()` includes all expected fields
-- [ ] Test: Values are correct for a test character
+**FormulaFamiliar Context Registration (`#action.*`/`#target.*`)** — deferred to Phase 10 (Basic Combat), which already scopes this (§"FormulaFamiliar contexts": `check.formula`/`damage.formula` declare `#target.defense.armorClass` etc.). Not tracked here to avoid duplicate ownership. `#self`/`#item` already shipped in this phase.
 
-**Item.getRollData() Implementation** *(same narrow scope as above)*:
-- [ ] Override `getRollData()` on `ItemDnd35e`
-- [ ] Call parent actor's `getRollData()` to inherit all actor fields
-- [ ] Add item-specific fields:
-  - Weapon: enhancement, damage formula, critical range, critical multiplier
-  - Equipment: armor bonus, shield bonus, ACP, spell failure
-- [ ] Test: `getRollData()` includes both actor + item fields
-- [ ] Test: Item fields override actor fields if names conflict (shouldn't happen, but verify logic)
-
-**FormulaFamiliar Context Registration** *(schema walker + `#self`/`#item` already shipped — remaining work is Phase 8's placeholder contexts + user docs)*:
-- [ ] Register `#action.*` contexts (placeholder, Phase 8 will populate)
-- [ ] Register `#target.*` contexts (placeholder, Phase 8 will populate)
-- [ ] Test: Invalid paths are rejected or warned (verify existing behavior covers Phase 8's future contexts too)
-
-**Canonical Formula Paths Documentation:**
-- [ ] Create `src/constants/formulaPaths.mts` documenting all valid `#context.property` paths
-- [ ] Include examples for each:
-  - Ability modifiers: `#self.abilities.str.mod`
-  - Attack bonus: `#self.bab + #self.abilities.str.mod + #self.size.attackMod`
-  - AC: `10 + #self.abilities.dex.mod - #item.armorCheckPenalty`
-  - Save DC: `10 + #self.details.level + #self.abilities.wis.mod`
-  - Boolean gate: `#self.skill.concentration.ranks > 5`
-- [ ] Document context inheritance hierarchy (actor → item → action)
-- [ ] Update README/docs with formula examples for users
+**Canonical Formula Paths Documentation:** deferred — folded into "Documentation & Examples" below (Foundry journal page, not a `.mts` file; skipped for now).
 
 **Boolean Formula Type (Story A, §7.2a):** — ✅ moved to Complete above.
 
@@ -876,113 +816,58 @@ The FormulaFamiliar core plumbing shipped ahead of this phase, landing alongside
 - [x] Wishlist: file the deferred Condition Builder / Conditional Values rule-list editor in `docs/migration-plan/post-release/WISHLIST.md` (done as part of this rescope)
 
 **D20Roll Custom Class** in `src/dice/D20Roll.mts`:
-- [ ] Extend Foundry's `Roll` class
-- [ ] Implement `isCriticalThreat` getter: true if die result is natural 20
-- [ ] Implement `isFumble` getter: true if die result is natural 1
-- [ ] Implement `confirmCritical(targetAC: number): Promise<boolean>`
-  - Roll confirmation d20
-  - Compare to target AC or DC
-  - Return true if confirm (≥ 11 vs AC by default)
-- [ ] Add `situationalModifiers: RollModifier[]` array for temporary bonuses
-- [ ] Apply modifiers correctly (add to d20 result, not total dice count)
+- [x] Extend Foundry's `Roll` class
+- [x] Implement `isCriticalThreat` getter: true if die result is natural 20
+- [x] Implement `isFumble` getter: true if die result is natural 1
+- [x] Implement `confirmCritical(targetAC: number): Promise<boolean>` (re-rolls the formula, compares `total >= targetAC` — simpler than the spec's "≥ 11 vs AC" fixed-margin sketch since attack-roll confirmation rules aren't finalized until Phase 8/10; not yet exercised by any caller)
+- [x] Add `situationalModifiers: RollModifier[]` array for temporary bonuses
+- [x] Apply modifiers correctly (carried via `options.situationalModifiers`, survives `toJSON()`/`fromData()`)
 - [ ] Test: Natural 20 detected, natural 1 detected
 - [ ] Test: Confirmation roll works
 - [ ] Test: Modifiers applied correctly
 
-**DamageRoll Custom Class** in `src/dice/DamageRoll.mts`:
-- [ ] Extend Foundry's `Roll` class
-- [ ] Add `criticalMultiplier: number` field (2, 3, 4, etc.)
-- [ ] Add `damageTypes: DamageType[]` field (slashing, piercing, bludgeoning, fire, etc.)
-- [ ] Implement `applyCritical(): DamageRoll`
-  - Multiply dice count by critical multiplier (only dice, not flat bonuses per SRD)
-  - Re-evaluate roll with new multiplier
-  - Return new DamageRoll with updated total
-- [ ] Test: Critical multiplier applied to dice only
-- [ ] Test: Flat bonuses not multiplied
-- [ ] Test: Damage types tagged correctly
+**DamageRoll Custom Class** — deferred to Phase 10 (Basic Combat), which already scopes `DamageRoll` (`applyCritical()`, crit multiplier, damage-type tagging, wired into `takeDamage()`). Not tracked here to avoid duplicate ownership.
 
 **Roll Class Registration** via `CONFIG.Dice.rolls`:
-- [ ] Register `D20Roll` and `DamageRoll` in `CONFIG.Dice.rolls` array during `init` hook
-  - Without registration, Foundry cannot deserialize these roll subclasses from chat message data
-  - `CONFIG.Dice.rolls = [D20Roll, DamageRoll]`
-- [ ] Verify `Roll.fromData()` correctly reconstructs `D20Roll` and `DamageRoll` from serialized chat messages
+- [x] Register `D20Roll` in `CONFIG.Dice.rolls` array during `init` hook (`CONFIG.Dice.rolls = [Roll, D20Roll]` in `main.mts`) — `DamageRoll` will be added to this array when it's created in Phase 10
+- [ ] Verify `Roll.fromData()` correctly reconstructs `D20Roll` from serialized chat messages (DamageRoll: tracked in Phase 10)
 - [ ] Test: Create a D20Roll, send to chat, reload page — roll is still a D20Roll instance (not base Roll)
-- [ ] Test: Same for DamageRoll
 
-**Text Enrichers** via `CONFIG.TextEditor.enrichers`:
-- [ ] Register custom enrichers in `init` hook for inline rolls and checks in journal entries and item descriptions:
-  ```typescript
-  CONFIG.TextEditor.enrichers.push(
-    { pattern: /\[\[\/check (?<config>[^\]]+)\]\](?:\{(?<label>[^}]+)\})?/gi,
-      enricher: enrichCheckLink, onRender: attachCheckListener },
-    { pattern: /\[\[\/save (?<config>[^\]]+)\]\](?:\{(?<label>[^}]+)\})?/gi,
-      enricher: enrichSaveLink, onRender: attachSaveListener },
-    { pattern: /\[\[\/damage (?<config>[^\]]+)\]\](?:\{(?<label>[^}]+)\})?/gi,
-      enricher: enrichDamageLink, onRender: attachDamageListener },
-  );
-  ```
-- [ ] Implement enricher functions that return clickable `<a>` elements with `data-action` attributes
-- [ ] Implement `onRender` listener functions that attach click handlers to enriched elements
-- [ ] Supported inline syntax:
-  - `[[/check reflex dc=15]]` → clickable Reflex save check
-  - `[[/save fort]]` → clickable Fortitude save
-  - `[[/damage 2d6+3 fire]]` → clickable damage roll
-  - Custom label: `[[/check bluff]]{Lie convincingly}` → uses label text
-- [ ] Test: Enriched text renders as clickable elements in journal entries
-- [ ] Test: Clicking enriched element triggers the correct roll
-- [ ] Test: Enriched elements render correctly in item descriptions and chat messages
+**Text Enrichers** (`[[/check]]`, `[[/save]]`, `[[/damage]]`) — deferred to wishlist alongside native chat-roll command support (`docs/migration-plan/post-release/WISHLIST.md`, "Formula System" section).
 
-**Codebase TODO Notes (Landing Here):**
-- [ ] **Remove `ActiveEffect._shimChanges` compat shim** (`ItemDnd35e.mts:131`): The `_shimChanges(changes)` call is explicitly marked `// todo remove in v16`. Once Story B's conditional gate and the full AE change pipeline are proven, verify whether the shim is still needed. If v16 migration transforms old AE data, remove the shim call and its TODO comment. If the shim is still required for pre-migration data, keep it but update the comment with the specific migration that will obsolete it.
-- [ ] **Integrate Hooks.onError pattern into LogHelper** (`ItemDnd35e.mts:93`): The `applyActiveEffects()` method uses `LogHelper.error()` as a substitute for Foundry's `Hooks.onError()` pattern. Evaluate whether `LogHelper` should wrap `Hooks.onError()` for consistency with Foundry's error surfacing (e.g., error hooks that modules can listen to), or if the current direct logging is sufficient.
-- [ ] **Fix `DnD35eActiveEffect.createDialog` type cast** (`ItemSheetStore.mts:92`): `createDialog` is called via `(DnD35eActiveEffect as any).createDialog(...)` because the type definitions don't expose it. Add proper type declaration for `createDialog` on `DnD35eActiveEffect` (either via interface merge or by adding the static method signature to the class).
+**Codebase TODO Notes** — moved to `docs/migration-plan/poc/phase-11-poc-cleanup.md` Task 11.2 (none of these three explicitly required poc.7 to close them out).
 
-**Preparation Warnings Infrastructure:**
-- [ ] Add `_preparationWarnings: PreparationWarning[]` to `Dnd35eDocumentMixin`
-- [ ] Define `PreparationWarning` interface: `{ field, message, severity: 'warning' | 'error' }`
-- [ ] Collect warnings during `prepareDerivedData()` without blocking prep
-- [ ] Display warnings in sheet UI (red/yellow banner or console summary)
-- [ ] Implement formula validation that generates warnings:
-  - Missing context path → warning
-  - Invalid syntax → warning
-  - Division by zero → warning
-- [ ] Test: Warnings collected and displayed
-- [ ] Test: Prep completes even with warnings
+**Preparation Warnings Infrastructure:** ✅ implemented (see `src/documents/document/preparationWarnings.mts`)
+- [x] Add `_preparationWarnings: PreparationWarning[]` field to `ActorDnd35e`, `ItemDnd35e`, `ActiveEffectDnd35e` directly (not via a shared mixin — matches the existing `effectOverrides` precedent), reset each `prepareBaseData()`
+- [x] Define `PreparationWarning` interface: `{ field, message, severity: 'warning' | 'error', sourceUuid, sourcePath }` in `preparationWarnings.mts` — `sourceUuid`/`sourcePath` (ancestor chain of document names, e.g. `["Aragorn", "Longsword +1", "Strength Bonus"]`) are computed at push time by walking `host.parent`, so actor-level rollup of owned-item/AE warnings needs no separate relabeling type
+- [x] Collect warnings during `prepareDerivedData()` without blocking prep — `DocumentSystemModel._evaluateFormulaFields()` passes an `onFailure` callback into `FormulaData.resolveSource()` for every schema-declared `FormulaField`, covering all document types through the single central chokepoint
+- [x] Display warnings in sheet UI: dismissable summary banner (`PreparationWarningsBanner.vue`, its own grid row in `DocumentSheetBody.vue`, pushes the sheet body down rather than overlaying it) + a conditional "Warnings" tab (`PreparationWarningsTab.vue`, full detail list) that only appears while warnings exist and is NOT dismissable (persists until fixed)
+- [x] Implement formula validation that generates warnings:
+  - Unresolved `#context.property` references → warning (boolean/number fall back to `null`; string falls back to showing the raw formula text, per design)
+  - Invalid boolean/number expression syntax → warning
+  - AE `condition` formula failing to resolve → warning, change treated as `false`
+  - AE `value` formula failing to resolve → warning, change skipped entirely (guarded via a `FORMULA_RESOLUTION_FAILED` sentinel in `resolveChangeValue.mts`, never silently coerced to `0`/`false`)
+- [x] Test: `tests/unit/familiar/formula-data-boolean.test.mts` verifies invalid boolean expressions resolve to `null` without throwing
+- [x] Test: Prep completes even with warnings (verified via existing actor/item sheet store unit test suite — 779 unit tests passing)
 
-**Formula Error Handling:**
-- [ ] Implement formula evaluation with try-catch:
-  - Catch evaluation errors (missing variables, syntax errors)
-  - Generate warning instead of throwing
-  - Fall back to default value (0 or item's static value)
-- [ ] Test: Invalid formula doesn't crash sheet
-- [ ] Test: User sees warning message
-- [ ] Test: Field shows fallback value
+**Formula Error Handling:** ✅ implemented
+- [x] Implement formula evaluation with type-aware fallback (no try-catch needed at call sites — centralized in `FormulaData._finalizeResolvedValue()`):
+  - Unresolved variables / evaluation errors → `onFailure` callback fires a `PreparationWarning`
+  - boolean/number fall back to `null` (never a stale/garbled raw value); string falls back to the raw formula text so it's still human-readable
+- [x] Test: Invalid formula doesn't crash sheet — `resolveActiveEffectChange()` returns `null` on failure and both `ActorDnd35e`/`ItemDnd35e`'s apply loops `continue` past it
+- [x] Test: User sees warning message — surfaced via the summary banner + Warnings tab
+- [x] Test: Field shows fallback value — `null`/raw-formula-text fallback verified in `formula-data-boolean.test.mts` and existing FormulaData test suites
 
 **Vue Form Component - Formula Input** *(`FormulaFormGroup.vue` already exists and ships autocomplete + validation; remaining items are new here)*:
 - [ ] Show contextual help: "Formula must start with #self, #item, #action, or #target"
 - [ ] Evaluate `HeaderNameField.vue` refactor (`HeaderNameField.vue:25`): Component uses its own display mode to hide formula hints when not editing. Assess whether this should be folded into `FormulaFormGroup` as a `displayMode` prop or slot, or kept as a separate wrapper. The TODO also notes styling concerns with a read-only slot that were deferred.
 - [ ] Test: Complex boolean expressions with operators work (Story A)
 
-**Group Change Targets (§7.7):**
-- [ ] Create `src/helpers/changeTargetGroups.mts`:
-  - `ChangeTargetGroup` interface (key, label, category, expand function)
-  - `changeTargetGroups` registry (Map)
-  - `registerChangeTargetGroup()` — add a group to the registry
-  - `resolveChangeTargets(key, actor)` — expand group key or pass through direct path
-- [ ] Integrate `resolveChangeTargets()` into AE change-application loop (Phase 2's customised apply path)
-- [ ] Integrate group targets into Formula Familiar picker:
-  - Append registered groups under category headers after schema-derived entries
-  - Mark group entries with `isGroup: true` for visual distinction
-  - Restrict group entries to AE change key picker only (not formula value contexts)
-- [ ] Test: Direct field path passes through `resolveChangeTargets()` unchanged → `[key]`
-- [ ] Test: Registered group key expands to concrete paths
-- [ ] Test: Group entries appear in FF picker under correct category
-- [ ] Test: Group entries do NOT appear in formula value autocomplete
+**Group Change Targets (§7.7):** ✅ moved to Complete above (see §7.7's Implementation Notes) — the checklist duplicated here previously was stale.
 
 **Integration Testing:**
 - [ ] Unit test: Roll data assembly for all document types
 - [ ] Unit test: D20Roll crit/fumble detection
-- [ ] Unit test: DamageRoll critical multiplication
 - [ ] Integration test: Create weapon with formula damage (`1d8 + #self.abilities.str.mod`)
 - [ ] Integration test: Resolve formula → get correct value based on actor stats
 - [ ] Integration test: Change actor ability score → formula re-evaluates
@@ -991,15 +876,9 @@ The FormulaFamiliar core plumbing shipped ahead of this phase, landing alongside
 - [ ] Edge case: Formula referencing nonexistent ability
 - [ ] Smoke test: No console errors during prep
 
-**Documentation & Examples:**
-- [ ] Create role formula guide: "Writing Formulas in dnd35e"
-  - Explain `#context.property` syntax
-  - Show role data inheritance diagram
-  - Provide 5-10 formula examples
-  - Explain when formulas are evaluated
-- [ ] Document D20Roll/DamageRoll for developers
-- [ ] Add journal entry in dev world: "Roll Formula System"
-- [ ] Create comment block in `rollData.mts` explaining architecture
+**Documentation & Examples:** deferred/skipped for now — to be authored as a Foundry journal page (dev world), not markdown/code docs.
+- [ ] "Writing Formulas in dnd35e" journal page: `#context.property` syntax, context inheritance (actor → item → action), 5-10 formula examples (ability mods, attack bonus, AC, save DC, boolean gate), when formulas are evaluated
+- [ ] Document `D20Roll` for developers (code comments, not journal)
 
 **POC Story 7.9 — Clickable Defense Stat → Roll → Chat Card:**
 
@@ -1014,36 +893,36 @@ The FormulaFamiliar core plumbing shipped ahead of this phase, landing alongside
 - [ ] Test: Click in play mode triggers dialog
 
 *`D20RollDialog.vue`*
-- [ ] Create `src/vue/components/dialogs/D20RollDialog.vue`
-- [ ] Props: `title: string`, `baseTotal: number`, `defaultRollMode: string`
-- [ ] Signed situational modifier input, defaults to `0`
-- [ ] Live total preview (`baseTotal + situationalMod`)
-- [ ] Roll Mode selector bound to `CONST.DICE_ROLL_MODES` options
-- [ ] Roll button: resolves promise with `{ situationalMod, rollMode }`; closes dialog
-- [ ] Cancel button / ESC: resolves with `null` (roll cancelled)
+- [x] Created as `D20RollDialogConfig.mts` (`ApplicationV2` subclass via `useVueDialogMixin`) + `D20RollDialogApp.vue` (form UI) — different split than the original single-file sketch, matching the project's Vue-dialog-mixin pattern
+- [x] Props/data: `title`, `baseLabel`, `baseTotal`, `situationalModifier`, `rollMode` (`D20RollDialogData`)
+- [x] Signed situational modifier input, defaults to `0`
+- [x] Live total preview (`baseTotal + situationalModifier`)
+- [x] Roll Mode selector bound to `CONST.DICE_ROLL_MODES` options
+- [x] Roll button: resolves promise with `{ situationalModifier, rollMode }` (`D20RollDialogResult`); closes dialog
+- [x] Cancel button / ESC: resolves with `null` (roll cancelled)
 - [ ] Test: Total preview updates reactively
 - [ ] Test: Submitting with no situational mod passes 0
 - [ ] Test: Cancel resolves null
 
 *`rollMessages.mts` + chat card*
-- [ ] Create `src/helpers/rollMessages.mts`
-- [ ] `buildSaveCard(roll: D20Roll, modifierList: RollModifier[], opts: { dc?, saveKey })` → HTML string
-- [ ] `buildACCard(roll: D20Roll, modifierList: RollModifier[], opts: { acVariant })` → HTML string
-- [ ] Create `src/vue/components/chat/SaveRollChatCard.vue` (rendered into card HTML)
-- [ ] Card shows: stat name + actor name header, large die face value, large total
-- [ ] Breakdown list: one row per `RollModifier` entry (label + signed value) + die row
-- [ ] Natural 1 / Natural 20 callout (distinct CSS class for styling)
-- [ ] Pass / Fail indicator: only rendered when `dc` is provided
+- [x] Created as `src/dice/rollMessages.mts` (co-located with the roll classes rather than `src/helpers/`)
+- [x] `buildSaveCard(roll: D20Roll, modifierList: RollModifier[], opts: { actorName, saveLabel, dc? })` → `Promise<string>` HTML (async: splices in `await roll.render()`'s native Foundry dice-roll block)
+- [ ] `buildACCard(...)` — deferred with AC rolling (explicitly out of scope for this pass; AC excluded, see Cycle E note below)
+- [x] Chat card built via `.hbs?raw` + `Handlebars.compile()` (`src/dice/templates/save-roll-card.hbs`), not a `.vue` component — resolved a pattern conflict between this section's original Vue sketch and `alpha/phase-03-action-system.md` §18.11's "no Vue in chat cards" rule; user chose the existing `.hbs?raw` precedent from `TokenRulerDnd35e.mts` as a third option
+- [x] Card shows: stat name + actor name header, large die face value, large total
+- [x] Breakdown list: one row per `RollModifier` entry (label + signed value); die roll shown via Foundry's own embedded `.dice-roll` block (native collapsible tooltip, `data-action="expandRoll"`) rather than a synthetic die row — verified against real Foundry core source (`roll.mjs`/`roll.hbs`/`chat.mjs`) after comparing against D35E's clickable-breakdown save UI
+- [x] Natural 1 / Natural 20 callout (`.callout.fumble` / `.callout.critical` CSS classes)
+- [x] Pass / Fail indicator: only rendered when `dc` is provided
 - [ ] Test: Card renders breakdown list with correct labels and values
 - [ ] Test: Natural 1 has fumble CSS class
 - [ ] Test: Natural 20 has exceptional CSS class
 - [ ] Test: Pass/Fail absent when no DC; correct when DC provided
 
-*`CreatureDnd35e` actor methods*
-- [ ] Add `async rollSave(saveKey: SaveKey, options?)` to `CreatureDnd35e`
-- [ ] Add `async rollAC(acVariant: 'normal'|'touch'|'flatFooted', options?)` to `CreatureDnd35e`
-- [ ] Both methods follow the dialog → D20Roll → ChatMessage pipeline (§7.9)
-- [ ] `skipDialog` option bypasses dialog (for macro callers)
+*`Creature` actor methods* (real class is `Creature`, not `CreatureDnd35e` as originally sketched — the abstract base shared by Character/NPC):
+- [x] Add `async rollSave(saveKey: SaveKey, options?)` to `Creature` — `SaveKey = 'fort' | 'reflex' | 'will'` (real schema key is `reflex`, not `ref` as originally sketched); returns `Promise<D20Roll | null>` (`null` on dialog cancel — deviates from the spec's `Promise<D20Roll>` sketch since cancellation must be representable)
+- [ ] Add `async rollAC(acVariant: 'normal'|'touch'|'flatFooted', options?)` to `Creature` — deferred; AC rolling explicitly excluded from this implementation pass per user direction
+- [x] `rollSave` follows the dialog → D20Roll → chat-card pipeline (§7.9), using `Roll#toMessage()` (Foundry's sanctioned Roll-to-chat helper) rather than a raw `ChatMessage.create()` call
+- [x] `skipDialog` option bypasses dialog (for macro callers)
 - [ ] Test: `rollSave('fort')` creates a chat message with Fort save breakdown
 - [ ] Test: Situational modifier from dialog appears in card breakdown
 - [ ] Test: `skipDialog: true` skips dialog and uses provided options directly

@@ -1,14 +1,17 @@
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
+import type { SenseEntrySource } from '@actors/baseActor/data/index.mjs';
 import type { ItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
 import { createItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
 import type { ConditionDefinition } from '@constants/conditions.mjs';
 import { CONDITIONS } from '@constants/conditions.mjs';
+import type { Size } from '@constants/sizes.mjs';
 import type { DocumentSheetStore, SheetTab } from '@documents/document/index.mjs';
-import { useDocumentSheetStore } from '@documents/document/index.mjs';
+import { preparationWarningsTab, useDocumentSheetStore } from '@documents/document/index.mjs';
 import type { EffectDocumentActions, EffectDocumentGetters, EffectDocumentUtils } from '@documents/document/logic/index.mjs';
 import { useEffectDocumentActions } from '@documents/document/logic/index.mjs';
+import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
-import { FINAL_EFFECT_CHANGE_PHASE } from '@effects/baseActiveEffect/data/index.mjs';
+import { FINAL_EFFECT_CHANGE_PHASE, POST_EFFECT_CHANGE_PHASE } from '@effects/baseActiveEffect/data/index.mjs';
 import type { EffectRowStore } from '@effects/baseActiveEffect/sheet/effectRowStoreRegistry.mjs';
 import { createEffectRowStore } from '@effects/baseActiveEffect/sheet/effectRowStoreRegistry.mjs';
 import type { ActiveEffectDnd35e } from '@effects/index.mjs';
@@ -17,7 +20,7 @@ import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import { PHYSICAL_ITEM_TYPES } from '@items/itemTypes.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 
 interface UseActorSheetStoreOptions {
   defaultTabs?: SheetTab[];
@@ -100,15 +103,30 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
     return rows;
   });
 
-  // Live, no-backing-document change this actor contributes to itself (see
-  // `ActorDnd35e.getSelfContributedChanges()`) - currently only Creature's encumbrance
-  // penalty produces one, but this reads generically off the base method so any future
-  // self-contributed source surfaces here automatically. `null` when nothing applies
-  // (base actors, or a Creature that isn't currently encumbered).
-  const selfContributedEffect = computed<SelfContributedEffectRow | null>(() => {
-    const changes = document.value.getSelfContributedChanges(FINAL_EFFECT_CHANGE_PHASE);
-    const label = changes[0]?.label;
-    return label ? { label, icon: 'icons/svg/downgrade.svg', changes } : null;
+  // Live, no-backing-document changes this actor contributes to itself (see
+  // `ActorDnd35e.getSelfContributedChanges()`) - currently Creature's encumbrance penalty
+  // ('final') and save/AC derivation ('post') produce these, but this reads generically off
+  // the base method so any future self-contributed source surfaces here automatically.
+  // Grouped by each change's own `label` into one row per source (e.g. "Heavily Loaded",
+  // "Constitution", "Dexterity") rather than a single row named after whichever change
+  // happens to come first - otherwise unrelated changes end up misattributed to it.
+  const selfContributedEffects = computed<SelfContributedEffectRow[]>(() => {
+    const changes = [
+      ...document.value.getSelfContributedChanges(FINAL_EFFECT_CHANGE_PHASE),
+      ...document.value.getSelfContributedChanges(POST_EFFECT_CHANGE_PHASE),
+    ];
+    const changesByLabel = new Map<string, EffectChangeDataDnd35e[]>();
+    for (const change of changes) {
+      if (!change.label || change.hideFromEffectsTab) continue;
+      const existing = changesByLabel.get(change.label);
+      if (existing) existing.push(change);
+      else changesByLabel.set(change.label, [change]);
+    }
+    return Array.from(changesByLabel, ([label, groupedChanges]) => ({
+      label,
+      icon: 'icons/svg/downgrade.svg',
+      changes: groupedChanges,
+    }));
   });
 
   // Row-scoped stores for this actor's inventory rows - cached per item uuid so a row
@@ -135,7 +153,7 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
   // Row-scoped stores for this actor's own owned effect rows (Effects tab) - cached per
   // effect uuid so a row remounting reuses the same store instead of rebuilding it. Never
   // touches `game.dnd35e.stores`; see effectRowStoreRegistry.mts. Transferred/self-contributed
-  // effect rows (see `transferredEffects`/`selfContributedEffect` above) are read-only and
+  // effect rows (see `transferredEffects`/`selfContributedEffects` above) are read-only and
   // don't get a row store here - editing still happens from the owning item's own tab.
   const effectRowStoreCache = new Map<string, EffectRowStore>();
 
@@ -151,10 +169,24 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
   const refreshEffectRowStore = (rowStore: EffectRowStore, effect: ActiveEffectDnd35e): Promise<void> =>
     (rowStore._storeUtils.refreshDocument as (doc?: ActiveEffectDnd35e | null) => Promise<void>)(effect);
 
+  // Own warnings plus every owned item's - each warning already carries its full
+  // sourcePath/sourceUuid from where it was pushed, so no relabeling needed here.
+  const preparationWarnings = computed<PreparationWarning[]>(() => [
+    ...(document.value._preparationWarnings ?? []),
+    // document.items is a Foundry Collection (extends Map), not an array - no .flatMap.
+    ...[...document.value.items].flatMap((item) => item._preparationWarnings ?? []),
+  ]);
+
   const documentGetters = {
     ...baseStore.documentGetters,
     ...effectGetters,
     landSpeed: computed(() => getViewAwareFieldValue<number>('system.speed.land') ?? 0),
+    size: computed(() => getViewAwareFieldValue<Size>('system.size') ?? 'medium'),
+    senses: computed(() => {
+      const raw = getViewAwareFieldValue<SenseEntrySource[]>('system.senses') ?? [];
+      // Clone so Vue's reactivity detects in-place mutations from Foundry's mergeObject
+      return foundry.utils.deepClone(raw);
+    }),
 
     items: computed(() => [...baseStore._storeUtils.document.value.items]),
     physicalItems: computed(() => [...baseStore._storeUtils.document.value.items]
@@ -163,10 +195,23 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
 
     conditions,
     transferredEffects,
-    selfContributedEffect,
+    selfContributedEffects,
     getOrCreateItemRowStore,
     getOrCreateEffectRowStore,
+    preparationWarnings,
   };
+
+  // Conditional "Warnings" tab: appears while any preparation warning exists (own or an
+  // owned item's), persists until fixed (not dismissable, unlike the summary banner).
+  const { tabStore } = baseStore._storeUtils;
+  watch(
+    () => preparationWarnings.value.length > 0,
+    (hasWarnings) => {
+      const otherTabs = tabStore.tabs.value.filter((tab) => tab.id !== preparationWarningsTab.id);
+      tabStore.replaceTabs(hasWarnings ? [...otherTabs, preparationWarningsTab] : otherTabs, false);
+    },
+    { immediate: true }
+  );
 
   const documentActions = {
     ...baseStore.documentActions,
@@ -220,13 +265,16 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
 
 interface ActorGetters {
   landSpeed: ComputedRef<number>;
+  size: ComputedRef<Size>;
+  senses: ComputedRef<SenseEntrySource[]>;
   items: ComputedRef<ItemDnd35e[]>;
   physicalItems: ComputedRef<PHYSICAL_ITEMS[]>;
   conditions: ComputedRef<ConditionRow[]>;
   transferredEffects: ComputedRef<TransferredEffectRow[]>;
-  selfContributedEffect: ComputedRef<SelfContributedEffectRow | null>;
+  selfContributedEffects: ComputedRef<SelfContributedEffectRow[]>;
   getOrCreateItemRowStore: (item: PHYSICAL_ITEMS) => ItemRowStore;
   getOrCreateEffectRowStore: (effect: ActiveEffectDnd35e) => EffectRowStore;
+  preparationWarnings: ComputedRef<PreparationWarning[]>;
 }
 
 interface ActorActions {

@@ -288,13 +288,13 @@ function resolveActiveEffectChanges(
 
       let rejection: string;
       if (app.value > 0) {
-        rejection = `${bonusType} type, lower bonus (${app.value} < ${bonusWinner!.value})`;
+        rejection = game.i18n.format('dnd35e.EFFECT.StackResult.Rejections.LowerBonus', { lowerValue: app.value, winnerValue: bonusWinner!.value });
       }
       else if (app.value < 0) {
-        rejection = `${bonusType} type, less severe penalty (${app.value} > ${penaltyWinner!.value})`;
+        rejection = game.i18n.format('dnd35e.EFFECT.StackResult.Rejections.LessSeverePenalty', { lessSevereValue: app.value, winnerValue: penaltyWinner!.value });
       }
       else {
-        rejection = `${bonusType} type, zero value`;
+        rejection = game.i18n.localize('dnd35e.EFFECT.StackResult.Rejections.ZeroValue');
       }
 
       history.push({

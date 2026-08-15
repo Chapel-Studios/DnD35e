@@ -67,7 +67,6 @@ beforeEach(() => {
   ActiveEffectClass.CHANGE_TYPES = {
     [EFFECT_CHANGE_TYPE.ADD]: {},
     [EFFECT_CHANGE_TYPE.OVERRIDE]: {},
-    [EFFECT_CHANGE_TYPE.CUSTOM]: {},
   };
   ActiveEffectClass.applyChange = vi.fn((_doc: unknown, change: { key: string; value: unknown }) => ({ [change.key]: change.value }));
 });

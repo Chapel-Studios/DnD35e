@@ -12,7 +12,7 @@ import { computed, defineComponent, h } from 'vue';
 
 /**
  * Tests for `useActorSheetStore`'s three Actor Effects tab getters
- * (`conditions`, `transferredEffects`, `selfContributedEffect`).
+ * (`conditions`, `transferredEffects`, `selfContributedEffects`).
  *
  * The composable is not designed to be called outside a component's `setup()`
  * (it calls Vue's `provide`/`inject`), so we mount a tiny host component that
@@ -128,24 +128,53 @@ describe('useActorSheetStore — Actor Effects tab getters', () => {
     expect(gmStore.documentGetters.transferredEffects.value).toHaveLength(1);
   });
 
-  it('selfContributedEffect is null when getSelfContributedChanges returns no changes', () => {
+  it('selfContributedEffects is empty when getSelfContributedChanges returns no changes', () => {
     const document = mkDocument({ getSelfContributedChanges: vi.fn(() => []) });
     const store = mountStore(document);
-    expect(store.documentGetters.selfContributedEffect.value).toBeNull();
+    expect(store.documentGetters.selfContributedEffects.value).toEqual([]);
   });
 
-  it('selfContributedEffect summarizes the changes under the first change\'s label', () => {
-    const changes = [
+  it('selfContributedEffects groups changes by their own label into separate rows', () => {
+    const finalChanges = [
       { key: 'system.encumbrance.maxDexBonus', value: 3, type: 'downgrade', phase: 'final', target: 'actor', isSystem: true, label: 'Moderately Loaded' },
       { key: 'system.abilities.dex.mod', value: 3, type: 'downgrade', phase: 'final', target: 'actor', isSystem: true, label: 'Moderately Loaded' },
     ];
-    const document = mkDocument({ getSelfContributedChanges: vi.fn(() => changes) });
+    const postChanges = [
+      { key: 'system.saves.fort', value: 0, type: 'add', phase: 'post', target: 'actor', isSystem: true, label: 'Constitution' },
+      { key: 'system.saves.reflex', value: 6, type: 'add', phase: 'post', target: 'actor', isSystem: true, label: 'Dexterity' },
+    ];
+    // selfContributedEffects concatenates 'final' and 'post' results - mock must be phase-aware
+    // so each call only returns its own phase's changes.
+    const document = mkDocument({
+      getSelfContributedChanges: vi.fn((phase: string) => (phase === 'final' ? finalChanges : postChanges)),
+    });
     const store = mountStore(document);
 
-    const row = store.documentGetters.selfContributedEffect.value;
-    expect(row).not.toBeNull();
-    expect(row?.label).toBe('Moderately Loaded');
-    expect(row?.icon).toBe('icons/svg/downgrade.svg');
-    expect(row?.changes).toHaveLength(2);
+    const rows = store.documentGetters.selfContributedEffects.value;
+    expect(rows).toHaveLength(3);
+
+    const loaded = rows.find((row) => row.label === 'Moderately Loaded');
+    expect(loaded?.changes).toHaveLength(2);
+
+    const constitution = rows.find((row) => row.label === 'Constitution');
+    expect(constitution?.changes).toHaveLength(1);
+
+    const dexterity = rows.find((row) => row.label === 'Dexterity');
+    expect(dexterity?.changes).toHaveLength(1);
+  });
+
+  it('selfContributedEffects excludes changes marked hideFromEffectsTab', () => {
+    const postChanges = [
+      { key: 'system.defense.armorClass', value: 10, type: 'add', phase: 'post', target: 'actor', isSystem: true, label: 'Base', hideFromEffectsTab: true },
+      { key: 'system.defense.armorClass', value: 2, type: 'add', phase: 'post', target: 'actor', isSystem: true, label: 'Shield Bonus' },
+    ];
+    const document = mkDocument({
+      getSelfContributedChanges: vi.fn((phase: string) => (phase === 'post' ? postChanges : [])),
+    });
+    const store = mountStore(document);
+
+    const rows = store.documentGetters.selfContributedEffects.value;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].label).toBe('Shield Bonus');
   });
 });

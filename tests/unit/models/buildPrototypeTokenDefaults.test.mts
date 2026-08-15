@@ -1,4 +1,4 @@
-import { buildPrototypeTokenDefaults } from '@actors/creature/logic/buildPrototypeTokenDefaults.mjs';
+import { buildPrototypeTokenDefaults } from '@actors/baseActor/logic/buildPrototypeTokenDefaults.mjs';
 import { describe, expect, it } from 'vitest';
 
 describe('buildPrototypeTokenDefaults', () => {

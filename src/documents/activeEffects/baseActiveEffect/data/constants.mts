@@ -28,9 +28,11 @@ const EFFECT_CHANGE_TARGETS = {
 /**
  * String-based effect change types matching Foundry v14+ CONST.ACTIVE_EFFECT_CHANGE_TYPES keys.
  * Use these instead of the deprecated CONST.ACTIVE_EFFECT_MODES (removed in v16).
+ * CUSTOM is intentionally omitted — foundry is phasing it out with v16, and this system never used it.
+ * https://github.com/foundryvtt/foundryvtt/issues/5842
+ * TODO: update this note in v16
  */
 const EFFECT_CHANGE_TYPE = {
-  CUSTOM: 'custom',
   MULTIPLY: 'multiply',
   ADD: 'add',
   SUBTRACT: 'subtract',
@@ -56,12 +58,17 @@ const ALL_CHANGE_TYPES = [
 
 const INITIAL_EFFECT_CHANGE_PHASE = 'initial';
 const FINAL_EFFECT_CHANGE_PHASE = 'final';
-const CORE_EFFECT_CHANGE_PHASE = 'core';
+// Runs after 'final' has fully applied (see ActorDnd35e#prepareData / ItemDnd35e#prepareDerivedData).
+// Reserved for changes that derive a stat from OTHER stats that are themselves settled only at
+// the end of 'final' (e.g. a save total built from an ability mod that encumbrance may have
+// downgraded in the same 'final' pass) - 'final'-phase changes cannot reliably read each other's
+// results since they're all collected then applied in one batch.
+const POST_EFFECT_CHANGE_PHASE = 'post';
 
 const EFFECT_CHANGE_PHASES = [
-  CORE_EFFECT_CHANGE_PHASE,
   INITIAL_EFFECT_CHANGE_PHASE,
   FINAL_EFFECT_CHANGE_PHASE,
+  POST_EFFECT_CHANGE_PHASE,
 ] as const;
 
 type EffectChangeType = typeof EFFECT_CHANGE_TYPE[keyof typeof EFFECT_CHANGE_TYPE] | ChangeType;
@@ -71,13 +78,13 @@ type EffectChangePhase = typeof EFFECT_CHANGE_PHASES[number];
 export {
   ACTIVE_EFFECT_TARGETS,
   ALL_CHANGE_TYPES,
-  CORE_EFFECT_CHANGE_PHASE,
   EFFECT_CHANGE_PHASES,
   EFFECT_CHANGE_TARGET,
   EFFECT_CHANGE_TARGETS,
   EFFECT_CHANGE_TYPE,
   FINAL_EFFECT_CHANGE_PHASE,
   INITIAL_EFFECT_CHANGE_PHASE,
+  POST_EFFECT_CHANGE_PHASE,
   CHANGE_TYPE as SYSTEM_CHANGE_TYPE,
 };
 

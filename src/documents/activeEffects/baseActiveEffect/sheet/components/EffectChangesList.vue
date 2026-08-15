@@ -23,12 +23,11 @@
       data-changes
     >
       <li class="changes-table-header">
-        <span v-if="props.variant === 'default'" class="col-header">{{ targetLabel }}</span>
         <span class="col-header">{{ keyHeaderLabel }}</span>
         <span v-if="props.variant === 'mask'" class="col-header" />
         <span v-if="props.variant === 'default'" class="col-header">{{ typeHeaderLabel }}</span>
         <span class="col-header">{{ valueHeaderLabel }}</span>
-        <span v-if="props.variant === 'default' && props.showBonusType" class="col-header">{{ bonusTypeLabel }}</span>
+        <span v-if="props.variant === 'default'" class="col-header">{{ bonusTypeLabel }}</span>
         <span v-if="props.variant === 'default'" class="col-header">{{ conditionHeaderLabel }}</span>
         <span class="col-header">{{ priorityHeaderLabel }}</span>
         <span v-if="props.showChangeFieldControls" class="col-header">{{ controlsHeaderLabel }}</span>
@@ -42,26 +41,11 @@
         :data-index="index"
       >
         <div class="form-fields">
-          <select
-            v-if="props.variant === 'default'"
-            :name="`system.changes.${index}.target`"
-            :value="change.target ?? 'item'"
-            :disabled="!isChangeEditable(index) || change.isSystem"
-            class="target-select"
-            :title="targetLabel"
-            @change="(e: Event) => updateChangeField(change.id, 'target', (e.target as HTMLSelectElement).value)"
-          >
-            <option v-for="(label, target) in changeTargets" :key="target" :value="target">
-              {{ label }}
-            </option>
-          </select>
-
           <AspectPicker
             :model-value="change.key"
             :placeholder="resolvedKeyPlaceholder"
             :disabled="!isChangeEditable(index) || change.isSystem"
-            :familiar-context="getKeyPickerContext(change.target ?? 'item')"
-            :context-name="store.documentGetters.getTargetFamiliarContextName(change.target ?? 'item')"
+            :contexts="keyPickerContexts"
             hide-context-hint
             @update:model-value="(val: string) => updateChangeKey(change.id, val)"
             @update:error="(err: string | null) => setRowError(index, 'field', err)"
@@ -89,7 +73,7 @@
             :field-path="`system.changes.${index}.value`"
             :on-update="(val: string) => updateChangeField(change.id, 'value', val)"
             :disabled="!isChangeEditable(index) || change.isSystem"
-            :contexts="getContextsForTarget(change.target ?? 'item')"
+            :contexts="valueConditionContexts"
             :expected-type="getExpectedTypeForChange(change)"
             :placeholder="resolvedValuePlaceholder"
             hide-field-controls
@@ -98,7 +82,7 @@
           />
 
           <select
-            v-if="props.variant === 'default' && props.showBonusType"
+            v-if="props.variant === 'default'"
             :name="`system.changes.${index}.bonusType`"
             :value="change.bonusType ?? ''"
             :disabled="!isChangeEditable(index) || change.isSystem"
@@ -106,7 +90,7 @@
             :title="bonusTypeLabel"
             @change="(e: Event) => updateChangeField(change.id, 'bonusType', (e.target as HTMLSelectElement).value || null)"
           >
-            <option value="">{{ noneLabel }}</option>
+            <option value="">{{ untypedLabel }}</option>
             <option v-for="bt in bonusTypeOptions" :key="bt.value" :value="bt.value">
               {{ bt.label }}
             </option>
@@ -120,7 +104,7 @@
             :field-path="`system.changes.${index}.condition`"
             :on-update="(val: string) => updateChangeField(change.id, 'condition', val || null)"
             :disabled="!isChangeEditable(index) || change.isSystem"
-            :contexts="getContextsForTarget(change.target ?? 'item')"
+            :contexts="valueConditionContexts"
             :placeholder="resolvedConditionPlaceholder"
             hide-field-controls
             hide-label
@@ -151,12 +135,12 @@
         </div>
 
         <div
-          v-if="getRowContextInfo(change) || getRowErrorText(index)"
+          v-if="getRowContextInfo() || getRowErrorText(index)"
           class="row-context"
           :class="{ 'has-error': hasRowError(index) }"
         >
           <p>
-            <span v-if="getRowContextInfo(change)" class="context-info">{{ getRowContextInfo(change) }}.</span>
+            <span v-if="getRowContextInfo()" class="context-info">{{ getRowContextInfo() }}. </span>
             <span v-if="getRowErrorText(index)" class="row-errors">{{ getRowErrorText(index) }}</span>
           </p>
         </div>
@@ -166,16 +150,16 @@
 </template>
 
 <script setup lang="ts">
-  import { BONUS_TYPES } from '@constants/bonusTypes.mjs';
+  import { BONUS_TYPE_UNTYPED, BONUS_TYPES } from '@constants/bonusTypes.mjs';
   import type { RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
-  import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+  import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, type EffectChangeTarget, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
   import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/sheet/ActiveEffectConfigStore.mjs';
   import { withChangeTargetGroups } from '@helpers/formulae/changeTargetGroups.mjs';
   import FormulaFormGroup from '@helpers/formulae/FormulaFormGroup.vue';
   import { FormulaResolver } from '@helpers/formulae/FormulaResolver.mjs';
-  import type { FamiliarContext, FamiliarSchema } from '@helpers/formulae/types.mts';
+  import type { FamiliarSchema } from '@helpers/formulae/types.mts';
   import AspectPicker from '@vc/fields/formGroups/AspectPicker.vue';
   import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
   import { computed, inject, reactive } from 'vue';
@@ -186,7 +170,6 @@
     emptyLabel?: string;
     keyPlaceholder?: string;
     variant?: 'default' | 'mask';
-    showBonusType?: boolean;
     showChangeFieldControls?: boolean;
     createChangeData?: Partial<EffectChangeDataDnd35e>;
   }>(), {
@@ -195,7 +178,6 @@
     emptyLabel: undefined,
     keyPlaceholder: undefined,
     variant: 'default',
-    showBonusType: true,
     showChangeFieldControls: true,
     createChangeData: undefined,
   });
@@ -215,10 +197,12 @@
     },
   } = store;
 
-  const targetLabel = game.i18n.localize('dnd35e.EFFECT.ChangeTarget.Target');
   const bonusTypeLabel = game.i18n.localize('dnd35e.EFFECT.BonusType.Label');
-  const noneLabel = game.i18n.localize('dnd35e.EFFECT.BonusType.None');
-  const keyHeaderLabel = game.i18n.localize('dnd35e.EFFECT.Headers.Field');
+  // The empty selection (stored as `null`) IS the untyped bonus type (see stacking.mts's
+  // undefined/null → BONUS_TYPE_UNTYPED normalization) — Untyped is never also listed
+  // among `bonusTypeOptions` below, since that would just be the same option twice.
+  const untypedLabel = game.i18n.localize(BONUS_TYPE_UNTYPED);
+  const keyHeaderLabel = game.i18n.localize('dnd35e.EFFECT.Headers.TargetField');
   const typeHeaderLabel = game.i18n.localize('dnd35e.EFFECT.Headers.Type');
   const valueHeaderLabel = game.i18n.localize('dnd35e.EFFECT.Headers.Value');
   const conditionHeaderLabel = game.i18n.localize('dnd35e.EFFECT.Headers.Condition');
@@ -235,10 +219,14 @@
       if (props.showChangeFieldControls) cols.push('max-content');
       return cols.join(' ');
     }
-    const cols = ['max-content', '1fr', 'max-content', '1fr']; // Target, Key, Type, Value
-    if (props.showBonusType) cols.push('max-content'); // BonusType
-    cols.push('1fr'); // Condition
-    cols.push('max-content'); // Priority
+    const cols = [
+      '1fr',          // Key
+      'max-content',  // Type
+      '1fr',          // Value
+      'max-content',  // BonusType
+      '1fr',          // Condition
+      'max-content',  // Priority
+    ]; 
     if (props.showChangeFieldControls) cols.push('max-content'); // Controls
     return cols.join(' ');
   });
@@ -253,31 +241,91 @@
   const isChangeVisible = (index: number): boolean => getIsFieldVisible(changeFieldPath(index)).value;
   const isChangeEditable = (index: number): boolean => getIsFieldEditable(changeFieldPath(index)).value;
 
-  // Group Change Targets (poc §7.7) only make sense for the *key* picker, and only for the
-  // 'actor' target — registered groups expand to actor field paths (e.g. group:allSaves
-  // → system.saves.fort/.reflex/.will). Never applied to Value/Condition contexts
-  // (getContextsForTarget below), since a group has no meaning as a single formula value.
-  function getKeyPickerContext (target: string): FamiliarContext | undefined {
-    const context = store.documentGetters.getTargetFamiliarContext(target);
-    if (!context) return undefined;
-    return target === EFFECT_CHANGE_TARGET.ACTOR ? withChangeTargetGroups(context) : context;
-  }
+  // The Field/Key column no longer has a separate Target selector — both the item's and
+  // the owning actor's contexts are always offered together (poc request), and the picked
+  // property's own context prefix (#weapon./#character./etc.) determines `change.target`
+  // (see `resolveTargetForKey` below). Group Change Targets (poc §7.7) only ever expand to
+  // actor field paths, so they're folded into the actor context only.
+  const keyPickerContexts = computed((): FamiliarSchema | undefined => {
+    const schema: FamiliarSchema = {};
 
-  // Value/Condition formulas may reference both the change's target (item/actor)
-  // AND the effect document itself ("Self") — e.g. a Material AE's Value formula
-  // referencing its own #Self.MagicEquivalency. The Field column (AspectPicker)
-  // intentionally does NOT get Self — change.key must resolve to a path on the
-  // target document, since that's what Foundry actually applies the change to.
-  function getContextsForTarget (target: string): FamiliarSchema | undefined {
+    const itemContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ITEM);
+    if (itemContext) schema[store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ITEM)] = itemContext;
+
+    const actorContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ACTOR);
+    if (actorContext) schema[store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ACTOR)] = withChangeTargetGroups(actorContext);
+
+    return Object.keys(schema).length ? schema : undefined;
+  });
+
+  // Value/Condition formulas may reference Self, the item, AND the actor at once — even a
+  // change that targets the actor may want to read an item stat (e.g. a weapon's own
+  // enhancement bonus) to compute its value, and vice versa, so both are always merged in
+  // regardless of which document the change itself targets.
+  const valueConditionContexts = computed((): FamiliarSchema | undefined => {
     const schema: FamiliarSchema = {};
 
     const selfContext = store.documentGetters.familiarSchema.value.self;
     if (selfContext) schema.self = selfContext;
 
-    const targetContext = store.documentGetters.getTargetFamiliarContext(target);
-    if (targetContext) schema[store.documentGetters.getTargetFamiliarContextName(target)] = targetContext;
+    const itemContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ITEM);
+    if (itemContext) schema[store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ITEM)] = itemContext;
+
+    const actorContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ACTOR);
+    if (actorContext) schema[store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ACTOR)] = actorContext;
 
     return Object.keys(schema).length ? schema : undefined;
+  });
+
+  // A `$conditional(...)` key (authored via AspectPicker's advanced editor) has no single
+  // literal accessPath — its branch values are canonical `#context.property` formula text
+  // instead (see `resolveActiveEffectChangeKey.mts`). Resolve target from the first branch
+  // whose `#context.` prefix matches the item or actor context's own name/alias, checking
+  // `when()` clauses in order, then `else()`.
+  function resolveTargetForConditionalKey (key: string): EffectChangeTarget {
+    const [block] = FormulaResolver.findConditionalBlocks(key);
+    if (!block) return EFFECT_CHANGE_TARGET.ITEM;
+
+    const branchValues = [
+      ...block.whenClauses.map((c) => c.value),
+      block.elseValue,
+    ].filter((v): v is string => !!v);
+
+    const itemContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ITEM);
+    const itemContextName = store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ITEM);
+    const actorContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ACTOR);
+    const actorContextName = store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ACTOR);
+
+    for (const branchValue of branchValues) {
+      const prefix = /^#([^.]+)\./.exec(branchValue)?.[1];
+      if (!prefix) continue;
+
+      if (prefix === itemContextName || itemContext?.aliases?.includes(prefix)) return EFFECT_CHANGE_TARGET.ITEM;
+      if (prefix === actorContextName || actorContext?.aliases?.includes(prefix)) return EFFECT_CHANGE_TARGET.ACTOR;
+    }
+
+    return EFFECT_CHANGE_TARGET.ITEM;
+  }
+
+  // Derives which document a picked Field/Key path actually belongs to, replacing the
+  // removed Target selector. Checked against the same (group-extended) contexts the
+  // picker itself offers — item is checked first, actor (including groups) second.
+  function resolveTargetForKey (key: string): EffectChangeTarget {
+    if (!key) return EFFECT_CHANGE_TARGET.ITEM;
+
+    if (key.includes('$conditional(')) return resolveTargetForConditionalKey(key);
+
+    const itemContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ITEM);
+    if (itemContext && FormulaResolver.findAspectByAccessPath(itemContext.properties, key)) {
+      return EFFECT_CHANGE_TARGET.ITEM;
+    }
+
+    const actorContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ACTOR);
+    if (actorContext && FormulaResolver.findAspectByAccessPath(withChangeTargetGroups(actorContext).properties, key)) {
+      return EFFECT_CHANGE_TARGET.ACTOR;
+    }
+
+    return EFFECT_CHANGE_TARGET.ITEM;
   }
 
   // Per-row validation errors surfaced by the Field/Value/Condition formula editors
@@ -299,8 +347,8 @@
   // The row's shared "Available Contexts: [...]" hint — always shown alongside
   // any validation errors (below) rather than being replaced by them, so the
   // user can still see what contexts are available while fixing an error.
-  function getRowContextInfo (change: EffectChangeDataDnd35e): string {
-    const schema = getContextsForTarget(change.target ?? 'item');
+  function getRowContextInfo (): string {
+    const schema = valueConditionContexts.value;
     if (!schema) return '';
     const names = Object.entries(schema).map(([k, ctx]) => ctx.display ?? (k.charAt(0).toUpperCase() + k.slice(1)));
     if (!names.length) return '';
@@ -343,16 +391,8 @@
     return types;
   });
 
-  const changeTargets = computed(() => {
-    const targets: Record<string, string> = {};
-    for (const [target, label] of Object.entries(EFFECT_CHANGE_TARGETS)) {
-      targets[target] = game.i18n.localize(label);
-    }
-    return targets;
-  });
-
   const bonusTypeOptions = computed(() =>
-    BONUS_TYPES.map((bt) => ({
+    BONUS_TYPES.filter((bt) => bt !== BONUS_TYPE_UNTYPED).map((bt) => ({
       value: bt,
       label: game.i18n.localize(bt),
     }))
@@ -368,7 +408,10 @@
       key: '',
       type: EFFECT_CHANGE_TYPE.ADD,
       value: '',
-      phase: 'initial',
+      // No phase selector exists in the change editor UI (matches vanilla Foundry, which
+      // doesn't expose one either) - default to 'final' rather than 'initial' so authored
+      // bonuses settle before the 'post' phase derives saves/AC from them.
+      phase: 'final',
       priority: 10,
       target: EFFECT_CHANGE_TARGET.ITEM,
       isSystem: false,
@@ -381,8 +424,11 @@
   };
 
   // Domain callback: each editor row targets a specific change entry by stable id.
+  // Also re-derives `target` from the picked key (item vs actor), since there's no
+  // longer a separate Target selector for the user to keep in sync manually.
   const updateChangeKey = async (id: string, val: string) => {
     await updateChangeField(id, 'key', val);
+    await updateChangeField(id, 'target', resolveTargetForKey(val));
   };
 </script>
 
@@ -530,10 +576,6 @@
     .row-errors {
       color: rgba(255, 100, 100, 0.85);
     }
-  }
-
-  .target-select {
-    width: 80px;
   }
 
   .bonus-type-select {

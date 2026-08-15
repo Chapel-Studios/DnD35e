@@ -84,3 +84,16 @@ Also deferred: **round-trip parsing** — opening the editor on an existing form
 Also deferred: helper buttons on the new basic multiline modal editor (§7.10 Half 2) to insert `#context.property` variables or `$conditional(...)` scaffolding without hand-typing — the modal shipped as a plain rich-text box for the initial pass.
 
 Affects: `src/helpers/formulae/FormulaFormGroup.vue`, a new `ConditionBuilder.vue` / `ConditionalValuesEditor.vue` (not yet created), the AE Condition column (`EffectChangesList.vue`).
+
+### Native Foundry chat-roll command support (`/roll`, `/r`)
+This system does not bridge to Foundry's native `@attr` roll-data syntax anywhere — every authored formula resolves exclusively through FormulaFamiliar's `#context.property` syntax before it ever reaches `Roll` (see `docs/migration-plan/poc/phase-07-roll-formulas.md` §7.1/§7.2, "No `@attr` Bridge"). One consequence: raw Foundry chat commands like `/roll 1d20+@abilities.str.mod` or a custom Combat Tracker initiative formula (`CONFIG.Combat.initiative.formula`) don't work, since `ActorDnd35e`/`ItemDnd35e` don't override `getRollData()` — it returns Foundry's default (the raw `system` data blob), which doesn't expose the shorthand paths those commands expect (`@abilities.str.mod`, `@attributes.ac.normal`, etc.).
+
+If this is wanted later: implement a minimal `getRollData()` override on `ActorDnd35e`/`ItemDnd35e` (abilities with mod/total/base, attributes like bab/ac/saves/init, size mods) purely to satisfy these Foundry-native `@attr` consumers — kept deliberately narrow, not expanded in lockstep with every FormulaFamiliar aspect, and never used as a resolution path for our own authored formulas.
+
+Affects: `ActorDnd35e`, `ItemDnd35e`, `CONFIG.Combat.initiative.formula`.
+
+### Text enrichers for inline rolls (`[[/check]]`, `[[/save]]`, `[[/damage]]`)
+Custom `CONFIG.TextEditor.enrichers` entries so journal entries and item descriptions can embed clickable inline rolls/checks, e.g. `[[/check reflex dc=15]]` → clickable Reflex save link, `[[/damage 2d6+3 fire]]` → clickable damage roll, with an optional custom label (`[[/check bluff]]{Lie convincingly}`). Requires enricher functions returning `<a data-action="...">` elements plus `onRender` listeners to wire up click handlers. Depends on the roll-dialog/chat-card pipeline (`docs/migration-plan/poc/phase-07-roll-formulas.md` §7.9) existing first, since clicking an enriched link should trigger the same roll pipeline as clicking a defense stat.
+
+Affects: `init` hook registration, new enricher/listener functions, journal/item-description rendering.
+

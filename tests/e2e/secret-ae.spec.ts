@@ -64,7 +64,7 @@ test.describe('secret AE masking round-trip', () => {
         type: 'mask',
         target: 'item',
         priority: 10,
-        phase: 'core',
+        phase: 'initial',
       }],
     });
 
@@ -98,7 +98,7 @@ test.describe('secret AE masking round-trip', () => {
         type: 'mask',
         target: 'item',
         priority: 10,
-        phase: 'core',
+        phase: 'initial',
       }],
     });
 
@@ -131,7 +131,7 @@ test.describe('secret AE masking round-trip', () => {
         type: 'mask',
         target: 'item',
         priority: 10,
-        phase: 'core',
+        phase: 'initial',
       }],
     });
 
@@ -147,7 +147,7 @@ test.describe('secret AE masking round-trip', () => {
         type: 'mask',
         target: 'item',
         priority: 100,
-        phase: 'core',
+        phase: 'initial',
       }],
     });
 

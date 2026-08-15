@@ -75,7 +75,9 @@ if (process.env.FOUNDRY_E2E_SKIP_PREFLIGHT !== '1') {
 const lockFile = path.join(foundryE2EDataDir, 'Config', 'options.json.lock');
 if (existsSync(lockFile)) {
   console.log('[e2e:webServer] Removing stale options.json.lock...');
-  rmSync(lockFile, { force: true });
+  // `recursive: true` is required because a force-killed Foundry process can leave this
+  // path as a directory rather than a file; plain rmSync() throws EISDIR in that case.
+  rmSync(lockFile, { force: true, recursive: true });
 }
 
 console.log('[e2e:webServer] Starting Foundry server...');

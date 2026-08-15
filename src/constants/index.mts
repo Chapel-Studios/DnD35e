@@ -30,7 +30,7 @@ import {
 } from './attacks/index.mjs';
 import {
   BONUS_TYPE_BROKEN,
-  BONUS_TYPE_MASTERWORK,
+  BONUS_TYPE_ENHANCEMENT,
   BONUS_TYPE_MATERIAL,
   BONUS_TYPES,
   type BonusType,
@@ -61,6 +61,15 @@ import {
 import { defaultGameSettings } from './gameSettings/index.mjs';
 import { LogLevel } from './logging.mjs';
 import { hbsTemplatePath, systemPath } from './paths.mjs';
+import type { SaveKey } from './saves.mjs';
+import {
+  FORT,
+  REFLEX,
+  SAVE_ABILITY_MAP,
+  SAVE_KEYS,
+  SAVE_KEYS_LOCALIZED,
+  WILL,
+} from './saves.mjs';
 import type { SenseType } from './senses.mjs';
 import {
   BLINDSIGHT,
@@ -97,7 +106,7 @@ export {
   ALIGNMENT_I18N,
   BLINDSIGHT,
   BONUS_TYPE_BROKEN,
-  BONUS_TYPE_MASTERWORK,
+  BONUS_TYPE_ENHANCEMENT,
   BONUS_TYPE_MATERIAL,
   BONUS_TYPES,
   BROKEN_ARMOR_AE_UUID,
@@ -118,6 +127,7 @@ export {
   FLY_MANEUVERABILITY,
   FLY_MANEUVERABILITY_LOCALIZED,
   FLY_MANEUVERABILITY_OPTIONS,
+  FORT,
   getCarryingCapacity,
   GOOD,
   hbsTemplatePath,
@@ -137,6 +147,10 @@ export {
   MORAL_AXIS_SELECT_OPTIONS,
   NEUTRAL,
   PLAYER_SECRET_ROUTE,
+  REFLEX,
+  SAVE_ABILITY_MAP,
+  SAVE_KEYS,
+  SAVE_KEYS_LOCALIZED,
   SCENT,
   SENSE_TYPE,
   SENSE_TYPES,
@@ -154,6 +168,7 @@ export {
   TRAP_SENSE,
   TREMORSENSE,
   VUE_APP_CLASS,
+  WILL,
   WIS,
 };
 
@@ -165,6 +180,7 @@ export type {
   LawAxis,
   MaskedEditStrategy,
   MoralAxis,
+  SaveKey,
   SenseType,
   SpeedType,
 };

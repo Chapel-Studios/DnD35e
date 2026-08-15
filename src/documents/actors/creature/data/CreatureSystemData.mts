@@ -1,6 +1,5 @@
 import type { AbilityKey } from '@constants/abilities.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
-import type { SenseType } from '@constants/senses.mjs';
 import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 import type { FormulaDataSource } from '@helpers/formulae/index.mjs';
 import type { WeaponDamage } from '@items/physical/weapon/data/index.mjs';
@@ -74,11 +73,6 @@ interface AlignmentData {
 
 // ─── Bio ─────────────────────────────────────────────────────────────────────
 
-interface SenseEntrySource {
-  type: SenseType;
-  distance: number;
-}
-
 interface BioSource {
   gender:    string | null;
   deity:     string | null;
@@ -87,7 +81,6 @@ interface BioSource {
   weight:    string | null;
   alignment: AlignmentData;
   languages: string[];
-  senses:    SenseEntrySource[];
 }
 
 // ─── Settings ────────────────────────────────────────────────────────────────
@@ -122,7 +115,12 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   defense: {
     armorClass: number;
     touchAC: number;
-    flatFootedAC: number;
+    /** Set by the Flat-Footed condition; gates Dex out of armorClass/touchAC. Never stored. */
+    denyDexToAC: boolean;
+    /** Target for future Armor item `getContributedActorChanges('initial')` contributions. Always 0 until Armor items exist. */
+    armorBonus: number;
+    /** Target for future Shield item `getContributedActorChanges('initial')` contributions. Always 0 until Shield items exist. */
+    shieldBonus: number;
     naturalArmor: number;
     fortification: number;
     concealment: number;
@@ -136,7 +134,13 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   level: number;
   currency: CurrencyData;
   /** Derived list of equipped weapon attacks contributed by equipped weapons. Never stored. */
-  attacks: WeaponDamage[];
+  attacks: {
+    toHitBonus: number;
+    meleeToHitBonus: number;
+    rangedToHitBonus: number;
+    rangedTouchToHitBonus: number;
+    actions: WeaponDamage[];
+  };
   encumbrance: EncumbranceData;
   isIncorporeal: boolean;
   isQuadruped: boolean;
@@ -156,6 +160,5 @@ export type {
   EncumbranceData,
   HpData,
   HpSource,
-  SenseEntrySource,
   SettingsData,
 };

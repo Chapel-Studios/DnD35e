@@ -254,3 +254,93 @@ describe('EffectChangesList — Value column rejects/flags a formula that doesn\
     expect(wrapper.find('.row-context.has-error').exists()).toBe(false);
   });
 });
+
+/**
+ * Regression test for `resolveTargetForKey()`'s `$conditional(...)` handling — a
+ * conditional key stores canonical `#context.property` formula text rather than a
+ * literal accessPath, so the target must be derived from each branch's `#context.`
+ * prefix instead of falling through to the ITEM default (which would silently strip
+ * an actor-targeted change out of `ActorDnd35e.applyActiveEffects()`).
+ */
+describe('EffectChangesList — resolveTargetForKey() with a $conditional(...) key', () => {
+  const conditionalActorContext: FamiliarContext = {
+    display: 'Actor',
+    properties: { hp: { type: 'number', accessPath: 'system.hp.value', value: 10 } },
+  };
+  const conditionalItemContext: FamiliarContext = {
+    display: 'Item',
+    properties: { hardness: { type: 'number', accessPath: 'system.hardness', value: 5 } },
+  };
+
+  const AspectPickerEmitStub = defineComponent({
+    props: ['modelValue'],
+    emits: ['update:model-value'],
+    setup (_props, { emit }) {
+      return () => h('button', {
+        class: 'aspect-picker-emit-stub',
+        onClick: () => emit('update:model-value', (globalThis as { __testConditionalKey?: string }).__testConditionalKey),
+      });
+    },
+  });
+
+  const mkConditionalStore = () => ({
+    documentGetters: {
+      visibleChanges: computed(() => [
+        { key: '', type: 'add', value: '', target: 'item', priority: 10 },
+      ]),
+      getIsFieldEditable: vi.fn(() => computed(() => true)),
+      getIsFieldVisible: vi.fn(() => computed(() => true)),
+      familiarSchema: ref({}),
+      getTargetFamiliarContext: vi.fn((target: string) =>
+        target === 'item' ? conditionalItemContext : target === 'actor' ? conditionalActorContext : undefined
+      ),
+      getTargetFamiliarContextName: vi.fn((target: string) => target),
+    },
+    documentActions: {
+      addChange: vi.fn(),
+      removeChange: vi.fn(),
+      updateChangeField: vi.fn(),
+    },
+  });
+
+  const mountConditional = () => {
+    const store = mkConditionalStore();
+    const wrapper = mount(EffectChangesList, {
+      props: { variant: 'mask' },
+      global: {
+        provide: {
+          [DocumentSheetStoreSymbol as symbol]: store,
+          [RenderModeStoreSymbol as symbol]: { isEditMode: computed(() => true) },
+        },
+        stubs: {
+          FormulaFormGroup: FormulaFormGroupStub,
+          AspectPicker: AspectPickerEmitStub,
+          FieldControls: FieldControlsStub,
+        },
+      },
+    });
+    return { wrapper, store };
+  };
+
+  it('derives target "actor" from an all-actor-branch conditional key instead of defaulting to "item"', async () => {
+    (globalThis as { __testConditionalKey?: string }).__testConditionalKey =
+      '$conditional(when(true, #actor.hp) else(#actor.hp))';
+    const { wrapper, store } = mountConditional();
+
+    await wrapper.find('.aspect-picker-emit-stub').trigger('click');
+    await nextTick();
+
+    expect(store.documentActions.updateChangeField).toHaveBeenCalledWith(undefined, 'target', 'actor');
+  });
+
+  it('still derives target "item" from an all-item-branch conditional key', async () => {
+    (globalThis as { __testConditionalKey?: string }).__testConditionalKey =
+      '$conditional(when(true, #item.hardness) else(#item.hardness))';
+    const { wrapper, store } = mountConditional();
+
+    await wrapper.find('.aspect-picker-emit-stub').trigger('click');
+    await nextTick();
+
+    expect(store.documentActions.updateChangeField).toHaveBeenCalledWith(undefined, 'target', 'item');
+  });
+});

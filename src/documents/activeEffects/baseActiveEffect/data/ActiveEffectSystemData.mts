@@ -35,6 +35,14 @@ interface EffectChangeSourceDnd35e extends Omit<EffectChangeData, 'effect'> {
   bonusType?: BonusType | null;
   /** Optional formula-familiar condition for action-phase changes. poc Phase 8+. Must round-trip through the database, so string-form (FormulaFamiliar boolean grammar) only — no function form. */
   condition?: string | null;
+  /**
+   * Excludes this change from the Actor Effects tab's self-contributed-changes list
+   * (`ActorSheetStore.selfContributedEffects`) without affecting `effectOverrides`/tooltip
+   * attribution elsewhere. For baseline formula components (e.g. base AC, ability mod into
+   * a save/AC) that aren't meaningfully "effects" on their own - unlike `isHidden`, which
+   * hides a change everywhere.
+   */
+  hideFromEffectsTab?: boolean;
 }
 
 interface ActiveEffectSystemSourceDnd35e extends DocumentSystemData, Omit<ActiveEffectSystemSource, 'changes'> {

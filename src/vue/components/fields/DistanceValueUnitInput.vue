@@ -38,8 +38,8 @@
 </template>
 
 <script setup lang="ts" generic="TUnit extends string">
-  import type { SettingsStore } from '@settings/index.mjs';
-  import { SettingsStoreSymbol } from '@settings/index.mjs';
+  import type { SettingsStore } from '@settings/shared/sheet/settingsStore.mjs';
+  import { SettingsStoreSymbol } from '@settings/shared/sheet/settingsStore.mjs';
   import { computed, inject } from 'vue';
 
   import type { SelectOption } from './index.mjs';

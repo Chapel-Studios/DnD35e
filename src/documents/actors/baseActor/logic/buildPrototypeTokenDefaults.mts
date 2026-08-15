@@ -1,6 +1,6 @@
 import type { Size } from '@constants/sizes.mjs';
 
-import type { SenseEntrySource } from '../data/CreatureSystemData.mjs';
+import type { SenseEntrySource } from '../data/ActorSystemData.mjs';
 import { buildDerivedPrototypeTokenFields } from './derivedPrototypeTokenFields.mjs';
 
 interface PrototypeTokenDefaults {
@@ -17,13 +17,13 @@ interface PrototypeTokenDefaults {
 }
 
 /**
- * Prototype token defaults shared by all creature-type actors (characters, NPCs,
+ * Prototype token defaults shared by all actor types (characters, NPCs, objects, traps,
  * etc.): linked token, friendly disposition, owner-hover HP bar, and name/size/vision
- * derived from `Actor#name`/`system.size`/`system.bio.senses` via
+ * derived from `Actor#name`/`system.size`/`system.senses` via
  * `buildDerivedPrototypeTokenFields()` (falls back to medium/basic vision when there's
- * no size/senses yet). See `Creature._preCreate()`. This is a one-time seed at creation
+ * no size/senses yet). See `ActorDnd35e._preCreate()`. This is a one-time seed at creation
  * only — ongoing sync as name/size/senses change afterward is handled separately by
- * `Creature.prepareDerivedData()`.
+ * `ActorDnd35e.prepareData()`.
  */
 const buildPrototypeTokenDefaults = (name: string, size: Size, senses: SenseEntrySource[] = []): PrototypeTokenDefaults => ({
   actorLink: true,

@@ -48,8 +48,16 @@ export const registerEffects = () => {
   foundry.helpers.Hooks.once('init', () => {
     CONFIG.ActiveEffect.documentClass = ActiveEffectProxyDnd35e;
 
-    // Register custom phases (core, initial, final)
-    CONFIG.ActiveEffect.phases = EFFECT_CHANGE_PHASES;
+    // Register custom phases (core, initial, final, post). Foundry's `ActiveEffect.CHANGE_PHASES`
+    // getter expects `Record<string, {label, hint}>` - previously registered as the raw
+    // `EFFECT_CHANGE_PHASES` string array, which meant `Object.entries()` iterated array indices
+    // instead of phase names, so 'core'/'post' never actually validated as recognized phases.
+    CONFIG.ActiveEffect.phases = Object.fromEntries(
+      EFFECT_CHANGE_PHASES.map((phase) => [phase, {
+        label: `dnd35e.EFFECT.Phase.${phase}.label`,
+        hint: `dnd35e.EFFECT.Phase.${phase}.hint`,
+      }])
+    );
 
     // Disable legacy transferral behavior
     CONFIG.ActiveEffect.legacyTransferral = false;

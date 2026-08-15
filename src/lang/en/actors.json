@@ -47,9 +47,13 @@
         },
         "defense": {
           "label": "Armor Class",
+          "base": { "label": "Base" },
           "armorClass":     { "label": "AC", "tooltip": "Armor Class" },
           "touchAC":      { "label": "Touch", "tooltip": "Touch AC"   },
-          "flatFootedAC": { "label": "Flat-Footed", "tooltip": "Flat-Footed AC" },
+          "denyDexToAC": { "label": "Deny Dex to AC", "hint": "When active, the Dexterity bonus is excluded from AC and Touch AC (e.g. while Flat-Footed)." },
+          "flatFootedRemoveTooltip": "Flat-Footed \u2014 click to remove",
+          "armorBonus":   { "label": "Armor Bonus", "tooltip": "Armor Bonus to AC" },
+          "shieldBonus":  { "label": "Shield Bonus", "tooltip": "Shield Bonus to AC" },
           "naturalArmor":    { "label": "Natural Armor", "tooltip": "Natural Armor Bonus" },
           "spellResistance": { "label": "Spell Resistance", "tooltip": "Spell Resistance" },
           "concealment":      { "label": "Concealment", "tooltip": "Concealment Bonus" },
@@ -59,7 +63,7 @@
           "label": "Saving Throws",
           "familiarLabel": "Saves",
           "fort":   { "label": "Fort", "familiarAliases": ["Fortitude"] },
-          "reflex": { "label": "Ref",  "familiarAliases": ["Reflex"] },
+          "reflex": { "label": "Reflex" },
           "will":   { "label": "Will", "familiarAliases": ["Willpower"] },
           "all": { "label": "All Saves", "familiarLabel": "All" }
         },
@@ -107,16 +111,6 @@
           "height":    { "label": "Height" },
           "weight":    { "label": "Weight" },
           "languages": { "label": "Languages" },
-          "senses": {
-            "label": "Senses",
-            "add": "Add Sense",
-            "remove": "Remove Sense",
-            "empty": "No senses configured",
-            "element": {
-              "type": { "label": "Type", "familiarLabel": "Type", "familiarAliases": [], "hint": "The kind of sense, such as darkvision or blindsense." },
-              "distance": { "label": "Distance", "familiarLabel": "Range", "familiarAliases": [], "hint": "The range of this sense, in {distanceType}." }
-            }
-          },
           "alignment": {
             "label": "Alignment",
             "law":   { "label": "Law/Chaos" },
@@ -263,6 +257,16 @@
         "bio": {
           "label": "Biography",
           "placeholder": "Character biography, backstory, appearance, personality..."
+        },
+        "senses": {
+          "label": "Senses",
+          "add": "Add Sense",
+          "remove": "Remove Sense",
+          "empty": "No senses configured",
+          "element": {
+            "type": { "label": "Type", "familiarLabel": "Type", "familiarAliases": [], "hint": "The kind of sense, such as darkvision or blindsense." },
+            "distance": { "label": "Distance", "familiarLabel": "Range", "familiarAliases": [], "hint": "The range of this sense, in {distanceType}." }
+          }
         }
       },
       "sheet": {

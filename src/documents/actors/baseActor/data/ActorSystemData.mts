@@ -1,4 +1,5 @@
 import type { FlyManeuverability } from '@constants/index.mjs';
+import type { SenseType } from '@constants/senses.mjs';
 import type { Size } from '@constants/sizes.mjs';
 import type { DocumentSystemData } from '@documents/document/index.mjs';
 import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
@@ -19,9 +20,16 @@ interface SpeedData {
   flyManeuverability: FlyManeuverability | null;
 }
 
+interface SenseEntrySource {
+  type: SenseType;
+  distance: number;
+}
+
 interface ActorSystemSourceProperties extends DocumentSystemData {
   /** Every actor type has a size (creatures, objects, traps, etc.) — used for token dimensions. */
   size: Size;
+  /** Every actor type has senses (creatures, objects, traps, etc.) — used for token vision sync. */
+  senses: SenseEntrySource[];
 }
 
 interface ActorSystemSource extends ActorSystemSourceProperties {
@@ -39,5 +47,6 @@ export type {
   ActorSystemData,
   ActorSystemSource,
   ActorSystemSourceProperties,
+  SenseEntrySource,
   SpeedData,
 };

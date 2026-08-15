@@ -163,6 +163,38 @@ export function canonicalizeFormula(formula: string, schema: FamiliarSchema): st
 }
 
 /**
+ * Translate a single, already-canonical `#context.property` reference (see
+ * `canonicalizeFormula`) into its raw document accessPath by walking `schema`'s
+ * FieldAspect tree. Shared by `AspectPicker.vue` (editor, single-leaf case) and
+ * `resolveActiveEffectChangeKey.mts` (runtime — the winning `$conditional(...)`
+ * branch of a `change.key`). Matches the context prefix against a schema entry's
+ * primary key OR its `aliases` (e.g. a runtime schema keyed by the live item's
+ * subtype `weapon`, aliased `item`, still resolves a `#item.foo` branch stored
+ * from an editing session that had no live parent to key off of). Returns `null`
+ * (rather than the input unchanged) when unresolvable, so callers can distinguish
+ * failure from "nothing to do".
+ */
+export function resolveFamiliarLeafToAccessPath(canonicalPath: string, schema: FamiliarSchema): string | null {
+  const match = /^#([^.]+)\./.exec(canonicalPath);
+  if (!match) return null;
+  const ctxEntry = Object.entries(schema).find(([key, ctx]) => key === match[1] || ctx.aliases?.includes(match[1]));
+  if (!ctxEntry) return null;
+  const [, ctx] = ctxEntry;
+  const innerPath = canonicalPath.slice(match[0].length);
+  if (!innerPath) return null;
+
+  let current: unknown = ctx.properties;
+  for (const seg of innerPath.split('.')) {
+    if (typeof current !== 'object' || current === null || !(seg in current)) return null;
+    current = (current as Record<string, unknown>)[seg];
+  }
+  if (current && typeof current === 'object' && 'accessPath' in current) {
+    return (current as { accessPath: string }).accessPath;
+  }
+  return null;
+}
+
+/**
  * Display-only transform for the single-line `FormulaFormGroup` field: collapse real
  * line breaks AND any indentation/extra whitespace (from the multiline editor modal,
  * poc §7.10 — users may indent `when()`/`else()` clauses onto their own lines for
@@ -216,43 +248,50 @@ export interface GetAutocompleteOptionsConfig {
 const defaultFormatFullPath = (ctx: string, prefix: string, key: string): string => `#${ctx}.${prefix}${key}`;
 
 /**
- * Canonical `$`-prefixed keywords offered by the `$` autocomplete dropdown (poc §7.2b).
+ * Canonical keywords offered by the `$` autocomplete dropdown (poc §7.2b).
  * `conditional` is the control-flow `$conditional(when()else())` construct;
- * the other five are the array/string query functions. Both groups share the
- * exact same insertion shape (`$name(`), so they're offered from one list.
+ * `when`/`else` are its clause keywords (bare, no `$` sigil per the grammar —
+ * see `FormulaResolver.conditionalGrammar.mts`'s `CLAUSE_KEYWORD_REGEX`); the
+ * rest are the array/string query functions. All are surfaced from the same
+ * `$`-triggered list for discoverability since `when()`/`else()` only ever
+ * appear nested inside a `$conditional(...)` block.
  */
-const FUNCTION_AUTOCOMPLETE_NAMES = [
-  'conditional',
-  'contains',
-  'find',
-  'any',
-  'count',
-  'stringContains',
-  'fromFeet',
-  'fromMeters',
-  'fromKg',
-] as const;
+const FUNCTION_AUTOCOMPLETE_ENTRIES: readonly { name: string; sigil?: string }[] = [
+  { name: 'conditional' },
+  { name: 'when', sigil: '' },
+  { name: 'else', sigil: '' },
+  { name: 'contains' },
+  { name: 'find' },
+  { name: 'any' },
+  { name: 'count' },
+  { name: 'stringContains' },
+  { name: 'fromFeet' },
+  { name: 'fromMeters' },
+  { name: 'fromKg' },
+];
 
 /**
  * Autocomplete options for the `$`-keyword dropdown (`$conditional`/`$contains`/
- * `$find`/`$any`/`$count`/`$stringContains`) — mirrors the `#` context dropdown's
- * UX (triggered by typing `$`, filtered by what's typed so far) but the option
- * list is a small fixed set rather than schema-driven, since these keywords aren't
- * `FamiliarSchema` properties. Selecting an option inserts `$name(` with the cursor
- * placed right after the open paren, ready to type the next argument (which itself
- * triggers the normal `#` dropdown on the next keystroke).
+ * `$find`/`$any`/`$count`/`$stringContains`, plus the bare `when`/`else` clause
+ * keywords) — mirrors the `#` context dropdown's UX (triggered by typing `$`,
+ * filtered by what's typed so far) but the option list is a small fixed set
+ * rather than schema-driven, since these keywords aren't `FamiliarSchema`
+ * properties. Selecting an option inserts `${sigil}name(` with the cursor
+ * placed right after the open paren, ready to type the next argument (which
+ * itself triggers the normal `#` dropdown on the next keystroke).
  */
 export function getFunctionAutocompleteOptions(partialText: string): AutocompleteOption[] {
   const query = partialText.toLowerCase();
-  return FUNCTION_AUTOCOMPLETE_NAMES
-    .filter(name => name.toLowerCase().startsWith(query))
-    .map(name => ({
+  return FUNCTION_AUTOCOMPLETE_ENTRIES
+    .filter(({ name }) => name.toLowerCase().startsWith(query))
+    .map(({ name, sigil = '$' }) => ({
       path: name,
       display: game.i18n.localize(`dnd35e.Formula.Functions.${name}.label`),
       value: null,
       isLeaf: true,
-      fullPath: `$${name}(`,
+      fullPath: `${sigil}${name}(`,
       accessPath: game.i18n.localize(`dnd35e.Formula.Functions.${name}.hint`),
+      trigger: '$',
     }));
 }
 
@@ -465,23 +504,25 @@ function escapeHTML(text: string): string {
 }
 
 /**
- * Check whether a partial path segment matches any familiar option.
- * Used to decide if an in-progress variable should be blue (has matches) or red (no matches).
+ * Walks `contextName` + `path[0..length-2]` (everything except the final segment) and
+ * returns the resolved schema node, or `undefined` if the context itself or any
+ * intermediate segment doesn't resolve. Shared by `hasPartialAspectMatch` (does the
+ * final segment partially match?) and the in-progress split-highlight branch below
+ * (is everything BEFORE the final segment actually valid, so only it should be red?).
  */
-function hasPartialAspectMatch(context: FamiliarSchema, contextName: string, path: string[]): boolean {
-  if (!context || path.length === 0) return false;
+function resolvePathPrefix(context: FamiliarSchema, contextName: string, path: string[]): AspectGroup | undefined {
+  if (!context || path.length === 0) return undefined;
 
   let contextSchema = context[contextName];
   if (!contextSchema) {
     const foundKey = Object.keys(context).find(k => context[k].aliases?.includes(contextName));
     if (foundKey) contextSchema = context[foundKey];
   }
-  if (!contextSchema?.properties) return false;
+  if (!contextSchema?.properties) return undefined;
 
-  // Walk to the parent of the last segment
   let current: unknown = contextSchema.properties;
   for (let i = 0; i < path.length - 1; i++) {
-    if (typeof current !== 'object' || current === null) return false;
+    if (typeof current !== 'object' || current === null) return undefined;
     const obj = current as Record<string, unknown>;
     if (path[i] in obj) {
       current = obj[path[i]];
@@ -499,12 +540,24 @@ function hasPartialAspectMatch(context: FamiliarSchema, contextName: string, pat
       if (branchAlias) {
         current = branchAlias[1];
       } else {
-        return false;
+        return undefined;
       }
     }
   }
 
-  if (typeof current !== 'object' || current === null) return false;
+  return typeof current === 'object' && current !== null
+    ? current as AspectGroup
+    : undefined;
+}
+
+/**
+ * Check whether a partial path segment matches any familiar option.
+ * Used to decide if an in-progress variable should be blue (has matches) or red (no matches).
+ */
+function hasPartialAspectMatch(context: FamiliarSchema, contextName: string, path: string[]): boolean {
+  if (path.length === 0) return false;
+  const current = resolvePathPrefix(context, contextName, path);
+  if (!current) return false;
 
   const partial = path[path.length - 1].toLowerCase();
   const obj = current as Record<string, unknown>;
@@ -514,6 +567,17 @@ function hasPartialAspectMatch(context: FamiliarSchema, contextName: string, pat
     if (isFieldAspect(v) && v.aliases?.some(a => a.toLowerCase().startsWith(partial) && a.toLowerCase() !== partial)) return true;
     return false;
   });
+}
+
+/**
+ * Whether everything before the final path segment (the context itself plus any
+ * intermediate segments) actually resolves — i.e. only the last segment is in question.
+ * Gates the blue-prefix/red-suffix split highlight so an invalid CONTEXT (e.g. `#TEA.sucks`
+ * where `TEA` isn't a real context) renders fully red instead of `#TEA.` misleadingly
+ * showing blue.
+ */
+function hasValidPathPrefix(context: FamiliarSchema, contextName: string, path: string[]): boolean {
+  return !!resolvePathPrefix(context, contextName, path);
 }
 
 /**
@@ -926,8 +990,9 @@ export function renderFormulaHTML(
           return `<span class="formula-variable" data-var-index="${varIdx}" data-start="${token.startIndex}" data-end="${token.endIndex}">${escapeHTML(token.value)}</span>`;
         }
 
-        if (path.length > 0) {
-          // No partial match → split: blue prefix + red suffix (no tooltip)
+        if (path.length > 0 && hasValidPathPrefix(familiarSchema, ctxName, path)) {
+          // No partial match on the last segment, but the context + everything before it
+          // IS valid → split: blue prefix + red suffix (no tooltip)
           const dotIdx = token.value.lastIndexOf('.');
           if (dotIdx > 0) {
             const prefix = token.value.substring(0, dotIdx + 1);

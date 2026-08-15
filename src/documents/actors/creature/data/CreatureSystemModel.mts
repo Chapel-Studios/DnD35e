@@ -5,7 +5,6 @@ import {
   LAW_AXES,
   MASKED_EDIT_STRATEGY,
   MORAL_AXES,
-  SENSE_TYPES,
 } from '@constants/index.mjs';
 import { CurrencyField } from '@fields/currency/CurrencyField.mjs';
 import {
@@ -13,7 +12,6 @@ import {
   derivedNullableOptionalStringField,
   derivedNumberField,
   requiredNumberField,
-  requiredTypedStringField,
   useDnd35eField,
 } from '@fields/fieldBuilders.mjs';
 import { NullableCapNumberField } from '@fields/NullableCapNumberField.mjs';
@@ -49,6 +47,11 @@ abstract class CreatureSystemModel extends ActorSystemModel {
    *  - `maxDexBonus`/`armorCheckPenalty`: reset so DOWNGRADE applies correctly each pass
    *  - `saves.fort`/`.reflex`/`.will`: reset to 0 so 'initial'-phase Value formula
    *    changes don't compound across repeated prepare passes
+   *  - `defense.armorClass`/`.touchAC`/`.armorBonus`/`.shieldBonus`: reset to 0
+   *    so `Creature._buildDefenseChanges()`'s 'final'-phase ADD changes (base 10 + dex + size +
+   *    armor/shield/natural) don't compound across repeated prepare passes
+   *  - `defense.denyDexToAC`: reset to false so a lapsed Flat-Footed (or similar) condition
+   *    doesn't leave the Dex-denial flag stuck on from a prior prepare pass
    * See docs/architecture/actor-data-pipeline.md.
    */
   override prepareBaseData(): void {
@@ -63,6 +66,18 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     this.saves.fort = 0;
     this.saves.reflex = 0;
     this.saves.will = 0;
+
+    this.defense.armorClass = 0;
+    this.defense.touchAC = 0;
+    this.defense.armorBonus = 0;
+    this.defense.shieldBonus = 0;
+    this.defense.denyDexToAC = false;
+
+    this.attacks.toHitBonus = 0;
+    this.attacks.meleeToHitBonus = 0;
+    this.attacks.rangedToHitBonus = 0;
+    this.attacks.rangedTouchToHitBonus = 0;
+    this.attacks.actions = [];
   }
 
   override prepareDerivedData(): void {
@@ -127,9 +142,14 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     schema.aooCount = useDnd35eField(derivedNumberField(1), { familiar: { aliases: ['attacksOfOpportunity'] } });
 
     schema.defense = new SchemaField({
-      armorClass:     useDnd35eField(derivedNumberField(10)),
-      touchAC:      useDnd35eField(derivedNumberField(10)),
-      flatFootedAC: useDnd35eField(derivedNumberField(10)),
+      armorClass:     useDnd35eField(derivedNumberField(0)),
+      touchAC:      useDnd35eField(derivedNumberField(0)),
+      // Set by the Flat-Footed condition (see CONDITIONS in constants/conditions.mts); gates
+      // the Dex term out of both armorClass and touchAC in Creature._buildDefenseChanges().
+      // A future Uncanny Dodge feat overrides this back to false.
+      denyDexToAC: useDnd35eField(derivedBooleanField(false)),
+      armorBonus:      useDnd35eField(derivedNumberField(0)),
+      shieldBonus:     useDnd35eField(derivedNumberField(0)),
       naturalArmor:    useDnd35eField(derivedNumberField(0)),
       fortification: useDnd35eField(derivedNumberField(0)),
       concealment: useDnd35eField(derivedNumberField(0)),
@@ -168,10 +188,6 @@ abstract class CreatureSystemModel extends ActorSystemModel {
         moral: useDnd35eField(new StringField({ nullable: true, required: true, initial: null, choices: [...MORAL_AXES] })),
       }),
       languages: new ArrayField(new StringField({ required: true, blank: false }), { initial: [] }),
-      senses: new ArrayField(new SchemaField({
-        type:     useDnd35eField(requiredTypedStringField(SENSE_TYPES, 'darkvision')),
-        distance: useDnd35eField(requiredNumberField(0), { measurementUnit: 'distance' }),
-      }), { initial: [] }),
     });
 
     schema.level = useDnd35eField(derivedNumberField(1), { familiar: { aliases: ['lvl'] } });
@@ -184,17 +200,23 @@ abstract class CreatureSystemModel extends ActorSystemModel {
 
     schema.currency = useDnd35eField(new CurrencyField({ required: true }));
 
-    schema.attacks = new ArrayField(new SchemaField({
-      damageRoll: new StringField({ required: true, initial: '', blank: true }),
-      damageType: new StringField({ required: true, initial: '', blank: true }),
-      critRange: new StringField({ required: true, initial: '20' }),
-      critMultiplier: requiredNumberField(2),
-      rangeIncrement: requiredNumberField(0),
-      attackFormula: new StringField({ required: true, initial: '', blank: true }),
-      damageFormula: new StringField({ required: true, initial: '', blank: true }),
-    }), {
-      initial: [],
-      persisted: false,
+    schema.attacks = new SchemaField({
+      actions: new ArrayField(new SchemaField({
+        damageRoll: new StringField({ required: true, initial: '', blank: true }),
+        damageType: new StringField({ required: true, initial: '', blank: true }),
+        critRange: new StringField({ required: true, initial: '20' }),
+        critMultiplier: requiredNumberField(2),
+        rangeIncrement: requiredNumberField(0),
+        attackFormula: new StringField({ required: true, initial: '', blank: true }),
+        damageFormula: new StringField({ required: true, initial: '', blank: true }),
+      }), {
+        initial: [],
+        persisted: false,
+      }),
+      toHitBonus: useDnd35eField(derivedNumberField(0)),
+      meleeToHitBonus: useDnd35eField(derivedNumberField(0)),
+      rangedToHitBonus: useDnd35eField(derivedNumberField(0)),
+      rangedTouchToHitBonus: useDnd35eField(derivedNumberField(0)),
     });
 
     schema.encumbrance = new SchemaField({

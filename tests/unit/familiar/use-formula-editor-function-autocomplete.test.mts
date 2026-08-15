@@ -75,7 +75,7 @@ async function typeText(input: DOMWrapper<HTMLInputElement>, text: string) {
 }
 
 describe('useFormulaEditor — $ function-name autocomplete dropdown', () => {
-  it('typing a bare "$" shows all 9 keyword options', async () => {
+  it('typing a bare "$" shows all 11 keyword options', async () => {
     const wrapper = mount(makeHarness());
     await nextTick();
     const input = wrapper.find('input');
@@ -84,7 +84,7 @@ describe('useFormulaEditor — $ function-name autocomplete dropdown', () => {
 
     expect(wrapper.find('[data-testid="dropdown"]').attributes('data-visible')).toBe('true');
     const paths = wrapper.findAll('.option').map(o => o.attributes('data-path')).sort();
-    expect(paths).toEqual(['any', 'conditional', 'contains', 'count', 'find', 'fromFeet', 'fromKg', 'fromMeters', 'stringContains'].sort());
+    expect(paths).toEqual(['any', 'conditional', 'contains', 'count', 'else', 'find', 'fromFeet', 'fromKg', 'fromMeters', 'stringContains', 'when'].sort());
   });
 
   it('typing "$cont" filters to only "contains"', async () => {
@@ -120,6 +120,20 @@ describe('useFormulaEditor — $ function-name autocomplete dropdown', () => {
     await nextTick();
 
     expect(wrapper.find('input').element.value).toBe('$contains(');
+    expect(wrapper.find('[data-testid="dropdown"]').attributes('data-visible')).toBe('false');
+  });
+
+  it('selecting "when" inserts bare "when(" (no "$" sigil)', async () => {
+    const wrapper = mount(makeHarness());
+    await nextTick();
+    const input = wrapper.find('input');
+    await input.trigger('focus');
+    await typeText(input, '$w');
+
+    await wrapper.find('.option[data-path="when"]').trigger('click');
+    await nextTick();
+
+    expect(wrapper.find('input').element.value).toBe('when(');
     expect(wrapper.find('[data-testid="dropdown"]').attributes('data-visible')).toBe('false');
   });
 

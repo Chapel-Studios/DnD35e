@@ -6,11 +6,18 @@ import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import { ensureNameFormulaOnCreate, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
+import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
-import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+import {
+  EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TYPE,
+  POST_EFFECT_CHANGE_PHASE,
+  SYSTEM_CHANGE_TYPE,
+} from '@effects/baseActiveEffect/data/constants.mjs';
 import { applyStackedActiveEffectChanges, type ResolvedEffectChange } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
 import { evaluateChangeCondition } from '@effects/baseActiveEffect/logic/evaluateChangeCondition.mjs';
+import { KEY_RESOLUTION_FAILED, resolveActiveEffectChangeKey } from '@effects/baseActiveEffect/logic/resolveChangeKey.mjs';
 import { getEffectContexts, resolveActiveEffectChange } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import { DocumentEventEmitter } from '@helpers/documentEvents/DocumentEventEmitter.mjs';
 import { buildDocumentDataMap, expandChangeTargetGroups } from '@helpers/formulae/index.mjs';
@@ -21,6 +28,13 @@ import type { ItemType } from '@items/itemTypes.mjs';
 import type { TokenDocumentDnd35e } from '@scene/tokenDocument/TokenDocumentDnd35e.mjs';
 
 import type { ActorSystemData } from './index.mjs';
+import { buildPrototypeTokenDefaults } from './logic/buildPrototypeTokenDefaults.mjs';
+import {
+  buildDerivedPrototypeTokenFields,
+  diffDerivedPrototypeTokenFields,
+  MANAGED_DETECTION_MODE_KEYS,
+} from './logic/derivedPrototypeTokenFields.mjs';
+import { isTokenSyncDisabled } from './logic/tokenSyncSettings.mjs';
 
 // Apply mixin at runtime but cast to preserve generic parameter compatibility.
 // TypeScript mixins erase generics; this cast is safe because the mixin only adds
@@ -39,6 +53,21 @@ class ActorDnd35e<
   declare type: TActorType;
   declare system: TSystemData;
   declare events: DocumentEventEmitter<this>;
+
+  /**
+   * Trailing-edge debounce for `_persistPrototypeTokenSync()` — Foundry's own idiom for
+   * "many calls per tick, only write once" (see core's `Combat.debounceSetup`,
+   * `PlaylistSound.debounceVolume`, `PrimaryOccludableObject.debounceSetOcclusion`).
+   * `delay: 0` still coalesces every synchronous call within the same tick into a single
+   * deferred write, since each call resets the pending `setTimeout`. This is the only
+   * persist path — an update always triggers `prepareData()` again, so there's no need
+   * to also piggyback the diff onto the in-flight update via `_preUpdate()`.
+   */
+  private readonly _debouncedPersistPrototypeTokenSync = foundry.utils.debounce(
+    () => this._persistPrototypeTokenSync(),
+    0
+  );
+
   /**
    * Field-path -> contributing-effect history, mirroring ItemDnd35e's `effectOverrides`
    * shape. Populated by the shared stacking engine in `applyActiveEffects()` (see
@@ -49,6 +78,12 @@ class ActorDnd35e<
    */
   effectOverrides: Record<string, Override[]> = {};
 
+  /**
+   * Non-blocking diagnostics collected during this prep cycle (broken formulas, etc.).
+   * Reset every `prepareBaseData()` — see `preparationWarnings.mts`.
+   */
+  _preparationWarnings: PreparationWarning[] = [];
+
   get localizedType (): string {
     return ACTOR_TYPES_LOCALIZED[this.type as ActorType] ?? 'dnd35e.COMMON.Actor';
   }
@@ -56,12 +91,31 @@ class ActorDnd35e<
   override prepareBaseData (): void {
     super.prepareBaseData();
     this.effectOverrides = {};
+    this._preparationWarnings = [];
+  }
+
+  /**
+   * Core's own `prepareData()` (actor.mjs) already calls `applyActiveEffects('final')` after
+   * `prepareDerivedData()` returns - there is no later hook to add a phase after that, so this
+   * override runs the full core chain first, then applies 'post'. 'post' is for changes that
+   * derive a stat from another stat only settled at the end of 'final' (e.g. a save total built
+   * from an ability mod that encumbrance may have downgraded in that same 'final' pass) - see
+   * `Creature._buildSaveAbilityChanges()`/`_buildDefenseChanges()`.
+   *
+   * `_syncPrototypeToken()` runs last, after this whole chain settles - a 'post'-phase AE could
+   * still shift `system.senses`/`system.size` (e.g. a future Polymorph-style effect); syncing
+   * any earlier would read pre-post-phase values.
+   */
+  override prepareData (): void {
+    super.prepareData();
+    this.applyActiveEffects(POST_EFFECT_CHANGE_PHASE);
+    this._syncPrototypeToken();
   }
 
   /**
    * Override to filter out item-targeted changes from transferred effects.
    * Effects can have both item and actor targeted changes - we only apply actor-targeted changes here.
-   * @param phase - The effect application phase ('initial' or 'final')
+   * @param phase - The effect application phase ('initial', 'final', or 'post')
    */
   override applyActiveEffects(phase: string): void {
     const ActiveEffect = foundry.documents.ActiveEffect;
@@ -94,9 +148,14 @@ class ActorDnd35e<
         ) continue;
         if (change.condition) {
           const { contextMap } = getEffectContexts(effect, change);
-          if (!evaluateChangeCondition(change, contextMap)) continue;
+          if (!evaluateChangeCondition(change, contextMap, this, effect)) continue;
         }
-        const copy = foundry.utils.deepClone(resolveActiveEffectChange(effect, change)) as AppliedActorEffectChange;
+        const resolvedKey = resolveActiveEffectChangeKey(effect, change, this);
+        if (resolvedKey === KEY_RESOLUTION_FAILED) continue;
+        const changeWithResolvedKey = resolvedKey === change.key ? change : { ...change, key: resolvedKey };
+        const resolvedChange = resolveActiveEffectChange(effect, changeWithResolvedKey, this);
+        if (!resolvedChange) continue; // value formula failed to resolve — skip, warning already recorded
+        const copy = foundry.utils.deepClone(resolvedChange) as AppliedActorEffectChange;
         copy.effect = effect as ActiveEffectDnd35e;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
         copy.priority ??= 0;
@@ -114,7 +173,7 @@ class ActorDnd35e<
     ) => {
       for (const change of changesToProcess) {
         if (!change.key) continue;
-        if (change.condition && !evaluateChangeCondition(change, contextMap)) continue;
+        if (change.condition && !evaluateChangeCondition(change, contextMap, this, source)) continue;
         const copy = foundry.utils.deepClone(change) as AppliedActorEffectChange;
         copy.effect = source;
         copy.type ??= EFFECT_CHANGE_TYPE.ADD;
@@ -211,6 +270,66 @@ class ActorDnd35e<
     const result = await super._preCreate(data, options, user);
     if (result === false) return false;
     await ensureNameFormulaOnCreate(this as unknown as NameFormulaDocument, options);
+
+    // Prototype token defaults shared by all actor types: linked token, friendly
+    // disposition, owner-hover HP bar, and name/size/vision derived from
+    // `Actor#name`/`system.size`/`system.senses`. One-time seed; ongoing sync as
+    // name/size/senses change afterward is handled by `prepareData()`/`_syncPrototypeToken()`.
+    this.updateSource({
+      prototypeToken: {
+        ...buildPrototypeTokenDefaults(this.name, this.system.size, this.system.senses),
+        ...data.prototypeToken,
+      },
+    });
+  }
+
+  /**
+   * Keeps the *live* `prototypeToken.name`/`width`/`height`/`sight`/`detectionModes` in
+   * sync with this actor's current (fully post-phase-settled) `name`/`system.size`/
+   * `system.senses` on every `prepareData()` pass — pure in-memory mutation, safe to
+   * run redundantly any number of times per tick. Also kicks the debounced proactive
+   * persist (`_debouncedPersistPrototypeTokenSync`) so `_source` catches up shortly after.
+   *
+   * Respects both the `DISABLE_TOKEN_AUTO_SYNC` world setting and this actor's own
+   * `flags.dnd35e.disableTokenSync` opt-out.
+   */
+  private _syncPrototypeToken(): void {
+    if (isTokenSyncDisabled(this)) return;
+
+    const derived = buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.senses);
+
+    this.prototypeToken.name = derived.name;
+    this.prototypeToken.width = derived.width;
+    this.prototypeToken.height = derived.height;
+    Object.assign(this.prototypeToken.sight, derived.sight);
+    // Object.assign only adds/overwrites keys present in `derived.detectionModes`; a managed
+    // key that dropped out (e.g. darkvision lost) must be deleted explicitly, mirroring the
+    // ForcedDeletion used for the persisted diff below - otherwise the live in-memory token
+    // keeps a stale managed mode until the next persisted sync lands.
+    for (const key of MANAGED_DETECTION_MODE_KEYS) {
+      if (!(key in derived.detectionModes)) delete this.prototypeToken.detectionModes[key];
+    }
+    Object.assign(this.prototypeToken.detectionModes, derived.detectionModes);
+
+    this._debouncedPersistPrototypeTokenSync();
+  }
+
+  /**
+   * Proactive persist for the prototype-token diff — fires once per debounced burst of
+   * `_syncPrototypeToken()` calls (see `_debouncedPersistPrototypeTokenSync` above), so
+   * `_source.prototypeToken` catches up even when nothing else ever updates this actor
+   * (e.g. senses shifting via an AE with no other change following). Recomputes the diff
+   * fresh at fire time rather than from captured state, so it always reflects whatever
+   * settled last.
+   */
+  private _persistPrototypeTokenSync(): void {
+    if (!this.id || this.pack || isTokenSyncDisabled(this)) return;
+
+    const derived = buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.senses);
+    const diff = diffDerivedPrototypeTokenFields(this._source.prototypeToken, derived);
+    if (!diff) return;
+
+    void this.update({ prototypeToken: diff });
   }
 }
 

@@ -44,6 +44,7 @@ import {
 import {
   defaultDetailsTab,
   DocumentDetails,
+  preparationWarningsTab,
 } from './tabs/index.mjs';
 import type { EvaluationDocument, FormulaRegistration } from './types.mjs';
 
@@ -62,6 +63,7 @@ export {
   FieldOverridesStoreSymbol,
   HeaderNameField,
   pickMoreRestrictive,
+  preparationWarningsTab,
   RenderModeStoreSymbol,
   TabStoreSymbol,
   useDocumentSheetStore,

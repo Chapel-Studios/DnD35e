@@ -7,6 +7,8 @@ import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { DocumentContext } from '@helpers/formulae/registry.mjs';
 
+import type { PreparationWarningHost } from '../preparationWarnings.mjs';
+import { pushPreparationWarning } from '../preparationWarnings.mjs';
 import type { DocumentSystemData } from './DocumentSystemData.mjs';
 
 const {
@@ -62,16 +64,18 @@ abstract class DocumentSystemModel<TDocType extends foundry.abstract.DataModel |
     const doc = this.parent as unknown as DocumentContext;
     const schema = (this.constructor as any).schema?.fields as Record<string, foundry.data.fields.DataField> | undefined;
     if (!schema) return;
-    this._evaluateFormulaFields(this as unknown as Record<string, unknown>, schema, doc);
+    this._evaluateFormulaFields(this as unknown as Record<string, unknown>, schema, doc, 'system');
   }
 
   protected _evaluateFormulaFields(
     model: Record<string, unknown>,
     fields: Record<string, foundry.data.fields.DataField>,
-    doc: DocumentContext
+    doc: DocumentContext,
+    path: string
   ): void {
     for (const [key, field] of Object.entries(fields)) {
       const currentValue = model[key] as Record<string, unknown> | undefined;
+      const fieldPath = `${path}.${key}`;
 
       if (field instanceof FormulaField) {
         if (!currentValue || !('formula' in currentValue)) continue;
@@ -83,7 +87,9 @@ abstract class DocumentSystemModel<TDocType extends foundry.abstract.DataModel |
           resolvedValue: string | null;
         };
         formulaSource.resolvedValue = formulaSource.formula
-          ? FormulaData.resolveSource(formulaSource, dataMap, '', excluded)
+          ? FormulaData.resolveSource(formulaSource, dataMap, '', excluded, (reason) => {
+            pushPreparationWarning(doc as unknown as PreparationWarningHost, fieldPath, reason);
+          })
           : null;
         continue;
       }
@@ -92,7 +98,8 @@ abstract class DocumentSystemModel<TDocType extends foundry.abstract.DataModel |
         this._evaluateFormulaFields(
           currentValue,
           (field.fields as Record<string, foundry.data.fields.DataField> | undefined) ?? {},
-          doc
+          doc,
+          fieldPath
         );
       }
     }

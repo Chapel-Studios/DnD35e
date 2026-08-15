@@ -3,10 +3,21 @@ import deepmerge from 'deepmerge';
 import fg from 'fast-glob';
 import fs from 'fs-extra';
 import path from 'path';
-import { defineConfig, Plugin } from 'vite';
+import { createLogger, defineConfig, Plugin } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 import { compilePacks } from './vite-plugin-compile-packs';
+
+// These are runtime-relative CSS/SFC asset urls (e.g. `../dnd35e/assets/foo.svg`) that
+// intentionally resolve relative to the file's final location inside Foundry's systems dir,
+// not relative to the source file — Vite can't statically resolve them, but they're valid
+// at runtime, so silence the noisy per-occurrence warning.
+const viteLogger = createLogger();
+const rawWarnOnce = viteLogger.warnOnce.bind(viteLogger);
+viteLogger.warnOnce = (msg, options) => {
+  if (msg.includes('didn\'t resolve at build time')) return;
+  rawWarnOnce(msg, options);
+};
 
 // Read local developer config (git-ignored) for per-machine paths
 const localConfigPath = path.resolve(__dirname, 'local.config.json');
@@ -227,6 +238,7 @@ export default defineConfig(({ command, mode }) => {
   }
 
   return ({
+    customLogger: viteLogger,
     resolve: {
       alias: {
         '@vueApps': path.resolve(__dirname, 'src/vue/apps'),

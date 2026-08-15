@@ -5,7 +5,15 @@ import type { TargetContexts } from '@helpers/formulae/registry.mjs';
 import { ensureNameFormula } from '@helpers/formulae/utils.mjs';
 
 import type { ActiveEffectSystemData } from './ActiveEffectSystemData.mjs';
-import { ACTIVE_EFFECT_TARGETS, ALL_CHANGE_TYPES, CORE_EFFECT_CHANGE_PHASE, EFFECT_CHANGE_PHASES, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TARGETS, EFFECT_CHANGE_TYPE } from './constants.mjs';
+import {
+  ACTIVE_EFFECT_TARGETS,
+  ALL_CHANGE_TYPES,
+  EFFECT_CHANGE_PHASES,
+  EFFECT_CHANGE_TARGET,
+  EFFECT_CHANGE_TARGETS,
+  EFFECT_CHANGE_TYPE,
+  FINAL_EFFECT_CHANGE_PHASE,
+} from './constants.mjs';
 
 const {
   ArrayField,
@@ -67,7 +75,11 @@ class ActiveEffectSystemModel extends DocumentSystemModel<foundry.documents.Acti
           phase: new StringField({
             required: true,
             choices: EFFECT_CHANGE_PHASES,
-            initial: CORE_EFFECT_CHANGE_PHASE,
+            // 'core' is a documented-but-not-yet-applied phase (see active-effect-lifecycle.md);
+            // 'final' is the safest default for authored changes since it settles before the
+            // 'post' phase reads it - see EffectChangesList.vue's `createChange()` for the
+            // matching UI default.
+            initial: FINAL_EFFECT_CHANGE_PHASE,
           }),
           target: new StringField({
             required: true,

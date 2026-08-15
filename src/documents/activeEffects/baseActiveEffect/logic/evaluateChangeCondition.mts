@@ -7,6 +7,8 @@
  *
  * A missing/null condition always passes (current behavior, unchanged).
  */
+import type { PreparationWarningHost } from '@documents/document/preparationWarnings.mjs';
+import { pushPreparationWarningToHosts } from '@documents/document/preparationWarnings.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 
@@ -15,23 +17,34 @@ import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
  * @param contextMap Pre-built context map for resolution (from `getEffectContexts()`).
  *   Omit for changes with no backing AE document (e.g. live-contributed changes) — a
  *   condition with no contextMap surfaces a warning and is treated as `false`.
+ * @param warnHost Document to record a `PreparationWarning` on if resolution fails
+ *   (the actor/item applying the change — see `ActorDnd35e`/`ItemDnd35e.applyActiveEffects()`).
+ * @param effectHost The ActiveEffect defining the change — also recorded on, so the warning
+ *   is visible from the AE's own config sheet, not just the actor/item it targets.
  * @returns `true` when the change should apply, `false` when it should be skipped.
  */
 function evaluateChangeCondition(
   change: EffectChangeDataDnd35e,
-  contextMap?: Record<string, unknown>
+  contextMap?: Record<string, unknown>,
+  warnHost?: PreparationWarningHost,
+  effectHost?: PreparationWarningHost
 ): boolean {
   const condition = change.condition;
   if (!condition) return true;
 
   if (!contextMap) {
-    console.warn(`evaluateChangeCondition: no context map available to resolve condition "${condition}" for change targeting "${change.key}"`);
+    const message = `Condition "${condition}" has no context to resolve against for change targeting "${change.key}"`;
+    console.warn(`evaluateChangeCondition: ${message}`);
+    pushPreparationWarningToHosts([warnHost, effectHost], change.key, message);
     return false;
   }
 
   const resolved = FormulaData.resolveSource(
     { formula: condition, resolvedValue: null, expectedType: 'boolean' },
-    contextMap
+    contextMap,
+    '',
+    [],
+    (reason) => pushPreparationWarningToHosts([warnHost, effectHost], change.key, `Condition "${condition}": ${reason}`)
   );
 
   if (resolved !== 'true' && resolved !== 'false') {

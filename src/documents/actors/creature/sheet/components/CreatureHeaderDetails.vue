@@ -4,9 +4,9 @@
     <AbilityScores />
     <div class="defense-shields">
       <CreatureAC />
-      <CreatureDefenseStat fieldPath="system.saves.fort" />
-      <CreatureDefenseStat fieldPath="system.saves.reflex" />
-      <CreatureDefenseStat fieldPath="system.saves.will" />
+      <CreatureDefenseStat fieldPath="system.saves.fort" saveKey="fort" />
+      <CreatureDefenseStat fieldPath="system.saves.reflex" saveKey="reflex" />
+      <CreatureDefenseStat fieldPath="system.saves.will" saveKey="will" />
     </div>
     <slot />
   </div>

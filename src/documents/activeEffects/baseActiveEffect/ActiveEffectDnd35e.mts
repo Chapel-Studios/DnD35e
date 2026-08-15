@@ -7,6 +7,7 @@ import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import type { NameFormulaDocument } from '@documents/document/logic/index.mjs';
 import { ensureNameFormulaOnCreate, getDisplayName } from '@documents/document/logic/index.mjs';
+import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
 import type { ActiveEffectSystemData, ActiveEffectSystemSourceDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { EffectType } from '@effects/effectTypes.mjs';
@@ -60,6 +61,17 @@ class ActiveEffectDnd35e<
   declare system: TSystemData;
   declare type: TEffectType;
   declare events: DocumentEventEmitter<this>;
+
+  /**
+   * Non-blocking diagnostics collected during this prep cycle (broken formulas, etc.).
+   * Reset every `prepareBaseData()` — see `preparationWarnings.mts`.
+   */
+  _preparationWarnings: PreparationWarning[] = [];
+
+  override prepareBaseData (): void {
+    super.prepareBaseData();
+    this._preparationWarnings = [];
+  }
 
   // dnd35e type-fix: phantom marker keeping `TParent` "used" for TypeScript's
   // unused-type-parameter check. `TParent` has no structural effect at runtime (the

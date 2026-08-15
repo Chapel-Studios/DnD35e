@@ -2,7 +2,7 @@ import { buildTokenVisionFromSenses } from '@canvas/token/logic/tokenVision.mjs'
 import type { Size } from '@constants/sizes.mjs';
 import { SIZE_TOKEN_DIMENSIONS } from '@constants/sizes.mjs';
 
-import type { SenseEntrySource } from '../data/CreatureSystemData.mjs';
+import type { SenseEntrySource } from '../data/ActorSystemData.mjs';
 
 /** Detection mode keys this system manages automatically; any other key is left untouched (e.g. a GM-added `seeInvisibility`). */
 const MANAGED_DETECTION_MODE_KEYS = ['basicSight', 'feelTremor'] as const;
@@ -30,13 +30,13 @@ interface PrototypeTokenSource {
 }
 
 /**
- * Derives the token fields this system keeps in sync with a creature's current name,
+ * Derives the token fields this system keeps in sync with an actor's current name,
  * size, and senses: display name (mirroring `Actor#name`, which already reflects any
  * name-formula resolution — see `documents/document/logic/ensureNameFormula.mts` /
  * `formulaRegistrationHelpers.mts`), token dimensions (from `system.size`), and vision
- * (`sight`/`detectionModes`, from `system.bio.senses` via `buildTokenVisionFromSenses()`).
+ * (`sight`/`detectionModes`, from `system.senses` via `buildTokenVisionFromSenses()`).
  * Pure — used both for the one-time `_preCreate()` seed (`buildPrototypeTokenDefaults(name, size, senses)`)
- * and the continuous `Creature.prepareDerivedData()` sync.
+ * and the continuous `ActorDnd35e.prepareData()` sync.
  */
 const buildDerivedPrototypeTokenFields = (name: string, size: Size, senses: SenseEntrySource[]): DerivedPrototypeTokenFields => {
   const vision = buildTokenVisionFromSenses(senses);

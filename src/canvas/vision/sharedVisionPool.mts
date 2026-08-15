@@ -55,7 +55,7 @@ const getActiveLowLightMultiplier = (): number => {
   const tokens = canvas.tokens?.placeables ?? [];
   const multipliers = tokens
     .filter(token => resolveSharedVisionSource(buildSharedVisionSourceContext(token)))
-    .map(token => (token.actor instanceof Creature ? getLowLightMultiplier(token.actor.system.bio.senses) : null))
+    .map(token => (token.actor instanceof Creature ? getLowLightMultiplier(token.actor.system.senses) : null))
     .filter((multiplier): multiplier is number => multiplier !== null);
   return multipliers.length > 0 ? Math.max(...multipliers) : 1;
 };

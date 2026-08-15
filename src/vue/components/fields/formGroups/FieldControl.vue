@@ -1,7 +1,7 @@
 <template>
   <button
     type="button"
-    class="field-control"
+    class="field-control-btn"
     :title="title"
   >
     <i :class="icon"></i>

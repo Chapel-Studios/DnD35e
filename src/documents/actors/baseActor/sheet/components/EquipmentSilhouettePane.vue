@@ -117,7 +117,8 @@
   const actorId = computed(() => store._storeUtils.document.value.id);
 
   const silhouetteStyle = computed(() => ({
-    '--silhouette-url': `url(${new URL('../dnd35e/assets/equip_silhouette.svg', import.meta.url).href})`,
+    // Path resolves relative to the compiled module's runtime location in Foundry, not at build time.
+    '--silhouette-url': `url(${new URL(/* @vite-ignore */ '../dnd35e/assets/equip_silhouette.svg', import.meta.url).href})`,
   }));
 
   const normalizeImgPath = (src: string): string => {

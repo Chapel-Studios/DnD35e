@@ -63,7 +63,10 @@ export default defineConfig({
       command: 'node scripts/run-e2e-foundry.mjs',
       url: `${baseURL}/join`,
       reuseExistingServer: true,
-      timeout: 90_000,
+      // Covers a cold-cache build:dist preflight (lint+typecheck+vite build)
+      // run by run-e2e-foundry.mjs, which can take well over 90s after a
+      // reboot. See memories/repo/e2e-test-explorer-preflight.md.
+      timeout: 240_000,
       stdout: 'pipe',
       stderr: 'pipe',
     }

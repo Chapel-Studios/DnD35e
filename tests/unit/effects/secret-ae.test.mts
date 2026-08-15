@@ -189,6 +189,18 @@ describe('getEffectContexts', () => {
     expect(result.schemaField).toBeUndefined();
     expect(result.targetDocument).toBe(actor);
   });
+
+  it('"self" is always the effect itself, never targetDocument — #self.name must resolve to the effect\'s own name even when the change targets the item', () => {
+    const item = mkDoc({ documentName: 'Item', type: 'weapon' });
+    const effect = mkEffect(item);
+    const change = mkChange({ target: EFFECT_CHANGE_TARGET.ITEM });
+
+    const result = getEffectContexts(effect, change);
+
+    // buildDocumentDataMap is mocked to capture its first ("self") argument as `target`.
+    expect(result.contextMap?.target).toBe(effect);
+    expect(result.contextMap?.item).toBe(item);
+  });
 });
 
 // =========================================================================

@@ -15,6 +15,7 @@
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
   import { formatChangeTypeSymbol } from '@effects/baseActiveEffect/logic/index.mjs';
+  import { getChangeTargetGroupLabel } from '@helpers/formulae/changeTargetGroups.mjs';
   import { findAspectByAccessPath, localizeFormula } from '@helpers/formulae/index.mjs';
   import { computed, inject } from 'vue';
 
@@ -45,7 +46,11 @@
   }
 
   /** The field's real schema label (e.g. "Land Speed"), same label shown on its FormGroup elsewhere on the sheet. */
-  const label = computed(() => store?._storeUtils?.getFieldLabel?.(props.change.key) || humanizeChangeKey(props.change.key));
+  const label = computed(() =>
+    getChangeTargetGroupLabel(props.change.key) ||
+    store?._storeUtils?.getFieldLabel?.(props.change.key) ||
+    humanizeChangeKey(props.change.key)
+  );
 
   /** Plain-text familiar path (e.g. "#Self.Speed.Land") for the label's hover tooltip - same reverse-lookup AspectPicker uses. */
   const tooltip = computed<string | undefined>(() => {

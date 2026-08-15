@@ -3,8 +3,8 @@ import type { DatabaseUpdateCallbackOptions } from '@common/abstract/_types.mjs'
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import type { IdentifiableDocumentSourceProps } from '@documents/identifiable/IdentifiableDocument.mjs';
 import { IdentifiableDocumentMixin } from '@documents/identifiable/IdentifiableDocument.mjs';
-import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
-import { INITIAL_EFFECT_CHANGE_PHASE } from '@effects/baseActiveEffect/index.mjs';
+import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
+import { INITIAL_EFFECT_CHANGE_PHASE } from '@effects/baseActiveEffect/data/constants.mjs';
 import { syncContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
 import { multiplyCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';

@@ -73,6 +73,7 @@ class ActiveEffectStub {
   static CHANGE_PHASES: Record<string, { label: string; hint: string }> = {
     initial: { label: '', hint: '' },
     final: { label: '', hint: '' },
+    post: { label: '', hint: '' },
   };
   static CHANGE_TYPES: Record<string, { label: string; defaultPriority?: number }> = {
     add: { label: 'EFFECT.CHANGE.TYPES.add', defaultPriority: 10 },
@@ -170,13 +171,17 @@ class ActiveEffectStub {
 };
 
 // --- Roll ----------------------------------------------------------------
+// Must be a class (not a plain object) — `class D20Roll extends Roll` (src/dice/D20Roll.mts)
+// evaluates `Roll` as a constructor at module-load time, so any test whose import graph
+// reaches the dice module needs `Roll` to be extendable.
+//
 // The real Foundry `Roll.safeEval` reads `this.MATH_PROXY` internally, so calling
 // it detached from `Roll` (e.g. `const fn = Roll.safeEval; fn(x)` instead of
 // `Roll.safeEval(x)`) silently breaks it in production. Enforce correct `this`
 // binding here with a regular (non-arrow) function so any future regression of
 // that bug class fails loudly in unit tests instead of passing silently.
-(globalThis as any).Roll = {
-  safeEval: vi.fn(function (this: unknown, expr: string) {
+class RollStub {
+  static safeEval = vi.fn(function (this: unknown, expr: string) {
     if (this !== (globalThis as any).Roll) {
       throw new Error(
         'Roll.safeEval stub was called without `this` bound to `Roll` (e.g. via a destructured ' +
@@ -187,6 +192,21 @@ class ActiveEffectStub {
     // Minimal stub — tests that need real evaluation should override per-test.
     const n = Number(expr);
     return Number.isFinite(n) ? n : 0;
+  });
+
+  terms: unknown[] = [];
+
+  constructor (public formula: string = '', public data: Record<string, unknown> = {}, public options: Record<string, unknown> = {}) {}
+}
+(globalThis as any).Roll = RollStub;
+
+// --- Handlebars ------------------------------------------------------------
+// `rollMessages.mts` precompiles a `.hbs` template at module load time via
+// `Handlebars.compile()` (see its module doc comment). Tests don't render chat
+// cards, so the stub just needs to not throw when the module is imported.
+(globalThis as any).Handlebars = {
+  compile: vi.fn((_source: string, _options?: Record<string, unknown>) => {
+    return vi.fn((_data: Record<string, unknown>) => '');
   }),
 };
 

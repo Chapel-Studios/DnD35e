@@ -8,6 +8,11 @@ import type {
 } from './logic/index.mjs';
 import { ensureNameFormulaOnCreate, getDisplayName } from './logic/index.mjs';
 import type {
+  PreparationWarning,
+  PreparationWarningHost,
+} from './preparationWarnings.mjs';
+import { pushPreparationWarning, pushPreparationWarningToHosts } from './preparationWarnings.mjs';
+import type {
   DocumentSheetStore,
   DocumentSheetStoreDocumentActions,
   DocumentSheetStoreDocumentGetters,
@@ -44,6 +49,7 @@ import {
   FieldOverridesStoreSymbol,
   HeaderNameField,
   pickMoreRestrictive,
+  preparationWarningsTab,
   RenderModeStoreSymbol,
   TabStoreSymbol,
   useDocumentSheetStore,
@@ -67,6 +73,9 @@ export {
   getDisplayName,
   HeaderNameField,
   pickMoreRestrictive,
+  preparationWarningsTab,
+  pushPreparationWarning,
+  pushPreparationWarningToHosts,
   RenderModeStoreSymbol,
   TabStoreSymbol,
   useDocumentSheetStore,
@@ -95,6 +104,8 @@ export type {
   FieldOverrideValue,
   FormulaRegistration,
   NameFormulaDocument,
+  PreparationWarning,
+  PreparationWarningHost,
   RenderModeStore,
   SheetDocument,
   SheetMode,

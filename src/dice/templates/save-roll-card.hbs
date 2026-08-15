@@ -1,0 +1,44 @@
+{{!--
+  Save roll chat card. Rendered by `buildSaveCard()` in rollMessages.mts via a
+  precompiled Handlebars template (same `?raw` + `Handlebars.compile()` pattern as
+  `TokenRulerDnd35e`'s waypoint label) — never served over HTTP or copied to `dist/`.
+--}}
+<div class="dnd35e chat-card save-roll-card {{#if isFumble}}is-fumble{{/if}} {{#if isCriticalThreat}}is-critical{{/if}}">
+  <header class="card-header">
+    <img src="{{ actorImage }}" alt="" class="actor-image" />
+    <div class="title-text">
+      <h5 class="value">{{ actorName }} -</h5>
+      <br />
+      <h6 class="label">{{ saveLabel }}</h6>
+      <br />
+      <h6 class="formula">{{ rollFormula }}</h6>
+    </div>
+  </header>
+
+  <div class="roll-result" data-action="expandRoll">
+    <div class="roll-summary">
+      <span class="result-header">{{resultLabel}}</span>
+      {{!-- <span class="die-result">{{dieResult}}</span> --}}
+      <span class="total-result">{{total}}</span>
+
+      {{#if isFumble}}
+      <span class="callout fumble">{{localize "dnd35e.ROLL.NaturalOne"}}</span>
+      {{/if}}
+      {{#if isCriticalThreat}}
+      <span class="callout critical">{{localize "dnd35e.ROLL.NaturalTwenty"}}</span>
+      {{/if}}
+    </div>
+
+    {{!-- Just the die-face tooltip (via `Roll#getTooltip()`), with the modifier breakdown
+          appended after it (see `appendModifierBreakdown()` in rollMessages.mts). This
+          `.roll-result` div is our own `data-action="expandRoll"` click target, reusing
+          Foundry's core CSS-grid collapse animation without its formula/total rows. --}}
+    {{{diceRollHtml}}}
+  </div>
+
+  {{#if showResult}}
+  <div class="pass-fail {{#if passed}}passed{{else}}failed{{/if}}">
+    {{#if passed}}{{localize "dnd35e.ROLL.Passed"}}{{else}}{{localize "dnd35e.ROLL.Failed"}}{{/if}}
+  </div>
+  {{/if}}
+</div>
