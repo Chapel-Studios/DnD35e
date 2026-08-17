@@ -79,8 +79,8 @@
 
 - [ ] ~~**1.J — Derived Weapon Data**~~: **REMOVED.** No weapon-specific derived data needed in Phase 1.
     - **`effectiveSize`**: Not needed — `size` is the physical object size, `designedForSize` is the creature size for chart lookups. AEs modify these directly; no wrapper field required.
-    - **`effectiveDamageRoll`**: Ephemeral — calculated by the combat system at roll time using `designedForSize` against the size-damage chart. Not a stored derived property. → Phase 8.
-    - **`isProficient`**: Determined by the combat engine at runtime based on class/feat proficiency grants. Display value deferred until proficiency feats exist. → Phase 8.
+    - **`effectiveDamageRoll`**: Ephemeral — calculated by the combat system at roll time using `designedForSize` against the size-damage chart. Not a stored derived property. → Phase 10 (Basic Combat), see `docs/migration-plan/poc/phase-10-basic-combat.md` §10.4 "Weapon damage scaling by size" (this doc's original "Phase 8" pointer predates a phase renumbering — poc phase 8 is now Pipeline & Branching, unrelated).
+    - **`isProficient`**: Determined by the combat engine at runtime based on class/feat proficiency grants. Display value deferred until proficiency feats exist. → alpha.4 (Feat system); poc.10 covers only a manual "Not Proficient" toggle in the Attack Roll Dialog (`docs/migration-plan/poc/phase-10-basic-combat.md` §10.7) with no real proficiency check behind it. (Same stale "Phase 8" pointer correction as above.)
     - **`isDouble`**: Double weapons require two damage entries, two crit profiles, and special TWF rules. → Deferred to late Beta or post-release bonus content.
     - **`threatRange`**: Redundant — `critRange` IS the threat range. The SRD uses "critical threat range" and "threat range" interchangeably. A weapon with `critRange: 19` threatens on 19–20. Nothing to derive.
 

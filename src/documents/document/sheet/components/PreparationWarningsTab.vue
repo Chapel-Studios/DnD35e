@@ -4,7 +4,7 @@
       {{ warningSummary }}
     </p>
     <ul class="preparation-warnings-list">
-      <li v-for="(warning, index) in warnings" :key="index" class="preparation-warning-row" :class="warning.severity">
+      <li v-for="(warning, index) in warnings" :key="warning.sourceUuid + warning.field" class="preparation-warning-row" :class="warning.severity">
         <i :class="warning.severity === 'error' ? 'fas fa-circle-exclamation' : 'fas fa-triangle-exclamation'"></i>
         <div class="preparation-warning-body">
           <span class="preparation-warning-source">{{ warning.sourcePath.join(' → ') }}</span>
