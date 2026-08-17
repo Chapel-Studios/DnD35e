@@ -64,13 +64,15 @@
     _storeUtils: { getFieldMeasurementUnit },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
+  const effects = getEffectsForField(props.fieldPath);
+
   const {
     measurement: { convertToLocalizedDistance, convertToLocalizedWeight },
   } = inject(SettingsStoreSymbol) as SettingsStore;
 
   const activeEffects = computed(() => [
     ...(props.additionalFieldPaths ?? []).flatMap((path) => getEffectsForField(path).value),
-    ...getEffectsForField(props.fieldPath).value,
+    ...effects.value,
   ]);
   const hasActiveEffects = computed(() => activeEffects.value.length > 0);
 

@@ -89,11 +89,13 @@
         "fragile": "Fragile",
         "grapple": "Grapple",
         "improvised": "Improvised",
+        "incorporeal": "Incorporeal",
         "monk": "Monk",
         "nonLethal": "Non-lethal",
         "nonLethalNoPenalty": "No Penalty Non-lethal Attacks",
         "performance": "Performance",
         "reach": "Reach",
+        "returning": "Returning",
         "sunder": "Sunder",
         "thrown": "Thrown",
         "trip": "Trip"

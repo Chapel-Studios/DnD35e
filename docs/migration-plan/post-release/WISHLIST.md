@@ -97,3 +97,37 @@ Custom `CONFIG.TextEditor.enrichers` entries so journal entries and item descrip
 
 Affects: `init` hook registration, new enricher/listener functions, journal/item-description rendering.
 
+---
+
+## Weapons & Combat
+
+### Wielding ammo as an improvised weapon
+SRD allows ammunition (arrows, bolts, etc.) to be wielded in melee as an improvised weapon (e.g. stabbing with an arrow), at the standard improvised-weapon −4 penalty. poc.10 (`docs/migration-plan/poc/phase-10-basic-combat.md` §10.9) only wires `Ammo` items into the ranged attack/ammo-consumption pipeline — no melee action is generated for an `Ammo` item itself. Revisit alongside the generic "Throw" ad hoc action (poc.10 §10.4) once a broader improvised-weapon story exists; likely the same ad hoc −4/no-bonus-crit math, but as a melee variant rather than a thrown one.
+
+Affects: `Ammo` item type, generic improvised-attack handling (poc.10 §10.4's "Throw" action).
+
+### Automated concealment detection (lighting/vision-based)
+poc.10 Spike 1 (`docs/migration-plan/poc/phase-10-basic-combat.md` §10.14) spiked auto-detecting the Roll Defense Dialog's Concealment percentage from a target token's actual lighting/vision state vs. the attacker's senses — verdict was **no-go**: Foundry v14 exposes no supported client API for a graduated, attacker-specific concealment percentage (`CanvasVisibility#testVisibility` is binary and tied to the *viewing client's* vision, not a specific attacker; `darknessLevel` getters are scene-wide scalars, not per-square). The Concealment field ships fully manual in poc.10.
+
+**Follow-up finding (still logged here, not acted on in poc.10)**: a narrower primitive — "is point P within any active light source's bright/dim radius" — *is* fully supported and cheap, so a future implementation doesn't need to solve this from scratch:
+- `canvas.effects.lightSources` (`Collection<string, PointLightSource<AmbientLight | Token>>`, verified against the bundled v14.365 client source) covers both scene-placed `AmbientLight`s and token-carried lights (torches) in one collection.
+- `source.active` is already `false` when the source is suppressed by an overlapping darkness effect (`PointLightSource` calls `#updateDarknessSuppression()` before building its shape) — magical Darkness auto-disables a torch with no extra plumbing.
+- `source.testPoint(point: ElevatedPoint): boolean` (`BaseEffectSource.testPoint`) is a public, wall-aware point-in-source test.
+- `source.radius` = `max(data.dim, data.bright)` in pixels; `source.ratio` = `clamp(abs(data.bright) / data.radius, 0, 1)` (computed in `PointLightSource._configure()`) — so `radius * ratio` is the bright-radius in pixels.
+- Combined:
+  ```js
+  let level = 'dark';
+  for (const source of canvas.effects.lightSources) {
+    if (!source.active) continue;
+    if (!source.testPoint(point)) continue; // outside shape or wall-blocked
+    const dist = Math.hypot(point.x - source.x, point.y - source.y);
+    const brightRadiusPx = source.radius * source.ratio;
+    level = dist <= brightRadiusPx ? 'bright' : (level === 'bright' ? level : 'dim');
+  }
+  ```
+- This still only answers the *objective* light level at a point — not whether a specific attacker's darkvision/low-light vision/blindsight lets them ignore it. That combination (light level × viewer `senses` from `tokenVision.mts`/`lowLightVision.mts`/`senses.mts`) is real, uninvestigated scope on top of this primitive.
+
+The longer-term native mechanism is still Foundry's `AdjustDarknessLevelRegionBehaviorType` (Regions) — a GM-authored, declarative darkness-level override per area — which is exactly what `docs/migration-plan/post-release/phase-03-sight-concealment.md` already plans to build on top of, gated on Phase 24 (Area Effects & Auras Full). Any future automated-concealment work should promote through that phase doc, combining both the Region-based override and the light-source-radius primitive above with per-observer senses, rather than attempting raw lighting-texture sampling.
+
+Affects: Roll Defense Dialog's Concealment field (poc.10 §10.7), `post-release/phase-03-sight-concealment.md`.
+

@@ -53,18 +53,7 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 - [ ] **Remove `ActiveEffect._shimChanges` compat shim** (`ItemDnd35e.mts:131`): The `_shimChanges(changes)` call is explicitly marked `// todo remove in v16`. **Blocked — not actionable yet**: the system currently targets Foundry v14; revisit once the project actually upgrades to v16. If v16 migration transforms old AE data, remove the shim call and its TODO comment. If the shim is still required for pre-migration data, keep it but update the comment with the specific migration that will obsolete it.
 - [ ] **Integrate Hooks.onError pattern into LogHelper** (`ItemDnd35e.mts:93`): The `applyActiveEffects()` method uses `LogHelper.error()` as a substitute for Foundry's `Hooks.onError()` pattern. Evaluate whether `LogHelper` should wrap `Hooks.onError()` for consistency with Foundry's error surfacing (e.g., error hooks that modules can listen to), or if the current direct logging is sufficient.
 
-### Task 11.3 — Wire up weapon Property flags
-
-**Objective**: `dnd35e.WEAPON.Property.*` (`blocking`, `brace`, `double`, `disarm`, `finesse`, `fragile`, `grapple`, `improvised`, `monk`, `nonLethal`, `nonLethalNoPenalty`, `performance`, `reach`, `sunder`, `thrown`, `trip`) exist in `src/lang/en/weapons.json` but have no corresponding schema field on `WeaponSystemModel` at all — not even as unwired booleans. There is no `system.properties` (or similar) shape on the weapon DataModel, and none of these strings are referenced anywhere in `src/documents/items/physical/weapon/`.
-
-**Draft acceptance criteria**:
-- Decide the field shape (e.g. a `SetField`/boolean-map of weapon properties) and add it to `WeaponSystemModel`.
-- Sheet exposes the properties (even as a plain checklist, no mechanical hookup required yet).
-- Each property's actual rules effect (disarm, trip, reach, etc.) is out of scope for this task — tracked separately once combat mechanics phases need them.
-
----
-
-### Task 11.4 — Lang file cleanup (organization & deduplication)
+### Task 11.3 — Lang file cleanup (organization & deduplication)
 
 **Objective**: `src/lang/en/*.json` has grown ad hoc across phases — audit for inconsistent key organization and duplicate/near-duplicate strings (e.g. the same label defined under more than one document type's file, or both a `FIELDS.*` entry and a bespoke top-level entry for the same concept).
 
@@ -76,7 +65,7 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 
 ---
 
-### Task 11.5 — Review `_displayName`/`displayName` getters on `ItemDnd35e`
+### Task 11.4 — Review `_displayName`/`displayName` getters on `ItemDnd35e`
 
 **Objective**: `ItemDnd35e._displayName`/`.displayName` (`src/documents/items/baseItem/ItemDnd35e.mts`) duplicate the exact same `getDisplayName(fallbackName, this.system, this)` logic as the `name` getter directly above them. Confirm whether any caller actually needs a separate accessor from `name`, or if these are leftover from before `name` itself became formula-driven.
 
@@ -87,7 +76,7 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 
 ---
 
-### Task 11.6 — Advanced Change Editor; slim down `EffectChangesList` inline columns
+### Task 11.5 — Advanced Change Editor; slim down `EffectChangesList` inline columns
 
 **Objective**: `EffectChangesList.vue` (`src/documents/activeEffects/baseActiveEffect/sheet/components/EffectChangesList.vue`) currently renders every change row as a wide inline grid — `default` variant shows Field/Key, Type, Value, Bonus Type, Condition, and Priority all at once, leaving each column (especially Field/Key and Value, which host formula editors) too cramped to be usable. Add a per-row "Advanced" editor (dialog or popover) that holds the less-frequently-touched columns, and slim the inline row down to just the columns that need to stay visible at a glance.
 
@@ -119,10 +108,9 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 ### ❌ Not Started
 - [ ] 11.1 FormGroup updater contract pass (async Promise-returning callbacks).
 - [ ] 11.2 AE pipeline codebase TODOs (`_shimChanges` blocked on v16 upgrade; `Hooks.onError`/`LogHelper` still open) — moved from poc.7. `createDialog` type cast fixed directly (no `as any` needed).
-- [ ] 11.3 Wire up weapon Property flags (`dnd35e.WEAPON.Property.*` has no schema field on `WeaponSystemModel`).
-- [ ] 11.4 Lang file cleanup — organize and deduplicate `src/lang/en/*.json`.
-- [ ] 11.5 Review `_displayName`/`displayName` getters on `ItemDnd35e` (duplicate `name` getter's logic — still needed?).
-- [ ] 11.6 Advanced Change Editor; slim down `EffectChangesList` inline columns (move Type/Bonus Type/Condition/Priority to a per-row advanced dialog).
+- [ ] 11.3 Lang file cleanup — organize and deduplicate `src/lang/en/*.json`.
+- [ ] 11.4 Review `_displayName`/`displayName` getters on `ItemDnd35e` (duplicate `name` getter's logic — still needed?).
+- [ ] 11.5 Advanced Change Editor; slim down `EffectChangesList` inline columns (move Type/Bonus Type/Condition/Priority to a per-row advanced dialog).
 - [ ] Add more POC cleanup tasks as they are discovered during final POC work.
 
 ---
