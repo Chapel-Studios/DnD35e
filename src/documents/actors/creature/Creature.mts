@@ -151,10 +151,9 @@ abstract class Creature extends ActorDnd35e {
   /**
    * Roll initiative: opens the D20 roll dialog (unless `skipDialog`) for a situational
    * modifier and roll mode, evaluates a `D20Roll`, posts a chat card, and sets the result
-   * directly via `combatant.update({ initiative })`. Bypasses Foundry's built-in
-   * formula-based initiative entirely — there is no `getRollData()`/`@attr` bridge in this
-   * codebase (see WISHLIST.md). Mirrors `rollSave()`'s pipeline. Returns `null` if the user
-   * cancels the dialog, or if this actor has no combatant in the active combat.
+   * directly via `combatant.update({ initiative })` when the actor has a combatant in the active combat.
+   * Bypasses Foundry's built-in formula-based initiative entirely — there is no `getRollData()`/`@attr` bridge in this
+   * codebase (see WISHLIST.md). Mirrors `rollSave()`'s pipeline. Returns `null` if the user cancels the dialog.
    *
    * Named `rollInitiativeCheck` (not `rollInitiative`) to avoid colliding with Foundry's
    * own `Actor#rollInitiative({createCombatants, rerollInitiative, initiativeOptions})`,

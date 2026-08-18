@@ -40,8 +40,9 @@ class CombatDnd35e extends foundry.documents.Combat {
   // class's declared signature only parameterizes the parent slot, not the token-document
   // slot `CombatantDnd35e` narrows, so a narrower param type fails the override check.
   protected override async _onStartTurn(combatant: foundry.documents.Combatant<this>, context: CombatTurnEventContext): Promise<void> {
+    await super._onStartTurn(combatant, context);
     if (context.round !== 1) return; // Flat-Footed end at start of the first turn of the combat
-    void (combatant.actor as ActorDnd35e | undefined)?.toggleStatusEffect(FLAT_FOOTED_CONDITION_ID, { active: false });
+    await (combatant.actor as ActorDnd35e | undefined)?.toggleStatusEffect(FLAT_FOOTED_CONDITION_ID, { active: false });
   }
 
   override async rollInitiative(ids: string | string[], _options?: RollInitiativeOptions): Promise<this> {
