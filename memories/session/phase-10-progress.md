@@ -8,9 +8,22 @@
 **Renumbering note**: with all three spikes resolved, the remaining stories (formerly D–K) were relettered A–H in `phase-10-basic-combat.md` (D→A, E→B, F→C, G→D, H→E, I→F, J→G, K→H). The retired spike letters A/B/C were renamed to Spike 1/2/3 to free them up. All cross-references, the Parallelization diagram, and its prose were updated accordingly.
 
 ## Current Section
-- None in progress — awaiting direction on next story (A, B, C; all independent foundations)
+- [ ] Story A — Combat tracker infrastructure, initiative, flat-footed — IN PROGRESS (Phase 0 onboarding complete)
 
 ## Decisions Made
+- **Story A/B descoping (Phase 0 for Story A)**: tracker action-pip rendering moved entirely from
+  Story A to Story B in `phase-10-basic-combat.md` — it depends on `combatantActionEconomy.mts`
+  (Story B's module), and rebuilding the same `CombatTracker` subclass/template twice wasn't worth
+  it. Story A now ships `CombatantDnd35e` without its `actionEconomy` accessor (added in Story B)
+  and `CombatDnd35e` with only `_onStartRound()` (Story B adds `_onStartTurn()` later, same file).
+  Agreed pip visual design (for Story B): icons (sword/boot/dot) for standard/move/minor, greyed
+  when spent, + numeric AoO badge.
+- Roll Initiative wiring: override `CombatDnd35e.rollInitiative(ids, options)` so the tracker's
+  existing built-in per-row/roll-all dice buttons transparently drive `Creature.rollInitiative()`
+  instead of formula-based rolling. A character-sheet trigger is also wanted but location is
+  deferred — user will decide placement once the rest of Story A is done.
+- Flat-footed auto-apply on combat start (`CombatDnd35e._onStartRound()`) is silent — no chat
+  card; the condition's own token status icon is sufficient indicator.
 - Spike 1 verdict: no supported Foundry v14 client API exposes per-point light level or an
   attacker-specific concealment percentage. `CanvasVisibility#testVisibility` is a binary check
   tied to the *viewing client's* vision, not the attacker's. `canvas.environment.darknessLevel`

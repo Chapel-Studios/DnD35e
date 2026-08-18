@@ -252,7 +252,7 @@ Real snippet: `src/documents/actors/creature/sheet/tabs/sections/attributes/Comb
 
 ```vue
 <NumberFormGroup
-  field-path="system.init.total"
+  field-path="system.init"
   read-only
 />
 ```

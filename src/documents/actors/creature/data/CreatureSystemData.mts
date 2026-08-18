@@ -129,7 +129,7 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   /** Entirely derived — not stored in source. */
   saves: { fort: number; reflex: number; will: number };
   /** Entirely derived — not stored in source. */
-  init: { total: number };
+  init: number;
   /** Derived from class items. Resets to 1 until class system is implemented. Never stored. */
   level: number;
   currency: CurrencyData;

@@ -115,6 +115,9 @@ const useCreatureStore = <TDocument extends Creature>(
     rollSaveFromSheet: async (saveKey: SaveKey): Promise<void> => {
       await document.value.rollSave(saveKey);
     },
+    rollInitiativeFromSheet: async (): Promise<void> => {
+      await document.value.rollInitiativeCheck();
+    },
   };
 
   const store: CreatureDocumentStore<TDocument> = {
@@ -159,6 +162,7 @@ interface CreatureGetters {
 type CreatureActions = {
   adjustHp: (amount: number, adjustmentType: HpAdjustmentType) => Promise<boolean>;
   rollSaveFromSheet: (saveKey: SaveKey) => Promise<void>;
+  rollInitiativeFromSheet: () => Promise<void>;
 };
 type CreatureStoreUtils = Record<string, unknown>;
 

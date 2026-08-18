@@ -279,7 +279,7 @@ describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
       reflex: 0,
       will: 0,
     } as any;
-    model.init = { total: 0 } as any;
+    model.init = 0 as any;
     model.bab = { total: 0 } as any;
     model.prepareDerivedData();
     return model;
@@ -294,7 +294,7 @@ describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
 
   it('baseline initiative defaults to 0 (no DEX adjustment)', () => {
     const model = buildModel({});
-    expect(model.init.total).toBe(0);
+    expect(model.init).toBe(0);
   });
 
   it('baseline BAB defaults to 0', () => {
@@ -373,7 +373,7 @@ describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
     } as any;
     model.defense = { armorClass: 10 } as any;
     model.saves = { fort: { total: 0 }, ref: { total: 0 }, will: { total: 0 } } as any;
-    model.init = { total: 0 } as any;
+    model.init = 0 as any;
     model.bab = { total: 0 } as any;
 
     // First pass

@@ -2,10 +2,12 @@
  * Vue-based D20 roll dialog — situational modifier + roll mode, used by any d20 check
  * (saves, ability checks, attack rolls). See phase-07-roll-formulas.md §7.9.
  */
+import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import { ROLL_DIALOG_CLASS, VUE_APP_CLASS } from '@constants/cssClasses.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import { useVueDialogMixin } from '@vueApps/VueDialogMixin.mjs';
 import type { Component } from 'vue';
+import { markRaw } from 'vue';
 
 import D20RollDialogApp from './D20RollDialogApp.vue';
 
@@ -17,14 +19,21 @@ interface D20RollDialogData {
   baseLabel: string;
   /** The actor's current computed value for the stat being rolled. */
   baseTotal: number;
-  situationalModifier: number;
+  /**
+   * A formula (not a plain number) — resolved through FormulaFamiliar against `#self`
+   * (the rolling actor) once the user rolls. See `D20RollDialogApp.vue`'s formula input.
+   */
+  situationalModifier: string;
   rollMode: string;
   actorName: string;
   actorImage: string;
+  /** The rolling actor — used to build the `#self` FormulaFamiliar context for the modifier input. */
+  actor: ActorDnd35e;
 }
 
 /** Result returned when the user confirms the roll. */
 interface D20RollDialogResult {
+  /** The resolved numeric value of the formula the user entered (see `D20RollDialogData.situationalModifier`). */
   situationalModifier: number;
   rollMode: string;
 }
@@ -55,7 +64,9 @@ class D20RollDialogConfig extends VueDialogBase {
   constructor(data: D20RollDialogData) {
     super();
     this.options.window.title = data.title;
-    this.initializeReactiveData(data);
+    // `actor` is a live Foundry Document — never let Vue's reactive() wrap it (Documents
+    // have private class fields/complex internal state that break under a reactive Proxy).
+    this.initializeReactiveData({ ...data, actor: markRaw(data.actor) });
   }
 
   protected override get vueComponent(): Component {

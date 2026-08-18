@@ -65,6 +65,19 @@ async function buildSaveCard(roll: D20Roll, modifierList: RollModifier[], opts: 
 }
 
 /**
+ * Build the HTML content for an initiative roll chat card. Initiative has no DC/pass-fail
+ * concept, so this is a thin wrapper around `buildSaveCard()`'s pipeline (same header/die
+ * face/modifier-breakdown template) with `saveLabel` set to "Initiative" and no `dc`.
+ */
+async function buildInitiativeCard(roll: D20Roll, modifierList: RollModifier[], opts: { actorName: string; actorImage: string }): Promise<string> {
+  return buildSaveCard(roll, modifierList, {
+    actorName: opts.actorName,
+    actorImage: opts.actorImage,
+    saveLabel: game.i18n.localize('dnd35e.ROLL.Initiative'),
+  });
+}
+
+/**
  * Append the modifier breakdown as the last child of `.dice-tooltip > .wrapper` (see
  * `Roll#getTooltip()`/`templates/dice/tooltip.hbs`), after the individual die-face rows.
  * Falls back to leaving `diceTooltipHtml` untouched if there's no wrapper to append to (e.g.
@@ -76,4 +89,4 @@ function appendModifierBreakdown(diceTooltipHtml: string, modifierBreakdownHtml:
   return diceTooltipHtml.replace(wrapperCloseAtEnd, match => modifierBreakdownHtml + match);
 }
 
-export { buildSaveCard };
+export { buildInitiativeCard, buildSaveCard };

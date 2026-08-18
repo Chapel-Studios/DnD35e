@@ -102,14 +102,18 @@ class ActorDnd35e<
    * from an ability mod that encumbrance may have downgraded in that same 'final' pass) - see
    * `Creature._buildSaveAbilityChanges()`/`_buildDefenseChanges()`.
    *
-   * `_syncPrototypeToken()` runs last, after this whole chain settles - a 'post'-phase AE could
+   * `prototypeToken.name`/`width`/`height`/`sight.*` sync is folded into `getSelfContributedChanges()`
+   * as ordinary 'post'-phase self-contributed changes, so it's already applied by the
+   * `applyActiveEffects(POST_EFFECT_CHANGE_PHASE)` call above. `_syncPrototypeTokenDetectionModes()`
+   * runs last, after this whole chain settles, for the one piece that can't be expressed as a
+   * generic OVERRIDE change (add/remove-by-key on `detectionModes`) - a 'post'-phase AE could
    * still shift `system.senses`/`system.size` (e.g. a future Polymorph-style effect); syncing
    * any earlier would read pre-post-phase values.
    */
   override prepareData (): void {
     super.prepareData();
     this.applyActiveEffects(POST_EFFECT_CHANGE_PHASE);
-    this._syncPrototypeToken();
+    this._syncPrototypeTokenDetectionModes();
   }
 
   /**
@@ -225,10 +229,46 @@ class ActorDnd35e<
    * penalty, land speed downgrade). Recomputed fresh from this actor's own current
    * system data on every call (called from `applyActiveEffects()` each preparation
    * cycle) - never persisted, so there is no document to create, toggle, or delete.
-   * Base implementation returns none; overridden by subclasses that need this.
+   * Base implementation supplies the prototype-token sync changes (below) shared by all
+   * actor types; subclasses that add their own (e.g. `Creature`) must call
+   * `super.getSelfContributedChanges(phase)` and merge in the result.
    */
-  getSelfContributedChanges(_phase: string): EffectChangeDataDnd35e[] {
-    return [];
+  getSelfContributedChanges(phase: string): EffectChangeDataDnd35e[] {
+    return this._buildPrototypeTokenSyncChanges().filter((change) => change.phase === phase);
+  }
+
+  /**
+   * Self-contributed OVERRIDE changes that keep `prototypeToken.name`/`width`/`height`/
+   * `sight.*` in sync with this actor's current (fully post-phase-settled) `name`/
+   * `system.size`/`system.senses`. These are plain scalar leaf fields on the actor's own
+   * schema, so the shared stacking engine applies them exactly like any other
+   * self-contributed change (`ActiveEffect.applyChange()`, no bespoke write code needed).
+   * `detectionModes` is excluded here — it's a keyed collection needing add/remove-by-key
+   * semantics the generic per-field OVERRIDE model can't express — see `_syncPrototypeTokenDetectionModes()`.
+   */
+  private _buildPrototypeTokenSyncChanges(): EffectChangeDataDnd35e[] {
+    if (isTokenSyncDisabled(this)) return [];
+
+    const derived = buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.senses);
+    const fields: [string, unknown][] = [
+      ['prototypeToken.name', derived.name],
+      ['prototypeToken.width', derived.width],
+      ['prototypeToken.height', derived.height],
+      ['prototypeToken.sight.enabled', derived.sight.enabled],
+      ['prototypeToken.sight.visionMode', derived.sight.visionMode],
+      ['prototypeToken.sight.range', derived.sight.range],
+    ];
+
+    return fields.map(([key, value]) => ({
+      key,
+      target: EFFECT_CHANGE_TARGET.ACTOR,
+      isSystem: true,
+      type: EFFECT_CHANGE_TYPE.OVERRIDE,
+      value,
+      priority: 0,
+      phase: POST_EFFECT_CHANGE_PHASE,
+      hideFromEffectsTab: true,
+    }));
   }
 
   /**
@@ -284,26 +324,24 @@ class ActorDnd35e<
   }
 
   /**
-   * Keeps the *live* `prototypeToken.name`/`width`/`height`/`sight`/`detectionModes` in
-   * sync with this actor's current (fully post-phase-settled) `name`/`system.size`/
-   * `system.senses` on every `prepareData()` pass — pure in-memory mutation, safe to
-   * run redundantly any number of times per tick. Also kicks the debounced proactive
-   * persist (`_debouncedPersistPrototypeTokenSync`) so `_source` catches up shortly after.
+   * Keeps the *live* `prototypeToken.detectionModes` in sync with this actor's current
+   * (fully post-phase-settled) `system.senses` on every `prepareData()` pass — pure
+   * in-memory mutation, safe to run redundantly any number of times per tick. This is
+   * the one piece of prototype-token sync that can't be folded into `getSelfContributedChanges()`
+   * (see there): `detectionModes` is a keyed collection needing keys added AND removed,
+   * not just value-replaced. Also kicks the debounced proactive persist
+   * (`_debouncedPersistPrototypeTokenSync`) so `_source` catches up shortly after.
    *
    * Respects both the `DISABLE_TOKEN_AUTO_SYNC` world setting and this actor's own
    * `flags.dnd35e.disableTokenSync` opt-out.
    */
-  private _syncPrototypeToken(): void {
+  private _syncPrototypeTokenDetectionModes(): void {
     if (isTokenSyncDisabled(this)) return;
 
     const derived = buildDerivedPrototypeTokenFields(this.name, this.system.size, this.system.senses);
 
-    this.prototypeToken.name = derived.name;
-    this.prototypeToken.width = derived.width;
-    this.prototypeToken.height = derived.height;
-    Object.assign(this.prototypeToken.sight, derived.sight);
-    // Object.assign only adds/overwrites keys present in `derived.detectionModes`; a managed
-    // key that dropped out (e.g. darkvision lost) must be deleted explicitly, mirroring the
+    // Only adds/overwrites keys present in `derived.detectionModes`; a managed key that
+    // dropped out (e.g. darkvision lost) must be deleted explicitly, mirroring the
     // ForcedDeletion used for the persisted diff below - otherwise the live in-memory token
     // keeps a stale managed mode until the next persisted sync lands.
     for (const key of MANAGED_DETECTION_MODE_KEYS) {
@@ -311,7 +349,11 @@ class ActorDnd35e<
     }
     Object.assign(this.prototypeToken.detectionModes, derived.detectionModes);
 
-    this._debouncedPersistPrototypeTokenSync();
+    // Optional chaining: Document construction calls prepareData() synchronously during
+    // the super() chain, before this subclass's own class fields are initialized — the
+    // very first pass has no debounce field yet. Safe to skip; nothing needs persisting
+    // that early, and every later prepareData() pass (post-construction) has it ready.
+    this._debouncedPersistPrototypeTokenSync?.();
   }
 
   /**

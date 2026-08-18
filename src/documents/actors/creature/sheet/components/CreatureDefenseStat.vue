@@ -1,7 +1,7 @@
 <template>
   <div
     class="shield"
-    :class="{ rollable: isRollable }"
+    :class="{ rollable: isRollable, 'rollable-cursor': isRollable }"
     :role="isRollable ? 'button' : undefined"
     :tabindex="isRollable ? 0 : undefined"
     @click="onClick"
@@ -89,8 +89,6 @@
     color: var(--color-cool-4);
 
     &.rollable {
-      cursor: pointer;
-
       &:hover::after {
         filter: brightness(1.15);
       }
