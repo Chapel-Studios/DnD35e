@@ -81,6 +81,10 @@ export const registerActors = () => {
     }
 
     // Register SRD conditions as Token HUD status effects (see conditions.mts for scope notes).
+    // Foundry seeds `CONFIG.statusEffects` with ~20 core defaults before this hook runs;
+    // clear them first so the Token HUD shows only our SRD list (assigning by id alone
+    // only replaces same-id entries, leaving every other core default in place).
+    CONFIG.statusEffects.length = 0;
     // `CONFIG.statusEffects` is a Proxy keyed by id (its `ownKeys` trap maps entries to their
     // `.id`s) — assigning by id (Foundry's own registration idiom) replaces same-id defaults
     // (our `prone`/`invisible`/`unconscious` intentionally supersede core's) instead of

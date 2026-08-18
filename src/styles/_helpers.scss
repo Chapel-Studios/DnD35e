@@ -5,6 +5,11 @@
   grid-column: 1 / -1;
 }
 
+/** Custom d20 cursor for clickable roll targets (defense stat pills, initiative, etc.). */
+.rollable-cursor {
+  cursor: url('../dnd35e/assets/roll-cursor.png'), pointer;
+}
+
 /**
  * FIREFOX BUG WORKAROUND — This class MUST remain global (not in a scoped <style> block).
  *

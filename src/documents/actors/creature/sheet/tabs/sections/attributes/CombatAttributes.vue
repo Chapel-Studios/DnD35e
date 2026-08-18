@@ -8,10 +8,7 @@
       <!-- TODO: this needs energy/condition resistance/immunity,  -->
     </template>
     <template #grid>
-      <NumberFormGroup
-        field-path="system.init.total"
-        read-only
-      />
+      <Initiative />
       <NumberFormGroup
         field-path="system.bab.total"
         read-only
@@ -40,6 +37,7 @@
   import Concealment from '@actors/creature/sheet/components/Concealment.vue';
   import FastHealing from '@actors/creature/sheet/components/FastHealing.vue';
   import Fortification from '@actors/creature/sheet/components/Fortification.vue';
+  import Initiative from '@actors/creature/sheet/components/Initiative.vue';
   import NaturalArmor from '@actors/creature/sheet/components/NaturalArmor.vue';
   import Regeneration from '@actors/creature/sheet/components/Regeneration.vue';
   import SpellResistance from '@actors/creature/sheet/components/SpellResistance.vue';

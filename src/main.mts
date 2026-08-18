@@ -4,6 +4,7 @@ import { reinitializeSharedVision } from '@canvas/vision/sharedVisionPool.mjs';
 import { SystemConfig } from '@constants/config/system.mjs';
 import { registerEffects } from '@documents/activeEffects/registration.mjs';
 import { registerActors } from '@documents/actors/registration.mjs';
+import { registerCombat } from '@documents/combat/registration.mjs';
 import { registerScenes } from '@documents/scene/registration.mjs';
 import { preLocalizeConfig } from '@helpers/localization/preLocalizeConfig.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -89,4 +90,5 @@ Hooks.once('ready', async () => {
 registerItems();
 registerActors();
 registerEffects();
+registerCombat();
 registerScenes();

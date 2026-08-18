@@ -2,7 +2,7 @@ import { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
 import type { BonusType } from '@constants/bonusTypes.mjs';
-import { BONUS_TYPE_ARMOR, BONUS_TYPE_NATURAL, BONUS_TYPE_SHIELD, BONUS_TYPE_SIZE } from '@constants/bonusTypes.mjs';
+import { BONUS_TYPE_ARMOR, BONUS_TYPE_NATURAL, BONUS_TYPE_SHIELD, BONUS_TYPE_SIZE, BONUS_TYPE_UNTYPED } from '@constants/bonusTypes.mjs';
 import { getEncumberedSpeed } from '@constants/carryingCapacity.mjs';
 import { DOCUMENT_UPDATE_TYPES } from '@constants/documentUpdateTypes.mjs';
 import type { SaveKey } from '@constants/saves.mjs';
@@ -17,7 +17,7 @@ import {
 } from '@effects/baseActiveEffect/data/index.mjs';
 import { parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
 import type { RollModifier } from '@source/dice/index.mjs';
-import { buildD20Formula, buildSaveCard, D20Roll, D20RollDialogConfig } from '@source/dice/index.mjs';
+import { buildD20Formula, buildInitiativeCard, buildSaveCard, D20Roll, D20RollDialogConfig } from '@source/dice/index.mjs';
 
 import { _debugCreature, isCreatureDebugEnabled } from './_debug.mjs';
 import type { CreatureSystemData, CreatureSystemSource } from './data/index.mjs';
@@ -97,9 +97,10 @@ abstract class Creature extends ActorDnd35e {
         baseLabel: saveLabel,
         baseTotal: saveTotal,
         actorName: this.name,
-        situationalModifier,
+        situationalModifier: String(situationalModifier),
         rollMode,
         actorImage: this.img,
+        actor: this,
       });
       if (!result) return null;
       situationalModifier = result.situationalModifier;
@@ -143,6 +144,79 @@ abstract class Creature extends ActorDnd35e {
       } as ChatMessageSource,
       { messageMode: rollMode }
     );
+
+    return roll;
+  }
+
+  /**
+   * Roll initiative: opens the D20 roll dialog (unless `skipDialog`) for a situational
+   * modifier and roll mode, evaluates a `D20Roll`, posts a chat card, and sets the result
+   * directly via `combatant.update({ initiative })`. Bypasses Foundry's built-in
+   * formula-based initiative entirely — there is no `getRollData()`/`@attr` bridge in this
+   * codebase (see WISHLIST.md). Mirrors `rollSave()`'s pipeline. Returns `null` if the user
+   * cancels the dialog, or if this actor has no combatant in the active combat.
+   *
+   * Named `rollInitiativeCheck` (not `rollInitiative`) to avoid colliding with Foundry's
+   * own `Actor#rollInitiative({createCombatants, rerollInitiative, initiativeOptions})`,
+   * which has an incompatible signature and different purpose (creates a combatant and
+   * delegates to `Combat#rollInitiative()` — the method we override in `CombatDnd35e`).
+   */
+  async rollInitiativeCheck(options: {
+    situationalModifier?: number;
+    rollMode?: string;
+    skipDialog?: boolean;
+  } = {}): Promise<D20Roll | null> {
+    const initiativeLabel = game.i18n.localize('dnd35e.ROLL.Initiative');
+    const initTotal = this.system.init;
+
+    let situationalModifier = options.situationalModifier ?? 0;
+    let rollMode = options.rollMode ?? game.settings.get('core', 'messageMode');
+
+    if (!options.skipDialog) {
+      const result = await D20RollDialogConfig.roll({
+        title: game.i18n.localize('dnd35e.ROLL.RollInitiativeTitle' ),
+        baseLabel: initiativeLabel,
+        baseTotal: initTotal,
+        actorName: this.name,
+        situationalModifier: String(situationalModifier),
+        rollMode,
+        actorImage: this.img,
+        actor: this,
+      });
+      if (!result) return null;
+      situationalModifier = result.situationalModifier;
+      rollMode = result.rollMode;
+    }
+
+    // Same per-effect stacking breakdown `rollSave()` shows (`_buildCombatStateChanges()`
+    // contributes the Dex mod as a hidden-from-tab AE change) instead of one lumped total.
+    const appliedInitOverrides = (this.effectOverrides['system.init'] ?? [])
+      .filter((override) => override.stackResult !== STACK_RESULT_IGNORED);
+    const modifierList: RollModifier[] = appliedInitOverrides.length > 0
+      ? appliedInitOverrides.map((override) => ({ label: override.effectName, value: parseNumericChangeValue(override.value) }))
+      : [{ label: initiativeLabel, value: initTotal }];
+    if (situationalModifier !== 0) {
+      modifierList.push({ label: game.i18n.localize('dnd35e.ROLL.SituationalModifier'), value: situationalModifier });
+    }
+
+    const roll = new D20Roll(buildD20Formula(initTotal, situationalModifier), {}, { situationalModifiers: modifierList });
+    await roll.evaluate();
+
+    const content = await buildInitiativeCard(roll, modifierList, {
+      actorName: this.name,
+      actorImage: this.img,
+    });
+
+    await roll.toMessage(
+      {
+        content,
+        speaker: ChatMessage.getSpeaker({ actor: this }),
+      } as ChatMessageSource,
+      { messageMode: rollMode }
+    );
+
+    const combatant = game.combat?.combatants.find((c) => c.actor?.id === this.id);
+    await combatant?.update({ initiative: roll.total ?? 0 });
 
     return roll;
   }
@@ -280,21 +354,39 @@ abstract class Creature extends ActorDnd35e {
     return results;
   }
 
+  protected _buildCombatStateChanges(): EffectChangeDataDnd35e[] {
+    return [{
+      key: 'system.init',
+      target: 'actor',
+      isSystem: true,
+      type: EFFECT_CHANGE_TYPE.ADD,
+      value: this.system.abilities.dex.mod,
+      bonusType: BONUS_TYPE_UNTYPED,
+      priority: 20,
+      phase: POST_EFFECT_CHANGE_PHASE,
+      label: game.i18n.localize('dnd35e.ABILITY.dex.label'),
+      hideFromEffectsTab: true,
+    }];
+  }
+
   /**
    * Live, actor-targeted encumbrance-penalty, save-ability-mod, and AC changes - see
    * `ActorDnd35e.getSelfContributedChanges()`. Recomputed fresh from this actor's
    * current state on every call; never persisted, so there is no AE document to
-   * seed, toggle, or race against.
+   * seed, toggle, or race against. Merges in the base class's prototype-token sync
+   * changes (`super.getSelfContributedChanges()`) - Creature fully replaces the base
+   * return value rather than extending it, so this must call super explicitly.
    */
   override getSelfContributedChanges(phase: string): EffectChangeDataDnd35e[] {
     return [
+      ...super.getSelfContributedChanges(phase),
       ...this._buildEncumberedChanges(),
       ...this._buildSaveAbilityChanges(),
       ...this._buildDefenseChanges(),
+      ...this._buildCombatStateChanges(),
     ]
       .filter((change) => change.phase === phase);
   }
-
 
   /**
    * Ability-mod contribution to each save (Fort/Con, Reflex/Dex, Will/Wis - SRD default,

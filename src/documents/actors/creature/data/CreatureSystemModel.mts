@@ -67,6 +67,8 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     this.saves.reflex = 0;
     this.saves.will = 0;
 
+    this.init = 0;
+
     this.defense.armorClass = 0;
     this.defense.touchAC = 0;
     this.defense.armorBonus = 0;
@@ -173,9 +175,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       will:   useDnd35eField(derivedNumberField(0)),
     });
 
-    schema.init = new SchemaField({
-      total: useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['initiative'] } }),
-    });
+    schema.init = useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['initiative'] } });
 
     schema.bio = new SchemaField({
       gender: useDnd35eField(nullableBioField()),

@@ -22,6 +22,7 @@
       "prone": { "label": "Prone" },
       "shaken": { "label": "Shaken" },
       "sickened": { "label": "Sickened" },
+      "squeezing": { "label": "Squeezing" },
       "staggered": { "label": "Staggered" },
       "stunned": { "label": "Stunned" },
       "unconscious": { "label": "Unconscious" }

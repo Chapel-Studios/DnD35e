@@ -1,6 +1,6 @@
 # POC Phase 10: Basic Combat
 
-**Status**: � In Progress
+**Status**: 🔶 In Progress
 
 > **Milestone**: POC  
 > **Dependencies**: poc.6, poc.7, poc.9  
@@ -1680,32 +1680,39 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 ---
 
-### Story A — Combat tracker, initiative, flat-footed
+### Story A — Combat tracker infrastructure, initiative, flat-footed
 **User**: GM / Player  
-**Delivers**: "Start combat → all combatants flat-footed, ordered by a rolled initiative (dialog + chat card, situational bonus entered as a formula); action pips (standard/move/minor/AoO) show on each row and reset on turn start"  
-**Routing**: Lead dev (`CombatantDnd35e`, `rollInitiative()`) + Jr dev (tracker template, flat-footed hook)  
-**Depends on**: Story B (`combatantActionEconomy.mts` shape, for the pip display); optionally consumes Spike 2's verdict for the pip-injection approach (falls back to the documented hook + DOM injection otherwise)
+**Delivers**: "Start combat → all combatants silently flat-footed (the condition's own status icon is the only indicator — no chat notice), ordered by a rolled initiative (dialog + chat card, situational bonus entered as a formula) triggered from the tracker's own built-in roll-initiative controls"  
+**Routing**: Lead dev (`CombatantDnd35e`, `CombatDnd35e`, `rollInitiative()`) + Jr dev (flat-footed hook, Squeezing condition)  
+**Depends on**: none — deliberately descoped from the tracker action-pip display so this story doesn't block on Story B. `CombatantDnd35e` ships without its `actionEconomy` convenience accessor for now (added in Story B once `combatantActionEconomy.mts` exists); `CombatDnd35e` ships with only `_onStartRound()` (Story B adds `_onStartTurn()` to the same file later — no conflict, just an additive method).
 
-- [ ] Flatten `system.init` schema from `{ total: number }` to a plain derived number field (drop `.total`); update `CombatAttributes.vue`'s field-path accordingly
-- [ ] Create `CombatantDnd35e` (no system model — see §10.1)
-- [ ] Register `CONFIG.Combatant.documentClass = CombatantDnd35e`
-- [ ] Upgrade `D20RollDialogConfig`/`D20RollDialogApp.vue`'s situational-modifier input to a formula field (Self-context-only FormulaFamiliar, via `FamiliarOverlayInput` + `FormulaData.resolveSource()`) — this is retroactive and also upgrades the existing `rollSave()` dialog
-- [ ] Implement `rollInitiative()` mirroring `Creature.rollSave()`'s dialog → `D20Roll` → chat-card pipeline; set via `combatant.update({ initiative })`
-- [ ] Add `buildInitiativeCard()` to `src/dice/rollMessages.mts`
-- [ ] Extend combat tracker rendering (per Spike 2's confirmed approach, or the fallback): standard/move/minor pips + AoO count badge per row, sourced from `combatant.actionEconomy`
-- [ ] `CombatDnd35e._onStartRound()` (§10.1): auto-apply the existing flat-footed condition (`FLAT_FOOTED_CONDITION_ID`) to all combatants when combat's first round starts — this is the only real gap; everything else (AC exclusion, sheet toggle) already ships
-- [ ] Add `SQUEEZING_CONDITION_ID` to `conditions.mts` (icon-only, `changes: []`, same convention as Shaken/Sickened/etc.) — Token-HUD-toggleable like every other icon-only condition; no movement/AC gating needed, it's read only by the Attack Roll Dialog's auto-detection (§10.7)
+- [x] Flatten `system.init` schema from `{ total: number }` to a plain derived number field (drop `.total`); update `CombatAttributes.vue`'s field-path accordingly
+- [x] Create `CombatantDnd35e` (no system model, no `actionEconomy` accessor yet — see §10.1)
+- [x] Register `CONFIG.Combatant.documentClass = CombatantDnd35e`
+- [x] Create `CombatDnd35e` with `_onStartRound()` override (§10.1): auto-apply the existing flat-footed condition (`FLAT_FOOTED_CONDITION_ID`) to all combatants when combat's first round starts, silently (no chat card — the condition's own token status icon is sufficient)
+- [x] Register `CONFIG.Combat.documentClass = CombatDnd35e`
+- [x] Upgrade `D20RollDialogConfig`/`D20RollDialogApp.vue`'s situational-modifier input to a formula field (Self-context-only FormulaFamiliar, via `FamiliarOverlayInput` + `FormulaData.resolveSource()`) — this is retroactive and also upgrades the existing `rollSave()` dialog
+- [x] Implement `Creature.rollInitiative()` mirroring `rollSave()`'s dialog → `D20Roll` → chat-card pipeline; set via `combatant.update({ initiative })` — shipped as `rollInitiativeCheck()` (collision-avoidance naming, same convention as `allApplicableEffectsDnd35e`)
+- [x] Add `buildInitiativeCard()` to `src/dice/rollMessages.mts`
+- [x] Override `CombatDnd35e.rollInitiative(ids, options)` so the tracker's existing built-in per-row/roll-all dice-icon controls call `Creature.rollInitiative()` per combatant instead of the default formula-based roll
+- [x] Add `SQUEEZING_CONDITION_ID` to `conditions.mts` (icon-only, `changes: []`, same convention as Shaken/Sickened/etc.) — Token-HUD-toggleable like every other icon-only condition; no movement/AC gating needed, it's read only by the Attack Roll Dialog's auto-detection (§10.7)
 
-**Verify**: Roll initiative → dialog accepts a formula situational modifier, combatants ordered via chat-card roll. Save roll dialog also accepts a formula modifier. Combat starts → all combatants flat-footed. Advance turn → pips (including minor) reset. Toggling Squeezing on a token via the Token HUD shows the icon and is queryable via `actor.statuses.has('squeezing')`.
+**Deferred within this story**: ~~a character-sheet trigger for rolling initiative — location TBD, to be decided once the rest of this story is in hand.~~ Not deferred — shipped as the rollable `Initiative.vue` field on the character sheet, wired to `rollInitiativeFromSheet`/`rollInitiativeCheck()`.
+
+**Deferred to Story B**: combat tracker action-pip rendering (standard/move/minor pips + AoO badge, per Spike 2's confirmed subclass approach) — moved there since it reads `combatant.actionEconomy`/`getActionEconomy()`, which `combatantActionEconomy.mts` (Story B) provides. Agreed visual design for when Story B builds it: small icons (sword/boot/dot) for standard/move/minor, greyed when spent, plus a numeric badge for remaining AoOs.
+
+**Verify**: Clicking the tracker's existing roll-initiative controls (per-row or roll-all) opens the dialog, accepts a formula situational modifier, and posts a chat card; combatants end up ordered by the result. Save roll dialog also accepts a formula modifier. Combat starts → all combatants silently flat-footed (status icon only, no chat message). Toggling Squeezing on a token via the Token HUD shows the icon and is queryable via `actor.statuses.has('squeezing')`.
 
 ---
 
 ### Story B — Combatant action economy + movement integration
 **User**: Player / GM (during combat)  
-**Delivers**: "Moving, taking a 5-foot step, withdrawing, or charging correctly consumes/restricts actions; BAB pools refill per hand at turn start"  
-**Routing**: Lead dev (flags module, movement integration, new movement actions)
+**Delivers**: "Moving, taking a 5-foot step, withdrawing, or charging correctly consumes/restricts actions; BAB pools refill per hand at turn start; the combat tracker now shows each combatant's remaining standard/move/minor/AoO"  
+**Routing**: Lead dev (flags module, movement integration, new movement actions, tracker pip rendering)
 
 - [ ] Create `combatantActionEconomy.mts` (flags-based, plain functions — see §10.1 shape), incl. `refundMoveAction()`/`refundStandardAction()`/`refundHandBab()` undo primitives and `markChargedThisTurn()`
+- [ ] Add the `actionEconomy` convenience accessor to `CombatantDnd35e` (Story A), delegating to `combatantActionEconomy.mts`
+- [ ] Extend combat tracker rendering (per Spike 2's confirmed subclass approach): standard/move/minor pips (icons, greyed when spent) + numeric AoO badge per row, sourced from `combatant.actionEconomy`
 - [ ] `CombatDnd35e._onStartTurn()` reset (§10.1): `resetActionEconomy()` — refill `bab.main`/`bab.off` from `actor.system.attributes.bab.total`, `actions.aoo` from `actor.system.aooCount`, reset `actions.standard`/`move`/`minor` to true, clear `used` flags
 - [ ] Add `SIZE_REACH` constant to `src/constants/sizes.mts`
 - [ ] Extend `TokenDocumentDnd35e._onUpdateMovement()`: spend move/standard action via `getMovementBudget()`/`isOverBudget()` (existing poc.9 machinery), no new hooks; add the `charge` branch (always spends move + standard, calls `markChargedThisTurn()` when the completed move ends within `isWithinReach()` of a hostile token, §10.6)

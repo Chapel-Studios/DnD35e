@@ -10,6 +10,8 @@
       "Failed": "Failure",
       "Result": "Result",
       "RollSaveTitle": "Roll {save} Saving Throw",
+      "Initiative": "Initiative",
+      "RollInitiativeTitle": "Roll Initiative",
       "SaveNames": {
         "fort": "Fortitude",
         "reflex": "Reflex",

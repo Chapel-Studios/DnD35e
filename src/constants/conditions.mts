@@ -32,6 +32,8 @@ const PRONE_CONDITION_ID = 'prone';
 /** `CONFIG.statusEffects[].id` for the Blinded condition — mapped to Foundry's native `CONFIG.specialStatusEffects.BLIND`. */
 const BLINDED_CONDITION_ID = 'blinded';
 const FLAT_FOOTED_CONDITION_ID = 'flatFooted';
+/** `CONFIG.statusEffects[].id` for the Squeezing condition — read only by the Attack Roll Dialog's auto-detection (poc.10 §10.7). No movement/AC gating. */
+const SQUEEZING_CONDITION_ID = 'squeezing';
 
 const setFieldOverride = (key: string, value: unknown): EffectChangeDataDnd35e => ({
   key,
@@ -262,6 +264,12 @@ const CONDITIONS: Record<string, ConditionDefinition> = {
     icon: 'icons/svg/pill.svg',
     changes: [],
   },
+  squeezing: {
+    id: SQUEEZING_CONDITION_ID,
+    label: 'dnd35e.CONDITIONS.squeezing.label',
+    icon: 'icons/svg/net.svg',
+    changes: [],
+  },
   staggered: {
     id: 'staggered',
     label: 'dnd35e.CONDITIONS.staggered.label',
@@ -313,6 +321,7 @@ export {
   CONDITIONS,
   FLAT_FOOTED_CONDITION_ID,
   PRONE_CONDITION_ID,
+  SQUEEZING_CONDITION_ID,
 };
 
 export type {
