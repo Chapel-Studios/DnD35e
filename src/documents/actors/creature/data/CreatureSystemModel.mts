@@ -138,9 +138,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       fastHealing: useDnd35eField(derivedNumberField(0)),
     });
 
-    schema.bab = new SchemaField({
-      total: useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['baseAttackBonus'] } }),
-    });
+    schema.bab = useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['baseAttackBonus'] } });
     schema.aooCount = useDnd35eField(derivedNumberField(1), { familiar: { aliases: ['attacksOfOpportunity'] } });
 
     schema.defense = new SchemaField({

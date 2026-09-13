@@ -14,6 +14,7 @@ import type { ItemType } from '@items/itemTypes.mjs';
 import type { CanvasDnd35e } from './canvas/CanvasDnd35e.mjs';
 import { CombatantDnd35e } from './documents/combat/combatant/CombatantDnd35e.mjs';
 import { CombatDnd35e } from './documents/combat/CombatDnd35e.mjs';
+import type { CombatTrackerDnd35e } from './documents/combat/CombatTrackerDnd35e.mjs';
 import { RegionDocumentDnd35e } from './documents/scene/regionDocument/RegionDocumentDnd35e.mjs';
 import { SceneDnd35e } from './documents/scene/SceneDnd35e.mjs';
 import type { TokenDocumentDnd35e } from './documents/scene/tokenDocument/index.mjs';
@@ -51,7 +52,7 @@ type ThisConfig = Config<
   documents.ChatMessage,
   CombatDnd35e,
   CombatantDnd35e,
-  fa.sidebar.tabs.CombatTracker<CombatDnd35e | null>,
+  CombatTrackerDnd35e,
   CompendiumDirectory,
   Hotbar<documents.Macro>,
   ItemDnd35e,

@@ -110,7 +110,7 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
   abilities: AbilityScoresOf<AbilityScoreData>;
   hp: HpData;
   /** Entirely derived — not stored in source. */
-  bab: { total: number };
+  bab: number;
   /** Entirely derived — not stored in source. */
   defense: {
     armorClass: number;

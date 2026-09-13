@@ -20,29 +20,34 @@
  *
  * @module
  */
-import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import { Creature } from '@actors/creature/index.mjs';
 import type { CombatRoundEventContext, CombatTurnEventContext } from '@client/_types.mjs';
 import type { RollInitiativeOptions } from '@client/documents/combat.mjs';
+import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import { FLAT_FOOTED_CONDITION_ID } from '@constants/conditions.mjs';
 
+import { resetActionEconomy } from './combatant/combatantActionEconomy.mjs';
+import type { CombatantDnd35e } from './combatant/CombatantDnd35e.mjs';
+import { resetMovementSession } from './combatant/movementSession.mjs';
+
 class CombatDnd35e extends foundry.documents.Combat {
+  declare readonly combatants: EmbeddedCollection<CombatantDnd35e<this>>;
+
   protected override async _onStartRound(context: CombatRoundEventContext): Promise<void> {
     await super._onStartRound(context);
     if (context.round !== 1) return; // only combat's actual first round applies Flat-Footed (Story A)
     const applications = this.combatants.map((combatant) =>
-      (combatant.actor as ActorDnd35e | undefined)?.toggleStatusEffect(FLAT_FOOTED_CONDITION_ID, { active: true })
+      combatant.actor?.toggleStatusEffect(FLAT_FOOTED_CONDITION_ID, { active: true })
     );
     await Promise.all(applications);
   }
 
-  // Param typed against core's own `Combatant<this>` (not `CombatantDnd35e`) — the base
-  // class's declared signature only parameterizes the parent slot, not the token-document
-  // slot `CombatantDnd35e` narrows, so a narrower param type fails the override check.
-  protected override async _onStartTurn(combatant: foundry.documents.Combatant<this>, context: CombatTurnEventContext): Promise<void> {
+  protected override async _onStartTurn(combatant: CombatantDnd35e<this>, context: CombatTurnEventContext): Promise<void> {
     await super._onStartTurn(combatant, context);
-    if (context.round !== 1) return; // Flat-Footed end at start of the first turn of the combat
-    await (combatant.actor as ActorDnd35e | undefined)?.toggleStatusEffect(FLAT_FOOTED_CONDITION_ID, { active: false });
+    const actor = combatant.actor;
+    if (context.round === 1) await actor?.toggleStatusEffect(FLAT_FOOTED_CONDITION_ID, { active: false }); // Flat-Footed ends at the start of the first turn of combat
+    if (actor instanceof Creature) await resetActionEconomy(combatant, actor);
+    await resetMovementSession(combatant);
   }
 
   override async rollInitiative(ids: string | string[], _options?: RollInitiativeOptions): Promise<this> {
@@ -53,7 +58,7 @@ class CombatDnd35e extends foundry.documents.Combat {
     const skipDialog = idList.length > 1;
     for (const id of idList) {
       const combatant = this.combatants.get(id);
-      const actor = combatant?.actor as ActorDnd35e | undefined;
+      const actor = combatant?.actor;
       if (actor instanceof Creature) {
         await actor.rollInitiativeCheck({ skipDialog });
       }

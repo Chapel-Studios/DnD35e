@@ -8,7 +8,7 @@ import { registerCombat } from '@documents/combat/registration.mjs';
 import { registerScenes } from '@documents/scene/registration.mjs';
 import { preLocalizeConfig } from '@helpers/localization/preLocalizeConfig.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
-import { D20Roll } from '@source/dice/index.mjs';
+import { D20Roll, registerChatCardActions } from '@source/dice/index.mjs';
 
 import { registerItems } from './documents/items/index.mjs';
 import { registerSettings } from './settings/index.mjs';
@@ -92,3 +92,4 @@ registerActors();
 registerEffects();
 registerCombat();
 registerScenes();
+registerChatCardActions();

@@ -25,6 +25,20 @@ export async function createItem (
   return uuid;
 }
 
+
+export async function updateDocument (
+  page: Page,
+  uuid: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  await page.evaluate(async ({ uuid, data }) => {
+    const fromUuid = (globalThis as any).fromUuid;
+    const doc = await fromUuid(uuid);
+    if (!doc) throw new Error(`updateDocument: document not found at ${uuid}`);
+    await doc.update(data);
+  }, { uuid, data });
+}
+
 /**
  * Programmatic actor creation via Foundry's Actor.create().
  *

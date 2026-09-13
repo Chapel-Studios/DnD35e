@@ -279,8 +279,8 @@ describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
       reflex: 0,
       will: 0,
     } as any;
-    model.init = 0 as any;
-    model.bab = { total: 0 } as any;
+    model.init = 0;
+    model.bab = 0;
     model.prepareDerivedData();
     return model;
   };
@@ -299,7 +299,7 @@ describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
 
   it('baseline BAB defaults to 0', () => {
     const model = buildModel({});
-    expect(model.bab.total).toBe(0);
+    expect(model.bab).toBe(0);
   });
 
   describe('ability modifiers are correctly derived as floor((score - 10) / 2)', () => {

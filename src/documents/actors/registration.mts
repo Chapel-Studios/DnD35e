@@ -4,22 +4,36 @@ import { ActorProxyDnd35e } from '@actors/baseActor/index.mjs';
 import { Character, CharacterSystemModel } from '@actors/character/index.mjs';
 import { CharacterSheet } from '@actors/character/sheet/CharacterSheet.mjs';
 import { AmbientLightDnd35e } from '@canvas/light/AmbientLightDnd35e.mjs';
+import type { Dnd35eMovementActionConfig } from '@canvas/token/logic/movementActionGating.mjs';
 import {
+  buildChargeMovementActionConfig,
+  buildDoubleMoveMovementActionConfig,
   buildDropProneMovementActionConfig,
+  buildFiveFootStepMovementActionConfig,
   buildRunMovementActionConfig,
   buildStandUpMovementActionConfig,
+  buildWithdrawMovementActionConfig,
+  canSelectChargeMovementAction,
   canSelectCrawlMovementAction,
+  canSelectDoubleMoveMovementAction,
   canSelectDropProneMovementAction,
+  canSelectFiveFootStepMovementAction,
   canSelectGroundMovementAction,
   canSelectSpeedGatedMovementAction,
   canSelectStandUpMovementAction,
+  canSelectWithdrawMovementAction,
+  CHARGE_MOVEMENT_ACTION,
   DISABLED_MOVEMENT_ACTIONS,
+  DOUBLE_MOVE_MOVEMENT_ACTION,
   DROP_PRONE_MOVEMENT_ACTION,
+  FIVE_FOOT_STEP_MOVEMENT_ACTION,
   GROUND_MOVEMENT_ACTIONS,
   RUN_MOVEMENT_ACTION,
   SPEED_GATED_ACTIONS,
   STAND_UP_MOVEMENT_ACTION,
+  WITHDRAW_MOVEMENT_ACTION,
 } from '@canvas/token/logic/movementActionGating.mjs';
+import { registerMovementActionHudDecoration } from '@canvas/token/logic/movementActionHudDecoration.mjs';
 import { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import { TokenRulerDnd35e } from '@canvas/token/TokenRulerDnd35e.mjs';
 import { BLINDED_CONDITION_ID, buildConditionStatusEffects } from '@constants/conditions.mjs';
@@ -80,6 +94,23 @@ export const registerActors = () => {
       CONFIG.Token.movement.actions[action].canSelect = () => false;
     }
 
+    // Register poc.10 Story B's three combat-only movement actions (5-foot step, withdraw, charge),
+    // plus Double Move (full-round, 2x land speed, ordinary provoking movement). `canSelect` here
+    // is structural (combat-only) only — current affordability (remaining action economy) is a
+    // separate, non-hiding "disabled" HUD decoration (see movementActionHudDecoration.mts), since
+    // Foundry's canSelect has no in-between state.
+    CONFIG.Token.movement.actions[FIVE_FOOT_STEP_MOVEMENT_ACTION] = buildFiveFootStepMovementActionConfig();
+    CONFIG.Token.movement.actions[WITHDRAW_MOVEMENT_ACTION] = buildWithdrawMovementActionConfig();
+    CONFIG.Token.movement.actions[CHARGE_MOVEMENT_ACTION] = buildChargeMovementActionConfig();
+    CONFIG.Token.movement.actions[DOUBLE_MOVE_MOVEMENT_ACTION] = buildDoubleMoveMovementActionConfig();
+    CONFIG.Token.movement.actions[FIVE_FOOT_STEP_MOVEMENT_ACTION].canSelect = () => canSelectFiveFootStepMovementAction();
+    CONFIG.Token.movement.actions[WITHDRAW_MOVEMENT_ACTION].canSelect = () => canSelectWithdrawMovementAction();
+    CONFIG.Token.movement.actions[CHARGE_MOVEMENT_ACTION].canSelect = () => canSelectChargeMovementAction();
+    CONFIG.Token.movement.actions[DOUBLE_MOVE_MOVEMENT_ACTION].canSelect = () => canSelectDoubleMoveMovementAction();
+    // Foundry's own built-in `walk` config predates our `provokes` extension — backfill it
+    // (SRD: ordinary movement provokes if it leaves a threatened square).
+    (CONFIG.Token.movement.actions.walk as Dnd35eMovementActionConfig).provokes = true;
+
     // Register SRD conditions as Token HUD status effects (see conditions.mts for scope notes).
     // Foundry seeds `CONFIG.statusEffects` with ~20 core defaults before this hook runs;
     // clear them first so the Token HUD shows only our SRD list (assigning by id alone
@@ -116,4 +147,6 @@ export const registerActors = () => {
       registerFamiliarSchema('Actor', type, (ctx?) => withItemCollectionAspects(gatherAspectsFromSchema(CharacterSystemModel, ctx), ctx));
     }
   });
+
+  registerMovementActionHudDecoration();
 };

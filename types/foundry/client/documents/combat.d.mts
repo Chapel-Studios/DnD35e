@@ -72,10 +72,10 @@ export default class Combat extends ClientBaseCombat {
   override prepareDerivedData(): void;
 
   /**
-     * Get a Combatant using its Token id
-     * @param tokenId The id of the Token for which to acquire the combatant
+     * Get all Combatants who occupy the Token with a certain id
+     * @param token The Token id or a TokenDocument instance for which to acquire the combatants
      */
-  getCombatantByToken(tokenId: string): Combatant<this> | undefined;
+  getCombatantsByToken(token: string | TokenDocument): Combatant<this>[];
 
   /**
      * Get a Combatant using its Actor id

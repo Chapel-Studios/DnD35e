@@ -8,7 +8,7 @@ import {
   placeToken,
   releaseAllTokens,
 } from './helpers/canvas.mjs';
-import { clearWorld, createActor } from './helpers/documents.mjs';
+import { clearWorld, createActor, updateDocument } from './helpers/documents.mjs';
 import { gotoGame } from './helpers/session.mjs';
 
 /**
@@ -39,12 +39,13 @@ test.describe('low-light vision light radius', () => {
 
     const lowLightActorUuid = await createActor(page, 'character', {
       name: 'Low-Light Scout',
-      system: { bio: { senses: [{ type: 'lowLight', distance: 0 }] } },
     });
+    await updateDocument(page, lowLightActorUuid, { system: { senses: [{ type: 'lowLight', distance: 0 }] } });
+
     const darkvisionActorUuid = await createActor(page, 'character', {
       name: 'Darkvision Scout',
-      system: { bio: { senses: [{ type: 'darkvision', distance: 12 }] } },
     });
+    await updateDocument(page, darkvisionActorUuid, { system: { senses: [{ type: 'darkvision', distance: 12 }] } });
 
     const light = { dim: 40, bright: 20 };
     const lowLightTokenId = await placeToken(page, lowLightActorUuid, { x: 100, y: 100, light });
