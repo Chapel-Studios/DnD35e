@@ -30,7 +30,9 @@ function decorateMovementActionChoices(hud: TokenHUD, element: HTMLElement): voi
     if (!action) continue;
     const affordable = isMovementActionAffordable(actor, action);
     entry.classList.toggle(UNAFFORDABLE_CLASS, !affordable);
-    entry.toggleAttribute('aria-disabled', !affordable);
+    entry.setAttribute('aria-disabled', affordable ? 'false' : 'true');
+    if (affordable) entry.removeAttribute('tabindex');
+    else entry.setAttribute('tabindex', '-1');
     if (affordable) delete entry.dataset.tooltipText;
     else entry.dataset.tooltipText = game.i18n.localize('dnd35e.TOKEN.MOVEMENT.ActionUnaffordable');
   }
