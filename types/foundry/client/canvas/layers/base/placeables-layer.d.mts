@@ -27,7 +27,7 @@ export default class PlaceablesLayer<TObject extends PlaceableObject = Placeable
   preview: PIXI.Container<TObject> | null;
 
   /** Keep track of history so that CTRL+Z can undo changes. */
-  history: CanvasHistoryEvent<TObject>[];
+  history: CanvasHistoryEvent<DeepPartial<TObject['document']['_source']> & { _id: string }>[];
 
   /** Keep track of objects copied with CTRL+C/X which can be pasted later. */
   clipboard: { objects: PlaceableObject[]; cut: boolean };

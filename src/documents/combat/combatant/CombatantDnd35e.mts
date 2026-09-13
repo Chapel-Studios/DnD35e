@@ -1,22 +1,29 @@
+import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/index.mjs';
 
 import type { CombatDnd35e } from '../CombatDnd35e.mjs';
+import type { CombatantActionEconomy } from './combatantActionEconomy.mjs';
+import { getActionEconomy } from './combatantActionEconomy.mjs';
 
 /**
  * CombatantDnd35e — client-side Combatant document subclass.
  *
- * poc.10 Story A: registered so `CONFIG.Combatant.documentClass` can be swapped in ahead of
- * Story B, which adds the `actionEconomy` convenience accessor (delegates to
- * `combatantActionEconomy.mts`) once that module exists. No members yet — this class is
- * currently just a registration point.
- *
- * Parameterized with `CombatDnd35e`/`TokenDocumentDnd35e` (rather than the default core
- * `Combat`/`TokenDocument`) to match the `TCombatant` binding in `global.mts`'s `ThisConfig`.
- *
  * @module
  */
-class CombatantDnd35e extends foundry.documents.Combatant<CombatDnd35e | null, TokenDocumentDnd35e | null> {
-  
+class CombatantDnd35e<
+  TParent extends CombatDnd35e | null = CombatDnd35e | null,
+> extends foundry.documents.Combatant<TParent, TokenDocumentDnd35e | null> {
+  get actionEconomy(): CombatantActionEconomy {
+    return getActionEconomy(this);
+  }
+}
+
+// Type-only override merged onto the class — base getter resolves through
+// `TTokenDocument['actor']`, which is Foundry's own `Actor`, not `ActorDnd35e`.
+interface CombatantDnd35e<TParent extends CombatDnd35e | null = CombatDnd35e | null>
+  extends foundry.documents.Combatant<TParent, TokenDocumentDnd35e | null>
+{
+  get actor(): ActorDnd35e | null;
 }
 
 export { CombatantDnd35e };

@@ -4,11 +4,13 @@
 - [x] Spike 1 — Concealment auto-detection spike — resolved **no-go** (revisited: light-source-radius detection *is* feasible, logged to wishlist, still no code this phase)
 - [x] Spike 2 — Combat tracker extension API spike — resolved **subclass** (no DOM-injection fallback needed)
 - [x] Spike 3 — AE short-duration expiry mechanism spike — resolved **native mechanism, no custom hook**
+- [x] Story A — Combat tracker infrastructure, initiative, flat-footed — all checklist items checked off in `phase-10-basic-combat.md`
+- [x] Story B — Combatant action economy + movement integration — all 12 checklist items checked off in `phase-10-basic-combat.md`; verified via a full codebase audit (11/12 were already implemented but unchecked, only the HUD provokes badge needed new code)
 
 **Renumbering note**: with all three spikes resolved, the remaining stories (formerly D–K) were relettered A–H in `phase-10-basic-combat.md` (D→A, E→B, F→C, G→D, H→E, I→F, J→G, K→H). The retired spike letters A/B/C were renamed to Spike 1/2/3 to free them up. All cross-references, the Parallelization diagram, and its prose were updated accordingly.
 
 ## Current Section
-- [ ] Story A — Combat tracker infrastructure, initiative, flat-footed — IN PROGRESS (Phase 0 onboarding complete)
+- [ ] Story C — ActionDataModel first cut (melee + TWF) — NOT STARTED, next up. Do not begin without new instruction — user is reviewing Story B for a PR first.
 
 ## Decisions Made
 - **Story A/B descoping (Phase 0 for Story A)**: tracker action-pip rendering moved entirely from
@@ -59,6 +61,28 @@
   `'delete'` (removes the AE outright) is a separate global-setting decision deferred to Story E
   (formerly Story H, prior to the renumbering — Roll Defense Dialog & attack resolution),
   since it affects every AE system-wide, not just these three condition types.
+
+- **Story B closeout**: checklist audit found 11/12 items already implemented in code with zero
+  doc/memory record — going forward, verify phase-doc/memory staleness directly against the
+  codebase (e.g. via a search subagent) rather than trusting unchecked boxes as "not started".
+  Also fixed an unrelated convention violation found along the way: `_combat-tracker.scss` (a
+  standalone global partial styling `CombatTrackerRow.vue`'s action-economy pips) was moved into
+  a scoped `<style>` block in the component itself and the partial + its `core.scss` `@use` were
+  deleted, matching the rest of the codebase's Vue-scoped-styling convention.
+- **Movement-action provokes badge** (last open Story B item): implemented as a second decoration
+  step in the existing `renderTokenHUD` hook in `movementActionHudDecoration.mts`
+  (`decorateMovementActionProvokes()`), sitting alongside the pre-existing affordability greying
+  (`decorateMovementActionChoices()`) rather than a new hook registration. Reads
+  `CONFIG.Token.movement.actions[action]?.provokes` (cast to `Dnd35eMovementActionConfig`, the
+  system's own extension interface in `movementActionGating.mts`) and only badges when
+  `game.combat?.started` is true. Badge is a JS-injected `<i class="fa-solid
+  fa-triangle-exclamation dnd35e-movement-action-provokes-badge">` appended to the anchor (native
+  Foundry HUD DOM confirmed via `token-hud.hbs`: `<a class="palette-list-entry ..."
+  data-action="movementAction" data-movement-action="{id}"><span>{icon}{label}</span></a>` — no
+  existing badge slot, so DOM injection was required, matching the doc's own "try DOM injection
+  first" fallback plan). Styling added to `_token-hud.scss` (global partial — correct location
+  since this decorates native, non-Vue HUD DOM), not a Vue `<style>` block. New localization key
+  `dnd35e.TOKEN.MOVEMENT.Provokes` added to `src/lang/en/tokens.json`.
 
 ## Deferred Items
 - Automated concealment detection (lighting/vision/senses-based) → post-release Phase 3

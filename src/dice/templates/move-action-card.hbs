@@ -1,0 +1,35 @@
+{{!--
+  Move Action Spent chat card. Rendered by `buildMoveActionCard()` in rollMessages.mts
+  (see phase-10-basic-combat.md §10.6) via the same precompiled `?raw` + `Handlebars.compile()`
+  pattern as `save-roll-card.hbs` — never served over HTTP or copied to `dist/`.
+--}}
+<div class="dnd35e chat-card move-action-card {{#if overBudget}}is-over-budget{{/if}} {{#if undone}}is-undone{{/if}}">
+  <header class="card-header">
+    <h5 class="combatant-name">{{ combatantName }}</h5>
+    <h6 class="movement-action-label">{{ movementActionLabel }}</h6>
+  </header>
+
+  <div class="card-body">
+    <span class="distance">{{ cost }} / {{ budget }} {{ distanceUnit }}</span>
+
+    {{#if overBudget}}
+    <div class="warning-banner">{{overBudgetMessage}}</div>
+    {{else}}
+    <div class="spent-actions">
+      {{#each spentLabels}}
+      <span class="spent-action">{{ this }}</span>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+
+  {{#if showUndo}}
+  <footer class="card-footer">
+    {{#if undone}}
+    <span class="undone-label">{{localize "dnd35e.ROLL.MOVE_ACTION_CARD.Undone"}}</span>
+    {{else}}
+    <button type="button" data-action="undo-move-action">{{localize "dnd35e.ROLL.MOVE_ACTION_CARD.Undo"}}</button>
+    {{/if}}
+  </footer>
+  {{/if}}
+</div>

@@ -10,7 +10,7 @@
     <template #grid>
       <Initiative />
       <NumberFormGroup
-        field-path="system.bab.total"
+        field-path="system.bab"
         read-only
       />
       <SpellResistance class="sr" />

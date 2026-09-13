@@ -60,11 +60,11 @@ test.describe('AE change condition using #self.weapons (poc §7.2c)', () => {
 
     // Add a weapon (and a non-weapon item, to prove the filterTypes narrowing
     // isn't accidentally matching everything in the collection).
-    const { weaponId, potionId } = await page.evaluate(async (uuid) => {
+    const { weaponId, sackId } = await page.evaluate(async (uuid) => {
       const actor = await (globalThis as any).fromUuid(uuid);
       const [weapon] = await actor.createEmbeddedDocuments('Item', [{ type: 'weapon', name: 'Test Dagger' }]);
-      const [potion] = await actor.createEmbeddedDocuments('Item', [{ type: 'container', name: 'Test Sack' }]);
-      return { weaponId: weapon.id as string, potionId: potion.id as string };
+      const [sack] = await actor.createEmbeddedDocuments('Item', [{ type: 'container', name: 'Test Sack' }]);
+      return { weaponId: weapon.id as string, sackId: sack.id as string };
     }, actorUuid);
 
     await expect.poll(readWill).toBe(1);
@@ -79,10 +79,10 @@ test.describe('AE change condition using #self.weapons (poc §7.2c)', () => {
     await expect.poll(readWill).toBe(0);
 
     // Sanity: the non-weapon item is still there (didn't get deleted too).
-    const remaining = await page.evaluate(async ({ uuid, potionId }) => {
+    const remaining = await page.evaluate(async ({ uuid, sackId }) => {
       const actor = await (globalThis as any).fromUuid(uuid);
-      return actor.items.get(potionId)?.id ?? null;
-    }, { uuid: actorUuid, potionId });
-    expect(remaining).toBe(potionId);
+      return actor.items.get(sackId)?.id ?? null;
+    }, { uuid: actorUuid, sackId });
+    expect(remaining).toBe(sackId);
   });
 });

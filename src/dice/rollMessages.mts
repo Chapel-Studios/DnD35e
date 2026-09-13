@@ -7,13 +7,23 @@
  *
  * @module
  */
+import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
+import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
+import type { ActionEconomyActionType } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
+import { useSettingsStore } from '@settings/index.mjs';
+
 import type { D20Roll } from './D20Roll.mjs';
 import modifierBreakdownTemplateSource from './templates/modifier-breakdown.hbs?raw';
+import moveActionCardTemplateSource from './templates/move-action-card.hbs?raw';
+import proneToggleCardTemplateSource from './templates/prone-toggle-card.hbs?raw';
 import saveRollCardTemplateSource from './templates/save-roll-card.hbs?raw';
 import type { RollModifier } from './types.mjs';
 
 const saveRollCardTemplate = Handlebars.compile(saveRollCardTemplateSource, { preventIndent: true });
 const modifierBreakdownTemplate = Handlebars.compile(modifierBreakdownTemplateSource, { preventIndent: true });
+const moveActionCardTemplate = Handlebars.compile(moveActionCardTemplateSource, { preventIndent: true });
+const proneToggleCardTemplate = Handlebars.compile(proneToggleCardTemplateSource, { preventIndent: true });
 
 /** Options for `buildSaveCard()` beyond the roll and its modifier breakdown. */
 interface BuildSaveCardOptions {
@@ -77,6 +87,206 @@ async function buildInitiativeCard(roll: D20Roll, modifierList: RollModifier[], 
   });
 }
 
+/** Data a caller computes about the move — everything `buildMoveActionCard()` needs beyond the combatant/actor/action themselves. */
+interface MoveActionCardData {
+  spent: ActionEconomyActionType[];
+  /** Already converted to the scene's localized distance units (ft/m) — see `movement.passed.cost`. */
+  cost: number;
+  /** Already converted to the scene's localized distance units — see `TokenRulerDnd35e#getLocalizedBudget()`. */
+  budget: number;
+  overBudget: boolean;
+  /**
+   * Which over-budget message to show — distinct from the generic "moved further than
+   * allowed" message for a 5-foot step (fixed 1-square allowance), mixing a 5-foot step
+   * with other movement in the same turn, exceeding a session already escalated to a
+   * full-round Double Move, or running out of actions to cover a move that would
+   * otherwise be affordable. Defaults to `'distance'` (the original generic message)
+   * when omitted.
+   */
+  overBudgetReason?: 'distance' | 'fiveFootStep' | 'mixedMovement' | 'doubleMove' | 'insufficientActions';
+}
+
+/** Persisted in `message.flags.dnd35e.moveActionCard` — everything needed to re-render the card after Undo, without re-deriving anything from the (possibly since-changed) combatant/actor. */
+interface MoveActionCardFlags extends MoveActionCardData {
+  combatantId: string;
+  movementActionLabel: string;
+  priorPosition: { x: number; y: number; elevation: number } | null;
+  undone: boolean;
+  /**
+   * Whether this card belongs to the per-turn cumulative movement session (walk/run/crawl/
+   * 5-foot-step — see `movementSession.mts`) rather than a one-shot full-round move (charge/
+   * withdraw/double move). Undo needs this to know whether to also reset the combatant's
+   * movement session (allowing fresh movement this turn) alongside refunding the action(s).
+   */
+  isSessionCard: boolean;
+}
+
+const OVER_BUDGET_MESSAGE_KEYS: Record<NonNullable<MoveActionCardData['overBudgetReason']>, string> = {
+  distance: 'dnd35e.ROLL.MOVE_ACTION_CARD.OverBudget',
+  fiveFootStep: 'dnd35e.ROLL.MOVE_ACTION_CARD.OverBudgetFiveFootStep',
+  mixedMovement: 'dnd35e.ROLL.MOVE_ACTION_CARD.OverBudgetMixedMovement',
+  doubleMove: 'dnd35e.ROLL.MOVE_ACTION_CARD.OverBudgetDoubleMove',
+  insufficientActions: 'dnd35e.ROLL.MOVE_ACTION_CARD.OverBudgetInsufficientActions',
+};
+
+/** Shared by the initial post and the Undo click handler's re-render — see chatCardActions.mts. */
+function buildMoveActionCardContent(combatantName: string, flags: MoveActionCardFlags): string {
+  const { measurement: { distanceDisplayShortLabel } } = useSettingsStore();
+  return moveActionCardTemplate({
+    combatantName,
+    movementActionLabel: flags.movementActionLabel,
+    cost: flags.cost,
+    budget: flags.budget,
+    distanceUnit: distanceDisplayShortLabel.value,
+    overBudget: flags.overBudget,
+    overBudgetMessage: flags.overBudget
+      ? game.i18n.localize(OVER_BUDGET_MESSAGE_KEYS[flags.overBudgetReason ?? 'distance'])
+      : '',
+    showUndo: flags.spent.length > 0,
+    undone: flags.undone,
+    spentLabels: flags.spent.map((action) =>
+      game.i18n.localize(action === 'move' ? 'dnd35e.ROLL.MOVE_ACTION_CARD.MoveAction' : 'dnd35e.ROLL.MOVE_ACTION_CARD.StandardAction')
+    ),
+  });
+}
+
+/**
+ * Posts the Move Action Spent card (see phase-10-basic-combat.md §10.6) whenever
+ * `TokenDocumentDnd35e#_onUpdateMovement` spends a move/standard action from movement, or
+ * flags an over-budget move that spent nothing. `priorPosition` is only stored when
+ * something was actually spent — the `overBudget` branch never committed a move, so
+ * there's nothing to undo. Returns the created message's id, so callers tracking a
+ * one-shot full-round move (Charge/Withdraw/Double Move) can later locate and mark it
+ * undone if Foundry's native movement Undo reverts that drag.
+ */
+async function buildMoveActionCard(
+  combatant: CombatantDnd35e,
+  actor: ActorDnd35e,
+  movementAction: string,
+  data: MoveActionCardData,
+  priorPosition: { x: number; y: number; elevation: number } | null
+): Promise<string | null> {
+  const movementActionLabel = game.i18n.localize(CONFIG.Token.movement.actions[movementAction]?.label ?? movementAction);
+  const flags: MoveActionCardFlags = {
+    ...data,
+    combatantId: combatant.id,
+    movementActionLabel,
+    priorPosition: data.spent.length > 0 ? priorPosition : null,
+    undone: false,
+    isSessionCard: false,
+  };
+
+  // Cast needed: same ambient schema-required-fields mismatch documented at
+  // `Creature#rollSave()`'s `roll.toMessage()` call — `ChatMessage.create()`'s data param
+  // resolves to a fully-required `SourceFromSchema<ChatMessageSchema>` shape at compile time,
+  // even though Foundry fills in every other field (`_id`, `type`, `system`, etc.) at runtime.
+  // Direct cast isn't enough here (unlike `roll.toMessage()`'s `DeepPartial<...>` param) since
+  // `ChatMessage.create()`'s param type doesn't sufficiently overlap our partial literal.
+  const message = await ChatMessage.create({
+    content: buildMoveActionCardContent(combatant.name, flags),
+    speaker: ChatMessage.getSpeaker({ actor }),
+    flags: { dnd35e: { moveActionCard: flags } },
+  } as unknown as ChatMessageSource);
+  return message?.id ?? null;
+}
+
+/**
+ * Session-aware variant of `buildMoveActionCard()` used by the per-turn cumulative movement
+ * session (5-foot step / walk / run / crawl — see `movementSession.mts`): updates the same
+ * chat message in place across multiple partial drags in the same turn instead of always
+ * posting a new one, so a player moving in several increments only ever sees a single,
+ * running "Move Action Spent" card for that turn. Returns the (possibly newly-created)
+ * message's id, to be stored back on the movement session.
+ */
+async function upsertMoveActionCard(
+  combatant: CombatantDnd35e,
+  actor: ActorDnd35e,
+  movementAction: string,
+  data: MoveActionCardData,
+  firstOrigin: { x: number; y: number; elevation: number } | null,
+  existingMessageId: string | null
+): Promise<string | null> {
+  const movementActionLabel = game.i18n.localize(CONFIG.Token.movement.actions[movementAction]?.label ?? movementAction);
+  const flags: MoveActionCardFlags = {
+    ...data,
+    combatantId: combatant.id,
+    movementActionLabel,
+    priorPosition: data.spent.length > 0 ? firstOrigin : null,
+    undone: false,
+    isSessionCard: true,
+  };
+
+  const existingMessage = existingMessageId ? game.messages?.get(existingMessageId) : undefined;
+  if (existingMessage) {
+    await existingMessage.update({
+      content: buildMoveActionCardContent(combatant.name, flags),
+      'flags.dnd35e.moveActionCard': flags,
+    });
+    return existingMessage.id;
+  }
+
+  // See `buildMoveActionCard()`'s comment above for why this cast is needed.
+  const created = (await ChatMessage.create({
+    content: buildMoveActionCardContent(combatant.name, flags),
+    speaker: ChatMessage.getSpeaker({ actor }),
+    flags: { dnd35e: { moveActionCard: flags } },
+  } as unknown as ChatMessageSource)) as ChatMessage | undefined;
+  return created?.id ?? null;
+}
+
+/** Persisted in `message.flags.dnd35e.proneToggleCard` — everything needed to re-render the card, or revert the Prone condition, after Undo (button click or Foundry's native Ctrl+Z). */
+interface ProneToggleCardFlags {
+  combatantId: string;
+  /** `true` for Drop Prone, `false` for Stand Up — determines the card's label. */
+  droppedProne: boolean;
+  /** Whether the actor had the Prone condition *before* this toggle — restored on Undo, independent of whatever the session/live actor state looks like by the time Undo happens. */
+  priorActive: boolean;
+  /** The confirming drag's `movement.id` — lets the card's Undo button call `TokenDocument#revertRecordedMovement()` directly, Foundry's own recorded-movement undo, instead of a manual revert. */
+  movementId: string;
+  undone: boolean;
+}
+
+/** Shared by the initial post and both Undo paths' re-render — see chatCardActions.mts and TokenDocumentDnd35e#reconcileProneToggle. */
+function buildProneToggleCardContent(combatantName: string, flags: ProneToggleCardFlags): string {
+  return proneToggleCardTemplate({
+    combatantName,
+    label: game.i18n.localize(
+      flags.droppedProne ? 'dnd35e.ROLL.PRONE_TOGGLE_CARD.DroppedProne' : 'dnd35e.ROLL.PRONE_TOGGLE_CARD.StoodUp'
+    ),
+    undone: flags.undone,
+  });
+}
+
+/**
+ * Posts the compact Drop Prone/Stand Up card (distinct from `buildMoveActionCard()`'s
+ * distance/budget card — the confirming drag that triggers this toggle isn't real movement,
+ * so a "cost / budget" line would be meaningless here). Returns the created message's id so
+ * `TokenDocumentDnd35e` can track it on the movement session for both Undo paths.
+ */
+async function buildProneToggleCard(
+  combatant: CombatantDnd35e,
+  actor: ActorDnd35e,
+  droppedProne: boolean,
+  priorActive: boolean,
+  movementId: string
+): Promise<string | null> {
+  const flags: ProneToggleCardFlags = {
+    combatantId: combatant.id,
+    droppedProne,
+    priorActive,
+    movementId,
+    undone: false,
+  };
+
+  // See `buildMoveActionCard()`'s comment above for why this cast is needed.
+  const message = await ChatMessage.create({
+    content: buildProneToggleCardContent(combatant.name, flags),
+    speaker: ChatMessage.getSpeaker({ actor }),
+    flags: { dnd35e: { proneToggleCard: flags } },
+  } as unknown as ChatMessageSource);
+  return message?.id ?? null;
+}
+
 /**
  * Append the modifier breakdown as the last child of `.dice-tooltip > .wrapper` (see
  * `Roll#getTooltip()`/`templates/dice/tooltip.hbs`), after the individual die-face rows.
@@ -89,4 +299,13 @@ function appendModifierBreakdown(diceTooltipHtml: string, modifierBreakdownHtml:
   return diceTooltipHtml.replace(wrapperCloseAtEnd, match => modifierBreakdownHtml + match);
 }
 
-export { buildInitiativeCard, buildSaveCard };
+export {
+  buildInitiativeCard,
+  buildMoveActionCard,
+  buildMoveActionCardContent,
+  buildProneToggleCard,
+  buildProneToggleCardContent,
+  buildSaveCard,
+  upsertMoveActionCard,
+};
+export type { MoveActionCardData, MoveActionCardFlags, ProneToggleCardFlags };

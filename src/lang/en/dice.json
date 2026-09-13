@@ -16,6 +16,23 @@
         "fort": "Fortitude",
         "reflex": "Reflex",
         "will": "Will"
+      },
+      "MOVE_ACTION_CARD": {
+        "MoveAction": "Move Action",
+        "StandardAction": "Standard Action",
+        "OverBudget": "Moved further than allowed for a single action.",
+        "OverBudgetFiveFootStep": "Can only move 5 feet using a 5-foot Step Move Action.",
+        "OverBudgetMixedMovement": "Can't combine a 5-foot step with other movement in the same turn.",
+        "OverBudgetDoubleMove": "Moved further than allowed for a Double Move.",
+        "OverBudgetInsufficientActions": "Not enough actions remaining to cover this movement.",
+        "Undo": "Undo",
+        "Undone": "Undone — action(s) refunded, token returned to its prior position."
+      },
+      "PRONE_TOGGLE_CARD": {
+        "DroppedProne": "Dropped Prone",
+        "StoodUp": "Stood Up",
+        "Undo": "Undo",
+        "Undone": "Undone — condition reverted."
       }
     }
   }

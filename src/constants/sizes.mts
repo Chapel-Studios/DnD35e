@@ -33,8 +33,22 @@ const SIZE_TOKEN_DIMENSIONS: Record<Size, number> = {
   colossal: 6,
 };
 
+/** D&D 3.5e size category -> natural reach, in grid squares (SRD Table 8-6). */
+const SIZE_REACH: Record<Size, number> = {
+  fine: 0,
+  diminutive: 0,
+  tiny: 0,
+  small: 1,
+  medium: 1,
+  large: 2,
+  huge: 3,
+  gargantuan: 3,
+  colossal: 4,
+};
+
 export {
   SIZE_MODIFIERS,
+  SIZE_REACH,
   SIZE_SELECT_OPTIONS,
   SIZE_TOKEN_DIMENSIONS,
   SIZES,

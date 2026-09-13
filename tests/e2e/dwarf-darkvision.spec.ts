@@ -8,7 +8,7 @@ import {
   placeToken,
   releaseAllTokens,
 } from './helpers/canvas.mjs';
-import { clearWorld, createActor } from './helpers/documents.mjs';
+import { clearWorld, createActor, updateDocument } from './helpers/documents.mjs';
 import { gotoGame } from './helpers/session.mjs';
 
 /**
@@ -50,8 +50,9 @@ test.describe('Darkvision on a dark scene', () => {
   test('a character with 60ft darkvision gets a live darkvision vision source in the dark', async ({ page }) => {
     const darkvisionActorUuid = await createActor(page, 'character', {
       name: 'Dwarf Test Scout',
-      system: { bio: { senses: [{ type: 'darkvision', distance: 12 }] } },
     });
+    await updateDocument(page, darkvisionActorUuid, { system: { senses: [{ type: 'darkvision', distance: 12 }] } });
+    
     const basicActorUuid = await createActor(page, 'character', { name: 'Human Test Scout' });
 
     const darkvisionTokenId = await placeToken(page, darkvisionActorUuid, { x: 200, y: 200 });

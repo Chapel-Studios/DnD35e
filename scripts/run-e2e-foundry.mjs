@@ -24,12 +24,30 @@ function readLocalConfig() {
   }
 }
 
+// VS Code's debug auto-attach doesn't just set --inspect-brk in NODE_OPTIONS -
+// it typically injects `--require <...\js-debug\...\bootloader.js>` plus a
+// VSCODE_INSPECTOR_OPTIONS env var, and the bootloader decides at runtime
+// whether to open an inspector. child_process.spawn/spawnSync inherit env by
+// default, so every node child we spawn below (build:dist, setup-e2e.mjs, and
+// critically Foundry's own main.js) would load that bootloader too and can
+// end up paused waiting for a debugger that never attaches to it - hanging
+// the webServer readiness probe forever even though a plain (non-debug) run
+// has none of this set and works. None of these children are ever meant to be
+// debugged themselves, so just strip the whole lot.
+function childEnv() {
+  const env = { ...process.env };
+  delete env.NODE_OPTIONS;
+  delete env.VSCODE_INSPECTOR_OPTIONS;
+  return env;
+}
+
 function runStep(command, args, label) {
   console.log(`[e2e:webServer] ${label}...`);
   const result = spawnSync(command, args, {
     cwd: REPO_ROOT,
     stdio: 'inherit',
     shell: process.platform === 'win32',
+    env: childEnv(),
   });
 
   if (typeof result.status === 'number' && result.status !== 0) {
@@ -94,6 +112,7 @@ const foundryProcess = spawn(
     cwd: REPO_ROOT,
     stdio: 'inherit',
     shell: false,
+    env: childEnv(),
   },
 );
 

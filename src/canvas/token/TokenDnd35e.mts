@@ -5,7 +5,7 @@ import type { LightSourceData } from '@client/canvas/sources/base-light-source.m
 import type { Point } from '@common/_types.mjs';
 import type { TokenDocumentDnd35e } from '@scene/tokenDocument/TokenDocumentDnd35e.mjs';
 
-import { RUN_MOVEMENT_ACTION } from './logic/movementActionGating.mjs';
+import { CHARGE_MOVEMENT_ACTION, RUN_MOVEMENT_ACTION } from './logic/movementActionGating.mjs';
 
 declare const ui: typeof foundry.ui;
 
@@ -15,13 +15,18 @@ class TokenDnd35e<TDocument extends TokenDocumentDnd35e = TokenDocumentDnd35e>
   declare readonly layer: TokenLayer<this>;
 
   /**
-   * SRD running only permits a single straight-line move — refuse to add the
+   * SRD running/charging only permit a single straight-line move — refuse to add the
    * intermediate checkpoint waypoints normally added via ctrl+click while the
-   * token's active movement action is `run` (see WISHLIST.md / poc/phase-09-basic-tokens.md).
+   * token's active movement action is `run` or `charge` (see WISHLIST.md /
+   * poc/phase-09-basic-tokens.md, poc/phase-10-basic-combat.md §10.6).
    */
   protected override _addDragWaypoint(point: Point, options?: { snap?: boolean }): void {
     if (this.document.movementAction === RUN_MOVEMENT_ACTION) {
       ui.notifications.warn(game.i18n.localize('dnd35e.TOKEN.MOVEMENT.RunNoWaypoints'));
+      return;
+    }
+    if (this.document.movementAction === CHARGE_MOVEMENT_ACTION) {
+      ui.notifications.warn(game.i18n.localize('dnd35e.TOKEN.MOVEMENT.ChargeNoWaypoints'));
       return;
     }
     super._addDragWaypoint(point, options);

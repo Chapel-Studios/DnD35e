@@ -1,0 +1,12 @@
+{
+  "dnd35e": {
+    "COMBAT": {
+      "ACTION_ECONOMY": {
+        "Standard": "Standard Action",
+        "Move": "Move Action",
+        "Minor": "Minor Action",
+        "AttacksOfOpportunity": "Attacks of Opportunity remaining"
+      }
+    }
+  }
+}

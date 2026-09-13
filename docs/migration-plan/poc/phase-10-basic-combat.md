@@ -1544,6 +1544,9 @@ All open decisions from the initial spec have been resolved and folded into the 
 5. FormulaFamiliar preferred-alias support — §10.7 "FormulaFamiliar context aliasing"
 6. `PLAYER_SELF_DEFENSE` default — §10.7 "GM-gated attack resolution"
 7. Multi-target flanking / target capping — §10.3's `maxTargets` field and §10.7 "executeAction()" / "Retargeting"
+8. Real-Ctrl+Z coverage for non-movement combat-card mutations (added after the initial spec, during poc.9's Drop Prone/Stand Up Undo fix) — §10.14 Story I: push a synthetic entry onto `canvas.tokens.history` ourselves for every Undo-eligible card, and intercept a custom `TokenLayerDnd35e#undoHistory()` override to route it to our own shared revert primitive instead of falling through to core's CRUD-based undo
+
+---
 
 ---
 
@@ -1560,6 +1563,7 @@ All open decisions from the initial spec have been resolved and folded into the 
 | `src/constants/weapons/weaponProperties.mts` | `WEAPON_PROPERTY_*` constants (`finesse`, `reach`, `threatensAdjacent`, `thrown`, `nonLethal`, `nonLethalNoPenalty`) + `WEAPON_PROPERTIES` choices array (§10.3) — alpha.3 extends this with the remaining 11 |
 | `src/documents/items/physical/ammo/` | New `Ammo` item type (model, data, sheet); `getContributedActorChanges()` pushes `system.attacks.ammoOptions` entries
 | `src/documents/combat/CombatDnd35e.mts` | Custom Combat class; `_onStartTurn()` override resets action economy on turn advance, `_onStartRound()` override auto-applies Flat-Footed on combat's first round (§10.1) |
+| `src/canvas/token/TokenLayerDnd35e.mts` | Custom `TokenLayer` (`CONFIG.Canvas.layers.tokens.layerClass`); `undoHistory()` override intercepts our own synthetic, marker-tagged history entries and routes them to the shared combat-card revert primitive instead of core's CRUD-based undo (§10.14 Story I) |
 | `src/documents/combat/CombatTrackerDnd35e.mts` | Custom `CombatTracker` (or template/hook injection, per Spike 2's verdict): action pips (§10.2) |
 | `src/dice/templates/ammo-recovery-card.hbs` | Ammo Recovery chat card template (§10.9): unresolved (Recover Ammo button) and resolved (per-entry expended/recovered rows + Undo button) states of the same message |
 | `src/canvas/token/hud/` | Token HUD bottom row: Weapon Attacks (expandable list of weapon actions + Throw) and Combat Maneuvers (single Total Defense entry this phase; alpha.3 adds real maneuvers) controls |
@@ -1710,18 +1714,18 @@ All open decisions from the initial spec have been resolved and folded into the 
 **Delivers**: "Moving, taking a 5-foot step, withdrawing, or charging correctly consumes/restricts actions; BAB pools refill per hand at turn start; the combat tracker now shows each combatant's remaining standard/move/minor/AoO"  
 **Routing**: Lead dev (flags module, movement integration, new movement actions, tracker pip rendering)
 
-- [ ] Create `combatantActionEconomy.mts` (flags-based, plain functions — see §10.1 shape), incl. `refundMoveAction()`/`refundStandardAction()`/`refundHandBab()` undo primitives and `markChargedThisTurn()`
-- [ ] Add the `actionEconomy` convenience accessor to `CombatantDnd35e` (Story A), delegating to `combatantActionEconomy.mts`
-- [ ] Extend combat tracker rendering (per Spike 2's confirmed subclass approach): standard/move/minor pips (icons, greyed when spent) + numeric AoO badge per row, sourced from `combatant.actionEconomy`
-- [ ] `CombatDnd35e._onStartTurn()` reset (§10.1): `resetActionEconomy()` — refill `bab.main`/`bab.off` from `actor.system.attributes.bab.total`, `actions.aoo` from `actor.system.aooCount`, reset `actions.standard`/`move`/`minor` to true, clear `used` flags
-- [ ] Add `SIZE_REACH` constant to `src/constants/sizes.mts`
-- [ ] Extend `TokenDocumentDnd35e._onUpdateMovement()`: spend move/standard action via `getMovementBudget()`/`isOverBudget()` (existing poc.9 machinery), no new hooks; add the `charge` branch (always spends move + standard, calls `markChargedThisTurn()` when the completed move ends within `isWithinReach()` of a hostile token, §10.6)
-- [ ] Add `fiveFootStep`, `withdraw`, and `charge` custom movement actions to `movementActionGating.mts`, with `canSelectFiveFootStepMovementAction()`/`canSelectWithdrawMovementAction()`/`canSelectChargeMovementAction()` gating (combat-only); extend `movementBudget.mts`'s `ACTION_TO_SPEED_KEY`/`ACTION_SPEED_MULTIPLIER` so `charge` (and `withdraw`) double land speed
-- [ ] Add `provokes: boolean` to every movement action config (`walk`/`run`/`charge`/`standUp` → `true`; `dropProne`/`fiveFootStep`/`withdraw` → `false`)
-- [ ] Enforce `charge`'s straight-line-only constraint via `TokenDnd35e#_addDragWaypoint` refusing intermediate waypoints while `charge` is the active movement action (same technique as `run`, §10.6)
-- [ ] Build `buildMoveActionCard()` + `move-action-card.hbs` template; post it from `_onUpdateMovement()` whenever a move/standard action is actually spent, or a warning-flagged card when `cost > budget * 2` (§10.6)
-- [ ] Wire the `data-action="undo-move-action"` click handler (GM/owner-gated): refunds the spent action(s) via `refundMoveAction()`/`refundStandardAction()`, teleports the token back to the stored `priorPosition`, sets `undone: true`, re-renders the card
-- [ ] Add the movement-action HUD caution badge for `provokes: true` actions (§10.10/Story G reads it too) — exact v14 render point: try a DOM injection via a render hook first (mirroring Spike 2's tracker fallback), only escalate to a dedicated spike if that proves unworkable
+- [x] Create `combatantActionEconomy.mts` (flags-based, plain functions — see §10.1 shape), incl. `refundMoveAction()`/`refundStandardAction()`/`refundHandBab()` undo primitives and `markChargedThisTurn()`
+- [x] Add the `actionEconomy` convenience accessor to `CombatantDnd35e` (Story A), delegating to `combatantActionEconomy.mts`
+- [x] Extend combat tracker rendering (per Spike 2's confirmed subclass approach): standard/move/minor pips (icons, greyed when spent) + numeric AoO badge per row, sourced from `combatant.actionEconomy`
+- [x] `CombatDnd35e._onStartTurn()` reset (§10.1): `resetActionEconomy()` — refill `bab.main`/`bab.off` from `actor.system.attributes.bab.total`, `actions.aoo` from `actor.system.aooCount`, reset `actions.standard`/`move`/`minor` to true, clear `used` flags
+- [x] Add `SIZE_REACH` constant to `src/constants/sizes.mts`
+- [x] Extend `TokenDocumentDnd35e._onUpdateMovement()`: spend move/standard action via `getMovementBudget()`/`isOverBudget()` (existing poc.9 machinery), no new hooks; add the `charge` branch (always spends move + standard, calls `markChargedThisTurn()` when the completed move ends within `isWithinReach()` of a hostile token, §10.6)
+- [x] Add `fiveFootStep`, `withdraw`, and `charge` custom movement actions to `movementActionGating.mts`, with `canSelectFiveFootStepMovementAction()`/`canSelectWithdrawMovementAction()`/`canSelectChargeMovementAction()` gating (combat-only); extend `movementBudget.mts`'s `ACTION_TO_SPEED_KEY`/`ACTION_SPEED_MULTIPLIER` so `charge` (and `withdraw`) double land speed
+- [x] Add `provokes: boolean` to every movement action config (`walk`/`run`/`charge`/`standUp` → `true`; `dropProne`/`fiveFootStep`/`withdraw` → `false`)
+- [x] Enforce `charge`'s straight-line-only constraint via `TokenDnd35e#_addDragWaypoint` refusing intermediate waypoints while `charge` is the active movement action (same technique as `run`, §10.6)
+- [x] Build `buildMoveActionCard()` + `move-action-card.hbs` template; post it from `_onUpdateMovement()` whenever a move/standard action is actually spent, or a warning-flagged card when `cost > budget * 2` (§10.6)
+- [x] Wire the `data-action="undo-move-action"` click handler (GM/owner-gated): refunds the spent action(s) via `refundMoveAction()`/`refundStandardAction()`, teleports the token back to the stored `priorPosition`, sets `undone: true`, re-renders the card
+- [x] Add the movement-action HUD caution badge for `provokes: true` actions (§10.10/Story G reads it too) — implemented as a `renderTokenHUD` DOM injection alongside the existing affordability decoration (`decorateMovementActionProvokes()` in `movementActionHudDecoration.mts`), gated on `game.combat?.started`
 
 **Verify**: Move ≤ speed → move action consumed + Move Action card posted with an active Undo button; clicking Undo refills the move-action pip and the card shows "Undone". Move > speed ≤ 2× → move + standard consumed, card lists both, Undo refunds both. Move > 2× speed → warning banner on the card (no Undo, nothing was spent) alongside the existing toast. 5-foot step/Withdraw only selectable in combat; neither provokes. Charge only selectable in combat, provokes like a normal move, can't drag a bent path (only straight lines), and always spends move + standard regardless of distance. Charging into melee reach of a hostile token sets `used.chargedThisTurn`; charging without reaching anyone doesn't, and nothing warns either way. Turn start refills both hand BAB pools and AoO count. The provokes badge appears on `provokes: true` movement actions only during combat.
 
@@ -1871,6 +1875,23 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 ---
 
+### Story I — Uniform undo architecture across combat chat cards
+**User**: Developer (architecture) / Player & GM (feel the effect — attacks become undoable, and Ctrl+Z reliably undoes the *whole* last combat action, not just token position)  
+**Delivers**: "The Resolution card's Undo button (speced in §10.7 but not yet built) actually exists and works; Move Action, Prone Toggle (poc.9), Resolution, and Ammo Recovery cards' revert logic shares one common primitive; and a real Ctrl+Z press reverts *any* of these cards, not only movement — by pushing our own synthetic entry onto `canvas.tokens.history` for every Undo-eligible card and intercepting the layer's own undo dispatch to route it to that same shared revert primitive"  
+**Routing**: Lead dev (touches core undo internals and Foundry's undocumented canvas-history behavior)  
+**Depends on**: Story B (Move Action card), Story E (Resolution card exists to gain its Undo button), poc.9 (Drop Prone/Stand Up's `revertRecordedMovement()`-based Undo — the reference pattern for the movement-carrying half of this story)
+
+- [ ] Extract a shared revert primitive (e.g. a single `revertCombatCard(kind, message)`-style helper) that Move Action, Prone Toggle, Resolution, and Ammo Recovery's Undo handlers all call through, instead of each card maintaining its own bespoke revert function
+- [ ] Implement the Resolution card's Undo button on top of that shared primitive, per §10.7's existing spec (reverse the exact HP delta, refund `actionEconomySpent`, emit `undoDealDamage`) — this was fully speced in §10.7 but never actually built
+- [ ] Register a `TokenLayerDnd35e extends TokenLayer` (`CONFIG.Canvas.layers.tokens.layerClass`) overriding `undoHistory()`: peek `this.history.at(-1)` before popping; if it carries our own marker (e.g. `options.dnd35e?.cardUndo`), pop it ourselves and call the shared revert primitive directly instead of falling through to `super.undoHistory()`'s core CRUD dispatch; any entry without the marker (an ordinary token drag) falls through unchanged
+- [ ] Whenever a card commits a mutation with no token-movement component of its own (Resolution's damage application, Ammo Recovery's quantity increments), push a synthetic `CanvasHistoryEvent`-shaped entry onto `canvas.tokens.history` (`{ type: 'update', data: [{ _id: tokenId }], options: { dnd35e: { cardUndo: { kind, messageId } } } }`) immediately after committing, so a later Ctrl+Z has something to pop for it — for a movement-carrying action (Charge's mandatory attack, Drop Prone), reuse poc.9's real `revertRecordedMovement()`-triggered path instead of a synthetic entry, since Foundry already records those
+- [ ] Verify interleaving: `canvas.tokens.history` is one flat stack shared by every token operation — confirm that attacking, then moving, then pressing Ctrl+Z twice undoes the move first and the attack second (correct reverse chronological order), not something surprising
+- [ ] Update §10.7 "Undo scope across combat chat cards" to state that all four card types now share one Ctrl+Z-and-button-uniform revert path, superseding its current "button only" framing
+
+**Verify**: Clicking Undo on a Resolution card reverses the exact HP delta and refunds the attacker's action economy in one click. Move Action, Prone Toggle, Resolution, and Ammo Recovery cards' Undo buttons all call through the same shared revert helper. Pressing Ctrl+Z after any of the four card-producing actions reverts it exactly as its own button would, in the correct reverse-chronological order relative to other token operations in between.
+
+---
+
 ### Parallelization
 
 ```
@@ -1880,7 +1901,7 @@ Spike 3 (AE-duration spike — independent, informs Story E's helper only)
 
 Story B (action economy + movement)  ──┬──► Story A (tracker/initiative/flat-footed)
 Story C (ActionDataModel + TWF)      ──┤
-                                        ├──► Story D (attack trigger, execution, attack card) ──► Story E (Roll Defense + resolution)
+                                        ├──► Story D (attack trigger, execution, attack card) ──► Story E (Roll Defense + resolution) ──► Story I (uniform undo)
                                         │            │
                                         │            └──► Story F (ranged + ammo)
                                         └──────────────────────────────────────────────────────────────────► Story G (AoO)
@@ -1888,4 +1909,4 @@ Story C (ActionDataModel + TWF)      ──┤
 Story H (PreparationWarning alerts/warnings split — independent, scheduled last, no blocking relationships)
 ```
 
-Spikes 1, 2, and 3 (already resolved above) were all fully independent research tasks — each only informed one downstream story's scope and never blocked outright. Stories B and C can start simultaneously (no shared dependency). Story A only needs B's action-economy shape, not the full movement integration (and optionally Spike 2's tracker-API verdict). Story D is the first vertical slice through the attack flow — trigger UI, execution engine, and the attack card all together, since none of the three has an independently-verifiable user story on its own. Story F (ranged/ammo) and Story G (AoO) both build on Story D once it lands. Story E (Roll Defense + resolution) follows Story D directly, and optionally consumes Spike 3's verdict for the AE-duration shape and Spike 1's verdict for the Concealment pre-fill. Story G additionally needs Story B for movement-provokes. Story H stands entirely apart from the dependency chain above — it's a self-contained severity-tier upgrade to the existing warnings system, deliberately scheduled last since nothing else in this phase requires it (Story C's auto-created actions just use today's single-tier warning behavior until it lands).
+Spikes 1, 2, and 3 (already resolved above) were all fully independent research tasks — each only informed one downstream story's scope and never blocked outright. Stories B and C can start simultaneously (no shared dependency). Story A only needs B's action-economy shape, not the full movement integration (and optionally Spike 2's tracker-API verdict). Story D is the first vertical slice through the attack flow — trigger UI, execution engine, and the attack card all together, since none of the three has an independently-verifiable user story on its own. Story F (ranged/ammo) and Story G (AoO) both build on Story D once it lands. Story E (Roll Defense + resolution) follows Story D directly, and optionally consumes Spike 3's verdict for the AE-duration shape and Spike 1's verdict for the Concealment pre-fill. Story G additionally needs Story B for movement-provokes. Story H stands entirely apart from the dependency chain above — it's a self-contained severity-tier upgrade to the existing warnings system, deliberately scheduled last since nothing else in this phase requires it (Story C's auto-created actions just use today's single-tier warning behavior until it lands). Story I follows Story E — it needs the Resolution card's Undo button speced (so it has something to build, extract, and unify) and reuses poc.9's already-shipped `revertRecordedMovement()` pattern as its template; it does not block anything else in this phase.

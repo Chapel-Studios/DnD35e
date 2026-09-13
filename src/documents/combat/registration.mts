@@ -5,10 +5,12 @@
  */
 import { CombatantDnd35e } from './combatant/CombatantDnd35e.mjs';
 import { CombatDnd35e } from './CombatDnd35e.mjs';
+import { CombatTrackerDnd35e } from './CombatTrackerDnd35e.mjs';
 
 export const registerCombat = () => {
   foundry.helpers.Hooks.once('init', () => {
     CONFIG.Combat.documentClass = CombatDnd35e;
     CONFIG.Combatant.documentClass = CombatantDnd35e;
+    CONFIG.ui.combat = CombatTrackerDnd35e;
   });
 };

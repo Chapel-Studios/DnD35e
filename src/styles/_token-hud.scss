@@ -1,0 +1,21 @@
+// Token HUD decorations — see movementActionHudDecoration.mts. Greys out (not hides) a
+// movement-action HUD entry the combatant currently can't afford (as opposed to `canSelect`
+// hiding entries that don't structurally apply at all).
+.palette-list[data-palette='movementActions'] a.dnd35e-movement-action-unaffordable {
+  opacity: 0.35;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+// Caution badge on movement-action HUD entries that provoke an attack of opportunity.
+.palette-list[data-palette='movementActions'] a .dnd35e-movement-action-provokes-badge {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: 2px;
+  color: var(--color-level-warning, #ff9900);
+  font-size: var(--font-size-10, 10px);
+}
+
+.palette-list[data-palette='movementActions'] a.palette-list-entry {
+  position: relative;
+}
