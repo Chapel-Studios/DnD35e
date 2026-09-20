@@ -72,6 +72,18 @@ class WeaponSystemModel extends EquippableItemSystemModel {
 
     return schema;
   }
+
+  /**
+   * `system.actions` is an `ArrayField` — `DocumentSystemModel`'s generic
+   * `prepareDerivedData()` never recurses into it, so each embedded action must resolve
+   * its own `FormulaField`s explicitly (see `ActionDataModel.prepareDerivedData()`).
+   */
+  override prepareDerivedData(): void {
+    super.prepareDerivedData();
+    for (const action of this.actions) {
+      action.prepareDerivedData();
+    }
+  }
 }
 
 interface WeaponSystemModel extends WeaponSystemData {}

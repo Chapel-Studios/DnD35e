@@ -17,6 +17,7 @@ import { ACTION_ECONOMY, ACTION_ECONOMY_TYPES } from '@constants/actionEconomy.m
 import { EFFECT_CHANGE_PHASE, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
 import { requiredStringField, requiredTypedStringField } from '@fields/fieldBuilders.mjs';
+import type { DocumentContext, FormulaContextDeclaration } from '@helpers/formulae/index.mjs';
 import { FormulaData, FormulaField } from '@helpers/formulae/index.mjs';
 import type { ITEMS_DND35E } from '@items/itemTypes.mjs';
 
@@ -62,9 +63,11 @@ abstract class ActionDataModel extends foundry.abstract.DataModel {
         contexts: [
           // 'self' aliases to the Item (not the Actor, unlike attackFormula/damageFormula
           // below) since an action's name is naturally described from its owning weapon's
-          // perspective - "Longsword Attack", not "<actor name> Attack".
-          { contextName: 'Item', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['self', 'weapon'] },
-          { contextName: 'Actor', resolvePath: 'parent.parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['actor'] },
+          // perspective - "Longsword Attack", not "<actor name> Attack". Resolved relative
+          // to the embedded action itself (`this.item`/`this.item.actor`), not the owning
+          // system model — see `_buildFormulaContext()`.
+          { contextName: 'Item', resolvePath: 'item', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['self', 'weapon'] },
+          { contextName: 'Actor', resolvePath: 'item.actor', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['actor'] },
         ],
         initialFormula: '#self.name Attack',
       }),
@@ -104,6 +107,49 @@ abstract class ActionDataModel extends foundry.abstract.DataModel {
   /** The weapon this action is embedded on. */
   get item(): ITEMS_DND35E | undefined {
     return this.parent?.parent as ITEMS_DND35E | undefined;
+  }
+
+  /**
+   * Resolves every `FormulaField` declared on this action's own schema, anchored to the
+   * action itself rather than the owning system model — `DocumentSystemModel`'s generic
+   * `prepareDerivedData()`/`_buildFormulaDataMap()` never recurses into `system.actions`
+   * (an `ArrayField`), so it can't do this on the action's behalf. Not auto-invoked by
+   * Foundry for embedded (non-Document) DataModels — called explicitly by the owning
+   * system model (see `WeaponSystemModel.prepareDerivedData()`).
+   */
+  prepareDerivedData(): void {
+    const fields = (this.constructor as typeof ActionDataModel).schema.fields as Record<string, foundry.data.fields.DataField>;
+    for (const [key, field] of Object.entries(fields)) {
+      if (!(field instanceof FormulaField)) continue;
+      const formulaData = (this as unknown as Record<string, FormulaData | undefined>)[key];
+      if (!formulaData) continue;
+      const dataMap = this._buildFormulaContext(field.formulaContexts);
+      formulaData.resolvedValue = formulaData.resolve(dataMap, '', field.excludedFields);
+    }
+  }
+
+  /**
+   * Builds the formula data map for one of this action's own `FormulaField`s —
+   * `thisAttack` (this action) is always present; each declared context's `resolvePath`
+   * is walked from the action itself (e.g. `item`/`item.actor`, via the `item` getter
+   * above), and registered under both its `contextName` and every declared `alias` so
+   * `#self`/`#weapon`/`#actor`/etc. all resolve by direct key lookup.
+   */
+  private _buildFormulaContext(declarations: FormulaContextDeclaration[]): Record<string, DocumentContext> {
+    const map: Record<string, DocumentContext> = { thisAttack: this as unknown as DocumentContext };
+    for (const decl of declarations) {
+      if (!decl.resolvePath) continue;
+      let current: unknown = this;
+      for (const segment of decl.resolvePath.split('.')) {
+        if (!current) break;
+        current = (current as Record<string, unknown>)[segment];
+      }
+      const resolved = current as { documentName?: string } | undefined;
+      if (!resolved?.documentName) continue;
+      map[decl.contextName] = resolved as DocumentContext;
+      for (const alias of decl.aliases ?? []) map[alias] = resolved as DocumentContext;
+    }
+    return map;
   }
 
   /**

@@ -33,16 +33,16 @@ abstract class WeaponAttackDataModel extends ActionDataModel {
     schema.attackFormula = new FormulaField({
       expectedType: 'string',
       contexts: [
-        { contextName: 'Actor', resolvePath: 'parent.parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['self'] },
-        { contextName: 'Item', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['item', 'weapon'] },
+        { contextName: 'Actor', resolvePath: 'item.actor', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['self'] },
+        { contextName: 'Item', resolvePath: 'item', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['item', 'weapon'] },
       ],
       initialFormula: '1d20',
     });
     schema.damageFormula = new FormulaField({
       expectedType: 'string',
       contexts: [
-        { contextName: 'Actor', resolvePath: 'parent.parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['self'] },
-        { contextName: 'Item', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['item', 'weapon'] },
+        { contextName: 'Actor', resolvePath: 'item.actor', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['self'] },
+        { contextName: 'Item', resolvePath: 'item', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['item', 'weapon'] },
       ],
       initialFormula: '$scaleDamage(1d4)',
     });
