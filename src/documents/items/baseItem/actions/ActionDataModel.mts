@@ -156,9 +156,11 @@ abstract class ActionDataModel extends foundry.abstract.DataModel {
    * Live-merges a lightweight actor-side stub for this action onto `system.actions.<_id>`
    * (poc.10 §10.4's simplified aggregation — the actor only ever stores an `IAction`
    * pointer; resolved data is looked up live from the item via `itemUuid` rather than
-   * duplicated onto the actor). Runs at `EFFECT_CHANGE_PHASE.POST` since it depends on
-   * nothing else settling first. Generic on the base class since every action subtype
-   * (weapon attack, future spell cast, ...) contributes the same stub shape.
+   * duplicated onto the actor). `phase: FINAL` matches the phase `Weapon.getContributedActorChanges()`
+   * actually emits these during — it only computes/returns action stubs once `phase ===
+   * FINAL`, so all of a weapon's actions are known to exist first. Generic on the base
+   * class since every action subtype (weapon attack, future spell cast, ...) contributes
+   * the same stub shape.
    */
   createActionChange(): EffectChangeDataDnd35e {
     // not sure if we actually want this to be system or not, but for now it is
@@ -175,7 +177,7 @@ abstract class ActionDataModel extends foundry.abstract.DataModel {
       value: stub,
       target: EFFECT_CHANGE_TARGET.ACTOR,
       isSystem,
-      phase: EFFECT_CHANGE_PHASE.POST,
+      phase: EFFECT_CHANGE_PHASE.FINAL,
       priority: 1,
     };
   }

@@ -14,6 +14,8 @@
  *
  * @module
  */
+import type { Size } from '@constants/sizes.mjs';
+import { SIZE_REACH } from '@constants/sizes.mjs';
 import { ACTION_TYPE } from '@items/baseItem/actions/constants.mjs';
 import type { WeaponAction } from '@items/baseItem/actions/types.mjs';
 
@@ -43,13 +45,18 @@ async function syncWeaponActions (weapon: Weapon): Promise<void> {
   let changed = false;
 
   if (!actions.some((action) => action.type === desiredType && action.isTopLevel)) {
-    actions.push({
+    const newAction: Record<string, unknown> = {
       _id: foundry.utils.randomID(),
       type: desiredType,
       name: { formula: game.i18n.localize('dnd35e.WEAPON.ACTIONS.DefaultName'), resolvedValue: null, expectedType: 'string' },
       isSystemCreated: true,
       isTopLevel: true,
-    } as unknown as WeaponAction);
+    };
+    if (desiredType === ACTION_TYPE.MELEE_WEAPON_ATTACK) {
+      const baseReach = SIZE_REACH[weapon.actor?.system.size as Size] ?? 1;
+      newAction.reachLength = baseReach * 2;
+    }
+    actions.push(newAction as unknown as WeaponAction);
     changed = true;
   }
 

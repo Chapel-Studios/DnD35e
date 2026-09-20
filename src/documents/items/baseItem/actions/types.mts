@@ -28,7 +28,7 @@ interface ActionResult {
 
 /**
  * The actor-side projection of an action, live-merged onto `system.actions.<id>` by
- * `ActionDataModel.createActionChange()` (an `EFFECT_CHANGE_PHASE.POST` change, no
+ * `ActionDataModel.createActionChange()` (an `EFFECT_CHANGE_PHASE.FINAL` change, no
  * backing AE document). Keyed by the source `ActionDataModel`'s own `_id`. Deliberately
  * minimal — the actor only ever holds a pointer back to the source item; resolved
  * `check`/`damage`/`range`-equivalent data (`attackFormula`/`damageFormula`/etc.) stays

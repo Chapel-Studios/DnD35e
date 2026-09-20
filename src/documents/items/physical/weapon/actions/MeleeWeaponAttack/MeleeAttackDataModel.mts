@@ -36,6 +36,12 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
       resolvedValue: null,
       expectedType: 'string',
     });
+    // Total effective reach in squares while the `reach` property is active - only
+    // meaningful in combination with it (see `_validateMeleeReach()`). Static `initial`
+    // fallback of 1 (Medium's un-doubled reach) is only ever used if a caller creates
+    // this DataModel directly without going through `weaponActionSync.mts`, which seeds
+    // the real default (double the wielding actor's size-based reach) at creation time
+    // - stays editable afterward for homebrew weapons with more than double reach.
     schema.reachLength = new NumberField({
       required: true,
       initial: 1,
@@ -83,7 +89,10 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
     const hasReach = this.properties?.has(MELEE_WEAPON_PROPERTY.REACH) ?? false;
     const threatensAdjacent = this.properties?.has(MELEE_WEAPON_PROPERTY.THREATENS_ADJACENT) ?? false;
     const baseReach = SIZE_REACH[context.actor.system.size as Size] ?? 1;
-    const effectiveReach = hasReach ? baseReach + this.reachLength : baseReach;
+    // `reachLength` is authored as the weapon's total effective reach (defaults to
+    // double the wielder's size at creation - see weaponActionSync.mts - but stays
+    // editable for homebrew reach weapons longer than the standard double).
+    const effectiveReach = hasReach ? this.reachLength : baseReach;
 
     for (const target of context.target ?? []) {
       const targetToken = (target.getActiveTokens()[0]) as TokenDnd35e | undefined;

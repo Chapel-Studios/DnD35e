@@ -59,7 +59,9 @@ class Weapon extends EquippableItem {
    * Live-merges a lightweight actor-side stub for each of this weapon's own
    * system-created `system.actions` entries onto `system.actions.<id>` (poc.10 §10.4) —
    * see `ActionDataModel.createActionChange()`. Runs unconditionally (not equip-gated);
-   * `requiresEquipped` gates usability at execution time, not merge time.
+   * `requiresEquipped` gates usability at execution time, not merge time. Gated to
+   * `FINAL` (matching the stub's own declared `phase`) so all of a weapon's actions are
+   * known to exist before any are merged onto the actor.
    */
   override getContributedActorChanges(phase: string): EffectChangeDataDnd35e[] {
     const changes = super.getContributedActorChanges(phase);

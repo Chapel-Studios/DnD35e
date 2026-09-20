@@ -30,13 +30,15 @@ function findOffHandWeapon (weapon: Weapon): Weapon | undefined {
 
 /**
  * `weapon` is the attacking weapon (used only to resolve the actor); `hand` is the hand
- * making this attack. `'both'` (two-handed grip) is treated the same as `'main'` — TWF
- * penalties don't apply to a two-handed attack.
+ * making this attack. `'both'` (two-handed grip) is exempt from TWF penalties, as is any
+ * attack made with no weapon currently equipped in the off-hand slot (nothing to fight
+ * two-weapon with).
  */
 function getTwoWeaponFightingPenalty (weapon: Weapon, hand: 'main' | 'off' | 'both'): number {
-  const baseline = hand === 'off' ? -10 : -6;
   const offHandWeapon = findOffHandWeapon(weapon);
-  const offHandIsLight = offHandWeapon?.system.weaponSubtype === WEAPON_SUBTYPE.LIGHT_WEAPON;
+  if (hand === 'both' || !offHandWeapon) return 0;
+  const baseline = hand === 'off' ? -10 : -6;
+  const offHandIsLight = offHandWeapon.system.weaponSubtype === WEAPON_SUBTYPE.LIGHT_WEAPON;
   if (!offHandIsLight) return baseline;
   return hand === 'off' ? -8 : -4;
 }
