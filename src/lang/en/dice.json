@@ -2,6 +2,7 @@
   "dnd35e": {
     "ROLL": {
       "SituationalModifier": "Situational Modifier",
+      "DamageBonus": "Damage Bonus",
       "Total": "Total",
       "RollButton": "Roll",
       "NaturalOne": "Natural 1!",

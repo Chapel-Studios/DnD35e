@@ -1,7 +1,7 @@
 import { registerChatCardActions } from './chatCardActions.mjs';
 import { buildD20Formula } from './d20Formula.mjs';
 import { D20Roll } from './D20Roll.mjs';
-import type { D20RollDialogData, D20RollDialogResult } from './D20RollDialogConfig.mjs';
+import type { AmmoOption, CombatModifierToggle, D20RollDialogData, D20RollDialogResult } from './D20RollDialogConfig.mjs';
 import { D20RollDialogConfig } from './D20RollDialogConfig.mjs';
 import { DamageRoll } from './DamageRoll.mjs';
 import { buildInitiativeCard, buildMoveActionCard, buildProneToggleCard, buildSaveCard, upsertMoveActionCard } from './rollMessages.mjs';
@@ -19,4 +19,4 @@ export {
   registerChatCardActions,
   upsertMoveActionCard,
 };
-export type { D20RollDialogData, D20RollDialogResult, RollModifier };
+export type { AmmoOption, CombatModifierToggle, D20RollDialogData, D20RollDialogResult, RollModifier };

@@ -6,11 +6,16 @@
 - [x] Spike 3 — AE short-duration expiry mechanism spike — resolved **native mechanism, no custom hook**
 - [x] Story A — Combat tracker infrastructure, initiative, flat-footed — all checklist items checked off in `phase-10-basic-combat.md`
 - [x] Story B — Combatant action economy + movement integration — all 12 checklist items checked off in `phase-10-basic-combat.md`; verified via a full codebase audit (11/12 were already implemented but unchecked, only the HUD provokes badge needed new code)
+- [x] Story C — ActionDataModel first cut (melee + TWF) — all checklist items checked off in `phase-10-basic-combat.md` and verified directly against the codebase (`ActionDataModel.mts`, `WeaponAttackDataModel.mts`, `MeleeAttackDataModel.mts`/`RangedAttackDataModel.mts`, `combatantActionEconomy.mts`, `detectWieldMode()`/`getWieldModeStrTerm()`/`wieldModeToBabHand()` on `ActorDnd35e`). This section's stale "NOT STARTED" note (previously here) was corrected once Story D began — always re-verify against the phase doc + codebase, not just this file.
 
 **Renumbering note**: with all three spikes resolved, the remaining stories (formerly D–K) were relettered A–H in `phase-10-basic-combat.md` (D→A, E→B, F→C, G→D, H→E, I→F, J→G, K→H). The retired spike letters A/B/C were renamed to Spike 1/2/3 to free them up. All cross-references, the Parallelization diagram, and its prose were updated accordingly.
 
 ## Current Section
-- [ ] Story C — ActionDataModel first cut (melee + TWF) — NOT STARTED, next up. Do not begin without new instruction — user is reviewing Story B for a PR first.
+- [x] Story D.1 — Engine primitives (`DamageRoll`, `preUseAction`/`postUseAction`/`dealDamage`/`undoDealDamage` events) — complete, committed.
+- [x] Story D.2 — Attack Roll Dialog extension (`combatModifiers`, `damageBonus`, Wield Mode toggle, reserved Ammo slot) — complete, committed. `isFlanking()`/`isOnHigherGround()` auto-detection wiring deferred to D.3 (Flanking specifically stays manual-only, deferred to Story G — see decision below).
+- [ ] Story D.3 — `executeAction()`/`useAction()`/attack card — NEXT UP.
+
+**Story D breakdown** (agreed with user before starting): D.1 engine primitives → D.2 dialog extension → D.3 `executeAction()`/`useAction()`/attack card → D.4 Token HUD control + Actions tab UI (HUD render approach to be spiked at the start of D.4).
 
 ## Decisions Made
 - **Story A/B descoping (Phase 0 for Story A)**: tracker action-pip rendering moved entirely from
@@ -83,6 +88,39 @@
   first" fallback plan). Styling added to `_token-hud.scss` (global partial — correct location
   since this decorates native, non-Vue HUD DOM), not a Vue `<style>` block. New localization key
   `dnd35e.TOKEN.MOVEMENT.Provokes` added to `src/lang/en/tokens.json`.
+
+- **Story D.1**: New events (`preUseAction`/`postUseAction`/`dealDamage`/`undoDealDamage`) registered
+  under `src/documents/actors/baseActor/events/` (not Creature-specific) since `useAction()` lives on
+  `ActorDnd35e` per the doc's §10.7. Followed the existing per-event-file convention
+  (`PhysicalItemLifeCycle`/`CreatureLifeCycle`): one file per event exporting a string const + payload
+  interface, aggregated into `ActionLifeCycle`, registered via `registerActionEvents()` called at
+  module load (bottom of `ActorDnd35e.mts`), matching `Creature.mts`'s `registerCreatureEvents()`
+  pattern. `DamageRoll` (`src/dice/DamageRoll.mts`) does critical multiplication via Foundry's
+  built-in `Roll#alter(critMultiplier, 0, { multiplyNumeric: true })` in the constructor — matches
+  SRD's "roll the dice N times, add static bonuses N times" crit rule.
+- **Deliberately deferred out of D.1**: `UseActionContext`'s `hand`/`free` fields and `ActionResult`'s
+  hit/damage-snapshot shape — these depend on what `executeAction()`/`useAction()` actually produce,
+  so they're being defined in D.3 alongside that logic instead of guessed at now.
+- **isFlanking()/Story G ordering conflict (resolved by user)**: the doc's `executeAction()` sample
+  calls `isFlanking()`, but its real implementation (`src/canvas/token/logic/threatenedSquares.mts`)
+  is a Story G deliverable, and Story G's own header states it depends on Story D — a circular
+  ordering. User chose: ship Flanking as a manual-only toggle in Story D (`autoDetected: false`,
+  unchecked by default), with real geometry auto-detection deferred entirely to Story G. The phase
+  doc's Story D checklist was split accordingly (see `phase-10-basic-combat.md`); the doc's own
+  Verify-script line about Flanking pre-checking correctly won't be satisfiable until Story G lands
+  — expected, not a regression.
+- **Story D.2**: Extended `D20RollDialogData`/`D20RollDialogResult` (`D20RollDialogConfig.mts`) with
+  `CombatModifierToggle`/`AmmoOption` types and the new optional fields (`combatModifiers`,
+  `damageBonus`, `wieldMode`, `hand`, `ammoOptions`, `ammo`), all exported from the `src/dice`
+  barrel for D.3's `executeAction()` to consume. `D20RollDialogApp.vue` renders each new field only
+  when its data is present (so save/initiative rolls are unaffected): Attack Type/Combat Status
+  toggle groups with `fa-circle-question` tooltips, a second independent `FamiliarOverlayInput`
+  formula-editor instance for `damageBonus` (resolves to a formula **string** via
+  `FormulaData.resolveSource(..., { expectedType: 'string' })` — dice notation preserved, unlike
+  `situationalModifier` which resolves to a plain number), a `MultiOptionToggle` for Wield Mode, a
+  native `<select>` for Hand, and a reserved (currently-always-empty) Ammo `<select>` for Story F.
+  New lang keys added to `combat.json` (`COMBAT.CombatModifiers`, `COMBAT.WieldMode`, `COMBAT.Hand`,
+  `COMBAT.Ammo`) and `dice.json` (`ROLL.DamageBonus`).
 
 ## Deferred Items
 - Automated concealment detection (lighting/vision/senses-based) → post-release Phase 3
