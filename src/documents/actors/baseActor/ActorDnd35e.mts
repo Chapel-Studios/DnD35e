@@ -1,5 +1,7 @@
 import type { ActorType } from '@actors/actorTypes.mjs';
 import { ACTOR_TYPES_LOCALIZED } from '@actors/actorTypes.mjs';
+import { ActionLifeCycle } from '@actors/baseActor/events/ActionLifeCycle.mjs';
+import { registerActionEvents } from '@actors/baseActor/events/registerActionEvents.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
@@ -303,6 +305,7 @@ class ActorDnd35e<
   static readonly LifeCycle = {
     // This sadly doesn't properly inherit this from the Mixin
     ...DocumentLifeCycle,
+    ...ActionLifeCycle,
   } as const;
 
   protected override async _preCreate (
@@ -454,6 +457,8 @@ const ActorProxyDnd35e = new Proxy(ActorDnd35e, {
     return new ActorClass(...args);
   },
 });
+
+registerActionEvents();
 
 export {
   ActorDnd35e,
