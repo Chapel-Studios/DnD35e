@@ -24,9 +24,14 @@ import type { MovementSession, MovementSessionCategory } from '@documents/combat
 import { getMovementSession, resetMovementSession, setMovementSession } from '@documents/combat/combatant/movementSession.mjs';
 import { useSettingsStore } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
-import { buildMoveActionCard, buildProneToggleCard, upsertMoveActionCard } from '@source/dice/index.mjs';
-import type { MoveActionCardData, MoveActionCardFlags, ProneToggleCardFlags } from '@source/dice/rollMessages.mjs';
-import { buildMoveActionCardContent, buildProneToggleCardContent } from '@source/dice/rollMessages.mjs';
+import type { MoveActionCardData, MoveActionCardFlags, ProneToggleCardFlags } from '@source/dice/index.mjs';
+import {
+  buildMoveActionCard,
+  buildMoveActionCardContent,
+  buildProneToggleCard,
+  buildProneToggleCardContent,
+  upsertMoveActionCard,
+} from '@source/dice/index.mjs';
 
 import type { SceneDnd35e } from '../SceneDnd35e.mjs';
 
@@ -130,7 +135,7 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
    * Toggles the Prone condition and reverts the confirming drag's own displacement through
    * Foundry's native recorded-movement undo (`revertRecordedMovement()`) — the same mechanism
    * Ctrl+Z and the Prone Toggle chat card's own Undo button already rely on (see
-   * `chatCardActions.mts#onUndoProneToggle`). A manual `displace` snap-back layered *on top*
+   * `proneToggleCard.mts#onUndoProneToggle`). A manual `displace` snap-back layered *on top*
    * of the confirming drag (the old approach) left that drag's own `dropProne`/`standUp`
    * waypoint permanently recorded in `movementHistory` — the Ruler renders the whole recorded
    * path, so it kept showing a leftover ghost waypoint marker even after the token visually

@@ -46,8 +46,12 @@ const {
  * validation, and melee reach validation (self-contained, no Story D dependency). It
  * returns early with `cancelled: true` before any dialog/roll/chat-card work, which is
  * Story D's deliverable (Attack Roll Dialog + `useAction()`).
+ *
+ * Generic over `TResult` so each concrete action kind (weapon attacks today, future spell
+ * casts, etc.) can declare its own `executeAction()`/`continue()` result shape instead of
+ * every kind's fields piling onto one shared `ActionResult`.
  */
-abstract class ActionDataModel extends foundry.abstract.DataModel {
+abstract class ActionDataModel<TResult extends ActionResult = ActionResult> extends foundry.abstract.DataModel {
   declare name: FormulaData;
   declare abstract isTargetRequired: boolean;
   declare maxTargets: number | null;
@@ -182,12 +186,12 @@ abstract class ActionDataModel extends foundry.abstract.DataModel {
     };
   }
 
-  protected _canExecute(context: UseActionContext): ActionResult {
-    const result: ActionResult = {
+  protected _canExecute(context: UseActionContext): TResult {
+    const result = {
       cancelled: false,
       warnings: [],
       reason: 'success',
-    };
+    } as unknown as TResult;
 
     // TODO: enforce target min/max requirements based on combat settings.
     // const { enforceActionTargetMinMax } = useCombatSettings();
@@ -221,7 +225,7 @@ abstract class ActionDataModel extends foundry.abstract.DataModel {
     return result;
   }
 
-  protected abstract _executeCheck(context: UseActionContext): ActionResult;
+  protected abstract _executeCheck(context: UseActionContext): Promise<TResult>;
 
   /**
    * Public entry point the execution engine calls — never attack-specific logic directly.
@@ -229,11 +233,11 @@ abstract class ActionDataModel extends foundry.abstract.DataModel {
    * attacker/target reach, then returns early. Story D fills in the Attack Roll Dialog,
    * roll resolution, and chat card (see phase-10-basic-combat.md §10.7).
    */
-  async executeAction(context: UseActionContext): Promise<ActionResult> {
+  async executeAction(context: UseActionContext): Promise<TResult> {
     const preCheckResult = this._canExecute(context);
     if (preCheckResult.cancelled) return preCheckResult;
 
-    const result = this._executeCheck(context);
+    const result = await this._executeCheck(context);
     return result;
   }
 
@@ -241,12 +245,13 @@ abstract class ActionDataModel extends foundry.abstract.DataModel {
    * Advances a previously-posted attack card's action chain (e.g. the `damage` chain
    * link after a successful hit). Story D scope — see §10.7's Roll Defense Dialog design.
    */
-  async continue(_stepId: string, _message: unknown, _targetId: string): Promise<ActionResult> {
+  async continue(_stepId: string, _message: unknown, _targetId: string): Promise<TResult> {
     console.warn('dnd35e | ActionDataModel#continue(): Story D scope — not yet implemented.');
-    return { cancelled: true, reason: 'notImplemented', warnings: [] };
+    return { cancelled: true, reason: 'notImplemented', warnings: [] } as unknown as TResult;
   }
 }
-interface ActionDataModel extends foundry.abstract.DataModel, ActionSourceData {}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- TResult must match the class's type param for declaration merging.
+interface ActionDataModel<TResult extends ActionResult = ActionResult> extends foundry.abstract.DataModel, ActionSourceData {}
 
 export {
   ActionDataModel,

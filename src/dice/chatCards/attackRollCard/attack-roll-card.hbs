@@ -1,0 +1,60 @@
+{{!--
+  Attack roll chat card (poc.10 Story D, §10.8). Rendered by `buildAttackCard()`/
+  `buildAttackCardContent()` in rollMessages.mts via the same precompiled Handlebars
+  pattern as `save-roll-card.hbs` — never served over HTTP or copied to `dist/`.
+--}}
+<div class="dnd35e chat-card attack-roll-card {{#if isFumble}}is-fumble{{/if}} {{#if isCriticalThreat}}is-critical{{/if}}">
+  <header class="card-header">
+    <img src="{{ actorImage }}" alt="" class="actor-image" />
+    <div class="title-text">
+      <h5 class="value">{{ actorName }} -</h5>
+      <br />
+      <h6 class="label">{{ weaponName }}</h6>
+      <br />
+      <h6 class="formula">{{ rollFormula }}</h6>
+    </div>
+  </header>
+
+  <div class="roll-result" data-action="expandRoll">
+    <div class="roll-summary">
+      <span class="result-header">{{ resultLabel }}</span>
+      <span class="total-result">{{ total }}</span>
+
+      {{#if isFumble}}
+      <span class="callout fumble">{{localize "dnd35e.ROLL.NaturalOne"}}</span>
+      {{/if}}
+      {{#if isCriticalThreat}}
+      <span class="callout critical">{{localize "dnd35e.ROLL.NaturalTwenty"}}</span>
+      {{/if}}
+    </div>
+
+    {{!-- Same die-face tooltip + modifier breakdown splice as save-roll-card.hbs. --}}
+    {{{diceRollHtml}}}
+  </div>
+
+  <div class="damage-preview">
+    <span class="label">{{ damagePreviewLabel }}</span>
+    <span class="value">{{ damageFormulaDisplay }}</span>
+    <span class="crit-multiplier">(&times;{{ critMultiplier }})</span>
+    {{#if nonLethal}}
+    <span class="callout non-lethal">{{ nonLethalLabel }}</span>
+    {{/if}}
+  </div>
+
+  {{#if targets.length}}
+  <ul class="attack-card-targets">
+    {{#each targets}}
+    <li class="target-row {{#if this.resolved}}resolved{{/if}}">
+      <span class="target-name">{{ this.targetName }}</span>
+    </li>
+    {{/each}}
+  </ul>
+  {{/if}}
+
+  <footer class="card-footer">
+    <button type="button" class="retarget-btn" data-action="retarget">
+      <i class="fas fa-bullseye" />
+      {{ changeTargetsLabel }}
+    </button>
+  </footer>
+</div>

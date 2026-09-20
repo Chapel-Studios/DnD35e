@@ -1,5 +1,6 @@
 import { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { documents, Game } from '@client/_module.mjs';
+import type { ui as globalUiConst } from '@client/_module.mjs';
 import type CompendiumDirectory from '@client/applications/sidebar/tabs/compendium-directory.mjs';
 import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
@@ -93,6 +94,7 @@ declare global {
   }
   const CONFIG: ConfigDnd35e;
   const canvas: CanvasDnd35e;
+  const ui: typeof globalUiConst;
 
   namespace globalThis {
     const game: GameDnd35e;

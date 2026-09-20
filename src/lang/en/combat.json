@@ -9,7 +9,15 @@
       },
       "CombatModifiers": {
         "AttackType": "Attack Type",
-        "CombatStatus": "Combat Status"
+        "CombatStatus": "Combat Status",
+        "Flanking": { "Label": "Flanking", "Tooltip": "+2 to attack rolls when flanking the target." },
+        "Prone": { "Label": "Prone", "Tooltip": "-4 to melee attack rolls, +4 against you in melee." },
+        "Squeezing": { "Label": "Squeezing", "Tooltip": "-4 to attack rolls while squeezing through a tight space." },
+        "HighGround": { "Label": "High Ground", "Tooltip": "+1 to melee attack rolls from higher elevation." },
+        "Charge": { "Label": "Charge", "Tooltip": "+2 to the attack roll, -2 AC until your next turn." },
+        "DefensiveFighting": { "Label": "Fight Defensively", "Tooltip": "-4 to the attack roll, +2 AC until your next turn." },
+        "Proficient": { "Label": "Proficient", "Tooltip": "Uncheck if not proficient with this weapon (-4 to the attack roll)." },
+        "NonLethal": { "Label": "Non-lethal", "Tooltip": "Deal subdual damage instead of normal damage." }
       },
       "WieldMode": {
         "Label": "Wield Mode",
@@ -22,7 +30,9 @@
         "Main": "Main Hand",
         "Off": "Off-Hand"
       },
-      "Ammo": "Ammunition"
+      "Ammo": "Ammunition",
+      "TwoWeaponFighting": "Two-Weapon Fighting",
+      "NoActionAvailable": "No action available for this attack."
     }
   }
 }

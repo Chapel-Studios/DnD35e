@@ -184,7 +184,19 @@
     return Number.isNaN(num) ? 0 : num;
   }
 
-  const total = computed(() => props.context.data.baseTotal + resolveSituationalModifier(localValue.value));
+  /**
+   * Sum of all checked combatModifiers' flat `value` (poc.10 Story D, §10.7) - folded into
+   * the returned situationalModifier alongside the freeform formula field. `proficient`/
+   * `nonLethal` always carry `value: 0` here since `executeAction()` reads their `checked`
+   * state directly instead (inverted/conditional logic - see `CombatModifierToggle`'s doc).
+   */
+  function combatModifierSum(): number {
+    return (props.context.data.combatModifiers ?? [])
+      .filter(mod => mod.checked)
+      .reduce((sum, mod) => sum + mod.value, 0);
+  }
+
+  const total = computed(() => props.context.data.baseTotal + resolveSituationalModifier(localValue.value) + combatModifierSum());
 
   const overlayInputModel = computed(() => ({
     id: 'situational-modifier',
@@ -298,7 +310,7 @@
     onBlur(); // force-commit any in-progress formula edit before resolving
     onDamageBonusBlur();
     const result: D20RollDialogResult = {
-      situationalModifier: resolveSituationalModifier(props.context.data.situationalModifier),
+      situationalModifier: resolveSituationalModifier(props.context.data.situationalModifier) + combatModifierSum(),
       rollMode: props.context.data.rollMode,
     };
     if (props.context.data.combatModifiers) {

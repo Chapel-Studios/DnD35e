@@ -8,6 +8,9 @@ import { DOCUMENT_UPDATE_TYPES } from '@constants/documentUpdateTypes.mjs';
 import type { SaveKey } from '@constants/saves.mjs';
 import { SAVE_ABILITY_MAP, SAVE_KEYS, SAVE_KEYS_LOCALIZED } from '@constants/saves.mjs';
 import { SIZE_MODIFIERS } from '@constants/sizes.mjs';
+import type { ACTORS_DND35E } from '@documents/actors/actorTypes.mjs';
+import { canUseHandAttack, spendAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
 import {
@@ -16,6 +19,10 @@ import {
   POST_EFFECT_CHANGE_PHASE,
 } from '@effects/baseActiveEffect/data/index.mjs';
 import { parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+import type { ActionResult } from '@items/baseItem/actions/types.mjs';
+import { prepareWeaponAttackContext } from '@items/physical/weapon/actions/WeaponAttack/prepareWeaponAttackContext.mjs';
+import { WeaponAttackDataModel } from '@items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mjs';
+import type { Weapon } from '@items/physical/weapon/index.mjs';
 import type { RollModifier } from '@source/dice/index.mjs';
 import { buildD20Formula, buildInitiativeCard, buildSaveCard, D20Roll, D20RollDialogConfig } from '@source/dice/index.mjs';
 
@@ -218,6 +225,74 @@ abstract class Creature extends ActorDnd35e {
     await combatant?.update({ initiative: roll.total ?? 0 });
 
     return roll;
+  }
+
+  /**
+   * Single entry point for triggering an item action (poc.10 Story D, §10.7/§10.8) —
+   * weapon attacks today, other action kinds (spell casts, etc.) once they exist. Resolves
+   * the acting item/action, detects a weapon attack to delegate context-building to
+   * `prepareWeaponAttackContext()`, emits the cancellable `preUseAction`/`postUseAction`
+   * lifecycle events, gates on action economy (bypassed entirely when `options.free`),
+   * calls the action's own `executeAction()`, then spends the standard action + hand BAB
+   * pool only once execution actually completes — never before, so a cancelled Attack
+   * Roll Dialog never costs an action. Returns `null` when the item/action can't be
+   * resolved or the action-economy gate blocks the attack outright (as opposed to the
+   * user cancelling the dialog, which still returns a `cancelled: true` `ActionResult`).
+   */
+  async useAction(
+    itemId: string,
+    actionId: string,
+    targetId?: string,
+    options: { free?: boolean } = {}
+  ): Promise<ActionResult | null> {
+    const item = this.items.get(itemId) as Weapon | undefined;
+    const action = item?.system.actions.find((a) => a._id === actionId);
+    if (!item || !action) return null;
+
+    const actor = this as unknown as ACTORS_DND35E;
+    const target = targetId ? game.actors?.get(targetId) as ACTORS_DND35E | undefined : undefined;
+    const targets = target ? [target] : null;
+
+    // No explicit `UseActionContext` annotation — keeping the natural union lets `'hand' in
+    // context` narrow to the real `'main' | 'off' | 'both'` literal type below instead of
+    // widening it away.
+    const context = action instanceof WeaponAttackDataModel
+      ? prepareWeaponAttackContext(actor, item, targets)
+      : { actor, target: targets };
+    const hand = 'hand' in context ? context.hand : undefined;
+
+    let cancelled = false;
+    await this.events.emit('preUseAction', { ...context, cancel: () => { cancelled = true; } });
+    if (cancelled) return { cancelled: true, reason: 'preUseActionCancelled', warnings: [] };
+
+    const combat = game.combat;
+    const combatant = combat?.combatants.find((c) => c.actor?.id === this.id) as CombatantDnd35e | undefined;
+    if (combat?.started && combatant && !options.free && hand && !canUseHandAttack(combatant, hand)) {
+      ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.NoActionAvailable'));
+      return null;
+    }
+
+    const result = await action.executeAction(context);
+
+    // Spend AFTER execution, not before — a cancelled dialog never costs an action. The
+    // attack card (if one was posted) already exists by now, so its `actionEconomySpent`
+    // flag is patched in here rather than known ahead of time inside `executeAction()`. Hand
+    // BAB is only ever spent for weapon attacks — non-weapon actions have no `hand`.
+    if (combat?.started && combatant && !result.cancelled && !options.free) {
+      await spendAction(combatant, ['standard']);
+      if (hand) {
+        const babSpent = 5;
+        await spendHandBab(combatant, hand, babSpent);
+        if (result.attackMessage) {
+          await result.attackMessage.update({
+            'flags.dnd35e.attackCard.actionEconomySpent': { standardActionSpent: true, hand, babSpent },
+          });
+        }
+      }
+    }
+
+    await this.events.emit('postUseAction', { ...context, result });
+    return result;
   }
 
   /**

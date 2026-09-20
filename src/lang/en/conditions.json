@@ -2,8 +2,10 @@
   "dnd35e": {
     "CONDITIONS": {
       "blinded": { "label": "Blinded" },
+      "charged": { "label": "Charging" },
       "cowering": { "label": "Cowering" },
       "dazed": { "label": "Dazed" },
+      "defensiveFighting": { "label": "Fighting Defensively" },
       "dazzled": { "label": "Dazzled" },
       "deafened": { "label": "Deafened" },
       "entangled": { "label": "Entangled" },

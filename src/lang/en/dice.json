@@ -13,6 +13,7 @@
       "RollSaveTitle": "Roll {save} Saving Throw",
       "Initiative": "Initiative",
       "RollInitiativeTitle": "Roll Initiative",
+      "RollAttackTitle": "Attack Roll: {weapon}",
       "SaveNames": {
         "fort": "Fortitude",
         "reflex": "Reflex",
@@ -50,6 +51,11 @@
         "MoveAction": "Move Action",
         "Undo": "Undo",
         "Undone": "Undone — action refunded, item state reverted."
+      },
+      "ATTACK_CARD": {
+        "ChangeTargets": "Change Target(s)",
+        "DamagePreview": "Damage",
+        "NonLethal": "Non-lethal"
       }
     }
   }

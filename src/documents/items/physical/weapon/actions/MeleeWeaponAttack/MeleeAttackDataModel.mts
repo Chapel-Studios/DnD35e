@@ -5,6 +5,7 @@ import { type Size,SIZE_REACH } from '@constants/sizes.mjs';
 import { ACTION_TYPE, ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
 import type { ActionResult } from '@items/baseItem/actions/types.mjs';
 
+import type { WeaponAttackActionResult } from '../WeaponAttack/types.mjs';
 import type { UseWeaponAttackContext } from '../WeaponAttack/types.mjs';
 import { WeaponAttackDataModel } from '../WeaponAttack/WeaponAttackDataModel.mjs';
 import { MELEE_WEAPON_PROPERTIES, MELEE_WEAPON_PROPERTY, type MeleeWeaponProperty } from './constants.mjs';
@@ -53,7 +54,7 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
     return schema;
   }
 
-  protected override _canExecute(context: UseWeaponAttackContext): ActionResult {
+  protected override _canExecute(context: UseWeaponAttackContext): WeaponAttackActionResult {
     const superResult = super._canExecute(context);
     if (superResult.cancelled) return superResult;
 
@@ -67,11 +68,11 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
     return superResult;
   }
 
-  protected override _executeCheck(context: UseWeaponAttackContext): ActionResult {
+  protected override async _executeCheck(context: UseWeaponAttackContext): Promise<WeaponAttackActionResult> {
     context.attackAbility = this.properties?.has(MELEE_WEAPON_PROPERTY.FINESSE)
       ? DEX
       : STR;
-    const superResult = super._executeCheck(context);
+    const superResult = await super._executeCheck(context);
     if (superResult.cancelled) return superResult;
 
     return superResult;

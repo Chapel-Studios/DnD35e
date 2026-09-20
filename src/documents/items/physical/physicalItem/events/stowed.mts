@@ -3,7 +3,7 @@ import { ACTION_ECONOMY } from '@constants/actionEconomy.mjs';
 import { spendAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { DocumentEvent, EventChecker, EventCheckResult } from '@helpers/documentEvents/types.mjs';
-import { buildActionEconomyWarningCard, buildItemActionSpentCard } from '@source/dice/rollMessages.mjs';
+import { buildActionEconomyWarningCard, buildItemActionSpentCard } from '@source/dice/index.mjs';
 
 import type { PhysicalItem, PhysicalItemSystemData } from '../index.mjs';
 

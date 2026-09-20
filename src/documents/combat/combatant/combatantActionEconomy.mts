@@ -222,6 +222,19 @@ async function markMovedAfterAttack(combatant: CombatantDnd35e): Promise<void> {
   await setActionEconomy(combatant, economy);
 }
 
+/**
+ * Set the first time `useAction()` actually spends the standard action for a weapon
+ * attack this turn (poc.10 Story D) — distinct from `used.standard` (which just tracks
+ * whether the standard-action pool itself has been spent, for any reason). Reserved for
+ * a future full-attack-sequence UX to distinguish "already attacking this turn" from
+ * "used my standard action on something else."
+ */
+async function markStandardAttackUsed(combatant: CombatantDnd35e): Promise<void> {
+  const economy = getActionEconomy(combatant);
+  economy.used.standardAttackUsed = true;
+  await setActionEconomy(combatant, economy);
+}
+
 export {
   canUseAction,
   canUseAoO,
@@ -229,6 +242,7 @@ export {
   getActionEconomy,
   markChargedThisTurn,
   markMovedAfterAttack,
+  markStandardAttackUsed,
   refundAction,
   refundHandBab,
   resetActionEconomy,
