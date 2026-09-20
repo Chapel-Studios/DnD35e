@@ -75,7 +75,7 @@ async function resetActionEconomy(combatant: CombatantDnd35e, actor: Creature): 
  * covers a minor), never the reverse. `free` never goes through this hierarchy (it costs
  * nothing by definition). `fullRound` is a real SRD tier but isn't trackable here yet —
  * partial-round bookkeeping (what remains spendable if a full-round action gets
- * interrupted mid-turn) needs dedicated design (see phase-10 notes), so for now a
+ * initiated mid-turn) needs dedicated design (see phase-10 notes), so for now a
  * `fullRound` (or any other not-yet-implemented) request is simply ignored: it's treated
  * as already available and never actually claims a pool, rather than being gated or
  * crashing on an untracked key.

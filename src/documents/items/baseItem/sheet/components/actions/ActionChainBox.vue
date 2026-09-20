@@ -7,7 +7,7 @@
         :key="chainIndex"
         class="chain-link-entry"
       >
-        <ActionAccordionRow :link="link" :actionType="actionType" :actionId="link.actionId" />
+        <ActionAccordionRow :link="link" :actionType="actionType" :actionId="link.actionId" :chainOwnerActionId="actionId" />
       </li>
     </ol>
 
@@ -44,6 +44,7 @@
     getters: {
       chain,
       actionType,
+      actionId,
     },
     actions: {
       addChainLink,

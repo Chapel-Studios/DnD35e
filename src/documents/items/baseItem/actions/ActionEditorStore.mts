@@ -4,7 +4,7 @@ import type { ActionChainLinkModel } from '@items/baseItem/actions/ActionSourceD
 import type { SelectOption } from '@vc/fields/index.mjs';
 import type { Ref } from 'vue';
 import type { ComputedRef } from 'vue';
-import { computed, ref, shallowRef } from 'vue';
+import { computed, ref } from 'vue';
 
 import type { ActionDataModel } from './ActionDataModel.mjs';
 import type { ActionTrigger, ActionType } from './constants.mjs';
@@ -30,7 +30,7 @@ interface ActionEditorStoreParams<T extends ActionDataModel> {
   displaySettings: ActionEditorDisplaySettings;
   linkSettings?: LinkSettings;
   actionTypeOptions: SelectOption<ActionType>[];
-  createActionEditorStore: (actionId: string, link?: Ref<ActionChainLinkModel>) => ActionEditorStore;
+  createActionEditorStore: (actionId: string, link?: Ref<ActionChainLinkModel>, chainOwnerActionId?: string) => ActionEditorStore;
 }
 
 interface ActionEditorStoreCreatorParams<T extends ActionDataModel> {
@@ -41,7 +41,7 @@ interface ActionEditorStoreCreatorParams<T extends ActionDataModel> {
   addChainLink: (parentActionId: string, subActionType: T['type']) => Promise<boolean>;
 }
 
-const useActionEditorStoreCreator = <T extends ActionDataModel>(creatorParams: ActionEditorStoreCreatorParams<T>): (actionId: string, link?: Ref<ActionChainLinkModel>) => ActionEditorStore => {
+const useActionEditorStoreCreator = <T extends ActionDataModel>(creatorParams: ActionEditorStoreCreatorParams<T>): (actionId: string, link?: Ref<ActionChainLinkModel>, chainOwnerActionId?: string) => ActionEditorStore => {
   const {
     actions,
     actionTypeOptions,
@@ -78,17 +78,20 @@ const useActionEditorStoreCreator = <T extends ActionDataModel>(creatorParams: A
   };
 
   const createActionEditorStore = (actionId: string, link?: Ref<ActionChainLinkModel>, chainOwnerActionId?: string): ActionEditorStore => {
-    const action = actions.value.find((a) => a._id === actionId);
-    if (!action) throw new Error(`Action with ID ${actionId} not found`);
+    const initialAction = actions.value.find((a) => a._id === actionId);
+    if (!initialAction) throw new Error(`Action with ID ${actionId} not found`);
 
     const linkSettings = getLinkSettings(updateLink, link, chainOwnerActionId);
 
     const displaySettings = getDisplaySettings(actionId);
     const actionStoreParams: ActionEditorStoreParams<T> = {
-      // shallowRef, not ref: a deep-reactive proxy around an ActionDataModel throws a
-      // Proxy invariant violation when the FormulaFamiliar walker reads `.schema`
-      // (a non-configurable data property) — see foundry-document-non-reactive-props memory.
-      action: shallowRef(action) as Ref<T>,
+      // Computed re-lookup, not a one-time snapshot: `actions.value` gets fresh
+      // ActionDataModel instances on every document update, so a static ref would go
+      // stale after the first edit (a later edit would then spread the old field values
+      // back). Not a deep `ref()` either — that throws a Proxy invariant violation when
+      // the FormulaFamiliar walker reads `.schema` (a non-configurable data property) —
+      // see foundry-document-non-reactive-props memory.
+      action: computed(() => actions.value.find((a) => a._id === actionId) ?? initialAction),
       updateAction,
       addChainLink,
       displaySettings,
@@ -97,7 +100,7 @@ const useActionEditorStoreCreator = <T extends ActionDataModel>(creatorParams: A
       createActionEditorStore,
     };
     
-    return createActionStore(action.type, actionStoreParams);
+    return createActionStore(initialAction.type, actionStoreParams);
   };
 
   return createActionEditorStore;
@@ -130,6 +133,7 @@ const useActionEditorStore = <T extends ActionDataModel>({
   const familiarContexts = computed((): FamiliarSchema => FormulaData.buildFamiliarSchema(nameContexts.value));
 
   const getters = {
+    actionId: computed(() => action.value._id),
     // See `nameContexts` above for the context-name -> document mapping.
     displayName: computed(() => action.value.name.resolve({ ...nameContexts.value })
       ?? action.value.name.resolvedValue
@@ -212,12 +216,13 @@ interface ActionEditorStoreActions {
   updateActionField: (field: string, value: unknown) => Promise<boolean>;
   // updateChain: (link: ActionChainLinkModel, remove?: boolean) => Promise<boolean>;
   updateLink: (link: ActionChainLinkModel, remove?: boolean) => Promise<boolean>;
-  createActionEditorStore: (actionId: string, link?: Ref<ActionChainLinkModel>) => ActionEditorStore;
+  createActionEditorStore: (actionId: string, link?: Ref<ActionChainLinkModel>, chainOwnerActionId?: string) => ActionEditorStore;
   updateTrigger: (trigger: ActionTrigger) => Promise<boolean>;
   addChainLink: (subActionType: ActionType) => Promise<boolean>;
 }
 
 interface ActionEditorStoreGetters {
+  actionId: ComputedRef<string>;
   nameFormulaData: ComputedRef<FormulaDataSource>;
   familiarContexts: ComputedRef<FamiliarSchema>;
   displayName: ComputedRef<string>;

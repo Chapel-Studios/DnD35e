@@ -1,24 +1,34 @@
 /**
  * Action Collection Contexts helper.
  *
- * Injects an `actions` array-typed `FieldAspect` (accessPath `'system.actions'`,
- * `arrayElement.kind: 'embeddedModel'`) onto a weapon Item's or actor's familiar
- * schema, replacing the raw schema-walked `system.actions` field (opted out via
- * `familiar: { formulaVisible: false }` on the schema field itself — see
- * `WeaponSystemModel.mts`/`CreatureSystemModel.mts`).
+ * Injects an `actions` array-typed `FieldAspect` (accessPath `'system.actions'`) onto a
+ * weapon Item's or actor's familiar schema, replacing the raw schema-walked
+ * `system.actions` field (opted out via `familiar: { formulaVisible: false }` on the
+ * schema field itself — see `WeaponSystemModel.mts`/`CreatureSystemModel.mts`).
  *
  * Unlike `itemCollectionFamiliar.mts`'s `items`/`weapons`/`equipment` (heterogeneous
  * real Foundry Item documents, dispatched per-element via the documentType/subtype
- * registry), action collection elements are embedded (non-Document) DataModels with
- * no `.documentName`/registry entry — each element's own `.schema.fields` is walked
- * directly at predicate-evaluation time (`FormulaResolver.functionGrammar.mts`'s
- * `evaluatePredicateForEmbeddedModelElement`).
+ * registry), the weapon side of this collection holds embedded (non-Document)
+ * `ActionDataModel` instances with no `.documentName`/registry entry — each element's
+ * own `.schema.fields` is walked directly at predicate-evaluation time
+ * (`FormulaResolver.functionGrammar.mts`'s `evaluatePredicateForEmbeddedModelElement`),
+ * so `weapon.system.actions` uses `arrayElement.kind: 'embeddedModel'`.
  *
- * `weapon.system.actions` is a genuine `ArrayField` of full `ActionDataModel`
- * instances. `actor.system.actions` is a `TypedObjectField` (Record<string, stub>,
- * keyed by action `_id`) holding only lightweight `{ id, itemUuid, type, isSystem }`
- * stubs — live-merged one entry at a time by each owned action's own
- * `ActionDataModel.createActionChange()`; the rich fields stay on the source item.
+ * `actor.system.actions` is a *different* shape: a `TypedObjectField` (Record<string,
+ * stub>, keyed by action `_id`) holding only lightweight, uniform
+ * `{ id, itemUuid, type, isSystem }` stubs — live-merged one entry at a time by each
+ * owned action's own `ActionDataModel.createActionChange()`; the rich fields stay on
+ * the source item. These stub values are plain schema-validated objects (from the
+ * `TypedObjectField`'s inner `SchemaField`), NOT DataModel instances, so they have no
+ * `.schema` property — `embeddedModel`'s per-element `.schema.fields` walk would build
+ * an empty `#it` context for them and every predicate would silently evaluate false.
+ * Since every stub shares the exact same uniform shape (unlike the weapon side, where
+ * each subtype's real fields differ), the actor side instead uses
+ * `arrayElement.kind: 'object'` with the stub's *cached* `elementFields` (passed in by
+ * the caller, e.g. `CharacterSystemModel.schema.fields.actions.element.fields`) —
+ * mirroring how `ArrayField(SchemaField)` fields like `senses`/`attacks` are classified
+ * by the schema walker (`schemaWalker.mts`'s `inferArrayElementInfo`).
+ *
  * Both shapes materialize to a searchable array at resolve time (Record values via
  * `Object.values()`, see `resolveFunctionBlock()`'s array-materialization step).
  *
@@ -46,13 +56,25 @@ function countActions(context: DocumentContext | undefined): number | undefined 
  * Merge an `actions` collection aspect onto an existing AspectGroup. Call this from a
  * weapon's or actor's familiar schema builder alongside/instead of the auto-walked
  * `system.actions` schema field (opted out via `formulaVisible: false`).
+ *
+ * @param actorStubFields When set, classifies the aspect as `arrayElement.kind: 'object'`
+ *   using this cached field shape instead of `'embeddedModel'` — pass the actor stub's
+ *   inner `SchemaField.fields` (e.g. `CharacterSystemModel.schema.fields.actions.element.fields`).
+ *   Omit for the weapon case, whose elements are real `ActionDataModel` instances with
+ *   their own live `.schema`.
  */
-export function withActionCollectionAspects(group: AspectGroup, context?: DocumentContext): AspectGroup {
+export function withActionCollectionAspects(
+  group: AspectGroup,
+  context?: DocumentContext,
+  actorStubFields?: Record<string, foundry.data.fields.DataField>
+): AspectGroup {
   const aspect: FieldAspect = {
     display: localize('dnd35e.Formula.ActionCollections.actions', 'Actions'),
     type: 'array',
     accessPath: 'system.actions',
-    arrayElement: { kind: 'embeddedModel' },
+    arrayElement: actorStubFields
+      ? { kind: 'object', elementFields: actorStubFields, elementAccessPath: 'actions.element', localizationPrefixes: [] }
+      : { kind: 'embeddedModel' },
   };
   const count = countActions(context);
   if (count !== undefined) aspect.value = count;

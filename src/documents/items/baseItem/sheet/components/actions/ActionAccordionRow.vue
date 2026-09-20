@@ -9,7 +9,7 @@
     actionId: string;
     actionType: ActionType;
     link?: ActionChainLinkModel;
-    
+    chainOwnerActionId?: string;
   };
 </script>
 
@@ -24,7 +24,7 @@
 
   interface DocStoreThatCreatesActionEditorStore {
     _storeUtils: {
-      createActionEditorStore?: (actionId: string, link?: Ref<ActionChainLinkModel>) => ActionEditorStore;
+      createActionEditorStore?: (actionId: string, link?: Ref<ActionChainLinkModel>, chainOwnerActionId?: string) => ActionEditorStore;
     };
   }
 
@@ -32,6 +32,7 @@
     actionId,
     actionType,
     link,
+    chainOwnerActionId,
   } = defineProps<ActionAccordionRowProps>();
 
   const possibleActionEditorStore = inject<ActionEditorStore>(ActionEditorStoreSymbol);
@@ -46,7 +47,7 @@
   }
 
   const linkRef: Ref<ActionChainLinkModel> | undefined = link ? ref(link) : undefined;
-  const actionStore = createActionEditorStore(actionId, linkRef);
+  const actionStore = createActionEditorStore(actionId, linkRef, chainOwnerActionId);
   provide(ActionEditorStoreSymbol, actionStore);
 
   const actionComponent = getActionRow(actionType);

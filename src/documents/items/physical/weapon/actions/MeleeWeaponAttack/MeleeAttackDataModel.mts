@@ -57,7 +57,6 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
       superResult.cancelled = true;
       superResult.reason = reachResult.reason;
     }
-    superResult.warnings.push(...reachResult.warnings);
 
     return superResult;
   }

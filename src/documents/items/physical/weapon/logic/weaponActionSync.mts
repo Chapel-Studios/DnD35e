@@ -46,7 +46,7 @@ async function syncWeaponActions (weapon: Weapon): Promise<void> {
     actions.push({
       _id: foundry.utils.randomID(),
       type: desiredType,
-      name: game.i18n.localize('dnd35e.WEAPON.ACTIONS.DefaultName'),
+      name: { formula: game.i18n.localize('dnd35e.WEAPON.ACTIONS.DefaultName'), resolvedValue: null, expectedType: 'string' },
       isSystemCreated: true,
       isTopLevel: true,
     } as unknown as WeaponAction);

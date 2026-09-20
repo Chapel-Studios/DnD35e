@@ -49,7 +49,7 @@ const {
 abstract class ActionDataModel extends foundry.abstract.DataModel {
   declare name: FormulaData;
   declare abstract isTargetRequired: boolean;
-  maxTargets: number | null = null;
+  declare maxTargets: number | null;
 
   static override defineSchema(): Record<string, any> {
     return {
@@ -90,30 +90,7 @@ abstract class ActionDataModel extends foundry.abstract.DataModel {
       provokes: new BooleanField({ required: true, initial: false }),
       maxTargets: new NumberField({ required: true, initial: 1, integer: true, min: 1, nullable: true }),
       isTargetRequired: new BooleanField({ required: true, initial: true }),
-      description: new HTMLField(),  
-      // check: new SchemaField({
-      //   formula: new FormulaField({
-      //     expectedType: 'string',
-      //     contexts: [
-      //       { contextName: 'Actor', resolvePath: 'parent.parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['self'] },
-      //       { contextName: 'Item', resolvePath: 'parent', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['item', 'weapon'] },
-      //     ],
-      //   }),
-      //   against: new StringField({
-      //     choices: ['armorClass', 'touchAc', 'flatFootedAc'],
-      //     initial: 'armorClass',
-      //     required: true,
-      //   }),
-      // }, { required: false, nullable: true, initial: null }),
-
-      // damage: new SchemaField({
-      // }, { required: false, nullable: true, initial: null }),
-
-      // // Present only on ranged/thrown actions — see §10.9.
-      // range: new SchemaField({
-      //   increment: new NumberField({ required: true, integer: true, initial: 0 }),
-      //   ammoType: new StringField({ required: false, blank: true, initial: '' }),
-      // }, { required: false, nullable: true, initial: null }),
+      description: new HTMLField(),
 
       chain: new ArrayField(
         new SchemaField({

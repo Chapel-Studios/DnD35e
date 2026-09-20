@@ -206,7 +206,7 @@ interface WeaponActions extends EquippableItemActions {
 }
 
 interface WeaponUtils extends EquippableItemStoreUtils {
-  createActionEditorStore: (actionId: string, link?: Ref<ActionChainLinkModel>) => ActionEditorStore;
+  createActionEditorStore: (actionId: string, link?: Ref<ActionChainLinkModel>, chainOwnerActionId?: string) => ActionEditorStore;
 }
 
 type WeaponStore = EquippableDocumentStore<Weapon> & {

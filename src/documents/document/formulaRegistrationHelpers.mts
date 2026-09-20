@@ -54,12 +54,11 @@ function evaluateRegisteredFormulas (
   host: FormulaRegistrationHost,
   updateData: Record<string, unknown>
 ): void {
-  // Source (not live/derived) data - the derived/prepared `system` can carry transient
-  // AE-applied values (e.g. the `name` override redirected onto `nameFormula.formula`,
-  // see `remapNameKeyForItem()`), which must never get baked into what gets persisted here.
-  const thisObject = host.toObject(true) as Record<string, unknown>;
+  // Live/derived data so formulas can reference persisted:false fields (e.g. #self.isBroken).
+  const thisObject = host.toObject(false) as Record<string, unknown>;
   thisObject.documentName = host.documentName;
   thisObject.type = host.type;
+  resetNameFormulaToSource(host, thisObject);
 
   for (const registration of host.registeredFormulas) {
     const additionalContexts = buildFormulaContexts(host, registration.formulaField);
@@ -80,9 +79,10 @@ function evaluateRegisteredFormulasForCreate (host: FormulaRegistrationHost): Re
   const nameFormula = host.system?.nameFormula?.formula;
   if (!nameFormula) return null;
 
-  const thisObject = host.toObject(true) as Record<string, unknown>;
+  const thisObject = host.toObject(false) as Record<string, unknown>;
   thisObject.documentName = host.documentName;
   thisObject.type = host.type;
+  resetNameFormulaToSource(host, thisObject);
 
   const sourceUpdate: Record<string, unknown> = {};
   for (const registration of host.registeredFormulas) {
@@ -96,6 +96,18 @@ function evaluateRegisteredFormulasForCreate (host: FormulaRegistrationHost): Re
   }
 
   return sourceUpdate;
+}
+
+/**
+ * AE-applied name overrides get redirected onto `system.nameFormula.formula`
+ * (see `remapNameKeyForItem()`) — reset just that field to its persisted source
+ * value so a transient AE override never gets baked into what gets saved here.
+ */
+function resetNameFormulaToSource (host: FormulaRegistrationHost, thisObject: Record<string, unknown>): void {
+  const system = thisObject.system as Record<string, unknown> | undefined;
+  if (!system || !('nameFormula' in system)) return;
+  const sourceSystem = (host.toObject(true) as { system?: Record<string, unknown> }).system;
+  system.nameFormula = sourceSystem?.nameFormula;
 }
 
 /**

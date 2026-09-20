@@ -140,14 +140,21 @@ export const registerActors = () => {
 
     // Register familiar schemas for formula resolution
     // `#self.actions` — searchable actor-side action stub collection (own `system.actions`).
+    // Actor stubs are plain schema-validated objects (no live `.schema` of their own — see
+    // `actionCollectionFamiliar.mts`), so `withActionCollectionAspects` needs the stub's
+    // cached field shape to classify the collection as `arrayElement.kind: 'object'`
+    // instead of `'embeddedModel'`.
+    const actionStubFields = (
+      CharacterSystemModel.schema.fields.actions as unknown as { element: { fields: Record<string, foundry.data.fields.DataField> } }
+    ).element.fields;
     registerFamiliarSchema('Actor', characterActorType, (ctx?) =>
-      withActionCollectionAspects(withItemCollectionAspects(gatherAspectsFromSchema(CharacterSystemModel, ctx), ctx), ctx));
+      withActionCollectionAspects(withItemCollectionAspects(gatherAspectsFromSchema(CharacterSystemModel, ctx), ctx), ctx, actionStubFields));
 
     // Register remaining types with the base schema for now (stubs — full models added in a future, not-yet-scheduled phase)
     for (const type of ACTOR_TYPES) {
       if (type === characterActorType) continue;
       registerFamiliarSchema('Actor', type, (ctx?) =>
-        withActionCollectionAspects(withItemCollectionAspects(gatherAspectsFromSchema(CharacterSystemModel, ctx), ctx), ctx));
+        withActionCollectionAspects(withItemCollectionAspects(gatherAspectsFromSchema(CharacterSystemModel, ctx), ctx), ctx, actionStubFields));
     }
   });
 

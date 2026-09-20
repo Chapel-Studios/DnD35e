@@ -5,7 +5,7 @@
       :value="link?.trigger ?? ACTION_TRIGGER.ALWAYS"
       :options="ActionTriggerSelectOptions"
       :fieldPath="getFieldPath('trigger')"
-      @update="(v: ActionTrigger | null) => updateTrigger(v ?? ACTION_TRIGGER.ALWAYS)"
+      :onUpdate="(v) => updateTrigger(v ?? ACTION_TRIGGER.ALWAYS)"
     />
     <button
       type="button"
@@ -21,7 +21,6 @@
   import { ActionEditorStoreSymbol } from '@items/baseItem/actions/ActionEditorStore.mjs';
   import type { ActionEditorStore } from '@items/baseItem/actions/ActionEditorStore.mts';
   import { ACTION_TRIGGER, ActionTriggerSelectOptions } from '@items/baseItem/actions/constants.mjs';
-  import type { ActionTrigger } from '@items/baseItem/actions/constants.mts';
   import { SelectFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
 
