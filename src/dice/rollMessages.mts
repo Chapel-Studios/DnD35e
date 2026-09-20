@@ -9,11 +9,13 @@
  */
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
-import type { ActionEconomyActionType } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import { useSettingsStore } from '@settings/index.mjs';
 
 import type { D20Roll } from './D20Roll.mjs';
+import actionSpentCardTemplateSource from './templates/action-spent-card.hbs?raw';
+import actionWarningCardTemplateSource from './templates/action-warning-card.hbs?raw';
 import modifierBreakdownTemplateSource from './templates/modifier-breakdown.hbs?raw';
 import moveActionCardTemplateSource from './templates/move-action-card.hbs?raw';
 import proneToggleCardTemplateSource from './templates/prone-toggle-card.hbs?raw';
@@ -24,6 +26,8 @@ const saveRollCardTemplate = Handlebars.compile(saveRollCardTemplateSource, { pr
 const modifierBreakdownTemplate = Handlebars.compile(modifierBreakdownTemplateSource, { preventIndent: true });
 const moveActionCardTemplate = Handlebars.compile(moveActionCardTemplateSource, { preventIndent: true });
 const proneToggleCardTemplate = Handlebars.compile(proneToggleCardTemplateSource, { preventIndent: true });
+const actionWarningCardTemplate = Handlebars.compile(actionWarningCardTemplateSource, { preventIndent: true });
+const actionSpentCardTemplate = Handlebars.compile(actionSpentCardTemplateSource, { preventIndent: true });
 
 /** Options for `buildSaveCard()` beyond the roll and its modifier breakdown. */
 interface BuildSaveCardOptions {
@@ -67,7 +71,7 @@ async function buildSaveCard(roll: D20Roll, modifierList: RollModifier[], opts: 
     dieResult,
     total,
     isFumble: roll.isFumble,
-    isCriticalThreat: roll.isCriticalThreat,
+    isCriticalThreat: roll.isCriticalThreat(),
     diceRollHtml,
     showResult: opts.dc !== undefined,
     passed,
@@ -89,7 +93,7 @@ async function buildInitiativeCard(roll: D20Roll, modifierList: RollModifier[], 
 
 /** Data a caller computes about the move — everything `buildMoveActionCard()` needs beyond the combatant/actor/action themselves. */
 interface MoveActionCardData {
-  spent: ActionEconomyActionType[];
+  spent: ActionEconomyType[];
   /** Already converted to the scene's localized distance units (ft/m) — see `movement.passed.cost`. */
   cost: number;
   /** Already converted to the scene's localized distance units — see `TokenRulerDnd35e#getLocalizedBudget()`. */
@@ -288,6 +292,79 @@ async function buildProneToggleCard(
 }
 
 /**
+ * Posts a standalone warning card when an item's automatic action-economy spend
+ * (equip/unequip/stow/retrieve) fails for lack of the required action — nothing was
+ * actually consumed, so unlike `buildMoveActionCard()` there's no `spent`/Undo bookkeeping.
+ */
+async function buildActionEconomyWarningCard(combatant: CombatantDnd35e, actor: ActorDnd35e, warningMessage: string): Promise<void> {
+  // See `buildMoveActionCard()`'s comment above for why this cast is needed.
+  await ChatMessage.create({
+    content: actionWarningCardTemplate({ combatantName: combatant.name, warningMessage }),
+    speaker: ChatMessage.getSpeaker({ actor }),
+  } as unknown as ChatMessageSource);
+}
+
+/** Localized labels for the action-economy tiers an item's automatic spend can consume — `standard`/`minor`/`fullRound`/`aoo` aren't currently reachable by equip/stow, but are included so a future caller doesn't silently render the raw tier key. */
+const ITEM_ACTION_TIER_LABEL_KEYS: Partial<Record<ActionEconomyType, string>> = {
+  free: 'dnd35e.ROLL.ITEM_ACTION_SPENT_CARD.FreeAction',
+  move: 'dnd35e.ROLL.ITEM_ACTION_SPENT_CARD.MoveAction',
+  standard: 'dnd35e.ROLL.MOVE_ACTION_CARD.StandardAction',
+};
+
+/** Persisted in `message.flags.dnd35e.itemActionSpentCard` — everything needed to re-render the card, or revert the item's equip/stow state, after Undo. */
+interface ItemActionSpentCardFlags {
+  combatantId: string;
+  /** Already-localized "Equipped {item}"/"Stowed {item}" etc. label — see ITEM_ACTION_SPENT_CARD keys. */
+  actionLabel: string;
+  spent: ActionEconomyType[];
+  itemUuid: string;
+  /** Which field to restore, and to what value, on Undo — distinct shapes since equip and stow touch different `system` fields. */
+  revert: { kind: 'equip'; priorSlotIds: string[] } | { kind: 'stow'; priorContainerUuid: string | null };
+  undone: boolean;
+}
+
+/** Shared by the initial post and the Undo click handler's re-render — see chatCardActions.mts. */
+function buildItemActionSpentCardContent(combatantName: string, flags: ItemActionSpentCardFlags): string {
+  return actionSpentCardTemplate({
+    combatantName,
+    actionLabel: flags.actionLabel,
+    spentLabels: flags.spent.map((tier) => game.i18n.localize(ITEM_ACTION_TIER_LABEL_KEYS[tier] ?? tier)),
+    undone: flags.undone,
+  });
+}
+
+/**
+ * Posts the Action Spent card for a successful equip/unequip/stow/retrieve action-economy
+ * spend (see `equippableItem/events/equipped.mts` and `physicalItem/events/stowed.mts`) —
+ * the announcement half of the same mechanic `buildActionEconomyWarningCard()` covers for
+ * the failure case. Includes an Undo button that refunds the spent action(s) and reverts
+ * the item's equip/stow state (see `revert` in `ItemActionSpentCardFlags`).
+ */
+async function buildItemActionSpentCard(
+  combatant: CombatantDnd35e,
+  actor: ActorDnd35e,
+  actionLabel: string,
+  spent: ActionEconomyType[],
+  revertData: Pick<ItemActionSpentCardFlags, 'itemUuid' | 'revert'>
+): Promise<string | null> {
+  const flags: ItemActionSpentCardFlags = {
+    ...revertData,
+    combatantId: combatant.id,
+    actionLabel,
+    spent,
+    undone: false,
+  };
+
+  // See `buildMoveActionCard()`'s comment above for why this cast is needed.
+  const message = await ChatMessage.create({
+    content: buildItemActionSpentCardContent(combatant.name, flags),
+    speaker: ChatMessage.getSpeaker({ actor }),
+    flags: { dnd35e: { itemActionSpentCard: flags } },
+  } as unknown as ChatMessageSource);
+  return message?.id ?? null;
+}
+
+/**
  * Append the modifier breakdown as the last child of `.dice-tooltip > .wrapper` (see
  * `Roll#getTooltip()`/`templates/dice/tooltip.hbs`), after the individual die-face rows.
  * Falls back to leaving `diceTooltipHtml` untouched if there's no wrapper to append to (e.g.
@@ -300,7 +377,10 @@ function appendModifierBreakdown(diceTooltipHtml: string, modifierBreakdownHtml:
 }
 
 export {
+  buildActionEconomyWarningCard,
   buildInitiativeCard,
+  buildItemActionSpentCard,
+  buildItemActionSpentCardContent,
   buildMoveActionCard,
   buildMoveActionCardContent,
   buildProneToggleCard,
@@ -308,4 +388,9 @@ export {
   buildSaveCard,
   upsertMoveActionCard,
 };
-export type { MoveActionCardData, MoveActionCardFlags, ProneToggleCardFlags };
+export type {
+  ItemActionSpentCardFlags,
+  MoveActionCardData,
+  MoveActionCardFlags,
+  ProneToggleCardFlags,
+};

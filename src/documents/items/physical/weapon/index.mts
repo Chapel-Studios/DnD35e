@@ -1,6 +1,5 @@
 import type {
   WeaponBaseType,
-  WeaponDamage,
   WeaponSubtype,
   WeaponSystemData,
   WeaponSystemSource,
@@ -53,7 +52,6 @@ export {
 
 export type {
   WeaponBaseType,
-  WeaponDamage,
   WeaponSheetConfig,
   WeaponSheetRenderContext,
   WeaponStore,

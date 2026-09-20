@@ -14,6 +14,8 @@ type ValueType = string
 interface BaseFormGroupProps<TValue extends ValueType> {
   label?: string; // localization key
   hint?: string; // localization key for hint text
+  /** Localization key shown on the label's hover tooltip. Independent of `hint` — both can be set at once. */
+  tooltip?: string;
   fieldPath: string; // unique identifier for this field's permission overrides
   defaultVisibility?: FieldVisibility; // defaults to 'everyone'
   defaultEditability?: FieldEditability; // defaults to 'normal'

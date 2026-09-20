@@ -13,6 +13,7 @@ import {
   derivedNumberField,
   requiredNumberField,
   useDnd35eField,
+  withFamiliar,
 } from '@fields/fieldBuilders.mjs';
 import { NullableCapNumberField } from '@fields/NullableCapNumberField.mjs';
 import { FormulaField } from '@helpers/formulae/index.mjs';
@@ -25,6 +26,7 @@ const {
   HTMLField,
   SchemaField,
   StringField,
+  TypedObjectField,
 } = foundry.data.fields;
 
 const abilityEntry = () => new SchemaField({
@@ -79,7 +81,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     this.attacks.meleeToHitBonus = 0;
     this.attacks.rangedToHitBonus = 0;
     this.attacks.rangedTouchToHitBonus = 0;
-    this.attacks.actions = [];
+    this.actions = {};
   }
 
   override prepareDerivedData(): void {
@@ -199,23 +201,31 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     schema.currency = useDnd35eField(new CurrencyField({ required: true }));
 
     schema.attacks = new SchemaField({
-      actions: new ArrayField(new SchemaField({
-        damageRoll: new StringField({ required: true, initial: '', blank: true }),
-        damageType: new StringField({ required: true, initial: '', blank: true }),
-        critRange: new StringField({ required: true, initial: '20' }),
-        critMultiplier: requiredNumberField(2),
-        rangeIncrement: requiredNumberField(0),
-        attackFormula: new StringField({ required: true, initial: '', blank: true }),
-        damageFormula: new StringField({ required: true, initial: '', blank: true }),
-      }), {
-        initial: [],
-        persisted: false,
-      }),
       toHitBonus: useDnd35eField(derivedNumberField(0)),
       meleeToHitBonus: useDnd35eField(derivedNumberField(0)),
       rangedToHitBonus: useDnd35eField(derivedNumberField(0)),
       rangedTouchToHitBonus: useDnd35eField(derivedNumberField(0)),
     });
+
+    // Actor-side stub bag (poc.10 §10.4) — live-merged one entry at a time by each
+    // owned action's own `ActionDataModel.createActionChange()` (`system.actions.<id>`,
+    // `EFFECT_CHANGE_PHASE.POST`, no backing AE document). Resolved data stays on the
+    // source item; looked up live via `itemUuid`, never duplicated here.
+    // `formulaVisible: false` — a `TypedObjectField` isn't recognized by the schema
+    // walker's default array-classification; a proper `actions` FieldAspect
+    // (`arrayElement.kind: 'embeddedModel'`, materialized via `Object.values()`) is
+    // injected instead by `withActionCollectionAspects()` in the actor familiar schema
+    // registration.
+    const actionsField =  new TypedObjectField(new SchemaField({
+      id: new StringField({ required: true, blank: false }),
+      itemUuid: new StringField({ required: true, blank: false }),
+      type: new StringField({ required: true, blank: false }),
+      isSystem: new BooleanField({ required: true, initial: true }),
+    }), {
+      initial: {},
+      persisted: false,
+    });
+    schema.actions = withFamiliar(actionsField, { formulaVisible: false });
 
     schema.encumbrance = new SchemaField({
       carriedWeight:   useDnd35eField(derivedNumberField(0), { measurementUnit: 'weight' }),

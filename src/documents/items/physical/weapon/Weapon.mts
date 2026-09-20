@@ -1,11 +1,16 @@
+import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type { EquipSlot } from '@constants/equipmentSlots.mjs';
 import { MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
+import type { DocumentUpdateCallbackOptions } from '@documents/document/DocumentDnd35e.mjs';
+import { EFFECT_CHANGE_PHASE } from '@effects/baseActiveEffect/data/constants.mjs';
+import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
 import type { WeaponItemType } from '@items/itemTypes.mjs';
 import { EquippableItem } from '@items/physical/equippableItem/index.mjs';
 
 import type { PhysicalItemSourceProps } from '../physicalItem/PhysicalItem.mjs';
 import { WEAPON_SUBTYPE } from './data/constants.mjs';
 import type { WeaponSystemData, WeaponSystemSource } from './data/WeaponSystemData.mjs';
+import { syncWeaponActions } from './logic/weaponActionSync.mjs';
 
 type WeaponSource = Omit<foundry.documents.ItemSource, 'system'>
   & Omit<PhysicalItemSourceProps, 'system'>
@@ -40,7 +45,7 @@ class Weapon extends EquippableItem {
   override get defaultSlotIds (): EquipSlot[] {
     if (
       this.system.weaponSubtype === WEAPON_SUBTYPE.TWO_HANDED_WEAPON
-      || this.system.weaponSubtype === WEAPON_SUBTYPE.RANGED_WEAPON
+      || this.system.weaponSubtype === WEAPON_SUBTYPE.TWO_HANDED_RANGED_WEAPON
     ) {
       return [MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT];
     }
@@ -48,6 +53,52 @@ class Weapon extends EquippableItem {
       return [OFF_HAND_EQUIP_SLOT];
     }
     return super.defaultSlotIds;
+  }
+
+  /**
+   * Live-merges a lightweight actor-side stub for each of this weapon's own
+   * system-created `system.actions` entries onto `system.actions.<id>` (poc.10 §10.4) —
+   * see `ActionDataModel.createActionChange()`. Runs unconditionally (not equip-gated);
+   * `requiresEquipped` gates usability at execution time, not merge time. Gated to
+   * `FINAL` (matching the stub's own declared `phase`) so all of a weapon's actions are
+   * known to exist before any are merged onto the actor.
+   */
+  override getContributedActorChanges(phase: string): EffectChangeDataDnd35e[] {
+    const changes = super.getContributedActorChanges(phase);
+    if (phase !== EFFECT_CHANGE_PHASE.FINAL) return changes;
+
+    const actionChanges = this.system.actions.map((action) => action.createActionChange());
+
+    return [...changes, ...actionChanges];
+  }
+
+  protected override async _onCreate(
+    updateData: DeepPartial<this['_source']>,
+    options: DatabaseCreateCallbackOptions,
+    userId: string
+  ): Promise<void> {
+    super._onCreate(updateData, options, userId);
+    await syncWeaponActions(this);
+  }
+
+  /**
+   * Keeps `system.actions` in sync whenever `weaponSubtype` or `properties` changes
+   * (poc.10 §10.3) — the same lifecycle point `PhysicalItem._onUpdate()` already reacts
+   * from for containment sync, since this performs a genuine array mutation that must
+   * never run from prep-time derivation.
+   */
+  protected override async _onUpdate(
+    data: Record<string, unknown>,
+    options: DocumentUpdateCallbackOptions,
+    userId: string
+  ): Promise<void> {
+    await super._onUpdate(data, options, userId);
+
+    const changedSystem = data.system as Partial<WeaponSystemSource> | undefined;
+    if (!changedSystem) return;
+    if ('weaponSubtype' in changedSystem || 'properties' in changedSystem) {
+      await syncWeaponActions(this);
+    }
   }
 }
 
@@ -61,3 +112,4 @@ export type {
   WeaponSource,
   WeaponType,
 };
+

@@ -268,6 +268,12 @@ const FUNCTION_AUTOCOMPLETE_ENTRIES: readonly { name: string; sigil?: string }[]
   { name: 'fromFeet' },
   { name: 'fromMeters' },
   { name: 'fromKg' },
+  { name: 'floor' },
+  { name: 'ceiling' },
+  { name: 'round' },
+  { name: 'absolute' },
+  { name: 'localize' },
+  { name: 'scaleDamage' },
 ];
 
 /**
@@ -280,9 +286,12 @@ const FUNCTION_AUTOCOMPLETE_ENTRIES: readonly { name: string; sigil?: string }[]
  * placed right after the open paren, ready to type the next argument (which
  * itself triggers the normal `#` dropdown on the next keystroke).
  */
-export function getFunctionAutocompleteOptions(partialText: string): AutocompleteOption[] {
+export function getFunctionAutocompleteOptions(partialText: string, context?: FamiliarSchema): AutocompleteOption[] {
   const query = partialText.toLowerCase();
   return FUNCTION_AUTOCOMPLETE_ENTRIES
+    // $scaleDamage only makes sense inside an action's own formula fields — hide it
+    // from the dropdown unless the field's schema carries a `thisAttack` context.
+    .filter(({ name }) => name !== 'scaleDamage' || context?.thisAttack)
     .filter(({ name }) => name.toLowerCase().startsWith(query))
     .map(({ name, sigil = '$' }) => ({
       path: name,
@@ -850,15 +859,18 @@ export function renderFormulaHTML(
   // have no escape mechanism in the real grammar, so they're intentionally
   // left un-escapable here too).
   //
-  // `$contains`/`$find`/`$any`/`$count`/`$stringContains` (poc §7.2b) get the same
-  // complete-keyword-plus-open-paren treatment as `$conditional`. The final
-  // catch-all `\$[A-Za-z]*` (bare `$`, or any partial/unrecognized `$word`
-  // with no `(` yet) is listed LAST so every more specific alternative gets
-  // first shot at a given position — it exists purely so an in-progress `$`
-  // command renders as a yellow "still typing" token (mirroring a bare/partial
-  // `#context` token) instead of falling through as unstyled plain text.
+  // `$contains`/`$find`/`$any`/`$count`/`$stringContains`/`$localize`/`$l`/
+  // `$fromFeet`/`$fromMeters`/`$fromKg`/`$floor`/`$ceiling`/`$round`/`$absolute`/
+  // `$scaleDamage` (all `functionGrammar.mts` names — keep this list in sync with
+  // `CANONICAL_NAMES`) get the same complete-keyword-plus-open-paren treatment as
+  // `$conditional`. The final catch-all `\$[A-Za-z]*` (bare `$`, or any partial/
+  // unrecognized `$word` with no `(` yet) is listed LAST so every more specific
+  // alternative gets first shot at a given position — it exists purely so an
+  // in-progress `$` command renders as a yellow "still typing" token (mirroring
+  // a bare/partial `#context` token) instead of falling through as unstyled
+  // plain text.
   const OPERATOR_SPLIT =
-    /((?<!\\)\(|(?<!\\)\)|>=|<=|==|!=|&&|\|\||[!<>]|(?<!\\)\$conditional(?=\s*\()|(?<!\\)\$(?:contains|find|any|count|stringContains)(?=\s*\()|\bwhen(?=\s*\()|\belse(?=\s*\()|(?<!\\)\$and\b|(?<!\\)\$or\b|(?<!\\)\$[A-Za-z]*)/i;
+    /((?<!\\)\(|(?<!\\)\)|>=|<=|==|!=|&&|\|\||[!<>]|(?<!\\)\$conditional(?=\s*\()|(?<!\\)\$(?:contains|find|any|count|stringContains|localize|l|fromFeet|fromMeters|fromKg|floor|ceiling|round|absolute|scaleDamage)(?=\s*\()|\bwhen(?=\s*\()|\belse(?=\s*\()|(?<!\\)\$and\b|(?<!\\)\$or\b|(?<!\\)\$[A-Za-z]*)/i;
 
   return tokens
     .map(token => {
@@ -889,12 +901,18 @@ export function renderFormulaHTML(
             const keywordError = errors.find(e => e.index === cursor);
             const titleAttr = keywordError?.error ? ` title="${escapeHTML(keywordError.error)}"` : '';
             out += `<span class="formula-keyword${stateToClass(state)}"${titleAttr} data-start="${cursor}" data-end="${cursor + piece.length}">${escapeHTML(piece)}</span>`;
-          } else if (/^\$(?:contains|find|any|count|stringcontains)$/i.test(piece)) {
+          } else if (/^\$(?:contains|find|any|count|stringcontains|localize|l|fromfeet|frommeters|fromkg|floor|ceiling|round|absolute|scaledamage)$/i.test(piece)) {
             // Same reasoning as the `$conditional` branch above — no matching
             // `functionBlocks` entry means the "(" hasn't been typed yet.
             const block = functionBlocks.find(b => b.startIndex === cursor);
-            const state = escalateOnBlur(!block ? 'partial' : block.error ? functionErrorState(block.error) : 'valid', isFocused);
             const keywordError = errors.find(e => e.index === cursor);
+            // A semantic error (e.g. `$scaleDamage` used outside an action) has no
+            // `block.error` of its own — structurally the call is fine — so it must
+            // also be consulted here, not just for the hover tooltip below.
+            const state = escalateOnBlur(
+              !block ? 'partial' : block.error ? functionErrorState(block.error) : keywordError?.severity === 'error' ? 'invalid' : 'valid',
+              isFocused
+            );
             const titleAttr = keywordError?.error ? ` title="${escapeHTML(keywordError.error)}"` : '';
             out += `<span class="formula-keyword${stateToClass(state)}"${titleAttr} data-start="${cursor}" data-end="${cursor + piece.length}">${escapeHTML(piece)}</span>`;
           } else if (/^\$[A-Za-z]*$/.test(piece)) {

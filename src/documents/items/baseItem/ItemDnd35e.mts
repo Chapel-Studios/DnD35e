@@ -46,7 +46,7 @@ type ItemSourceDnd35e<TItemType extends ItemType = ItemType> = foundry.documents
 // dropped/defaulted argument) breaks circular assignability when checking subclasses
 // (e.g. this class's own subtypes) against foundry.documents.Item, while still satisfying
 // EmbeddedCollection's requirement that embedded elements have a non-null parent.
-class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e | null = ActorDnd35e | null> extends foundry.documents.Item<foundry.documents.Actor> {
+class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd35e = ActorDnd35e> extends foundry.documents.Item<foundry.documents.Actor> {
   constructor(source: PreCreate<ItemSourceDnd35e<TItemType>>, context?: DocumentConstructionContext<TParent>) {
     super(source, context);
     this._completedActiveEffectPhases = new Set();
@@ -55,15 +55,10 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   declare type: TItemType;
   declare system: ItemSystemData;
   declare _source: ItemSourceDnd35e<TItemType>;
-  // declare _sheet: ItemSheetDnd35e<any> | null;
 
-  // dnd35e type-fix: base's "actor" resolves to the FIXED `foundry.documents.Actor`
-  // argument used to break the extends-clause circularity above. Overriding it to return
-  // this class's own (nullable) `TParent` is NOT possible — TypeScript's covariant-override
-  // rule rejects widening a non-null base return type to include `null`, and re-declaring
-  // "parent" itself reintroduces excessive-depth circularity via DataModel's parent-typed
-  // construction context. `TParent` is therefore decorative for "actor"/"parent" purposes;
-  // consuming code that needs the narrower dnd35e actor type should cast explicitly.
+  override get actor(): TParent {
+    return this.parent as TParent;
+  }
 
   /** Life Cycle */
   static readonly LifeCycle = {
@@ -196,6 +191,20 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     this.effectOverrides = {};
     this._masks = {};
     this._preparationWarnings = [];
+
+    // `name` AE overrides are redirected onto `system.nameFormula.formula`
+    // (see `remapNameKeyForItem()`) since `name` itself is a read-only getter with no
+    // writable backing field. Unlike computed derived fields, `nameFormula.formula` is
+    // a persisted, user-authored value that nothing else recomputes each cycle - reset
+    // it to the true source value here so a self-referential override formula (e.g. one
+    // that reads `#self.name`/`#weapon.name`) always resolves against a stable baseline
+    // instead of compounding onto its own already-mutated output every time this item's
+    // derived data is re-prepared within a session (see the "Lucky Lucky Lucky..."
+    // name-accumulation bug).
+    const sourceFormula = this._source.system?.nameFormula?.formula;
+    if (this.system?.nameFormula && sourceFormula !== undefined) {
+      this.system.nameFormula.formula = sourceFormula;
+    }
   }
 
   /**
@@ -378,7 +387,7 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
 const ItemProxyDnd35e = new Proxy(ItemDnd35e, {
   construct (
     _target,
-    args: [source: PreCreate<ItemSourceDnd35e>, context?: DocumentConstructionContext<ActorDnd35e | null>]
+    args: [source: PreCreate<ItemSourceDnd35e>, context?: DocumentConstructionContext<ActorDnd35e>]
   ) {
     const [source] = args;
     const type = source?.type;

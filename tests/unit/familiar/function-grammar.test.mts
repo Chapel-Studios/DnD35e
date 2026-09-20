@@ -362,6 +362,143 @@ describe('resolveFormula — $fromKg(...) unit conversion', () => {
   });
 });
 
+describe('findFunctionBlocks — $localize(...)/$l(...) parsing', () => {
+  it('parses both the full name and the short alias with a single argument', () => {
+    const localize = findFunctionBlocks('$localize(dnd35e.Some.Key)')[0];
+    const short = findFunctionBlocks('$l(dnd35e.Some.Key)')[0];
+    expect(localize.error).toBeUndefined();
+    expect(localize.name).toBe('localize');
+    expect(localize.args).toEqual(['dnd35e.Some.Key']);
+    expect(short.error).toBeUndefined();
+    expect(short.name).toBe('localize');
+    expect(short.args).toEqual(['dnd35e.Some.Key']);
+  });
+
+  it('flags the wrong argument count as an error', () => {
+    expect(findFunctionBlocks('$localize(a, b)')[0].error).toBe('argCount');
+  });
+});
+
+describe('resolveFormula — $localize(...)/$l(...)', () => {
+  const schema: FamiliarSchema = { self: { properties: {} } };
+  const docMap = { self: {} };
+  const originalLocalize = game.i18n.localize.bind(game.i18n);
+
+  it('resolves a bare (unquoted) key via game.i18n.localize', () => {
+    game.i18n.localize = ((key: string) => (key === 'dnd35e.Some.Key' ? 'Some Value' : key)) as typeof game.i18n.localize;
+    try {
+      expect(resolveFormula('$localize(dnd35e.Some.Key)', schema, docMap as never)).toBe('Some Value');
+      expect(resolveFormula('$l(dnd35e.Some.Key)', schema, docMap as never)).toBe('Some Value');
+    } finally {
+      game.i18n.localize = originalLocalize;
+    }
+  });
+
+  it('resolves a quoted literal key the same way as a bare key', () => {
+    game.i18n.localize = ((key: string) => (key === 'dnd35e.Some.Key' ? 'Some Value' : key)) as typeof game.i18n.localize;
+    try {
+      expect(resolveFormula('$localize("dnd35e.Some.Key")', schema, docMap as never)).toBe('Some Value');
+    } finally {
+      game.i18n.localize = originalLocalize;
+    }
+  });
+
+  it('resolves a nested #context.property key', () => {
+    const nestedSchema: FamiliarSchema = {
+      self: { properties: { labelKey: { type: 'string', accessPath: 'system.labelKey' } as FieldAspect } },
+    };
+    const nestedDocMap = { self: { system: { labelKey: 'dnd35e.Some.Key' } } };
+    game.i18n.localize = ((key: string) => (key === 'dnd35e.Some.Key' ? 'Some Value' : key)) as typeof game.i18n.localize;
+    try {
+      expect(resolveFormula('$localize(#self.labelKey)', nestedSchema, nestedDocMap as never)).toBe('Some Value');
+    } finally {
+      game.i18n.localize = originalLocalize;
+    }
+  });
+
+  it('builds the key from a literal prefix plus an interpolated #context.property segment', () => {
+    const schema: FamiliarSchema = {
+      thisAttack: { properties: { type: { type: 'string', accessPath: 'type' } as FieldAspect } },
+    };
+    const docMap = { thisAttack: { type: 'melee_weapon_attack' } };
+    game.i18n.localize = ((key: string) =>
+      (key === 'dnd35e.WEAPON.ACTIONS.Type.melee_weapon_attack' ? 'Melee Attack' : key)) as typeof game.i18n.localize;
+    try {
+      expect(resolveFormula(
+        '$localize(dnd35e.WEAPON.ACTIONS.Type.#thisAttack.type)',
+        schema,
+        docMap as never
+      )).toBe('Melee Attack');
+    } finally {
+      game.i18n.localize = originalLocalize;
+    }
+  });
+});
+
+describe('findFunctionBlocks — $scaleDamage(...) parsing', () => {
+  it('parses the name case-insensitively with a single argument', () => {
+    const block = findFunctionBlocks('$SCALEDAMAGE(1d6)')[0];
+    expect(block.error).toBeUndefined();
+    expect(block.name).toBe('scaleDamage');
+    expect(block.args).toEqual(['1d6']);
+  });
+
+  it('flags the wrong argument count as an error', () => {
+    expect(findFunctionBlocks('$scaleDamage(1d6, large)')[0].error).toBe('argCount');
+  });
+});
+
+describe('resolveFormula — $scaleDamage(...) size scaling', () => {
+  const schema: FamiliarSchema = {
+    self: { properties: {} },
+    weapon: { properties: {} },
+    thisAttack: { properties: {} },
+  };
+
+  it('scales the die up for a Large weapon', () => {
+    const docMap = { self: { system: { designedForSize: 'large' } }, weapon: { system: { designedForSize: 'large' } }, thisAttack: {} };
+    expect(resolveFormula('$scaleDamage(1d6)', schema, docMap as never)).toBe('1d8');
+  });
+
+  it('scales the die down for a Small weapon', () => {
+    const docMap = { self: { system: { designedForSize: 'small' } }, weapon: { system: { designedForSize: 'small' } }, thisAttack: {} };
+    expect(resolveFormula('$scaleDamage(1d6)', schema, docMap as never)).toBe('1d4');
+  });
+
+  it('leaves the die unscaled when no weapon/self context has a designedForSize', () => {
+    const docMap = { thisAttack: {} };
+    expect(resolveFormula('$scaleDamage(1d6)', schema, docMap as never)).toBe('1d6');
+  });
+
+  it('resolves a nested sub-formula argument', () => {
+    const nestedSchema: FamiliarSchema = {
+      self: { properties: { die: { type: 'string', accessPath: 'system.die' } as FieldAspect } },
+      weapon: { properties: {} },
+      thisAttack: { properties: {} },
+    };
+    const nestedDocMap = {
+      self: { system: { die: '1d8', designedForSize: 'large' } },
+      weapon: { system: { designedForSize: 'large' } },
+      thisAttack: {},
+    };
+    expect(resolveFormula('$scaleDamage(#self.die)', nestedSchema, nestedDocMap as never)).toBe('2d6');
+  });
+});
+
+describe('validateFormula — $scaleDamage(...) is action-only', () => {
+  it('flags $scaleDamage(...) as an error when no thisAttack context is present', () => {
+    const schema: FamiliarSchema = { self: { properties: {} } };
+    const errors = validateFormula('$scaleDamage(1d6)', schema);
+    expect(errors.some(e => e.severity === 'error')).toBe(true);
+  });
+
+  it('does not flag $scaleDamage(...) when a thisAttack context is present', () => {
+    const schema: FamiliarSchema = { self: { properties: {} }, thisAttack: { properties: {} } };
+    const errors = validateFormula('$scaleDamage(1d6)', schema);
+    expect(errors.filter(e => e.severity === 'error')).toHaveLength(0);
+  });
+});
+
 describe('resolveFormula — backward compatibility', () => {
   it('a formula with zero function blocks is untouched', () => {
     const schema: FamiliarSchema = { self: { properties: {} } };

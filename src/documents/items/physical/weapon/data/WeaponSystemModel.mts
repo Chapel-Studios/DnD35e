@@ -1,23 +1,23 @@
-import { DAMAGE_TYPE_SLASHING,DAMAGE_TYPES } from '@constants/attacks/damageTypes.mjs';
 import { WEAPON_EQUIP_SLOTS, type WeaponEquipSlot } from '@constants/equipmentSlots.mjs';
 import {
-  optionalStringField,
   requiredBooleanField,
-  requiredNullableStringField,
   useDnd35eField,
+  withFamiliar,
 } from '@fields/fieldBuilders.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
+import { ACTION_TYPE } from '@items/baseItem/actions/constants.mjs';
 import { EquippableItemSystemModel } from '@items/physical/equippableItem/data/index.mjs';
+import { MeleeWeaponAttack } from '@items/physical/weapon/actions/MeleeWeaponAttack/MeleeAttackDataModel.mjs';
+import { RangedWeaponAttack } from '@items/physical/weapon/actions/RangedAttack/RangedAttackDataModel.mjs';
 
-import { WEAPON_BASE_TYPES, WEAPON_SUBTYPES, WEAPON_TYPES } from './constants.mjs';
+import { WEAPON_BASE_TYPES, WEAPON_SUBTYPES, WEAPON_TYPE, WEAPON_TYPES } from './constants.mjs';
 import type { WeaponSystemData } from './WeaponSystemData.mjs';
 
 const {
   fields: {
-    NumberField,
-    SchemaField,
-    StringField,
     ArrayField,
+    StringField,
+    TypedSchemaField,
   },
 } = foundry.data;
 
@@ -44,7 +44,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
         choices: [
           ...WEAPON_TYPES,
         ],
-        initial: 'simple',
+        initial: WEAPON_TYPE.SIMPLE,
         required: true,
       }),
       {
@@ -52,20 +52,37 @@ class WeaponSystemModel extends EquippableItemSystemModel {
       });
     schema.weaponSubtype = useDnd35eField(new StringField({ choices: [...WEAPON_SUBTYPES], initial: 'light', required: true }), { familiar: { aliases: ['subtype'] } });
     schema.weaponBaseType = useDnd35eField(new StringField({ choices: [...WEAPON_BASE_TYPES], initial: '', required: true, blank: true }));
-    schema.weaponDamage = new SchemaField({
-      damageRoll: useDnd35eField(new StringField({ initial: '', required: true, blank: true }), { familiar: { aliases: ['roll', 'dice'] } }),
-      damageType: useDnd35eField(new StringField({ choices: [...DAMAGE_TYPES], initial: DAMAGE_TYPE_SLASHING, required: true }), { familiar: { aliases: ['type'] } }),
-      critRange: useDnd35eField(new StringField({ required: true, initial: '20' }), { familiar: { aliases: ['range', 'threat'] } }),
-      critMultiplier: useDnd35eField(new NumberField({ required: true, nullable: false, initial: 2 }), { familiar: { aliases: ['multiplier', 'mult'] } }),
-      rangeIncrement: useDnd35eField(new NumberField({ required: true, nullable: true })),
-      attackFormula: optionalStringField(),
-      damageFormula: optionalStringField(),
-    });
-    schema.attackNotes = requiredNullableStringField();
-    schema.damageNotes = requiredNullableStringField();
-    schema.noAmmoRequired = requiredBooleanField(false);
+
+    // System-managed weapon-attack actions (§10.3/§10.4) — auto-created/synced by
+    // weaponActionSync.mts, live-merged by Weapon.getContributedActorChanges().
+    // Key names must match each leaf DataModel's own `type` field value for
+    // TypedSchemaField's type discriminant to resolve correctly.
+    // `formulaVisible: false` — the raw ArrayField(TypedSchemaField) shape isn't
+    // recognized by the schema walker's default array-classification (`inferArrayElementInfo()`
+    // only handles plain `SchemaField` elements); a proper `actions` FieldAspect
+    // (`arrayElement.kind: 'embeddedModel'`) is injected instead by
+    // `withActionCollectionAspects()` in the item familiar schema registration.
+    schema.actions = withFamiliar(useDnd35eField(new ArrayField(
+      new TypedSchemaField({
+        [ACTION_TYPE.MELEE_WEAPON_ATTACK]: MeleeWeaponAttack,
+        [ACTION_TYPE.RANGED_WEAPON_ATTACK]: RangedWeaponAttack,
+      }),
+      { initial: [] }
+    )), { formulaVisible: false });
 
     return schema;
+  }
+
+  /**
+   * `system.actions` is an `ArrayField` — `DocumentSystemModel`'s generic
+   * `prepareDerivedData()` never recurses into it, so each embedded action must resolve
+   * its own `FormulaField`s explicitly (see `ActionDataModel.prepareDerivedData()`).
+   */
+  override prepareDerivedData(): void {
+    super.prepareDerivedData();
+    for (const action of this.actions) {
+      action.prepareDerivedData();
+    }
   }
 }
 

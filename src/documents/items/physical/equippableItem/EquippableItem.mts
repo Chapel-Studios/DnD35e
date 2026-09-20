@@ -1,4 +1,6 @@
+import { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
+import type { DatabaseCreateCallbackOptions } from '@common/abstract/_module.mjs';
 import { DOCUMENT_UPDATE_TYPES } from '@constants/documentUpdateTypes.mjs';
 import type { EquipSlot } from '@constants/equipmentSlots.mjs';
 import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
@@ -41,7 +43,10 @@ abstract class EquippableItem extends PhysicalItem {
 
   protected _buildEquippedChanges(): EffectChangeDataDnd35e[] {
     const changes: EffectChangeDataDnd35e[] = [];
-    // to do move actions to actor on equip
+    // Weapon actions do NOT route through here (poc.10 §10.4) — Weapon.getContributedActorChanges()
+    // merges onto system.actions unconditionally, regardless of equip state (an action's
+    // own requiresEquipped field gates usability at execution time, not at merge time). This stub
+    // stays reserved for a future equip-gated contribution (e.g. an armor's AC bonus).
     return changes;
   }
 
@@ -109,6 +114,25 @@ abstract class EquippableItem extends PhysicalItem {
     
     await this.update(updateObj, { updateMetadata });
 
+    return true;
+  }
+
+  /**
+   * Defaults `designedForSize` to the parent actor's own size when a weapon is created
+   * directly embedded on an Actor (e.g. dragged from a compendium onto a character) and
+   * the creating data didn't already explicitly set a size (poc.10 §10.4). An
+   * author-specified size (e.g. a purpose-built "Large Longsword") is left alone.
+   */
+  protected override async _preCreate(
+    updateData: DeepPartial<this['_source']>,
+    options: DatabaseCreateCallbackOptions,
+    user: foundry.documents.BaseUser
+  ): Promise<boolean> {
+    const superResult = await super._preCreate(updateData, options, user);
+    if (superResult === false) return false;
+    if (this.parent instanceof ActorDnd35e && !foundry.utils.hasProperty(updateData, 'system.designedForSize')) {
+      this.updateSource({ 'system.designedForSize': this.parent.system.size });
+    }
     return true;
   }
 

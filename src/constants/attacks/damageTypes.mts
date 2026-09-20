@@ -1,3 +1,5 @@
+import type { SelectOption } from '@vc/fields/index.mjs';
+
 // Individual damage type constants
 const DAMAGE_TYPE_PIERCING = 'dnd35e.DAMAGE_TYPES.Piercing' as const;
 const DAMAGE_TYPE_BLUDGEONING = 'dnd35e.DAMAGE_TYPES.Bludgeoning' as const;
@@ -10,6 +12,7 @@ const DAMAGE_TYPE_SONIC = 'dnd35e.DAMAGE_TYPES.Sonic' as const;
 const DAMAGE_TYPE_FORCE = 'dnd35e.DAMAGE_TYPES.Force' as const;
 const DAMAGE_TYPE_POSITIVE = 'dnd35e.DAMAGE_TYPES.Positive' as const;
 const DAMAGE_TYPE_NEGATIVE = 'dnd35e.DAMAGE_TYPES.Negative' as const;
+const DAMAGE_TYPE_NONE = 'dnd35e.DAMAGE_TYPES.None' as const;
 
 // Array of all damage types for form choices
 const DAMAGE_TYPES = [
@@ -24,9 +27,16 @@ const DAMAGE_TYPES = [
   DAMAGE_TYPE_FORCE,
   DAMAGE_TYPE_POSITIVE,
   DAMAGE_TYPE_NEGATIVE,
-];
+  DAMAGE_TYPE_NONE,
+] as const;
 type DamageType = (typeof DAMAGE_TYPES)[number];
 
+const GetDamageTypeSelectOptions = (): SelectOption<DamageType>[] => DAMAGE_TYPES.map((type) => ({
+  value: type,
+  label: game.i18n.localize(type),
+}));
+
+export type { DamageType };
 export {
   DAMAGE_TYPE_ACID,
   DAMAGE_TYPE_BLUDGEONING,
@@ -35,10 +45,11 @@ export {
   DAMAGE_TYPE_FIRE,
   DAMAGE_TYPE_FORCE,
   DAMAGE_TYPE_NEGATIVE,
+  DAMAGE_TYPE_NONE,
   DAMAGE_TYPE_PIERCING,
   DAMAGE_TYPE_POSITIVE,
   DAMAGE_TYPE_SLASHING,
   DAMAGE_TYPE_SONIC,
   DAMAGE_TYPES,
-  type DamageType,
+  GetDamageTypeSelectOptions,
 };

@@ -18,13 +18,20 @@ import type { ActorType } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/index.mjs';
 import type { EffectType } from '@effects/effectTypes.mjs';
+import type { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';
 import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
 
 import type { AspectGroup } from './types.mjs';
 
-/** Union of all Foundry document classes that can serve as familiar context. */
-export type NonNullDocumentContext = ItemDnd35e | ActorDnd35e | ActiveEffectDnd35e;
+/**
+ * Union of all Foundry document classes that can serve as familiar context, plus
+ * embedded (non-Document) DataModels — e.g. `ActionDataModel` — that expose their
+ * own `.schema` but have no `.documentName`/document-type registry entry. Those are
+ * walked directly via `walkFields()` in `buildDocumentFamiliar()` instead of going
+ * through the documentType/subtype registry below.
+ */
+export type NonNullDocumentContext = ItemDnd35e | ActorDnd35e | ActiveEffectDnd35e | ActionDataModel;
 export type DocumentContext = NonNullDocumentContext | null;
 
 export type ContextDocumentType = ItemType | EffectType | ActorType;

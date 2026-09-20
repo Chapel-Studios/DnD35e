@@ -311,15 +311,35 @@ export function resolveFormula(
 
     // Find the FieldAspect to get the accessPath
     const prop = getFieldAspect(familiarSchema, variable.context, variable.path);
-    if (!prop) continue;
+    if (prop) {
+      const value = getNestedValue(docData, prop.accessPath);
 
-    const value = getNestedValue(docData, prop.accessPath);
+      if (value !== undefined && value !== null) {
+        result =
+          result.substring(0, variable.startIndex) +
+          String(value) +
+          result.substring(variable.endIndex);
+      }
+      continue;
+    }
 
-    if (value !== undefined && value !== null) {
-      result =
-        result.substring(0, variable.startIndex) +
-        String(value) +
-        result.substring(variable.endIndex);
+    // No static aspect matches the full path — check whether its leading segment is an
+    // array-collection aspect (e.g. `#weapon.actions`, `#actor.actions`). If so, the
+    // remaining segments can address one concrete element by its own resolved display
+    // name (`#weapon.actions.LongswordAttack.reachLength`) rather than a static schema
+    // key — collection elements aren't part of the static AspectGroup tree.
+    if (variable.path.length > 1) {
+      const collectionAspect = getFieldAspect(familiarSchema, variable.context, [variable.path[0]]);
+      if (collectionAspect?.type === 'array' && collectionAspect.arrayElement) {
+        const rawPath = [collectionAspect.accessPath, ...variable.path.slice(1)].join('.');
+        const value = getNestedValue(docData, rawPath);
+        if (value !== undefined && value !== null) {
+          result =
+            result.substring(0, variable.startIndex) +
+            String(value) +
+            result.substring(variable.endIndex);
+        }
+      }
     }
   }
 
@@ -332,14 +352,48 @@ export function resolveFormula(
 /**
  * Walk a dotted path on any object to retrieve a nested value.
  * Works with live Foundry documents (getter access) and plain objects alike.
+ *
+ * Array-valued intermediate steps additionally support lookup by the element's own
+ * resolved display name (not just numeric index) — e.g. `actions.Longsword Attack`
+ * finds the array entry whose `name` resolves to `'Longsword Attack'`. This is what
+ * lets a concrete collection element be addressed directly, either via a quoted custom
+ * path (`#weapon.'actions.Longsword Attack.reachLength'`) or an unquoted one when the
+ * resolved name has no spaces (`#weapon.actions.LongswordAttack.reachLength`).
  */
 export function getNestedValue(obj: object, dottedPath: string): unknown {
   let current: unknown = obj;
   for (const key of dottedPath.split('.')) {
     if (current === null || current === undefined || typeof current !== 'object') return undefined;
+    if (Array.isArray(current)) {
+      current = resolveArrayMember(current, key);
+      continue;
+    }
     current = (current as Record<string, unknown>)[key];
   }
   return current;
+}
+
+/** Resolve one array member by numeric index, falling back to a match on its own resolved display name. */
+function resolveArrayMember(arr: unknown[], key: string): unknown {
+  const index = Number(key);
+  if (Number.isInteger(index) && index >= 0 && index < arr.length) return arr[index];
+  return arr.find(el => resolveElementDisplayName(el) === key);
+}
+
+/**
+ * Resolve an array element's own display name for name-based lookup — a plain string
+ * `name` property (real Foundry documents, e.g. `#self.items`), or a `FormulaData`-shaped
+ * `name` field's cached `resolvedValue` (embedded DataModels, e.g. action `name` fields).
+ */
+function resolveElementDisplayName(element: unknown): string | undefined {
+  if (!element || typeof element !== 'object') return undefined;
+  const name = (element as { name?: unknown }).name;
+  if (typeof name === 'string') return name;
+  if (name && typeof name === 'object' && 'resolvedValue' in (name as object)) {
+    const resolvedValue = (name as { resolvedValue?: unknown }).resolvedValue;
+    if (typeof resolvedValue === 'string') return resolvedValue;
+  }
+  return undefined;
 }
 
 /**

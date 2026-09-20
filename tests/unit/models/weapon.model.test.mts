@@ -1,4 +1,3 @@
-import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
 import { WeaponSystemModel } from '@items/physical/weapon/data/WeaponSystemModel.mjs';
 import { describe, it } from 'vitest';
 
@@ -11,12 +10,13 @@ import { createSchemaTester } from '../../helpers/schemaTester.mjs';
  * factory. Runtime behavior (defaults applied on construction, validators
  * rejecting bad input) is verified end-to-end in Playwright — not here.
  *
- * Combat-related semantics (crit range parsing, attack/damage formula
- * evaluation, range increment math, ammo enforcement) intentionally land
- * as `it.todo` and are fleshed out in the combat phase.
+ * Weapon-attack semantics (crit range, attack/damage formula evaluation, range
+ * increment math, ammo enforcement) live on each `system.actions` entry's own
+ * `ActionDataModel`/`WeaponAttackDataModel` subclass (poc.10), not directly on
+ * `WeaponSystemModel` — those intentionally land as `it.todo` here.
  */
 
-const { NumberField, StringField, SchemaField, ArrayField, BooleanField } =
+const { StringField, ArrayField, BooleanField } =
   (globalThis as any).foundry.data.fields;
 
 describe('WeaponSystemModel schema', () => {
@@ -29,10 +29,10 @@ describe('WeaponSystemModel schema', () => {
       t.assertField('weaponType');
       t.assertField('weaponSubtype');
       t.assertField('weaponBaseType');
-      t.assertField('weaponDamage');
-      t.assertField('attackNotes');
-      t.assertField('damageNotes');
-      t.assertField('noAmmoRequired');
+      t.assertField('availableEquipmentSlots');
+      // System-managed weapon-attack actions (poc.10 §10.3) — replaces the
+      // earlier single `weaponDamage` sub-schema.
+      t.assertField('actions');
     });
 
     it('inherits the equippable layer (equipment slots, size, meld)', () => {
@@ -59,7 +59,6 @@ describe('WeaponSystemModel schema', () => {
   describe('field types', () => {
     it('boolean flags use BooleanField', () => {
       t.assertFieldType('isBaseWeaponType', BooleanField);
-      t.assertFieldType('noAmmoRequired', BooleanField);
     });
 
     it('weaponType / weaponSubtype / weaponBaseType use StringField', () => {
@@ -68,39 +67,22 @@ describe('WeaponSystemModel schema', () => {
       t.assertFieldType('weaponBaseType', StringField);
     });
 
-    it('weaponDamage is a SchemaField sub-schema', () => {
-      t.assertFieldType('weaponDamage', SchemaField);
+    it('availableEquipmentSlots is an ArrayField', () => {
+      t.assertFieldType('availableEquipmentSlots', ArrayField);
     });
 
     it('equippedSlotIds is an ArrayField', () => {
       t.assertFieldType('equippedSlotIds', ArrayField);
     });
-  });
 
-  describe('weaponDamage sub-fields', () => {
-    it('declares all expected damage sub-fields', () => {
-      t.assertField('weaponDamage.damageRoll');
-      t.assertField('weaponDamage.damageType');
-      t.assertField('weaponDamage.critRange');
-      t.assertField('weaponDamage.critMultiplier');
-      t.assertField('weaponDamage.rangeIncrement');
-      t.assertField('weaponDamage.attackFormula');
-      t.assertField('weaponDamage.damageFormula');
-    });
-
-    it('uses correct field types within weaponDamage', () => {
-      t.assertFieldType('weaponDamage.damageRoll', StringField);
-      t.assertFieldType('weaponDamage.damageType', StringField);
-      t.assertFieldType('weaponDamage.critRange', StringField);
-      t.assertFieldType('weaponDamage.critMultiplier', NumberField);
-      t.assertFieldType('weaponDamage.rangeIncrement', NumberField);
+    it('actions is an ArrayField of TypedSchemaField-discriminated attack subtypes', () => {
+      t.assertFieldType('actions', ArrayField);
     });
   });
 
   describe('declared defaults', () => {
     it('non-combat flags default to false', () => {
       t.assertDefault('isBaseWeaponType', false);
-      t.assertDefault('noAmmoRequired', false);
     });
 
     it('weaponType defaults to "simple", weaponSubtype to "light"', () => {
@@ -124,23 +106,19 @@ describe('WeaponSystemModel schema', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────
-  // Combat-related semantics — flesh out during the combat phase.
+  // Weapon-attack semantics — flesh out during the combat phase, on
+  // WeaponAttackDataModel/MeleeWeaponAttack/RangedWeaponAttack instead.
   // ─────────────────────────────────────────────────────────────────────
 
   describe('combat semantics (deferred to combat phase)', () => {
-    it.todo('weaponDamage.critRange parses "20", "19-20", "18-20" correctly');
-    it.todo('weaponDamage.critRange rejects malformed strings ("0", "21", "abc")');
-    it.todo('weaponDamage.critMultiplier validates >= 1');
-    it.todo('weaponDamage.damageRoll validates as a parseable dice expression');
-    it.todo('weaponDamage.rangeIncrement validates as a positive integer when set');
-    it.todo('weaponDamage.attackFormula / damageFormula resolve via FormulaFamiliar');
+    it.todo('critRange parses "20", "19-20", "18-20" correctly');
+    it.todo('critRange rejects malformed strings ("0", "21", "abc")');
+    it.todo('critMultiplier validates >= 1');
+    it.todo('damageFormula validates as a parseable dice expression');
+    it.todo('rangeIncrement validates as a positive integer when set');
+    it.todo('attackFormula / damageFormula resolve via FormulaFamiliar');
     it.todo('damageType is restricted to declared DAMAGE_TYPES choices');
     it.todo('noAmmoRequired interacts correctly with ammunition consumption logic');
   });
-
-  // Default value sanity for damageType lives here (not deferred — it's
-  // pure schema declaration, not combat behavior).
-  it('damageType defaults to slashing', () => {
-    t.assertDefault('weaponDamage.damageType', DAMAGE_TYPE_SLASHING);
-  });
 });
+

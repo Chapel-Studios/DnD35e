@@ -93,7 +93,13 @@ export type FunctionName = 'contains'
   | 'stringContains'
   | 'fromFeet'
   | 'fromMeters'
-  | 'fromKg';
+  | 'fromKg'
+  | 'floor'
+  | 'ceiling'
+  | 'round'
+  | 'absolute'
+  | 'localize'
+  | 'scaleDamage';
 
 /** A reason a `$function(...)` block failed to parse cleanly. */
 export type FunctionBlockError = 'unbalancedParens' | 'argCount' | 'missingProjection';

@@ -8,6 +8,8 @@
  * @module
  */
 import type { Creature } from '@actors/creature/index.mjs';
+import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
+import { FULL_ROUND_ACTION, MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION } from '@constants/actionEconomy.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { CombatantDnd35e } from './CombatantDnd35e.mjs';
@@ -17,12 +19,17 @@ import type { CombatantDnd35e } from './CombatantDnd35e.mjs';
 const ACTION_ECONOMY_FLAG = 'actionEconomy';
 
 interface CombatantActionEconomy {
-  actions: { standard: boolean; move: boolean; minor: boolean; aoo: number };
+  actions: {
+    [STANDARD_ACTION]: boolean;
+    [MOVE_ACTION]: boolean;
+    [MINOR_ACTION]: boolean;
+    aoo: number;
+  };
   bab: { main: number; off: number };
   used: {
-    standard: boolean;
-    move: boolean;
-    minor: boolean;
+    [STANDARD_ACTION]: boolean;
+    [MOVE_ACTION]: boolean;
+    [MINOR_ACTION]: boolean;
     /** Reserved for Story D (full-attack-sequence UX) — not set or read by Story B. */
     standardAttackUsed: boolean;
     movedAfterAttack: boolean;
@@ -31,9 +38,9 @@ interface CombatantActionEconomy {
 }
 
 const DEFAULT_ACTION_ECONOMY: CombatantActionEconomy = {
-  actions: { standard: true, move: true, minor: true, aoo: 0 },
+  actions: { [STANDARD_ACTION]: true, [MOVE_ACTION]: true, [MINOR_ACTION]: true, aoo: 0 },
   bab: { main: 0, off: 0 },
-  used: { standard: false, move: false, minor: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
+  used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [MINOR_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
 };
 
 /** Reads `flags.dnd35e.actionEconomy`, applying defaults for any missing keys. */
@@ -53,34 +60,58 @@ async function setActionEconomy(combatant: CombatantDnd35e, economy: CombatantAc
 /** Refills both BAB pools and AoO count from the actor, resets all actions, clears all `used` flags. */
 async function resetActionEconomy(combatant: CombatantDnd35e, actor: Creature): Promise<void> {
   await setActionEconomy(combatant, {
-    actions: { standard: true, move: true, minor: true, aoo: actor.system.aooCount },
+    actions: { [STANDARD_ACTION]: true, [MOVE_ACTION]: true, [MINOR_ACTION]: true, aoo: actor.system.aooCount },
     bab: { main: actor.system.bab, off: actor.system.bab },
-    used: { standard: false, move: false, minor: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
+    used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [MINOR_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
   });
 }
 
 // Standard, Move, and Minor Actions
 
-type ActionEconomyActionType = 'standard' | 'move' | 'minor';
 
-/** Ascending SRD action hierarchy — a higher tier can always cover a lower-tier request (a standard covers a move or minor; a move covers a minor), never the reverse. */
-const ACTION_HIERARCHY: ActionEconomyActionType[] = ['minor', 'move', 'standard'];
+/**
+ * Ascending SRD action hierarchy this pool-based tracker currently implements — a higher
+ * tier can always cover a lower-tier request (a standard covers a move or minor; a move
+ * covers a minor), never the reverse. `free` never goes through this hierarchy (it costs
+ * nothing by definition). `fullRound` is a real SRD tier but isn't trackable here yet —
+ * partial-round bookkeeping (what remains spendable if a full-round action gets
+ * initiated mid-turn) needs dedicated design (see phase-10 notes), so for now a
+ * `fullRound` (or any other not-yet-implemented) request is simply ignored: it's treated
+ * as already available and never actually claims a pool, rather than being gated or
+ * crashing on an untracked key.
+ */
+type TrackedActionTier = typeof MINOR_ACTION | typeof MOVE_ACTION | typeof STANDARD_ACTION;
+
+function isTrackedActionTier(action: ActionEconomyType): action is TrackedActionTier {
+  return action === MINOR_ACTION || action === MOVE_ACTION || action === STANDARD_ACTION;
+}
+
+const ACTION_HIERARCHY: TrackedActionTier[] = [
+  MINOR_ACTION,
+  MOVE_ACTION,
+  STANDARD_ACTION,
+];
 
 /**
  * The pools that would actually be spent for `actions` — each entry resolved to itself or a
  * higher tier per `ACTION_HIERARCHY`, with no pool reused across two entries. Requests are
  * resolved highest-requirement first (`standard` before `move` before `minor`) so a scarce
  * `standard` pool is claimed by an actual standard request before a lower request
- * opportunistically borrows it. Order matches the input `actions`. Null if the full set
- * can't be covered — e.g. a compound cost like `['move', 'standard']` (a full-round action)
- * is all-or-nothing, never partially spent.
+ * opportunistically borrows it. Order matches the input `actions`. Not-yet-implemented
+ * tiers (see `isTrackedActionTier`) are passed through unchanged, never gated. Null if the
+ * trackable subset can't be covered — e.g. a compound cost like `['move', 'standard']` (a
+ * full-round action) is all-or-nothing, never partially spent.
  */
-function canUseAction(combatant: CombatantDnd35e, actions: ActionEconomyActionType[]): ActionEconomyActionType[] | null {
+function canUseAction(combatant: CombatantDnd35e, actions: ActionEconomyType[]): ActionEconomyType[] | null {
+  // Full round actions are not yet supported — return null to indicate they can't be used.
+  // TODO: implement full-round action handling
+  if (actions.includes(FULL_ROUND_ACTION)) return null;
   const economy = getActionEconomy(combatant);
   const available = { ...economy.actions };
-  const resolved = new Map<ActionEconomyActionType, ActionEconomyActionType>();
+  const resolved = new Map<TrackedActionTier, TrackedActionTier>();
 
-  const byDescendingTier = [...actions].sort((a, b) => ACTION_HIERARCHY.indexOf(b) - ACTION_HIERARCHY.indexOf(a));
+  const trackable = actions.filter(isTrackedActionTier);
+  const byDescendingTier = [...trackable].sort((a, b) => ACTION_HIERARCHY.indexOf(b) - ACTION_HIERARCHY.indexOf(a));
   for (const requested of byDescendingTier) {
     const tiers = ACTION_HIERARCHY.slice(ACTION_HIERARCHY.indexOf(requested));
     const tier = tiers.find((candidate) => available[candidate]);
@@ -89,15 +120,20 @@ function canUseAction(combatant: CombatantDnd35e, actions: ActionEconomyActionTy
     resolved.set(requested, tier);
   }
 
-  return actions.map((requested) => resolved.get(requested) as ActionEconomyActionType);
+  return actions.map((requested) => (
+    isTrackedActionTier(requested)
+      ? resolved.get(requested) as TrackedActionTier
+      : requested
+  ));
 }
 
 /** Spends `actions` (see `canUseAction`) and returns the pools actually spent, or null if the full set wasn't available (nothing is spent in that case). */
-async function spendAction(combatant: CombatantDnd35e, actions: ActionEconomyActionType[]): Promise<ActionEconomyActionType[] | null> {
+async function spendAction(combatant: CombatantDnd35e, actions: ActionEconomyType[]): Promise<ActionEconomyType[] | null> {
   const used = canUseAction(combatant, actions);
   if (!used) return null;
   const economy = getActionEconomy(combatant);
   for (const tier of used) {
+    if (!isTrackedActionTier(tier)) continue;
     economy.actions[tier] = false;
     economy.used[tier] = true;
   }
@@ -106,9 +142,10 @@ async function spendAction(combatant: CombatantDnd35e, actions: ActionEconomyAct
 }
 
 /** Inverse of spendAction — refunds the exact pools that were spent (see spendAction's return value; no hierarchy lookup needed here). */
-async function refundAction(combatant: CombatantDnd35e, actions: ActionEconomyActionType[]): Promise<void> {
+async function refundAction(combatant: CombatantDnd35e, actions: ActionEconomyType[]): Promise<void> {
   const economy = getActionEconomy(combatant);
   for (const tier of actions) {
+    if (!isTrackedActionTier(tier)) continue;
     economy.actions[tier] = true;
     economy.used[tier] = false;
   }
@@ -200,4 +237,4 @@ export {
   spendHandBab,
 };
 
-export type { ActionEconomyActionType, CombatantActionEconomy };
+export type { CombatantActionEconomy };

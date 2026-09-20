@@ -3,6 +3,7 @@
     v-bind="attrs"
     :label="props.label"
     :hint="displayHint"
+    :tooltip="props.tooltip"
     :field-path="props.fieldPath"
     :default-visibility="props.defaultVisibility"
     :default-editability="props.defaultEditability"
@@ -105,6 +106,8 @@
   const props = defineProps({
     label: { type: String, default: undefined },
     hint: { type: String, default: undefined },
+    /** Localization key shown on the label's hover tooltip. Independent of `hint` — both can be set at once. */
+    tooltip: { type: String, default: undefined },
     isDmOnly: { type: Boolean, default: false },
     /** Formula string (legacy). When formulaData is provided, this is ignored. */
     value: { type: String, default: '' },

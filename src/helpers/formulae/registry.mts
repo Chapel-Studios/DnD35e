@@ -22,12 +22,15 @@ import {
   hasFamiliarSchema,
   registerFamiliarSchema,
 } from './familiarBuilderRegistry.mjs';
-import { normalizeLabel } from './schemaWalker.mjs';
+import { normalizeLabel, walkFields } from './schemaWalker.mjs';
 import type { AspectGroup, FamiliarContext, FamiliarSchema, FormulaFieldData } from './types.mjs';
 import { isFieldAspect } from './types.mjs';
 
 export type { ContextDocumentType, DocumentContext, NonNullDocumentContext };
 export { familiarSchemaRegistry, getFamiliarBuilder, getRegisteredSubtypes, hasFamiliarSchema, registerFamiliarSchema };
+
+/** The subset of `NonNullDocumentContext` that are real Foundry documents (have `.documentName`) — excludes embedded (non-Document) DataModels like `ActionDataModel`. */
+type RealDocumentContext = Extract<NonNullDocumentContext, { documentName: string }>;
 
 /**
  * Declares which item/actor subtypes compose each target context for an effect model.
@@ -125,12 +128,33 @@ function gatherFieldContextDeclarations(fields: Record<string, any>): { contextN
  * on a detached item), `fallbackSubtypes` from the declaration are used
  * to build a schema-only context.
  *
- * @param document A live Foundry document with .documentName and .type
+ * Embedded (non-Document) DataModels — e.g. an `ActionDataModel` living on
+ * `Weapon.system.actions` — have no `.documentName` and no documentType/subtype
+ * registry entry. For those, `self` is built by walking the model's own schema
+ * fields directly via `walkFields()` (no 'system.' path prefix, since the fields
+ * sit right on the model rather than under a `.system` wrapper), instead of the
+ * registry lookup used for real Foundry documents below.
+ *
+ * @param document A live Foundry document (with .documentName and .type) or an
+ *   embedded DataModel (with only .schema)
  * @returns FamiliarSchema with self (and optionally declared) contexts
  */
 function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
   const schema: FamiliarSchema = {};
   if (!document) return schema;
+
+  if (!('documentName' in document)) {
+    // Embedded (non-Document) DataModel context — walk its own schema directly.
+    // `walkFields()` mutates its `output` param in place (returns void), so the
+    // AspectGroup must be created first and passed by reference.
+    const fields = (document as { schema?: { fields?: Record<string, foundry.data.fields.DataField> } }).schema?.fields;
+    if (fields) {
+      const properties: AspectGroup = {};
+      walkFields(fields, document, '', properties, []);
+      schema.self = { properties };
+    }
+    return schema;
+  }
 
   // --- Self: always present if registered ---
   const docType = document.documentName;
@@ -161,7 +185,10 @@ function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
       seen.add(decl.contextName);
 
       // Try to resolve the live context document via the declared path
-      let contextDoc: DocumentContext | undefined;
+      // `RealDocumentContext` — this path only ever resolves real Foundry documents
+      // (checked via the `documentName` guard below); embedded DataModels like
+      // `ActionDataModel` have no `.documentName` and can't reach here.
+      let contextDoc: RealDocumentContext | undefined;
       if (decl.resolvePath) {
         let current: any = document;
         for (const segment of decl.resolvePath.split('.')) {
@@ -169,7 +196,7 @@ function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
           current = current[segment];
         }
         if (current?.documentName) {
-          contextDoc = current as DocumentContext;
+          contextDoc = current as RealDocumentContext;
         }
       }
 

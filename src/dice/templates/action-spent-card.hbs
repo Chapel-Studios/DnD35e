@@ -1,0 +1,26 @@
+{{!--
+  Item Action Spent chat card. Rendered by `buildItemActionSpentCard()` in rollMessages.mts
+  (announcement counterpart to `action-warning-card.hbs`'s failure case) via the same
+  precompiled `?raw` + `Handlebars.compile()` pattern as `move-action-card.hbs`. Posted
+  whenever an equip/unequip/stow/retrieve action-economy spend succeeds.
+--}}
+<div class="dnd35e chat-card action-spent-card {{#if undone}}is-undone{{/if}}">
+  <header class="card-header">
+    <h5 class="combatant-name">{{ combatantName }}</h5>
+    <h6 class="item-action-label">{{ actionLabel }}</h6>
+  </header>
+
+  <div class="card-body">
+    {{#each spentLabels}}
+    <span class="spent-action">{{ this }}</span>
+    {{/each}}
+  </div>
+
+  <footer class="card-footer">
+    {{#if undone}}
+    <span class="undone-label">{{localize "dnd35e.ROLL.ITEM_ACTION_SPENT_CARD.Undone"}}</span>
+    {{else}}
+    <button type="button" data-action="undo-item-action-spent">{{localize "dnd35e.ROLL.ITEM_ACTION_SPENT_CARD.Undo"}}</button>
+    {{/if}}
+  </footer>
+</div>

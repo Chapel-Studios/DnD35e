@@ -39,7 +39,7 @@ const IdentifiableItemBase = IdentifiableDocumentMixin(DocumentMixin(ItemDnd35eC
  */
 abstract class PhysicalItem extends IdentifiableItemBase {
   constructor(source: PreCreate<PhysicalItemSource>, context?: DocumentConstructionContext<null>) {
-    super(source as any, context);
+    super(source as any, context as any);
 
     registerPhysicalItemEventChecks(this);
 

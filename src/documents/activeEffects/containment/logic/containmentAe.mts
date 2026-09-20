@@ -1,3 +1,5 @@
+import { DOCUMENT_UPDATE_TYPES } from '@constants/documentUpdateTypes.mjs';
+import type { DocumentUpdateMetadata } from '@documents/document/DocumentDnd35e.mjs';
 import { containmentEffectType } from '@effects/containment/containmentEffectType.mjs';
 import type { ActiveEffectDnd35e } from '@effects/index.mjs';
 import { addCurrency, multiplyCurrency } from '@fields/currency/logic/mathOperations.mjs';
@@ -94,9 +96,17 @@ export function isItemContained (item: ContainmentAeTarget): boolean {
  */
 export async function syncContainmentAe (
   item: ContainmentAeTarget,
-  container: Container | null
+  container: Container | null,
+  isUndo?: boolean
 ): Promise<void> {
   const { count, weight, price } = computeItemContribution(item);
+
+  const updateMetadata: DocumentUpdateMetadata | null = isUndo
+    ? {
+      updateType: DOCUMENT_UPDATE_TYPES.UNKNOWN_UPDATE,
+      isUndo: !!isUndo,
+    }
+    : null;
 
   //cases
   //1 it shouldn't be in a container and isn't, do nothing
@@ -146,7 +156,7 @@ export async function syncContainmentAe (
       } as Partial<Containment>]);
 
       if (item.system.containerUuid !== container.uuid) {
-        await item.update({ 'system.containerUuid': container.uuid });
+        await item.update({ 'system.containerUuid': container.uuid }, updateMetadata ? { updateMetadata } : undefined);
       }
       await cascadeUpward(container);
     }
@@ -210,7 +220,7 @@ export async function syncContainmentAe (
     const wrongContainer = await foundry.utils.fromUuid(item.system.containerUuid!) as Container | null;
     if (wrongContainer) await removeFromWrongContainer(wrongContainer);
 
-    await item.update({ 'system.containerUuid': null });
+    await item.update({ 'system.containerUuid': null }, updateMetadata ? { updateMetadata } : undefined);
     // Case 2 End
   }
 }

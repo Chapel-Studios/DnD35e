@@ -75,7 +75,7 @@ async function typeText(input: DOMWrapper<HTMLInputElement>, text: string) {
 }
 
 describe('useFormulaEditor — $ function-name autocomplete dropdown', () => {
-  it('typing a bare "$" shows all 11 keyword options', async () => {
+  it('typing a bare "$" shows all 16 keyword options', async () => {
     const wrapper = mount(makeHarness());
     await nextTick();
     const input = wrapper.find('input');
@@ -84,7 +84,7 @@ describe('useFormulaEditor — $ function-name autocomplete dropdown', () => {
 
     expect(wrapper.find('[data-testid="dropdown"]').attributes('data-visible')).toBe('true');
     const paths = wrapper.findAll('.option').map(o => o.attributes('data-path')).sort();
-    expect(paths).toEqual(['any', 'conditional', 'contains', 'count', 'else', 'find', 'fromFeet', 'fromKg', 'fromMeters', 'stringContains', 'when'].sort());
+    expect(paths).toEqual(['absolute', 'any', 'ceiling', 'conditional', 'contains', 'count', 'else', 'find', 'floor', 'fromFeet', 'fromKg', 'fromMeters', 'localize', 'round', 'stringContains', 'when'].sort());
   });
 
   it('typing "$cont" filters to only "contains"', async () => {

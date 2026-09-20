@@ -19,6 +19,17 @@
  * stored pound value (1 kg = 2 lbs, mirroring `settingsStore.mts`'s weight conversion).
  * Result is rounded to 2 decimal places, matching the weight display precision.
  *
+ * `$localize(key)` (short alias `$l(key)`) resolves a localization key via
+ * `game.i18n.localize()` — the key argument is either a quoted literal or a bare
+ * `#context.property`/plain-text operand, same convention as `$stringContains`'s
+ * operands.
+ *
+ * `$scaleDamage(dieFormula)` scales a plain `NdM` die formula (e.g. `1d6`) to the
+ * wielding weapon's `designedForSize` via `scaleDamageDie()` — only meaningful inside
+ * an action's own formula fields (enforced by `FormulaResolver.validation.mts`
+ * requiring a `thisAttack` context), and resolved against whichever of the `weapon`/
+ * `self` contexts is present.
+ *
  * `#it` is a bound per-element variable valid only inside a `$contains`/`$find`/
  * `$any`/`$count` predicate argument — resolved per-element against a synthetic
  * FamiliarSchema built from the array's `arrayElement.elementFields` (object-array
@@ -35,7 +46,9 @@
  *
  * @module
  */
+import type { Size } from '@constants/sizes.mjs';
 import { roundToDecimal } from '@helpers/math.mjs';
+import { scaleDamageDie } from '@items/physical/weapon/logic/weaponDamageScaling.mjs';
 
 import { findMatchingParen, splitTopLevelArgs } from './FormulaResolver.parenUtils.mjs';
 import type { FunctionBlock, FunctionBlockError, FunctionName } from './FormulaResolver.types.mjs';
@@ -81,7 +94,7 @@ export interface FunctionGrammarHelpers {
   ) => ((context?: DocumentContext) => AspectGroup) | undefined;
 }
 
-const FUNCTION_OPEN_REGEX = /(?<!\\)\$(contains|find|any|count|stringcontains|fromfeet|frommeters|fromkg)\s*\(/gi;
+const FUNCTION_OPEN_REGEX = /(?<!\\)\$(contains|find|any|count|stringcontains|fromfeet|frommeters|fromkg|floor|ceiling|round|absolute|localize|l|scaledamage)\s*\(/gi;
 const PROJECTION_REGEX = /^\.([\p{L}\p{N}_]+)/u;
 const IT_REFERENCE_REGEX = /(?<!\\)#it(?![\p{L}\p{N}_])/u;
 const BARE_VARIABLE_REGEX = /^#([\p{L}\p{N}_]+)((?:\.[\p{L}\p{N}_]+)*)$/u;
@@ -95,6 +108,13 @@ const CANONICAL_NAMES: Record<string, FunctionName> = {
   fromfeet: 'fromFeet',
   frommeters: 'fromMeters',
   fromkg: 'fromKg',
+  floor: 'floor',
+  ceiling: 'ceiling',
+  round: 'round',
+  absolute: 'absolute',
+  localize: 'localize',
+  l: 'localize',
+  scaledamage: 'scaleDamage',
 };
 
 /** Valid top-level argument counts per function. */
@@ -107,6 +127,12 @@ const FUNCTION_ARG_COUNTS: Record<FunctionName, number[]> = {
   fromFeet: [1],
   fromMeters: [1],
   fromKg: [1],
+  floor: [1],
+  ceiling: [1],
+  round: [1],
+  absolute: [1],
+  localize: [1],
+  scaleDamage: [1],
 };
 
 /**
@@ -258,6 +284,33 @@ function evaluatePredicateForHeterogeneousElement(
   }
 }
 
+/**
+ * Evaluate a `#it.*` predicate against a single embedded-(non-Document)-DataModel
+ * collection element (e.g. one entry from `#weapon.actions`/`#actor.actions`). Unlike
+ * `evaluatePredicateForHeterogeneousElement` (per-element shape resolved via the
+ * documentType/subtype registry), these elements have no `.documentName`/registry entry
+ * at all — each element's own `.schema.fields` is walked directly, mirroring
+ * `buildDocumentFamiliar()`'s embedded-model branch in registry.mts.
+ */
+function evaluatePredicateForEmbeddedModelElement(
+  predicateText: string,
+  element: object,
+  helpers: FunctionGrammarHelpers
+): boolean {
+  const fields = (element as { schema?: { fields?: Record<string, foundry.data.fields.DataField> } }).schema?.fields;
+  const itGroup: AspectGroup = {};
+  if (fields) walkFields(fields, element as unknown as DocumentContext, '', itGroup, []);
+  const itSchema: FamiliarSchema = { it: { properties: itGroup } };
+  const itDataMap: Record<string, DocumentContext> = { it: element as unknown as DocumentContext };
+
+  const resolved = helpers.resolveSubFormula(predicateText, itSchema, itDataMap);
+  try {
+    return helpers.evaluateCondition(resolved);
+  } catch {
+    return false;
+  }
+}
+
 /** Resolve a single, already-structurally-valid `FunctionBlock` to its literal text result. */
 function resolveFunctionBlock(
   block: FunctionBlock,
@@ -292,6 +345,45 @@ function resolveFunctionBlock(
     return String(roundToDecimal(value * LBS_PER_KG, 2));
   }
 
+  // $localize(key)/$l(key) — resolves a localization key via game.i18n.localize().
+  if (block.name === 'localize') {
+    const key = resolveOperand(block.args[0], helpers.resolveSubFormula);
+    return game.i18n.localize(key);
+  }
+
+  // $scaleDamage(dieFormula) — scales a die formula from its Medium baseline to the
+  // wielding weapon's designed size. Only ever placed inside an action's own formula
+  // fields (validated separately); resolved defensively here — falls back to the
+  // unscaled die text if no weapon/self context or size is reachable.
+  if (block.name === 'scaleDamage') {
+    const dieText = resolveOperand(block.args[0], helpers.resolveSubFormula);
+    const weaponDoc = helpers.resolveContextDocData('weapon', familiarSchema, documentDataMap)
+      ?? helpers.resolveContextDocData('self', familiarSchema, documentDataMap);
+    const size = (weaponDoc as { system?: { designedForSize?: Size } } | undefined)?.system?.designedForSize;
+    return size ? scaleDamageDie(dieText, size) : dieText;
+  }
+
+  // $floor(n)/$ceiling(n)/$round(n)/$absolute(n) — resolved locally whenever the inner
+  // argument is already a plain finite number (the common case: e.g.
+  // `#self.abilities.str.mod` always resolves to a number, so `$floor(str.mod / 2)`
+  // resolves straight to a literal and never touches Foundry's Math proxy). Only when
+  // real dice-term syntax remains (can't be evaluated without rolling) does this fall
+  // back to re-emitting the bare, `$`-stripped call for Foundry's own `Roll`/`FunctionTerm`
+  // to evaluate later (`$ceiling`→`ceil`, `$absolute`→`abs`; `$floor`/`$round` unchanged).
+  if (block.name === 'floor' || block.name === 'ceiling' || block.name === 'round' || block.name === 'absolute') {
+    const resolved = resolveOperand(block.args[0], helpers.resolveSubFormula);
+    const value = Number(resolved);
+    if (Number.isFinite(value)) {
+      const computed = block.name === 'floor' ? Math.floor(value)
+        : block.name === 'ceiling' ? Math.ceil(value)
+          : block.name === 'round' ? Math.round(value)
+            : Math.abs(value);
+      return String(computed);
+    }
+    const mathProxyName = block.name === 'ceiling' ? 'ceil' : block.name === 'absolute' ? 'abs' : block.name;
+    return `${mathProxyName}(${resolved})`;
+  }
+
   // Array functions: contains / find / any / count — a runtime miss (missing context,
   // unresolvable path, wrong aspect type, not actually an array) resolves to a sensible
   // default rather than leaving raw text behind — only *structural* parse errors do that.
@@ -315,12 +407,20 @@ function resolveFunctionBlock(
     rawArray = rawValue;
   } else if (rawValue && typeof (rawValue as Iterable<unknown>)[Symbol.iterator] === 'function') {
     rawArray = [...(rawValue as Iterable<unknown>)];
+  } else if (rawValue && typeof rawValue === 'object') {
+    // `actor.system.actions` is a `TypedObjectField` (Record<string, stub>, keyed by id,
+    // not iterable) — materialize it the same way `Object.values()` would.
+    rawArray = Object.values(rawValue as Record<string, unknown>);
   } else {
     return fallback;
   }
 
-  // Filtered sub-collections (`#self.weapons`/`#self.equipment`) pre-filter by element type.
-  if (aspect.arrayElement?.kind === 'heterogeneous' && aspect.arrayElement.filterTypes?.length) {
+  // Filtered sub-collections (`#self.weapons`/`#self.equipment`/action-type filters)
+  // pre-filter by element type.
+  if (
+    (aspect.arrayElement?.kind === 'heterogeneous' || aspect.arrayElement?.kind === 'embeddedModel')
+    && aspect.arrayElement.filterTypes?.length
+  ) {
     const filterTypes = aspect.arrayElement.filterTypes;
     rawArray = rawArray.filter(el => filterTypes.includes((el as { type?: string })?.type ?? ''));
   }
@@ -333,6 +433,9 @@ function resolveFunctionBlock(
     if (typeof element !== 'object' || element === null) return false;
     if (aspect.arrayElement?.kind === 'heterogeneous') {
       return evaluatePredicateForHeterogeneousElement(predicateArg!, aspect.arrayElement.documentType, element, helpers);
+    }
+    if (aspect.arrayElement?.kind === 'embeddedModel') {
+      return evaluatePredicateForEmbeddedModelElement(predicateArg!, element, helpers);
     }
     if (aspect.arrayElement?.kind !== 'object') return false;
     return evaluatePredicateForElement(predicateArg!, aspect.arrayElement.elementFields, element, helpers);

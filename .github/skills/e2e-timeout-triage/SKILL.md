@@ -17,7 +17,7 @@ Read the actual Playwright error first; it tells you which tier to jump to.
 | `page.waitForFunction: Timeout 30000ms exceeded` at `gotoGame`/`performJoin` in `session.mts` | **A2 — page loaded, but `game.ready` never fires** |
 | `Test timeout of 60000ms exceeded` (single spec, otherwise fine) | **B — test-level timeout** |
 | `ERR_CONNECTION_REFUSED` mid-suite, or `page.goto` retries exhausted | **D — stale/degraded server** |
-| Failure only in `field-permissions.spec.ts`, `secret-ae.spec.ts`, `view-mode-bar.spec.ts` (dual-browser specs), with `[warn] Failed to parse URL from undefined` in `[WebServer]` logs | **C — known pre-existing flake** |
+| Failure only in `field-permissions.spec.ts`, `secret-ae.spec.ts`, `view-mode-bar.spec.ts`, `permission-override-cascade.spec.ts` (dual-browser specs), with `[warn] Failed to parse URL from undefined` in `[WebServer]` logs | **C — known pre-existing flake** |
 | Everything hangs, no output at all for minutes | **A** (check preflight) or **E — debugger injection** |
 
 ## Tier A — webServer Never Becomes Ready
@@ -81,7 +81,7 @@ npx playwright test tests/e2e/<spec>.spec.ts --headed --trace on
 
 ## Tier C — Known Dual-Browser Flakiness
 
-`field-permissions.spec.ts`, `secret-ae.spec.ts`, `view-mode-bar.spec.ts` open a second browser context and are known to flake on Foundry/Playwright timing instability unrelated to your change. Confirm by grepping the webServer log for:
+`field-permissions.spec.ts`, `secret-ae.spec.ts`, `view-mode-bar.spec.ts`, `permission-override-cascade.spec.ts` open a second browser context and are known to flake on Foundry/Playwright timing instability unrelated to your change. Confirm by grepping the webServer log for:
 
 ```
 [WebServer] FoundryVTT | ... | [warn] Failed to parse URL from undefined

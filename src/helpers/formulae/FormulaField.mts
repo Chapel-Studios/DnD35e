@@ -43,6 +43,12 @@ type BaseFormulaFieldOptions = {
   excludedFields?: string[];
   /** Required field. Default: false. */
   required?: boolean;
+  /**
+   * Convenience prefill for just the formula text, sparing callers from constructing a
+   * full `FormulaDataSource` object. Ignored if `initial` is also supplied. Resolves to
+   * `{ formula: initialFormula, resolvedValue: null, expectedType }`.
+   */
+  initialFormula?: string;
 }
 
 type NullableFieldOptions = {
@@ -89,8 +95,17 @@ class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
       familiar,
       contexts,
       excludedFields,
+      initialFormula,
       ...fieldOptions
     } = options;
+
+    if (initialFormula !== undefined && fieldOptions.initial === undefined) {
+      fieldOptions.initial = () => ({
+        formula: initialFormula,
+        resolvedValue: null,
+        expectedType: expectedType ?? 'string',
+      });
+    }
 
     super(FormulaData, {
       ...fieldOptions,

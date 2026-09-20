@@ -40,11 +40,16 @@ class D20Roll extends Roll {
     return first instanceof foundry.dice.terms.Die ? first : undefined;
   }
 
-  /** Whether the d20 term's active result is a natural 20. Only meaningful once evaluated. */
-  get isCriticalThreat(): boolean {
+  /**
+   * Whether the d20 term's active result meets or exceeds `threshold` (natural 20 by
+   * default). Only meaningful once evaluated. Saves/ability checks have no threat range
+   * and always use the default; an attack roll's `executeAction()` (poc.10 §10.4) passes
+   * the weapon's live `critRange` instead.
+   */
+  isCriticalThreat (threshold: number = 20): boolean {
     const die = this.d20;
     if (!die) return false;
-    return die.results.some(r => r.active && r.result === die.faces);
+    return die.results.some(r => r.active && r.result >= threshold);
   }
 
   /** Whether the d20 term's active result is a natural 1. Only meaningful once evaluated. */
