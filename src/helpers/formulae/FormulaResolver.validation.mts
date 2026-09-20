@@ -122,6 +122,21 @@ export function validateFormula(formula: string, context: FamiliarSchema, isFocu
     });
   }
 
+  // $scaleDamage(...) only makes sense inside an action's own formula fields (it scales a
+  // die by the wielding weapon's designed size) — flag it wherever the schema wasn't given
+  // a `thisAttack` context, regardless of whether it would otherwise resolve fine.
+  for (const block of findFunctionBlocks(formula)) {
+    if (block.error || block.name !== 'scaleDamage' || context.thisAttack) continue;
+    errors.push({
+      variable: block.raw,
+      context: 'function',
+      path: [],
+      error: game.i18n.localize('dnd35e.Formula.Errors.function.actionOnly'),
+      severity: 'error',
+      index: block.startIndex,
+    });
+  }
+
   return errors;
 }
 

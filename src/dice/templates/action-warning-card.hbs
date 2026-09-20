@@ -1,0 +1,16 @@
+{{!--
+  Insufficient-action-economy warning chat card. Rendered by `buildActionEconomyWarningCard()`
+  in rollMessages.mts via the same precompiled `?raw` + `Handlebars.compile()` pattern as
+  `move-action-card.hbs`. Posted when an item's automatic action-economy spend (equip/
+  unequip/stow/retrieve) fails for lack of the required action — nothing was consumed, so
+  there's no cost/budget body or Undo footer, just the combatant name and the warning.
+--}}
+<div class="dnd35e chat-card action-warning-card">
+  <header class="card-header">
+    <h5 class="combatant-name">{{ combatantName }}</h5>
+  </header>
+
+  <div class="card-body">
+    <div class="warning-banner">{{ warningMessage }}</div>
+  </div>
+</div>

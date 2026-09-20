@@ -6,17 +6,18 @@ import { closeAllSheets } from './helpers/sheets.mjs';
 
 /**
  * End-to-end: an AE change's `condition` formula uses poc §7.2c's item-collection
- * context (`#self.weapons`) to gate a bonus on whether the actor is carrying
+ * context (`#Owner.weapons`) to gate a bonus on whether the actor is carrying
  * any weapon at all.
  *
- * `#self` in a change's Value/Condition formula resolves to the change's own
- * target document (here, `target: 'actor'` -> the actor itself), so
- * `#self.weapons` walks the actor's live embedded Item collection, filtered
- * to `weaponItemType` by `withItemCollectionAspects()`. Proves the
- * heterogeneous per-element array resolution added in poc §7.2c works against a
- * real actor's real embedded items, not just the unit-test fixtures.
+ * `#self` in a change's Value/Condition formula always resolves to the effect
+ * authoring the change (never the change's `target`), so reaching the owning
+ * actor's live embedded Item collection requires the `#Owner`/`#actor` alias
+ * instead — `#Owner.weapons` walks it, filtered to `weaponItemType` by
+ * `withItemCollectionAspects()`. Proves the heterogeneous per-element array
+ * resolution added in poc §7.2c works against a real actor's real embedded
+ * items, not just the unit-test fixtures.
  */
-test.describe('AE change condition using #self.weapons (poc §7.2c)', () => {
+test.describe('AE change condition using #Owner.weapons (poc §7.2c)', () => {
   test.afterEach(async ({ page }) => {
     await closeAllSheets(page).catch(() => {});
     await clearWorld(page);
@@ -40,7 +41,7 @@ test.describe('AE change condition using #self.weapons (poc §7.2c)', () => {
             key: 'system.saves.will',
             type: 'add',
             value: '1',
-            condition: '$count(#self.weapons) > 0',
+            condition: '$count(#Owner.weapons) > 0',
             phase: 'initial',
             priority: 10,
             isSystem: false,
@@ -70,7 +71,7 @@ test.describe('AE change condition using #self.weapons (poc §7.2c)', () => {
     await expect.poll(readWill).toBe(1);
 
     // Delete the weapon but keep the non-weapon item: condition should go
-    // false again, proving `#self.weapons` really filters by type.
+    // false again, proving `#Owner.weapons` really filters by type.
     await page.evaluate(async ({ uuid, weaponId }) => {
       const actor = await (globalThis as any).fromUuid(uuid);
       await actor.deleteEmbeddedDocuments('Item', [weaponId]);

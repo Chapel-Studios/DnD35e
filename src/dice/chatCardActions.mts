@@ -9,13 +9,18 @@
  * @module
  */
 import { snapTokenToPosition } from '@canvas/token/logic/snapTokenPosition.mjs';
+import { DOCUMENT_UPDATE_TYPES } from '@constants/documentUpdateTypes.mjs';
+import { syncContainmentAe } from '@documents/activeEffects/containment/logic/containmentAe.mjs';
 import { refundAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import { resetMovementSession } from '@documents/combat/combatant/movementSession.mjs';
+import type { Container } from '@items/physical/container/index.mjs';
+import type { EquippableItem } from '@items/physical/equippableItem/index.mjs';
+import type { PhysicalItem } from '@items/physical/physicalItem/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
-import type { MoveActionCardFlags, ProneToggleCardFlags } from './rollMessages.mjs';
-import { buildMoveActionCardContent } from './rollMessages.mjs';
+import type { ItemActionSpentCardFlags, MoveActionCardFlags, ProneToggleCardFlags } from './rollMessages.mjs';
+import { buildItemActionSpentCardContent, buildMoveActionCardContent } from './rollMessages.mjs';
 
 async function onUndoMoveAction(message: ChatMessage, flags: MoveActionCardFlags, combatant: CombatantDnd35e): Promise<void> {
   if (flags.undone) return;
@@ -57,6 +62,40 @@ async function onUndoProneToggle(flags: ProneToggleCardFlags, combatant: Combata
   await token?.revertRecordedMovement(flags.movementId);
 }
 
+/**
+ * Refunds the action-economy spend and reverts the item's own equip/stow state — tagged
+ * `isUndo: true` so `equipped.mts`/`stowed.mts`'s listeners don't re-spend for this same
+ * update (see `ItemActionSpentCardFlags.revert`). Routed through `syncContainmentAe()` for
+ * the stow case (not a raw field update) so container weight/AE rollup stays consistent.
+ */
+async function onUndoItemActionSpent(message: ChatMessage, flags: ItemActionSpentCardFlags, combatant: CombatantDnd35e): Promise<void> {
+  if (flags.undone) return;
+
+  await refundAction(combatant, flags.spent);
+
+  const item = await foundry.utils.fromUuid(flags.itemUuid) as (EquippableItem | PhysicalItem) | null;
+  if (item) {
+    if (flags.revert.kind === 'equip') {
+      await item.update(
+        { 'system.equippedSlotIds': flags.revert.priorSlotIds },
+        { updateMetadata: { updateType: DOCUMENT_UPDATE_TYPES.EQUIP_STATUS_UPDATE, isUndo: true } }
+      );
+    }
+    else {
+      const priorContainer = flags.revert.priorContainerUuid
+        ? await foundry.utils.fromUuid(flags.revert.priorContainerUuid) as Container | null
+        : null;
+      await syncContainmentAe(item as PhysicalItem, priorContainer, true);
+    }
+  }
+
+  const updatedFlags: ItemActionSpentCardFlags = { ...flags, undone: true };
+  await message.update({
+    content: buildItemActionSpentCardContent(combatant.name, updatedFlags),
+    'flags.dnd35e.itemActionSpentCard': updatedFlags,
+  });
+}
+
 function registerChatCardActions(): void {
   // dnd35e type-fix: `renderChatMessageHTML` has no typed overload in Hooks.on() (see
   // hooks.d.mts) — it falls through to the generic `HookParameters<string, unknown[]>`
@@ -85,6 +124,17 @@ function registerChatCardActions(): void {
         undoProneButton.remove();
       } else {
         undoProneButton.addEventListener('click', () => { void onUndoProneToggle(flags, combatant); });
+      }
+    }
+
+    const undoItemActionButton = html.querySelector<HTMLElement>('[data-action="undo-item-action-spent"]');
+    if (undoItemActionButton) {
+      const flags = message.getFlag(SYSTEM_ID, 'itemActionSpentCard') as ItemActionSpentCardFlags | undefined;
+      const combatant = flags ? (game.combat?.combatants.get(flags.combatantId) as CombatantDnd35e | undefined) : undefined;
+      if (!flags || !combatant || !(game.user?.isGM || combatant.isOwner)) {
+        undoItemActionButton.remove();
+      } else {
+        undoItemActionButton.addEventListener('click', () => { void onUndoItemActionSpent(message, flags, combatant); });
       }
     }
   });

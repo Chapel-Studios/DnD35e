@@ -80,8 +80,15 @@ export default class Combat extends ClientBaseCombat {
   /**
      * Get a Combatant using its Actor id
      * @param actorId The id of the Actor for which to acquire the combatant
+     * @deprecated since v14, use `getCombatantsByActor` instead
      */
   getCombatantByActor(actorId: string): Combatant<this> | undefined;
+
+  /**
+     * Get all Combatants who have a certain Actor id
+     * @param actorId The id of the Actor for which to acquire the combatants
+     */
+  getCombatantsByActor(actorId: string): Combatant<this>[];
 
   /**
      * Calculate the time delta between two turns.

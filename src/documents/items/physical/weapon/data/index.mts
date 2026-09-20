@@ -13,7 +13,6 @@ import {
   weaponTypeSelectOptions,
 } from './constants.mjs';
 import type {
-  WeaponDamage,
   WeaponSystemData,
   WeaponSystemSource,
 } from './WeaponSystemData.mjs';
@@ -21,7 +20,6 @@ import { WeaponSystemModel } from './WeaponSystemModel.mjs';
 
 export type {
   WeaponBaseType,
-  WeaponDamage,
   WeaponSubtype,
   WeaponSystemData,
   WeaponSystemSource,

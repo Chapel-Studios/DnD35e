@@ -11,6 +11,7 @@
 import { FormulaResolver } from './FormulaResolver.mjs';
 import type { DocumentContext } from './registry.mjs';
 import { buildDocumentFamiliar } from './registry.mjs';
+import { normalizeLabel } from './schemaWalker.mjs';
 import type { FamiliarSchema } from './types.mjs';
 
 const {
@@ -61,7 +62,7 @@ class FormulaData extends foundry.abstract.DataModel {
     onFailure?: (reason: string) => void
   ): string | null {
     if (!this.formula) return fallback;
-    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap, excludedFields);
+    const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap, excludedFields);
     const partiallyResolved = FormulaResolver.resolveFormula(this.formula, familiarSchema, documentDataMap);
     return FormulaData._finalizeResolvedValue(partiallyResolved, this.expectedType, onFailure);
   }
@@ -85,7 +86,7 @@ class FormulaData extends foundry.abstract.DataModel {
     onFailure?: (reason: string) => void
   ): string | null {
     if (!source.formula) return fallback;
-    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>, excludedFields);
+    const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap as Record<string, DocumentContext>, excludedFields);
     const partiallyResolved = FormulaResolver.resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
     return FormulaData._finalizeResolvedValue(partiallyResolved, source.expectedType, onFailure);
   }
@@ -97,7 +98,7 @@ class FormulaData extends foundry.abstract.DataModel {
     excludedFields: string[] = []
   ): string {
     if (!source.formula) return fallback;
-    const familiarSchema = FormulaData._buildFamiliarFromDocumentMap(documentDataMap as Record<string, DocumentContext>, excludedFields);
+    const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap as Record<string, DocumentContext>, excludedFields);
     return FormulaResolver.resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
   }
 
@@ -126,11 +127,16 @@ class FormulaData extends foundry.abstract.DataModel {
    * in the data map. Each document is introspected via buildDocumentFamiliar
    * to derive its property tree.
    *
+   * Public (not `resolve()`-internal-only) so callers that need a full `FamiliarSchema`
+   * ahead of time — e.g. an editor UI building an explicit `contexts` prop for
+   * `FormulaFormGroup`'s `#` autocomplete dropdown (`ActionEditorStore.mts`, merging
+   * `self`/`weapon`/`actor`/`thisAttack`) — can reuse the exact same logic `resolve()`
+   * uses internally, rather than re-deriving it.
+   *
    * @param documentDataMap Maps context names to their documents
    * @param excludedFields Top-level aspect keys to strip from every context's properties
-   * @internal
    */
-  private static _buildFamiliarFromDocumentMap(
+  static buildFamiliarSchema(
     documentDataMap: Record<string, DocumentContext>,
     excludedFields: string[] = []
   ): FamiliarSchema {
@@ -139,9 +145,24 @@ class FormulaData extends foundry.abstract.DataModel {
       if (!doc) continue;
       const docSchema = buildDocumentFamiliar(doc);
       // buildDocumentFamiliar returns { self: ..., Owner/Item: ... } keyed by role.
-      // Map the "self" entry to the actual context name from the data map.
+      // Map the "self" entry to the actual context name from the data map. The same
+      // document is often exposed under more than one alias (e.g. `self`/`weapon` both
+      // pointing at the same Item) — `docSchema.self`'s `display`/"Self"-alias are only
+      // correct for the literal `self` key, so every OTHER alias drops them and falls
+      // back to the capitalized context name instead (see the shared
+      // `ctx.display ?? capitalize(key)` fallback in FormulaFormGroup.vue/
+      // FormulaMultilineModal.vue/EffectChangesList.vue) rather than showing "Self" twice.
       if (docSchema.self) {
-        schema[contextName] = docSchema.self;
+        if (contextName === 'self') {
+          schema[contextName] = docSchema.self;
+        } else {
+          const normalizedSelfLabel = normalizeLabel(docSchema.self.display);
+          schema[contextName] = {
+            ...docSchema.self,
+            display: undefined,
+            aliases: docSchema.self.aliases?.filter(alias => alias !== normalizedSelfLabel),
+          };
+        }
       }
       // Also merge any parent contexts that buildDocumentFamiliar discovered,
       // but only if we don't already have an entry for that context name

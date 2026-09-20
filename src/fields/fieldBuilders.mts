@@ -62,11 +62,11 @@ const requiredBooleanField = (initialValue?: boolean) => {
 };
 
 // Numbers
-const requiredNumberField = (initialValue?: number) => {
+const requiredNumberField = (initialValue?: number, min?: number, max?: number) => {
   if (initialValue === undefined) {
     initialValue = 0;
   }
-  return new NumberField<number, number, true, false, true>({ required: true, nullable: false, initial: initialValue });
+  return new NumberField<number, number, true, false, true>({ required: true, nullable: false, initial: initialValue, min, max });
 };
 
 const optionalNumberField = (initialValue?: number) => {

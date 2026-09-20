@@ -71,6 +71,12 @@ const EFFECT_CHANGE_PHASES = [
   POST_EFFECT_CHANGE_PHASE,
 ] as const;
 
+const EFFECT_CHANGE_PHASE = {
+  INITIAL: INITIAL_EFFECT_CHANGE_PHASE,
+  FINAL: FINAL_EFFECT_CHANGE_PHASE,
+  POST: POST_EFFECT_CHANGE_PHASE,
+} as const;
+
 type EffectChangeType = typeof EFFECT_CHANGE_TYPE[keyof typeof EFFECT_CHANGE_TYPE] | ChangeType;
 type ChangeType = typeof CHANGE_TYPE[keyof typeof CHANGE_TYPE];
 type EffectChangePhase = typeof EFFECT_CHANGE_PHASES[number];
@@ -78,6 +84,7 @@ type EffectChangePhase = typeof EFFECT_CHANGE_PHASES[number];
 export {
   ACTIVE_EFFECT_TARGETS,
   ALL_CHANGE_TYPES,
+  EFFECT_CHANGE_PHASE,
   EFFECT_CHANGE_PHASES,
   EFFECT_CHANGE_TARGET,
   EFFECT_CHANGE_TARGETS,

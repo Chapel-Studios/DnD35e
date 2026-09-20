@@ -24,7 +24,7 @@ type GameDnd35e = Game<
   fd.collections.Actors<ActorDnd35e<null>>,
   documents.ChatMessage,
   CombatDnd35e,
-  ItemDnd35e<ItemType, null>,
+  ItemDnd35e<ItemType, ActorDnd35e<null>>,
   documents.Macro,
   SceneDnd35e,
   documents.User

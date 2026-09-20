@@ -16,9 +16,9 @@
  *
  * @module
  */
+import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
-import type { ActionEconomyActionType } from './combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from './CombatantDnd35e.mjs';
 
 const MOVEMENT_SESSION_FLAG = 'movementSession';
@@ -31,7 +31,7 @@ interface MovementSession {
   /** Total distance (scene distance units) covered by this turn's tracked movement so far. */
   cumulativeCost: number;
   /** Action-economy pools already spent by this turn's movement (see `combatantActionEconomy.mts`). */
-  spentTiers: ActionEconomyActionType[];
+  spentTiers: ActionEconomyType[];
   /** The token's position before any movement this turn — where a full Undo snaps back to. */
   firstOrigin: { x: number; y: number; elevation: number } | null;
   /** The chat message being updated in place across this turn's movement, if one has been posted. */
@@ -45,7 +45,7 @@ interface MovementSession {
    * `movementId` is the drag's `movement.id`, used to detect whether Foundry's native Undo
    * (Ctrl+Z) has reverted this specific drag (it's no longer present in `movementHistory`).
    */
-  fullRoundMove: { movementId: string; spentTiers: ActionEconomyActionType[]; messageId: string | null } | null;
+  fullRoundMove: { movementId: string; spentTiers: ActionEconomyType[]; messageId: string | null } | null;
   /**
    * The most recent Drop Prone/Stand Up toggle this turn, if any (see
    * `TokenDocumentDnd35e#handleProneToggle`). `movementId` is the *confirming drag's* own

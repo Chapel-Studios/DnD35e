@@ -2,7 +2,7 @@ import type { AbilityKey } from '@constants/abilities.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import type { CurrencyData } from '@fields/currency/CurrencyData.mjs';
 import type { FormulaDataSource } from '@helpers/formulae/index.mjs';
-import type { WeaponDamage } from '@items/physical/weapon/data/index.mjs';
+import type { IAction } from '@items/baseItem/actions/types.mjs';
 import type { PriceSource } from '@settings/currency/index.mjs';
 
 import type { ActorSystemData, ActorSystemSource } from '../../baseActor/data/ActorSystemData.mjs';
@@ -139,8 +139,13 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
     meleeToHitBonus: number;
     rangedToHitBonus: number;
     rangedTouchToHitBonus: number;
-    actions: WeaponDamage[];
   };
+  /**
+   * Actor-side stub bag (poc.10 §10.4), keyed by the source `ActionDataModel`'s own
+   * `_id` — live-merged one entry at a time by `ActionDataModel.createActionChange()`.
+   * Never stored; resolved data stays on the source item, looked up live via `itemUuid`.
+   */
+  actions: Record<string, IAction>;
   encumbrance: EncumbranceData;
   isIncorporeal: boolean;
   isQuadruped: boolean;

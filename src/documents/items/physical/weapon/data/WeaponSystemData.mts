@@ -1,27 +1,17 @@
+import type { WeaponAction } from '@items/baseItem/actions/types.mjs';
 import type { ItemSystemData } from '@items/baseItem/index.mjs';
 import type { EquippableItemSystemData } from '@items/physical/equippableItem/index.mjs';
 
 import type { WeaponBaseType, WeaponSubtype, WeaponType } from './index.mjs';
 
-type WeaponDamage = {
-  damageRoll: string;
-  damageType: string;
-  critRange: string;
-  critMultiplier: number;
-  rangeIncrement: number;
-  attackFormula: string;
-  damageFormula: string;
-};
+
 
 interface WeaponSystemSource {
   isBaseWeaponType: boolean;
   weaponType: WeaponType;
   weaponSubtype: WeaponSubtype;
   weaponBaseType: WeaponBaseType;
-  weaponDamage: WeaponDamage;
-  attackNotes: string;
-  damageNotes: string;
-  noAmmoRequired: boolean;
+  actions: WeaponAction[];
 }
 
 type WeaponSystemData = WeaponSystemSource
@@ -29,7 +19,6 @@ type WeaponSystemData = WeaponSystemSource
   & EquippableItemSystemData;
 
 export type {
-  WeaponDamage,
   WeaponSystemData,
   WeaponSystemSource,
 };

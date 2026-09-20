@@ -108,7 +108,7 @@
   });
 
   const hasHint = computed(() => !!resolvedHint.value);
-  const labelTooltip = computed(() => getFieldHint(props.fieldPath) || undefined);
+  const labelTooltip = computed(() => (props.tooltip ? localize(props.tooltip) : '') || getFieldHint(props.fieldPath) || undefined);
 
   // Get effective visibility: override > prop > schema default > 'everyone'
   const isFieldVisible = getIsFieldVisible(props.fieldPath, props.defaultVisibility);

@@ -41,7 +41,7 @@ test.describe('Effect Changes row — field errors and auto-derived target conte
         system: {
           changes: [{
             target: 'item',
-            key: 'system.weaponDamage.critMultiplier',
+            key: 'system.hardness',
             type: 'add',
             value: '1',
             phase: 'initial',
@@ -71,7 +71,7 @@ test.describe('Effect Changes row — field errors and auto-derived target conte
     await expect(valueInput).not.toHaveClass(/has-error/);
     await expect(rowContext).not.toHaveClass(/has-error/);
 
-    // Break it: critMultiplier is a number field, "abc" is not a valid number formula.
+    // Break it: hardness is a number field, "abc" is not a valid number formula.
     await valueInput.click();
     await valueInput.fill('abc');
     await page.keyboard.press('Tab');
@@ -149,7 +149,7 @@ test.describe('Effect Changes row — field errors and auto-derived target conte
     // Typing a known item-scoped path resolves against the weapon's own schema
     // and persists `change.target === 'item'`.
     await fieldInput.click();
-    await fieldInput.fill('system.weaponDamage.critMultiplier');
+    await fieldInput.fill('system.hardness');
     await page.keyboard.press('Tab');
     await expect.poll(readChangeTarget).toBe('item');
 

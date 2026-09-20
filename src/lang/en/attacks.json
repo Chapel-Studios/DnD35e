@@ -11,7 +11,8 @@
       "Sonic": "Sonic",
       "Force": "Force",
       "Positive": "Positive",
-      "Negative": "Negative"
+      "Negative": "Negative",
+      "None": "None"
     },
     "DAMAGE_REDUCTION_TYPES": {
       "Acid": "Acid",

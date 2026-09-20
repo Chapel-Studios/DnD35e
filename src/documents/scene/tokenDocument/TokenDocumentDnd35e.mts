@@ -15,9 +15,9 @@ import { isWithinReach } from '@canvas/token/logic/reach.mjs';
 import type { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import type { TokenMovementOperation } from '@client/documents/_types.mjs';
 import type { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
+import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
 import { PRONE_CONDITION_ID } from '@constants/conditions.mjs';
 import { SIZE_REACH, SIZE_TOKEN_DIMENSIONS } from '@constants/sizes.mjs';
-import type { ActionEconomyActionType } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import { markChargedThisTurn, refundAction, spendAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { MovementSession, MovementSessionCategory } from '@documents/combat/combatant/movementSession.mjs';
@@ -354,7 +354,7 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
         }
       }
     } else {
-      const requiredTiers: ActionEconomyActionType[] =
+      const requiredTiers: ActionEconomyType[] =
         cumulativeCost <= budget ? ['move']
           : cumulativeCost <= budget * 2 ? ['move', 'standard']
             : [];
@@ -502,7 +502,7 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
       ? convertToLocalizedDistance(1)
       : convertToLocalizedDistance(getMovementBudget(actor, movementAction));
 
-    const requiredTiers: ActionEconomyActionType[] = remainingCost <= budget ? ['move'] : ['move', 'standard'];
+    const requiredTiers: ActionEconomyType[] = remainingCost <= budget ? ['move'] : ['move', 'standard'];
     const tiersToRefund = session.spentTiers.filter((tier) => !requiredTiers.includes(tier));
     if (tiersToRefund.length > 0) await refundAction(combatant, tiersToRefund);
     const spentTiers = session.spentTiers.filter((tier) => requiredTiers.includes(tier));

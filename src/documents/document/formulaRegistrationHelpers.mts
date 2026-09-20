@@ -54,7 +54,10 @@ function evaluateRegisteredFormulas (
   host: FormulaRegistrationHost,
   updateData: Record<string, unknown>
 ): void {
-  const thisObject = host.toObject(false) as Record<string, unknown>;
+  // Source (not live/derived) data - the derived/prepared `system` can carry transient
+  // AE-applied values (e.g. the `name` override redirected onto `nameFormula.formula`,
+  // see `remapNameKeyForItem()`), which must never get baked into what gets persisted here.
+  const thisObject = host.toObject(true) as Record<string, unknown>;
   thisObject.documentName = host.documentName;
   thisObject.type = host.type;
 
@@ -77,7 +80,7 @@ function evaluateRegisteredFormulasForCreate (host: FormulaRegistrationHost): Re
   const nameFormula = host.system?.nameFormula?.formula;
   if (!nameFormula) return null;
 
-  const thisObject = host.toObject(false) as Record<string, unknown>;
+  const thisObject = host.toObject(true) as Record<string, unknown>;
   thisObject.documentName = host.documentName;
   thisObject.type = host.type;
 

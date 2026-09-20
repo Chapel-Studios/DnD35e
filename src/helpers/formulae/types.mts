@@ -138,6 +138,20 @@ export type ArrayElementInfo =
     documentType: foundry.CONST.DocumentType;
     /** When set, only elements whose `.type` is in this list are iterated (filtered sub-collections). */
     filterTypes?: string[];
+  }
+  | {
+    /**
+     * A collection of embedded (non-Document) DataModels with no `.documentName`/registry
+     * entry — e.g. `weapon.system.actions` (`ArrayField(TypedSchemaField)`) or
+     * `actor.system.actions` (`TypedObjectField`, materialized via `Object.values()`).
+     * Unlike `heterogeneous` (dispatches per-element via the documentType/subtype
+     * registry), each element's own `.schema.fields` is walked directly at
+     * predicate-evaluation time (mirrors `buildDocumentFamiliar()`'s embedded-model
+     * branch in registry.mts).
+     */
+    kind: 'embeddedModel';
+    /** When set, only elements whose `.type` is in this list are iterated (filtered sub-collections). */
+    filterTypes?: string[];
   };
 
 /**

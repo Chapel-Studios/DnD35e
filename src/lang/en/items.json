@@ -159,6 +159,14 @@
         "itemRepaired": {
           "label": "Item Repaired",
           "description": "Triggered when this item is repaired."
+        },
+        "itemStowed": {
+          "label": "Item Stowed",
+          "description": "Triggered when this item is stowed in a container."
+        },
+        "itemRetrieved": {
+          "label": "Item Retrieved",
+          "description": "Triggered when this item is retrieved from a container."
         }
       },
       "carriedEffect": {

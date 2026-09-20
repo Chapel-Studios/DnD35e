@@ -1,4 +1,4 @@
-import { gatherAspectsFromSchema, registerFamiliarSchema, withItemCollectionAspects } from '@helpers/formulae/index.mjs';
+import { gatherAspectsFromSchema, registerFamiliarSchema, withActionCollectionAspects, withItemCollectionAspects } from '@helpers/formulae/index.mjs';
 import { ItemProxyDnd35e } from '@items/baseItem/index.mjs';
 import { containerItemType, weaponItemType } from '@items/itemTypes.mjs';
 import { Container, ContainerSheet, ContainerSystemModel } from '@items/physical/container/index.mjs';
@@ -41,7 +41,8 @@ export const registerItems = () => {
     });
 
     // Register familiar schemas for formula resolution
-    registerFamiliarSchema('Item', weaponItemType, (ctx?) => gatherAspectsFromSchema(WeaponSystemModel, ctx));
+    // `#self.actions`/`#weapon.actions` — searchable action collection (own `system.actions`).
+    registerFamiliarSchema('Item', weaponItemType, (ctx?) => withActionCollectionAspects(gatherAspectsFromSchema(WeaponSystemModel, ctx), ctx));
     // Container's own #self.items/.weapons/.equipment refer to its contents (poc §7.2c)
     registerFamiliarSchema('Item', containerItemType, (ctx?) => withItemCollectionAspects(gatherAspectsFromSchema(ContainerSystemModel, ctx), ctx));
   });

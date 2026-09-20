@@ -130,7 +130,8 @@
         "function": {
           "unbalancedParens": "${name}(...) has unbalanced parentheses",
           "argCount": "${name}(...) has the wrong number of arguments",
-          "missingProjection": "$find(...) must be followed by a .property projection (e.g. $find(...).range)"
+          "missingProjection": "$find(...) must be followed by a .property projection (e.g. $find(...).range)",
+          "actionOnly": "$scaleDamage(...) can only be used inside an action's own formula fields"
         }
       },
       "Functions": {
@@ -177,6 +178,30 @@
         "fromKg": {
           "label": "fromKg",
           "hint": "$fromKg(kg) — converts a real-world kilogram value into stored pounds (1 kg = 2 lbs)"
+        },
+        "floor": {
+          "label": "floor",
+          "hint": "$floor(n) — rounds down to the nearest whole number"
+        },
+        "ceiling": {
+          "label": "ceiling",
+          "hint": "$ceiling(n) — rounds up to the nearest whole number"
+        },
+        "round": {
+          "label": "round",
+          "hint": "$round(n) — rounds to the nearest whole number"
+        },
+        "absolute": {
+          "label": "absolute",
+          "hint": "$absolute(n) — the absolute (non-negative) value"
+        },
+        "localize": {
+          "label": "localize",
+          "hint": "$localize(key) — resolves a localization key (short alias: $l(key))"
+        },
+        "scaleDamage": {
+          "label": "scaleDamage",
+          "hint": "$scaleDamage(dieFormula) — scales a die formula from Medium to this weapon's designed size (action formulas only)"
         }
       },
       "ChangeGroups": {

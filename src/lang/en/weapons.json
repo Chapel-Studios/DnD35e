@@ -97,6 +97,7 @@
         "reach": "Reach",
         "returning": "Returning",
         "sunder": "Sunder",
+        "threatensAdjacent": "Threatens Adjacent",
         "thrown": "Thrown",
         "trip": "Trip"
       },
@@ -105,8 +106,98 @@
         "light": "Light",
         "oneHanded": "One-handed",
         "twoHanded": "Two-handed",
-        "ranged": "Ranged"
+        "ranged": "Ranged",
+        "twoHandedRanged": "Two-handed Ranged"
+      },
+      "ACTIONS": {
+        "TabLabel": "Actions",
+        "NewSubActionName": "New Action",
+        "DefaultName": "Attack",
+        "AutoBadge": "Auto-managed \u2014 editing detaches it from weapon-property sync",
+        "AddToChain": "Add to Chain",
+        "AddToChainType": "New Sub-Action Type",
+        "RemoveChainLink": "Remove from Chain",
+        "DamageRollLabel": "Damage Roll",
+        "ChainLabel": "Chain",
+        "Empty": "This weapon has no actions.",
+        "Fields": {
+          "name": {
+            "label": "Name"
+          },
+          "activationCost": {
+            "label": "Activation Cost",
+            "hint": "The action economy cost required to use this action."
+          },
+          "requiresEquipped": {
+            "label": "Requires Equipped",
+            "hint": "Whether the weapon must be equipped to use this action."
+          },
+          "provokes": {
+            "label": "Provokes Attacks of Opportunity",
+            "hint": "Whether using this action provokes an attack of opportunity."
+          },
+          "maxTargets": {
+            "label": "Max Targets",
+            "hint": "The maximum number of targets this action can affect."
+          },
+          "attackFormula": {
+            "label": "Attack Formula",
+            "familiarLabel": "Attack",
+            "familiarAliases": [],
+            "hint": "The formula used for this action's attack roll."
+          },
+          "damageFormula": {
+            "label": "Damage Formula",
+            "familiarLabel": "Damage",
+            "familiarAliases": [],
+            "hint": "The formula used for this action's damage roll."
+          },
+          "damageType": {
+            "label": "Damage Type"
+          },
+          "critRange": {
+            "label": "Critical Range"
+          },
+          "critMultiplier": {
+            "label": "Critical Multiplier"
+          },
+          "reachLength": {
+            "label": "Reach"
+          },
+          "rangeIncrement": {
+            "label": "Range Increment"
+          },
+          "isAmmoRequired": {
+            "label": "Requires Ammunition"
+          },
+          "properties": {
+            "label": "Properties"
+          },
+          "trigger": {
+            "label": "Trigger"
+          }
+        },
+        "ActivationCost": {
+          "free": "Free Action",
+          "minor": "Minor Action",
+          "move": "Move Action",
+          "standard": "Standard Action",
+          "fullRound": "Full-Round Action",
+          "aoo": "Attack of Opportunity"
+        },
+        "Trigger": {
+          "onSuccess": "On Success",
+          "onFailure": "On Failure",
+          "onCrit": "On Critical Hit",
+          "onFumble": "On Fumble",
+          "always": "Always"
+        },
+        "Type": {
+          "melee_weapon_attack": "Melee Attack",
+          "ranged_weapon_attack": "Ranged Attack"
+        }
       }
     }
   }
 }
+

@@ -28,6 +28,16 @@ const registerPhysicalItemEvents = () => {
     description: 'dnd35e.PHYSICAL_ITEM.EVENTS.itemRepaired.description',
     appliesTo: ['Item'],
   });
+  DocumentEventEmitter.registerEventType(PhysicalItemLifeCycle.itemStowed, {
+    label: 'dnd35e.PHYSICAL_ITEM.EVENTS.itemStowed.label',
+    description: 'dnd35e.PHYSICAL_ITEM.EVENTS.itemStowed.description',
+    appliesTo: ['Item'],
+  });
+  DocumentEventEmitter.registerEventType(PhysicalItemLifeCycle.itemRetrieved, {
+    label: 'dnd35e.PHYSICAL_ITEM.EVENTS.itemRetrieved.label',
+    description: 'dnd35e.PHYSICAL_ITEM.EVENTS.itemRetrieved.description',
+    appliesTo: ['Item'],
+  });
 };
 
 export { registerPhysicalItemEvents };

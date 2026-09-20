@@ -42,7 +42,7 @@ const buildFakeCombatant = (
 const stubCombat = (started: boolean, combatant?: CombatantDnd35e): void => {
   (globalThis as any).game.combat = {
     started,
-    getCombatantByActor: () => combatant,
+    getCombatantsByActor: () => (combatant ? [combatant] : []),
   };
 };
 

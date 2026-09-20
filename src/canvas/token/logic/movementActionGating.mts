@@ -115,7 +115,7 @@ const canSelectStandUpMovementAction = (actor: ActorDnd35e | null | undefined): 
 const isInActiveCombat = (): boolean => game.combat?.started ?? false;
 
 const getCombatantForActor = (actor: ActorDnd35e | null | undefined): CombatantDnd35e | undefined =>
-  actor ? (game.combat?.getCombatantByActor(actor.id) as CombatantDnd35e | undefined) : undefined;
+  actor ? (game.combat?.getCombatantsByActor(actor.id)[0] as CombatantDnd35e | undefined) : undefined;
 
 /**
  * A 5-foot step only makes sense during an active encounter — combat-only, same as

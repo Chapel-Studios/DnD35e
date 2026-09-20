@@ -164,7 +164,7 @@ export const useFormulaEditor = (options: FormulaEditorOptions) => {
    */
   const updateFunctionAutocompleteMenu = (dollarIndex: number, cursorPosition: number) => {
     const partial = localValue.value.substring(dollarIndex + 1, cursorPosition);
-    const optionsOverride = getFunctionAutocompleteOptions(partial);
+    const optionsOverride = getFunctionAutocompleteOptions(partial, options.contexts.value);
     if (optionsOverride.length === 0) {
       dismissFamiliar();
       return;

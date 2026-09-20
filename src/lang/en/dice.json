@@ -33,6 +33,22 @@
         "StoodUp": "Stood Up",
         "Undo": "Undo",
         "Undone": "Undone — condition reverted."
+      },
+      "ACTION_WARNING_CARD": {
+        "InsufficientMoveEquip": "{name} has no move action available to equip {item}.",
+        "InsufficientMoveUnequip": "{name} has no move action available to unequip {item}.",
+        "InsufficientMoveStow": "{name} has no move action available to stow {item}.",
+        "InsufficientMoveRetrieve": "{name} has no move action available to retrieve {item}."
+      },
+      "ITEM_ACTION_SPENT_CARD": {
+        "Equipped": "Equipped {item}",
+        "Unequipped": "Unequipped {item}",
+        "Stowed": "Stowed {item}",
+        "Retrieved": "Retrieved {item}",
+        "FreeAction": "Free Action",
+        "MoveAction": "Move Action",
+        "Undo": "Undo",
+        "Undone": "Undone — action refunded, item state reverted."
       }
     }
   }

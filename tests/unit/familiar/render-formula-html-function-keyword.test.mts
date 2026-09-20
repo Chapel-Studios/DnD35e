@@ -130,6 +130,27 @@ describe('renderFormulaHTML — $contains/$find/$any/$count/$stringContains keyw
   });
 
   /**
+   * `$localize`/`$l` (and the other unit-conversion/math helpers) share the exact same
+   * complete-keyword-plus-open-paren recognition as `$contains`/etc — regression coverage
+   * for a bug where this list wasn't kept in sync with `functionGrammar.mts`'s
+   * `CANONICAL_NAMES`, so a well-formed `$localize(...)` fell through to the generic
+   * "still typing" catch-all and rendered as an error once blurred.
+   */
+  describe('well-formed $localize(...)/$l(...) — plain purple, no state modifier', () => {
+    it('$localize(...) has no state modifier once blurred', () => {
+      const spans = keywordSpans(render('$localize(dnd35e.Some.Key)', false), '\\$localize');
+      expect(spans).toHaveLength(1);
+      expect(spans[0]).not.toMatch(/is-warning|is-error/);
+    });
+
+    it('$l(...) (short alias) has no state modifier once blurred', () => {
+      const spans = keywordSpans(render('$l(dnd35e.Some.Key)', false), '\\$l');
+      expect(spans).toHaveLength(1);
+      expect(spans[0]).not.toMatch(/is-warning|is-error/);
+    });
+  });
+
+  /**
    * A backslash-escaped `\$contains(` is not a real block opener to
    * `FormulaResolver.functionGrammar.mts` (`FUNCTION_OPEN_REGEX` has a
    * `(?<!\\)` guard) — the editor highlighter must not wrap it in a

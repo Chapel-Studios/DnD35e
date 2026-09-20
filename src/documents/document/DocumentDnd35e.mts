@@ -36,6 +36,8 @@ interface DocumentUpdateMetadata {
   pendingEvents?: DocumentEvent<any>[];
   sourceDocumentId?: string;
   sourceMessage?: string;
+  /** Marks this update as an Undo-button-triggered revert — listeners that react to the same field(s) (e.g. re-spending an action economy cost) should check this and no-op. */
+  isUndo?: boolean;
   [key: string]: unknown;                                   
 }
 

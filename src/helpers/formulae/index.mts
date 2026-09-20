@@ -14,6 +14,7 @@ const replaceDataAttribute = <TContext extends ItemDnd35e> (formula: Formula, co
 export { replaceDataAttribute };
 
 import FamiliarDropdown from '../../vue/components/FamiliarDropdown.vue';
+import { withActionCollectionAspects } from './actionCollectionFamiliar.mjs';
 import type { ChangeTargetGroup } from './changeTargetGroups.mjs';
 import {
   changeTargetGroups,
@@ -152,6 +153,7 @@ export {
   useFamiliar,
   useFamiliarOverlayInput,
   validateFormula,
+  withActionCollectionAspects,
   withChangeTargetGroups,
   withItemCollectionAspects,
 };
