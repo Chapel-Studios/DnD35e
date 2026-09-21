@@ -36,16 +36,16 @@ describe('getActionEconomy', () => {
   it('returns full defaults when no flag has ever been stored', () => {
     const economy = getActionEconomy(buildCombatant());
     expect(economy).toEqual({
-      actions: { standard: true, move: true, minor: true, aoo: 0 },
+      actions: { standard: true, move: true, minor: true, swift: true, aoo: 0 },
       bab: { main: 0, off: 0 },
-      used: { standard: false, move: false, minor: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
+      used: { standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
     });
   });
 
   it('merges partial stored flags with defaults rather than replacing the whole shape', () => {
     const combatant = buildCombatant({ actionEconomy: { actions: { standard: false } } });
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: false, move: true, minor: true, aoo: 0 });
+    expect(economy.actions).toEqual({ standard: false, move: true, minor: true, swift: true, aoo: 0 });
     expect(economy.bab).toEqual({ main: 0, off: 0 });
   });
 });
@@ -54,17 +54,17 @@ describe('resetActionEconomy', () => {
   it('refills bab pools and AoO from the actor, resets actions, clears used flags', async () => {
     const combatant = buildCombatant({
       actionEconomy: {
-        actions: { standard: false, move: false, minor: false, aoo: 0 },
+        actions: { standard: false, move: false, minor: false, swift: false, aoo: 0 },
         bab: { main: 0, off: 0 },
-        used: { standard: true, move: true, minor: true, standardAttackUsed: true, movedAfterAttack: true, chargedThisTurn: true },
+        used: { standard: true, move: true, minor: true, swift: true, standardAttackUsed: true, movedAfterAttack: true, chargedThisTurn: true },
       },
     });
     await resetActionEconomy(combatant, buildActor(3, 6));
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: true, move: true, minor: true, aoo: 3 });
+    expect(economy.actions).toEqual({ standard: true, move: true, minor: true, swift: true, aoo: 3 });
     expect(economy.bab).toEqual({ main: 6, off: 6 });
-    expect(economy.used).toEqual({ standard: false, move: false, minor: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false });
+    expect(economy.used).toEqual({ standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false });
   });
 });
 
@@ -123,7 +123,7 @@ describe('canUseAction / spendAction / refundAction (hierarchy resolution)', () 
     expect(spent).toBeNull();
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: false, move: false, minor: false, aoo: 0 });
+    expect(economy.actions).toEqual({ standard: false, move: false, minor: false, swift: true, aoo: 0 });
   });
 
   it('refundAction restores exactly the pools passed in, independent of canUseAction', async () => {
@@ -133,6 +133,36 @@ describe('canUseAction / spendAction / refundAction (hierarchy resolution)', () 
     const economy = getActionEconomy(combatant);
     expect(economy.actions.standard).toBe(true);
     expect(economy.used.standard).toBe(false);
+  });
+});
+
+describe('swift action (isolated pool, capped at one per turn)', () => {
+  it('a swift request spends only the swift pool', async () => {
+    const combatant = buildCombatant();
+    expect(canUseAction(combatant, ['swift'])).toEqual(['swift']);
+
+    const spent = await spendAction(combatant, ['swift']);
+    expect(spent).toEqual(['swift']);
+
+    const economy = getActionEconomy(combatant);
+    expect(economy.actions).toEqual({ standard: true, move: true, minor: true, swift: false, aoo: 0 });
+    expect(economy.used.swift).toBe(true);
+  });
+
+  it('cannot be covered by downgrading a spent move or standard action', () => {
+    const combatant = buildCombatant({ actionEconomy: { actions: { swift: false } } });
+    // Standard and move are both still available, but swift has its own pool and isn't in ACTION_HIERARCHY.
+    expect(canUseAction(combatant, ['swift'])).toBeNull();
+  });
+
+  it('spending swift does not consume the standard/move/minor pools', async () => {
+    const combatant = buildCombatant();
+    await spendAction(combatant, ['swift']);
+
+    const economy = getActionEconomy(combatant);
+    expect(economy.actions.standard).toBe(true);
+    expect(economy.actions.move).toBe(true);
+    expect(economy.actions.minor).toBe(true);
   });
 });
 

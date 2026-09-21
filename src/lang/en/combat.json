@@ -5,6 +5,7 @@
         "Standard": "Standard Action",
         "Move": "Move Action",
         "Minor": "Minor Action",
+        "Swift": "Swift Action",
         "AttacksOfOpportunity": "Attacks of Opportunity remaining"
       },
       "CombatModifiers": {
@@ -32,7 +33,45 @@
       },
       "Ammo": "Ammunition",
       "TwoWeaponFighting": "Two-Weapon Fighting",
-      "NoActionAvailable": "No action available for this attack."
+      "NoActionAvailable": "No action available for this attack.",
+      "SelectTargetFirst": "Select a target before attacking.",
+      "Maneuver": {
+        "TotalDefense": "Total Defense",
+        "NotYetImplemented": "Total Defense isn't implemented yet."
+      },
+      "HUD": {
+        "WeaponAttacks": "Weapon Attacks",
+        "CombatManeuvers": "Combat Maneuvers",
+        "NoWeaponAttacks": "No weapons carried"
+      },
+      "CONFIG": {
+        "ClearImage": "Reset to Token/Actor Image",
+        "ActionEconomy": {
+          "ToggleLabel": "Advanced (Action Economy)",
+          "Available": "Available",
+          "BabMain": "Base Attack Bonus (Main)",
+          "BabOff": "Base Attack Bonus (Off-Hand)",
+          "UsedFlags": "Attack Sequence Flags",
+          "StandardAttackUsed": "Standard Attack Used",
+          "MovedAfterAttack": "Moved After Attack",
+          "ChargedThisTurn": "Charged This Turn"
+        },
+        "Movement": {
+          "ToggleLabel": "Advanced (Movement Session)",
+          "Category": "Movement Category",
+          "CategoryNone": "None",
+          "CategoryStep": "5-Foot Step",
+          "CategoryNormal": "Normal Movement",
+          "CumulativeCost": "Cumulative Movement Cost",
+          "SpentTiers": "Spent Action Tiers",
+          "HasOrigin": "Track Origin",
+          "MessageId": "Chat Message ID",
+          "LastMovementAction": "Last Movement Action",
+          "HasFullRoundMove": "Full-Round Move Active",
+          "FullRoundMovementId": "Movement ID",
+          "FullRoundMessageId": "Chat Message ID"
+        }
+      }
     }
   }
 }

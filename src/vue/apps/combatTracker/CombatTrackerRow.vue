@@ -14,10 +14,11 @@
     return game.i18n.localize(key);
   }
 
-  const ACTION_PIPS: { icon: string; flag: 'standard' | 'move' | 'minor'; labelKey: string }[] = [
+  const ACTION_PIPS: { icon: string; flag: 'standard' | 'move' | 'minor' | 'swift'; labelKey: string }[] = [
     { icon: 'fa-swords', flag: 'standard', labelKey: 'dnd35e.COMBAT.ACTION_ECONOMY.Standard' },
     { icon: 'fa-shoe-prints', flag: 'move', labelKey: 'dnd35e.COMBAT.ACTION_ECONOMY.Move' },
     { icon: 'fa-circle', flag: 'minor', labelKey: 'dnd35e.COMBAT.ACTION_ECONOMY.Minor' },
+    { icon: 'fa-bolt', flag: 'swift', labelKey: 'dnd35e.COMBAT.ACTION_ECONOMY.Swift' },
   ];
 
   const hasResource = computed(() => props.turn.resource !== null && props.turn.resource !== undefined);
@@ -71,8 +72,10 @@
             v-for="pip in ACTION_PIPS"
             :key="pip.flag"
             class="fas action-economy-pip"
-            :class="[pip.icon, { 'is-spent': !turn.actionEconomy?.actions[pip.flag] }]"
+            :class="[pip.icon, { 'is-spent': !turn.actionEconomy?.actions[pip.flag], clickable: isGM }]"
             :data-tooltip="localize(pip.labelKey)"
+            :data-action="isGM ? 'toggleActionEconomy' : undefined"
+            :data-action-flag="pip.flag"
           />
           <span class="action-economy-aoo" :data-tooltip="localize('dnd35e.COMBAT.ACTION_ECONOMY.AttacksOfOpportunity')">{{ turn.actionEconomy.actions.aoo }}</span>
         </div>
@@ -127,6 +130,18 @@
 
     &.is-spent {
       opacity: 0.3;
+    }
+
+    &.clickable {
+      cursor: pointer;
+
+      &:hover {
+        opacity: 0.6;
+      }
+
+      &.is-spent:hover {
+        opacity: 0.5;
+      }
     }
   }
 

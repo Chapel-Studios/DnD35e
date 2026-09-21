@@ -3,10 +3,12 @@ const MOVE_ACTION = 'move';
 const STANDARD_ACTION = 'standard';
 const FULL_ROUND_ACTION = 'fullRound';
 const FREE_ACTION = 'free';
+const SWIFT_ACTION = 'swift';
 const AOO_ACTION = 'aoo';
 
 const ACTION_ECONOMY_TYPES = [
   FREE_ACTION,
+  SWIFT_ACTION,
   MINOR_ACTION,
   MOVE_ACTION,
   STANDARD_ACTION,
@@ -22,6 +24,7 @@ const ACTION_ECONOMY: Record<string, ActionEconomyType> = {
   STANDARD: STANDARD_ACTION,
   FULL_ROUND: FULL_ROUND_ACTION,
   FREE: FREE_ACTION,
+  SWIFT: SWIFT_ACTION,
   AOO: AOO_ACTION,
 };
 
@@ -34,6 +37,7 @@ export {
   MINOR_ACTION,
   MOVE_ACTION,
   STANDARD_ACTION,
+  SWIFT_ACTION,
 };
 
 export type {

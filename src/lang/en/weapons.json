@@ -179,6 +179,7 @@
         },
         "ActivationCost": {
           "free": "Free Action",
+          "swift": "Swift Action",
           "minor": "Minor Action",
           "move": "Move Action",
           "standard": "Standard Action",
