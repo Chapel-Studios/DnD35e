@@ -67,3 +67,21 @@ export async function selectMovementAction (page: Page, tokenId: string, actionI
     { id: tokenId, action: actionId }
   );
 }
+
+/**
+ * Click a movement-action palette entry WITHOUT polling for `document.movementAction` to
+ * become that literal id — used for the `dropProne`/`standUp` entries, which
+ * `TokenHudDnd35e#onMovementAction` intercepts and routes to a direct Prone toggle instead
+ * of core's default "stage this as the pending mode" behavior (see `proneToggle.mts`); the
+ * field ends up set to `crawl`/`walk` afterward, never to `dropProne`/`standUp` itself.
+ * Ordinary movement modes should keep using `selectMovementAction` above.
+ */
+export async function clickMovementAction (page: Page, actionId: string): Promise<void> {
+  const hud = page.locator('#token-hud');
+  const paletteList = hud.locator('.palette-list[data-palette="movementActions"]');
+  if (!(await paletteList.isVisible())) {
+    await hud.locator('button[data-action="togglePalette"][data-palette="movementActions"]').click();
+    await paletteList.waitFor({ state: 'visible' });
+  }
+  await hud.locator(`a[data-action="movementAction"][data-movement-action="${actionId}"]`).click();
+}

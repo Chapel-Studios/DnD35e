@@ -1,12 +1,8 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import {
   CHARGE_MOVEMENT_ACTION,
-  CRAWL_MOVEMENT_ACTION,
   DOUBLE_MOVE_MOVEMENT_ACTION,
-  DROP_PRONE_MOVEMENT_ACTION,
   FIVE_FOOT_STEP_MOVEMENT_ACTION,
-  hasProneCondition,
-  STAND_UP_MOVEMENT_ACTION,
   WALK_MOVEMENT_ACTION,
   WITHDRAW_MOVEMENT_ACTION,
 } from '@canvas/token/logic/movementActionGating.mjs';
@@ -16,7 +12,6 @@ import type { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import type { TokenMovementOperation } from '@client/documents/_types.mjs';
 import type { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
-import { PRONE_CONDITION_ID } from '@constants/conditions.mjs';
 import { SIZE_REACH, SIZE_TOKEN_DIMENSIONS } from '@constants/sizes.mjs';
 import { markChargedThisTurn, refundAction, spendAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
@@ -24,14 +19,8 @@ import type { MovementSession, MovementSessionCategory } from '@documents/combat
 import { getMovementSession, resetMovementSession, setMovementSession } from '@documents/combat/combatant/movementSession.mjs';
 import { useSettingsStore } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
-import type { MoveActionCardData, MoveActionCardFlags, ProneToggleCardFlags } from '@source/dice/index.mjs';
-import {
-  buildMoveActionCard,
-  buildMoveActionCardContent,
-  buildProneToggleCard,
-  buildProneToggleCardContent,
-  upsertMoveActionCard,
-} from '@source/dice/index.mjs';
+import type { MoveActionCardData, MoveActionCardFlags } from '@source/dice/index.mjs';
+import { buildMoveActionCard, buildMoveActionCardContent, upsertMoveActionCard } from '@source/dice/index.mjs';
 
 import type { SceneDnd35e } from '../SceneDnd35e.mjs';
 
@@ -42,24 +31,10 @@ const FULL_ROUND_MOVEMENT_ACTIONS = new Set<string>([
   DOUBLE_MOVE_MOVEMENT_ACTION,
 ]);
 
-/** Actions excluded from the ordinary cumulative movement session's cost accounting — full-round moves are tracked atomically (see `#reconcileFullRoundMove()`), and Drop Prone/Stand Up toggles aren't real movement at all (see `#handleProneToggle()`). */
-const NON_SESSION_MOVEMENT_ACTIONS = new Set<string>([
-  ...FULL_ROUND_MOVEMENT_ACTIONS,
-  DROP_PRONE_MOVEMENT_ACTION,
-  STAND_UP_MOVEMENT_ACTION,
-]);
+/** Actions excluded from the ordinary cumulative movement session's cost accounting — full-round moves are tracked atomically instead (see `#reconcileFullRoundMove()`). Drop Prone/Stand Up no longer appear here at all: they're instant Token HUD clicks (see `TokenHudDnd35e#onMovementAction`/`proneToggle.mts`) that never enter the movement/waypoint pipeline. */
+const NON_SESSION_MOVEMENT_ACTIONS = new Set<string>(FULL_ROUND_MOVEMENT_ACTIONS);
 
 class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | null> extends TokenDocument<TParent> {
-  /**
-   * The `movement.id` of the last Drop Prone/Stand Up toggle processed by `_onUpdateMovement`.
-   * Foundry's client-side movement pipeline can invoke `_onUpdateMovement` more than once for
-   * the same physical drag (e.g. an optimistic/predicted local apply followed by the
-   * server-confirmed update) — both invocations share the same `movement.id`. Without this
-   * guard, both would race to call `actor.toggleStatusEffect()` before the first (unawaited)
-   * call's ActiveEffect creation resolves, producing a duplicate Prone effect.
-   */
-  #lastProneToggleMovementId: string | null = null;
-
   protected override async _preCreate(
     data: this['_source'],
     options: DatabaseCreateCallbackOptions,
@@ -77,15 +52,10 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
   }
 
   /**
-   * Detects the `dropProne`/`standUp` custom movement actions (see
-   * `movementActionGating.mts`) among the just-completed movement's waypoints and routes
-   * them to `#handleProneToggle()` *instead of* `#consumeMovementActionEconomy()` — neither
-   * action represents real ground covered or spends a tracked action/session budget (SRD:
-   * Drop Prone is a free action, Standing Up doesn't move you), so letting them fall through
-   * to the ordinary movement-session accounting produced a nonsensical "5 / 0" over-budget
-   * card. Both actions are `teleport: true, measure: true` with a free (`0`) cost, so the
-   * last completed waypoint's `.action` is the only signal available that one was used —
-   * there's no dedicated "action selected" hook in Foundry's movement pipeline.
+   * Every remaining custom movement action (Drop Prone/Stand Up excepted — those are instant
+   * Token HUD clicks now, see `TokenHudDnd35e#onMovementAction`/`proneToggle.mts`, and never
+   * create a movement operation at all) routes here to spend action economy via
+   * `#consumeMovementActionEconomy()`.
    */
   protected override _onUpdateMovement(
     movement: DeepReadonly<TokenMovementOperation>,
@@ -98,33 +68,11 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     if (!actor) return;
 
     // Foundry's native movement Undo (Ctrl+Z / `TokenDocument#revertRecordedMovement`) snaps
-    // the token back and marks the operation `isUndo: true` — `#handleProneToggle()`'s own
-    // corrective revert (also routed through `revertRecordedMovement()`) sets the very same
-    // flag, so this branch re-enters here too. That's harmless: `#reconcileProneToggle()` is a
-    // no-op until `session.proneToggle` is actually set, which only happens *after*
-    // `#handleProneToggle()`'s corrective revert completes. `operation` is typed as the generic
-    // `DatabaseUpdateOperation` here, but Token updates always carry the richer
+    // the token back and marks the operation `isUndo: true`. `operation` is typed as the
+    // generic `DatabaseUpdateOperation` here, but Token updates always carry the richer
     // `EmbeddedTokenUpdateOperation` shape at runtime (see `scene.d.mts`), which does.
     if ((operation as { isUndo?: boolean }).isUndo) {
       void this.#reconcileUndoneMovement(actor);
-      return;
-    }
-
-    // Only the most recently completed waypoint matters here — checking `.some()` over the
-    // whole passed list would also match a stale waypoint carried over from a prior update.
-    const lastAction = (movement.passed?.waypoints ?? []).at(-1)?.action;
-    const droppedProne = lastAction === DROP_PRONE_MOVEMENT_ACTION;
-    const stoodUp = lastAction === STAND_UP_MOVEMENT_ACTION;
-
-    if (droppedProne || stoodUp) {
-      // Foundry's client-side movement pipeline can invoke `_onUpdateMovement` more than once
-      // for the same physical drag (e.g. an optimistic/predicted local apply followed by the
-      // server-confirmed update) — both invocations share the same `movement.id`. Without this
-      // guard, both would race to call `actor.toggleStatusEffect()` before the first
-      // (unawaited) call's ActiveEffect creation resolves, producing a duplicate Prone effect.
-      if (movement.id === this.#lastProneToggleMovementId) return;
-      this.#lastProneToggleMovementId = movement.id;
-      void this.#handleProneToggle(movement, actor, droppedProne);
       return;
     }
 
@@ -132,90 +80,16 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
   }
 
   /**
-   * Toggles the Prone condition and reverts the confirming drag's own displacement through
-   * Foundry's native recorded-movement undo (`revertRecordedMovement()`) — the same mechanism
-   * Ctrl+Z and the Prone Toggle chat card's own Undo button already rely on (see
-   * `proneToggleCard.mts#onUndoProneToggle`). A manual `displace` snap-back layered *on top*
-   * of the confirming drag (the old approach) left that drag's own `dropProne`/`standUp`
-   * waypoint permanently recorded in `movementHistory` — the Ruler renders the whole recorded
-   * path, so it kept showing a leftover ghost waypoint marker even after the token visually
-   * returned to its original spot. Truncating the history via `revertRecordedMovement()`
-   * removes that waypoint entirely instead of merely covering it up.
-   *
-   * The movement mode is switched separately (crawling while prone, walking again once back
-   * on your feet) — `revertRecordedMovement()` is a fixed built-in that only ever restores
-   * position/history fields, it has no room for extra data.
-   *
-   * Posts a compact, dedicated "Dropped Prone"/"Stood Up" card (distinct from the distance/
-   * budget-based Move Action Spent card) and tracks the confirming drag's `movement.id` on
-   * the movement session so `#reconcileProneToggle()` can revert the condition if Foundry's
-   * native Undo (Ctrl+Z) later reverts that specific drag. Only posted/tracked during an
-   * active encounter, matching `#consumeMovementActionEconomy()`'s own combat-only card
-   * posting — outside combat the toggle still happens, just silently.
-   */
-  async #handleProneToggle(movement: DeepReadonly<TokenMovementOperation>, actor: ActorDnd35e, droppedProne: boolean): Promise<void> {
-    const priorActive = hasProneCondition(actor);
-    await actor.toggleStatusEffect(PRONE_CONDITION_ID, { active: droppedProne });
-
-    const historyLengthBeforeRevert = canvas.tokens?.history.length ?? 0;
-
-    await this.revertRecordedMovement(movement.id);
-    await this.update({ movementAction: droppedProne ? CRAWL_MOVEMENT_ACTION : WALK_MOVEMENT_ACTION });
-
-    // Both corrective updates above are themselves recorded as separate Ctrl+Z-able entries
-    // (see `TokenLayer#storeHistory`) — left in place, a single Ctrl+Z press would only pop
-    // the most recent of the two, and it'd take a *third* press to finally revert the
-    // confirming drag itself. Truncating by length (rather than a fixed pop-count) is robust
-    // to however many entries Foundry's movement pipeline actually pushed (e.g. a
-    // duplicate optimistic/confirmed invocation) and never removes the confirming drag's own
-    // (pre-existing) entry, so a single Ctrl+Z press reverts straight through to before the
-    // toggle and correctly reports `isUndo` for `#reconcileProneToggle()` to act on.
-    this.#discardProneToggleCorrectiveEntries(historyLengthBeforeRevert);
-
-    // The Token HUD's movement-action picker snapshots `document.movementAction` only at its
-    // own render time (see `TokenHUD#_getMovementActionChoices()`) — it doesn't reactively
-    // refresh when the field changes elsewhere, so without this it kept showing the toggle's
-    // own `dropProne`/`standUp` action as "active" even though the field above already moved
-    // on to `crawl`/`walk`.
-    if (canvas.tokens?.hud.rendered && canvas.tokens.hud.document === this) void canvas.tokens.hud.render();
-
-    const combat = game.combat;
-    if (!combat?.started) return;
-
-    const tokenId = this.id;
-    if (!tokenId) return;
-    const combatant = combat.getCombatantsByToken(tokenId)[0] as CombatantDnd35e | undefined;
-    if (!combatant) return;
-
-    const messageId = await buildProneToggleCard(combatant, actor, droppedProne, priorActive, movement.id);
-    const session = getMovementSession(combatant);
-    await setMovementSession(combatant, { ...session, proneToggle: { movementId: movement.id, priorActive, messageId } });
-  }
-
-  /**
-   * Truncates the tokens layer's own Ctrl+Z undo stack back to its length from before
-   * `#handleProneToggle()`'s corrective updates (the `revertRecordedMovement()` call and the
-   * movement-mode field update) began, discarding whatever they added. See the call site for
-   * why length-based truncation is preferred over a fixed pop-count.
-   */
-  #discardProneToggleCorrectiveEntries(lengthBeforeRevert: number): void {
-    const history = canvas.tokens?.history;
-    if (history && history.length > lengthBeforeRevert) history.length = lengthBeforeRevert;
-  }
-
-  /**
    * Spends the move/standard action(s) a just-completed movement consumed (see
    * phase-10-basic-combat.md §10.6), posting the Move Action Spent chat card. Only runs
    * during an active encounter — outside combat there's no action economy to track.
    * Foundry's movement pipeline has no dedicated "which action was selected" field on
-   * `movement` itself, so the movement action is read the same way `_onUpdateMovement()`
-   * reads it to detect a Prone toggle: the last completed waypoint's `.action`. Drop
-   * Prone/Stand Up never reach here at all — `_onUpdateMovement()` routes them to
-   * `#handleProneToggle()` instead, since neither spends a tracked action/session budget.
+   * `movement` itself, so the movement action is read from the last completed waypoint's
+   * `.action`.
    *
-   * `displace` waypoints (the Prone-toggle revert's own `revertRecordedMovement()` call and
-   * the Move Action Undo snap-back — see `snapTokenToPosition()`) never carry a real cost and
-   * must never be accounted for here, or an Undo would look like a brand-new chargeable move.
+   * `displace` waypoints (the Move Action Undo snap-back — see `snapTokenToPosition()`) never
+   * carry a real cost and must never be accounted for here, or an Undo would look like a
+   * brand-new chargeable move.
    *
    * `charge`/`withdraw`/`doubleMove` are full-round actions: always spend a move + standard
    * action outright, in a single one-shot chat card, regardless of distance covered (see
@@ -387,7 +261,6 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
       messageId: session.messageId,
       lastMovementAction: movementAction,
       fullRoundMove: session.fullRoundMove,
-      proneToggle: session.proneToggle,
     };
 
     // Once a session escalates to spending the standard action too, it's mechanically a
@@ -411,9 +284,9 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
    * entirely (it snaps the token via a cost-free `displace` waypoint), so without this our
    * action economy and chat card(s) would keep reporting the pre-undo state forever.
    *
-   * The Prone toggle, full-round moves (atomic, all-or-nothing), and the cumulative session
-   * (partial, distance-based) are reconciled independently, since any combination could have
-   * accumulated this turn before the drag that just got undone.
+   * Full-round moves (atomic, all-or-nothing) and the cumulative session (partial,
+   * distance-based) are reconciled independently, since either could have accumulated this
+   * turn before the drag that just got undone.
    */
   async #reconcileUndoneMovement(actor: ActorDnd35e): Promise<void> {
     const combat = game.combat;
@@ -424,34 +297,8 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     const combatant = combat.getCombatantsByToken(tokenId)[0] as CombatantDnd35e | undefined;
     if (!combatant) return;
 
-    await this.#reconcileProneToggle(combatant, actor);
     await this.#reconcileFullRoundMove(combatant);
     await this.#reconcileSessionMovement(combatant, actor);
-  }
-
-  /**
-   * A Drop Prone/Stand Up toggle's confirming drag (see `#handleProneToggle()`) is atomic,
-   * like a full-round move — reverted only once its own `movementId` (the drag that
-   * triggered the toggle, not our own corrective snap-back's) is no longer present in
-   * `movementHistory`. Foundry's native Undo pops one recorded update at a time, and our
-   * corrective snap-back is a *separate* update from the confirming drag — so the first
-   * Ctrl+Z press only reverts our snap-back (landing the token back at the confirming drag's
-   * endpoint), and the Prone condition/card are only reverted by whichever *later* press
-   * finally removes the confirming drag itself.
-   */
-  async #reconcileProneToggle(combatant: CombatantDnd35e, actor: ActorDnd35e): Promise<void> {
-    const session = getMovementSession(combatant);
-    const proneToggle = session.proneToggle;
-    if (!proneToggle) return;
-
-    const stillPresent = this.movementHistory.some((waypoint) => waypoint.movementId === proneToggle.movementId);
-    if (stillPresent) return;
-
-    if (hasProneCondition(actor) !== proneToggle.priorActive) {
-      await actor.toggleStatusEffect(PRONE_CONDITION_ID, { active: proneToggle.priorActive });
-    }
-    await this.#markProneToggleCardUndone(combatant, proneToggle.messageId);
-    await setMovementSession(combatant, { ...session, proneToggle: null });
   }
 
   /**
@@ -482,8 +329,7 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
    * the time this runs, and expressed in the same scene distance-unit domain as the session's
    * `cumulativeCost` (see `TokenRulerDnd35e`'s matching use of native waypoint cost). Full-round
    * waypoints are excluded — they're accounted for separately by `#reconcileFullRoundMove()`
-   * and never counted toward the ordinary session's budget. Drop Prone/Stand Up waypoints are
-   * excluded too — they never participate in the session at all (see `#handleProneToggle()`).
+   * and never counted toward the ordinary session's budget.
    */
   async #reconcileSessionMovement(combatant: CombatantDnd35e, actor: ActorDnd35e): Promise<void> {
     const session = getMovementSession(combatant);
@@ -533,20 +379,6 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     await message.update({
       content: buildMoveActionCardContent(combatant.name, updatedFlags),
       'flags.dnd35e.moveActionCard': updatedFlags,
-    });
-  }
-
-  /** Marks an existing Drop Prone/Stand Up card `undone` in place — mirrors `#markMoveActionCardUndone()`, reading the distinct `proneToggleCard` flag key instead. */
-  async #markProneToggleCardUndone(combatant: CombatantDnd35e, messageId: string | null): Promise<void> {
-    const message = messageId ? game.messages?.get(messageId) : undefined;
-    if (!message) return;
-    const flags = message.getFlag(SYSTEM_ID, 'proneToggleCard') as ProneToggleCardFlags | undefined;
-    if (!flags || flags.undone) return;
-
-    const updatedFlags: ProneToggleCardFlags = { ...flags, undone: true };
-    await message.update({
-      content: buildProneToggleCardContent(combatant.name, updatedFlags),
-      'flags.dnd35e.proneToggleCard': updatedFlags,
     });
   }
 }
