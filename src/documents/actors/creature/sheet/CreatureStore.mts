@@ -118,6 +118,9 @@ const useCreatureStore = <TDocument extends Creature>(
     rollInitiativeFromSheet: async (): Promise<void> => {
       await document.value.rollInitiativeCheck();
     },
+    useActionFromSheet: async (itemId: string, actionId: string, targetId?: string): Promise<void> => {
+      await document.value.useAction(itemId, actionId, targetId);
+    },
   };
 
   const store: CreatureDocumentStore<TDocument> = {
@@ -163,6 +166,7 @@ type CreatureActions = {
   adjustHp: (amount: number, adjustmentType: HpAdjustmentType) => Promise<boolean>;
   rollSaveFromSheet: (saveKey: SaveKey) => Promise<void>;
   rollInitiativeFromSheet: () => Promise<void>;
+  useActionFromSheet: (itemId: string, actionId: string, targetId?: string) => Promise<void>;
 };
 type CreatureStoreUtils = Record<string, unknown>;
 

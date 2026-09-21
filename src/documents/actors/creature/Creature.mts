@@ -9,7 +9,7 @@ import type { SaveKey } from '@constants/saves.mjs';
 import { SAVE_ABILITY_MAP, SAVE_KEYS, SAVE_KEYS_LOCALIZED } from '@constants/saves.mjs';
 import { SIZE_MODIFIERS } from '@constants/sizes.mjs';
 import type { ACTORS_DND35E } from '@documents/actors/actorTypes.mjs';
-import { canUseHandAttack, spendAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import { canUseHandAttack, getActionEconomy, markMovedAfterAttack, spendAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
@@ -289,6 +289,10 @@ abstract class Creature extends ActorDnd35e {
           });
         }
       }
+
+      // SRD: a charge permits only this one melee attack — reuses the existing "moved after
+      // attack" gate rather than a second bespoke flag.
+      if (getActionEconomy(combatant).used.chargedThisTurn) await markMovedAfterAttack(combatant);
     }
 
     await this.events.emit('postUseAction', { ...context, result });

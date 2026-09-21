@@ -275,7 +275,7 @@
       "tab": {
         "Summary": "Summary",
         "Attributes": "Attributes",
-        "Combat": "Combat",
+        "Actions": "Actions",
         "Inventory": "Inventory",
         "Features": "Features",
         "Skills": "Skills",
@@ -293,7 +293,24 @@
         "Speed": "Movement",
         "p-attributes": "Physical Attributes",
         "c-attributes": "Combat Attributes",
-        "inventory": "Inventory"
+        "inventory": "Inventory",
+        "Weapons": "Weapons"
+      },
+      "actions": {
+        "column": {
+          "weapon": "Weapon",
+          "attack": "Attack",
+          "damage": "Damage",
+          "crit": "Crit",
+          "range": "Range",
+          "type": "Type"
+        },
+        "action": {
+          "attack": "Attack",
+          "requiresEquipped": "This weapon must be equipped before it can be used to attack."
+        },
+        "meleeRange": "Melee",
+        "empty": "No weapons carried"
       },
       "inventory": {
         "tab": {

@@ -1,18 +1,15 @@
 import { getWieldModeStrTerm } from '@actors/baseActor/ActorDnd35e.mjs';
 import { applyChargedAE, applyDefensiveFightingAE } from '@actors/creature/logic/combatConditionAEs.mjs';
-import { isOnHigherGround } from '@canvas/token/logic/highGround.mjs';
 import type { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
-import { PRONE_CONDITION_ID, SQUEEZING_CONDITION_ID } from '@constants/conditions.mjs';
 import { DAMAGE_TYPES } from '@constants/index.mjs';
-import { getActionEconomy } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { FormulaData } from '@helpers/formulae/index.mjs';
 import { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';
 import { ACTION_TYPE } from '@items/baseItem/actions/constants.mjs';
 import { getTwoWeaponFightingPenalty } from '@items/physical/weapon/logic/twoWeaponFighting.mjs';
-import type { AttackCardFlags, AttackCardTargetRow, CombatModifierToggle, RollModifier } from '@source/dice/index.mjs';
+import type { AttackCardFlags, AttackCardTargetRow, RollModifier } from '@source/dice/index.mjs';
 import {
   buildActionChainId,
   buildAttackCard,
