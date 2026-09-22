@@ -8,12 +8,12 @@
  * @module
  */
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import { applyProneToggle } from '@canvas/token/logic/proneToggle.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
 import { refundAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
+import { applyProneToggle } from '@documents/token/logic/proneToggle.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import proneToggleCardTemplateSource from './prone-toggle-card.hbs?raw';

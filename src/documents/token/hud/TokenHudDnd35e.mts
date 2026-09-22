@@ -14,7 +14,9 @@
  * behavior (`document.update({movementAction: ...})`, staging a pending mode for a future
  * confirming drag); every other movement action falls through to that same default update,
  * unchanged. The palette entries themselves (icon/label/position/`canSelect` gating, see
- * `movementActionGating.mts`) are untouched — only the click's effect changes.
+ * `movementActionGating.mts`) are untouched — only the click's effect changes. `standUp` spends
+ * a move action first (gated + refundable, same `spendAction`/`refundAction` pattern as every
+ * other action-economy consumer) — `dropProne` remains free per SRD.
  *
  * Two more new actions are added on top of core's set: `attackAction` (Weapon Attacks palette
  * entries) and `combatManeuver` (Combat Maneuvers palette entries, §10.11's new bottom-row
@@ -31,19 +33,22 @@
  */
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import { Creature } from '@actors/creature/index.mjs';
-import { applyProneToggle } from '@canvas/token/logic/proneToggle.mjs';
 import type { ApplicationRenderContext } from '@client/applications/_types.mjs';
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
+import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
+import { MOVE_ACTION } from '@constants/actionEconomy.mjs';
+import { spendAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import { buildProneToggleCard } from '@source/dice/index.mjs';
-import TokenHudApp from '@vueApps/tokenHud/TokenHudApp.vue';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
 import type { App, Component } from 'vue';
 import { createApp, reactive } from 'vue';
 
 import { DROP_PRONE_MOVEMENT_ACTION, STAND_UP_MOVEMENT_ACTION } from '../logic/movementActionGating.mjs';
+import { applyProneToggle } from '../logic/proneToggle.mjs';
 import { getCombatManeuverChoices, getWeaponActionChoices } from './tokenHudActions.mjs';
+import TokenHudApp from './TokenHudApp.vue';
 import type { TokenHudContext } from './tokenHudTypes.mjs';
 
 interface RawBarData {
@@ -149,6 +154,9 @@ class TokenHudDnd35e extends TokenHudVueBase {
   protected override async _prepareContext (options: HandlebarsRenderOptions): Promise<TokenHudContext> {
     const raw = await super._prepareContext(options) as RawTokenHudContext;
     const actor = this.actor as ActorDnd35e | undefined;
+    const weaponActions = actor instanceof Creature
+      ? await getWeaponActionChoices(actor)
+      : [];
 
     return {
       _id: raw._id,
@@ -176,7 +184,7 @@ class TokenHudDnd35e extends TokenHudVueBase {
       movementActions: Object.values(raw.movementActions),
       levels: Object.values(raw.levels),
       canChangeLevel: raw.canChangeLevel,
-      weaponActions: actor ? getWeaponActionChoices(actor) : [],
+      weaponActions: weaponActions,
       combatManeuvers: actor ? getCombatManeuverChoices() : [],
     };
   }
@@ -228,14 +236,26 @@ class TokenHudDnd35e extends TokenHudVueBase {
       if (!actor) return;
 
       const droppedProne = action === DROP_PRONE_MOVEMENT_ACTION;
-      await applyProneToggle(actor, token, droppedProne);
-
       const combat = game.combat;
       const tokenId = token.id;
       const combatant = combat?.started && tokenId
         ? (combat.getCombatantsByToken(tokenId)[0] as CombatantDnd35e | undefined)
         : undefined;
-      if (combatant) await buildProneToggleCard(combatant, actor, droppedProne, !droppedProne);
+
+      // Standing up is a move action (SRD); dropping prone is free. Spend before toggling
+      // so a combatant with no move action left can't stand up at all.
+      let spentTiers: ActionEconomyType[] = [];
+      if (!droppedProne && combatant) {
+        const spent = await spendAction(combatant, [MOVE_ACTION]);
+        if (!spent) {
+          ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.NoActionAvailable'));
+          return;
+        }
+        spentTiers = spent;
+      }
+
+      await applyProneToggle(actor, token, droppedProne);
+      if (combatant) await buildProneToggleCard(combatant, actor, droppedProne, !droppedProne, spentTiers);
       return;
     }
 

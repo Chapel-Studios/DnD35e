@@ -8,8 +8,9 @@
  *
  * @module
  */
-import type { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import { useSettingsStore } from '@settings/index.mjs';
+
+import type { TokenDnd35e } from '../TokenDnd35e.mjs';
 
 /** SRD: higher ground grants +1 to melee attack rolls when at least this many squares above the target. */
 const HIGH_GROUND_ELEVATION_SQUARES = 2;

@@ -4,11 +4,11 @@
 // `nonLethal` carry `value: 0` (read directly by id below instead of folded into the
 
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
-import type { TokenDnd35e } from '@canvas/index.mjs';
-import { isOnHigherGround } from '@canvas/token/logic/highGround.mjs';
 import { PRONE_CONDITION_ID, SQUEEZING_CONDITION_ID } from '@constants/conditions.mjs';
 import { getActionEconomy } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
+import { isOnHigherGround } from '@documents/token/logic/highGround.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import type { CombatModifierToggle } from '@source/dice/rollDialogs/d20RollDialog/D20RollDialogConfig.mjs';
 
 // dialog's generic situational-modifier sum).

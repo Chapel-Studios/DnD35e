@@ -30,11 +30,12 @@ const RUN_SPEED_MULTIPLIER = 4;
 
 /**
  * The dnd35e-specific "Drop Prone" and "Stand Up" movement actions — modeled on `run`:
- * custom entries in `CONFIG.Token.movement.actions`, not spatial movement. Selecting one
- * and confirming a move (even a zero/short drag) applies or removes the Prone condition
- * via `TokenDocumentDnd35e#_onUpdateMovement` inspecting the completed waypoints' `action`.
- * SRD: Drop Prone is a free action; Standing Up is a move action that provokes an AoO —
- * poc.9 has no action-economy system yet, so both are cost-free toggles for now.
+ * custom entries in `CONFIG.Token.movement.actions`, not spatial movement. Clicking either
+ * one directly toggles the Prone condition (see `proneToggle.mts`'s `applyProneToggle()`) —
+ * no confirming drag anymore. SRD: Drop Prone is a free action; Standing Up is a move action
+ * that provokes an AoO — `TokenHudDnd35e#onMovementAction` spends the move action (only
+ * while a combat is active; free outside combat, same as other combat-only mechanics) before
+ * toggling, and `proneToggleCard.mts`'s Undo button refunds it.
  */
 const DROP_PRONE_MOVEMENT_ACTION = 'dropProne';
 const STAND_UP_MOVEMENT_ACTION = 'standUp';
@@ -170,12 +171,19 @@ const isFullRoundMoveAffordable = (actor: ActorDnd35e | null | undefined): boole
   return combatant.actionEconomy.actions.move && combatant.actionEconomy.actions.standard && session.category !== 'step';
 };
 
+/** `standUp` costs a move action (SRD) — only affordable in combat while the move action pool is still available; free/always-affordable outside combat, mirroring `TokenHudDnd35e#onMovementAction`'s own no-combatant skip. */
+const isStandUpAffordable = (actor: ActorDnd35e | null | undefined): boolean => {
+  const combatant = getCombatantForActor(actor);
+  if (!combatant) return true;
+  return combatant.actionEconomy.actions.move;
+};
+
 /**
  * Per-action affordability predicates, read by `movementActionHudDecoration.mts` to grey out
  * (not hide) movement-action HUD entries the combatant can't currently use. Actions absent
- * from this map (`walk`/`crawl`/`dropProne`/`standUp`/fly/swim/climb/burrow) are always
- * considered affordable once structurally selectable — walk/crawl remain selectable
- * regardless of remaining action economy by design.
+ * from this map (`walk`/`crawl`/`dropProne`/fly/swim/climb/burrow) are always considered
+ * affordable once structurally selectable — walk/crawl remain selectable regardless of
+ * remaining action economy by design.
  */
 const MOVEMENT_ACTION_AFFORDABILITY: Partial<Record<string, (actor: ActorDnd35e | null | undefined) => boolean>> = {
   [RUN_MOVEMENT_ACTION]: isRunAffordable,
@@ -183,6 +191,7 @@ const MOVEMENT_ACTION_AFFORDABILITY: Partial<Record<string, (actor: ActorDnd35e 
   [WITHDRAW_MOVEMENT_ACTION]: isFullRoundMoveAffordable,
   [CHARGE_MOVEMENT_ACTION]: isFullRoundMoveAffordable,
   [DOUBLE_MOVE_MOVEMENT_ACTION]: isFullRoundMoveAffordable,
+  [STAND_UP_MOVEMENT_ACTION]: isStandUpAffordable,
 };
 
 /** Whether the given movement action, already offered (structurally applicable), is currently affordable given the actor's remaining action economy this turn. */
@@ -334,6 +343,7 @@ export {
   isFullRoundMoveAffordable,
   isMovementActionAffordable,
   isRunAffordable,
+  isStandUpAffordable,
   RUN_MOVEMENT_ACTION,
   RUN_SPEED_MULTIPLIER,
   SPEED_GATED_ACTIONS,

@@ -1,5 +1,5 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import { getMovementBudget, getSessionAwareBudget, isOverBudget } from '@canvas/token/logic/movementBudget.mjs';
+import { getMovementBudget, getSessionAwareBudget, isOverBudget } from '@documents/token/logic/movementBudget.mjs';
 import { describe, expect, it } from 'vitest';
 
 const actorWithLandSpeed = (land: number): ActorDnd35e => ({ system: { speed: { land } } }) as unknown as ActorDnd35e;

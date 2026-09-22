@@ -1,14 +1,4 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import {
-  CHARGE_MOVEMENT_ACTION,
-  DOUBLE_MOVE_MOVEMENT_ACTION,
-  FIVE_FOOT_STEP_MOVEMENT_ACTION,
-  WALK_MOVEMENT_ACTION,
-  WITHDRAW_MOVEMENT_ACTION,
-} from '@canvas/token/logic/movementActionGating.mjs';
-import { getMovementBudget } from '@canvas/token/logic/movementBudget.mjs';
-import { isWithinReach } from '@canvas/token/logic/reach.mjs';
-import type { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import type { TokenMovementOperation } from '@client/documents/_types.mjs';
 import type { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
@@ -17,6 +7,16 @@ import { markChargedThisTurn, refundAction, spendAction } from '@documents/comba
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { MovementSession, MovementSessionCategory } from '@documents/combat/combatant/movementSession.mjs';
 import { getMovementSession, resetMovementSession, setMovementSession } from '@documents/combat/combatant/movementSession.mjs';
+import {
+  CHARGE_MOVEMENT_ACTION,
+  DOUBLE_MOVE_MOVEMENT_ACTION,
+  FIVE_FOOT_STEP_MOVEMENT_ACTION,
+  WALK_MOVEMENT_ACTION,
+  WITHDRAW_MOVEMENT_ACTION,
+} from '@documents/token/logic/movementActionGating.mjs';
+import { getMovementBudget } from '@documents/token/logic/movementBudget.mjs';
+import { isWithinReach } from '@documents/token/logic/reach.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { useSettingsStore } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { MoveActionCardData, MoveActionCardFlags } from '@source/dice/index.mjs';

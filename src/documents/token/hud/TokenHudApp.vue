@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import type { TokenHudContext } from '@canvas/token/hud/tokenHudTypes.mjs';
+  import type { TokenHudContext } from '@documents/token/hud/tokenHudTypes.mjs';
 
   interface Props {
     context: TokenHudContext;

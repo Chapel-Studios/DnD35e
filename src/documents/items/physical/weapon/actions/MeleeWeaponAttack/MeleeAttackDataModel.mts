@@ -1,7 +1,7 @@
-import type { TokenDnd35e } from '@canvas/index.mjs';
-import { isWithinReach } from '@canvas/token/logic/reach.mjs';
 import { DEX, STR } from '@constants/abilities.mjs';
 import { type Size,SIZE_REACH } from '@constants/sizes.mjs';
+import { isWithinReach } from '@documents/token/logic/reach.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { ACTION_TYPE, ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
 import type { ActionResult } from '@items/baseItem/actions/types.mjs';
 

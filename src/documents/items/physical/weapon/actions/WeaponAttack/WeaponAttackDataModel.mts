@@ -1,9 +1,9 @@
 import { getWieldModeStrTerm, wieldModeToBabHand } from '@actors/baseActor/ActorDnd35e.mjs';
 import { applyChargedAE, applyDefensiveFightingAE } from '@actors/creature/logic/combatConditionAEs.mjs';
-import type { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
 import { DAMAGE_TYPES } from '@constants/index.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { FormulaData } from '@helpers/formulae/index.mjs';
 import { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';

@@ -23,8 +23,8 @@
  */
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
 import { VUE_APP_CLASS } from '@constants/cssClasses.mjs';
+import CombatantConfigApp from '@documents/combat/combatant/CombatantConfigApp.vue';
 import { SYSTEM_ID } from '@settings/shared.mjs';
-import CombatantConfigApp from '@vueApps/combatantConfig/CombatantConfigApp.vue';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
 import type { App, Component } from 'vue';
 import { createApp, reactive } from 'vue';

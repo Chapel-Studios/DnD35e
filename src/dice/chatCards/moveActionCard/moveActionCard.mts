@@ -6,12 +6,12 @@
  * @module
  */
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
-import { snapTokenToPosition } from '@canvas/token/logic/snapTokenPosition.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
 import { refundAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import { resetMovementSession } from '@documents/combat/combatant/movementSession.mjs';
+import { snapTokenToPosition } from '@documents/token/logic/snapTokenPosition.mjs';
 import { useSettingsStore } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 

@@ -26,7 +26,6 @@ import type { ApplicationRenderContext } from '@client/applications/_types.mjs';
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
 import { MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
 import type { CombatTrackerContext, CombatTrackerTurn } from '@documents/combat/combatTrackerTypes.mjs';
-import CombatTrackerApp from '@vueApps/combatTracker/CombatTrackerApp.vue';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
 import type { App, Component } from 'vue';
 import { createApp, reactive } from 'vue';
@@ -34,6 +33,7 @@ import { createApp, reactive } from 'vue';
 import { getActionEconomy, toggleActionAvailability } from './combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from './combatant/CombatantDnd35e.mjs';
 import type { CombatDnd35e } from './CombatDnd35e.mjs';
+import CombatTrackerApp from './combatTracker/CombatTrackerApp.vue';
 
 /** Intermediate plain shape `_prepareCombatContext`/`_prepareTrackerContext` mutate in place. */
 interface RawTrackerContext extends ApplicationRenderContext {

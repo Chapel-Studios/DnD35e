@@ -3,8 +3,9 @@
  *
  * @module
  */
-import type { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import { useSettingsStore } from '@settings/index.mjs';
+
+import type { TokenDnd35e } from '../TokenDnd35e.mjs';
 
 /**
  * `canvas.grid.measurePath().distance` is expressed in the scene's configured grid distance

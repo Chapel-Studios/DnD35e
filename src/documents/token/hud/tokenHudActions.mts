@@ -4,11 +4,13 @@
  *
  * Weapon Attacks: one entry per carried weapon's top-level action, filtered to
  * `item.system.isCarried && (item.system.isEquipped || action.requiresEquipped === false)` —
- * mirrors `WeaponAttackDataModel#_canExecute()`'s own `requiresEquipped` gate (§10.4) without
- * calling the protected method directly. Enabled state follows `canUseHandAttack()` for the
- * wield mode's BAB hand, same as the sheet's Actions tab (WeaponsSection.vue) — but unlike the
- * sheet, ineligible entries are omitted entirely rather than merely disabled, since the HUD
- * palette has no room for an explanatory tooltip.
+ * this filter is the *only* place `requiresEquipped` is enforced; `WeaponAttackDataModel`
+ * itself no longer re-gates on equip state at execution time (§10.11), since the sheet's
+ * Actions tab intentionally lets a carried-but-unequipped weapon's action fire. Enabled
+ * state follows `canUseHandAttack()` for the wield mode's BAB hand, same as the sheet's
+ * Actions tab (WeaponsSection.vue) — but unlike the sheet, ineligible entries are omitted
+ * entirely rather than merely disabled, since the HUD palette has no room for an
+ * explanatory tooltip.
  *
  * Combat Maneuvers: this phase renders only a "Total Defense" entry (§10.7's special action is
  * Story E's scope — this module only establishes the HUD row/entry shell, always enabled; the
@@ -18,16 +20,15 @@
  */
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import { detectWieldMode, wieldModeToBabHand } from '@actors/baseActor/ActorDnd35e.mjs';
+import type { Creature } from '@actors/creature/Creature.mjs';
+import { fromUuid } from '@client/utils/_module.mjs';
 import { canUseHandAttack } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
-import type { WeaponAction } from '@items/baseItem/actions/types.mjs';
-import { weaponItemType } from '@items/itemTypes.mjs';
+import { WEAPON_ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
+import type { IAction } from '@items/baseItem/actions/types.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
 
 import type { TokenHudCombatManeuverRow, TokenHudWeaponActionRow } from './tokenHudTypes.mjs';
-
-
-const isWeapon = (item: { type: string }): item is Weapon => item.type === weaponItemType;
 
 /** The combatant tracking this actor's per-round action economy, if any encounter is active. */
 function getActiveCombatant(actor: ActorDnd35e): CombatantDnd35e | undefined {
@@ -36,25 +37,30 @@ function getActiveCombatant(actor: ActorDnd35e): CombatantDnd35e | undefined {
 }
 
 /** Weapon Attacks HUD palette entries — see module doc for the eligibility/enabled rules. */
-function getWeaponActionChoices(actor: ActorDnd35e): TokenHudWeaponActionRow[] {
+async function getWeaponActionChoices(actor: Creature): Promise<TokenHudWeaponActionRow[]> {
   const combatant = getActiveCombatant(actor);
   const rows: TokenHudWeaponActionRow[] = [];
 
-  const weapons = [...actor.items].filter(isWeapon).filter((item) => item.system.isCarried);
-  for (const weapon of weapons) {
-    const actions = weapon.system.actions.filter((action) => action.isTopLevel) as WeaponAction[];
-    for (const action of actions) {
-      if (!weapon.system.isEquipped && action.requiresEquipped !== false) continue;
-
-      const hand = wieldModeToBabHand(detectWieldMode(actor, weapon));
-      rows.push({
-        itemId: weapon.id,
-        actionId: action._id,
-        label: weapon.name,
-        img: weapon.img ?? 'icons/svg/sword.svg',
-        enabled: !combatant || canUseHandAttack(combatant, hand),
-      });
+  const weaponActions: IAction[] = await Promise.all(Object.values(actor.system.actions)
+    .filter((iAction: IAction) => WEAPON_ACTION_TYPES.includes(iAction.type)));
+  for (const iAction of weaponActions) {
+    const weapon = await fromUuid<Weapon>(iAction.itemUuid);
+    // since this pointer is recreated on each data life cycle it should be safe to presume it exists
+    const actualAction = weapon?.system.actions.find((action) => action._id === iAction.id);
+    if (!weapon || !actualAction
+      ||(!weapon?.system.isEquipped && actualAction?.requiresEquipped !== false)
+    ) {
+      continue;
     }
+
+    const hand = wieldModeToBabHand(detectWieldMode(actor, weapon));
+    rows.push({
+      itemId: weapon.id,
+      actionId: actualAction!._id,
+      label: weapon.name,
+      img: weapon.img ?? 'icons/svg/sword.svg',
+      enabled: !combatant || canUseHandAttack(combatant, hand),
+    });
   }
 
   return rows;
