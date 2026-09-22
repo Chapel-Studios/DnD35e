@@ -306,8 +306,7 @@
           "type": "Type"
         },
         "action": {
-          "attack": "Attack",
-          "requiresEquipped": "This weapon must be equipped before it can be used to attack."
+          "attack": "Attack"
         },
         "meleeRange": "Melee",
         "empty": "No weapons carried"

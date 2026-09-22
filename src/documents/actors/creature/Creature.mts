@@ -277,15 +277,18 @@ abstract class Creature extends ActorDnd35e {
     // Spend AFTER execution, not before — a cancelled dialog never costs an action. The
     // attack card (if one was posted) already exists by now, so its `actionEconomySpent`
     // flag is patched in here rather than known ahead of time inside `executeAction()`. Hand
-    // BAB is only ever spent for weapon attacks — non-weapon actions have no `hand`.
+    // BAB is only ever spent for weapon attacks — non-weapon actions have no `hand`. Uses the
+    // dialog's final resolved hand (`result.finalHand`), not the pre-dialog auto-detected
+    // `hand` used only for the availability gate above — the two can differ.
     if (combat?.started && combatant && !result.cancelled && !options.free) {
-      await spendAction(combatant, ['standard']);
-      if (hand) {
+      const standardSpent = await spendAction(combatant, ['standard']);
+      const spentHand = result.finalHand ?? hand;
+      if (spentHand) {
         const babSpent = 5;
-        await spendHandBab(combatant, hand, babSpent);
+        await spendHandBab(combatant, spentHand, babSpent);
         if (result.attackMessage) {
           await result.attackMessage.update({
-            'flags.dnd35e.attackCard.actionEconomySpent': { standardActionSpent: true, hand, babSpent },
+            'flags.dnd35e.attackCard.actionEconomySpent': { standardActionSpent: standardSpent !== null, hand: spentHand, babSpent },
           });
         }
       }

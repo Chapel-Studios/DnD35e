@@ -11,6 +11,14 @@
     <h6 class="prone-toggle-label">{{ label }}</h6>
   </header>
 
+  {{#if spentLabels}}
+  <div class="card-body">
+    {{#each spentLabels}}
+    <span class="spent-action">{{ this }}</span>
+    {{/each}}
+  </div>
+  {{/if}}
+
   <footer class="card-footer">
     {{#if undone}}
     <span class="undone-label">{{localize "dnd35e.ROLL.PRONE_TOGGLE_CARD.Undone"}}</span>

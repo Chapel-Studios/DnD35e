@@ -32,6 +32,8 @@
         "Off": "Off-Hand"
       },
       "Ammo": "Ammunition",
+      "BaseAttackBonus": "Base Attack Bonus",
+      "AbilityModifier": "{ability} Modifier",
       "TwoWeaponFighting": "Two-Weapon Fighting",
       "NoActionAvailable": "No action available for this attack.",
       "SelectTargetFirst": "Select a target before attacking.",

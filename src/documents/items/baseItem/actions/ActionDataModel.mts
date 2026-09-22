@@ -238,6 +238,11 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
     if (preCheckResult.cancelled) return preCheckResult;
 
     const result = await this._executeCheck(context);
+    result.warnings = [
+      ...preCheckResult.warnings,
+      ...result.warnings,
+    ];
+    
     return result;
   }
 

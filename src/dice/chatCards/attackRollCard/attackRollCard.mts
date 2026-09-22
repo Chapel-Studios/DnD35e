@@ -42,6 +42,8 @@ interface AttackCardFlags {
   resolvedDamageFormula: string;
   /** Damage-bonus formula term (e.g. `' + 1d6'`), already prefixed with its own sign/operator, or `''` when none was entered. */
   damageBonusTerm: string;
+  /** Threat range floor (e.g. 19 for a 19–20 weapon) — passed to `roll.isCriticalThreat()` instead of assuming a bare natural 20. */
+  critRange: number;
   critMultiplier: number;
   targets: AttackCardTargetRow[];
   actionEconomySpent: { standardActionSpent: boolean; hand: 'main' | 'off' | 'both'; babSpent: number } | null;
@@ -62,7 +64,7 @@ function buildAttackCardContent(roll: D20Roll, flags: AttackCardFlags, diceRollH
     rollFormula: roll.formula,
     total: roll.total ?? 0,
     isFumble: roll.isFumble,
-    isCriticalThreat: roll.isCriticalThreat(),
+    isCriticalThreat: roll.isCriticalThreat(flags.critRange),
     diceRollHtml,
     damageFormulaDisplay: `${flags.resolvedDamageFormula}${flags.damageBonusTerm}`,
     critMultiplier: flags.critMultiplier,

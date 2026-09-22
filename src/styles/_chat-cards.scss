@@ -2,7 +2,8 @@
 // Handlebars templates (see src/dice/rollMessages.mts). These are global rules, not
 // scoped Vue component styles, since chat cards are plain persisted HTML.
 
-.dnd35e.chat-card.save-roll-card {
+.dnd35e.chat-card.save-roll-card,
+.dnd35e.chat-card.attack-roll-card {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -124,6 +125,53 @@
 
     &.failed {
       color: var(--color-level-error);
+    }
+  }
+}
+
+.dnd35e.chat-card.attack-roll-card {
+  .damage-preview {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+
+    .crit-multiplier {
+      opacity: 0.7;
+    }
+
+    .callout.non-lethal {
+      font-weight: 700;
+    }
+  }
+
+  .attack-card-targets {
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem 0;
+    border-top: 1px solid var(--color-border);
+
+    .target-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      padding: 0.1rem 0.25rem;
+
+      &.resolved {
+        opacity: 0.6;
+      }
+    }
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: center;
+
+    .retarget-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
     }
   }
 }

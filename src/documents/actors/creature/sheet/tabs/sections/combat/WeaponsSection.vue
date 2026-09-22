@@ -33,11 +33,7 @@
             <button
               type="button"
               class="field-control-btn attack-btn"
-              :class="{ disabled: row.disabled }"
-              :disabled="row.disabled"
-              :title="row.disabled
-                ? localize('dnd35e.ACTOR.actions.action.requiresEquipped')
-                : localize('dnd35e.ACTOR.actions.action.attack')"
+              :title="localize('dnd35e.ACTOR.actions.action.attack')"
               @click="onAttack(row.itemId, row.actionId)"
             >
               <i class="fas fa-swords" />
@@ -85,7 +81,6 @@
     crit: string;
     range: string;
     damageType: string;
-    disabled: boolean;
   }
 
   const rows = computed<WeaponActionRow[]>(() => {
@@ -97,10 +92,6 @@
     for (const weapon of weapons) {
       const actions = weapon.system.actions.filter((action) => action.isTopLevel) as WeaponAction[];
       for (const action of actions) {
-        // Mirrors tokenHudActions.mts / WeaponAttackDataModel#_canExecute()'s own
-        // requiresEquipped gate - the sheet's attack button never bypasses it, it
-        // just greys out instead of silently no-op'ing when clicked.
-        const disabled = action.requiresEquipped && !weapon.system.isEquipped;
         result.push({
           key: `${weapon.id}.${action._id}`,
           itemId: weapon.id,
@@ -113,7 +104,6 @@
             ? `${convertToLocalizedDistance(action.rangeIncrement)} ${distanceDisplayShortLabel.value}`
             : localize('dnd35e.ACTOR.actions.meleeRange'),
           damageType: game.i18n.localize(action.damageType),
-          disabled,
         });
       }
     }
@@ -121,8 +111,6 @@
   });
 
   const onAttack = async (itemId: string, actionId: string): Promise<void> => {
-    const row = rows.value.find((r) => r.itemId === itemId && r.actionId === actionId);
-    if (row?.disabled) return;
     // Sheet-triggered attacks bypass target selection - unlike the Token HUD, which
     // requires a target since it has no other way to know who's being attacked.
     const targetToken = game.user?.targets?.first() ?? null;
@@ -170,12 +158,5 @@
 
   .attack-btn {
     width: 1.5rem;
-
-    &.disabled,
-    &:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-      filter: grayscale(1);
-    }
   }
 </style>

@@ -20,11 +20,12 @@
   /** Local editable copy — the form doesn't write through to the document until Save is clicked. */
   const form = reactive(structuredClone(toRaw(props.context)));
 
-  // The reactive `context` prop is refreshed by the owning Application on every re-render
-  // (e.g. after an external update); resync the working copy whenever that happens.
+  // The reactive `context` prop is mutated in place by `CombatantConfigDnd35e#_replaceHTML`
+  // (same object identity every render), so a shallow watch would never fire — deep is
+  // required to resync the working copy after an external update.
   watch(() => props.context, (next) => {
     Object.assign(form, structuredClone(toRaw(next)));
-  });
+  }, { deep: true });
 
   const showAdvancedMove = ref(false);
   const showAdvancedActionEconomy = ref(false);

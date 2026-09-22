@@ -26,6 +26,7 @@ function prepareWeaponAttackContext(
     actor,
     target,
     hand,
+    wieldMode,
     attackAbility: STR,
     availableBab: actor.system.bab,
   };

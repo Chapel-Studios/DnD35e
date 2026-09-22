@@ -1,13 +1,17 @@
 /**
  * Drop Prone / Stand Up chat card — a compact toggle announcement distinct from
- * `moveActionCard.mts`'s distance/budget card (the toggle it announces isn't real
- * movement, so a "cost / budget" line would be meaningless here).
+ * `moveActionCard.mts`'s distance/budget card (neither toggle is real movement, so a
+ * "cost / budget" line would be meaningless here). Stand Up spends a move action
+ * (`TokenHudDnd35e#onMovementAction`) and shows it via `spentLabels`, same convention as
+ * `actionSpentCard.mts`; Drop Prone is always free and renders no spent tiers.
  *
  * @module
  */
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import { applyProneToggle } from '@canvas/token/logic/proneToggle.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
+import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
+import { refundAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -16,6 +20,12 @@ import proneToggleCardTemplateSource from './prone-toggle-card.hbs?raw';
 
 const proneToggleCardTemplate = Handlebars.compile(proneToggleCardTemplateSource, { preventIndent: true });
 
+/** Localized labels for the action-economy tiers standing up can spend — mirrors `move-action-card.hbs`'s own tier labels (only `move`/`standard` are ever reachable here, `standard` only when `move` was already spent elsewhere this turn). */
+const PRONE_TOGGLE_TIER_LABEL_KEYS: Partial<Record<ActionEconomyType, string>> = {
+  move: 'dnd35e.ROLL.MOVE_ACTION_CARD.MoveAction',
+  standard: 'dnd35e.ROLL.MOVE_ACTION_CARD.StandardAction',
+};
+
 /** Persisted in `message.flags.dnd35e.proneToggleCard` — everything needed to re-render the card, or revert the Prone condition, after the Undo button is clicked. */
 interface ProneToggleCardFlags {
   combatantId: string;
@@ -23,6 +33,8 @@ interface ProneToggleCardFlags {
   droppedProne: boolean;
   /** Whether the actor had the Prone condition *before* this toggle — restored on Undo. */
   priorActive: boolean;
+  /** Action-economy tiers spent for this toggle (see `spendAction`'s return value) — empty for Drop Prone (free) or a Stand Up performed outside combat. */
+  spentTiers: ActionEconomyType[];
   undone: boolean;
 }
 
@@ -33,6 +45,7 @@ function buildProneToggleCardContent(combatantName: string, flags: ProneToggleCa
     label: game.i18n.localize(
       flags.droppedProne ? 'dnd35e.ROLL.PRONE_TOGGLE_CARD.DroppedProne' : 'dnd35e.ROLL.PRONE_TOGGLE_CARD.StoodUp'
     ),
+    spentLabels: flags.spentTiers.map((tier) => game.i18n.localize(PRONE_TOGGLE_TIER_LABEL_KEYS[tier] ?? tier)),
     undone: flags.undone,
   });
 }
@@ -42,12 +55,14 @@ async function buildProneToggleCard(
   combatant: CombatantDnd35e,
   actor: ActorDnd35e,
   droppedProne: boolean,
-  priorActive: boolean
+  priorActive: boolean,
+  spentTiers: ActionEconomyType[] = []
 ): Promise<string | null> {
   const flags: ProneToggleCardFlags = {
     combatantId: combatant.id,
     droppedProne,
     priorActive,
+    spentTiers,
     undone: false,
   };
 
@@ -59,13 +74,14 @@ async function buildProneToggleCard(
   return message?.id ?? null;
 }
 
-/** Reverts the Prone condition/movement action directly (no movement operation to undo anymore) and marks the card undone in place. */
+/** Reverts the Prone condition/movement action directly (no movement operation to undo anymore), refunds any action economy the original toggle spent, and marks the card undone in place. */
 async function onUndoProneToggle(message: ChatMessage, flags: ProneToggleCardFlags, combatant: CombatantDnd35e): Promise<void> {
   if (flags.undone) return;
 
   const actor = combatant.actor as ActorDnd35e | null;
   const token = combatant.token as TokenDocumentDnd35e | null;
   if (actor && token) await applyProneToggle(actor, token, flags.priorActive);
+  if (flags.spentTiers.length > 0) await refundAction(combatant, flags.spentTiers);
 
   const updatedFlags: ProneToggleCardFlags = { ...flags, undone: true };
   await message.update({

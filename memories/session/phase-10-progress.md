@@ -7,14 +7,18 @@
 - [x] Story A — Combat tracker infrastructure, initiative, flat-footed — all checklist items checked off in `phase-10-basic-combat.md`
 - [x] Story B — Combatant action economy + movement integration — all 12 checklist items checked off in `phase-10-basic-combat.md`; verified via a full codebase audit (11/12 were already implemented but unchecked, only the HUD provokes badge needed new code)
 - [x] Story C — ActionDataModel first cut (melee + TWF) — all checklist items checked off in `phase-10-basic-combat.md` and verified directly against the codebase (`ActionDataModel.mts`, `WeaponAttackDataModel.mts`, `MeleeAttackDataModel.mts`/`RangedAttackDataModel.mts`, `combatantActionEconomy.mts`, `detectWieldMode()`/`getWieldModeStrTerm()`/`wieldModeToBabHand()` on `ActorDnd35e`). This section's stale "NOT STARTED" note (previously here) was corrected once Story D began — always re-verify against the phase doc + codebase, not just this file.
+- [x] Story D — Attack trigger, execution engine & attack card (D.1 engine primitives → D.2 dialog extension → D.3 `executeAction()`/`useAction()`/attack card → D.4 Token HUD control + Actions tab UI) — all checklist items checked off in `phase-10-basic-combat.md`; D.4 user-tested and approved in Foundry, all four sub-parts committed. See the detailed D.1–D.4 breakdown below.
 
 **Renumbering note**: with all three spikes resolved, the remaining stories (formerly D–K) were relettered A–H in `phase-10-basic-combat.md` (D→A, E→B, F→C, G→D, H→E, I→F, J→G, K→H). The retired spike letters A/B/C were renamed to Spike 1/2/3 to free them up. All cross-references, the Parallelization diagram, and its prose were updated accordingly.
 
 ## Current Section
+Story D is fully complete. **Story E (Roll Defense Dialog & attack resolution) has not been started** — do not begin it without explicit user go-ahead.
+
+## Story D Detail (D.1–D.4 breakdown)
 - [x] Story D.1 — Engine primitives (`DamageRoll`, `preUseAction`/`postUseAction`/`dealDamage`/`undoDealDamage` events) — complete, committed.
 - [x] Story D.2 — Attack Roll Dialog extension (`combatModifiers`, `damageBonus`, Wield Mode toggle, reserved Ammo slot) — complete, committed. `isFlanking()`/`isOnHigherGround()` auto-detection wiring deferred to D.3 (Flanking specifically stays manual-only, deferred to Story G — see decision below).
 - [x] Story D.3 — `executeAction()`/`useAction()`/attack card — complete (see prior session notes; `Creature.useAction()` shipped).
-- [ ] Story D.4 — Token HUD control + Actions tab UI — **implemented, awaiting user test/approval in Foundry**: Actions tab rename (`CombatTab`→Actions, `AttackBonusSection.vue` deleted), `WeaponsSection.vue` real data + attack button, and the Token HUD Vue-takeover (`TokenHudDnd35e.mts`/`TokenHudApp.vue`/`tokenHudActions.mts`/`tokenHudTypes.mts`, registered via `CONFIG.Token.hudClass`). Full clean `npm run build` passed. Phase doc checklist intentionally left unchecked per SilverSmith workflow (pending explicit approval) — see the "Deviation" note already written inline on the Story D checklist item.
+- [x] Story D.4 — Token HUD control + Actions tab UI — **user-tested and approved in Foundry**: Actions tab rename (`CombatTab`→Actions, `AttackBonusSection.vue` deleted), `WeaponsSection.vue` real data + attack button, and the Token HUD Vue-takeover (`TokenHudDnd35e.mts`/`TokenHudApp.vue`/`tokenHudActions.mts`/`tokenHudTypes.mts`, registered via `CONFIG.Token.hudClass`). Phase doc checklist items checked off; committed. **Story D is now fully complete** (all checklist items in `phase-10-basic-combat.md` checked off) — next up is Story E (Roll Defense Dialog & attack resolution), not yet started.
 
 **Story D breakdown** (agreed with user before starting): D.1 engine primitives → D.2 dialog extension → D.3 `executeAction()`/`useAction()`/attack card → D.4 Token HUD control + Actions tab UI (HUD render approach to be spiked at the start of D.4).
 

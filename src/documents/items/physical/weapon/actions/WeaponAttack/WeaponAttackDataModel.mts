@@ -1,4 +1,4 @@
-import { getWieldModeStrTerm } from '@actors/baseActor/ActorDnd35e.mjs';
+import { getWieldModeStrTerm, wieldModeToBabHand } from '@actors/baseActor/ActorDnd35e.mjs';
 import { applyChargedAE, applyDefensiveFightingAE } from '@actors/creature/logic/combatConditionAEs.mjs';
 import type { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
 import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
@@ -81,16 +81,11 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     return super.item as Weapon | undefined;
   }
 
+  // `requiresEquipped` is enforced only as HUD-entry eligibility (tokenHudActions.mts) — the
+  // sheet's Actions tab intentionally allows firing this action regardless of equip state
+  // (§10.11), so execution itself never re-gates on it here.
   protected override _canExecute(context: UseWeaponAttackContext): WeaponAttackActionResult {
-    const superResult = super._canExecute(context);
-    if (superResult.cancelled) return superResult;
-
-    if (this.requiresEquipped && !this.item?.system.equippedSlotIds.length) {
-      superResult.cancelled = true;
-      superResult.reason = 'requiresEquipped';
-    }
-
-    return superResult;
+    return super._canExecute(context);
   }
 
   /**
@@ -133,8 +128,16 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       actorImage: actor.img ?? '',
       actor,
       hand: context.hand === 'both' ? undefined : context.hand,
+      wieldMode: context.wieldMode,
     });
     if (!dialogResult) return { cancelled: true, reason: 'dialogCancelled', warnings: [] };
+
+    // The dialog's own hand/wield-mode selections are authoritative from here on —
+    // `context.hand`/`context.wieldMode` were only the pre-dialog auto-detected defaults.
+    // `dialogResult.hand` (Main/Off select) takes priority when shown; two-handed hides
+    // it entirely, so wield mode alone decides the pool in that case.
+    const finalWieldMode = dialogResult.wieldMode ?? context.wieldMode;
+    const finalHand: 'main' | 'off' | 'both' = dialogResult.hand ?? wieldModeToBabHand(finalWieldMode);
 
     // Non-lethal switch penalty (§10.3): only applies when the final checked state deviates
     // from the weapon's own default, waived entirely by `nonLethalNoPenalty` — kept out of
@@ -144,7 +147,10 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // Proficient inverts the usual checked-applies-value shape (§10.7) — unchecked applies the −4.
     const isProficient = dialogResult.combatModifiers?.find(m => m.id === 'proficient')?.checked ?? false;
     const proficiencyPenalty = isProficient ? 0 : -4;
-    const twfPenalty = getTwoWeaponFightingPenalty(item, context.hand);
+    const twfPenalty = getTwoWeaponFightingPenalty(item, finalHand);
+    // BAB/ability mod (§10.7) — never baked into the authored `attackFormula` (defaults to
+    // bare `1d20`), so they're appended live here just like the damage formula's STR term.
+    const abilityMod = actor.system.abilities[context.attackAbility].mod;
 
     // Short-duration self-AEs (§10.7) — read back later by the Roll Defense Dialog (Story E)
     // when this same creature becomes a target before its next turn.
@@ -153,13 +159,18 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
 
     // `combatModifierSum()` (D20RollDialogApp.vue) already folded every checked toggle's
     // `value` (except proficient/nonLethal, both `value: 0`) into `situationalModifier`.
-    const flatPenalty = twfPenalty + nonLethalPenalty + proficiencyPenalty;
+    const flatPenalty = context.availableBab + abilityMod + twfPenalty + nonLethalPenalty + proficiencyPenalty;
     const baseAttackFormula = this.attackFormula.resolvedValue || '1d20';
     const attackFormula = appendFlatTerms(baseAttackFormula, flatPenalty, dialogResult.situationalModifier);
 
     const modifierList: RollModifier[] = (dialogResult.combatModifiers ?? [])
       .filter(m => m.checked && m.value !== 0)
       .map(m => ({ label: m.label, value: m.value }));
+    if (context.availableBab !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.BaseAttackBonus'), value: context.availableBab });
+    // Ability mod always shown (even 0) for bookkeeping — the attack card should always
+    // disclose which ability the roll used, not just when it happens to be non-zero.
+    const abilityAbbr = game.i18n.localize(`dnd35e.ABILITY.${context.attackAbility}.abbr`);
+    modifierList.push({ label: game.i18n.format('dnd35e.COMBAT.AbilityModifier', { ability: abilityAbbr }), value: abilityMod });
     if (twfPenalty !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.TwoWeaponFighting'), value: twfPenalty });
     if (nonLethalPenalty !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.CombatModifiers.NonLethal.Label'), value: nonLethalPenalty });
     if (proficiencyPenalty !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.CombatModifiers.Proficient.Label'), value: proficiencyPenalty });
@@ -171,7 +182,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // it when it carries the `rangedUsesStr` property (true bows/crossbows don't).
     const properties = this.properties as Set<string> | undefined;
     const includeStrTerm = this.type === ACTION_TYPE.MELEE_WEAPON_ATTACK || (properties?.has('rangedUsesStr') ?? false);
-    const strTerm = includeStrTerm ? getWieldModeStrTerm(dialogResult.wieldMode ?? 'primaryHand') : '';
+    const strTerm = includeStrTerm ? getWieldModeStrTerm(finalWieldMode) : '';
     const resolvedDamageFormula = `${this.damageFormula.resolvedValue || '0'}${strTerm}`;
     const damageBonusTerm = dialogResult.damageBonus ? ` + ${dialogResult.damageBonus}` : '';
 
@@ -186,10 +197,11 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       attackerName: actor.name,
       attackerImage: actor.img ?? '',
       weaponName,
-      hand: context.hand,
+      hand: finalHand,
       nonLethal: isNonLethal,
       resolvedDamageFormula,
       damageBonusTerm,
+      critRange: this.critRange,
       critMultiplier: this.critMultiplier,
       targets: targetRows,
       actionEconomySpent: null,
@@ -204,6 +216,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       warnings: [],
       attackTotal: attackRoll.total,
       nonLethal: isNonLethal,
+      finalHand,
       attackMessage,
     };
   }
