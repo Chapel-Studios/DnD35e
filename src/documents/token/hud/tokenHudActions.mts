@@ -18,20 +18,24 @@
  *
  * @module
  */
+import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import { detectWieldedHand } from '@actors/baseActor/logic/wieldMode.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
 import { canUseHandAttack, getHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
+import { getActorToken } from '@documents/token/logic/getActorToken.mjs';
 import { WEAPON_ACTION_TYPE, WEAPON_ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
 import type { IAction } from '@items/baseItem/actions/types.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
 
 import type { TokenHudCombatManeuverRow, TokenHudWeaponActionRow } from './tokenHudTypes.mjs';
 
-/** The combatant tracking this actor's per-round action economy, if any encounter is active. */
+/** The combatant tracking this actor's per-round action economy, if any encounter is active — resolved by the actor's own placed token (`getActorToken()`), never by actor id alone, which is ambiguous when multiple tokens share one prototype actor. */
 function getActiveCombatant(actor: ActorDnd35e): CombatantDnd35e | undefined {
   if (!game.combat?.started) return undefined;
+  const token = getActorToken(actor as unknown as ACTORS_DND35E);
+  if (token) return game.combat.getCombatantsByToken(token.id)[0] as CombatantDnd35e | undefined;
   return game.combat.combatants.find((combatant) => combatant.actor?.id === actor.id) as CombatantDnd35e | undefined;
 }
 
@@ -55,6 +59,7 @@ async function getWeaponActionChoices(actor: Creature): Promise<TokenHudWeaponAc
     if (
       !weapon
       || !actualAction
+      || !weapon?.system.isCarried
       || (!weapon?.system.isEquipped && actualAction?.requiresEquipped !== false)
     ) {
       continue;

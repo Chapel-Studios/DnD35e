@@ -285,7 +285,8 @@ class TokenHudDnd35e extends TokenHudVueBase {
   static async #onMovementAction (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
     const action = target.dataset.movementAction || null;
     const token = this.document;
-    let wasSuccess = false;
+    // Assume success by default; will be updated if the action is drop prone or stand up.
+    let wasSuccess = true;
 
     if (action === DROP_PRONE_MOVEMENT_ACTION || action === STAND_UP_MOVEMENT_ACTION) {
       const actor = this.actor;

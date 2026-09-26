@@ -7,12 +7,16 @@ interface UseWeaponAttackContext extends UseActionContext {
   /** Which hand(s) this attack draws BAB/STR-scaling from — derived live via `detectHand()`, never authored. Seeds both the dialog's Wield Mode toggle and its WieldedHand-select override. */
   wieldedHand: WieldedHand;
   attackAbility: AbilityKey;
+  /** Ability the STR-scaling damage term uses — independent of `attackAbility` (finesse swaps only the attack roll's ability, never damage's). Always STR under current SRD weapon properties. */
+  damageAbility: AbilityKey;
   availableBab: number;
   isFree: boolean;
   damageSituationalModifier: string;  // formula
   attackSituationalModifier: string;  // formula
   /** The actually-targeted token, carried straight through from the click that started this action — never re-derived from `target` by actor id, which is ambiguous when multiple unlinked tokens share a prototype actor. */
   targetToken?: TokenDnd35e;
+  /** The acting actor's own placed token (`getActorToken()`) — combatant lookups resolve via `combat.getCombatantsByToken()` off this, never by actor id, which is ambiguous when multiple tokens share one actor. */
+  actorToken?: TokenDnd35e;
 }
 
 /**

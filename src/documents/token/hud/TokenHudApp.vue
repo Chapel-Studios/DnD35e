@@ -11,57 +11,43 @@
   }
 
   const { context } = defineProps<Props>();
-  const {
-    leftHudContext,
-    rightHudContext,
-    bottomHudContext,
-    middleHudContext: {
-      useDefaultHpBar,
-      displayBar1,
-      bar1Value,
-      bar1Editable,
-      displayBar2,
-      bar2Value,
-      bar2Editable,
-    },
-  } = context;
 </script>
 
 <template>
-  <LeftHudBar v-bind="leftHudContext" />
-  <RightHudBar v-bind="rightHudContext" />
+  <LeftHudBar v-bind="context.leftHudContext" />
+  <RightHudBar v-bind="context.rightHudContext" />
 
   <div
     class="col middle"
-    :class="{ 'updater': !useDefaultHpBar}"
+    :class="{ 'updater': !context.middleHudContext.useDefaultHpBar}"
   >
     <div class="attribute bar2">
       <input 
-        v-if="displayBar2" 
+        v-if="context.middleHudContext.displayBar2" 
         type="text"
         name="bar2"
-        :value="bar2Value"
-        :disabled="!bar2Editable"
+        :value="context.middleHudContext.bar2Value"
+        :disabled="!context.middleHudContext.bar2Editable"
       >
     </div>
 
     <div
       class="attribute bar1"
-      :class="{ 'placeable-hud control-icon': !useDefaultHpBar}"
+      :class="{ 'placeable-hud control-icon': !context.middleHudContext.useDefaultHpBar}"
     >
-      <template v-if="displayBar1">
+      <template v-if="context.middleHudContext.displayBar1">
         <input
-          v-if="useDefaultHpBar"
+          v-if="context.middleHudContext.useDefaultHpBar"
           type="text"
           name="bar1"
-          :value="bar1Value"
-          :disabled="!bar1Editable"
+          :value="context.middleHudContext.bar1Value"
+          :disabled="!context.middleHudContext.bar1Editable"
         >
-        <HpUpdater v-else :editable="bar1Editable" compact />
+        <HpUpdater v-else :editable="context.middleHudContext.bar1Editable" compact />
       </template>
     </div>
 
-    <BottomHudBar v-bind="bottomHudContext" />
+    <BottomHudBar v-bind="context.bottomHudContext" />
   </div>
 </template>
 

@@ -18,8 +18,10 @@ const createCombatModifiers = (
   targetToken: TokenDnd35e | undefined,
   weaponNonLethalDefault: boolean
 ): CombatModifierToggle[] => {
-  const actorCombatant = game.combat?.combatants.find(c => c.actor?.id === actor.id) as CombatantDnd35e | undefined;
   const actorToken = getActorToken(actor);
+  const actorCombatant = actorToken
+    ? game.combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e | undefined
+    : undefined;
 
   const localize = (key: string) => game.i18n.localize(`dnd35e.COMBAT.CombatModifiers.${key}`);
 

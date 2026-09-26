@@ -284,7 +284,7 @@ abstract class Creature extends ActorDnd35e {
     // No explicit `UseActionContext` annotation — keeping the natural union lets `'hand' in
     // context` narrow to the real `'main' | 'off' | 'both'` literal type below instead of
     // widening it away.
-    const context = action instanceof WeaponAttackDataModel && targets.length
+    const context = action instanceof WeaponAttackDataModel
       ? WeaponAttackDataModel.PrepareActionContext(actor, item, targets, options.free, targetTokens?.[0])
       : { actor, target: targets };
     if (!context) {

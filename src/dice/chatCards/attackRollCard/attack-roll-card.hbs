@@ -10,23 +10,23 @@
       <div class="actor-header">
         <img src="{{ actorImage }}" alt="" class="actor-image" />
         <div class="title-text">
-          <h5 class="value" data-attacker-uuid="{{ attackerUuid }}">{{ actorName }}</h5>
+          <h5 class="value" data-attacker-uuid="{{ attackerUuid }}"></h5>
           <h6 class="label">- {{ weaponName }}</h6>
         </div>
       </div>
     </div>
 
-    {{#if targetName}}
+    {{#if targetUuid}}
     <div class="actor-info target">
       <span class="actor-header-title">{{ targetHeaderLabel }}</span>
       <div class="actor-header">
         <img src="{{ targetImage }}" alt="" class="actor-image" />
         <div class="title-text">
-          <button type="button" class="retarget-btn" data-action="retarget">
-            <i class="fas fa-bullseye" aria-label="{{ changeTargetsLabel }}"></i>
+          <button type="button" class="retarget-btn" data-action="retarget" aria-label="{{ changeTargetsLabel }}" title="{{ changeTargetsLabel }}">
+            <i class="fas fa-bullseye"></i>
             {{!-- <span>{{ changeTargetsLabel }}</span> --}}
           </button>
-          <h5 class="value" data-target-uuid="{{ targetUuid }}">{{ targetName }}</h5>
+          <h5 class="value" data-target-uuid="{{ targetUuid }}"></h5>
         </div>
       </div>
     </div>
@@ -68,7 +68,7 @@
   <ul class="attack-card-targets">
     {{#each targets}}
     <li class="target-row {{#if this.resolved}}resolved{{/if}}">
-      <span class="target-name" data-target-uuid="{{ this.actorUuid }}">{{ this.targetName }}</span>
+      <span class="target-name" data-target-uuid="{{ this.actorUuid }}"></span>
     </li>
     {{/each}}
   </ul>

@@ -21,10 +21,14 @@ import attackRollCardTemplateSource from './attack-roll-card.hbs?raw';
 
 const attackRollCardTemplate = Handlebars.compile(attackRollCardTemplateSource, { preventIndent: true });
 
-/** One target row on the attack card — `resolved` flips true once Story E's hit resolution runs. */
+/**
+ * One target row on the attack card — `resolved` flips true once Story E's hit resolution runs.
+ * Only the UUID is persisted (never the name): the display name is resolved per-viewer at render
+ * time via `resolveVisibleActorName()`, since a name baked into flags/content would be readable
+ * by any client regardless of token name-display permissions.
+ */
 interface AttackCardTargetRow {
   actorUuid: string;
-  targetName: string;
   targetImage: string;
   resolved: boolean;
 }
@@ -33,11 +37,11 @@ interface AttackCardTargetRow {
  * Persisted in `message.flags.dnd35e.attackCard` — everything needed to re-render the card
  * (Change Target(s)) or, in Story E, resolve the hit. `actionChainId` is `buildActionChainId()`'s
  * composite actor/item/action id (see `actionChainSteps.mts`), letting button handlers resolve
- * back to the live documents without duplicating actor/item/action data onto the flags.
+ * back to the live documents without duplicating actor/item/action data onto the flags. Actor
+ * names are deliberately not stored here — see `AttackCardTargetRow`'s note.
  */
 interface AttackCardFlags {
   actionChainId: string;
-  attackerName: string;
   attackerImage: string;
   weaponName: string;
   hand: WieldedHand;
@@ -57,19 +61,30 @@ interface AttackCardFlags {
   modifierList: RollModifier[];
 }
 
+/**
+ * Resolves the name a specific viewer is allowed to see for an actor UUID, mirroring Foundry's
+ * token name-display rules (`canUserSeeActorName()`) — used to fill in card names per-client at
+ * render time instead of ever persisting a name string on the message.
+ */
+function resolveVisibleActorName(uuid: string | null | undefined, user: User): string {
+  if (!uuid) return '';
+  const actor = foundry.utils.fromUuidSync(uuid) as unknown as ACTORS_DND35E | null;
+  if (!actor) return '';
+  if (!canUserSeeActorName(actor, user)) return game.i18n.localize('dnd35e.ROLL.HiddenName');
+  return actor.token?.name ?? actor.name;
+}
+
 /** Shared by the initial post and the Change Target(s) click handler's re-render. */
 function buildAttackCardContent(roll: D20Roll, flags: AttackCardFlags, diceRollHtml: string): string {
   const primaryTarget = flags.targets[0];
   const attackerUuid = parseActionChainId(flags.actionChainId)?.actorUuid ?? null;
   return attackRollCardTemplate({
     actorImage: flags.attackerImage,
-    actorName: flags.attackerName,
     attackerUuid,
     weaponName: flags.weaponName,
     // Mirrors the Roll Dialog's Attacker/Defender header labels (§10.8 parity).
     attackerHeaderLabel: game.i18n.localize('dnd35e.ROLL.Attacker'),
     targetHeaderLabel: game.i18n.localize('dnd35e.ROLL.Defender'),
-    targetName: primaryTarget?.targetName ?? null,
     targetImage: primaryTarget?.targetImage ?? '',
     targetUuid: primaryTarget?.actorUuid ?? null,
     resultLabel: game.i18n.localize('dnd35e.ROLL.Result'),
@@ -134,7 +149,7 @@ async function onRetarget(message: ChatMessage, flags: AttackCardFlags): Promise
   const resolvedRows = flags.targets.filter(target => target.resolved);
   const newRows: AttackCardTargetRow[] = Array.from(game.user?.targets ?? [])
     .filter(token => !!token.actor)
-    .map(token => ({ actorUuid: token.actor!.uuid, targetName: token.name, targetImage: token.actor!.img ?? '', resolved: false }));
+    .map(token => ({ actorUuid: token.actor!.uuid, targetImage: token.actor!.img ?? '', resolved: false }));
   const updatedFlags: AttackCardFlags = { ...flags, targets: [...resolvedRows, ...newRows] };
 
   const roll = message.rolls[0] as D20Roll;
@@ -146,34 +161,31 @@ async function onRetarget(message: ChatMessage, flags: AttackCardFlags): Promise
 }
 
 /**
- * Redacts the attacker/target name(s) rendered into the card's static, shared `content`
- * HTML for the CURRENT viewer only (poc.10 Story D follow-up) — `content` is one string
- * persisted on the message and identical for every client, so this must re-run per viewer
- * at actual render time rather than baking a single name in at author time. GM viewers are
- * left untouched (`canUserSeeActorName()` always allows them).
+ * Fills in the attacker/target name(s) into the card's static, shared `content` HTML for the
+ * CURRENT viewer only (poc.10 Story D follow-up) — no name is ever persisted in `content` or
+ * the flags (both are one string/object shared by every client), so this must resolve and
+ * write the correct per-viewer name at actual render time rather than redacting a baked-in one.
  */
-function redactAttackCardNames(message: ChatMessage, html: HTMLElement): void {
+function populateActorNames(message: ChatMessage, html: HTMLElement): void {
   const flags = message.getFlag(SYSTEM_ID, 'attackCard') as AttackCardFlags | undefined;
   if (!flags) return;
 
-  const hiddenName = game.i18n.localize('dnd35e.ROLL.HiddenName');
-  const redact = (el: HTMLElement | null, uuid: string | undefined): void => {
-    if (!el || !uuid) return;
-    const revealedActor = foundry.utils.fromUuidSync(uuid) as unknown as ACTORS_DND35E | null;
-    if (!canUserSeeActorName(revealedActor, game.user)) el.textContent = hiddenName;
+  const setName = (el: HTMLElement | null, uuid: string | undefined): void => {
+    if (!el) return;
+    el.textContent = resolveVisibleActorName(uuid, game.user);
   };
 
   const attackerUuid = parseActionChainId(flags.actionChainId)?.actorUuid;
-  redact(html.querySelector<HTMLElement>('[data-attacker-uuid]'), attackerUuid);
-  redact(html.querySelector<HTMLElement>('.actor-info.target [data-target-uuid]'), flags.targets[0]?.actorUuid);
+  setName(html.querySelector<HTMLElement>('[data-attacker-uuid]'), attackerUuid);
+  setName(html.querySelector<HTMLElement>('.actor-info.target [data-target-uuid]'), flags.targets[0]?.actorUuid);
   html.querySelectorAll<HTMLElement>('.target-row [data-target-uuid]').forEach((el) => {
-    redact(el, el.dataset.targetUuid);
+    setName(el, el.dataset.targetUuid);
   });
 }
 
 /** Wires the "Change Target(s)" button, gated to GM/attacker-owner — see registerChatCardActions.mts. */
 function wireAttackRollCardButton(message: ChatMessage, html: HTMLElement): void {
-  redactAttackCardNames(message, html);
+  populateActorNames(message, html);
 
   const retargetButton = html.querySelector<HTMLElement>('[data-action="retarget"]');
   if (!retargetButton) return;

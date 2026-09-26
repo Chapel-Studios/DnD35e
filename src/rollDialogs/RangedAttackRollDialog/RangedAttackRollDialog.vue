@@ -1,6 +1,5 @@
 <template>
-  <RollDialog>
-    <WeaponAttackRollDialog />
+  <WeaponAttackRollDialog>
     <div v-if="ammoOptions.length" class="form-group subgrid">
       <label for="ammo-select">{{ localize('dnd35e.COMBAT.Ammo') }}</label>
       <select id="ammo-select" v-model="ammo">
@@ -9,14 +8,13 @@
         </option>
       </select>
     </div>
-  </RollDialog>
+  </WeaponAttackRollDialog>
 </template>
 
 <script setup lang="ts">
   import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
   import { provide } from 'vue';
 
-  import RollDialog from '../RollDialog/RollDialog.vue';
   import { RollDialogStoreSymbol } from '../RollDialog/RollDialogStore.mjs';
   import WeaponAttackRollDialog from '../WeaponAttackRollDialog/WeaponAttackRollDialog.vue';
   import { useRangedAttackRollDialogStore } from './RangedAttackRollDialogStore.mjs';

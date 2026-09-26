@@ -47,11 +47,15 @@ function extractFlatModifier(term: string): { flat: number; hasDice: boolean } {
  * dice (e.g. `1d6`) — a term with dice is flavor-tagged with `labels.situational` and appended
  * raw; a plain flat number is appended as a normal signed term instead (unlabeled — it already
  * gets its own modifier-breakdown entry via `extractFlatModifier()`, see callers). `labels.base`
- * flavor-tags the `1d20` die itself so it always reads as the check, never confusable with a
- * situational die.
+ * flavors the `1d20` die directly (`1d20[label]`, no parens) so it always reads as the check,
+ * never confusable with a situational die — `flavorTerm()`'s parenthesization is reserved for
+ * the (possibly multi-term) situational modifier: wrapping the bare `1d20` in parens would turn
+ * `roll.terms[0]` into a `ParentheticalTerm` instead of a `Die`, which is what `D20Roll#d20`
+ * (and therefore natural 1/20 detection) requires.
  */
 function buildD20Formula(base: number, situationalModifier: string, labels?: { base?: string; situational?: string }): string {
-  const terms = [labels?.base ? flavorTerm('1d20', labels.base) : '1d20'];
+  const terms = [labels?.base ? `1d20[${labels.base}]` : '1d20'];
+
   if (base !== 0) terms.push(base >= 0 ? `+ ${base}` : `- ${Math.abs(base)}`);
   const trimmed = situationalModifier.trim();
   const { flat, hasDice } = extractFlatModifier(trimmed);

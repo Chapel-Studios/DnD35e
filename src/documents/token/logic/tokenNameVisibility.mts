@@ -26,9 +26,14 @@ function canUserSeeActorName(actor: ACTORS_DND35E | null | undefined, user: User
   const displayMode = (actor.token ?? actor.prototypeToken)?.displayName;
   const DISPLAY_MODES = CONST.TOKEN_DISPLAY_MODES;
   if (displayMode === DISPLAY_MODES.ALWAYS || displayMode === DISPLAY_MODES.HOVER) return true;
+  if (
+    displayMode === DISPLAY_MODES.OWNER_HOVER
+    || displayMode === DISPLAY_MODES.OWNER
+    || displayMode === DISPLAY_MODES.CONTROL
+  ) return actor.testUserPermission(user, 'OWNER');
   if (displayMode === DISPLAY_MODES.NONE || displayMode === undefined) return false;
 
-  return actor.testUserPermission(user, 'OWNER');
+  return false;
 }
 
 export { canUserSeeActorName };

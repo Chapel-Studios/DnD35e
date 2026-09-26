@@ -7,6 +7,7 @@ import { DAMAGE_TYPES, SIZE_MODIFIERS, STR } from '@constants/index.mjs';
 import { canUseHandAttack, getActionEconomy, getHandBab, markMovedAfterAttack, spendAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
+import { getActorToken } from '@documents/token/logic/getActorToken.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { DocumentContext } from '@helpers/formulae/index.mjs';
@@ -128,8 +129,9 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   // (§10.11), so execution itself never re-gates on it here.
   protected override _canExecute(context: UseWeaponAttackContext): WeaponAttackActionResult {
     const combat = game.combat;
-    const combatant = combat?.combatants
-      .find<CombatantDnd35e<CombatDnd35e>>((c) => c.actor?.id === context.actor.id);
+    const combatant = context.actorToken
+      ? combat?.getCombatantsByToken(context.actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
+      : undefined;
 
     if (
       combat?.started
@@ -309,8 +311,11 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    */
   private _computeDamageFormula(context: UseWeaponAttackContext, formulaContext: FormulaContext): string {
     const properties = this.properties as Set<string> | undefined;
-    const includeStrTerm = this.type === ACTION_TYPE.MELEE || (properties?.has('rangedUsesStr') ?? false);
-    const rawStrTerm = includeStrTerm ? getWeaponAttackActionAbilityModTerm(context.wieldedHand, context.attackAbility) : '';
+    const includeStrTerm = this.type === ACTION_TYPE.MELEE
+      || (properties?.has('rangedUsesStr') ?? false);
+    const rawStrTerm = includeStrTerm
+      ? getWeaponAttackActionAbilityModTerm(context.wieldedHand, context.attackAbility)
+      : '';
     const strTerm = rawStrTerm
       ? FormulaData.resolveSource(FormulaData.toSource(rawStrTerm, { expectedType: 'string' }), formulaContext, '')
       : '';
@@ -434,14 +439,12 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
 
     const targetRows: AttackCardTargetRow[] = (context.target ?? []).map(t => ({
       actorUuid: t.uuid,
-      targetName: t.token?.name ?? t.name,
       targetImage: t.img ?? '',
       resolved: false,
     }));
 
     const attackCardFlags: AttackCardFlags = {
       actionChainId: buildActionChainId(actor, this),
-      attackerName: actor.token?.name ?? actor.name,
       attackerImage: actor.img ?? '',
       weaponName: attackName,
       hand: context.wieldedHand,
@@ -477,9 +480,9 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // dialog's final resolved hand (`result.finalHand`), not the pre-dialog auto-detected
     // `hand` used only for the availability gate above — the two can differ.
     const combat = game.combat;
-    const combatant = game.combat?.combatants
-      .find(c => c.actor?.id === context.actor.id)
-      ?? null;
+    const combatant = context.actorToken
+      ? (combat?.getCombatantsByToken(context.actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
+      : null;
     if (combat?.started && combatant && !result.cancelled && !context.isFree) {
       const standardSpent = await spendAction(combatant, ['standard']);
       const spentHand = result.finalHand ?? context.wieldedHand;
@@ -515,18 +518,26 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     ) return null;
 
     const hand = detectWieldedHand(actor, item);
-    const combatant = game.combat?.combatants.find(c => c.actor?.id === actor.id) ?? null;
-    if (!hand || !combatant) return null;
+    const actorToken = getActorToken(actor);
+    const combatant = actorToken
+      ? (game.combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
+      : null;
+    if (!hand) return null;
 
-    const availableBab = getHandBab(combatant, hand)
-      ?? actor.system.bab;
+    // No active combatant (no encounter, or actor not yet added to one) — full BAB, mirrors
+    // the Token HUD's own "not in combat" fallback (tokenHudActions.mts).
+    const availableBab = combatant
+      ? getHandBab(combatant, hand) ?? actor.system.bab
+      : actor.system.bab;
 
     return {
       actor,
       target,
       targetToken,
+      actorToken,
       wieldedHand: hand,
       attackAbility: STR,
+      damageAbility: STR,
       isFree: !!isFree,
       availableBab,
       attackSituationalModifier: '',
