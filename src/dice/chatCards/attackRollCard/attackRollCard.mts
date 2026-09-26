@@ -10,6 +10,7 @@ import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
+import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import { canUserSeeActorName } from '@documents/token/logic/tokenNameVisibility.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
@@ -29,6 +30,8 @@ const attackRollCardTemplate = Handlebars.compile(attackRollCardTemplateSource, 
  */
 interface AttackCardTargetRow {
   actorUuid: string;
+  /** UUID of the placed token this row was resolved against, if known — see `resolveVisibleActorName()`. */
+  tokenUuid: string | null;
   targetImage: string;
   resolved: boolean;
 }
@@ -42,6 +45,8 @@ interface AttackCardTargetRow {
  */
 interface AttackCardFlags {
   actionChainId: string;
+  /** UUID of the placed token that initiated the attack (e.g. via the Token HUD), if known — see `resolveVisibleActorName()`. `null` for callers that never threaded one through. */
+  attackerTokenUuid: string | null;
   attackerImage: string;
   weaponName: string;
   hand: WieldedHand;
@@ -66,14 +71,17 @@ interface AttackCardFlags {
 /**
  * Resolves the name a specific viewer is allowed to see for an actor UUID, mirroring Foundry's
  * token name-display rules (`canUserSeeActorName()`) — used to fill in card names per-client at
- * render time instead of ever persisting a name string on the message.
+ * render time instead of ever persisting a name string on the message. `tokenUuid`, when known,
+ * resolves through the exact placed token instead of the actor's ambiguous `token`/`prototypeToken`
+ * fallback — a linked actor with multiple placed tokens otherwise loses which one actually attacked.
  */
-function resolveVisibleActorName(uuid: string | null | undefined, user: User): string {
+function resolveVisibleActorName(uuid: string | null | undefined, user: User, tokenUuid?: string | null): string {
   if (!uuid) return '';
   const actor = foundry.utils.fromUuidSync(uuid) as unknown as ACTORS_DND35E | null;
   if (!actor) return '';
-  if (!canUserSeeActorName(actor, user)) return game.i18n.localize('dnd35e.ROLL.HiddenName');
-  return actor.token?.name ?? actor.name;
+  const token = tokenUuid ? foundry.utils.fromUuidSync(tokenUuid) as unknown as TokenDocumentDnd35e | null : null;
+  if (!canUserSeeActorName(actor, user, token)) return game.i18n.localize('dnd35e.ROLL.HiddenName');
+  return token?.name ?? actor.token?.name ?? actor.name;
 }
 
 /** Shared by the initial post and the Change Target(s) click handler's re-render. */
@@ -89,6 +97,7 @@ function buildAttackCardContent(roll: D20Roll, flags: AttackCardFlags, diceRollH
     targetHeaderLabel: game.i18n.localize('dnd35e.ROLL.Defender'),
     targetImage: primaryTarget?.targetImage ?? '',
     targetUuid: primaryTarget?.actorUuid ?? null,
+    targetTokenUuid: primaryTarget?.tokenUuid ?? null,
     resultLabel: game.i18n.localize('dnd35e.ROLL.Result'),
     changeTargetsLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.ChangeTargets'),
     damagePreviewLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.DamagePreview'),
@@ -175,7 +184,12 @@ async function onRetarget(message: ChatMessage, flags: AttackCardFlags): Promise
   const resolvedRows = flags.targets.filter(target => target.resolved);
   const newRows: AttackCardTargetRow[] = Array.from(game.user?.targets ?? [])
     .filter(token => !!token.actor)
-    .map(token => ({ actorUuid: token.actor!.uuid, targetImage: token.actor!.img ?? '', resolved: false }));
+    .map(token => ({
+      actorUuid: token.actor!.uuid,
+      tokenUuid: token.document.uuid,
+      targetImage: token.actor!.img ?? '',
+      resolved: false,
+    }));
   const updatedFlags: AttackCardFlags = { ...flags, targets: [...resolvedRows, ...newRows] };
 
   const roll = message.rolls[0] as D20Roll;
@@ -196,16 +210,16 @@ function populateActorNames(message: ChatMessage, html: HTMLElement): void {
   const flags = message.getFlag(SYSTEM_ID, 'attackCard') as AttackCardFlags | undefined;
   if (!flags) return;
 
-  const setName = (el: HTMLElement | null, uuid: string | undefined): void => {
+  const setName = (el: HTMLElement | null, uuid: string | undefined, tokenUuid?: string | null): void => {
     if (!el) return;
-    el.textContent = resolveVisibleActorName(uuid, game.user);
+    el.textContent = resolveVisibleActorName(uuid, game.user, tokenUuid);
   };
 
   const attackerUuid = parseActionChainId(flags.actionChainId)?.actorUuid;
-  setName(html.querySelector<HTMLElement>('[data-attacker-uuid]'), attackerUuid);
-  setName(html.querySelector<HTMLElement>('.actor-info.target [data-target-uuid]'), flags.targets[0]?.actorUuid);
+  setName(html.querySelector<HTMLElement>('[data-attacker-uuid]'), attackerUuid, flags.attackerTokenUuid);
+  setName(html.querySelector<HTMLElement>('.actor-info.target [data-target-uuid]'), flags.targets[0]?.actorUuid, flags.targets[0]?.tokenUuid);
   html.querySelectorAll<HTMLElement>('.target-row [data-target-uuid]').forEach((el) => {
-    setName(el, el.dataset.targetUuid);
+    setName(el, el.dataset.targetUuid, el.dataset.targetTokenUuid);
   });
 }
 

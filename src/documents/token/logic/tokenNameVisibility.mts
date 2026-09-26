@@ -6,6 +6,7 @@
  * @module
  */
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
+import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 
 /**
  * GMs always see the real name. Otherwise this mirrors Foundry's own token-nameplate
@@ -15,15 +16,16 @@ import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
  * `OWNER_HOVER`/`OWNER`/`CONTROL` all require actual ownership, since a non-owner can never
  * see the name via those modes regardless of hovering.
  *
- * An unlinked token's own synthetic actor (`actor.token`) carries the actual display mode
- * for that specific token; a linked/world actor has no single placed-token instance to read,
- * so its `prototypeToken`'s mode is used as the best available default.
+ * `token` — the specific placed token this name check is for (e.g. the one whose HUD
+ * launched an attack), if known. Preferred over `actor.token`/`actor.prototypeToken`
+ * since a linked actor with multiple placed tokens has no single "the" token instance to
+ * read a display mode from; falls back to the old actor-only resolution when omitted.
  */
-function canUserSeeActorName(actor: ACTORS_DND35E | null | undefined, user: User): boolean {
+function canUserSeeActorName(actor: ACTORS_DND35E | null | undefined, user: User, token?: TokenDocumentDnd35e | null): boolean {
   if (!actor) return false;
   if (user.isGM) return true;
 
-  const displayMode = (actor.token ?? actor.prototypeToken)?.displayName;
+  const displayMode = (token ?? actor.token ?? actor.prototypeToken)?.displayName;
   const DISPLAY_MODES = CONST.TOKEN_DISPLAY_MODES;
   if (displayMode === DISPLAY_MODES.ALWAYS || displayMode === DISPLAY_MODES.HOVER) return true;
   if (

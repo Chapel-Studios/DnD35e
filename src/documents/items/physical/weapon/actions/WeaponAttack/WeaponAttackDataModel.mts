@@ -485,14 +485,22 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
 
     const { resolvedDamageFormula, damageBonusTerm } = this._buildDamageSnapshot(context, formulaContext, dialogResult);
 
-    const targetRows: AttackCardTargetRow[] = (context.target ?? []).map(t => ({
-      actorUuid: t.uuid,
-      targetImage: t.img ?? '',
-      resolved: false,
-    }));
+    const targetRows: AttackCardTargetRow[] = (context.target ?? []).map(t => {
+      // Same primary-target-token resolution `MeleeAttackDataModel._validateMeleeReach()`
+      // uses — `context.targetToken` only resolves the first target, others fall back.
+      const token = (t === context.target?.[0] ? context.targetToken : undefined)
+        ?? (t.getActiveTokens()[0] as TokenDnd35e | undefined);
+      return {
+        actorUuid: t.uuid,
+        tokenUuid: token?.document.uuid ?? null,
+        targetImage: t.img ?? '',
+        resolved: false,
+      };
+    });
 
     const attackCardFlags: AttackCardFlags = {
       actionChainId: buildActionChainId(actor, this),
+      attackerTokenUuid: context.actorToken?.document.uuid ?? null,
       attackerImage: actor.img ?? '',
       weaponName: attackName,
       hand: context.wieldedHand,
