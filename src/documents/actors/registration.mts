@@ -4,7 +4,9 @@ import { ActorProxyDnd35e } from '@actors/baseActor/index.mjs';
 import { Character, CharacterSystemModel } from '@actors/character/index.mjs';
 import { CharacterSheet } from '@actors/character/sheet/CharacterSheet.mjs';
 import { AmbientLightDnd35e } from '@canvas/light/AmbientLightDnd35e.mjs';
-import type { Dnd35eMovementActionConfig } from '@canvas/token/logic/movementActionGating.mjs';
+import { BLINDED_CONDITION_ID, buildConditionStatusEffects } from '@constants/conditions.mjs';
+import { TokenHudDnd35e } from '@documents/token/hud/TokenHudDnd35e.mjs';
+import type { Dnd35eMovementActionConfig } from '@documents/token/logic/movementActionGating.mjs';
 import {
   buildChargeMovementActionConfig,
   buildDoubleMoveMovementActionConfig,
@@ -32,11 +34,11 @@ import {
   SPEED_GATED_ACTIONS,
   STAND_UP_MOVEMENT_ACTION,
   WITHDRAW_MOVEMENT_ACTION,
-} from '@canvas/token/logic/movementActionGating.mjs';
-import { registerMovementActionHudDecoration } from '@canvas/token/logic/movementActionHudDecoration.mjs';
-import { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
-import { TokenRulerDnd35e } from '@canvas/token/TokenRulerDnd35e.mjs';
-import { BLINDED_CONDITION_ID, buildConditionStatusEffects } from '@constants/conditions.mjs';
+} from '@documents/token/logic/movementActionGating.mjs';
+import { registerMovementActionHudDecoration } from '@documents/token/logic/movementActionHudDecoration.mjs';
+import { registerTokenConfigHpBarOption } from '@documents/token/logic/tokenConfigHpBarOption.mjs';
+import { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
+import { TokenRulerDnd35e } from '@documents/token/TokenRulerDnd35e.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema, withActionCollectionAspects, withItemCollectionAspects } from '@helpers/formulae/index.mjs';
 import { TokenDocumentDnd35e } from '@scene/tokenDocument/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -56,6 +58,7 @@ export const registerActors = () => {
     CONFIG.Token.objectClass = TokenDnd35e;
     CONFIG.Token.documentClass = TokenDocumentDnd35e;
     CONFIG.Token.rulerClass = TokenRulerDnd35e;
+    CONFIG.Token.hudClass = TokenHudDnd35e;
     CONFIG.AmbientLight.objectClass = AmbientLightDnd35e;
 
     // Register the dnd35e "run" movement action (4x land speed, straight line only).
@@ -159,4 +162,5 @@ export const registerActors = () => {
   });
 
   registerMovementActionHudDecoration();
+  registerTokenConfigHpBarOption();
 };

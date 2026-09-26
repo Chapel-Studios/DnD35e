@@ -1,4 +1,6 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
+import { PRONE_CONDITION_ID } from '@constants/conditions.mjs';
+import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import {
   canSelectChargeMovementAction,
   canSelectCrawlMovementAction,
@@ -16,9 +18,7 @@ import {
   isMovementActionAffordable,
   isRunAffordable,
   SPEED_GATED_ACTIONS,
-} from '@canvas/token/logic/movementActionGating.mjs';
-import { PRONE_CONDITION_ID } from '@constants/conditions.mjs';
-import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
+} from '@documents/token/logic/movementActionGating.mjs';
 import { afterEach, describe, expect, it } from 'vitest';
 
 const actorWithSpeed = (speed: Partial<Record<string, number>>): ActorDnd35e =>

@@ -33,12 +33,28 @@ const HP_ADJUSTMENT_TYPE_OPTIONS: SelectOption<HpAdjustmentType>[] = HP_ADJUSTME
   label: HP_ADJUSTMENT_TYPE_LOCALIZED[value],
 }));
 
+const HP_ADJUSTMENT_TYPE_ICON = {
+  [DAMAGE_ADJUSTMENT]: 'fa-solid fa-heart-crack',
+  [HEALING_ADJUSTMENT]: 'fa-solid fa-heart-pulse',
+  [TEMPORARY_ADJUSTMENT]: 'fa-solid fa-shield',
+  [NONLETHAL_ADJUSTMENT]: 'fa-solid fa-moon',
+} as const satisfies Record<HpAdjustmentType, string>;
+
+// Icon-only variant of HP_ADJUSTMENT_TYPE_OPTIONS — label is kept for the tooltip (see MultiOptionToggle's iconOnly prop).
+const HP_ADJUSTMENT_TYPE_ICON_OPTIONS: SelectOption<HpAdjustmentType>[] = HP_ADJUSTMENT_TYPES.map(value => ({
+  value,
+  label: HP_ADJUSTMENT_TYPE_LOCALIZED[value],
+  icon: HP_ADJUSTMENT_TYPE_ICON[value],
+}));
+
 export type {
   HpAdjustmentType,
 };
 
 export {
   HP_ADJUSTMENT_TYPE,
+  HP_ADJUSTMENT_TYPE_ICON,
+  HP_ADJUSTMENT_TYPE_ICON_OPTIONS,
   HP_ADJUSTMENT_TYPE_LOCALIZED,
   HP_ADJUSTMENT_TYPE_OPTIONS,
   HP_ADJUSTMENT_TYPES,

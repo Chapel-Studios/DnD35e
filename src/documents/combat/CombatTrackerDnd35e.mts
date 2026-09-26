@@ -16,19 +16,24 @@
  * excluded from the returned shape — Vue's `reactive()` proxies break class instances that use
  * private (`#`) fields, which core Documents do.
  *
+ * One new action is added on top of core's set: `toggleActionEconomy` (GM click on a
+ * standard/move/minor/swift/aoo action-economy pip in `CombatTrackerRow.vue`, spending or
+ * refunding one use of that pool via `toggleActionAvailability()` — see `combatantActionEconomy.mts`).
+ *
  * @module
  */
 import type { ApplicationRenderContext } from '@client/applications/_types.mjs';
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
+import { AOO_ACTION, MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
 import type { CombatTrackerContext, CombatTrackerTurn } from '@documents/combat/combatTrackerTypes.mjs';
-import CombatTrackerApp from '@vueApps/combatTracker/CombatTrackerApp.vue';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
 import type { App, Component } from 'vue';
 import { createApp, reactive } from 'vue';
 
-import { getActionEconomy } from './combatant/combatantActionEconomy.mjs';
+import { getActionEconomy, toggleActionAvailability } from './combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from './combatant/CombatantDnd35e.mjs';
 import type { CombatDnd35e } from './CombatDnd35e.mjs';
+import CombatTrackerApp from './combatTracker/CombatTrackerApp.vue';
 
 /** Intermediate plain shape `_prepareCombatContext`/`_prepareTrackerContext` mutate in place. */
 interface RawTrackerContext extends ApplicationRenderContext {
@@ -52,6 +57,16 @@ const CombatTrackerCore = foundry.applications.sidebar.tabs.CombatTracker<Combat
 const CombatTrackerVueBase = useVueAppBaseMixin(CombatTrackerCore);
 
 class CombatTrackerDnd35e extends CombatTrackerVueBase {
+  static override DEFAULT_OPTIONS = foundry.utils.mergeObject(
+    super.DEFAULT_OPTIONS,
+    {
+      actions: {
+        toggleActionEconomy: CombatTrackerDnd35e.#onToggleActionEconomy,
+      },
+    },
+    { inplace: false }
+  );
+
   /** Persistent reactive context handed to the Vue app; mutated in place on every render. */
   private readonly reactiveContext: CombatTrackerContext = reactive({
     isGM: false,
@@ -79,6 +94,9 @@ class CombatTrackerDnd35e extends CombatTrackerVueBase {
     const raw = await super._prepareContext(options) as RawTrackerContext;
     await this._prepareCombatContext(raw, options);
     await this._prepareTrackerContext(raw, options);
+    // Core's `_prepareTrackerContext` returns early without setting `turns` at all when there's
+    // no viewed combat (`if (!combat) return;`).
+    raw.turns ??= [];
 
     const combat = this.viewed;
     for (const turn of raw.turns) {
@@ -112,6 +130,40 @@ class CombatTrackerDnd35e extends CombatTrackerVueBase {
 
   protected override _createVueApp (): App {
     return createApp(this.vueComponent, { context: this.reactiveContext });
+  }
+
+  /** Action-economy pip click (GM only, template only renders `data-action` for `isGM`) \u2014 spends/refunds that single pool by 1. */
+  static async #onToggleActionEconomy (this: CombatTrackerDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
+    const flag = target.dataset.actionFlag;
+    if (
+      flag !== STANDARD_ACTION
+      && flag !== MOVE_ACTION
+      && flag !== MINOR_ACTION
+      && flag !== SWIFT_ACTION
+      && flag !== AOO_ACTION
+    ) return;
+
+    const { combatantId } = target.closest<HTMLElement>('[data-combatant-id]')?.dataset ?? {};
+    const combatant = combatantId ? this.viewed?.combatants.get(combatantId) : undefined;
+    if (!combatant) return;
+
+    await toggleActionAvailability(combatant as unknown as CombatantDnd35e, flag);
+  }
+
+  /**
+   * Core's `_onClickAction` reads `this.viewed` directly with no fallback (`combat[target.dataset.action]?.()`)
+   * — that field is only refreshed by `_configureRenderOptions` on the app's own render pass, so if a hook fires
+   * `ui.combat.render({ combat: null })` (e.g. `Scene#activate`/`deactivate`) and `#inferCombat()` can't find a
+   * replacement (combat not marked `active` and its `scene` doesn't match the now-current scene), `viewed` goes
+   * null while our Vue-rendered controls are still showing from the previous render, and every button throws
+   * `Cannot read properties of null`. Re-sync from `this.combats` before delegating, since a click on a
+   * `.combat-control` button only happens when Vue's own context still believes a combat is being viewed.
+   */
+  protected override async _onClickAction (event: PointerEvent, target: HTMLElement): Promise<void> {
+    if (!this.viewed && (event.target as HTMLElement | null)?.closest('.combat-control')) {
+      this.viewed = this.combats.find(c => c.active) ?? this.combats[0] ?? null;
+    }
+    return super._onClickAction(event, target);
   }
 }
 

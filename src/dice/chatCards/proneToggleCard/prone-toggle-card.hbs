@@ -1,0 +1,29 @@
+{{!--
+  Drop Prone/Stand Up toggle chat card. Rendered by `buildProneToggleCard()` in
+  rollMessages.mts via the same precompiled `?raw` + `Handlebars.compile()` pattern as
+  `move-action-card.hbs`. Deliberately has no distance/budget body — the confirming drag
+  used to trigger this toggle (see `movementActionGating.mts`'s `buildProneToggleMovementActionConfig()`)
+  isn't real movement, so showing a "cost / budget" line for it would be meaningless.
+--}}
+<div class="dnd35e chat-card prone-toggle-card {{#if undone}}is-undone{{/if}}">
+  <header class="card-header">
+    <h5 class="combatant-name">{{ combatantName }}</h5>
+    <h6 class="prone-toggle-label">{{ label }}</h6>
+  </header>
+
+  {{#if spentLabels}}
+  <div class="card-body">
+    {{#each spentLabels}}
+    <span class="spent-action">{{ this }}</span>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  <footer class="card-footer">
+    {{#if undone}}
+    <span class="undone-label">{{localize "dnd35e.ROLL.PRONE_TOGGLE_CARD.Undone"}}</span>
+    {{else}}
+    <button type="button" data-action="undo-prone-toggle">{{localize "dnd35e.ROLL.PRONE_TOGGLE_CARD.Undo"}}</button>
+    {{/if}}
+  </footer>
+</div>

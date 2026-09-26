@@ -47,12 +47,12 @@ function evaluateChangeCondition(
     (reason) => pushPreparationWarningToHosts([warnHost, effectHost], change.key, `Condition "${condition}": ${reason}`)
   );
 
-  if (resolved !== 'true' && resolved !== 'false') {
+  if (resolved !== true && resolved !== false) {
     console.error(`evaluateChangeCondition: condition "${condition}" did not resolve to a valid boolean expression (got "${resolved}") for change targeting "${change.key}"`);
     return false;
   }
 
-  return resolved === 'true';
+  return resolved === true;
 }
 
 export { evaluateChangeCondition };

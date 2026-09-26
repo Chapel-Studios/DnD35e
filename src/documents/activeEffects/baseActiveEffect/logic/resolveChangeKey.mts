@@ -115,10 +115,10 @@ function resolveActiveEffectChangeKey(
       [],
       () => { failed = true; }
     );
-    if (failed || (resolved !== 'true' && resolved !== 'false')) {
+    if (failed || (resolved !== true && resolved !== false)) {
       return fail(`Conditional key "${rawKey}": when() condition "${clause.condition}" did not resolve to a valid boolean expression`);
     }
-    if (resolved === 'true') {
+    if (resolved === true) {
       winningTarget = clause.value;
       break;
     }

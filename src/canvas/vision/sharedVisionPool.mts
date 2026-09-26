@@ -1,5 +1,5 @@
 import { Creature } from '@actors/creature/index.mjs';
-import type { TokenDnd35e } from '@canvas/token/TokenDnd35e.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { DISPLAY_WORLD_KEYS } from '@settings/display/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 

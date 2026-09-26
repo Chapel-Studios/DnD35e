@@ -86,11 +86,12 @@ abstract class DocumentSystemModel<TDocType extends foundry.abstract.DataModel |
           expectedType: 'string' | 'number' | 'boolean';
           resolvedValue: string | null;
         };
-        formulaSource.resolvedValue = formulaSource.formula
+        const resolved = formulaSource.formula
           ? FormulaData.resolveSource(formulaSource, dataMap, '', excluded, (reason) => {
             pushPreparationWarning(doc as unknown as PreparationWarningHost, fieldPath, reason);
           })
           : null;
+        formulaSource.resolvedValue = resolved === null ? null : String(resolved);
         continue;
       }
 

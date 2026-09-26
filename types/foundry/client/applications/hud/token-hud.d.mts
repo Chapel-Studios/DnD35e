@@ -13,7 +13,7 @@ import type { PlaceableHUDContext } from './placeable-hud.mjs';
  * This interface provides controls for visibility, attribute bars, elevation, status effects, and more.
  * The TokenHUD implementation can be configured and replaced via {@link CONFIG.Token.hudClass}.
  */
-export default class TokenHUD extends HandlebarsApplicationMixin(BasePlaceableHUD) {
+export default class TokenHUD<T extends Token = Token> extends HandlebarsApplicationMixin(BasePlaceableHUD) {
   static override DEFAULT_OPTIONS: DeepPartial<ApplicationConfiguration>;
 
   static override PARTS: Record<string, HandlebarsTemplatePart>;

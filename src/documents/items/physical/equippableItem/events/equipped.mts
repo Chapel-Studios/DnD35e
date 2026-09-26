@@ -5,7 +5,7 @@ import { spendAction } from '@documents/combat/combatant/combatantActionEconomy.
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { DocumentEvent, EventChecker, EventCheckResult } from '@helpers/documentEvents/types.mjs';
 import { weaponItemType } from '@items/itemTypes.mjs';
-import { buildActionEconomyWarningCard, buildItemActionSpentCard } from '@source/dice/rollMessages.mjs';
+import { buildActionEconomyWarningCard, buildItemActionSpentCard } from '@source/dice/index.mjs';
 
 import type { EquippableItem, EquippableItemSystemData } from '../index.mjs';
 

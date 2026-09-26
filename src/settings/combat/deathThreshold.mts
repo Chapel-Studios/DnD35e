@@ -49,7 +49,11 @@ const resolveDeathThresholdValue = (setting: DeathThresholdSetting, actor?: Acto
     )
     : normalizedFormula;
 
-  if (resolvedFormula) {
+  if (typeof resolvedFormula === 'number' && Number.isFinite(resolvedFormula)) {
+    return resolvedFormula;
+  }
+
+  if (typeof resolvedFormula === 'string' && resolvedFormula) {
     try {
       const evaluated = Roll.safeEval(resolvedFormula);
       if (Number.isFinite(evaluated)) return evaluated;

@@ -6,11 +6,32 @@
 - [x] Spike 3 — AE short-duration expiry mechanism spike — resolved **native mechanism, no custom hook**
 - [x] Story A — Combat tracker infrastructure, initiative, flat-footed — all checklist items checked off in `phase-10-basic-combat.md`
 - [x] Story B — Combatant action economy + movement integration — all 12 checklist items checked off in `phase-10-basic-combat.md`; verified via a full codebase audit (11/12 were already implemented but unchecked, only the HUD provokes badge needed new code)
+- [x] Story C — ActionDataModel first cut (melee + TWF) — all checklist items checked off in `phase-10-basic-combat.md` and verified directly against the codebase (`ActionDataModel.mts`, `WeaponAttackDataModel.mts`, `MeleeAttackDataModel.mts`/`RangedAttackDataModel.mts`, `combatantActionEconomy.mts`, `detectWieldMode()`/`getWieldModeStrTerm()`/`wieldModeToBabHand()` on `ActorDnd35e`). This section's stale "NOT STARTED" note (previously here) was corrected once Story D began — always re-verify against the phase doc + codebase, not just this file.
+- [x] Story D — Attack trigger, execution engine & attack card (D.1 engine primitives → D.2 dialog extension → D.3 `executeAction()`/`useAction()`/attack card → D.4 Token HUD control + Actions tab UI) — all checklist items checked off in `phase-10-basic-combat.md`; D.4 user-tested and approved in Foundry, all four sub-parts committed. See the detailed D.1–D.4 breakdown below.
 
 **Renumbering note**: with all three spikes resolved, the remaining stories (formerly D–K) were relettered A–H in `phase-10-basic-combat.md` (D→A, E→B, F→C, G→D, H→E, I→F, J→G, K→H). The retired spike letters A/B/C were renamed to Spike 1/2/3 to free them up. All cross-references, the Parallelization diagram, and its prose were updated accordingly.
 
 ## Current Section
-- [ ] Story C — ActionDataModel first cut (melee + TWF) — NOT STARTED, next up. Do not begin without new instruction — user is reviewing Story B for a PR first.
+Story D is fully complete. **Story E (Roll Defense Dialog & attack resolution) has not been started** — do not begin it without explicit user go-ahead.
+
+## Story D Detail (D.1–D.4 breakdown)
+- [x] Story D.1 — Engine primitives (`DamageRoll`, `preUseAction`/`postUseAction`/`dealDamage`/`undoDealDamage` events) — complete, committed.
+- [x] Story D.2 — Attack Roll Dialog extension (`combatModifiers`, `damageBonus`, Wield Mode toggle, reserved Ammo slot) — complete, committed. `isFlanking()`/`isOnHigherGround()` auto-detection wiring deferred to D.3 (Flanking specifically stays manual-only, deferred to Story G — see decision below).
+- [x] Story D.3 — `executeAction()`/`useAction()`/attack card — complete (see prior session notes; `Creature.useAction()` shipped).
+- [x] Story D.4 — Token HUD control + Actions tab UI — **user-tested and approved in Foundry**: Actions tab rename (`CombatTab`→Actions, `AttackBonusSection.vue` deleted), `WeaponsSection.vue` real data + attack button, and the Token HUD Vue-takeover (`TokenHudDnd35e.mts`/`TokenHudApp.vue`/`tokenHudActions.mts`/`tokenHudTypes.mts`, registered via `CONFIG.Token.hudClass`). Phase doc checklist items checked off; committed. **Story D is now fully complete** (all checklist items in `phase-10-basic-combat.md` checked off) — next up is Story E (Roll Defense Dialog & attack resolution), not yet started.
+
+**Story D breakdown** (agreed with user before starting): D.1 engine primitives → D.2 dialog extension → D.3 `executeAction()`/`useAction()`/attack card → D.4 Token HUD control + Actions tab UI (HUD render approach to be spiked at the start of D.4).
+
+**D.4 architecture decision**: user explicitly confirmed ("let's go vue take over on the hud....") a full Vue takeover of `TokenHUD` rather than a lighter Handlebars-subclass decoration — mirrors `CombatTrackerDnd35e`'s established pattern exactly (`useVueAppBaseMixin(foundry.applications.hud.TokenHUD)`, `reactive()` context object mutated in `_replaceHTML`, registered via `CONFIG.Token.hudClass`). Every native control's markup (classes, `data-action`/`data-palette`/`data-status-id`/`data-movement-action`/`data-level-id` attributes, input `name`s) is byte-faithfully reproduced in `TokenHudApp.vue` so `BasePlaceableHUD`'s/`TokenHUD`'s inherited click-handling and `movementActionHudDecoration.mts`'s `renderTokenHUD` hook (grey-out + provokes badge) keep working unmodified — confirmed via reading core's `token-hud.mjs`/`placeable-hud.mjs`/`token-hud.hbs` in full, and via checking `#token-hud .col`'s CSS (all descendant selectors, `height: calc(100% + 100px)` — meaning the new bottom row is deliberately its own `.dnd35e-hud-actions` div, NOT a 4th `.col`, to avoid inheriting that flanking-column sizing rule).
+
+Two new `data-action`s added to `TokenHudDnd35e`'s `DEFAULT_OPTIONS.actions` (merged via `foundry.utils.mergeObject(super.DEFAULT_OPTIONS, ...)`, same pattern as `D20RollDialogConfig.mts`): `attackAction` (Weapon Attacks palette entry — calls `Creature.useAction()`, same target-required guard as `WeaponsSection.vue`'s `onAttack()`) and `combatManeuver` (Combat Maneuvers palette entry — Total Defense is UI-shell-only this story per Story E's ownership of the actual mechanic; click shows a "not yet implemented" `ui.notifications.info`). Disabled entries (can't afford the attack right now) are marked via `data-enabled="false"` read by the click handler itself, rather than a separate DOM capture-listener (simpler than `movementActionHudDecoration.mts`'s approach since we fully control the markup and don't need to layer onto pre-existing native entries).
+
+**Type-system gaps found and patched** (ambient `.d.mts` under-specification, same class of issue as the CombatDnd35e `_onStartRound` context-param gap from Story A): `CONFIG.Token` doesn't declare `hudClass` at all (backfilled via `src/global.mts`'s `ConfigDnd35e` interface: `Token: ThisConfig['Token'] & { hudClass: typeof TokenHUD }`, not by editing the generated ambient `.d.mts` directly); `PlaceableHUDContext` is only `{ _id: string; id: string }` (near-empty ambient stub) — `TokenHudContext` includes those two fields purely to satisfy the override's structural return-type contract.
+
+## Story D Follow-up Fixes (post-approval, before moving to Story E)
+User testing after D.4's approval surfaced two more correctness bugs in the same attack pipeline, both fixed and re-verified (`eslint --fix` + `vue-tsc --noEmit`, clean) before closing out Story D for good:
+- **Unlinked-token target resolution**: `Creature.useAction()`/`TokenHudDnd35e`/`WeaponsSection.vue`/`CreatureStore.mts` now thread the target's actual `TokenDnd35e` object end-to-end (`useAction(itemId, actionId, targetTokens?: TokenDnd35e[], options)` → `WeaponAttackDataModel.PrepareActionContext()` → `UseWeaponAttackContext.targetToken` → `_executeCheck()`), instead of round-tripping through `game.actors.get(id)` (always the shared prototype Actor) or reverse-deriving a Token from an Actor (ambiguous whenever multiple unlinked tokens share one prototype). Rule of thumb going forward: Token → Actor is always lossless; Actor → "its" Token is not — thread the Token.
+- **Token name display**: added `canUserSeeActorName()` (`src/documents/token/logic/tokenNameVisibility.mts`) — GM always sees real names; players see them per Foundry's own `CONST.TOKEN_DISPLAY_MODES` nameplate rules. Wired into the live roll dialog (`WeaponAttackRollDialogStore.mts`) and, since the attack chat card's `content` is one static HTML string shared by every viewer, via a `renderChatMessageHTML`-time redaction pass (`redactAttackCardNames()` in `attackRollCard.mts`). Separately, every attacker/target name displayed anywhere in the roll/card pipeline (`Creature.mts`'s save/initiative cards, `RollDialogStore.mts`'s shared attacker header, the attack card's attacker/target rows, `onRetarget()`) now reads the placed Token's own `name` (`token.name`, or `actor.token?.name ?? actor.name` when only the Actor is in hand) instead of the shared Actor's `name` — unlinked tokens sharing one Actor can have distinct display names (e.g. "Goblin 1"/"Goblin 2"). Phase doc (`phase-10-basic-combat.md`) updated with follow-up-fix notes on the relevant Story D checklist items; full detail in `/memories/repo/unlinked-token-actor-and-name-visibility.md`.
 
 ## Decisions Made
 - **Story A/B descoping (Phase 0 for Story A)**: tracker action-pip rendering moved entirely from
@@ -84,6 +105,39 @@
   since this decorates native, non-Vue HUD DOM), not a Vue `<style>` block. New localization key
   `dnd35e.TOKEN.MOVEMENT.Provokes` added to `src/lang/en/tokens.json`.
 
+- **Story D.1**: New events (`preUseAction`/`postUseAction`/`dealDamage`/`undoDealDamage`) registered
+  under `src/documents/actors/baseActor/events/` (not Creature-specific) since `useAction()` lives on
+  `ActorDnd35e` per the doc's §10.7. Followed the existing per-event-file convention
+  (`PhysicalItemLifeCycle`/`CreatureLifeCycle`): one file per event exporting a string const + payload
+  interface, aggregated into `ActionLifeCycle`, registered via `registerActionEvents()` called at
+  module load (bottom of `ActorDnd35e.mts`), matching `Creature.mts`'s `registerCreatureEvents()`
+  pattern. `DamageRoll` (`src/dice/DamageRoll.mts`) does critical multiplication via Foundry's
+  built-in `Roll#alter(critMultiplier, 0, { multiplyNumeric: true })` in the constructor — matches
+  SRD's "roll the dice N times, add static bonuses N times" crit rule.
+- **Deliberately deferred out of D.1**: `UseActionContext`'s `hand`/`free` fields and `ActionResult`'s
+  hit/damage-snapshot shape — these depend on what `executeAction()`/`useAction()` actually produce,
+  so they're being defined in D.3 alongside that logic instead of guessed at now.
+- **isFlanking()/Story G ordering conflict (resolved by user)**: the doc's `executeAction()` sample
+  calls `isFlanking()`, but its real implementation (`src/canvas/token/logic/threatenedSquares.mts`)
+  is a Story G deliverable, and Story G's own header states it depends on Story D — a circular
+  ordering. User chose: ship Flanking as a manual-only toggle in Story D (`autoDetected: false`,
+  unchecked by default), with real geometry auto-detection deferred entirely to Story G. The phase
+  doc's Story D checklist was split accordingly (see `phase-10-basic-combat.md`); the doc's own
+  Verify-script line about Flanking pre-checking correctly won't be satisfiable until Story G lands
+  — expected, not a regression.
+- **Story D.2**: Extended `D20RollDialogData`/`D20RollDialogResult` (`D20RollDialogConfig.mts`) with
+  `CombatModifierToggle`/`AmmoOption` types and the new optional fields (`combatModifiers`,
+  `damageBonus`, `wieldMode`, `hand`, `ammoOptions`, `ammo`), all exported from the `src/dice`
+  barrel for D.3's `executeAction()` to consume. `D20RollDialogApp.vue` renders each new field only
+  when its data is present (so save/initiative rolls are unaffected): Attack Type/Combat Status
+  toggle groups with `fa-circle-question` tooltips, a second independent `FamiliarOverlayInput`
+  formula-editor instance for `damageBonus` (resolves to a formula **string** via
+  `FormulaData.resolveSource(..., { expectedType: 'string' })` — dice notation preserved, unlike
+  `situationalModifier` which resolves to a plain number), a `MultiOptionToggle` for Wield Mode, a
+  native `<select>` for Hand, and a reserved (currently-always-empty) Ammo `<select>` for Story F.
+  New lang keys added to `combat.json` (`COMBAT.CombatModifiers`, `COMBAT.WieldMode`, `COMBAT.Hand`,
+  `COMBAT.Ammo`) and `dice.json` (`ROLL.DamageBonus`).
+
 ## Deferred Items
 - Automated concealment detection (lighting/vision/senses-based) → post-release Phase 3
   (`docs/migration-plan/post-release/phase-03-sight-concealment.md`, gated on Phase 24) — also in
@@ -91,6 +145,17 @@
   `canvas.effects.lightSources`/`testPoint()`/`radius`/`ratio` algorithm for bright/dim/dark-at-a-point
 - `CONFIG.ActiveEffect.expiryAction` ('update' vs 'delete') choice for short-duration combat
   condition AEs → Story E, when `createShortDurationAE()` is actually built
+- **Total Defense's actual mechanic** (spend standard action + apply the `+4 AC` self-AE tagged
+  `TOTAL_DEFENSE_CONDITION_ID`) → Story E, per the phase doc's own `combatConditionAEs.mts` note.
+  D.4's Combat Maneuvers HUD entry is a UI shell only — clicking it currently shows a "not yet
+  implemented" notice.
+- **⚠️ Needs triage with user**: `attackFormula.resolvedValue` currently has no BAB or ability-modifier
+  term baked in anywhere in the attack pipeline (`_executeCheck()` only appends `flatPenalty`/
+  `situationalModifier`) — confirmed by direct code reading, contradicting the phase doc's early-draft
+  pseudocode (`1d20 + #self.attributes.bab.total + ...`) which is stale/superseded. Both the sheet's
+  `WeaponsSection.vue` and the new Token HUD Weapon Attacks palette surface this same incomplete
+  math. Not fixed this session (out of scope for the HUD/Actions-tab work) — flag to user: bug to
+  fix now, or intentionally deferred to a specific not-yet-identified checklist item?
 
 ## Knowledge Cached
 - None yet — consider delegating to @kb-curator once more of Phase 10 lands (Foundry v14 vision/

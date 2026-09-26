@@ -1,10 +1,11 @@
-import type { TokenDnd35e } from '@canvas/index.mjs';
-import { isWithinReach } from '@canvas/token/logic/reach.mjs';
 import { DEX, STR } from '@constants/abilities.mjs';
 import { type Size,SIZE_REACH } from '@constants/sizes.mjs';
+import { isWithinReach } from '@documents/token/logic/reach.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { ACTION_TYPE, ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
 import type { ActionResult } from '@items/baseItem/actions/types.mjs';
 
+import type { WeaponAttackActionResult } from '../WeaponAttack/types.mjs';
 import type { UseWeaponAttackContext } from '../WeaponAttack/types.mjs';
 import { WeaponAttackDataModel } from '../WeaponAttack/WeaponAttackDataModel.mjs';
 import { MELEE_WEAPON_PROPERTIES, MELEE_WEAPON_PROPERTY, type MeleeWeaponProperty } from './constants.mjs';
@@ -27,8 +28,8 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
       required: true,
       blank: false,
       choices: [...ACTION_TYPES],
-      initial: ACTION_TYPE.MELEE_WEAPON_ATTACK,
-      validate: (value: unknown) => value === ACTION_TYPE.MELEE_WEAPON_ATTACK,
+      initial: ACTION_TYPE.MELEE,
+      validate: (value: unknown) => value === ACTION_TYPE.MELEE,
     });
     // Same contexts as the base `name` field - only the default text differs.
     schema.name.initial = () => ({
@@ -53,7 +54,7 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
     return schema;
   }
 
-  protected override _canExecute(context: UseWeaponAttackContext): ActionResult {
+  protected override _canExecute(context: UseWeaponAttackContext): WeaponAttackActionResult {
     const superResult = super._canExecute(context);
     if (superResult.cancelled) return superResult;
 
@@ -67,11 +68,11 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
     return superResult;
   }
 
-  protected override _executeCheck(context: UseWeaponAttackContext): ActionResult {
+  protected override async _executeCheck(context: UseWeaponAttackContext): Promise<WeaponAttackActionResult> {
     context.attackAbility = this.properties?.has(MELEE_WEAPON_PROPERTY.FINESSE)
       ? DEX
       : STR;
-    const superResult = super._executeCheck(context);
+    const superResult = await super._executeCheck(context);
     if (superResult.cancelled) return superResult;
 
     return superResult;
@@ -85,7 +86,9 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
   private _validateMeleeReach(context: UseWeaponAttackContext): ActionResult {
     const result: ActionResult = { cancelled: false, warnings: [], reason: 'success' };
     
-    const attackerToken = context.actor.getActiveTokens()[0] as TokenDnd35e | undefined;
+    // Prefer the threaded tokens (unambiguous when multiple unlinked tokens share an actor);
+    // fall back to `getActiveTokens()[0]` only when a caller didn't thread one through.
+    const attackerToken = context.actorToken ?? (context.actor.getActiveTokens()[0] as TokenDnd35e | undefined);
     const hasReach = this.properties?.has(MELEE_WEAPON_PROPERTY.REACH) ?? false;
     const threatensAdjacent = this.properties?.has(MELEE_WEAPON_PROPERTY.THREATENS_ADJACENT) ?? false;
     const baseReach = SIZE_REACH[context.actor.system.size as Size] ?? 1;
@@ -95,38 +98,29 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
     const effectiveReach = hasReach ? this.reachLength : baseReach;
 
     for (const target of context.target ?? []) {
-      const targetToken = (target.getActiveTokens()[0]) as TokenDnd35e | undefined;
-      
-      // TODO: enforce target min/max requirements based on combat settings.
-      // const { enforceMeleeReach } = useCombatSettings();
-      const enforceMeleeReach = false; // Placeholder until combat settings are integrated
+      // `context.targetToken` only resolves the primary target (`context.target?.[0]`,
+      // see `WeaponAttackDataModel._executeCheck()`); any additional targets fall back.
+      const targetToken = (target === context.target?.[0] ? context.targetToken : undefined)
+        ?? (target.getActiveTokens()[0] as TokenDnd35e | undefined);
 
       if (!attackerToken || !targetToken) {
-        if (enforceMeleeReach) {
-          result.cancelled = true;
-          result.reason = 'missingTokens';
-          return result;
-        }
-
-        continue;
+        ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.MissingTargetToken'));
+        result.cancelled = true;
+        result.reason = 'missingTokens';
+        return result;
       }
 
       if (!isWithinReach(attackerToken, targetToken, effectiveReach)) {
-        if (enforceMeleeReach) {
-          result.cancelled = true;
-          result.reason = 'outOfReach';
-          return result;
-        }
-
-        result.warnings!.push('outOfReach');
+        ui.notifications.warn(game.i18n.format('dnd35e.COMBAT.TargetOutOfReach', { target: target.name }));
+        result.cancelled = true;
+        result.reason = 'outOfReach';
+        return result;
       }
       if (hasReach && !threatensAdjacent && isWithinReach(attackerToken, targetToken, baseReach)) {
-        if (enforceMeleeReach) {
-          result.cancelled = true;
-          result.reason = 'reachDeadZone';
-          return result;
-        }
-        result.warnings!.push('reachDeadZone');
+        ui.notifications.warn(game.i18n.format('dnd35e.COMBAT.TargetTooCloseForReach', { target: target.name }));
+        result.cancelled = true;
+        result.reason = 'reachDeadZone';
+        return result;
       }
     }
 

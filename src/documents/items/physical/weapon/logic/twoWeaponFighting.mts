@@ -11,7 +11,8 @@
  *
  * @module
  */
-import { OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
+import type { WieldedHand } from '@constants/equipmentSlots.mjs';
+import { BOTH_HANDS_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
 import { weaponItemType } from '@items/itemTypes.mjs';
 
 import { WEAPON_SUBTYPE } from '../data/constants.mjs';
@@ -34,13 +35,13 @@ function findOffHandWeapon (weapon: Weapon): Weapon | undefined {
  * attack made with no weapon currently equipped in the off-hand slot (nothing to fight
  * two-weapon with).
  */
-function getTwoWeaponFightingPenalty (weapon: Weapon, hand: 'main' | 'off' | 'both'): number {
+function getTwoWeaponFightingPenalty (weapon: Weapon, hand: WieldedHand): number {
   const offHandWeapon = findOffHandWeapon(weapon);
-  if (hand === 'both' || !offHandWeapon) return 0;
-  const baseline = hand === 'off' ? -10 : -6;
+  if (hand === BOTH_HANDS_EQUIP_SLOT || !offHandWeapon) return 0;
+  const baseline = hand === OFF_HAND_EQUIP_SLOT ? -10 : -6;
   const offHandIsLight = offHandWeapon.system.weaponSubtype === WEAPON_SUBTYPE.LIGHT_WEAPON;
   if (!offHandIsLight) return baseline;
-  return hand === 'off' ? -8 : -4;
+  return hand === OFF_HAND_EQUIP_SLOT ? -8 : -4;
 }
 
 export { getTwoWeaponFightingPenalty };

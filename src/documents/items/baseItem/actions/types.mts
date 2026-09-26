@@ -16,9 +16,9 @@ interface UseActionContext {
 }
 
 /**
- * Result of `executeAction()`/`continue()`. Minimal for Story C — `cancelled`/`reason`
- * only, so the reach-validation early-return path has something concrete to return.
- * Story D expands this with the real attack-roll/chat-card result shape.
+ * Result of `executeAction()`/`continue()`. Base shape shared by every action kind —
+ * concrete action kinds (weapon attacks, future spell casts, etc.) extend this with their
+ * own result fields rather than piling optional fields onto one shared shape.
  */
 interface ActionResult {
   cancelled: boolean;
