@@ -24,7 +24,11 @@
         "Label": "Wield Mode",
         "mainHand": "Primary Hand",
         "offHand": "Off-Hand",
-        "bothHands": "Two-Handed"
+        "bothHands": "Two-Handed",
+        "MismatchNotInMainHand": "Attacked with the primary hand, but this weapon isn't equipped there.",
+        "MismatchNotInOffHand": "Attacked with the off-hand, but this weapon isn't equipped there.",
+        "MismatchOffHandOccupied": "Attacked two-handed, but the off-hand is holding something else.",
+        "InsufficientBab": "Attacked with no Base Attack Bonus remaining in that hand."
       },
       "Target": {
         "Label": "Target"
@@ -35,6 +39,7 @@
       "SizeModifier": "Size Modifier",
       "TwoWeaponFighting": "Two-Weapon Fighting",
       "NoActionAvailable": "No action available for this attack.",
+      "ChargeMeleeOnly": "A charge permits only a single melee attack.",
       "SelectTargetFirst": "Select a target before attacking.",
       "Maneuver": {
         "TotalDefense": "Total Defense",

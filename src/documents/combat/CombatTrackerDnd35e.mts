@@ -17,14 +17,14 @@
  * private (`#`) fields, which core Documents do.
  *
  * One new action is added on top of core's set: `toggleActionEconomy` (GM click on a
- * standard/move/minor action-economy pip in `CombatTrackerRow.vue`, directly flipping that
- * pool's availability via `toggleActionAvailability()` — see `combatantActionEconomy.mts`).
+ * standard/move/minor/swift/aoo action-economy pip in `CombatTrackerRow.vue`, spending or
+ * refunding one use of that pool via `toggleActionAvailability()` — see `combatantActionEconomy.mts`).
  *
  * @module
  */
 import type { ApplicationRenderContext } from '@client/applications/_types.mjs';
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
-import { MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
+import { AOO_ACTION, MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
 import type { CombatTrackerContext, CombatTrackerTurn } from '@documents/combat/combatTrackerTypes.mjs';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
 import type { App, Component } from 'vue';
@@ -132,10 +132,16 @@ class CombatTrackerDnd35e extends CombatTrackerVueBase {
     return createApp(this.vueComponent, { context: this.reactiveContext });
   }
 
-  /** Action-economy pip click (GM only, template only renders `data-action` for `isGM`) — flips that single pool's availability directly. */
+  /** Action-economy pip click (GM only, template only renders `data-action` for `isGM`) \u2014 spends/refunds that single pool by 1. */
   static async #onToggleActionEconomy (this: CombatTrackerDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
     const flag = target.dataset.actionFlag;
-    if (flag !== STANDARD_ACTION && flag !== MOVE_ACTION && flag !== MINOR_ACTION && flag !== SWIFT_ACTION) return;
+    if (
+      flag !== STANDARD_ACTION
+      && flag !== MOVE_ACTION
+      && flag !== MINOR_ACTION
+      && flag !== SWIFT_ACTION
+      && flag !== AOO_ACTION
+    ) return;
 
     const { combatantId } = target.closest<HTMLElement>('[data-combatant-id]')?.dataset ?? {};
     const combatant = combatantId ? this.viewed?.combatants.get(combatantId) : undefined;

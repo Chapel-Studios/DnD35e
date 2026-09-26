@@ -181,22 +181,14 @@
         <div class="form-group">
           <span class="label">{{ localize('dnd35e.COMBAT.CONFIG.ActionEconomy.Available') }}</span>
           <div class="form-fields">
-            <label class="checkbox">
-              <input v-model="form.actionEconomy.actions.standard" type="checkbox">
-              {{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Standard') }}
-            </label>
-            <label class="checkbox">
-              <input v-model="form.actionEconomy.actions.move" type="checkbox">
-              {{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Move') }}
-            </label>
-            <label class="checkbox">
-              <input v-model="form.actionEconomy.actions.minor" type="checkbox">
-              {{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Minor') }}
-            </label>
-            <label class="checkbox">
-              <input v-model="form.actionEconomy.actions.swift" type="checkbox">
-              {{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Swift') }}
-            </label>
+            <label for="combatant-config-standard">{{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Standard') }}</label>
+            <input id="combatant-config-standard" v-model.number="form.actionEconomy.actions.standard" type="number" min="0">
+            <label for="combatant-config-move">{{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Move') }}</label>
+            <input id="combatant-config-move" v-model.number="form.actionEconomy.actions.move" type="number" min="0">
+            <label for="combatant-config-minor">{{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Minor') }}</label>
+            <input id="combatant-config-minor" v-model.number="form.actionEconomy.actions.minor" type="number" min="0">
+            <label for="combatant-config-swift">{{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Swift') }}</label>
+            <input id="combatant-config-swift" v-model.number="form.actionEconomy.actions.swift" type="number" min="0">
           </div>
         </div>
         <div class="form-group">

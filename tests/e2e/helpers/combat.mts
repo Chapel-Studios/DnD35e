@@ -49,7 +49,7 @@ export async function nextCombatTurn (page: Page): Promise<void> {
 
 /** Reads a combatant's current `flags.dnd35e.actionEconomy`, applying the same defaults `getActionEconomy()` would. */
 export async function getCombatantActionEconomy (page: Page, combatId: string, combatantId: string): Promise<{
-  actions: { standard: boolean; move: boolean; minor: boolean; swift: boolean; aoo: number };
+  actions: { standard: number; move: number; minor: number; swift: number; aoo: number };
   bab: { main: number; off: number };
   used: Record<string, boolean>;
 }> {
@@ -59,7 +59,7 @@ export async function getCombatantActionEconomy (page: Page, combatId: string, c
     if (!combatant) throw new Error(`getCombatantActionEconomy: no combatant ${combatantId} on combat ${combatId}`);
     const stored = combatant.getFlag('dnd35e', 'actionEconomy') ?? {};
     return {
-      actions: { standard: true, move: true, minor: true, swift: true, aoo: 0, ...stored.actions },
+      actions: { standard: 1, move: 1, minor: 1, swift: 1, aoo: 0, ...stored.actions },
       bab: { main: 0, off: 0, ...stored.bab },
       used: { standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false, ...stored.used },
     };

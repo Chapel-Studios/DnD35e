@@ -86,7 +86,9 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
   private _validateMeleeReach(context: UseWeaponAttackContext): ActionResult {
     const result: ActionResult = { cancelled: false, warnings: [], reason: 'success' };
     
-    const attackerToken = context.actor.getActiveTokens()[0] as TokenDnd35e | undefined;
+    // Prefer the threaded tokens (unambiguous when multiple unlinked tokens share an actor);
+    // fall back to `getActiveTokens()[0]` only when a caller didn't thread one through.
+    const attackerToken = context.actorToken ?? (context.actor.getActiveTokens()[0] as TokenDnd35e | undefined);
     const hasReach = this.properties?.has(MELEE_WEAPON_PROPERTY.REACH) ?? false;
     const threatensAdjacent = this.properties?.has(MELEE_WEAPON_PROPERTY.THREATENS_ADJACENT) ?? false;
     const baseReach = SIZE_REACH[context.actor.system.size as Size] ?? 1;
@@ -96,7 +98,10 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
     const effectiveReach = hasReach ? this.reachLength : baseReach;
 
     for (const target of context.target ?? []) {
-      const targetToken = (target.getActiveTokens()[0]) as TokenDnd35e | undefined;
+      // `context.targetToken` only resolves the primary target (`context.target?.[0]`,
+      // see `WeaponAttackDataModel._executeCheck()`); any additional targets fall back.
+      const targetToken = (target === context.target?.[0] ? context.targetToken : undefined)
+        ?? (target.getActiveTokens()[0] as TokenDnd35e | undefined);
       
       // TODO: enforce target min/max requirements based on combat settings.
       // const { enforceMeleeReach } = useCombatSettings();

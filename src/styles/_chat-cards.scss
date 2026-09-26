@@ -93,6 +93,16 @@
     &.critical {
       color: var(--color-level-success);
     }
+
+    &.rule-warning {
+      color: var(--color-level-warning);
+    }
+  }
+
+  .attack-card-warnings {
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
 
   .modifier-breakdown {

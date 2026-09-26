@@ -68,7 +68,7 @@ const DEFAULT_CONTEXT: CombatantConfigContext = {
   hidden: false,
   defeated: false,
   actionEconomy: {
-    actions: { standard: true, move: true, minor: true, swift: true, aoo: 0 },
+    actions: { standard: 1, move: 1, minor: 1, swift: 1, aoo: 1 },
     bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
     used: { standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
   },
@@ -142,13 +142,13 @@ class CombatantConfigDnd35e extends useVueAppBaseMixin(CombatantConfigCore) {
     });
 
     // `used.standard/move/minor/swift` mirror `actions.standard/move/minor/swift` (see
-    // `toggleActionAvailability`) — the form only edits the pool availability toggles, so
-    // re-derive the mirrored `used` flags here rather than exposing redundant checkboxes.
+    // `toggleActionAvailability`) — the form only edits the pool counts, so re-derive the
+    // mirrored `used` flags here rather than exposing redundant checkboxes.
     const { actionEconomy } = data;
-    actionEconomy.used.standard = !actionEconomy.actions.standard;
-    actionEconomy.used.move = !actionEconomy.actions.move;
-    actionEconomy.used.minor = !actionEconomy.actions.minor;
-    actionEconomy.used.swift = !actionEconomy.actions.swift;
+    actionEconomy.used.standard = actionEconomy.actions.standard <= 0;
+    actionEconomy.used.move = actionEconomy.actions.move <= 0;
+    actionEconomy.used.minor = actionEconomy.actions.minor <= 0;
+    actionEconomy.used.swift = actionEconomy.actions.swift <= 0;
     await setActionEconomy(combatant, actionEconomy);
 
     await setMovementSession(combatant, data.movementSession);

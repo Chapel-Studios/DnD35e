@@ -91,7 +91,7 @@ class TokenRulerDnd35e extends foundry.canvas.placeables.tokens.TokenRuler {
     // Once the standard action is actually spent (committing an escalated Double Move),
     // `actionEconomy.actions.standard` flips to unavailable — so we need to check if this turn
     // has already-escalated the budget, accidently converting back to a single move's budget.
-    const isBudgetEscalatable = (combatant?.actionEconomy.actions.standard ?? false)
+    const isBudgetEscalatable = (combatant?.actionEconomy.actions.standard ?? 0) > 0
       || (combatant ? getMovementSession(combatant).spentTiers.includes('standard') : false);
 
     return getSessionAwareBudget(singleBudget, waypoint.action, waypoint.measurement.cost, isBudgetEscalatable);

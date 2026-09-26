@@ -66,8 +66,12 @@ function useWeaponAttackRollDialogStore<
     get: () => context.data.wieldModeFromEquippedSlots,
     set: (value: WieldedHand) => {
       context.data.wieldModeFromEquippedSlots = value;
+      // Keeps `app.baseTotal`/`app.total` live as the player overrides Wield Mode, instead of
+      // staying frozen at whatever hand was auto-detected when the dialog opened.
+      context.data.baseTotal = context.data.baseTotalByHand[value];
     },
   });
+  const handBab = computed(() => context.data.handBab);
 
   const target = {
     documents: computed(() => context.data.target ?? []),
@@ -132,6 +136,7 @@ function useWeaponAttackRollDialogStore<
       attackSituationalModifier,
       damageSituationalModifier,
       wieldMode,
+      handBab,
       formulaContexts,
       damageLabel: computed(() => context.data.damageLabel),
       // Live total (poc.10 Story D) — pre-dialog base plus the resolved damage situational
@@ -156,6 +161,8 @@ interface WeaponAttackRollDialogWeaponStore {
   attackSituationalModifier: WritableComputedRef<string>;
   damageSituationalModifier: WritableComputedRef<string>;
   wieldMode: WritableComputedRef<WieldedHand | undefined>;
+  /** Raw BAB pool per hand — feeds the Wield Mode toggle's per-option `(+N)` label. */
+  handBab: ComputedRef<Record<WieldedHand, number>>;
   /** Full FormulaFamiliar schema (self/item/thisAttack/target) for the situational modifier fields' `#` autocomplete dropdown. */
   formulaContexts: ComputedRef<FamiliarSchema>;
   /** Damage box's base-row label, mirrors `RollDialogAppStore.baseLabel`. */

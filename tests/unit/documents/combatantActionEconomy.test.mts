@@ -12,6 +12,7 @@ import {
   spendAction,
   spendAoO,
   spendHandBab,
+  toggleActionAvailability,
 } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import { describe, expect, it } from 'vitest';
@@ -37,16 +38,16 @@ describe('getActionEconomy', () => {
   it('returns full defaults when no flag has ever been stored', () => {
     const economy = getActionEconomy(buildCombatant());
     expect(economy).toEqual({
-      actions: { standard: true, move: true, minor: true, swift: true, aoo: 0 },
+      actions: { standard: 1, move: 1, minor: 1, swift: 1, aoo: 0 },
       bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
       used: { standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
     });
   });
 
   it('merges partial stored flags with defaults rather than replacing the whole shape', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { standard: false } } });
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 } } });
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: false, move: true, minor: true, swift: true, aoo: 0 });
+    expect(economy.actions).toEqual({ standard: 0, move: 1, minor: 1, swift: 1, aoo: 0 });
     expect(economy.bab).toEqual({ [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 });
   });
 });
@@ -55,7 +56,7 @@ describe('resetActionEconomy', () => {
   it('refills bab pools and AoO from the actor, resets actions, clears used flags', async () => {
     const combatant = buildCombatant({
       actionEconomy: {
-        actions: { standard: false, move: false, minor: false, swift: false, aoo: 0 },
+        actions: { standard: 0, move: 0, minor: 0, swift: 0, aoo: 0 },
         bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
         used: { standard: true, move: true, minor: true, swift: true, standardAttackUsed: true, movedAfterAttack: true, chargedThisTurn: true },
       },
@@ -63,7 +64,7 @@ describe('resetActionEconomy', () => {
     await resetActionEconomy(combatant, buildActor(3, 6));
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: true, move: true, minor: true, swift: true, aoo: 3 });
+    expect(economy.actions).toEqual({ standard: 1, move: 1, minor: 1, swift: 1, aoo: 3 });
     expect(economy.bab).toEqual({ [MAIN_HAND_EQUIP_SLOT]: 6, [OFF_HAND_EQUIP_SLOT]: 6 });
     expect(economy.used).toEqual({ standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false });
   });
@@ -76,7 +77,7 @@ describe('canUseAction / spendAction / refundAction (hierarchy resolution)', () 
   });
 
   it('a move request can be covered by the standard pool once move is already spent', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { move: false } } });
+    const combatant = buildCombatant({ actionEconomy: { actions: { move: 0 } } });
     expect(canUseAction(combatant, ['move'])).toEqual(['standard']);
   });
 
@@ -87,23 +88,28 @@ describe('canUseAction / spendAction / refundAction (hierarchy resolution)', () 
 
   it('returns null when nothing remains to cover the request', () => {
     const combatant = buildCombatant({
-      actionEconomy: { actions: { standard: false, move: false, minor: false } },
+      actionEconomy: { actions: { standard: 0, move: 0, minor: 0 } },
     });
     expect(canUseAction(combatant, ['minor'])).toBeNull();
   });
 
   it('a compound full-round request (move + standard) is all-or-nothing', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { standard: false } } });
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 } } });
     // Only move remains — the full-round request can't be covered even though 'move' alone could be.
     expect(canUseAction(combatant, ['move', 'standard'])).toBeNull();
   });
 
   it('resolves higher-tier requests first so a standard request claims the standard pool before a minor request opportunistically borrows it', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { move: false } } });
+    const combatant = buildCombatant({ actionEconomy: { actions: { move: 0 } } });
     // Both 'minor' and 'standard' requested; only 'minor' and 'standard' pools remain (move spent).
     // 'standard' must resolve to the real standard pool, leaving 'minor' its own pool.
     const resolved = canUseAction(combatant, ['minor', 'standard']);
     expect(resolved).toEqual(['minor', 'standard']);
+  });
+
+  it('a pool holding more than one use (e.g. an "extra action" grant) covers two separate requests before running out', () => {
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 2 } } });
+    expect(canUseAction(combatant, ['standard'])).toEqual(['standard']);
   });
 
   it('spendAction flips both actions and used flags for the resolved pools', async () => {
@@ -112,27 +118,37 @@ describe('canUseAction / spendAction / refundAction (hierarchy resolution)', () 
     expect(spent).toEqual(['move']);
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions.move).toBe(false);
+    expect(economy.actions.move).toBe(0);
     expect(economy.used.move).toBe(true);
+  });
+
+  it('spendAction only decrements by 1, leaving an extra-action pool still available', async () => {
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 2 } } });
+    const spent = await spendAction(combatant, ['standard']);
+    expect(spent).toEqual(['standard']);
+
+    const economy = getActionEconomy(combatant);
+    expect(economy.actions.standard).toBe(1);
+    expect(economy.used.standard).toBe(false);
   });
 
   it('spendAction returns null and spends nothing when the request cannot be covered', async () => {
     const combatant = buildCombatant({
-      actionEconomy: { actions: { standard: false, move: false, minor: false } },
+      actionEconomy: { actions: { standard: 0, move: 0, minor: 0 } },
     });
     const spent = await spendAction(combatant, ['standard']);
     expect(spent).toBeNull();
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: false, move: false, minor: false, swift: true, aoo: 0 });
+    expect(economy.actions).toEqual({ standard: 0, move: 0, minor: 0, swift: 1, aoo: 0 });
   });
 
   it('refundAction restores exactly the pools passed in, independent of canUseAction', async () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { standard: false }, used: { standard: true } } });
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 }, used: { standard: true } } });
     await refundAction(combatant, ['standard']);
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions.standard).toBe(true);
+    expect(economy.actions.standard).toBe(1);
     expect(economy.used.standard).toBe(false);
   });
 });
@@ -146,12 +162,12 @@ describe('swift action (isolated pool, capped at one per turn)', () => {
     expect(spent).toEqual(['swift']);
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: true, move: true, minor: true, swift: false, aoo: 0 });
+    expect(economy.actions).toEqual({ standard: 1, move: 1, minor: 1, swift: 0, aoo: 0 });
     expect(economy.used.swift).toBe(true);
   });
 
   it('cannot be covered by downgrading a spent move or standard action', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { swift: false } } });
+    const combatant = buildCombatant({ actionEconomy: { actions: { swift: 0 } } });
     // Standard and move are both still available, but swift has its own pool and isn't in ACTION_HIERARCHY.
     expect(canUseAction(combatant, ['swift'])).toBeNull();
   });
@@ -161,9 +177,41 @@ describe('swift action (isolated pool, capped at one per turn)', () => {
     await spendAction(combatant, ['swift']);
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions.standard).toBe(true);
-    expect(economy.actions.move).toBe(true);
-    expect(economy.actions.minor).toBe(true);
+    expect(economy.actions.standard).toBe(1);
+    expect(economy.actions.move).toBe(1);
+    expect(economy.actions.minor).toBe(1);
+  });
+});
+
+describe('toggleActionAvailability (manual pip click)', () => {
+  it('decrements a positive pool by 1', async () => {
+    const combatant = buildCombatant();
+    await toggleActionAvailability(combatant, 'standard');
+    expect(getActionEconomy(combatant).actions.standard).toBe(0);
+    expect(getActionEconomy(combatant).used.standard).toBe(true);
+  });
+
+  it('decrements an extra-action pool (>1) by 1 without fully spending it', async () => {
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 2 } } });
+    await toggleActionAvailability(combatant, 'standard');
+    expect(getActionEconomy(combatant).actions.standard).toBe(1);
+    expect(getActionEconomy(combatant).used.standard).toBe(false);
+  });
+
+  it('adds 1 back once a pool is at or below 0', async () => {
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 } } });
+    await toggleActionAvailability(combatant, 'standard');
+    expect(getActionEconomy(combatant).actions.standard).toBe(1);
+    expect(getActionEconomy(combatant).used.standard).toBe(false);
+  });
+
+  it('applies the same spend/refund toggle to aoo, with no `used` counterpart to sync', async () => {
+    const combatant = buildCombatant({ actionEconomy: { actions: { aoo: 1 } } });
+    await toggleActionAvailability(combatant, 'aoo');
+    expect(getActionEconomy(combatant).actions.aoo).toBe(0);
+
+    await toggleActionAvailability(combatant, 'aoo');
+    expect(getActionEconomy(combatant).actions.aoo).toBe(1);
   });
 });
 
@@ -175,22 +223,22 @@ describe('canUseHandAttack', () => {
 
   it('is blocked once the standard action is spent and the combatant has since moved', () => {
     const combatant = buildCombatant({
-      actionEconomy: { actions: { standard: false }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 5 }, used: { movedAfterAttack: true } },
+      actionEconomy: { actions: { standard: 0 }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 5 }, used: { movedAfterAttack: true } },
     });
     expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(false);
   });
 
   it('falls back to the named hand\'s BAB pool once standard is spent and nothing moved since', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { standard: false }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 0 } } });
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 0 } } });
     expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(true);
     expect(canUseHandAttack(combatant, OFF_HAND_EQUIP_SLOT)).toBe(false);
   });
 
   it('requires BAB remaining in both pools for a two-handed ("both") attack', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { standard: false }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 0 } } });
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 0 } } });
     expect(canUseHandAttack(combatant, BOTH_HANDS_EQUIP_SLOT)).toBe(false);
 
-    const bothReady = buildCombatant({ actionEconomy: { actions: { standard: false }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 5 } } });
+    const bothReady = buildCombatant({ actionEconomy: { actions: { standard: 0 }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 5 } } });
     expect(canUseHandAttack(bothReady, BOTH_HANDS_EQUIP_SLOT)).toBe(true);
   });
 });

@@ -1,8 +1,10 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
-import { detectWieldedHand, getWeaponAttackActionAbilityModTerm } from '@actors/baseActor/logic/wieldMode.mjs';
+import { detectWieldedHand, getWeaponAttackActionAbilityModTerm, getWieldModeMismatchReason } from '@actors/baseActor/logic/wieldMode.mjs';
 import { Creature } from '@actors/creature/index.mjs';
 import { applyChargedAE, applyDefensiveFightingAE } from '@actors/creature/logic/combatConditionAEs.mjs';
 import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
+import type { WieldedHand } from '@constants/equipmentSlots.mjs';
+import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
 import { DAMAGE_TYPES, SIZE_MODIFIERS, STR } from '@constants/index.mjs';
 import { canUseHandAttack, getActionEconomy, getHandBab, markMovedAfterAttack, spendAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
@@ -124,6 +126,28 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     return super.item as Weapon | undefined;
   }
 
+  /**
+   * Rule-violation notices for the attack card (poc.10 §10.7 follow-up) — surfaced even though
+   * the dialog already let the override through, so the GM notices a RAW-illegal Wield Mode or
+   * an exhausted BAB pool even if the acting player missed/ignored the dialog's live preview.
+   */
+  private _buildWieldModeWarnings(context: UseWeaponAttackContext, item: Weapon): string[] {
+    const warnings: string[] = [];
+    const combat = game.combat;
+    const combatant = context.actorToken
+      ? combat?.getCombatantsByToken(context.actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
+      : undefined;
+
+    if (combat?.started && combatant && !context.isFree && context.availableBab <= 0) {
+      warnings.push(game.i18n.localize('dnd35e.COMBAT.WieldMode.InsufficientBab'));
+    }
+
+    const mismatchKey = getWieldModeMismatchReason(context.actor, item, context.wieldedHand);
+    if (mismatchKey) warnings.push(game.i18n.localize(mismatchKey));
+
+    return warnings;
+  }
+
   // `requiresEquipped` is enforced only as HUD-entry eligibility (tokenHudActions.mts) — the
   // sheet's Actions tab intentionally allows firing this action regardless of equip state
   // (§10.11), so execution itself never re-gates on it here.
@@ -157,7 +181,8 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     weaponNonLethalDefault: boolean,
     expectedToHitBonus: number,
     expectedDamageBonus: number,
-    resolvedName: string | null
+    resolvedName: string | null,
+    baseTotalByHand: Record<WieldedHand, number>
   ): Promise<AttackRollDialogResult | null> {
     const combatModifierToggles = createCombatModifiers(context.actor, targetToken, weaponNonLethalDefault);
     
@@ -178,6 +203,8 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       actor: context.actor,
       target: context.target,
       wieldModeFromEquippedSlots: context.wieldedHand,
+      handBab: context.handBab,
+      baseTotalByHand,
       // poc.10 Story D: additional FormulaFamiliar contexts (`#item`/`#thisAttack`) for the
       // dialog's situational modifier fields, mirroring `_executeCheck()`'s own `formulaContext`.
       // Documents/DataModels must never be wrapped in Vue's reactive() proxy (see repo memory).
@@ -201,16 +228,27 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    * Pre-dialog expected-to-hit bonus (§10.7) — BAB + ability mod + TWF penalty, before any
    * dialog-side situational modifiers or combat-modifier toggles. Used only to seed the
    * dialog's base-total preview row; the real formula is assembled post-dialog by
-   * `_buildAttackFormula()`.
+   * `_buildAttackFormula()`. `baseTotalByHand` mirrors this same computation for every hand
+   * so the dialog can show a live-updating preview as the player changes Wield Mode.
    */
-  private _computeExpectedToHitBonus(context: UseWeaponAttackContext, item: Weapon): { abilityMod: number; sizeMod: number; expectedToHitBonus: number } {
+  private _computeExpectedToHitBonus(
+    context: UseWeaponAttackContext,
+    item: Weapon
+  ): { abilityMod: number; sizeMod: number; expectedToHitBonus: number; baseTotalByHand: Record<WieldedHand, number> } {
     const abilityMod = context.actor.system.abilities[context.attackAbility].mod;
     const sizeMod = SIZE_MODIFIERS[context.actor.system.size] ?? 0;
-    const expectedTwfPenalty = getTwoWeaponFightingPenalty(item, context.wieldedHand);
+    const flatBonus = (hand: WieldedHand): number =>
+      context.handBab[hand] + abilityMod + sizeMod + getTwoWeaponFightingPenalty(item, hand);
+    const baseTotalByHand: Record<WieldedHand, number> = {
+      [MAIN_HAND_EQUIP_SLOT]: flatBonus(MAIN_HAND_EQUIP_SLOT),
+      [OFF_HAND_EQUIP_SLOT]: flatBonus(OFF_HAND_EQUIP_SLOT),
+      [BOTH_HANDS_EQUIP_SLOT]: flatBonus(BOTH_HANDS_EQUIP_SLOT),
+    };
     return {
       abilityMod,
       sizeMod,
-      expectedToHitBonus: context.availableBab + abilityMod + sizeMod + expectedTwfPenalty,
+      expectedToHitBonus: baseTotalByHand[context.wieldedHand],
+      baseTotalByHand,
     };
   }
 
@@ -385,7 +423,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     const weaponNonLethalDefault = this.properties?.has(WEAPON_PROPERTY.NON_LETHAL) ?? false;
     const nonLethalNoPenalty = this.properties?.has(WEAPON_PROPERTY.NON_LETHAL_NO_PENALTY) ?? false;
 
-    const { abilityMod, sizeMod, expectedToHitBonus } = this._computeExpectedToHitBonus(context, item);
+    const { abilityMod, sizeMod, expectedToHitBonus, baseTotalByHand } = this._computeExpectedToHitBonus(context, item);
     const expectedDamageBonus = this._computeExpectedDamageBonus(context, formulaContext);
     const dialogResult: AttackRollDialogResult | null = await this._resolveAttackRollDialog(
       context,
@@ -394,7 +432,8 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       weaponNonLethalDefault,
       expectedToHitBonus,
       expectedDamageBonus,
-      resolvedName
+      resolvedName,
+      baseTotalByHand
     );
 
     if (!dialogResult) {
@@ -405,6 +444,9 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // The dialog's Wield Mode selection is authoritative from here on — `context.wieldedHand`
     // was only the pre-dialog auto-detected default used to seed the dialog and gate availability.
     context.wieldedHand = dialogResult.wieldMode;
+    // An override must re-pull from the actually-chosen hand's own snapshotted pool before the
+    // real formula is built, or the roll (not just the preview) silently uses the wrong hand's BAB.
+    context.availableBab = context.handBab[context.wieldedHand];
     const twfPenalty = getTwoWeaponFightingPenalty(item, context.wieldedHand);
 
     const {
@@ -459,6 +501,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       targets: targetRows,
       actionEconomySpent: null,
       modifierList,
+      warnings: this._buildWieldModeWarnings(context, item),
     };
 
     const attackMessage = await buildAttackCard(actor, attackRoll, modifierList, attackCardFlags, dialogResult.rollMode, critConfirmRoll);
@@ -511,7 +554,8 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     item: Weapon,
     target: ACTORS_DND35E[],
     isFree?: boolean,
-    targetToken?: TokenDnd35e
+    targetToken?: TokenDnd35e,
+    actorToken?: TokenDnd35e
   ): UseWeaponAttackContext | null {
     if (
       !actor
@@ -520,28 +564,39 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     ) return null;
 
     const hand = detectWieldedHand(actor, item);
-    const actorToken = getActorToken(actor);
-    const combatant = actorToken
-      ? (game.combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
+    // A caller with a concrete acting token (e.g. the Token HUD) must win over this
+    // fallback \u2014 ambiguous for a linked actor with multiple placed tokens.
+    const resolvedActorToken = actorToken ?? getActorToken(actor);
+    const combatant = resolvedActorToken
+      ? (game.combat?.getCombatantsByToken(resolvedActorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
       : null;
     if (!hand) return null;
 
-    // No active combatant (no encounter, or actor not yet added to one) — full BAB, mirrors
-    // the Token HUD's own "not in combat" fallback (tokenHudActions.mts).
-    const availableBab = combatant
-      ? getHandBab(combatant, hand) ?? actor.system.bab
-      : actor.system.bab;
+    // No active combatant (no encounter, or actor not yet added to one) — full BAB for every
+    // hand, mirrors the Token HUD's own "not in combat" fallback (tokenHudActions.mts).
+    const handBab: Record<WieldedHand, number> = combatant
+      ? {
+        [MAIN_HAND_EQUIP_SLOT]: getHandBab(combatant, MAIN_HAND_EQUIP_SLOT),
+        [OFF_HAND_EQUIP_SLOT]: getHandBab(combatant, OFF_HAND_EQUIP_SLOT),
+        [BOTH_HANDS_EQUIP_SLOT]: getHandBab(combatant, BOTH_HANDS_EQUIP_SLOT),
+      }
+      : {
+        [MAIN_HAND_EQUIP_SLOT]: actor.system.bab,
+        [OFF_HAND_EQUIP_SLOT]: actor.system.bab,
+        [BOTH_HANDS_EQUIP_SLOT]: actor.system.bab,
+      };
 
     return {
       actor,
       target,
       targetToken,
-      actorToken,
+      actorToken: resolvedActorToken,
       wieldedHand: hand,
       attackAbility: STR,
       damageAbility: STR,
       isFree: !!isFree,
-      availableBab,
+      availableBab: handBab[hand],
+      handBab,
       attackSituationalModifier: '',
       damageSituationalModifier: '',
     };

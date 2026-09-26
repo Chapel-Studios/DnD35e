@@ -69,7 +69,7 @@
   import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
   import type { SelectOption } from '@vc/fields/index.mjs';
   import MultiOptionToggle from '@vc/fields/MultiOptionToggle.vue';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
 
   import ActorRollHeader from '../RollDialog/ActorRollHeader.vue';
   import RollDialog from '../RollDialog/RollDialog.vue';
@@ -85,6 +85,7 @@
       attackSituationalModifier,
       damageSituationalModifier,
       wieldMode,
+      handBab,
       formulaContexts,
       damageTotal,
       damageLabel,
@@ -99,11 +100,14 @@
     },
   } = inject(RollDialogStoreSymbol) as WeaponAttackRollDialogStore;
 
-  const wieldModeOptions: SelectOption<WieldedHand>[] = [
-    { label: `dnd35e.COMBAT.WieldMode.${MAIN_HAND_EQUIP_SLOT}`, value: MAIN_HAND_EQUIP_SLOT },
-    { label: `dnd35e.COMBAT.WieldMode.${OFF_HAND_EQUIP_SLOT}`, value: OFF_HAND_EQUIP_SLOT },
-    { label: `dnd35e.COMBAT.WieldMode.${BOTH_HANDS_EQUIP_SLOT}`, value: BOTH_HANDS_EQUIP_SLOT },
-  ];
+  // Each option's label gets a live `(+N)` BAB suffix (tokenHudActions.mts's own convention) —
+  // `MultiOptionToggle` runs `game.i18n.localize()` on the composed string too, which is a
+  // no-op once it no longer matches a translation key (see SelectFormGroup's same idiom).
+  const wieldModeOptions = computed<SelectOption<WieldedHand>[]>(() => [
+    { label: `${localize(`dnd35e.COMBAT.WieldMode.${MAIN_HAND_EQUIP_SLOT}`)} (${formatBonus(handBab.value[MAIN_HAND_EQUIP_SLOT])})`, value: MAIN_HAND_EQUIP_SLOT },
+    { label: `${localize(`dnd35e.COMBAT.WieldMode.${OFF_HAND_EQUIP_SLOT}`)} (${formatBonus(handBab.value[OFF_HAND_EQUIP_SLOT])})`, value: OFF_HAND_EQUIP_SLOT },
+    { label: `${localize(`dnd35e.COMBAT.WieldMode.${BOTH_HANDS_EQUIP_SLOT}`)} (${formatBonus(handBab.value[BOTH_HANDS_EQUIP_SLOT])})`, value: BOTH_HANDS_EQUIP_SLOT },
+  ]);
 
   function onWieldModeUpdate(value: WieldedHand): void {
     wieldMode.value = value;

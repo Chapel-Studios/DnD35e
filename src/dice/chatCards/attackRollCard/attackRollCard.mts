@@ -59,6 +59,8 @@ interface AttackCardFlags {
   actionEconomySpent: { standardActionSpent: boolean; hand: WieldedHand; babSpent: number } | null;
   /** Persisted so the Change Target(s) handler can rebuild `diceRollHtml` without re-deriving the roll's own modifier breakdown. */
   modifierList: RollModifier[];
+  /** Already-localized rule-violation notices (insufficient BAB, illegal Wield Mode override) surfaced on the card so the GM notices even if the acting player missed the dialog's live warning. */
+  warnings: string[];
 }
 
 /**
@@ -103,6 +105,7 @@ function buildAttackCardContent(roll: D20Roll, flags: AttackCardFlags, diceRollH
     critMultiplier: flags.critMultiplier,
     nonLethal: flags.nonLethal,
     targets: flags.targets,
+    warnings: flags.warnings,
   });
 }
 

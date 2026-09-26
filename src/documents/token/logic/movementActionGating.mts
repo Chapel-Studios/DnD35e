@@ -160,7 +160,7 @@ const isRunAffordable = (actor: ActorDnd35e | null | undefined): boolean => {
   const combatant = getCombatantForActor(actor);
   if (!combatant) return true;
   const session = getMovementSession(combatant);
-  return combatant.actionEconomy.actions.move && session.category !== 'step';
+  return combatant.actionEconomy.actions.move > 0 && session.category !== 'step';
 };
 
 /** `withdraw`/`charge`/`doubleMove` are full-round actions — only affordable while both the move and standard actions are still unspent (and this turn hasn't been locked into a 5-foot-step-only session). */
@@ -168,14 +168,16 @@ const isFullRoundMoveAffordable = (actor: ActorDnd35e | null | undefined): boole
   const combatant = getCombatantForActor(actor);
   if (!combatant) return true;
   const session = getMovementSession(combatant);
-  return combatant.actionEconomy.actions.move && combatant.actionEconomy.actions.standard && session.category !== 'step';
+  return combatant.actionEconomy.actions.move > 0
+    && combatant.actionEconomy.actions.standard > 0
+    && session.category !== 'step';
 };
 
 /** `standUp` costs a move action (SRD) — only affordable in combat while the move action pool is still available; free/always-affordable outside combat, mirroring `TokenHudDnd35e#onMovementAction`'s own no-combatant skip. */
 const isStandUpAffordable = (actor: ActorDnd35e | null | undefined): boolean => {
   const combatant = getCombatantForActor(actor);
   if (!combatant) return true;
-  return combatant.actionEconomy.actions.move;
+  return combatant.actionEconomy.actions.move > 0;
 };
 
 /**

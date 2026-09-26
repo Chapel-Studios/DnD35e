@@ -10,6 +10,8 @@ interface UseWeaponAttackContext extends UseActionContext {
   /** Ability the STR-scaling damage term uses — independent of `attackAbility` (finesse swaps only the attack roll's ability, never damage's). Always STR under current SRD weapon properties. */
   damageAbility: AbilityKey;
   availableBab: number;
+  /** Raw BAB pool for each hand (main/off/both), snapshotted once in `PrepareActionContext` — feeds the dialog's live per-hand preview and the post-dialog `availableBab` refresh when the player overrides Wield Mode. */
+  handBab: Record<WieldedHand, number>;
   isFree: boolean;
   damageSituationalModifier: string;  // formula
   attackSituationalModifier: string;  // formula

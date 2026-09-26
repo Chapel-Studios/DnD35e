@@ -55,6 +55,14 @@
     {{{diceRollHtml}}}
   </div>
 
+  {{#if warnings.length}}
+  <ul class="attack-card-warnings">
+    {{#each warnings}}
+    <li class="callout rule-warning">{{ this }}</li>
+    {{/each}}
+  </ul>
+  {{/if}}
+
   {{!-- <div class="damage-preview">
     <span class="label">{{ damagePreviewLabel }}</span>
     <span class="value">{{ damageFormulaDisplay }}</span>

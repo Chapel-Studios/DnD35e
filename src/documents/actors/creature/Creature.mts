@@ -259,12 +259,17 @@ abstract class Creature extends ActorDnd35e {
    * ambiguous when multiple unlinked tokens share one prototype actor id. Callers already
    * have the real targeted `Token` in hand (canvas targeting, HUD, sheet) — pass it straight
    * through instead.
+   *
+   * `options.actorToken` — same reasoning applies to the *acting* token: a caller that already
+   * knows which placed token initiated the click (e.g. the Token HUD) must pass it through
+   * rather than letting `PrepareActionContext()` fall back to `getActorToken()`'s first-match
+   * search, which is ambiguous for a linked actor with multiple placed tokens.
    */
   async useAction(
     itemId: string,
     actionId: string,
     targetTokens?: TokenDnd35e[],
-    options: { free?: boolean } = {}
+    options: { free?: boolean; actorToken?: TokenDnd35e } = {}
   ): Promise<ActionResult> {
     const defaultResult = {
       cancelled: true,
@@ -285,7 +290,7 @@ abstract class Creature extends ActorDnd35e {
     // context` narrow to the real `'main' | 'off' | 'both'` literal type below instead of
     // widening it away.
     const context = action instanceof WeaponAttackDataModel
-      ? WeaponAttackDataModel.PrepareActionContext(actor, item, targets, options.free, targetTokens?.[0])
+      ? WeaponAttackDataModel.PrepareActionContext(actor, item, targets, options.free, targetTokens?.[0], options.actorToken)
       : { actor, target: targets };
     if (!context) {
       defaultResult.reason = 'contextNotPrepared';

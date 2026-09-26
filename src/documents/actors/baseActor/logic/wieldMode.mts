@@ -53,7 +53,39 @@ function getWeaponAttackActionAbilityModTerm (hand: WieldedHand, ability: Abilit
   }
 }
 
+/**
+ * Checks whether `hand` (typically a dialog-overridden Wield Mode) is physically possible
+ * given `item`'s current `equippedSlotIds` — an SRD one-handed weapon may always be gripped
+ * two-handed for the extra STR term while the off-hand is empty (no flag), but not while the
+ * off-hand holds a different item (flagged). Returns `null` when legal, else a localization
+ * key describing the mismatch for the attack card.
+ */
+function getWieldModeMismatchReason (actor: ActorDnd35e, item: Weapon, hand: WieldedHand): string | null {
+  const slots = item.system.equippedSlotIds;
+  const inMainHand = slots.includes(MAIN_HAND_EQUIP_SLOT);
+  const inOffHand = slots.includes(OFF_HAND_EQUIP_SLOT);
+  const offHandOccupant = [...actor.items].find(
+    (candidate): candidate is Weapon =>
+      candidate.type === weaponItemType
+      && candidate.id !== item.id
+      && (candidate as Weapon).system.equippedSlotIds.includes(OFF_HAND_EQUIP_SLOT)
+  );
+
+  switch (hand) {
+    case MAIN_HAND_EQUIP_SLOT:
+      return inMainHand ? null : 'dnd35e.COMBAT.WieldMode.MismatchNotInMainHand';
+    case OFF_HAND_EQUIP_SLOT:
+      return inOffHand ? null : 'dnd35e.COMBAT.WieldMode.MismatchNotInOffHand';
+    case BOTH_HANDS_EQUIP_SLOT:
+      if (!inMainHand) return 'dnd35e.COMBAT.WieldMode.MismatchNotInMainHand';
+      return offHandOccupant ? 'dnd35e.COMBAT.WieldMode.MismatchOffHandOccupied' : null;
+    default:
+      return null;
+  }
+}
+
 export {
   detectWieldedHand,
-  getWeaponAttackActionAbilityModTerm, 
+  getWeaponAttackActionAbilityModTerm,
+  getWieldModeMismatchReason,
 };

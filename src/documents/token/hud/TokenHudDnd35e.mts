@@ -241,7 +241,12 @@ class TokenHudDnd35e extends TokenHudVueBase {
     return createApp(this.vueComponent, { context: this.reactiveContext });
   }
 
-  /** Weapon Attacks palette entry click — mirrors the sheet Actions tab's `onAttack()` (WeaponsSection.vue). */
+  /**
+   * Weapon Attacks palette entry click — mirrors the sheet Actions tab's `onAttack()` (WeaponsSection.vue).
+   * Passes `this.document.object` as the acting token so `PrepareActionContext()` reads
+   * wield mode/action economy/BAB from the exact token whose HUD was clicked, not a
+   * re-resolved (and potentially wrong, for a linked actor with multiple placed tokens) fallback.
+   */
   static async #onAttackAction (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
     const { itemId, actionId, enabled } = target.dataset;
     if (!itemId || !actionId || enabled === 'false') return;
@@ -255,7 +260,9 @@ class TokenHudDnd35e extends TokenHudVueBase {
       return;
     }
 
-    await actor.useAction(itemId, actionId, [...targetTokens] as TokenDnd35e[]);
+    await actor.useAction(itemId, actionId, [...targetTokens] as TokenDnd35e[], {
+      actorToken: this.document.object as unknown as TokenDnd35e | undefined,
+    });
   }
 
   /** Compact bar1 HP widget's apply button (TokenHpUpdater.vue) — reads the amount/type staged in the button's own data attributes since the Vue tree has no document/store access here. */

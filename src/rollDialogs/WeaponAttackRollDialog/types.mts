@@ -61,6 +61,10 @@ interface WeaponAttackRollDialogData extends RollDialogData {
   // wieldMode?: WieldedHand;
   /** WieldedHand select (poc.10 Story D, §10.3) — auto-filled, always overridable. */
   wieldModeFromEquippedSlots: WieldedHand;
+  /** Raw BAB pool per hand, snapshotted pre-dialog — feeds the Wield Mode toggle's per-option `(+N)` label. */
+  handBab: Record<WieldedHand, number>;
+  /** Full expected to-hit bonus (BAB + ability + size + TWF) per hand — lets the dialog's base-total preview stay live as Wield Mode changes, mirrors `RollDialogData.baseTotal`'s single-value shape but keyed per hand. */
+  baseTotalByHand: Record<WieldedHand, number>;
   /** Damage box's base-row label (poc.10 Story D) — mirrors `RollDialogData.baseLabel`'s convention, but damage-specific since only weapon attacks have a damage preview row. */
   damageLabel: string;
   /** Damage box's base-row total (poc.10 Story D) — pre-dialog flat preview (dice terms excluded, see `resolveFormulaNumber`'s doc), mirrors `RollDialogData.baseTotal`. */

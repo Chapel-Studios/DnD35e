@@ -9,7 +9,7 @@
  */
 import type { Creature } from '@actors/creature/index.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
-import { FULL_ROUND_ACTION, MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
+import { AOO_ACTION, FULL_ROUND_ACTION, MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
 import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, type WieldedHand } from '@constants/equipmentSlots.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
@@ -21,11 +21,12 @@ const ACTION_ECONOMY_FLAG = 'actionEconomy';
 
 interface CombatantActionEconomy {
   actions: {
-    [STANDARD_ACTION]: boolean;
-    [MOVE_ACTION]: boolean;
-    [MINOR_ACTION]: boolean;
-    /** Own pool, capped at one use per turn — not part of `ACTION_HIERARCHY`, so it can never be covered by downgrading a spent move/standard action. */
-    [SWIFT_ACTION]: boolean;
+    /** Int, not bool — some feats/spells grant an extra use this round, so a pool can hold more than 1 (see `toggleActionAvailability`). */
+    [STANDARD_ACTION]: number;
+    [MOVE_ACTION]: number;
+    [MINOR_ACTION]: number;
+    /** Own pool, capped at one use per turn by default — not part of `ACTION_HIERARCHY`, so it can never be covered by downgrading a spent move/standard action. */
+    [SWIFT_ACTION]: number;
     aoo: number;
   };
   bab: {
@@ -45,7 +46,7 @@ interface CombatantActionEconomy {
 }
 
 const DEFAULT_ACTION_ECONOMY: CombatantActionEconomy = {
-  actions: { [STANDARD_ACTION]: true, [MOVE_ACTION]: true, [MINOR_ACTION]: true, [SWIFT_ACTION]: true, aoo: 0 },
+  actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [MINOR_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: 0 },
   bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
   used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [MINOR_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
 };
@@ -67,7 +68,7 @@ async function setActionEconomy(combatant: CombatantDnd35e, economy: CombatantAc
 /** Refills both BAB pools and AoO count from the actor, resets all actions, clears all `used` flags. */
 async function resetActionEconomy(combatant: CombatantDnd35e, actor: Creature): Promise<void> {
   await setActionEconomy(combatant, {
-    actions: { [STANDARD_ACTION]: true, [MOVE_ACTION]: true, [MINOR_ACTION]: true, [SWIFT_ACTION]: true, aoo: actor.system.aooCount },
+    actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [MINOR_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: actor.system.aooCount },
     bab: { [MAIN_HAND_EQUIP_SLOT]: actor.system.bab, [OFF_HAND_EQUIP_SLOT]  : actor.system.bab },
     used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [MINOR_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
   });
@@ -135,9 +136,9 @@ function canUseAction(combatant: CombatantDnd35e, actions: ActionEconomyType[]):
   const byDescendingTier = [...trackable].sort((a, b) => tierRank(b) - tierRank(a));
   for (const requested of byDescendingTier) {
     const tiers = tiersCovering(requested);
-    const tier = tiers.find((candidate) => available[candidate]);
+    const tier = tiers.find((candidate) => available[candidate] > 0);
     if (!tier) return null;
-    available[tier] = false;
+    available[tier] -= 1;
     resolved.set(requested, tier);
   }
 
@@ -155,8 +156,8 @@ async function spendAction(combatant: CombatantDnd35e, actions: ActionEconomyTyp
   const economy = getActionEconomy(combatant);
   for (const tier of used) {
     if (!isTrackedActionTier(tier)) continue;
-    economy.actions[tier] = false;
-    economy.used[tier] = true;
+    economy.actions[tier] = Math.max(0, economy.actions[tier] - 1);
+    economy.used[tier] = economy.actions[tier] <= 0;
   }
   await setActionEconomy(combatant, economy);
   return used;
@@ -167,18 +168,21 @@ async function refundAction(combatant: CombatantDnd35e, actions: ActionEconomyTy
   const economy = getActionEconomy(combatant);
   for (const tier of actions) {
     if (!isTrackedActionTier(tier)) continue;
-    economy.actions[tier] = true;
-    economy.used[tier] = false;
+    economy.actions[tier] += 1;
+    economy.used[tier] = economy.actions[tier] <= 0;
   }
   await setActionEconomy(combatant, economy);
 }
 
-/** GM manual override (Combat Tracker action pip click) — directly flips a single pool's availability, bypassing the hierarchy resolution `spendAction`/`refundAction` perform. Keeps `used[tier]` in sync so other economy consumers relying on it stay consistent. */
-async function toggleActionAvailability(combatant: CombatantDnd35e, tier: TrackedActionTier): Promise<void> {
+/** Pip tiers clickable in the Combat Tracker row — the four tracked action tiers plus `aoo` (aoo has no `used` counterpart, see below). */
+type ActionPipTier = TrackedActionTier | typeof AOO_ACTION;
+
+/** GM manual override (Combat Tracker action pip click) — spends one use from the pool if any remain, otherwise refunds one back. Unifies standard/move/minor/swift/aoo behind the same click gesture, bypassing the hierarchy resolution `spendAction`/`refundAction` perform, so a pool pushed above its normal single use (an "extra action" source) just takes an extra click to fully spend. Keeps `used[tier]` in sync for the four tracked tiers so other economy consumers relying on it stay consistent. */
+async function toggleActionAvailability(combatant: CombatantDnd35e, tier: ActionPipTier): Promise<void> {
   const economy = getActionEconomy(combatant);
-  const available = !economy.actions[tier];
-  economy.actions[tier] = available;
-  economy.used[tier] = !available;
+  const current = economy.actions[tier];
+  economy.actions[tier] = current > 0 ? current - 1 : current + 1;
+  if (isTrackedActionTier(tier)) economy.used[tier] = economy.actions[tier] <= 0;
   await setActionEconomy(combatant, economy);
 }
 
@@ -192,7 +196,7 @@ function getHandBab(combatant: CombatantDnd35e, hand: WieldedHand): number {
 
 function canUseHandAttack(combatant: CombatantDnd35e, hand: WieldedHand): boolean {
   const economy = getActionEconomy(combatant);
-  if (economy.actions.standard) return true;
+  if (economy.actions.standard > 0) return true;
   if (economy.used.movedAfterAttack) return false;
   // Two-handed wielding needs BAB remaining in *both* pools — spendHandBab()'s 'both' case draws from both at once.
   return hand === BOTH_HANDS_EQUIP_SLOT
@@ -290,4 +294,4 @@ export {
   toggleActionAvailability,
 };
 
-export type { CombatantActionEconomy };
+export type { ActionPipTier, CombatantActionEconomy };

@@ -104,7 +104,7 @@ test.describe('Move action economy', () => {
     }, tokenId);
     console.log('DEBUG post-drag:', JSON.stringify(debugInfo, null, 2));
     await expect.poll(async () => (await getCombatantActionEconomy(page, combatId!, combatantId)).actions).toEqual(
-      expect.objectContaining({ move: false, standard: true })
+      expect.objectContaining({ move: 0, standard: 1 })
     );
     console.log('DEBUG card count after drag 1:', await page.locator('.message .move-action-card').count());
 
@@ -125,7 +125,7 @@ test.describe('Move action economy', () => {
     // standard action too (a Double Move), still updating the same session card.
     await dragTokenByOffset(page, tokenId, { dx: 2 * gridSize, dy: 0 });
     await expect.poll(async () => (await getCombatantActionEconomy(page, combatId!, combatantId)).actions).toEqual(
-      expect.objectContaining({ move: false, standard: false })
+      expect.objectContaining({ move: 0, standard: 0 })
     );
     await expect(page.locator('.message .move-action-card')).toHaveCount(1);
     await expect(card.locator('.spent-action')).toHaveCount(2);
@@ -135,7 +135,7 @@ test.describe('Move action economy', () => {
     // just the last drag's start), resets the movement session, and marks the card undone.
     await undoButton.click();
     await expect.poll(async () => (await getCombatantActionEconomy(page, combatId!, combatantId)).actions).toEqual(
-      expect.objectContaining({ move: true, standard: true })
+      expect.objectContaining({ move: 1, standard: 1 })
     );
     await expect.poll(async () => getCombatantMovementSessionCategory(page, combatId!, combatantId)).toBeNull();
     await expect(card).toHaveClass(/is-undone/);
