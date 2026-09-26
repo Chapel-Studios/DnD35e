@@ -102,37 +102,25 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
       // see `WeaponAttackDataModel._executeCheck()`); any additional targets fall back.
       const targetToken = (target === context.target?.[0] ? context.targetToken : undefined)
         ?? (target.getActiveTokens()[0] as TokenDnd35e | undefined);
-      
-      // SRD requires melee attacks to actually be in reach (§10.7 verification) — always
-      // enforced, not a combat-settings toggle like the target min/max checks above it.
-      const enforceMeleeReach = true;
 
       if (!attackerToken || !targetToken) {
-        if (enforceMeleeReach) {
-          result.cancelled = true;
-          result.reason = 'missingTokens';
-          return result;
-        }
-
-        continue;
+        ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.MissingTargetToken'));
+        result.cancelled = true;
+        result.reason = 'missingTokens';
+        return result;
       }
 
       if (!isWithinReach(attackerToken, targetToken, effectiveReach)) {
-        if (enforceMeleeReach) {
-          result.cancelled = true;
-          result.reason = 'outOfReach';
-          return result;
-        }
-
-        result.warnings!.push('outOfReach');
+        ui.notifications.warn(game.i18n.format('dnd35e.COMBAT.TargetOutOfReach', { target: target.name }));
+        result.cancelled = true;
+        result.reason = 'outOfReach';
+        return result;
       }
       if (hasReach && !threatensAdjacent && isWithinReach(attackerToken, targetToken, baseReach)) {
-        if (enforceMeleeReach) {
-          result.cancelled = true;
-          result.reason = 'reachDeadZone';
-          return result;
-        }
-        result.warnings!.push('reachDeadZone');
+        ui.notifications.warn(game.i18n.format('dnd35e.COMBAT.TargetTooCloseForReach', { target: target.name }));
+        result.cancelled = true;
+        result.reason = 'reachDeadZone';
+        return result;
       }
     }
 

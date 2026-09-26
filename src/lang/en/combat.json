@@ -41,6 +41,11 @@
       "NoActionAvailable": "No action available for this attack.",
       "ChargeMeleeOnly": "A charge permits only a single melee attack.",
       "SelectTargetFirst": "Select a target before attacking.",
+      "NoTargets": "This action normally requires a target.",
+      "TooManyTargets": "This action allows at most {max} target(s).",
+      "TargetOutOfReach": "{target} is out of reach.",
+      "TargetTooCloseForReach": "{target} is too close to attack with a reach weapon.",
+      "MissingTargetToken": "Unable to determine token positions for this attack.",
       "Maneuver": {
         "TotalDefense": "Total Defense",
         "NotYetImplemented": "Total Defense isn't implemented yet."

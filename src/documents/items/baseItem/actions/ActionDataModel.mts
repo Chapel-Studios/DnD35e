@@ -207,7 +207,7 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
         return result;
       }
 
-      result.warnings!.push('noTargets');
+      result.warnings!.push(game.i18n.localize('dnd35e.COMBAT.NoTargets'));
     }
 
     if (
@@ -220,7 +220,7 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
         return result;
       }
 
-      result.warnings!.push('tooManyTargets');
+      result.warnings!.push(game.i18n.format('dnd35e.COMBAT.TooManyTargets', { max: this.maxTargets }));
     }
 
     // Placeholder logic for determining if the action can be executed.

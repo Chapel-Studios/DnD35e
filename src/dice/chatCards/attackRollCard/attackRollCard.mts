@@ -143,8 +143,8 @@ async function buildAttackCard(
 
 /**
  * Patches in additional warnings discovered after the card was already posted (poc.10 §10.8
- * review fix) — `_canExecute()`'s pre-check warnings (`noTargets`, `outOfReach`,
- * `reachDeadZone`, etc.) aren't merged onto the action result until `executeAction()`'s
+ * review fix) — `_canExecute()`'s pre-check warnings (already-localized, e.g. `noTargets`/
+ * `tooManyTargets`) aren't merged onto the action result until `executeAction()`'s
  * caller runs, which is after `_executeCheck()` has already built and posted this card via
  * `buildAttackCard()` with only its own wield-mode warnings. `WeaponAttackDataModel._postExecute()`
  * calls this once the merged result is known. `content` is rebuilt (not flags-only) since

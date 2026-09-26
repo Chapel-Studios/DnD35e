@@ -522,9 +522,10 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   }
 
   protected async _postExecute(context: UseWeaponAttackContext, result: WeaponAttackActionResult): Promise<void> {
-    // Pre-check warnings (`_canExecute()`, e.g. `noTargets`/`outOfReach`/`reachDeadZone`) are
-    // merged onto `result.warnings` by `executeAction()` only after `_executeCheck()` has
-    // already built and posted the attack card — patch them in now that the merged list is known.
+    // Pre-check warnings (`_canExecute()`, e.g. `noTargets`/`tooManyTargets`, already localized
+    // at the push site) are merged onto `result.warnings` by `executeAction()` only after
+    // `_executeCheck()` has already built and posted the attack card — patch them in now that
+    // the merged list is known.
     if (result.attackMessage) await appendAttackCardWarnings(result.attackMessage, result.warnings);
 
     // Spend AFTER execution, not before — a cancelled dialog never costs an action. The
