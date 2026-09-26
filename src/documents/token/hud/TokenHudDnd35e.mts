@@ -261,7 +261,7 @@ class TokenHudDnd35e extends TokenHudVueBase {
   /** Compact bar1 HP widget's apply button (TokenHpUpdater.vue) — reads the amount/type staged in the button's own data attributes since the Vue tree has no document/store access here. */
   static async #onAdjustHp (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
     const actor = this.actor;
-    if (!(actor instanceof Creature)) return;
+    if (!(actor instanceof Creature) || !actor.isOwner) return;
 
     const amount = Number(target.dataset.amount);
     const adjustmentType = target.dataset.adjustmentType as HpAdjustmentType | undefined;

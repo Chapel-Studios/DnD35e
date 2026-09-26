@@ -6,6 +6,7 @@
       :icon-only="props.compact"
       :options="props.compact ? HP_ADJUSTMENT_TYPE_ICON_OPTIONS : HP_ADJUSTMENT_TYPE_OPTIONS"
       :value="adjustmentType"
+      :disabled="isReadOnly"
       @update="onAdjustmentTypeChange"
     />
     <label v-if="!props.compact">{{ localize('dnd35e.CREATURE.FIELDS.hp.adjustment.amount.label') }}</label>
@@ -14,14 +15,16 @@
       class="hp-updater-amount"
       type="number"
       :min="minAdjustment"
+      :disabled="isReadOnly"
     >
     <button
       type="button"
       class="apply-btn"
       :class="{ 'field-control-btn': !props.compact }"
-      :data-action="props.compact ? 'adjustHp' : undefined"
+      :data-action="isReadOnly ? undefined : (props.compact ? 'adjustHp' : undefined)"
       :data-amount="props.compact ? adjustmentAmount : undefined"
       :data-adjustment-type="props.compact ? adjustmentType : undefined"
+      :disabled="isReadOnly"
       :title="localize('dnd35e.CREATURE.FIELDS.hp.adjustment.apply.tooltip')"
       @click="applyAdjustment"
     >
@@ -60,6 +63,9 @@
   // `data-action="adjustHp"` dataset attributes above (see TokenHudDnd35e#onAdjustHp).
   const store = inject(DocumentSheetStoreSymbol, undefined) as CreatureDocumentStore | undefined;
 
+  // Compact only — non-compact always renders inside an already permission-gated sheet.
+  const isReadOnly = computed(() => props.compact && !props.editable);
+
   const isOpen = defineModel<boolean>('open', { default: false });
 
   const adjustmentType = ref<HpAdjustmentType>(HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT);
@@ -94,6 +100,12 @@
 
     &.read-only {
       justify-content: center;
+
+      .hp-updater-amount,
+      .apply-btn {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     }
 
     .hp-updater-type {
