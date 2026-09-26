@@ -103,9 +103,9 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
       const targetToken = (target === context.target?.[0] ? context.targetToken : undefined)
         ?? (target.getActiveTokens()[0] as TokenDnd35e | undefined);
       
-      // TODO: enforce target min/max requirements based on combat settings.
-      // const { enforceMeleeReach } = useCombatSettings();
-      const enforceMeleeReach = false; // Placeholder until combat settings are integrated
+      // SRD requires melee attacks to actually be in reach (§10.7 verification) — always
+      // enforced, not a combat-settings toggle like the target min/max checks above it.
+      const enforceMeleeReach = true;
 
       if (!attackerToken || !targetToken) {
         if (enforceMeleeReach) {
