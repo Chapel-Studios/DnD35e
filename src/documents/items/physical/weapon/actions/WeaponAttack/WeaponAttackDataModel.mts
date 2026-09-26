@@ -306,15 +306,17 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    * `getWeaponAttackActionAbilityModTerm()` returns raw FormulaFamiliar text (e.g.
    * `$floor(#self.abilities.str.mod * 1.5)`), so it's resolved here against `formulaContext`
    * before display — it must never reach the dialog preview/attack card as literal syntax.
-   * Depends only on `context.wieldedHand`/`context.attackAbility`, not on the dialog result, so
-   * it's usable both pre-dialog (damage box preview) and post-dialog (`_buildDamageSnapshot`).
+   * Depends only on `context.wieldedHand`/`context.damageAbility`, not `attackAbility` (finesse
+   * swaps only the attack roll's ability, never damage's — see `UseWeaponAttackContext`) nor
+   * the dialog result, so it's usable both pre-dialog (damage box preview) and post-dialog
+   * (`_buildDamageSnapshot`).
    */
   private _computeDamageFormula(context: UseWeaponAttackContext, formulaContext: FormulaContext): string {
     const properties = this.properties as Set<string> | undefined;
     const includeStrTerm = this.type === ACTION_TYPE.MELEE
       || (properties?.has('rangedUsesStr') ?? false);
     const rawStrTerm = includeStrTerm
-      ? getWeaponAttackActionAbilityModTerm(context.wieldedHand, context.attackAbility)
+      ? getWeaponAttackActionAbilityModTerm(context.wieldedHand, context.damageAbility)
       : '';
     const strTerm = rawStrTerm
       ? FormulaData.resolveSource(FormulaData.toSource(rawStrTerm, { expectedType: 'string' }), formulaContext, '')
