@@ -19,24 +19,25 @@ function flavorTerm(term: string, flavor: string): string {
 /**
  * Split a resolved situational-modifier term into its flat numeric sum (safe to show as its
  * own labeled modifier-breakdown entry) and whether it also contains dice or other non-flat
- * sub-terms. Uses Foundry's own Roll parser (`new Roll(term).terms` — parsed eagerly by the
- * constructor, no `evaluate()` needed) instead of hand-rolled regex, so mixed expressions like
- * `1d6 + 12` split correctly.
+ * sub-terms. Uses Foundry's own Roll parser/evaluator (`new Roll(term)` + `Roll.safeEval()`)
+ * rather than hand-summing terms — a naive term-by-term walk mishandles non-additive operators
+ * (e.g. `2 * 3` would be miscounted as `5` instead of `6`). Dice terms are zeroed out before
+ * evaluating (they can't be pre-rolled into a flat preview number — the raw formula, dice
+ * included, is what actually gets rolled; see callers), so e.g. `1d6 * 2 + 3` correctly
+ * evaluates its flat portion as `0 * 2 + 3 = 3`.
  */
 function extractFlatModifier(term: string): { flat: number; hasDice: boolean } {
   const trimmed = term.trim();
-  
+
   if (!trimmed) return { flat: 0, hasDice: false };
 
-  let flat = 0;
-  let sign = 1;
-  let hasDice = false;
-  for (const rollTerm of new Roll(trimmed).terms) {
-    if (rollTerm instanceof foundry.dice.terms.OperatorTerm) sign = rollTerm.operator === '-' ? -1 : 1;
-    else if (rollTerm instanceof foundry.dice.terms.NumericTerm) flat += sign * rollTerm.number;
-    else if (rollTerm instanceof foundry.dice.terms.DiceTerm) hasDice = true;
-  }
-  return { flat, hasDice };
+  const roll = new Roll(trimmed);
+  const hasDice = roll.dice.length > 0;
+  const flatOnlyFormula = hasDice
+    ? roll.terms.map(rollTerm => (rollTerm instanceof foundry.dice.terms.DiceTerm ? '0' : rollTerm.formula)).join(' ')
+    : trimmed;
+
+  return { flat: Roll.safeEval(flatOnlyFormula), hasDice };
 }
 
 /**
