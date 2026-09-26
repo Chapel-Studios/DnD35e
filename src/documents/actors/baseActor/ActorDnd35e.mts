@@ -5,7 +5,6 @@ import { registerActionEvents } from '@actors/baseActor/events/registerActionEve
 import type { DocumentConstructionContext } from '@common/_types.mjs';
 import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import { MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import { ensureNameFormulaOnCreate, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
@@ -28,8 +27,6 @@ import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { Override } from '@helpers/stacking.mjs';
 import type { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
-import { weaponItemType } from '@items/itemTypes.mjs';
-import type { Weapon } from '@items/physical/weapon/index.mjs';
 import type { TokenDocumentDnd35e } from '@scene/tokenDocument/TokenDocumentDnd35e.mjs';
 
 import type { ActorSystemData } from './index.mjs';
@@ -381,68 +378,6 @@ class ActorDnd35e<
   }
 }
 
-/**
- * Wield mode for a weapon attack (poc.10 §10.3) — not a schema field, derived fresh at
- * attack time from the weapon's **current** `equippedSlotIds` since it can change
- * attack-to-attack as equip slots are swapped mid-combat. Drives both the STR damage
- * term (`getWieldModeStrTerm()`) and which BAB pool(s) an attack draws from
- * (`wieldModeToBabHand()`).
- */
-type WieldMode = 'primaryHand' | 'offHand' | 'twoHanded';
-
-/**
- * Detects `item`'s current wield mode on `actor`:
- * - `twoHanded` — `item.system.equippedSlotIds` occupies both the main-hand and off-hand slots
- * - `offHand` — occupies only the off-hand slot, **and** a different weapon currently
- *   occupies the main-hand slot (a genuine two-weapon-fighting pair)
- * - `primaryHand` — everything else (main-hand slot only, or off-hand slot with nothing
- *   else wielded in the main hand)
- */
-function detectWieldMode (actor: ActorDnd35e, item: Weapon): WieldMode {
-  const slots = item.system.equippedSlotIds;
-  const inMainHand = slots.includes(MAIN_HAND_EQUIP_SLOT);
-  const inOffHand = slots.includes(OFF_HAND_EQUIP_SLOT);
-
-  if (inMainHand && inOffHand) return 'twoHanded';
-
-  if (inOffHand) {
-    const mainHandOccupant = [...actor.items].find(
-      (candidate): candidate is Weapon =>
-        candidate.type === weaponItemType
-        && candidate.id !== item.id
-        && (candidate as unknown as Weapon).system.equippedSlotIds.includes(MAIN_HAND_EQUIP_SLOT)
-    );
-    if (mainHandOccupant) return 'offHand';
-  }
-
-  return 'primaryHand';
-}
-
-/**
- * The STR damage term appended to a resolved damage formula for the given wield mode
- * (poc.10 §10.3) — Primary Hand gets the full modifier, Off-Hand gets half rounded down,
- * Two-Handed gets 1.5x rounded down. Never baked into a weapon's stored `damage.formula`;
- * always appended fresh at execution time.
- */
-function getWieldModeStrTerm (wieldMode: WieldMode): string {
-  switch (wieldMode) {
-    case 'offHand': return ' + $floor(#self.abilities.str.mod / 2)';
-    case 'twoHanded': return ' + $floor(#self.abilities.str.mod * 1.5)';
-    case 'primaryHand':
-    default: return ' + #self.abilities.str.mod';
-  }
-}
-
-/** Which BAB pool(s) (`spendHandBab()`/`canUseHandAttack()`) an attack in this wield mode draws from. */
-function wieldModeToBabHand (wieldMode: WieldMode): 'main' | 'off' | 'both' {
-  switch (wieldMode) {
-    case 'offHand': return 'off';
-    case 'twoHanded': return 'both';
-    case 'primaryHand':
-    default: return 'main';
-  }
-}
-
 const ActorProxyDnd35e = new Proxy(ActorDnd35e, {
   construct (
     _target,
@@ -463,9 +398,5 @@ registerActionEvents();
 export {
   ActorDnd35e,
   ActorProxyDnd35e,
-  detectWieldMode,
-  getWieldModeStrTerm,
-  wieldModeToBabHand,
 };
-export type { WieldMode };
 

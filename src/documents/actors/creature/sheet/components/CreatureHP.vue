@@ -48,31 +48,10 @@
           force-edit
         />
       </div>
-      <div 
+      <HpUpdater
+        v-model:open="isAdjustmentDrawerOpen"
         class="adjustment-drawer"
-        :class="{ open: isAdjustmentDrawerOpen }"
-      >
-        <label>{{ localize('dnd35e.CREATURE.FIELDS.hp.adjustment.type.label') }}</label>
-        <MultiOptionToggle
-          :options="HP_ADJUSTMENT_TYPE_OPTIONS"
-          :value="adjustmentType"
-          @update="onAdjustmentTypeChange"
-        />
-        <label>{{ localize('dnd35e.CREATURE.FIELDS.hp.adjustment.amount.label') }}</label>
-        <input
-          :min="minAdjustment"
-          type="number"
-          v-model.number="adjustmentAmount"
-        />
-        <button
-          type="button"
-          class="apply-btn field-control-btn"
-          :title="localize('dnd35e.CREATURE.FIELDS.hp.adjustment.apply.tooltip')"
-          @click="applyAdjustment"
-        >
-          <i class="fas fa-check" /> {{ localize('dnd35e.CREATURE.FIELDS.hp.adjustment.apply.label') }}
-        </button>
-      </div>
+      />
     </div>
     <template #controls>
       <button
@@ -101,12 +80,11 @@
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { FormGroupSection, NumberFormGroup } from '@vc/fields/index.mjs';
   import { gmOnlyEditability, ownerPlusVisibility } from '@vc/fields/index.mjs';
-  import MultiOptionToggle from '@vc/fields/MultiOptionToggle.vue';
   import MeasureBar from '@vc/MeasureBar.vue';
   import { computed, inject, ref } from 'vue';
 
   import type { CreatureDocumentStore } from '../CreatureStore.mjs';
-  import { HP_ADJUSTMENT_TYPE, HP_ADJUSTMENT_TYPE_OPTIONS, type HpAdjustmentType } from './constants.mjs';
+  import HpUpdater from './HpUpdater.vue';
 
   const localize = (key: string) => game.i18n.localize(key);
   const { 
@@ -115,9 +93,6 @@
       maxHp,
       tempHp,
       nonlethalDamage,
-    },
-    documentActions: {
-      adjustHp,
     },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
 
@@ -150,31 +125,11 @@
   ]);
 
   // Adjustment drawer state
-  const adjustmentType = ref<HpAdjustmentType>(HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT);
   const isAdjustmentDrawerOpen = ref(false);
-  const adjustmentAmount = ref(0);
-  const minAdjustment = computed(() => {
-    if (adjustmentType.value === HP_ADJUSTMENT_TYPE.TEMPORARY_ADJUSTMENT) {
-      return 0;
-    }
-    return undefined;
-  });
 
   const toggleAdjustmentDrawer = () => {
     isAdjustmentDrawerOpen.value = !isAdjustmentDrawerOpen.value;
   };
-  const onAdjustmentTypeChange = (type: HpAdjustmentType) => {
-    adjustmentType.value = type;
-  };
-
-  const applyAdjustment = async () => {
-    const updateAmount = adjustmentAmount.value;
-    
-    await adjustHp(updateAmount, adjustmentType.value);
-
-    adjustmentAmount.value = 0;
-  };
-
 </script>
 
 <style lang="scss" scoped>

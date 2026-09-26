@@ -23,6 +23,7 @@
  */
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
 import { VUE_APP_CLASS } from '@constants/cssClasses.mjs';
+import { MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
 import CombatantConfigApp from '@documents/combat/combatant/CombatantConfigApp.vue';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
@@ -68,7 +69,7 @@ const DEFAULT_CONTEXT: CombatantConfigContext = {
   defeated: false,
   actionEconomy: {
     actions: { standard: true, move: true, minor: true, swift: true, aoo: 0 },
-    bab: { main: 0, off: 0 },
+    bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
     used: { standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
   },
   movementSession: {

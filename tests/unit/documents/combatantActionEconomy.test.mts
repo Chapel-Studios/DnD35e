@@ -1,3 +1,4 @@
+import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
 import {
   canUseAction,
   canUseAoO,
@@ -37,7 +38,7 @@ describe('getActionEconomy', () => {
     const economy = getActionEconomy(buildCombatant());
     expect(economy).toEqual({
       actions: { standard: true, move: true, minor: true, swift: true, aoo: 0 },
-      bab: { main: 0, off: 0 },
+      bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
       used: { standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
     });
   });
@@ -46,7 +47,7 @@ describe('getActionEconomy', () => {
     const combatant = buildCombatant({ actionEconomy: { actions: { standard: false } } });
     const economy = getActionEconomy(combatant);
     expect(economy.actions).toEqual({ standard: false, move: true, minor: true, swift: true, aoo: 0 });
-    expect(economy.bab).toEqual({ main: 0, off: 0 });
+    expect(economy.bab).toEqual({ [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 });
   });
 });
 
@@ -55,7 +56,7 @@ describe('resetActionEconomy', () => {
     const combatant = buildCombatant({
       actionEconomy: {
         actions: { standard: false, move: false, minor: false, swift: false, aoo: 0 },
-        bab: { main: 0, off: 0 },
+        bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
         used: { standard: true, move: true, minor: true, swift: true, standardAttackUsed: true, movedAfterAttack: true, chargedThisTurn: true },
       },
     });
@@ -63,7 +64,7 @@ describe('resetActionEconomy', () => {
 
     const economy = getActionEconomy(combatant);
     expect(economy.actions).toEqual({ standard: true, move: true, minor: true, swift: true, aoo: 3 });
-    expect(economy.bab).toEqual({ main: 6, off: 6 });
+    expect(economy.bab).toEqual({ [MAIN_HAND_EQUIP_SLOT]: 6, [OFF_HAND_EQUIP_SLOT]: 6 });
     expect(economy.used).toEqual({ standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false });
   });
 });
@@ -169,62 +170,62 @@ describe('swift action (isolated pool, capped at one per turn)', () => {
 describe('canUseHandAttack', () => {
   it('is always usable while the standard action is unspent, regardless of BAB/movedAfterAttack', () => {
     const combatant = buildCombatant({ actionEconomy: { used: { movedAfterAttack: true } } });
-    expect(canUseHandAttack(combatant, 'main')).toBe(true);
+    expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(true);
   });
 
   it('is blocked once the standard action is spent and the combatant has since moved', () => {
     const combatant = buildCombatant({
-      actionEconomy: { actions: { standard: false }, bab: { main: 5, off: 5 }, used: { movedAfterAttack: true } },
+      actionEconomy: { actions: { standard: false }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 5 }, used: { movedAfterAttack: true } },
     });
-    expect(canUseHandAttack(combatant, 'main')).toBe(false);
+    expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(false);
   });
 
   it('falls back to the named hand\'s BAB pool once standard is spent and nothing moved since', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { standard: false }, bab: { main: 5, off: 0 } } });
-    expect(canUseHandAttack(combatant, 'main')).toBe(true);
-    expect(canUseHandAttack(combatant, 'off')).toBe(false);
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: false }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 0 } } });
+    expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(true);
+    expect(canUseHandAttack(combatant, OFF_HAND_EQUIP_SLOT)).toBe(false);
   });
 
   it('requires BAB remaining in both pools for a two-handed ("both") attack', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { standard: false }, bab: { main: 5, off: 0 } } });
-    expect(canUseHandAttack(combatant, 'both')).toBe(false);
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: false }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 0 } } });
+    expect(canUseHandAttack(combatant, BOTH_HANDS_EQUIP_SLOT)).toBe(false);
 
-    const bothReady = buildCombatant({ actionEconomy: { actions: { standard: false }, bab: { main: 5, off: 5 } } });
-    expect(canUseHandAttack(bothReady, 'both')).toBe(true);
+    const bothReady = buildCombatant({ actionEconomy: { actions: { standard: false }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 5 } } });
+    expect(canUseHandAttack(bothReady, BOTH_HANDS_EQUIP_SLOT)).toBe(true);
   });
 });
 
 describe('spendHandBab / refundHandBab', () => {
   it('subtracts from the named hand only, flooring at 0', async () => {
-    const combatant = buildCombatant({ actionEconomy: { bab: { main: 5, off: 5 } } });
-    await spendHandBab(combatant, 'main', 10);
+    const combatant = buildCombatant({ actionEconomy: { bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 5 } } });
+    await spendHandBab(combatant, MAIN_HAND_EQUIP_SLOT, 10);
     const economy = getActionEconomy(combatant);
-    expect(economy.bab.main).toBe(0);
-    expect(economy.bab.off).toBe(5);
+    expect(economy.bab[MAIN_HAND_EQUIP_SLOT]).toBe(0);
+    expect(economy.bab[OFF_HAND_EQUIP_SLOT]).toBe(5);
   });
 
   it('\'both\' subtracts the same amount from main and off independently', async () => {
-    const combatant = buildCombatant({ actionEconomy: { bab: { main: 8, off: 3 } } });
-    await spendHandBab(combatant, 'both', 5);
+    const combatant = buildCombatant({ actionEconomy: { bab: { [MAIN_HAND_EQUIP_SLOT]: 8, [OFF_HAND_EQUIP_SLOT]: 3 } } });
+    await spendHandBab(combatant, BOTH_HANDS_EQUIP_SLOT, 5);
     const economy = getActionEconomy(combatant);
-    expect(economy.bab.main).toBe(3);
-    expect(economy.bab.off).toBe(0); // floored at 0, not negative
+    expect(economy.bab[MAIN_HAND_EQUIP_SLOT]).toBe(3);
+    expect(economy.bab[OFF_HAND_EQUIP_SLOT]).toBe(0); // floored at 0, not negative
   });
 
   it('refundHandBab restores amount capped at the actor\'s current total BAB', async () => {
-    const combatant = buildCombatant({ actionEconomy: { bab: { main: 2, off: 2 } } });
-    await refundHandBab(combatant, 'both', 10, buildActor(0, 6));
+    const combatant = buildCombatant({ actionEconomy: { bab: { [MAIN_HAND_EQUIP_SLOT]: 2, [OFF_HAND_EQUIP_SLOT]: 2 } } });
+    await refundHandBab(combatant, BOTH_HANDS_EQUIP_SLOT, 10, buildActor(0, 6));
     const economy = getActionEconomy(combatant);
-    expect(economy.bab.main).toBe(6);
-    expect(economy.bab.off).toBe(6);
+    expect(economy.bab[MAIN_HAND_EQUIP_SLOT]).toBe(6);
+    expect(economy.bab[OFF_HAND_EQUIP_SLOT]).toBe(6);
   });
 
   it('refundHandBab on a single hand does not touch the other hand', async () => {
-    const combatant = buildCombatant({ actionEconomy: { bab: { main: 0, off: 4 } } });
-    await refundHandBab(combatant, 'main', 3, buildActor(0, 6));
+    const combatant = buildCombatant({ actionEconomy: { bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 4 } } });
+    await refundHandBab(combatant, MAIN_HAND_EQUIP_SLOT, 3, buildActor(0, 6));
     const economy = getActionEconomy(combatant);
-    expect(economy.bab.main).toBe(3);
-    expect(economy.bab.off).toBe(4);
+    expect(economy.bab[MAIN_HAND_EQUIP_SLOT]).toBe(3);
+    expect(economy.bab[OFF_HAND_EQUIP_SLOT]).toBe(4);
   });
 });
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
   import { ACTION_ECONOMY_TYPES } from '@constants/actionEconomy.mjs';
+  import { MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
   import type { CombatantConfigContext, CombatantConfigSaveData } from '@documents/combat/combatant/CombatantConfigDnd35e.mjs';
   import type { MovementSessionCategory } from '@documents/combat/combatant/movementSession.mjs';
   import { computed, reactive, ref, toRaw, watch } from 'vue';
@@ -204,11 +205,11 @@
         </div>
         <div class="form-group">
           <label for="combatant-config-bab-main">{{ localize('dnd35e.COMBAT.CONFIG.ActionEconomy.BabMain') }}</label>
-          <input id="combatant-config-bab-main" v-model.number="form.actionEconomy.bab.main" type="number">
+          <input id="combatant-config-bab-main" v-model.number="form.actionEconomy.bab[MAIN_HAND_EQUIP_SLOT]" type="number">
         </div>
         <div class="form-group">
           <label for="combatant-config-bab-off">{{ localize('dnd35e.COMBAT.CONFIG.ActionEconomy.BabOff') }}</label>
-          <input id="combatant-config-bab-off" v-model.number="form.actionEconomy.bab.off" type="number">
+          <input id="combatant-config-bab-off" v-model.number="form.actionEconomy.bab[OFF_HAND_EQUIP_SLOT]" type="number">
         </div>
         <div class="form-group">
           <span class="label">{{ localize('dnd35e.COMBAT.CONFIG.ActionEconomy.UsedFlags') }}</span>

@@ -94,6 +94,9 @@ class CombatTrackerDnd35e extends CombatTrackerVueBase {
     const raw = await super._prepareContext(options) as RawTrackerContext;
     await this._prepareCombatContext(raw, options);
     await this._prepareTrackerContext(raw, options);
+    // Core's `_prepareTrackerContext` returns early without setting `turns` at all when there's
+    // no viewed combat (`if (!combat) return;`).
+    raw.turns ??= [];
 
     const combat = this.viewed;
     for (const turn of raw.turns) {
@@ -139,6 +142,22 @@ class CombatTrackerDnd35e extends CombatTrackerVueBase {
     if (!combatant) return;
 
     await toggleActionAvailability(combatant as unknown as CombatantDnd35e, flag);
+  }
+
+  /**
+   * Core's `_onClickAction` reads `this.viewed` directly with no fallback (`combat[target.dataset.action]?.()`)
+   * — that field is only refreshed by `_configureRenderOptions` on the app's own render pass, so if a hook fires
+   * `ui.combat.render({ combat: null })` (e.g. `Scene#activate`/`deactivate`) and `#inferCombat()` can't find a
+   * replacement (combat not marked `active` and its `scene` doesn't match the now-current scene), `viewed` goes
+   * null while our Vue-rendered controls are still showing from the previous render, and every button throws
+   * `Cannot read properties of null`. Re-sync from `this.combats` before delegating, since a click on a
+   * `.combat-control` button only happens when Vue's own context still believes a combat is being viewed.
+   */
+  protected override async _onClickAction (event: PointerEvent, target: HTMLElement): Promise<void> {
+    if (!this.viewed && (event.target as HTMLElement | null)?.closest('.combat-control')) {
+      this.viewed = this.combats.find(c => c.active) ?? this.combats[0] ?? null;
+    }
+    return super._onClickAction(event, target);
   }
 }
 

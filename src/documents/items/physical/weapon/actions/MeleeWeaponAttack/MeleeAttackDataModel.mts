@@ -28,8 +28,8 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
       required: true,
       blank: false,
       choices: [...ACTION_TYPES],
-      initial: ACTION_TYPE.MELEE_WEAPON_ATTACK,
-      validate: (value: unknown) => value === ACTION_TYPE.MELEE_WEAPON_ATTACK,
+      initial: ACTION_TYPE.MELEE,
+      validate: (value: unknown) => value === ACTION_TYPE.MELEE,
     });
     // Same contexts as the base `name` field - only the default text differs.
     schema.name.initial = () => ({

@@ -42,7 +42,7 @@ async function buildSaveCard(roll: D20Roll, modifierList: RollModifier[], opts: 
     actorName: opts.actorName,
     resultLabel: game.i18n.localize('dnd35e.ROLL.Result'),
     saveLabel: opts.saveLabel,
-    rollFormula: roll.formula,
+    rollFormula: roll.displayFormula,
     dieResult,
     total,
     isFumble: roll.isFumble,

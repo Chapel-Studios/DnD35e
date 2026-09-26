@@ -22,8 +22,8 @@ class RangedWeaponAttack extends WeaponAttackDataModel {
       required: true,
       blank: false,
       choices: [...ACTION_TYPES],
-      initial: ACTION_TYPE.RANGED_WEAPON_ATTACK,
-      validate: (value: unknown) => value === ACTION_TYPE.RANGED_WEAPON_ATTACK,
+      initial: ACTION_TYPE.RANGED,
+      validate: (value: unknown) => value === ACTION_TYPE.RANGED,
     });
     schema.rangeIncrement = requiredNumberField(2, 0);
     schema.isAmmoRequired = new BooleanField({ required: true, nullable: false, initial: false });

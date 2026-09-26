@@ -27,29 +27,32 @@
  * (`statusEffects`/`movementActions`/`levels`) become arrays, and `movementActionsConfig`
  * (a `CONFIG.Token.movement.actions` entry, which carries function-valued keys like `canSelect`)
  * is narrowed down to just the two primitive fields the template needs (`icon`/`img`) rather than
- * handed to Vue's `reactive()` wholesale.
+ * handed to Vue's `reactive()` wholesale. Bar 1's `displayBar1`/`bar1Value`/`bar1Editable` only
+ * fall through to core's `raw.displayBar1`/`raw.bar1Data` when `useDefaultHpBar` is on — otherwise
+ * they're read straight off the actor's `system.hp.current`/`isOwner`, so the compact widget works
+ * regardless of whatever attribute (if any) bar1 is actually configured for.
  *
  * @module
  */
-import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
+import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
+import { performStandUpOrDropProne } from '@actors/creature/Actions/ChangeProneStatus.mjs';
 import { Creature } from '@actors/creature/index.mjs';
-import type { ApplicationRenderContext } from '@client/applications/_types.mjs';
+import type { HpAdjustmentType } from '@actors/creature/sheet/components/constants.mjs';
+import type { ApplicationRenderContext } from '@client/applications/_module.mjs';
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
-import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
-import { MOVE_ACTION } from '@constants/actionEconomy.mjs';
-import { spendAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
-import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
-import { buildProneToggleCard } from '@source/dice/index.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
 import type { App, Component } from 'vue';
 import { createApp, reactive } from 'vue';
 
 import { DROP_PRONE_MOVEMENT_ACTION, STAND_UP_MOVEMENT_ACTION } from '../logic/movementActionGating.mjs';
-import { applyProneToggle } from '../logic/proneToggle.mjs';
+import type { BottomHudBarProps } from './components/BottomHudBar.vue';
+import type { LeftHudBarProps } from './components/LeftHudBar.vue';
+import type { RightHudBarProps } from './components/RightHudBar.vue';
 import { getCombatManeuverChoices, getWeaponActionChoices } from './tokenHudActions.mjs';
 import TokenHudApp from './TokenHudApp.vue';
-import type { TokenHudContext } from './tokenHudTypes.mjs';
+import type { MiddleHudBarProps, TokenHudContext } from './tokenHudTypes.mjs';
 
 interface RawBarData {
   value: number | string | null;
@@ -105,34 +108,40 @@ const TokenHudVueBase = useVueAppBaseMixin(TokenHUDCore);
 
 class TokenHudDnd35e extends TokenHudVueBase {
   /** Persistent reactive context handed to the Vue app; mutated in place on every render. */
-  private readonly reactiveContext: TokenHudContext = reactive({
-    _id: '',
+  private readonly reactiveContext = reactive<TokenHudContext>({
     id: '',
-    isGM: false,
-    isGamePaused: false,
-    hidden: false,
-    locked: false,
-    elevation: 0,
-    elevationDisabled: false,
-    canConfigure: false,
-    canToggleCombat: false,
-    combatActive: false,
-    targeted: false,
-    displayBar1: false,
-    bar1Value: null,
-    bar1Editable: false,
-    displayBar2: false,
-    bar2Value: null,
-    bar2Editable: false,
-    statusEffectsIcon: '',
-    statusEffects: [],
-    movementActionIcon: undefined,
-    movementActionImg: undefined,
-    movementActions: [],
-    levels: [],
-    canChangeLevel: false,
-    weaponActions: [],
-    combatManeuvers: [],
+    _id: '',
+    leftHudContext: {
+      elevation: 0,
+      elevationDisabled: false,
+      canChangeLevel: false,
+      levels: [],
+      locked: false,
+      canConfigure: false,
+    },
+    rightHudContext: {
+      canToggleCombat: false,
+      combatActive: false,
+      targeted: false,
+      hidden: false,
+      movementActions: [],
+      statusEffects: [],
+      movementActionIcon: undefined,
+      movementActionImg: undefined,
+    },
+    middleHudContext: {
+      useDefaultHpBar: false,
+      displayBar1: false,
+      bar1Value: null,
+      bar1Editable: false,
+      displayBar2: false,
+      bar2Value: null,
+      bar2Editable: false,
+    },
+    bottomHudContext: {
+      combatManeuvers: [],
+      weaponActions: [],
+    },
   });
 
   static override DEFAULT_OPTIONS = foundry.utils.mergeObject(
@@ -140,6 +149,7 @@ class TokenHudDnd35e extends TokenHudVueBase {
     {
       actions: {
         attackAction: TokenHudDnd35e.#onAttackAction,
+        adjustHp: TokenHudDnd35e.#onAdjustHp,
         combatManeuver: TokenHudDnd35e.#onCombatManeuver,
         movementAction: TokenHudDnd35e.#onMovementAction,
       },
@@ -151,41 +161,74 @@ class TokenHudDnd35e extends TokenHudVueBase {
     return TokenHudApp;
   }
 
-  protected override async _prepareContext (options: HandlebarsRenderOptions): Promise<TokenHudContext> {
+  protected override async _prepareContext(options: HandlebarsRenderOptions): Promise<TokenHudContext> {
     const raw = await super._prepareContext(options) as RawTokenHudContext;
-    const actor = this.actor as ActorDnd35e | undefined;
-    const weaponActions = actor instanceof Creature
-      ? await getWeaponActionChoices(actor)
-      : [];
+    const actor = this.actor;
 
-    return {
-      _id: raw._id,
-      id: raw.id,
-      isGM: raw.isGM,
-      isGamePaused: raw.isGamePaused,
-      hidden: raw.hidden,
-      locked: raw.locked,
+    // Compact widget reads HP straight off the actor rather than through bar1Data — it must
+    // work regardless of whatever attribute (if any) bar1 happens to be configured for.
+    const creature = actor instanceof Creature ? actor : null;
+    const useDefaultHpBar = Boolean(this.document.getFlag('dnd35e', 'useDefaultHpBar'));
+    const displayBar1 = useDefaultHpBar
+      ? raw.displayBar1
+      : !!creature;
+    const bar1Value = useDefaultHpBar
+      ? (raw.bar1Data?.value ?? null)
+      : (creature?.system.hp.current ?? null);
+    const bar1Editable = useDefaultHpBar
+      ? (raw.bar1Data?.editable ?? false)
+      : Boolean(creature?.isOwner);
+
+    const leftHudContext: LeftHudBarProps = {
       elevation: raw.elevation,
-      elevationDisabled: raw.locked || (raw.isGamePaused && !raw.isGM),
+      elevationDisabled: raw.locked 
+        || (raw.isGamePaused && !raw.isGM),
+      canChangeLevel: raw.canChangeLevel,
+      levels: Object.values(raw.levels),
+      locked: raw.locked,
       canConfigure: raw.canConfigure,
-      canToggleCombat: raw.canToggleCombat,
-      combatActive: raw.combatClass === 'active',
-      targeted: raw.targetClass === 'active',
-      displayBar1: raw.displayBar1,
-      bar1Value: raw.bar1Data?.value ?? null,
-      bar1Editable: raw.bar1Data?.editable ?? false,
-      displayBar2: raw.displayBar2,
-      bar2Value: raw.bar2Data?.value ?? null,
-      bar2Editable: raw.bar2Data?.editable ?? false,
-      statusEffectsIcon: CONFIG.controlIcons.effects,
+    };
+
+    const rightHudContext: RightHudBarProps = {
+      hidden: raw.hidden,
       statusEffects: Object.values(raw.statusEffects),
       movementActionIcon: raw.movementActionsConfig?.icon,
       movementActionImg: raw.movementActionsConfig?.img,
       movementActions: Object.values(raw.movementActions),
-      levels: Object.values(raw.levels),
-      canChangeLevel: raw.canChangeLevel,
+      targeted: raw.targetClass === 'active',
+      canToggleCombat: raw.canToggleCombat,
+      combatActive: raw.combatClass === 'active',
+    };
+
+    const middleHudContext: MiddleHudBarProps = {
+      useDefaultHpBar,
+      displayBar1,
+      bar1Value,
+      bar1Editable,
+      displayBar2: raw.displayBar2,
+      bar2Value: raw.bar2Data?.value ?? null,
+      bar2Editable: raw.bar2Data?.editable ?? false,
+    };
+
+    const isCreature = actor && actor instanceof Creature;
+    const weaponActions = isCreature
+      ? await getWeaponActionChoices(actor)
+      : [];
+    const combatManeuvers = isCreature
+      ? getCombatManeuverChoices()
+      : [];
+    const bottomHudContext: BottomHudBarProps = {
       weaponActions: weaponActions,
-      combatManeuvers: actor ? getCombatManeuverChoices() : [],
+      combatManeuvers: combatManeuvers,
+    };
+
+    return {
+      id: raw.id,
+      _id: raw._id,
+      leftHudContext,
+      rightHudContext,
+      bottomHudContext,
+      middleHudContext,
     };
   }
 
@@ -206,13 +249,25 @@ class TokenHudDnd35e extends TokenHudVueBase {
     const actor = this.actor;
     if (!(actor instanceof Creature)) return;
 
-    const targetToken = game.user?.targets?.first() ?? null;
-    if (!targetToken && game.combat?.started) {
+    const targetTokens = game.user?.targets ?? [];
+    if (targetTokens.size === 0 && game.combat?.started) {
       ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.SelectTargetFirst'));
       return;
     }
 
-    await actor.useAction(itemId, actionId, targetToken?.actor?.id);
+    await actor.useAction(itemId, actionId, [...targetTokens] as TokenDnd35e[]);
+  }
+
+  /** Compact bar1 HP widget's apply button (TokenHpUpdater.vue) — reads the amount/type staged in the button's own data attributes since the Vue tree has no document/store access here. */
+  static async #onAdjustHp (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
+    const actor = this.actor;
+    if (!(actor instanceof Creature)) return;
+
+    const amount = Number(target.dataset.amount);
+    const adjustmentType = target.dataset.adjustmentType as HpAdjustmentType | undefined;
+    if (!adjustmentType || Number.isNaN(amount) || amount === 0) return;
+
+    await actor.updateHP(amount, adjustmentType);
   }
 
   /** Combat Maneuvers palette entry click — Total Defense's real mechanic is Story E's scope (see tokenHudActions.mts). */
@@ -229,38 +284,29 @@ class TokenHudDnd35e extends TokenHudVueBase {
    */
   static async #onMovementAction (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
     const action = target.dataset.movementAction || null;
-    const token = this.document as TokenDocumentDnd35e;
+    const token = this.document;
+    let wasSuccess = false;
 
     if (action === DROP_PRONE_MOVEMENT_ACTION || action === STAND_UP_MOVEMENT_ACTION) {
-      const actor = this.actor as ActorDnd35e | undefined;
-      if (!actor) return;
+      const actor = this.actor;
+      if (!actor || !(actor instanceof Creature)) return;
 
-      const droppedProne = action === DROP_PRONE_MOVEMENT_ACTION;
-      const combat = game.combat;
-      const tokenId = token.id;
-      const combatant = combat?.started && tokenId
-        ? (combat.getCombatantsByToken(tokenId)[0] as CombatantDnd35e | undefined)
-        : undefined;
+      wasSuccess = await performStandUpOrDropProne(actor, token, action);
 
-      // Standing up is a move action (SRD); dropping prone is free. Spend before toggling
-      // so a combatant with no move action left can't stand up at all.
-      let spentTiers: ActionEconomyType[] = [];
-      if (!droppedProne && combatant) {
-        const spent = await spendAction(combatant, [MOVE_ACTION]);
-        if (!spent) {
-          ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.NoActionAvailable'));
-          return;
-        }
-        spentTiers = spent;
-      }
-
-      await applyProneToggle(actor, token, droppedProne);
-      if (combatant) await buildProneToggleCard(combatant, actor, droppedProne, !droppedProne, spentTiers);
       return;
     }
 
-    await token.update({ movementAction: action });
+    if (wasSuccess) {
+      await token.update({ movementAction: action });
+    }
   }
+}
+
+// Type-only override merged onto the class — base getters resolve through the untyped
+// Foundry `Actor`/`TokenDocument`, not `ACTORS_DND35E`/`TokenDocumentDnd35e`.
+interface TokenHudDnd35e {
+  get actor(): ACTORS_DND35E | undefined;
+  get document(): TokenDocumentDnd35e;
 }
 
 export { TokenHudDnd35e };

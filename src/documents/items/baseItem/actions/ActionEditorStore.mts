@@ -135,9 +135,12 @@ const useActionEditorStore = <T extends ActionDataModel>({
   const getters = {
     actionId: computed(() => action.value._id),
     // See `nameContexts` above for the context-name -> document mapping.
-    displayName: computed(() => action.value.name.resolve({ ...nameContexts.value })
-      ?? action.value.name.resolvedValue
-      ?? action.value._id),
+    displayName: computed(() => {
+      const resolved = action.value.name.resolve({ ...nameContexts.value });
+      return (typeof resolved === 'string' ? resolved : null)
+        ?? action.value.name.resolvedValue
+        ?? action.value._id;
+    }),
     nameFormulaData: computed(() => action.value.name),
     // Explicit `contexts` for the `name` field's FormulaFormGroup `#` autocomplete
     // dropdown \u2014 same keys/roles as the `resolve()` call above (`self`/`weapon`/`actor`/

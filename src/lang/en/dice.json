@@ -2,7 +2,8 @@
   "dnd35e": {
     "ROLL": {
       "SituationalModifier": "Situational Modifier",
-      "DamageBonus": "Damage Bonus",
+      "AttackSituationalModifier": "Attack Situational Modifier",
+      "DamageSituationalModifier": "Damage Situational Modifier",
       "Total": "Total",
       "RollButton": "Roll",
       "NaturalOne": "Natural 1!",
@@ -14,11 +15,15 @@
       "Initiative": "Initiative",
       "RollInitiativeTitle": "Roll Initiative",
       "RollAttackTitle": "Attack Roll: {weapon}",
+      "RollAttackToHit": "Bonus to Hit",
       "SaveNames": {
         "fort": "Fortitude",
         "reflex": "Reflex",
         "will": "Will"
       },
+      "Attacker": "Attacker",
+      "Defender": "Defender",
+      "HiddenName": "Unknown",
       "MOVE_ACTION_CARD": {
         "MoveAction": "Move Action",
         "StandardAction": "Standard Action",
@@ -54,8 +59,9 @@
       },
       "ATTACK_CARD": {
         "ChangeTargets": "Change Target(s)",
-        "DamagePreview": "Damage",
-        "NonLethal": "Non-lethal"
+        "DamagePreview": "Bonus to Damage",
+        "NonLethal": "Non-lethal",
+        "ConfirmCritical": "Confirm"
       }
     }
   }

@@ -22,18 +22,17 @@
       },
       "WieldMode": {
         "Label": "Wield Mode",
-        "primaryHand": "Primary Hand",
+        "mainHand": "Primary Hand",
         "offHand": "Off-Hand",
-        "twoHanded": "Two-Handed"
+        "bothHands": "Two-Handed"
       },
-      "Hand": {
-        "Label": "Hand",
-        "Main": "Main Hand",
-        "Off": "Off-Hand"
+      "Target": {
+        "Label": "Target"
       },
       "Ammo": "Ammunition",
       "BaseAttackBonus": "Base Attack Bonus",
       "AbilityModifier": "{ability} Modifier",
+      "SizeModifier": "Size Modifier",
       "TwoWeaponFighting": "Two-Weapon Fighting",
       "NoActionAvailable": "No action available for this attack.",
       "SelectTargetFirst": "Select a target before attacking.",

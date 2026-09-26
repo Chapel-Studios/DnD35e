@@ -7,11 +7,12 @@
       v-for="option in props.options"
       :key="option.value"
       :class="getOptionClass(option)"
+      :title="props.iconOnly ? localize(option.label) : undefined"
       @click="() => handleClick(option)"
       class="multi-option-toggle__option"
     >
       <i v-if="option.icon" :class="option.icon" class="multi-option-toggle__option-icon"></i>
-      <span v-if="option.label" class="multi-option-toggle__option-label">{{ localize(option.label) }}</span>
+      <span v-if="option.label && !props.iconOnly" class="multi-option-toggle__option-label">{{ localize(option.label) }}</span>
     </div>
   </div>
 </template>
@@ -26,6 +27,8 @@
     value: TType;
     /** Disable all options and visually dim the wrapper. */
     disabled?: boolean;
+    /** Render only the option icons (label becomes a hover tooltip instead of visible text). */
+    iconOnly?: boolean;
   }
 </script>
 

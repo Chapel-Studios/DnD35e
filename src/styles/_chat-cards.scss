@@ -36,12 +36,14 @@
 
     .roll-summary {
       display: grid;
-      background: no-repeat url('../dnd35e/assets/rolling-dices.svg') center;
+      // `rolling-dices.svg` bakes in a 512x512 intrinsic size, so it must be explicitly
+      // constrained here or it renders hugely oversized instead of a small icon.
+      background: no-repeat url('../dnd35e/assets/rolling-dices.svg') center / contain;
+      width: 5rem;
       height: 5rem;
-      aspect-ratio: 1;
+      margin: 0 auto;
       justify-items: center;
       align-items: center;
-      justify-self: center;
 
       .result-header {
         font-weight: 600;
@@ -130,8 +132,74 @@
 }
 
 .dnd35e.chat-card.attack-roll-card {
+  // Mirrors the Roll Dialog's Attacker/Defender header layout (§10.8 parity) — attacker
+  // on the left, target (when one is set) on the right.
+  .card-header {
+    display: grid;
+    align-items: start;
+    gap: 0.5rem;
+
+    .actor-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+
+      .actor-header-title {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        opacity: 0.7;
+      }
+
+      .actor-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        .title-text {
+          display: flex;
+          align-items: center;
+          flex-direction: column;
+        }
+      }
+
+      &.target {
+        text-align: right;
+
+        .actor-header {
+          flex-direction: row-reverse;
+
+          .title-text {
+            flex-direction: row;
+          }
+        }
+      }
+    }
+
+    .retarget-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+      background: none;
+      border: none;
+      
+      &:hover {
+        color: var(--color-level-primary);
+      }
+    }
+
+    .formula {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      text-align: center;
+      margin-top: 0.25rem;
+    }
+  }
+
   .damage-preview {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: baseline;
     gap: 0.3rem;
@@ -168,11 +236,6 @@
     display: flex;
     justify-content: center;
 
-    .retarget-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
   }
 }
 

@@ -6,6 +6,7 @@
     turn: CombatTrackerTurn;
     isGM: boolean;
     hasDecimals: boolean;
+    initiativeIcon: { icon: string; hover: string };
   }
 
   const props = defineProps<Props>();
@@ -111,6 +112,7 @@
         data-action="rollInitiative"
         data-tooltip
         :aria-label="localize('COMBAT.InitiativeRoll')"
+        :style="{ '--initiative-icon': `url('${initiativeIcon.icon}')`, '--initiative-icon-hover': `url('${initiativeIcon.hover}')` }"
       />
     </div>
   </li>

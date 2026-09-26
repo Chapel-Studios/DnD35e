@@ -36,6 +36,7 @@ import {
   WITHDRAW_MOVEMENT_ACTION,
 } from '@documents/token/logic/movementActionGating.mjs';
 import { registerMovementActionHudDecoration } from '@documents/token/logic/movementActionHudDecoration.mjs';
+import { registerTokenConfigHpBarOption } from '@documents/token/logic/tokenConfigHpBarOption.mjs';
 import { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { TokenRulerDnd35e } from '@documents/token/TokenRulerDnd35e.mjs';
 import { gatherAspectsFromSchema, registerFamiliarSchema, withActionCollectionAspects, withItemCollectionAspects } from '@helpers/formulae/index.mjs';
@@ -161,4 +162,5 @@ export const registerActors = () => {
   });
 
   registerMovementActionHudDecoration();
+  registerTokenConfigHpBarOption();
 };

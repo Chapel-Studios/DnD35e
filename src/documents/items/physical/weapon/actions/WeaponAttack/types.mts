@@ -1,14 +1,18 @@
-import type { WieldMode } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { AbilityKey } from '@constants/abilities.mjs';
+import type { WieldedHand } from '@constants/equipmentSlots.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import type { ActionResult, UseActionContext } from '@items/baseItem/actions/types.mjs';
 
 interface UseWeaponAttackContext extends UseActionContext {
-  /** Which hand(s) this attack draws BAB from — derived live via `wieldModeToBabHand(detectWieldMode(...))`, never authored. */
-  hand: 'main' | 'off' | 'both';
-  /** Initial Wield Mode shown in the Attack Roll Dialog's override — derived via `detectWieldMode()`, always user-overridable there. */
-  wieldMode: WieldMode;
+  /** Which hand(s) this attack draws BAB/STR-scaling from — derived live via `detectHand()`, never authored. Seeds both the dialog's Wield Mode toggle and its WieldedHand-select override. */
+  wieldedHand: WieldedHand;
   attackAbility: AbilityKey;
   availableBab: number;
+  isFree: boolean;
+  damageSituationalModifier: string;  // formula
+  attackSituationalModifier: string;  // formula
+  /** The actually-targeted token, carried straight through from the click that started this action — never re-derived from `target` by actor id, which is ambiguous when multiple unlinked tokens share a prototype actor. */
+  targetToken?: TokenDnd35e;
 }
 
 /**
@@ -20,8 +24,8 @@ interface WeaponAttackActionResult extends ActionResult {
   attackTotal?: number;
   /** Set from the dialog's Non-lethal toggle — which HP bucket a later hit should target (Story E). */
   nonLethal?: boolean;
-  /** The dialog's final resolved hand/wield-mode pool — `useAction()` spends BAB from this, not the pre-dialog auto-detected hand. */
-  finalHand?: 'main' | 'off' | 'both';
+  /** The dialog's final resolved hand — `useAction()` spends BAB from this, not the pre-dialog auto-detected hand. */
+  finalHand?: WieldedHand;
   /** The posted attack card, once one exists — lets `useAction()` patch its `actionEconomySpent` flag in after spending (poc.10 Story D, §10.8). */
   attackMessage?: ChatMessage;
 }

@@ -16,11 +16,9 @@ import type { ProneToggleCardFlags } from './chatCards/proneToggleCard/proneTogg
 import { buildProneToggleCard, buildProneToggleCardContent } from './chatCards/proneToggleCard/proneToggleCard.mjs';
 import { registerChatCardActions } from './chatCards/registerChatCardActions.mjs';
 import { buildInitiativeCard, buildSaveCard } from './chatCards/saveRollCard/saveRollCard.mjs';
-import { buildD20Formula } from './d20Formula.mjs';
+import { buildD20Formula, extractFlatModifier, flavorTerm } from './d20Formula.mjs';
 import { D20Roll } from './D20Roll.mjs';
 import { DamageRoll } from './DamageRoll.mjs';
-import type { AmmoOption, CombatModifierToggle, D20RollDialogData, D20RollDialogResult } from './rollDialogs/d20RollDialog/D20RollDialogConfig.mjs';
-import { D20RollDialogConfig } from './rollDialogs/d20RollDialog/D20RollDialogConfig.mjs';
 import type { RollModifier } from './types.mjs';
 
 export {
@@ -36,22 +34,21 @@ export {
   buildProneToggleCardContent,
   buildSaveCard,
   D20Roll,
-  D20RollDialogConfig,
   DamageRoll,
+  extractFlatModifier,
+  flavorTerm,
   parseActionChainId,
   registerChatCardActions,
   upsertMoveActionCard,
 };
 export type {
-  AmmoOption,
   AttackCardFlags,
   AttackCardTargetRow,
-  CombatModifierToggle,
-  D20RollDialogData,
-  D20RollDialogResult,
   ItemActionSpentCardFlags,
   MoveActionCardData,
   MoveActionCardFlags,
   ProneToggleCardFlags,
   RollModifier,
 };
+
+

@@ -87,7 +87,7 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
         required: true,
         blank: false,
         choices: [...ACTION_TYPES],
-        initial: ACTION_TYPE.MELEE_WEAPON_ATTACK,
+        initial: ACTION_TYPE.MELEE,
       }),
       activationCost: new StringField({
         choices: [...ACTION_ECONOMY_TYPES],
@@ -128,7 +128,9 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
       const formulaData = (this as unknown as Record<string, FormulaData | undefined>)[key];
       if (!formulaData) continue;
       const dataMap = this._buildFormulaContext(field.formulaContexts);
-      formulaData.resolvedValue = formulaData.resolve(dataMap, '', field.excludedFields);
+      const resolved = formulaData.resolve(dataMap, '', field.excludedFields);
+      // `resolvedValue` is a StringField — stringify number/boolean results before storing (see ItemDnd35e._maskedNameFormula for the same convention).
+      formulaData.resolvedValue = resolved === null ? null : String(resolved);
     }
   }
 
@@ -242,9 +244,13 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
       ...preCheckResult.warnings,
       ...result.warnings,
     ];
-    
+
+    await this._postExecute(context, result);
+        
     return result;
   }
+
+  protected abstract _postExecute(context: UseActionContext, result: TResult): Promise<void>;
 
   /**
    * Advances a previously-posted attack card's action chain (e.g. the `damage` chain

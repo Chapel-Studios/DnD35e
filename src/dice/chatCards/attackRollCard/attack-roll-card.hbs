@@ -5,14 +5,34 @@
 --}}
 <div class="dnd35e chat-card attack-roll-card {{#if isFumble}}is-fumble{{/if}} {{#if isCriticalThreat}}is-critical{{/if}}">
   <header class="card-header">
-    <img src="{{ actorImage }}" alt="" class="actor-image" />
-    <div class="title-text">
-      <h5 class="value">{{ actorName }} -</h5>
-      <br />
-      <h6 class="label">{{ weaponName }}</h6>
-      <br />
-      <h6 class="formula">{{ rollFormula }}</h6>
+    <div class="actor-info attacker">
+      <span class="actor-header-title">{{ attackerHeaderLabel }}</span>
+      <div class="actor-header">
+        <img src="{{ actorImage }}" alt="" class="actor-image" />
+        <div class="title-text">
+          <h5 class="value" data-attacker-uuid="{{ attackerUuid }}">{{ actorName }}</h5>
+          <h6 class="label">- {{ weaponName }}</h6>
+        </div>
+      </div>
     </div>
+
+    {{#if targetName}}
+    <div class="actor-info target">
+      <span class="actor-header-title">{{ targetHeaderLabel }}</span>
+      <div class="actor-header">
+        <img src="{{ targetImage }}" alt="" class="actor-image" />
+        <div class="title-text">
+          <button type="button" class="retarget-btn" data-action="retarget">
+            <i class="fas fa-bullseye" aria-label="{{ changeTargetsLabel }}"></i>
+            {{!-- <span>{{ changeTargetsLabel }}</span> --}}
+          </button>
+          <h5 class="value" data-target-uuid="{{ targetUuid }}">{{ targetName }}</h5>
+        </div>
+      </div>
+    </div>
+    {{/if}}
+
+    <h6 class="formula">{{ rollFormula }}</h6>
   </header>
 
   <div class="roll-result" data-action="expandRoll">
@@ -25,6 +45,9 @@
       {{/if}}
       {{#if isCriticalThreat}}
       <span class="callout critical">{{localize "dnd35e.ROLL.NaturalTwenty"}}</span>
+      {{#if hasCritConfirm}}
+      <span class="callout critical-confirm">{{ confirmCriticalLabel }}: {{ critConfirmTotal }}</span>
+      {{/if}}
       {{/if}}
     </div>
 
@@ -32,29 +55,25 @@
     {{{diceRollHtml}}}
   </div>
 
-  <div class="damage-preview">
+  {{!-- <div class="damage-preview">
     <span class="label">{{ damagePreviewLabel }}</span>
     <span class="value">{{ damageFormulaDisplay }}</span>
     <span class="crit-multiplier">(&times;{{ critMultiplier }})</span>
     {{#if nonLethal}}
     <span class="callout non-lethal">{{ nonLethalLabel }}</span>
     {{/if}}
-  </div>
+  </div> --}}
 
   {{#if targets.length}}
   <ul class="attack-card-targets">
     {{#each targets}}
     <li class="target-row {{#if this.resolved}}resolved{{/if}}">
-      <span class="target-name">{{ this.targetName }}</span>
+      <span class="target-name" data-target-uuid="{{ this.actorUuid }}">{{ this.targetName }}</span>
     </li>
     {{/each}}
   </ul>
   {{/if}}
 
   <footer class="card-footer">
-    <button type="button" class="retarget-btn" data-action="retarget">
-      <i class="fas fa-bullseye" />
-      {{ changeTargetsLabel }}
-    </button>
   </footer>
 </div>

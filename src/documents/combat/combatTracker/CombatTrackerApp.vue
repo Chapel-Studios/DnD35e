@@ -130,6 +130,7 @@
       :turn="turn"
       :is-g-m="context.isGM"
       :has-decimals="context.hasDecimals"
+      :initiative-icon="context.initiativeIcon"
     />
   </ol>
 

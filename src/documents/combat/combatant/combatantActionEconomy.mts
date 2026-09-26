@@ -10,6 +10,7 @@
 import type { Creature } from '@actors/creature/index.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
 import { FULL_ROUND_ACTION, MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
+import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, type WieldedHand } from '@constants/equipmentSlots.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { CombatantDnd35e } from './CombatantDnd35e.mjs';
@@ -27,7 +28,10 @@ interface CombatantActionEconomy {
     [SWIFT_ACTION]: boolean;
     aoo: number;
   };
-  bab: { main: number; off: number };
+  bab: {
+    [MAIN_HAND_EQUIP_SLOT]: number;
+    [OFF_HAND_EQUIP_SLOT]: number;
+  };
   used: {
     [STANDARD_ACTION]: boolean;
     [MOVE_ACTION]: boolean;
@@ -42,7 +46,7 @@ interface CombatantActionEconomy {
 
 const DEFAULT_ACTION_ECONOMY: CombatantActionEconomy = {
   actions: { [STANDARD_ACTION]: true, [MOVE_ACTION]: true, [MINOR_ACTION]: true, [SWIFT_ACTION]: true, aoo: 0 },
-  bab: { main: 0, off: 0 },
+  bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
   used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [MINOR_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
 };
 
@@ -64,7 +68,7 @@ async function setActionEconomy(combatant: CombatantDnd35e, economy: CombatantAc
 async function resetActionEconomy(combatant: CombatantDnd35e, actor: Creature): Promise<void> {
   await setActionEconomy(combatant, {
     actions: { [STANDARD_ACTION]: true, [MOVE_ACTION]: true, [MINOR_ACTION]: true, [SWIFT_ACTION]: true, aoo: actor.system.aooCount },
-    bab: { main: actor.system.bab, off: actor.system.bab },
+    bab: { [MAIN_HAND_EQUIP_SLOT]: actor.system.bab, [OFF_HAND_EQUIP_SLOT]  : actor.system.bab },
     used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [MINOR_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
   });
 }
@@ -179,34 +183,40 @@ async function toggleActionAvailability(combatant: CombatantDnd35e, tier: Tracke
 }
 
 // Bab Tracking
+function getHandBab(combatant: CombatantDnd35e, hand: WieldedHand): number {
+  const economy = getActionEconomy(combatant);
+  return hand === BOTH_HANDS_EQUIP_SLOT
+    ? Math.min(economy.bab[MAIN_HAND_EQUIP_SLOT], economy.bab[OFF_HAND_EQUIP_SLOT])
+    : economy.bab[hand];
+}
 
-function canUseHandAttack(combatant: CombatantDnd35e, hand: 'main' | 'off' | 'both'): boolean {
+function canUseHandAttack(combatant: CombatantDnd35e, hand: WieldedHand): boolean {
   const economy = getActionEconomy(combatant);
   if (economy.actions.standard) return true;
   if (economy.used.movedAfterAttack) return false;
   // Two-handed wielding needs BAB remaining in *both* pools — spendHandBab()'s 'both' case draws from both at once.
-  return hand === 'both'
-    ? (economy.bab.main > 0 && economy.bab.off > 0)
+  return hand === BOTH_HANDS_EQUIP_SLOT
+    ? (economy.bab[MAIN_HAND_EQUIP_SLOT] > 0 && economy.bab[OFF_HAND_EQUIP_SLOT] > 0)
     : economy.bab[hand] > 0;
 }
 
-async function spendHandBab(combatant: CombatantDnd35e, hand: 'main' | 'off' | 'both', amount: number): Promise<void> {
+async function spendHandBab(combatant: CombatantDnd35e, hand: WieldedHand, amount: number): Promise<void> {
   const economy = getActionEconomy(combatant);
-  if (hand === 'both') {
-    economy.bab.main = Math.max(0, economy.bab.main - amount);
-    economy.bab.off = Math.max(0, economy.bab.off - amount);
+  if (hand === BOTH_HANDS_EQUIP_SLOT) {
+    economy.bab[MAIN_HAND_EQUIP_SLOT] = Math.max(0, economy.bab[MAIN_HAND_EQUIP_SLOT] - amount);
+    economy.bab[OFF_HAND_EQUIP_SLOT] = Math.max(0, economy.bab[OFF_HAND_EQUIP_SLOT] - amount);
   } else {
     economy.bab[hand] = Math.max(0, economy.bab[hand] - amount);
   }
   await setActionEconomy(combatant, economy);
 }
 
-async function refundHandBab(combatant: CombatantDnd35e, hand: 'main' | 'off' | 'both', amount: number, actor: Creature): Promise<void> {
+async function refundHandBab(combatant: CombatantDnd35e, hand: WieldedHand, amount: number, actor: Creature): Promise<void> {
   const economy = getActionEconomy(combatant);
   const cap = actor.system.bab;
-  if (hand === 'both') {
-    economy.bab.main = Math.min(cap, economy.bab.main + amount);
-    economy.bab.off = Math.min(cap, economy.bab.off + amount);
+  if (hand === BOTH_HANDS_EQUIP_SLOT) {
+    economy.bab[MAIN_HAND_EQUIP_SLOT] = Math.min(cap, economy.bab[MAIN_HAND_EQUIP_SLOT] + amount);
+    economy.bab[OFF_HAND_EQUIP_SLOT] = Math.min(cap, economy.bab[OFF_HAND_EQUIP_SLOT] + amount);
   } else {
     economy.bab[hand] = Math.min(cap, economy.bab[hand] + amount);
   }
@@ -266,6 +276,7 @@ export {
   canUseAoO,
   canUseHandAttack,
   getActionEconomy,
+  getHandBab,
   markChargedThisTurn,
   markMovedAfterAttack,
   markStandardAttackUsed,

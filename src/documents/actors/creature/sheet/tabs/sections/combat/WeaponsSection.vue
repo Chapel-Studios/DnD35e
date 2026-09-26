@@ -47,6 +47,7 @@
 
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
   import type { WeaponAction } from '@items/baseItem/actions/types.mjs';
   import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
   import { weaponItemType } from '@items/itemTypes.mjs';
@@ -113,8 +114,8 @@
   const onAttack = async (itemId: string, actionId: string): Promise<void> => {
     // Sheet-triggered attacks bypass target selection - unlike the Token HUD, which
     // requires a target since it has no other way to know who's being attacked.
-    const targetToken = game.user?.targets?.first() ?? null;
-    await useActionFromSheet(itemId, actionId, targetToken?.actor?.id);
+    const targetToken = (game.user?.targets?.first() ?? undefined) as TokenDnd35e | undefined;
+    await useActionFromSheet(itemId, actionId, targetToken);
   };
 </script>
 

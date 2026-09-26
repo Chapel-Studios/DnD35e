@@ -4,6 +4,7 @@ import type { Creature } from '@actors/creature/Creature.mjs';
 import type { LawAxis, MoralAxis } from '@constants/alignment.mjs';
 import { ALIGNMENT_I18N, NEUTRAL } from '@constants/alignment.mjs';
 import type { SaveKey } from '@constants/index.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { addCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 import { GAME_RULES_KEYS, type SettingsStore, SettingsStoreSymbol } from '@settings/index.mjs';
@@ -118,8 +119,8 @@ const useCreatureStore = <TDocument extends Creature>(
     rollInitiativeFromSheet: async (): Promise<void> => {
       await document.value.rollInitiativeCheck();
     },
-    useActionFromSheet: async (itemId: string, actionId: string, targetId?: string): Promise<void> => {
-      await document.value.useAction(itemId, actionId, targetId);
+    useActionFromSheet: async (itemId: string, actionId: string, target?: TokenDnd35e): Promise<void> => {
+      await document.value.useAction(itemId, actionId, target ? [target] : undefined);
     },
   };
 
@@ -166,7 +167,7 @@ type CreatureActions = {
   adjustHp: (amount: number, adjustmentType: HpAdjustmentType) => Promise<boolean>;
   rollSaveFromSheet: (saveKey: SaveKey) => Promise<void>;
   rollInitiativeFromSheet: () => Promise<void>;
-  useActionFromSheet: (itemId: string, actionId: string, targetId?: string) => Promise<void>;
+  useActionFromSheet: (itemId: string, actionId: string, target?: TokenDnd35e) => Promise<void>;
 };
 type CreatureStoreUtils = Record<string, unknown>;
 

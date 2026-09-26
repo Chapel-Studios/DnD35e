@@ -19,12 +19,11 @@
  * @module
  */
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
-import { detectWieldMode, wieldModeToBabHand } from '@actors/baseActor/ActorDnd35e.mjs';
+import { detectWieldedHand } from '@actors/baseActor/logic/wieldMode.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
-import { fromUuid } from '@client/utils/_module.mjs';
-import { canUseHandAttack } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import { canUseHandAttack, getHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
-import { WEAPON_ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
+import { WEAPON_ACTION_TYPE, WEAPON_ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
 import type { IAction } from '@items/baseItem/actions/types.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
 
@@ -36,9 +35,14 @@ function getActiveCombatant(actor: ActorDnd35e): CombatantDnd35e | undefined {
   return game.combat.combatants.find((combatant) => combatant.actor?.id === actor.id) as CombatantDnd35e | undefined;
 }
 
+const WEAPON_ATTACK_DEFAULT_ICON = {
+  [WEAPON_ACTION_TYPE.MELEE]: 'icons/svg/sword.svg',
+  [WEAPON_ACTION_TYPE.RANGED]: 'icons/svg/bow.svg',
+}; 
+
 /** Weapon Attacks HUD palette entries — see module doc for the eligibility/enabled rules. */
 async function getWeaponActionChoices(actor: Creature): Promise<TokenHudWeaponActionRow[]> {
-  const combatant = getActiveCombatant(actor);
+  const combatant = getActiveCombatant(actor) ?? null;
   const rows: TokenHudWeaponActionRow[] = [];
 
   const weaponActions: IAction[] = await Promise.all(Object.values(actor.system.actions)
@@ -47,18 +51,28 @@ async function getWeaponActionChoices(actor: Creature): Promise<TokenHudWeaponAc
     const weapon = await fromUuid<Weapon>(iAction.itemUuid);
     // since this pointer is recreated on each data life cycle it should be safe to presume it exists
     const actualAction = weapon?.system.actions.find((action) => action._id === iAction.id);
-    if (!weapon || !actualAction
-      ||(!weapon?.system.isEquipped && actualAction?.requiresEquipped !== false)
+
+    if (
+      !weapon
+      || !actualAction
+      || (!weapon?.system.isEquipped && actualAction?.requiresEquipped !== false)
     ) {
       continue;
     }
 
-    const hand = wieldModeToBabHand(detectWieldMode(actor, weapon));
+    const hand = detectWieldedHand(actor, weapon);
+    const baseLabel = actualAction.name.resolvedValue ?? weapon.name;
+    // If not in combat assume full bab is available
+    const availableBab = combatant
+      ? getHandBab(combatant, hand)
+      : actor.system.bab;
+    const label = `${baseLabel} (${availableBab})`;
+
     rows.push({
       itemId: weapon.id,
       actionId: actualAction!._id,
-      label: weapon.name,
-      img: weapon.img ?? 'icons/svg/sword.svg',
+      label,
+      img: weapon.img ?? WEAPON_ATTACK_DEFAULT_ICON[actualAction.type],
       enabled: !combatant || canUseHandAttack(combatant, hand),
     });
   }
