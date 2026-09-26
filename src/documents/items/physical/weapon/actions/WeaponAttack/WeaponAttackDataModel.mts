@@ -319,7 +319,10 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       ? ` + ${dialogResult.attackSituationalModifier.trim()}`
       : '';
 
-    const attackFormula = `${flavorTerm(baseAttackFormula, attackName)}${attackBonusTerm}`;
+    // Flavor only the bare `1d20` (not the whole compound expression via `flavorTerm()`'s
+    // parenthesization), which would turn `roll.terms[0]` into a `ParentheticalTerm` and
+    // break `D20Roll`'s natural 1/20 detection (fumbles, critical threats, eager confirmation).
+    const attackFormula = `${baseAttackFormula.replace(/^1d20/, `1d20[${attackName}]`)}${attackBonusTerm}`;
     const displayAttackFormula = `${baseAttackFormula}${plainAttackBonusTerm}`;
 
     const modifierList: RollModifier[] = (dialogResult.combatModifiers ?? [])
