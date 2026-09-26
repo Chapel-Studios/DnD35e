@@ -142,6 +142,29 @@ async function buildAttackCard(
 }
 
 /**
+ * Patches in additional warnings discovered after the card was already posted (poc.10 §10.8
+ * review fix) — `_canExecute()`'s pre-check warnings (`noTargets`, `outOfReach`,
+ * `reachDeadZone`, etc.) aren't merged onto the action result until `executeAction()`'s
+ * caller runs, which is after `_executeCheck()` has already built and posted this card via
+ * `buildAttackCard()` with only its own wield-mode warnings. `WeaponAttackDataModel._postExecute()`
+ * calls this once the merged result is known. `content` is rebuilt (not flags-only) since
+ * `warnings` is baked into the static `content` HTML at build time, same as `onRetarget()`.
+ */
+async function appendAttackCardWarnings(message: ChatMessage, additionalWarnings: string[]): Promise<void> {
+  if (additionalWarnings.length === 0) return;
+  const flags = message.getFlag(SYSTEM_ID, 'attackCard') as AttackCardFlags | undefined;
+  if (!flags) return;
+
+  const updatedFlags: AttackCardFlags = { ...flags, warnings: [...flags.warnings, ...additionalWarnings] };
+  const roll = message.rolls[0] as D20Roll;
+  const diceRollHtml = await buildDiceRollHtmlWithModifiers(roll, flags.modifierList);
+  await message.update({
+    content: buildAttackCardContent(roll, updatedFlags, diceRollHtml),
+    'flags.dnd35e.attackCard': updatedFlags,
+  });
+}
+
+/**
  * Re-syncs the card's unresolved target rows to whatever's currently targeted on the canvas
  * (poc.10 §10.8) — already-`resolved` rows (Story E's hit resolution) are left untouched.
  * `diceRollHtml` is fully rebuilt (not string-patched) from the persisted `modifierList` +
@@ -203,5 +226,5 @@ function wireAttackRollCardButton(message: ChatMessage, html: HTMLElement): void
   retargetButton.addEventListener('click', () => { void onRetarget(message, flags); });
 }
 
-export { buildAttackCard, buildAttackCardContent, wireAttackRollCardButton };
+export { appendAttackCardWarnings, buildAttackCard, buildAttackCardContent, wireAttackRollCardButton };
 export type { AttackCardFlags, AttackCardTargetRow };

@@ -19,6 +19,7 @@ import { ACTION_TYPE } from '@items/baseItem/actions/constants.mjs';
 import { getTwoWeaponFightingPenalty } from '@items/physical/weapon/logic/twoWeaponFighting.mjs';
 import type { AttackCardFlags, AttackCardTargetRow, RollModifier } from '@source/dice/index.mjs';
 import {
+  appendAttackCardWarnings,
   buildActionChainId,
   buildAttackCard,
   D20Roll,
@@ -518,6 +519,11 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   }
 
   protected async _postExecute(context: UseWeaponAttackContext, result: WeaponAttackActionResult): Promise<void> {
+    // Pre-check warnings (`_canExecute()`, e.g. `noTargets`/`outOfReach`/`reachDeadZone`) are
+    // merged onto `result.warnings` by `executeAction()` only after `_executeCheck()` has
+    // already built and posted the attack card — patch them in now that the merged list is known.
+    if (result.attackMessage) await appendAttackCardWarnings(result.attackMessage, result.warnings);
+
     // Spend AFTER execution, not before — a cancelled dialog never costs an action. The
     // attack card (if one was posted) already exists by now, so its `actionEconomySpent`
     // flag is patched in here rather than known ahead of time inside `executeAction()`. WieldedHand

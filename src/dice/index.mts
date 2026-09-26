@@ -9,7 +9,7 @@ import { buildItemActionSpentCard } from './chatCards/actionSpentCard/actionSpen
 import { buildActionEconomyWarningCard } from './chatCards/actionWarningCard/actionWarningCard.mjs';
 import { buildActionChainId, parseActionChainId } from './chatCards/attackRollCard/actionChainSteps.mjs';
 import type { AttackCardFlags, AttackCardTargetRow } from './chatCards/attackRollCard/attackRollCard.mjs';
-import { buildAttackCard } from './chatCards/attackRollCard/attackRollCard.mjs';
+import { appendAttackCardWarnings, buildAttackCard } from './chatCards/attackRollCard/attackRollCard.mjs';
 import type { MoveActionCardData, MoveActionCardFlags } from './chatCards/moveActionCard/moveActionCard.mjs';
 import { buildMoveActionCard, buildMoveActionCardContent, upsertMoveActionCard } from './chatCards/moveActionCard/moveActionCard.mjs';
 import type { ProneToggleCardFlags } from './chatCards/proneToggleCard/proneToggleCard.mjs';
@@ -22,6 +22,7 @@ import { DamageRoll } from './DamageRoll.mjs';
 import type { RollModifier } from './types.mjs';
 
 export {
+  appendAttackCardWarnings,
   buildActionChainId,
   buildActionEconomyWarningCard,
   buildAttackCard,

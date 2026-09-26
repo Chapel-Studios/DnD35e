@@ -210,9 +210,10 @@ class TokenHudDnd35e extends TokenHudVueBase {
       bar2Editable: raw.bar2Data?.editable ?? false,
     };
 
+    const hudToken = this.document.object as unknown as TokenDnd35e | undefined;
     const isCreature = actor && actor instanceof Creature;
-    const weaponActions = isCreature
-      ? await getWeaponActionChoices(actor)
+    const weaponActions = isCreature && hudToken
+      ? await getWeaponActionChoices(actor, hudToken)
       : [];
     const combatManeuvers = isCreature
       ? getCombatManeuverChoices()
