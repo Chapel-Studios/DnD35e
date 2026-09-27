@@ -1,6 +1,7 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import { detectWieldedHand, getWeaponAttackActionAbilityModTerm, getWieldModeMismatchReason } from '@actors/baseActor/logic/wieldMode.mjs';
 import { Creature } from '@actors/creature/index.mjs';
+import { buildRollDefenseDialogData } from '@actors/creature/logic/buildRollDefenseDialogData.mjs';
 import { applyChargedAE, applyDefensiveFightingAE } from '@actors/creature/logic/combatConditionAEs.mjs';
 import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
@@ -9,25 +10,34 @@ import { DAMAGE_TYPES, SIZE_MODIFIERS, STR } from '@constants/index.mjs';
 import { canUseHandAttack, getActionEconomy, getHandBab, markMovedAfterAttack, spendAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
-import { getActorToken } from '@documents/token/logic/getActorToken.mjs';
+import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { DocumentContext } from '@helpers/formulae/index.mjs';
 import { FormulaData } from '@helpers/formulae/index.mjs';
 import { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';
 import { ACTION_TYPE } from '@items/baseItem/actions/constants.mjs';
+import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
+import { participantActor, participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import { getTwoWeaponFightingPenalty } from '@items/physical/weapon/logic/twoWeaponFighting.mjs';
-import type { AttackCardFlags, AttackCardTargetRow, RollModifier } from '@source/dice/index.mjs';
+import { COMBAT_KEYS } from '@settings/combat/constants.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
+import { evaluateDefense } from '@source/dice/chatCards/resolutionCard/evaluateDefense.mjs';
+import type { AttackCardFlags, AttackCardTargetRow, ResolutionCardData, RollModifier } from '@source/dice/index.mjs';
 import {
   appendAttackCardWarnings,
   buildActionChainId,
   buildAttackCard,
+  buildResolutionCard,
   D20Roll,
+  DamageRoll,
   extractFlatModifier,
   flavorTerm,
+  markTargetRowResolved,
 } from '@source/dice/index.mjs';
 import { MeleeAttackRollDialogConfig } from '@source/rollDialogs/MeleeAttackRollDialog/MeleeAttackRollDialogConfig.mjs';
 import { RangedAttackRollDialogConfig } from '@source/rollDialogs/RangedAttackRollDialog/RangedAttackRollDialogConfig.mjs';
+import { RollDefenseDialogConfig } from '@source/rollDialogs/RollDefenseDialog/RollDefenseDialogConfig.mjs';
 import type { AttackRollDialogResult, WeaponAttackRollDialogData } from '@source/rollDialogs/WeaponAttackRollDialog/types.mjs';
 import { markRaw } from 'vue';
 
@@ -135,15 +145,16 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   private _buildWieldModeWarnings(context: UseWeaponAttackContext, item: Weapon): string[] {
     const warnings: string[] = [];
     const combat = game.combat;
-    const combatant = context.actorToken
-      ? combat?.getCombatantsByToken(context.actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
+    const actorToken = participantToken(context.actor);
+    const combatant = actorToken
+      ? combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
       : undefined;
 
     if (combat?.started && combatant && !context.isFree && context.availableBab <= 0) {
       warnings.push(game.i18n.localize('dnd35e.COMBAT.WieldMode.InsufficientBab'));
     }
 
-    const mismatchKey = getWieldModeMismatchReason(context.actor, item, context.wieldedHand);
+    const mismatchKey = getWieldModeMismatchReason(participantActor(context.actor), item, context.wieldedHand);
     if (mismatchKey) warnings.push(game.i18n.localize(mismatchKey));
 
     return warnings;
@@ -154,8 +165,9 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   // (§10.11), so execution itself never re-gates on it here.
   protected override _canExecute(context: UseWeaponAttackContext): WeaponAttackActionResult {
     const combat = game.combat;
-    const combatant = context.actorToken
-      ? combat?.getCombatantsByToken(context.actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
+    const actorToken = participantToken(context.actor);
+    const combatant = actorToken
+      ? combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
       : undefined;
 
     if (
@@ -201,8 +213,8 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       damageSituationalModifier: context.damageSituationalModifier ?? '',
       combatModifierToggles,
       rollMode: game.settings.get('core', 'messageMode'),
-      actor: context.actor,
-      target: context.target,
+      actor: participantActor(context.actor),
+      target: context.target?.map(participantActor) ?? null,
       targetToken: targetToken ?? null,
       wieldModeFromEquippedSlots: context.wieldedHand,
       handBab: context.handBab,
@@ -237,8 +249,9 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     context: UseWeaponAttackContext,
     item: Weapon
   ): { abilityMod: number; sizeMod: number; expectedToHitBonus: number; baseTotalByHand: Record<WieldedHand, number> } {
-    const abilityMod = context.actor.system.abilities[context.attackAbility].mod;
-    const sizeMod = SIZE_MODIFIERS[context.actor.system.size] ?? 0;
+    const actor = participantActor(context.actor);
+    const abilityMod = actor.system.abilities[context.attackAbility].mod;
+    const sizeMod = SIZE_MODIFIERS[actor.system.size] ?? 0;
     const flatBonus = (hand: WieldedHand): number =>
       context.handBab[hand] + abilityMod + sizeMod + getTwoWeaponFightingPenalty(item, hand);
     const baseTotalByHand: Record<WieldedHand, number> = {
@@ -380,7 +393,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   /**
    * Snapshots the unrolled damage formula (§10.7) — the wield-mode STR term (melee always,
    * ranged only when the weapon carries `rangedUsesStr`) plus the dialog's damage situational
-   * modifier — actually rolled later by Story E's `continue()`.
+   * modifier — actually rolled later by Story E's `_continue()`.
    */
   private _buildDamageSnapshot(context: UseWeaponAttackContext, formulaContext: FormulaContext, dialogResult: AttackRollDialogResult): { resolvedDamageFormula: string; damageBonusTerm: string } {
     const resolvedDamageFormula = this._computeDamageFormula(context, formulaContext);
@@ -399,7 +412,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    * subtype — `MeleeWeaponAttack`/`RangedWeaponAttack` never override this; they only
    * override `_canExecute()` for their own reach/range validation. Hit/miss resolution
    * and damage rolling are deliberately **not** decided here — that's Story E's
-   * GM-gated Roll Defense Dialog / `continue()` — this method's job stops at posting
+   * GM-gated Roll Defense Dialog / `_continue()` — this method's job stops at posting
    * the attack card with a raw total and an unrolled damage-formula snapshot.
    */
   protected override async _executeCheck(context: UseWeaponAttackContext): Promise<WeaponAttackActionResult> {
@@ -410,8 +423,9 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       return defaultResult;
     }
 
-    const { actor } = context;
-    const target = context.target?.[0] ?? null;
+    const actor = participantActor(context.actor);
+    const targetParticipant = context.target?.[0] ?? null;
+    const target = targetParticipant ? participantActor(targetParticipant) : null;
     const formulaContext: FormulaContext = {
       actor,
       item,
@@ -423,7 +437,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
 
     const { resolvedName, attackName } = this._resolveAttackName(formulaContext, item);
 
-    const targetToken = context.targetToken;
+    const targetToken = targetParticipant ? participantToken(targetParticipant) ?? undefined : undefined;
 
     const weaponNonLethalDefault = this.properties?.has(WEAPON_PROPERTY.NON_LETHAL) ?? false;
     const nonLethalNoPenalty = this.properties?.has(WEAPON_PROPERTY.NON_LETHAL_NO_PENALTY) ?? false;
@@ -486,22 +500,23 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
 
     const { resolvedDamageFormula, damageBonusTerm } = this._buildDamageSnapshot(context, formulaContext, dialogResult);
 
-    const targetRows: AttackCardTargetRow[] = (context.target ?? []).map(t => {
-      // Same primary-target-token resolution `MeleeAttackDataModel._validateMeleeReach()`
-      // uses — `context.targetToken` only resolves the first target, others fall back.
-      const token = (t === context.target?.[0] ? context.targetToken : undefined)
-        ?? (t.getActiveTokens()[0] as TokenDnd35e | undefined);
+    const targetRows: AttackCardTargetRow[] = (context.target ?? []).map(participant => {
+      const targetActor = participantActor(participant);
+      // Every target now carries its own token directly on the participant — no more
+      // "only the primary target's token was threaded through" special case.
+      const token = participantToken(participant) ?? (targetActor.getActiveTokens()[0] as TokenDnd35e | undefined);
       return {
-        actorUuid: t.uuid,
+        actorUuid: targetActor.uuid,
         tokenUuid: token?.document.uuid ?? null,
-        targetImage: t.img ?? '',
+        targetImage: targetActor.img ?? '',
         resolved: false,
+        hit: null,
       };
     });
 
     const attackCardFlags: AttackCardFlags = {
       actionChainId: buildActionChainId(actor, this),
-      attackerTokenUuid: context.actorToken?.document.uuid ?? null,
+      attackerTokenUuid: participantToken(context.actor)?.document.uuid ?? null,
       attackerImage: actor.img ?? '',
       weaponName: attackName,
       hand: context.wieldedHand,
@@ -511,6 +526,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       critRange: this.critRange,
       critMultiplier: this.critMultiplier,
       critConfirmTotal: critConfirmRoll?.total ?? null,
+      damageType: this.damageType,
       targets: targetRows,
       actionEconomySpent: null,
       modifierList,
@@ -544,8 +560,9 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // dialog's final resolved hand (`result.finalHand`), not the pre-dialog auto-detected
     // `hand` used only for the availability gate above — the two can differ.
     const combat = game.combat;
-    const combatant = context.actorToken
-      ? (combat?.getCombatantsByToken(context.actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
+    const actorToken = participantToken(context.actor);
+    const combatant = actorToken
+      ? (combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
       : null;
     if (combat?.started && combatant && !result.cancelled && !context.isFree) {
       const standardSpent = await spendAction(combatant, ['standard']);
@@ -568,14 +585,82 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     }
   }
 
+  /**
+   * Resolves the attack card's `'damage'` chain step (poc.10 Story E, §10.7) — the only step
+   * this action currently declares. Opens the Roll Defense Dialog for the clicked target row,
+   * folds its result together with the already-posted attack total/critical-threat state via
+   * `evaluateDefense()`, rolls damage on a hit, and posts the Resolution card (which applies
+   * the damage itself — see `buildResolutionCard()`). Gated to the GM, or (when the
+   * `PLAYER_SELF_DEFENSE` setting is on) the target's own owner — `advanceActionChain()`
+   * already hides the Apply button from anyone else, this is the same rule enforced again at
+   * the point that actually matters, in case some future caller reaches `continueAction()` directly.
+   */
+  override async _continue(_stepId: string, message: unknown, targetId: string): Promise<WeaponAttackActionResult> {
+    const cancelled: WeaponAttackActionResult = { cancelled: true, reason: '', warnings: [] };
+    const chatMessage = message as ChatMessage;
+    const flags = chatMessage.getFlag(SYSTEM_ID, 'attackCard') as AttackCardFlags | undefined;
+    if (!flags) return { ...cancelled, reason: 'noAttackCard' };
+
+    const targetActor = foundry.utils.fromUuidSync(targetId) as ACTORS_DND35E | null;
+    const attackerActor = this.item?.actor as ACTORS_DND35E | undefined;
+    if (!targetActor || !attackerActor) return { ...cancelled, reason: 'missingActorOrTarget' };
+
+    const playerSelfDefense = !!game.settings.get(SYSTEM_ID, COMBAT_KEYS.PLAYER_SELF_DEFENSE);
+    if (!(game.user?.isGM || (playerSelfDefense && targetActor.isOwner))) {
+      ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.NotYourTurnToDefend'));
+      return { ...cancelled, reason: 'notPermitted' };
+    }
+
+    // Token identity (if any) was already resolved once when the attack card was built —
+    // re-derive it here from the same persisted UUIDs rather than re-running the token-
+    // preference search, so the resolution/defense roll faces the exact same participant.
+    const targetRow = flags.targets.find(row => row.actorUuid === targetId);
+    const attackerToken = flags.attackerTokenUuid
+      ? (foundry.utils.fromUuidSync(flags.attackerTokenUuid) as TokenDocumentDnd35e | null)?.object as TokenDnd35e | undefined
+      : undefined;
+    const targetToken = targetRow?.tokenUuid
+      ? (foundry.utils.fromUuidSync(targetRow.tokenUuid) as TokenDocumentDnd35e | null)?.object as TokenDnd35e | undefined
+      : undefined;
+    const attacker: ActionParticipant = attackerToken ?? attackerActor;
+    const target: ActionParticipant = targetToken ?? targetActor;
+
+    const dialogData = buildRollDefenseDialogData(target, attacker);
+    const dialogResult = await RollDefenseDialogConfig.roll(dialogData);
+    if (!dialogResult) return { ...cancelled, reason: 'dialogCancelled' };
+
+    const attackRoll = chatMessage.rolls[0] as D20Roll | undefined;
+    const attackTotal = attackRoll?.total ?? 0;
+    const isCriticalThreat = attackRoll?.isCriticalThreat(flags.critRange) ?? false;
+    const evaluation = await evaluateDefense(attackTotal, isCriticalThreat, flags.critConfirmTotal, dialogResult, targetActor);
+
+    let damageRoll: DamageRoll | null = null;
+    if (evaluation.hit) {
+      damageRoll = new DamageRoll(`${flags.resolvedDamageFormula}${flags.damageBonusTerm}`);
+      await damageRoll.evaluateCritical(evaluation.criticalHit ? flags.critMultiplier : 1);
+    }
+
+    const resolutionData: ResolutionCardData = {
+      ...evaluation,
+      weaponName: flags.weaponName,
+      checkMode: dialogResult.checkMode,
+      damageType: flags.damageType,
+      nonLethal: flags.nonLethal,
+      applyHalfDamage: dialogResult.applyHalfDamage,
+      actionEconomySpent: flags.actionEconomySpent,
+    };
+    await buildResolutionCard(attacker, target, resolutionData, damageRoll);
+    await markTargetRowResolved(chatMessage, flags, targetId, evaluation.hit);
+
+    return { cancelled: false, reason: '', warnings: [], hit: evaluation.hit, criticalHit: evaluation.criticalHit };
+  }
+
   public static PrepareActionContext(
-    actor: ACTORS_DND35E,
+    attacker: ActionParticipant,
     item: Weapon,
-    target: ACTORS_DND35E[],
-    isFree?: boolean,
-    targetToken?: TokenDnd35e,
-    actorToken?: TokenDnd35e
+    targets: ActionParticipant[],
+    isFree?: boolean
   ): UseWeaponAttackContext | null {
+    const actor = participantActor(attacker);
     if (
       !actor
       || !(actor instanceof Creature)
@@ -583,9 +668,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     ) return null;
 
     const hand = detectWieldedHand(actor, item);
-    // A caller with a concrete acting token (e.g. the Token HUD) must win over this
-    // fallback \u2014 ambiguous for a linked actor with multiple placed tokens.
-    const resolvedActorToken = actorToken ?? getActorToken(actor);
+    const resolvedActorToken = participantToken(attacker);
     const combatant = resolvedActorToken
       ? (game.combat?.getCombatantsByToken(resolvedActorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
       : null;
@@ -606,10 +689,8 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       };
 
     return {
-      actor,
-      target,
-      targetToken,
-      actorToken: resolvedActorToken,
+      actor: attacker,
+      target: targets,
       wieldedHand: hand,
       attackAbility: STR,
       damageAbility: STR,

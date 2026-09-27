@@ -19,7 +19,13 @@
         "Charge": { "Label": "Charge", "Tooltip": "+2 to the attack roll, -2 AC until your next turn." },
         "DefensiveFighting": { "Label": "Fight Defensively", "Tooltip": "-4 to the attack roll, +2 AC until your next turn." },
         "Proficient": { "Label": "Proficient", "Tooltip": "Uncheck if not proficient with this weapon (-4 to the attack roll)." },
-        "NonLethal": { "Label": "Non-lethal", "Tooltip": "Deal subdual damage instead of normal damage." }
+        "NonLethal": { "Label": "Non-lethal", "Tooltip": "Deal subdual damage instead of normal damage." },
+        "Charged": { "Label": "Charged", "Tooltip": "This creature charged on its last turn and is at -2 AC until its next turn." },
+        "FlatFooted": { "Label": "Flat-Footed", "Tooltip": "Flat-footed creatures lose their Dex bonus to AC and can't make AoOs." },
+        "TotalDefense": { "Label": "Total Defense", "Tooltip": "This creature used its standard action for Total Defense this round: +4 AC until its next turn." },
+        "DefensiveFightingActive": { "Label": "Defensive Fighting", "Tooltip": "This creature fought defensively on its last attack and is at +2 AC until its next turn." },
+        "ApplyHalfDamage": { "Label": "Apply Half Damage", "Tooltip": "Halves the final applied damage (e.g. Evasion-adjacent effects)." },
+        "IgnoreCriticalHit": { "Label": "Ignore Critical Hit", "Tooltip": "This creature is immune to critical hits (e.g. undead, constructs, oozes)." }
       },
       "Covered": {
         "Label": "Cover",
@@ -59,6 +65,8 @@
       "TargetOutOfReach": "{target} is out of reach.",
       "TargetTooCloseForReach": "{target} is too close to attack with a reach weapon.",
       "MissingTargetToken": "Unable to determine token positions for this attack.",
+      "RollDefenseTitle": "Roll Defense",
+      "NotYourTurnToDefend": "Only the GM (or, if allowed, the target's owner) can resolve this attack.",
       "Maneuver": {
         "TotalDefense": "Total Defense",
         "MustBeInCombat": "Total Defense requires an active encounter."

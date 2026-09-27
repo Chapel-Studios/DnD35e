@@ -39,7 +39,7 @@ const {
 
 /**
  * Shared base schema/behavior for all weapon-attack action subtypes. Declares the public
- * `executeAction()`/`continue()` interface the execution engine (`useAction()`, Story D)
+ * `executeAction()`/`continueAction()` interface the execution engine (`useAction()`, Story D)
  * calls — never invoking attack-specific logic directly.
  *
  * Story C ships a functional-but-partial `executeAction()`: full signature, target-count
@@ -48,8 +48,8 @@ const {
  * Story D's deliverable (Attack Roll Dialog + `useAction()`).
  *
  * Generic over `TResult` so each concrete action kind (weapon attacks today, future spell
- * casts, etc.) can declare its own `executeAction()`/`continue()` result shape instead of
- * every kind's fields piling onto one shared `ActionResult`.
+ * casts, etc.) can declare its own `executeAction()`/`continueAction()` result shape instead
+ * of every kind's fields piling onto one shared `ActionResult`.
  */
 abstract class ActionDataModel<TResult extends ActionResult = ActionResult> extends foundry.abstract.DataModel {
   declare name: FormulaData;
@@ -252,13 +252,17 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
 
   protected abstract _postExecute(context: UseActionContext, result: TResult): Promise<void>;
 
+  protected abstract _continue(stepId: string, message: unknown, targetId: string): Promise<TResult>;
+
   /**
-   * Advances a previously-posted attack card's action chain (e.g. the `damage` chain
-   * link after a successful hit). Story D scope — see §10.7's Roll Defense Dialog design.
+   * Sealed entry point for advancing a previously-posted attack card's action chain (e.g.
+   * the `damage` chain link after a successful hit) — leaf actions override `_continue()`,
+   * never this. Unlike `executeAction()`, there's no shared post-step hook here: a chain
+   * step (e.g. Story E's Roll Defense Dialog + Resolution card) is fully self-contained,
+   * so `_continue()`'s own return value is the final result.
    */
-  async continue(_stepId: string, _message: unknown, _targetId: string): Promise<TResult> {
-    console.warn('dnd35e | ActionDataModel#continue(): Story D scope — not yet implemented.');
-    return { cancelled: true, reason: 'notImplemented', warnings: [] } as unknown as TResult;
+  async continueAction(stepId: string, message: unknown, targetId: string): Promise<TResult> {
+    return this._continue(stepId, message, targetId);
   }
 }
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- TResult must match the class's type param for declaration merging.

@@ -2,7 +2,7 @@
  * Attack Roll chat card (poc.10 Story D, §10.8): die face/total, modifier breakdown,
  * unrolled damage-formula preview, and one row per target. The "Change Target(s)" button
  * re-syncs unresolved rows to the user's current `game.user.targets` — Story E adds the
- * "Apply" button/hit-resolution alongside `continue()`'s real body.
+ * "Apply" button/hit-resolution alongside `continueAction()`'s real body.
  *
  * @module
  */
@@ -12,6 +12,8 @@ import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import { canUserSeeActorName } from '@documents/token/logic/tokenNameVisibility.mjs';
+import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
+import { COMBAT_KEYS } from '@settings/combat/constants.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { D20Roll } from '../../D20Roll.mjs';
@@ -34,6 +36,8 @@ interface AttackCardTargetRow {
   tokenUuid: string | null;
   targetImage: string;
   resolved: boolean;
+  /** Final hit/miss, set by `_continue()`'s `'damage'` case once this row resolves — `null` until then. */
+  hit: boolean | null;
 }
 
 /**
@@ -51,7 +55,7 @@ interface AttackCardFlags {
   weaponName: string;
   hand: WieldedHand;
   nonLethal: boolean;
-  /** Unrolled damage formula (STR term included), snapshotted at attack-roll time — actually rolled by Story E's `continue()`. */
+  /** Unrolled damage formula (STR term included), snapshotted at attack-roll time — actually rolled by Story E's `_continue()`. */
   resolvedDamageFormula: string;
   /** Damage-bonus formula term (e.g. `' + 1d6'`), already prefixed with its own sign/operator, or `''` when none was entered. */
   damageBonusTerm: string;
@@ -60,6 +64,8 @@ interface AttackCardFlags {
   critMultiplier: number;
   /** Eagerly-rolled confirmation total (poc.10 Story D) — present only when the primary roll threatened a critical; `null` otherwise. Story E compares it against the target's final AC. */
   critConfirmTotal: number | null;
+  /** Weapon's damage type (e.g. `slashing`) — needed by `_continue()`'s `'damage'` case to apply/undo HP damage with the right `HpUpdateMetadata.damageType`. */
+  damageType: string;
   targets: AttackCardTargetRow[];
   actionEconomySpent: { standardActionSpent: boolean; hand: WieldedHand; babSpent: number } | null;
   /** Persisted so the Change Target(s) handler can rebuild `diceRollHtml` without re-deriving the roll's own modifier breakdown. */
@@ -102,6 +108,9 @@ function buildAttackCardContent(roll: D20Roll, flags: AttackCardFlags, diceRollH
     changeTargetsLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.ChangeTargets'),
     damagePreviewLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.DamagePreview'),
     nonLethalLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.NonLethal'),
+    applyLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Apply'),
+    hitLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Hit'),
+    missLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Miss'),
     rollFormula: roll.displayFormula,
     total: roll.total ?? 0,
     isFumble: roll.isFumble,
@@ -189,8 +198,28 @@ async function onRetarget(message: ChatMessage, flags: AttackCardFlags): Promise
       tokenUuid: token.document.uuid,
       targetImage: token.actor!.img ?? '',
       resolved: false,
+      hit: null,
     }));
   const updatedFlags: AttackCardFlags = { ...flags, targets: [...resolvedRows, ...newRows] };
+
+  const roll = message.rolls[0] as D20Roll;
+  const diceRollHtml = await buildDiceRollHtmlWithModifiers(roll, flags.modifierList);
+  await message.update({
+    content: buildAttackCardContent(roll, updatedFlags, diceRollHtml),
+    'flags.dnd35e.attackCard': updatedFlags,
+  });
+}
+
+/**
+ * Flips one target row to `resolved`/`hit` on the attack card (poc.10 Story E, §10.7) — called
+ * by `WeaponAttackDataModel#continue()`'s `'damage'` case once `evaluateDefense()` decides the
+ * outcome. Same rebuild-not-patch convention as `onRetarget()`/`appendAttackCardWarnings()`.
+ */
+async function markTargetRowResolved(message: ChatMessage, flags: AttackCardFlags, targetUuid: string, hit: boolean): Promise<void> {
+  const updatedTargets = flags.targets.map(row => (
+    row.actorUuid === targetUuid ? { ...row, resolved: true, hit } : row
+  ));
+  const updatedFlags: AttackCardFlags = { ...flags, targets: updatedTargets };
 
   const roll = message.rolls[0] as D20Roll;
   const diceRollHtml = await buildDiceRollHtmlWithModifiers(roll, flags.modifierList);
@@ -223,22 +252,58 @@ function populateActorNames(message: ChatMessage, html: HTMLElement): void {
   });
 }
 
-/** Wires the "Change Target(s)" button, gated to GM/attacker-owner — see registerChatCardActions.mts. */
+/**
+ * Resolves back to the exact action instance that fired this attack (via the card's stored
+ * `actionChainId`) and hands off to its own `continueAction()` (poc.10 Story E, §10.7) — the
+ * click handler never looks anything up in a step registry, and never decides hit/miss
+ * itself; that's entirely `continueAction()`'s job (permission gating included). Generic/ungated
+ * on purpose: a future action type with a different `_continue()` body needs no changes here.
+ */
+async function advanceActionChain(message: ChatMessage, flags: AttackCardFlags, targetUuid: string): Promise<void> {
+  const row = flags.targets.find(t => t.actorUuid === targetUuid);
+  if (!row || row.resolved) return; // already resolved — one-shot per target
+
+  const parsed = parseActionChainId(flags.actionChainId);
+  if (!parsed) return;
+  const item = foundry.utils.fromUuidSync(parsed.itemUuid) as Weapon | null;
+  const action = item?.system.actions.find(a => a._id === parsed.actionId);
+  if (!action) return; // the acting item/action no longer exists (deleted since the card posted)
+
+  const stepId = action.chain[0]?.actionId ?? 'damage';
+  await action.continueAction(stepId, message, row.actorUuid);
+}
+
+/** Wires the "Change Target(s)" button and each unresolved target row's "Apply" button — see registerChatCardActions.mts. */
 function wireAttackRollCardButton(message: ChatMessage, html: HTMLElement): void {
   populateActorNames(message, html);
-
-  const retargetButton = html.querySelector<HTMLElement>('[data-action="retarget"]');
-  if (!retargetButton) return;
 
   const flags = message.getFlag(SYSTEM_ID, 'attackCard') as AttackCardFlags | undefined;
   const parsed = flags ? parseActionChainId(flags.actionChainId) : null;
   const attacker = parsed ? foundry.utils.fromUuidSync(parsed.actorUuid) as ActorDnd35e | null : null;
-  if (!flags || !attacker || !(game.user?.isGM || attacker.isOwner)) {
-    retargetButton.remove();
-    return;
+
+  const retargetButton = html.querySelector<HTMLElement>('[data-action="retarget"]');
+  if (retargetButton) {
+    if (!flags || !attacker || !(game.user?.isGM || attacker.isOwner)) {
+      retargetButton.remove();
+    } else {
+      retargetButton.addEventListener('click', () => { void onRetarget(message, flags); });
+    }
   }
-  retargetButton.addEventListener('click', () => { void onRetarget(message, flags); });
+
+  if (!flags) return;
+  const playerSelfDefense = !!game.settings.get(SYSTEM_ID, COMBAT_KEYS.PLAYER_SELF_DEFENSE);
+  html.querySelectorAll<HTMLElement>('[data-action="apply-attack"]').forEach((button) => {
+    const targetUuid = button.dataset.targetUuid;
+    const target = targetUuid ? foundry.utils.fromUuidSync(targetUuid) as ActorDnd35e | null : null;
+    // Hidden entirely for anyone who can't resolve this target's defense right now — `continueAction()`
+    // re-checks the same rule (defense-in-depth for any other future caller of that method).
+    if (!target || !(game.user?.isGM || (playerSelfDefense && target.isOwner))) {
+      button.remove();
+      return;
+    }
+    button.addEventListener('click', () => { void advanceActionChain(message, flags, targetUuid!); });
+  });
 }
 
-export { appendAttackCardWarnings, buildAttackCard, buildAttackCardContent, wireAttackRollCardButton };
+export { advanceActionChain, appendAttackCardWarnings, buildAttackCard, buildAttackCardContent, markTargetRowResolved, resolveVisibleActorName, wireAttackRollCardButton };
 export type { AttackCardFlags, AttackCardTargetRow };

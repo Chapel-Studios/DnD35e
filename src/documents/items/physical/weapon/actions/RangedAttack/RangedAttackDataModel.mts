@@ -3,6 +3,7 @@ import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35
 import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
 import { requiredNumberField } from '@fields/fieldBuilders.mjs';
 import { ACTION_TYPE, ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
+import { participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 
 import type { UseWeaponAttackContext, WeaponAttackActionResult } from '../WeaponAttack/types.mjs';
 import { WeaponAttackDataModel } from '../WeaponAttack/WeaponAttackDataModel.mjs';
@@ -41,8 +42,9 @@ class RangedWeaponAttack extends WeaponAttackDataModel {
 
     // SRD: a charge's mandatory attack must be melee — block ranged/thrown before the dialog opens.
     const combat = game.combat;
-    const combatant = context.actorToken
-      ? combat?.getCombatantsByToken(context.actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
+    const actorToken = participantToken(context.actor);
+    const combatant = actorToken
+      ? combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
       : undefined;
     if (
       combat?.started

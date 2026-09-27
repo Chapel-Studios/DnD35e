@@ -3,22 +3,23 @@
 // table for exactly which are auto-detected vs. manual-only, and why `proficient`/
 // `nonLethal` carry `value: 0` (read directly by id below instead of folded into the
 
-import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import { PRONE_CONDITION_ID, SQUEEZING_CONDITION_ID } from '@constants/conditions.mjs';
 import { getActionEconomy } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
-import { getActorToken } from '@documents/token/logic/getActorToken.mjs';
 import { isOnHigherGround } from '@documents/token/logic/highGround.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
+import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
+import { participantActor, participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import type { CombatModifierToggle } from '@source/rollDialogs/WeaponAttackRollDialog/types.mjs';
 
 // dialog's generic situational-modifier sum).
 const createCombatModifiers = (
-  actor: ACTORS_DND35E,
+  attacker: ActionParticipant,
   targetToken: TokenDnd35e | undefined,
   weaponNonLethalDefault: boolean
 ): CombatModifierToggle[] => {
-  const actorToken = getActorToken(actor);
+  const actor = participantActor(attacker);
+  const actorToken = participantToken(attacker) ?? undefined;
   const actorCombatant = actorToken
     ? game.combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e | undefined
     : undefined;

@@ -18,6 +18,8 @@ import {
   POST_EFFECT_CHANGE_PHASE,
 } from '@effects/baseActiveEffect/data/index.mjs';
 import { parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
+import { resolveActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import type { ActionResult } from '@items/baseItem/actions/types.mjs';
 import { WeaponAttackDataModel } from '@items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
@@ -284,14 +286,18 @@ abstract class Creature extends ActorDnd35e {
     }
 
     const actor = this as unknown as ACTORS_DND35E;
-    const targets = targetTokens?.map(t => t.actor as unknown as ACTORS_DND35E).filter(a => !!a) ?? [];
+    // A caller with a concrete acting token (e.g. the Token HUD) must win over the shell's
+    // own token-preference search — ambiguous otherwise for a linked actor with multiple
+    // placed tokens (§10.7 token-preference policy, resolved once here).
+    const attacker = resolveActionParticipant(actor, options.actorToken);
+    const targets: ActionParticipant[] = targetTokens?.filter(t => !!t.actor) ?? [];
 
     // No explicit `UseActionContext` annotation — keeping the natural union lets `'hand' in
     // context` narrow to the real `'main' | 'off' | 'both'` literal type below instead of
     // widening it away.
     const context = action instanceof WeaponAttackDataModel
-      ? WeaponAttackDataModel.PrepareActionContext(actor, item, targets, options.free, targetTokens?.[0], options.actorToken)
-      : { actor, target: targets };
+      ? WeaponAttackDataModel.PrepareActionContext(attacker, item, targets, options.free)
+      : { actor: attacker, target: targets };
     if (!context) {
       defaultResult.reason = 'contextNotPrepared';
       return defaultResult;

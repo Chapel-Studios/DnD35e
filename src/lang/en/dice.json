@@ -63,7 +63,23 @@
         "ChangeTargets": "Change Target(s)",
         "DamagePreview": "Bonus to Damage",
         "NonLethal": "Non-lethal",
-        "ConfirmCritical": "Confirm"
+        "ConfirmCritical": "Confirm",
+        "Apply": "Apply",
+        "Hit": "Hit",
+        "Miss": "Miss"
+      },
+      "RESOLUTION_CARD": {
+        "Title": "Resolution",
+        "Hit": "Hit",
+        "Miss": "Miss",
+        "CriticalHit": "Critical Hit!",
+        "Concealed": "Missed due to concealment",
+        "EffectiveAc": "Effective AC",
+        "DamageApplied": "Damage Applied",
+        "NonLethalApplied": "Non-lethal Damage Applied",
+        "HalfDamage": "(halved)",
+        "Undo": "Undo",
+        "Undone": "Undone — damage reversed, action(s) refunded."
       }
     }
   }

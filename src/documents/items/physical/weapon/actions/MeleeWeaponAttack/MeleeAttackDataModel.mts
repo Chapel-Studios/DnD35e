@@ -1,8 +1,8 @@
 import { DEX, STR } from '@constants/abilities.mjs';
 import { type Size,SIZE_REACH } from '@constants/sizes.mjs';
 import { isWithinReach } from '@documents/token/logic/reach.mjs';
-import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { ACTION_TYPE, ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
+import { participantActor, participantName, participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import type { ActionResult } from '@items/baseItem/actions/types.mjs';
 
 import type { WeaponAttackActionResult } from '../WeaponAttack/types.mjs';
@@ -81,43 +81,36 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
   /**
    * Melee reach validation (§10.5/§10.10) — only applies to actions with no `range`
    * block (ranged/thrown actions use range increments instead, handled by Story D/F).
-   * Self-contained: no dependency on the Attack Roll Dialog.
+   * Self-contained: no dependency on the Attack Roll Dialog. Only reports/blocks on
+   * reach when both sides resolve to an actual placed token — a token-less participant
+   * (§10.7 fallback) has no position to check, so that target is silently assumed to be
+   * in reach rather than blocked or warned about.
    */
   private _validateMeleeReach(context: UseWeaponAttackContext): ActionResult {
     const result: ActionResult = { cancelled: false, warnings: [], reason: 'success' };
-    
-    // Prefer the threaded tokens (unambiguous when multiple unlinked tokens share an actor);
-    // fall back to `getActiveTokens()[0]` only when a caller didn't thread one through.
-    const attackerToken = context.actorToken ?? (context.actor.getActiveTokens()[0] as TokenDnd35e | undefined);
+
+    const attackerToken = participantToken(context.actor);
+    const attackerActor = participantActor(context.actor);
     const hasReach = this.properties?.has(MELEE_WEAPON_PROPERTY.REACH) ?? false;
     const threatensAdjacent = this.properties?.has(MELEE_WEAPON_PROPERTY.THREATENS_ADJACENT) ?? false;
-    const baseReach = SIZE_REACH[context.actor.system.size as Size] ?? 1;
+    const baseReach = SIZE_REACH[attackerActor.system.size as Size] ?? 1;
     // `reachLength` is authored as the weapon's total effective reach (defaults to
     // double the wielder's size at creation - see weaponActionSync.mts - but stays
     // editable for homebrew reach weapons longer than the standard double).
     const effectiveReach = hasReach ? this.reachLength : baseReach;
 
-    for (const target of context.target ?? []) {
-      // `context.targetToken` only resolves the primary target (`context.target?.[0]`,
-      // see `WeaponAttackDataModel._executeCheck()`); any additional targets fall back.
-      const targetToken = (target === context.target?.[0] ? context.targetToken : undefined)
-        ?? (target.getActiveTokens()[0] as TokenDnd35e | undefined);
-
-      if (!attackerToken || !targetToken) {
-        ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.MissingTargetToken'));
-        result.cancelled = true;
-        result.reason = 'missingTokens';
-        return result;
-      }
+    for (const targetParticipant of context.target ?? []) {
+      const targetToken = participantToken(targetParticipant);
+      if (!attackerToken || !targetToken) continue;
 
       if (!isWithinReach(attackerToken, targetToken, effectiveReach)) {
-        ui.notifications.warn(game.i18n.format('dnd35e.COMBAT.TargetOutOfReach', { target: target.name }));
+        ui.notifications.warn(game.i18n.format('dnd35e.COMBAT.TargetOutOfReach', { target: participantName(targetParticipant) }));
         result.cancelled = true;
         result.reason = 'outOfReach';
         return result;
       }
       if (hasReach && !threatensAdjacent && isWithinReach(attackerToken, targetToken, baseReach)) {
-        ui.notifications.warn(game.i18n.format('dnd35e.COMBAT.TargetTooCloseForReach', { target: target.name }));
+        ui.notifications.warn(game.i18n.format('dnd35e.COMBAT.TargetTooCloseForReach', { target: participantName(targetParticipant) }));
         result.cancelled = true;
         result.reason = 'reachDeadZone';
         return result;

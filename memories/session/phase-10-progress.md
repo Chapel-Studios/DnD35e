@@ -12,14 +12,22 @@
 **Renumbering note**: with all three spikes resolved, the remaining stories (formerly D–K) were relettered A–H in `phase-10-basic-combat.md` (D→A, E→B, F→C, G→D, H→E, I→F, J→G, K→H). The retired spike letters A/B/C were renamed to Spike 1/2/3 to free them up. All cross-references, the Parallelization diagram, and its prose were updated accordingly.
 
 ## Current Section
-Story E (Roll Defense Dialog & attack resolution) — **started**. Completed so far: condition IDs
+Story E (Roll Defense Dialog & attack resolution) — **in progress**. Completed so far: condition IDs
 (Charged/Defensive Fighting/Total Defense), `combatConditionAEs.mts` native-duration rework
 (supersedes the speced `createShortDurationAE()` helper — see phase doc note), Total Defense's
 real mechanic wired into the HUD Combat Maneuvers entry, `system.defense.criticalImmune` field
-(schema only, not yet read anywhere), `PLAYER_SELF_DEFENSE` + `ROLLED_DEFENSE_VARIANT` settings.
-Not yet started: `RollDefenseDialogConfig.mts`/`RollDefenseDialogApp.vue`, action-chain plumbing
-(`actionChainSteps.mts`, `continue()`), Resolution card, Concealment miss-chance roll,
-preferred-alias FormulaFamiliar wiring.
+(schema only, not yet read anywhere), `PLAYER_SELF_DEFENSE` + `ROLLED_DEFENSE_VARIANT` settings,
+and the standalone `RollDefenseDialog/` file set (`types.mts`, `RollDefenseDialogStore.mts`,
+`RollDefenseDialogConfig.mts`, `RollDefenseDialog.vue` — committed on `poc/10e_roll-defense-dialog`,
+branched off `dev` since the prior condition-IDs commit had landed directly on local `dev` by
+mistake before being pushed; `dev` was reset back to match `origin/dev`). The dialog renders
+generic `CombatModifierToggle[]` groups (`combatStatus`/`overrides`) supplied by its caller — it
+does not itself hardcode Charged/Flat-Footed/Total Defense/Defensive Fighting; that toggle-builder
+is a separate not-yet-built piece (parallel to the Attack dialog's `createCombatModifiers()`).
+**Not yet testable in Foundry** — nothing calls `RollDefenseDialogConfig.roll()` yet.
+Not yet started: action-chain plumbing (`actionChainSteps.mts`, `continue()`'s `'damage'` case,
+`advanceActionChain()`), Resolution card + template + Undo handler, Concealment miss-chance roll,
+`criticalImmune` auto-detect read + Racial Trait AE producer, preferred-alias FormulaFamiliar wiring.
 
 ## Story D Detail (D.1–D.4 breakdown)
 - [x] Story D.1 — Engine primitives (`DamageRoll`, `preUseAction`/`postUseAction`/`dealDamage`/`undoDealDamage` events) — complete, committed.

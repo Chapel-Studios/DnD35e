@@ -77,6 +77,11 @@
     {{#each targets}}
     <li class="target-row {{#if this.resolved}}resolved{{/if}}">
       <span class="target-name" data-target-uuid="{{ this.actorUuid }}" data-target-token-uuid="{{ this.tokenUuid }}"></span>
+      {{#if this.resolved}}
+      <span class="resolution-badge {{#if this.hit}}hit{{else}}miss{{/if}}">{{#if this.hit}}{{../hitLabel}}{{else}}{{../missLabel}}{{/if}}</span>
+      {{else}}
+      <button type="button" class="apply-attack-btn" data-action="apply-attack" data-target-uuid="{{ this.actorUuid }}">{{ ../applyLabel }}</button>
+      {{/if}}
     </li>
     {{/each}}
   </ul>
