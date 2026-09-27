@@ -43,6 +43,7 @@ This phase delivers **only the minimum surface those three spells consume**. Eve
 - `hideFromToken: boolean`.
 - Dedicated **"Buffs" sheet section** UI on the character sheet (alpha.9 buffs render in the generic effects list).
 - D35E `buff` item → Buff AE **data migration**.
+- `actorTurnEnd` / `creationInitiativeStart` expiry-trigger evaluation logic (§9.4b) — the `expiryTrigger` schema field ships in alpha.9, only its `actorTurnStart` case is wired.
 
 > Beta.3 *extends* alpha.9's schema; it does not replace it. The alpha.9 fields below are stable contracts that beta.3 builds on.
 
@@ -67,14 +68,25 @@ export class BuffSystemModel extends Dnd35eActiveEffectSystemModel {
 
       // Round-based duration.
       // `rounds`: total duration in combat rounds (set by the cast action at cast time).
-      // `elapsed`: rounds ticked so far. Incremented on the bearer's turn start by the
+      // `elapsed`: rounds ticked so far. Incremented per `expiryTrigger` below by the
       //   combat tracker hook.
       // `deleteOnExpiry`: default true for spell buffs — when `elapsed >= rounds`, the
       //   AE is deleted. If false, it is marked inactive but retained (for sheet display).
+      // `expiryTrigger`: which turn-boundary `elapsed` ticks/expires against — see §9.4b.
+      //   Alpha.9 only wires `'actorTurnStart'` (the only case Bless/PfE/Divine Favor need);
+      //   the field exists now so beta.3 doesn't need a schema migration to add the other two.
+      // `creationRound`/`creationInitiative`: combat round + initiative captured at AE
+      //   creation time — only read when `expiryTrigger === 'creationInitiativeStart'`.
       duration: new fields.SchemaField({
         rounds: requiredNumberField({ initial: 0, min: 0 }),
         elapsed: requiredNumberField({ initial: 0, min: 0 }),
         deleteOnExpiry: requiredBooleanField({ initial: true }),
+        expiryTrigger: requiredStringField({
+          initial: 'actorTurnStart',
+          choices: ['actorTurnStart', 'actorTurnEnd', 'creationInitiativeStart'],
+        }),
+        creationRound: optionalNumberField(),
+        creationInitiative: optionalNumberField(),
       }),
 
       // Short human-facing description shown on the AE sheet and chat card.
@@ -113,15 +125,39 @@ User-facing toggle on the AE sheet (and on the actor's effects list, post-beta i
 
 ### Round tick (combat-tracker side)
 
-alpha.7 (Combat Tracker & Turn Economy) already stubs *"buff expirations (stub for Phase 20)"* in its combat tracker turn-start hook. Alpha.9 fills in the stub:
+alpha.7 (Combat Tracker & Turn Economy) already stubs *"buff expirations (stub for Phase 20)"* in its combat tracker turn-start hook. Alpha.9 fills in the stub for the `'actorTurnStart'` trigger only:
 
-1. On the bearer actor's turn-start, iterate active Buff AEs on the actor.
+1. On the bearer actor's turn-start, iterate active Buff AEs on the actor with `expiryTrigger === 'actorTurnStart'`.
 2. For each: `system.duration.elapsed += 1`.
 3. If `elapsed >= rounds && rounds > 0`:
    - If `deleteOnExpiry` → `effect.delete()`.
    - Else → `effect.update({ 'system.active': false, disabled: true })`.
 
 Buffs with `rounds === 0` are treated as **indefinite** (no tick) — used by passive/permanent buffs migrated from D35E `buff` items in beta.3, but rejected in alpha.9 since Bless/PfE/Divine Favor all set explicit round durations.
+
+### 9.4b Expiry Trigger Points (schema now, remaining evaluation logic beta.3)
+
+D&D 3.5e duration wording maps to three distinct turn-boundary checks, not just one — `expiryTrigger` picks which:
+
+| `expiryTrigger` | SRD wording it matches | Evaluated where | Alpha.9 status |
+|---|---|---|---|
+| `actorTurnStart` (default) | "1 round/level", "until the start of your next turn" | `CombatDnd35e#_onStartTurn()`, bearer only (existing alpha.7 stub) | ✅ wired |
+| `actorTurnEnd` | "until the end of this turn" | `CombatDnd35e#_onEndTurn()`, bearer only — **not yet overridden** in dnd35e; core's `Combat#_onEndTurn()` hook point already exists (see `types/foundry/client/documents/combat.d.mts`) | ❌ beta.3 |
+| `creationInitiativeStart` | "1 round" measured from the moment of casting, independent of whose turn it is next — the effect lapses when initiative order returns to the same count it was created at, not at the bearer's own turn | `CombatDnd35e#_onStartTurn()`, evaluated for **every** combatant that turn (not just the bearer) against `creationRound`/`creationInitiative` | ❌ beta.3 |
+
+> **Legacy D35E precedent (verified against real source, `Data/systems/D35E/module/`)**: D35E implements the `creationInitiativeStart` case by inserting a literal synthetic "ghost" `Combatant` into the tracker (`flags.D35E.buffId`, `combat.js` `addBuffsToCombat()`) at `anchorInitiative ± 0.01` — `+0.01` for a normal tick, `-0.01` when `system.timeline.tickOnEnd` is set (their `actorTurnEnd`-equivalent). The anchor is whoever was the *active combatant when the buff was created* (usually the caster, not the bearer) — not the bearer's own turn. The ghost row is **visible** in D35E's tracker (shows the buff's name/icon as its own turn); reaching it silently runs `Actor#progressBuff()` then auto-advances (`combat.js` `_processCurrentCombatant()`/`nextTurn()`). This is a proven approach but has real UX cost (phantom tracker rows) — dnd35e's `CombatDnd35e` uses real `_onStartTurn`/`_onEndTurn`/`_onStartRound`/`_onEndRound` overrides, not synthetic combatants, so beta.3 should evaluate a `creationRound`/`creationInitiative` comparison inside the real per-combatant turn hooks instead of replicating the ghost-combatant trick — open design question to settle when beta.3 is scoped in detail.
+
+An on-expiry **and per-round-while-active action** hook is explicitly out of scope for both alpha.9 and beta.3 — see §9.4c below.
+
+> poc.10 Story E's short-duration combat conditions (Charged/Defensive Fighting/Total Defense) are **not** part of this system — they only ever need the `actorTurnStart` case ("until your next turn"), which Foundry's own native `ActiveEffect.duration` + `ActiveEffectRegistry` already provides for free (see `conditions.mts`/`ActiveEffectDnd35e.mts#_onUpdate`). This `expiryTrigger` design is for the general Buff AE system only.
+
+### 9.4c Recurring / On-Expiry Action Hook (deferred design)
+
+alpha.9/beta.3's duration system (§9.4b) only ever *deletes or deactivates* a buff on expiry. Many D&D 3.5e buffs and poisons need to *do* something every round they're active (and/or once on expiry), not just vanish — damage-over-time poisons, fast healing/regeneration buffs, etc.
+
+**Confirmed legacy precedent** (verified against real source, `Data/systems/D35E/module/actor/entity.js` `applyOnRoundBuffActions()`): D35E buffs carry `system.perRoundActions[]`, an array of `{ action: string }` mini-DSL strings (e.g. `"Regenerate 5 on self;"`, `"SelfDamage -2 on self;"`, `@roundDelta` substitution) executed every round the buff is active. These are **not** silently auto-applied — they're posted as a chat card with one clickable button per action (`action: 'customAction'`) that the GM/player clicks to confirm, matching the same click-to-apply pattern the rest of D35E's roll/damage flow uses.
+
+dnd35e should NOT copy D35E's raw string-macro DSL verbatim — the system already has richer typed action definitions (`@items/baseItem/actions`) that a "run this on my turn while active" reference could point to instead of a bespoke string language. This needs its own design pass once the general Buff AE system (beta.3) exists: likely a `perRoundActions`-equivalent field referencing real `IAction` entries, evaluated at the same expiry-trigger checkpoints as `expiryTrigger` (§9.4b), and surfaced via a confirm-to-apply chat card rather than silent auto-application (consistent with the rest of this codebase's damage/roll conventions).
 
 ---
 
@@ -159,6 +195,8 @@ The buff AE Core must prove four behaviors before alpha.9 closes:
 - ❌ D35E `buff` item → Buff AE data migration.
 - ❌ Buff stacking-by-source rules (multiple Bless from different casters) — alpha.9 lets all buff changes flow through the standard stacking engine, with `bonusType` doing the work.
 - ❌ Dispel Magic interaction beyond setting `flags.dnd35e.isSpellEffect: true` as provenance.
+- ❌ `actorTurnEnd` / `creationInitiativeStart` expiry-trigger evaluation (§9.4b) — schema field ships, only `actorTurnStart` is wired.
+- ❌ On-expiry/recurring action execution hook (§9.4c).
 
 These all land in **beta.3** (Buff AE Expansion & Conditions Full).
 

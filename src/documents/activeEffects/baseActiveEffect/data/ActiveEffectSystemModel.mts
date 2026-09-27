@@ -42,6 +42,12 @@ class ActiveEffectSystemModel extends DocumentSystemModel<foundry.documents.Acti
       }),
       isHidden: requiredBooleanField(false),
       label: new StringField({ required: false, nullable: true, initial: null }),
+      // Whether this effect self-deletes the moment core's `ActiveEffectRegistry` marks its
+      // duration expired, rather than just sitting inert with `duration.expired: true` (core's
+      // default). Currently opted into by conditions only (see `conditions.mts`); the general
+      // Buff AE system (alpha.9+) will likely relocate this under `system.duration` once that
+      // schema exists — see `ActiveEffectDnd35e#_onUpdate()`.
+      deleteOnExpiry: requiredBooleanField(false),
       // ─── Future: triggers ──────────────────────────────────────────────────
       // AEs will be able to subscribe to document lifecycle events on their
       // owning item/actor. When a lifecycle event fires (e.g. Weapon.LifeCycle.onHit),

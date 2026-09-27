@@ -37,9 +37,12 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import { performStandUpOrDropProne } from '@actors/creature/Actions/ChangeProneStatus.mjs';
 import { Creature } from '@actors/creature/index.mjs';
+import { applyTotalDefenseAE } from '@actors/creature/logic/combatConditionAEs.mjs';
 import type { HpAdjustmentType } from '@actors/creature/sheet/components/constants.mjs';
 import type { ApplicationRenderContext } from '@client/applications/_module.mjs';
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
+import { ACTION_ECONOMY } from '@constants/actionEconomy.mjs';
+import { spendAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
@@ -50,7 +53,7 @@ import { DROP_PRONE_MOVEMENT_ACTION, STAND_UP_MOVEMENT_ACTION } from '../logic/m
 import type { BottomHudBarProps } from './components/BottomHudBar.vue';
 import type { LeftHudBarProps } from './components/LeftHudBar.vue';
 import type { RightHudBarProps } from './components/RightHudBar.vue';
-import { getCombatManeuverChoices, getWeaponActionChoices } from './tokenHudActions.mjs';
+import { getActiveCombatant, getCombatManeuverChoices, getWeaponActionChoices } from './tokenHudActions.mjs';
 import TokenHudApp from './TokenHudApp.vue';
 import type { MiddleHudBarProps, TokenHudContext } from './tokenHudTypes.mjs';
 
@@ -215,8 +218,8 @@ class TokenHudDnd35e extends TokenHudVueBase {
     const weaponActions = isCreature && hudToken
       ? await getWeaponActionChoices(actor, hudToken)
       : [];
-    const combatManeuvers = isCreature
-      ? getCombatManeuverChoices()
+    const combatManeuvers = isCreature && hudToken
+      ? getCombatManeuverChoices(hudToken)
       : [];
     const bottomHudContext: BottomHudBarProps = {
       weaponActions: weaponActions,
@@ -278,10 +281,30 @@ class TokenHudDnd35e extends TokenHudVueBase {
     await actor.updateHP(amount, adjustmentType);
   }
 
-  /** Combat Maneuvers palette entry click — Total Defense's real mechanic is Story E's scope (see tokenHudActions.mts). */
-  static #onCombatManeuver (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): void {
+  /**
+   * Combat Maneuvers palette entry click (poc.10 Story E) — Total Defense is a standard
+   * action (SRD): spend it, then apply the +4 AC dodge bonus via the native-duration AE
+   * (see `combatConditionAEs.mts`). Outside an active encounter there's no action economy
+   * to spend against, so the maneuver is a no-op with a warning (mirrors `#onAttackAction`'s
+   * "select a target first" guard style).
+   */
+  static async #onCombatManeuver (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
     if (target.dataset.enabled === 'false') return;
-    ui.notifications.info(game.i18n.localize('dnd35e.COMBAT.Maneuver.NotYetImplemented'));
+
+    const actor = this.actor;
+    if (!(actor instanceof Creature)) return;
+
+    const hudToken = this.document.object as unknown as TokenDnd35e | undefined;
+    const combatant = hudToken ? getActiveCombatant(hudToken) : undefined;
+    if (!combatant) {
+      ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.Maneuver.MustBeInCombat'));
+      return;
+    }
+
+    const spent = await spendAction(combatant, [ACTION_ECONOMY.Standard]);
+    if (spent === null) return;
+
+    await applyTotalDefenseAE(actor);
   }
 
   /**

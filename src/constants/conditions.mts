@@ -35,14 +35,18 @@ const FLAT_FOOTED_CONDITION_ID = 'flatFooted';
 /** `CONFIG.statusEffects[].id` for the Squeezing condition — read only by the Attack Roll Dialog's auto-detection (poc.10 §10.7). No movement/AC gating. */
 const SQUEEZING_CONDITION_ID = 'squeezing';
 /**
- * `CONFIG.statusEffects[].id` for the Charge combat state (poc.10 Story D, §10.7) — not an
+ * `CONFIG.statusEffects[].id` for the Charge combat state (poc.10 Story D/E, §10.7) — not an
  * SRD "condition" proper, but reuses the same `toggleStatusEffect()`/registry mechanism for
  * its -2 AC penalty. Applied by `applyChargedAE()` when the attack dialog's Charge toggle is
- * checked; cleared at the start of the charging actor's next turn (see `CombatDnd35e#_onStartTurn()`).
+ * checked. Expires natively via its own `duration: { value: 1, units: 'turns' }` (see
+ * `CONDITIONS.charged`) — Foundry's built-in `turnStart` expiry handles "until your next turn"
+ * with no manual clearing needed (see `combatConditionAEs.mts`).
  */
 const CHARGED_CONDITION_ID = 'charged';
-/** `CONFIG.statusEffects[].id` for the Defensive Fighting combat state (poc.10 Story D, §10.7) — same short-duration pattern as `CHARGED_CONDITION_ID`, +2 AC dodge bonus instead. */
+/** `CONFIG.statusEffects[].id` for the Defensive Fighting combat state (poc.10 Story D/E, §10.7) — same native-duration pattern as `CHARGED_CONDITION_ID`, +2 AC dodge bonus instead. */
 const DEFENSIVE_FIGHTING_CONDITION_ID = 'defensiveFighting';
+/** `CONFIG.statusEffects[].id` for the Total Defense combat state (poc.10 Story E, §10.7) — same native-duration pattern as `CHARGED_CONDITION_ID`, +4 AC dodge bonus (SRD: full-round action, no attacks). */
+const TOTAL_DEFENSE_CONDITION_ID = 'totalDefense';
 
 const setFieldOverride = (key: string, value: unknown): EffectChangeDataDnd35e => ({
   key,
@@ -128,6 +132,14 @@ interface ConditionDefinition {
    * conditions whose SRD effects have no live consumer yet (see module doc comment).
    */
   changes: EffectChangeDataDnd35e[];
+  /**
+   * Native Foundry AE duration (poc.10 Story E) — set only on the short-lived combat-state
+   * conditions (Charged/Defensive Fighting/Total Defense) that must expire "until your next
+   * turn". Forwarded verbatim onto the built `CONFIG.statusEffects` entry; `ActiveEffect
+   * .fromStatusEffect()` clones the whole status entry, so this reaches the created AE's own
+   * `duration` field with no extra plumbing. See `combatConditionAEs.mts` for the full mechanism.
+   */
+  duration?: { value: number; units: string };
 }
 
 /**
@@ -310,6 +322,7 @@ const CONDITIONS: Record<string, ConditionDefinition> = {
     // SRD: charging grants +2 to the attack roll (folded into the dialog's situationalModifier
     // directly, not an AE - there's no persistent "attack roll" field) but -2 AC until your next turn.
     changes: acAdjustment(-2),
+    duration: { value: 1, units: 'turns' },
   },
   defensiveFighting: {
     id: DEFENSIVE_FIGHTING_CONDITION_ID,
@@ -318,6 +331,15 @@ const CONDITIONS: Record<string, ConditionDefinition> = {
     // SRD: fighting defensively is -4 to the attack roll (folded into situationalModifier
     // directly) but +2 AC (dodge) until your next turn.
     changes: acAdjustment(2),
+    duration: { value: 1, units: 'turns' },
+  },
+  totalDefense: {
+    id: TOTAL_DEFENSE_CONDITION_ID,
+    label: 'dnd35e.CONDITIONS.totalDefense.label',
+    icon: 'icons/svg/shield.svg',
+    // SRD: total defense is a standard action granting +4 AC (dodge) until your next turn.
+    changes: acAdjustment(4),
+    duration: { value: 1, units: 'turns' },
   },
 } as const;
 
@@ -334,6 +356,7 @@ const buildConditionStatusEffects = (): StatusEffectConfig[] =>
     name: condition.label,
     img: condition.icon,
     type: GENERAL_EFFECT_TYPE,
+    ...(condition.duration ? { duration: condition.duration } : {}),
     flags: {
       dnd35e: {
         isCondition: true,
@@ -342,6 +365,7 @@ const buildConditionStatusEffects = (): StatusEffectConfig[] =>
     system: {
       target: EFFECT_CHANGE_TARGET.ACTOR,
       isHidden: false,
+      deleteOnExpiry: true,
       changes: condition.changes,
     },
   } as unknown as StatusEffectConfig));
@@ -355,6 +379,7 @@ export {
   FLAT_FOOTED_CONDITION_ID,
   PRONE_CONDITION_ID,
   SQUEEZING_CONDITION_ID,
+  TOTAL_DEFENSE_CONDITION_ID,
 };
 
 export type {

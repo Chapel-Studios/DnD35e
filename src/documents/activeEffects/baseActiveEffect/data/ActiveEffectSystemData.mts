@@ -49,6 +49,8 @@ interface ActiveEffectSystemSourceDnd35e extends DocumentSystemData, Omit<Active
   target: ActiveEffectTarget;
   isHidden: boolean;
   label?: string;
+  /** See `ActiveEffectSystemModel.defineSchema()`'s `deleteOnExpiry` field doc comment. */
+  deleteOnExpiry: boolean;
   changes: EffectChangeSourceDnd35e[];
 }
 

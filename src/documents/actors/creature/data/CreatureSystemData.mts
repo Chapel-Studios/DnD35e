@@ -117,6 +117,8 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
     touchAC: number;
     /** Set by the Flat-Footed condition; gates Dex out of armorClass/touchAC. Never stored. */
     denyDexToAC: boolean;
+    /** Set by fortification/construct-type immunities; auto-checks "Ignore Critical Hit" in the Roll Defense Dialog. Never stored. */
+    criticalImmune: boolean;
     /** Target for future Armor item `getContributedActorChanges('initial')` contributions. Always 0 until Armor items exist. */
     armorBonus: number;
     /** Target for future Shield item `getContributedActorChanges('initial')` contributions. Always 0 until Shield items exist. */

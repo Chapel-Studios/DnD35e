@@ -20,6 +20,8 @@ export const COMBAT_KEYS = {
   THREATENED_SHOW_SQUARES: 'threatened-show-squares',
   RANDOMIZE_HP: 'randomizeHp',
   ENFORCE_SINGLE_MATERIAL: 'enforceSingleMaterial',
+  PLAYER_SELF_DEFENSE: 'playerSelfDefense',
+  ROLLED_DEFENSE_VARIANT: 'rolledDefenseVariant',
 } as const;
 
 /**

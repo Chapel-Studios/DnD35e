@@ -110,6 +110,21 @@ class ActiveEffectDnd35e<
   ): void {
     super._onUpdate(_data, _options, _userId);
     refreshOwningDocument(this);
+
+    // `CONFIG.ActiveEffect.expiryAction` is a single global switch (core's `ActiveEffectRegistry`
+    // reads it for every duration-bearing AE system-wide) — not a per-effect choice, so we can't
+    // flip it to 'delete' just for our own short-duration combat conditions (Charged/Defensive
+    // Fighting/Total Defense, see conditions.mts) without also changing behavior for every future
+    // buff/spell duration this system hasn't built yet. Left at core's default ('update', which
+    // only flips `duration.expired`), so instead effects opted into `system.deleteOnExpiry` self-delete
+    // the moment the registry marks them expired — same single-mutator gate core itself uses to
+    // avoid every client racing to delete the same document (see active-effect-registry.mjs).
+    if (_data.duration?.expired && this.system.deleteOnExpiry) {
+    // I don't think we need to check for the active GM here because the core registry already handles
+    // avoiding multiple clients racing to delete the same document. saving just incase we need to revert.
+    // if (_data.duration?.expired && this.system.deleteOnExpiry && game.users.activeGM?.isSelf) {
+      void this.delete();
+    }
   }
 
   protected override _onDelete(

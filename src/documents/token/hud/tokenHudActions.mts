@@ -12,15 +12,17 @@
  * entirely rather than merely disabled, since the HUD palette has no room for an
  * explanatory tooltip.
  *
- * Combat Maneuvers: this phase renders only a "Total Defense" entry (§10.7's special action is
- * Story E's scope — this module only establishes the HUD row/entry shell, always enabled; the
- * click handler surfaces a "not yet implemented" notice until Story E wires the real mechanic).
+ * Combat Maneuvers: this phase renders only a "Total Defense" entry (poc.10 Story E) — a
+ * standard action (SRD), so `enabled` follows `canUseAction(combatant, [ACTION_ECONOMY.Standard])`
+ * (outside combat it's always enabled, same convention as Weapon Attacks' `!combatant ||` fallback).
+ * The click handler (`TokenHudDnd35e#onCombatManeuver`) spends the action and applies the AE.
  *
  * @module
  */
 import { detectWieldedHand } from '@actors/baseActor/logic/wieldMode.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
-import { canUseHandAttack, getHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import { ACTION_ECONOMY } from '@constants/actionEconomy.mjs';
+import { canUseAction, canUseHandAttack, getHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { WEAPON_ACTION_TYPE, WEAPON_ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
@@ -82,15 +84,16 @@ async function getWeaponActionChoices(actor: Creature, token: TokenDnd35e): Prom
   return rows;
 }
 
-/** Combat Maneuvers HUD palette entries — Total Defense shell only this phase (see module doc). */
-function getCombatManeuverChoices(): TokenHudCombatManeuverRow[] {
+/** Combat Maneuvers HUD palette entries — Total Defense is the only maneuver so far (poc.10 Story E). */
+function getCombatManeuverChoices(token: TokenDnd35e): TokenHudCombatManeuverRow[] {
+  const combatant = getActiveCombatant(token) ?? null;
   return [
     {
       id: 'totalDefense',
       label: game.i18n.localize('dnd35e.COMBAT.Maneuver.TotalDefense'),
-      enabled: true,
+      enabled: !combatant || canUseAction(combatant, [ACTION_ECONOMY.Standard]) !== null,
     },
   ];
 }
 
-export { getCombatManeuverChoices, getWeaponActionChoices };
+export { getActiveCombatant, getCombatManeuverChoices, getWeaponActionChoices };

@@ -48,7 +48,7 @@
       "MissingTargetToken": "Unable to determine token positions for this attack.",
       "Maneuver": {
         "TotalDefense": "Total Defense",
-        "NotYetImplemented": "Total Defense isn't implemented yet."
+        "MustBeInCombat": "Total Defense requires an active encounter."
       },
       "HUD": {
         "WeaponAttacks": "Weapon Attacks",
