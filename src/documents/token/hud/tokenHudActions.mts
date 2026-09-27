@@ -55,6 +55,7 @@ async function getWeaponActionChoices(actor: Creature, token: TokenDnd35e): Prom
     if (
       !weapon
       || !actualAction
+      || !actualAction.isTopLevel
       || !weapon?.system.isCarried
       || (!weapon?.system.isEquipped && actualAction?.requiresEquipped !== false)
     ) {

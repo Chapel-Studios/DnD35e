@@ -33,7 +33,10 @@ function resolveFormulaString(formula: string, documentDataMap: Record<string, D
     documentDataMap,
     ''
   );
-  return typeof resolved === 'string' ? resolved : String(resolved);
+  return typeof resolved === 'string'
+    ? resolved
+    : String(resolved)
+      ?? '';
 }
 
 /** Formats a plain number as a signed bonus fragment, e.g. `4` -> `+4`, `-2` -> `-2`. */
