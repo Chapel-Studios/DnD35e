@@ -11,6 +11,7 @@ import type { ApplicationRenderContext, ApplicationRenderOptions } from '@client
 import { SettingsStoreSymbol, useSettingsStore } from '@settings/shared/sheet/settingsStore.mjs';
 import type { App, Component } from 'vue';
 
+import { installGlobalVueProperties } from './globalVueProperties.mjs';
 import type { VueApplicationContextTransfer } from './VueAppTypes.mjs';
 
 /**
@@ -91,6 +92,7 @@ function useVueAppBaseMixin<
       // First render: create and mount Vue
       if (!this.vueApp) {
         this.vueApp = this._createVueApp(options);
+        installGlobalVueProperties(this.vueApp);
         this.vueApp.provide(SettingsStoreSymbol, useSettingsStore());
         this.vueApp.mount(this.vueRoot);
       }

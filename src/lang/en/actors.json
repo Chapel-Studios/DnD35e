@@ -275,7 +275,7 @@
       "tab": {
         "Summary": "Summary",
         "Attributes": "Attributes",
-        "Combat": "Combat",
+        "Actions": "Actions",
         "Inventory": "Inventory",
         "Features": "Features",
         "Skills": "Skills",
@@ -293,7 +293,23 @@
         "Speed": "Movement",
         "p-attributes": "Physical Attributes",
         "c-attributes": "Combat Attributes",
-        "inventory": "Inventory"
+        "inventory": "Inventory",
+        "Weapons": "Weapons"
+      },
+      "actions": {
+        "column": {
+          "weapon": "Weapon",
+          "attack": "Attack",
+          "damage": "Damage",
+          "crit": "Crit",
+          "range": "Range",
+          "type": "Type"
+        },
+        "action": {
+          "attack": "Attack"
+        },
+        "meleeRange": "Melee",
+        "empty": "No weapons carried"
       },
       "inventory": {
         "tab": {
@@ -407,6 +423,24 @@
         "physical": "Physical",
         "addLanguage": "Add language...",
         "removeLanguage": "Remove"
+      },
+      "EVENTS": {
+        "preUseAction": {
+          "label": "Before Action Used",
+          "description": "Triggered before an action executes. Cancellable."
+        },
+        "postUseAction": {
+          "label": "After Action Used",
+          "description": "Triggered after an action completes."
+        },
+        "dealDamage": {
+          "label": "Damage Dealt",
+          "description": "Triggered when damage is applied to this actor as part of resolving an action."
+        },
+        "undoDealDamage": {
+          "label": "Damage Undone",
+          "description": "Triggered when a previously dealt damage is reversed."
+        }
       }
     },
     "CHARACTER": {

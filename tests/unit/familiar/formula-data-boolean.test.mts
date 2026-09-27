@@ -15,26 +15,26 @@ const { evaluateBooleanExpression, resolveFormula, validateFormulaType } = Formu
  * sufficient to prove `_finalizeResolvedValue()`'s new 'boolean' branch.
  */
 describe('FormulaData — boolean expectedType resolution', () => {
-  it('resolves a comparison expression to the string "true"', () => {
+  it('resolves a comparison expression to the boolean true', () => {
     const result = FormulaData.resolveSource(
       { formula: '6 > 5', resolvedValue: null, expectedType: 'boolean' },
       {}
     );
-    expect(result).toBe('true');
+    expect(result).toBe(true);
   });
 
-  it('resolves a comparison expression to the string "false" on the other side of the threshold', () => {
+  it('resolves a comparison expression to the boolean false on the other side of the threshold', () => {
     const result = FormulaData.resolveSource(
       { formula: '4 > 5', resolvedValue: null, expectedType: 'boolean' },
       {}
     );
-    expect(result).toBe('false');
+    expect(result).toBe(false);
   });
 
   it('evaluates compound expressions (&&, ||, !, parentheses)', () => {
-    expect(FormulaData.resolveSource({ formula: '(3 > 2) && (1 == 1)', resolvedValue: null, expectedType: 'boolean' }, {})).toBe('true');
-    expect(FormulaData.resolveSource({ formula: '3 > 2 || false', resolvedValue: null, expectedType: 'boolean' }, {})).toBe('true');
-    expect(FormulaData.resolveSource({ formula: '!(3 > 2) && true', resolvedValue: null, expectedType: 'boolean' }, {})).toBe('false');
+    expect(FormulaData.resolveSource({ formula: '(3 > 2) && (1 == 1)', resolvedValue: null, expectedType: 'boolean' }, {})).toBe(true);
+    expect(FormulaData.resolveSource({ formula: '3 > 2 || false', resolvedValue: null, expectedType: 'boolean' }, {})).toBe(true);
+    expect(FormulaData.resolveSource({ formula: '!(3 > 2) && true', resolvedValue: null, expectedType: 'boolean' }, {})).toBe(false);
   });
 
   it('does not throw on an invalid boolean expression — falls back to null (see preparationWarnings.mts)', () => {

@@ -35,11 +35,11 @@ function isRangedSubtype (weaponSubtype: string): boolean {
 async function syncWeaponActions (weapon: Weapon): Promise<void> {
   const isRanged = isRangedSubtype(weapon.system.weaponSubtype);
   const desiredType = isRanged
-    ? ACTION_TYPE.RANGED_WEAPON_ATTACK
-    : ACTION_TYPE.MELEE_WEAPON_ATTACK;
+    ? ACTION_TYPE.RANGED
+    : ACTION_TYPE.MELEE;
   const inapplicableType = isRanged
-    ? ACTION_TYPE.MELEE_WEAPON_ATTACK
-    : ACTION_TYPE.RANGED_WEAPON_ATTACK;
+    ? ACTION_TYPE.MELEE
+    : ACTION_TYPE.RANGED;
 
   let actions = [...weapon.system.actions];
   let changed = false;
@@ -52,7 +52,7 @@ async function syncWeaponActions (weapon: Weapon): Promise<void> {
       isSystemCreated: true,
       isTopLevel: true,
     };
-    if (desiredType === ACTION_TYPE.MELEE_WEAPON_ATTACK) {
+    if (desiredType === ACTION_TYPE.MELEE) {
       const baseReach = SIZE_REACH[weapon.actor?.system.size as Size] ?? 1;
       newAction.reachLength = baseReach * 2;
     }

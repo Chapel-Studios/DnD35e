@@ -8,7 +8,9 @@ import { DOCUMENT_UPDATE_TYPES } from '@constants/documentUpdateTypes.mjs';
 import type { SaveKey } from '@constants/saves.mjs';
 import { SAVE_ABILITY_MAP, SAVE_KEYS, SAVE_KEYS_LOCALIZED } from '@constants/saves.mjs';
 import { SIZE_MODIFIERS } from '@constants/sizes.mjs';
+import type { ACTORS_DND35E } from '@documents/actors/actorTypes.mjs';
 import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
 import {
   EFFECT_CHANGE_TYPE,
@@ -16,8 +18,13 @@ import {
   POST_EFFECT_CHANGE_PHASE,
 } from '@effects/baseActiveEffect/data/index.mjs';
 import { parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+import type { ActionResult } from '@items/baseItem/actions/types.mjs';
+import { WeaponAttackDataModel } from '@items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mjs';
+import type { Weapon } from '@items/physical/weapon/index.mjs';
 import type { RollModifier } from '@source/dice/index.mjs';
-import { buildD20Formula, buildInitiativeCard, buildSaveCard, D20Roll, D20RollDialogConfig } from '@source/dice/index.mjs';
+import { buildD20Formula, buildInitiativeCard, buildSaveCard, D20Roll, extractFlatModifier } from '@source/dice/index.mjs';
+import { InitiativeRollDialogConfig } from '@source/rollDialogs/InitiativeRollDialog/InitiativeRollDialogConfig.mjs';
+import { SavingThrowRollDialogConfig } from '@source/rollDialogs/SavingThrowRollDialog/SavingThrowRollDialogConfig.mjs';
 
 import { _debugCreature, isCreatureDebugEnabled } from './_debug.mjs';
 import type { CreatureSystemData, CreatureSystemSource } from './data/index.mjs';
@@ -85,22 +92,21 @@ abstract class Creature extends ActorDnd35e {
   } = {}): Promise<D20Roll | null> {
     const saveTotal = this.system.saves[saveKey];
     const saveLabel = game.i18n.localize(SAVE_KEYS_LOCALIZED[saveKey]);
+    const actor = this as unknown as ACTORS_DND35E;
 
-    let situationalModifier = options.situationalModifier ?? 0;
+    let situationalModifier = String(options.situationalModifier ?? 0);
     // `core.rollMode` is deprecated since v14 (removed v16) in favor of `core.messageMode`,
     // whose value now matches the CONFIG.ChatMessage.modes keys used by the roll dialog.
     let rollMode = options.rollMode ?? game.settings.get('core', 'messageMode');
 
     if (!options.skipDialog) {
-      const result = await D20RollDialogConfig.roll({
+      const result = await SavingThrowRollDialogConfig.roll({
         title: game.i18n.format('dnd35e.ROLL.RollSaveTitle', { save: saveLabel }),
         baseLabel: saveLabel,
         baseTotal: saveTotal,
-        actorName: this.name,
-        situationalModifier: String(situationalModifier),
+        situationalModifier,
         rollMode,
-        actorImage: this.img,
-        actor: this,
+        actor,
       });
       if (!result) return null;
       situationalModifier = result.situationalModifier;
@@ -114,15 +120,23 @@ abstract class Creature extends ActorDnd35e {
     const modifierList: RollModifier[] = appliedSaveOverrides.length > 0
       ? appliedSaveOverrides.map((override) => ({ label: override.effectName, value: parseNumericChangeValue(override.value) }))
       : [{ label: saveLabel, value: saveTotal }];
-    if (situationalModifier !== 0) {
-      modifierList.push({ label: game.i18n.localize('dnd35e.ROLL.SituationalModifier'), value: situationalModifier });
+    // Dice/complex situational terms are folded straight into the roll formula below —
+    // flavor-tagged as "Situational Modifier" so their own die group is unambiguous in the
+    // tooltip (see `buildD20Formula`); their flat portion (if any) still gets its own line here.
+    const { flat: flatSituationalModifier } = extractFlatModifier(situationalModifier);
+    if (flatSituationalModifier !== 0) {
+      modifierList.push({ label: game.i18n.localize('dnd35e.ROLL.SituationalModifier'), value: flatSituationalModifier });
     }
 
-    const roll = new D20Roll(buildD20Formula(saveTotal, situationalModifier), {}, { situationalModifiers: modifierList });
+    const roll = new D20Roll(
+      buildD20Formula(saveTotal, situationalModifier, { base: saveLabel, situational: game.i18n.localize('dnd35e.ROLL.SituationalModifier') }),
+      {},
+      { situationalModifiers: modifierList, displayFormula: buildD20Formula(saveTotal, situationalModifier) }
+    );
     await roll.evaluate();
 
     const content = await buildSaveCard(roll, modifierList, {
-      actorName: this.name,
+      actorName: this.token?.name ?? this.name,
       actorImage: this.img,
       saveLabel,
       dc: options.dc,
@@ -167,20 +181,19 @@ abstract class Creature extends ActorDnd35e {
   } = {}): Promise<D20Roll | null> {
     const initiativeLabel = game.i18n.localize('dnd35e.ROLL.Initiative');
     const initTotal = this.system.init;
+    const actor = this as unknown as ACTORS_DND35E;
 
-    let situationalModifier = options.situationalModifier ?? 0;
+    let situationalModifier = String(options.situationalModifier ?? 0);
     let rollMode = options.rollMode ?? game.settings.get('core', 'messageMode');
 
     if (!options.skipDialog) {
-      const result = await D20RollDialogConfig.roll({
+      const result = await InitiativeRollDialogConfig.roll({
         title: game.i18n.localize('dnd35e.ROLL.RollInitiativeTitle' ),
         baseLabel: initiativeLabel,
         baseTotal: initTotal,
-        actorName: this.name,
-        situationalModifier: String(situationalModifier),
+        situationalModifier,
         rollMode,
-        actorImage: this.img,
-        actor: this,
+        actor,
       });
       if (!result) return null;
       situationalModifier = result.situationalModifier;
@@ -194,15 +207,23 @@ abstract class Creature extends ActorDnd35e {
     const modifierList: RollModifier[] = appliedInitOverrides.length > 0
       ? appliedInitOverrides.map((override) => ({ label: override.effectName, value: parseNumericChangeValue(override.value) }))
       : [{ label: initiativeLabel, value: initTotal }];
-    if (situationalModifier !== 0) {
-      modifierList.push({ label: game.i18n.localize('dnd35e.ROLL.SituationalModifier'), value: situationalModifier });
+    // Dice/complex situational terms are folded straight into the roll formula below —
+    // flavor-tagged as "Situational Modifier" so their own die group is unambiguous in the
+    // tooltip (see `buildD20Formula`); their flat portion (if any) still gets its own line here.
+    const { flat: flatSituationalModifier } = extractFlatModifier(situationalModifier);
+    if (flatSituationalModifier !== 0) {
+      modifierList.push({ label: game.i18n.localize('dnd35e.ROLL.SituationalModifier'), value: flatSituationalModifier });
     }
 
-    const roll = new D20Roll(buildD20Formula(initTotal, situationalModifier), {}, { situationalModifiers: modifierList });
+    const roll = new D20Roll(
+      buildD20Formula(initTotal, situationalModifier, { base: initiativeLabel, situational: game.i18n.localize('dnd35e.ROLL.SituationalModifier') }),
+      {},
+      { situationalModifiers: modifierList, displayFormula: buildD20Formula(initTotal, situationalModifier) }
+    );
     await roll.evaluate();
 
     const content = await buildInitiativeCard(roll, modifierList, {
-      actorName: this.name,
+      actorName: this.token?.name ?? this.name,
       actorImage: this.img,
     });
 
@@ -218,6 +239,80 @@ abstract class Creature extends ActorDnd35e {
     await combatant?.update({ initiative: roll.total ?? 0 });
 
     return roll;
+  }
+
+  /**
+   * Single entry point for triggering an item action (poc.10 Story D, §10.7/§10.8) —
+   * weapon attacks today, other action kinds (spell casts, etc.) once they exist. Resolves
+   * the acting item/action, detects a weapon attack to delegate context-building to
+   * `prepareWeaponAttackContext()`, emits the cancellable `preUseAction`/`postUseAction`
+   * lifecycle events, gates on action economy (bypassed entirely when `options.free`),
+   * calls the action's own `executeAction()`, then spends the standard action + hand BAB
+   * pool only once execution actually completes — never before, so a cancelled Attack
+   * Roll Dialog never costs an action. Returns `null` when the item/action can't be
+   * resolved or the action-economy gate blocks the attack outright (as opposed to the
+   * user cancelling the dialog, which still returns a `cancelled: true` `ActionResult`).
+   *
+   * `targetTokens` — never resolve targets by actor id (e.g. via `game.actors.get()`),
+   * which always returns the shared prototype actor instead of an unlinked token's own
+   * data, and never re-derive "the" token for a target from its actor afterwards, which is
+   * ambiguous when multiple unlinked tokens share one prototype actor id. Callers already
+   * have the real targeted `Token` in hand (canvas targeting, HUD, sheet) — pass it straight
+   * through instead.
+   *
+   * `options.actorToken` — same reasoning applies to the *acting* token: a caller that already
+   * knows which placed token initiated the click (e.g. the Token HUD) must pass it through
+   * rather than letting `PrepareActionContext()` fall back to `getActorToken()`'s first-match
+   * search, which is ambiguous for a linked actor with multiple placed tokens.
+   */
+  async useAction(
+    itemId: string,
+    actionId: string,
+    targetTokens?: TokenDnd35e[],
+    options: { free?: boolean; actorToken?: TokenDnd35e } = {}
+  ): Promise<ActionResult> {
+    const defaultResult = {
+      cancelled: true,
+      reason: '',
+      warnings: [],
+    };
+    const item = this.items.get(itemId) as Weapon | undefined;
+    const action = item?.system.actions.find((a) => a._id === actionId);
+    if (!item || !action) {
+      defaultResult.reason = 'itemOrActionNotFound';
+      return defaultResult;
+    }
+
+    const actor = this as unknown as ACTORS_DND35E;
+    const targets = targetTokens?.map(t => t.actor as unknown as ACTORS_DND35E).filter(a => !!a) ?? [];
+
+    // No explicit `UseActionContext` annotation — keeping the natural union lets `'hand' in
+    // context` narrow to the real `'main' | 'off' | 'both'` literal type below instead of
+    // widening it away.
+    const context = action instanceof WeaponAttackDataModel
+      ? WeaponAttackDataModel.PrepareActionContext(actor, item, targets, options.free, targetTokens?.[0], options.actorToken)
+      : { actor, target: targets };
+    if (!context) {
+      defaultResult.reason = 'contextNotPrepared';
+      return defaultResult;
+    }
+
+    let cancelled = false;
+    const eventContext = {
+      ...context,
+      cancel: ({ reason }: { reason?: string } = {}) => {
+        cancelled = true;
+        defaultResult.reason = reason ?? 'preUseActionCancelled';
+      },
+    };
+    await this.events.emit('preUseAction', eventContext);
+    if (cancelled) return defaultResult;
+
+    const result = await action.executeAction(context);
+
+    await this.events.emit('postUseAction', { ...context, result });
+    
+    return result;
   }
 
   /**

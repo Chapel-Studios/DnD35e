@@ -96,6 +96,7 @@
       <Suspense>
         <InventoryListTable
           variant="container"
+          :items="containerContents"
           :is-carried="isCarried"
           :container-uuid="item.uuid"
           :owner-uuid="ownerUuid"
@@ -116,6 +117,7 @@
   import type { ItemDnd35e } from '@items/baseItem/index.mjs';
   import type { EQUIPPABLE_ITEMS, EquippableItemType, PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
   import { containerItemType, EQUIPPABLE_ITEM_TYPES, ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
+  import type { ContainerStore } from '@items/physical/container/sheet/ContainerStore.mjs';
   import { EquippableItem } from '@items/physical/equippableItem/EquippableItem.mjs';
   import type { WeaponStore } from '@items/physical/weapon/sheet/WeaponStore.mjs';
   import { type SettingsStore,SettingsStoreSymbol } from '@settings/index.mjs';
@@ -198,6 +200,14 @@
   const isContained = computed<boolean>(() => props.variant === 'container');
 
   const isContainer = computed<boolean>(() => itemType.value === containerItemType);
+
+  // The nested InventoryListTable below (variant="container") can't rely on its own
+  // ambient inject(DocumentSheetStoreSymbol) - this row already re-provides that symbol
+  // as itemRowStore (a row-scoped ContainerStore, not the actor's CreatureDocumentStore),
+  // which has no `physicalItems` getter. Pass this container's own contents explicitly,
+  // same as ContainerInventory.vue does for the container's standalone sheet tab.
+  const containerContents = computed<PHYSICAL_ITEMS[]>(() =>
+    isContainer.value ? (itemRowStore as ContainerStore).documentGetters.contents.value : []);
 
   const itemIcon = computed<string>(() => img.value ?? FALLBACK_ITEM_ICON);
   const iconKey = computed<string>(() => `${documentId.value}:${img.value || 'fallback'}`);

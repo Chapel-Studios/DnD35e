@@ -23,7 +23,7 @@ const {
  */
 interface FormulaDataSource {
   formula: string;
-  resolvedValue: string | number | null;
+  resolvedValue: string | number | boolean | null;
   expectedType: 'string' | 'number' | 'boolean';
 }
 
@@ -47,20 +47,24 @@ class FormulaData extends foundry.abstract.DataModel {
 
   /**
    * Resolve the formula using a document data map.
-   * Delegates to the existing resolveFormula() utility.
+   * Delegates to the existing resolveFormula() utility. Never rolls dice itself — a
+   * `number`-expected formula that resolves to dice notation (e.g. `1d6`) is returned
+   * unrolled, as its formula text, so the caller can fold it into a larger Roll formula
+   * and let it roll at the correct time (see `_finalizeResolvedValue`).
    *
    * @param documentDataMap Map of context names → live documents/objects
    * @param fallback Fallback value if formula is empty
    * @param excludedFields Top-level aspect keys to remove from the familiar before resolution
    * @param onFailure Called when resolution fails (missing context path, invalid syntax, etc.)
-   * @returns Resolved string, `null` if a `number`/`boolean` formula failed to resolve, or fallback if no formula
+   * @returns Resolved value coerced to `expectedType` (a `number`-expected dice formula stays
+   *   an unrolled string), `null` on failure, or `fallback` if no formula
    */
   resolve(
     documentDataMap: Record<string, DocumentContext>,
     fallback: string = '',
     excludedFields: string[] = [],
     onFailure?: (reason: string) => void
-  ): string | null {
+  ): string | number | boolean | null {
     if (!this.formula) return fallback;
     const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap, excludedFields);
     const partiallyResolved = FormulaResolver.resolveFormula(this.formula, familiarSchema, documentDataMap);
@@ -84,7 +88,7 @@ class FormulaData extends foundry.abstract.DataModel {
     fallback: string = '',
     excludedFields: string[] = [],
     onFailure?: (reason: string) => void
-  ): string | null {
+  ): string | number | boolean | null {
     if (!source.formula) return fallback;
     const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap as Record<string, DocumentContext>, excludedFields);
     const partiallyResolved = FormulaResolver.resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
@@ -191,55 +195,53 @@ class FormulaData extends foundry.abstract.DataModel {
    *
    * On failure (unresolved `#context.property` token left over, invalid syntax, or a
    * non-numeric/non-boolean result), `onFailure` is invoked with a human-readable reason.
-   * `number`/`boolean` formulas fall back to `null` on failure (as if never authored, per
-   * design); `string` formulas keep falling back to the raw/partially-resolved formula text.
+   * `boolean` formulas fall back to `null` on failure (as if never authored, per design);
+   * `string` formulas always come back as-is — dice notation (e.g. `1d20`) is deliberately
+   * left unrolled so callers can embed it in a larger Roll formula. `number` formulas also
+   * defer to an unrolled formula string when they contain dice terms (`_hasDiceTerms`) —
+   * only a plain numeric literal resolves eagerly to an actual `number`. Dice are never
+   * rolled here; that's left to whichever Roll ultimately consumes the resolved formula.
    */
   private static _finalizeResolvedValue(
     resolved: string,
     expectedType: 'string' | 'number' | 'boolean',
     onFailure?: (reason: string) => void
-  ): string | null {
+  ): string | number | boolean | null {
+    if (FormulaResolver.extractVariables(resolved).length > 0) {
+      onFailure?.(`Unresolved property reference in formula: "${resolved}"`);
+      return null;
+    }
+
     if (expectedType === 'boolean') {
-      if (FormulaResolver.extractVariables(resolved).length > 0) {
-        onFailure?.(`Unresolved property reference in formula: "${resolved}"`);
-        return null;
-      }
       try {
-        return FormulaResolver.evaluateBooleanExpression(resolved) ? 'true' : 'false';
+        return FormulaResolver.evaluateBooleanExpression(resolved);
       } catch {
         onFailure?.(`Formula did not resolve to a valid boolean expression: "${resolved}"`);
         return null;
       }
     }
 
-    if (expectedType !== 'number') {
-      if (FormulaResolver.extractVariables(resolved).length > 0) {
-        onFailure?.(`Unresolved property reference in formula: "${resolved}"`);
-      }
-      return resolved;
-    }
+    if (expectedType === 'string') return resolved;
 
-    if (FormulaResolver.extractVariables(resolved).length > 0) {
-      onFailure?.(`Unresolved property reference in formula: "${resolved}"`);
-      return null;
-    }
-
+    // expectedType === 'number'
     const trimmed = resolved.trim();
-    if (!trimmed) return resolved;
+    if (!trimmed) return null;
+    // todo: we should consider consolidating terms here to simplify the formula  for display purposes.
+    if (FormulaData._hasDiceTerms(trimmed)) return trimmed;
 
     const numericValue = Number(trimmed);
-    if (!Number.isNaN(numericValue)) return String(numericValue);
+    if (!Number.isNaN(numericValue)) return numericValue;
 
+    onFailure?.(`Formula did not resolve to a valid number: "${resolved}"`);
+    return null;
+  }
+
+  /** Whether `formula` parses to at least one unrolled dice term — used to defer `number`-expected formulas until roll time instead of evaluating them here. */
+  private static _hasDiceTerms(formula: string): boolean {
     try {
-      const evaluated = Roll.safeEval(trimmed);
-      if (Number.isNaN(evaluated)) {
-        onFailure?.(`Formula did not resolve to a valid number: "${resolved}"`);
-        return null;
-      }
-      return String(evaluated);
+      return new Roll(formula).terms.some(term => term instanceof foundry.dice.terms.DiceTerm);
     } catch {
-      onFailure?.(`Formula did not resolve to a valid number: "${resolved}"`);
-      return null;
+      return false;
     }
   }
 }

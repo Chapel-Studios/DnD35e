@@ -221,7 +221,7 @@ describe('resolveFormula — end-to-end with $conditional(...)', () => {
       { formula: '$conditional(when(0 <= 0, 0) else(5))', resolvedValue: null, expectedType: 'number' },
       {}
     );
-    expect(result).toBe('0');
+    expect(result).toBe(0);
   });
 });
 

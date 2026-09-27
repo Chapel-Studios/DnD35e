@@ -1,4 +1,4 @@
-import { buildTokenVisionFromSenses } from '@canvas/token/logic/tokenVision.mjs';
+import { buildTokenVisionFromSenses } from '@documents/token/logic/tokenVision.mjs';
 import { describe, expect, it } from 'vitest';
 
 describe('buildTokenVisionFromSenses', () => {

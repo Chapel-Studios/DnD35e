@@ -13,19 +13,16 @@ import {
 } from './helpers/canvas.mjs';
 import { clearWorld, createActor } from './helpers/documents.mjs';
 import { gotoGame } from './helpers/session.mjs';
-import { openTokenHud, selectMovementAction } from './helpers/tokenHud.mjs';
+import { clickMovementAction, openTokenHud, selectMovementAction } from './helpers/tokenHud.mjs';
 
 /**
  * End-to-end coverage for the `dropProne`/`crawl`/`standUp` custom `CONFIG.Token.
  * movement.actions` entries (see `movementActionGating.mts`), driven entirely through
- * the real Token HUD and real mouse drags on the canvas — no `page.evaluate` shortcuts
- * for the interactions under test. This is the regression guard for a bug where
- * `dropProne`/`standUp` (originally `measure: false`) silently blocked dragging
- * entirely: no ruler, no waypoint, no visible response.
+ * the real Token HUD — no `page.evaluate` shortcuts for the interactions under test.
  *
- * The full flow (Drop Prone → Crawl 5ft → Stand Up), including the snap-back-to-origin
- * and auto movement-action switch behavior in `TokenDocumentDnd35e#_onUpdateMovement`,
- * was manually verified in a live Foundry session before this test was re-enabled.
+ * `dropProne`/`standUp` are instant clicks (`TokenHudDnd35e#onMovementAction` intercepts
+ * and calls `applyProneToggle()` directly, see `proneToggle.mts`) — no confirming drag,
+ * no snap-back. `crawl` is ordinary movement and still requires a real canvas drag.
  */
 test.describe('Prone movement actions (Drop Prone / Crawl / Stand Up)', () => {
   const tokenIds: string[] = [];
@@ -37,10 +34,8 @@ test.describe('Prone movement actions (Drop Prone / Crawl / Stand Up)', () => {
     await clearWorld(page);
   });
 
-  test('GM uses the movement-action HUD and canvas drags to drop prone, crawl 5ft, and stand back up', async ({ page }) => {
-    // Three full HUD reopen → select → drag cycles against a real (non-headless-optimized)
-    // Foundry instance comfortably exceeds the default 60s test timeout.
-    test.setTimeout(120_000);
+  test('GM uses the movement-action HUD to drop prone, crawl 5ft via a canvas drag, and click to stand back up', async ({ page }) => {
+    test.setTimeout(60_000);
 
     await gotoGame(page);
     await activateScene(page, 'Test Scene');
@@ -60,33 +55,27 @@ test.describe('Prone movement actions (Drop Prone / Crawl / Stand Up)', () => {
       const actor = await (globalThis as any).fromUuid(uuid);
       return actor.statuses.has('prone') as boolean;
     }, actorUuid);
-    // Regression guard: `_onUpdateMovement`'s snap-back follow-up update must not cause
-    // `actor.toggleStatusEffect('prone', ...)` to run twice and create a duplicate Prone
-    // ActiveEffect. Counts embedded effects whose `statuses` set includes 'prone', not
-    // just whether the actor is prone at all.
+    // Regression guard: toggling Prone must never create a duplicate Prone ActiveEffect.
+    // Counts embedded effects whose `statuses` set includes 'prone', not just whether the
+    // actor is prone at all.
     const countProneEffects = () => page.evaluate(async (uuid) => {
       const actor = await (globalThis as any).fromUuid(uuid);
       return actor.effects.filter((effect: any) => effect.statuses?.has('prone')).length as number;
     }, actorUuid);
 
-    // The HUD closes after every completed movement update (Foundry redraws the token
-    // placeable on update, which detaches the HUD's bound object) — this is true even for
-    // the plain `crawl`/`standUp` moves here, not just the dropProne/standUp snap-back's
-    // extra follow-up update. A real user re-opens the HUD (right-click) before picking
-    // the next action, so each step below does the same.
+    // The HUD closes after every completed document update (Foundry redraws the token
+    // placeable, which detaches the HUD's bound object) — a real user re-opens the HUD
+    // (right-click) before picking the next action, so each step below does the same.
     await openTokenHud(page, tokenId);
 
-    // --- Drop Prone: select via HUD, confirm with a one-grid-square drag. Foundry snaps drag
-    // destinations to the grid by default, so a sub-half-cell nudge rounds back to the origin
-    // cell (net zero displacement, no waypoint recorded) — a full square guarantees it snaps to
-    // an adjacent cell so the drag actually registers as movement.
-    await selectMovementAction(page, tokenId, 'dropProne');
-    await dragTokenByOffset(page, tokenId, { dx: gridSize, dy: 0 });
+    // --- Drop Prone: instant click, no drag ---
+    await clickMovementAction(page, 'dropProne');
 
     await expect.poll(isProne).toBe(true);
     await expect.poll(countProneEffects).toBe(1);
 
-    // --- Crawl 5ft: select via HUD, drag exactly one grid square ---
+    // --- Crawl 5ft: select via HUD, drag exactly one grid square (ordinary movement,
+    // unaffected by the Prone-toggle refactor) ---
     await openTokenHud(page, tokenId);
     await selectMovementAction(page, tokenId, 'crawl');
     const before = await getTokenPosition(page, tokenId);
@@ -96,10 +85,9 @@ test.describe('Prone movement actions (Drop Prone / Crawl / Stand Up)', () => {
     await expect.poll(async () => (await getTokenPosition(page, tokenId)).x, { timeout: 5000 })
       .toBeCloseTo(before.x + gridSize, 0);
 
-    // --- Stand Up: select via HUD, confirm with a one-grid-square drag ---
+    // --- Stand Up: instant click, no drag ---
     await openTokenHud(page, tokenId);
-    await selectMovementAction(page, tokenId, 'standUp');
-    await dragTokenByOffset(page, tokenId, { dx: gridSize, dy: 0 });
+    await clickMovementAction(page, 'standUp');
 
     await expect.poll(isProne).toBe(false);
     await expect.poll(countProneEffects).toBe(0);

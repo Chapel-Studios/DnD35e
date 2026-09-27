@@ -1,3 +1,4 @@
+import Combatant from '@client/documents/combatant.mjs';
 import {
   DocumentSheetConfiguration,
   DocumentSheetRenderContext,
@@ -10,12 +11,18 @@ import {
 /**
  * The Combatant configuration application.
  */
-export default class CombatantConfig extends HandlebarsApplicationMixin(DocumentSheetV2) {
+declare class CombatantConfig<
+  TDocument extends Combatant = Combatant,
+  TConfig extends DocumentSheetConfiguration<TDocument> = DocumentSheetConfiguration<TDocument>,
+  TRenderOptions extends HandlebarsRenderOptions = HandlebarsRenderOptions,
+> extends HandlebarsApplicationMixin(DocumentSheetV2)<TConfig, TRenderOptions> {
   static override DEFAULT_OPTIONS: DeepPartial<DocumentSheetConfiguration>;
 
   static override PARTS: Record<string, HandlebarsTemplatePart>;
 
-  override readonly title: string;
+  override get title(): string;
 
-  protected override _prepareContext(options: HandlebarsRenderOptions): Promise<DocumentSheetRenderContext>;
+  protected override _prepareContext(options: HandlebarsRenderOptions): Promise<Partial<DocumentSheetRenderContext>>;
 }
+
+export default CombatantConfig;

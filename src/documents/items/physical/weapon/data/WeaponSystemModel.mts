@@ -64,8 +64,8 @@ class WeaponSystemModel extends EquippableItemSystemModel {
     // `withActionCollectionAspects()` in the item familiar schema registration.
     schema.actions = withFamiliar(useDnd35eField(new ArrayField(
       new TypedSchemaField({
-        [ACTION_TYPE.MELEE_WEAPON_ATTACK]: MeleeWeaponAttack,
-        [ACTION_TYPE.RANGED_WEAPON_ATTACK]: RangedWeaponAttack,
+        [ACTION_TYPE.MELEE]: MeleeWeaponAttack,
+        [ACTION_TYPE.RANGED]: RangedWeaponAttack,
       }),
       { initial: [] }
     )), { formulaVisible: false });

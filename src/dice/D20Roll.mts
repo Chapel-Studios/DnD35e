@@ -9,8 +9,9 @@
  *   `Roll.toJSON()` / `Roll.fromData()` round-trips.
  * - `isCriticalThreat` / `isFumble` — natural 20 / natural 1 detection on the roll's first
  *   term. Only meaningful once the roll has been evaluated.
- * - `confirmCritical()` — re-rolls the same formula and compares the total against a target
- *   AC. Used by attack rolls (Phase poc 10); saves and AC checks never call it.
+ * - `rollConfirmation()` — re-rolls the same formula the instant a threat is detected (SRD
+ *   critical confirmation, poc.10 Story D). The AC comparison that turns a confirmed threat
+ *   into an actual critical hit is Story E's job; saves and AC checks never call this.
  *
  * Registered in `CONFIG.Dice.rolls` (see main.mts) alongside the native `Roll` class so
  * `Roll.fromData()` can reconstruct a serialized D20Roll (e.g. from a stored ChatMessage) by
@@ -24,14 +25,22 @@ import type { RollModifier } from './types.mjs';
 class D20Roll extends Roll {
   /** Labeled modifier breakdown (base save/AC total, situational bonus, etc.) for the chat card. */
   situationalModifiers: RollModifier[];
+  /**
+   * Formula text for the chat card header. Defaults to `this.formula`, but callers that
+   * flavor-tag `formula` (`d20Formula.mts`'s `flavorTerm()`) for tooltip clarity pass a plain,
+   * unbracketed version here instead — the bracket syntax is only meant to label dice groups
+   * in the tooltip breakdown, not to appear in the card's headline formula text.
+   */
+  displayFormula: string;
 
   constructor(
     formula: string,
     data: Record<string, unknown> = {},
-    options: Record<string, unknown> & { situationalModifiers?: RollModifier[] } = {}
+    options: Record<string, unknown> & { situationalModifiers?: RollModifier[]; displayFormula?: string } = {}
   ) {
     super(formula, data, options);
     this.situationalModifiers = options.situationalModifiers ?? [];
+    this.displayFormula = options.displayFormula ?? this.formula;
   }
 
   /** The roll's first term, if it's a die (expected to be the `1d20`). */
@@ -65,13 +74,14 @@ class D20Roll extends Roll {
   }
 
   /**
-   * Re-roll this D20Roll's formula and compare the result against a target AC — used to
-   * confirm a critical threat on an attack roll. Not exercised by saves/AC checks.
+   * Re-rolls this D20Roll's formula (SRD critical confirmation, poc.10 Story D) — rolled
+   * eagerly the moment a threat is detected, not deferred to Story E. Not exercised by
+   * saves/AC checks.
    */
-  async confirmCritical(targetAC: number): Promise<boolean> {
+  async rollConfirmation(): Promise<D20Roll> {
     const confirmRoll = new D20Roll(this.formula, this.data, foundry.utils.deepClone(this.options));
     await confirmRoll.evaluate();
-    return (confirmRoll.total ?? 0) >= targetAC;
+    return confirmRoll;
   }
 }
 

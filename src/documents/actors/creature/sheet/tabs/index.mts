@@ -27,12 +27,12 @@ const creatureInventoryTab: SheetTab = {
 };
 
 const combatTab: SheetTab = {
-  id: 'combat',
-  label: 'dnd35e.ACTOR.tab.Combat',
-  tooltip: 'dnd35e.ACTOR.tab.Combat',
+  id: 'actions',
+  label: 'dnd35e.ACTOR.tab.Actions',
+  tooltip: 'dnd35e.ACTOR.tab.Actions',
   component: CombatTab,
   order: 20,
-  icon: 'fas fa-shield-halved',
+  icon: 'fas fa-hand-fist',
 };
 
 const featuresTab: SheetTab = {

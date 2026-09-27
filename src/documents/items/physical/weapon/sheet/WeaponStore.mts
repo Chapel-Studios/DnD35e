@@ -28,8 +28,8 @@ interface UseWeaponStoreOptions {
 }
 
 const actionTypeOptions: SelectOption<ActionType>[] = [
-  { value: ACTION_TYPE.MELEE_WEAPON_ATTACK, label: 'dnd35e.WEAPON.ACTIONS.Type.melee_weapon_attack' },
-  { value: ACTION_TYPE.RANGED_WEAPON_ATTACK, label: 'dnd35e.WEAPON.ACTIONS.Type.ranged_weapon_attack' },
+  { value: ACTION_TYPE.MELEE, label: 'dnd35e.WEAPON.ACTIONS.Type.melee_weapon_attack' },
+  { value: ACTION_TYPE.RANGED, label: 'dnd35e.WEAPON.ACTIONS.Type.ranged_weapon_attack' },
 ];
 
 const useWeaponStore = (context: VueApplicationContext<Weapon>, options: UseWeaponStoreOptions = {}): WeaponStore => {

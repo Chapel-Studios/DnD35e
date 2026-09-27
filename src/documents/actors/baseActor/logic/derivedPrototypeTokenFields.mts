@@ -1,6 +1,6 @@
-import { buildTokenVisionFromSenses } from '@canvas/token/logic/tokenVision.mjs';
 import type { Size } from '@constants/sizes.mjs';
 import { SIZE_TOKEN_DIMENSIONS } from '@constants/sizes.mjs';
+import { buildTokenVisionFromSenses } from '@documents/token/logic/tokenVision.mjs';
 
 import type { SenseEntrySource } from '../data/ActorSystemData.mjs';
 

@@ -3,16 +3,21 @@
     class="multi-option-toggle"
     :class="derivedClass"
   >
-    <div
+    <button
       v-for="option in props.options"
       :key="option.value"
+      type="button"
       :class="getOptionClass(option)"
+      :disabled="option.disabled || props.disabled"
+      :aria-pressed="option.value === props.value"
+      :aria-label="props.iconOnly ? localize(option.label) : undefined"
+      :title="props.iconOnly ? localize(option.label) : undefined"
       @click="() => handleClick(option)"
       class="multi-option-toggle__option"
     >
       <i v-if="option.icon" :class="option.icon" class="multi-option-toggle__option-icon"></i>
-      <span v-if="option.label" class="multi-option-toggle__option-label">{{ localize(option.label) }}</span>
-    </div>
+      <span v-if="option.label && !props.iconOnly" class="multi-option-toggle__option-label">{{ localize(option.label) }}</span>
+    </button>
   </div>
 </template>
 
@@ -26,6 +31,8 @@
     value: TType;
     /** Disable all options and visually dim the wrapper. */
     disabled?: boolean;
+    /** Render only the option icons (label becomes a hover tooltip instead of visible text). */
+    iconOnly?: boolean;
   }
 </script>
 
@@ -74,9 +81,15 @@
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
       border: 1px solid var(--color-tabs-border);
+      background: none;
+      font: inherit;
       cursor: pointer;
       color: var(--color-tabs-border);
       // background-color: var(--color-tabs-border);
+
+      &:disabled {
+        cursor: not-allowed;
+      }
 
       &.active {
         // background-color: var(--vc-color-primary);

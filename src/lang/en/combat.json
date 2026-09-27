@@ -5,7 +5,83 @@
         "Standard": "Standard Action",
         "Move": "Move Action",
         "Minor": "Minor Action",
+        "Swift": "Swift Action",
         "AttacksOfOpportunity": "Attacks of Opportunity remaining"
+      },
+      "CombatModifiers": {
+        "AttackType": "Attack Type",
+        "CombatStatus": "Combat Status",
+        "Flanking": { "Label": "Flanking", "Tooltip": "+2 to attack rolls when flanking the target." },
+        "Prone": { "Label": "Prone", "Tooltip": "-4 to melee attack rolls, +4 against you in melee." },
+        "Squeezing": { "Label": "Squeezing", "Tooltip": "-4 to attack rolls while squeezing through a tight space." },
+        "HighGround": { "Label": "High Ground", "Tooltip": "+1 to melee attack rolls from higher elevation." },
+        "Charge": { "Label": "Charge", "Tooltip": "+2 to the attack roll, -2 AC until your next turn." },
+        "DefensiveFighting": { "Label": "Fight Defensively", "Tooltip": "-4 to the attack roll, +2 AC until your next turn." },
+        "Proficient": { "Label": "Proficient", "Tooltip": "Uncheck if not proficient with this weapon (-4 to the attack roll)." },
+        "NonLethal": { "Label": "Non-lethal", "Tooltip": "Deal subdual damage instead of normal damage." }
+      },
+      "WieldMode": {
+        "Label": "Wield Mode",
+        "mainHand": "Primary Hand",
+        "offHand": "Off-Hand",
+        "bothHands": "Two-Handed",
+        "MismatchNotInMainHand": "Attacked with the primary hand, but this weapon isn't equipped there.",
+        "MismatchNotInOffHand": "Attacked with the off-hand, but this weapon isn't equipped there.",
+        "MismatchOffHandOccupied": "Attacked two-handed, but the off-hand is holding something else.",
+        "InsufficientBab": "Attacked with no Base Attack Bonus remaining in that hand."
+      },
+      "Target": {
+        "Label": "Target"
+      },
+      "Ammo": "Ammunition",
+      "BaseAttackBonus": "Base Attack Bonus",
+      "AbilityModifier": "{ability} Modifier",
+      "SizeModifier": "Size Modifier",
+      "TwoWeaponFighting": "Two-Weapon Fighting",
+      "NoActionAvailable": "No action available for this attack.",
+      "ChargeMeleeOnly": "A charge permits only a single melee attack.",
+      "SelectTargetFirst": "Select a target before attacking.",
+      "NoTargets": "This action normally requires a target.",
+      "TooManyTargets": "This action allows at most {max} target(s).",
+      "TargetOutOfReach": "{target} is out of reach.",
+      "TargetTooCloseForReach": "{target} is too close to attack with a reach weapon.",
+      "MissingTargetToken": "Unable to determine token positions for this attack.",
+      "Maneuver": {
+        "TotalDefense": "Total Defense",
+        "NotYetImplemented": "Total Defense isn't implemented yet."
+      },
+      "HUD": {
+        "WeaponAttacks": "Weapon Attacks",
+        "CombatManeuvers": "Combat Maneuvers",
+        "NoWeaponAttacks": "No weapons carried"
+      },
+      "CONFIG": {
+        "ClearImage": "Reset to Token/Actor Image",
+        "ActionEconomy": {
+          "ToggleLabel": "Advanced (Action Economy)",
+          "Available": "Available",
+          "BabMain": "Base Attack Bonus (Main)",
+          "BabOff": "Base Attack Bonus (Off-Hand)",
+          "UsedFlags": "Attack Sequence Flags",
+          "StandardAttackUsed": "Standard Attack Used",
+          "MovedAfterAttack": "Moved After Attack",
+          "ChargedThisTurn": "Charged This Turn"
+        },
+        "Movement": {
+          "ToggleLabel": "Advanced (Movement Session)",
+          "Category": "Movement Category",
+          "CategoryNone": "None",
+          "CategoryStep": "5-Foot Step",
+          "CategoryNormal": "Normal Movement",
+          "CumulativeCost": "Cumulative Movement Cost",
+          "SpentTiers": "Spent Action Tiers",
+          "HasOrigin": "Track Origin",
+          "MessageId": "Chat Message ID",
+          "LastMovementAction": "Last Movement Action",
+          "HasFullRoundMove": "Full-Round Move Active",
+          "FullRoundMovementId": "Movement ID",
+          "FullRoundMessageId": "Chat Message ID"
+        }
       }
     }
   }

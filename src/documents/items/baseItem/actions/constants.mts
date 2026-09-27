@@ -11,18 +11,21 @@ const WEAPON_ACTION_TYPES = [
 ] as const;
 type WeaponActionType = typeof WEAPON_ACTION_TYPES[number];
 
+const WEAPON_ACTION_TYPE = {
+  MELEE: MELEE_WEAPON_ATTACK,
+  RANGED: RANGED_WEAPON_ATTACK,
+} as const;
+
 const ACTION_TYPES = [
   ...WEAPON_ACTION_TYPES,
   // SPELL_CAST,
 ] as const;
+type ActionType = typeof ACTION_TYPES[number];
 
 const ACTION_TYPE = {
-  MELEE_WEAPON_ATTACK,
-  RANGED_WEAPON_ATTACK,
+  ...WEAPON_ACTION_TYPE,
   // SPELL_CAST,
 } as const;
-
-type ActionType = typeof ACTION_TYPES[number];
 
 const ActionTypeSelectOptions: SelectOption<ActionType>[] = ACTION_TYPES.map(type => ({
   value: type,
@@ -76,5 +79,6 @@ export {
   ACTION_TYPES,
   ActionTriggerSelectOptions,
   ActionTypeSelectOptions,
+  WEAPON_ACTION_TYPE,
   WEAPON_ACTION_TYPES,
 };

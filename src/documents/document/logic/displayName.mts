@@ -82,12 +82,14 @@ const getDisplayName = <TSystemData extends DocumentSystemData = DocumentSystemD
 
   const excluded = nameFormulaField?.excludedFields ?? [];
 
-  return FormulaData.resolveSource(
+  const resolved = FormulaData.resolveSource(
     identifiedFormula,
     buildDocumentDataMap(conversionContext, additionalContexts),
     documentName,
     excluded
-  ) ?? '';
+  );
+
+  return typeof resolved === 'string' ? resolved : documentName;
 };
 
 export {

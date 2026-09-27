@@ -23,7 +23,6 @@ describe('getMovementSession', () => {
       messageId: null,
       lastMovementAction: null,
       fullRoundMove: null,
-      proneToggle: null,
     });
   });
 
@@ -48,7 +47,6 @@ describe('setMovementSession', () => {
       messageId: 'msg1',
       lastMovementAction: 'fiveFootStep',
       fullRoundMove: null,
-      proneToggle: null,
     };
     await setMovementSession(combatant, session);
     expect(getMovementSession(combatant)).toEqual(session);
@@ -66,7 +64,6 @@ describe('resetMovementSession', () => {
         messageId: 'msg1',
         lastMovementAction: 'walk',
         fullRoundMove: { movementId: 'm1', spentTiers: ['move', 'standard'], messageId: 'msg1' },
-        proneToggle: null,
       },
     });
     await resetMovementSession(combatant);
@@ -78,7 +75,6 @@ describe('resetMovementSession', () => {
       messageId: null,
       lastMovementAction: null,
       fullRoundMove: null,
-      proneToggle: null,
     });
   });
 });

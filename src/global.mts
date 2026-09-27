@@ -1,5 +1,7 @@
 import { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { documents, Game } from '@client/_module.mjs';
+import type { ui as globalUiConst } from '@client/_module.mjs';
+import type TokenHUD from '@client/applications/hud/token-hud.mjs';
 import type CompendiumDirectory from '@client/applications/sidebar/tabs/compendium-directory.mjs';
 import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
@@ -70,6 +72,10 @@ type ThisConfig = Config<
 
 declare global {
   interface ConfigDnd35e extends ThisConfig {
+    /** Ambient `Config['Token']` (types/foundry/client/config.d.mts) doesn't declare `hudClass` (see TokenHudDnd35e.mts's registration) — backfilled here rather than editing the generated ambient type. */
+    Token: ThisConfig['Token'] & {
+      hudClass: typeof TokenHUD;
+    };
     dnd35e: {
       VERSION: string;
       item: {
@@ -93,6 +99,7 @@ declare global {
   }
   const CONFIG: ConfigDnd35e;
   const canvas: CanvasDnd35e;
+  const ui: typeof globalUiConst;
 
   namespace globalThis {
     const game: GameDnd35e;

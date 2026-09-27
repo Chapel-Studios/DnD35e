@@ -10,14 +10,14 @@ type StoreFactory<ActionEditorStore> =
   (params: ActionEditorStoreParams<any>) => ActionEditorStore;
 
 type StoreTypeLookup = {
-  [ACTION_TYPE.MELEE_WEAPON_ATTACK]: StoreFactory<MeleeAttackEditorStore>;
-  [ACTION_TYPE.RANGED_WEAPON_ATTACK]: StoreFactory<RangedAttackEditorStore>;
+  [ACTION_TYPE.MELEE]: StoreFactory<MeleeAttackEditorStore>;
+  [ACTION_TYPE.RANGED]: StoreFactory<RangedAttackEditorStore>;
   // [ACTION_TYPE.SPELL_CAST]: StoreFactory<ActionEditorStore>;
 };
 
 const StoreTypeLookup: StoreTypeLookup = {
-  [ACTION_TYPE.MELEE_WEAPON_ATTACK]: useMeleeAttackEditorStore,
-  [ACTION_TYPE.RANGED_WEAPON_ATTACK]: useRangedAttackEditorStore,
+  [ACTION_TYPE.MELEE]: useMeleeAttackEditorStore,
+  [ACTION_TYPE.RANGED]: useRangedAttackEditorStore,
   // [ACTION_TYPE.SPELL_CAST]: useActionEditorStore<ActionDataModel>,
 };
 

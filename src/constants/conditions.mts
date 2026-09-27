@@ -34,6 +34,15 @@ const BLINDED_CONDITION_ID = 'blinded';
 const FLAT_FOOTED_CONDITION_ID = 'flatFooted';
 /** `CONFIG.statusEffects[].id` for the Squeezing condition — read only by the Attack Roll Dialog's auto-detection (poc.10 §10.7). No movement/AC gating. */
 const SQUEEZING_CONDITION_ID = 'squeezing';
+/**
+ * `CONFIG.statusEffects[].id` for the Charge combat state (poc.10 Story D, §10.7) — not an
+ * SRD "condition" proper, but reuses the same `toggleStatusEffect()`/registry mechanism for
+ * its -2 AC penalty. Applied by `applyChargedAE()` when the attack dialog's Charge toggle is
+ * checked; cleared at the start of the charging actor's next turn (see `CombatDnd35e#_onStartTurn()`).
+ */
+const CHARGED_CONDITION_ID = 'charged';
+/** `CONFIG.statusEffects[].id` for the Defensive Fighting combat state (poc.10 Story D, §10.7) — same short-duration pattern as `CHARGED_CONDITION_ID`, +2 AC dodge bonus instead. */
+const DEFENSIVE_FIGHTING_CONDITION_ID = 'defensiveFighting';
 
 const setFieldOverride = (key: string, value: unknown): EffectChangeDataDnd35e => ({
   key,
@@ -100,6 +109,12 @@ const denyDexToAC = (): EffectChangeDataDnd35e => ({
   isSystem: true,
   bonusType: BONUS_TYPE_UNTYPED,
 });
+
+/** Builds a flat AC adjustment (ADD, untyped) against both normal and touch AC — used by Charge (-2) and Defensive Fighting (+2). */
+const acAdjustment = (value: number): EffectChangeDataDnd35e[] => [
+  { key: 'system.defense.armorClass', type: EFFECT_CHANGE_TYPE.ADD, value, priority: 10, phase: INITIAL_EFFECT_CHANGE_PHASE, target: EFFECT_CHANGE_TARGET.ACTOR, isSystem: true, bonusType: BONUS_TYPE_UNTYPED },
+  { key: 'system.defense.touchAC', type: EFFECT_CHANGE_TYPE.ADD, value, priority: 10, phase: INITIAL_EFFECT_CHANGE_PHASE, target: EFFECT_CHANGE_TARGET.ACTOR, isSystem: true, bonusType: BONUS_TYPE_UNTYPED },
+];
 
 interface ConditionDefinition {
   /** Matches the `CONFIG.statusEffects[].id` / `Actor#toggleStatusEffect(id)` argument. */
@@ -288,6 +303,22 @@ const CONDITIONS: Record<string, ConditionDefinition> = {
     icon: 'icons/svg/unconscious.svg',
     changes: [],
   },
+  charged: {
+    id: CHARGED_CONDITION_ID,
+    label: 'dnd35e.CONDITIONS.charged.label',
+    icon: 'icons/svg/wing.svg',
+    // SRD: charging grants +2 to the attack roll (folded into the dialog's situationalModifier
+    // directly, not an AE - there's no persistent "attack roll" field) but -2 AC until your next turn.
+    changes: acAdjustment(-2),
+  },
+  defensiveFighting: {
+    id: DEFENSIVE_FIGHTING_CONDITION_ID,
+    label: 'dnd35e.CONDITIONS.defensiveFighting.label',
+    icon: 'icons/svg/aura.svg',
+    // SRD: fighting defensively is -4 to the attack roll (folded into situationalModifier
+    // directly) but +2 AC (dodge) until your next turn.
+    changes: acAdjustment(2),
+  },
 } as const;
 
 /**
@@ -318,7 +349,9 @@ const buildConditionStatusEffects = (): StatusEffectConfig[] =>
 export {
   BLINDED_CONDITION_ID,
   buildConditionStatusEffects,
+  CHARGED_CONDITION_ID,
   CONDITIONS,
+  DEFENSIVE_FIGHTING_CONDITION_ID,
   FLAT_FOOTED_CONDITION_ID,
   PRONE_CONDITION_ID,
   SQUEEZING_CONDITION_ID,

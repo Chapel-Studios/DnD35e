@@ -135,7 +135,9 @@ function resolveActiveEffectChangeValue(
   if (failed || resolvedValue === null) return FORMULA_RESOLUTION_FAILED;
 
   if (schemaField instanceof NumberField) {
-    return tryEvaluateNumber(resolvedValue) ?? rawValue;
+    if (typeof resolvedValue === 'number') return resolvedValue;
+    if (typeof resolvedValue === 'string') return tryEvaluateNumber(resolvedValue) ?? rawValue;
+    return rawValue;
   }
 
   if (schemaField instanceof BooleanField) {

@@ -46,14 +46,6 @@ interface MovementSession {
    * (Ctrl+Z) has reverted this specific drag (it's no longer present in `movementHistory`).
    */
   fullRoundMove: { movementId: string; spentTiers: ActionEconomyType[]; messageId: string | null } | null;
-  /**
-   * The most recent Drop Prone/Stand Up toggle this turn, if any (see
-   * `TokenDocumentDnd35e#handleProneToggle`). `movementId` is the *confirming drag's* own
-   * `movement.id` (not the corrective snap-back's) — Foundry's native Undo (Ctrl+Z) reverts
-   * the snap-back first, then the confirming drag itself; only once the confirming drag is
-   * gone from `movementHistory` does the toggle actually get reconciled.
-   */
-  proneToggle: { movementId: string; priorActive: boolean; messageId: string | null } | null;
 }
 
 const DEFAULT_MOVEMENT_SESSION: MovementSession = {
@@ -64,7 +56,6 @@ const DEFAULT_MOVEMENT_SESSION: MovementSession = {
   messageId: null,
   lastMovementAction: null,
   fullRoundMove: null,
-  proneToggle: null,
 };
 
 function getMovementSession(combatant: CombatantDnd35e): MovementSession {

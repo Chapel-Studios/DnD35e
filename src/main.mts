@@ -8,7 +8,7 @@ import { registerCombat } from '@documents/combat/registration.mjs';
 import { registerScenes } from '@documents/scene/registration.mjs';
 import { preLocalizeConfig } from '@helpers/localization/preLocalizeConfig.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
-import { D20Roll, registerChatCardActions } from '@source/dice/index.mjs';
+import { D20Roll, DamageRoll, registerChatCardActions } from '@source/dice/index.mjs';
 
 import { registerItems } from './documents/items/index.mjs';
 import { registerSettings } from './settings/index.mjs';
@@ -30,7 +30,7 @@ Hooks.once('init', () => {
   // Register custom Roll subclasses so Roll.fromData() can reconstruct them by class name
   // (e.g. from a stored ChatMessage). `Roll` stays first/default so Roll.create() and any
   // other code building a plain roll elsewhere in Foundry is unaffected.
-  CONFIG.Dice.rolls = [Roll, D20Roll];
+  CONFIG.Dice.rolls = [Roll, D20Roll, DamageRoll];
 
   game.dnd35e = {
     stores: {

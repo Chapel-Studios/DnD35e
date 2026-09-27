@@ -22,6 +22,8 @@ import { DatabaseCreateOperation, DatabaseDeleteOperation, DatabaseUpdateOperati
 import Document from '@common/abstract/document.mjs';
 import type ApplicationV2 from '../applications/api/application.mjs';
 import type TokenHUD from '../applications/hud/token-hud.mjs';
+import type PrototypeTokenConfig from '../applications/sheets/token/prototype-config.mjs';
+import type TokenConfig from '../applications/sheets/token/token-config.mjs';
 import { ChatLog, CompendiumDirectory, ItemDirectory } from '../applications/sidebar/tabs/_module.mjs';
 import type ActorDirectory from '../applications/sidebar/tabs/actor-directory.mjs';
 import type Hotbar from '../applications/ui/hotbar.mjs';
@@ -144,6 +146,8 @@ export default class Hooks {
   static on(...args: HookParamsRender<SceneControls, 'SceneControls'>): number;
   static on(...args: HookParamsRender<SettingsConfig, 'SettingsConfig'>): number;
   static on(...args: HookParamsRender<TokenHUD, 'TokenHUD'>): number;
+  static on(...args: HookParamsRender<TokenConfig, 'TokenConfig'>): number;
+  static on(...args: HookParamsRender<PrototypeTokenConfig, 'PrototypeTokenConfig'>): number;
   static on(...args: HookParamsPreUpdate<Actor, 'Actor'>): number;
   static on(...args: HookParamsUpdate<Actor, 'Actor'>): number;
   static on(...args: HookParamsPreUpdate<Item, 'Item'>): number;

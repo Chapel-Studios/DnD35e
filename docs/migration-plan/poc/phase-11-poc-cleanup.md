@@ -97,6 +97,20 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 
 ---
 
+### Task 11.6 — Remove redundant per-component `localize` redeclarations
+
+**Objective**: `app.config.globalProperties.localize` is now registered once in `useVueAppBaseMixin` (`src/vue/apps/globalVueProperties.mts`), so any `<template>`-only usage of `localize('key')` resolves automatically with no import. ~30 existing components still have their own `const localize = (key: string) => game.i18n.localize(key);` which now just shadows the global one.
+
+**Why now**: Discovered while extracting `HpUpdater.vue` — see `/memories/repo/vue-global-properties-localize.md` for the mechanism and its `<script setup>` limitation.
+
+**Draft acceptance criteria**:
+- Audit all `const localize = (key: string) => game.i18n.localize(key);` declarations across `src/`.
+- Remove the declaration (and now-unused import, if any) from components where `localize` is only referenced inside `<template>`.
+- Leave the local declaration in place for components that also call `localize` from `<script setup>` logic (computed, functions) — global properties aren't reachable there.
+- No behavior change; verified by `npm run build` and `npx vue-tsc --noEmit`.
+
+---
+
 ## Checklist
 
 ### ✅ Complete
@@ -111,6 +125,7 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 - [ ] 11.3 Lang file cleanup — organize and deduplicate `src/lang/en/*.json`.
 - [ ] 11.4 Review `_displayName`/`displayName` getters on `ItemDnd35e` (duplicate `name` getter's logic — still needed?).
 - [ ] 11.5 Advanced Change Editor; slim down `EffectChangesList` inline columns (move Type/Bonus Type/Condition/Priority to a per-row advanced dialog).
+- [ ] 11.6 Remove redundant per-component `localize` redeclarations now that `app.config.globalProperties.localize` covers template-only usage.
 - [ ] Add more POC cleanup tasks as they are discovered during final POC work.
 
 ---
@@ -121,3 +136,8 @@ When adding tasks to this phase:
 - Prefer concrete, verifiable cleanup items (not broad themes).
 - Add a short rationale and expected verification for each task.
 - Keep tasks scoped to cleanup/hardening, not net-new feature delivery.
+
+
+# manual notes to be sorted later
+- fix pack building to only happen on specific command and as part of prod build.
+- implement weapons pack with srd weapons

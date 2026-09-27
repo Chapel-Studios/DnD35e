@@ -24,7 +24,7 @@ import { Creature } from '@actors/creature/index.mjs';
 import type { CombatRoundEventContext, CombatTurnEventContext } from '@client/_types.mjs';
 import type { RollInitiativeOptions } from '@client/documents/combat.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import { FLAT_FOOTED_CONDITION_ID } from '@constants/conditions.mjs';
+import { CHARGED_CONDITION_ID, DEFENSIVE_FIGHTING_CONDITION_ID, FLAT_FOOTED_CONDITION_ID } from '@constants/conditions.mjs';
 
 import { resetActionEconomy } from './combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from './combatant/CombatantDnd35e.mjs';
@@ -46,6 +46,10 @@ class CombatDnd35e extends foundry.documents.Combat {
     await super._onStartTurn(combatant, context);
     const actor = combatant.actor;
     if (context.round === 1) await actor?.toggleStatusEffect(FLAT_FOOTED_CONDITION_ID, { active: false }); // Flat-Footed ends at the start of the first turn of combat
+    // Charge/Defensive Fighting (poc.10 Story D, §10.7) last "until your next turn" — cleared
+    // unconditionally (not gated on round === 1) the same way action economy resets each turn.
+    await actor?.toggleStatusEffect(CHARGED_CONDITION_ID, { active: false });
+    await actor?.toggleStatusEffect(DEFENSIVE_FIGHTING_CONDITION_ID, { active: false });
     if (actor instanceof Creature) await resetActionEconomy(combatant, actor);
     await resetMovementSession(combatant);
   }
