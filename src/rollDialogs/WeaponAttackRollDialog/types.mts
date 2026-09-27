@@ -1,5 +1,6 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import type { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';
 import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
 
@@ -29,6 +30,8 @@ interface CombatModifierToggle {
 
 interface WeaponAttackRollDialogData extends RollDialogData {
   target: ACTORS_DND35E[] | null;
+  /** The specific placed token `target[0]` resolves to, if known — see `WeaponAttackRollDialogStore`'s `target.name`. */
+  targetToken?: TokenDnd35e | null;
   /**
    * The weapon making the attack (poc.10 Story D) — additional FormulaFamiliar context
    * (`#item`/`#weapon`) for `attackSituationalModifier`/`damageSituationalModifier`,

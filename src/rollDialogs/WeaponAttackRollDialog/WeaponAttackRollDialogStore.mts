@@ -82,8 +82,9 @@ function useWeaponAttackRollDialogStore<
     name: computed(() => {
       const targetActor = context.data.target?.[0] ?? null;
       if (!targetActor) return '';
-      return canUserSeeActorName(targetActor, game.user)
-        ? targetActor.token?.name ?? targetActor.name
+      const targetToken = context.data.targetToken;
+      return canUserSeeActorName(targetActor, game.user, targetToken?.document)
+        ? targetToken?.name ?? targetActor.token?.name ?? targetActor.name
         : game.i18n.localize('dnd35e.ROLL.HiddenName');
     }),
   };

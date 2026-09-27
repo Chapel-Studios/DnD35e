@@ -203,6 +203,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       rollMode: game.settings.get('core', 'messageMode'),
       actor: context.actor,
       target: context.target,
+      targetToken: targetToken ?? null,
       wieldModeFromEquippedSlots: context.wieldedHand,
       handBab: context.handBab,
       baseTotalByHand,
