@@ -9,17 +9,20 @@ import type { RangedAttackRollDialogResult } from '../RangedAttackRollDialog/typ
 import type { RollDialogData, RollDialogResult } from '../RollDialog/types.mjs';
 
 /**
- * A single attack-roll combat modifier (poc.10 Story D, §10.7) — Attack Type
- * (charge/defensiveFighting/nonLethal) and Combat Status (flanking/highGround/squeezing/
- * prone/proficient) toggles share this shape. `label`/`tooltip` are already localized by
- * the caller (`executeAction()`), same convention as `RollDialogData.title`/`baseLabel`.
- * `checked`'s effect on `value` is inverted for `proficient` — see §10.7's Proficient row —
- * `executeAction()` reads that toggle's `checked` state directly rather than folding its
- * `value` into the generic sum.
+ * A single attack-roll or defense-roll combat modifier (poc.10 Story D/E, §10.7) — Attack
+ * Type (charge/defensiveFighting/nonLethal), Combat Status (flanking/highGround/squeezing/
+ * prone/proficient on the Attack dialog; charged/totalDefense/defensiveFighting/flatFooted
+ * on the Roll Defense dialog), and Overrides (applyHalfDamage/ignoreCriticalHit, Roll
+ * Defense dialog only) toggles all share this shape. `label`/`tooltip` are already
+ * localized by the caller (`executeAction()`/the defense-dialog data builder), same
+ * convention as `RollDialogData.title`/`baseLabel`. `checked`'s effect on `value` is
+ * inverted/bypassed for a few ids (`proficient`, `applyHalfDamage`, `ignoreCriticalHit`) —
+ * these are read back by id directly rather than folded into the generic checked-sum, so
+ * they carry `value: 0`.
  */
 interface CombatModifierToggle {
   id: string;
-  group: 'attackType' | 'combatStatus';
+  group: 'attackType' | 'combatStatus' | 'overrides';
   label: string;
   tooltip: string;
   value: number;

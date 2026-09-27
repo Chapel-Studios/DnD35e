@@ -3,7 +3,7 @@
     <div class="options">
       <div class="title-row subgrid">
         <ActorRollHeader
-          :header="localize('dnd35e.ROLL.Attacker')"
+          :header="localize(actorHeaderLabel)"
           :image="actorImage"
           :name="actorName"
         >
@@ -50,8 +50,12 @@
   import { RollDialogStoreSymbol } from './RollDialogStore.mjs';
 
   // `hideTotal` lets dialogs with their own per-box live totals (e.g. Weapon Attack's
-  // to-hit/damage boxes) suppress this generic single-total row.
-  defineProps<{ hideTotal?: boolean }>();
+  // to-hit/damage boxes) suppress this generic single-total row. `actorHeaderLabel` lets
+  // dialogs whose primary actor isn't the attacker (e.g. Roll Defense's defender) override
+  // the title-row header text — see RollDefenseDialog.vue.
+  withDefaults(defineProps<{ hideTotal?: boolean; actorHeaderLabel?: string }>(), {
+    actorHeaderLabel: 'dnd35e.ROLL.Attacker',
+  });
 
   const {
     actor: {

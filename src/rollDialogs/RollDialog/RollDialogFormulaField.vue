@@ -39,6 +39,8 @@
      * its own `self`/`actor`-equivalent entry).
      */
     contexts?: FamiliarSchema;
+    /** Localization key for the input's placeholder text (e.g. Roll Defense's Concealment field, poc.10 Story E). */
+    placeholder?: string;
   }>();
 
   const modelValue = defineModel<string>({ required: true });
@@ -94,6 +96,7 @@
     id: props.id,
     name: props.id,
     modelValue: localValue.value,
+    placeholder: props.placeholder ? localize(props.placeholder) : '',
     inputClass: 'formula-input',
     highlightClass: 'highlight-layer',
     inputWrapperClass: 'formula-input-wrapper',

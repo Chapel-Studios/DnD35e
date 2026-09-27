@@ -11,6 +11,7 @@
       "CombatModifiers": {
         "AttackType": "Attack Type",
         "CombatStatus": "Combat Status",
+        "Overrides": "Overrides",
         "Flanking": { "Label": "Flanking", "Tooltip": "+2 to attack rolls when flanking the target." },
         "Prone": { "Label": "Prone", "Tooltip": "-4 to melee attack rolls, +4 against you in melee." },
         "Squeezing": { "Label": "Squeezing", "Tooltip": "-4 to attack rolls while squeezing through a tight space." },
@@ -19,6 +20,18 @@
         "DefensiveFighting": { "Label": "Fight Defensively", "Tooltip": "-4 to the attack roll, +2 AC until your next turn." },
         "Proficient": { "Label": "Proficient", "Tooltip": "Uncheck if not proficient with this weapon (-4 to the attack roll)." },
         "NonLethal": { "Label": "Non-lethal", "Tooltip": "Deal subdual damage instead of normal damage." }
+      },
+      "Covered": {
+        "Label": "Cover",
+        "none": "None",
+        "covered": "Covered (+4)",
+        "improvedCover": "Improved Cover (+8)"
+      },
+      "CheckMode": {
+        "Label": "Check Mode",
+        "normal": "Normal",
+        "touch": "Touch",
+        "noCheck": "No Check"
       },
       "WieldMode": {
         "Label": "Wield Mode",

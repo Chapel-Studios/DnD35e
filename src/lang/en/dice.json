@@ -4,6 +4,8 @@
       "SituationalModifier": "Situational Modifier",
       "AttackSituationalModifier": "Attack Situational Modifier",
       "DamageSituationalModifier": "Damage Situational Modifier",
+      "Concealment": "Concealment (%)",
+      "ConcealmentPlaceholder": "e.g. 20 or 50",
       "Total": "Total",
       "RollButton": "Roll",
       "NaturalOne": "Natural 1!",
