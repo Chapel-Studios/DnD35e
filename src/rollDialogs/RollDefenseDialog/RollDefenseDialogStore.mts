@@ -1,10 +1,11 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
+import { BAKED_AC_CONDITION_IDS } from '@actors/creature/logic/defenseCombatModifiers.mjs';
 import { canUserSeeActorName } from '@documents/token/logic/tokenNameVisibility.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import type { FamiliarSchema, PreferredContextAlias } from '@helpers/formulae/types.mjs';
 import { buildDocumentDataMap } from '@helpers/formulae/utils.mjs';
 import type { RollModifier } from '@source/dice/index.mjs';
-import { buildSituationalModifierEntry } from '@source/dice/index.mjs';
+import { buildSituationalModifierEntry, reconcileBakedConditionEntry, reconcileFlatFootedDexEntry } from '@source/dice/index.mjs';
 import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
 import type { ComputedRef, WritableComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -35,9 +36,30 @@ function useRollDefenseDialogStore(
   const combatModifierToggles = computed(() => context.data.combatModifierToggles);
   const combatStatusModifiers = computed(() => context.data.combatModifierToggles.filter((mod) => mod.group === 'combatStatus'));
   const overrideModifiers = computed(() => context.data.combatModifierToggles.filter((mod) => mod.group === 'overrides'));
+  const isBakedAcCondition = (id: string): boolean => BAKED_AC_CONDITION_IDS.includes(id as typeof BAKED_AC_CONDITION_IDS[number]);
   const combatModifierSum = computed(() => context.data.combatModifierToggles
-    .filter((mod) => mod.checked)
+    .filter((mod) => mod.checked && !isBakedAcCondition(mod.id))
     .reduce((sum, mod) => sum + mod.value, 0));
+
+  // Reconciles the Flat-Footed checkbox against the defender's already-baked
+  // `defenderDenyDexToAC` (what `baseTotalByMode` was built from) — checking it when the
+  // target isn't really flat-footed strips `defenderDexMod` back out; unchecking it when
+  // the target IS flat-footed (e.g. an Uncanny-Dodge-style override for this one roll)
+  // adds it back. No-op once both agree, so the real condition's own baked-in value is
+  // never double-counted.
+  const flatFootedChecked = computed(() => context.data.combatModifierToggles.find((mod) => mod.id === 'flatFooted')?.checked ?? false);
+  const flatFootedDexAdjustment = computed(() => {
+    if (flatFootedChecked.value === context.data.defenderDenyDexToAC) return 0;
+    return flatFootedChecked.value ? -context.data.defenderDexMod : context.data.defenderDexMod;
+  });
+
+  // Same reconciliation as Flat-Footed's Dex line, generalized to Charged/Total Defense/
+  // Defensive Fighting's flat bonus (see BAKED_AC_CONDITION_IDS doc comment) — these are
+  // excluded from `combatModifierSum` above and summed here instead against the real
+  // `actor.statuses` state, so an unchanged checkbox never double-counts the baked AE.
+  const bakedConditionDelta = computed(() => context.data.combatModifierToggles
+    .filter((mod) => isBakedAcCondition(mod.id))
+    .reduce((sum, mod) => sum + reconcileBakedConditionEntry([], mod.label, mod.checked, context.data.actor.statuses.has(mod.id), mod.value).delta, 0));
 
   const concealment = computed({
     get: () => context.data.concealment,
@@ -65,6 +87,22 @@ function useRollDefenseDialogStore(
       }
     },
   });
+  const applyHalfDamageChecked = computed(() => context.data.combatModifierToggles.find((mod) => mod.id === 'applyHalfDamage')?.checked ?? false);
+  // Static preview (poc.10 Story E follow-up) \u2014 the attacker's expected-damage formula/
+  // breakdown is already computed when the attack card was built, so this box never
+  // recomputes damage itself; it just mirrors the Overrides' `applyHalfDamage` toggle back
+  // onto the breakdown as a non-numeric "(halved)" annotation (no flat value to add \u2014 the
+  // dice formula itself isn't recollapsed here).
+  const damageModifierList = computed<RollModifier[]>(() => (applyHalfDamageChecked.value
+    ? [
+      ...context.data.damageModifierList,
+      {
+        label: game.i18n.localize('dnd35e.COMBAT.CombatModifiers.ApplyHalfDamage.Label'),
+        value: 0,
+        formula: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.HalfDamage'),
+      },
+    ]
+    : context.data.damageModifierList));
 
   const attacker = {
     document: computed(() => context.data.attacker),
@@ -96,11 +134,19 @@ function useRollDefenseDialogStore(
     formula: computed(() => `${coverValue.value}`),
   });
   base.actions.registerTotalModifier({
+    value: flatFootedDexAdjustment,
+    formula: computed(() => `${flatFootedDexAdjustment.value}`),
+  });
+  base.actions.registerTotalModifier({
+    value: bakedConditionDelta,
+    formula: computed(() => `${bakedConditionDelta.value}`),
+  });
+  base.actions.registerTotalModifier({
     value: computed(() => resolveFormulaNumber(context.data.situationalModifier, documentDataMap.value, defenderSelfAlias)),
     formula: computed(() => resolveFormulaString(context.data.situationalModifier, documentDataMap.value, defenderSelfAlias)),
   });
   base.actions.registerModifierListEntries(computed<RollModifier[]>(() => context.data.combatModifierToggles
-    .filter((mod) => mod.checked && mod.value !== 0)
+    .filter((mod) => mod.checked && mod.value !== 0 && !isBakedAcCondition(mod.id))
     .map((mod) => ({ label: mod.label, value: mod.value }))));
   base.actions.registerModifierListEntries(computed<RollModifier[]>(() => (coverValue.value !== 0
     ? [{ label: game.i18n.localize('dnd35e.COMBAT.Covered.Label'), value: coverValue.value }]
@@ -109,6 +155,18 @@ function useRollDefenseDialogStore(
     resolveFormulaString(context.data.situationalModifier, documentDataMap.value, defenderSelfAlias),
     game.i18n.localize('dnd35e.ROLL.SituationalModifier')
   )));
+
+  // Rather than showing an offsetting "Flat-Footed" row alongside the real Dex line, gate the
+  // Dex line itself via the same reconciliation the resolution card uses, so both always match.
+  // Charged/Total Defense/Defensive Fighting get the same treatment against `actor.statuses`.
+  const acModifierList = computed<RollModifier[]>(() => {
+    let list = reconcileFlatFootedDexEntry(base.app.modifierList.value, flatFootedChecked.value, context.data.defenderDenyDexToAC);
+    for (const mod of combatStatusModifiers.value) {
+      if (!isBakedAcCondition(mod.id)) continue;
+      list = reconcileBakedConditionEntry(list, mod.label, mod.checked, context.data.actor.statuses.has(mod.id), mod.value).modifierList;
+    }
+    return list;
+  });
 
   const rollAction = (): void => {
     const applyHalfDamage = context.data.combatModifierToggles.find((mod) => mod.id === 'applyHalfDamage')?.checked ?? false;
@@ -122,11 +180,15 @@ function useRollDefenseDialogStore(
       rollMode: context.data.rollMode,
       applyHalfDamage,
       ignoreCriticalHit,
+      defenderDenyDexToAC: context.data.defenderDenyDexToAC,
+      defenderDexMod: context.data.defenderDexMod,
+      baseModifierList: context.data.baseModifierList,
     });
   };
 
   return {
     ...base,
+    app: { ...base.app, modifierList: acModifierList },
     attacker,
     defense: {
       combatModifierToggles,
@@ -139,6 +201,9 @@ function useRollDefenseDialogStore(
       situationalModifier,
       checkMode,
       formulaContexts,
+      damageLabel: computed(() => context.data.damageLabel),
+      damageTotalFormula: computed(() => context.data.damageTotalFormula),
+      damageModifierList,
     },
     actions: { ...base.actions, roll: rollAction },
   };
@@ -162,6 +227,12 @@ interface RollDefenseDialogDefenseStore {
   checkMode: WritableComputedRef<CheckMode>;
   /** FormulaFamiliar schema (self/attacker) for the Situational Bonus/Concealment fields' `#` autocomplete dropdown. */
   formulaContexts: ComputedRef<FamiliarSchema>;
+  /** Damage box's label — static passthrough of `RollDefenseDialogData.damageLabel`. */
+  damageLabel: ComputedRef<string>;
+  /** Damage box's dice-collapsed preview formula — static passthrough of `RollDefenseDialogData.damageTotalFormula`. */
+  damageTotalFormula: ComputedRef<string>;
+  /** Damage box's breakdown — `RollDefenseDialogData.damageModifierList` plus a "(halved)" annotation when the `applyHalfDamage` override toggle is checked. */
+  damageModifierList: ComputedRef<RollModifier[]>;
 }
 interface RollDefenseDialogStore extends RollDialogStore {
   attacker: RollDefenseDialogAttackerStore;

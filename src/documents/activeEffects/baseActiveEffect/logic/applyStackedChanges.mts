@@ -80,10 +80,10 @@ function applyStackedActiveEffectChanges<TDocument extends StackableChangeTarget
     };
   });
 
-  // Resolve stacking — only numeric, typed changes participate
-  const numericStackable = stackingChanges.filter(sc => !isNaN(sc.value) && sc.bonusType !== undefined);
+  // Resolve stacking — only numeric, typed changes participate; a forced-ignore change
+  // never competes for a stacking slot at all (its result is authored, not computed).
+  const numericStackable = stackingChanges.filter((sc, i) => !isNaN(sc.value) && sc.bonusType !== undefined && !changes[i].forcedIgnoreReason);
   const { winners, history } = resolveActiveEffectChanges(numericStackable);
-  const winnerIndices = new Set(winners.map(w => w.changeIndex));
   const historyByIndex = new Map<number, ChangeHistory>();
   for (const h of history) historyByIndex.set(h.changeIndex, h);
   const winnerByIndex = new Map(winners.map(w => [w.changeIndex, w]));
@@ -94,7 +94,14 @@ function applyStackedActiveEffectChanges<TDocument extends StackableChangeTarget
     const change = changes[i];
     const sc = stackingChanges[i];
     const isStackable = !isNaN(sc.value) && sc.bonusType !== undefined;
-    const isWinner = winnerIndices.has(i);
+    // `winners` legitimately collapses an entire untyped-stacking group into one summed
+    // entry carrying only the first member's index (see resolveActiveEffectChanges's
+    // doc comment + its tests) — every group member still needs to be individually
+    // applied for Foundry's ADD handler to accumulate the real sum. `history`, unlike
+    // `winners`, already marks every stacking-group member `applied: true` per-index, so
+    // it — not `winnerIndices.has(i)` — is the correct per-change apply/ignore gate.
+    const historyEntry = historyByIndex.get(i);
+    const isApplied = !isStackable || (historyEntry?.applied ?? false);
     const effectName = change.label
       ?? (change.effect instanceof ActiveEffect
         ? change.effect.system.label
@@ -102,9 +109,27 @@ function applyStackedActiveEffectChanges<TDocument extends StackableChangeTarget
       ?? change.effect.name
       ?? 'Unknown Effect';
 
-    if (isStackable && !isWinner) {
+    if (change.forcedIgnoreReason) {
+      // Authored result, not computed — skip stacking/application entirely, same
+      // `effectOverrides` shape a real stacking loser gets so every reader (chat card
+      // breakdowns, `HasActiveEffectsNotification`) renders it identically.
+      document.effectOverrides[change.key] = [
+        ...(document.effectOverrides[change.key] ?? []),
+        {
+          fieldPath: change.key,
+          value: change.value,
+          effectName,
+          type: change.type,
+          bonusType: sc.bonusType,
+          stackResult: STACK_RESULT_IGNORED,
+          stackReason: change.forcedIgnoreReason,
+        },
+      ];
+      continue;
+    }
+
+    if (isStackable && !isApplied) {
       // Stacking loser — record in overrides but don't apply
-      const historyEntry = historyByIndex.get(i);
       document.effectOverrides[change.key] = [
         ...(document.effectOverrides[change.key] ?? []),
         {
@@ -120,7 +145,7 @@ function applyStackedActiveEffectChanges<TDocument extends StackableChangeTarget
       continue;
     }
 
-    // Apply the change (winner or non-stackable).
+    // Apply the change (winner, stacking-summed group member, or non-stackable).
     // Type cast: core handler expects Actor | Item. change.effect may now be an
     // ItemDnd35e (no `applyChange` method) for live-contributed changes, so use the
     // base handler instead of relying on subclass overrides.

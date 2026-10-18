@@ -301,7 +301,7 @@ class TokenHudDnd35e extends TokenHudVueBase {
       return;
     }
 
-    const spent = await spendAction(combatant, [ACTION_ECONOMY.Standard]);
+    const spent = await spendAction(combatant, [ACTION_ECONOMY.STANDARD]);
     if (spent === null) return;
 
     await applyTotalDefenseAE(actor);

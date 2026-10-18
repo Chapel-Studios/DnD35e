@@ -18,7 +18,12 @@ const ACTION_ECONOMY_TYPES = [
 
 type ActionEconomyType = typeof ACTION_ECONOMY_TYPES[number];
 
-const ACTION_ECONOMY: Record<string, ActionEconomyType> = {
+// Loosely-typed `Record<string, ...>` previously let `ACTION_ECONOMY.Standard` (wrong casing)
+// silently resolve to `undefined` instead of a compile error. Inferred literal keys instead,
+// with `as const` so each property keeps its narrow `ActionEconomyType` literal rather than
+// widening to `string` (an object literal loses a referenced const's literal "freshness"
+// without it) — callers like `spendAction()` need the literal union, not a bare `string`.
+const ACTION_ECONOMY = {
   MINOR: MINOR_ACTION,
   MOVE: MOVE_ACTION,
   STANDARD: STANDARD_ACTION,
@@ -26,7 +31,7 @@ const ACTION_ECONOMY: Record<string, ActionEconomyType> = {
   FREE: FREE_ACTION,
   SWIFT: SWIFT_ACTION,
   AOO: AOO_ACTION,
-};
+} as const;
 
 export {
   ACTION_ECONOMY,

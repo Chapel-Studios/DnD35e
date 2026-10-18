@@ -8,6 +8,7 @@
  */
 import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import { participantActor, participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
+import type { RollModifier } from '@source/dice/index.mjs';
 import { buildOverridesModifierList } from '@source/dice/index.mjs';
 import type { RollDefenseDialogData } from '@source/rollDialogs/RollDefenseDialog/types.mjs';
 import { COVERED_STATES } from '@source/rollDialogs/RollDefenseDialog/types.mjs';
@@ -15,9 +16,21 @@ import { markRaw } from 'vue';
 
 import { createDefenseCombatModifiers } from './defenseCombatModifiers.mjs';
 
+/**
+ * Attacker's already-computed expected-damage preview, handed in by the caller (the attack
+ * card's `expectedDamageFormula`/`expectedDamageModifierList` flags) rather than recomputed
+ * here \u2014 keeps this module decoupled from `attackRollCard.mts`'s `AttackCardFlags` shape.
+ */
+interface AttackerDamagePreview {
+  label: string;
+  formula: string;
+  modifierList: RollModifier[];
+}
+
 function buildRollDefenseDialogData(
   target: ActionParticipant,
-  attacker: ActionParticipant
+  attacker: ActionParticipant,
+  damagePreview: AttackerDamagePreview
 ): RollDefenseDialogData {
   const targetActor = participantActor(target);
   const attackerActor = participantActor(attacker);
@@ -49,6 +62,11 @@ function buildRollDefenseDialogData(
       touch: targetActor.system.defense.touchAC,
     },
     baseModifierListByMode,
+    defenderDenyDexToAC: targetActor.system.defense.denyDexToAC,
+    defenderDexMod: targetActor.system.abilities.dex.mod,
+    damageLabel: damagePreview.label,
+    damageTotalFormula: damagePreview.formula,
+    damageModifierList: damagePreview.modifierList,
   };
 }
 

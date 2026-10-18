@@ -7,7 +7,7 @@ import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
 import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
 import { DAMAGE_TYPES, SIZE_MODIFIERS, STR } from '@constants/index.mjs';
-import { canUseHandAttack, getActionEconomy, getHandBab, markMovedAfterAttack, spendAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import { canUseHandAttack, getActionEconomy, getHandBab, isCombatEconomyActive, markMovedAfterAttack, spendAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
@@ -148,13 +148,12 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    */
   private _buildWieldModeWarnings(context: UseWeaponAttackContext, item: Weapon): string[] {
     const warnings: string[] = [];
-    const combat = game.combat;
     const actorToken = participantToken(context.actor);
     const combatant = actorToken
-      ? combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
+      ? game.combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
       : undefined;
 
-    if (combat?.started && combatant && !context.isFree && context.availableBab <= 0) {
+    if (isCombatEconomyActive(combatant) && !context.isFree && context.availableBab <= 0) {
       warnings.push(game.i18n.localize('dnd35e.COMBAT.WieldMode.InsufficientBab'));
     }
 
@@ -168,18 +167,16 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   // sheet's Actions tab intentionally allows firing this action regardless of equip state
   // (§10.11), so execution itself never re-gates on it here.
   protected override _canExecute(context: UseWeaponAttackContext): WeaponAttackActionResult {
-    const combat = game.combat;
     const actorToken = participantToken(context.actor);
     const combatant = actorToken
-      ? combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
+      ? game.combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
       : undefined;
 
     if (
-      combat?.started
-      && combatant
+      isCombatEconomyActive(combatant)
       && !context.isFree
       && context.wieldedHand
-      && !canUseHandAttack(combatant, context.wieldedHand)
+      && !canUseHandAttack(combatant as CombatantDnd35e<CombatDnd35e>, context.wieldedHand)
     ) {
       ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.NoActionAvailable'));
       return {
@@ -745,17 +742,16 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // BAB is only ever spent for weapon attacks — non-weapon actions have no `hand`. Uses the
     // dialog's final resolved hand (`result.finalHand`), not the pre-dialog auto-detected
     // `hand` used only for the availability gate above — the two can differ.
-    const combat = game.combat;
     const actorToken = participantToken(context.actor);
     const combatant = actorToken
-      ? (combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
+      ? (game.combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
       : null;
-    if (combat?.started && combatant && !result.cancelled && !context.isFree) {
-      const standardSpent = await spendAction(combatant, ['standard']);
+    if (isCombatEconomyActive(combatant) && !result.cancelled && !context.isFree) {
+      const standardSpent = await spendAction(combatant as CombatantDnd35e<CombatDnd35e>, ['standard']);
       const spentHand = result.finalHand ?? context.wieldedHand;
       if (spentHand) {
         const babSpent = 5;
-        await spendHandBab(combatant, spentHand, babSpent);
+        await spendHandBab(combatant as CombatantDnd35e<CombatDnd35e>, spentHand, babSpent);
         if (result.attackMessage) {
           await result.attackMessage.update({
             'flags.dnd35e.attackCard.actionEconomySpent': { standardActionSpent: standardSpent !== null, hand: spentHand, babSpent },
@@ -765,8 +761,8 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
 
       // SRD: a charge permits only this one melee attack — reuses the existing "moved after
       // attack" gate rather than a second bespoke flag.
-      if (getActionEconomy(combatant).used.chargedThisTurn) {
-        await markMovedAfterAttack(combatant);
+      if (getActionEconomy(combatant as CombatantDnd35e<CombatDnd35e>).used.chargedThisTurn) {
+        await markMovedAfterAttack(combatant as CombatantDnd35e<CombatDnd35e>);
       }
     }
   }
@@ -811,7 +807,11 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     const attacker: ActionParticipant = attackerToken ?? attackerActor;
     const target: ActionParticipant = targetToken ?? targetActor;
 
-    const dialogData = buildRollDefenseDialogData(target, attacker);
+    const dialogData = buildRollDefenseDialogData(target, attacker, {
+      label: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.ExpectedDamage'),
+      formula: flags.expectedDamageFormula,
+      modifierList: flags.expectedDamageModifierList,
+    });
     const dialogResult = await RollDefenseDialogConfig.roll(dialogData);
     if (!dialogResult) return { ...cancelled, reason: 'dialogCancelled' };
 
@@ -862,13 +862,15 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       : null;
     if (!hand) return null;
 
-    // No active combatant (no encounter, or actor not yet added to one) — full BAB for every
-    // hand, mirrors the Token HUD's own "not in combat" fallback (tokenHudActions.mts).
-    const handBab: Record<WieldedHand, number> = combatant
+    // Full BAB for every hand unless the combat economy is actually active (no encounter, actor
+    // not yet added to one, combat not started, or this combatant hasn't rolled initiative yet —
+    // see `isCombatEconomyActive()`) — mirrors the Token HUD's own "not in combat" fallback
+    // (tokenHudActions.mts).
+    const handBab: Record<WieldedHand, number> = isCombatEconomyActive(combatant)
       ? {
-        [MAIN_HAND_EQUIP_SLOT]: getHandBab(combatant, MAIN_HAND_EQUIP_SLOT),
-        [OFF_HAND_EQUIP_SLOT]: getHandBab(combatant, OFF_HAND_EQUIP_SLOT),
-        [BOTH_HANDS_EQUIP_SLOT]: getHandBab(combatant, BOTH_HANDS_EQUIP_SLOT),
+        [MAIN_HAND_EQUIP_SLOT]: getHandBab(combatant as CombatantDnd35e<CombatDnd35e>, MAIN_HAND_EQUIP_SLOT),
+        [OFF_HAND_EQUIP_SLOT]: getHandBab(combatant as CombatantDnd35e<CombatDnd35e>, OFF_HAND_EQUIP_SLOT),
+        [BOTH_HANDS_EQUIP_SLOT]: getHandBab(combatant as CombatantDnd35e<CombatDnd35e>, BOTH_HANDS_EQUIP_SLOT),
       }
       : {
         [MAIN_HAND_EQUIP_SLOT]: actor.system.bab,

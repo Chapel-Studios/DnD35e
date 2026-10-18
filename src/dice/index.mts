@@ -21,7 +21,7 @@ import { buildInitiativeCard, buildSaveCard } from './chatCards/saveRollCard/sav
 import { buildD20Formula, combineDiceFormula, extractDiceOnlyFormula, extractFlatModifier, flavorTerm } from './d20Formula.mjs';
 import { D20Roll } from './D20Roll.mjs';
 import { DamageRoll } from './DamageRoll.mjs';
-import { buildOverridesModifierList, buildSituationalModifierEntry } from './rollModifierBreakdown.mjs';
+import { buildOverridesModifierList, buildSituationalModifierEntry, reconcileBakedConditionEntry, reconcileFlatFootedDexEntry } from './rollModifierBreakdown.mjs';
 import type { RollModifier } from './types.mjs';
 
 export {
@@ -50,6 +50,8 @@ export {
   flavorTerm,
   markTargetRowResolved,
   parseActionChainId,
+  reconcileBakedConditionEntry,
+  reconcileFlatFootedDexEntry,
   registerChatCardActions,
   upsertMoveActionCard,
   wireResolutionCardButton,

@@ -186,6 +186,18 @@ async function toggleActionAvailability(combatant: CombatantDnd35e, tier: Action
   await setActionEconomy(combatant, economy);
 }
 
+/**
+ * True only once the encounter is actually running (`combat.started`) AND this combatant
+ * has rolled initiative — `_onStartTurn()` (which seeds the BAB pool from `actor.system.bab`
+ * via `resetActionEconomy()`) only ever fires once a combatant reaches their own turn in the
+ * order, so a combatant sitting in the tracker pre-initiative/pre-start still has the pool's
+ * zeroed `DEFAULT_ACTION_ECONOMY` default — not a meaningful cap. Callers must fall back to
+ * the full `actor.system.bab` (no pool gating/spending) until this returns true.
+ */
+function isCombatEconomyActive(combatant: CombatantDnd35e | null | undefined): boolean {
+  return !!combatant?.combat?.started && combatant.initiative !== null && combatant.initiative !== undefined;
+}
+
 // Bab Tracking
 function getHandBab(combatant: CombatantDnd35e, hand: WieldedHand): number {
   const economy = getActionEconomy(combatant);
@@ -281,6 +293,7 @@ export {
   canUseHandAttack,
   getActionEconomy,
   getHandBab,
+  isCombatEconomyActive,
   markChargedThisTurn,
   markMovedAfterAttack,
   markStandardAttackUsed,

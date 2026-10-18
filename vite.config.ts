@@ -223,6 +223,9 @@ function bundleLangFiles (): Plugin {
 }
 
 export default defineConfig(({ command, mode }) => {
+  // Vite doesn't expose a `--watch` flag via the config callback args; read argv directly.
+  const isWatch = process.argv.includes('--watch');
+
   // mode === 'dist': build to <repo>/dist, independent of any running Foundry instance.
   // Used by `npm run build:dist` which pretest:e2e runs before spawning the E2E Foundry.
   // mode === 'development' or 'production': build into the dev Foundry data dir as usual.
@@ -268,6 +271,7 @@ export default defineConfig(({ command, mode }) => {
         sourceRoot: path.resolve(__dirname, 'packs/_source'),
         outRoot: path.resolve(__dirname, buildOutDir),
         mode,
+        watch: isWatch,
       }),
       vue(),
       logBuildTimestamp(),

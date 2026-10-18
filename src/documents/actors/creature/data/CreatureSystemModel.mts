@@ -56,6 +56,12 @@ abstract class CreatureSystemModel extends ActorSystemModel {
    *    doesn't leave the Dex-denial flag stuck on from a prior prepare pass
    *  - `defense.criticalImmune`: reset to false so a lapsed Total Defense/Ignore-Critical
    *    source doesn't leave the flag stuck on from a prior prepare pass
+   *  - `bab`/`aooCount`: reset to their schema defaults (0 / 1) so `add`-type AE/class
+   *    contributions don't compound across repeated prepare passes (e.g. combat's more
+   *    frequent re-prepares) the same way `defense.armorClass` would without its own reset
+   *  - `hp.max`: reset to its 100 stub baseline (replace with real HD/level/CON calculation
+   *    when progression is implemented) so `add`-type AE contributions (e.g. a Heroic
+   *    Training-style buff) layer on top instead of being overwritten each pass
    * See docs/architecture/actor-data-pipeline.md.
    */
   override prepareBaseData(): void {
@@ -72,6 +78,8 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     this.saves.will = 0;
 
     this.init = 0;
+    this.bab = 0;
+    this.aooCount = 1;
 
     this.defense.armorClass = 0;
     this.defense.touchAC = 0;

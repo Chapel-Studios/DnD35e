@@ -9,13 +9,25 @@
       />
     </template>
 
-    <div class="ac-box subgrid">
-      <div class="bonus-row">
-        <span class="label">{{ acLabel }}</span>
-        <span class="value">
-          {{ displayTotal }}
-          <RollModifierTooltip :modifiers="acModifierList" />
-        </span>
+    <div class="subgrid">
+      <div class="ac-box">
+        <div class="bonus-row">
+          <span class="label">{{ acLabel }}</span>
+          <span class="value">
+            {{ acTotalFormula }}
+            <RollModifierTooltip :modifiers="acModifierList" />
+          </span>
+        </div>
+      </div>
+
+      <div class="damage-box">
+        <div class="bonus-row">
+          <span class="label">{{ damageLabel }}</span>
+          <span class="value">
+            {{ damageTotalFormula }}
+            <RollModifierTooltip :modifiers="damageModifierList" />
+          </span>
+        </div>
       </div>
     </div>
 
@@ -72,7 +84,7 @@
   import type { SelectOption } from '@vc/fields/index.mjs';
   import MultiOptionToggle from '@vc/fields/MultiOptionToggle.vue';
   import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
-  import { computed, provide } from 'vue';
+  import { provide } from 'vue';
 
   import ActorRollHeader from '../RollDialog/ActorRollHeader.vue';
   import RollDialog from '../RollDialog/RollDialog.vue';
@@ -103,15 +115,16 @@
       situationalModifier,
       checkMode,
       formulaContexts,
+      damageLabel,
+      damageTotalFormula,
+      damageModifierList,
     },
     app: {
       baseLabel: acLabel,
-      total: acTotal,
+      totalFormula: acTotalFormula,
       modifierList: acModifierList,
     },
   } = store;
-
-  const displayTotal = computed(() => checkMode.value !== 'noCheck' ? acTotal.value - 10 : acTotal.value);
 
   const coveredOptions: SelectOption<CoveredState>[] = [
     { label: 'dnd35e.COMBAT.Covered.none', value: 'none' },
@@ -144,12 +157,10 @@
     grid-column: span 2;
   }
 
-  .ac-box {
-    .bonus-row {
-      display: flex;
-      justify-content: space-around;
-      font-size: 1.2rem;
-    }
+  .bonus-row {
+    display: flex;
+    justify-content: space-around;
+    font-size: 1.2rem;
   }
 
   .form-group {

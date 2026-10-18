@@ -38,6 +38,17 @@ interface RollDefenseDialogData extends RollDialogData {
   attackerToken?: TokenDnd35e | null;
   /** Combat Status + Overrides toggles (§10.7) — `combatStatus`/`overrides` groups only, no `attackType` group on this dialog. */
   combatModifierToggles: CombatModifierToggle[];
+  /**
+   * Whether the real Flat-Footed condition (or similar) already denies Dex to AC at the
+   * moment this dialog was built — `baseTotalByMode` already reflects this. Compared against
+   * the `flatFooted` toggle's checked state (`RollDefenseDialogStore`) to decide whether a
+   * live Dex add/remove adjustment is needed: GM manually checking the box (target not
+   * actually flat-footed) subtracts `defenderDexMod`; manually unchecking it (target IS
+   * flat-footed) adds it back, e.g. an Uncanny-Dodge-style override for this one roll.
+   */
+  defenderDenyDexToAC: boolean;
+  /** Defender's Dex modifier to AC — same source `_buildDefenseChanges()` uses, so the live adjustment above matches exactly what the real AC would gain/lose. */
+  defenderDexMod: number;
   /** Concealment formula field (§10.7) — blank/0 by default; resolved to a flat 0–100 percentage on submit, the miss-chance roll itself happens later in `evaluateDefense()`. */
   concealment: string;
   /** Covered / Improved Cover 3-way toggle (§10.7). */
@@ -55,6 +66,21 @@ interface RollDefenseDialogData extends RollDialogData {
   baseTotalByMode: Record<Exclude<CheckMode, 'noCheck'>, number>;
   /** Labeled breakdown of `baseTotalByMode`, per mode — mirrors `RollDialogData.baseModifierList`'s convention, swapped out by `RollDefenseDialogStore`'s checkMode setter alongside `baseTotalByMode`. */
   baseModifierListByMode: Record<Exclude<CheckMode, 'noCheck'>, RollModifier[]>;
+  /**
+   * Damage box's label — mirrors `WeaponAttackRollDialogData.damageLabel`. Sits alongside the
+   * AC box (see `RollDefenseDialog.vue`'s `subgrid`) so the defender can see what's riding on
+   * this defense roll.
+   */
+  damageLabel: string;
+  /**
+   * Attacker's already-computed expected-damage preview (dice-collapsed, e.g. `2d6 + 7`) —
+   * sourced from the attack card's `expectedDamageFormula` flag (`attackRollCard.mts`), since
+   * the defense dialog never recomputes damage itself; this is purely informational/static,
+   * unlike the Attack dialog's twin which stays live against a situational-modifier field.
+   */
+  damageTotalFormula: string;
+  /** Labeled breakdown backing `damageTotalFormula` — sourced from the attack card's `expectedDamageModifierList` flag, same static convention. */
+  damageModifierList: RollModifier[];
 }
 
 interface RollDefenseDialogResult extends RollDialogResult {
@@ -69,6 +95,12 @@ interface RollDefenseDialogResult extends RollDialogResult {
   applyHalfDamage: boolean;
   /** Read directly off the `ignoreCriticalHit` toggle, same convention as `applyHalfDamage`. */
   ignoreCriticalHit: boolean;
+  /** Passthrough of `RollDefenseDialogData.defenderDenyDexToAC` — lets `evaluateDefense()` reconcile the `flatFooted` toggle against the real baked-in condition the same way `RollDefenseDialogStore`'s live preview does, instead of silently dropping the Dex adjustment once the dialog resolves. */
+  defenderDenyDexToAC: boolean;
+  /** Passthrough of `RollDefenseDialogData.defenderDexMod`, same reason as `defenderDenyDexToAC`. */
+  defenderDexMod: number;
+  /** The resolved check mode's granular Base AC breakdown (`RollDefenseDialogData.baseModifierListByMode`, already mode-selected) — lets `evaluateDefense()` show the same Base/Size/Dex/Armor/Shield/Natural fidelity on the resolution card as the dialog's own AC tooltip, not a single lumped "Base AC" line. */
+  baseModifierList: RollModifier[];
 }
 
 export type {

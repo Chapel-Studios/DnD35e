@@ -23,11 +23,20 @@ interface CompilePacksOptions {
   outRoot: string;
   /**
    * Vite mode (`'development'` | `'production'`).
-   * Dev mode: per-pack errors are caught and recorded in `build-warnings.json`
-   *   instead of aborting the build (Foundry may hold LevelDB locks).
-   * Prod mode (default): any compilation error hard-fails the build.
+   * Dev mode (one-shot `build:dev`): only compiles packs that aren't already built —
+   *   per-pack errors are caught and recorded in `build-warnings.json` instead of
+   *   aborting the build (Foundry may hold LevelDB locks).
+   * Prod mode (default): always rebuilds every pack from scratch; any compilation
+   *   error hard-fails the build.
    */
   mode?: string;
+  /**
+   * True when Vite is running under `--watch` (`dev:watch`). Pack compilation is
+   * skipped entirely — watch rebuilds on every src change, not just pack edits, so
+   * attempting a recompile every time means constantly fighting Foundry's held
+   * LevelDB locks for no reason. Run `npm run packs:build` to compile packs manually.
+   */
+  watch?: boolean;
 }
 
 function hasContent (entries: string[]): boolean {
@@ -40,6 +49,11 @@ export function compilePacks (options: CompilePacksOptions): Plugin {
     apply: 'build',
     enforce: 'post',
     async closeBundle () {
+      if (options.watch) {
+        console.log('📦 Skipping pack compilation (--watch) — run `npm run packs:build` to compile packs manually.');
+        return;
+      }
+
       const isDev = options.mode === 'development';
       const warningsPath = path.join(options.outRoot, 'build-warnings.json');
 
@@ -54,6 +68,7 @@ export function compilePacks (options: CompilePacksOptions): Plugin {
 
       let compiled = 0;
       let skipped = 0;
+      let upToDate = 0;
       const skippedNames: string[] = [];
       const stalePacks: string[] = [];
       const staleErrors: Record<string, string> = {};
@@ -72,6 +87,14 @@ export function compilePacks (options: CompilePacksOptions): Plugin {
         if (!hasContent(entries)) {
           skipped++;
           skippedNames.push(pack.name);
+          continue;
+        }
+
+        // build:dev (one-shot) only builds packs that aren't compiled yet, so repeated
+        // runs don't fight Foundry's held LevelDB locks for packs that are already fine.
+        // Prod always rebuilds everything for a correct, from-scratch artifact.
+        if (isDev && (await fs.pathExists(destDir)) && hasContent(await fs.readdir(destDir))) {
+          upToDate++;
           continue;
         }
 
@@ -102,6 +125,9 @@ export function compilePacks (options: CompilePacksOptions): Plugin {
         console.log(`📦 No packs to compile (${skipped} empty/missing: ${skippedNames.join(', ')})`);
       } else if (skipped > 0) {
         console.log(`📦 Skipped ${skipped} empty pack(s): ${skippedNames.join(', ')}`);
+      }
+      if (upToDate > 0) {
+        console.log(`📦 ${upToDate} pack(s) already built, left untouched (dev mode)`);
       }
 
       // In dev mode: write/clear build-warnings.json so Foundry can surface stale-pack notices.

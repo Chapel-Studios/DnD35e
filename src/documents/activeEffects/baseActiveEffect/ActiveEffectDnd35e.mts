@@ -64,9 +64,12 @@ class ActiveEffectDnd35e<
 
   /**
    * Non-blocking diagnostics collected during this prep cycle (broken formulas, etc.).
-   * Reset every `prepareBaseData()` — see `preparationWarnings.mts`.
+   * Reset every `prepareBaseData()` — see `preparationWarnings.mts`. `declare` (no runtime
+   * initializer): core's `DataModel` constructor runs `prepareBaseData()` (which populates
+   * this) synchronously *inside* the `super()` chain, and a real class-field initializer
+   * here would reinitialize to `[]` *after* `super()` returns, wiping that out.
    */
-  _preparationWarnings: PreparationWarning[] = [];
+  declare _preparationWarnings: PreparationWarning[];
 
   override prepareBaseData (): void {
     super.prepareBaseData();

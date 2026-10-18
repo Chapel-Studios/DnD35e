@@ -1,16 +1,16 @@
 {
-  "name": "Heroic Training (+6 BAB, +6 AC)",
+  "name": "Heroic Training",
   "type": "general",
   "_id": "vZVLGH2hp0feGd62",
   "img": "icons/svg/upgrade.svg",
   "system": {
     "origin": { "migrationVersion": "14.0.0-dev.1" },
     "nameFormula": {
-      "formula": "Heroic Training (+6 BAB, +6 AC)",
+      "formula": "Heroic Training",
       "expectedType": "string",
-      "resolvedValue": "Heroic Training (+6 BAB, +6 AC)"
+      "resolvedValue": "Heroic Training"
     },
-    "description": "POC generic buff: grants +6 base attack bonus and +6 armor class (untyped bonuses, for testing the actor-level AE pipeline only). Drop onto an actor's own effects to test the mechanic.",
+    "description": "POC generic buff: grants +6 base attack bonus, +6 armor class, and +100 max HP (untyped bonuses, for testing the actor-level AE pipeline only). Drop onto an actor's own effects to test the mechanic.",
     "target": "actor",
     "isHidden": false,
     "deleteOnExpiry": false,
@@ -34,6 +34,19 @@
         "key": "system.defense.armorClass",
         "type": "add",
         "value": 6,
+        "priority": 10,
+        "phase": "initial",
+        "target": "actor",
+        "isSystem": false,
+        "bonusType": "dnd35e.BONUS_TYPES.Untyped",
+        "condition": null
+      },
+      {
+        "id": "9hQ4wBz1kVn7pMdT",
+        "label": "Hit Points",
+        "key": "system.hp.max",
+        "type": "add",
+        "value": 100,
         "priority": 10,
         "phase": "initial",
         "target": "actor",

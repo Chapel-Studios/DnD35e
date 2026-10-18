@@ -13,7 +13,7 @@
  * explanatory tooltip.
  *
  * Combat Maneuvers: this phase renders only a "Total Defense" entry (poc.10 Story E) — a
- * standard action (SRD), so `enabled` follows `canUseAction(combatant, [ACTION_ECONOMY.Standard])`
+ * standard action (SRD), so `enabled` follows `canUseAction(combatant, [ACTION_ECONOMY.STANDARD])`
  * (outside combat it's always enabled, same convention as Weapon Attacks' `!combatant ||` fallback).
  * The click handler (`TokenHudDnd35e#onCombatManeuver`) spends the action and applies the AE.
  *
@@ -91,7 +91,7 @@ function getCombatManeuverChoices(token: TokenDnd35e): TokenHudCombatManeuverRow
     {
       id: 'totalDefense',
       label: game.i18n.localize('dnd35e.COMBAT.Maneuver.TotalDefense'),
-      enabled: !combatant || canUseAction(combatant, [ACTION_ECONOMY.Standard]) !== null,
+      enabled: !combatant || canUseAction(combatant, [ACTION_ECONOMY.STANDARD]) !== null,
     },
   ];
 }

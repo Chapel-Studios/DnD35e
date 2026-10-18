@@ -30,12 +30,21 @@ function buildModifierBreakdownHtml(modifierList: RollModifier[]): string {
 
 /**
  * Renders the same modifier-breakdown partial with raw (unsigned) values — e.g. the
- * Resolution card's AC Details table, where the first row is a total (base AC), not a
- * modifier, mirroring D35E's `damage-description.html` `acModifiers` table.
+ * Resolution card's AC Details table, where rows are granular AC components (base/size/Dex/
+ * armor/...), not signed bonuses, mirroring D35E's `damage-description.html` `acModifiers`
+ * table. Still carries bonus-type tags + ignored/struck-through styling, same fidelity as
+ * `buildModifierBreakdownHtml()` — every roll dialog's live breakdown and its resulting chat
+ * card are expected to show identical detail (poc.10 Story E standard).
  */
 function buildRawBreakdownHtml(rows: RollModifier[]): string {
   return modifierBreakdownTemplate({
-    modifiers: rows.map(row => ({ label: row.label, signed: String(row.value) })),
+    modifiers: rows.map(row => ({
+      label: row.label,
+      signed: String(row.value),
+      bonusTypeLabel: row.bonusTypeLabel,
+      isIgnored: row.isIgnored,
+      ignoredReason: row.ignoredReason,
+    })),
   });
 }
 

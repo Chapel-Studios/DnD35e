@@ -56,4 +56,55 @@ function buildSituationalModifierEntry(resolvedFormula: string, label: string): 
   return [{ label, value: flat, ...(hasDice ? { formula: trimmed } : {}) }];
 }
 
-export { buildOverridesModifierList, buildSituationalModifierEntry };
+/**
+ * Toggles the baked Dex AC line's ignored state against a Flat-Footed-style checkbox: the
+ * real line (always present — see `Creature._buildDefenseChanges()`'s `forcedIgnoreReason`)
+ * already shows applied or struck-through/ignored to match the defender's real condition.
+ * Checking the box as an override when the defender isn't really denied Dex marks that same
+ * line ignored for this roll; unchecking it when the defender IS really denied Dex clears the
+ * ignored flag (e.g. an Uncanny-Dodge-style override for one roll). No-op when the checkbox
+ * already agrees with the real condition. Shared by the Roll Defense Dialog's live AC preview
+ * and the resolution card's final AC breakdown (poc.10 Story E) so both always show identical
+ * breakdown fidelity — this is the project's standard going forward for every roll
+ * dialog/chat card pair.
+ */
+function reconcileFlatFootedDexEntry(
+  modifierList: RollModifier[],
+  flatFootedChecked: boolean,
+  defenderDenyDexToAC: boolean
+): RollModifier[] {
+  if (flatFootedChecked === defenderDenyDexToAC) return modifierList;
+  const dexLabel = game.i18n.localize('dnd35e.ABILITY.dex.label');
+  const flatFootedReason = game.i18n.localize('dnd35e.COMBAT.CombatModifiers.FlatFooted.Label');
+  return modifierList.map((mod) => (mod.label === dexLabel
+    ? (flatFootedChecked
+      ? { ...mod, isIgnored: true, ignoredReason: flatFootedReason }
+      : { ...mod, isIgnored: false, ignoredReason: undefined })
+    : mod));
+}
+
+/**
+ * Toggles a named baked-condition AC line (Charged/Total Defense/Defensive Fighting — their
+ * flat SRD bonus is already applied via a real condition AE once truly active, see
+ * `conditions.mts`'s `acAdjustment`, and therefore already shows in `modifierList`) in/out
+ * against a Combat Status checkbox that may disagree with the real condition for this one
+ * roll, same reconciliation shape as `reconcileFlatFootedDexEntry` but for a fixed value
+ * instead of the defender's Dex mod. No-op (same list, `delta: 0`) once the checkbox already
+ * agrees with the real condition — checking it when not really active adds a new line +
+ * `delta: value`; unchecking it when really active removes the existing line +
+ * `delta: -value`, so the numeric total and the displayed breakdown never drift apart.
+ */
+function reconcileBakedConditionEntry(
+  modifierList: RollModifier[],
+  label: string,
+  checked: boolean,
+  realConditionActive: boolean,
+  value: number
+): { modifierList: RollModifier[]; delta: number } {
+  if (checked === realConditionActive) return { modifierList, delta: 0 };
+  return checked
+    ? { modifierList: [...modifierList, { label, value }], delta: value }
+    : { modifierList: modifierList.filter((mod) => mod.label !== label), delta: -value };
+}
+
+export { buildOverridesModifierList, buildSituationalModifierEntry, reconcileBakedConditionEntry, reconcileFlatFootedDexEntry };

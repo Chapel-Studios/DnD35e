@@ -14,6 +14,17 @@ import {
 } from '@constants/conditions.mjs';
 import type { CombatModifierToggle } from '@source/rollDialogs/WeaponAttackRollDialog/types.mjs';
 
+/**
+ * Combat Status toggle ids whose flat SRD bonus is already baked into the defender's
+ * `armorClass`/`touchAC` once truly active, via the matching condition's own `acAdjustment()`
+ * AE (`conditions.mts`) — `evaluateDefense()`/`RollDefenseDialogStore` must reconcile these
+ * against `actor.statuses.has(id)` (`reconcileBakedConditionEntry()`) rather than naively
+ * summing `toggle.value` on top of `baseAc`, or the real bonus gets double-counted whenever
+ * the checkbox agrees with the real condition (the common case). `flatFooted` isn't here —
+ * its own value is always `0`; it's reconciled separately against `defenderDenyDexToAC`.
+ */
+const BAKED_AC_CONDITION_IDS = [CHARGED_CONDITION_ID, TOTAL_DEFENSE_CONDITION_ID, DEFENSIVE_FIGHTING_CONDITION_ID] as const;
+
 const createDefenseCombatModifiers = (actor: ACTORS_DND35E): CombatModifierToggle[] => {
   const localize = (key: string) => game.i18n.localize(`dnd35e.COMBAT.CombatModifiers.${key}`);
 
@@ -32,8 +43,9 @@ const createDefenseCombatModifiers = (actor: ACTORS_DND35E): CombatModifierToggl
       group: 'combatStatus',
       label: localize('FlatFooted.Label'),
       tooltip: localize('FlatFooted.Tooltip'),
-      // Dex-to-AC denial is already baked into the target's own live armorClass/touchAC
-      // (`system.defense.denyDexToAC`) — this toggle is informational, not summed.
+      // `value` stays 0 — Dex denial isn't a flat number, it's `defenderDexMod`, so
+      // `RollDefenseDialogStore` reconciles this checkbox against the already-baked
+      // `defenderDenyDexToAC` separately rather than folding it into `combatModifierSum`.
       value: 0,
       checked: actor.statuses.has(FLAT_FOOTED_CONDITION_ID),
       autoDetected: true,
@@ -77,4 +89,4 @@ const createDefenseCombatModifiers = (actor: ACTORS_DND35E): CombatModifierToggl
   ];
 };
 
-export { createDefenseCombatModifiers };
+export { BAKED_AC_CONDITION_IDS, createDefenseCombatModifiers };

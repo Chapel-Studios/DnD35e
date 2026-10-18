@@ -64,9 +64,16 @@ function useWeaponAttackRollDialogStore<
   const combatModifierToggles = computed(() => context.data.combatModifierToggles);
   const attackTypeModifiers = computed(() => context.data.combatModifierToggles.filter((mod) => mod.group === 'attackType'));
   const combatStatusModifiers = computed(() => context.data.combatModifierToggles.filter((mod) => mod.group === 'combatStatus'));
+  // Proficient inverts the usual checked-applies-value shape (§10.7, mirrors
+  // WeaponAttackDataModel._applyCombatModifierEffects) — unchecked applies the −4 that the
+  // toggle's own `value: 0` can't carry through the generic checked-sum below.
+  const proficiencyPenalty = computed(() => {
+    const isProficient = context.data.combatModifierToggles.find((mod) => mod.id === 'proficient')?.checked ?? false;
+    return isProficient ? 0 : -4;
+  });
   const combatModifierSum = computed(() => context.data.combatModifierToggles
     .filter((mod) => mod.checked)
-    .reduce((sum, mod) => sum + mod.value, 0));
+    .reduce((sum, mod) => sum + mod.value, 0) + proficiencyPenalty.value);
 
   const attackSituationalModifier = computed({
     get: () => context.data.attackSituationalModifier,
@@ -128,6 +135,12 @@ function useWeaponAttackRollDialogStore<
   base.actions.registerModifierListEntries(computed<RollModifier[]>(() => context.data.combatModifierToggles
     .filter((mod) => mod.checked && mod.value !== 0)
     .map((mod) => ({ label: mod.label, value: mod.value }))));
+  // Label diverges from the checkbox's own "Proficient" (§10.7) — the breakdown entry is
+  // always a penalty, so "Not Proficient" better reflects what's actually being applied,
+  // mirroring WeaponAttackDataModel._buildAttackFormula's final attack-card modifierList.
+  base.actions.registerModifierListEntries(computed<RollModifier[]>(() => (proficiencyPenalty.value !== 0
+    ? [{ label: game.i18n.localize('dnd35e.COMBAT.CombatModifiers.NotProficient.Label'), value: proficiencyPenalty.value }]
+    : [])));
   base.actions.registerModifierListEntries(computed<RollModifier[]>(() => buildSituationalModifierEntry(
     resolveFormulaString(context.data.attackSituationalModifier, documentDataMap.value, attackerSelfAlias),
     game.i18n.localize('dnd35e.ROLL.AttackSituationalModifier')

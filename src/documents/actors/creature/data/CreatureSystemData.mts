@@ -29,7 +29,12 @@ interface HpSource {
 }
 
 interface HpData extends HpSource {
-  /** Derived: class HD × level + CON mod + bonuses. Never stored. */
+  /**
+   * Derived: class HD × level + CON mod + bonuses. Never stored. Currently a flat 100
+   * stub baseline reset each `prepareBaseData()` pass (`CreatureSystemModel.mts`) so
+   * `add`-type AE contributions can layer on top — replace with real HD/level/CON
+   * calculation when class progression is implemented.
+   */
   max: number;
   regeneration: number;
   fastHealing: number;

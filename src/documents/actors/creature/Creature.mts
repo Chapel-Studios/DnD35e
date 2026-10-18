@@ -404,9 +404,10 @@ abstract class Creature extends ActorDnd35e {
       value: number,
       label: string,
       bonusType?: BonusType,
-      hideFromEffectsTab?: boolean
+      hideFromEffectsTab?: boolean,
+      forcedIgnoreReason?: string
     ): void => {
-      if (value === 0) return;
+      if (value === 0 && !forcedIgnoreReason) return;
       results.push({
         key,
         target: 'actor',
@@ -418,6 +419,7 @@ abstract class Creature extends ActorDnd35e {
         phase: POST_EFFECT_CHANGE_PHASE,
         label,
         hideFromEffectsTab,
+        forcedIgnoreReason,
       });
     };
 
@@ -427,6 +429,7 @@ abstract class Creature extends ActorDnd35e {
     const armorLabel = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.armorBonus.label');
     const shieldLabel = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.shieldBonus.label');
     const naturalLabel = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.naturalArmor.label');
+    const flatFootedLabel = game.i18n.localize('dnd35e.COMBAT.CombatModifiers.FlatFooted.Label');
 
     const dexMod = this.system.abilities.dex.mod;
     const sizeMod = SIZE_MODIFIERS[this.system.size] ?? 0;
@@ -442,7 +445,11 @@ abstract class Creature extends ActorDnd35e {
       // meaningful "effects" on their own - keep them out of the Effects tab.
       pushChange(fieldKey, 10, baseLabel, undefined, true);
       pushChange(fieldKey, sizeMod, sizeLabel, BONUS_TYPE_SIZE, true);
-      if (!denyDexToAC) pushChange(fieldKey, dexMod, dexLabel, undefined, true);
+      // Always pushed (even when denied) — `forcedIgnoreReason` authors the stacking
+      // result directly rather than omitting the line, so `effectOverrides` (and every
+      // reader of it: `HasActiveEffectsNotification`, roll breakdowns) shows Dex struck
+      // through with "Flat-Footed" instead of silently vanishing.
+      pushChange(fieldKey, dexMod, dexLabel, undefined, true, denyDexToAC ? flatFootedLabel : undefined);
 
       if (key !== 'touchAC') {
         pushChange(fieldKey, armorBonus, armorLabel, BONUS_TYPE_ARMOR);
@@ -529,13 +536,6 @@ abstract class Creature extends ActorDnd35e {
     ...super.LifeCycle,
     ...CreatureLifeCycle,
   } as const;
-
-  override prepareDerivedData(): void {
-    super.prepareDerivedData();
-
-    // stub value to 100 for sheet building; replace with real HP calculation when progression is implemented
-    this.system.hp.max = 100;
-  }
 
   async updateHP(
     amount: number,
