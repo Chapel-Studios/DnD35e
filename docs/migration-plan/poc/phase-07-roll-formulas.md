@@ -333,7 +333,7 @@ this._preparationWarnings.push({
 
 ## 7.7 Group Change Targets (Story D)
 
-**Status**: ✅ Implemented (POC scope — `group:allSaves` only).
+**Status**: ✅ Implemented (POC scope — `#actor.saves.all` only).
 
 ### Implementation Notes
 
@@ -345,9 +345,9 @@ The design below was implemented essentially as sketched, with these concrete de
 - **Apply-loop wiring is actor-only**: `ActorDnd35e.applyActiveEffects()` calls `expandChangeTargetGroups(changes, this)` right before `applyStackedActiveEffectChanges()`. `ItemDnd35e.applyActiveEffects()` was NOT wired up — `ChangeTargetGroup.expand(actor)` takes an actor, and no groups currently target item-only fields. If a future group needs to target items, `expand()`'s signature and the item apply loop will both need revisiting.
 - **Formula Familiar wiring is key-picker-only, actor-target-only**: `EffectChangesList.vue`'s `getKeyPickerContext(target)` calls `withChangeTargetGroups()` only when `target === EFFECT_CHANGE_TARGET.ACTOR`; the Value/Condition column contexts (`getContextsForTarget()`) are untouched, so groups never leak into formula value/condition autocomplete — matching the "natural boundary" described above.
 - **Visual hint**: `FamiliarDropdown.vue` renders a small `fa-layer-group` icon plus an italicized label for any `AutocompleteOption` with `isGroup: true` (propagated from `FieldAspect.isGroup` via `getAutocompleteOptions()`).
-- **Colon-in-key parsing caveat**: `group:allSaves`'s colon is illegal in `VARIABLE_REGEX`'s path-segment character class, so `AspectPicker.vue`'s `rawToFamiliar()` special-cases registered group keys with a direct registry lookup + `game.i18n.localize()`, bypassing `findAspectByAccessPath`/`localizeFormula`'s regex-tokenizing path entirely for that one branch. The reverse direction (`familiarToRaw()` / dropdown selection via `option.accessPath`) needed no changes — the colon only ever appears in output strings there, never re-tokenized.
+- **Key format redesign (post-POC)**: the original POC used an invented `group:` prefix (e.g. `group:allSaves`) with hand-authored flat keys, requiring `AspectPicker.vue` to special-case registered groups during parsing since the colon isn't legal in `VARIABLE_REGEX`'s path-segment character class. This was replaced with a genuine `#<contextName>.<treePath>` canonical formula key (e.g. `#actor.saves.all`), auto-derived by `registerChangeTargetGroup()` from the group's own `contextName`/`treePath` — matching the convention already used for `$conditional()` branch targets (`resolveChangeKey.mts`). Because `FieldAspect.accessPath` is treated as a fully opaque string everywhere else in the pipeline (`canonicalizeFormula`, `localizeFormula`, `resolveFamiliarLeafToAccessPath`, `findAspectByAccessPath`), this required zero special-casing in `AspectPicker.vue` — group keys resolve, display, and round-trip through the exact same generic machinery as any other formula reference.
 - **Tests**: `tests/unit/familiar/change-target-groups.test.mts` (registry + `withChangeTargetGroups` unit tests), `tests/unit/effects/actor-apply-change-groups.test.mts` (`expandChangeTargetGroups` unit tests + integration with `applyStackedActiveEffectChanges` proving each expanded field stacks independently by bonus type), `tests/unit/components/AspectPicker.test.mts` (group-key display round-trip, no false "property not found" error).
-- Only `group:allSaves` is registered so far (POC scope, per the recommendation below) — skills groups (`group:allSkills`, `group:dexSkills`, etc.) are deferred to Phase 9 when the skills data model lands, as originally planned.
+- Only `#actor.saves.all` is registered so far (POC scope, per the recommendation below) — skills groups (`#actor.skills.all`, `#actor.skills.dex`, etc.) are deferred to Phase 9 when the skills data model lands, as originally planned.
 
 ### Problem
 
@@ -364,7 +364,7 @@ Some AE changes need to target multiple fields simultaneously — e.g., "all sav
 ```typescript
 /** A group of related AE change targets that expand to concrete field paths. */
 interface ChangeTargetGroup {
-  /** Unique key stored on the AE change, e.g. "group:allSaves". */
+  /** Unique key stored on the AE change, e.g. "#actor.saves.all". */
   key: string;
   /** i18n label shown in Formula Familiar picker. */
   label: string;
@@ -393,7 +393,7 @@ function resolveChangeTargets(key: string, actor: Dnd35eActor): string[] {
 
 ### Key Convention
 
-Group keys use a `group:` prefix (e.g., `group:allSaves`, `group:dexSkills`) to avoid collision with real field paths (which start with `system.` or a root field name). The prefix is an internal convention — users never see it; the Formula Familiar picker shows only the friendly label.
+Group keys are real canonical formula references in `#<contextName>.<treePath>` form (e.g. `#actor.saves.all`, `#actor.skills.dex`) — the exact same `#context.path` syntax used for every other formula/branch-target reference in the system (see `resolveChangeKey.mts`'s `$conditional()` branch targets). `registerChangeTargetGroup()` auto-derives the key from the group's `contextName` and `treePath`; nothing hand-authors a flat string. Because it's real formula syntax, it needs no special-casing anywhere in the Formula Familiar pipeline — the Formula Familiar picker still shows only the friendly label, same as any other field.
 
 ### AE Apply Integration
 
@@ -419,7 +419,7 @@ The FF context builder (§7.3) already walks schemas to discover `friendlyName �
 for (const [key, group] of changeTargetGroups) {
   familiarContext.addEntry({
     label: game.i18n.localize(group.label),
-    path: key,                // the group key, e.g. "group:allSaves"
+    path: key,                // the group key, e.g. "#actor.saves.all"
     category: group.category, // groups under this heading
     isGroup: true,            // visual hint in picker (e.g., italic or icon)
   });
@@ -434,17 +434,17 @@ Registered by later phases as their data models land:
 
 | Registering Phase | Group Key | Label | Expands To |
 |-------------------|-----------|-------|------------|
-| Phase 9 | `group:allSaves` | "All Saving Throws" | `system.saves.fort`, `.reflex`, `.will` |
-| Phase 9 | `group:allSkills` | "All Skills" | Every `system.skills.<key>.value` |
-| Phase 9 | `group:strSkills` | "Strength Skills" | Skills keyed to Str |
-| Phase 9 | `group:dexSkills` | "Dexterity Skills" | Skills keyed to Dex |
-| Phase 9 | `group:intSkills` | "Intelligence Skills" | Skills keyed to Int |
-| Phase 9 | `group:wisSkills` | "Wisdom Skills" | Skills keyed to Wis |
-| Phase 9 | `group:chaSkills` | "Charisma Skills" | Skills keyed to Cha |
+| Phase 9 | `#actor.saves.all` | "All Saving Throws" | `system.saves.fort`, `.reflex`, `.will` |
+| Phase 9 | `#actor.skills.all` | "All Skills" | Every `system.skills.<key>.value` |
+| Phase 9 | `#actor.skills.str` | "Strength Skills" | Skills keyed to Str |
+| Phase 9 | `#actor.skills.dex` | "Dexterity Skills" | Skills keyed to Dex |
+| Phase 9 | `#actor.skills.int` | "Intelligence Skills" | Skills keyed to Int |
+| Phase 9 | `#actor.skills.wis` | "Wisdom Skills" | Skills keyed to Wis |
+| Phase 9 | `#actor.skills.cha` | "Charisma Skills" | Skills keyed to Cha |
 
-Additional groups (e.g., `group:allAC`, `group:allSpeeds`) can be registered by later phases without modifying core infrastructure.
+Additional groups (e.g., `#actor.ac.all`, `#actor.speeds.all`) can be registered by later phases without modifying core infrastructure.
 
-> **Proof-of-concept recommendation**: Start with `group:allSaves` (3 fields, 1 group, trivial `expand()` function). Add skills groups immediately after in the same phase.
+> **Proof-of-concept recommendation**: Start with `#actor.saves.all` (3 fields, 1 group, trivial `expand()` function). Add skills groups immediately after in the same phase.
 
 ### What This Replaces
 
@@ -456,7 +456,7 @@ This system is orthogonal to field permission metadata for schema field groups o
 
 ### Relationship to AE Change Conditional Gate (§7.7a)
 
-Also orthogonal, and easy to conflate since both live on the `changes` array. Group Change Targets expand a change's **key** (one change → many field paths, all values identical). The conditional gate (§7.7a) decides whether a change **applies at all** (one change → applied or entirely skipped). A single change entry can use both: a `group:allSaves` key with a `condition` formula that must be true for the whole group to apply.
+Also orthogonal, and easy to conflate since both live on the `changes` array. Group Change Targets expand a change's **key** (one change → many field paths, all values identical). The conditional gate (§7.7a) decides whether a change **applies at all** (one change → applied or entirely skipped). A single change entry can use both: a `#actor.saves.all` key with a `condition` formula that must be true for the whole group to apply.
 
 ## 7.7a AE Change Conditional Gate (Story B)
 
@@ -553,7 +553,7 @@ No new component. The Condition column is a plain `FormulaFormGroup` with `expec
 - `AspectPicker.vue`: a stored key that becomes unresolvable after switching Target (a raw path with no `#` token) previously produced **zero** validation errors — `validateFormula()` only inspects `#context.property` tokens, so an orphaned raw path silently looked valid. Now detected explicitly and surfaced via `has-error` styling + hint text (reusing `dnd35e.Formula.Errors.propertyNotFound`), matching the "leave the raw value in place, flag it as an error" reset behavior (never silently clear or destroy the stored key on a Target switch).
 - `custom` (`CONST.ACTIVE_EFFECT_CHANGE_TYPES.CUSTOM`) removed entirely from the system's own `EFFECT_CHANGE_TYPE` constant (`constants.mts`) — Foundry core still enumerates it via `ActiveEffect.CHANGE_TYPES`, so the Type dropdown filters it out by its literal `'custom'` key, same pattern as the `mask` exclusion.
 - Bonus Type dropdown: removed the redundant separate "Untyped" option — the empty/`null` selection already **is** untyped (`stacking.mts` normalizes `undefined`/`null` → `BONUS_TYPE_UNTYPED` at grouping time), so the two options were functionally identical. The empty option is now labeled "Untyped" directly; `BONUS_TYPE_UNTYPED` is filtered out of the separately-listed `bonusTypeOptions`.
-- `EffectsListSection`/`EffectChangeRow`: `group:allSaves` (and other Group Change Target keys) now resolve to their registered label ("All Saves") instead of a raw/humanized key string, via a new `getChangeTargetGroupLabel()` export on `changeTargetGroups.mts`.
+- `EffectsListSection`/`EffectChangeRow`: `#actor.saves.all` (and other Group Change Target keys) now resolve to their registered label ("All Saves") instead of a raw/humanized key string, via a new `getChangeTargetGroupLabel()` export on `changeTargetGroups.mts`.
 - `EFFECT_TYPES.general` localization key fixed from the invalid `'Document.ActiveEffect'` to Foundry core's actual `'DOCUMENT.ActiveEffect'` — was displaying the raw untranslated key ("Document.ActiveEffect") instead of "Active Effect" in category labels.
 - `stacking.mts`'s rejection-reason messages (`LowerBonus`/`LessSeverePenalty`/`ZeroValue`) were silently crashing real gameplay (`Cannot read properties of undefined (reading 'translations')`) because `game.i18n.localize`/`format` were referenced as detached function values (losing their `this` binding) instead of called as methods — fixed to call through `game.i18n.` directly.
 
@@ -757,7 +757,7 @@ The FormulaFamiliar core plumbing shipped ahead of this phase, landing alongside
 - **`condition` type placeholder** — `EffectChangeSourceDnd35e.condition` (`ActiveEffectSystemData.mts`) already typed as `string | null | ((target) => boolean)`, ready for Story B to wire up
 - **Boolean Formula Type (Story A, §7.2a)** — schema walker `BooleanField → 'boolean'` branch, `FieldAspect.type`/`FormulaFieldMeta.aspectType` widened, `FormulaData`/`FormulaField` `expectedType` includes `'boolean'`, `evaluateBooleanExpression()` implemented **including arithmetic operands** (`+ - * /`, unary minus, standard precedence — see §7.2a), `FormulaData._finalizeResolvedValue()` branches on `'boolean'`. All tests passing (`tests/unit/familiar/evaluate-boolean-expression.test.mts`).
 - **AE Change Conditional Gate — schema & logic (Story B, §7.7a)** — `condition` field added to `ActiveEffectSystemModel.defineSchema()`'s `changes` schema; `evaluateChangeCondition()` implemented (string-form only via `FormulaData.resolveSource()`) and wired into `ActorDnd35e.applyActiveEffects()`'s three gathering loops and `ItemDnd35e.applyActiveEffects()`. All five test cases passing (`tests/unit/effects/evaluate-change-condition.test.mts`). A function-form condition type was briefly supported for live-computed changes with no backing AE document, but was removed — conditions are persisted to the database, so a function could never round-trip through it. **UI is not done** — see §7.7b checklist below.
-- **Bug fixes (§7.7b)** — removed the unused `changeTypes.familiar` placeholder (registration, constant, type augmentation, localization key); `AspectPicker.vue` now surfaces a validation error when a stored key becomes unresolvable after a Target switch instead of silently looking valid; `custom` removed entirely from `EFFECT_CHANGE_TYPE`; Bonus Type dropdown's redundant "Untyped"/"None" duplicate options collapsed into one; `group:allSaves` label resolution fixed in the read-only Effects list; `DOCUMENT.ActiveEffect` localization key typo fixed; unbound `game.i18n.localize`/`format` crash in stacking rejection messages fixed.
+- **Bug fixes (§7.7b)** — removed the unused `changeTypes.familiar` placeholder (registration, constant, type augmentation, localization key); `AspectPicker.vue` now surfaces a validation error when a stored key becomes unresolvable after a Target switch instead of silently looking valid; `custom` removed entirely from `EFFECT_CHANGE_TYPE`; Bonus Type dropdown's redundant "Untyped"/"None" duplicate options collapsed into one; `#actor.saves.all` label resolution fixed in the read-only Effects list; `DOCUMENT.ActiveEffect` localization key typo fixed; unbound `game.i18n.localize`/`format` crash in stacking rejection messages fixed.
 
 ### ❌ Not Started
 

@@ -1,8 +1,10 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import { canUserSeeActorName } from '@documents/token/logic/tokenNameVisibility.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
-import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
+import type { FamiliarSchema, PreferredContextAlias } from '@helpers/formulae/types.mjs';
 import { buildDocumentDataMap } from '@helpers/formulae/utils.mjs';
+import type { RollModifier } from '@source/dice/index.mjs';
+import { buildSituationalModifierEntry } from '@source/dice/index.mjs';
 import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
 import type { ComputedRef, WritableComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -57,7 +59,10 @@ function useRollDefenseDialogStore(
       // Keeps `app.baseTotal`/`app.total` live as the check mode changes (mirrors Wield Mode's
       // same pattern in WeaponAttackRollDialogStore). 'noCheck' has no meaningful AC — the
       // preview box hides itself instead of reading a stale baseTotal (see RollDefenseDialog.vue).
-      if (value !== 'noCheck') context.data.baseTotal = context.data.baseTotalByMode[value];
+      if (value !== 'noCheck') {
+        context.data.baseTotal = context.data.baseTotalByMode[value];
+        context.data.baseModifierList = context.data.baseModifierListByMode[value];
+      }
     },
   });
 
@@ -75,10 +80,12 @@ function useRollDefenseDialogStore(
     }),
   };
 
-  // No preferred-alias override yet (see RollDefenseDialogData.situationalModifier's doc) —
-  // `self` stays the autocomplete's default term until that Story E task lands.
+  // Situational Bonus / Concealment fields' preferred term is `defender` (poc.10 Story E's
+  // FormulaFamiliar context aliasing) — `self` here is the defender being attacked; `self`
+  // still resolves as a fallback via `buildDocumentFamiliar`'s always-present literal key.
+  const defenderSelfAlias: PreferredContextAlias = { term: 'defender', label: game.i18n.localize('dnd35e.Formula.Context.Defender') };
   const documentDataMap = computed(() => buildDocumentDataMap(context.data.actor, { attacker: context.data.attacker }));
-  const formulaContexts = computed<FamiliarSchema>(() => FormulaData.buildFamiliarSchema(documentDataMap.value));
+  const formulaContexts = computed<FamiliarSchema>(() => FormulaData.buildFamiliarSchema(documentDataMap.value, [], defenderSelfAlias));
 
   base.actions.registerTotalModifier({
     value: computed(() => combatModifierSum.value),
@@ -89,19 +96,29 @@ function useRollDefenseDialogStore(
     formula: computed(() => `${coverValue.value}`),
   });
   base.actions.registerTotalModifier({
-    value: computed(() => resolveFormulaNumber(context.data.situationalModifier, documentDataMap.value)),
-    formula: computed(() => resolveFormulaString(context.data.situationalModifier, documentDataMap.value)),
+    value: computed(() => resolveFormulaNumber(context.data.situationalModifier, documentDataMap.value, defenderSelfAlias)),
+    formula: computed(() => resolveFormulaString(context.data.situationalModifier, documentDataMap.value, defenderSelfAlias)),
   });
+  base.actions.registerModifierListEntries(computed<RollModifier[]>(() => context.data.combatModifierToggles
+    .filter((mod) => mod.checked && mod.value !== 0)
+    .map((mod) => ({ label: mod.label, value: mod.value }))));
+  base.actions.registerModifierListEntries(computed<RollModifier[]>(() => (coverValue.value !== 0
+    ? [{ label: game.i18n.localize('dnd35e.COMBAT.Covered.Label'), value: coverValue.value }]
+    : [])));
+  base.actions.registerModifierListEntries(computed<RollModifier[]>(() => buildSituationalModifierEntry(
+    resolveFormulaString(context.data.situationalModifier, documentDataMap.value, defenderSelfAlias),
+    game.i18n.localize('dnd35e.ROLL.SituationalModifier')
+  )));
 
   const rollAction = (): void => {
     const applyHalfDamage = context.data.combatModifierToggles.find((mod) => mod.id === 'applyHalfDamage')?.checked ?? false;
     const ignoreCriticalHit = context.data.combatModifierToggles.find((mod) => mod.id === 'ignoreCriticalHit')?.checked ?? false;
     context.resolve({
       checkMode: context.data.checkMode,
-      concealment: resolveFormulaNumber(context.data.concealment, documentDataMap.value),
+      concealment: resolveFormulaNumber(context.data.concealment, documentDataMap.value, defenderSelfAlias),
       covered: context.data.covered,
       combatModifiers: context.data.combatModifierToggles,
-      situationalModifier: resolveFormulaString(context.data.situationalModifier, documentDataMap.value),
+      situationalModifier: resolveFormulaString(context.data.situationalModifier, documentDataMap.value, defenderSelfAlias),
       rollMode: context.data.rollMode,
       applyHalfDamage,
       ignoreCriticalHit,

@@ -21,7 +21,8 @@
         :data-action-id="action.actionId"
         :data-enabled="action.enabled"
       >
-        <span><img :src="action.img" alt="">{{ action.label }}</span>
+        <img :src="action.img" alt="">
+        <span>{{ action.label }}</span>
       </a>
     </div>
 
@@ -81,6 +82,12 @@
     .palette.palette-list {
       top: 100%;
       transform: unset;
+      width: max-content;
+
+      .palette-list-entry {
+        display: inline-flex;
+        gap: 4px;
+      }
     }
   
     .palette-list-empty {

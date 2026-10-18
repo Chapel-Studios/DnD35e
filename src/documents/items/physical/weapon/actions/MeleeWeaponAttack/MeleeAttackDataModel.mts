@@ -7,6 +7,7 @@ import type { ActionResult } from '@items/baseItem/actions/types.mjs';
 
 import type { WeaponAttackActionResult } from '../WeaponAttack/types.mjs';
 import type { UseWeaponAttackContext } from '../WeaponAttack/types.mjs';
+import type { FormulaContext } from '../WeaponAttack/WeaponAttackDataModel.mjs';
 import { WeaponAttackDataModel } from '../WeaponAttack/WeaponAttackDataModel.mjs';
 import { MELEE_WEAPON_PROPERTIES, MELEE_WEAPON_PROPERTY, type MeleeWeaponProperty } from './constants.mjs';
 import type { MeleeAttackSourceData } from './MeleeAttackSourceData.mjs';
@@ -76,6 +77,11 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
     if (superResult.cancelled) return superResult;
 
     return superResult;
+  }
+
+  // Melee always adds the wield-mode STR term to damage — no property opt-in needed.
+  protected override _includeAttackAbilityTerms(context: UseWeaponAttackContext, formulaContext: FormulaContext): string {
+    return this._resolveAttackAbilityTerm(context, formulaContext);
   }
 
   /**

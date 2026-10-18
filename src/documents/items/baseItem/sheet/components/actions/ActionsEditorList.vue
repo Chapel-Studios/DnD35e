@@ -1,5 +1,9 @@
 <template>
   <div>
+    <div class="actions-list-header">
+      <label>{{ localize('dnd35e.WEAPON.ACTIONS.TabLabel') }}</label>
+      <FieldControls field-path="system.actions" />
+    </div>
     <p v-if="!topLevelActions.length" class="actions-empty">{{ localize('dnd35e.WEAPON.ACTIONS.Empty') }}</p>
     <ul v-else class="action-accordion-list">
       <ActionAccordionRow
@@ -15,6 +19,7 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { WeaponStore } from '@items/physical/weapon/index.mjs';
+  import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
   import { inject } from 'vue';
 
   import ActionAccordionRow from './ActionAccordionRow.vue';
@@ -30,6 +35,13 @@
   .actions-empty {
     font-style: italic;
     color: var(--color-text-muted, #888);
+  }
+
+  .actions-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
   }
 
   .action-accordion-list {

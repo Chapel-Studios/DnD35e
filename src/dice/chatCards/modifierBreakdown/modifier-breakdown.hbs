@@ -5,9 +5,15 @@
 --}}
 <ul class="modifier-breakdown">
   {{#each modifiers}}
-  <li class="modifier-row">
-    <span class="modifier-label">{{this.label}}</span>
-    <span class="modifier-value">{{this.signed}}</span>
+  <li class="modifier-row{{#if this.isIgnored}} is-ignored{{/if}}">
+    <div class="modifier-row-main">
+      <span class="modifier-label">
+        {{this.label}}
+        {{#if this.bonusTypeLabel}}<span class="modifier-bonus-type">[{{this.bonusTypeLabel}}]</span>{{/if}}
+      </span>
+      <span class="modifier-value">{{this.signed}}</span>
+    </div>
+    {{#if this.isIgnored}}<div class="modifier-ignored-reason">{{this.ignoredReason}}</div>{{/if}}
   </li>
   {{/each}}
 </ul>

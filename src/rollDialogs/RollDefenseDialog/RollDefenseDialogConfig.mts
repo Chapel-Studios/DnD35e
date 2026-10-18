@@ -22,7 +22,7 @@ class RollDefenseDialogConfig extends useRollDialogConfigBase<RollDefenseDialogD
         ROLL_DEFENSE_DIALOG_CLASS,
       ],
       position: {
-        width: 460,
+        width: 666,
         height: 'auto',
       },
     },

@@ -1,6 +1,9 @@
 # Node dependencies
 node_modules/
 
+# Scratch / debug logs (console dumps, ad-hoc test output)
+tmp/
+
 # TypeScript build artifacts
 dist/
 out/

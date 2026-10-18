@@ -9,10 +9,13 @@
       />
     </template>
 
-    <div v-if="checkMode !== 'noCheck'" class="ac-box full">
+    <div class="ac-box subgrid">
       <div class="bonus-row">
         <span class="label">{{ acLabel }}</span>
-        <span class="value">{{ acTotal }}</span>
+        <span class="value">
+          {{ displayTotal }}
+          <RollModifierTooltip :modifiers="acModifierList" />
+        </span>
       </div>
     </div>
 
@@ -68,15 +71,24 @@
 <script setup lang="ts">
   import type { SelectOption } from '@vc/fields/index.mjs';
   import MultiOptionToggle from '@vc/fields/MultiOptionToggle.vue';
-  import { inject } from 'vue';
+  import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
+  import { computed, provide } from 'vue';
 
   import ActorRollHeader from '../RollDialog/ActorRollHeader.vue';
   import RollDialog from '../RollDialog/RollDialog.vue';
   import RollDialogFormulaField from '../RollDialog/RollDialogFormulaField.vue';
   import { RollDialogStoreSymbol } from '../RollDialog/RollDialogStore.mjs';
-  import type { RollDefenseDialogStore } from './RollDefenseDialogStore.mjs';
-  import type { CheckMode, CoveredState } from './types.mjs';
+  import RollModifierTooltip from '../RollDialog/RollModifierTooltip.vue';
+  import { useRollDefenseDialogStore } from './RollDefenseDialogStore.mjs';
+  import type { CheckMode, CoveredState, RollDefenseDialogData, RollDefenseDialogResult } from './types.mjs';
 
+  const props = defineProps<{
+    context: VueDialogContext<RollDefenseDialogData, RollDefenseDialogResult>;
+  }>();
+
+  const store = useRollDefenseDialogStore(props.context);
+  provide(RollDialogStoreSymbol, store);
+  
   const {
     attacker: {
       image: attackerImage,
@@ -95,8 +107,11 @@
     app: {
       baseLabel: acLabel,
       total: acTotal,
+      modifierList: acModifierList,
     },
-  } = inject(RollDialogStoreSymbol) as RollDefenseDialogStore;
+  } = store;
+
+  const displayTotal = computed(() => checkMode.value !== 'noCheck' ? acTotal.value - 10 : acTotal.value);
 
   const coveredOptions: SelectOption<CoveredState>[] = [
     { label: 'dnd35e.COMBAT.Covered.none', value: 'none' },
@@ -121,6 +136,10 @@
 </script>
 
 <style scoped lang="scss">
+  :global(.roll-defense-roll-dialog .d20-roll-dialog .options) {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .full {
     grid-column: span 2;
   }

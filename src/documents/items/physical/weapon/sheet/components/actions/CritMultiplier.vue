@@ -6,7 +6,6 @@
     :max="10"
     :field-path="getFieldPath('critMultiplier')"
     :on-update="(v) => updateActionField('critMultiplier', v)"
-    hide-field-controls
   />
 </template>
 

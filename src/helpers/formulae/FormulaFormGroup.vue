@@ -45,10 +45,15 @@
           FormGroup's #controls slot) so it stays visible regardless of
           `hideFieldControls`/`hideLabel`/hint visibility — those compact
           inline usages (e.g. the AE Changes table row) still need the
-          advanced editor affordance.
+          advanced editor affordance. Same rationale for `overrideFieldPath`'s
+          `HasActiveEffectsNotification` sparkle — consumers that hide
+          FormGroup's own `FieldControls` (which normally carries the
+          sparkle) still need the effect-attribution tooltip to be reachable.
         -->
-        <template v-if="!props.hideAdvancedEditor && isEditable" #decoration>
+        <template v-if="(!props.hideAdvancedEditor && isEditable) || props.overrideFieldPath" #decoration>
+          <HasActiveEffectsNotification v-if="props.overrideFieldPath" :field-path="props.overrideFieldPath" />
           <button
+            v-if="!props.hideAdvancedEditor && isEditable"
             type="button"
             class="field-control-btn"
             :aria-label="advancedEditorLabel"
@@ -65,7 +70,7 @@
   <FormulaMultilineModal
     v-if="!props.hideAdvancedEditor"
     :open="isModalOpen"
-    :formula="effectiveFormula"
+    :formula="displayFormula"
     :contexts="contexts"
     :expected-type="resolvedExpectedType"
     :label="props.label"
@@ -83,6 +88,7 @@
   import { RenderModeStoreSymbol } from '@documents/document/sheet/stores/RenderModeStore.mjs';
   import FamiliarOverlayInput from '@vc/fields/formGroups/FamiliarOverlayInput.vue';
   import FormGroup from '@vc/fields/formGroups/FormGroup.vue';
+  import HasActiveEffectsNotification from '@vc/fields/formGroups/HasActiveEffectsNotification.vue';
   import type { PropType } from 'vue';
   import { computed, inject, ref, useAttrs, useSlots, watch } from 'vue';
 
@@ -90,7 +96,7 @@
   import { FormulaField } from './FormulaField.mjs';
   import FormulaMultilineModal from './FormulaMultilineModal.vue';
   import { FormulaResolver } from './FormulaResolver.mjs';
-  import type { FamiliarSchema } from './types.mts';
+  import type { FamiliarSchema, FormulaExpectedType } from './types.mts';
   import { useFormulaEditor } from './useFormulaEditor.mjs';
   import { renderFormulaDisplayHTML } from './utils.mjs';
 
@@ -111,6 +117,13 @@
     isDmOnly: { type: Boolean, default: false },
     /** Formula string (legacy). When formulaData is provided, this is ignored. */
     value: { type: String, default: '' },
+    /**
+     * True authored (pre-AE, `_source`) formula text. When provided, edit mode shows and
+     * edits this instead of `value`/`formulaData.formula` (which may be the AE-merged
+     * prepared value) — mirrors the sourceValue/editValue pattern used by other FormGroups.
+     * Play/true mode and the readonly slot always show the effective value regardless.
+     */
+    sourceValue: { type: String, default: undefined },
     onUpdate: { type: Function as PropType<(value: string) => void>, default: undefined },
     disabled: { type: Boolean, default: false },
     /** Explicit familiar contexts. When omitted, auto-derived from the store's document. */
@@ -120,6 +133,14 @@
     defaultEditability: { type: String as PropType<'normal' | 'gmOnly'>, default: undefined },
     hideFieldControls: { type: Boolean, default: false },
     hideLabel: { type: Boolean, default: false },
+    /**
+     * Index-based field path (e.g. `system.actions.0.attackFormula.formula`) used to look
+     * up `effectOverrides` AE-attribution history for the sparkle tooltip — distinct from
+     * `fieldPath` (which may be `_id`-based and is only used for reads/writes/permissions).
+     * When provided, renders `HasActiveEffectsNotification` in the decoration slot so it
+     * stays visible even when `hideFieldControls` suppresses `FormGroup`'s own copy.
+     */
+    overrideFieldPath: { type: String, default: undefined },
     /** FormulaData instance for formula/unidentified formula access. */
     formulaData: { type: Object as PropType<FormulaData | null>, default: undefined },
     /** Whether to focus the input on mount. Used by the name field to focus on edit. */
@@ -129,7 +150,7 @@
      * needed for fields whose schema type isn't a FormulaField (e.g. a plain StringField
      * that is always semantically boolean, such as an AE change's `condition`).
      */
-    expectedType: { type: String as PropType<'string' | 'number' | 'boolean'>, default: undefined },
+    expectedType: { type: String as PropType<FormulaExpectedType>, default: undefined },
     /**
      * Suppress the auto-generated "Available Contexts: [...]" hint text.
      * Used when a consumer renders that hint itself once, shared across
@@ -162,6 +183,14 @@
     return props.value || '';
   });
 
+  // Formula actually shown/edited in the input+modal: edit mode shows the true authored
+  // source text (when the caller provided one) instead of the AE-merged effective value;
+  // play/true mode always shows the effective value (see `readonlyDisplayHtml`).
+  const displayFormula = computed(() => {
+    if (isEditMode.value && props.sourceValue !== undefined) return props.sourceValue;
+    return effectiveFormula.value;
+  });
+
   // Resolve the FormulaField schema entry for this field path to read excludedFields
   const formulaField = computed((): FormulaField | undefined => {
     return sheetStore?._storeUtils?.getSchemaField?.(props.fieldPath) as FormulaField | undefined;
@@ -169,7 +198,7 @@
 
   // Expected type — explicit prop override > FormulaData > the schema's FormulaField,
   // used for type-mismatch validation
-  const resolvedExpectedType = computed((): 'string' | 'number' | 'boolean' | undefined => {
+  const resolvedExpectedType = computed((): FormulaExpectedType | undefined => {
     return props.expectedType ?? props.formulaData?.expectedType ?? formulaField.value?.expectedType;
   });
 
@@ -279,7 +308,7 @@
     onFamiliarSelect,
   } = useFormulaEditor({
     contexts,
-    currentValue: effectiveFormula,
+    currentValue: displayFormula,
     getInputElement,
     getHighlightElement,
     getDropdownMenuElement,

@@ -1,0 +1,82 @@
+{
+  "name": "Lance",
+  "type": "weapon",
+  "_id": "B1DDUOzVyjPJDOKi",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Lance",
+      "expectedType": "string",
+      "resolvedValue": "Lance"
+    },
+    "description": "",
+    "isPsionic": false,
+    "isEpic": false,
+    "hp": {
+      "current": 0,
+      "max": 0
+    },
+    "hardness": 0,
+    "quantity": 1,
+    "weight": 10,
+    "isCarried": true,
+    "size": "medium",
+    "price": {
+      "stacks": [
+        {
+          "coinId": "srd_gp",
+          "count": 10
+        }
+      ],
+      "srdEquivalent": 10
+    },
+    "equippedSlotIds": [],
+    "isMelded": false,
+    "designedForSize": "medium",
+    "isWeightlessWhenEquipped": false,
+    "isBaseWeaponType": true,
+    "weaponType": "martial",
+    "weaponSubtype": "twoHanded",
+    "weaponBaseType": "lance",
+    "actions": [
+      {
+        "_id": "ZLSKVpOGeJg956rc",
+        "type": "melee_weapon_attack",
+        "damageFormula": {
+          "formula": "$scaleDamage(1d8)",
+          "expectedType": "rollFormula",
+          "resolvedValue": null
+        },
+        "damageType": "dnd35e.DAMAGE_TYPES.Piercing",
+        "critRange": 20,
+        "critMultiplier": 3,
+        "properties": [
+          "reach"
+        ],
+        "reachLength": 2
+      }
+    ]
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1791785607629,
+    "modifiedTime": 1791785607629,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!B1DDUOzVyjPJDOKi"
+}

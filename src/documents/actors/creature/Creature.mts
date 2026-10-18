@@ -17,14 +17,13 @@ import {
   FINAL_EFFECT_CHANGE_PHASE,
   POST_EFFECT_CHANGE_PHASE,
 } from '@effects/baseActiveEffect/data/index.mjs';
-import { parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
 import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import { resolveActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import type { ActionResult } from '@items/baseItem/actions/types.mjs';
 import { WeaponAttackDataModel } from '@items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
 import type { RollModifier } from '@source/dice/index.mjs';
-import { buildD20Formula, buildInitiativeCard, buildSaveCard, D20Roll, extractFlatModifier } from '@source/dice/index.mjs';
+import { buildD20Formula, buildInitiativeCard, buildOverridesModifierList, buildSaveCard, D20Roll, extractFlatModifier } from '@source/dice/index.mjs';
 import { InitiativeRollDialogConfig } from '@source/rollDialogs/InitiativeRollDialog/InitiativeRollDialogConfig.mjs';
 import { SavingThrowRollDialogConfig } from '@source/rollDialogs/SavingThrowRollDialog/SavingThrowRollDialogConfig.mjs';
 
@@ -101,11 +100,18 @@ abstract class Creature extends ActorDnd35e {
     // whose value now matches the CONFIG.ChatMessage.modes keys used by the roll dialog.
     let rollMode = options.rollMode ?? game.settings.get('core', 'messageMode');
 
+    // Same per-effect stacking breakdown `HasActiveEffectsNotification` shows on the sheet
+    // (`effectOverrides`, filtered to applied entries) instead of one lumped save-total entry.
+    // Computed pre-dialog so the dialog itself can disclose it via `RollModifierTooltip`
+    // (poc.10 Story D follow-up), then reused as-is for the chat card below.
+    const baseModifierList = buildOverridesModifierList(actor, `system.saves.${saveKey}`, saveLabel, saveTotal);
+
     if (!options.skipDialog) {
       const result = await SavingThrowRollDialogConfig.roll({
         title: game.i18n.format('dnd35e.ROLL.RollSaveTitle', { save: saveLabel }),
         baseLabel: saveLabel,
         baseTotal: saveTotal,
+        baseModifierList,
         situationalModifier,
         rollMode,
         actor,
@@ -115,13 +121,7 @@ abstract class Creature extends ActorDnd35e {
       rollMode = result.rollMode;
     }
 
-    // Same per-effect stacking breakdown `HasActiveEffectsNotification` shows on the sheet
-    // (`effectOverrides`, filtered to applied entries) instead of one lumped save-total entry.
-    const appliedSaveOverrides = (this.effectOverrides[`system.saves.${saveKey}`] ?? [])
-      .filter((override) => override.stackResult !== STACK_RESULT_IGNORED);
-    const modifierList: RollModifier[] = appliedSaveOverrides.length > 0
-      ? appliedSaveOverrides.map((override) => ({ label: override.effectName, value: parseNumericChangeValue(override.value) }))
-      : [{ label: saveLabel, value: saveTotal }];
+    const modifierList: RollModifier[] = [...baseModifierList];
     // Dice/complex situational terms are folded straight into the roll formula below —
     // flavor-tagged as "Situational Modifier" so their own die group is unambiguous in the
     // tooltip (see `buildD20Formula`); their flat portion (if any) still gets its own line here.
@@ -188,11 +188,17 @@ abstract class Creature extends ActorDnd35e {
     let situationalModifier = String(options.situationalModifier ?? 0);
     let rollMode = options.rollMode ?? game.settings.get('core', 'messageMode');
 
+    // Same per-effect stacking breakdown `rollSave()` shows (`_buildCombatStateChanges()`
+    // contributes the Dex mod as a hidden-from-tab AE change) instead of one lumped total.
+    // Computed pre-dialog so the dialog itself can disclose it via `RollModifierTooltip`.
+    const baseModifierList = buildOverridesModifierList(actor, 'system.init', initiativeLabel, initTotal);
+
     if (!options.skipDialog) {
       const result = await InitiativeRollDialogConfig.roll({
         title: game.i18n.localize('dnd35e.ROLL.RollInitiativeTitle' ),
         baseLabel: initiativeLabel,
         baseTotal: initTotal,
+        baseModifierList,
         situationalModifier,
         rollMode,
         actor,
@@ -202,13 +208,7 @@ abstract class Creature extends ActorDnd35e {
       rollMode = result.rollMode;
     }
 
-    // Same per-effect stacking breakdown `rollSave()` shows (`_buildCombatStateChanges()`
-    // contributes the Dex mod as a hidden-from-tab AE change) instead of one lumped total.
-    const appliedInitOverrides = (this.effectOverrides['system.init'] ?? [])
-      .filter((override) => override.stackResult !== STACK_RESULT_IGNORED);
-    const modifierList: RollModifier[] = appliedInitOverrides.length > 0
-      ? appliedInitOverrides.map((override) => ({ label: override.effectName, value: parseNumericChangeValue(override.value) }))
-      : [{ label: initiativeLabel, value: initTotal }];
+    const modifierList: RollModifier[] = [...baseModifierList];
     // Dice/complex situational terms are folded straight into the roll formula below —
     // flavor-tagged as "Situational Modifier" so their own die group is unambiguous in the
     // tooltip (see `buildD20Formula`); their flat portion (if any) still gets its own line here.

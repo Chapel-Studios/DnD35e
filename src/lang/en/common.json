@@ -102,7 +102,9 @@
     "Formula": {
       "availableContexts": "Available Contexts",
       "Context": {
-        "Self": "Self"
+        "Self": "Self",
+        "Attacker": "Attacker",
+        "Defender": "Defender"
       },
       "DefaultPlaceholder": "Enter value or formula (e.g. #self.name)",
       "AdvancedEditor": "Open advanced formula editor",

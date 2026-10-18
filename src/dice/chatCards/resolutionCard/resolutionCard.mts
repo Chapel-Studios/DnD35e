@@ -1,10 +1,12 @@
 /**
  * Resolution chat card (poc.10 Story E, §10.7) — posted once `WeaponAttackDataModel#_continue()`
  * resolves an attack card target row's `'damage'` step: shows final hit/miss (+ confirmed
- * critical, concealment miss note), and on a hit, the rolled damage — already applied to the
- * target's HP as part of posting this card (no separate manual "Apply Damage" step). Carries
- * the one Undo button available for this exchange, reversing the exact HP delta and refunding
- * the attacker's spent action economy.
+ * critical, concealment miss note), and on a hit, the rolled damage — computed but NOT yet
+ * applied to the target's HP. Applying is a separate, explicit step: the GM/owner clicks the
+ * card's own Apply Damage button (`onApplyDamage()`), mirroring the attack card's Apply/Reapply
+ * convention, so there's a chance to review the roll before it lands. Carries the one Undo
+ * button available for this exchange, reversing the exact HP delta (once applied) and
+ * refunding the attacker's spent action economy.
  *
  * @module
  */
@@ -24,7 +26,9 @@ import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { CheckMode } from '@source/rollDialogs/RollDefenseDialog/types.mjs';
 
 import type { DamageRoll } from '../../DamageRoll.mjs';
+import type { RollModifier } from '../../types.mjs';
 import { resolveVisibleActorName } from '../attackRollCard/attackRollCard.mjs';
+import { buildDiceRollHtmlWithModifiers, buildRawBreakdownHtml } from '../modifierBreakdown/modifierBreakdown.mjs';
 import type { DefenseEvaluation } from './evaluateDefense.mjs';
 import resolutionCardTemplateSource from './resolution-card.hbs?raw';
 
@@ -32,34 +36,48 @@ const resolutionCardTemplate = Handlebars.compile(resolutionCardTemplateSource, 
 
 /** Data a caller (`WeaponAttackDataModel#continue()`) computes about the resolution — everything `buildResolutionCard()` needs beyond the actor/target themselves. */
 interface ResolutionCardData extends DefenseEvaluation {
-  weaponName: string;
+  attackName: string;
   checkMode: CheckMode;
   damageType: string;
   nonLethal: boolean;
   applyHalfDamage: boolean;
   actionEconomySpent: { standardActionSpent: boolean; hand: WieldedHand; babSpent: number } | null;
+  /** Labeled breakdown (Str modifier, damage situational bonus) for the damage roll's dice tooltip — see `_buildDamageSnapshot()`. Empty on a miss. */
+  damageModifierList: RollModifier[];
 }
 
 /** Persisted in `message.flags.dnd35e.resolutionCard` — everything needed to re-render the card and reverse it on Undo. */
 interface ResolutionCardFlags extends ResolutionCardData {
+  attackerHeaderLabel: string;
   attackerUuid: string;
   attackerTokenUuid: string | null;
+  attackerImage: string;
+  targetHeaderLabel: string;
   targetUuid: string;
   targetTokenUuid: string | null;
+  targetImage: string;
   /** Rolled damage total before any Apply Half Damage halving, for display only — `null` on a miss. */
   damageTotal: number | null;
-  /** Amount actually applied to the target's HP (post-halving) — what Undo reverses. `0` on a miss. */
+  /** Amount to be applied (post-halving) to the target's HP once Apply Damage is clicked — what Undo reverses. `0` on a miss. */
   appliedAmount: number;
+  /** Whether `appliedAmount` has actually been written to the target's HP yet — decouples "damage was rolled" (`damageTotal`/`hasDamage`) from "damage was applied" so the GM/owner can review before committing. */
+  applied: boolean;
   undone: boolean;
 }
 
+// const x: ResolutionCardFlags = {
+//   attacke
+// };
+
 /** Shared by the initial post and the Undo click handler's re-render. */
-function buildResolutionCardContent(flags: ResolutionCardFlags): string {
+function buildResolutionCardContent(flags: ResolutionCardFlags, diceRollHtml: string): string {
   return resolutionCardTemplate({
-    weaponName: flags.weaponName,
+    attackName: flags.attackName,
     attackerUuid: flags.attackerUuid,
+    attackerImage: flags.attackerImage,
     targetUuid: flags.targetUuid,
     targetTokenUuid: flags.targetTokenUuid,
+    targetImage: flags.targetImage,
     attackerHeaderLabel: game.i18n.localize('dnd35e.ROLL.Attacker'),
     targetHeaderLabel: game.i18n.localize('dnd35e.ROLL.Defender'),
     resultLabel: flags.hit ? game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Hit') : game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Miss'),
@@ -68,21 +86,34 @@ function buildResolutionCardContent(flags: ResolutionCardFlags): string {
     criticalHitLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.CriticalHit'),
     concealmentMissed: flags.concealmentMissed,
     concealedLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Concealed'),
+    attackTotal: flags.attackTotal,
+    attackTotalLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.AttackTotal'),
     effectiveAcLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.EffectiveAc'),
     effectiveAc: flags.effectiveAc,
     showEffectiveAc: flags.checkMode !== 'noCheck',
+    acDetailsLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.AcDetails'),
+    acBreakdownHtml: flags.acBreakdown.length > 0
+      ? buildRawBreakdownHtml(flags.acBreakdown)
+      : '',
     hasDamage: flags.damageTotal !== null,
-    damageAppliedLabel: flags.nonLethal
-      ? game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.NonLethalApplied')
-      : game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.DamageApplied'),
+    resultHeaderLabel: flags.applied
+      ? (flags.nonLethal
+        ? game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.NonLethalApplied')
+        : game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.DamageApplied'))
+      : (flags.nonLethal
+        ? game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.NonLethalPending')
+        : game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.DamagePending')),
     appliedAmount: flags.appliedAmount,
     damageTotal: flags.damageTotal,
     showHalved: flags.applyHalfDamage,
     halfDamageLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.HalfDamage'),
+    showApply: flags.hit && flags.damageTotal !== null && !flags.applied,
+    applyDamageLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.ApplyDamage'),
     undoLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Undo'),
     undoneLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Undone'),
-    showUndo: flags.appliedAmount > 0 || flags.actionEconomySpent !== null,
+    showUndo: (flags.applied && flags.appliedAmount > 0) || flags.actionEconomySpent !== null,
     undone: flags.undone,
+    diceRollHtml,
   });
 }
 
@@ -101,30 +132,35 @@ async function buildResolutionCard(
 ): Promise<ChatMessage | undefined> {
   const attackerActor = participantActor(attacker);
   const targetActor = participantActor(target);
-  const attackerTokenUuid = participantToken(attacker)?.document.uuid ?? null;
-  const targetTokenUuid = participantToken(target)?.document.uuid ?? null;
+  const attackerToken = participantToken(attacker);
+  const targetToken = participantToken(target);
+  const attackerTokenUuid = attackerToken?.document.uuid ?? null;
+  const targetTokenUuid = targetToken?.document.uuid ?? null;
 
   let appliedAmount = 0;
   if (data.hit && damageRoll) {
     const rawTotal = damageRoll.total ?? 0;
     appliedAmount = data.applyHalfDamage ? Math.floor(rawTotal / 2) : rawTotal;
-    const adjustmentType = data.nonLethal ? HP_ADJUSTMENT_TYPE.NONLETHAL_ADJUSTMENT : HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT;
-    await targetActor.updateHP(appliedAmount, adjustmentType, { attackerId: attackerActor.id, damageType: data.damageType });
-    await targetActor.events.emit(ActionLifeCycle.dealDamage, { amount: appliedAmount, damageType: data.damageType, target: targetActor });
   }
 
   const flags: ResolutionCardFlags = {
     ...data,
+    attackerHeaderLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Attacker'),
+    targetHeaderLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Target'),
     attackerUuid: attackerActor.uuid,
     attackerTokenUuid,
     targetUuid: targetActor.uuid,
     targetTokenUuid,
+    attackerImage: attackerToken?.document.texture.src ?? attackerActor.img,
+    targetImage: targetToken?.document.texture.src ?? targetActor.img,
     damageTotal: damageRoll ? damageRoll.total ?? 0 : null,
     appliedAmount,
+    applied: false,
     undone: false,
   };
 
-  const content = buildResolutionCardContent(flags);
+  const diceRollHtml = damageRoll ? await buildDiceRollHtmlWithModifiers(damageRoll, data.damageModifierList) : '';
+  const content = buildResolutionCardContent(flags, diceRollHtml);
   const messageData = {
     content,
     speaker: ChatMessage.getSpeaker({ actor: attackerActor }),
@@ -141,6 +177,32 @@ async function buildResolutionCard(
 }
 
 /**
+ * Applies this card's already-computed `appliedAmount` to the target's HP (poc.10 §10.7
+ * follow-up) \u2014 the explicit, GM/owner-triggered counterpart to the old eager-apply behavior.
+ * Guards against double-applying (`flags.applied`) and against a miss/zero-damage card having
+ * nothing to apply. Same rebuild-not-patch convention as `onUndoResolution()`/`onRetarget()`.
+ */
+async function onApplyDamage(message: ChatMessage, flags: ResolutionCardFlags): Promise<void> {
+  if (flags.applied || flags.appliedAmount <= 0) return;
+
+  const target = foundry.utils.fromUuidSync(flags.targetUuid) as ACTORS_DND35E | null;
+  if (!target) return;
+  const attackerActor = foundry.utils.fromUuidSync(flags.attackerUuid) as ACTORS_DND35E | null;
+
+  const adjustmentType = flags.nonLethal ? HP_ADJUSTMENT_TYPE.NONLETHAL_ADJUSTMENT : HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT;
+  await target.updateHP(flags.appliedAmount, adjustmentType, { attackerId: attackerActor?.id, damageType: flags.damageType });
+  await target.events.emit(ActionLifeCycle.dealDamage, { amount: flags.appliedAmount, damageType: flags.damageType, target });
+
+  const updatedFlags: ResolutionCardFlags = { ...flags, applied: true };
+  const roll = message.rolls[0] as DamageRoll | undefined;
+  const diceRollHtml = roll ? await buildDiceRollHtmlWithModifiers(roll, flags.damageModifierList) : '';
+  await message.update({
+    content: buildResolutionCardContent(updatedFlags, diceRollHtml),
+    'flags.dnd35e.resolutionCard': updatedFlags,
+  });
+}
+
+/**
  * Reverses the exact HP delta this card applied (not a restore of an absolute HP snapshot —
  * composes safely even if other damage/healing landed on the target in between), refunds the
  * attacker's spent action economy (if any), emits `undoDealDamage`, and re-renders the card.
@@ -153,7 +215,7 @@ async function onUndoResolution(message: ChatMessage, flags: ResolutionCardFlags
   if (flags.undone) return;
 
   const target = foundry.utils.fromUuidSync(flags.targetUuid) as ACTORS_DND35E | null;
-  if (target && flags.appliedAmount > 0) {
+  if (target && flags.applied && flags.appliedAmount > 0) {
     if (flags.nonLethal) {
       const newNonlethal = Math.max(0, target.system.hp.nonlethal - flags.appliedAmount);
       await target.update({ 'system.hp.nonlethal': newNonlethal });
@@ -176,10 +238,19 @@ async function onUndoResolution(message: ChatMessage, flags: ResolutionCardFlags
   }
 
   const updatedFlags: ResolutionCardFlags = { ...flags, undone: true };
+  const roll = message.rolls[0] as DamageRoll | undefined;
+  const diceRollHtml = roll ? await buildDiceRollHtmlWithModifiers(roll, flags.damageModifierList) : '';
   await message.update({
-    content: buildResolutionCardContent(updatedFlags),
+    content: buildResolutionCardContent(updatedFlags, diceRollHtml),
     'flags.dnd35e.resolutionCard': updatedFlags,
   });
+}
+
+function onExpandAc(html: HTMLElement): void {
+  const acDetails = html.querySelector<HTMLElement>('.ac-breakdown');
+  if (acDetails) {
+    acDetails.classList.toggle('expanded');
+  }
 }
 
 /** Wires the "Undo" button, gated to GM/target-owner — see registerChatCardActions.mts. */
@@ -195,14 +266,29 @@ function wireResolutionCardButton(message: ChatMessage, html: HTMLElement): void
   setName(html.querySelector<HTMLElement>('[data-target-uuid]'), flags.targetUuid, flags.targetTokenUuid);
 
   const undoButton = html.querySelector<HTMLElement>('[data-action="undo-resolution"]');
-  if (!undoButton) return;
-
-  const target = foundry.utils.fromUuidSync(flags.targetUuid) as ActorDnd35e | null;
-  if (!target || !(game.user?.isGM || target.isOwner)) {
-    undoButton.remove();
-    return;
+  if (undoButton) {
+    const target = foundry.utils.fromUuidSync(flags.targetUuid) as ActorDnd35e | null;
+    if (!target || !(game.user?.isGM || target.isOwner)) {
+      undoButton.remove();
+      return;
+    }
+    undoButton.addEventListener('click', () => { void onUndoResolution(message, flags); });
   }
-  undoButton.addEventListener('click', () => { void onUndoResolution(message, flags); });
+
+  const applyButton = html.querySelector<HTMLElement>('[data-action="apply-damage"]');
+  if (applyButton) {
+    const target = foundry.utils.fromUuidSync(flags.targetUuid) as ActorDnd35e | null;
+    if (!target || !(game.user?.isGM || target.isOwner)) {
+      applyButton.remove();
+    } else {
+      applyButton.addEventListener('click', () => { void onApplyDamage(message, flags); });
+    }
+  }
+
+  const expandAcButton = html.querySelector<HTMLElement>('[data-action="expandAc"]');
+  if (expandAcButton) {
+    expandAcButton.addEventListener('click', () => { onExpandAc(html); });
+  }
 }
 
 export { buildResolutionCard, wireResolutionCardButton };

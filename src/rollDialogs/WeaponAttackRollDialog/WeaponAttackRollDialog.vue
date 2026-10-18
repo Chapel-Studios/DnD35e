@@ -13,7 +13,10 @@
       <div class="to-hit-box">
         <div class="bonus-row">
           <span class="label">{{ toHitLabel }}</span>
-          <span class="value">{{ formatBonus(toHitTotal) }}</span>
+          <span class="value">
+            {{ toHitTotalFormula }}
+            <RollModifierTooltip :modifiers="toHitModifierList" />
+          </span>
         </div>
         <RollDialogFormulaField
           id="attack-situational-modifier"
@@ -26,7 +29,10 @@
       <div class="damage-box">
         <div class="bonus-row">
           <span class="label">{{ damageLabel }}</span>
-          <span class="value">{{ formatBonus(damageTotal) }}</span>
+          <span class="value">
+            {{ damageTotalFormula }}
+            <RollModifierTooltip :modifiers="damageModifierList" />
+          </span>
         </div>
         <RollDialogFormulaField
           id="damage-situational-modifier"
@@ -75,6 +81,7 @@
   import RollDialog from '../RollDialog/RollDialog.vue';
   import RollDialogFormulaField from '../RollDialog/RollDialogFormulaField.vue';
   import { formatBonus, RollDialogStoreSymbol } from '../RollDialog/RollDialogStore.mjs';
+  import RollModifierTooltip from '../RollDialog/RollModifierTooltip.vue';
   import type { WeaponAttackRollDialogStore } from './WeaponAttackRollDialogStore.mjs';
 
   const {
@@ -87,8 +94,9 @@
       wieldMode,
       handBab,
       formulaContexts,
-      damageTotal,
+      damageTotalFormula,
       damageLabel,
+      damageModifierList,
     },
     target: {
       image: targetImage,
@@ -96,7 +104,8 @@
     },
     app: {
       baseLabel: toHitLabel,
-      total: toHitTotal,
+      totalFormula: toHitTotalFormula,
+      modifierList: toHitModifierList,
     },
   } = inject(RollDialogStoreSymbol) as WeaponAttackRollDialogStore;
 

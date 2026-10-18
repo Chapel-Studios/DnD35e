@@ -8,6 +8,7 @@
  */
 import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import { participantActor, participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
+import { buildOverridesModifierList } from '@source/dice/index.mjs';
 import type { RollDefenseDialogData } from '@source/rollDialogs/RollDefenseDialog/types.mjs';
 import { COVERED_STATES } from '@source/rollDialogs/RollDefenseDialog/types.mjs';
 import { markRaw } from 'vue';
@@ -22,10 +23,18 @@ function buildRollDefenseDialogData(
   const attackerActor = participantActor(attacker);
   const resolvedAttackerToken = participantToken(attacker) ?? undefined;
 
+  const acLabel = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.armorClass.label');
+  const touchAcLabel = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.touchAC.label');
+  const baseModifierListByMode = {
+    normal: buildOverridesModifierList(targetActor, 'system.defense.armorClass', acLabel, targetActor.system.defense.armorClass),
+    touch: buildOverridesModifierList(targetActor, 'system.defense.touchAC', touchAcLabel, targetActor.system.defense.touchAC),
+  };
+
   return {
     title: game.i18n.localize('dnd35e.COMBAT.RollDefenseTitle'),
-    baseLabel: game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.armorClass.label'),
+    baseLabel: acLabel,
     baseTotal: targetActor.system.defense.armorClass,
+    baseModifierList: baseModifierListByMode.normal,
     rollMode: game.settings.get('core', 'rollMode') as string,
     actor: targetActor,
     attacker: markRaw(attackerActor),
@@ -39,7 +48,9 @@ function buildRollDefenseDialogData(
       normal: targetActor.system.defense.armorClass,
       touch: targetActor.system.defense.touchAC,
     },
+    baseModifierListByMode,
   };
 }
 
 export { buildRollDefenseDialogData };
+

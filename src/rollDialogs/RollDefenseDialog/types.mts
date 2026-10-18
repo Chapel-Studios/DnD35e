@@ -1,5 +1,6 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
+import type { RollModifier } from '@source/dice/index.mjs';
 
 import type { RollDialogData, RollDialogResult } from '../RollDialog/types.mjs';
 import type { CombatModifierToggle } from '../WeaponAttackRollDialog/types.mjs';
@@ -42,16 +43,18 @@ interface RollDefenseDialogData extends RollDialogData {
   /** Covered / Improved Cover 3-way toggle (§10.7). */
   covered: CoveredState;
   /**
-   * Situational Bonus formula field (§10.7) — contexts `defender`/`self` (preferred) and
-   * `attacker`. The preferred-alias labeling enhancement (`buildDocumentDataMap()`'s
-   * caller-supplied alias) is its own separate Story E task — until it lands, the
-   * autocomplete shows the default `self` term instead of `defender`.
+   * Situational Bonus formula field (§10.7) — contexts `defender` (preferred autocomplete
+   * term) and `self`/`attacker`. `self` always resolves too (`buildDocumentFamiliar`'s
+   * literal `self` key never goes away) — `defender` is the caller-supplied preferred
+   * alias set in `RollDefenseDialogStore.mts`.
    */
   situationalModifier: string;
   /** Normal/Touch/No Check 3-way toggle (§10.7). */
   checkMode: CheckMode;
   /** AC preview per check mode — mirrors `WeaponAttackRollDialogData.baseTotalByHand`'s per-option preview shape. `noCheck` has no meaningful AC; the preview box hides itself instead (see `RollDefenseDialog.vue`). */
   baseTotalByMode: Record<Exclude<CheckMode, 'noCheck'>, number>;
+  /** Labeled breakdown of `baseTotalByMode`, per mode — mirrors `RollDialogData.baseModifierList`'s convention, swapped out by `RollDefenseDialogStore`'s checkMode setter alongside `baseTotalByMode`. */
+  baseModifierListByMode: Record<Exclude<CheckMode, 'noCheck'>, RollModifier[]>;
 }
 
 interface RollDefenseDialogResult extends RollDialogResult {

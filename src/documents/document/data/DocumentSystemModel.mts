@@ -59,12 +59,55 @@ abstract class DocumentSystemModel<TDocType extends foundry.abstract.DataModel |
     return schema;
   }
 
+  override prepareBaseData(): void {
+    super.prepareBaseData();
+    const schema = (this.constructor as any).schema?.fields as Record<string, foundry.data.fields.DataField> | undefined;
+    if (!schema) return;
+    this._resetFormulaFields(this as unknown as Record<string, unknown>, schema, (this as unknown as { _source?: Record<string, unknown> })._source ?? {});
+  }
+
   override prepareDerivedData(): void {
     super.prepareDerivedData();
     const doc = this.parent as unknown as DocumentContext;
     const schema = (this.constructor as any).schema?.fields as Record<string, foundry.data.fields.DataField> | undefined;
     if (!schema) return;
     this._evaluateFormulaFields(this as unknown as Record<string, unknown>, schema, doc, 'system');
+  }
+
+  /**
+   * Override point for a system model (e.g. `WeaponSystemModel`) whose own FormulaFields are
+   * targeted by active effect changes that apply in a phase running *after* this document's
+   * `prepareDerivedData()` (e.g. weapon attack actions, whose Group Change Target AE changes
+   * apply in the `'final'` phase — see `changeTargetGroups.mts`). Called from `ItemDnd35e`/
+   * `ActorDnd35e`'s own `prepareDerivedData()` after their FINAL/POST active-effect phases
+   * complete, so resolution sees the fully AE-settled formula. No-op by default.
+   */
+  resolveDeferredFormulaFields(): void {}
+
+  /**
+   * Restore every FormulaField's authored `formula` from `_source` before this cycle's active
+   * effects apply. AE `add`/`subtract` changes target the `.formula` leaf directly (see
+   * `RollFormulaStringField`), so without this reset their deltas would compound onto the previous
+   * cycle's already-applied value every `prepareData()` pass.
+   */
+  protected _resetFormulaFields(
+    model: Record<string, unknown>,
+    fields: Record<string, foundry.data.fields.DataField>,
+    source: Record<string, unknown>
+  ): void {
+    for (const [key, field] of Object.entries(fields)) {
+      const currentValue = model[key] as Record<string, unknown> | undefined;
+      const sourceValue = source?.[key] as Record<string, unknown> | undefined;
+      if (field instanceof FormulaField) {
+        if (currentValue && 'formula' in currentValue && typeof sourceValue?.formula === 'string') {
+          currentValue.formula = sourceValue.formula;
+        }
+        continue;
+      }
+      if (field instanceof SchemaField && currentValue && typeof currentValue === 'object') {
+        this._resetFormulaFields(currentValue, (field.fields as Record<string, foundry.data.fields.DataField> | undefined) ?? {}, sourceValue ?? {});
+      }
+    }
   }
 
   protected _evaluateFormulaFields(

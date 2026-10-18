@@ -111,12 +111,15 @@
     .hp-updater-type {
       grid-column: span 2;
       justify-content: center;
-      gap: 1px;
+      gap: 0.25rem;
       background: none;
+      margin-bottom: 0.125rem;
 
       :deep(.multi-option-toggle__option) {
-        padding: 1px 2px;
+        padding: 3px;
         border-width: 1px;
+        height: max-content;
+        min-height: min-content;
       }
 
       :deep(.multi-option-toggle__option-icon) {

@@ -13,7 +13,7 @@ import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
-import type { DocumentContext } from '@helpers/formulae/index.mjs';
+import type { DocumentContext, FormulaDataSource } from '@helpers/formulae/index.mjs';
 import { FormulaData } from '@helpers/formulae/index.mjs';
 import { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';
 import { ACTION_TYPE } from '@items/baseItem/actions/constants.mjs';
@@ -28,9 +28,13 @@ import {
   appendAttackCardWarnings,
   buildActionChainId,
   buildAttackCard,
+  buildOverridesModifierList,
   buildResolutionCard,
+  buildSituationalModifierEntry,
+  combineDiceFormula,
   D20Roll,
   DamageRoll,
+  extractDiceOnlyFormula,
   extractFlatModifier,
   flavorTerm,
   markTargetRowResolved,
@@ -78,21 +82,21 @@ function appendFormulaTerm(baseFormula: string, term: string): string {
   return `${baseFormula} ${negative ? '-' : '+'} ${unsigned}`;
 }
 
-  interface FormulaContext {
-    actor: ACTORS_DND35E;
-    item: Weapon;
-    thisAttack: WeaponAttackDataModel;
-    target: ACTORS_DND35E | null;
-    // Aliases mirroring the schema fields' own `contexts` declarations (`aliases: ['self']`/
-    // `['item', 'weapon']`) — ad hoc `FormulaData.resolveSource()` calls (e.g. the STR damage
-    // term) build their own context map and need these present under the same names the
-    // formula text actually references (`#self...`), or resolution silently returns `null`.
-    self: ACTORS_DND35E;
-    weapon: Weapon;
-    // Satisfies `FormulaData.resolve()`'s `Record<string, DocumentContext>` param — a named
-    // interface needs its own index signature to be assignable to one, unlike a fresh object literal.
-    [key: string]: DocumentContext;
-  }
+export interface FormulaContext {
+  actor: ACTORS_DND35E;
+  item: Weapon;
+  thisAttack: WeaponAttackDataModel;
+  target: ACTORS_DND35E | null;
+  // Aliases mirroring the schema fields' own `contexts` declarations (`aliases: ['self']`/
+  // `['item', 'weapon']`) — ad hoc `FormulaData.resolveSource()` calls (e.g. the STR damage
+  // term) build their own context map and need these present under the same names the
+  // formula text actually references (`#self...`), or resolution silently returns `null`.
+  self: ACTORS_DND35E;
+  weapon: Weapon;
+  // Satisfies `FormulaData.resolve()`'s `Record<string, DocumentContext>` param — a named
+  // interface needs its own index signature to be assignable to one, unlike a fresh object literal.
+  [key: string]: DocumentContext;
+}
 
 abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionResult> {
   declare attackFormula: FormulaData;
@@ -106,7 +110,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // time (wield mode / Attack Roll Dialog hand select), not authored per-action.
     schema.requiresEquipped = new BooleanField({ required: true, initial: true });
     schema.attackFormula = new FormulaField({
-      expectedType: 'string',
+      expectedType: 'rollFormula',
       contexts: [
         { contextName: 'Actor', resolvePath: 'item.actor', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['self'] },
         { contextName: 'Item', resolvePath: 'item', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['item', 'weapon'] },
@@ -117,7 +121,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       initialFormula: '0',
     });
     schema.damageFormula = new FormulaField({
-      expectedType: 'string',
+      expectedType: 'rollFormula',
       contexts: [
         { contextName: 'Actor', resolvePath: 'item.actor', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['self'] },
         { contextName: 'Item', resolvePath: 'item', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['item', 'weapon'] },
@@ -195,7 +199,10 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     expectedToHitBonus: number,
     expectedDamageBonus: number,
     resolvedName: string | null,
-    baseTotalByHand: Record<WieldedHand, number>
+    baseTotalByHand: Record<WieldedHand, number>,
+    baseModifierListByHand: Record<WieldedHand, RollModifier[]>,
+    damageBaseModifierList: RollModifier[],
+    damageBaseFormula: string
   ): Promise<AttackRollDialogResult | null> {
     const combatModifierToggles = createCombatModifiers(context.actor, targetToken, weaponNonLethalDefault);
     
@@ -207,8 +214,11 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       title,
       baseLabel: rollAttackToHit,
       baseTotal: expectedToHitBonus,
-      damageLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.DamagePreview'),
+      baseModifierList: baseModifierListByHand[context.wieldedHand],
+      damageLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.ExpectedDamage'),
       damageTotal: expectedDamageBonus,
+      damageBaseModifierList,
+      damageBaseFormula,
       attackSituationalModifier: context.attackSituationalModifier ?? '',
       damageSituationalModifier: context.damageSituationalModifier ?? '',
       combatModifierToggles,
@@ -219,6 +229,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       wieldModeFromEquippedSlots: context.wieldedHand,
       handBab: context.handBab,
       baseTotalByHand,
+      baseModifierListByHand,
       // poc.10 Story D: additional FormulaFamiliar contexts (`#item`/`#thisAttack`) for the
       // dialog's situational modifier fields, mirroring `_executeCheck()`'s own `formulaContext`.
       // Documents/DataModels must never be wrapped in Vue's reactive() proxy (see repo memory).
@@ -233,13 +244,14 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
 
   /** Resolves `this.name`'s FormulaFamiliar formula against `formulaContext`, falling back to the item's own name when blank/unresolved. */
   private _resolveAttackName(formulaContext: FormulaContext, item: Weapon): { resolvedName: string | null; attackName: string } {
-    const resolved = this.name.resolve(formulaContext);
+    const resolved = FormulaData.resolveSource(this.name as unknown as FormulaDataSource, formulaContext);
     const resolvedName = typeof resolved === 'string' ? resolved : null;
     return { resolvedName, attackName: resolvedName ?? item.name };
   }
 
   /**
-   * Pre-dialog expected-to-hit bonus (§10.7) — BAB + ability mod + TWF penalty, before any
+   * Pre-dialog expected-to-hit bonus (§10.7) — BAB + ability mod + size mod + TWF penalty +
+   * the weapon's own `attackFormula` flat bonus (e.g. an enhancement AE), before any
    * dialog-side situational modifiers or combat-modifier toggles. Used only to seed the
    * dialog's base-total preview row; the real formula is assembled post-dialog by
    * `_buildAttackFormula()`. `baseTotalByHand` mirrors this same computation for every hand
@@ -247,23 +259,62 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    */
   private _computeExpectedToHitBonus(
     context: UseWeaponAttackContext,
-    item: Weapon
-  ): { abilityMod: number; sizeMod: number; expectedToHitBonus: number; baseTotalByHand: Record<WieldedHand, number> } {
+    item: Weapon,
+    formulaContext: FormulaContext
+  ): {
+    abilityMod: number;
+    sizeMod: number;
+    expectedToHitBonus: number;
+    baseTotalByHand: Record<WieldedHand, number>;
+    baseModifierListByHand: Record<WieldedHand, RollModifier[]>;
+  } {
     const actor = participantActor(context.actor);
     const abilityMod = actor.system.abilities[context.attackAbility].mod;
     const sizeMod = SIZE_MODIFIERS[actor.system.size] ?? 0;
+    // Static resolveSource(), not the instance .resolve() — a FINAL-phase AE (e.g. a
+    // weapon enhancement) replaces this field with a plain POJO via core's setProperty(),
+    // which has no .resolve() method.
+    const resolvedAttackBonus = FormulaData.resolveSource(this.attackFormula as unknown as FormulaDataSource, formulaContext);
+    const { flat: weaponAttackBonus, hasDice: weaponAttackBonusHasDice } = extractFlatModifier(
+      typeof resolvedAttackBonus === 'string' ? resolvedAttackBonus : '0'
+    );
     const flatBonus = (hand: WieldedHand): number =>
-      context.handBab[hand] + abilityMod + sizeMod + getTwoWeaponFightingPenalty(item, hand);
+      context.handBab[hand]
+      + abilityMod
+      + sizeMod
+      + getTwoWeaponFightingPenalty(item, hand)
+      + (weaponAttackBonusHasDice
+        ? 0
+        : weaponAttackBonus);
     const baseTotalByHand: Record<WieldedHand, number> = {
       [MAIN_HAND_EQUIP_SLOT]: flatBonus(MAIN_HAND_EQUIP_SLOT),
       [OFF_HAND_EQUIP_SLOT]: flatBonus(OFF_HAND_EQUIP_SLOT),
       [BOTH_HANDS_EQUIP_SLOT]: flatBonus(BOTH_HANDS_EQUIP_SLOT),
+    };
+    // Mirrors `_buildAttackFormula()`'s own `modifierList` construction (BAB + ability + size
+    // + TWF + weapon bonus), built per-hand so the dialog's tooltip stays live as Wield Mode changes.
+    const abilityAbbr = game.i18n.localize(`dnd35e.ABILITY.${context.attackAbility}.abbr`);
+    const buildModifierList = (hand: WieldedHand): RollModifier[] => {
+      const list: RollModifier[] = [];
+      if (context.handBab[hand] !== 0) list.push({ label: game.i18n.localize('dnd35e.COMBAT.BaseAttackBonus'), value: context.handBab[hand] });
+      list.push({ label: game.i18n.format('dnd35e.COMBAT.AbilityModifier', { ability: abilityAbbr }), value: abilityMod });
+      if (sizeMod !== 0) list.push({ label: game.i18n.localize('dnd35e.COMBAT.SizeModifier'), value: sizeMod });
+      const twfPenalty = getTwoWeaponFightingPenalty(item, hand);
+      if (twfPenalty !== 0) list.push({ label: game.i18n.localize('dnd35e.COMBAT.TwoWeaponFighting'), value: twfPenalty });
+      if (!weaponAttackBonusHasDice) list.push(...this._buildFormulaBonusEntries('attackFormula', weaponAttackBonus));
+      return list;
+    };
+    const baseModifierListByHand: Record<WieldedHand, RollModifier[]> = {
+      [MAIN_HAND_EQUIP_SLOT]: buildModifierList(MAIN_HAND_EQUIP_SLOT),
+      [OFF_HAND_EQUIP_SLOT]: buildModifierList(OFF_HAND_EQUIP_SLOT),
+      [BOTH_HANDS_EQUIP_SLOT]: buildModifierList(BOTH_HANDS_EQUIP_SLOT),
     };
     return {
       abilityMod,
       sizeMod,
       expectedToHitBonus: baseTotalByHand[context.wieldedHand],
       baseTotalByHand,
+      baseModifierListByHand,
     };
   }
 
@@ -313,7 +364,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     nonLethalPenalty: number,
     proficiencyPenalty: number
   ): { attackFormula: string; displayAttackFormula: string; modifierList: RollModifier[] } {
-    const resolvedAttackBonus = this.attackFormula.resolve(formulaContext);
+    const resolvedAttackBonus = FormulaData.resolveSource(this.attackFormula as unknown as FormulaDataSource, formulaContext);
     const attackFormulaResolved = typeof resolvedAttackBonus === 'string' ? resolvedAttackBonus : '0';
     const { flat: attackFormulaFlat, hasDice: attackFormulaHasDice } = extractFlatModifier(attackFormulaResolved);
 
@@ -350,34 +401,41 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     if (sizeMod !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.SizeModifier'), value: sizeMod });
     if (twfPenalty !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.TwoWeaponFighting'), value: twfPenalty });
     if (nonLethalPenalty !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.CombatModifiers.NonLethal.Label'), value: nonLethalPenalty });
-    if (proficiencyPenalty !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.CombatModifiers.Proficient.Label'), value: proficiencyPenalty });
+    // Label diverges from the checkbox's own "Proficient" (§10.7) — the list entry is always a
+    // penalty, so "Not Proficient" better reflects what's actually being applied here.
+    if (proficiencyPenalty !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.CombatModifiers.NotProficient.Label'), value: proficiencyPenalty });
+    if (!attackFormulaHasDice) modifierList.push(...this._buildFormulaBonusEntries('attackFormula', attackFormulaFlat));
     if (flatAttackSituational !== 0) modifierList.push({ label: situationalLabel, value: flatAttackSituational });
 
     return { attackFormula, displayAttackFormula, modifierList };
   }
 
   /**
-   * The unrolled base damage formula (§10.7) — the weapon's own resolved damage dice plus the
-   * wield-mode STR term (melee always, ranged only when the weapon carries `rangedUsesStr`).
+   * Resolved, ready-to-roll wield-mode ability term added to this attack's damage (e.g.
+   * `' + 1'`), or `''` when this attack type adds none at all — the base class has no opinion
+   * (melee vs. ranged rules for whether/when this applies belong to those subtypes, not here).
+   * Override per concrete attack type, using `_resolveAttackAbilityTerm()` to do the actual
+   * FormulaFamiliar resolution. Defaults to no term.
+   */
+  protected _includeAttackAbilityTerms(_context: UseWeaponAttackContext, _formulaContext: FormulaContext): string {
+    return '';
+  }
+
+  /**
    * `getWeaponAttackActionAbilityModTerm()` returns raw FormulaFamiliar text (e.g.
    * `$floor(#self.abilities.str.mod * 1.5)`), so it's resolved here against `formulaContext`
    * before display — it must never reach the dialog preview/attack card as literal syntax.
-   * Depends only on `context.wieldedHand`/`context.damageAbility`, not `attackAbility` (finesse
-   * swaps only the attack roll's ability, never damage's — see `UseWeaponAttackContext`) nor
-   * the dialog result, so it's usable both pre-dialog (damage box preview) and post-dialog
-   * (`_buildDamageSnapshot`).
+   * Shared by every concrete attack type's own `_includeAttackAbilityTerms()` override.
    */
+  protected _resolveAttackAbilityTerm(context: UseWeaponAttackContext, formulaContext: FormulaContext): string {
+    const rawStrTerm = getWeaponAttackActionAbilityModTerm(context.wieldedHand, context.damageAbility);
+    const strTerm = FormulaData.resolveSource(FormulaData.toSource(rawStrTerm, { expectedType: 'string' }), formulaContext, '');
+    return typeof strTerm === 'string' ? strTerm : String(strTerm);
+  }
+
   private _computeDamageFormula(context: UseWeaponAttackContext, formulaContext: FormulaContext): string {
-    const properties = this.properties as Set<string> | undefined;
-    const includeStrTerm = this.type === ACTION_TYPE.MELEE
-      || (properties?.has('rangedUsesStr') ?? false);
-    const rawStrTerm = includeStrTerm
-      ? getWeaponAttackActionAbilityModTerm(context.wieldedHand, context.damageAbility)
-      : '';
-    const strTerm = rawStrTerm
-      ? FormulaData.resolveSource(FormulaData.toSource(rawStrTerm, { expectedType: 'string' }), formulaContext, '')
-      : '';
-    return `${this.damageFormula.resolvedValue || '0'}${typeof strTerm === 'string' ? strTerm : String(strTerm)}`;
+    const strTerm = this._includeAttackAbilityTerms(context, formulaContext);
+    return `${this.damageFormula.resolvedValue || '0'}${strTerm}`;
   }
 
   /**
@@ -391,20 +449,140 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   }
 
   /**
+   * Dice-inclusive damage-box headline, before any situational modifier — the weapon's own
+   * resolved damage dice (enhancement bonuses and the like already baked into its text) plus
+   * the wield-mode STR term's evaluated flat value, dice-collapsed (poc.10 §10.7 hardening).
+   * Shared by the pre-dialog live preview (`WeaponAttackRollDialogData.damageBaseFormula`) and
+   * `_buildDamageSnapshot()`'s post-dialog `expectedDamageFormula` — both need the exact same
+   * "what the weapon alone deals" base before the dialog's own situational term is folded in.
+   */
+  private _computeExpectedDamageBaseFormula(context: UseWeaponAttackContext, formulaContext: FormulaContext): string {
+    const strFlat = extractFlatModifier(this._includeAttackAbilityTerms(context, formulaContext)).flat;
+    return combineDiceFormula([this.damageFormula.resolvedValue || '0', String(strFlat)]);
+  }
+
+  /**
+   * Labeled breakdown entries for the wield-mode STR term — the STR Modifier row itself (its
+   * already-evaluated flat number, e.g. `+1`, computed via `extractFlatModifier()` so it's
+   * correct even when the raw term re-emits unevaluated Math-proxy syntax like
+   * `floor(1 * 1.5)`, see `_computeStrTerm()`'s doc), plus a non-contributing (`value: 0`)
+   * annotation row calling out the wield-mode multiplier by name (`Two-Handed \u00d71.5` /
+   * `Off-Hand \u00d70.5`) instead of ever showing that raw multiplier formula text anywhere.
+   * Shared by the pre-dialog damage-box preview (`_computeExpectedDamageModifierList`) and
+   * `_buildDamageSnapshot()`'s post-dialog breakdown.
+   */
+  private _buildStrModifierEntries(context: UseWeaponAttackContext, formulaContext: FormulaContext): RollModifier[] {
+    const strTerm = this._includeAttackAbilityTerms(context, formulaContext);
+    if (!strTerm) return [];
+    const abilityAbbr = game.i18n.localize(`dnd35e.ABILITY.${context.damageAbility}.abbr`);
+    const strFlat = extractFlatModifier(strTerm).flat;
+    const entries: RollModifier[] = [{ label: game.i18n.format('dnd35e.COMBAT.AbilityModifier', { ability: abilityAbbr }), value: strFlat }];
+    const handMultiplier = context.wieldedHand === BOTH_HANDS_EQUIP_SLOT
+      ? { label: game.i18n.localize('dnd35e.COMBAT.WieldMode.bothHands'), formula: '\u00d71.5' }
+      : context.wieldedHand === OFF_HAND_EQUIP_SLOT
+        ? { label: game.i18n.localize('dnd35e.COMBAT.WieldMode.offHand'), formula: '\u00d70.5' }
+        : null;
+    if (handMultiplier) entries.push({ ...handMultiplier, value: 0 });
+    return entries;
+  }
+
+  /**
+   * Labels the weapon's own flat formula bonus (attack or damage) by its contributing Active
+   * Effect's name when one exists (e.g. "Blessed Blade +2"), reusing the same `effectOverrides`
+   * stacking history `HasActiveEffectsNotification` reads on the sheet — falls back to the
+   * generic "Weapon Bonus" label when the flat value comes from the authored formula text
+   * itself (no AE involved) or the action can't be located on the item. Empty when `flat` is 0.
+   */
+  private _buildFormulaBonusEntries(fieldSuffix: 'attackFormula' | 'damageFormula', flat: number): RollModifier[] {
+    if (flat === 0) return [];
+    const fallbackLabel = game.i18n.localize('dnd35e.COMBAT.WeaponBonus');
+    const item = this.item;
+    const actionIndex = item?.system.actions.findIndex((action) => action._id === this._id) ?? -1;
+    if (!item || actionIndex < 0) return [{ label: fallbackLabel, value: flat }];
+    return buildOverridesModifierList(item, `system.actions.${actionIndex}.${fieldSuffix}.formula`, fallbackLabel, flat);
+  }
+
+  /**
+   * The weapon's own `damageFormula` flat bonus (e.g. an enhancement AE) as a labeled
+   * breakdown entry — `extractFlatModifier()` isolates it from the formula's base weapon
+   * dice (always present, so `hasDice` can't gate this the way it does for `attackFormula`).
+   * Empty when there's no flat bonus to show.
+   */
+  private _buildWeaponDamageBonusEntries(): RollModifier[] {
+    const { flat } = extractFlatModifier(this.damageFormula.resolvedValue || '0');
+    return this._buildFormulaBonusEntries('damageFormula', flat);
+  }
+
+  /**
+   * The weapon's own damage dice (e.g. `1d8`) as its own labeled breakdown row — separate from
+   * the flat enhancement-bonus row (`_buildWeaponDamageBonusEntries()`) so the dialog/card
+   * breakdown discloses where the dice actually come from, not just the final total. Labeled
+   * by the weapon's own name when available, falling back to the generic "Weapon Damage"
+   * label. Empty when the resolved formula carries no dice at all.
+   */
+  private _buildWeaponDamageDiceEntry(): RollModifier[] {
+    const diceOnly = extractDiceOnlyFormula(this.damageFormula.resolvedValue || '0');
+    if (!diceOnly) return [];
+    const label = this.item?.name ?? game.i18n.localize('dnd35e.COMBAT.WeaponDamageDice');
+    return [{ label, value: 0, formula: diceOnly }];
+  }
+
+  /**
+   * Pre-dialog damage-box modifier-list preview (the wield-mode STR term plus the weapon's own
+   * flat damage bonus — the damage situational modifier isn't known yet pre-dialog, so it's
+   * layered in live by `WeaponAttackRollDialogStore`'s `damageModifierList` computed instead).
+   * Mirrors `_buildDamageSnapshot()`'s own entries.
+   */
+  private _computeExpectedDamageModifierList(context: UseWeaponAttackContext, formulaContext: FormulaContext): RollModifier[] {
+    return [...this._buildWeaponDamageDiceEntry(), ...this._buildStrModifierEntries(context, formulaContext), ...this._buildWeaponDamageBonusEntries()];
+  }
+
+  /**
    * Snapshots the unrolled damage formula (§10.7) — the wield-mode STR term (melee always,
    * ranged only when the weapon carries `rangedUsesStr`) plus the dialog's damage situational
-   * modifier — actually rolled later by Story E's `_continue()`.
+   * modifier — actually rolled later by Story E's `_continue()`. Also builds `damageModifierList`,
+   * the resolution card's labeled breakdown of those same two contributors (mirrors
+   * `_buildAttackFormula()`'s `modifierList` — the roll formula already bakes both terms in,
+   * this is purely the display-side breakdown).
    */
-  private _buildDamageSnapshot(context: UseWeaponAttackContext, formulaContext: FormulaContext, dialogResult: AttackRollDialogResult): { resolvedDamageFormula: string; damageBonusTerm: string } {
+  private _buildDamageSnapshot(
+    context: UseWeaponAttackContext,
+    formulaContext: FormulaContext,
+    dialogResult: AttackRollDialogResult
+  ): { resolvedDamageFormula: string; damageBonusTerm: string; damageModifierList: RollModifier[]; expectedDamageModifierList: RollModifier[]; expectedDamageFormula: string } {
     const resolvedDamageFormula = this._computeDamageFormula(context, formulaContext);
+    const situationalLabel = game.i18n.localize('dnd35e.ROLL.DamageSituationalModifier');
     const trimmedDamageSituational = dialogResult.damageSituationalModifier?.trim() ?? '';
     const { flat: flatDamageSituational, hasDice: damageSituationalHasDice } = extractFlatModifier(trimmedDamageSituational);
     const damageBonusTerm = damageSituationalHasDice
-      ? ` + ${trimmedDamageSituational}`
+      ? ` + ${flavorTerm(trimmedDamageSituational, situationalLabel)}`
       : flatDamageSituational !== 0
         ? (flatDamageSituational >= 0 ? ` + ${flatDamageSituational}` : ` - ${Math.abs(flatDamageSituational)}`)
         : '';
-    return { resolvedDamageFormula, damageBonusTerm };
+
+    const diceEntries = this._buildWeaponDamageDiceEntry();
+    const strEntries = this._buildStrModifierEntries(context, formulaContext);
+    const weaponBonusEntries = this._buildWeaponDamageBonusEntries();
+    const damageModifierList: RollModifier[] = [...diceEntries, ...strEntries, ...weaponBonusEntries];
+    const expectedDamageModifierList: RollModifier[] = [...diceEntries, ...strEntries, ...weaponBonusEntries];
+    if (!damageSituationalHasDice && flatDamageSituational !== 0) {
+      damageModifierList.push({ label: situationalLabel, value: flatDamageSituational });
+    }
+    // Unlike `damageModifierList` (the resolution card's breakdown, built after the damage is
+    // actually rolled — a dice-bearing situational term shows via the roll's own flavored dice
+    // tooltip instead), nothing is rolled yet here, so a dice-bearing term must carry its full
+    // formula text to be shown at all (see `buildSituationalModifierEntry`).
+    expectedDamageModifierList.push(...buildSituationalModifierEntry(trimmedDamageSituational, situationalLabel));
+
+    // Dice-collapsed preview formula (§10.7 hardening) — display-only: the REAL roll still uses
+    // `resolvedDamageFormula`/`damageBonusTerm` above (keeps e.g. a wield-mode `floor(x * 1.5)`
+    // term as real Roll-evaluable syntax). This instead merges same-faced dice from the weapon's
+    // own damage formula and the situational bonus into one clean string (e.g. a weapon `1d6`
+    // plus a situational `1d6 + 5` becomes `2d6 + 5`), folding the STR term's already-evaluated
+    // flat number straight in rather than its raw (and sometimes Math-proxy) formula text.
+    const expectedDamageFormula = combineDiceFormula([this._computeExpectedDamageBaseFormula(context, formulaContext), trimmedDamageSituational]);
+
+    return { resolvedDamageFormula, damageBonusTerm, damageModifierList, expectedDamageModifierList, expectedDamageFormula };
   }
 
   /**
@@ -442,8 +620,10 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     const weaponNonLethalDefault = this.properties?.has(WEAPON_PROPERTY.NON_LETHAL) ?? false;
     const nonLethalNoPenalty = this.properties?.has(WEAPON_PROPERTY.NON_LETHAL_NO_PENALTY) ?? false;
 
-    const { abilityMod, sizeMod, expectedToHitBonus, baseTotalByHand } = this._computeExpectedToHitBonus(context, item);
+    const { abilityMod, sizeMod, expectedToHitBonus, baseTotalByHand, baseModifierListByHand } = this._computeExpectedToHitBonus(context, item, formulaContext);
     const expectedDamageBonus = this._computeExpectedDamageBonus(context, formulaContext);
+    const damageBaseModifierList = this._computeExpectedDamageModifierList(context, formulaContext);
+    const damageBaseFormula = this._computeExpectedDamageBaseFormula(context, formulaContext);
     const dialogResult: AttackRollDialogResult | null = await this._resolveAttackRollDialog(
       context,
       item,
@@ -452,7 +632,10 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       expectedToHitBonus,
       expectedDamageBonus,
       resolvedName,
-      baseTotalByHand
+      baseTotalByHand,
+      baseModifierListByHand,
+      damageBaseModifierList,
+      damageBaseFormula
     );
 
     if (!dialogResult) {
@@ -498,7 +681,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // Story E owns the AC comparison that turns this into an actual confirmed critical.
     const critConfirmRoll = attackRoll.isCriticalThreat(this.critRange) ? await attackRoll.rollConfirmation() : null;
 
-    const { resolvedDamageFormula, damageBonusTerm } = this._buildDamageSnapshot(context, formulaContext, dialogResult);
+    const { resolvedDamageFormula, damageBonusTerm, damageModifierList, expectedDamageModifierList, expectedDamageFormula } = this._buildDamageSnapshot(context, formulaContext, dialogResult);
 
     const targetRows: AttackCardTargetRow[] = (context.target ?? []).map(participant => {
       const targetActor = participantActor(participant);
@@ -523,6 +706,9 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       nonLethal: isNonLethal,
       resolvedDamageFormula,
       damageBonusTerm,
+      damageModifierList,
+      expectedDamageModifierList,
+      expectedDamageFormula,
       critRange: this.critRange,
       critMultiplier: this.critMultiplier,
       critConfirmTotal: critConfirmRoll?.total ?? null,
@@ -589,8 +775,9 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    * Resolves the attack card's `'damage'` chain step (poc.10 Story E, §10.7) — the only step
    * this action currently declares. Opens the Roll Defense Dialog for the clicked target row,
    * folds its result together with the already-posted attack total/critical-threat state via
-   * `evaluateDefense()`, rolls damage on a hit, and posts the Resolution card (which applies
-   * the damage itself — see `buildResolutionCard()`). Gated to the GM, or (when the
+   * `evaluateDefense()`, rolls damage on a hit, and posts the Resolution card — damage is
+   * computed but not yet written to HP; the resolution card's own Apply Damage button commits
+   * it (see `buildResolutionCard()`/`onApplyDamage()`). Gated to the GM, or (when the
    * `PLAYER_SELF_DEFENSE` setting is on) the target's own owner — `advanceActionChain()`
    * already hides the Apply button from anyone else, this is the same rule enforced again at
    * the point that actually matters, in case some future caller reaches `continueAction()` directly.
@@ -641,12 +828,13 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
 
     const resolutionData: ResolutionCardData = {
       ...evaluation,
-      weaponName: flags.weaponName,
+      attackName: flags.weaponName,
       checkMode: dialogResult.checkMode,
       damageType: flags.damageType,
       nonLethal: flags.nonLethal,
       applyHalfDamage: dialogResult.applyHalfDamage,
       actionEconomySpent: flags.actionEconomySpent,
+      damageModifierList: flags.damageModifierList,
     };
     await buildResolutionCard(attacker, target, resolutionData, damageRoll);
     await markTargetRowResolved(chatMessage, flags, targetId, evaluation.hit);

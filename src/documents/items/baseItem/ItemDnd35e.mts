@@ -27,6 +27,7 @@ import type { ACTIVE_EFFECTS_DND35E } from '@effects/effectTypes.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import type { FormulaDataSource } from '@helpers/formulae/FormulaData.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
+import { expandChangeTargetGroups } from '@helpers/formulae/index.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { Override } from '@helpers/stacking.mjs';
 import type { ItemType } from '@items/index.mjs';
@@ -225,6 +226,10 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     this._prepareDerivedItemData();
     this.applyActiveEffects(FINAL_EFFECT_CHANGE_PHASE);
     this.applyActiveEffects(POST_EFFECT_CHANGE_PHASE);
+    // Resolve any FormulaFields whose AE changes only settle after the phases above (e.g.
+    // weapon attack actions' Group Change Target `attackFormula`/`damageFormula` changes,
+    // which apply in the 'final' phase) — see `DocumentSystemModel.resolveDeferredFormulaFields()`.
+    (this.system as unknown as { resolveDeferredFormulaFields(): void }).resolveDeferredFormulaFields();
   }
 
   /**
@@ -354,9 +359,16 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     }
     changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
 
+    // Expand any Group Change Target keys (poc §7.7, e.g. "#item.meleeWeaponAttacks.attackDamage")
+    // into their concrete per-action field paths before stacking — mirrors
+    // `ActorDnd35e.applyActiveEffects()`'s wiring. Non-group keys pass through unchanged. Named
+    // by `EFFECT_CHANGE_TARGET.ITEM` so a group declares which context it needs rather than
+    // relying on an implicit "the host".
+    const expandedChanges = expandChangeTargetGroups(changes, { [EFFECT_CHANGE_TARGET.ITEM]: this });
+
     // Resolve bonus-type stacking and apply the winners, recording Override
     // history for every field touched (shared with ActorDnd35e.applyActiveEffects).
-    applyStackedActiveEffectChanges(this, changes);
+    applyStackedActiveEffectChanges(this, expandedChanges);
   }
   
   get localizedType (): string {

@@ -18,7 +18,7 @@ import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { D20Roll } from '../../D20Roll.mjs';
 import type { RollModifier } from '../../types.mjs';
-import { buildDiceRollHtmlWithModifiers } from '../modifierBreakdown/modifierBreakdown.mjs';
+import { buildDiceRollHtmlWithModifiers, buildModifierBreakdownHtml } from '../modifierBreakdown/modifierBreakdown.mjs';
 import { parseActionChainId } from './actionChainSteps.mjs';
 import attackRollCardTemplateSource from './attack-roll-card.hbs?raw';
 
@@ -59,6 +59,12 @@ interface AttackCardFlags {
   resolvedDamageFormula: string;
   /** Damage-bonus formula term (e.g. `' + 1d6'`), already prefixed with its own sign/operator, or `''` when none was entered. */
   damageBonusTerm: string;
+  /** Labeled breakdown (Str modifier, damage situational bonus) for the damage roll's resolution-card tooltip — mirrors `modifierList` below, for damage instead of the attack roll. */
+  damageModifierList: RollModifier[];
+  /** Pre-roll damage preview breakdown shown on THIS card (before the damage die is ever rolled) — unlike `damageModifierList`, a dice-bearing situational modifier carries its full formula text here (via `RollModifier.formula`) since there's no real roll yet to show dice faces from. */
+  expectedDamageModifierList: RollModifier[];
+  /** Dice-collapsed "Expected Damage" preview formula (e.g. `2d6 + 7`) — display-only, built by `combineDiceFormula()` from the weapon's own damage dice, the STR term's already-evaluated flat number, and the situational modifier. Never used for the real roll (that stays on `resolvedDamageFormula`/`damageBonusTerm`, which must keep e.g. a wield-mode `floor(x * 1.5)` term as real Roll-evaluable syntax). */
+  expectedDamageFormula: string;
   /** Threat range floor (e.g. 19 for a 19–20 weapon) — passed to `roll.isCriticalThreat()` instead of assuming a bare natural 20. */
   critRange: number;
   critMultiplier: number;
@@ -106,9 +112,12 @@ function buildAttackCardContent(roll: D20Roll, flags: AttackCardFlags, diceRollH
     targetTokenUuid: primaryTarget?.tokenUuid ?? null,
     resultLabel: game.i18n.localize('dnd35e.ROLL.Result'),
     changeTargetsLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.ChangeTargets'),
-    damagePreviewLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.DamagePreview'),
+    noTargetLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.NoTarget'),
+    damagePreviewLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.ExpectedDamage'),
+    damagePreviewToggleLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.DamageDetails'),
     nonLethalLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.NonLethal'),
     applyLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Apply'),
+    reapplyLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Reapply'),
     hitLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Hit'),
     missLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Miss'),
     rollFormula: roll.displayFormula,
@@ -119,7 +128,13 @@ function buildAttackCardContent(roll: D20Roll, flags: AttackCardFlags, diceRollH
     hasCritConfirm: flags.critConfirmTotal !== null,
     critConfirmTotal: flags.critConfirmTotal,
     diceRollHtml,
-    damageFormulaDisplay: `${flags.resolvedDamageFormula}${flags.damageBonusTerm}`,
+    damageFormulaDisplay: flags.expectedDamageFormula,
+    // Hides the whole box rather than just the breakdown when there's genuinely no damage —
+    // `combineDiceFormula()` (which builds `expectedDamageFormula`) falls back to the string `'0'`
+    // rather than an empty string when nothing contributes.
+    hasDamagePreview: flags.expectedDamageFormula !== '' && flags.expectedDamageFormula !== '0',
+    damagePreviewBreakdownHtml: buildModifierBreakdownHtml(flags.expectedDamageModifierList),
+    hasDamagePreviewBreakdown: flags.expectedDamageModifierList.length > 0,
     critMultiplier: flags.critMultiplier,
     nonLethal: flags.nonLethal,
     targets: flags.targets,
@@ -247,7 +262,7 @@ function populateActorNames(message: ChatMessage, html: HTMLElement): void {
   const attackerUuid = parseActionChainId(flags.actionChainId)?.actorUuid;
   setName(html.querySelector<HTMLElement>('[data-attacker-uuid]'), attackerUuid, flags.attackerTokenUuid);
   setName(html.querySelector<HTMLElement>('.actor-info.target [data-target-uuid]'), flags.targets[0]?.actorUuid, flags.targets[0]?.tokenUuid);
-  html.querySelectorAll<HTMLElement>('.target-row [data-target-uuid]').forEach((el) => {
+  html.querySelectorAll<HTMLElement>('.target-row .target-name').forEach((el) => {
     setName(el, el.dataset.targetUuid, el.dataset.targetTokenUuid);
   });
 }
@@ -261,7 +276,7 @@ function populateActorNames(message: ChatMessage, html: HTMLElement): void {
  */
 async function advanceActionChain(message: ChatMessage, flags: AttackCardFlags, targetUuid: string): Promise<void> {
   const row = flags.targets.find(t => t.actorUuid === targetUuid);
-  if (!row || row.resolved) return; // already resolved — one-shot per target
+  if (!row) return;
 
   const parsed = parseActionChainId(flags.actionChainId);
   if (!parsed) return;
@@ -273,9 +288,20 @@ async function advanceActionChain(message: ChatMessage, flags: AttackCardFlags, 
   await action.continueAction(stepId, message, row.actorUuid);
 }
 
-/** Wires the "Change Target(s)" button and each unresolved target row's "Apply" button — see registerChatCardActions.mts. */
+/** Mirrors `onExpandAc()` in resolutionCard.mts — toggles `.expanded` on the breakdown itself, not the clicked summary row. */
+function onExpandDamagePreview(html: HTMLElement): void {
+  const breakdown = html.querySelector<HTMLElement>('.damage-preview-breakdown');
+  if (breakdown) breakdown.classList.toggle('expanded');
+}
+
+/** Wires the "Change Target(s)" button and each target row's "Apply"/"Reapply" button — see registerChatCardActions.mts. */
 function wireAttackRollCardButton(message: ChatMessage, html: HTMLElement): void {
   populateActorNames(message, html);
+
+  const expandDamagePreviewButton = html.querySelector<HTMLElement>('[data-action="expandDamagePreview"]');
+  if (expandDamagePreviewButton) {
+    expandDamagePreviewButton.addEventListener('click', () => { onExpandDamagePreview(html); });
+  }
 
   const flags = message.getFlag(SYSTEM_ID, 'attackCard') as AttackCardFlags | undefined;
   const parsed = flags ? parseActionChainId(flags.actionChainId) : null;

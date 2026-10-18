@@ -27,6 +27,7 @@ If a note grows past ~50 lines or sprouts diagrams, promote it to `docs/architec
 - [foundry-type-augmentation.md](foundry-type-augmentation.md) — Extending Foundry's closed unions via `declare module`
 - [vue-boolean-prop-defaults.md](vue-boolean-prop-defaults.md) — `withDefaults` for boolean props that default true
 - [system-json-registration.md](system-json-registration.md) — Every document subtype must be registered
+- [ae-change-label-override.md](ae-change-label-override.md) — `changes[].label` is a system-only display override; never set it in pack/sample AE data
 
 ### Testing & types
 - [tsconfig-tests-include.md](tsconfig-tests-include.md) — `tests/**/*` must be in `tsconfig.json` `include`; `test:ci` must gate on typecheck

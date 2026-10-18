@@ -24,7 +24,11 @@ function flavorTerm(term: string, flavor: string): string {
  * (e.g. `2 * 3` would be miscounted as `5` instead of `6`). Dice terms are zeroed out before
  * evaluating (they can't be pre-rolled into a flat preview number — the raw formula, dice
  * included, is what actually gets rolled; see callers), so e.g. `1d6 * 2 + 3` correctly
- * evaluates its flat portion as `0 * 2 + 3 = 3`.
+ * evaluates its flat portion as `0 * 2 + 3 = 3`. Zeroing is keyed off `isDeterministic` rather
+ * than `instanceof DiceTerm` because a leading negative dice term (e.g. `-1d10`) is parsed by
+ * Foundry's grammar into a single wrapped term (`RollParser#_wrapNegativeTerm()`, surfaced as
+ * `(1d10 * -1)`) — a top-level `instanceof` check misses the nested dice and leaves it in the
+ * formula handed to `Roll.safeEval()`, which can't evaluate un-rolled dice notation.
  */
 function extractFlatModifier(term: string): { flat: number; hasDice: boolean } {
   const trimmed = term.trim();
@@ -34,10 +38,35 @@ function extractFlatModifier(term: string): { flat: number; hasDice: boolean } {
   const roll = new Roll(trimmed);
   const hasDice = roll.dice.length > 0;
   const flatOnlyFormula = hasDice
-    ? roll.terms.map(rollTerm => (rollTerm instanceof foundry.dice.terms.DiceTerm ? '0' : rollTerm.formula)).join(' ')
+    ? roll.terms.map(rollTerm => (rollTerm.isDeterministic ? rollTerm.formula : '0')).join(' ')
     : trimmed;
 
   return { flat: Roll.safeEval(flatOnlyFormula), hasDice };
+}
+
+/**
+ * Isolates the dice-only portion of a resolved formula term (e.g. `'1d8 + 2'` -> `'1d8'`),
+ * dropping any flat numeric remainder — used to show a weapon's own damage dice as its own
+ * labeled modifier-breakdown row, separate from its flat enhancement-bonus row (see
+ * `extractFlatModifier()`). Reuses `parseAdditiveDiceFragment()`'s safe-merge bailout: falls
+ * back to the full term when it can't be decomposed (multiplication, parentheses, function
+ * calls). Empty string when there's no dice at all.
+ */
+function extractDiceOnlyFormula(term: string): string {
+  const trimmed = term.trim();
+  if (!trimmed) return '';
+
+  const parsed = parseAdditiveDiceFragment(trimmed);
+  if (!parsed) return trimmed;
+
+  const diceGroups = new Map<number, number>();
+  for (const [faces, count] of parsed.diceGroups) diceGroups.set(faces, (diceGroups.get(faces) ?? 0) + count);
+
+  return [...diceGroups.entries()]
+    .filter(([, count]) => count !== 0)
+    .sort(([a], [b]) => a - b)
+    .map(([faces, count]) => `${count}d${faces}`)
+    .join(' + ');
 }
 
 /**
@@ -68,4 +97,90 @@ function buildD20Formula(base: number, situationalModifier: string, labels?: { b
   return terms.join(' ');
 }
 
-export { buildD20Formula, extractFlatModifier, flavorTerm };
+/**
+ * Parses a single additive dice+flat fragment (e.g. `1d6 + 5`, `-1d4`, `7`) into its grouped
+ * `Die` counts (keyed by `faces`) and flat remainder, using Foundry's own `Roll.parse()` (never
+ * evaluated/rolled). Returns `null` — a safe-merge bailout — for anything beyond a plain
+ * top-level `+`/`-` chain of `Die`/`NumericTerm`s: multiplication/division, parentheses,
+ * function calls (e.g. a wield-mode `floor(x * 1.5)` term), or a `Die` with modifiers
+ * (`1d20kh1`) all fall through to `null` rather than risk silently mis-combining them.
+ */
+function parseAdditiveDiceFragment(fragment: string): { diceGroups: [number, number][]; flat: number } | null {
+  let terms: ReturnType<typeof Roll.parse>;
+  try {
+    terms = Roll.parse(fragment, {});
+  } catch {
+    return null;
+  }
+
+  const diceGroups: [number, number][] = [];
+  let flat = 0;
+  let sign = 1;
+
+  for (const rollTerm of terms) {
+    if (rollTerm instanceof foundry.dice.terms.OperatorTerm) {
+      if (rollTerm.operator === '+') sign = 1;
+      else if (rollTerm.operator === '-') sign = -1;
+      else return null;
+    } else if (rollTerm instanceof foundry.dice.terms.NumericTerm) {
+      flat += sign * rollTerm.number;
+    } else if (rollTerm instanceof foundry.dice.terms.Die) {
+      if (rollTerm.modifiers.length > 0 || typeof rollTerm.faces !== 'number') return null;
+      diceGroups.push([rollTerm.faces, sign * rollTerm.number]);
+    } else {
+      return null;
+    }
+  }
+
+  return { diceGroups, flat };
+}
+
+/**
+ * Combines multiple resolved, dice-preserving formula fragments (e.g. a weapon's own damage
+ * dice, an enchant's bonus dice, and a situational modifier) into one dice-collapsed display
+ * formula — same-faced `Die` groups are summed together and every flat remainder is folded into
+ * a single trailing number, e.g. a weapon `1d6` plus a situational `1d6 + 5` becomes `2d6 + 5`
+ * instead of staying as two separate `1d6` groups.
+ *
+ * This is display-only — it never touches the actual roll formula (which must keep e.g. a
+ * wield-mode `floor(x * 1.5)` term as real Roll-evaluable syntax for Foundry's own grammar to
+ * evaluate at roll time). Any fragment `parseAdditiveDiceFragment()` can't safely flatten
+ * (multiplication, parentheses, function calls) is appended to the result unmerged, verbatim,
+ * rather than silently mis-combined — callers that need to fold such a term's value in cleanly
+ * should pass its already-evaluated flat number (e.g. via `extractFlatModifier().flat`) instead
+ * of the raw term text.
+ */
+function combineDiceFormula(fragments: (string | null | undefined)[]): string {
+  const diceGroups = new Map<number, number>();
+  const opaqueFragments: string[] = [];
+  let flatTotal = 0;
+
+  for (const fragment of fragments) {
+    const trimmed = fragment?.trim();
+    if (!trimmed || trimmed === '0') continue;
+
+    const parsed = parseAdditiveDiceFragment(trimmed);
+    if (!parsed) {
+      opaqueFragments.push(trimmed);
+      continue;
+    }
+
+    flatTotal += parsed.flat;
+    for (const [faces, count] of parsed.diceGroups) {
+      diceGroups.set(faces, (diceGroups.get(faces) ?? 0) + count);
+    }
+  }
+
+  const diceTerms = [...diceGroups.entries()]
+    .filter(([, count]) => count !== 0)
+    .sort(([a], [b]) => a - b)
+    .map(([faces, count]) => `${count}d${faces}`);
+
+  let formula = [...diceTerms, ...opaqueFragments].join(' + ');
+  if (flatTotal !== 0) {
+    formula = formula ? `${formula} ${flatTotal >= 0 ? '+' : '-'} ${Math.abs(flatTotal)}` : String(flatTotal);
+  }
+  return formula || '0';
+}
+
+export { buildD20Formula, combineDiceFormula, extractDiceOnlyFormula, extractFlatModifier, flavorTerm };

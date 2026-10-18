@@ -23,7 +23,7 @@ import {
   registerFamiliarSchema,
 } from './familiarBuilderRegistry.mjs';
 import { normalizeLabel, walkFields } from './schemaWalker.mjs';
-import type { AspectGroup, FamiliarContext, FamiliarSchema, FormulaFieldData } from './types.mjs';
+import type { AspectGroup, FamiliarContext, FamiliarSchema, FormulaFieldData, PreferredContextAlias } from './types.mjs';
 import { isFieldAspect } from './types.mjs';
 
 export type { ContextDocumentType, DocumentContext, NonNullDocumentContext };
@@ -137,9 +137,12 @@ function gatherFieldContextDeclarations(fields: Record<string, any>): { contextN
  *
  * @param document A live Foundry document (with .documentName and .type) or an
  *   embedded DataModel (with only .schema)
+ * @param preferredAlias Caller-supplied override for the `self` context's display label
+ *   and a user-typeable term (e.g. `{ term: 'attacker', label: 'Attacker' }`) — `self`
+ *   keeps resolving regardless (poc.10 Story E's FormulaFamiliar context aliasing)
  * @returns FamiliarSchema with self (and optionally declared) contexts
  */
-function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
+function buildDocumentFamiliar(document: DocumentContext, preferredAlias?: PreferredContextAlias): FamiliarSchema {
   const schema: FamiliarSchema = {};
   if (!document) return schema;
 
@@ -162,11 +165,21 @@ function buildDocumentFamiliar(document: DocumentContext): FamiliarSchema {
   if (hasFamiliarSchema(docType, subtype)) {
     // Derive localized display label for the "Self" context from the i18n system.
     // Lazy call — always runs after i18nInit since builders are lazy.
-    const selfLabel = (game as unknown as { i18n?: { localize?(k: string): string } }).i18n?.localize?.('dnd35e.Formula.Context.Self') ?? 'Self';
+    const defaultSelfLabel = (game as unknown as { i18n?: { localize?(k: string): string } }).i18n?.localize?.('dnd35e.Formula.Context.Self') ?? 'Self';
+    const normalizedDefaultSelf = normalizeLabel(defaultSelfLabel) ?? 'Self';
+    const selfLabel = preferredAlias?.label ?? defaultSelfLabel;
     const normalizedSelf = normalizeLabel(selfLabel) ?? 'Self';
     const selfTypeAliases = buildContextAliases(docType, subtype) ?? [];
-    // Collect all user-typeable aliases: localized Self + type-based aliases
-    const selfAliases = [normalizedSelf, ...selfTypeAliases.filter(a => a !== normalizedSelf)];
+    // Collect all user-typeable aliases: preferred term (if any) + localized Self +
+    // type-based aliases. `self` itself always resolves via documentDataMap's literal
+    // 'self' key regardless of these aliases (see resolveContextDocData's
+    // direct-lookup-first order) — these aliases only matter for typing the preferred
+    // term (`#attacker.x`/`#defender.x`) or the localized Self label directly.
+    const selfAliases = [
+      normalizedSelf,
+      ...(preferredAlias ? [preferredAlias.term, normalizedDefaultSelf] : []),
+      ...selfTypeAliases.filter(a => a !== normalizedSelf && a !== normalizedDefaultSelf),
+    ];
     schema.self = {
       properties: getFamiliarBuilder(docType, subtype)!(document),
       display: selfLabel,

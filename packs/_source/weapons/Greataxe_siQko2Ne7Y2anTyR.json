@@ -1,0 +1,78 @@
+{
+  "name": "Greataxe",
+  "type": "weapon",
+  "_id": "siQko2Ne7Y2anTyR",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Greataxe",
+      "expectedType": "string",
+      "resolvedValue": "Greataxe"
+    },
+    "description": "",
+    "isPsionic": false,
+    "isEpic": false,
+    "hp": {
+      "current": 0,
+      "max": 0
+    },
+    "hardness": 0,
+    "quantity": 1,
+    "weight": 12,
+    "isCarried": true,
+    "size": "medium",
+    "price": {
+      "stacks": [
+        {
+          "coinId": "srd_gp",
+          "count": 20
+        }
+      ],
+      "srdEquivalent": 20
+    },
+    "equippedSlotIds": [],
+    "isMelded": false,
+    "designedForSize": "medium",
+    "isWeightlessWhenEquipped": false,
+    "isBaseWeaponType": true,
+    "weaponType": "martial",
+    "weaponSubtype": "twoHanded",
+    "weaponBaseType": "greataxe",
+    "actions": [
+      {
+        "_id": "BtYaOXmBmYec1ck9",
+        "type": "melee_weapon_attack",
+        "damageFormula": {
+          "formula": "$scaleDamage(1d12)",
+          "expectedType": "rollFormula",
+          "resolvedValue": null
+        },
+        "damageType": "dnd35e.DAMAGE_TYPES.Slashing",
+        "critRange": 20,
+        "critMultiplier": 3
+      }
+    ]
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1791785607593,
+    "modifiedTime": 1791785607593,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!siQko2Ne7Y2anTyR"
+}

@@ -42,7 +42,7 @@
   import { formatChangeTypeSymbol } from '@effects/baseActiveEffect/logic/index.mjs';
   import { roundToDecimal } from '@helpers/math.mjs';
   import type { Override } from '@helpers/stacking.mjs';
-  import { parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+  import { formatBonusTypeLabel, parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
   import type { SettingsStore } from '@settings/index.mjs';
   import { SettingsStoreSymbol } from '@settings/index.mjs';
   import { computed, inject, nextTick, ref } from 'vue';
@@ -76,11 +76,6 @@
   ]);
   const hasActiveEffects = computed(() => activeEffects.value.length > 0);
 
-  const formatBonusType = (bonusType?: string): string | undefined => {
-    const trimmed = bonusType?.trim();
-    return trimmed ? game.i18n.localize(trimmed) : undefined;
-  };
-
   // AE change values are stored in canonical units (squares/lbs); the tooltip must show
   // them in the world's configured display unit, same as the field's own input does.
   const measurementUnit = computed(() => getFieldMeasurementUnit(props.fieldPath));
@@ -98,7 +93,7 @@
     (activeEffects.value as Override[]).map((effect) => ({
       ...effect,
       displayValue: localizeDisplayValue(effect.value),
-      bonusTypeLabel: formatBonusType(effect.bonusType),
+      bonusTypeLabel: formatBonusTypeLabel(effect.bonusType),
     }))
   );
 

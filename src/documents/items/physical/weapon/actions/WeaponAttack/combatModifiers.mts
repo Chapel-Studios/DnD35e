@@ -3,7 +3,7 @@
 // table for exactly which are auto-detected vs. manual-only, and why `proficient`/
 // `nonLethal` carry `value: 0` (read directly by id below instead of folded into the
 
-import { PRONE_CONDITION_ID, SQUEEZING_CONDITION_ID } from '@constants/conditions.mjs';
+import { CHARGED_CONDITION_ID, DEFENSIVE_FIGHTING_CONDITION_ID, PRONE_CONDITION_ID, SQUEEZING_CONDITION_ID } from '@constants/conditions.mjs';
 import { getActionEconomy } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import { isOnHigherGround } from '@documents/token/logic/highGround.mjs';
@@ -80,9 +80,12 @@ const createCombatModifiers = (
       label: localize('Charge.Label'),
       tooltip: localize('Charge.Tooltip'),
       value: 2,
-      checked: !!actorCombatant
-        ? getActionEconomy(actorCombatant).used.chargedThisTurn
-        : false,
+      // Either signal means "this combatant charged": the action-economy flag (set by the
+      // charge movement itself, this turn) or the CHARGED_CONDITION_ID status (set once this
+      // very toggle was confirmed on a prior attack this turn, or applied manually via the
+      // Token HUD as the escape hatch) — same OR-both pattern as prone/squeezing/defensiveFighting.
+      checked: (!!actorCombatant && getActionEconomy(actorCombatant).used.chargedThisTurn)
+        || actor.statuses.has(CHARGED_CONDITION_ID),
       autoDetected: true,
     },
     {
@@ -91,8 +94,8 @@ const createCombatModifiers = (
       label: localize('DefensiveFighting.Label'),
       tooltip: localize('DefensiveFighting.Tooltip'),
       value: -4,
-      checked: false,
-      autoDetected: false,
+      checked: actor.statuses.has(DEFENSIVE_FIGHTING_CONDITION_ID),
+      autoDetected: true,
     },
     {
       id: 'nonLethal',

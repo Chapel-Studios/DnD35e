@@ -4,7 +4,7 @@ import { computed } from 'vue';
 
 import { resolveFormulaString } from '../RollDialog/RollDialogStore.mjs';
 import type { WeaponAttackRollDialogStore } from '../WeaponAttackRollDialog/WeaponAttackRollDialogStore.mjs';
-import { buildWeaponAttackFormulaContexts, useWeaponAttackRollDialogStore } from '../WeaponAttackRollDialog/WeaponAttackRollDialogStore.mjs';
+import { buildAttackerSelfAlias, buildWeaponAttackFormulaContexts, useWeaponAttackRollDialogStore } from '../WeaponAttackRollDialog/WeaponAttackRollDialogStore.mjs';
 import type { AmmoOption, RangedAttackRollDialogData, RangedAttackRollDialogResult } from './types.mjs';
 
 /**
@@ -26,7 +26,8 @@ function useRangedAttackRollDialogStore(
 
   const rollAction = (): void => {
     const documentDataMap = buildWeaponAttackFormulaContexts(context.data);
-    const resolvedAttackSituational = resolveFormulaString(context.data.attackSituationalModifier, documentDataMap);
+    const attackerSelfAlias = buildAttackerSelfAlias();
+    const resolvedAttackSituational = resolveFormulaString(context.data.attackSituationalModifier, documentDataMap, attackerSelfAlias);
     const toggleSum = weapon.weapon.combatModifierSum.value;
     const attackSituationalModifier = toggleSum === 0
       ? resolvedAttackSituational
@@ -37,7 +38,7 @@ function useRangedAttackRollDialogStore(
       attackSituationalModifier,
       rollMode: context.data.rollMode,
       combatModifiers: context.data.combatModifierToggles,
-      damageSituationalModifier: resolveFormulaString(context.data.damageSituationalModifier ?? '', documentDataMap),
+      damageSituationalModifier: resolveFormulaString(context.data.damageSituationalModifier ?? '', documentDataMap, attackerSelfAlias),
       wieldMode: context.data.wieldModeFromEquippedSlots,
       ammo: context.data.ammo ?? null,
     });

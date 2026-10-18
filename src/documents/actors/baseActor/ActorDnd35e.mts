@@ -214,11 +214,12 @@ class ActorDnd35e<
     
     changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
 
-    // Expand any Group Change Target keys (poc §7.7, e.g. "group:allSaves") into their
+    // Expand any Group Change Target keys (poc §7.7, e.g. "#actor.saves.all") into their
     // concrete field paths before stacking — each expanded field then becomes an
     // independent stacking candidate, exactly like a change that targeted it directly.
-    // Non-group keys pass through unchanged.
-    const expandedChanges = expandChangeTargetGroups(changes, this);
+    // Non-group keys pass through unchanged. Named by `EFFECT_CHANGE_TARGET.ACTOR` so a
+    // group declares which context it needs rather than relying on an implicit "the host".
+    const expandedChanges = expandChangeTargetGroups(changes, { [EFFECT_CHANGE_TARGET.ACTOR]: this });
 
     // Resolve bonus-type stacking and apply the winners, recording Override
     // history for every field touched (shared with ItemDnd35e.applyActiveEffects).

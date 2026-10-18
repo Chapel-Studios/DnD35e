@@ -57,9 +57,20 @@
       }
     },
     {
+      "name": "POC-Actors",
+      "label": "dnd35e.COMPENDIUM.PACK.PocActors",
+      "type": "Actor"
+    },
+    {
       "name": "macros-dev",
       "label": "dnd35e.COMPENDIUM.PACK.MacrosDev",
       "type": "Macro",
+      "_dev": true
+    },
+    {
+      "name": "dev-effects",
+      "label": "dnd35e.COMPENDIUM.PACK.DevEffects",
+      "type": "ActiveEffect",
       "_dev": true
     }
   ],
@@ -67,7 +78,7 @@
     {
       "name": "Content",
       "sorting": "a",
-      "packs": ["materials", "weapons", "documentation"]
+      "packs": ["materials", "weapons", "documentation", "POC-Actors"]
     }
   ],
   "documentTypes": {

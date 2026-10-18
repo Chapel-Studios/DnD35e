@@ -3,6 +3,7 @@ import type { WieldedHand } from '@constants/equipmentSlots.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import type { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';
 import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
+import type { RollModifier } from '@source/dice/index.mjs';
 
 import type { MeleeAttackRollDialogResult } from '../MeleeAttackRollDialog/types.mjs';
 import type { RangedAttackRollDialogResult } from '../RangedAttackRollDialog/types.mjs';
@@ -71,10 +72,16 @@ interface WeaponAttackRollDialogData extends RollDialogData {
   handBab: Record<WieldedHand, number>;
   /** Full expected to-hit bonus (BAB + ability + size + TWF) per hand — lets the dialog's base-total preview stay live as Wield Mode changes, mirrors `RollDialogData.baseTotal`'s single-value shape but keyed per hand. */
   baseTotalByHand: Record<WieldedHand, number>;
+  /** Labeled breakdown of `baseTotalByHand`, per hand — mirrors `RollDialogData.baseModifierList`'s convention, swapped out by `WeaponAttackRollDialogStore`'s Wield Mode setter alongside `baseTotalByHand`. */
+  baseModifierListByHand: Record<WieldedHand, RollModifier[]>;
   /** Damage box's base-row label (poc.10 Story D) — mirrors `RollDialogData.baseLabel`'s convention, but damage-specific since only weapon attacks have a damage preview row. */
   damageLabel: string;
   /** Damage box's base-row total (poc.10 Story D) — pre-dialog flat preview (dice terms excluded, see `resolveFormulaNumber`'s doc), mirrors `RollDialogData.baseTotal`. */
   damageTotal: number;
+  /** Labeled breakdown of `damageTotal` (e.g. the wield-mode STR term) — mirrors `RollDialogData.baseModifierList`'s convention for the damage box. */
+  damageBaseModifierList: RollModifier[];
+  /** Dice-inclusive damage-box headline (weapon dice + evaluated STR flat, dice-collapsed) before any situational modifier — the live preview's data-fidelity twin of `_buildDamageSnapshot()`'s `expectedDamageFormula`. */
+  damageBaseFormula: string;
 }
 
 interface WeaponAttackRollDialogResult extends RollDialogResult {

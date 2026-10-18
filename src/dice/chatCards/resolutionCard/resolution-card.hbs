@@ -7,38 +7,82 @@
   <header class="card-header">
     <div class="actor-info attacker">
       <span class="actor-header-title">{{ attackerHeaderLabel }}</span>
-      <div class="title-text">
-        <h5 class="value" data-attacker-uuid="{{ attackerUuid }}"></h5>
-        <h6 class="label">- {{ weaponName }}</h6>
+      <div class="actor-header">
+        <img src="{{ attackerImage }}" alt="" class="actor-image" />
+        <div class="title-text">
+          <h5 class="value" data-attacker-uuid="{{ attackerUuid }}"></h5>
+          <h6 class="label">- {{ attackName }}</h6>
+        </div>
       </div>
     </div>
     <div class="actor-info target">
       <span class="actor-header-title">{{ targetHeaderLabel }}</span>
-      <div class="title-text">
-        <h5 class="value" data-target-uuid="{{ targetUuid }}" data-target-token-uuid="{{ targetTokenUuid }}"></h5>
+      <div class="actor-header">
+        <img src="{{ targetImage }}" alt="" class="actor-image" />
+        <div class="title-text">
+          <h5 class="value" data-target-uuid="{{ targetUuid }}" data-target-token-uuid="{{ targetTokenUuid }}"></h5>
+        </div>
       </div>
     </div>
   </header>
 
-  <div class="resolution-summary">
-    <span class="result-badge {{#if hit}}hit{{else}}miss{{/if}}">{{ resultLabel }}</span>
-    {{#if criticalHit}}
-    <span class="callout critical">{{ criticalHitLabel }}</span>
-    {{/if}}
-    {{#if concealmentMissed}}
-    <span class="callout concealed">{{ concealedLabel }}</span>
-    {{/if}}
-    {{#if showEffectiveAc}}
-    <span class="effective-ac">{{ effectiveAcLabel }}: {{ effectiveAc }}</span>
+  {{!-- Mirrors attack-roll-card.hbs's expand-collapse pattern, restating the attack roll and
+  adjusted AC side by side (parity with D35E's damage-description.html) — kept visually
+  distinct from `.roll-result`/`.roll-summary` (no die-face background, two stats not one). --}}
+  <div class="ac-compare" data-action="expandAc" title="{{ acDetailsLabel }}">
+    <div class="ac-compare-summary">
+      <span class="result-badge {{#if hit}}hit{{else}}miss{{/if}}">{{ resultLabel }}</span>
+      {{#if criticalHit}}
+      <span class="callout critical">{{ criticalHitLabel }}</span>
+      {{/if}}
+      {{#if concealmentMissed}}
+      <span class="callout concealed">{{ concealedLabel }}</span>
+      {{/if}}
+
+      <div class="ac-compare-stats">
+        <div class="stat attack-stat" title="{{ attackTotalLabel }}">
+          <span class="value">{{ attackTotal }}</span>
+        </div>
+        {{#if showEffectiveAc}}
+        <div class="stat ac-stat" title="{{ effectiveAcLabel }}">
+          <span class="value">{{ effectiveAc }}</span>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+
+    {{#if acBreakdownHtml}}
+    <div class="ac-breakdown">
+      {{{ acBreakdownHtml }}}
+    </div>
     {{/if}}
   </div>
 
   {{#if hasDamage}}
-  <div class="resolution-damage">
-    <span class="label">{{ damageAppliedLabel }}</span>
-    <span class="value">{{ appliedAmount }}{{#if showHalved}} <em>{{ halfDamageLabel }}</em>{{/if}}</span>
+  <div class="roll-result" data-action="expandRoll">
+    <div class="roll-summary">
+      <span class="result-header">{{ resultHeaderLabel }}</span>
+      <span class="total-result">{{ appliedAmount }}</span>
+
+      {{#if showHalved}}
+        <span class="callout halved">{{ halfDamageLabel }}</span>
+      {{/if}}
+    </div>
+
+    {{!-- Same die-face tooltip + modifier breakdown splice as save-roll-card.hbs. --}}
+    {{{diceRollHtml}}}
   </div>
   {{/if}}
+
+  {{#if showApply}}
+  <div class="damage-apply-row">
+    <button type="button" class="apply-damage-btn" data-action="apply-damage">
+      <i class="fas fa-hand-holding-medical"></i>
+      <span>{{ applyDamageLabel }}</span>
+    </button>
+  </div>
+  {{/if}}
+
 
   {{#if showUndo}}
   <footer class="card-footer">

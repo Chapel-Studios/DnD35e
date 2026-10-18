@@ -6,6 +6,10 @@
       <span class="action-name">{{ displayName }}</span>
       <i v-if="isSystemCreated" class="fa-solid fa-wand-magic-sparkles action-auto-badge" :title="localize('dnd35e.WEAPON.ACTIONS.AutoBadge')" />
 
+      <div class="action-field-controls" @click.stop.prevent>
+        <FieldControls :field-path="actionFieldPath" />
+      </div>
+
       <ActionLinkHeader />
     </div>
 
@@ -14,10 +18,10 @@
         :label="'dnd35e.WEAPON.ACTIONS.Fields.name.label'"
         :tooltip="'dnd35e.WEAPON.ACTIONS.Fields.name.hint'"
         :value="nameFormulaData.formula"
+        :source-value="nameFormulaSourceText"
         :field-path="getFieldPath('name.formula')"
         :contexts="familiarContexts"
         :on-update="(v) => updateActionField('name', { ...nameFormulaData, formula: v })"
-        hide-field-controls
         class="grid-full-row"
       />
 
@@ -29,7 +33,6 @@
         :options="activationCostOptions"
         :field-path="getFieldPath('activationCost')"
         :on-update="(v) => updateActionField('activationCost', v)"
-        hide-field-controls
       />
       <CheckBoxFormGroup
         :label="'dnd35e.WEAPON.ACTIONS.Fields.provokes.label'"
@@ -37,7 +40,6 @@
         :value="provokes"
         :field-path="getFieldPath('provokes')"
         :on-update="(v) => updateActionField('provokes', v)"
-        hide-field-controls
       />
       <NumberFormGroup
         :label="'dnd35e.WEAPON.ACTIONS.Fields.maxTargets.label'"
@@ -46,7 +48,6 @@
         :min="1"
         :field-path="getFieldPath('maxTargets')"
         :on-update="(v) => updateActionField('maxTargets', v)"
-        hide-field-controls
       />
 
       <slot name="append" />
@@ -62,6 +63,7 @@
   import type { ActionEditorStore } from '@documents/items/baseItem/actions/ActionEditorStore.mjs';
   import { ActionEditorStoreSymbol } from '@documents/items/baseItem/actions/ActionEditorStore.mjs';
   import { FormulaFormGroup } from '@helpers/formulae/index.mjs';
+  import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
   import type { SelectOption } from '@vc/fields/index.mjs';
   import { CheckBoxFormGroup, NumberFormGroup, SelectFormGroup } from '@vc/fields/index.mjs';
   import { inject } from 'vue';
@@ -71,12 +73,14 @@
 
   const {
     getters: {
+      actionFieldPath,
       activationCost,
       displayName,
       localizedActionTypeLabel,
       isSystemCreated,
       isActionEditorOpen,
       nameFormulaData,
+      nameFormulaSourceText,
       familiarContexts,
       provokes,
       maxTargets,

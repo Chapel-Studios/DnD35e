@@ -141,3 +141,4 @@ When adding tasks to this phase:
 # manual notes to be sorted later
 - fix pack building to only happen on specific command and as part of prod build.
 - implement weapons pack with srd weapons
+- copy the SRD/OGL license (`OGL.txt`) from the old D35E system and find a way to display/reference it in dnd35e — needed since the system ships SRD-derived content (the SRD journal, and eventually spells/powers/magic items/bestiary) and the OGL requires a copy of the license to accompany any Open Game Content distributed.

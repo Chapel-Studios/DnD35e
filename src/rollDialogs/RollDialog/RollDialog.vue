@@ -17,7 +17,10 @@
 
       <div v-if="!hideTotal" class="total-row subgrid">
         <span class="label">{{ localize('dnd35e.ROLL.Total') }}</span>
-        <span class="value">{{ totalFormula }}</span>
+        <span class="value">
+          {{ totalFormula }}
+          <RollModifierTooltip :modifiers="modifierList" />
+        </span>
       </div>
     </div>
     <footer class="form-footer full">
@@ -48,6 +51,7 @@
   import ActorRollHeader from './ActorRollHeader.vue';
   import type { RollDialogStore } from './RollDialogStore.mjs';
   import { RollDialogStoreSymbol } from './RollDialogStore.mjs';
+  import RollModifierTooltip from './RollModifierTooltip.vue';
 
   // `hideTotal` lets dialogs with their own per-box live totals (e.g. Weapon Attack's
   // to-hit/damage boxes) suppress this generic single-total row. `actorHeaderLabel` lets
@@ -65,6 +69,7 @@
     app: {
       rollMode,
       totalFormula,
+      modifierList,
     },
     actions,
   } = inject(RollDialogStoreSymbol) as RollDialogStore;

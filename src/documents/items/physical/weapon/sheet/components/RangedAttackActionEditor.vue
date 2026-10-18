@@ -7,14 +7,12 @@
         :min="0"
         :field-path="getFieldPath('rangeIncrement')"
         :on-update="(v) => updateActionField('rangeIncrement', v)"
-        hide-field-controls
       />
       <CheckBoxFormGroup
         :label="'dnd35e.WEAPON.ACTIONS.Fields.isAmmoRequired.label'"
         :value="isAmmoRequired"
         :field-path="getFieldPath('isAmmoRequired')"
         :on-update="(v) => updateActionField('isAmmoRequired', v)"
-        hide-field-controls
       />
     </template>
   </WeaponAttackActionEditor>
