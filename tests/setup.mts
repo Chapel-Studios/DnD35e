@@ -31,6 +31,17 @@ function getProperty (obj: any, path: string): unknown {
   return path.split('.').reduce((acc, key) => (acc == null ? acc : acc[key]), obj);
 }
 
+function hasProperty (obj: any, path: string): boolean {
+  if (!path) return false;
+  const parts = path.split('.');
+  let current = obj;
+  for (const key of parts) {
+    if (current == null || typeof current !== 'object' || !(key in current)) return false;
+    current = current[key];
+  }
+  return true;
+}
+
 function setProperty (obj: any, path: string, value: unknown): boolean {
   if (!path) return false;
   const parts = path.split('.');
@@ -101,6 +112,7 @@ class ActiveEffectStub {
       }
     },
     getProperty,
+    hasProperty,
     setProperty,
     mergeObject,
     deepClone: <T,>(v: T): T => structuredClone(v),
