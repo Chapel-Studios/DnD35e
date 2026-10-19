@@ -58,6 +58,23 @@
     {{/if}}
   </div>
 
+  {{#if concealmentRolled}}
+  {{!-- Mirrors D35E's damage-description.html concealment roll box (roll vs. miss-chance target,
+  colored by whether the roll itself beat the chance) — independent of the overall hit/miss class
+  above it, since the attack could still miss on AC alone while the concealment roll succeeded. --}}
+  <div class="concealment-check">
+    <span class="dice-flavor">{{ concealmentCheckLabel }}</span>
+    <div class="concealment-check-stats">
+      <div class="stat concealment-roll-stat {{#if concealmentMissed}}failure{{else}}success{{/if}}" title="{{ concealmentRollLabel }}">
+        <span class="value">{{ concealmentRoll }}</span>
+      </div>
+      <div class="stat concealment-target-stat" title="{{ concealmentTargetLabel }}">
+        <span class="value">{{ concealmentPercent }}%</span>
+      </div>
+    </div>
+  </div>
+  {{/if}}
+
   {{#if hasDamage}}
   <div class="roll-result" data-action="expandRoll">
     <div class="roll-summary">
@@ -76,9 +93,10 @@
 
   {{#if showApply}}
   <div class="damage-apply-row">
+    {{!-- Left clickable after applying (not disabled) so a messed-up resolution can be redone. --}}
     <button type="button" class="apply-damage-btn" data-action="apply-damage">
       <i class="fas fa-hand-holding-medical"></i>
-      <span>{{ applyDamageLabel }}</span>
+      <span>{{#if applied}}{{ reapplyDamageLabel }}{{else}}{{ applyDamageLabel }}{{/if}}</span>
     </button>
   </div>
   {{/if}}

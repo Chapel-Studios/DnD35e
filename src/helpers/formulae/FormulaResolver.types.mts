@@ -99,7 +99,9 @@ export type FunctionName = 'contains'
   | 'round'
   | 'absolute'
   | 'localize'
-  | 'scaleDamage';
+  | 'scaleDamage'
+  | 'critMultiply'
+  | 'critExempt';
 
 /** A reason a `$function(...)` block failed to parse cleanly. */
 export type FunctionBlockError = 'unbalancedParens' | 'argCount' | 'missingProjection';

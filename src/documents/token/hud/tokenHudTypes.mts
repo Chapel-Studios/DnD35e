@@ -30,6 +30,14 @@ interface TokenHudLevelRow {
   cssClass: string;
 }
 
+/** Concealment palette entry (None/Concealed 20%/Full Concealment 50%) — `cssClass` is `'active'` when it matches the actor's current `system.defense.concealment`. */
+interface TokenHudConcealmentRow {
+  id: string;
+  label: string;
+  value: number;
+  cssClass: string;
+}
+
 interface TokenHudWeaponActionRow {
   itemId: string;
   actionId: string;
@@ -66,6 +74,7 @@ interface TokenHudContext {
 export type {
   MiddleHudBarProps,
   TokenHudCombatManeuverRow,
+  TokenHudConcealmentRow,
   TokenHudContext,
   TokenHudLevelRow,
   TokenHudMovementActionRow,

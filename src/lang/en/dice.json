@@ -77,18 +77,20 @@
         "Miss": "Miss",
         "CriticalHit": "Critical Hit!",
         "Concealed": "Missed due to concealment",
+        "ConcealmentCheck": "Concealment Check",
+        "ConcealmentRoll": "d% Roll",
+        "ConcealmentTarget": "Miss Chance",
         "AttackTotal": "Attack Roll",
         "EffectiveAc": "Effective AC",
         "AcDetails": "AC Details",
         "BaseAc": "AC",
-        "DamageApplied": "Damage Applied",
-        "NonLethalApplied": "Non-lethal Damage Applied",
-        "DamagePending": "Damage Pending",
-        "NonLethalPending": "Non-lethal Damage Pending",
+        "Damage": "Damage",
+        "NonLethalDamage": "Non-lethal Damage",
         "ApplyDamage": "Apply Damage",
+        "ReapplyDamage": "Reapply Damage",
         "HalfDamage": "(halved)",
         "Undo": "Undo",
-        "Undone": "Undone — damage reversed, action(s) refunded."
+        "Undone": "Undone — action(s) refunded."
       }
     }
   }

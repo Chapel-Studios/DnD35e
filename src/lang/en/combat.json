@@ -60,6 +60,7 @@
       "TwoWeaponFighting": "Two-Weapon Fighting",
       "WeaponBonus": "Weapon Bonus",
       "WeaponDamageDice": "Weapon Damage",
+      "ExtraDamageDice": "Extra Damage",
       "NoActionAvailable": "No action available for this attack.",
       "ChargeMeleeOnly": "A charge permits only a single melee attack.",
       "SelectTargetFirst": "Select a target before attacking.",
@@ -77,7 +78,15 @@
       "HUD": {
         "WeaponAttacks": "Weapon Attacks",
         "CombatManeuvers": "Combat Maneuvers",
-        "NoWeaponAttacks": "No weapons carried"
+        "NoWeaponAttacks": "No weapons carried",
+        "Concealment": "Concealment",
+        "ConcealmentNone": "None",
+        "ConcealmentConcealed": "Concealed (20%)",
+        "ConcealmentFull": "Full Concealment (50%)",
+        "ConcealmentCategoryNone": "None",
+        "ConcealmentCategoryConcealed": "Concealed",
+        "ConcealmentCategoryFull": "Full Concealment",
+        "ConcealmentTooltip": "{category} ({percent}%)"
       },
       "CONFIG": {
         "ClearImage": "Reset to Token/Actor Image",

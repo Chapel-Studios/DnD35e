@@ -168,7 +168,10 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       shieldBonus:     useDnd35eField(derivedNumberField(0)),
       naturalArmor:    useDnd35eField(derivedNumberField(0)),
       fortification: useDnd35eField(derivedNumberField(0)),
-      concealment: useDnd35eField(derivedNumberField(0)),
+      // Persisted (unlike its defense.* siblings) — a manually-set/HUD-set baseline the GM/
+      // owner can edit directly; AEs (e.g. a Blur buff) still layer on top during data prep the
+      // same as any other field. Reset to 0 on token placement, see TokenDocumentDnd35e#_preCreate.
+      concealment: useDnd35eField(requiredNumberField(0, 0, 100)),
       spellResistance: useDnd35eField(new FormulaField({
         expectedType: 'number',
         nullable: true,

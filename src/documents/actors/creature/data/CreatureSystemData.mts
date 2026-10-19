@@ -107,6 +107,7 @@ interface CreatureSystemSource extends CreatureSystemSourceProperties, ActorSyst
   hp:         HpSource;
   currency:   PriceSource;
   defense: {
+    concealment: number;
     spellResistance: FormulaDataSource;
   }
 }
@@ -130,6 +131,7 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
     shieldBonus: number;
     naturalArmor: number;
     fortification: number;
+    /** Persisted baseline (GM/owner-editable via sheet or Token HUD) — AEs still layer on top during data prep. */
     concealment: number;
     spellResistance: FormulaDataSource;
   };

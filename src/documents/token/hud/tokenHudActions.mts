@@ -29,7 +29,7 @@ import { WEAPON_ACTION_TYPE, WEAPON_ACTION_TYPES } from '@items/baseItem/actions
 import type { IAction } from '@items/baseItem/actions/types.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
 
-import type { TokenHudCombatManeuverRow, TokenHudWeaponActionRow } from './tokenHudTypes.mjs';
+import type { TokenHudCombatManeuverRow, TokenHudConcealmentRow, TokenHudWeaponActionRow } from './tokenHudTypes.mjs';
 
 /** The combatant tracking this per-round action economy, if any encounter is active — resolved by the HUD's own rendered token, never a re-resolved placeable, which is ambiguous when multiple tokens share one prototype actor. */
 function getActiveCombatant(token: TokenDnd35e): CombatantDnd35e | undefined {
@@ -96,4 +96,41 @@ function getCombatManeuverChoices(token: TokenDnd35e): TokenHudCombatManeuverRow
   ];
 }
 
-export { getActiveCombatant, getCombatManeuverChoices, getWeaponActionChoices };
+/**
+ * Concealment tiers (None/Concealed/Full), ordered by descending threshold so the first match
+ * for `percent >= threshold` is the correct "closest tier downward" (e.g. 49% is still Concealed,
+ * not Full) — the field itself is a real 0-100 percent, only the HUD groups it into 3 presets.
+ */
+const CONCEALMENT_TIERS = [
+  { id: 'full', threshold: 50, iconClass: 'fa-solid fa-cloud', categoryKey: 'dnd35e.COMBAT.HUD.ConcealmentCategoryFull' },
+  { id: 'concealed', threshold: 20, iconClass: 'fa-solid fa-cloud-sun', categoryKey: 'dnd35e.COMBAT.HUD.ConcealmentCategoryConcealed' },
+  { id: 'none', threshold: 0, iconClass: 'fa-regular fa-cloud', categoryKey: 'dnd35e.COMBAT.HUD.ConcealmentCategoryNone' },
+] as const;
+
+function getConcealmentTier(percent: number): (typeof CONCEALMENT_TIERS)[number] {
+  return CONCEALMENT_TIERS.find((tier) => percent >= tier.threshold) ?? CONCEALMENT_TIERS[CONCEALMENT_TIERS.length - 1];
+}
+
+/** Concealment HUD palette entries (None/Concealed 20%/Full Concealment 50%, mirrors D35E's checkboxes) — `cssClass` marks whichever preset matches the actor's current tier. */
+function getConcealmentChoices(concealment: number): TokenHudConcealmentRow[] {
+  const localize = (key: string) => game.i18n.localize(`dnd35e.COMBAT.HUD.${key}`);
+  const activeTier = getConcealmentTier(concealment).id;
+  const options: { id: string; label: string; value: number }[] = [
+    { id: 'none', label: localize('ConcealmentNone'), value: 0 },
+    { id: 'concealed', label: localize('ConcealmentConcealed'), value: 20 },
+    { id: 'full', label: localize('ConcealmentFull'), value: 50 },
+  ];
+  return options.map((option) => ({ ...option, cssClass: option.id === activeTier ? 'active' : '' }));
+}
+
+/** Toggle button's icon + tooltip for the actor's actual (0-100) concealment percent, not just the preset tier value. */
+function getConcealmentButtonInfo(percent: number): { iconClass: string; tooltip: string } {
+  const tier = getConcealmentTier(percent);
+  const tooltip = game.i18n.format('dnd35e.COMBAT.HUD.ConcealmentTooltip', {
+    category: game.i18n.localize(tier.categoryKey),
+    percent,
+  });
+  return { iconClass: tier.iconClass, tooltip };
+}
+
+export { getActiveCombatant, getCombatManeuverChoices, getConcealmentButtonInfo, getConcealmentChoices, getWeaponActionChoices };

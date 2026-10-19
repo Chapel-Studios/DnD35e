@@ -25,6 +25,10 @@ interface DefenseEvaluation {
   effectiveAc: number;
   /** Whether the d% Concealment roll alone caused an otherwise-successful hit to miss. */
   concealmentMissed: boolean;
+  /** The d% roll result compared against `concealmentPercent` — `null` when no roll happened (`concealmentPercent` was 0). Mirrors D35E's `concealRoll`. */
+  concealmentRoll: number | null;
+  /** The miss-chance percent the roll was checked against (max of the dialog's entry and the target's base concealment) — mirrors D35E's `concealTarget`. `0` when no concealment applies. */
+  concealmentPercent: number;
   /** Every named contributor to `effectiveAc` (granular Base AC breakdown first — same fidelity as the dialog's own AC tooltip — then checked combat modifiers/cover/situational) — mirrors D35E's `damage-description.html` "AC Details" table (`acModifiers`). Empty in `noCheck` mode. */
   acBreakdown: RollModifier[];
 }
@@ -47,6 +51,8 @@ async function evaluateDefense(
       attackTotal,
       effectiveAc: 0,
       concealmentMissed: false,
+      concealmentRoll: null,
+      concealmentPercent: 0,
       acBreakdown: [],
     };
   }
@@ -98,10 +104,17 @@ async function evaluateDefense(
     acBreakdown.push({ label: game.i18n.localize('dnd35e.ROLL.SituationalModifier'), value: situationalFlat });
   }
 
+  // Target's base concealment (buffs/conditions like Blur or Displacement, set via AE on
+  // `system.defense.concealment`) always factors in via max(), mirroring D35E's
+  // `Math.max(actor.system.attributes.concealment.total, concealTarget)` — so it can never be
+  // silently dropped even if the dialog's field was cleared or edited down.
+  const concealmentPercent = Math.max(dialogResult.concealment, target.system.defense.concealment);
   let concealmentMissed = false;
-  if (dialogResult.concealment > 0) {
-    const concealmentRoll = await new Roll('1d100').evaluate();
-    concealmentMissed = (concealmentRoll.total ?? 0) <= dialogResult.concealment;
+  let concealmentRoll: number | null = null;
+  if (concealmentPercent > 0) {
+    const roll = await new Roll('1d100').evaluate();
+    concealmentRoll = roll.total ?? 0;
+    concealmentMissed = concealmentRoll <= concealmentPercent;
   }
 
   const hit = attackTotal >= effectiveAc && !concealmentMissed;
@@ -111,7 +124,7 @@ async function evaluateDefense(
     && critConfirmTotal !== null
     && critConfirmTotal >= effectiveAc;
 
-  return { hit, criticalHit, attackTotal, effectiveAc, concealmentMissed, acBreakdown };
+  return { hit, criticalHit, attackTotal, effectiveAc, concealmentMissed, concealmentRoll, concealmentPercent, acBreakdown };
 }
 
 export { evaluateDefense };

@@ -86,6 +86,12 @@ function buildResolutionCardContent(flags: ResolutionCardFlags, diceRollHtml: st
     criticalHitLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.CriticalHit'),
     concealmentMissed: flags.concealmentMissed,
     concealedLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Concealed'),
+    concealmentRolled: flags.concealmentRoll !== null,
+    concealmentRoll: flags.concealmentRoll,
+    concealmentPercent: flags.concealmentPercent,
+    concealmentCheckLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.ConcealmentCheck'),
+    concealmentRollLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.ConcealmentRoll'),
+    concealmentTargetLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.ConcealmentTarget'),
     attackTotal: flags.attackTotal,
     attackTotalLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.AttackTotal'),
     effectiveAcLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.EffectiveAc'),
@@ -96,22 +102,24 @@ function buildResolutionCardContent(flags: ResolutionCardFlags, diceRollHtml: st
       ? buildRawBreakdownHtml(flags.acBreakdown)
       : '',
     hasDamage: flags.damageTotal !== null,
-    resultHeaderLabel: flags.applied
-      ? (flags.nonLethal
-        ? game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.NonLethalApplied')
-        : game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.DamageApplied'))
-      : (flags.nonLethal
-        ? game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.NonLethalPending')
-        : game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.DamagePending')),
+    resultHeaderLabel: flags.nonLethal
+      ? game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.NonLethalDamage')
+      : game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Damage'),
     appliedAmount: flags.appliedAmount,
     damageTotal: flags.damageTotal,
     showHalved: flags.applyHalfDamage,
     halfDamageLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.HalfDamage'),
-    showApply: flags.hit && flags.damageTotal !== null && !flags.applied,
+    // Always visible once there's damage to apply — never hidden post-apply, mirrors the
+    // attack card's Apply/Reapply convention so multiple resolvers can redo a messed-up roll.
+    showApply: flags.hit && flags.damageTotal !== null,
+    applied: flags.applied,
     applyDamageLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.ApplyDamage'),
+    reapplyDamageLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.ReapplyDamage'),
     undoLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Undo'),
     undoneLabel: game.i18n.localize('dnd35e.ROLL.RESOLUTION_CARD.Undone'),
-    showUndo: (flags.applied && flags.appliedAmount > 0) || flags.actionEconomySpent !== null,
+    // Narrowed to the miss/action-economy-refund case now that Apply/Reapply handles the hit
+    // path's own reversal — full undo/history hardening is a separate future story.
+    showUndo: !flags.hit && flags.actionEconomySpent !== null,
     undone: flags.undone,
     diceRollHtml,
   });
@@ -178,16 +186,26 @@ async function buildResolutionCard(
 
 /**
  * Applies this card's already-computed `appliedAmount` to the target's HP (poc.10 §10.7
- * follow-up) \u2014 the explicit, GM/owner-triggered counterpart to the old eager-apply behavior.
- * Guards against double-applying (`flags.applied`) and against a miss/zero-damage card having
- * nothing to apply. Same rebuild-not-patch convention as `onUndoResolution()`/`onRetarget()`.
+ * follow-up) — the explicit, GM/owner-triggered counterpart to the old eager-apply behavior.
+ * Left clickable after applying (relabeled Reapply, mirrors the attack card's Apply/Reapply
+ * button) so a messed-up resolution can be redone — a repeat click reverses its own prior
+ * delta first, keeping repeated clicks idempotent rather than stacking damage. Same
+ * rebuild-not-patch convention as `onUndoResolution()`/`onRetarget()`.
  */
 async function onApplyDamage(message: ChatMessage, flags: ResolutionCardFlags): Promise<void> {
-  if (flags.applied || flags.appliedAmount <= 0) return;
+  if (flags.appliedAmount <= 0) return;
 
   const target = foundry.utils.fromUuidSync(flags.targetUuid) as ACTORS_DND35E | null;
   if (!target) return;
   const attackerActor = foundry.utils.fromUuidSync(flags.attackerUuid) as ACTORS_DND35E | null;
+
+  if (flags.applied) {
+    if (flags.nonLethal) {
+      await target.update({ 'system.hp.nonlethal': Math.max(0, target.system.hp.nonlethal - flags.appliedAmount) });
+    } else {
+      await target.update({ 'system.hp.current': Math.min(target.system.hp.max, target.system.hp.current + flags.appliedAmount) });
+    }
+  }
 
   const adjustmentType = flags.nonLethal ? HP_ADJUSTMENT_TYPE.NONLETHAL_ADJUSTMENT : HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT;
   await target.updateHP(flags.appliedAmount, adjustmentType, { attackerId: attackerActor?.id, damageType: flags.damageType });
@@ -195,7 +213,9 @@ async function onApplyDamage(message: ChatMessage, flags: ResolutionCardFlags): 
 
   const updatedFlags: ResolutionCardFlags = { ...flags, applied: true };
   const roll = message.rolls[0] as DamageRoll | undefined;
-  const diceRollHtml = roll ? await buildDiceRollHtmlWithModifiers(roll, flags.damageModifierList) : '';
+  const diceRollHtml = roll
+    ? await buildDiceRollHtmlWithModifiers(roll, flags.damageModifierList)
+    : '';
   await message.update({
     content: buildResolutionCardContent(updatedFlags, diceRollHtml),
     'flags.dnd35e.resolutionCard': updatedFlags,

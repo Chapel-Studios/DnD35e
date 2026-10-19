@@ -30,6 +30,20 @@
  * requiring a `thisAttack` context), and resolved against whichever of the `weapon`/
  * `self` contexts is present.
  *
+ * `$critMultiply(dieFormula)`/`$critExempt(dieFormula)` are escape hatches for the
+ * default critical-hit multiplication rule (SRD: AE-contributed "extra damage dice"
+ * are never multiplied, the weapon's own base dice always are — see
+ * `flavorDamageDiceBySource()`/`DamageRoll#evaluateCritical()`). Each resolves its
+ * inner die formula normally, then re-flavors every top-level dice group in it with a
+ * reserved marker (`@constants/critDiceMarkers.mjs`) instead of discarding the result —
+ * the marker is plain text embedded as a Foundry bracket-flavor tag, so it survives
+ * formula resolution intact and is read back out (and replaced with a real display
+ * label) later by `flavorDamageDiceBySource()`. `$critMultiply`, used inside an AE's
+ * own formula/change value, keeps that AE's dice eligible for crit multiplication
+ * despite being AE-sourced. `$critExempt`, used inside the weapon's own base
+ * `damageFormula`, exempts that portion of the weapon's own dice despite being its own
+ * base dice.
+ *
  * `#it` is a bound per-element variable valid only inside a `$contains`/`$find`/
  * `$any`/`$count` predicate argument — resolved per-element against a synthetic
  * FamiliarSchema built from the array's `arrayElement.elementFields` (object-array
@@ -46,9 +60,11 @@
  *
  * @module
  */
+import { CRIT_EXEMPT_MARKER, CRIT_MULTIPLY_MARKER } from '@constants/critDiceMarkers.mjs';
 import type { Size } from '@constants/sizes.mjs';
 import { roundToDecimal } from '@helpers/math.mjs';
 import { scaleDamageDie } from '@items/physical/weapon/logic/weaponDamageScaling.mjs';
+import { flavorDiceGroups } from '@source/dice/d20Formula.mjs';
 
 import { findMatchingParen, splitTopLevelArgs } from './FormulaResolver.parenUtils.mjs';
 import type { FunctionBlock, FunctionBlockError, FunctionName } from './FormulaResolver.types.mjs';
@@ -94,7 +110,7 @@ export interface FunctionGrammarHelpers {
   ) => ((context?: DocumentContext) => AspectGroup) | undefined;
 }
 
-const FUNCTION_OPEN_REGEX = /(?<!\\)\$(contains|find|any|count|stringcontains|fromfeet|frommeters|fromkg|floor|ceiling|round|absolute|localize|l|scaledamage)\s*\(/gi;
+const FUNCTION_OPEN_REGEX = /(?<!\\)\$(contains|find|any|count|stringcontains|fromfeet|frommeters|fromkg|floor|ceiling|round|absolute|localize|l|scaledamage|critmultiply|critexempt)\s*\(/gi;
 const PROJECTION_REGEX = /^\.([\p{L}\p{N}_]+)/u;
 const IT_REFERENCE_REGEX = /(?<!\\)#it(?![\p{L}\p{N}_])/u;
 const BARE_VARIABLE_REGEX = /^#([\p{L}\p{N}_]+)((?:\.[\p{L}\p{N}_]+)*)$/u;
@@ -115,6 +131,8 @@ const CANONICAL_NAMES: Record<string, FunctionName> = {
   localize: 'localize',
   l: 'localize',
   scaledamage: 'scaleDamage',
+  critmultiply: 'critMultiply',
+  critexempt: 'critExempt',
 };
 
 /** Valid top-level argument counts per function. */
@@ -133,6 +151,8 @@ const FUNCTION_ARG_COUNTS: Record<FunctionName, number[]> = {
   absolute: [1],
   localize: [1],
   scaleDamage: [1],
+  critMultiply: [1],
+  critExempt: [1],
 };
 
 /**
@@ -382,6 +402,17 @@ function resolveFunctionBlock(
     }
     const mathProxyName = block.name === 'ceiling' ? 'ceil' : block.name === 'absolute' ? 'abs' : block.name;
     return `${mathProxyName}(${resolved})`;
+  }
+
+  // $critMultiply(dieFormula)/$critExempt(dieFormula) — escape hatches for the default
+  // crit-multiplication rule (see module doc comment). Resolves the inner die formula
+  // normally, then re-flavors its top-level dice groups with a reserved marker (instead
+  // of any flavor the inner text might already carry) so the override survives as plain
+  // text through to `flavorDamageDiceBySource()`'s later attribution pass.
+  if (block.name === 'critMultiply' || block.name === 'critExempt') {
+    const dieText = resolveOperand(block.args[0], helpers.resolveSubFormula);
+    const marker = block.name === 'critMultiply' ? CRIT_MULTIPLY_MARKER : CRIT_EXEMPT_MARKER;
+    return flavorDiceGroups(dieText, marker);
   }
 
   // Array functions: contains / find / any / count — a runtime miss (missing context,

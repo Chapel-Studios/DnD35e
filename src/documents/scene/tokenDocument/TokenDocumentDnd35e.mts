@@ -49,6 +49,15 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
       const dim = SIZE_TOKEN_DIMENSIONS[size];
       this.updateSource({ width: dim, height: dim });
     }
+
+    // Concealment is a persisted (GM/owner-editable) baseline, not a derived stat - every newly
+    // placed token starts unconcealed regardless of whatever value a previous placement left on
+    // the actor. Skipped for linked tokens (mirrors core's own `isLinked` guard before touching
+    // `delta` above) - a linked actor has no ActorDelta to write into, and its concealment is
+    // shared, real character state that shouldn't be reset just because a new token references it.
+    if (!this.isLinked) {
+      this.updateSource({ delta: { system: { defense: { concealment: 0 } } } });
+    }
   }
 
   /**

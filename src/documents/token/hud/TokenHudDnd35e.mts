@@ -53,7 +53,7 @@ import { DROP_PRONE_MOVEMENT_ACTION, STAND_UP_MOVEMENT_ACTION } from '../logic/m
 import type { BottomHudBarProps } from './components/BottomHudBar.vue';
 import type { LeftHudBarProps } from './components/LeftHudBar.vue';
 import type { RightHudBarProps } from './components/RightHudBar.vue';
-import { getActiveCombatant, getCombatManeuverChoices, getWeaponActionChoices } from './tokenHudActions.mjs';
+import { getActiveCombatant, getCombatManeuverChoices, getConcealmentButtonInfo, getConcealmentChoices, getWeaponActionChoices } from './tokenHudActions.mjs';
 import TokenHudApp from './TokenHudApp.vue';
 import type { MiddleHudBarProps, TokenHudContext } from './tokenHudTypes.mjs';
 
@@ -121,6 +121,10 @@ class TokenHudDnd35e extends TokenHudVueBase {
       levels: [],
       locked: false,
       canConfigure: false,
+      canEditConcealment: false,
+      concealmentIconClass: 'fa-regular fa-cloud',
+      concealmentTooltip: '',
+      concealmentOptions: [],
     },
     rightHudContext: {
       canToggleCombat: false,
@@ -154,6 +158,7 @@ class TokenHudDnd35e extends TokenHudVueBase {
         attackAction: TokenHudDnd35e.#onAttackAction,
         adjustHp: TokenHudDnd35e.#onAdjustHp,
         combatManeuver: TokenHudDnd35e.#onCombatManeuver,
+        concealment: TokenHudDnd35e.#onConcealment,
         movementAction: TokenHudDnd35e.#onMovementAction,
       },
     },
@@ -182,6 +187,9 @@ class TokenHudDnd35e extends TokenHudVueBase {
       ? (raw.bar1Data?.editable ?? false)
       : Boolean(creature?.isOwner);
 
+    const concealmentPercent = creature?.system.defense.concealment ?? 0;
+    const concealmentButtonInfo = getConcealmentButtonInfo(concealmentPercent);
+
     const leftHudContext: LeftHudBarProps = {
       elevation: raw.elevation,
       elevationDisabled: raw.locked 
@@ -190,6 +198,10 @@ class TokenHudDnd35e extends TokenHudVueBase {
       levels: Object.values(raw.levels),
       locked: raw.locked,
       canConfigure: raw.canConfigure,
+      canEditConcealment: Boolean(creature?.isOwner),
+      concealmentIconClass: concealmentButtonInfo.iconClass,
+      concealmentTooltip: concealmentButtonInfo.tooltip,
+      concealmentOptions: getConcealmentChoices(concealmentPercent),
     };
 
     const rightHudContext: RightHudBarProps = {
@@ -305,6 +317,23 @@ class TokenHudDnd35e extends TokenHudVueBase {
     if (spent === null) return;
 
     await applyTotalDefenseAE(actor);
+  }
+
+  /**
+   * Concealment palette entry click — writes straight to the actor's persisted
+   * `system.defense.concealment` (a real stored field now, not derived; reset to 0 on token
+   * placement, see `TokenDocumentDnd35e#_preCreate`). Active Effects (e.g. a Blur buff) still
+   * layer on top of this baseline during data prep the same as any other field.
+   */
+  static async #onConcealment (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
+    const actor = this.actor;
+    if (!actor?.isOwner) return;
+
+    const value = Number(target.dataset.concealmentValue);
+    if (Number.isNaN(value)) return;
+
+    await actor.update({ system: { defense: { concealment: value } } });
+    this.togglePalette(null);
   }
 
   /**

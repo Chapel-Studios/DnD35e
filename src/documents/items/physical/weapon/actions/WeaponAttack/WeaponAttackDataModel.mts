@@ -36,6 +36,7 @@ import {
   DamageRoll,
   extractDiceOnlyFormula,
   extractFlatModifier,
+  flavorDamageDiceBySource,
   flavorTerm,
   markTargetRowResolved,
 } from '@source/dice/index.mjs';
@@ -430,9 +431,38 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     return typeof strTerm === 'string' ? strTerm : String(strTerm);
   }
 
-  private _computeDamageFormula(context: UseWeaponAttackContext, formulaContext: FormulaContext): string {
+  /**
+   * Composes the unrolled damage formula — the weapon's own resolved `damageFormula` (its
+   * base dice plus any AE flat/dice bonuses, already merged as text) with the weapon's own
+   * dice flavor-tagged by its name and each contributing AE's own dice flavor-tagged (and,
+   * later, crit-exempted by `DamageRoll#evaluateCritical()`) by that effect's name instead —
+   * see `flavorDamageDiceBySource()` for why (SRD: "extra damage dice over and above a
+   * weapon's normal damage are never multiplied"). Plus the wield-mode STR term, appended
+   * fresh. Safe to flavor/split unconditionally here: `extractFlatModifier()`/
+   * `extractDiceOnlyFormula()` parse flavor-tagged dice terms the same as plain ones, so both
+   * callers below (flat-only preview and the real roll) are unaffected. Also returns
+   * `exemptDiceIndices` — the dice-group positions `DamageRoll#evaluateCritical()` must skip on
+   * a confirmed critical — threaded through by `_buildDamageSnapshot()`.
+   */
+  private _computeDamageFormula(context: UseWeaponAttackContext, formulaContext: FormulaContext): { formula: string; exemptDiceIndices: number[] } {
     const strTerm = this._includeAttackAbilityTerms(context, formulaContext);
-    return `${this.damageFormula.resolvedValue || '0'}${strTerm}`;
+    const item = this.item;
+    const actionIndex = item?.system.actions.findIndex((action) => action._id === this._id) ?? -1;
+    const fieldPath = item && actionIndex >= 0 ? `system.actions.${actionIndex}.damageFormula.formula` : null;
+    const diceOverrides = (fieldPath
+      ? item?.effectOverrides[fieldPath]
+      : undefined
+    )?.map((override) => ({
+      effectName: override.effectName,
+      value: String(override.value),
+    })) ?? [];
+    const { formula: flavoredDamageFormula, exemptDiceIndices } = flavorDamageDiceBySource(this.damageFormula.resolvedValue || '0', this._weaponDamageDiceLabel(), diceOverrides);
+    return { formula: `${flavoredDamageFormula}${strTerm}`, exemptDiceIndices };
+  }
+
+  /** Shared label for the weapon's own damage dice — used both to flavor-tag the real roll formula (`_computeDamageFormula()`) and to name its breakdown row (`_buildWeaponDamageDiceEntry()`), so both always agree. */
+  private _weaponDamageDiceLabel(): string {
+    return this.item?.name ?? game.i18n.localize('dnd35e.COMBAT.WeaponDamageDice');
   }
 
   /**
@@ -442,7 +472,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    * post-dialog by `_buildDamageSnapshot()`.
    */
   private _computeExpectedDamageBonus(context: UseWeaponAttackContext, formulaContext: FormulaContext): number {
-    return extractFlatModifier(this._computeDamageFormula(context, formulaContext)).flat;
+    return extractFlatModifier(this._computeDamageFormula(context, formulaContext).formula).flat;
   }
 
   /**
@@ -520,8 +550,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   private _buildWeaponDamageDiceEntry(): RollModifier[] {
     const diceOnly = extractDiceOnlyFormula(this.damageFormula.resolvedValue || '0');
     if (!diceOnly) return [];
-    const label = this.item?.name ?? game.i18n.localize('dnd35e.COMBAT.WeaponDamageDice');
-    return [{ label, value: 0, formula: diceOnly }];
+    return [{ label: this._weaponDamageDiceLabel(), value: 0, formula: diceOnly }];
   }
 
   /**
@@ -546,8 +575,15 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     context: UseWeaponAttackContext,
     formulaContext: FormulaContext,
     dialogResult: AttackRollDialogResult
-  ): { resolvedDamageFormula: string; damageBonusTerm: string; damageModifierList: RollModifier[]; expectedDamageModifierList: RollModifier[]; expectedDamageFormula: string } {
-    const resolvedDamageFormula = this._computeDamageFormula(context, formulaContext);
+  ): {
+    resolvedDamageFormula: string;
+    damageExemptDiceIndices: number[];
+    damageBonusTerm: string;
+    damageModifierList: RollModifier[];
+    expectedDamageModifierList: RollModifier[];
+    expectedDamageFormula: string;
+  } {
+    const { formula: resolvedDamageFormula, exemptDiceIndices: damageExemptDiceIndices } = this._computeDamageFormula(context, formulaContext);
     const situationalLabel = game.i18n.localize('dnd35e.ROLL.DamageSituationalModifier');
     const trimmedDamageSituational = dialogResult.damageSituationalModifier?.trim() ?? '';
     const { flat: flatDamageSituational, hasDice: damageSituationalHasDice } = extractFlatModifier(trimmedDamageSituational);
@@ -579,7 +615,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // flat number straight in rather than its raw (and sometimes Math-proxy) formula text.
     const expectedDamageFormula = combineDiceFormula([this._computeExpectedDamageBaseFormula(context, formulaContext), trimmedDamageSituational]);
 
-    return { resolvedDamageFormula, damageBonusTerm, damageModifierList, expectedDamageModifierList, expectedDamageFormula };
+    return { resolvedDamageFormula, damageExemptDiceIndices, damageBonusTerm, damageModifierList, expectedDamageModifierList, expectedDamageFormula };
   }
 
   /**
@@ -678,7 +714,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // Story E owns the AC comparison that turns this into an actual confirmed critical.
     const critConfirmRoll = attackRoll.isCriticalThreat(this.critRange) ? await attackRoll.rollConfirmation() : null;
 
-    const { resolvedDamageFormula, damageBonusTerm, damageModifierList, expectedDamageModifierList, expectedDamageFormula } = this._buildDamageSnapshot(context, formulaContext, dialogResult);
+    const { resolvedDamageFormula, damageExemptDiceIndices, damageBonusTerm, damageModifierList, expectedDamageModifierList, expectedDamageFormula } = this._buildDamageSnapshot(context, formulaContext, dialogResult);
 
     const targetRows: AttackCardTargetRow[] = (context.target ?? []).map(participant => {
       const targetActor = participantActor(participant);
@@ -702,6 +738,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       hand: context.wieldedHand,
       nonLethal: isNonLethal,
       resolvedDamageFormula,
+      damageExemptDiceIndices,
       damageBonusTerm,
       damageModifierList,
       expectedDamageModifierList,
@@ -823,7 +860,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     let damageRoll: DamageRoll | null = null;
     if (evaluation.hit) {
       damageRoll = new DamageRoll(`${flags.resolvedDamageFormula}${flags.damageBonusTerm}`);
-      await damageRoll.evaluateCritical(evaluation.criticalHit ? flags.critMultiplier : 1);
+      await damageRoll.evaluateCritical(evaluation.criticalHit ? flags.critMultiplier : 1, flags.damageExemptDiceIndices);
     }
 
     const resolutionData: ResolutionCardData = {

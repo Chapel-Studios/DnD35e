@@ -31,15 +31,21 @@ const ignoredFallbackLabel = (): string => game.i18n.localize('dnd35e.EFFECT.Sta
 function buildOverridesModifierList(document: EffectOverrideHost, fieldPath: string, fallbackLabel: string, fallbackValue: number): RollModifier[] {
   const overrides = document.effectOverrides[fieldPath] ?? [];
   if (overrides.length === 0) return [{ label: fallbackLabel, value: fallbackValue }];
-  return overrides.map((override) => {
-    const isIgnored = override.stackResult === STACK_RESULT_IGNORED;
-    return {
-      label: override.effectName,
-      value: parseNumericChangeValue(override.value),
-      bonusTypeLabel: formatBonusTypeLabel(override.bonusType),
-      ...(isIgnored ? { isIgnored: true, ignoredReason: override.stackReason ?? ignoredFallbackLabel() } : {}),
-    };
-  });
+  return overrides
+    // A dice-bearing change (e.g. a weapon enhancement's "+1d6" bonus damage) can share this
+    // field path with a flat change — it can't be shown as a flat number and is already
+    // represented by its own rolled dice pool elsewhere on the card, so skip it here rather
+    // than coercing NaN into a displayed value (see `parseNumericChangeValue`'s doc comment).
+    .filter((override) => !Number.isNaN(parseNumericChangeValue(override.value)))
+    .map((override) => {
+      const isIgnored = override.stackResult === STACK_RESULT_IGNORED;
+      return {
+        label: override.effectName,
+        value: parseNumericChangeValue(override.value),
+        bonusTypeLabel: formatBonusTypeLabel(override.bonusType),
+        ...(isIgnored ? { isIgnored: true, ignoredReason: override.stackReason ?? ignoredFallbackLabel() } : {}),
+      };
+    });
 }
 
 /**

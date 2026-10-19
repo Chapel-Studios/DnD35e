@@ -57,6 +57,8 @@ interface AttackCardFlags {
   nonLethal: boolean;
   /** Unrolled damage formula (STR term included), snapshotted at attack-roll time — actually rolled by Story E's `_continue()`. */
   resolvedDamageFormula: string;
+  /** 0-based positions (the Nth damage dice group, left to right) in `resolvedDamageFormula` that must NOT be multiplied on a confirmed crit — normally every AE-contributed "extra damage dice" group (SRD: never multiplied), but an author can invert that default per dice group via the `$critMultiply`/`$critExempt` FormulaFamiliar escape hatches (see `flavorDamageDiceBySource()`/`@constants/critDiceMarkers.mjs`). Passed straight into `DamageRoll#evaluateCritical()`. */
+  damageExemptDiceIndices: number[];
   /** Damage-bonus formula term (e.g. `' + 1d6'`), already prefixed with its own sign/operator, or `''` when none was entered. */
   damageBonusTerm: string;
   /** Labeled breakdown (Str modifier, damage situational bonus) for the damage roll's resolution-card tooltip — mirrors `modifierList` below, for damage instead of the attack roll. */

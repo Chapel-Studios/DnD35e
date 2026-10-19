@@ -53,7 +53,11 @@ function buildRollDefenseDialogData(
     attacker: markRaw(attackerActor),
     attackerToken: resolvedAttackerToken ? markRaw(resolvedAttackerToken) : null,
     combatModifierToggles: createDefenseCombatModifiers(targetActor),
-    concealment: '',
+    // Pre-filled from the target's base concealment (set by buffs/conditions like Blur or
+    // Displacement via AE, mirrors D35E's `attributes.concealment.total`) — still editable/
+    // stackable through the FormulaFamiliar field, and `evaluateDefense()` re-applies this same
+    // base value via `Math.max()` so it's never lost even if the field is cleared.
+    concealment: targetActor.system.defense.concealment > 0 ? String(targetActor.system.defense.concealment) : '',
     covered: COVERED_STATES.NONE,
     situationalModifier: '',
     checkMode: 'normal',
