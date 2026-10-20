@@ -9,7 +9,7 @@
  */
 import type { Creature } from '@actors/creature/index.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
-import { AOO_ACTION, FULL_ROUND_ACTION, MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
+import { AOO_ACTION, FULL_ROUND_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
 import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, type WieldedHand } from '@constants/equipmentSlots.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
@@ -25,8 +25,7 @@ interface CombatantActionEconomy {
     /** Int, not bool — some feats/spells grant an extra use this round, so a pool can hold more than 1 (see `toggleActionAvailability`). */
     [STANDARD_ACTION]: number;
     [MOVE_ACTION]: number;
-    [MINOR_ACTION]: number;
-    /** Own pool, capped at one use per turn by default — not part of `ACTION_HIERARCHY`, so it can never be covered by downgrading a spent move/standard action. */
+    /** Own pool, capped at one use per turn by default — not part of `ACTION_HIERARCHY`. */
     [SWIFT_ACTION]: number;
     aoo: number;
   };
@@ -37,7 +36,6 @@ interface CombatantActionEconomy {
   used: {
     [STANDARD_ACTION]: boolean;
     [MOVE_ACTION]: boolean;
-    [MINOR_ACTION]: boolean;
     [SWIFT_ACTION]: boolean;
     /** A paid weapon attack has started this turn's attack sequence. */
     standardAttackUsed: boolean;
@@ -49,18 +47,32 @@ interface CombatantActionEconomy {
 }
 
 const DEFAULT_ACTION_ECONOMY: CombatantActionEconomy = {
-  actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [MINOR_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: 0 },
+  actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: 0 },
   bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
-  used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [MINOR_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
+  used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
 };
 
 /** Reads `flags.dnd35e.actionEconomy`, applying defaults for any missing keys. */
 function getActionEconomy(combatant: CombatantDnd35e): CombatantActionEconomy {
   const stored = combatant.getFlag(SYSTEM_ID, ACTION_ECONOMY_FLAG) as Partial<CombatantActionEconomy> | undefined;
   return {
-    actions: { ...DEFAULT_ACTION_ECONOMY.actions, ...stored?.actions },
+    actions: {
+      [STANDARD_ACTION]: stored?.actions?.[STANDARD_ACTION] ?? DEFAULT_ACTION_ECONOMY.actions[STANDARD_ACTION],
+      [MOVE_ACTION]: stored?.actions?.[MOVE_ACTION] ?? DEFAULT_ACTION_ECONOMY.actions[MOVE_ACTION],
+      [SWIFT_ACTION]: stored?.actions?.[SWIFT_ACTION] ?? DEFAULT_ACTION_ECONOMY.actions[SWIFT_ACTION],
+      aoo: stored?.actions?.aoo ?? DEFAULT_ACTION_ECONOMY.actions.aoo,
+    },
     bab: { ...DEFAULT_ACTION_ECONOMY.bab, ...stored?.bab },
-    used: { ...DEFAULT_ACTION_ECONOMY.used, ...stored?.used },
+    used: {
+      [STANDARD_ACTION]: stored?.used?.[STANDARD_ACTION] ?? DEFAULT_ACTION_ECONOMY.used[STANDARD_ACTION],
+      [MOVE_ACTION]: stored?.used?.[MOVE_ACTION] ?? DEFAULT_ACTION_ECONOMY.used[MOVE_ACTION],
+      [SWIFT_ACTION]: stored?.used?.[SWIFT_ACTION] ?? DEFAULT_ACTION_ECONOMY.used[SWIFT_ACTION],
+      standardAttackUsed: stored?.used?.standardAttackUsed ?? DEFAULT_ACTION_ECONOMY.used.standardAttackUsed,
+      ...(stored?.used?.fullAttackUsed === undefined ? {} : { fullAttackUsed: stored.used.fullAttackUsed }),
+      ...(stored?.used?.attackCount === undefined ? {} : { attackCount: stored.used.attackCount }),
+      movedAfterAttack: stored?.used?.movedAfterAttack ?? DEFAULT_ACTION_ECONOMY.used.movedAfterAttack,
+      chargedThisTurn: stored?.used?.chargedThisTurn ?? DEFAULT_ACTION_ECONOMY.used.chargedThisTurn,
+    },
   };
 }
 
@@ -71,40 +83,38 @@ async function setActionEconomy(combatant: CombatantDnd35e, economy: CombatantAc
 /** Refills both BAB pools and AoO count from the actor, resets all actions, clears all `used` flags. */
 async function resetActionEconomy(combatant: CombatantDnd35e, actor: Creature): Promise<void> {
   await setActionEconomy(combatant, {
-    actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [MINOR_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: actor.system.aooCount },
+    actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: actor.system.aooCount },
     bab: { [MAIN_HAND_EQUIP_SLOT]: actor.system.bab, [OFF_HAND_EQUIP_SLOT]  : actor.system.bab },
-    used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [MINOR_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
+    used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
   });
 }
 
-// Standard, Move, and Minor Actions
+// Standard and Move Actions
 
 
 /**
- * Ascending SRD action hierarchy this pool-based tracker currently implements — a higher
- * tier can always cover a lower-tier request (a standard covers a move or minor; a move
- * covers a minor), never the reverse. `free` never goes through this hierarchy (it costs
- * nothing by definition). `fullRound` is a real SRD tier but isn't trackable here yet —
+ * Ascending SRD action hierarchy this pool-based tracker currently implements — a standard
+ * action can cover a move action, never the reverse. `free` never goes through this hierarchy
+ * (it costs nothing by definition). `fullRound` is a real SRD tier but isn't trackable here yet —
  * partial-round bookkeeping (what remains spendable if a full-round action gets
  * initiated mid-turn) needs dedicated design (see phase-10 notes), so for now a
  * `fullRound` (or any other not-yet-implemented) request is simply ignored: it's treated
  * as already available and never actually claims a pool, rather than being gated or
  * crashing on an untracked key.
  *
- * `swift` is tracked (its own pool, gated the same way as minor/move/standard) but is
+ * `swift` is tracked (its own pool, gated the same way as move/standard) but is
  * deliberately excluded from `ACTION_HIERARCHY` — it behaves like `free` (no other pool is
  * spent to cover it) except it's capped at one use per turn by its own boolean pool, and
  * that pool can never be reached by downgrading a spent move/standard request (a request
  * for `swift` only ever checks the `swift` pool, never `ACTION_HIERARCHY`'s tiers).
  */
-type TrackedActionTier = typeof MINOR_ACTION | typeof MOVE_ACTION | typeof STANDARD_ACTION | typeof SWIFT_ACTION;
+type TrackedActionTier = typeof MOVE_ACTION | typeof STANDARD_ACTION | typeof SWIFT_ACTION;
 
 function isTrackedActionTier(action: ActionEconomyType): action is TrackedActionTier {
-  return action === MINOR_ACTION || action === MOVE_ACTION || action === STANDARD_ACTION || action === SWIFT_ACTION;
+  return action === MOVE_ACTION || action === STANDARD_ACTION || action === SWIFT_ACTION;
 }
 
-const ACTION_HIERARCHY: (typeof MINOR_ACTION | typeof MOVE_ACTION | typeof STANDARD_ACTION)[] = [
-  MINOR_ACTION,
+const ACTION_HIERARCHY: (typeof MOVE_ACTION | typeof STANDARD_ACTION)[] = [
   MOVE_ACTION,
   STANDARD_ACTION,
 ];
@@ -117,7 +127,7 @@ function tiersCovering(tier: TrackedActionTier): TrackedActionTier[] {
 /**
  * The pools that would actually be spent for `actions` — each entry resolved to itself or a
  * higher tier per `ACTION_HIERARCHY`, with no pool reused across two entries. Requests are
- * resolved highest-requirement first (`standard` before `move` before `minor`) so a scarce
+ * resolved highest-requirement first (`standard` before `move`) so a scarce
  * `standard` pool is claimed by an actual standard request before a lower request
  * opportunistically borrows it. Order matches the input `actions`. Not-yet-implemented
  * tiers (see `isTrackedActionTier`) are passed through unchanged, never gated. Null if the
@@ -180,7 +190,7 @@ async function refundAction(combatant: CombatantDnd35e, actions: ActionEconomyTy
 /** Pip tiers clickable in the Combat Tracker row — the four tracked action tiers plus `aoo` (aoo has no `used` counterpart, see below). */
 type ActionPipTier = TrackedActionTier | typeof AOO_ACTION;
 
-/** GM manual override (Combat Tracker action pip click) — spends one use from the pool if any remain, otherwise refunds one back. Unifies standard/move/minor/swift/aoo behind the same click gesture, bypassing the hierarchy resolution `spendAction`/`refundAction` perform, so a pool pushed above its normal single use (an "extra action" source) just takes an extra click to fully spend. Keeps `used[tier]` in sync for the four tracked tiers so other economy consumers relying on it stay consistent. */
+/** GM manual override (Combat Tracker action pip click) — spends one use from the pool if any remain, otherwise refunds one back. Unifies standard/move/swift/aoo behind the same click gesture, bypassing the hierarchy resolution `spendAction`/`refundAction` perform, so a pool pushed above its normal single use (an "extra action" source) just takes an extra click to fully spend. Keeps `used[tier]` in sync for the tracked tiers so other economy consumers relying on it stay consistent. */
 async function toggleActionAvailability(combatant: CombatantDnd35e, tier: ActionPipTier): Promise<void> {
   const economy = getActionEconomy(combatant);
   const current = economy.actions[tier];

@@ -1,4 +1,3 @@
-const MINOR_ACTION = 'minor';
 const MOVE_ACTION = 'move';
 const STANDARD_ACTION = 'standard';
 const FULL_ROUND_ACTION = 'fullRound';
@@ -9,7 +8,6 @@ const AOO_ACTION = 'aoo';
 const ACTION_ECONOMY_TYPES = [
   FREE_ACTION,
   SWIFT_ACTION,
-  MINOR_ACTION,
   MOVE_ACTION,
   STANDARD_ACTION,
   FULL_ROUND_ACTION,
@@ -24,7 +22,6 @@ type ActionEconomyType = typeof ACTION_ECONOMY_TYPES[number];
 // widening to `string` (an object literal loses a referenced const's literal "freshness"
 // without it) — callers like `spendAction()` need the literal union, not a bare `string`.
 const ACTION_ECONOMY = {
-  MINOR: MINOR_ACTION,
   MOVE: MOVE_ACTION,
   STANDARD: STANDARD_ACTION,
   FULL_ROUND: FULL_ROUND_ACTION,
@@ -39,7 +36,6 @@ export {
   AOO_ACTION,
   FREE_ACTION,
   FULL_ROUND_ACTION,
-  MINOR_ACTION,
   MOVE_ACTION,
   STANDARD_ACTION,
   SWIFT_ACTION,

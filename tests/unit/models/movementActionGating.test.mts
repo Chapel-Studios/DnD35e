@@ -34,7 +34,7 @@ const buildFakeCombatant = (
   actions: { move: boolean; standard: boolean },
   movementSessionCategory: 'step' | 'normal' | null = null
 ): CombatantDnd35e => ({
-  actionEconomy: { actions: { standard: actions.standard, move: actions.move, minor: true, aoo: 0 } },
+  actionEconomy: { actions: { standard: actions.standard, move: actions.move, aoo: 0 } },
   getFlag: (_scope: string, key: string) => (key === 'movementSession' ? { category: movementSessionCategory } : undefined),
 } as unknown as CombatantDnd35e);
 

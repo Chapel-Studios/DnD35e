@@ -40,17 +40,25 @@ describe('getActionEconomy', () => {
   it('returns full defaults when no flag has ever been stored', () => {
     const economy = getActionEconomy(buildCombatant());
     expect(economy).toEqual({
-      actions: { standard: 1, move: 1, minor: 1, swift: 1, aoo: 0 },
+      actions: { standard: 1, move: 1, swift: 1, aoo: 0 },
       bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
-      used: { standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
+      used: { standard: false, move: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
     });
   });
 
   it('merges partial stored flags with defaults rather than replacing the whole shape', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 } } });
+    const combatant = buildCombatant({
+      actionEconomy: {
+        actions: { standard: 0, minor: 1 },
+        used: { minor: false, fullAttackUsed: true, attackCount: 2 },
+      },
+    });
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: 0, move: 1, minor: 1, swift: 1, aoo: 0 });
+    expect(economy.actions).toEqual({ standard: 0, move: 1, swift: 1, aoo: 0 });
     expect(economy.bab).toEqual({ [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 });
+    expect(economy.used).not.toHaveProperty('minor');
+    expect(economy.used.fullAttackUsed).toBe(true);
+    expect(economy.used.attackCount).toBe(2);
   });
 });
 
@@ -58,17 +66,17 @@ describe('resetActionEconomy', () => {
   it('refills bab pools and AoO from the actor, resets actions, clears used flags', async () => {
     const combatant = buildCombatant({
       actionEconomy: {
-        actions: { standard: 0, move: 0, minor: 0, swift: 0, aoo: 0 },
+        actions: { standard: 0, move: 0, swift: 0, aoo: 0 },
         bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
-        used: { standard: true, move: true, minor: true, swift: true, standardAttackUsed: true, movedAfterAttack: true, chargedThisTurn: true },
+        used: { standard: true, move: true, swift: true, standardAttackUsed: true, movedAfterAttack: true, chargedThisTurn: true },
       },
     });
     await resetActionEconomy(combatant, buildActor(3, 6));
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: 1, move: 1, minor: 1, swift: 1, aoo: 3 });
+    expect(economy.actions).toEqual({ standard: 1, move: 1, swift: 1, aoo: 3 });
     expect(economy.bab).toEqual({ [MAIN_HAND_EQUIP_SLOT]: 6, [OFF_HAND_EQUIP_SLOT]: 6 });
-    expect(economy.used).toEqual({ standard: false, move: false, minor: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false });
+    expect(economy.used).toEqual({ standard: false, move: false, swift: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false });
   });
 });
 
@@ -83,30 +91,17 @@ describe('canUseAction / spendAction / refundAction (hierarchy resolution)', () 
     expect(canUseAction(combatant, ['move'])).toEqual(['standard']);
   });
 
-  it('a minor request can be covered by move or standard, preferring the lowest sufficient tier', () => {
-    const combatant = buildCombatant();
-    expect(canUseAction(combatant, ['minor'])).toEqual(['minor']);
-  });
-
-  it('returns null when nothing remains to cover the request', () => {
+  it('returns null when nothing remains to cover a move request', () => {
     const combatant = buildCombatant({
-      actionEconomy: { actions: { standard: 0, move: 0, minor: 0 } },
+      actionEconomy: { actions: { standard: 0, move: 0 } },
     });
-    expect(canUseAction(combatant, ['minor'])).toBeNull();
+    expect(canUseAction(combatant, ['move'])).toBeNull();
   });
 
   it('a compound full-round request (move + standard) is all-or-nothing', () => {
     const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 } } });
     // Only move remains — the full-round request can't be covered even though 'move' alone could be.
     expect(canUseAction(combatant, ['move', 'standard'])).toBeNull();
-  });
-
-  it('resolves higher-tier requests first so a standard request claims the standard pool before a minor request opportunistically borrows it', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { move: 0 } } });
-    // Both 'minor' and 'standard' requested; only 'minor' and 'standard' pools remain (move spent).
-    // 'standard' must resolve to the real standard pool, leaving 'minor' its own pool.
-    const resolved = canUseAction(combatant, ['minor', 'standard']);
-    expect(resolved).toEqual(['minor', 'standard']);
   });
 
   it('a pool holding more than one use (e.g. an "extra action" grant) covers two separate requests before running out', () => {
@@ -136,13 +131,13 @@ describe('canUseAction / spendAction / refundAction (hierarchy resolution)', () 
 
   it('spendAction returns null and spends nothing when the request cannot be covered', async () => {
     const combatant = buildCombatant({
-      actionEconomy: { actions: { standard: 0, move: 0, minor: 0 } },
+      actionEconomy: { actions: { standard: 0, move: 0 } },
     });
     const spent = await spendAction(combatant, ['standard']);
     expect(spent).toBeNull();
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: 0, move: 0, minor: 0, swift: 1, aoo: 0 });
+    expect(economy.actions).toEqual({ standard: 0, move: 0, swift: 1, aoo: 0 });
   });
 
   it('refundAction restores exactly the pools passed in, independent of canUseAction', async () => {
@@ -164,7 +159,7 @@ describe('swift action (isolated pool, capped at one per turn)', () => {
     expect(spent).toEqual(['swift']);
 
     const economy = getActionEconomy(combatant);
-    expect(economy.actions).toEqual({ standard: 1, move: 1, minor: 1, swift: 0, aoo: 0 });
+    expect(economy.actions).toEqual({ standard: 1, move: 1, swift: 0, aoo: 0 });
     expect(economy.used.swift).toBe(true);
   });
 
@@ -174,14 +169,13 @@ describe('swift action (isolated pool, capped at one per turn)', () => {
     expect(canUseAction(combatant, ['swift'])).toBeNull();
   });
 
-  it('spending swift does not consume the standard/move/minor pools', async () => {
+  it('spending swift does not consume the standard/move pools', async () => {
     const combatant = buildCombatant();
     await spendAction(combatant, ['swift']);
 
     const economy = getActionEconomy(combatant);
     expect(economy.actions.standard).toBe(1);
     expect(economy.actions.move).toBe(1);
-    expect(economy.actions.minor).toBe(1);
   });
 });
 

@@ -4,7 +4,6 @@
       "ACTION_ECONOMY": {
         "Standard": "Standard Action",
         "Move": "Move Action",
-        "Minor": "Minor Action",
         "Swift": "Swift Action",
         "AttacksOfOpportunity": "Attacks of Opportunity remaining"
       },

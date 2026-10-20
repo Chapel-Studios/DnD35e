@@ -15,10 +15,9 @@
     return game.i18n.localize(key);
   }
 
-  const ACTION_PIPS: { icon: string; flag: 'standard' | 'move' | 'minor' | 'swift' | 'aoo'; labelKey: string }[] = [
+  const ACTION_PIPS: { icon: string; flag: 'standard' | 'move' | 'swift' | 'aoo'; labelKey: string }[] = [
     { icon: 'fa-swords', flag: 'standard', labelKey: 'dnd35e.COMBAT.ACTION_ECONOMY.Standard' },
     { icon: 'fa-shoe-prints', flag: 'move', labelKey: 'dnd35e.COMBAT.ACTION_ECONOMY.Move' },
-    { icon: 'fa-circle', flag: 'minor', labelKey: 'dnd35e.COMBAT.ACTION_ECONOMY.Minor' },
     { icon: 'fa-bolt', flag: 'swift', labelKey: 'dnd35e.COMBAT.ACTION_ECONOMY.Swift' },
     { icon: 'fa-hand-fist', flag: 'aoo', labelKey: 'dnd35e.COMBAT.ACTION_ECONOMY.AttacksOfOpportunity' },
   ];

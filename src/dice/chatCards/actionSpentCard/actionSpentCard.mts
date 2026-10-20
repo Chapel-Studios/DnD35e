@@ -21,7 +21,7 @@ import actionSpentCardTemplateSource from './action-spent-card.hbs?raw';
 
 const actionSpentCardTemplate = Handlebars.compile(actionSpentCardTemplateSource, { preventIndent: true });
 
-/** Localized labels for the action-economy tiers an item's automatic spend can consume — `standard`/`minor`/`fullRound`/`aoo` aren't currently reachable by equip/stow, but are included so a future caller doesn't silently render the raw tier key. */
+/** Localized labels for the action-economy tiers an item's automatic spend can consume — `standard`/`fullRound`/`aoo` aren't currently reachable by equip/stow, but are included so a future caller doesn't silently render the raw tier key. */
 const ITEM_ACTION_TIER_LABEL_KEYS: Partial<Record<ActionEconomyType, string>> = {
   free: 'dnd35e.ROLL.ITEM_ACTION_SPENT_CARD.FreeAction',
   move: 'dnd35e.ROLL.ITEM_ACTION_SPENT_CARD.MoveAction',

@@ -17,14 +17,14 @@
  * private (`#`) fields, which core Documents do.
  *
  * One new action is added on top of core's set: `toggleActionEconomy` (GM click on a
- * standard/move/minor/swift/aoo action-economy pip in `CombatTrackerRow.vue`, spending or
+ * standard/move/swift/aoo action-economy pip in `CombatTrackerRow.vue`, spending or
  * refunding one use of that pool via `toggleActionAvailability()` — see `combatantActionEconomy.mts`).
  *
  * @module
  */
 import type { ApplicationRenderContext } from '@client/applications/_types.mjs';
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
-import { AOO_ACTION, MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
+import { AOO_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
 import type { CombatTrackerContext, CombatTrackerTurn } from '@documents/combat/combatTrackerTypes.mjs';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
 import type { App, Component } from 'vue';
@@ -138,7 +138,6 @@ class CombatTrackerDnd35e extends CombatTrackerVueBase {
     if (
       flag !== STANDARD_ACTION
       && flag !== MOVE_ACTION
-      && flag !== MINOR_ACTION
       && flag !== SWIFT_ACTION
       && flag !== AOO_ACTION
     ) return;

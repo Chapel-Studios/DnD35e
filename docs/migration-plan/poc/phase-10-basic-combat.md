@@ -95,19 +95,18 @@ Verified against the bundled Foundry v14 type defs (`types/foundry/common/docume
 ```typescript
 // src/documents/combat/combatant/combatantActionEconomy.mts
 interface CombatantActionEconomy {
-  actions: { standard: boolean; move: boolean; minor: boolean; aoo: number };
+  actions: { standard: boolean; move: boolean; aoo: number };
   bab: { main: number; off: number };
-  used: { standard: boolean; move: boolean; minor: boolean; standardAttackUsed: boolean; movedAfterAttack: boolean; chargedThisTurn: boolean };
+  used: { standard: boolean; move: boolean; standardAttackUsed: boolean; movedAfterAttack: boolean; chargedThisTurn: boolean };
 }
 
 function getActionEconomy(combatant: CombatantDnd35e): CombatantActionEconomy { /* reads flags.dnd35e.actionEconomy, applies defaults */ }
 async function resetActionEconomy(combatant: CombatantDnd35e, actor: ActorDnd35e): Promise<void> {
   // Refill both hands to actor.system.attributes.bab.total, aoo to actor.system.aooCount,
-  // reset actions.standard/move/minor to true, clear all `used` flags
+  // reset actions.standard/move to true, clear all `used` flags
 }
 async function spendStandardAction(combatant: CombatantDnd35e): Promise<void> { /* actions.standard = false, used.standard = true */ }
 async function spendMoveAction(combatant: CombatantDnd35e): Promise<void> { /* actions.move = false, used.move = true */ }
-async function spendMinorAction(combatant: CombatantDnd35e): Promise<void> { /* actions.minor = false, used.minor = true */ }
 async function spendHandBab(combatant: CombatantDnd35e, hand: 'main' | 'off' | 'both', amount: number): Promise<void> { /* hand === 'both': subtract amount from both bab.main and bab.off (each floored at 0); else bab[hand] -= amount, floor 0 */ }
 async function spendAoO(combatant: CombatantDnd35e): Promise<void> { /* actions.aoo -= 1, floor 0 */ }
 async function markMovedAfterAttack(combatant: CombatantDnd35e): Promise<void> { /* used.movedAfterAttack = true */ }
@@ -220,7 +219,6 @@ The default `CombatTracker` template is extended to show action state for each c
 
 - **S** (swords icon) — standard action remaining; greyed when `actionEconomy.actions.standard === false`
 - **M** (boot icon) — move action remaining; greyed when `actionEconomy.actions.move === false`
-- **m** (smaller icon) — minor action remaining; greyed when `actionEconomy.actions.minor === false`
 - **AoO count** — numeric badge showing `actionEconomy.actions.aoo`
 
 Implementation (confirmed — Spike 2, §10.14): Subclass `CombatTracker` cleanly, no DOM-injection fallback needed. `CombatTracker` is a real `HandlebarsApplicationMixin`/ApplicationV2 class (verified against the bundled v14.365 client source) with dedicated per-row and per-part extension points: override `_prepareTurnContext(combat, combatant, index)` (call `super._prepareTurnContext()`, then merge `getActionEconomy(combatant)`'s pip/AoO data onto the returned `turn` object) and override `static PARTS` to point `tracker.template` at a system-owned copy of `templates/sidebar/tabs/combat/tracker.hbs` (core's actual per-row markup, confirmed against the bundled template) with pip markup added, reading the merged `turn.actionEconomy`. Register: `CONFIG.ui.combat = CombatTrackerDnd35e` (`CONFIG.ui.combat: ConstructorOf<CombatTracker>` is a real, documented registration point).
@@ -1716,7 +1714,7 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 **Deferred within this story**: ~~a character-sheet trigger for rolling initiative — location TBD, to be decided once the rest of this story is in hand.~~ Not deferred — shipped as the rollable `Initiative.vue` field on the character sheet, wired to `rollInitiativeFromSheet`/`rollInitiativeCheck()`.
 
-**Deferred to Story B**: combat tracker action-pip rendering (standard/move/minor pips + AoO badge, per Spike 2's confirmed subclass approach) — moved there since it reads `combatant.actionEconomy`/`getActionEconomy()`, which `combatantActionEconomy.mts` (Story B) provides. Agreed visual design for when Story B builds it: small icons (sword/boot/dot) for standard/move/minor, greyed when spent, plus a numeric badge for remaining AoOs.
+**Deferred to Story B**: combat tracker action-pip rendering (standard/move pips + AoO badge, per Spike 2's confirmed subclass approach) — moved there since it reads `combatant.actionEconomy`/`getActionEconomy()`, which `combatantActionEconomy.mts` (Story B) provides. Agreed visual design for when Story B builds it: icons (sword/boot) for standard/move, greyed when spent, plus a numeric badge for remaining AoOs.
 
 **Verify**: Clicking the tracker's existing roll-initiative controls (per-row or roll-all) opens the dialog, accepts a formula situational modifier, and posts a chat card; combatants end up ordered by the result. Save roll dialog also accepts a formula modifier. Combat starts → all combatants silently flat-footed (status icon only, no chat message). Toggling Squeezing on a token via the Token HUD shows the icon and is queryable via `actor.statuses.has('squeezing')`.
 
@@ -1724,13 +1722,13 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 ### Story B — Combatant action economy + movement integration
 **User**: Player / GM (during combat)  
-**Delivers**: "Moving, taking a 5-foot step, withdrawing, or charging correctly consumes/restricts actions; BAB pools refill per hand at turn start; the combat tracker now shows each combatant's remaining standard/move/minor/AoO"  
+**Delivers**: "Moving, taking a 5-foot step, withdrawing, or charging correctly consumes/restricts actions; BAB pools refill per hand at turn start; the combat tracker now shows each combatant's remaining standard/move/AoO"
 **Routing**: Lead dev (flags module, movement integration, new movement actions, tracker pip rendering)
 
 - [x] Create `combatantActionEconomy.mts` (flags-based, plain functions — see §10.1 shape), incl. `refundMoveAction()`/`refundStandardAction()`/`refundHandBab()` undo primitives and `markChargedThisTurn()`
 - [x] Add the `actionEconomy` convenience accessor to `CombatantDnd35e` (Story A), delegating to `combatantActionEconomy.mts`
-- [x] Extend combat tracker rendering (per Spike 2's confirmed subclass approach): standard/move/minor pips (icons, greyed when spent) + numeric AoO badge per row, sourced from `combatant.actionEconomy`
-- [x] `CombatDnd35e._onStartTurn()` reset (§10.1): `resetActionEconomy()` — refill `bab.main`/`bab.off` from `actor.system.attributes.bab.total`, `actions.aoo` from `actor.system.aooCount`, reset `actions.standard`/`move`/`minor` to true, clear `used` flags
+- [x] Extend combat tracker rendering (per Spike 2's confirmed subclass approach): standard/move pips (icons, greyed when spent) + numeric AoO badge per row, sourced from `combatant.actionEconomy`
+- [x] `CombatDnd35e._onStartTurn()` reset (§10.1): `resetActionEconomy()` — refill `bab.main`/`bab.off` from `actor.system.attributes.bab.total`, `actions.aoo` from `actor.system.aooCount`, reset `actions.standard`/`move` to true, clear `used` flags
 - [x] Add `SIZE_REACH` constant to `src/constants/sizes.mts`
 - [x] Extend `TokenDocumentDnd35e._onUpdateMovement()`: spend move/standard action via `getMovementBudget()`/`isOverBudget()` (existing poc.9 machinery), no new hooks; add the `charge` branch (always spends move + standard, calls `markChargedThisTurn()` when the completed move ends within `isWithinReach()` of a hostile token, §10.6)
 - [x] Add `fiveFootStep`, `withdraw`, and `charge` custom movement actions to `movementActionGating.mts`, with `canSelectFiveFootStepMovementAction()`/`canSelectWithdrawMovementAction()`/`canSelectChargeMovementAction()` gating (combat-only); extend `movementBudget.mts`'s `ACTION_TO_SPEED_KEY`/`ACTION_SPEED_MULTIPLIER` so `charge` (and `withdraw`) double land speed
