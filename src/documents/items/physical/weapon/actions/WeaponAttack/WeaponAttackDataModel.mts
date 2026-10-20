@@ -7,7 +7,7 @@ import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
 import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
 import { DAMAGE_TYPES, SIZE_MODIFIERS, STR } from '@constants/index.mjs';
-import { canUseHandAttack, getActionEconomy, getHandBab, isCombatEconomyActive, markMovedAfterAttack, spendAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import { canUseHandAttack, getActionEconomy, getHandBab, isCombatEconomyActive, markMovedAfterAttack, spendAttackAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
@@ -22,6 +22,7 @@ import { participantActor, participantToken } from '@items/baseItem/actions/logi
 import { getTwoWeaponFightingPenalty } from '@items/physical/weapon/logic/twoWeaponFighting.mjs';
 import { COMBAT_KEYS } from '@settings/combat/constants.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
+import { syncMovementCardSpend } from '@source/dice/chatCards/moveActionCard/moveActionCard.mjs';
 import { evaluateDefense } from '@source/dice/chatCards/resolutionCard/evaluateDefense.mjs';
 import type { AttackCardFlags, AttackCardTargetRow, ResolutionCardData, RollModifier } from '@source/dice/index.mjs';
 import {
@@ -34,10 +35,10 @@ import {
   combineDiceFormula,
   D20Roll,
   DamageRoll,
-  extractDiceOnlyFormula,
   extractFlatModifier,
   flavorDamageDiceBySource,
   flavorTerm,
+  groupDamageDiceBySource,
   markTargetRowResolved,
 } from '@source/dice/index.mjs';
 import { MeleeAttackRollDialogConfig } from '@source/rollDialogs/MeleeAttackRollDialog/MeleeAttackRollDialogConfig.mjs';
@@ -438,26 +439,30 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    * later, crit-exempted by `DamageRoll#evaluateCritical()`) by that effect's name instead —
    * see `flavorDamageDiceBySource()` for why (SRD: "extra damage dice over and above a
    * weapon's normal damage are never multiplied"). Plus the wield-mode STR term, appended
-   * fresh. Safe to flavor/split unconditionally here: `extractFlatModifier()`/
-   * `extractDiceOnlyFormula()` parse flavor-tagged dice terms the same as plain ones, so both
-   * callers below (flat-only preview and the real roll) are unaffected. Also returns
-   * `exemptDiceIndices` — the dice-group positions `DamageRoll#evaluateCritical()` must skip on
-   * a confirmed critical — threaded through by `_buildDamageSnapshot()`.
+   * fresh. Safe to flavor/split unconditionally here: `extractFlatModifier()` parses
+   * flavor-tagged dice terms the same as plain ones, so the flat-only preview caller below is
+   * unaffected. Also returns `exemptDiceIndices` — the dice-group positions
+   * `DamageRoll#evaluateCritical()` must skip on a confirmed critical — threaded through by
+   * `_buildDamageSnapshot()`.
    */
   private _computeDamageFormula(context: UseWeaponAttackContext, formulaContext: FormulaContext): { formula: string; exemptDiceIndices: number[] } {
     const strTerm = this._includeAttackAbilityTerms(context, formulaContext);
+    const { formula: flavoredDamageFormula, exemptDiceIndices } = flavorDamageDiceBySource(this.damageFormula.resolvedValue || '0', this._weaponDamageDiceLabel(), this._damageDiceOverrides());
+    return { formula: `${flavoredDamageFormula}${strTerm}`, exemptDiceIndices };
+  }
+
+  /** The weapon's own `damageFormula`'s AE-contributed dice overrides — shared by `_computeDamageFormula()` (the real roll) and `_buildWeaponDamageDiceEntry()` (its display breakdown), so both attribute dice to the same sources. */
+  private _damageDiceOverrides(): { effectName: string; value: string }[] {
     const item = this.item;
     const actionIndex = item?.system.actions.findIndex((action) => action._id === this._id) ?? -1;
     const fieldPath = item && actionIndex >= 0 ? `system.actions.${actionIndex}.damageFormula.formula` : null;
-    const diceOverrides = (fieldPath
+    return (fieldPath
       ? item?.effectOverrides[fieldPath]
       : undefined
     )?.map((override) => ({
       effectName: override.effectName,
       value: String(override.value),
     })) ?? [];
-    const { formula: flavoredDamageFormula, exemptDiceIndices } = flavorDamageDiceBySource(this.damageFormula.resolvedValue || '0', this._weaponDamageDiceLabel(), diceOverrides);
-    return { formula: `${flavoredDamageFormula}${strTerm}`, exemptDiceIndices };
   }
 
   /** Shared label for the weapon's own damage dice — used both to flavor-tag the real roll formula (`_computeDamageFormula()`) and to name its breakdown row (`_buildWeaponDamageDiceEntry()`), so both always agree. */
@@ -541,16 +546,17 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   }
 
   /**
-   * The weapon's own damage dice (e.g. `1d8`) as its own labeled breakdown row — separate from
-   * the flat enhancement-bonus row (`_buildWeaponDamageBonusEntries()`) so the dialog/card
-   * breakdown discloses where the dice actually come from, not just the final total. Labeled
-   * by the weapon's own name when available, falling back to the generic "Weapon Damage"
-   * label. Empty when the resolved formula carries no dice at all.
+   * The weapon's own damage dice (e.g. `1d8`) plus each contributing AE's own dice (e.g. a
+   * Flaming weapon's bonus `1d6`), as separate labeled breakdown rows — separate from the flat
+   * enhancement-bonus row (`_buildWeaponDamageBonusEntries()`) so the dialog/card breakdown
+   * discloses where the dice actually come from, not just the final total, and never merges an
+   * AE's own dice into the weapon's own dice count (`groupDamageDiceBySource()` mirrors
+   * `_computeDamageFormula()`'s real-roll attribution). Empty when the resolved formula carries
+   * no dice at all.
    */
   private _buildWeaponDamageDiceEntry(): RollModifier[] {
-    const diceOnly = extractDiceOnlyFormula(this.damageFormula.resolvedValue || '0');
-    if (!diceOnly) return [];
-    return [{ label: this._weaponDamageDiceLabel(), value: 0, formula: diceOnly }];
+    return groupDamageDiceBySource(this.damageFormula.resolvedValue || '0', this._weaponDamageDiceLabel(), this._damageDiceOverrides())
+      .map(({ label, formula }) => ({ label, value: 0, formula }));
   }
 
   /**
@@ -784,21 +790,35 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       ? (game.combat?.getCombatantsByToken(actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
       : null;
     if (isCombatEconomyActive(combatant) && !result.cancelled && !context.isFree) {
-      const standardSpent = await spendAction(combatant as CombatantDnd35e<CombatDnd35e>, ['standard']);
-      const spentHand = result.finalHand ?? context.wieldedHand;
+      const charged = getActionEconomy(combatant as CombatantDnd35e<CombatDnd35e>).used.chargedThisTurn;
+      const actionSpent = charged
+        ? { standardActionSpent: false }
+        : await spendAttackAction(combatant as CombatantDnd35e<CombatDnd35e>);
+      if (!actionSpent) {
+        const warning = game.i18n.localize('dnd35e.COMBAT.NoActionAvailable');
+        ui.notifications.warn(warning);
+        if (result.attackMessage) await appendAttackCardWarnings(result.attackMessage, [warning]);
+        return;
+      }
+      await syncMovementCardSpend(combatant as CombatantDnd35e<CombatDnd35e>);
+      const spentHand = charged
+        ? BOTH_HANDS_EQUIP_SLOT
+        : result.finalHand ?? context.wieldedHand;
       if (spentHand) {
-        const babSpent = 5;
+        const babSpent = charged
+          ? participantActor(context.actor).system.bab
+          : 5;
         await spendHandBab(combatant as CombatantDnd35e<CombatDnd35e>, spentHand, babSpent);
         if (result.attackMessage) {
           await result.attackMessage.update({
-            'flags.dnd35e.attackCard.actionEconomySpent': { standardActionSpent: standardSpent !== null, hand: spentHand, babSpent },
+            'flags.dnd35e.attackCard.actionEconomySpent': { ...actionSpent, hand: spentHand, babSpent },
           });
         }
       }
 
       // SRD: a charge permits only this one melee attack — reuses the existing "moved after
       // attack" gate rather than a second bespoke flag.
-      if (getActionEconomy(combatant as CombatantDnd35e<CombatDnd35e>).used.chargedThisTurn) {
+      if (charged) {
         await markMovedAfterAttack(combatant as CombatantDnd35e<CombatDnd35e>);
       }
     }

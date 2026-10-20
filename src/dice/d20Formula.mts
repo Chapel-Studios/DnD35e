@@ -258,6 +258,11 @@ function flavorDiceGroups(formula: string, label: string): string {
  * Falls back to `{ formula: flavorDiceGroups(resolvedFormula, baseLabel), exemptDiceIndices: [] }`
  * (single label, no split, nothing exempt) when the formula isn't a plain additive dice/numeric
  * chain.
+ *
+ * See `groupDamageDiceBySource()` for the display-only sibling of this function — a
+ * `RollModifier[]`-style breakdown list (one row per source) built from the same
+ * owner/escape-hatch attribution, used by the dialog/card's dice modifier-list rows rather than
+ * the real roll formula.
  */
 function flavorDamageDiceBySource(
   resolvedFormula: string,
@@ -267,7 +272,37 @@ function flavorDamageDiceBySource(
   const parsed = parseAdditiveDiceFragment(resolvedFormula);
   if (!parsed) return { formula: flavorDiceGroups(resolvedFormula, baseLabel), exemptDiceIndices: [] };
 
-  const nonZeroGroups = parsed.diceGroups.filter(([, count]) => count !== 0);
+  const attributed = attributeDamageDiceGroups(parsed.diceGroups, baseLabel, overrides);
+
+  // Each group's position here is also the order its `Die` term lands in the final formula
+  // text below — exactly what `evaluateCritical()` counts against when matching `exemptDiceIndices`.
+  const exemptDiceIndices: number[] = [];
+  const parts: string[] = [];
+  attributed.forEach(({ faces, count, label, isExempt }, idx) => {
+    if (isExempt) exemptDiceIndices.push(idx);
+    const term = `${Math.abs(count)}d${faces}[${label}]`;
+    parts.push(parts.length === 0 ? (count < 0 ? `-${term}` : term) : `${count < 0 ? '-' : '+'} ${term}`);
+  });
+
+  let formula = parts.join(' ');
+  if (parsed.flat !== 0) {
+    formula = formula ? `${formula} ${parsed.flat >= 0 ? '+' : '-'} ${Math.abs(parsed.flat)}` : String(parsed.flat);
+  }
+  return { formula: formula || '0', exemptDiceIndices };
+}
+
+/**
+ * Shared owner/label attribution behind `flavorDamageDiceBySource()` (the real roll formula)
+ * and `groupDamageDiceBySource()` (the display-only breakdown list) — see
+ * `flavorDamageDiceBySource()`'s doc comment for the positional-attribution and escape-hatch
+ * rules this implements. Returns one entry per non-zero dice group, in formula order.
+ */
+function attributeDamageDiceGroups(
+  diceGroups: [number, number, string | undefined][],
+  baseLabel: string,
+  overrides: { effectName: string; value: string }[]
+): { faces: number; count: number; label: string; isExempt: boolean }[] {
+  const nonZeroGroups = diceGroups.filter(([, count]) => count !== 0);
   // -1 = the weapon's own dice; otherwise an index into `overrides`.
   const ownerPerGroup = new Array<number>(nonZeroGroups.length).fill(-1);
   let cursor = nonZeroGroups.length;
@@ -281,30 +316,68 @@ function flavorDamageDiceBySource(
   }
 
   const extraDamageLabel = game.i18n.localize('dnd35e.COMBAT.ExtraDamageDice');
-  // idx here is each group's 0-based position among nonZeroGroups, which is also the order
-  // their `Die` terms land in the final formula text below — exactly what `evaluateCritical()`
-  // counts against when matching `exemptDiceIndices`.
-  const exemptDiceIndices: number[] = [];
-  const parts: string[] = [];
-  nonZeroGroups.forEach(([faces, count, marker], idx) => {
+  return nonZeroGroups.map(([faces, count, marker], idx) => {
     const owner = ownerPerGroup[idx];
     const forcedExempt = marker === CRIT_EXEMPT_MARKER;
     const forcedEligible = marker === CRIT_MULTIPLY_MARKER;
     const isExempt = forcedExempt ? true : forcedEligible ? false : owner !== -1;
-    if (isExempt) exemptDiceIndices.push(idx);
     const label = owner === -1
       ? (forcedExempt ? extraDamageLabel : baseLabel)
       : overrides[owner].effectName;
-    const term = `${Math.abs(count)}d${faces}[${label}]`;
-    parts.push(parts.length === 0 ? (count < 0 ? `-${term}` : term) : `${count < 0 ? '-' : '+'} ${term}`);
+    return { faces, count, label, isExempt };
   });
-
-  let formula = parts.join(' ');
-  if (parsed.flat !== 0) {
-    formula = formula ? `${formula} ${parsed.flat >= 0 ? '+' : '-'} ${Math.abs(parsed.flat)}` : String(parsed.flat);
-  }
-  return { formula: formula || '0', exemptDiceIndices };
 }
 
-export { buildD20Formula, combineDiceFormula, extractDiceOnlyFormula, extractFlatModifier, flavorDamageDiceBySource, flavorDiceGroups, flavorTerm };
+/**
+ * Display-only counterpart to `flavorDamageDiceBySource()` — same positional/escape-hatch
+ * attribution, but merges each source's own dice groups into its own dice-only formula string
+ * (e.g. `2d6`) instead of building one flavored roll string, for use in a `RollModifier[]`
+ * breakdown list (one row per contributing source) rather than the actual roll. One entry per
+ * distinct label that owns at least one non-zero dice group, in first-appearance order.
+ */
+function groupDamageDiceBySource(
+  resolvedFormula: string,
+  baseLabel: string,
+  overrides: { effectName: string; value: string }[]
+): { label: string; formula: string }[] {
+  const parsed = parseAdditiveDiceFragment(resolvedFormula);
+  const diceOnly = extractDiceOnlyFormula(resolvedFormula);
+  if (!parsed) return diceOnly ? [{ label: baseLabel, formula: diceOnly }] : [];
+
+  const attributed = attributeDamageDiceGroups(parsed.diceGroups, baseLabel, overrides);
+
+  const order: string[] = [];
+  const byLabel = new Map<string, Map<number, number>>();
+  for (const { faces, count, label } of attributed) {
+    if (!byLabel.has(label)) {
+      byLabel.set(label, new Map());
+      order.push(label);
+    }
+    const faceCounts = byLabel.get(label)!;
+    faceCounts.set(faces, (faceCounts.get(faces) ?? 0) + count);
+  }
+
+  return order
+    .map((label) => {
+      const formula = [...byLabel.get(label)!.entries()]
+        .filter(([, count]) => count !== 0)
+        .sort(([a], [b]) => a - b)
+        .map(([faces, count]) => `${count}d${faces}`)
+        .join(' + ');
+      return { label, formula };
+    })
+    .filter(({ formula }) => formula);
+}
+
+export {
+  buildD20Formula,
+  combineDiceFormula,
+  extractDiceOnlyFormula,
+  extractFlatModifier,
+  flavorDamageDiceBySource,
+  flavorDiceGroups,
+  flavorTerm,
+  groupDamageDiceBySource,
+};
+
 

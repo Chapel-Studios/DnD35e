@@ -16,9 +16,9 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
 import { HP_ADJUSTMENT_TYPE } from '@actors/creature/sheet/components/constants.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
-import { STANDARD_ACTION } from '@constants/actionEconomy.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
-import { refundAction, refundHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import type { AttackActionSpend } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import { refundAttackAction, refundHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import { participantActor, participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
@@ -29,6 +29,7 @@ import type { DamageRoll } from '../../DamageRoll.mjs';
 import type { RollModifier } from '../../types.mjs';
 import { resolveVisibleActorName } from '../attackRollCard/attackRollCard.mjs';
 import { buildDiceRollHtmlWithModifiers, buildRawBreakdownHtml } from '../modifierBreakdown/modifierBreakdown.mjs';
+import { syncMovementCardSpend } from '../moveActionCard/moveActionCard.mjs';
 import type { DefenseEvaluation } from './evaluateDefense.mjs';
 import resolutionCardTemplateSource from './resolution-card.hbs?raw';
 
@@ -41,7 +42,7 @@ interface ResolutionCardData extends DefenseEvaluation {
   damageType: string;
   nonLethal: boolean;
   applyHalfDamage: boolean;
-  actionEconomySpent: { standardActionSpent: boolean; hand: WieldedHand; babSpent: number } | null;
+  actionEconomySpent: (AttackActionSpend & { hand: WieldedHand; babSpent: number }) | null;
   /** Labeled breakdown (Str modifier, damage situational bonus) for the damage roll's dice tooltip — see `_buildDamageSnapshot()`. Empty on a miss. */
   damageModifierList: RollModifier[];
 }
@@ -252,7 +253,8 @@ async function onUndoResolution(message: ChatMessage, flags: ResolutionCardFlags
       ? game.combat?.combatants.find(c => c.actor?.uuid === attacker.uuid) as CombatantDnd35e | undefined
       : undefined;
     if (combatant && attacker) {
-      if (flags.actionEconomySpent.standardActionSpent) await refundAction(combatant, [STANDARD_ACTION]);
+      await refundAttackAction(combatant, flags.actionEconomySpent);
+      await syncMovementCardSpend(combatant);
       await refundHandBab(combatant, flags.actionEconomySpent.hand, flags.actionEconomySpent.babSpent, attacker);
     }
   }

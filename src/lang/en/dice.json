@@ -29,6 +29,9 @@
       "MOVE_ACTION_CARD": {
         "MoveAction": "Move Action",
         "StandardAction": "Standard Action",
+        "Provokes": "Movement provokes attacks of opportunity.",
+        "DoesNotProvoke": "Movement does not provoke attacks of opportunity.",
+        "StepProtectionLost": "Movement exceeded 5 feet. The initial 5 feet also loses its 5-foot-step protection.",
         "OverBudget": "Moved further than allowed for a single action.",
         "OverBudgetFiveFootStep": "Can only move 5 feet using a 5-foot Step Move Action.",
         "OverBudgetMixedMovement": "Can't combine a 5-foot step with other movement in the same turn.",

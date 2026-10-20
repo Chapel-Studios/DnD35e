@@ -10,9 +10,8 @@
  * single drag (which previously let a second short drag silently exceed the turn's real
  * budget with no warning, and let a completed 5-foot step not block a later normal move).
  *
- * A 5-foot step and ordinary movement (walk/run/crawl/fly/swim/climb/burrow) are mutually
- * exclusive for the whole turn, regardless of distance — `category` locks in on the first
- * move of the turn and any later move of the other category is rejected outright.
+ * Ordinary walking starts as a non-provoking step and becomes ordinary movement once
+ * its cumulative cost exceeds 5 feet. Explicit steps remain capped at 5 feet.
  *
  * @module
  */
@@ -26,8 +25,9 @@ const MOVEMENT_SESSION_FLAG = 'movementSession';
 type MovementSessionCategory = 'step' | 'normal';
 
 interface MovementSession {
-  /** Locked in by the first movement of the turn; `null` if nothing has moved yet. */
+  /** Current classification; automatic steps can be promoted to normal movement. */
   category: MovementSessionCategory | null;
+  stepProtectionLost?: boolean;
   /** Total distance (scene distance units) covered by this turn's tracked movement so far. */
   cumulativeCost: number;
   /** Action-economy pools already spent by this turn's movement (see `combatantActionEconomy.mts`). */

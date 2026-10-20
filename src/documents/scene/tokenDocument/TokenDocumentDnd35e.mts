@@ -1,9 +1,11 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
+import { applyChargedAE } from '@actors/creature/logic/combatConditionAEs.mjs';
 import type { TokenMovementOperation } from '@client/documents/_types.mjs';
 import type { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
+import { CHARGED_CONDITION_ID } from '@constants/conditions.mjs';
 import { SIZE_REACH, SIZE_TOKEN_DIMENSIONS } from '@constants/sizes.mjs';
-import { markChargedThisTurn, refundAction, spendAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import { clearChargedThisTurn, getActionEconomy, markChargedThisTurn, refundAction, spendAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { MovementSession, MovementSessionCategory } from '@documents/combat/combatant/movementSession.mjs';
 import { getMovementSession, resetMovementSession, setMovementSession } from '@documents/combat/combatant/movementSession.mjs';
@@ -105,8 +107,8 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
    * `#performFullRoundMove()`). Everything else (`walk`/`run`/`crawl`/fly/swim/climb/burrow/
    * `fiveFootStep`) participates in the per-turn cumulative movement session (see
    * `#consumeSessionMovement()`/`movementSession.mts`), which accumulates cost across
-   * multiple partial drags in the same turn and enforces that a 5-foot step and ordinary
-   * movement are mutually exclusive for the whole turn.
+   * multiple partial drags in the same turn. Ordinary walking starts as a protected step
+   * and upgrades to normal movement when its cumulative distance exceeds 5 feet.
    */
   async #consumeMovementActionEconomy(movement: DeepReadonly<TokenMovementOperation>, actor: ActorDnd35e): Promise<void> {
     const combat = game.combat;
@@ -181,26 +183,18 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
           && isWithinReach(attackerToken, target as unknown as TokenDnd35e, reach)
       )
       : false;
-    if (reachedTarget) await markChargedThisTurn(combatant);
+    if (reachedTarget) {
+      await markChargedThisTurn(combatant);
+      await applyChargedAE(actor);
+    }
   }
 
   /**
    * Ordinary movement (walk/run/crawl/fly/swim/climb/burrow/fiveFootStep) accumulates into
    * the combatant's per-turn movement session (see `movementSession.mts`) instead of being
-   * judged independently drag-by-drag. This is what fixes:
-   * - A 5-foot step always reading a 0 budget (fixed 1-square allowance handled here, not
-   *   via `movementBudget.mts`'s speed map) and never actually spending the move action.
-   * - A completed 5-foot step failing to block a later ordinary move in the same turn (and
-   *   vice versa) — SRD: the two are mutually exclusive for the whole round, regardless of
-   *   remaining distance.
-   * - Multiple partial drags in the same turn each posting their own independent chat card
-   *   and budget check instead of one running total for the turn (see phase-10 report).
-   * - A move silently "succeeding" with an empty `spent` list once the required action pool
-   *   is already exhausted, rather than warning the player.
-   *
-   * Only the *new* delta of action tiers required by the updated cumulative cost is spent
-   * (`spendAction()` is all-or-nothing for compound requests — re-requesting an
-   * already-spent tier would spuriously fail).
+   * judged independently drag-by-drag. A step provisionally reserves the move action;
+   * a full attack can claim that reservation without invalidating the step. Only the
+   * newly required action tiers are spent when walking upgrades to a move or double move.
    */
   async #consumeSessionMovement(
     combatant: CombatantDnd35e,
@@ -212,14 +206,20 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     if (stepCost <= 0) return; // a zero-length confirming drag has nothing to account for
 
     const { measurement: { convertToLocalizedDistance } } = useSettingsStore();
-    const category: MovementSessionCategory = movementAction === FIVE_FOOT_STEP_MOVEMENT_ACTION ? 'step' : 'normal';
+    const session = getMovementSession(combatant);
+    const cumulativeCost = session.cumulativeCost + stepCost;
+    const stepBudget = convertToLocalizedDistance(1);
+    const explicitStep = movementAction === FIVE_FOOT_STEP_MOVEMENT_ACTION;
+    const category: MovementSessionCategory = explicitStep
+      || (movementAction === WALK_MOVEMENT_ACTION && cumulativeCost <= stepBudget && session.category !== 'normal' && !session.fullRoundMove)
+      ? 'step'
+      : 'normal';
     const budget = category === 'step'
       ? convertToLocalizedDistance(1)
       : convertToLocalizedDistance(getMovementBudget(actor, movementAction));
 
-    const session = getMovementSession(combatant);
-    const mixedCategory = session.category !== null && session.category !== category;
-    const cumulativeCost = session.cumulativeCost + stepCost;
+    const mixedCategory = (explicitStep && (session.category === 'normal' || !!session.fullRoundMove))
+      || (session.lastMovementAction === FIVE_FOOT_STEP_MOVEMENT_ACTION && !explicitStep);
     const firstOrigin = session.firstOrigin ?? priorPosition;
 
     let spentTiers = session.spentTiers;
@@ -233,7 +233,10 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
       if (cumulativeCost > budget) {
         overBudget = true;
         overBudgetReason = 'fiveFootStep';
-      } else if (!spentTiers.includes('move')) {
+      } else if (session.fullRoundMove || getActionEconomy(combatant).used.chargedThisTurn) {
+        overBudget = true;
+        overBudgetReason = 'mixedMovement';
+      } else if (!spentTiers.includes('move') && !getActionEconomy(combatant).used.fullAttackUsed && getActionEconomy(combatant).actions.move > 0) {
         const spent = await spendAction(combatant, ['move']);
         if (spent) spentTiers = [...spentTiers, ...spent];
         else {
@@ -250,7 +253,7 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
         overBudget = true;
         overBudgetReason = 'doubleMove';
       } else {
-        const missingTiers = requiredTiers.filter((tier) => !spentTiers.includes(tier));
+        const missingTiers = requiredTiers.slice(spentTiers.length);
         if (missingTiers.length > 0) {
           const spent = await spendAction(combatant, missingTiers);
           if (spent) spentTiers = [...spentTiers, ...spent];
@@ -263,7 +266,7 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     }
 
     const updatedSession: MovementSession = {
-      category: session.category ?? category,
+      category,
       cumulativeCost,
       spentTiers,
       firstOrigin,
@@ -272,15 +275,22 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
       fullRoundMove: session.fullRoundMove,
     };
 
-    // Once a session escalates to spending the standard action too, it's mechanically a
+    // Once a session spends two actions, it's mechanically a
     // full-round Double Move (2x speed) rather than the single-move-action pace the drag's
     // own movement action implies — reflect that in the card's label and budget rather than
     // leaving both frozen at the original single-action values.
-    const isDoubleMoveEscalation = category === 'normal' && spentTiers.includes('standard');
-    const displayMovementAction = isDoubleMoveEscalation ? DOUBLE_MOVE_MOVEMENT_ACTION : movementAction;
+    const isDoubleMoveEscalation = category === 'normal' && spentTiers.length >= 2;
+    const displayMovementAction = category === 'step'
+      ? FIVE_FOOT_STEP_MOVEMENT_ACTION
+      : isDoubleMoveEscalation ? DOUBLE_MOVE_MOVEMENT_ACTION : movementAction;
     const displayBudget = isDoubleMoveEscalation ? budget * 2 : budget;
 
-    const cardData: MoveActionCardData = { spent: spentTiers, cost: cumulativeCost, budget: displayBudget, overBudget, overBudgetReason };
+    const cardData: MoveActionCardData = {
+      spent: spentTiers, cost: cumulativeCost, budget: displayBudget, overBudget, overBudgetReason,
+      provokes: category !== 'step',
+      stepProtectionLost: category === 'normal' && (session.category === 'step' || session.stepProtectionLost),
+    };
+    updatedSession.stepProtectionLost = cardData.stepProtectionLost;
     updatedSession.messageId = await upsertMoveActionCard(combatant, actor, displayMovementAction, cardData, firstOrigin, session.messageId);
 
     await setMovementSession(combatant, updatedSession);
@@ -306,7 +316,7 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     const combatant = combat.getCombatantsByToken(tokenId)[0] as CombatantDnd35e | undefined;
     if (!combatant) return;
 
-    await this.#reconcileFullRoundMove(combatant);
+    await this.#reconcileFullRoundMove(combatant, actor);
     await this.#reconcileSessionMovement(combatant, actor);
   }
 
@@ -317,7 +327,7 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
    * back to a position still covered by an earlier ordinary move could leave a nonzero total
    * cost behind that has nothing to do with the full-round move itself.
    */
-  async #reconcileFullRoundMove(combatant: CombatantDnd35e): Promise<void> {
+  async #reconcileFullRoundMove(combatant: CombatantDnd35e, actor: ActorDnd35e): Promise<void> {
     const session = getMovementSession(combatant);
     const fullRoundMove = session.fullRoundMove;
     if (!fullRoundMove) return;
@@ -326,6 +336,10 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     if (stillPresent) return;
 
     await refundAction(combatant, fullRoundMove.spentTiers);
+    if (getActionEconomy(combatant).used.chargedThisTurn) {
+      await clearChargedThisTurn(combatant);
+      await actor.toggleStatusEffect(CHARGED_CONDITION_ID, { active: false });
+    }
     await this.#markMoveActionCardUndone(combatant, fullRoundMove.messageId);
     await setMovementSession(combatant, { ...session, fullRoundMove: null });
   }
@@ -355,26 +369,36 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
       return;
     }
 
-    const category = session.category ?? 'normal';
     const { measurement: { convertToLocalizedDistance } } = useSettingsStore();
     const movementAction = session.lastMovementAction ?? WALK_MOVEMENT_ACTION;
+    const category = movementAction === FIVE_FOOT_STEP_MOVEMENT_ACTION
+      || (movementAction === WALK_MOVEMENT_ACTION && remainingCost <= convertToLocalizedDistance(1))
+      ? 'step'
+      : 'normal';
     const budget = category === 'step'
       ? convertToLocalizedDistance(1)
       : convertToLocalizedDistance(getMovementBudget(actor, movementAction));
 
-    const requiredTiers: ActionEconomyType[] = remainingCost <= budget ? ['move'] : ['move', 'standard'];
-    const tiersToRefund = session.spentTiers.filter((tier) => !requiredTiers.includes(tier));
+    const requiredTiers: ActionEconomyType[] = category === 'step' && getActionEconomy(combatant).used.fullAttackUsed
+      ? []
+      : remainingCost <= budget ? ['move'] : ['move', 'standard'];
+    const tiersToRefund = session.spentTiers.slice(requiredTiers.length);
     if (tiersToRefund.length > 0) await refundAction(combatant, tiersToRefund);
-    const spentTiers = session.spentTiers.filter((tier) => requiredTiers.includes(tier));
+    const spentTiers = session.spentTiers.slice(0, requiredTiers.length);
 
-    const isDoubleMoveEscalation = category === 'normal' && spentTiers.includes('standard');
-    const displayMovementAction = isDoubleMoveEscalation ? DOUBLE_MOVE_MOVEMENT_ACTION : movementAction;
+    const isDoubleMoveEscalation = category === 'normal' && spentTiers.length >= 2;
+    const displayMovementAction = category === 'step'
+      ? FIVE_FOOT_STEP_MOVEMENT_ACTION
+      : isDoubleMoveEscalation ? DOUBLE_MOVE_MOVEMENT_ACTION : movementAction;
     const displayBudget = isDoubleMoveEscalation ? budget * 2 : budget;
 
-    const cardData: MoveActionCardData = { spent: spentTiers, cost: remainingCost, budget: displayBudget, overBudget: false };
+    const cardData: MoveActionCardData = {
+      spent: spentTiers, cost: remainingCost, budget: displayBudget, overBudget: false,
+      provokes: category !== 'step', stepProtectionLost: category !== 'step' && session.stepProtectionLost,
+    };
     const messageId = await upsertMoveActionCard(combatant, actor, displayMovementAction, cardData, session.firstOrigin, session.messageId);
 
-    await setMovementSession(combatant, { ...session, cumulativeCost: remainingCost, spentTiers, messageId });
+    await setMovementSession(combatant, { ...session, category, cumulativeCost: remainingCost, spentTiers, messageId, stepProtectionLost: cardData.stepProtectionLost });
   }
 
   /** Marks an existing Move Action card `undone` in place — no position snap-back needed here, Foundry's native Undo already repositioned the token. */

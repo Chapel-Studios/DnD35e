@@ -14,6 +14,7 @@ import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, type 
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { CombatantDnd35e } from './CombatantDnd35e.mjs';
+import { getMovementSession, setMovementSession } from './movementSession.mjs';
 
 // Action Economy
 
@@ -38,8 +39,10 @@ interface CombatantActionEconomy {
     [MOVE_ACTION]: boolean;
     [MINOR_ACTION]: boolean;
     [SWIFT_ACTION]: boolean;
-    /** Reserved for Story D (full-attack-sequence UX) — not set or read by Story B. */
+    /** A paid weapon attack has started this turn's attack sequence. */
     standardAttackUsed: boolean;
+    fullAttackUsed?: boolean;
+    attackCount?: number;
     movedAfterAttack: boolean;
     chargedThisTurn: boolean;
   };
@@ -208,12 +211,78 @@ function getHandBab(combatant: CombatantDnd35e, hand: WieldedHand): number {
 
 function canUseHandAttack(combatant: CombatantDnd35e, hand: WieldedHand): boolean {
   const economy = getActionEconomy(combatant);
-  if (economy.actions.standard > 0) return true;
+  // Charge already paid for its attack with the full-round movement, even at BAB +0.
+  if (economy.used.chargedThisTurn) return !economy.used.movedAfterAttack;
+  if (!economy.used.standardAttackUsed) return economy.actions.standard > 0;
   if (economy.used.movedAfterAttack) return false;
+  const session = getMovementSession(combatant);
+  if (session.category === 'normal' || session.fullRoundMove) return false;
+  const reservedMove = session.category === 'step' && session.spentTiers.includes(MOVE_ACTION);
+  if (!economy.used.fullAttackUsed && economy.actions.move <= 0 && !reservedMove) return false;
   // Two-handed wielding needs BAB remaining in *both* pools — spendHandBab()'s 'both' case draws from both at once.
   return hand === BOTH_HANDS_EQUIP_SLOT
     ? (economy.bab[MAIN_HAND_EQUIP_SLOT] > 0 && economy.bab[OFF_HAND_EQUIP_SLOT] > 0)
     : economy.bab[hand] > 0;
+}
+
+interface AttackActionSpend {
+  standardActionSpent: boolean;
+  moveActionSpent?: boolean;
+  attackSequence?: boolean;
+}
+
+/** Promote a second attack without charging again for the first attack's standard action. */
+async function spendAttackAction(combatant: CombatantDnd35e): Promise<AttackActionSpend | null> {
+  const economy = getActionEconomy(combatant);
+  if (!economy.used.standardAttackUsed) {
+    const spent = await spendAction(combatant, [STANDARD_ACTION]);
+    if (!spent) return null;
+    await markStandardAttackUsed(combatant);
+    return { standardActionSpent: true, attackSequence: true };
+  }
+
+  const session = getMovementSession(combatant);
+  if (session.category === 'normal' || session.fullRoundMove || economy.used.movedAfterAttack) return null;
+  if (economy.used.fullAttackUsed) {
+    economy.used.attackCount = (economy.used.attackCount ?? 2) + 1;
+    await setActionEconomy(combatant, economy);
+    return { standardActionSpent: false, attackSequence: true };
+  }
+  const reassignedStepMove = session.category === 'step' && session.spentTiers.includes(MOVE_ACTION);
+  if (!reassignedStepMove && (economy.actions.move <= 0 || !await spendAction(combatant, [MOVE_ACTION]))) return null;
+  if (reassignedStepMove) {
+    await setMovementSession(combatant, { ...session, spentTiers: session.spentTiers.filter(tier => tier !== MOVE_ACTION) });
+  }
+  const updated = getActionEconomy(combatant);
+  updated.used.fullAttackUsed = true;
+  updated.used.attackCount = (updated.used.attackCount ?? 1) + 1;
+  await setActionEconomy(combatant, updated);
+  return { standardActionSpent: false, moveActionSpent: true, attackSequence: true };
+}
+
+async function refundAttackAction(combatant: CombatantDnd35e, spent: AttackActionSpend): Promise<void> {
+  const before = getActionEconomy(combatant);
+  const remainingAttacks = Math.max(0, (before.used.attackCount ?? 1) - 1);
+  const refundStandard = spent.attackSequence ? remainingAttacks === 0 : spent.standardActionSpent;
+  const refundMove = spent.attackSequence
+    ? before.used.fullAttackUsed && remainingAttacks < 2
+    : spent.moveActionSpent;
+  if (refundStandard) await refundAction(combatant, [STANDARD_ACTION]);
+  if (refundMove) {
+    const session = getMovementSession(combatant);
+    if (session.category === 'step' && session.cumulativeCost > 0) {
+      await setMovementSession(combatant, { ...session, spentTiers: [...session.spentTiers, MOVE_ACTION] });
+    } else {
+      await refundAction(combatant, [MOVE_ACTION]);
+    }
+  }
+  const economy = getActionEconomy(combatant);
+  if (spent.attackSequence) {
+    economy.used.attackCount = remainingAttacks;
+    economy.used.standardAttackUsed = remainingAttacks > 0;
+    economy.used.fullAttackUsed = remainingAttacks > 1;
+  }
+  await setActionEconomy(combatant, economy);
 }
 
 async function spendHandBab(combatant: CombatantDnd35e, hand: WieldedHand, amount: number): Promise<void> {
@@ -230,6 +299,9 @@ async function spendHandBab(combatant: CombatantDnd35e, hand: WieldedHand, amoun
 async function refundHandBab(combatant: CombatantDnd35e, hand: WieldedHand, amount: number, actor: Creature): Promise<void> {
   const economy = getActionEconomy(combatant);
   const cap = actor.system.bab;
+  if (economy.used.chargedThisTurn && hand === BOTH_HANDS_EQUIP_SLOT && amount === cap) {
+    economy.used.movedAfterAttack = false;
+  }
   if (hand === BOTH_HANDS_EQUIP_SLOT) {
     economy.bab[MAIN_HAND_EQUIP_SLOT] = Math.min(cap, economy.bab[MAIN_HAND_EQUIP_SLOT] + amount);
     economy.bab[OFF_HAND_EQUIP_SLOT] = Math.min(cap, economy.bab[OFF_HAND_EQUIP_SLOT] + amount);
@@ -258,13 +330,20 @@ async function spendAoO(combatant: CombatantDnd35e): Promise<boolean> {
 /**
  * Set by `_onUpdateMovement()` once a `charge` movement action completes. Read directly by
  * `executeAction()` to auto-check the Charge toggle; consumed by `useAction()` right after that
- * attack resolves (calls `markMovedAfterAttack()` to enforce SRD's "only a single melee attack"
- * charge restriction) — never cleared independently, since `resetActionEconomy()` wipes all
- * `used` flags at the combatant's next turn anyway.
+ * attack resolves (exhausts both BAB pools and calls `markMovedAfterAttack()` to enforce
+ * SRD's single-attack charge restriction). Movement Undo clears it; otherwise
+ * `resetActionEconomy()` wipes all `used` flags at the combatant's next turn.
  */
 async function markChargedThisTurn(combatant: CombatantDnd35e): Promise<void> {
   const economy = getActionEconomy(combatant);
   economy.used.chargedThisTurn = true;
+  await setActionEconomy(combatant, economy);
+}
+
+async function clearChargedThisTurn(combatant: CombatantDnd35e): Promise<void> {
+  const economy = getActionEconomy(combatant);
+  economy.used.chargedThisTurn = false;
+  economy.used.movedAfterAttack = false;
   await setActionEconomy(combatant, economy);
 }
 
@@ -276,14 +355,13 @@ async function markMovedAfterAttack(combatant: CombatantDnd35e): Promise<void> {
 
 /**
  * Set the first time `useAction()` actually spends the standard action for a weapon
- * attack this turn (poc.10 Story D) — distinct from `used.standard` (which just tracks
- * whether the standard-action pool itself has been spent, for any reason). Reserved for
- * a future full-attack-sequence UX to distinguish "already attacking this turn" from
- * "used my standard action on something else."
+ * attack this turn (poc.10 Story D) — distinct from `used.standard` (which tracks any
+ * standard-action spend). A subsequent attack must promote this sequence to a full attack.
  */
 async function markStandardAttackUsed(combatant: CombatantDnd35e): Promise<void> {
   const economy = getActionEconomy(combatant);
   economy.used.standardAttackUsed = true;
+  economy.used.attackCount = 1;
   await setActionEconomy(combatant, economy);
 }
 
@@ -291,6 +369,7 @@ export {
   canUseAction,
   canUseAoO,
   canUseHandAttack,
+  clearChargedThisTurn,
   getActionEconomy,
   getHandBab,
   isCombatEconomyActive,
@@ -298,13 +377,15 @@ export {
   markMovedAfterAttack,
   markStandardAttackUsed,
   refundAction,
+  refundAttackAction,
   refundHandBab,
   resetActionEconomy,
   setActionEconomy,
   spendAction,
   spendAoO,
+  spendAttackAction,
   spendHandBab,
   toggleActionAvailability,
 };
 
-export type { ActionPipTier, CombatantActionEconomy };
+export type { ActionPipTier, AttackActionSpend, CombatantActionEconomy };

@@ -3,7 +3,9 @@ import {
   canUseAction,
   canUseAoO,
   canUseHandAttack,
+  clearChargedThisTurn,
   getActionEconomy,
+  getHandBab,
   markChargedThisTurn,
   markMovedAfterAttack,
   refundAction,
@@ -216,6 +218,19 @@ describe('toggleActionAvailability (manual pip click)', () => {
 });
 
 describe('canUseHandAttack', () => {
+  it('allows the prepaid charge attack at BAB +0, but never another attack after it', async () => {
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 }, used: { chargedThisTurn: true } } });
+    for (const hand of [MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, BOTH_HANDS_EQUIP_SLOT] as const) {
+      expect(canUseHandAttack(combatant, hand)).toBe(true);
+      expect(getHandBab(combatant, hand)).toBe(0);
+    }
+    await markMovedAfterAttack(combatant);
+    await refundAction(combatant, ['standard']);
+    for (const hand of [MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, BOTH_HANDS_EQUIP_SLOT] as const) {
+      expect(canUseHandAttack(combatant, hand)).toBe(false);
+    }
+  });
+
   it('is always usable while the standard action is unspent, regardless of BAB/movedAfterAttack', () => {
     const combatant = buildCombatant({ actionEconomy: { used: { movedAfterAttack: true } } });
     expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(true);
@@ -228,8 +243,8 @@ describe('canUseHandAttack', () => {
     expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(false);
   });
 
-  it('falls back to the named hand\'s BAB pool once standard is spent and nothing moved since', () => {
-    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 0 } } });
+  it('uses the named hand\'s BAB pool when a standard attack can be promoted to a full attack', () => {
+    const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 0 }, used: { standardAttackUsed: true } } });
     expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(true);
     expect(canUseHandAttack(combatant, OFF_HAND_EQUIP_SLOT)).toBe(false);
   });
@@ -238,12 +253,38 @@ describe('canUseHandAttack', () => {
     const combatant = buildCombatant({ actionEconomy: { actions: { standard: 0 }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 0 } } });
     expect(canUseHandAttack(combatant, BOTH_HANDS_EQUIP_SLOT)).toBe(false);
 
-    const bothReady = buildCombatant({ actionEconomy: { actions: { standard: 0 }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 5 } } });
+    const bothReady = buildCombatant({ actionEconomy: { actions: { standard: 0 }, bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 5 }, used: { standardAttackUsed: true } } });
     expect(canUseHandAttack(bothReady, BOTH_HANDS_EQUIP_SLOT)).toBe(true);
   });
 });
 
 describe('spendHandBab / refundHandBab', () => {
+  it('does not reopen a spent charge attack when refunding an unrelated single-hand attack', async () => {
+    const combatant = buildCombatant({
+      actionEconomy: { actions: { standard: 0 }, used: { chargedThisTurn: true, movedAfterAttack: true } },
+    });
+    await refundHandBab(combatant, MAIN_HAND_EQUIP_SLOT, 5, buildActor(0, 16));
+    expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(false);
+  });
+
+  it('undoing the charge attack restores both pools and makes the single attack available again', async () => {
+    const combatant = buildCombatant({
+      actionEconomy: {
+        actions: { standard: 0, move: 0 },
+        bab: { [MAIN_HAND_EQUIP_SLOT]: 16, [OFF_HAND_EQUIP_SLOT]: 16 },
+        used: { chargedThisTurn: true },
+      },
+    });
+    await spendHandBab(combatant, BOTH_HANDS_EQUIP_SLOT, 16);
+    await markMovedAfterAttack(combatant);
+    await refundHandBab(combatant, BOTH_HANDS_EQUIP_SLOT, 16, buildActor(0, 16));
+
+    expect(getHandBab(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(16);
+    expect(getHandBab(combatant, OFF_HAND_EQUIP_SLOT)).toBe(16);
+    expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(true);
+    expect(getActionEconomy(combatant).actions.standard).toBe(0);
+  });
+
   it('subtracts from the named hand only, flooring at 0', async () => {
     const combatant = buildCombatant({ actionEconomy: { bab: { [MAIN_HAND_EQUIP_SLOT]: 5, [OFF_HAND_EQUIP_SLOT]: 5 } } });
     await spendHandBab(combatant, MAIN_HAND_EQUIP_SLOT, 10);
@@ -294,6 +335,19 @@ describe('canUseAoO / spendAoO', () => {
 });
 
 describe('markChargedThisTurn / markMovedAfterAttack', () => {
+  it('clears charge flags when its movement is undone without changing action or BAB pools', async () => {
+    const combatant = buildCombatant();
+    await markChargedThisTurn(combatant);
+    await markMovedAfterAttack(combatant);
+    const before = getActionEconomy(combatant);
+    await clearChargedThisTurn(combatant);
+    const after = getActionEconomy(combatant);
+    expect(after.used.chargedThisTurn).toBe(false);
+    expect(after.used.movedAfterAttack).toBe(false);
+    expect(after.actions).toEqual(before.actions);
+    expect(after.bab).toEqual(before.bab);
+  });
+
   it('markChargedThisTurn sets used.chargedThisTurn without touching other flags', async () => {
     const combatant = buildCombatant();
     await markChargedThisTurn(combatant);

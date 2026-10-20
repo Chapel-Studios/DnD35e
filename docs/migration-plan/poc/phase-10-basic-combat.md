@@ -650,6 +650,12 @@ No new Token hooks. This folds into the **existing** `TokenDocumentDnd35e._onUpd
 
 ### Action-economy consumption
 
+**Current runtime behavior:** ordinary `walk` movement totaling at most one 5-foot square is automatically classified as `fiveFootStep` for the movement card. It provisionally spends the move action, but does not provoke. Continuing to walk beyond 5 feet upgrades the session to ordinary movement at no additional cost; exceeding a single move's budget still upgrades to Double Move. The card tracks `provokes` and `stepProtectionLost`, explicitly recording that the initial 5 feet loses its protection when the whole path becomes ordinary movement. This is bookkeeping only; automatic AoO detection/resolution remains a separate story. The explicit `fiveFootStep` mode remains capped and cannot be extended into ordinary movement.
+
+**Full-attack interaction:** a legal step can occur before or after a full attack. Promoting the second weapon attack reassigns a step's reserved move action to the full attack, rather than charging twice. Movement after a full attack is limited to a single 5-foot step; Charge/Withdraw/Double Move do not permit an additional step. Native movement Undo recomputes step classification, and neither native nor card Undo refunds a move action owned by the full attack.
+
+The following original sketch illustrates the movement-hook integration; the cumulative session logic above is implemented in `TokenDocumentDnd35e`.
+
 ```typescript
 // TokenDocumentDnd35e._onUpdateMovement() — appended alongside the existing Prone-toggle logic
 const combat = game.combat;
@@ -693,7 +699,7 @@ Every action-economy consumption from movement now posts a small chat card inste
 - `buildMoveActionCard()` (sibling of `buildAttackCard()`/`buildResolutionCard()`, `src/dice/rollMessages.mts`) posts a compact message: combatant name, movement action used, feet moved, and which action(s) were consumed (Move, or Move + Standard)
 - Stores `message.flags.dnd35e.moveActionCard = { combatantId, spent: ('move' | 'standard')[], cost, budget, overBudget: boolean, priorPosition: { x, y, elevation } | null, undone: false }` — `priorPosition` is read straight off `movement.passed.waypoints[0]` (the first waypoint of the passed path is always the pre-move origin, already available in this hook — no new pre-update hook needed) and stored only when something was actually spent (`null` in the `overBudget` branch, where the token never actually committed the move)
 - When `overBudget` is true (moved further than two move actions' worth), the card renders a warning banner ("Moved further than allowed for a single action") **in addition to** the existing `ui.notifications.warn` toast — the toast is easy to miss mid-session; the chat card is a permanent log entry. Nothing is consumed in this branch, so there's nothing to refund and no Undo button
-- An **Undo** button (`data-action="undo-move-action"`), visible/enabled only for the GM or the combatant's owner, appears whenever `spent.length > 0`
+- An **Undo** button (`data-action="undo-move-action"`), visible/enabled only for the GM or the combatant's owner, appears whenever a prior position is stored. Session cards retain that position even for a free step after a full attack; they refund only the current movement session's own `spentTiers`, not a reservation reassigned to the full attack.
 - On click: calls `refundMoveAction(combatant)` and/or `refundStandardAction(combatant)` for each entry in `spent`, **and** — since the token physically moved — updates the token document back to `priorPosition` (teleporting it back to where it stood before the move committed), then sets `undone: true` and re-renders the card ("Undone — action(s) refunded, token returned to its prior position")
 - **Scope**: Undo reverses both halves of the move together — the action-economy flags *and* the physical repositioning — since a refunded move action that leaves the token standing in its new square would be a lie about what state the character is actually in. There's no partial-undo option (refund flags only, keep the new position, or vice versa); if a GM wants a different combination, they use Foundry's native token-update tools directly instead of this button
 
@@ -721,7 +727,8 @@ Charge (a movement action, not a combat maneuver — SRD lists it under "Special
 - **Always a full-round action**: unlike `walk`/`run`'s budget-tiered spend (move-only vs. move+standard depending on distance), a completed `charge` waypoint spends move **and** standard unconditionally, regardless of how far the token actually moved (§10.6's action-economy code sample above) — matching SRD's "charging is a full-round action."
 - **No reach/legality validation**: SRD requires a charge to end within reach of the target with a clear path, but poc.10 doesn't enforce or block an "illegal" charge — the move always completes once dragged. Whether it reaches a target only affects the one thing described next.
 - **Auto-links to the next attack, doesn't block anything**: once the completed charge waypoint places the token within melee reach (`isWithinReach()`, §10.5) of at least one hostile token, `markChargedThisTurn(combatant)` sets `used.chargedThisTurn` (§10.1). This is read once by `executeAction()` (§10.7) to pre-check the Charge toggle on that combatant's very next attack this turn — still fully user-overridable, same as every other auto-detected toggle. A charge that doesn't end in reach of anyone simply doesn't set the flag; nothing warns or blocks (mirrors the "trust the player" philosophy already used for straight-line dragging).
-- **Enforces SRD's "single melee attack" restriction**: per SRD, charging replaces a character's entire turn with one mandatory melee attack — not a full attack sequence. `useAction()` (§10.7) checks `used.chargedThisTurn` right after that attack resolves and, if set, calls `markMovedAfterAttack(combatant)` — reusing the existing "moved after attack" gate on `canUseHandAttack()` to block any further BAB-funded attacks this turn, rather than introducing a second gating flag.
+- **Enforces SRD's "single melee attack" restriction**: charging grants one prepaid attack at the actor's top BAB, including BAB +0. After that attack resolves, `WeaponAttackDataModel._postExecute()` exhausts **both** hand BAB pools and marks `movedAfterAttack`, so every weapon attack in the HUD shows BAB 0 and is unavailable. It does not spend a second standard action. Cancelled dialogs and free attacks do not consume the charge attack; resolution Undo restores both pools and reopens the single attack.
+- **Applies the charged condition on movement completion**: reaching a hostile token also applies `CHARGED_CONDITION_ID` immediately, imposing -2 AC until the actor's next turn, even before the attack dialog is confirmed. The melee dialog detects this condition and pre-checks the +2 Charge modifier. Both native movement Undo and the movement card's Undo clear the charge flag and condition.
 
 ### Where AoO detection hooks in
 
@@ -794,6 +801,12 @@ if (cancelled.value) return { hit: false, criticalHit: false, cancelled: true };
 ```
 
 ### useAction() on ActorDnd35e — manual full attack + TWF
+
+**Current runtime ownership:** `WeaponAttackDataModel._postExecute()` performs spending after a successful, non-free attack; cancelled dialogs do not spend anything. The first attack, with either hand, spends one standard action at that hand's top BAB. A second attack (the other weapon or an iterative) must promote the sequence to a full attack by spending the remaining move action, or claiming the move action provisionally reserved by a legal 5-foot step. Normal movement or a move action spent elsewhere prevents promotion. Subsequent iterative attacks consume only the selected hand's BAB pool.
+
+`used.standardAttackUsed`, `used.fullAttackUsed`, and `used.attackCount` track the sequence. Attack/resolution cards retain the spend metadata for Undo; undoing down to one attack releases the full-attack move cost (or returns it to an existing step reservation), while undoing the last attack refunds the standard action. Charge retains its separate prepaid single-attack behavior and exhausts both BAB pools.
+
+The following original actor-level sketch is historical; the action model and `spendAttackAction()`/`refundAttackAction()` now own the sequence accounting described above.
 
 ```typescript
 async useAction(itemId: string, actionId: string, targetId?: string, options?: { free?: boolean }): Promise<ActionResult | null> {

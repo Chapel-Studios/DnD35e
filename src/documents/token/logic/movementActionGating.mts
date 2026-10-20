@@ -152,7 +152,8 @@ const canSelectDoubleMoveMovementAction = (): boolean => isInActiveCombat();
 const isFiveFootStepAffordable = (actor: ActorDnd35e | null | undefined): boolean => {
   const combatant = getCombatantForActor(actor);
   if (!combatant) return true;
-  return getMovementSession(combatant).category === null;
+  const session = getMovementSession(combatant);
+  return session.category === null && !session.fullRoundMove;
 };
 
 /** `run` is ordinary movement — only affordable while the move action (and this turn's movement category) is still available. */
@@ -355,4 +356,3 @@ export {
 };
 
 export type { Dnd35eMovementActionConfig };
-

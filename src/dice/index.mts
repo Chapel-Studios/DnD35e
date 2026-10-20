@@ -18,7 +18,7 @@ import { registerChatCardActions } from './chatCards/registerChatCardActions.mjs
 import type { ResolutionCardData, ResolutionCardFlags } from './chatCards/resolutionCard/resolutionCard.mjs';
 import { buildResolutionCard, wireResolutionCardButton } from './chatCards/resolutionCard/resolutionCard.mjs';
 import { buildInitiativeCard, buildSaveCard } from './chatCards/saveRollCard/saveRollCard.mjs';
-import { buildD20Formula, combineDiceFormula, extractDiceOnlyFormula, extractFlatModifier, flavorDamageDiceBySource, flavorDiceGroups, flavorTerm } from './d20Formula.mjs';
+import { buildD20Formula, combineDiceFormula, extractDiceOnlyFormula, extractFlatModifier, flavorDamageDiceBySource, flavorDiceGroups, flavorTerm, groupDamageDiceBySource } from './d20Formula.mjs';
 import { D20Roll } from './D20Roll.mjs';
 import { DamageRoll } from './DamageRoll.mjs';
 import { buildOverridesModifierList, buildSituationalModifierEntry, reconcileBakedConditionEntry, reconcileFlatFootedDexEntry } from './rollModifierBreakdown.mjs';
@@ -50,6 +50,7 @@ export {
   flavorDamageDiceBySource,
   flavorDiceGroups,
   flavorTerm,
+  groupDamageDiceBySource,
   markTargetRowResolved,
   parseActionChainId,
   reconcileBakedConditionEntry,

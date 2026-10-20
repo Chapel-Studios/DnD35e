@@ -10,6 +10,7 @@ import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
+import type { AttackActionSpend } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import { canUserSeeActorName } from '@documents/token/logic/tokenNameVisibility.mjs';
 import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
@@ -75,7 +76,7 @@ interface AttackCardFlags {
   /** Weapon's damage type (e.g. `slashing`) — needed by `_continue()`'s `'damage'` case to apply/undo HP damage with the right `HpUpdateMetadata.damageType`. */
   damageType: string;
   targets: AttackCardTargetRow[];
-  actionEconomySpent: { standardActionSpent: boolean; hand: WieldedHand; babSpent: number } | null;
+  actionEconomySpent: (AttackActionSpend & { hand: WieldedHand; babSpent: number }) | null;
   /** Persisted so the Change Target(s) handler can rebuild `diceRollHtml` without re-deriving the roll's own modifier breakdown. */
   modifierList: RollModifier[];
   /** Already-localized rule-violation notices (insufficient BAB, illegal Wield Mode override) surfaced on the card so the GM notices even if the acting player missed the dialog's live warning. */
