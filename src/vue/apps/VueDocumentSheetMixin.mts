@@ -86,6 +86,22 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       return `dnd35e-${this.#document.type}-sheet-${this.#document.id}`;
     }
 
+    /**
+     * Core `DocumentSheetV2._onRender()` calls `this._toggleDisabled(true)` whenever
+     * `!this.isEditable` (e.g. viewed from a locked compendium) — it walks `this.form`'s
+     * native `HTMLFormElement.elements` and sets `.disabled = true` on every
+     * input/select/textarea/button, with no way to opt individual elements out. That
+     * would also disable pure navigation (expand an effect row, open a nested item's
+     * sheet, switch view mode) which has nothing to do with editing data. Our own
+     * Vue-level gating (`RenderModeStore`'s view mode, `getIsFieldEditable()`,
+     * `canEdit`/`readOnly` props) already correctly disables actual mutation controls
+     * based on `isEditable` — see `VueDocumentSheetMixin`'s `_onRender` reading
+     * `this.isEditable` into `setHeaderElement()`. Action chain add/remove/trigger
+     * controls also gate on the owning chain's field editability. No-op this instead
+     * of relying on Foundry's blanket, all-or-nothing form disable.
+     */
+    protected override _toggleDisabled (_disabled: boolean): void {}
+
     get canConfigureSheet () {
       if (!this.options?.sheetConfig || !this.isEditable) return false;
       const document = this.#document;

@@ -20,40 +20,47 @@
       "max": 0
     },
     "hardness": 0,
-    "quantity": 0,
-    "weight": 0,
+    "quantity": 1,
+    "weight": 2,
     "isCarried": true,
     "size": "tiny",
     "price": {
-      "stacks": [],
-      "srdEquivalent": 0
+      "stacks": [
+        {
+          "coinId": "srd_gp",
+          "count": 10
+        }
+      ],
+      "srdEquivalent": 10
     },
-    "isEquipped": false,
     "equippedSlotIds": [],
     "isMelded": false,
     "designedForSize": "medium",
     "isWeightlessWhenEquipped": false,
-    "isBaseWeaponType": false,
-    "weaponType": "simple",
+    "isBaseWeaponType": true,
+    "weaponType": "martial",
     "weaponSubtype": "light",
-    "weaponBaseType": "",
-    "weaponDamage": {
-      "damageRoll": "",
-      "damageType": "dnd35e.DAMAGE_TYPES.Slashing",
-      "critRange": "20",
-      "critMultiplier": 2,
-      "rangeIncrement": null
-    },
-    "attackNotes": "",
-    "damageNotes": "",
-    "noAmmoRequired": false
+    "weaponBaseType": "short sword",
+    "actions": [
+      {
+        "_id": "FgKdVVaa5UCk9DQ6",
+        "type": "melee_weapon_attack",
+        "damageFormula": {
+          "formula": "$scaleDamage(1d6)",
+          "expectedType": "rollFormula",
+          "resolvedValue": null
+        },
+        "damageType": "dnd35e.DAMAGE_TYPES.Piercing",
+        "critRange": 19,
+        "critMultiplier": 2
+      }
+    ]
   },
   "effects": [],
   "folder": null,
   "sort": 0,
   "ownership": {
-    "default": 0,
-    "mBlpD72i6u17h1qm": 3
+    "default": 0
   },
   "flags": {},
   "_stats": {
@@ -61,7 +68,7 @@
     "systemId": "dnd35e",
     "systemVersion": "14.0.0-dev.1",
     "createdTime": 1779589418473,
-    "modifiedTime": 1779589418474,
+    "modifiedTime": 1791785607530,
     "lastModifiedBy": "mBlpD72i6u17h1qm",
     "compendiumSource": null,
     "duplicateSource": null,

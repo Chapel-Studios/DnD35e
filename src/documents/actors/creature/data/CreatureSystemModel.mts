@@ -54,6 +54,14 @@ abstract class CreatureSystemModel extends ActorSystemModel {
    *    armor/shield/natural) don't compound across repeated prepare passes
    *  - `defense.denyDexToAC`: reset to false so a lapsed Flat-Footed (or similar) condition
    *    doesn't leave the Dex-denial flag stuck on from a prior prepare pass
+   *  - `defense.criticalImmune`: reset to false so a lapsed Total Defense/Ignore-Critical
+   *    source doesn't leave the flag stuck on from a prior prepare pass
+   *  - `bab`/`aooCount`: reset to their schema defaults (0 / 1) so `add`-type AE/class
+   *    contributions don't compound across repeated prepare passes (e.g. combat's more
+   *    frequent re-prepares) the same way `defense.armorClass` would without its own reset
+   *  - `hp.max`: reset to its 100 stub baseline (replace with real HD/level/CON calculation
+   *    when progression is implemented) so `add`-type AE contributions (e.g. a Heroic
+   *    Training-style buff) layer on top instead of being overwritten each pass
    * See docs/architecture/actor-data-pipeline.md.
    */
   override prepareBaseData(): void {
@@ -70,12 +78,15 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     this.saves.will = 0;
 
     this.init = 0;
+    this.bab = 0;
+    this.aooCount = 1;
 
     this.defense.armorClass = 0;
     this.defense.touchAC = 0;
     this.defense.armorBonus = 0;
     this.defense.shieldBonus = 0;
     this.defense.denyDexToAC = false;
+    this.defense.criticalImmune = false;
 
     this.attacks.toHitBonus = 0;
     this.attacks.meleeToHitBonus = 0;
@@ -150,11 +161,17 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       // the Dex term out of both armorClass and touchAC in Creature._buildDefenseChanges().
       // A future Uncanny Dodge feat overrides this back to false.
       denyDexToAC: useDnd35eField(derivedBooleanField(false)),
+      // Set by fortification/construct-type immunities (poc.10 Story E); read by
+      // evaluateDefense() to auto-check "Ignore Critical Hit" in the Roll Defense Dialog.
+      criticalImmune: useDnd35eField(derivedBooleanField(false)),
       armorBonus:      useDnd35eField(derivedNumberField(0)),
       shieldBonus:     useDnd35eField(derivedNumberField(0)),
       naturalArmor:    useDnd35eField(derivedNumberField(0)),
       fortification: useDnd35eField(derivedNumberField(0)),
-      concealment: useDnd35eField(derivedNumberField(0)),
+      // Persisted (unlike its defense.* siblings) — a manually-set/HUD-set baseline the GM/
+      // owner can edit directly; AEs (e.g. a Blur buff) still layer on top during data prep the
+      // same as any other field. Reset to 0 on token placement, see TokenDocumentDnd35e#_preCreate.
+      concealment: useDnd35eField(requiredNumberField(0, 0, 100)),
       spellResistance: useDnd35eField(new FormulaField({
         expectedType: 'number',
         nullable: true,

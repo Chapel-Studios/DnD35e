@@ -69,7 +69,11 @@ function pushPreparationWarning(
  * Push the same warning onto multiple hosts at once — e.g. both the AE change's own
  * `ActiveEffect` (so it's visible while authoring the change) and the actor/item the
  * change actually targets (where the broken field lives). Duplicate/undefined hosts
- * are deduped/no-op'd automatically.
+ * are deduped/no-op'd automatically. An entry may itself be an array (e.g. an item-owned
+ * effect applying an actor-targeted change needs both the actor AND the owning item
+ * warned at once) — `.flat()` collapses one level of nesting before filtering, so callers
+ * can pass a `PreparationWarningHost | PreparationWarningHost[]` "warnHost" straight
+ * through without pre-flattening it themselves.
  *
  * All copies share one `sourcePath`/`sourceUuid`, taken from whichever host has the
  * deepest ancestry chain (e.g. an AE's Actor → Item → Effect chain is more informative
@@ -77,12 +81,12 @@ function pushPreparationWarning(
  * which sheet the warning is viewed from.
  */
 function pushPreparationWarningToHosts(
-  hosts: Array<PreparationWarningHost | null | undefined>,
+  hosts: Array<PreparationWarningHost | PreparationWarningHost[] | null | undefined>,
   field: string,
   message: string,
   severity: 'warning' | 'error' = 'warning'
 ): void {
-  const validHosts = hosts.filter((host): host is PreparationWarningHost => !!host?._preparationWarnings);
+  const validHosts = hosts.flat().filter((host): host is PreparationWarningHost => !!host?._preparationWarnings);
   if (validHosts.length === 0) return;
 
   const origin = validHosts.reduce((deepest, host) =>

@@ -9,11 +9,12 @@
  */
 import type { Creature } from '@actors/creature/index.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
-import { AOO_ACTION, FULL_ROUND_ACTION, MINOR_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
+import { AOO_ACTION, FULL_ROUND_ACTION, MOVE_ACTION, STANDARD_ACTION, SWIFT_ACTION } from '@constants/actionEconomy.mjs';
 import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, type WieldedHand } from '@constants/equipmentSlots.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { CombatantDnd35e } from './CombatantDnd35e.mjs';
+import { getMovementSession, setMovementSession } from './movementSession.mjs';
 
 // Action Economy
 
@@ -24,8 +25,7 @@ interface CombatantActionEconomy {
     /** Int, not bool — some feats/spells grant an extra use this round, so a pool can hold more than 1 (see `toggleActionAvailability`). */
     [STANDARD_ACTION]: number;
     [MOVE_ACTION]: number;
-    [MINOR_ACTION]: number;
-    /** Own pool, capped at one use per turn by default — not part of `ACTION_HIERARCHY`, so it can never be covered by downgrading a spent move/standard action. */
+    /** Own pool, capped at one use per turn by default — not part of `ACTION_HIERARCHY`. */
     [SWIFT_ACTION]: number;
     aoo: number;
   };
@@ -36,28 +36,43 @@ interface CombatantActionEconomy {
   used: {
     [STANDARD_ACTION]: boolean;
     [MOVE_ACTION]: boolean;
-    [MINOR_ACTION]: boolean;
     [SWIFT_ACTION]: boolean;
-    /** Reserved for Story D (full-attack-sequence UX) — not set or read by Story B. */
+    /** A paid weapon attack has started this turn's attack sequence. */
     standardAttackUsed: boolean;
+    fullAttackUsed?: boolean;
+    attackCount?: number;
     movedAfterAttack: boolean;
     chargedThisTurn: boolean;
   };
 }
 
 const DEFAULT_ACTION_ECONOMY: CombatantActionEconomy = {
-  actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [MINOR_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: 0 },
+  actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: 0 },
   bab: { [MAIN_HAND_EQUIP_SLOT]: 0, [OFF_HAND_EQUIP_SLOT]: 0 },
-  used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [MINOR_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
+  used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
 };
 
 /** Reads `flags.dnd35e.actionEconomy`, applying defaults for any missing keys. */
 function getActionEconomy(combatant: CombatantDnd35e): CombatantActionEconomy {
   const stored = combatant.getFlag(SYSTEM_ID, ACTION_ECONOMY_FLAG) as Partial<CombatantActionEconomy> | undefined;
   return {
-    actions: { ...DEFAULT_ACTION_ECONOMY.actions, ...stored?.actions },
+    actions: {
+      [STANDARD_ACTION]: stored?.actions?.[STANDARD_ACTION] ?? DEFAULT_ACTION_ECONOMY.actions[STANDARD_ACTION],
+      [MOVE_ACTION]: stored?.actions?.[MOVE_ACTION] ?? DEFAULT_ACTION_ECONOMY.actions[MOVE_ACTION],
+      [SWIFT_ACTION]: stored?.actions?.[SWIFT_ACTION] ?? DEFAULT_ACTION_ECONOMY.actions[SWIFT_ACTION],
+      aoo: stored?.actions?.aoo ?? DEFAULT_ACTION_ECONOMY.actions.aoo,
+    },
     bab: { ...DEFAULT_ACTION_ECONOMY.bab, ...stored?.bab },
-    used: { ...DEFAULT_ACTION_ECONOMY.used, ...stored?.used },
+    used: {
+      [STANDARD_ACTION]: stored?.used?.[STANDARD_ACTION] ?? DEFAULT_ACTION_ECONOMY.used[STANDARD_ACTION],
+      [MOVE_ACTION]: stored?.used?.[MOVE_ACTION] ?? DEFAULT_ACTION_ECONOMY.used[MOVE_ACTION],
+      [SWIFT_ACTION]: stored?.used?.[SWIFT_ACTION] ?? DEFAULT_ACTION_ECONOMY.used[SWIFT_ACTION],
+      standardAttackUsed: stored?.used?.standardAttackUsed ?? DEFAULT_ACTION_ECONOMY.used.standardAttackUsed,
+      ...(stored?.used?.fullAttackUsed === undefined ? {} : { fullAttackUsed: stored.used.fullAttackUsed }),
+      ...(stored?.used?.attackCount === undefined ? {} : { attackCount: stored.used.attackCount }),
+      movedAfterAttack: stored?.used?.movedAfterAttack ?? DEFAULT_ACTION_ECONOMY.used.movedAfterAttack,
+      chargedThisTurn: stored?.used?.chargedThisTurn ?? DEFAULT_ACTION_ECONOMY.used.chargedThisTurn,
+    },
   };
 }
 
@@ -68,40 +83,38 @@ async function setActionEconomy(combatant: CombatantDnd35e, economy: CombatantAc
 /** Refills both BAB pools and AoO count from the actor, resets all actions, clears all `used` flags. */
 async function resetActionEconomy(combatant: CombatantDnd35e, actor: Creature): Promise<void> {
   await setActionEconomy(combatant, {
-    actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [MINOR_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: actor.system.aooCount },
+    actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: actor.system.aooCount },
     bab: { [MAIN_HAND_EQUIP_SLOT]: actor.system.bab, [OFF_HAND_EQUIP_SLOT]  : actor.system.bab },
-    used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [MINOR_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
+    used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
   });
 }
 
-// Standard, Move, and Minor Actions
+// Standard and Move Actions
 
 
 /**
- * Ascending SRD action hierarchy this pool-based tracker currently implements — a higher
- * tier can always cover a lower-tier request (a standard covers a move or minor; a move
- * covers a minor), never the reverse. `free` never goes through this hierarchy (it costs
- * nothing by definition). `fullRound` is a real SRD tier but isn't trackable here yet —
+ * Ascending SRD action hierarchy this pool-based tracker currently implements — a standard
+ * action can cover a move action, never the reverse. `free` never goes through this hierarchy
+ * (it costs nothing by definition). `fullRound` is a real SRD tier but isn't trackable here yet —
  * partial-round bookkeeping (what remains spendable if a full-round action gets
  * initiated mid-turn) needs dedicated design (see phase-10 notes), so for now a
  * `fullRound` (or any other not-yet-implemented) request is simply ignored: it's treated
  * as already available and never actually claims a pool, rather than being gated or
  * crashing on an untracked key.
  *
- * `swift` is tracked (its own pool, gated the same way as minor/move/standard) but is
+ * `swift` is tracked (its own pool, gated the same way as move/standard) but is
  * deliberately excluded from `ACTION_HIERARCHY` — it behaves like `free` (no other pool is
  * spent to cover it) except it's capped at one use per turn by its own boolean pool, and
  * that pool can never be reached by downgrading a spent move/standard request (a request
  * for `swift` only ever checks the `swift` pool, never `ACTION_HIERARCHY`'s tiers).
  */
-type TrackedActionTier = typeof MINOR_ACTION | typeof MOVE_ACTION | typeof STANDARD_ACTION | typeof SWIFT_ACTION;
+type TrackedActionTier = typeof MOVE_ACTION | typeof STANDARD_ACTION | typeof SWIFT_ACTION;
 
 function isTrackedActionTier(action: ActionEconomyType): action is TrackedActionTier {
-  return action === MINOR_ACTION || action === MOVE_ACTION || action === STANDARD_ACTION || action === SWIFT_ACTION;
+  return action === MOVE_ACTION || action === STANDARD_ACTION || action === SWIFT_ACTION;
 }
 
-const ACTION_HIERARCHY: (typeof MINOR_ACTION | typeof MOVE_ACTION | typeof STANDARD_ACTION)[] = [
-  MINOR_ACTION,
+const ACTION_HIERARCHY: (typeof MOVE_ACTION | typeof STANDARD_ACTION)[] = [
   MOVE_ACTION,
   STANDARD_ACTION,
 ];
@@ -114,7 +127,7 @@ function tiersCovering(tier: TrackedActionTier): TrackedActionTier[] {
 /**
  * The pools that would actually be spent for `actions` — each entry resolved to itself or a
  * higher tier per `ACTION_HIERARCHY`, with no pool reused across two entries. Requests are
- * resolved highest-requirement first (`standard` before `move` before `minor`) so a scarce
+ * resolved highest-requirement first (`standard` before `move`) so a scarce
  * `standard` pool is claimed by an actual standard request before a lower request
  * opportunistically borrows it. Order matches the input `actions`. Not-yet-implemented
  * tiers (see `isTrackedActionTier`) are passed through unchanged, never gated. Null if the
@@ -177,13 +190,25 @@ async function refundAction(combatant: CombatantDnd35e, actions: ActionEconomyTy
 /** Pip tiers clickable in the Combat Tracker row — the four tracked action tiers plus `aoo` (aoo has no `used` counterpart, see below). */
 type ActionPipTier = TrackedActionTier | typeof AOO_ACTION;
 
-/** GM manual override (Combat Tracker action pip click) — spends one use from the pool if any remain, otherwise refunds one back. Unifies standard/move/minor/swift/aoo behind the same click gesture, bypassing the hierarchy resolution `spendAction`/`refundAction` perform, so a pool pushed above its normal single use (an "extra action" source) just takes an extra click to fully spend. Keeps `used[tier]` in sync for the four tracked tiers so other economy consumers relying on it stay consistent. */
+/** GM manual override (Combat Tracker action pip click) — spends one use from the pool if any remain, otherwise refunds one back. Unifies standard/move/swift/aoo behind the same click gesture, bypassing the hierarchy resolution `spendAction`/`refundAction` perform, so a pool pushed above its normal single use (an "extra action" source) just takes an extra click to fully spend. Keeps `used[tier]` in sync for the tracked tiers so other economy consumers relying on it stay consistent. */
 async function toggleActionAvailability(combatant: CombatantDnd35e, tier: ActionPipTier): Promise<void> {
   const economy = getActionEconomy(combatant);
   const current = economy.actions[tier];
   economy.actions[tier] = current > 0 ? current - 1 : current + 1;
   if (isTrackedActionTier(tier)) economy.used[tier] = economy.actions[tier] <= 0;
   await setActionEconomy(combatant, economy);
+}
+
+/**
+ * True only once the encounter is actually running (`combat.started`) AND this combatant
+ * has rolled initiative — `_onStartTurn()` (which seeds the BAB pool from `actor.system.bab`
+ * via `resetActionEconomy()`) only ever fires once a combatant reaches their own turn in the
+ * order, so a combatant sitting in the tracker pre-initiative/pre-start still has the pool's
+ * zeroed `DEFAULT_ACTION_ECONOMY` default — not a meaningful cap. Callers must fall back to
+ * the full `actor.system.bab` (no pool gating/spending) until this returns true.
+ */
+function isCombatEconomyActive(combatant: CombatantDnd35e | null | undefined): boolean {
+  return !!combatant?.combat?.started && combatant.initiative !== null && combatant.initiative !== undefined;
 }
 
 // Bab Tracking
@@ -196,12 +221,78 @@ function getHandBab(combatant: CombatantDnd35e, hand: WieldedHand): number {
 
 function canUseHandAttack(combatant: CombatantDnd35e, hand: WieldedHand): boolean {
   const economy = getActionEconomy(combatant);
-  if (economy.actions.standard > 0) return true;
+  // Charge already paid for its attack with the full-round movement, even at BAB +0.
+  if (economy.used.chargedThisTurn) return !economy.used.movedAfterAttack;
+  if (!economy.used.standardAttackUsed) return economy.actions.standard > 0;
   if (economy.used.movedAfterAttack) return false;
+  const session = getMovementSession(combatant);
+  if (session.category === 'normal' || session.fullRoundMove) return false;
+  const reservedMove = session.category === 'step' && session.spentTiers.includes(MOVE_ACTION);
+  if (!economy.used.fullAttackUsed && economy.actions.move <= 0 && !reservedMove) return false;
   // Two-handed wielding needs BAB remaining in *both* pools — spendHandBab()'s 'both' case draws from both at once.
   return hand === BOTH_HANDS_EQUIP_SLOT
     ? (economy.bab[MAIN_HAND_EQUIP_SLOT] > 0 && economy.bab[OFF_HAND_EQUIP_SLOT] > 0)
     : economy.bab[hand] > 0;
+}
+
+interface AttackActionSpend {
+  standardActionSpent: boolean;
+  moveActionSpent?: boolean;
+  attackSequence?: boolean;
+}
+
+/** Promote a second attack without charging again for the first attack's standard action. */
+async function spendAttackAction(combatant: CombatantDnd35e): Promise<AttackActionSpend | null> {
+  const economy = getActionEconomy(combatant);
+  if (!economy.used.standardAttackUsed) {
+    const spent = await spendAction(combatant, [STANDARD_ACTION]);
+    if (!spent) return null;
+    await markStandardAttackUsed(combatant);
+    return { standardActionSpent: true, attackSequence: true };
+  }
+
+  const session = getMovementSession(combatant);
+  if (session.category === 'normal' || session.fullRoundMove || economy.used.movedAfterAttack) return null;
+  if (economy.used.fullAttackUsed) {
+    economy.used.attackCount = (economy.used.attackCount ?? 2) + 1;
+    await setActionEconomy(combatant, economy);
+    return { standardActionSpent: false, attackSequence: true };
+  }
+  const reassignedStepMove = session.category === 'step' && session.spentTiers.includes(MOVE_ACTION);
+  if (!reassignedStepMove && (economy.actions.move <= 0 || !await spendAction(combatant, [MOVE_ACTION]))) return null;
+  if (reassignedStepMove) {
+    await setMovementSession(combatant, { ...session, spentTiers: session.spentTiers.filter(tier => tier !== MOVE_ACTION) });
+  }
+  const updated = getActionEconomy(combatant);
+  updated.used.fullAttackUsed = true;
+  updated.used.attackCount = (updated.used.attackCount ?? 1) + 1;
+  await setActionEconomy(combatant, updated);
+  return { standardActionSpent: false, moveActionSpent: true, attackSequence: true };
+}
+
+async function refundAttackAction(combatant: CombatantDnd35e, spent: AttackActionSpend): Promise<void> {
+  const before = getActionEconomy(combatant);
+  const remainingAttacks = Math.max(0, (before.used.attackCount ?? 1) - 1);
+  const refundStandard = spent.attackSequence ? remainingAttacks === 0 : spent.standardActionSpent;
+  const refundMove = spent.attackSequence
+    ? before.used.fullAttackUsed && remainingAttacks < 2
+    : spent.moveActionSpent;
+  if (refundStandard) await refundAction(combatant, [STANDARD_ACTION]);
+  if (refundMove) {
+    const session = getMovementSession(combatant);
+    if (session.category === 'step' && session.cumulativeCost > 0) {
+      await setMovementSession(combatant, { ...session, spentTiers: [...session.spentTiers, MOVE_ACTION] });
+    } else {
+      await refundAction(combatant, [MOVE_ACTION]);
+    }
+  }
+  const economy = getActionEconomy(combatant);
+  if (spent.attackSequence) {
+    economy.used.attackCount = remainingAttacks;
+    economy.used.standardAttackUsed = remainingAttacks > 0;
+    economy.used.fullAttackUsed = remainingAttacks > 1;
+  }
+  await setActionEconomy(combatant, economy);
 }
 
 async function spendHandBab(combatant: CombatantDnd35e, hand: WieldedHand, amount: number): Promise<void> {
@@ -218,6 +309,9 @@ async function spendHandBab(combatant: CombatantDnd35e, hand: WieldedHand, amoun
 async function refundHandBab(combatant: CombatantDnd35e, hand: WieldedHand, amount: number, actor: Creature): Promise<void> {
   const economy = getActionEconomy(combatant);
   const cap = actor.system.bab;
+  if (economy.used.chargedThisTurn && hand === BOTH_HANDS_EQUIP_SLOT && amount === cap) {
+    economy.used.movedAfterAttack = false;
+  }
   if (hand === BOTH_HANDS_EQUIP_SLOT) {
     economy.bab[MAIN_HAND_EQUIP_SLOT] = Math.min(cap, economy.bab[MAIN_HAND_EQUIP_SLOT] + amount);
     economy.bab[OFF_HAND_EQUIP_SLOT] = Math.min(cap, economy.bab[OFF_HAND_EQUIP_SLOT] + amount);
@@ -246,13 +340,20 @@ async function spendAoO(combatant: CombatantDnd35e): Promise<boolean> {
 /**
  * Set by `_onUpdateMovement()` once a `charge` movement action completes. Read directly by
  * `executeAction()` to auto-check the Charge toggle; consumed by `useAction()` right after that
- * attack resolves (calls `markMovedAfterAttack()` to enforce SRD's "only a single melee attack"
- * charge restriction) — never cleared independently, since `resetActionEconomy()` wipes all
- * `used` flags at the combatant's next turn anyway.
+ * attack resolves (exhausts both BAB pools and calls `markMovedAfterAttack()` to enforce
+ * SRD's single-attack charge restriction). Movement Undo clears it; otherwise
+ * `resetActionEconomy()` wipes all `used` flags at the combatant's next turn.
  */
 async function markChargedThisTurn(combatant: CombatantDnd35e): Promise<void> {
   const economy = getActionEconomy(combatant);
   economy.used.chargedThisTurn = true;
+  await setActionEconomy(combatant, economy);
+}
+
+async function clearChargedThisTurn(combatant: CombatantDnd35e): Promise<void> {
+  const economy = getActionEconomy(combatant);
+  economy.used.chargedThisTurn = false;
+  economy.used.movedAfterAttack = false;
   await setActionEconomy(combatant, economy);
 }
 
@@ -264,14 +365,13 @@ async function markMovedAfterAttack(combatant: CombatantDnd35e): Promise<void> {
 
 /**
  * Set the first time `useAction()` actually spends the standard action for a weapon
- * attack this turn (poc.10 Story D) — distinct from `used.standard` (which just tracks
- * whether the standard-action pool itself has been spent, for any reason). Reserved for
- * a future full-attack-sequence UX to distinguish "already attacking this turn" from
- * "used my standard action on something else."
+ * attack this turn (poc.10 Story D) — distinct from `used.standard` (which tracks any
+ * standard-action spend). A subsequent attack must promote this sequence to a full attack.
  */
 async function markStandardAttackUsed(combatant: CombatantDnd35e): Promise<void> {
   const economy = getActionEconomy(combatant);
   economy.used.standardAttackUsed = true;
+  economy.used.attackCount = 1;
   await setActionEconomy(combatant, economy);
 }
 
@@ -279,19 +379,23 @@ export {
   canUseAction,
   canUseAoO,
   canUseHandAttack,
+  clearChargedThisTurn,
   getActionEconomy,
   getHandBab,
+  isCombatEconomyActive,
   markChargedThisTurn,
   markMovedAfterAttack,
   markStandardAttackUsed,
   refundAction,
+  refundAttackAction,
   refundHandBab,
   resetActionEconomy,
   setActionEconomy,
   spendAction,
   spendAoO,
+  spendAttackAction,
   spendHandBab,
   toggleActionAvailability,
 };
 
-export type { ActionPipTier, CombatantActionEconomy };
+export type { ActionPipTier, AttackActionSpend, CombatantActionEconomy };

@@ -27,6 +27,7 @@
       "squeezing": { "label": "Squeezing" },
       "staggered": { "label": "Staggered" },
       "stunned": { "label": "Stunned" },
+      "totalDefense": { "label": "Total Defense" },
       "unconscious": { "label": "Unconscious" }
     }
   }

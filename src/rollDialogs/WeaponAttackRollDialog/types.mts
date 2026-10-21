@@ -3,23 +3,27 @@ import type { WieldedHand } from '@constants/equipmentSlots.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import type { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';
 import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
+import type { RollModifier } from '@source/dice/index.mjs';
 
 import type { MeleeAttackRollDialogResult } from '../MeleeAttackRollDialog/types.mjs';
 import type { RangedAttackRollDialogResult } from '../RangedAttackRollDialog/types.mjs';
 import type { RollDialogData, RollDialogResult } from '../RollDialog/types.mjs';
 
 /**
- * A single attack-roll combat modifier (poc.10 Story D, §10.7) — Attack Type
- * (charge/defensiveFighting/nonLethal) and Combat Status (flanking/highGround/squeezing/
- * prone/proficient) toggles share this shape. `label`/`tooltip` are already localized by
- * the caller (`executeAction()`), same convention as `RollDialogData.title`/`baseLabel`.
- * `checked`'s effect on `value` is inverted for `proficient` — see §10.7's Proficient row —
- * `executeAction()` reads that toggle's `checked` state directly rather than folding its
- * `value` into the generic sum.
+ * A single attack-roll or defense-roll combat modifier (poc.10 Story D/E, §10.7) — Attack
+ * Type (charge/defensiveFighting/nonLethal), Combat Status (flanking/highGround/squeezing/
+ * prone/proficient on the Attack dialog; charged/totalDefense/defensiveFighting/flatFooted
+ * on the Roll Defense dialog), and Overrides (applyHalfDamage/ignoreCriticalHit, Roll
+ * Defense dialog only) toggles all share this shape. `label`/`tooltip` are already
+ * localized by the caller (`executeAction()`/the defense-dialog data builder), same
+ * convention as `RollDialogData.title`/`baseLabel`. `checked`'s effect on `value` is
+ * inverted/bypassed for a few ids (`proficient`, `applyHalfDamage`, `ignoreCriticalHit`) —
+ * these are read back by id directly rather than folded into the generic checked-sum, so
+ * they carry `value: 0`.
  */
 interface CombatModifierToggle {
   id: string;
-  group: 'attackType' | 'combatStatus';
+  group: 'attackType' | 'combatStatus' | 'overrides';
   label: string;
   tooltip: string;
   value: number;
@@ -68,10 +72,16 @@ interface WeaponAttackRollDialogData extends RollDialogData {
   handBab: Record<WieldedHand, number>;
   /** Full expected to-hit bonus (BAB + ability + size + TWF) per hand — lets the dialog's base-total preview stay live as Wield Mode changes, mirrors `RollDialogData.baseTotal`'s single-value shape but keyed per hand. */
   baseTotalByHand: Record<WieldedHand, number>;
+  /** Labeled breakdown of `baseTotalByHand`, per hand — mirrors `RollDialogData.baseModifierList`'s convention, swapped out by `WeaponAttackRollDialogStore`'s Wield Mode setter alongside `baseTotalByHand`. */
+  baseModifierListByHand: Record<WieldedHand, RollModifier[]>;
   /** Damage box's base-row label (poc.10 Story D) — mirrors `RollDialogData.baseLabel`'s convention, but damage-specific since only weapon attacks have a damage preview row. */
   damageLabel: string;
   /** Damage box's base-row total (poc.10 Story D) — pre-dialog flat preview (dice terms excluded, see `resolveFormulaNumber`'s doc), mirrors `RollDialogData.baseTotal`. */
   damageTotal: number;
+  /** Labeled breakdown of `damageTotal` (e.g. the wield-mode STR term) — mirrors `RollDialogData.baseModifierList`'s convention for the damage box. */
+  damageBaseModifierList: RollModifier[];
+  /** Dice-inclusive damage-box headline (weapon dice + evaluated STR flat, dice-collapsed) before any situational modifier — the live preview's data-fidelity twin of `_buildDamageSnapshot()`'s `expectedDamageFormula`. */
+  damageBaseFormula: string;
 }
 
 interface WeaponAttackRollDialogResult extends RollDialogResult {

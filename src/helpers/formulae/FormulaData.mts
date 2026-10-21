@@ -11,8 +11,9 @@
 import { FormulaResolver } from './FormulaResolver.mjs';
 import type { DocumentContext } from './registry.mjs';
 import { buildDocumentFamiliar } from './registry.mjs';
+import { RollFormulaStringField } from './rollFormulaStringField.mjs';
 import { normalizeLabel } from './schemaWalker.mjs';
-import type { FamiliarSchema } from './types.mjs';
+import type { FamiliarSchema, FormulaExpectedType, PreferredContextAlias } from './types.mjs';
 
 const {
   StringField,
@@ -24,20 +25,25 @@ const {
 interface FormulaDataSource {
   formula: string;
   resolvedValue: string | number | boolean | null;
-  expectedType: 'string' | 'number' | 'boolean';
+  expectedType: FormulaExpectedType;
 }
 
 class FormulaData extends foundry.abstract.DataModel {
   // Declare model properties for TypeScript
   declare formula: string;
   declare resolvedValue: string | null;
-  declare expectedType: 'string' | 'number' | 'boolean';
+  declare expectedType: FormulaExpectedType;
 
   static override defineSchema() {
     return {
-      formula: new StringField({ blank: true, initial: '' }),
+      // Roll-aware leaf (see RollFormulaStringField) — AE `add`/`subtract` changes target this
+      // `.formula` leaf directly (not the parent `FormulaField`), so the write survives instead of
+      // being dropped when Foundry re-casts an `EmbeddedDataField` POJO from `_source`. Reset to the
+      // authored `_source` value every `prepareBaseData()` pass (ActionDataModel.resetFormulaFields)
+      // so AE deltas never compound across prepareData() cycles.
+      formula: new RollFormulaStringField({ blank: true, initial: '' }),
       resolvedValue: new StringField({ nullable: true, initial: null }),
-      expectedType: new StringField({ choices: ['string', 'number', 'boolean'], initial: 'string' }),
+      expectedType: new StringField({ choices: ['string', 'number', 'boolean', 'rollFormula'], initial: 'string' }),
     };
   }
 
@@ -56,6 +62,8 @@ class FormulaData extends foundry.abstract.DataModel {
    * @param fallback Fallback value if formula is empty
    * @param excludedFields Top-level aspect keys to remove from the familiar before resolution
    * @param onFailure Called when resolution fails (missing context path, invalid syntax, etc.)
+   * @param preferredSelfAlias Caller-supplied override for the `self` context's label/alias
+   *   (poc.10 Story E's FormulaFamiliar context aliasing, e.g. `attacker`/`defender`)
    * @returns Resolved value coerced to `expectedType` (a `number`-expected dice formula stays
    *   an unrolled string), `null` on failure, or `fallback` if no formula
    */
@@ -63,11 +71,13 @@ class FormulaData extends foundry.abstract.DataModel {
     documentDataMap: Record<string, DocumentContext>,
     fallback: string = '',
     excludedFields: string[] = [],
-    onFailure?: (reason: string) => void
+    onFailure?: (reason: string) => void,
+    preferredSelfAlias?: PreferredContextAlias
   ): string | number | boolean | null {
-    if (!this.formula) return fallback;
-    const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap, excludedFields);
-    const partiallyResolved = FormulaResolver.resolveFormula(this.formula, familiarSchema, documentDataMap);
+    const formulaText = this.formula;
+    if (!formulaText) return fallback;
+    const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap, excludedFields, preferredSelfAlias);
+    const partiallyResolved = FormulaResolver.resolveFormula(formulaText, familiarSchema, documentDataMap);
     return FormulaData._finalizeResolvedValue(partiallyResolved, this.expectedType, onFailure);
   }
 
@@ -80,6 +90,7 @@ class FormulaData extends foundry.abstract.DataModel {
    * Use when you have serialized data (e.g. from toObject()) rather than a live DataModel.
    *
    * @param onFailure Called when resolution fails (missing context path, invalid syntax, etc.)
+   * @param preferredSelfAlias Caller-supplied override for the `self` context's label/alias
    * @returns Resolved string, `null` if a `number`/`boolean` formula failed to resolve, or fallback if no formula
    */
   static resolveSource(
@@ -87,11 +98,13 @@ class FormulaData extends foundry.abstract.DataModel {
     documentDataMap: Record<string, unknown>,
     fallback: string = '',
     excludedFields: string[] = [],
-    onFailure?: (reason: string) => void
+    onFailure?: (reason: string) => void,
+    preferredSelfAlias?: PreferredContextAlias
   ): string | number | boolean | null {
-    if (!source.formula) return fallback;
-    const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap as Record<string, DocumentContext>, excludedFields);
-    const partiallyResolved = FormulaResolver.resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
+    const formulaText = source.formula;
+    if (!formulaText) return fallback;
+    const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap as Record<string, DocumentContext>, excludedFields, preferredSelfAlias);
+    const partiallyResolved = FormulaResolver.resolveFormula(formulaText, familiarSchema, documentDataMap as Record<string, DocumentContext>);
     return FormulaData._finalizeResolvedValue(partiallyResolved, source.expectedType, onFailure);
   }
 
@@ -99,11 +112,13 @@ class FormulaData extends foundry.abstract.DataModel {
     source: FormulaDataSource,
     documentDataMap: Record<string, unknown>,
     fallback: string = '',
-    excludedFields: string[] = []
+    excludedFields: string[] = [],
+    preferredSelfAlias?: PreferredContextAlias
   ): string {
-    if (!source.formula) return fallback;
-    const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap as Record<string, DocumentContext>, excludedFields);
-    return FormulaResolver.resolveFormula(source.formula, familiarSchema, documentDataMap as Record<string, DocumentContext>);
+    const formulaText = source.formula;
+    if (!formulaText) return fallback;
+    const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap as Record<string, DocumentContext>, excludedFields, preferredSelfAlias);
+    return FormulaResolver.resolveFormula(formulaText, familiarSchema, documentDataMap as Record<string, DocumentContext>);
   }
 
   // ---------------------------------------------------------------------------
@@ -139,15 +154,20 @@ class FormulaData extends foundry.abstract.DataModel {
    *
    * @param documentDataMap Maps context names to their documents
    * @param excludedFields Top-level aspect keys to strip from every context's properties
+   * @param preferredSelfAlias Caller-supplied override for the literal `self` entry's
+   *   display label/alias (e.g. `attacker`/`defender`, poc.10 Story E's FormulaFamiliar
+   *   context aliasing) — only ever applied to the `self` context, never to other
+   *   aliases of the same document (`weapon`, `target`, etc.)
    */
   static buildFamiliarSchema(
     documentDataMap: Record<string, DocumentContext>,
-    excludedFields: string[] = []
+    excludedFields: string[] = [],
+    preferredSelfAlias?: PreferredContextAlias
   ): FamiliarSchema {
     const schema: FamiliarSchema = {};
     for (const [contextName, doc] of Object.entries(documentDataMap)) {
       if (!doc) continue;
-      const docSchema = buildDocumentFamiliar(doc);
+      const docSchema = buildDocumentFamiliar(doc, contextName === 'self' ? preferredSelfAlias : undefined);
       // buildDocumentFamiliar returns { self: ..., Owner/Item: ... } keyed by role.
       // Map the "self" entry to the actual context name from the data map. The same
       // document is often exposed under more than one alias (e.g. `self`/`weapon` both
@@ -196,15 +216,16 @@ class FormulaData extends foundry.abstract.DataModel {
    * On failure (unresolved `#context.property` token left over, invalid syntax, or a
    * non-numeric/non-boolean result), `onFailure` is invoked with a human-readable reason.
    * `boolean` formulas fall back to `null` on failure (as if never authored, per design);
-   * `string` formulas always come back as-is — dice notation (e.g. `1d20`) is deliberately
-   * left unrolled so callers can embed it in a larger Roll formula. `number` formulas also
-   * defer to an unrolled formula string when they contain dice terms (`_hasDiceTerms`) —
-   * only a plain numeric literal resolves eagerly to an actual `number`. Dice are never
-   * rolled here; that's left to whichever Roll ultimately consumes the resolved formula.
+   * `string`/`rollFormula` formulas always come back as-is — dice notation (e.g. `1d20`) is
+   * deliberately left unrolled so callers can embed it in a larger Roll formula. `number`
+   * formulas also defer to an unrolled formula string when they contain dice terms
+   * (`_hasDiceTerms`) — only a plain numeric literal resolves eagerly to an actual `number`.
+   * Dice are never rolled here; that's left to whichever Roll ultimately consumes the
+   * resolved formula.
    */
   private static _finalizeResolvedValue(
     resolved: string,
-    expectedType: 'string' | 'number' | 'boolean',
+    expectedType: FormulaExpectedType,
     onFailure?: (reason: string) => void
   ): string | number | boolean | null {
     if (FormulaResolver.extractVariables(resolved).length > 0) {
@@ -221,7 +242,8 @@ class FormulaData extends foundry.abstract.DataModel {
       }
     }
 
-    if (expectedType === 'string') return resolved;
+    if (expectedType === 'string' || expectedType === 'rollFormula')
+      return resolved;
 
     // expectedType === 'number'
     const trimmed = resolved.trim();

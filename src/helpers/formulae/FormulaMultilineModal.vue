@@ -59,7 +59,7 @@
   import type { PropType } from 'vue';
   import { computed, nextTick, ref, watch } from 'vue';
 
-  import type { FamiliarSchema } from './types.mjs';
+  import type { FamiliarSchema, FormulaExpectedType } from './types.mjs';
   import { useFormulaEditor } from './useFormulaEditor.mjs';
 
   /**
@@ -73,7 +73,7 @@
     open: { type: Boolean, required: true },
     formula: { type: String, default: '' },
     contexts: { type: Object as PropType<FamiliarSchema>, default: () => ({}) },
-    expectedType: { type: String as PropType<'string' | 'number' | 'boolean'>, default: undefined },
+    expectedType: { type: String as PropType<FormulaExpectedType>, default: undefined },
     label: { type: String, default: undefined },
     placeholder: { type: String, default: undefined },
     onCommit: { type: Function as PropType<(value: string) => void>, required: true },

@@ -1,6 +1,8 @@
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import type { DocumentContext } from '@helpers/formulae/index.mjs';
-import { extractFlatModifier } from '@source/dice/index.mjs';
+import type { PreferredContextAlias } from '@helpers/formulae/types.mjs';
+import type { RollModifier } from '@source/dice/index.mjs';
+import { combineDiceFormula, extractFlatModifier } from '@source/dice/index.mjs';
 import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
 import type { ComputedRef, WritableComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -18,20 +20,26 @@ const RollDialogStoreSymbol = Symbol('RollDialogStore');
  * unrolled), so only the term's flat/non-dice portion (via `extractFlatModifier`)
  * contributes here; the full term (dice included) still reaches the real roll via
  * `resolveFormulaString`/`buildTotalFormula`.
+ *
+ * @param preferredSelfAlias Caller-supplied override for the `self` context's label/alias
+ *   (poc.10 Story E's FormulaFamiliar context aliasing, e.g. `attacker`/`defender`)
  */
-function resolveFormulaNumber(formula: string, documentDataMap: Record<string, DocumentContext>): number {
-  const resolved = resolveFormulaString(formula, documentDataMap);
+function resolveFormulaNumber(formula: string, documentDataMap: Record<string, DocumentContext>, preferredSelfAlias?: PreferredContextAlias): number {
+  const resolved = resolveFormulaString(formula, documentDataMap, preferredSelfAlias);
   if (!resolved) return 0;
   return extractFlatModifier(resolved).flat;
 }
 
 /** Resolves a damage-bonus-style formula against a pre-built `documentDataMap`, preserving dice notation (e.g. sneak attack `1d6`). */
-function resolveFormulaString(formula: string, documentDataMap: Record<string, DocumentContext>): string {
+function resolveFormulaString(formula: string, documentDataMap: Record<string, DocumentContext>, preferredSelfAlias?: PreferredContextAlias): string {
   if (!formula) return '';
   const resolved = FormulaData.resolveSource(
     FormulaData.toSource(formula, { expectedType: 'string' }),
     documentDataMap,
-    ''
+    '',
+    [],
+    undefined,
+    preferredSelfAlias
   );
   return typeof resolved === 'string'
     ? resolved
@@ -44,29 +52,16 @@ function formatBonus(n: number): string {
   return n >= 0 ? `+${n}` : `${n}`;
 }
 
-/** Formats a resolved situational-modifier-style term (may itself contain dice, e.g. `1d6 + 2`) as
- * a signed formula fragment, e.g. `1d6 + 2` -> `+ 1d6 + 2`. Blank terms and purely-flat-zero terms
- * (e.g. `0`) resolve to `''` so callers can filter them out of the joined formula — a zero situational
- * bonus shouldn't clutter the total row. Dice-only terms are kept even when their resolved numeric
- * value is 0 (a dice term can't be pre-rolled into the preview number, see `resolveFormulaNumber`). */
-function formatModifierTerm(term: string): string {
-  const trimmed = term.trim();
-  if (!trimmed) return '';
-  const { flat, hasDice } = extractFlatModifier(trimmed);
-  if (!hasDice && flat === 0) return '';
-  if (trimmed.startsWith('-')) return `- ${trimmed.slice(1).trim()}`;
-  if (trimmed.startsWith('+')) return `+ ${trimmed.slice(1).trim()}`;
-  return `+ ${trimmed}`;
-}
-
 /**
- * Joins a numeric base bonus with any additional resolved formula fragments into the exact,
- * `1d20`-less terms that will be appended to the real roll formula (mirrors `buildD20Formula`'s
- * term assembly in `@source/dice/d20Formula.mjs`, minus the base die) — this is total-row preview
- * text only, no flavor tags.
+ * Joins a numeric base bonus with any additional resolved formula fragments into one
+ * dice-collapsed formula string (`combineDiceFormula` — same-faced dice from multiple
+ * fragments are summed together, e.g. a `1d6` situational bonus alongside another `1d6`
+ * source becomes `2d6`), mirroring `buildD20Formula`'s term assembly in
+ * `@source/dice/d20Formula.mjs` (minus the base die) — this is total-row preview text only,
+ * no flavor tags.
  */
 function buildTotalFormula(base: number, ...fragments: string[]): string {
-  return [formatBonus(base), ...fragments.map(formatModifierTerm).filter(Boolean)].join(' ');
+  return combineDiceFormula([String(base), ...fragments]);
 }
 
 /**
@@ -95,6 +90,7 @@ function useRollDialogStore<TData extends RollDialogData, TResult extends RollDi
 ): RollDialogBaseStore {
   const preRollCommitCallbacks: Array<() => void> = [];
   const totalModifierContributions: RollDialogModifierContribution[] = [];
+  const modifierListEntryContributions: Array<ComputedRef<RollModifier[]>> = [];
 
   const actor = {
     document: computed(() => context.data.actor),
@@ -116,6 +112,15 @@ function useRollDialogStore<TData extends RollDialogData, TResult extends RollDi
       context.data.baseTotal,
       ...totalModifierContributions.map((contribution) => contribution.formula.value)
     )),
+    // `baseModifierList` (caller-supplied, pre-dialog) + every live `registerModifierListEntries()`
+    // contribution — the full labeled breakdown behind `total`/`totalFormula`, shown via
+    // `RollModifierTooltip`. Deliberately separate from `totalModifierContributions`: a single
+    // total-formula contribution (e.g. a combat-modifier checked-sum) can expand into several
+    // labeled entries here.
+    modifierList: computed(() => [
+      ...context.data.baseModifierList,
+      ...modifierListEntryContributions.flatMap((entries) => entries.value),
+    ]),
   };
 
   const actions = {
@@ -123,6 +128,7 @@ function useRollDialogStore<TData extends RollDialogData, TResult extends RollDi
     registerPreRollCommit: (fn: () => void) => { preRollCommitCallbacks.push(fn); },
     commitPendingEdits: () => { preRollCommitCallbacks.forEach((fn) => fn()); },
     registerTotalModifier: (contribution: RollDialogModifierContribution) => { totalModifierContributions.push(contribution); },
+    registerModifierListEntries: (entries: ComputedRef<RollModifier[]>) => { modifierListEntryContributions.push(entries); },
   };
 
   return { actor, app, actions };
@@ -140,6 +146,8 @@ interface RollDialogAppStore {
   rollMode: WritableComputedRef<string>;
   total: ComputedRef<number>;
   totalFormula: ComputedRef<string>;
+  /** Labeled breakdown behind `total` — see `RollDialogData.baseModifierList`'s doc. */
+  modifierList: ComputedRef<RollModifier[]>;
 }
 /** One situational field's contribution to `roll.total`/`roll.totalFormula`, registered by a leaf store via `actions.registerTotalModifier()`. */
 interface RollDialogModifierContribution {
@@ -151,6 +159,8 @@ interface RollDialogBaseActions {
   registerPreRollCommit: (fn: () => void) => void;
   commitPendingEdits: () => void;
   registerTotalModifier: (contribution: RollDialogModifierContribution) => void;
+  /** Registers a live labeled breakdown contribution into `app.modifierList` (e.g. a situational-modifier formula's resolved entry, or every checked combat-modifier toggle). */
+  registerModifierListEntries: (entries: ComputedRef<RollModifier[]>) => void;
 }
 interface RollDialogActions extends RollDialogBaseActions {
   /** Assembles this dialog's full result and calls `context.resolve()` — implemented per type. */

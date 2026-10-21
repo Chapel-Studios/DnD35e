@@ -1,0 +1,78 @@
+{
+  "name": "Punching Dagger",
+  "type": "weapon",
+  "_id": "l0NKtLHpYly3ZrQO",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Punching Dagger",
+      "expectedType": "string",
+      "resolvedValue": "Punching Dagger"
+    },
+    "description": "",
+    "isPsionic": false,
+    "isEpic": false,
+    "hp": {
+      "current": 0,
+      "max": 0
+    },
+    "hardness": 0,
+    "quantity": 1,
+    "weight": 1,
+    "isCarried": true,
+    "size": "tiny",
+    "price": {
+      "stacks": [
+        {
+          "coinId": "srd_gp",
+          "count": 2
+        }
+      ],
+      "srdEquivalent": 2
+    },
+    "equippedSlotIds": [],
+    "isMelded": false,
+    "designedForSize": "medium",
+    "isWeightlessWhenEquipped": false,
+    "isBaseWeaponType": true,
+    "weaponType": "simple",
+    "weaponSubtype": "light",
+    "weaponBaseType": "punching dagger",
+    "actions": [
+      {
+        "_id": "Z6sKGtJAALhDFxGJ",
+        "type": "melee_weapon_attack",
+        "damageFormula": {
+          "formula": "$scaleDamage(1d4)",
+          "expectedType": "rollFormula",
+          "resolvedValue": null
+        },
+        "damageType": "dnd35e.DAMAGE_TYPES.Piercing",
+        "critRange": 20,
+        "critMultiplier": 3
+      }
+    ]
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1791785607457,
+    "modifiedTime": 1791785607457,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!l0NKtLHpYly3ZrQO"
+}

@@ -3,7 +3,7 @@
     <div class="options">
       <div class="title-row subgrid">
         <ActorRollHeader
-          :header="localize('dnd35e.ROLL.Attacker')"
+          :header="localize(actorHeaderLabel)"
           :image="actorImage"
           :name="actorName"
         >
@@ -17,7 +17,10 @@
 
       <div v-if="!hideTotal" class="total-row subgrid">
         <span class="label">{{ localize('dnd35e.ROLL.Total') }}</span>
-        <span class="value">{{ totalFormula }}</span>
+        <span class="value">
+          {{ totalFormula }}
+          <RollModifierTooltip :modifiers="modifierList" />
+        </span>
       </div>
     </div>
     <footer class="form-footer full">
@@ -48,10 +51,15 @@
   import ActorRollHeader from './ActorRollHeader.vue';
   import type { RollDialogStore } from './RollDialogStore.mjs';
   import { RollDialogStoreSymbol } from './RollDialogStore.mjs';
+  import RollModifierTooltip from './RollModifierTooltip.vue';
 
   // `hideTotal` lets dialogs with their own per-box live totals (e.g. Weapon Attack's
-  // to-hit/damage boxes) suppress this generic single-total row.
-  defineProps<{ hideTotal?: boolean }>();
+  // to-hit/damage boxes) suppress this generic single-total row. `actorHeaderLabel` lets
+  // dialogs whose primary actor isn't the attacker (e.g. Roll Defense's defender) override
+  // the title-row header text — see RollDefenseDialog.vue.
+  withDefaults(defineProps<{ hideTotal?: boolean; actorHeaderLabel?: string }>(), {
+    actorHeaderLabel: 'dnd35e.ROLL.Attacker',
+  });
 
   const {
     actor: {
@@ -61,6 +69,7 @@
     app: {
       rollMode,
       totalFormula,
+      modifierList,
     },
     actions,
   } = inject(RollDialogStoreSymbol) as RollDialogStore;

@@ -150,6 +150,28 @@ function registerCombatSettings(): void {
     type: Boolean,
     default: true,
   });
+
+  // poc.10 Story E: dev-convenience default (true) so the Roll Defense Dialog's Apply flow is
+  // exercisable without extra clicks during poc/alpha; flip to false at release.
+  game.settings.register(SYSTEM_ID, COMBAT_KEYS.PLAYER_SELF_DEFENSE, {
+    name: 'dnd35e.SETTINGS.PlayerSelfDefense.Name',
+    hint: 'dnd35e.SETTINGS.PlayerSelfDefense.Hint',
+    scope: 'world',
+    config: false,
+    type: Boolean,
+    default: true,
+  });
+
+  // House-rule variant (Rolled Defense): replaces AC's flat +10 base with a 1d20 roll. Off by
+  // default; dev-convenience default (true) during poc/alpha, same rationale as above.
+  game.settings.register(SYSTEM_ID, COMBAT_KEYS.ROLLED_DEFENSE_VARIANT, {
+    name: 'dnd35e.SETTINGS.RolledDefenseVariant.Name',
+    hint: 'dnd35e.SETTINGS.RolledDefenseVariant.Hint',
+    scope: 'world',
+    config: false,
+    type: Boolean,
+    default: true,
+  });
 }
 
 export {

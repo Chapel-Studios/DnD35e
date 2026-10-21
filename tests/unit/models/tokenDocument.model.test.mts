@@ -9,8 +9,9 @@ import { describe, expect, it, vi } from 'vitest';
  * a fake `actor` and a spy on `updateSource`.
  */
 describe('TokenDocumentDnd35e._preCreate size derivation', () => {
-  const buildToken = (size: string | null) => {
+  const buildToken = (size: string | null, isLinked = true) => {
     const token = Object.create(TokenDocumentDnd35e.prototype) as TokenDocumentDnd35e;
+    Object.defineProperty(token, 'isLinked', { value: isLinked });
     (token as unknown as { actor: unknown }).actor = size ? { system: { size } } : null;
     (token as unknown as { updateSource: unknown }).updateSource = vi.fn();
     return token;
@@ -31,6 +32,7 @@ describe('TokenDocumentDnd35e._preCreate size derivation', () => {
     await (token as unknown as { _preCreate: (...args: unknown[]) => Promise<void> })._preCreate({}, {}, {});
 
     expect(token.updateSource).toHaveBeenCalledWith({ width: expectedDimension, height: expectedDimension });
+    expect(token.updateSource).toHaveBeenCalledTimes(1);
   });
 
   it('does not set dimensions when the token has no linked actor', async () => {
@@ -38,5 +40,25 @@ describe('TokenDocumentDnd35e._preCreate size derivation', () => {
     await (token as unknown as { _preCreate: (...args: unknown[]) => Promise<void> })._preCreate({}, {}, {});
 
     expect(token.updateSource).not.toHaveBeenCalled();
+  });
+
+  it('resets concealment without setting dimensions for an unlinked token with no actor', async () => {
+    const token = buildToken(null, false);
+    await (token as unknown as { _preCreate: (...args: unknown[]) => Promise<void> })._preCreate({}, {}, {});
+
+    expect(token.updateSource).toHaveBeenCalledExactlyOnceWith({
+      delta: { system: { defense: { concealment: 0 } } },
+    });
+  });
+
+  it('sets dimensions and resets concealment for an unlinked token with an actor', async () => {
+    const token = buildToken('large', false);
+    await (token as unknown as { _preCreate: (...args: unknown[]) => Promise<void> })._preCreate({}, {}, {});
+
+    expect(token.updateSource).toHaveBeenCalledTimes(2);
+    expect(token.updateSource).toHaveBeenCalledWith({ width: 2, height: 2 });
+    expect(token.updateSource).toHaveBeenCalledWith({
+      delta: { system: { defense: { concealment: 0 } } },
+    });
   });
 });

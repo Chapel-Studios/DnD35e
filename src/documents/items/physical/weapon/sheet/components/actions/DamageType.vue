@@ -5,7 +5,6 @@
     :options="damageTypeOptions"
     :field-path="getFieldPath('damageType')"
     :on-update="(v: DamageType | null) => updateActionField('damageType', v ?? DAMAGE_TYPE_NONE)"
-    hide-field-controls
   />
 </template>
 

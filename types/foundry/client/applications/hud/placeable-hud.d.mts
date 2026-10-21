@@ -58,6 +58,13 @@ export default abstract class BasePlaceableHUD extends ApplicationV2<
      */
   bind(object: PlaceableObject): Promise<void>;
 
+  /**
+     * Toggle the expanded state of the given palette.
+     * @param palette The palette to toggle or null to collapse the currently expanded palette
+     * @param active  Force the palette to be active or inactive
+     */
+  togglePalette(palette: string | null, active?: boolean): void;
+
   /* -------------------------------------------- */
   /*  Event Listeners and Handlers                */
   /* -------------------------------------------- */

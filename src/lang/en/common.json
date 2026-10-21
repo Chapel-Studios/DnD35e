@@ -102,7 +102,9 @@
     "Formula": {
       "availableContexts": "Available Contexts",
       "Context": {
-        "Self": "Self"
+        "Self": "Self",
+        "Attacker": "Attacker",
+        "Defender": "Defender"
       },
       "DefaultPlaceholder": "Enter value or formula (e.g. #self.name)",
       "AdvancedEditor": "Open advanced formula editor",
@@ -202,6 +204,14 @@
         "scaleDamage": {
           "label": "scaleDamage",
           "hint": "$scaleDamage(dieFormula) — scales a die formula from Medium to this weapon's designed size (action formulas only)"
+        },
+        "critMultiply": {
+          "label": "critMultiply",
+          "hint": "$critMultiply(dieFormula) — marks dice as still multiplied on a critical hit, even when used inside an Active Effect's formula (normally AE-contributed dice are exempt)"
+        },
+        "critExempt": {
+          "label": "critExempt",
+          "hint": "$critExempt(dieFormula) — marks dice as exempt from critical-hit multiplication, even when used inside the weapon's own base formula (normally a weapon's own dice are always multiplied)"
         }
       },
       "ChangeGroups": {

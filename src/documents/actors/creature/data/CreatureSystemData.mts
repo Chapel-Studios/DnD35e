@@ -29,7 +29,12 @@ interface HpSource {
 }
 
 interface HpData extends HpSource {
-  /** Derived: class HD × level + CON mod + bonuses. Never stored. */
+  /**
+   * Derived: class HD × level + CON mod + bonuses. Never stored. Currently a flat 100
+   * stub baseline reset each `prepareBaseData()` pass (`CreatureSystemModel.mts`) so
+   * `add`-type AE contributions can layer on top — replace with real HD/level/CON
+   * calculation when class progression is implemented.
+   */
   max: number;
   regeneration: number;
   fastHealing: number;
@@ -102,6 +107,7 @@ interface CreatureSystemSource extends CreatureSystemSourceProperties, ActorSyst
   hp:         HpSource;
   currency:   PriceSource;
   defense: {
+    concealment: number;
     spellResistance: FormulaDataSource;
   }
 }
@@ -117,12 +123,15 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
     touchAC: number;
     /** Set by the Flat-Footed condition; gates Dex out of armorClass/touchAC. Never stored. */
     denyDexToAC: boolean;
+    /** Set by fortification/construct-type immunities; auto-checks "Ignore Critical Hit" in the Roll Defense Dialog. Never stored. */
+    criticalImmune: boolean;
     /** Target for future Armor item `getContributedActorChanges('initial')` contributions. Always 0 until Armor items exist. */
     armorBonus: number;
     /** Target for future Shield item `getContributedActorChanges('initial')` contributions. Always 0 until Shield items exist. */
     shieldBonus: number;
     naturalArmor: number;
     fortification: number;
+    /** Persisted baseline (GM/owner-editable via sheet or Token HUD) — AEs still layer on top during data prep. */
     concealment: number;
     spellResistance: FormulaDataSource;
   };

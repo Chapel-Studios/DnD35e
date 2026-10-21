@@ -99,7 +99,7 @@ const FORMULA_RESOLUTION_FAILED = Symbol('formulaResolutionFailed');
 function resolveActiveEffectChangeValue(
   effect: ActiveEffectDnd35e,
   change: EffectChangeDataDnd35e,
-  warnHost?: PreparationWarningHost
+  warnHost?: PreparationWarningHost | PreparationWarningHost[]
 ): unknown {
   const rawValue = change.value;
   if (typeof rawValue !== 'string') return rawValue;
@@ -201,7 +201,7 @@ function resolveMaskedActiveEffectChangeValue(
 function resolveActiveEffectChange(
   effect: ActiveEffectDnd35e,
   change: EffectChangeDataDnd35e,
-  warnHost?: PreparationWarningHost
+  warnHost?: PreparationWarningHost | PreparationWarningHost[]
 ): EffectChangeDataDnd35e | null {
   const resolvedValue = resolveActiveEffectChangeValue(effect, change, warnHost);
   if (resolvedValue === FORMULA_RESOLUTION_FAILED) return null;

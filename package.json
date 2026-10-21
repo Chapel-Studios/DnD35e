@@ -8,6 +8,7 @@
     "build:system-json:dev": "node scripts/build-system-json.mjs --dev",
     "build:test-world-json": "node scripts/build-test-world-json.mjs",
     "validate:packs": "node scripts/validate-packs.mjs",
+    "packs:build": "node scripts/compile-packs.mjs",
     "unpack": "node scripts/unpack-packs.mjs",
     "typecheck": "vue-tsc --noEmit",
     "prebuild": "npm run lint && npm run typecheck && npm run build:system-json && npm run build:test-world-json && npm run validate:packs",

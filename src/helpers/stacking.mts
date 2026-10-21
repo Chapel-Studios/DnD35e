@@ -28,6 +28,16 @@ function parseNumericChangeValue(value: unknown): number {
 }
 
 /**
+ * Localizes a bonus type key for display (e.g. `HasActiveEffectsNotification`'s tag, roll
+ * modifier breakdowns) — `undefined` for an untyped/empty value so callers can skip the tag
+ * entirely rather than showing an empty bracket.
+ */
+function formatBonusTypeLabel(bonusType?: string): string | undefined {
+  const trimmed = bonusType?.trim();
+  return trimmed ? game.i18n.localize(trimmed) : undefined;
+}
+
+/**
  * Bonus type stacking resolution engine.
  *
  * The stacking engine is the foundational system for resolving which bonuses
@@ -329,6 +339,7 @@ function resolveActiveEffectChanges(
 }
 
 export {
+  formatBonusTypeLabel,
   parseNumericChangeValue,
   resolveActiveEffectChanges,
   STACK_RESULT_APPLIED,

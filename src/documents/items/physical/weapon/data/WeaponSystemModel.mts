@@ -75,13 +75,28 @@ class WeaponSystemModel extends EquippableItemSystemModel {
 
   /**
    * `system.actions` is an `ArrayField` — `DocumentSystemModel`'s generic
-   * `prepareDerivedData()` never recurses into it, so each embedded action must resolve
-   * its own `FormulaField`s explicitly (see `ActionDataModel.prepareDerivedData()`).
+   * `prepareBaseData()` reset walk never recurses into it, so each embedded action must
+   * reset its own `FormulaField`s explicitly (see `ActionDataModel.resetFormulaFields()`).
    */
-  override prepareDerivedData(): void {
-    super.prepareDerivedData();
+  override prepareBaseData(): void {
+    super.prepareBaseData();
     for (const action of this.actions) {
-      action.prepareDerivedData();
+      action.resetFormulaFields();
+    }
+  }
+
+  /**
+   * `system.actions`' Group Change Target AE changes (`#item.meleeWeaponAttacks.attackDamage`/
+   * `attackToHit`, see `changeTargetGroups.mts`) apply in the `'final'` phase — after this
+   * system model's own `prepareDerivedData()` already ran. Resolving here (instead of in
+   * `prepareDerivedData()`) means `ItemDnd35e.prepareDerivedData()` can call this *after*
+   * its FINAL/POST active-effect phases, so resolution sees the fully AE-settled formula
+   * (see `ActionDataModel.resolveFormulaFields()`).
+   */
+  override resolveDeferredFormulaFields(): void {
+    super.resolveDeferredFormulaFields();
+    for (const action of this.actions) {
+      action.resolveFormulaFields();
     }
   }
 }

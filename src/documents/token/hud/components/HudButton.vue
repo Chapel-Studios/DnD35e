@@ -1,6 +1,6 @@
 <template>
   <button
-    :aria-label="l(labelKey)"
+    :aria-label="label ?? l(labelKey)"
     :data-action="dataAction"
     :data-palette="dataPalette"
     :data-tooltip-direction="tooltipDirection"
@@ -18,6 +18,8 @@
     dataAction: string;
     dataPalette?: string;
     labelKey: string;
+    /** Literal, pre-formatted tooltip text (e.g. interpolated with a live value) — takes precedence over `labelKey`. */
+    label?: string;
     iconClass?: string;
     tooltipDirection?: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'CENTER';
   };

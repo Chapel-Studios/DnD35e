@@ -1,4 +1,5 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
+import type { RollModifier } from '@source/dice/index.mjs';
 
 /** Input data for the base roll dialog. */
 interface RollDialogData {
@@ -8,6 +9,13 @@ interface RollDialogData {
   baseLabel: string;
   /** The actor's current computed value for the stat being rolled. */
   baseTotal: number;
+  /**
+   * Labeled breakdown of `baseTotal` (e.g. per-effect save overrides, BAB/ability/size for an
+   * attack) — known pre-dialog by the caller, shown via `RollModifierTooltip` next to the
+   * total/bonus row it backs. Combined with any live `actions.registerModifierListEntries()`
+   * contributions into `app.modifierList`.
+   */
+  baseModifierList: RollModifier[];
   rollMode: string;
   /** The rolling actor — used to build the `#self` FormulaFamiliar context for formula inputs. */
   actor: ACTORS_DND35E;

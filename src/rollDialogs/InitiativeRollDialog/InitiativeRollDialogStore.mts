@@ -1,4 +1,6 @@
 import { buildDocumentDataMap } from '@helpers/formulae/utils.mjs';
+import type { RollModifier } from '@source/dice/index.mjs';
+import { buildSituationalModifierEntry } from '@source/dice/index.mjs';
 import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
 import type { WritableComputedRef } from 'vue';
 import { computed } from 'vue';
@@ -22,6 +24,10 @@ function useInitiativeRollDialogStore(
     value: computed(() => resolveFormulaNumber(context.data.situationalModifier, buildDocumentDataMap(context.data.actor))),
     formula: computed(() => resolveFormulaString(context.data.situationalModifier, buildDocumentDataMap(context.data.actor))),
   });
+  base.actions.registerModifierListEntries(computed<RollModifier[]>(() => buildSituationalModifierEntry(
+    resolveFormulaString(context.data.situationalModifier, buildDocumentDataMap(context.data.actor)),
+    game.i18n.localize('dnd35e.ROLL.SituationalModifier')
+  )));
 
   const rollAction = (): void => {
     context.resolve({

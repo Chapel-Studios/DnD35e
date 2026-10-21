@@ -9,13 +9,15 @@
  * Foundry core's `ActiveEffect.applyChange()`, only ever see a plain literal path.
  *
  * A key with no `$conditional(` skips block resolution (fast path — the common case) but
- * still passes through `remapNameKeyForItem()` below.
+ * still passes through `remapNameKeyForItem()` below, then the same literal-field-existence
+ * check every resolved key gets (see the final check at the bottom of the function).
  *
  * Failure handling: any single unresolvable piece (malformed block, a `when()` condition
- * that doesn't evaluate to a valid boolean, or a branch target that doesn't resolve to a
- * real field) is treated exactly like a bad variable anywhere else in a formula — a
- * `PreparationWarning` is recorded and the whole change is skipped (`KEY_RESOLUTION_FAILED`),
- * never silently falling back to a different branch.
+ * that doesn't evaluate to a valid boolean, a branch target that doesn't resolve to a
+ * real field, or a final literal key that isn't a real field on the target document) is
+ * treated exactly like a bad variable anywhere else in a formula — a `PreparationWarning`
+ * is recorded and the whole change is skipped (`KEY_RESOLUTION_FAILED`), never silently
+ * falling back to a different branch.
  */
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { PreparationWarningHost } from '@documents/document/preparationWarnings.mjs';
@@ -75,19 +77,21 @@ function buildKeyResolutionSchema(effect: ActiveEffectDnd35e): FamiliarSchema {
  * @param effect The ActiveEffect defining `change` — used to resolve live item/actor
  *   parents for both condition evaluation and branch-target resolution.
  * @param change The change whose `key` should be resolved.
- * @param warnHost Document to record a `PreparationWarning` on if resolution fails (the
- *   actor/item applying the change — see `ActorDnd35e`/`ItemDnd35e.applyActiveEffects()`).
+ * @param warnHost Document(s) to record a `PreparationWarning` on if resolution fails (the
+ *   actor/item applying the change — see `ActorDnd35e`/`ItemDnd35e.applyActiveEffects()`;
+ *   an item-owned effect applying an actor-targeted change passes both the actor and the
+ *   owning item so both sheets surface the warning).
  * @returns The literal raw accessPath to write to (with `name` remapped to
  *   `system.nameFormula.formula` for item-targeted changes — see `remapNameKeyForItem()`),
- *   or `KEY_RESOLUTION_FAILED` when a `$conditional(...)` block fails to resolve.
+ *   or `KEY_RESOLUTION_FAILED` when a `$conditional(...)` block fails to resolve, or when
+ *   the final literal key doesn't resolve to a real field on the target document.
  */
 function resolveActiveEffectChangeKey(
   effect: ActiveEffectDnd35e,
   change: EffectChangeDataDnd35e,
-  warnHost?: PreparationWarningHost
+  warnHost?: PreparationWarningHost | PreparationWarningHost[]
 ): string | typeof KEY_RESOLUTION_FAILED {
   const rawKey = change.key;
-  if (!rawKey || !rawKey.includes('$conditional(')) return remapNameKeyForItem(rawKey, change.target);
 
   const fail = (reason: string): typeof KEY_RESOLUTION_FAILED => {
     console.error(`resolveActiveEffectChangeKey: ${reason}`);
@@ -95,44 +99,63 @@ function resolveActiveEffectChangeKey(
     return KEY_RESOLUTION_FAILED;
   };
 
-  const [block, ...extraBlocks] = FormulaResolver.findConditionalBlocks(rawKey);
-  if (!block || block.error || extraBlocks.length > 0) {
-    return fail(`Conditional key "${rawKey}" is malformed${block?.error ? ` (${block.error})` : ''}`);
-  }
+  let resolvedKey: string;
 
-  const { contextMap } = getEffectContexts(effect, change);
-  if (!contextMap) {
-    return fail(`Conditional key "${rawKey}": no document to resolve against for target "${change.target ?? 'actor'}"`);
-  }
-
-  let winningTarget: string | null = null;
-  for (const clause of block.whenClauses) {
-    let failed = false;
-    const resolved = FormulaData.resolveSource(
-      { formula: clause.condition, resolvedValue: null, expectedType: 'boolean' },
-      contextMap,
-      '',
-      [],
-      () => { failed = true; }
-    );
-    if (failed || (resolved !== true && resolved !== false)) {
-      return fail(`Conditional key "${rawKey}": when() condition "${clause.condition}" did not resolve to a valid boolean expression`);
+  if (!rawKey || !rawKey.includes('$conditional(')) {
+    resolvedKey = remapNameKeyForItem(rawKey, change.target);
+  } else {
+    const [block, ...extraBlocks] = FormulaResolver.findConditionalBlocks(rawKey);
+    if (!block || block.error || extraBlocks.length > 0) {
+      return fail(`Conditional key "${rawKey}" is malformed${block?.error ? ` (${block.error})` : ''}`);
     }
-    if (resolved === true) {
-      winningTarget = clause.value;
-      break;
+
+    const { contextMap } = getEffectContexts(effect, change);
+    if (!contextMap) {
+      return fail(`Conditional key "${rawKey}": no document to resolve against for target "${change.target ?? 'actor'}"`);
+    }
+
+    let winningTarget: string | null = null;
+    for (const clause of block.whenClauses) {
+      let failed = false;
+      const resolved = FormulaData.resolveSource(
+        { formula: clause.condition, resolvedValue: null, expectedType: 'boolean' },
+        contextMap,
+        '',
+        [],
+        () => { failed = true; }
+      );
+      if (failed || (resolved !== true && resolved !== false)) {
+        return fail(`Conditional key "${rawKey}": when() condition "${clause.condition}" did not resolve to a valid boolean expression`);
+      }
+      if (resolved === true) {
+        winningTarget = clause.value;
+        break;
+      }
+    }
+    if (winningTarget === null) {
+      if (block.elseValue === null) return fail(`Conditional key "${rawKey}" has no else() and no when() clause matched`);
+      winningTarget = block.elseValue;
+    }
+
+    const schema = buildKeyResolutionSchema(effect);
+    const accessPath = resolveFamiliarLeafToAccessPath(winningTarget, schema);
+    if (!accessPath) return fail(`Conditional key "${rawKey}": target "${winningTarget}" did not resolve to a real field`);
+
+    resolvedKey = remapNameKeyForItem(accessPath, change.target);
+  }
+
+  // A plain (non-conditional) key skips every check above entirely, so without this it
+  // would get zero validation at all. Group Change Target keys (poc §7.7, e.g.
+  // "#actor.saves.all") are real formula references, not literal paths — they fan out to
+  // many concrete fields later in `expandChangeTargetGroups()`, so they're exempt here.
+  if (!resolvedKey.startsWith('#')) {
+    const { targetDocument } = getEffectContexts(effect, { ...change, key: resolvedKey });
+    if (targetDocument && !foundry.utils.hasProperty(targetDocument, resolvedKey)) {
+      return fail(`Key "${resolvedKey}" does not resolve to a real field on the ${change.target ?? EFFECT_CHANGE_TARGET.ACTOR}`);
     }
   }
-  if (winningTarget === null) {
-    if (block.elseValue === null) return fail(`Conditional key "${rawKey}" has no else() and no when() clause matched`);
-    winningTarget = block.elseValue;
-  }
 
-  const schema = buildKeyResolutionSchema(effect);
-  const accessPath = resolveFamiliarLeafToAccessPath(winningTarget, schema);
-  if (!accessPath) return fail(`Conditional key "${rawKey}": target "${winningTarget}" did not resolve to a real field`);
-
-  return remapNameKeyForItem(accessPath, change.target);
+  return resolvedKey;
 }
 
 export { KEY_RESOLUTION_FAILED, resolveActiveEffectChangeKey };

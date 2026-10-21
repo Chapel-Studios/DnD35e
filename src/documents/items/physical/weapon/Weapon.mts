@@ -62,12 +62,19 @@ class Weapon extends EquippableItem {
    * `requiresEquipped` gates usability at execution time, not merge time. Gated to
    * `FINAL` (matching the stub's own declared `phase`) so all of a weapon's actions are
    * known to exist before any are merged onto the actor.
+   *
+   * `createActionChange()` returns `null` for an action whose `item.uuid` isn't
+   * resolvable yet (e.g. mid-construction of a brand-new, not-yet-persisted Actor) —
+   * filtered out here rather than emitting a change that would fail actor-side schema
+   * validation; a later `prepareData()` pass picks it up once the uuid is known.
    */
   override getContributedActorChanges(phase: string): EffectChangeDataDnd35e[] {
     const changes = super.getContributedActorChanges(phase);
     if (phase !== EFFECT_CHANGE_PHASE.FINAL) return changes;
 
-    const actionChanges = this.system.actions.map((action) => action.createActionChange());
+    const actionChanges = this.system.actions
+      .map((action) => action.createActionChange())
+      .filter((change): change is EffectChangeDataDnd35e => change !== null);
 
     return [...changes, ...actionChanges];
   }

@@ -244,16 +244,18 @@
   // The Field/Key column no longer has a separate Target selector — both the item's and
   // the owning actor's contexts are always offered together (poc request), and the picked
   // property's own context prefix (#weapon./#character./etc.) determines `change.target`
-  // (see `resolveTargetForKey` below). Group Change Targets (poc §7.7) only ever expand to
-  // actor field paths, so they're folded into the actor context only.
+  // (see `resolveTargetForKey` below). Group Change Targets (poc §7.7) each declare their own
+  // named `contextName` (e.g. `EFFECT_CHANGE_TARGET.ITEM`/`.ACTOR`) — folded into the matching
+  // context branch via `withChangeTargetGroups(context, contextName)`, the same name-keyed
+  // convention `FormulaData.resolve()`'s `documentDataMap` uses for formula values.
   const keyPickerContexts = computed((): FamiliarSchema | undefined => {
     const schema: FamiliarSchema = {};
 
     const itemContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ITEM);
-    if (itemContext) schema[store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ITEM)] = itemContext;
+    if (itemContext) schema[store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ITEM)] = withChangeTargetGroups(itemContext, EFFECT_CHANGE_TARGET.ITEM);
 
     const actorContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ACTOR);
-    if (actorContext) schema[store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ACTOR)] = withChangeTargetGroups(actorContext);
+    if (actorContext) schema[store.documentGetters.getTargetFamiliarContextName(EFFECT_CHANGE_TARGET.ACTOR)] = withChangeTargetGroups(actorContext, EFFECT_CHANGE_TARGET.ACTOR);
 
     return Object.keys(schema).length ? schema : undefined;
   });
@@ -321,7 +323,7 @@
     }
 
     const actorContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ACTOR);
-    if (actorContext && FormulaResolver.findAspectByAccessPath(withChangeTargetGroups(actorContext).properties, key)) {
+    if (actorContext && FormulaResolver.findAspectByAccessPath(withChangeTargetGroups(actorContext, EFFECT_CHANGE_TARGET.ACTOR).properties, key)) {
       return EFFECT_CHANGE_TARGET.ACTOR;
     }
 

@@ -28,6 +28,9 @@ import {
   WeaponSheetVue,
   WeaponSummary,
 } from './sheet/index.mjs';
+import type {
+  WeaponSource,
+} from './Weapon.mjs';
 import {
   Weapon,
 } from './Weapon.mjs';
@@ -54,6 +57,7 @@ export type {
   WeaponBaseType,
   WeaponSheetConfig,
   WeaponSheetRenderContext,
+  WeaponSource,
   WeaponStore,
   WeaponSubtype,
   WeaponSystemData,

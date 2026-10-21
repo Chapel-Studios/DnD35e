@@ -16,7 +16,6 @@
         :value="requiresEquipped"
         :field-path="getFieldPath('requiresEquipped')"
         :on-update="(v) => updateActionField('requiresEquipped', v)"
-        hide-field-controls
       />
       <slot name="append" />
       <MultiSelectFormGroup
@@ -25,7 +24,6 @@
         :options="propertyOptions"
         :field-path="getFieldPath('properties')"
         :on-update="(v) => updateActionField('properties', v)"
-        hide-field-controls
         class="grid-full-row"
       />
     </template>

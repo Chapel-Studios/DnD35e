@@ -1,0 +1,530 @@
+{
+  "name": "Crown Knight",
+  "type": "character",
+  "_id": "LtT4rNSSBfyF6sT1",
+  "img": "systems/dnd35e/assets/crown.svg",
+  "prototypeToken": {
+    "actorLink": true,
+    "texture": { "src": "systems/dnd35e/assets/crown.svg" }
+  },
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "slug": "",
+    "nameFormula": {
+      "formula": "Crown Knight",
+      "expectedType": "string",
+      "resolvedValue": "Crown Knight"
+    },
+    "description": "",
+    "speed": {
+      "land": 6,
+      "climb": 0,
+      "swim": 0,
+      "burrow": 0,
+      "fly": 0,
+      "flyManeuverability": null
+    },
+    "size": "medium",
+    "senses": [],
+    "abilities": {
+      "str": { "score": 16 },
+      "dex": { "score": 14 },
+      "con": { "score": 14 },
+      "int": { "score": 10 },
+      "wis": { "score": 10 },
+      "cha": { "score": 12 }
+    },
+    "hp": {
+      "current": 100,
+      "temp": 0,
+      "nonlethal": 0
+    },
+    "bio": {
+      "gender": null,
+      "deity": null,
+      "age": null,
+      "height": null,
+      "weight": null,
+      "alignment": { "law": null, "moral": null },
+      "languages": []
+    },
+    "notes": "",
+    "settings": { "isPartyMember": false },
+    "currency": { "stacks": [], "srdEquivalent": 0 },
+    "xp": { "value": 0 },
+    "isPartyMember": false
+  },
+  "items": [
+    {
+      "name": "Longsword",
+      "type": "weapon",
+      "_id": "THH5biuwoDiEZVRc",
+      "img": "icons/svg/item-bag.svg",
+      "system": {
+        "origin": { "migrationVersion": "14.0.0-dev.1" },
+        "nameFormula": {
+          "formula": "Longsword",
+          "expectedType": "string",
+          "resolvedValue": "Longsword"
+        },
+        "description": "",
+        "isPsionic": false,
+        "isEpic": false,
+        "hp": { "current": 0, "max": 0 },
+        "hardness": 0,
+        "quantity": 1,
+        "weight": 4,
+        "isCarried": true,
+        "size": "small",
+        "price": { "stacks": [{ "coinId": "srd_gp", "count": 15 }], "srdEquivalent": 15 },
+        "equippedSlotIds": ["mainHand"],
+        "isMelded": false,
+        "designedForSize": "medium",
+        "isWeightlessWhenEquipped": false,
+        "isBaseWeaponType": true,
+        "weaponType": "martial",
+        "weaponSubtype": "oneHanded",
+        "weaponBaseType": "longsword",
+        "actions": [
+          {
+            "_id": "yAG7XNq9CYHziuYX",
+            "type": "melee_weapon_attack",
+            "damageFormula": {
+              "formula": "$scaleDamage(1d8)",
+              "expectedType": "rollFormula",
+              "resolvedValue": null
+            },
+            "damageType": "dnd35e.DAMAGE_TYPES.Slashing",
+            "critRange": 19,
+            "critMultiplier": 2
+          }
+        ]
+      },
+      "effects": [
+        {
+          "name": "+2 Weapon",
+          "type": "general",
+          "_id": "yWLgkPjOmDW8dGLu",
+          "img": "icons/svg/upgrade.svg",
+          "system": {
+            "origin": { "migrationVersion": "14.0.0-dev.1" },
+            "nameFormula": {
+              "formula": "+2 Weapon",
+              "expectedType": "string",
+              "resolvedValue": "+2 Weapon"
+            },
+            "description": "POC generic weapon enhancement: +2 enhancement bonus to this weapon's attack roll and +2 enhancement bonus to damage. Targets ALL of this weapon's melee attack actions via a Group Change Target.",
+            "target": "item",
+            "isHidden": false,
+            "deleteOnExpiry": false,
+            "changes": [
+              {
+                "id": "hcmWPwKs4EIBsIMm",
+                "key": "#item.meleeWeaponAttacks.attackToHit",
+                "type": "add",
+                "value": 2,
+                "priority": 10,
+                "phase": "final",
+                "target": "item",
+                "isSystem": false,
+                "bonusType": "dnd35e.BONUS_TYPES.Enhancement",
+                "condition": null
+              },
+              {
+                "id": "khinsTuMe9zFOwxP",
+                "key": "#item.meleeWeaponAttacks.attackDamage",
+                "type": "add",
+                "value": 2,
+                "priority": 10,
+                "phase": "final",
+                "target": "item",
+                "isSystem": false,
+                "bonusType": "dnd35e.BONUS_TYPES.Enhancement",
+                "condition": null
+              }
+            ]
+          },
+          "disabled": false,
+          "start": null,
+          "duration": { "value": null, "units": "seconds", "expiry": null, "expired": false },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": false,
+          "statuses": [],
+          "showIcon": 1,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.359",
+            "systemId": "dnd35e",
+            "systemVersion": "14.0.0-dev.1",
+            "createdTime": 1791787209300,
+            "modifiedTime": 1791787209300,
+            "lastModifiedBy": "mBlpD72i6u17h1qm",
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!LtT4rNSSBfyF6sT1.THH5biuwoDiEZVRc.yWLgkPjOmDW8dGLu"
+        }
+      ],
+      "folder": null,
+      "sort": 0,
+      "ownership": { "default": 0 },
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.359",
+        "systemId": "dnd35e",
+        "systemVersion": "14.0.0-dev.1",
+        "createdTime": 1791787209300,
+        "modifiedTime": 1791787209300,
+        "lastModifiedBy": "mBlpD72i6u17h1qm",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!actors.items!LtT4rNSSBfyF6sT1.THH5biuwoDiEZVRc"
+    },
+    {
+      "name": "Shortsword",
+      "type": "weapon",
+      "_id": "cc15kpgD9ghpBS9n",
+      "img": "icons/svg/item-bag.svg",
+      "system": {
+        "origin": { "migrationVersion": "14.0.0-dev.1" },
+        "nameFormula": {
+          "formula": "Shortsword",
+          "expectedType": "string",
+          "resolvedValue": "Shortsword"
+        },
+        "description": "",
+        "isPsionic": false,
+        "isEpic": false,
+        "hp": { "current": 0, "max": 0 },
+        "hardness": 0,
+        "quantity": 1,
+        "weight": 2,
+        "isCarried": true,
+        "size": "tiny",
+        "price": { "stacks": [{ "coinId": "srd_gp", "count": 10 }], "srdEquivalent": 10 },
+        "equippedSlotIds": ["offHand"],
+        "isMelded": false,
+        "designedForSize": "medium",
+        "isWeightlessWhenEquipped": false,
+        "isBaseWeaponType": true,
+        "weaponType": "martial",
+        "weaponSubtype": "light",
+        "weaponBaseType": "short sword",
+        "actions": [
+          {
+            "_id": "S1FG5B4dS98mdcZF",
+            "type": "melee_weapon_attack",
+            "damageFormula": {
+              "formula": "$scaleDamage(1d6)",
+              "expectedType": "rollFormula",
+              "resolvedValue": null
+            },
+            "damageType": "dnd35e.DAMAGE_TYPES.Piercing",
+            "critRange": 19,
+            "critMultiplier": 2
+          }
+        ]
+      },
+      "effects": [
+        {
+          "name": "+2 Weapon Enhancement",
+          "type": "general",
+          "_id": "bE4afatG4CnJziFg",
+          "img": "icons/svg/upgrade.svg",
+          "system": {
+            "origin": { "migrationVersion": "14.0.0-dev.1" },
+            "nameFormula": {
+              "formula": "+2 Weapon Enhancement",
+              "expectedType": "string",
+              "resolvedValue": "+2 Weapon Enhancement"
+            },
+            "description": "POC generic weapon enhancement: +2 enhancement bonus to this weapon's attack roll and +2 enhancement bonus to damage. Targets ALL of this weapon's melee attack actions via a Group Change Target.",
+            "target": "item",
+            "isHidden": false,
+            "deleteOnExpiry": false,
+            "changes": [
+              {
+                "id": "M6EfjGqFVnLeh13C",
+                "key": "#item.meleeWeaponAttacks.attackToHit",
+                "type": "add",
+                "value": 2,
+                "priority": 10,
+                "phase": "final",
+                "target": "item",
+                "isSystem": false,
+                "bonusType": "dnd35e.BONUS_TYPES.Enhancement",
+                "condition": null
+              },
+              {
+                "id": "AnB4ZGsfg1nh70b0",
+                "key": "#item.meleeWeaponAttacks.attackDamage",
+                "type": "add",
+                "value": 2,
+                "priority": 10,
+                "phase": "final",
+                "target": "item",
+                "isSystem": false,
+                "bonusType": "dnd35e.BONUS_TYPES.Enhancement",
+                "condition": null
+              }
+            ]
+          },
+          "disabled": false,
+          "start": null,
+          "duration": { "value": null, "units": "seconds", "expiry": null, "expired": false },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": false,
+          "statuses": [],
+          "showIcon": 1,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.359",
+            "systemId": "dnd35e",
+            "systemVersion": "14.0.0-dev.1",
+            "createdTime": 1791787209300,
+            "modifiedTime": 1791787209300,
+            "lastModifiedBy": "mBlpD72i6u17h1qm",
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!LtT4rNSSBfyF6sT1.cc15kpgD9ghpBS9n.bE4afatG4CnJziFg"
+        },
+        {
+          "name": "Broken item AE test",
+          "type": "general",
+          "_id": "Xk9mQ2fTnB4Lp7Rw",
+          "img": "icons/svg/upgrade.svg",
+          "system": {
+            "origin": { "migrationVersion": "14.0.0-dev.1" },
+            "nameFormula": {
+              "formula": "Broken item AE test",
+              "expectedType": "string",
+              "resolvedValue": "Broken item AE test"
+            },
+            "description": "test of the broken formula report system",
+            "target": "actor",
+            "isHidden": false,
+            "deleteOnExpiry": false,
+            "changes": [
+              {
+                "id": "Qm3Tz8VbN1kXy6Hs",
+                "key": "system.bad.target",
+                "type": "add",
+                "value": "#not.a.real.value",
+                "priority": 10,
+                "phase": "final",
+                "target": "actor",
+                "isSystem": false,
+                "bonusType": "dnd35e.BONUS_TYPES.Untyped",
+                "condition": null
+              }
+            ]
+          },
+          "disabled": false,
+          "start": null,
+          "duration": { "value": null, "units": "seconds", "expiry": null, "expired": false },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.359",
+            "systemId": "dnd35e",
+            "systemVersion": "14.0.0-dev.1",
+            "createdTime": 1791787209300,
+            "modifiedTime": 1791787209300,
+            "lastModifiedBy": "mBlpD72i6u17h1qm",
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!LtT4rNSSBfyF6sT1.cc15kpgD9ghpBS9n.Xk9mQ2fTnB4Lp7Rw"
+        }
+      ],
+      "folder": null,
+      "sort": 0,
+      "ownership": { "default": 0 },
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.359",
+        "systemId": "dnd35e",
+        "systemVersion": "14.0.0-dev.1",
+        "createdTime": 1791787209300,
+        "modifiedTime": 1791787209300,
+        "lastModifiedBy": "mBlpD72i6u17h1qm",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!actors.items!LtT4rNSSBfyF6sT1.cc15kpgD9ghpBS9n"
+    }
+  ],
+  "effects": [
+    {
+      "name": "Heroic Training",
+      "type": "general",
+      "_id": "YKQDoXig8sL6t4vq",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "origin": { "migrationVersion": "14.0.0-dev.1" },
+        "nameFormula": {
+          "formula": "Heroic Training",
+          "expectedType": "string",
+          "resolvedValue": "Heroic Training"
+        },
+        "description": "POC generic buff: grants +6 base attack bonus, +6 armor class, and +100 max HP (untyped bonuses, for testing the AE pipeline only).",
+        "target": "actor",
+        "isHidden": false,
+        "deleteOnExpiry": false,
+        "changes": [
+          {
+            "id": "Norr0A9SrmCAsQtC",
+            "key": "system.bab",
+            "type": "add",
+            "value": 6,
+            "priority": 10,
+            "phase": "final",
+            "target": "actor",
+            "isSystem": false,
+            "bonusType": "dnd35e.BONUS_TYPES.Untyped",
+            "condition": null
+          },
+          {
+            "id": "gfYpsv203USmgY5m",
+            "key": "system.defense.armorClass",
+            "type": "add",
+            "value": 6,
+            "priority": 10,
+            "phase": "initial",
+            "target": "actor",
+            "isSystem": false,
+            "bonusType": "dnd35e.BONUS_TYPES.Untyped",
+            "condition": null
+          },
+          {
+            "id": "p6Lm9CdWt3Vn5kXq",
+            "key": "system.hp.max",
+            "type": "add",
+            "value": 100,
+            "priority": 10,
+            "phase": "initial",
+            "target": "actor",
+            "isSystem": false,
+            "bonusType": "dnd35e.BONUS_TYPES.Untyped",
+            "condition": null
+          }
+        ]
+      },
+      "disabled": false,
+      "start": null,
+      "duration": { "value": null, "units": "seconds", "expiry": null, "expired": false },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": false,
+      "statuses": [],
+      "showIcon": 1,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.359",
+        "systemId": "dnd35e",
+        "systemVersion": "14.0.0-dev.1",
+        "createdTime": 1791787209300,
+        "modifiedTime": 1791787209300,
+        "lastModifiedBy": "mBlpD72i6u17h1qm",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!actors.effects!LtT4rNSSBfyF6sT1.YKQDoXig8sL6t4vq"
+    },
+    {
+      "name": "Broken Actor AE test",
+      "type": "general",
+      "_id": "Zr5Wp2Tn9Lb4Kq8M",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "origin": { "migrationVersion": "14.0.0-dev.1" },
+        "nameFormula": {
+          "formula": "Broken Actor AE test",
+          "expectedType": "string",
+          "resolvedValue": "Broken Actor AE test"
+        },
+        "description": "test of the broken formula report system",
+        "target": "actor",
+        "isHidden": false,
+        "deleteOnExpiry": false,
+        "changes": [
+          {
+            "id": "Vt7Ny3Rk1Xp6Qm9F",
+            "key": "system.bad.target",
+            "type": "add",
+            "value": "#not.a.real.value",
+            "priority": 10,
+            "phase": "final",
+            "target": "actor",
+            "isSystem": false,
+            "bonusType": "dnd35e.BONUS_TYPES.Untyped",
+            "condition": null
+          }
+        ]
+      },
+      "disabled": false,
+      "start": null,
+      "duration": { "value": null, "units": "seconds", "expiry": null, "expired": false },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": false,
+      "statuses": [],
+      "showIcon": 1,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.359",
+        "systemId": "dnd35e",
+        "systemVersion": "14.0.0-dev.1",
+        "createdTime": 1791787209300,
+        "modifiedTime": 1791787209300,
+        "lastModifiedBy": "mBlpD72i6u17h1qm",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!actors.effects!LtT4rNSSBfyF6sT1.Zr5Wp2Tn9Lb4Kq8M"
+    }
+  ],
+  "folder": null,
+  "sort": 0,
+  "ownership": { "default": 0 },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1791787209300,
+    "modifiedTime": 1791787209300,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!actors!LtT4rNSSBfyF6sT1"
+}

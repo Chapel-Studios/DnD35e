@@ -64,9 +64,12 @@ class ActiveEffectDnd35e<
 
   /**
    * Non-blocking diagnostics collected during this prep cycle (broken formulas, etc.).
-   * Reset every `prepareBaseData()` — see `preparationWarnings.mts`.
+   * Reset every `prepareBaseData()` — see `preparationWarnings.mts`. `declare` (no runtime
+   * initializer): core's `DataModel` constructor runs `prepareBaseData()` (which populates
+   * this) synchronously *inside* the `super()` chain, and a real class-field initializer
+   * here would reinitialize to `[]` *after* `super()` returns, wiping that out.
    */
-  _preparationWarnings: PreparationWarning[] = [];
+  declare _preparationWarnings: PreparationWarning[];
 
   override prepareBaseData (): void {
     super.prepareBaseData();
@@ -110,6 +113,12 @@ class ActiveEffectDnd35e<
   ): void {
     super._onUpdate(_data, _options, _userId);
     refreshOwningDocument(this);
+
+    // Keep core's global expiryAction at 'update' and delete only opted-in effects.
+    // _onUpdate runs on receiving clients, so only the update initiator may delete.
+    if (_data.duration?.expired && this.system.deleteOnExpiry && _userId === game.user.id) {
+      void this.delete();
+    }
   }
 
   protected override _onDelete(

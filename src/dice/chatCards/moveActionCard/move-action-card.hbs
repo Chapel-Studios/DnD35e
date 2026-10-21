@@ -11,6 +11,12 @@
 
   <div class="card-body">
     <span class="distance">{{ cost }} / {{ budget }} {{ distanceUnit }}</span>
+    {{#if provocationLabel}}
+    <div class="provocation">{{ provocationLabel }}</div>
+    {{/if}}
+    {{#if stepProtectionLost}}
+    <div class="warning-banner">{{localize "dnd35e.ROLL.MOVE_ACTION_CARD.StepProtectionLost"}}</div>
+    {{/if}}
 
     {{#if overBudget}}
     <div class="warning-banner">{{overBudgetMessage}}</div>

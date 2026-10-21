@@ -1,10 +1,14 @@
 <template>
-  <li class="action-accordion-row" :class="{ 'is-expanded': isActionEditorOpen }">
+  <li v-if="isActionVisible" class="action-accordion-row" :class="{ 'is-expanded': isActionEditorOpen }">
     <div class="action-row-header" @click="toggleActionEditor()">
       <i class="fa-solid action-toggle-icon" :class="isActionEditorOpen ? 'fa-chevron-down' : 'fa-chevron-right'" />
       <span class="action-type-badge">{{ localizedActionTypeLabel }}</span>
       <span class="action-name">{{ displayName }}</span>
       <i v-if="isSystemCreated" class="fa-solid fa-wand-magic-sparkles action-auto-badge" :title="localize('dnd35e.WEAPON.ACTIONS.AutoBadge')" />
+
+      <div class="action-field-controls" @click.stop.prevent>
+        <FieldControls :field-path="actionFieldPath" />
+      </div>
 
       <ActionLinkHeader />
     </div>
@@ -14,10 +18,10 @@
         :label="'dnd35e.WEAPON.ACTIONS.Fields.name.label'"
         :tooltip="'dnd35e.WEAPON.ACTIONS.Fields.name.hint'"
         :value="nameFormulaData.formula"
+        :source-value="nameFormulaSourceText"
         :field-path="getFieldPath('name.formula')"
         :contexts="familiarContexts"
         :on-update="(v) => updateActionField('name', { ...nameFormulaData, formula: v })"
-        hide-field-controls
         class="grid-full-row"
       />
 
@@ -29,7 +33,6 @@
         :options="activationCostOptions"
         :field-path="getFieldPath('activationCost')"
         :on-update="(v) => updateActionField('activationCost', v)"
-        hide-field-controls
       />
       <CheckBoxFormGroup
         :label="'dnd35e.WEAPON.ACTIONS.Fields.provokes.label'"
@@ -37,7 +40,6 @@
         :value="provokes"
         :field-path="getFieldPath('provokes')"
         :on-update="(v) => updateActionField('provokes', v)"
-        hide-field-controls
       />
       <NumberFormGroup
         :label="'dnd35e.WEAPON.ACTIONS.Fields.maxTargets.label'"
@@ -46,7 +48,6 @@
         :min="1"
         :field-path="getFieldPath('maxTargets')"
         :on-update="(v) => updateActionField('maxTargets', v)"
-        hide-field-controls
       />
 
       <slot name="append" />
@@ -59,24 +60,29 @@
 <script setup lang="ts">
   import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
   import { ACTION_ECONOMY_TYPES } from '@constants/actionEconomy.mjs';
+  import type { DocumentSheetStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { ActionEditorStore } from '@documents/items/baseItem/actions/ActionEditorStore.mjs';
   import { ActionEditorStoreSymbol } from '@documents/items/baseItem/actions/ActionEditorStore.mjs';
   import { FormulaFormGroup } from '@helpers/formulae/index.mjs';
+  import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
   import type { SelectOption } from '@vc/fields/index.mjs';
   import { CheckBoxFormGroup, NumberFormGroup, SelectFormGroup } from '@vc/fields/index.mjs';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
 
   import ActionChainBox from './ActionChainBox.vue';
   import ActionLinkHeader from './ActionLinkHeader.vue';
 
   const {
     getters: {
+      actionFieldPath,
       activationCost,
       displayName,
       localizedActionTypeLabel,
       isSystemCreated,
       isActionEditorOpen,
       nameFormulaData,
+      nameFormulaSourceText,
       familiarContexts,
       provokes,
       maxTargets,
@@ -87,6 +93,13 @@
       updateActionField,
     },
   } = inject(ActionEditorStoreSymbol) as ActionEditorStore;
+
+  const {
+    documentGetters: { getIsFieldVisible },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  // Overrides cascade from ancestors, so a GM-only `system.actions` also hides this row.
+  const isActionVisible = computed(() => getIsFieldVisible(actionFieldPath.value).value);
 
   function localize(key: string): string {
     return game.i18n.localize(key);

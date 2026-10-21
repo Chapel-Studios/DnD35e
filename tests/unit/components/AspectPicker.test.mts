@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
 import { withChangeTargetGroups } from '@helpers/formulae/changeTargetGroups.mjs';
 import type { FamiliarContext } from '@helpers/formulae/types.mjs';
 import AspectPicker from '@vc/fields/formGroups/AspectPicker.vue';
@@ -83,9 +84,9 @@ describe('AspectPicker — hideContextHint error suppression', () => {
 
 /**
  * Regression tests for poc §7.7's Group Change Target display — a stored `modelValue` of
- * "group:allSaves" (a synthetic `group:`-prefixed accessPath, not real formula-variable
- * syntax) must render as a friendly localized label rather than the raw key leaking
- * through, and must round-trip back to the raw group key on commit without corruption.
+ * "#actor.saves.all" (a real canonical `#context.path` formula reference, same syntax as
+ * any other formula) must render as a friendly localized label rather than the raw key
+ * leaking through, and must round-trip back to the raw group key on commit without corruption.
  * `withChangeTargetGroups()` is the real production helper used to build this context
  * (see `EffectChangesList.vue`'s `getKeyPickerContext`), not a hand-rolled fixture.
  *
@@ -131,7 +132,7 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
           will: { type: 'number', accessPath: 'system.saves.will', display: 'Will' },
         },
       },
-    });
+    }, EFFECT_CHANGE_TARGET.ACTOR);
   });
 
   afterAll(() => {
@@ -141,7 +142,7 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
   it('displays the group leaf nested under the real branch\'s own resolved identifier, not a hardcoded string', () => {
     const wrapper = mount(AspectPicker, {
       props: {
-        modelValue: 'group:allSaves',
+        modelValue: '#actor.saves.all',
         contexts: { actor: groupAwareContext },
       },
       global: { stubs: { FamiliarOverlayInput: ModelValueStub } },
@@ -154,13 +155,13 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
     // itself is localized from the context's own `display: 'Actor'` (see the sibling
     // "still resolves a real field normally" test below).
     expect(displayed).toBe('#Actor.SavingThrows.All');
-    expect(displayed).not.toContain('group:allSaves');
+    expect(displayed).not.toContain('#actor.saves.all');
   });
 
   it('does not surface a "property not found" error for a registered group key', async () => {
     const wrapper = mount(AspectPicker, {
       props: {
-        modelValue: 'group:allSaves',
+        modelValue: '#actor.saves.all',
         contexts: { actor: groupAwareContext },
       },
       global: { stubs: { FamiliarOverlayInput: ModelValueStub } },
@@ -185,7 +186,7 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
     expect(displayed).toBe('#Actor.hardness');
   });
 
-  it('round-trips a manually-typed "#actor.SavingThrows.All" back to the raw "group:allSaves" key on commit', async () => {
+  it('round-trips a manually-typed "#actor.SavingThrows.All" back to the raw "#actor.saves.all" key on commit', async () => {
     vi.useFakeTimers();
     try {
       const wrapper = mount(AspectPicker, {
@@ -205,7 +206,7 @@ describe('AspectPicker — Group Change Target display (poc §7.7)', () => {
       await nextTick();
 
       const emitted = wrapper.emitted('update:modelValue');
-      expect(emitted?.[emitted.length - 1]?.[0]).toBe('group:allSaves');
+      expect(emitted?.[emitted.length - 1]?.[0]).toBe('#actor.saves.all');
     } finally {
       vi.useRealTimers();
     }
