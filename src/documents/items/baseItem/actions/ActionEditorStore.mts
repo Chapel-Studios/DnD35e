@@ -189,6 +189,9 @@ const useActionEditorStore = <T extends ActionDataModel>({
     provokes: computed(() => action.value.provokes),
     maxTargets: computed(() => action.value.maxTargets),
     chain: computed(() => [...action.value.chain]),
+    chainOwnerFieldPath: computed(() => linkSettings
+      ? `system.actions.${linkSettings.parentActionId}.chain`
+      : undefined),
     link: linkSettings?.link,
     isLink: !!linkSettings?.link.value,
 
@@ -274,6 +277,7 @@ interface ActionEditorStoreGetters {
   provokes: ComputedRef<boolean>;
   maxTargets: ComputedRef<number | null>;
   chain: ComputedRef<ActionChainLinkModel[]>;
+  chainOwnerFieldPath: ComputedRef<string | undefined>;
   actionType: ComputedRef<ActionType>;
   isLink: boolean;
   link?: Ref<ActionChainLinkModel>;

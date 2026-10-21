@@ -96,8 +96,9 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
      * Vue-level gating (`RenderModeStore`'s view mode, `getIsFieldEditable()`,
      * `canEdit`/`readOnly` props) already correctly disables actual mutation controls
      * based on `isEditable` — see `VueDocumentSheetMixin`'s `_onRender` reading
-     * `this.isEditable` into `setHeaderElement()`. No-op this instead of relying on
-     * Foundry's blanket, all-or-nothing form disable.
+     * `this.isEditable` into `setHeaderElement()`. Action chain add/remove/trigger
+     * controls also gate on the owning chain's field editability. No-op this instead
+     * of relying on Foundry's blanket, all-or-nothing form disable.
      */
     protected override _toggleDisabled (_disabled: boolean): void {}
 
