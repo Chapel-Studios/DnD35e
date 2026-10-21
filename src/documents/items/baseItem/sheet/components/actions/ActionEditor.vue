@@ -1,5 +1,5 @@
 <template>
-  <li class="action-accordion-row" :class="{ 'is-expanded': isActionEditorOpen }">
+  <li v-if="isActionVisible" class="action-accordion-row" :class="{ 'is-expanded': isActionEditorOpen }">
     <div class="action-row-header" @click="toggleActionEditor()">
       <i class="fa-solid action-toggle-icon" :class="isActionEditorOpen ? 'fa-chevron-down' : 'fa-chevron-right'" />
       <span class="action-type-badge">{{ localizedActionTypeLabel }}</span>
@@ -60,13 +60,15 @@
 <script setup lang="ts">
   import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
   import { ACTION_ECONOMY_TYPES } from '@constants/actionEconomy.mjs';
+  import type { DocumentSheetStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { ActionEditorStore } from '@documents/items/baseItem/actions/ActionEditorStore.mjs';
   import { ActionEditorStoreSymbol } from '@documents/items/baseItem/actions/ActionEditorStore.mjs';
   import { FormulaFormGroup } from '@helpers/formulae/index.mjs';
   import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
   import type { SelectOption } from '@vc/fields/index.mjs';
   import { CheckBoxFormGroup, NumberFormGroup, SelectFormGroup } from '@vc/fields/index.mjs';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
 
   import ActionChainBox from './ActionChainBox.vue';
   import ActionLinkHeader from './ActionLinkHeader.vue';
@@ -91,6 +93,13 @@
       updateActionField,
     },
   } = inject(ActionEditorStoreSymbol) as ActionEditorStore;
+
+  const {
+    documentGetters: { getIsFieldVisible },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  // Overrides cascade from ancestors, so a GM-only `system.actions` also hides this row.
+  const isActionVisible = computed(() => getIsFieldVisible(actionFieldPath.value).value);
 
   function localize(key: string): string {
     return game.i18n.localize(key);
