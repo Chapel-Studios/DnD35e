@@ -1,4 +1,4 @@
-import { buildMaskMapFromSecretEffects } from '@documents/document/sheet/maskMap.mjs';
+import { buildMaskMapFromSecretEffects, getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
 import { EFFECT_CHANGE_TARGET, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import { describe, expect, it, vi } from 'vitest';
@@ -24,6 +24,29 @@ describe('buildMaskMapFromSecretEffects', () => {
   it('returns undefined when no effects are present', () => {
     const result = buildMaskMapFromSecretEffects(undefined, EFFECT_CHANGE_TARGET.ACTOR, vi.fn());
     expect(result).toBeUndefined();
+  });
+
+  describe('getDocumentMasks', () => {
+    it('uses an existing runtime mask dictionary before rebuilding from effects', () => {
+      const actor = { documentName: 'Actor', _masks: { 'system.defense.concealment': 20 } };
+      expect(getDocumentMasks(actor)).toBe(actor._masks);
+    });
+
+    it('rebuilds actor masks from active secret effects when no dictionary exists', () => {
+      const actor = {
+        documentName: 'Actor',
+        effects: [mkEffect([{ key: 'system.defense.concealment', type: SYSTEM_CHANGE_TYPE.MASK, value: 20 }])],
+      };
+      expect(getDocumentMasks(actor)).toEqual({ 'system.defense.concealment': 20 });
+    });
+
+    it('does not rebuild actor-targeted masks for other document types', () => {
+      const item = {
+        documentName: 'Item',
+        effects: [mkEffect([{ key: 'system.defense.concealment', type: SYSTEM_CHANGE_TYPE.MASK, value: 20 }])],
+      };
+      expect(getDocumentMasks(item)).toBeUndefined();
+    });
   });
 
   it('keeps only active secret MASK changes for the desired target', () => {

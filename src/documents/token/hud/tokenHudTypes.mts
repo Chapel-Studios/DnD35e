@@ -53,6 +53,7 @@ interface TokenHudCombatManeuverRow {
 }
 
 interface MiddleHudBarProps {
+  hpAdjustmentPermissions?: HpAdjustmentPermissions;
   useDefaultHpBar: boolean;
   displayBar1: boolean;
   bar1Value: string | number | null;
@@ -81,3 +82,4 @@ export type {
   TokenHudStatusEffectRow,
   TokenHudWeaponActionRow,
 };
+import type { HpAdjustmentPermissions } from '@actors/creature/sheet/components/hpAdjustmentPermissions.mjs';

@@ -30,6 +30,37 @@ store.isTrueMode               // true only in GM true-value mode
 store.isEditable               // true = user can edit (has perm AND edit mode)
 ```
 
+`store._storeUtils.renderModeStore.isSheetEditable` is the reactive application-level
+permission, independent of view mode. `getIsFieldEditable()` always checks it, even
+when `allowForceEdit` permits gameplay inputs in Play mode. Forced editors must not
+bypass locked-compendium or explicit `isEditable: false` restrictions. Standalone
+mutation controls such as `HpUpdater` must also check this permission in both their
+disabled state and their event handlers; navigation controls remain available.
+
+HP adjustments resolve per-operation permissions using `getHpAdjustmentPermissions()`:
+damage/healing follow `system.hp.current`, temporary HP follows `system.hp.temp`,
+and nonlethal follows `system.hp.nonlethal`. Owners have access by default; hidden
+options are omitted and locked options disabled, including inherited restrictions.
+GMs bypass field restrictions, but not a read-only sheet's application permission.
+The compact Token HUD requires token ownership for non-GMs and rechecks live
+permissions on Apply. Indirect HP changes made by damage/healing are not separately
+permission-gated. Native token bars remain separate from the compact updater.
+
+The HUD concealment button follows `system.defense.concealment` visibility and
+editability (including parents). Locked fields keep a read-only icon/tooltip;
+hidden fields omit the button. Owners see masked values and masked edits use the
+player-secret route; GMs see effective true values and can edit. This does not
+broaden Foundry's existing GM/owner HUD access.
+
+HUD weapon attacks require GM or token ownership both when building the palette
+and when handling a click. This ownership gate does not change weapon eligibility
+or attack availability, and does not add sheet visibility settings.
+Combat maneuvers use the same ownership gate without changing their combat or
+action-cost requirements.
+The custom movement/prone handler and picker also require GM/token ownership,
+without changing movement eligibility, affordability, or action costs. Stock
+status and utility controls retain Foundry's behavior and HUD access rules.
+
 ## EditValue Pattern (Required in All FormGroups)
 
 Every FormGroup computes an `editValue` that respects view mode:

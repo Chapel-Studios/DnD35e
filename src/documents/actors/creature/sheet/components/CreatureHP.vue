@@ -3,7 +3,7 @@
     label="dnd35e.CREATURE.FIELDS.hp.label"
     field-path="system.hp"
     :default-visibility="ownerPlusVisibility"
-    :default-editability="gmOnlyEditability"
+    :default-editability="normalEditability"
     class="actor-hp-section"
   >
     <div class="hp-bar-container">
@@ -22,28 +22,28 @@
         <NumberFormGroup
           field-path="system.hp.temp"
           :default-visibility="ownerPlusVisibility"
-          :default-editability="gmOnlyEditability"
+          :default-editability="normalEditability"
           class="hp-temp"
           force-edit
         />
         <NumberFormGroup
           field-path="system.hp.current"
           :default-visibility="ownerPlusVisibility"
-          :default-editability="gmOnlyEditability"
+          :default-editability="normalEditability"
           class="hp-current"
           force-edit
         />
         <NumberFormGroup
           field-path="system.hp.max"
           :default-visibility="ownerPlusVisibility"
-          :default-editability="gmOnlyEditability"
+          :default-editability="normalEditability"
           class="hp-max"
           read-only
         />
         <NumberFormGroup
           field-path="system.hp.nonlethal"
           :default-visibility="ownerPlusVisibility"
-          :default-editability="gmOnlyEditability"
+          :default-editability="normalEditability"
           class="hp-nonlethal"
           force-edit
         />
@@ -79,7 +79,7 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { FormGroupSection, NumberFormGroup } from '@vc/fields/index.mjs';
-  import { gmOnlyEditability, ownerPlusVisibility } from '@vc/fields/index.mjs';
+  import { normalEditability, ownerPlusVisibility } from '@vc/fields/index.mjs';
   import MeasureBar from '@vc/MeasureBar.vue';
   import { computed, inject, ref } from 'vue';
 

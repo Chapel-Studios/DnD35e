@@ -43,7 +43,12 @@
           :value="context.middleHudContext.bar1Value"
           :disabled="!context.middleHudContext.bar1Editable"
         >
-        <HpUpdater v-else :editable="context.middleHudContext.bar1Editable" compact />
+        <HpUpdater
+          v-else
+          :editable="context.middleHudContext.bar1Editable"
+          :permissions="context.middleHudContext.hpAdjustmentPermissions"
+          compact
+        />
       </template>
     </div>
 

@@ -78,6 +78,10 @@
   });
 
   function onChange(val: string) {
+    if (isDisabled.value) {
+      console.warn(`Cannot edit disabled field: ${props.fieldPath}`);
+      return;
+    }
     fieldUpdater(val === '' ? null : Number(val));
   }
 </script>

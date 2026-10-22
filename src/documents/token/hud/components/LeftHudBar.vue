@@ -47,15 +47,16 @@
       data-action="config"
     />
 
-    <template v-if="canEditConcealment">
+    <template v-if="canSeeConcealment">
       <HudButton
-        data-palette="concealment"
-        data-action="togglePalette"
+        :data-palette="canEditConcealment ? 'concealment' : undefined"
+        :data-action="canEditConcealment ? 'togglePalette' : undefined"
+        :aria-disabled="!canEditConcealment"
         label-key="dnd35e.COMBAT.HUD.Concealment"
         :label="concealmentTooltip"
         :icon-class="concealmentIconClass"
       />
-      <div class="palette palette-list" data-palette="concealment">
+      <div v-if="canEditConcealment" class="palette palette-list" data-palette="concealment">
         <a
           v-for="option in concealmentOptions"
           :key="option.id"
@@ -79,6 +80,7 @@
     levels: TokenHudLevelRow[];
     locked: boolean;
     canConfigure: boolean;
+    canSeeConcealment: boolean;
     canEditConcealment: boolean;
     concealmentIconClass: string;
     concealmentTooltip: string;

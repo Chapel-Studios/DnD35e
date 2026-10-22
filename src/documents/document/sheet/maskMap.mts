@@ -1,6 +1,7 @@
 import type { EffectChangeTarget } from '@effects/baseActiveEffect/data/constants.mjs';
 import { EFFECT_CHANGE_TARGET, SYSTEM_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
+import { resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import type { ActiveEffectDnd35e } from '@effects/index.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 
@@ -44,5 +45,12 @@ const buildMaskMapFromSecretEffects = (
   return Object.keys(masks).length ? masks : undefined;
 };
 
-export { buildMaskMapFromSecretEffects };
+const getDocumentMasks = (document: { documentName: string }): Record<string, unknown> | undefined => {
+  const host = document as { _masks?: Record<string, unknown>; effects?: Iterable<ActiveEffectDnd35e> };
+  if (host._masks) return host._masks;
+  if (document.documentName !== 'Actor') return undefined;
+  return buildMaskMapFromSecretEffects(host.effects, EFFECT_CHANGE_TARGET.ACTOR, resolveMaskedActiveEffectChangeValue);
+};
+
+export { buildMaskMapFromSecretEffects, getDocumentMasks };
 export type { MaskCandidate };

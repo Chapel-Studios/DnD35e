@@ -67,6 +67,7 @@ Phase 10 is the proof that a full manual combat exchange works end-to-end. It si
 - `useAction()` execution engine on `ActorDnd35e`, supporting manual full attack (repeated attacks spending a per-hand BAB pool) and two-weapon fighting (per-hand BAB, SRD off-hand penalty using existing `weaponSubtype`)
 - D20Roll vs target AC → hit/miss attack card; a **chained** Resolution card is posted once the target's row is applied — the defender's Roll Defense Dialog finalizes hit/miss, and on a hit, damage is rolled **and auto-applied** as part of posting that same card, with a delta-based Undo button available. This two-card Attack → Resolution chain matches D35E's own attack/defense dialog exchange (see §10.8)
 - `buildAttackCard()` chat card, mirroring `buildSaveCard()`'s precompiled-Handlebars pattern
+- Story J (planning only; implementation on hold): secrets-aware melee presentation and GM-controlled damage disclosure, using typed damage and maskable derived resistance as the first proof. Display policy and actor scope must be agreed before implementation.
 - New `Ammo` item type + equippable Quiver support; ranged/thrown actions consume ammo
 - Attacks of Opportunity: automatic detection of provoking actions taken in a threatened square, with asymmetric player/GM visibility; threatened-square highlighting on token selection
 - Token HUD bottom row (new, alongside Foundry's existing left/right HUD columns): **Weapon Attacks** and **Combat Maneuvers** controls, each expanding a list on click the same way the existing Movement Action control does; Weapon Attacks is fully populated this phase, Combat Maneuvers has a single entry this phase (Total Defense — real maneuvers like trip/grapple/bull rush are alpha.3) + sheet weapon-row attack buttons (work regardless of equip state)
@@ -1907,6 +1908,80 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 ---
 
+### Story J — Secret-aware melee resolution, typed damage & resistance disclosure
+
+**Status**: Planning only; combat implementation explicitly on hold pending the decisions below. Existing HUD permission/concealment work remains in place.
+**User**: GM / Player
+**Delivers**: "Combat uses the real effective values, but players do not automatically learn secret bonuses, defenses, or damage mitigation. A player sees the damage their dice appeared to deal; the GM can inspect the real outcome and deliberately reveal it."
+**Routing**: Lead dev (authority, disclosure and HP integration); UI work only after display decisions are approved.
+**Depends on**: Stories D and E (melee attack and resolution flow), existing Secret AE masks and HP masked-edit conventions. Coordinate reversal semantics with Story I; do not require its full canvas undo architecture to agree this story's design.
+
+#### Agreed contract
+
+- True effective values determine attack rolls, critical confirmation, AC, concealment, mitigation and actual HP changes. Masks affect presentation, not those calculations.
+- Secret-dependent totals and details belong in private GM data, not merely collapsed tooltips or GM-only DOM elements on a public message. Separate public presentation from private resolution data.
+- Damage resistance is the first disclosure example: a damage roll of 10 with 5 points prevented should initially appear to the attacker as 10 damage, while the GM sees 5 actually applied. A GM-controlled reveal can disclose the real damage; its exact UI and audience are **not yet decided**. These numbers illustrate disclosure, not an approved resistance schema or rules algorithm.
+- Damage application must update real HP and synchronize masked current/temp/nonlethal HP deltas. How apparent HP presentation interacts with concealed mitigation still needs an explicit decision; do not let an HP display defeat the apparent-damage policy.
+- This is a plan, not permission to implement combat changes now. Do not broaden the already-approved HUD changes into a combat rollout.
+
+#### Scope and dependency brake
+
+The intended first slice adds a small supported set of typed damage and a maskable, derived resistance/mitigation stat, then proves apparent-versus-actual damage and deliberate reveal through one melee exchange. Reuse existing damage type constants; the repository already declares physical and energy types, so this is not a request for a second damage-type taxonomy.
+
+Do not silently equate physical damage reduction with energy resistance, or choose a universal flat subtraction stat. Agree the initial rules subset, bypass behavior and derived data shape first. Derive real values through the existing AE/data-preparation architecture; keep masks in Secret AE/runtime presentation rather than adding dual real/apparent schema fields.
+
+**No NPC actor prerequisite is approved.** NPC actors remain assigned to [beta.6](../beta/phase-06-advanced-actors.md). Nor is a general player-actor Secret authoring/masking rollout approved here. First establish the smallest existing-actor fixture that can prove the behavior without those expansions. If that cannot be done cleanly, leave implementation blocked and return the dependency for discussion rather than pulling either project forward. The desired maskable derived stat is part of Story J's design, not a claim that all actor masking infrastructure is already complete.
+
+#### Initial trace evidence and implementation audit
+
+These are findings from an initial direct trace, not a completed end-to-end audit or implemented fixes. Paths below are relative to the repository root.
+
+| Boundary | Current evidence | Story J obligation |
+|----------|------------------|--------------------|
+| HUD selection | `src/documents/token/hud/tokenHudActions.mts` builds labels from action names and available BAB | Audit names, images and displayed BAB without changing ownership, equip eligibility, action costs or exact acting-token forwarding |
+| Melee previews and rolls | `src/documents/items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mts` builds attack/damage previews from real values and AE contribution history | Separate viewer-safe previews and labels from true mechanics; inspect critical rolls and dice flavor text as well as headline totals |
+| Formula contexts | `src/helpers/formulae/utils.mts` exposes prepared system data to formula resolution | Preserve true mechanical contexts; separately audit dialog autocomplete, resolved previews and user-facing errors for secret disclosure |
+| Defense dialog and evaluation | `src/documents/actors/creature/logic/buildRollDefenseDialogData.mts` and `src/dice/chatCards/resolutionCard/evaluateDefense.mts` read real AC/concealment and build detailed breakdowns | Preserve authoritative hit resolution while deciding what each dialog participant may see or edit |
+| Attack and resolution messages | `src/dice/chatCards/attackRollCard/attackRollCard.mts` and `src/dice/chatCards/resolutionCard/resolutionCard.mts` persist formulas/totals/breakdowns in flags and render them into content | Audit public content, flags, stored rolls, confirmation rolls, roll options, tooltips and dice integration; do not place private truth in a public message and rely on render-time hiding |
+| Apply/Reapply Damage | `resolutionCard.mts` calls `Creature.updateHP()`; its reversal currently writes HP directly | Integrate mitigation exactly once, synchronize masks, record actual per-field deltas, and reverse/reapply those deltas without recalculating from newly changed defenses |
+| HP calculation | `src/documents/actors/creature/Creature.mts` has an explicit DR integration TODO in `updateHP()` and no resistance fields were found in the creature model during this trace | Agree a single mitigation boundary and derived stat shape before editing; preserve temporary HP/nonlethal rules and avoid a card-only mitigation implementation |
+
+Protection of private chat data is a concrete requirement, not a promise of server-enforced secrecy for every replicated actor field. Document the actual Foundry client-data boundary during design. Do not claim that masking makes actor source data inaccessible to a client that already receives it.
+
+#### Open decisions — discuss before implementation
+
+- [ ] **Display and reveal UX**: Where do apparent damage, private actual damage and the GM reveal control appear? Does reveal disclose only the actual amount, the amount prevented, the resistance source, or selectable parts? Who receives it, and is it per target/per application? Preserve the original dice result as a roll record.
+- [ ] **Private data and authority**: Choose the private resolution record/message and public-summary relationship, who performs true resolution, and what happens when the GM is offline or a record cannot be resolved. Do not emit public truth as a fallback. Recheck permissions at execution, not only when rendering buttons.
+- [ ] **Initial damage rules**: Pick the minimal physical/energy type subset; distinguish damage reduction from energy resistance and agree bypass/stacking, critical, half-damage and nonlethal interactions. Check the selected rules against the SRD before finalizing acceptance numbers.
+- [ ] **Derived stat and mask shape**: Agree canonical field paths, AE contributions, sheet visibility, FormulaFamiliar exposure and how a mask represents an unknown or apparent resistance. Do not introduce persisted true/apparent pairs.
+- [ ] **Actor boundary**: Can a controlled fixture on the existing Creature/Character chain prove the design without new player-mask authoring UX or an NPC subtype? If not, explicitly keep implementation blocked for a scope decision.
+- [ ] **Apparent HP versus hidden mitigation**: Reconcile synchronized HP deltas with the requirement that the attacker initially believes the dice damage was dealt. Decide what attacker, target owner and GM each see in HP fields, bars, cards and damage events, before and after reveal.
+- [ ] **Other secret-dependent outcomes**: Define apparent-versus-real attack/confirmation totals, AC, concealment and hit/miss presentation after the damage-resistance example is agreed. Do not automatically generalize damage's apparent-number treatment to every roll.
+- [ ] **Replay, reveal and history**: Specify idempotent Apply/Reapply/Undo and reveal behavior, stale clicks, changing permissions/defenses, historical snapshots and linked/unlinked target identity. Decide how private/public records remain correlated without leaking private payloads.
+
+#### Proposed implementation order — gated, not started
+
+1. Resolve the display, authority and actor-boundary questions with the damage-resistance example. Record approved answers here; leave unresolved questions unchecked.
+2. Specify the minimal typed-damage/derived-resistance model and a multi-user proof fixture, including the private/public payload contract.
+3. Implement true mitigation and recorded HP/mask deltas at the agreed shared boundary. Integrate Apply/Reapply and Story I's reversal contract without applying mitigation twice.
+4. Wire public apparent presentation, private GM inspection and deliberate reveal for that fixture.
+5. Complete the HUD-to-damage audit above, extending the approved disclosure rules to the remaining melee surfaces. Preserve true combat mechanics and existing HUD permissions.
+
+#### Completion checklist
+
+- [ ] User has approved the required display, authority, damage-rules and actor-scope decisions; no NPC/player-mask expansion is implicit.
+- [ ] Supported typed damage and maskable derived resistance exist in runtime schema/types, AE preparation, localization and the agreed presentation surface.
+- [ ] A multi-user melee fixture demonstrates the approved apparent damage, private actual mitigation and a deliberate GM reveal, including per-target behavior.
+- [ ] Public message content, flags, stored roll payloads and rendered tooltips contain no unrevealed private combat payload; reload and rerender preserve this separation.
+- [ ] True calculations produce the same expected outcomes regardless of viewing user or display mask, and an invalid display mask never falls back to revealing truth.
+- [ ] Apply/Reapply/Undo preserve actual current/temp/nonlethal deltas and mask synchronization, including intervening HP changes; events do not disclose details beyond the agreed audience.
+- [ ] HUD, dialogs, critical confirmation, attack/resolution cards, damage application and reveal have targeted regression coverage, plus a real Foundry GM/player verification of the supported privacy boundary.
+- [ ] Record remaining limitations explicitly; do not mark the broader melee audit complete on the strength of the resistance example alone.
+
+**Verify (after design approval and implementation)**: In a controlled multi-user encounter, a player rolls the agreed example damage against an unrevealed resistance. The public record shows apparent damage, while the GM's private record shows mitigation and the actual HP change. The GM can reveal precisely the approved information. Other clients cannot recover unrevealed values from the public message's flags, rolls or content. Applying/reapplying/undoing the result preserves the recorded HP and mask deltas without duplicate mitigation. Repeat after reload and with the exact unlinked target token.
+
+---
+
 ### Parallelization
 
 ```
@@ -1922,6 +1997,9 @@ Story C (ActionDataModel + TWF)      ──┤
                                        └──────────────────────────────────────────────────────────────────► Story G (AoO)
 
 Story H (PreparationWarning alerts/warnings split — independent, scheduled last, no blocking relationships)
+Story J (secret-aware melee + resistance disclosure — follows D/E; implementation on hold for design approval)
 ```
 
 Spikes 1, 2, and 3 (already resolved above) were all fully independent research tasks — each only informed one downstream story's scope and never blocked outright. Stories B and C can start simultaneously (no shared dependency). Story A only needs B's action-economy shape, not the full movement integration (and optionally Spike 2's tracker-API verdict). Story D is the first vertical slice through the attack flow — trigger UI, execution engine, and the attack card all together, since none of the three has an independently-verifiable user story on its own. Story F (ranged/ammo) and Story G (AoO) both build on Story D once it lands. Story E (Roll Defense + resolution) follows Story D directly, and optionally consumes Spike 3's verdict for the AE-duration shape and Spike 1's verdict for the Concealment pre-fill. Story G additionally needs Story B for movement-provokes. Story H stands entirely apart from the dependency chain above — it's a self-contained severity-tier upgrade to the existing warnings system, deliberately scheduled last since nothing else in this phase requires it (Story C's auto-created actions just use today's single-tier warning behavior until it lands). Story I follows Story E — it needs the Resolution card's Undo button speced (so it has something to build, extract, and unify) and reuses poc.9's already-shipped `revertRecordedMovement()` pattern as its template; it does not block anything else in this phase.
+
+Story J depends on D/E's actual melee flow but is not implementation-ready. Its disclosure design and actor-scope gate come first; Story I and J must agree actual HP delta/reversal semantics before overlapping changes land. Neither NPC actors nor a broad player-mask rollout is an approved prerequisite.

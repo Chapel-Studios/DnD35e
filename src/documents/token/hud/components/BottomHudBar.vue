@@ -1,56 +1,62 @@
 <template>
   <div class="dnd35e-hud-actions">
-    <HudButton
-      data-action="togglePalette"
-      data-palette="weaponAttacks"
-      label-key="dnd35e.COMBAT.HUD.WeaponAttacks"
-      iconClass="fa-solid fa-swords"
-      tooltip-direction="UP"
-    />
-    <div class="palette palette-list" data-palette="weaponAttacks">
-      <p v-if="!weaponActions.length" class="palette-list-empty">
-        {{ localize('dnd35e.COMBAT.HUD.NoWeaponAttacks') }}
-      </p>
-      <a
-        v-for="action in weaponActions"
-        :key="`${action.itemId}.${action.actionId}`"
-        class="palette-list-entry"
-        :class="{ disabled: !action.enabled }"
-        data-action="attackAction"
-        :data-item-id="action.itemId"
-        :data-action-id="action.actionId"
-        :data-enabled="action.enabled"
-      >
-        <img :src="action.img" alt="">
-        <span>{{ action.label }}</span>
-      </a>
-    </div>
+    <template v-if="canShowWeaponAttacks">
+      <HudButton
+        data-action="togglePalette"
+        data-palette="weaponAttacks"
+        label-key="dnd35e.COMBAT.HUD.WeaponAttacks"
+        iconClass="fa-solid fa-swords"
+        tooltip-direction="UP"
+      />
+      <div class="palette palette-list" data-palette="weaponAttacks">
+        <p v-if="!weaponActions.length" class="palette-list-empty">
+          {{ localize('dnd35e.COMBAT.HUD.NoWeaponAttacks') }}
+        </p>
+        <a
+          v-for="action in weaponActions"
+          :key="`${action.itemId}.${action.actionId}`"
+          class="palette-list-entry"
+          :class="{ disabled: !action.enabled }"
+          data-action="attackAction"
+          :data-item-id="action.itemId"
+          :data-action-id="action.actionId"
+          :data-enabled="action.enabled"
+        >
+          <img :src="action.img" alt="">
+          <span>{{ action.label }}</span>
+        </a>
+      </div>
+    </template>
 
-    <HudButton
-      data-action="togglePalette"
-      data-palette="combatManeuvers"
-      label-key="dnd35e.COMBAT.HUD.CombatManeuvers"
-      iconClass="fa-solid fa-shield-halved"
-      tooltip-direction="UP"
-    />
-    <div class="palette palette-list" data-palette="combatManeuvers">
-      <a
-        v-for="maneuver in combatManeuvers"
-        :key="maneuver.id"
-        class="palette-list-entry"
-        :class="{ disabled: !maneuver.enabled }"
-        data-action="combatManeuver"
-        :data-maneuver-id="maneuver.id"
-        :data-enabled="maneuver.enabled"
-      >
-        <span>{{ maneuver.label }}</span>
-      </a>
-    </div>
+    <template v-if="canShowCombatManeuvers">
+      <HudButton
+        data-action="togglePalette"
+        data-palette="combatManeuvers"
+        label-key="dnd35e.COMBAT.HUD.CombatManeuvers"
+        iconClass="fa-solid fa-shield-halved"
+        tooltip-direction="UP"
+      />
+      <div class="palette palette-list" data-palette="combatManeuvers">
+        <a
+          v-for="maneuver in combatManeuvers"
+          :key="maneuver.id"
+          class="palette-list-entry"
+          :class="{ disabled: !maneuver.enabled }"
+          data-action="combatManeuver"
+          :data-maneuver-id="maneuver.id"
+          :data-enabled="maneuver.enabled"
+        >
+          <span>{{ maneuver.label }}</span>
+        </a>
+      </div>
+    </template>
   </div>
 </template>
 
 <script lang="ts">
   export type BottomHudBarProps = {
+    canShowWeaponAttacks: boolean;
+    canShowCombatManeuvers: boolean;
     weaponActions: TokenHudWeaponActionRow[];
     combatManeuvers: TokenHudCombatManeuverRow[];
   };

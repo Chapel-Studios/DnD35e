@@ -3,8 +3,6 @@ import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import { MASKED_EDIT_STRATEGY, type MaskedEditStrategy } from '@constants/fields.mjs';
 import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
-import { EFFECT_CHANGE_TARGET } from '@effects/baseActiveEffect/data/constants.mjs';
-import { resolveMaskedActiveEffectChangeValue } from '@effects/baseActiveEffect/logic/resolveChangeValue.mjs';
 import type { ActiveEffectDnd35e, EffectType } from '@effects/index.mjs';
 import { addOrUpdatePlayerEditMask, findOrCreatePlayerEditSecret } from '@effects/secret/playerEditSecret.mjs';
 import { getSchemaField } from '@fields/getSchemaField.mjs';
@@ -29,7 +27,7 @@ import type { ComputedRef, ShallowRef } from 'vue';
 import { computed, inject, provide, reactive, ref, shallowRef, triggerRef, unref } from 'vue';
 
 import { routeMaskedFieldEdit } from './maskedFieldRouting.mjs';
-import { buildMaskMapFromSecretEffects } from './maskMap.mjs';
+import { getDocumentMasks } from './maskMap.mjs';
 import type {
   FieldOverridesStoreActions,
   FieldOverridesStoreGetters,
@@ -318,19 +316,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     return schemaField?.options?.maskedEditStrategy ?? MASKED_EDIT_STRATEGY.PLAYER_SECRET_ROUTE;
   };
 
-  const documentMasks = computed((): Record<string, unknown> | undefined => {
-    const directMasks = (document.value as unknown as { _masks?: Record<string, unknown> })._masks;
-    if (directMasks) return directMasks;
-
-    if (document.value.documentName !== 'Actor') return undefined;
-
-    const effects = (document.value as unknown as { effects?: Iterable<ActiveEffectDnd35e> }).effects;
-    return buildMaskMapFromSecretEffects(
-      effects,
-      EFFECT_CHANGE_TARGET.ACTOR,
-      (effect, change) => resolveMaskedActiveEffectChangeValue(effect, change)
-    );
-  });
+  const documentMasks = computed(() => getDocumentMasks(document.value));
 
   const getViewAwareFieldValue = <T,>(fieldPath: string, getFromSource = false): T => {
     const plan = resolveViewAwareFieldPlan(
@@ -408,6 +394,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     allowForceEdit = false
   ): ComputedRef<boolean> =>
     computed(() => {
+      if (!renderModeStore.isSheetEditable.value) return false;
       if (!isEditMode.value && !allowForceEdit) return false;
       const currentEditability = isGM.value ? gmOnlyEditability : normalEditability;
       return fieldOverridesUtils.getIsEditable(
