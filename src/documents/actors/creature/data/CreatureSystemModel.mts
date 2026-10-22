@@ -195,6 +195,11 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     schema.init = useDnd35eField(derivedNumberField(0), { familiar: { aliases: ['initiative'] } });
 
     schema.bio = new SchemaField({
+      notes: useDnd35eField(new HTMLField({ required: false, nullable: false, blank: true, initial: '' })),
+      gmNotes: useDnd35eField(new HTMLField({ required: false, nullable: false, blank: true, initial: '' }), {
+        defaultVisibility: 'gmOnly',
+        defaultEditability: 'gmOnly',
+      }),
       gender: useDnd35eField(nullableBioField()),
       deity:  useDnd35eField(nullableBioField()),
       age:    useDnd35eField(nullableBioField()),
@@ -212,8 +217,6 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     schema.settings = new SchemaField({
       isPartyMember: new BooleanField({ initial: false }),
     });
-
-    schema.notes = useDnd35eField(new HTMLField({ required: false, nullable: false, blank: true }));
 
     schema.currency = useDnd35eField(new CurrencyField({ required: true }));
 

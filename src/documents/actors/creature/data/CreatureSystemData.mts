@@ -79,6 +79,8 @@ interface AlignmentData {
 // ─── Bio ─────────────────────────────────────────────────────────────────────
 
 interface BioSource {
+  notes:     string;
+  gmNotes:   string;
   gender:    string | null;
   deity:     string | null;
   age:       string | null;
@@ -98,7 +100,6 @@ interface SettingsData {
 
 interface CreatureSystemSourceProperties {
   bio:          BioSource;
-  notes:        string;
   settings:     SettingsData;
 }
 

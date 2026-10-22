@@ -2,6 +2,28 @@ import { CreatureSystemModel } from '@actors/creature/data/CreatureSystemModel.m
 import { computeEncumbranceTier, getEncumberedSpeed } from '@constants/carryingCapacity.mjs';
 import { describe, expect, it } from 'vitest';
 
+import { createSchemaTester } from '../../helpers/schemaTester.mjs';
+
+describe('CreatureSystemModel bio notes schema', () => {
+  const schema = createSchemaTester(CreatureSystemModel);
+
+  it.each(['bio.notes', 'bio.gmNotes'])('declares %s as HTML with an empty default', (path) => {
+    schema.assertFieldType(path, foundry.data.fields.HTMLField);
+    schema.assertDefault(path, '');
+  });
+
+  it('does not declare the former top-level notes field', () => {
+    expect(schema.field('notes')).toBeUndefined();
+  });
+
+  it('defaults GM notes visibility and editability to GM-only', () => {
+    expect(schema.assertField('bio.gmNotes').options).toMatchObject({
+      defaultVisibility: 'gmOnly',
+      defaultEditability: 'gmOnly',
+    });
+  });
+});
+
 /**
  * Unit tests for CreatureSystemModel.prepareDerivedData() ability modifier formula.
  *
@@ -388,5 +410,4 @@ describe('CreatureSystemModel AC/saves/init/BAB baseline derivation', () => {
     expect(model.abilities.str.mod).toBe(2); // 14 is +2, not the stale 999
   });
 });
-
 

@@ -69,7 +69,8 @@ const useCreatureStore = <TDocument extends Creature>(
     alignmentMoral,
     alignmentLabel: computed(() => buildAlignmentLabel(alignmentLaw.value, alignmentMoral.value)),
 
-    notes:          computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
+    notes:          computed(() => getViewAwareFieldValue<string>('system.bio.notes') ?? ''),
+    gmNotes:        computed(() => getViewAwareFieldValue<string>('system.bio.gmNotes') ?? ''),
     level:          computed(() => document.value.system.level ?? 1),
     isPartyMember:  computed(() => getViewAwareFieldValue<boolean>('system.settings.isPartyMember') ?? false),
     languages:      computed(() => [...(getViewAwareFieldValue<string[]>('system.bio.languages') ?? [])]),
@@ -148,6 +149,7 @@ interface CreatureGetters {
   alignmentMoral: ComputedRef<MoralAxis | null>;
   alignmentLabel: ComputedRef<string | null>;
   notes:          ComputedRef<string>;
+  gmNotes:        ComputedRef<string>;
   level:          ComputedRef<number>;
   isPartyMember:  ComputedRef<boolean>;
   languages:      ComputedRef<string[]>;

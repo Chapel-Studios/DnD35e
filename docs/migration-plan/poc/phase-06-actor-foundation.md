@@ -68,7 +68,9 @@ Current state:
 - Attributes/Bio/Settings/Effects tabs exist and are usable scaffolds.
 - Combat tab exists with combat scaffolding components.
 - Inventory tab is implemented: grouped item list, equip/carry toggles, container assignment, and live carried-weight/encumbrance aggregation (Story D delivered).
-- Notes and Bio are currently split; Phase 6 Story C merges them into one tab in the first-pass cleanup.
+- `CharacterDescriptionTab` inherits `CreatureDescriptionTab`; its Bio surface renders `SessionNotes` and `GmNotes`.
+
+Current Bio notes implementation: `CreatureSystemModel` stores `notes` and `gmNotes` as HTML fields under `system.bio.notes` and `system.bio.gmNotes`; the former top-level `notes` field is removed. `CreatureStore` exposes both through view-aware getters. `GmNotes` wraps `RichTextEditorFormGroup` in the existing `DmControl`, and the schema defaults `gmNotes` visibility and editability to `gmOnly`. No existing actors means no migration is required. Verification: 72 targeted unit tests passed, including schema shape and GM/nonGM character editor wiring; `npm run typecheck` passed.
 
 Key files:
 

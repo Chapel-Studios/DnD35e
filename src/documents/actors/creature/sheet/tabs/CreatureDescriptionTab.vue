@@ -12,6 +12,7 @@
     <template #append>
       <slot name="append" />
       <SessionNotes />
+      <GmNotes />
       <slot name="footer" />
     </template>
   </ActorDescriptionTab>
@@ -20,6 +21,7 @@
 <script setup lang="ts">
   import ActorDescriptionTab from '@actors/baseActor/sheet/tabs/ActorDescriptionTab.vue';
 
+  import GmNotes from '../components/GmNotes.vue';
   import SessionNotes from '../components/SessionNotes.vue';
   import IdentitySection from './bio/IdentitySection.vue';
   import PhysicalSection from './bio/PhysicalSection.vue';
