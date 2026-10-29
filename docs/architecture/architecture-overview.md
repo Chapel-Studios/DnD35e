@@ -163,7 +163,21 @@ Silver (+#self.hardness AC)     → "Silver (+5 AC)"
 `FormulaField` is an `EmbeddedDataField<FormulaData>` that stores:
 - `formula` — the user-authored template string
 - `resolvedValue` — cached resolution result
-- `expectedType` — `'string'` or `'number'`
+- `expectedType` — `'string'`, `'number'`, `'boolean'`, or `'rollFormula'`
+
+Action models distinguish serialized `*SourceData` from live `*Data` shapes:
+`action._source.attackFormula` is a `FormulaDataSource` POJO, while
+`action.attackFormula` is a live `FormulaData` (or a structurally compatible POJO
+after an ActiveEffect replacement). Each action layer narrows its own `_source`.
+Weapon property `SetField`s likewise use arrays in source data and `Set`s at runtime.
+
+`FormulaData.resolveSource<string>(source, contexts)` returns `string | null`.
+The optional result type is a caller assertion, not runtime coercion; it must
+agree with the source's `expectedType` and any fallback. Without a type argument,
+the result remains `string | number | boolean | null`. Number-targeted formulas
+may return unrolled dice text, so use `string | number` for those callers.
+An empty formula returns the fallback (default `''`); use a matching fallback
+such as `false` when explicitly requesting a boolean result.
 
 It also carries **context declarations** — metadata telling the system which additional documents are available for this formula:
 
@@ -186,6 +200,30 @@ It also carries **context declarations** — metadata telling the system which a
 3. `Dnd35eDocument._preCreate()` resolves formulas on embedded document creation so compendium effects persist resolved names immediately
 
 ### UI Components
+
+Roll-dialog callers build a fresh `FamiliarSchema` (including `self` and all additional
+contexts) before each `DialogConfig.roll(data, formulaContext, familiarSchema)` call.
+The dialog passes the live document map and schema through the required
+`RollDialogContext.formulaContext` and `RollDialogContext.familiarSchema`; the base store
+exposes these unchanged. Leaf stores must not build replacement
+schemas. Formula inputs and resolution both consume the supplied schema;
+`FormulaData.resolveSource` accepts it as its final argument to avoid rebuilding it.
+
+Roll dialogs share `useRollBreakdown`: immutable contributions, canonical situational
+formula text, and condition-generated contributions form one authoritative modifier list.
+Previews, actual rolls, and chat snapshots project that list. A prepared statistic
+(save, initiative, AC, or weapon formula) contributes its already-stacked value once;
+its nested `breakdown` is display-only effect history, including ignored entries and
+non-additive operations. Never sum that history to reconstruct the prepared value.
+Damage snapshots also preserve per-source critical-dice exemptions; collapsed preview
+formulas are never used as actual damage formulas.
+
+Melee Two-Weapon Fighting is an explicit combat modifier. An absent combatant choice
+autodetects two equipped weapons; `false` is an explicit opt-out and `true` an opt-in.
+Confirmed choices remain editable and persist until the start of that combatant's next
+turn, when reset removes the flag. Without TWF, an attack spends BAB from both hand
+pools; with TWF, each hand retains its independent pool. The card records the actual
+pool spend so Undo can refund the same pool(s).
 
 All three components share the FormulaFamiliar infrastructure through a `useFamiliar()` composable that owns reactive autocomplete state, keyboard navigation, and dropdown positioning. Each consumer decides *when* to invoke the Familiar — FormulaFormGroup triggers on `#`, AspectPicker triggers on every keystroke.
 

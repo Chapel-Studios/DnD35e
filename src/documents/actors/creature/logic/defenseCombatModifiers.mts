@@ -12,7 +12,7 @@ import {
   FLAT_FOOTED_CONDITION_ID,
   TOTAL_DEFENSE_CONDITION_ID,
 } from '@constants/conditions.mjs';
-import type { CombatModifierToggle } from '@source/rollDialogs/WeaponAttackRollDialog/types.mjs';
+import type { DefenseModifierToggle } from '@source/rollDialogs/RollDefenseDialog/types.mjs';
 
 /**
  * Combat Status toggle ids whose flat SRD bonus is already baked into the defender's
@@ -25,7 +25,7 @@ import type { CombatModifierToggle } from '@source/rollDialogs/WeaponAttackRollD
  */
 const BAKED_AC_CONDITION_IDS = [CHARGED_CONDITION_ID, TOTAL_DEFENSE_CONDITION_ID, DEFENSIVE_FIGHTING_CONDITION_ID] as const;
 
-const createDefenseCombatModifiers = (actor: ACTORS_DND35E): CombatModifierToggle[] => {
+const createDefenseCombatModifiers = (actor: ACTORS_DND35E): DefenseModifierToggle[] => {
   const localize = (key: string) => game.i18n.localize(`dnd35e.COMBAT.CombatModifiers.${key}`);
 
   return [

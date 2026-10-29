@@ -225,6 +225,8 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       meleeToHitBonus: useDnd35eField(derivedNumberField(0)),
       rangedToHitBonus: useDnd35eField(derivedNumberField(0)),
       rangedTouchToHitBonus: useDnd35eField(derivedNumberField(0)),
+      twoWeaponFightingModifierMainHand: useDnd35eField(derivedNumberField(0)),
+      twoWeaponFightingModifierOffHand: useDnd35eField(derivedNumberField(0)),
     });
 
     // Actor-side stub bag (poc.10 §10.4) — live-merged one entry at a time by each

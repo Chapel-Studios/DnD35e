@@ -14,6 +14,8 @@
  * @module
  */
 import { ACTION_ECONOMY, ACTION_ECONOMY_TYPES } from '@constants/actionEconomy.mjs';
+import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
+import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
 import type { PreparationWarningHost } from '@documents/document/preparationWarnings.mjs';
 import { pushPreparationWarning } from '@documents/document/preparationWarnings.mjs';
 import { EFFECT_CHANGE_PHASE, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
@@ -25,7 +27,8 @@ import type { ITEMS_DND35E } from '@items/itemTypes.mjs';
 
 import { ACTION_TRIGGER, ACTION_TRIGGERS, ACTION_TYPE, ACTION_TYPES } from '../actions/constants.mjs';
 import type { ActionResult, IAction, UseActionContext } from '../actions/types.mjs';
-import type { ActionSourceData } from './ActionSourceData.mjs';
+import type { ActionData, ActionSourceData } from './ActionSourceData.mjs';
+import { participantToken } from './logic/actionParticipant.mjs';
 
 const {
   fields: {
@@ -54,7 +57,7 @@ const {
  * of every kind's fields piling onto one shared `ActionResult`.
  */
 abstract class ActionDataModel<TResult extends ActionResult = ActionResult> extends foundry.abstract.DataModel {
-  declare name: FormulaData;
+  declare readonly _source: ActionSourceData;
   declare abstract isTargetRequired: boolean;
   declare maxTargets: number | null;
 
@@ -113,6 +116,14 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
   /** The weapon this action is embedded on. */
   get item(): ITEMS_DND35E | undefined {
     return this.parent?.parent as ITEMS_DND35E | undefined;
+  }
+
+  protected getCombatant(context: UseActionContext): CombatantDnd35e<CombatDnd35e> | undefined {
+    const token = participantToken(context.actor);
+    
+    return token
+      ? game.combat?.getCombatantsByToken(token.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
+      : undefined;
   }
 
   /**
@@ -254,7 +265,6 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
     // const { enforceActionTargetMinMax } = useCombatSettings();
     const enforceActionTargetMinMax = false; // Placeholder until combat settings are integrated
 
-    // todo add toggle for enforcing target min/max requirements
     if (!context.target?.length && this.isTargetRequired) {
       if (enforceActionTargetMinMax) {
         result.cancelled = true;
@@ -277,18 +287,14 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
 
       result.warnings!.push(game.i18n.format('dnd35e.COMBAT.TooManyTargets', { max: this.maxTargets }));
     }
-
-    // Placeholder logic for determining if the action can be executed.
+    
     return result;
   }
 
   protected abstract _executeCheck(context: UseActionContext): Promise<TResult>;
 
   /**
-   * Public entry point the execution engine calls — never attack-specific logic directly.
-   * Story C: validates target count and (for melee actions with no `range` block) the
-   * attacker/target reach, then returns early. Story D fills in the Attack Roll Dialog,
-   * roll resolution, and chat card (see phase-10-basic-combat.md §10.7).
+   * Public entry point the execution engine calls — should never be overwritten by subclasses.
    */
   async executeAction(context: UseActionContext): Promise<TResult> {
     const preCheckResult = this._canExecute(context);
@@ -316,12 +322,12 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
    * step (e.g. Story E's Roll Defense Dialog + Resolution card) is fully self-contained,
    * so `_continue()`'s own return value is the final result.
    */
-  async continueAction(stepId: string, message: unknown, targetId: string): Promise<TResult> {
+  async continueAction(stepId: string, message: ChatMessage, targetId: string): Promise<TResult> {
     return this._continue(stepId, message, targetId);
   }
 }
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- TResult must match the class's type param for declaration merging.
-interface ActionDataModel<TResult extends ActionResult = ActionResult> extends foundry.abstract.DataModel, ActionSourceData {}
+interface ActionDataModel<TResult extends ActionResult = ActionResult> extends foundry.abstract.DataModel, ActionData {}
 
 export {
   ActionDataModel,

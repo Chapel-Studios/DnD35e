@@ -149,6 +149,8 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
     meleeToHitBonus: number;
     rangedToHitBonus: number;
     rangedTouchToHitBonus: number;
+    twoWeaponFightingModifierMainHand: number;
+    twoWeaponFightingModifierOffHand: number;
   };
   /**
    * Actor-side stub bag (poc.10 §10.4), keyed by the source `ActionDataModel`'s own

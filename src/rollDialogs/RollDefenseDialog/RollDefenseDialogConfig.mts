@@ -3,6 +3,8 @@
  * the Attack Roll Dialog, opened from `ActionDataModel#continue()`'s `'damage'` step (a
  * later Story E task; this dialog is standalone/not yet wired to a caller).
  */
+import type { DocumentContext } from '@helpers/formulae/index.mjs';
+import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import type { Component } from 'vue';
 
 import { useRollDialogConfigBase } from '../RollDialog/RollDialogConfigBase.mjs';
@@ -36,8 +38,12 @@ class RollDefenseDialogConfig extends useRollDialogConfigBase<RollDefenseDialogD
   /**
    * Open the dialog and resolve once the user submits, cancels, or closes it.
    */
-  static async roll(data: RollDefenseDialogData): Promise<RollDefenseDialogResult | null> {
-    const dialog = new RollDefenseDialogConfig(data);
+  static async roll(
+    data: RollDefenseDialogData,
+    formulaContext: Record<string, DocumentContext>,
+    formulaContexts: FamiliarSchema
+  ): Promise<RollDefenseDialogResult | null> {
+    const dialog = new RollDefenseDialogConfig(data, formulaContext, formulaContexts);
     void dialog.render(true);
     return dialog.resultPromise;
   }

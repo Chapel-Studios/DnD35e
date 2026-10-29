@@ -1,16 +1,26 @@
+import type { RollMode } from '@common/constants.mjs';
 import { DEX, STR } from '@constants/abilities.mjs';
-import { type Size,SIZE_REACH } from '@constants/sizes.mjs';
+import type { WieldedHand } from '@constants/equipmentSlots.mjs';
+import { BOTH_HANDS_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
+import type { Size } from '@constants/sizes.mjs';
+import { SIZE_REACH } from '@constants/sizes.mjs';
 import { isWithinReach } from '@documents/token/logic/reach.mjs';
+import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
+import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 import { ACTION_TYPE, ACTION_TYPES } from '@items/baseItem/actions/constants.mjs';
 import { participantActor, participantName, participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import type { ActionResult } from '@items/baseItem/actions/types.mjs';
+import { MeleeAttackRollDialogConfig } from '@source/rollDialogs/MeleeAttackRollDialog/MeleeAttackRollDialogConfig.mjs';
+import { buildAttackerSelfAlias } from '@source/rollDialogs/WeaponAttackRollDialog/formulaContexts.mjs';
+import type { WeaponAttackRollDialogData, WeaponAttackRollDialogResult, WeaponDamageRollBreakdownData, WeaponRollBreakdownData } from '@source/rollDialogs/WeaponAttackRollDialog/types.mjs';
 
+import { createMeleeCombatModifiers } from '../WeaponAttack/combatModifiers.mjs';
 import type { WeaponAttackActionResult } from '../WeaponAttack/types.mjs';
 import type { UseWeaponAttackContext } from '../WeaponAttack/types.mjs';
 import type { FormulaContext } from '../WeaponAttack/WeaponAttackDataModel.mjs';
 import { WeaponAttackDataModel } from '../WeaponAttack/WeaponAttackDataModel.mjs';
-import { MELEE_WEAPON_PROPERTIES, MELEE_WEAPON_PROPERTY, type MeleeWeaponProperty } from './constants.mjs';
-import type { MeleeAttackSourceData } from './MeleeAttackSourceData.mjs';
+import { MELEE_WEAPON_PROPERTIES, MELEE_WEAPON_PROPERTY } from './constants.mjs';
+import type { MeleeAttackData, MeleeAttackSourceData } from './MeleeAttackSourceData.mjs';
 
 const {
   fields: {
@@ -21,7 +31,8 @@ const {
 } = foundry.data;
 
 class MeleeWeaponAttack extends WeaponAttackDataModel {
-  declare properties: Set<MeleeWeaponProperty>;
+  declare readonly _source: MeleeAttackSourceData;
+  declare properties: MeleeAttackData['properties'];
 
   static override defineSchema(): Record<string, any> {
     const schema = super.defineSchema();
@@ -70,6 +81,8 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
   }
 
   protected override async _executeCheck(context: UseWeaponAttackContext): Promise<WeaponAttackActionResult> {
+    // todo: this requires a feat too, all light weapons are finesse weapons as well,
+    // this needs to autocheck in the ui when the attack is auto created for light weapons
     context.attackAbility = this.properties?.has(MELEE_WEAPON_PROPERTY.FINESSE)
       ? DEX
       : STR;
@@ -79,11 +92,48 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
     return superResult;
   }
 
-  // Melee always adds the wield-mode STR term to damage — no property opt-in needed.
-  protected override _includeAttackAbilityTerms(context: UseWeaponAttackContext, formulaContext: FormulaContext): string {
-    return this._resolveAttackAbilityTerm(context, formulaContext);
+  protected override _getDamageAbilityWieldModifier(hand: WieldedHand): number {
+    return hand === BOTH_HANDS_EQUIP_SLOT
+      ? 1.5
+      : super._getDamageAbilityWieldModifier(hand);
   }
 
+  protected override async _resolveAttackRollDialog(
+    context: UseWeaponAttackContext,
+    formulaContext: FormulaContext,
+    targetToken: TokenDnd35e | undefined,
+    attackRoll: WeaponRollBreakdownData,
+    damageRoll: WeaponDamageRollBreakdownData,
+    resolvedName: string | null,
+    weaponNonLethalDefault: boolean,
+    nonLethalNoPenalty: boolean
+  ): Promise<WeaponAttackRollDialogResult | null> {
+    const combatModifierToggles = createMeleeCombatModifiers(context.actor, targetToken, weaponNonLethalDefault, nonLethalNoPenalty, this.item);
+    
+    // const rollAttackToHit = game.i18n.localize('dnd35e.ROLL.RollAttackToHit');
+    const title = resolvedName
+      ?? game.i18n.format('dnd35e.ROLL.RollAttackTitle', { weapon: this.item?.name });
+
+    const dialogData: WeaponAttackRollDialogData = {
+      title,
+      rollMode: game.settings.get('core', 'messageMode') as RollMode,
+      actor: participantActor(context.actor),
+      target: context.target?.map(participantActor) || null,
+      targetToken: targetToken ?? null,
+      wieldedHand: context.wieldedHand,
+      handBab: context.handBab,
+      attackRoll,
+      damageRoll,
+      combatModifierToggles,
+    };
+
+    const formulaContexts = FormulaData.buildFamiliarSchema(formulaContext, [], buildAttackerSelfAlias());
+    if (formulaContexts.target) {
+      formulaContexts.target = { ...formulaContexts.target, display: game.i18n.localize('dnd35e.ROLL.Defender') };
+    }
+    return await MeleeAttackRollDialogConfig.roll(dialogData, formulaContext, formulaContexts);
+  }
+  
   /**
    * Melee reach validation (§10.5/§10.10) — only applies to actions with no `range`
    * block (ranged/thrown actions use range increments instead, handled by Story D/F).
@@ -127,7 +177,7 @@ class MeleeWeaponAttack extends WeaponAttackDataModel {
   }
 }
 interface MeleeWeaponAttack extends WeaponAttackDataModel,
-  Omit<MeleeAttackSourceData, 'attackFormula' | 'damageFormula' | 'name'> {}
+  MeleeAttackData {}
 
 export {
   MeleeWeaponAttack,

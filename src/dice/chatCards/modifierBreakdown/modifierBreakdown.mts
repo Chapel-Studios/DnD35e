@@ -4,6 +4,7 @@
  *
  * @module
  */
+import { getDisplayModifiers } from '../../rollModifiers.mjs';
 import type { RollModifier } from '../../types.mjs';
 import modifierBreakdownTemplateSource from './modifier-breakdown.hbs?raw';
 
@@ -18,7 +19,7 @@ function formatSigned(value: number): string {
  * sheet (see `buildOverridesModifierList`) — ignored entries render with their `stackReason`. */
 function buildModifierBreakdownHtml(modifierList: RollModifier[]): string {
   return modifierBreakdownTemplate({
-    modifiers: modifierList.map(modifier => ({
+    modifiers: getDisplayModifiers(modifierList).map(modifier => ({
       label: modifier.label,
       signed: modifier.formula ?? formatSigned(modifier.value),
       bonusTypeLabel: modifier.bonusTypeLabel,
@@ -38,7 +39,7 @@ function buildModifierBreakdownHtml(modifierList: RollModifier[]): string {
  */
 function buildRawBreakdownHtml(rows: RollModifier[]): string {
   return modifierBreakdownTemplate({
-    modifiers: rows.map(row => ({
+    modifiers: getDisplayModifiers(rows).map(row => ({
       label: row.label,
       signed: String(row.value),
       bonusTypeLabel: row.bonusTypeLabel,

@@ -1,110 +1,63 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
-import type { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';
-import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
-import type { RollModifier } from '@source/dice/index.mjs';
+import type { RollModifier, WeaponDamageRollModifier } from '@source/dice/types.mjs';
 
-import type { MeleeAttackRollDialogResult } from '../MeleeAttackRollDialog/types.mjs';
-import type { RangedAttackRollDialogResult } from '../RangedAttackRollDialog/types.mjs';
-import type { RollDialogData, RollDialogResult } from '../RollDialog/types.mjs';
+import type { RollBreakdownData, RollDialogContext, RollDialogData, RollDialogResult } from '../RollDialog/types.mjs';
 
-/**
- * A single attack-roll or defense-roll combat modifier (poc.10 Story D/E, §10.7) — Attack
- * Type (charge/defensiveFighting/nonLethal), Combat Status (flanking/highGround/squeezing/
- * prone/proficient on the Attack dialog; charged/totalDefense/defensiveFighting/flatFooted
- * on the Roll Defense dialog), and Overrides (applyHalfDamage/ignoreCriticalHit, Roll
- * Defense dialog only) toggles all share this shape. `label`/`tooltip` are already
- * localized by the caller (`executeAction()`/the defense-dialog data builder), same
- * convention as `RollDialogData.title`/`baseLabel`. `checked`'s effect on `value` is
- * inverted/bypassed for a few ids (`proficient`, `applyHalfDamage`, `ignoreCriticalHit`) —
- * these are read back by id directly rather than folded into the generic checked-sum, so
- * they carry `value: 0`.
- */
-interface CombatModifierToggle {
+interface ModifierToggle {
   id: string;
-  group: 'attackType' | 'combatStatus' | 'overrides';
+  group: string;
   label: string;
   tooltip: string;
-  value: number;
   checked: boolean;
-  /** Whether this toggle's initial `checked` state came from geometry/status detection vs. a fixed default. */
-  autoDetected: boolean;
+  wasAutoDetected: boolean;
+}
+
+interface WeaponAttackModifierToggle extends ModifierToggle {
+  group: 'attackType' | 'combatStatus';
+  createRollModifiers: (checked: boolean, hand: WieldedHand) => {
+    attackModifiers: RollModifier[];
+    damageModifiers: WeaponDamageRollModifier[];
+  };
+}
+
+interface WeaponRollBreakdownData extends Omit<RollBreakdownData, 'immutableModifiers'> {
+  immutableModifiersByHand: Record<WieldedHand, RollModifier[]>;
+}
+
+interface WeaponDamageRollBreakdownData extends WeaponRollBreakdownData {
+  immutableModifiersByHand: Record<WieldedHand, WeaponDamageRollModifier[]>;
 }
 
 interface WeaponAttackRollDialogData extends RollDialogData {
   target: ACTORS_DND35E[] | null;
-  /** The specific placed token `target[0]` resolves to, if known — see `WeaponAttackRollDialogStore`'s `target.name`. */
   targetToken?: TokenDnd35e | null;
-  /**
-   * The weapon making the attack (poc.10 Story D) — additional FormulaFamiliar context
-   * (`#item`/`#weapon`) for `attackSituationalModifier`/`damageSituationalModifier`,
-   * mirroring `WeaponAttackDataModel._executeCheck()`'s own `formulaContext`.
-   */
-  item: Weapon;
-  /**
-   * This attack's own action DataModel (poc.10 Story D) — additional FormulaFamiliar
-   * context (`#thisAttack`, e.g. `$scaleDamage(...)`) for the situational modifier formulas.
-   */
-  thisAttack: ActionDataModel;
-  /**
-   * A formula folded into the attack roll only (poc.10 Story D) — the weapon-attack
-   * dialogs' analog of `SavingThrowRollDialogData.situationalModifier`, renamed to
-   * disambiguate from `damageSituationalModifier` below.
-   */
-  attackSituationalModifier: string;
-  /**
-   * Attack-roll-only combat modifiers (poc.10 Story D) — undefined for saves/initiative.
-   * Round-trips through `WeaponAttackRollDialogResult` with each toggle's final `checked` state.
-   */
-  combatModifierToggles: CombatModifierToggle[];
-  /**
-   * A formula field folded only into the resolved damage formula once damage is actually
-   * rolled — never into the attack roll itself (poc.10 Story D, §10.7). Undefined for
-   * saves/initiative.
-   */
-  damageSituationalModifier?: string;
-  /** Wield Mode (poc.10 Story D, §10.3) — auto-filled by `detectHand()`, always overridable. */
-  // wieldMode?: WieldedHand;
-  /** WieldedHand select (poc.10 Story D, §10.3) — auto-filled, always overridable. */
-  wieldModeFromEquippedSlots: WieldedHand;
-  /** Raw BAB pool per hand, snapshotted pre-dialog — feeds the Wield Mode toggle's per-option `(+N)` label. */
+  attackRoll: WeaponRollBreakdownData;
+  damageRoll: WeaponDamageRollBreakdownData;
+  combatModifierToggles: WeaponAttackModifierToggle[];
+  wieldedHand: WieldedHand;
   handBab: Record<WieldedHand, number>;
-  /** Full expected to-hit bonus (BAB + ability + size + TWF) per hand — lets the dialog's base-total preview stay live as Wield Mode changes, mirrors `RollDialogData.baseTotal`'s single-value shape but keyed per hand. */
-  baseTotalByHand: Record<WieldedHand, number>;
-  /** Labeled breakdown of `baseTotalByHand`, per hand — mirrors `RollDialogData.baseModifierList`'s convention, swapped out by `WeaponAttackRollDialogStore`'s Wield Mode setter alongside `baseTotalByHand`. */
-  baseModifierListByHand: Record<WieldedHand, RollModifier[]>;
-  /** Damage box's base-row label (poc.10 Story D) — mirrors `RollDialogData.baseLabel`'s convention, but damage-specific since only weapon attacks have a damage preview row. */
-  damageLabel: string;
-  /** Damage box's base-row total (poc.10 Story D) — pre-dialog flat preview (dice terms excluded, see `resolveFormulaNumber`'s doc), mirrors `RollDialogData.baseTotal`. */
-  damageTotal: number;
-  /** Labeled breakdown of `damageTotal` (e.g. the wield-mode STR term) — mirrors `RollDialogData.baseModifierList`'s convention for the damage box. */
-  damageBaseModifierList: RollModifier[];
-  /** Dice-inclusive damage-box headline (weapon dice + evaluated STR flat, dice-collapsed) before any situational modifier — the live preview's data-fidelity twin of `_buildDamageSnapshot()`'s `expectedDamageFormula`. */
-  damageBaseFormula: string;
 }
 
 interface WeaponAttackRollDialogResult extends RollDialogResult {
-  /**
-   * The resolved `WeaponAttackRollDialogData.attackSituationalModifier` term (dice terms kept
-   * intact, e.g. `1d6`), combined with any checked combat-modifier toggles' flat sum.
-   */
-  attackSituationalModifier: string;
-  /** Present only when `WeaponAttackRollDialogData.combatModifiers` was provided — see that field's doc. */
-  combatModifiers: CombatModifierToggle[];
-  /**
-   * The resolved damage-situational formula (FormulaFamiliar tokens replaced, dice terms kept
-   * intact for later evaluation) — present only when `WeaponAttackRollDialogData.damageSituationalModifier` was provided.
-   */
-  damageSituationalModifier: string;
   wieldMode: WieldedHand;
+  attackModifiers: RollModifier[];
+  damageModifiers: WeaponDamageRollModifier[];
+  /** Choices with non-numeric consequences, including zero-penalty nonlethal attacks. */
+  combatModifiers: Pick<ModifierToggle, 'id' | 'checked'>[];
 }
 
-type AttackRollDialogResult = MeleeAttackRollDialogResult | RangedAttackRollDialogResult;
+type AttackRollDialogResult = WeaponAttackRollDialogResult;
+type WeaponAttackRollDialogContext = RollDialogContext<WeaponAttackRollDialogData, WeaponAttackRollDialogResult>;
 
 export type {
   AttackRollDialogResult,
-  CombatModifierToggle,
+  ModifierToggle,
+  WeaponAttackModifierToggle,
+  WeaponAttackRollDialogContext,
   WeaponAttackRollDialogData,
   WeaponAttackRollDialogResult,
+  WeaponDamageRollBreakdownData,
+  WeaponRollBreakdownData,
 };

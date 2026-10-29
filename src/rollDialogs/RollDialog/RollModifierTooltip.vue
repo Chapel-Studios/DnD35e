@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="modifiers.length"
+    v-if="displayModifiers.length"
     ref="iconRef"
     class="roll-modifier-tooltip"
     @pointerenter="openTooltip"
@@ -15,7 +15,7 @@
         :style="popupStyle"
       >
         <div
-          v-for="(modifier, index) in modifiers"
+          v-for="(modifier, index) in displayModifiers"
           :key="index"
           class="roll-modifier-entry"
           :class="{ 'is-ignored': modifier.isIgnored }"
@@ -36,13 +36,15 @@
 
 <script setup lang="ts">
   import type { RollModifier } from '@source/dice/index.mjs';
-  import { nextTick, ref } from 'vue';
+  import { getDisplayModifiers } from '@source/dice/rollModifiers.mjs';
+  import { computed, nextTick, ref } from 'vue';
 
   import { formatBonus } from './RollDialogStore.mjs';
 
-  defineProps<{
+  const props = defineProps<{
     modifiers: RollModifier[];
   }>();
+  const displayModifiers = computed(() => getDisplayModifiers(props.modifiers));
 
   // Same Teleport-to-body popup pattern as `HasActiveEffectsNotification` (see that
   // component's doc) — escapes the dialog window's own stacking context/overflow clipping.

@@ -11,44 +11,32 @@
 </template>
 
 <script setup lang="ts">
-  import { buildDocumentFamiliar } from '@helpers/formulae/registry.mjs';
   import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
   import { useFormulaEditor } from '@helpers/formulae/useFormulaEditor.mjs';
   import FamiliarOverlayInput from '@vc/fields/formGroups/FamiliarOverlayInput.vue';
-  import { computed, inject, ref } from 'vue';
-
-  import type { RollDialogStore } from './RollDialogStore.mjs';
-  import { RollDialogStoreSymbol } from './RollDialogStore.mjs';
+  import { computed, ref } from 'vue';
 
   /**
    * Reusable formula input for the roll dialogs (poc.10 Story D) — situational modifier,
    * damage bonus, etc. Similar in spirit to `FormulaFormGroup` (the sheet-side equivalent),
-   * but simpler: no `FormGroup`/field-permission wrapper, and injects the roll dialog store
-   * directly for the actor document and `registerPreRollCommit` instead of a
-   * `DocumentSheetStore`. Defaults to a `#self`-only FormulaFamiliar context (the actor);
-   * callers with richer context needs (e.g. the weapon-attack dialogs' `item`/`thisAttack`/
-   * `target`, poc.10 Story D) pass a full replacement schema via the `contexts` prop.
+   * but simpler: no `FormGroup`/field-permission wrapper. The canonical formula is committed
+   * through `v-model` when the editor blurs or accepts the input.
+   * Callers must supply the full FormulaFamiliar schema, including `self`, built from
+   * the same context map used to resolve the formula.
    */
   const props = defineProps<{
     id: string;
     /** Localization key for the field label. */
     label: string;
-    /**
-     * Full FormulaFamiliar schema override. When provided, replaces the default
-     * actor-only `#self` context entirely (the override is expected to already include
-     * its own `self`/`actor`-equivalent entry).
-     */
-    contexts?: FamiliarSchema;
+    /** Full FormulaFamiliar schema, including the rolling document's `self` context. */
+    schema: FamiliarSchema;
     /** Localization key for the input's placeholder text (e.g. Roll Defense's Concealment field, poc.10 Story E). */
     placeholder?: string;
   }>();
 
   const modelValue = defineModel<string>({ required: true });
 
-  const { actor: { document: actorDocument }, actions } = inject(RollDialogStoreSymbol) as RollDialogStore;
-
-  const defaultContexts = computed<FamiliarSchema>(() => buildDocumentFamiliar(actorDocument.value));
-  const contexts = computed<FamiliarSchema>(() => props.contexts ?? defaultContexts.value);
+  const contexts = computed(() => props.schema);
 
   const overlayRef = ref<InstanceType<typeof FamiliarOverlayInput>>();
   const getInputElement = (): HTMLInputElement | undefined => overlayRef.value?.getInputElement();
@@ -79,8 +67,6 @@
     getDropdownMenuElement,
     onCommit: (canonical) => { modelValue.value = canonical; },
   });
-
-  actions.registerPreRollCommit(onBlur);
 
   // Mirrors FormulaFormGroup's "Available Contexts: [...]" hint — this field has no
   // FormGroup wrapper to generate it for us.

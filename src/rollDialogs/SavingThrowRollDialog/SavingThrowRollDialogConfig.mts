@@ -3,6 +3,8 @@
  * sibling of `InitiativeRollDialogConfig` with no extra fields; see that class's doc for the shared
  * shape/rationale.
  */
+import type { DocumentContext } from '@helpers/formulae/index.mjs';
+import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import type { Component } from 'vue';
 
 import { useRollDialogConfigBase } from '../RollDialog/RollDialogConfigBase.mjs';
@@ -33,8 +35,12 @@ class SavingThrowRollDialogConfig extends useRollDialogConfigBase<SavingThrowRol
   /**
    * Open the dialog and resolve once the user rolls, cancels, or closes it.
    */
-  static async roll(data: SavingThrowRollDialogData): Promise<SavingThrowRollDialogResult | null> {
-    const dialog = new SavingThrowRollDialogConfig(data);
+  static async roll(
+    data: SavingThrowRollDialogData,
+    formulaContext: Record<string, DocumentContext>,
+    formulaContexts: FamiliarSchema
+  ): Promise<SavingThrowRollDialogResult | null> {
+    const dialog = new SavingThrowRollDialogConfig(data, formulaContext, formulaContexts);
     void dialog.render(true);
     return dialog.resultPromise;
   }

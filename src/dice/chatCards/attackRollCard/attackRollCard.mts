@@ -18,7 +18,7 @@ import { COMBAT_KEYS } from '@settings/combat/constants.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { D20Roll } from '../../D20Roll.mjs';
-import type { RollModifier } from '../../types.mjs';
+import type { RollModifier, WeaponDamageRollModifier } from '../../types.mjs';
 import { buildDiceRollHtmlWithModifiers, buildModifierBreakdownHtml } from '../modifierBreakdown/modifierBreakdown.mjs';
 import { parseActionChainId } from './actionChainSteps.mjs';
 import attackRollCardTemplateSource from './attack-roll-card.hbs?raw';
@@ -49,6 +49,8 @@ interface AttackCardTargetRow {
  * names are deliberately not stored here — see `AttackCardTargetRow`'s note.
  */
 interface AttackCardFlags {
+  /** Authoritative damage snapshot; old cards continue to use their serialized formula. */
+  damageModifiers?: WeaponDamageRollModifier[];
   actionChainId: string;
   /** UUID of the placed token that initiated the attack (e.g. via the Token HUD), if known — see `resolveVisibleActorName()`. `null` for callers that never threaded one through. */
   attackerTokenUuid: string | null;

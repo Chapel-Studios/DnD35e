@@ -10,7 +10,7 @@
     </template>
 
     <div class="subgrid">
-      <div class="ac-box">
+      <div v-if="checkMode !== 'noCheck'" class="ac-box">
         <div class="bonus-row">
           <span class="label">{{ acLabel }}</span>
           <span class="value">
@@ -36,14 +36,14 @@
         id="defense-situational-modifier"
         v-model="situationalModifier"
         label="dnd35e.ROLL.SituationalModifier"
-        :contexts="formulaContexts"
+        :schema="formulaContexts"
       />
       <RollDialogFormulaField
         id="defense-concealment"
         v-model="concealment"
         label="dnd35e.ROLL.Concealment"
         placeholder="dnd35e.ROLL.ConcealmentPlaceholder"
-        :contexts="formulaContexts"
+        :schema="formulaContexts"
       />
     </div>
 
@@ -83,7 +83,6 @@
 <script setup lang="ts">
   import type { SelectOption } from '@vc/fields/index.mjs';
   import MultiOptionToggle from '@vc/fields/MultiOptionToggle.vue';
-  import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
   import { provide } from 'vue';
 
   import ActorRollHeader from '../RollDialog/ActorRollHeader.vue';
@@ -91,11 +90,12 @@
   import RollDialogFormulaField from '../RollDialog/RollDialogFormulaField.vue';
   import { RollDialogStoreSymbol } from '../RollDialog/RollDialogStore.mjs';
   import RollModifierTooltip from '../RollDialog/RollModifierTooltip.vue';
+  import type { RollDialogContext } from '../RollDialog/types.mjs';
   import { useRollDefenseDialogStore } from './RollDefenseDialogStore.mjs';
   import type { CheckMode, CoveredState, RollDefenseDialogData, RollDefenseDialogResult } from './types.mjs';
 
   const props = defineProps<{
-    context: VueDialogContext<RollDefenseDialogData, RollDefenseDialogResult>;
+    context: RollDialogContext<RollDefenseDialogData, RollDefenseDialogResult>;
   }>();
 
   const store = useRollDefenseDialogStore(props.context);
@@ -114,12 +114,12 @@
       covered,
       situationalModifier,
       checkMode,
-      formulaContexts,
       damageLabel,
       damageTotalFormula,
       damageModifierList,
     },
     app: {
+      familiarSchema: formulaContexts,
       baseLabel: acLabel,
       totalFormula: acTotalFormula,
       modifierList: acModifierList,

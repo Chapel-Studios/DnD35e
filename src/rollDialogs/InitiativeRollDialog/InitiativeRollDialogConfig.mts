@@ -5,6 +5,8 @@
  * initiative may diverge from the set with saving throws. See `InitiativeRollDialogStore`'s
  * doc for the rationale.
  */
+import type { DocumentContext } from '@helpers/formulae/index.mjs';
+import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import type { Component } from 'vue';
 
 import { useRollDialogConfigBase } from '../RollDialog/RollDialogConfigBase.mjs';
@@ -35,8 +37,12 @@ class InitiativeRollDialogConfig extends useRollDialogConfigBase<InitiativeRollD
   /**
    * Open the dialog and resolve once the user rolls, cancels, or closes it.
    */
-  static async roll(data: InitiativeRollDialogData): Promise<InitiativeRollDialogResult | null> {
-    const dialog = new InitiativeRollDialogConfig(data);
+  static async roll(
+    data: InitiativeRollDialogData,
+    formulaContext: Record<string, DocumentContext>,
+    formulaContexts: FamiliarSchema
+  ): Promise<InitiativeRollDialogResult | null> {
+    const dialog = new InitiativeRollDialogConfig(data, formulaContext, formulaContexts);
     void dialog.render(true);
     return dialog.resultPromise;
   }

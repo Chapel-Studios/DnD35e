@@ -1,21 +1,17 @@
-import type { VueDialogContext } from '@vueApps/index.mjs';
+import type { RollModifier } from '@source/dice/index.mjs';
 
-import type { RollDialogData, RollDialogResult } from '../RollDialog/types.mjs';
+import type { RollBreakdownData, RollDialogContext, RollDialogData, RollDialogResult } from '../RollDialog/types.mjs';
 
 interface SavingThrowRollDialogData extends RollDialogData {
-  /**
-   * A formula (not a plain number) — resolved through FormulaFamiliar against `#self`
-   * (the rolling actor) once the user rolls. See `RollDialogFormulaField`.
-   */
-  situationalModifier: string;
+  savingThrow: RollBreakdownData;
 }
 
 interface SavingThrowRollDialogResult extends RollDialogResult {
   /** The resolved situational-modifier term — a plain number when the user entered one, or a raw formula/dice term (e.g. `1d6`) otherwise. */
-  situationalModifier: string;
+  finalModifiers: RollModifier[];
 }
 
-interface SavingThrowRollDialogContext extends VueDialogContext<SavingThrowRollDialogData, SavingThrowRollDialogResult> {}
+interface SavingThrowRollDialogContext extends RollDialogContext<SavingThrowRollDialogData, SavingThrowRollDialogResult> {}
 
 export type {
   SavingThrowRollDialogContext,

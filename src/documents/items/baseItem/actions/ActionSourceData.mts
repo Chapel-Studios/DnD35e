@@ -1,5 +1,5 @@
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
-import type { FormulaDataSource } from '@helpers/formulae/FormulaData.mjs';
+import type { FormulaData, FormulaDataSource } from '@helpers/formulae/FormulaData.mjs';
 
 import type { ActionTrigger, ActionType } from './constants.mjs';
 
@@ -8,7 +8,7 @@ type ActionChainLinkModel = {
   trigger: ActionTrigger;
 };
 
-interface ActionSourceData {
+type ActionSourceData = {
   _id: string;
   name: FormulaDataSource;
   type: ActionType;
@@ -20,9 +20,14 @@ interface ActionSourceData {
   isTargetRequired: boolean;
   provokes: boolean;
   description: string;
+};
+
+interface ActionData extends Omit<ActionSourceData, 'name'> {
+  name: FormulaData;
 }
 
 export type {
   ActionChainLinkModel,
+  ActionData,
   ActionSourceData,
 };

@@ -8,6 +8,8 @@
  * promise with `null` instead of leaving callers hanging.
  */
 
+import type { DocumentContext } from '@helpers/formulae/index.mjs';
+import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import type { App } from 'vue';
 import { createApp, reactive } from 'vue';
 
@@ -18,6 +20,8 @@ interface VueDialogContext<TData extends object = object, TResult = unknown> {
   /** The reactive input data (e.g. dialog field values) — bind directly with v-model. */
   data: TData;
   renderOptions?: VueBaseRenderOptions;
+  familiarSchema?: FamiliarSchema;
+  formulaContext?: Record<string, DocumentContext>;
   /** Resolve the dialog's result promise with `result` and close the dialog. */
   resolve: (result: TResult) => void;
   /** Resolve the dialog's result promise with `null` and close the dialog. */

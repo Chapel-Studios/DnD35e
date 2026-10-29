@@ -19,6 +19,18 @@ import { getMovementSession, setMovementSession } from './movementSession.mjs';
 // Action Economy
 
 const ACTION_ECONOMY_FLAG = 'actionEconomy';
+const TWO_WEAPON_FIGHTING_FLAG = 'twoWeaponFighting';
+
+/** Undefined uses equipment detection; false explicitly opts out for this turn. */
+function getTwoWeaponFightingChoice(combatant: CombatantDnd35e): boolean | undefined {
+  const choice = combatant.getFlag(SYSTEM_ID, TWO_WEAPON_FIGHTING_FLAG);
+  return typeof choice === 'boolean' ? choice : undefined;
+}
+
+/** Persists the attack dialog's explicit choice until the combatant's next turn. */
+async function setTwoWeaponFightingChoice(combatant: CombatantDnd35e, enabled: boolean): Promise<void> {
+  await combatant.setFlag(SYSTEM_ID, TWO_WEAPON_FIGHTING_FLAG, enabled);
+}
 
 interface CombatantActionEconomy {
   actions: {
@@ -80,13 +92,16 @@ async function setActionEconomy(combatant: CombatantDnd35e, economy: CombatantAc
   await combatant.setFlag(SYSTEM_ID, ACTION_ECONOMY_FLAG, economy);
 }
 
-/** Refills both BAB pools and AoO count from the actor, resets all actions, clears all `used` flags. */
+/** Refills BAB and AoO, resets actions/used flags, and restores equipment-based TWF detection. */
 async function resetActionEconomy(combatant: CombatantDnd35e, actor: Creature): Promise<void> {
   await setActionEconomy(combatant, {
     actions: { [STANDARD_ACTION]: 1, [MOVE_ACTION]: 1, [SWIFT_ACTION]: 1, aoo: actor.system.aooCount },
     bab: { [MAIN_HAND_EQUIP_SLOT]: actor.system.bab, [OFF_HAND_EQUIP_SLOT]  : actor.system.bab },
     used: { [STANDARD_ACTION]: false, [MOVE_ACTION]: false, [SWIFT_ACTION]: false, standardAttackUsed: false, movedAfterAttack: false, chargedThisTurn: false },
   });
+  if (combatant.getFlag(SYSTEM_ID, TWO_WEAPON_FIGHTING_FLAG) !== undefined) {
+    await combatant.unsetFlag(SYSTEM_ID, TWO_WEAPON_FIGHTING_FLAG);
+  }
 }
 
 // Standard and Move Actions
@@ -295,6 +310,7 @@ async function refundAttackAction(combatant: CombatantDnd35e, spent: AttackActio
   await setActionEconomy(combatant, economy);
 }
 
+/** Pass BOTH_HANDS_EQUIP_SLOT for a shared non-TWF sequence, or a specific hand for independent TWF pools. */
 async function spendHandBab(combatant: CombatantDnd35e, hand: WieldedHand, amount: number): Promise<void> {
   const economy = getActionEconomy(combatant);
   if (hand === BOTH_HANDS_EQUIP_SLOT) {
@@ -382,6 +398,7 @@ export {
   clearChargedThisTurn,
   getActionEconomy,
   getHandBab,
+  getTwoWeaponFightingChoice,
   isCombatEconomyActive,
   markChargedThisTurn,
   markMovedAfterAttack,
@@ -391,6 +408,7 @@ export {
   refundHandBab,
   resetActionEconomy,
   setActionEconomy,
+  setTwoWeaponFightingChoice,
   spendAction,
   spendAoO,
   spendAttackAction,

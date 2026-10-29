@@ -4,6 +4,8 @@
  * extend `WeaponAttackRollDialogConfig`; Ranged supplies its own wider `TData`/`TResult`
  * (adds ammo) since Melee's defaults don't include it.
  */
+import type { DocumentContext } from '@helpers/formulae/index.mjs';
+import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import type { Component } from 'vue';
 
 import { useWeaponAttackRollDialogConfig } from '../WeaponAttackRollDialog/WeaponAttackRollDialogConfig.mjs';
@@ -28,8 +30,12 @@ class RangedAttackRollDialogConfig extends useWeaponAttackRollDialogConfig<Range
   /**
    * Open the dialog and resolve once the user rolls, cancels, or closes it.
    */
-  static async roll(data: RangedAttackRollDialogData): Promise<RangedAttackRollDialogResult | null> {
-    const dialog = new RangedAttackRollDialogConfig(data);
+  static async roll(
+    data: RangedAttackRollDialogData,
+    formulaContext: Record<string, DocumentContext>,
+    formulaContexts: FamiliarSchema
+  ): Promise<RangedAttackRollDialogResult | null> {
+    const dialog = new RangedAttackRollDialogConfig(data, formulaContext, formulaContexts);
     void dialog.render(true);
     return dialog.resultPromise;
   }

@@ -12,16 +12,16 @@
 </template>
 
 <script setup lang="ts">
-  import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
   import { provide } from 'vue';
 
   import { RollDialogStoreSymbol } from '../RollDialog/RollDialogStore.mjs';
+  import type { RollDialogContext } from '../RollDialog/types.mjs';
   import WeaponAttackRollDialog from '../WeaponAttackRollDialog/WeaponAttackRollDialog.vue';
   import { useRangedAttackRollDialogStore } from './RangedAttackRollDialogStore.mjs';
   import type { RangedAttackRollDialogData, RangedAttackRollDialogResult } from './types.mjs';
 
   const props = defineProps<{
-    context: VueDialogContext<RangedAttackRollDialogData, RangedAttackRollDialogResult>;
+    context: RollDialogContext<RangedAttackRollDialogData, RangedAttackRollDialogResult>;
   }>();
 
   const store = useRangedAttackRollDialogStore(props.context);

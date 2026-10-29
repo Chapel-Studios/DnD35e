@@ -6,13 +6,16 @@ import {
   clearChargedThisTurn,
   getActionEconomy,
   getHandBab,
+  getTwoWeaponFightingChoice,
   markChargedThisTurn,
   markMovedAfterAttack,
   refundAction,
   refundHandBab,
   resetActionEconomy,
+  setTwoWeaponFightingChoice,
   spendAction,
   spendAoO,
+  spendAttackAction,
   spendHandBab,
   toggleActionAvailability,
 } from '@documents/combat/combatant/combatantActionEconomy.mjs';
@@ -21,7 +24,7 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * Fake CombatantDnd35e backed by an in-memory flag store — enough surface
- * (getFlag/setFlag) for combatantActionEconomy.mts's plain functions, which
+ * (getFlag/setFlag/unsetFlag) for combatantActionEconomy.mts's plain functions, which
  * never touch anything else on the combatant.
  */
 const buildCombatant = (stored?: Record<string, unknown>): CombatantDnd35e => {
@@ -31,10 +34,48 @@ const buildCombatant = (stored?: Record<string, unknown>): CombatantDnd35e => {
     setFlag: async (_scope: string, key: string, value: unknown) => {
       flags[key] = value;
     },
+    unsetFlag: async (_scope: string, key: string) => {
+      delete flags[key];
+    },
   } as unknown as CombatantDnd35e;
 };
 
 const buildActor = (aooCount: number, bab: number) => ({ system: { aooCount, bab } }) as any;
+
+describe('two-weapon fighting choice', () => {
+  it('defaults to equipment detection when no choice is stored', () => {
+    expect(getTwoWeaponFightingChoice(buildCombatant())).toBeUndefined();
+  });
+
+  it.each([true, false])('persists an explicit %s choice independently of action spending', async (enabled) => {
+    const combatant = buildCombatant();
+    await setTwoWeaponFightingChoice(combatant, enabled);
+    await spendAction(combatant, ['standard']);
+
+    expect(combatant.getFlag('dnd35e', 'twoWeaponFighting')).toBe(enabled);
+    expect(getTwoWeaponFightingChoice(combatant)).toBe(enabled);
+  });
+
+  it('can replace an opt-in with an explicit opt-out', async () => {
+    const combatant = buildCombatant();
+    await setTwoWeaponFightingChoice(combatant, true);
+    await setTwoWeaponFightingChoice(combatant, false);
+    expect(getTwoWeaponFightingChoice(combatant)).toBe(false);
+  });
+
+  it('ignores a non-boolean stored choice', () => {
+    expect(getTwoWeaponFightingChoice(buildCombatant({ twoWeaponFighting: 'false' }))).toBeUndefined();
+  });
+
+  it.each([true, false])('removes an explicit %s choice on turn reset', async (enabled) => {
+    const combatant = buildCombatant();
+    await setTwoWeaponFightingChoice(combatant, enabled);
+    await resetActionEconomy(combatant, buildActor(1, 6));
+
+    expect(combatant.getFlag('dnd35e', 'twoWeaponFighting')).toBeUndefined();
+    expect(getTwoWeaponFightingChoice(combatant)).toBeUndefined();
+  });
+});
 
 describe('getActionEconomy', () => {
   it('returns full defaults when no flag has ever been stored', () => {
@@ -253,6 +294,28 @@ describe('canUseHandAttack', () => {
 });
 
 describe('spendHandBab / refundHandBab', () => {
+  it('spends a shared non-TWF +6/+1 sequence from both pools without granting an extra off-hand attack', async () => {
+    const combatant = buildCombatant();
+    await resetActionEconomy(combatant, buildActor(0, 6));
+    await setTwoWeaponFightingChoice(combatant, false);
+    expect(getHandBab(combatant, BOTH_HANDS_EQUIP_SLOT)).toBe(6);
+
+    expect(await spendAttackAction(combatant)).not.toBeNull();
+    await spendHandBab(combatant, BOTH_HANDS_EQUIP_SLOT, 5);
+    expect(getHandBab(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(1);
+    expect(getHandBab(combatant, OFF_HAND_EQUIP_SLOT)).toBe(1);
+    expect(canUseHandAttack(combatant, BOTH_HANDS_EQUIP_SLOT)).toBe(true);
+
+    expect(await spendAttackAction(combatant)).not.toBeNull();
+    await spendHandBab(combatant, BOTH_HANDS_EQUIP_SLOT, 5);
+    for (const hand of [MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, BOTH_HANDS_EQUIP_SLOT] as const) {
+      expect(getHandBab(combatant, hand)).toBe(0);
+      expect(canUseHandAttack(combatant, hand)).toBe(false);
+    }
+    expect(getActionEconomy(combatant).actions).toEqual({ standard: 0, move: 0, swift: 1, aoo: 0 });
+    expect(getTwoWeaponFightingChoice(combatant)).toBe(false);
+  });
+
   it('does not reopen a spent charge attack when refunding an unrelated single-hand attack', async () => {
     const combatant = buildCombatant({
       actionEconomy: { actions: { standard: 0 }, used: { chargedThisTurn: true, movedAfterAttack: true } },

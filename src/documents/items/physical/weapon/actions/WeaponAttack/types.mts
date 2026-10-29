@@ -27,6 +27,7 @@ interface WeaponAttackActionResult extends ActionResult {
   nonLethal?: boolean;
   /** The dialog's final resolved hand — `useAction()` spends BAB from this, not the pre-dialog auto-detected hand. */
   finalHand?: WieldedHand;
+  twoWeaponFighting?: boolean;
   /** The posted attack card, once one exists — lets `useAction()` patch its `actionEconomySpent` flag in after spending (poc.10 Story D, §10.8). */
   attackMessage?: ChatMessage;
   /** Final hit/miss, once `_continue()`'s `'damage'` case has resolved a target row (Story E). */

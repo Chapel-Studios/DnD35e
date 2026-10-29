@@ -6,7 +6,7 @@ import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35
 import { getWeaponActionChoices } from '@documents/token/hud/tokenHudActions.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { WEAPON_ACTION_TYPE } from '@items/baseItem/actions/constants.mjs';
-import { createCombatModifiers } from '@items/physical/weapon/actions/WeaponAttack/combatModifiers.mjs';
+import { createMeleeCombatModifiers } from '@items/physical/weapon/actions/WeaponAttack/combatModifiers.mjs';
 import type { UseWeaponAttackContext, WeaponAttackActionResult } from '@items/physical/weapon/actions/WeaponAttack/types.mjs';
 import { WeaponAttackDataModel } from '@items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -23,7 +23,7 @@ class TestWeaponAttack extends WeaponAttackDataModel {
 }
 
 const buildCharge = async (bab: number) => {
-  const actor = { system: { bab, aooCount: 1 }, statuses: new Set([CHARGED_CONDITION_ID]) } as unknown as Creature;
+  const actor = { system: { bab, aooCount: 1 }, items: [], statuses: new Set([CHARGED_CONDITION_ID]) } as unknown as Creature;
   const flags: Record<string, unknown> = {};
   const combatant = {
     combat: { started: true },
@@ -65,7 +65,7 @@ describe('charge attack spending', () => {
     });
     expect(attackMessage.update).toHaveBeenCalledWith({
       'flags.dnd35e.attackCard.actionEconomySpent': {
-        standardActionSpent: false, moveActionSpent: true, attackSequence: true, hand: OFF_HAND_EQUIP_SLOT, babSpent: 5,
+        standardActionSpent: false, moveActionSpent: true, attackSequence: true, hand: BOTH_HANDS_EQUIP_SLOT, babSpent: 5,
       },
     });
   });
@@ -81,19 +81,57 @@ describe('charge attack spending', () => {
     expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(false);
   });
 
-  it('still spends only five BAB from the selected hand for an ordinary attack', async () => {
+  it('spends only five BAB from the selected hand when opting into TWF', async () => {
     const { combatant, token } = await buildCharge(16);
     await resetActionEconomy(combatant, token.actor as Creature);
     const attackMessage = { update: vi.fn() } as unknown as ChatMessage;
     await new TestWeaponAttack().postExecute(
       { actor: token, wieldedHand: MAIN_HAND_EQUIP_SLOT, isFree: false } as UseWeaponAttackContext,
-      { cancelled: false, reason: '', warnings: [], attackMessage }
+      { cancelled: false, reason: '', warnings: [], attackMessage, twoWeaponFighting: true }
     );
     expect(getHandBab(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(11);
     expect(getHandBab(combatant, OFF_HAND_EQUIP_SLOT)).toBe(16);
     expect(attackMessage.update).toHaveBeenCalledWith({
       'flags.dnd35e.attackCard.actionEconomySpent': { standardActionSpent: true, attackSequence: true, hand: MAIN_HAND_EQUIP_SLOT, babSpent: 5 },
     });
+  });
+
+  it('shares the +6/+1 sequence between hands without TWF and records shared refunds', async () => {
+    const { combatant, token } = await buildCharge(6);
+    await resetActionEconomy(combatant, token.actor as Creature);
+    const action = new TestWeaponAttack();
+    const attackMessage = { update: vi.fn() } as unknown as ChatMessage;
+    await action.postExecute(
+        { actor: token, wieldedHand: MAIN_HAND_EQUIP_SLOT, isFree: false } as UseWeaponAttackContext,
+        { cancelled: false, reason: '', warnings: [], twoWeaponFighting: false, attackMessage }
+    );
+    expect(getHandBab(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(1);
+    expect(getHandBab(combatant, OFF_HAND_EQUIP_SLOT)).toBe(1);
+    await action.postExecute(
+        { actor: token, wieldedHand: OFF_HAND_EQUIP_SLOT, isFree: false } as UseWeaponAttackContext,
+        { cancelled: false, reason: '', warnings: [], twoWeaponFighting: false, attackMessage }
+    );
+    expect(canUseHandAttack(combatant, MAIN_HAND_EQUIP_SLOT)).toBe(false);
+    expect(canUseHandAttack(combatant, OFF_HAND_EQUIP_SLOT)).toBe(false);
+    expect(attackMessage.update).toHaveBeenLastCalledWith({
+      'flags.dnd35e.attackCard.actionEconomySpent': {
+        standardActionSpent: false, moveActionSpent: true, attackSequence: true, hand: BOTH_HANDS_EQUIP_SLOT, babSpent: 5,
+      },
+    });
+  });
+
+  it.each([false, true])('preserves nonlethal choice and penalty direction for default=%s', async (nonlethalDefault) => {
+    const { token } = await buildCharge(6);
+    const toggle = createMeleeCombatModifiers(token, undefined, nonlethalDefault, false).find(mod => mod.id === 'nonLethal')!;
+    expect(toggle.createRollModifiers(nonlethalDefault, MAIN_HAND_EQUIP_SLOT).attackModifiers).toEqual([]);
+    expect(toggle.createRollModifiers(!nonlethalDefault, MAIN_HAND_EQUIP_SLOT).attackModifiers).toEqual([
+      expect.objectContaining({
+        value: -4,
+        label: nonlethalDefault ? 'dnd35e.COMBAT.CombatModifiers.Lethal.Label' : 'dnd35e.COMBAT.CombatModifiers.NonLethal.Label',
+      }),
+    ]);
+    const noPenalty = createMeleeCombatModifiers(token, undefined, nonlethalDefault, true).find(mod => mod.id === 'nonLethal')!;
+    expect(noPenalty.createRollModifiers(!nonlethalDefault, MAIN_HAND_EQUIP_SLOT).attackModifiers).toEqual([]);
   });
 
   it.each([MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, BOTH_HANDS_EQUIP_SLOT] as const)('spends both BAB pools after one %s attack at top BAB', async (hand) => {
@@ -129,9 +167,11 @@ describe('charge attack spending', () => {
   it('detects the charged condition in the melee dialog even without the movement flag', async () => {
     const { combatant, token } = await buildCharge(6);
     await resetActionEconomy(combatant, token.actor as Creature);
-    expect(createCombatModifiers(token, undefined, false)).toContainEqual(expect.objectContaining({
-      id: 'charge', checked: true, autoDetected: true, value: 2,
-    }));
+    const charge = createMeleeCombatModifiers(token, undefined, false).find(mod => mod.id === 'charge')!;
+    expect(charge).toMatchObject({ checked: true, wasAutoDetected: true });
+    expect(charge.createRollModifiers(charge.checked, MAIN_HAND_EQUIP_SLOT).attackModifiers).toEqual([
+      expect.objectContaining({ id: 'charge', value: 2 }),
+    ]);
   });
 
   it('shows BAB 0 and disables every HUD weapon action after the charge attack', async () => {

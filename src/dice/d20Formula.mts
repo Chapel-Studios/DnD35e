@@ -71,6 +71,65 @@ function extractDiceOnlyFormula(term: string): string {
     .join(' + ');
 }
 
+interface FormulaParts {
+  dice: string[];
+  flatTerms: string[];
+}
+
+/**
+ * Split a resolved formula into additive, signed formula strings without rolling or merging.
+ * Parenthetical flavors are inherited by both dice and flat terms; explicit inner flavors
+ * win over inherited flavors and the optional default. Unflavored terms remain unflavored
+ * when no default is supplied. Multiplication, division, functions, and pools stay intact:
+ * an inseparable expression belongs to dice if non-deterministic, otherwise flatTerms.
+ * Invalid formulas throw the Foundry parser's error.
+ *
+ * @example
+ * splitFormulaParts('(1d6 + 3)[Fire] + 2', 'Weapon');
+ * // { dice: ['1d6[Fire]'], flatTerms: ['3[Fire]', '2[Weapon]'] }
+ */
+function splitFormulaParts(formula: string, defaultFlavor?: string): FormulaParts {
+  const parts: FormulaParts = { dice: [], flatTerms: [] };
+  const { OperatorTerm, ParentheticalTerm } = foundry.dice.terms;
+
+  function collect(expression: string, inheritedFlavor?: string, sign = 1): void {
+    const terms = Roll.parse(expression, {});
+    let group: typeof terms = [];
+    let groupSign = sign;
+
+    function appendGroup(): void {
+      if (!group.length) return;
+      const [first] = group;
+      if (group.length === 1 && first instanceof ParentheticalTerm) {
+        collect(first.term, first.flavor || inheritedFlavor, groupSign);
+        return;
+      }
+
+      const text = group.map((term) => {
+        if (term instanceof OperatorTerm) return term.operator;
+        if (term.flavor || !inheritedFlavor) return term.formula;
+        return `${term.expression}[${inheritedFlavor}]`;
+      }).join(' ');
+      const target = group.every(term => term.isDeterministic) ? parts.flatTerms : parts.dice;
+      target.push(groupSign < 0 ? `-(${text})` : text);
+    }
+
+    for (const term of terms) {
+      if (term instanceof OperatorTerm && (term.operator === '+' || term.operator === '-')) {
+        appendGroup();
+        group = [];
+        groupSign = term.operator === '-' ? -sign : sign;
+      } else {
+        group.push(term);
+      }
+    }
+    appendGroup();
+  }
+
+  if (formula.trim()) collect(formula, defaultFlavor);
+  return parts;
+}
+
 /**
  * Build a `1d20 + base + situational` formula string, omitting any zero term (see
  * poc/phase-07-roll-formulas.md §7.2's "No `@attr` Bridge" — values are plain numbers
@@ -378,6 +437,7 @@ export {
   flavorDiceGroups,
   flavorTerm,
   groupDamageDiceBySource,
+  splitFormulaParts,
 };
 
-
+export type { FormulaParts };

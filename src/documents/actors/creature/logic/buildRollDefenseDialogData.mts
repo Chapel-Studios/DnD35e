@@ -6,6 +6,7 @@
  *
  * @module
  */
+import type { RollMode } from '@common/constants.mjs';
 import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import { participantActor, participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import type { RollModifier } from '@source/dice/index.mjs';
@@ -38,17 +39,28 @@ function buildRollDefenseDialogData(
 
   const acLabel = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.armorClass.label');
   const touchAcLabel = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.touchAC.label');
-  const baseModifierListByMode = {
-    normal: buildOverridesModifierList(targetActor, 'system.defense.armorClass', acLabel, targetActor.system.defense.armorClass),
-    touch: buildOverridesModifierList(targetActor, 'system.defense.touchAC', touchAcLabel, targetActor.system.defense.touchAC),
+  const defenseRollByMode = {
+    normal: {
+      label: acLabel,
+      immutableModifiers: [{
+        label: acLabel,
+        value: targetActor.system.defense.armorClass,
+        breakdown: buildOverridesModifierList(targetActor, 'system.defense.armorClass'),
+      }],
+    },
+    touch: {
+      label: touchAcLabel,
+      immutableModifiers: [{
+        label: touchAcLabel,
+        value: targetActor.system.defense.touchAC,
+        breakdown: buildOverridesModifierList(targetActor, 'system.defense.touchAC'),
+      }],
+    },
   };
 
   return {
     title: game.i18n.localize('dnd35e.COMBAT.RollDefenseTitle'),
-    baseLabel: acLabel,
-    baseTotal: targetActor.system.defense.armorClass,
-    baseModifierList: baseModifierListByMode.normal,
-    rollMode: game.settings.get('core', 'rollMode') as string,
+    rollMode: game.settings.get('core', 'messageMode') as RollMode,
     actor: targetActor,
     attacker: markRaw(attackerActor),
     attackerToken: resolvedAttackerToken ? markRaw(resolvedAttackerToken) : null,
@@ -61,11 +73,7 @@ function buildRollDefenseDialogData(
     covered: COVERED_STATES.NONE,
     situationalModifier: '',
     checkMode: 'normal',
-    baseTotalByMode: {
-      normal: targetActor.system.defense.armorClass,
-      touch: targetActor.system.defense.touchAC,
-    },
-    baseModifierListByMode,
+    defenseRollByMode,
     defenderDenyDexToAC: targetActor.system.defense.denyDexToAC,
     defenderDexMod: targetActor.system.abilities.dex.mod,
     damageLabel: damagePreview.label,
@@ -75,4 +83,3 @@ function buildRollDefenseDialogData(
 }
 
 export { buildRollDefenseDialogData };
-

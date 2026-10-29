@@ -25,6 +25,7 @@
       },
       "Attacker": "Attacker",
       "Defender": "Defender",
+      "Actor": "Actor",
       "HiddenName": "Unknown",
       "MOVE_ACTION_CARD": {
         "MoveAction": "Move Action",

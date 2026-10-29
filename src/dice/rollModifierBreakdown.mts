@@ -7,6 +7,7 @@
  *
  * @module
  */
+import { EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { Override } from '@helpers/stacking.mjs';
 import { formatBonusTypeLabel, parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
 
@@ -21,6 +22,9 @@ interface EffectOverrideHost {
 const ignoredFallbackLabel = (): string => game.i18n.localize('dnd35e.EFFECT.StackResult.Ignored');
 
 /**
+ * Display-only preparation history, not additive roll contributions. A prepared statistic
+ * must supply its final value separately, with these rows nested under `breakdown`.
+ *
  * Falls back to a single `{ fallbackLabel, fallbackValue }` entry when the field carries no
  * overrides at all (e.g. a save with no contributing AEs) — mirrors `rollSave()`'s original
  * inline logic. Otherwise returns EVERY override (applied AND ignored), same stacking-history
@@ -28,9 +32,21 @@ const ignoredFallbackLabel = (): string => game.i18n.localize('dnd35e.EFFECT.Sta
  * flagged with their rejection reason (`stackReason`) so callers can render them struck-through
  * rather than silently dropping "what lost" information.
  */
-function buildOverridesModifierList(document: EffectOverrideHost, fieldPath: string, fallbackLabel: string, fallbackValue: number): RollModifier[] {
-  const overrides = document.effectOverrides[fieldPath] ?? [];
-  if (overrides.length === 0) return [{ label: fallbackLabel, value: fallbackValue }];
+function buildOverridesModifierList(
+  document: EffectOverrideHost,
+  fieldPath: string,
+  fallbackLabel: string = '',
+  fallbackValue: number = 0
+): RollModifier[] {
+  const overrides = document.effectOverrides[fieldPath]
+    ?? [];
+
+  if (overrides.length === 0) {
+    return !!fallbackLabel
+      ? [{ label: fallbackLabel, value: fallbackValue }]
+      : [];
+  }
+
   return overrides
     // A dice-bearing change (e.g. a weapon enhancement's "+1d6" bonus damage) can share this
     // field path with a flat change — it can't be shown as a flat number and is already
@@ -38,12 +54,28 @@ function buildOverridesModifierList(document: EffectOverrideHost, fieldPath: str
     // than coercing NaN into a displayed value (see `parseNumericChangeValue`'s doc comment).
     .filter((override) => !Number.isNaN(parseNumericChangeValue(override.value)))
     .map((override) => {
-      const isIgnored = override.stackResult === STACK_RESULT_IGNORED;
+      const ignoredProps = override.stackResult === STACK_RESULT_IGNORED
+        ? {
+          isIgnored: true,
+          ignoredReason: override.stackReason
+            ?? ignoredFallbackLabel(),
+        }
+        : {};
+      
+      const value = parseNumericChangeValue(override.value);
+      const operations: Partial<Record<Override['type'], string>> = {
+        [EFFECT_CHANGE_TYPE.MULTIPLY]: `* ${value}`,
+        [EFFECT_CHANGE_TYPE.OVERRIDE]: `= ${value}`,
+        [EFFECT_CHANGE_TYPE.UPGRADE]: `max(${value})`,
+        [EFFECT_CHANGE_TYPE.DOWNGRADE]: `min(${value})`,
+      };
+      const operation = operations[override.type];
       return {
         label: override.effectName,
-        value: parseNumericChangeValue(override.value),
+        value: override.type === EFFECT_CHANGE_TYPE.SUBTRACT ? -value : value,
+        ...(operation ? { formula: operation } : {}),
         bonusTypeLabel: formatBonusTypeLabel(override.bonusType),
-        ...(isIgnored ? { isIgnored: true, ignoredReason: override.stackReason ?? ignoredFallbackLabel() } : {}),
+        ...ignoredProps,
       };
     });
 }

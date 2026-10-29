@@ -9,6 +9,8 @@
  * forbids static members from referencing class type parameters too.
  */
 import { ROLL_DIALOG_CLASS, VUE_APP_CLASS } from '@constants/cssClasses.mjs';
+import type { DocumentContext } from '@helpers/formulae/index.mjs';
+import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import { useVueDialogMixin } from '@vueApps/VueDialogMixin.mjs';
 import { markRaw } from 'vue';
@@ -19,8 +21,11 @@ function useRollDialogConfigBase<TData extends RollDialogData, TResult extends R
   const { ApplicationV2 } = foundry.applications.api;
 
   abstract class RollDialogConfigBase extends useVueDialogMixin<typeof ApplicationV2, TData, TResult>(ApplicationV2) {
-    constructor(data: TData) {
+    constructor(data: TData, formulaContext: Record<string, DocumentContext>, formulaContexts: FamiliarSchema) {
       super();
+      // Holds live Documents/DataModels — keep Vue's reactive() context from proxying them.
+      this.context.formulaContext = markRaw(formulaContext);
+      this.context.familiarSchema = formulaContexts;
       this.options.window.title = data.title;
       // `actor` is a live Foundry Document — never let Vue's reactive() wrap it (Documents
       // have private class fields/complex internal state that break under a reactive Proxy).

@@ -22,13 +22,14 @@ const {
 /**
  * Source shape written to the database for a FormulaData field.
  */
-interface FormulaDataSource {
+type FormulaDataSource = {
   formula: string;
   resolvedValue: string | number | boolean | null;
   expectedType: FormulaExpectedType;
-}
+};
 
 class FormulaData extends foundry.abstract.DataModel {
+  declare readonly _source: FormulaDataSource;
   // Declare model properties for TypeScript
   declare formula: string;
   declare resolvedValue: string | null;
@@ -88,23 +89,38 @@ class FormulaData extends foundry.abstract.DataModel {
   /**
    * Resolve the formula from a raw FormulaDataSource POJO.
    * Use when you have serialized data (e.g. from toObject()) rather than a live DataModel.
+   * An explicit result type is a caller assertion, not a coercion: it must match the
+   * source's expectedType and fallback. Number formulas can also return unrolled dice text.
+   * Without a type argument, the full result union is preserved.
    *
    * @param onFailure Called when resolution fails (missing context path, invalid syntax, etc.)
    * @param preferredSelfAlias Caller-supplied override for the `self` context's label/alias
+   * @param familiarSchema Prebuilt schema, including any exclusions/aliases; skips schema construction when supplied
    * @returns Resolved string, `null` if a `number`/`boolean` formula failed to resolve, or fallback if no formula
    */
+  static resolveSource<T extends string | number | boolean = string | number | boolean>(
+    source: FormulaDataSource,
+    documentDataMap: Record<string, unknown>,
+    fallback?: NoInfer<T>,
+    excludedFields?: string[],
+    onFailure?: (reason: string) => void,
+    preferredSelfAlias?: PreferredContextAlias,
+    familiarSchema?: FamiliarSchema
+  ): T | null;
   static resolveSource(
     source: FormulaDataSource,
     documentDataMap: Record<string, unknown>,
-    fallback: string = '',
+    fallback: string | number | boolean = '',
     excludedFields: string[] = [],
     onFailure?: (reason: string) => void,
-    preferredSelfAlias?: PreferredContextAlias
+    preferredSelfAlias?: PreferredContextAlias,
+    familiarSchema?: FamiliarSchema
   ): string | number | boolean | null {
     const formulaText = source.formula;
     if (!formulaText) return fallback;
-    const familiarSchema = FormulaData.buildFamiliarSchema(documentDataMap as Record<string, DocumentContext>, excludedFields, preferredSelfAlias);
-    const partiallyResolved = FormulaResolver.resolveFormula(formulaText, familiarSchema, documentDataMap as Record<string, DocumentContext>);
+    const resolvedSchema = familiarSchema
+      ?? FormulaData.buildFamiliarSchema(documentDataMap as Record<string, DocumentContext>, excludedFields, preferredSelfAlias);
+    const partiallyResolved = FormulaResolver.resolveFormula(formulaText, resolvedSchema, documentDataMap as Record<string, DocumentContext>);
     return FormulaData._finalizeResolvedValue(partiallyResolved, source.expectedType, onFailure);
   }
 

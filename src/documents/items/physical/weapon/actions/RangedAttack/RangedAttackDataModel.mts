@@ -6,10 +6,9 @@ import { ACTION_TYPE, ACTION_TYPES } from '@items/baseItem/actions/constants.mjs
 import { participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 
 import type { UseWeaponAttackContext, WeaponAttackActionResult } from '../WeaponAttack/types.mjs';
-import type { FormulaContext } from '../WeaponAttack/WeaponAttackDataModel.mjs';
 import { WeaponAttackDataModel } from '../WeaponAttack/WeaponAttackDataModel.mjs';
-import { RANGED_WEAPON_PROPERTIES, RANGED_WEAPON_PROPERTY, type RangedWeaponProperty } from './constants.mjs';
-import type { RangedAttackSourceData } from './RangedAttackSourceData.mjs';
+import { RANGED_WEAPON_PROPERTIES, RANGED_WEAPON_PROPERTY } from './constants.mjs';
+import type { RangedAttackData, RangedAttackSourceData } from './RangedAttackSourceData.mjs';
 
 const {
   fields: {
@@ -20,7 +19,8 @@ const {
 } = foundry.data;
 
 class RangedWeaponAttack extends WeaponAttackDataModel {
-  declare properties: Set<RangedWeaponProperty>;
+  declare readonly _source: RangedAttackSourceData;
+  declare properties: RangedAttackData['properties'];
 
   static override defineSchema(): Record<string, any> {
     const schema = super.defineSchema();
@@ -63,13 +63,13 @@ class RangedWeaponAttack extends WeaponAttackDataModel {
   }
 
   // Ranged only adds the wield-mode STR term when the weapon is flagged `rangedUsesStr` (e.g. thrown weapons).
-  protected override _includeAttackAbilityTerms(context: UseWeaponAttackContext, formulaContext: FormulaContext): string {
-    if (!this.properties?.has(RANGED_WEAPON_PROPERTY.WEAPON_PROPERTY_RANGED_USES_STR)) return '';
-    return this._resolveAttackAbilityTerm(context, formulaContext);
+  protected override _usesDamageAbility(): boolean {
+    return this.properties?.has(RANGED_WEAPON_PROPERTY.WEAPON_PROPERTY_RANGED_USES_STR) ?? false;
   }
+
 }
 
 interface RangedWeaponAttack extends WeaponAttackDataModel,
-  Omit<RangedAttackSourceData, 'attackFormula' | 'damageFormula' | 'name'> {}
+  RangedAttackData {}
 
 export { RangedWeaponAttack };

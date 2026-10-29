@@ -4,11 +4,13 @@
  * @module
  */
 
-/** A single labeled contributor to a D20Roll's total (e.g. "Fortitude +4", "Situational +2"). */
+/** A labeled roll contribution, optionally carrying display-only preparation history. */
 interface RollModifier {
+  /** Stable source identity; localized labels are never identifiers. */
+  id?: string;
   label: string;
   value: number;
-  /** Resolved formula text (dice preserved, e.g. `1d6+5`) to display instead of `value`'s signed number — set only when the contributor carries a dice term that can't collapse to a flat preview number. */
+  /** Resolved dice-preserving formula. When present it replaces `value` for rolling; never add both. */
   formula?: string;
   /** Localized bonus type tag (e.g. "Enhancement") shown alongside the entry — mirrors `HasActiveEffectsNotification`'s `[bonusTypeLabel]` bracket notation. Omitted for untyped contributors. */
   bonusTypeLabel?: string;
@@ -16,6 +18,13 @@ interface RollModifier {
   isIgnored?: boolean;
   /** Localized reason this entry was ignored (e.g. "lower bonus than +4"). Only meaningful when `isIgnored` is true. */
   ignoredReason?: string;
+  /** Display-only history for an already-prepared value. Never included in arithmetic. */
+  breakdown?: RollModifier[];
 }
 
-export type { RollModifier };
+interface WeaponDamageRollModifier extends RollModifier {
+  /** Positions within this entry's top-level dice which do not multiply on a critical. An explicit [] keeps all top-level dice eligible; absent metadata preserves the parenthesized situational-formula behavior. */
+  exemptDiceIndices?: number[];
+}
+
+export type { RollModifier, WeaponDamageRollModifier };
