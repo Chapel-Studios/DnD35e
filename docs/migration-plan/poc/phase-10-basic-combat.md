@@ -1899,6 +1899,7 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 #### Implementation notes (pending user acceptance)
 
+- Banner dismissal tracks diagnostic identity/revision pairs individually per sheet for the browser session. Demoting or removing a diagnostic preserves dismissal of remaining diagnostics; new identities and promotion/reset revisions still reopen the banner.
 - Warning management requires both GM status and application-level sheet editability, rechecked by the store action and exposed through `canManagePreparationWarnings` for controls. Read-only sheets cannot persist overrides; editable Play/True sheets remain supported.
 - Source preference reads use loaded compendium documents, traversing embedded sources from their cached root; writes resolve the full UUID asynchronously and retain GM/locked-pack checks. ActiveEffect key/value/condition diagnostics carry per-change/per-rule IDs through the multi-host helper, so two failing changes targeting the same field do not share preferences.
 - Existing producers keep technical severity and banner defaults. `pushPreparationWarning()` accepts optional `{ id, defaultBanner }`; Story F's Container diagnostic will use `defaultBanner: false`.

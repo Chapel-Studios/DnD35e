@@ -174,7 +174,7 @@ describe('preparation diagnostic prominence', () => {
     const warning = makeWarning();
     dismissPreparationWarnings('sheet-promote', [warning]);
     await setPreparationWarningBanner(warning, false);
-    expect(isPreparationWarningsDismissed('sheet-promote', [warning])).toBe(false);
+    expect(isPreparationWarningsDismissed('sheet-promote', [warning])).toBe(true);
     dismissPreparationWarnings('sheet-promote', [warning]);
     const advisory = { ...makeWarning(source.uuid, 'advisory'), defaultBanner: false };
     expect(isPreparationWarningsDismissed('sheet-promote', [warning, advisory])).toBe(true);
@@ -187,6 +187,28 @@ describe('preparation diagnostic prominence', () => {
     await setPreparationWarningBanner(advisory, true);
     await setPreparationWarningBanner(advisory, null);
     expect(getPreparationWarningBannerState(advisory).banner).toBe(false);
+  });
+
+  it('keeps remaining diagnostics dismissed after demotion, removal and reordering, but surfaces new identities and revisions', async () => {
+    const first = makeWarning(source.uuid, 'diagnostic:A');
+    const second = makeWarning(source.uuid, 'diagnostic:B');
+    const third = makeWarning(source.uuid, 'diagnostic:C');
+    const uuid = 'sheet-subset-dismissal';
+    dismissPreparationWarnings(uuid, [first, second]);
+    expect(isPreparationWarningsDismissed(uuid, [second, first])).toBe(true);
+    await setPreparationWarningBanner(second, false);
+    expect(isPreparationWarningsDismissed(uuid, [first, second])).toBe(true);
+    expect(isPreparationWarningsDismissed(uuid, [first])).toBe(true);
+    expect(isPreparationWarningsDismissed(uuid, [{ ...first, message: 'Reworded' }])).toBe(true);
+    expect(isPreparationWarningsDismissed(uuid, [first, third])).toBe(false);
+    expect(isPreparationWarningsDismissed('another-sheet', [first])).toBe(false);
+    dismissPreparationWarnings(uuid, [third]);
+    expect(isPreparationWarningsDismissed(uuid, [first, third])).toBe(true);
+    await setPreparationWarningBanner(second, true);
+    expect(isPreparationWarningsDismissed(uuid, [first, second])).toBe(false);
+    dismissPreparationWarnings(uuid, [first, second]);
+    await setPreparationWarningBanner(second, null);
+    expect(isPreparationWarningsDismissed(uuid, [first, second])).toBe(false);
   });
 
   it('rejects non-GMs at execution, missing sources, locked packs and cancelled updates', async () => {

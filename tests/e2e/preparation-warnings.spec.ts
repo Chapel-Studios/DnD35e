@@ -86,6 +86,33 @@ test('GM demotes a real melee diagnostic, reloads, promotes and resets its banne
   await expect(row).toHaveClass(/error/);
 });
 
+test('GM demotes one dismissed diagnostic without reopening the other, then promotes it back', async ({ page }) => {
+  await gotoGame(page);
+  const fixture = diagnosticWeapon();
+  fixture.system.actions[0].damageFormula.formula = '';
+  const uuid = await createItem(page, 'weapon', fixture);
+  const sheet = page.locator(await openDocumentSheet(page, uuid));
+  await expect(sheet.locator('.preparation-warnings-banner')).toBeVisible();
+  await dismissOverlays(page);
+  await sheet.locator('.preparation-warnings-banner-dismiss').click();
+  await expect(sheet.locator('.preparation-warnings-banner')).toHaveCount(0);
+  await sheet.locator('[data-tab="preparation-warnings"]').click();
+  const damageRow = sheet.locator(`[data-warning-id="action:${ACTION_ID}:formula:damageFormula"]`);
+  await damageRow.locator('summary').click();
+  await damageRow.locator('[data-banner-mode="tab"]').click();
+  await expect.poll(() => page.evaluate(async uuid => {
+    const item = await fromUuid(uuid) as Weapon | null;
+    if (!item) throw new Error('Missing dismissal fixture');
+    const key = encodeURIComponent('action:HmeleeAttack0001:formula:damageFormula');
+    return item.getFlag('dnd35e', `preparationWarningOverrides.${key}.banner`);
+  }, uuid)).toBe(false);
+  await expect(sheet.locator('.preparation-warnings-banner')).toHaveCount(0);
+  await expect(sheet.locator(`[data-warning-id="${WARNING_ID}"]`)).toBeVisible();
+  await damageRow.locator('summary').click();
+  await damageRow.locator('[data-banner-mode="show"]').click();
+  await expect(sheet.locator('.preparation-warnings-banner')).toBeVisible();
+});
+
 test('GM manages an owned melee diagnostic consistently from actor and source weapon sheets', async ({ page }) => {
   await gotoGame(page);
   const actorUuid = await createActor(page, 'character', {

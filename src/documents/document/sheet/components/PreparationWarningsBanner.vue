@@ -35,7 +35,7 @@
   const documentUuid = documentGetters.documentUuid;
 
   // Dismissable per-document for the browser session (see preparationWarningsDismissal.mts) -
-  // a signature check still surfaces the banner if the actual warning set changes.
+  // New diagnostic identities or preference revisions reopen the banner; removals do not.
   const dismissed = computed(() => isPreparationWarningsDismissed(documentUuid.value, warnings.value));
   const dismiss = () => dismissPreparationWarnings(documentUuid.value, warnings.value);
 
