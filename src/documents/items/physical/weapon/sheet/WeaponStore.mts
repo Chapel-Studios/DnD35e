@@ -12,7 +12,7 @@ import type {
   EquippableItemActions, EquippableItemGetters, EquippableItemStoreUtils } from '@items/physical/equippableItem/sheet/EquippableItemStore.mjs';
 import { physicalItemEffectsTab } from '@items/physical/physicalItem/sheet/tabs/index.mjs';
 import { WEAPON_SUBTYPE_LOCALIZED, WEAPON_TYPE_LOCALIZED } from '@items/physical/weapon/data/constants.mjs';
-import type { Weapon } from '@items/physical/weapon/index.mjs';
+import type { Weapon, WeaponSource } from '@items/physical/weapon/index.mjs';
 import type { SelectOption } from '@vc/fields/formGroups/types.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef, Ref } from 'vue';
@@ -168,6 +168,9 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>, options: UseWeap
 
   const actionEditorStoreParams: ActionEditorStoreCreatorParams<WeaponAction> = {
     actions: computed(() => document.value.system.actions),
+    // `Weapon#_source` is typed via the generic `ItemDnd35e` base (lacks `.actions`); cast
+    // through the real `WeaponSource` shape — see `ActionEditorStoreParams.sourceAction` doc.
+    sourceActions: computed(() => ((document.value._source as unknown as WeaponSource).system.actions ?? []) as unknown as Record<string, unknown>[]),
     actionTypeOptions,
     updateAction,
     updateLink,

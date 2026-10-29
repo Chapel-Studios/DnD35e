@@ -8,9 +8,10 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
-import { refundAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import { CHARGED_CONDITION_ID } from '@constants/conditions.mjs';
+import { clearChargedThisTurn, getActionEconomy, refundAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
-import { resetMovementSession } from '@documents/combat/combatant/movementSession.mjs';
+import { getMovementSession, resetMovementSession } from '@documents/combat/combatant/movementSession.mjs';
 import { snapTokenToPosition } from '@documents/token/logic/snapTokenPosition.mjs';
 import { useSettingsStore } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -27,6 +28,8 @@ interface MoveActionCardData {
   /** Already converted to the scene's localized distance units — see `TokenRulerDnd35e#getLocalizedBudget()`. */
   budget: number;
   overBudget: boolean;
+  provokes?: boolean;
+  stepProtectionLost?: boolean;
   /**
    * Which over-budget message to show — distinct from the generic "moved further than
    * allowed" message for a 5-foot step (fixed 1-square allowance), mixing a 5-foot step
@@ -71,10 +74,14 @@ function buildMoveActionCardContent(combatantName: string, flags: MoveActionCard
     budget: flags.budget,
     distanceUnit: distanceDisplayShortLabel.value,
     overBudget: flags.overBudget,
+    provocationLabel: flags.provokes === undefined
+      ? ''
+      : game.i18n.localize(flags.provokes ? 'dnd35e.ROLL.MOVE_ACTION_CARD.Provokes' : 'dnd35e.ROLL.MOVE_ACTION_CARD.DoesNotProvoke'),
+    stepProtectionLost: flags.stepProtectionLost,
     overBudgetMessage: flags.overBudget
       ? game.i18n.localize(OVER_BUDGET_MESSAGE_KEYS[flags.overBudgetReason ?? 'distance'])
       : '',
-    showUndo: flags.spent.length > 0,
+    showUndo: flags.priorPosition !== null,
     undone: flags.undone,
     spentLabels: flags.spent.map((action) =>
       game.i18n.localize(action === 'move' ? 'dnd35e.ROLL.MOVE_ACTION_CARD.MoveAction' : 'dnd35e.ROLL.MOVE_ACTION_CARD.StandardAction')
@@ -101,6 +108,7 @@ async function buildMoveActionCard(
   const movementActionLabel = game.i18n.localize(CONFIG.Token.movement.actions[movementAction]?.label ?? movementAction);
   const flags: MoveActionCardFlags = {
     ...data,
+    provokes: data.provokes ?? (CONFIG.Token.movement.actions[movementAction] as { provokes?: boolean } | undefined)?.provokes,
     combatantId: combatant.id,
     movementActionLabel,
     priorPosition: data.spent.length > 0 ? priorPosition : null,
@@ -141,7 +149,7 @@ async function upsertMoveActionCard(
     ...data,
     combatantId: combatant.id,
     movementActionLabel,
-    priorPosition: data.spent.length > 0 ? firstOrigin : null,
+    priorPosition: firstOrigin,
     undone: false,
     isSessionCard: true,
   };
@@ -166,7 +174,11 @@ async function upsertMoveActionCard(
 async function onUndoMoveAction(message: ChatMessage, flags: MoveActionCardFlags, combatant: CombatantDnd35e): Promise<void> {
   if (flags.undone) return;
 
-  await refundAction(combatant, flags.spent);
+  await refundAction(combatant, flags.isSessionCard ? getMovementSession(combatant).spentTiers : flags.spent);
+  if (!flags.isSessionCard && getActionEconomy(combatant).used.chargedThisTurn) {
+    await clearChargedThisTurn(combatant);
+    await combatant.actor?.toggleStatusEffect(CHARGED_CONDITION_ID, { active: false });
+  }
 
   // The token physically moved — refunding the action(s) without also undoing the displacement
   // would leave the character standing somewhere its action economy says it never went. Routed
@@ -190,6 +202,19 @@ async function onUndoMoveAction(message: ChatMessage, flags: MoveActionCardFlags
   });
 }
 
+/** Keep the movement card's refund ledger in sync when its reserved move funds a full attack. */
+async function syncMovementCardSpend(combatant: CombatantDnd35e): Promise<void> {
+  const session = getMovementSession(combatant);
+  const message = session.messageId ? game.messages?.get(session.messageId) : undefined;
+  const flags = message?.getFlag(SYSTEM_ID, 'moveActionCard') as MoveActionCardFlags | undefined;
+  if (!message || !flags || flags.undone) return;
+  const updatedFlags = { ...flags, spent: session.spentTiers };
+  await message.update({
+    content: buildMoveActionCardContent(combatant.name, updatedFlags),
+    'flags.dnd35e.moveActionCard': updatedFlags,
+  });
+}
+
 /** Wires the "Undo" button, gated to GM/combatant-owner — see registerChatCardActions.mts. */
 function wireMoveActionCardButton(message: ChatMessage, html: HTMLElement): void {
   const undoButton = html.querySelector<HTMLElement>('[data-action="undo-move-action"]');
@@ -207,6 +232,7 @@ function wireMoveActionCardButton(message: ChatMessage, html: HTMLElement): void
 export {
   buildMoveActionCard,
   buildMoveActionCardContent,
+  syncMovementCardSpend,
   upsertMoveActionCard,
   wireMoveActionCardButton,
 };

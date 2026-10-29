@@ -1,8 +1,10 @@
 /**
  * FormulaField — EmbeddedDataField subclass wrapping FormulaData.
  *
- * Stores formula text + resolved value + unidentified variant + context bindings
- * + permission overrides. AE override replaces the formula text and clears the cache.
+ * Stores formula text + resolved value + context bindings + permission overrides. AE
+ * `add`/`subtract` changes target the `.formula` leaf directly (see `RollFormulaStringField`),
+ * so they survive core's write-back; FormulaField itself only handles the Secret-AE mask
+ * `override` path (`_applyChangeOverride`).
  *
  * @example
  * ```ts
@@ -17,13 +19,13 @@ import type { FieldEditability, FieldVisibility } from '@vc/fields/formGroups/fi
 
 import type { FormulaDataSource } from './FormulaData.mjs';
 import { FormulaData } from './FormulaData.mjs';
-import type { FormulaContextDeclaration, FormulaFieldMeta } from './types.mjs';
+import type { FormulaContextDeclaration, FormulaExpectedType, FormulaFieldMeta } from './types.mjs';
 
 const { EmbeddedDataField } = foundry.data.fields;
 
 type BaseFormulaFieldOptions = {
   /** Expected result type when resolving the formula. Default: 'string'. */
-  expectedType?: 'string' | 'number' | 'boolean';
+  expectedType?: FormulaExpectedType;
   /** Default visibility when no GM override is saved. Default: 'everyone'. */
   defaultVisibility?: FieldVisibility;
   /** Default editability when no GM override is saved. Default: 'normal'. */
@@ -162,8 +164,8 @@ class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
   // ---------------------------------------------------------------------------
 
   /** Expected result type when resolving the formula (used for type-mismatch validation). */
-  get expectedType (): 'string' | 'number' | 'boolean' {
-    return (this.options as Record<string, unknown>).expectedType as 'string' | 'number' | 'boolean' ?? 'string';
+  get expectedType (): FormulaExpectedType {
+    return (this.options as Record<string, unknown>).expectedType as FormulaExpectedType ?? 'string';
   }
 
   // ---------------------------------------------------------------------------
@@ -178,7 +180,10 @@ class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
   }
 
   /**
-   * AE Override: replace the formula text and clear the resolved cache.
+   * AE Override (Secret-AE mask path): replaces the authored `formula` text with the masked
+   * value, clearing the resolved cache so it re-resolves. This is the only AE-change handler
+   * FormulaField needs — `add`/`subtract` target the `.formula` leaf directly (see
+   * `RollFormulaStringField`), never the parent `FormulaField`.
    */
   override _applyChangeOverride(
     current: unknown,
@@ -192,81 +197,6 @@ class FormulaField extends EmbeddedDataField<FormulaData, false, true, true> {
       formula: delta,
       resolvedValue: null,
     };
-  }
-
-  /**
-   * AE Add: append to formula text (string concatenation).
-   */
-  override _applyChangeAdd(
-    current: unknown,
-    delta: unknown,
-    _model: foundry.abstract.DataModel,
-    _change: EffectChangeData
-  ): unknown {
-    const data = (current ?? {}) as Record<string, unknown>;
-    const existingFormula = (data.formula as string) ?? '';
-    return {
-      ...data,
-      formula: existingFormula + String(delta),
-      resolvedValue: null,
-    };
-  }
-
-  /**
-   * AE Subtract: prepend to formula text.
-   */
-  override _applyChangeSubtract(
-    current: unknown,
-    delta: unknown,
-    _model: foundry.abstract.DataModel,
-    _change: EffectChangeData
-  ): unknown {
-    const data = (current ?? {}) as Record<string, unknown>;
-    const existingFormula = (data.formula as string) ?? '';
-    return {
-      ...data,
-      formula: String(delta) + existingFormula,
-      resolvedValue: null,
-    };
-  }
-
-  /**
-   * AE Multiply: not applicable to formula fields.
-   */
-  override _applyChangeMultiply(
-    current: unknown,
-    _delta: unknown,
-    _model: foundry.abstract.DataModel,
-    _change: EffectChangeData
-  ): unknown {
-    console.warn('FormulaField does not support the Multiply change type.');
-    return current;
-  }
-
-  /**
-   * AE Upgrade: not applicable to formula fields.
-   */
-  override _applyChangeUpgrade(
-    current: unknown,
-    _delta: unknown,
-    _model: foundry.abstract.DataModel,
-    _change: EffectChangeData
-  ): unknown {
-    console.warn('FormulaField does not support the Upgrade change type.');
-    return current;
-  }
-
-  /**
-   * AE Downgrade: not applicable to formula fields.
-   */
-  override _applyChangeDowngrade(
-    current: unknown,
-    _delta: unknown,
-    _model: foundry.abstract.DataModel,
-    _change: EffectChangeData
-  ): unknown {
-    console.warn('FormulaField does not support the Downgrade change type.');
-    return current;
   }
 }
 

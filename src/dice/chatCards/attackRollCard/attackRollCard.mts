@@ -2,7 +2,7 @@
  * Attack Roll chat card (poc.10 Story D, §10.8): die face/total, modifier breakdown,
  * unrolled damage-formula preview, and one row per target. The "Change Target(s)" button
  * re-syncs unresolved rows to the user's current `game.user.targets` — Story E adds the
- * "Apply" button/hit-resolution alongside `continue()`'s real body.
+ * "Apply" button/hit-resolution alongside `continueAction()`'s real body.
  *
  * @module
  */
@@ -10,13 +10,16 @@ import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
+import type { AttackActionSpend } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import { canUserSeeActorName } from '@documents/token/logic/tokenNameVisibility.mjs';
+import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
+import { COMBAT_KEYS } from '@settings/combat/constants.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 
 import type { D20Roll } from '../../D20Roll.mjs';
-import type { RollModifier } from '../../types.mjs';
-import { buildDiceRollHtmlWithModifiers } from '../modifierBreakdown/modifierBreakdown.mjs';
+import type { RollModifier, WeaponDamageRollModifier } from '../../types.mjs';
+import { buildDiceRollHtmlWithModifiers, buildModifierBreakdownHtml } from '../modifierBreakdown/modifierBreakdown.mjs';
 import { parseActionChainId } from './actionChainSteps.mjs';
 import attackRollCardTemplateSource from './attack-roll-card.hbs?raw';
 
@@ -34,6 +37,8 @@ interface AttackCardTargetRow {
   tokenUuid: string | null;
   targetImage: string;
   resolved: boolean;
+  /** Final hit/miss, set by `_continue()`'s `'damage'` case once this row resolves — `null` until then. */
+  hit: boolean | null;
 }
 
 /**
@@ -44,6 +49,8 @@ interface AttackCardTargetRow {
  * names are deliberately not stored here — see `AttackCardTargetRow`'s note.
  */
 interface AttackCardFlags {
+  /** Authoritative damage snapshot; old cards continue to use their serialized formula. */
+  damageModifiers?: WeaponDamageRollModifier[];
   actionChainId: string;
   /** UUID of the placed token that initiated the attack (e.g. via the Token HUD), if known — see `resolveVisibleActorName()`. `null` for callers that never threaded one through. */
   attackerTokenUuid: string | null;
@@ -51,17 +58,27 @@ interface AttackCardFlags {
   weaponName: string;
   hand: WieldedHand;
   nonLethal: boolean;
-  /** Unrolled damage formula (STR term included), snapshotted at attack-roll time — actually rolled by Story E's `continue()`. */
+  /** Unrolled damage formula (STR term included), snapshotted at attack-roll time — actually rolled by Story E's `_continue()`. */
   resolvedDamageFormula: string;
+  /** 0-based positions (the Nth damage dice group, left to right) in `resolvedDamageFormula` that must NOT be multiplied on a confirmed crit — normally every AE-contributed "extra damage dice" group (SRD: never multiplied), but an author can invert that default per dice group via the `$critMultiply`/`$critExempt` FormulaFamiliar escape hatches (see `flavorDamageDiceBySource()`/`@constants/critDiceMarkers.mjs`). Passed straight into `DamageRoll#evaluateCritical()`. */
+  damageExemptDiceIndices: number[];
   /** Damage-bonus formula term (e.g. `' + 1d6'`), already prefixed with its own sign/operator, or `''` when none was entered. */
   damageBonusTerm: string;
+  /** Labeled breakdown (Str modifier, damage situational bonus) for the damage roll's resolution-card tooltip — mirrors `modifierList` below, for damage instead of the attack roll. */
+  damageModifierList: RollModifier[];
+  /** Pre-roll damage preview breakdown shown on THIS card (before the damage die is ever rolled) — unlike `damageModifierList`, a dice-bearing situational modifier carries its full formula text here (via `RollModifier.formula`) since there's no real roll yet to show dice faces from. */
+  expectedDamageModifierList: RollModifier[];
+  /** Dice-collapsed "Expected Damage" preview formula (e.g. `2d6 + 7`) — display-only, built by `combineDiceFormula()` from the weapon's own damage dice, the STR term's already-evaluated flat number, and the situational modifier. Never used for the real roll (that stays on `resolvedDamageFormula`/`damageBonusTerm`, which must keep e.g. a wield-mode `floor(x * 1.5)` term as real Roll-evaluable syntax). */
+  expectedDamageFormula: string;
   /** Threat range floor (e.g. 19 for a 19–20 weapon) — passed to `roll.isCriticalThreat()` instead of assuming a bare natural 20. */
   critRange: number;
   critMultiplier: number;
   /** Eagerly-rolled confirmation total (poc.10 Story D) — present only when the primary roll threatened a critical; `null` otherwise. Story E compares it against the target's final AC. */
   critConfirmTotal: number | null;
+  /** Weapon's damage type (e.g. `slashing`) — needed by `_continue()`'s `'damage'` case to apply/undo HP damage with the right `HpUpdateMetadata.damageType`. */
+  damageType: string;
   targets: AttackCardTargetRow[];
-  actionEconomySpent: { standardActionSpent: boolean; hand: WieldedHand; babSpent: number } | null;
+  actionEconomySpent: (AttackActionSpend & { hand: WieldedHand; babSpent: number }) | null;
   /** Persisted so the Change Target(s) handler can rebuild `diceRollHtml` without re-deriving the roll's own modifier breakdown. */
   modifierList: RollModifier[];
   /** Already-localized rule-violation notices (insufficient BAB, illegal Wield Mode override) surfaced on the card so the GM notices even if the acting player missed the dialog's live warning. */
@@ -100,8 +117,14 @@ function buildAttackCardContent(roll: D20Roll, flags: AttackCardFlags, diceRollH
     targetTokenUuid: primaryTarget?.tokenUuid ?? null,
     resultLabel: game.i18n.localize('dnd35e.ROLL.Result'),
     changeTargetsLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.ChangeTargets'),
-    damagePreviewLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.DamagePreview'),
+    noTargetLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.NoTarget'),
+    damagePreviewLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.ExpectedDamage'),
+    damagePreviewToggleLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.DamageDetails'),
     nonLethalLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.NonLethal'),
+    applyLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Apply'),
+    reapplyLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Reapply'),
+    hitLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Hit'),
+    missLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.Miss'),
     rollFormula: roll.displayFormula,
     total: roll.total ?? 0,
     isFumble: roll.isFumble,
@@ -110,7 +133,13 @@ function buildAttackCardContent(roll: D20Roll, flags: AttackCardFlags, diceRollH
     hasCritConfirm: flags.critConfirmTotal !== null,
     critConfirmTotal: flags.critConfirmTotal,
     diceRollHtml,
-    damageFormulaDisplay: `${flags.resolvedDamageFormula}${flags.damageBonusTerm}`,
+    damageFormulaDisplay: flags.expectedDamageFormula,
+    // Hides the whole box rather than just the breakdown when there's genuinely no damage —
+    // `combineDiceFormula()` (which builds `expectedDamageFormula`) falls back to the string `'0'`
+    // rather than an empty string when nothing contributes.
+    hasDamagePreview: flags.expectedDamageFormula !== '' && flags.expectedDamageFormula !== '0',
+    damagePreviewBreakdownHtml: buildModifierBreakdownHtml(flags.expectedDamageModifierList),
+    hasDamagePreviewBreakdown: flags.expectedDamageModifierList.length > 0,
     critMultiplier: flags.critMultiplier,
     nonLethal: flags.nonLethal,
     targets: flags.targets,
@@ -189,8 +218,28 @@ async function onRetarget(message: ChatMessage, flags: AttackCardFlags): Promise
       tokenUuid: token.document.uuid,
       targetImage: token.actor!.img ?? '',
       resolved: false,
+      hit: null,
     }));
   const updatedFlags: AttackCardFlags = { ...flags, targets: [...resolvedRows, ...newRows] };
+
+  const roll = message.rolls[0] as D20Roll;
+  const diceRollHtml = await buildDiceRollHtmlWithModifiers(roll, flags.modifierList);
+  await message.update({
+    content: buildAttackCardContent(roll, updatedFlags, diceRollHtml),
+    'flags.dnd35e.attackCard': updatedFlags,
+  });
+}
+
+/**
+ * Flips one target row to `resolved`/`hit` on the attack card (poc.10 Story E, §10.7) — called
+ * by `WeaponAttackDataModel#continue()`'s `'damage'` case once `evaluateDefense()` decides the
+ * outcome. Same rebuild-not-patch convention as `onRetarget()`/`appendAttackCardWarnings()`.
+ */
+async function markTargetRowResolved(message: ChatMessage, flags: AttackCardFlags, targetUuid: string, hit: boolean): Promise<void> {
+  const updatedTargets = flags.targets.map(row => (
+    row.actorUuid === targetUuid ? { ...row, resolved: true, hit } : row
+  ));
+  const updatedFlags: AttackCardFlags = { ...flags, targets: updatedTargets };
 
   const roll = message.rolls[0] as D20Roll;
   const diceRollHtml = await buildDiceRollHtmlWithModifiers(roll, flags.modifierList);
@@ -218,27 +267,74 @@ function populateActorNames(message: ChatMessage, html: HTMLElement): void {
   const attackerUuid = parseActionChainId(flags.actionChainId)?.actorUuid;
   setName(html.querySelector<HTMLElement>('[data-attacker-uuid]'), attackerUuid, flags.attackerTokenUuid);
   setName(html.querySelector<HTMLElement>('.actor-info.target [data-target-uuid]'), flags.targets[0]?.actorUuid, flags.targets[0]?.tokenUuid);
-  html.querySelectorAll<HTMLElement>('.target-row [data-target-uuid]').forEach((el) => {
+  html.querySelectorAll<HTMLElement>('.target-row .target-name').forEach((el) => {
     setName(el, el.dataset.targetUuid, el.dataset.targetTokenUuid);
   });
 }
 
-/** Wires the "Change Target(s)" button, gated to GM/attacker-owner — see registerChatCardActions.mts. */
+/**
+ * Resolves back to the exact action instance that fired this attack (via the card's stored
+ * `actionChainId`) and hands off to its own `continueAction()` (poc.10 Story E, §10.7) — the
+ * click handler never looks anything up in a step registry, and never decides hit/miss
+ * itself; that's entirely `continueAction()`'s job (permission gating included). Generic/ungated
+ * on purpose: a future action type with a different `_continue()` body needs no changes here.
+ */
+async function advanceActionChain(message: ChatMessage, flags: AttackCardFlags, targetUuid: string): Promise<void> {
+  const row = flags.targets.find(t => t.actorUuid === targetUuid);
+  if (!row) return;
+
+  const parsed = parseActionChainId(flags.actionChainId);
+  if (!parsed) return;
+  const item = foundry.utils.fromUuidSync(parsed.itemUuid) as Weapon | null;
+  const action = item?.system.actions.find(a => a._id === parsed.actionId);
+  if (!action) return; // the acting item/action no longer exists (deleted since the card posted)
+
+  const stepId = action.chain[0]?.actionId ?? 'damage';
+  await action.continueAction(stepId, message, row.actorUuid);
+}
+
+/** Mirrors `onExpandAc()` in resolutionCard.mts — toggles `.expanded` on the breakdown itself, not the clicked summary row. */
+function onExpandDamagePreview(html: HTMLElement): void {
+  const breakdown = html.querySelector<HTMLElement>('.damage-preview-breakdown');
+  if (breakdown) breakdown.classList.toggle('expanded');
+}
+
+/** Wires the "Change Target(s)" button and each target row's "Apply"/"Reapply" button — see registerChatCardActions.mts. */
 function wireAttackRollCardButton(message: ChatMessage, html: HTMLElement): void {
   populateActorNames(message, html);
 
-  const retargetButton = html.querySelector<HTMLElement>('[data-action="retarget"]');
-  if (!retargetButton) return;
+  const expandDamagePreviewButton = html.querySelector<HTMLElement>('[data-action="expandDamagePreview"]');
+  if (expandDamagePreviewButton) {
+    expandDamagePreviewButton.addEventListener('click', () => { onExpandDamagePreview(html); });
+  }
 
   const flags = message.getFlag(SYSTEM_ID, 'attackCard') as AttackCardFlags | undefined;
   const parsed = flags ? parseActionChainId(flags.actionChainId) : null;
   const attacker = parsed ? foundry.utils.fromUuidSync(parsed.actorUuid) as ActorDnd35e | null : null;
-  if (!flags || !attacker || !(game.user?.isGM || attacker.isOwner)) {
-    retargetButton.remove();
-    return;
+
+  const retargetButton = html.querySelector<HTMLElement>('[data-action="retarget"]');
+  if (retargetButton) {
+    if (!flags || !attacker || !(game.user?.isGM || attacker.isOwner)) {
+      retargetButton.remove();
+    } else {
+      retargetButton.addEventListener('click', () => { void onRetarget(message, flags); });
+    }
   }
-  retargetButton.addEventListener('click', () => { void onRetarget(message, flags); });
+
+  if (!flags) return;
+  const playerSelfDefense = !!game.settings.get(SYSTEM_ID, COMBAT_KEYS.PLAYER_SELF_DEFENSE);
+  html.querySelectorAll<HTMLElement>('[data-action="apply-attack"]').forEach((button) => {
+    const targetUuid = button.dataset.targetUuid;
+    const target = targetUuid ? foundry.utils.fromUuidSync(targetUuid) as ActorDnd35e | null : null;
+    // Hidden entirely for anyone who can't resolve this target's defense right now — `continueAction()`
+    // re-checks the same rule (defense-in-depth for any other future caller of that method).
+    if (!target || !(game.user?.isGM || (playerSelfDefense && target.isOwner))) {
+      button.remove();
+      return;
+    }
+    button.addEventListener('click', () => { void advanceActionChain(message, flags, targetUuid!); });
+  });
 }
 
-export { appendAttackCardWarnings, buildAttackCard, buildAttackCardContent, wireAttackRollCardButton };
+export { advanceActionChain, appendAttackCardWarnings, buildAttackCard, buildAttackCardContent, markTargetRowResolved, resolveVisibleActorName, wireAttackRollCardButton };
 export type { AttackCardFlags, AttackCardTargetRow };

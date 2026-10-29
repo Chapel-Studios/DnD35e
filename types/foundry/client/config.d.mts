@@ -436,6 +436,15 @@ export default interface Config<
          * dnd35e disables legacy transferral in favor of explicit transfer settings.
          */
         legacyTransferral?: boolean;
+        /**
+         * The action taken by the ActiveEffectRegistry upon an ActiveEffect's expiration.
+         * An `"update"` action sets `ActiveEffectDuration#expired`; `"delete"` removes the
+         * effect outright; `null` disables automatic expiry handling.
+         * @remarks Foundry core default is `"update"`; dnd35e leaves it at that default —
+         * it's a single global switch, so per-effect self-deletion is opted into instead via
+         * `system.deleteOnExpiry` (see `ActiveEffectDnd35e#_onUpdate()`).
+         */
+        expiryAction?: 'update' | 'delete' | null;
     };
 
     /** Configuration for the ActorDelta embedded document type. */

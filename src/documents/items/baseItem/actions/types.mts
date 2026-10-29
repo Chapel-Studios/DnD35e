@@ -1,4 +1,4 @@
-import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
+import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import type { MeleeWeaponAttack } from '@items/physical/weapon/actions/MeleeWeaponAttack/MeleeAttackDataModel.mjs';
 import type { RangedWeaponAttack } from '@items/physical/weapon/actions/RangedAttack/RangedAttackDataModel.mjs';
 
@@ -11,12 +11,12 @@ import type { ActionType } from './constants.mjs';
  * attack-roll pipeline's own requirements (non-lethal toggle, charge, etc.).
  */
 interface UseActionContext {
-  actor: ACTORS_DND35E;
-  target: ACTORS_DND35E[] | null;
+  actor: ActionParticipant;
+  target: ActionParticipant[] | null;
 }
 
 /**
- * Result of `executeAction()`/`continue()`. Base shape shared by every action kind —
+ * Result of `executeAction()`/`continueAction()`. Base shape shared by every action kind —
  * concrete action kinds (weapon attacks, future spell casts, etc.) extend this with their
  * own result fields rather than piling optional fields onto one shared shape.
  */

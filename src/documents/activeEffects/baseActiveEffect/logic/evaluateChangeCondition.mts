@@ -17,8 +17,10 @@ import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
  * @param contextMap Pre-built context map for resolution (from `getEffectContexts()`).
  *   Omit for changes with no backing AE document (e.g. live-contributed changes) — a
  *   condition with no contextMap surfaces a warning and is treated as `false`.
- * @param warnHost Document to record a `PreparationWarning` on if resolution fails
- *   (the actor/item applying the change — see `ActorDnd35e`/`ItemDnd35e.applyActiveEffects()`).
+ * @param warnHost Document(s) to record a `PreparationWarning` on if resolution fails
+ *   (the actor/item applying the change — see `ActorDnd35e`/`ItemDnd35e.applyActiveEffects()`;
+ *   an item-owned effect applying an actor-targeted change passes both the actor and the
+ *   owning item so both sheets surface the warning).
  * @param effectHost The ActiveEffect defining the change — also recorded on, so the warning
  *   is visible from the AE's own config sheet, not just the actor/item it targets.
  * @returns `true` when the change should apply, `false` when it should be skipped.
@@ -26,7 +28,7 @@ import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
 function evaluateChangeCondition(
   change: EffectChangeDataDnd35e,
   contextMap?: Record<string, unknown>,
-  warnHost?: PreparationWarningHost,
+  warnHost?: PreparationWarningHost | PreparationWarningHost[],
   effectHost?: PreparationWarningHost
 ): boolean {
   const condition = change.condition;

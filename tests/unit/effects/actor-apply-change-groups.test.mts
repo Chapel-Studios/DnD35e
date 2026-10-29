@@ -1,4 +1,4 @@
-import { EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
+import { EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import { applyStackedActiveEffectChanges, type ResolvedEffectChange } from '@effects/baseActiveEffect/logic/applyStackedChanges.mjs';
 import { expandChangeTargetGroups } from '@helpers/formulae/changeTargetGroups.mjs';
 import type { Override } from '@helpers/stacking.mjs';
@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * Regression tests for poc §7.7's Group Change Target expansion (`expandChangeTargetGroups`,
  * `src/helpers/formulae/changeTargetGroups.mts`) wired into `ActorDnd35e.applyActiveEffects()`
  * between the priority sort and the shared stacking call. An AE change whose `key` is a
- * registered group (e.g. "group:allSaves") must expand into one independent stacking
+ * registered group (e.g. "#actor.saves.all") must expand into one independent stacking
  * candidate per concrete field path (`system.saves.fort`/`.reflex`/`.will`).
  *
  * Exercised here directly against `expandChangeTargetGroups` + the real
@@ -51,8 +51,8 @@ beforeEach(() => {
 
 describe('expandChangeTargetGroups', () => {
   it('expands a registered group key into one clone per concrete field path', () => {
-    const change = mkChange({ key: 'group:allSaves', value: 2 });
-    const expanded = expandChangeTargetGroups([change], {} as any);
+    const change = mkChange({ key: '#actor.saves.all', value: 2 });
+    const expanded = expandChangeTargetGroups([change], { [EFFECT_CHANGE_TARGET.ACTOR]: {} as any });
 
     expect(expanded.map(c => c.key).sort()).toEqual([
       'system.saves.fort',
@@ -65,13 +65,13 @@ describe('expandChangeTargetGroups', () => {
 
   it('leaves a non-group key unchanged (single-element passthrough)', () => {
     const change = mkChange({ key: 'system.hp.max', value: 5 });
-    const expanded = expandChangeTargetGroups([change], {} as any);
+    const expanded = expandChangeTargetGroups([change], { [EFFECT_CHANGE_TARGET.ACTOR]: {} as any });
     expect(expanded).toEqual([change]);
   });
 
   it('passes through changes with no key untouched', () => {
     const change = { value: 5 } as unknown as ResolvedEffectChange;
-    const expanded = expandChangeTargetGroups([change], {} as any);
+    const expanded = expandChangeTargetGroups([change], { [EFFECT_CHANGE_TARGET.ACTOR]: {} as any });
     expect(expanded).toEqual([change]);
   });
 });
@@ -79,10 +79,10 @@ describe('expandChangeTargetGroups', () => {
 describe('expandChangeTargetGroups → applyStackedActiveEffectChanges integration', () => {
   it('each field expanded from a group stacks independently by bonus type', () => {
     const document = { effectOverrides: {} as Record<string, Override[]>, getRollData: vi.fn(() => ({})) };
-    const groupChange = mkChange({ key: 'group:allSaves', value: 2, bonusType: 'resistance', label: 'Cloak of Resistance +2' });
+    const groupChange = mkChange({ key: '#actor.saves.all', value: 2, bonusType: 'resistance', label: 'Cloak of Resistance +2' });
     const fortOverride = mkChange({ key: 'system.saves.fort', value: 4, bonusType: 'resistance', label: 'Cloak of Resistance +4' });
 
-    const expanded = expandChangeTargetGroups([groupChange, fortOverride], {} as any);
+    const expanded = expandChangeTargetGroups([groupChange, fortOverride], { [EFFECT_CHANGE_TARGET.ACTOR]: {} as any });
     applyStackedActiveEffectChanges(document, expanded);
 
     // Fort: two competing resistance bonuses on the same field — only the higher (+4) applies.

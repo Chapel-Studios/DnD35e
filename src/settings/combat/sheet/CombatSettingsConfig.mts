@@ -92,6 +92,14 @@ class CombatSettingsConfig extends VueSettingsBase {
         { key: COMBAT_KEYS.RANDOMIZE_HP, label: 'dnd35e.SETTINGS.RandomizeHp.Name', hint: 'dnd35e.SETTINGS.RandomizeHp.Hint', type: 'boolean' },
       ],
     },
+    {
+      key: 'defense',
+      label: 'dnd35e.SETTINGS.Combat.Defense',
+      fields: [
+        { key: COMBAT_KEYS.PLAYER_SELF_DEFENSE, label: 'dnd35e.SETTINGS.PlayerSelfDefense.Name', hint: 'dnd35e.SETTINGS.PlayerSelfDefense.Hint', type: 'boolean' },
+        { key: COMBAT_KEYS.ROLLED_DEFENSE_VARIANT, label: 'dnd35e.SETTINGS.RolledDefenseVariant.Name', hint: 'dnd35e.SETTINGS.RolledDefenseVariant.Hint', type: 'boolean' },
+      ],
+    },
   ];
 
   constructor(...args: any[]) {

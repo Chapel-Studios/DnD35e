@@ -8,7 +8,8 @@ import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
 import { ensureNameFormulaOnCreate, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
-import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
+import type { PreparationWarning, PreparationWarningHost } from '@documents/document/preparationWarnings.mjs';
+import { pushPreparationWarningToHosts } from '@documents/document/preparationWarnings.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import {
@@ -77,14 +78,21 @@ class ActorDnd35e<
    * `overrides: ActorOverrides` (a deep-partial-value shape) - that core property is left
    * untouched since nothing in this system reads it, and reusing its name would conflict
    * with core's declared type.
+   *
+   * `declare` (no runtime initializer) is required here: core's `DataModel` constructor
+   * calls `_initialize()` -> `prepareData()` -> `prepareBaseData()` (which populates this)
+   * synchronously *inside* the `super()` chain. A real class-field initializer on this
+   * subclass would reinitialize to `{}` *after* `super()` returns under
+   * `useDefineForClassFields`, wiping out whatever `prepareBaseData()` just computed.
    */
-  effectOverrides: Record<string, Override[]> = {};
+  declare effectOverrides: Record<string, Override[]>;
 
   /**
    * Non-blocking diagnostics collected during this prep cycle (broken formulas, etc.).
-   * Reset every `prepareBaseData()` — see `preparationWarnings.mts`.
+   * Reset every `prepareBaseData()` — see `preparationWarnings.mts`. `declare` for the same
+   * post-`super()` reinitialization-wipe reason as `effectOverrides` above.
    */
-  _preparationWarnings: PreparationWarning[] = [];
+  declare _preparationWarnings: PreparationWarning[];
 
   get localizedType (): string {
     return ACTOR_TYPES_LOCALIZED[this.type as ActorType] ?? 'dnd35e.COMMON.Actor';
@@ -152,20 +160,45 @@ class ActorDnd35e<
           // read directly by maskMap.mts to build the actor's masks dictionary.
           || (change.type === SYSTEM_CHANGE_TYPE.MASK)
         ) continue;
-        if (change.condition) {
-          const { contextMap } = getEffectContexts(effect, change);
-          if (!evaluateChangeCondition(change, contextMap, this, effect)) continue;
+        // An item-owned effect applying an actor-targeted change (`effect.transfer === true`,
+        // see `allApplicableEffectsDnd35e()` above) warns BOTH this actor and the owning item —
+        // otherwise a broken change on e.g. a weapon's buff would only ever surface on the actor
+        // sheet, never on the weapon's own item sheet where it was actually authored.
+        const effectParent = effect.parent;
+        const warnHosts: PreparationWarningHost | PreparationWarningHost[] =
+          effectParent && effectParent !== this
+            ? [this as unknown as PreparationWarningHost, effectParent as unknown as PreparationWarningHost]
+            : (this as unknown as PreparationWarningHost);
+        // A malformed change (bad key/formula) must never abort the rest of data prep —
+        // that would leave this actor (and any item/compendium index fetching it) unable
+        // to construct at all, so no sheet could ever open to let the user fix it. Any
+        // unexpected throw here (beyond the designed KEY_RESOLUTION_FAILED/null-return
+        // failure paths, which already record their own warning) is caught and recorded
+        // as a warning too, then this one change is skipped.
+        try {
+          if (change.condition) {
+            const { contextMap } = getEffectContexts(effect, change);
+            if (!evaluateChangeCondition(change, contextMap, warnHosts, effect)) continue;
+          }
+          const resolvedKey = resolveActiveEffectChangeKey(effect, change, warnHosts);
+          if (resolvedKey === KEY_RESOLUTION_FAILED) continue;
+          const changeWithResolvedKey = resolvedKey === change.key ? change : { ...change, key: resolvedKey };
+          const resolvedChange = resolveActiveEffectChange(effect, changeWithResolvedKey, warnHosts);
+          if (!resolvedChange) continue; // value formula failed to resolve — skip, warning already recorded
+          const copy = foundry.utils.deepClone(resolvedChange) as AppliedActorEffectChange;
+          copy.effect = effect as ActiveEffectDnd35e;
+          copy.type ??= EFFECT_CHANGE_TYPE.ADD;
+          copy.priority ??= 0;
+          changes.push(copy);
+        } catch (err) {
+          console.error(`ActorDnd35e#applyActiveEffects: unexpected error applying change "${change.key}"`, err);
+          pushPreparationWarningToHosts(
+            [warnHosts, effect as unknown as PreparationWarningHost],
+            change.key,
+            `Unexpected error applying this change: ${err instanceof Error ? err.message : String(err)}`,
+            'error'
+          );
         }
-        const resolvedKey = resolveActiveEffectChangeKey(effect, change, this);
-        if (resolvedKey === KEY_RESOLUTION_FAILED) continue;
-        const changeWithResolvedKey = resolvedKey === change.key ? change : { ...change, key: resolvedKey };
-        const resolvedChange = resolveActiveEffectChange(effect, changeWithResolvedKey, this);
-        if (!resolvedChange) continue; // value formula failed to resolve — skip, warning already recorded
-        const copy = foundry.utils.deepClone(resolvedChange) as AppliedActorEffectChange;
-        copy.effect = effect as ActiveEffectDnd35e;
-        copy.type ??= EFFECT_CHANGE_TYPE.ADD;
-        copy.priority ??= 0;
-        changes.push(copy);
       }
       if ( phase === 'initial' ) {
         for ( const statusId of effect.statuses ) this.statuses.add(statusId);
@@ -214,11 +247,12 @@ class ActorDnd35e<
     
     changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
 
-    // Expand any Group Change Target keys (poc §7.7, e.g. "group:allSaves") into their
+    // Expand any Group Change Target keys (poc §7.7, e.g. "#actor.saves.all") into their
     // concrete field paths before stacking — each expanded field then becomes an
     // independent stacking candidate, exactly like a change that targeted it directly.
-    // Non-group keys pass through unchanged.
-    const expandedChanges = expandChangeTargetGroups(changes, this);
+    // Non-group keys pass through unchanged. Named by `EFFECT_CHANGE_TARGET.ACTOR` so a
+    // group declares which context it needs rather than relying on an implicit "the host".
+    const expandedChanges = expandChangeTargetGroups(changes, { [EFFECT_CHANGE_TARGET.ACTOR]: this });
 
     // Resolve bonus-type stacking and apply the winners, recording Override
     // history for every field touched (shared with ItemDnd35e.applyActiveEffects).

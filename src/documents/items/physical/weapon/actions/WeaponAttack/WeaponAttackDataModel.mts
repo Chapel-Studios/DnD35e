@@ -1,125 +1,73 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
-import { detectWieldedHand, getWeaponAttackActionAbilityModTerm, getWieldModeMismatchReason } from '@actors/baseActor/logic/wieldMode.mjs';
+import { detectWieldedHand, getWieldModeMismatchReason } from '@actors/baseActor/logic/wieldMode.mjs';
 import { Creature } from '@actors/creature/index.mjs';
+import { buildRollDefenseDialogData } from '@actors/creature/logic/buildRollDefenseDialogData.mjs';
 import { applyChargedAE, applyDefensiveFightingAE } from '@actors/creature/logic/combatConditionAEs.mjs';
 import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
-import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
+import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, WIELD_HANDS } from '@constants/equipmentSlots.mjs';
 import { DAMAGE_TYPES, SIZE_MODIFIERS, STR } from '@constants/index.mjs';
-import { canUseHandAttack, getActionEconomy, getHandBab, markMovedAfterAttack, spendAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import { canUseHandAttack, getActionEconomy, getHandBab, isCombatEconomyActive, markMovedAfterAttack, setTwoWeaponFightingChoice, spendAttackAction, spendHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
-import { getActorToken } from '@documents/token/logic/getActorToken.mjs';
+import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
+import { EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { DocumentContext } from '@helpers/formulae/index.mjs';
 import { FormulaData } from '@helpers/formulae/index.mjs';
+import type { FormulaContextDeclaration } from '@helpers/formulae/types.mjs';
+import { buildDocumentDataMap } from '@helpers/formulae/utils.mjs';
+import { formatBonusTypeLabel, parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
 import { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';
-import { ACTION_TYPE } from '@items/baseItem/actions/constants.mjs';
-import { getTwoWeaponFightingPenalty } from '@items/physical/weapon/logic/twoWeaponFighting.mjs';
-import type { AttackCardFlags, AttackCardTargetRow, RollModifier } from '@source/dice/index.mjs';
-import {
-  appendAttackCardWarnings,
-  buildActionChainId,
-  buildAttackCard,
-  D20Roll,
-  extractFlatModifier,
-  flavorTerm,
-} from '@source/dice/index.mjs';
-import { MeleeAttackRollDialogConfig } from '@source/rollDialogs/MeleeAttackRollDialog/MeleeAttackRollDialogConfig.mjs';
-import { RangedAttackRollDialogConfig } from '@source/rollDialogs/RangedAttackRollDialog/RangedAttackRollDialogConfig.mjs';
-import type { AttackRollDialogResult, WeaponAttackRollDialogData } from '@source/rollDialogs/WeaponAttackRollDialog/types.mjs';
-import { markRaw } from 'vue';
+import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
+import { participantActor, participantToken } from '@items/baseItem/actions/logic/actionParticipant.mjs';
+import { COMBAT_KEYS } from '@settings/combat/constants.mjs';
+import { SYSTEM_ID } from '@settings/shared.mjs';
+import { syncMovementCardSpend } from '@source/dice/chatCards/moveActionCard/moveActionCard.mjs';
+import { evaluateDefense } from '@source/dice/chatCards/resolutionCard/evaluateDefense.mjs';
+import type { AttackCardFlags, AttackCardTargetRow, ResolutionCardData, RollModifier } from '@source/dice/index.mjs';
+import { appendAttackCardWarnings, buildActionChainId, buildAttackCard, buildOverridesModifierList, buildResolutionCard, D20Roll, DamageRoll, extractFlatModifier, flavorDamageDiceBySource, groupDamageDiceBySource, markTargetRowResolved } from '@source/dice/index.mjs';
+import { buildModifiersD20Formula, buildModifiersDamageFormula, getModifiersFormula } from '@source/dice/rollModifiers.mjs';
+import type { WeaponDamageRollModifier } from '@source/dice/types.mjs';
+import { RollDefenseDialogConfig } from '@source/rollDialogs/RollDefenseDialog/RollDefenseDialogConfig.mjs';
+import type { AttackRollDialogResult, WeaponDamageRollBreakdownData, WeaponRollBreakdownData } from '@source/rollDialogs/WeaponAttackRollDialog/types.mjs';
 
 import type { Weapon } from '../../Weapon.mjs';
-import { createCombatModifiers } from './combatModifiers.mjs';
 import { WEAPON_PROPERTIES, WEAPON_PROPERTY } from './constants.mjs';
-import type { WeaponAttackActionResult } from './types.mjs';
-import type { UseWeaponAttackContext } from './types.mjs';
-import type { WeaponAttackSourceData } from './WeaponAttackSourceData.mjs';
+import type { UseWeaponAttackContext, WeaponAttackActionResult } from './types.mjs';
+import type { WeaponAttackData, WeaponAttackSourceData } from './WeaponAttackSourceData.mjs';
 
-const {
-  fields: {
-    BooleanField,
-    NumberField,
-    StringField,
-    SetField,
-  },
-} = foundry.data;
+const { BooleanField, NumberField, StringField, SetField } = foundry.data.fields;
 
-/** Appends signed flat-number terms onto a resolved formula string, skipping any zero term. */
-function appendFlatTerms(baseFormula: string, ...terms: number[]): string {
-  return terms.reduce((formula, term) => {
-    if (term === 0) return formula;
-    return `${formula}${term >= 0 ? ' + ' : ' - '}${Math.abs(term)}`;
-  }, baseFormula);
+export interface FormulaContext {
+  actor: ACTORS_DND35E;
+  item: Weapon;
+  thisAttack: WeaponAttackDataModel;
+  target: ACTORS_DND35E | null;
+  self: ACTORS_DND35E;
+  weapon: Weapon;
+  [key: string]: DocumentContext;
 }
-
-/**
- * Appends a single resolved formula-bonus term (a plain number or dice notation, e.g. `1d4` —
- * left unrolled by `FormulaData`, see `FormulaData._finalizeResolvedValue`) onto a base formula,
- * prefixed with the correct sign. Skips blank/zero terms.
- */
-function appendFormulaTerm(baseFormula: string, term: string): string {
-  const trimmed = term.trim();
-  if (!trimmed || trimmed === '0') return baseFormula;
-  const negative = trimmed.startsWith('-');
-  const unsigned = negative || trimmed.startsWith('+') ? trimmed.slice(1).trim() : trimmed;
-  return `${baseFormula} ${negative ? '-' : '+'} ${unsigned}`;
-}
-
-  interface FormulaContext {
-    actor: ACTORS_DND35E;
-    item: Weapon;
-    thisAttack: WeaponAttackDataModel;
-    target: ACTORS_DND35E | null;
-    // Aliases mirroring the schema fields' own `contexts` declarations (`aliases: ['self']`/
-    // `['item', 'weapon']`) — ad hoc `FormulaData.resolveSource()` calls (e.g. the STR damage
-    // term) build their own context map and need these present under the same names the
-    // formula text actually references (`#self...`), or resolution silently returns `null`.
-    self: ACTORS_DND35E;
-    weapon: Weapon;
-    // Satisfies `FormulaData.resolve()`'s `Record<string, DocumentContext>` param — a named
-    // interface needs its own index signature to be assignable to one, unlike a fresh object literal.
-    [key: string]: DocumentContext;
-  }
 
 abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionResult> {
-  declare attackFormula: FormulaData;
-  declare damageFormula: FormulaData;
-
+  declare readonly _source: WeaponAttackSourceData;
   isTargetRequired = true;
-
+  
+  // General
   static override defineSchema(): Record<string, any> {
     const schema = super.defineSchema();
-    // No `hand` field, no `defaultSlotId` field — both determined live at execution
-    // time (wield mode / Attack Roll Dialog hand select), not authored per-action.
     schema.requiresEquipped = new BooleanField({ required: true, initial: true });
-    schema.attackFormula = new FormulaField({
-      expectedType: 'string',
-      contexts: [
-        { contextName: 'Actor', resolvePath: 'item.actor', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['self'] },
-        { contextName: 'Item', resolvePath: 'item', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['item', 'weapon'] },
-      ],
-      // Bonus term ONLY (e.g. an extra dice bonus feat) — `_buildAttackFormula()` always
-      // prepends its own literal `1d20` base die separately, so this must default to no bonus,
-      // never a second `1d20`.
-      initialFormula: '0',
-    });
-    schema.damageFormula = new FormulaField({
-      expectedType: 'string',
-      contexts: [
-        { contextName: 'Actor', resolvePath: 'item.actor', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['self'] },
-        { contextName: 'Item', resolvePath: 'item', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['item', 'weapon'] },
-      ],
-      initialFormula: '$scaleDamage(1d4)',
-    });
+    const contexts: FormulaContextDeclaration[] = [
+      { contextName: 'Actor', resolvePath: 'item.actor', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['self'] },
+      { contextName: 'Item', resolvePath: 'item', documentType: 'Item', fallbackSubtypes: ['weapon'], aliases: ['item', 'weapon'] },
+    ];
+    schema.attackFormula = new FormulaField({ expectedType: 'rollFormula', contexts, initialFormula: '0' });
+    schema.damageFormula = new FormulaField({ expectedType: 'rollFormula', contexts, initialFormula: '$scaleDamage(1d4)' });
     schema.damageType = new StringField({ choices: [...DAMAGE_TYPES], initial: DAMAGE_TYPE_SLASHING, required: true });
     schema.critRange = new NumberField({ required: true, initial: 20, integer: true, min: 2, max: 20 });
     schema.critMultiplier = new NumberField({ required: true, initial: 2, integer: true });
-    // Weapon Properties (§10.4) — finesse/reach/threatensAdjacent/thrown/nonLethal/nonLethalNoPenalty.
     schema.properties = new SetField(new StringField({ choices: [...WEAPON_PROPERTIES] }));
-
     return schema;
   }
 
@@ -134,390 +82,288 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    */
   private _buildWieldModeWarnings(context: UseWeaponAttackContext, item: Weapon): string[] {
     const warnings: string[] = [];
-    const combat = game.combat;
-    const combatant = context.actorToken
-      ? combat?.getCombatantsByToken(context.actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
-      : undefined;
-
-    if (combat?.started && combatant && !context.isFree && context.availableBab <= 0) {
+    if (isCombatEconomyActive(this.getCombatant(context)) && !context.isFree && context.availableBab <= 0) {
       warnings.push(game.i18n.localize('dnd35e.COMBAT.WieldMode.InsufficientBab'));
     }
-
-    const mismatchKey = getWieldModeMismatchReason(context.actor, item, context.wieldedHand);
-    if (mismatchKey) warnings.push(game.i18n.localize(mismatchKey));
-
+    const mismatch = getWieldModeMismatchReason(participantActor(context.actor), item, context.wieldedHand);
+    if (mismatch) warnings.push(game.i18n.localize(mismatch));
     return warnings;
   }
 
   // `requiresEquipped` is enforced only as HUD-entry eligibility (tokenHudActions.mts) — the
   // sheet's Actions tab intentionally allows firing this action regardless of equip state
   // (§10.11), so execution itself never re-gates on it here.
+  // Can execute
   protected override _canExecute(context: UseWeaponAttackContext): WeaponAttackActionResult {
-    const combat = game.combat;
-    const combatant = context.actorToken
-      ? combat?.getCombatantsByToken(context.actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
-      : undefined;
-
+    const combatant = this.getCombatant(context);
+    
     if (
-      combat?.started
-      && combatant
+      !!combatant
+      && isCombatEconomyActive(combatant)
       && !context.isFree
-      && context.wieldedHand
       && !canUseHandAttack(combatant, context.wieldedHand)
     ) {
       ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.NoActionAvailable'));
       return {
-        cancelled: true,
+        cancelled: true, // todo: this should be based on a user setting to warn / block or silently allow this
         reason: 'noActionAvailable',
         warnings: [],
       };
     }
+
     return super._canExecute(context);
   }
 
-  private async _resolveAttackRollDialog(
-    context: UseWeaponAttackContext,
-    item: Weapon,
-    targetToken: TokenDnd35e | undefined,
-    weaponNonLethalDefault: boolean,
-    expectedToHitBonus: number,
-    expectedDamageBonus: number,
-    resolvedName: string | null,
-    baseTotalByHand: Record<WieldedHand, number>
+  protected async _resolveAttackRollDialog(
+    _context: UseWeaponAttackContext,
+    _formulaContext: FormulaContext,
+    _targetToken: TokenDnd35e | undefined,
+    _attackRoll: WeaponRollBreakdownData,
+    _damageRoll: WeaponDamageRollBreakdownData,
+    _resolvedName: string | null,
+    _weaponNonLethalDefault: boolean,
+    _nonLethalNoPenalty: boolean
   ): Promise<AttackRollDialogResult | null> {
-    const combatModifierToggles = createCombatModifiers(context.actor, targetToken, weaponNonLethalDefault);
-    
-    const rollAttackToHit = game.i18n.localize('dnd35e.ROLL.RollAttackToHit');
-    const title = resolvedName
-      ?? game.i18n.format('dnd35e.ROLL.RollAttackTitle', { weapon: this.item?.name });
-
-    const dialogData: WeaponAttackRollDialogData = {
-      title,
-      baseLabel: rollAttackToHit,
-      baseTotal: expectedToHitBonus,
-      damageLabel: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.DamagePreview'),
-      damageTotal: expectedDamageBonus,
-      attackSituationalModifier: context.attackSituationalModifier ?? '',
-      damageSituationalModifier: context.damageSituationalModifier ?? '',
-      combatModifierToggles,
-      rollMode: game.settings.get('core', 'messageMode'),
-      actor: context.actor,
-      target: context.target,
-      targetToken: targetToken ?? null,
-      wieldModeFromEquippedSlots: context.wieldedHand,
-      handBab: context.handBab,
-      baseTotalByHand,
-      // poc.10 Story D: additional FormulaFamiliar contexts (`#item`/`#thisAttack`) for the
-      // dialog's situational modifier fields, mirroring `_executeCheck()`'s own `formulaContext`.
-      // Documents/DataModels must never be wrapped in Vue's reactive() proxy (see repo memory).
-      item: markRaw(item),
-      thisAttack: markRaw(this),
-    };
-
-    return this.type === ACTION_TYPE.MELEE
-      ? await MeleeAttackRollDialogConfig.roll(dialogData)
-      : await RangedAttackRollDialogConfig.roll(dialogData);
+    return null;
   }
 
-  /** Resolves `this.name`'s FormulaFamiliar formula against `formulaContext`, falling back to the item's own name when blank/unresolved. */
-  private _resolveAttackName(formulaContext: FormulaContext, item: Weapon): { resolvedName: string | null; attackName: string } {
-    const resolved = this.name.resolve(formulaContext);
-    const resolvedName = typeof resolved === 'string' ? resolved : null;
-    return { resolvedName, attackName: resolvedName ?? item.name };
+  private _formulaPath(field: 'attackFormula' | 'damageFormula'): string {
+    const index = this.item?.system.actions.findIndex(action => action._id === this._id) ?? -1;
+    return `system.actions.${index}.${field}.formula`;
   }
 
-  /**
-   * Pre-dialog expected-to-hit bonus (§10.7) — BAB + ability mod + TWF penalty, before any
-   * dialog-side situational modifiers or combat-modifier toggles. Used only to seed the
-   * dialog's base-total preview row; the real formula is assembled post-dialog by
-   * `_buildAttackFormula()`. `baseTotalByHand` mirrors this same computation for every hand
-   * so the dialog can show a live-updating preview as the player changes Wield Mode.
-   */
-  private _computeExpectedToHitBonus(
-    context: UseWeaponAttackContext,
-    item: Weapon
-  ): { abilityMod: number; sizeMod: number; expectedToHitBonus: number; baseTotalByHand: Record<WieldedHand, number> } {
-    const abilityMod = context.actor.system.abilities[context.attackAbility].mod;
-    const sizeMod = SIZE_MODIFIERS[context.actor.system.size] ?? 0;
-    const flatBonus = (hand: WieldedHand): number =>
-      context.handBab[hand] + abilityMod + sizeMod + getTwoWeaponFightingPenalty(item, hand);
-    const baseTotalByHand: Record<WieldedHand, number> = {
-      [MAIN_HAND_EQUIP_SLOT]: flatBonus(MAIN_HAND_EQUIP_SLOT),
-      [OFF_HAND_EQUIP_SLOT]: flatBonus(OFF_HAND_EQUIP_SLOT),
-      [BOTH_HANDS_EQUIP_SLOT]: flatBonus(BOTH_HANDS_EQUIP_SLOT),
-    };
+  private _resolveFormula(field: 'attackFormula' | 'damageFormula', context: FormulaContext): string {
+    const resolved = FormulaData.resolveSource<string>(this[field], context);
+    if (resolved === null) throw new Error(`Unable to resolve ${field} for action ${this._id}`);
+    return resolved || '0';
+  }
+
+  private _buildFormulaBreakdown(field: 'attackFormula' | 'damageFormula', context: FormulaContext, label: string, resolved: string) {
+    const path = this._formulaPath(field);
+    const overrides = (context.item.effectOverrides[path] ?? []).map(override => {
+      const value = FormulaData.resolveSource<string>(
+        FormulaData.toSource(String(override.value), { expectedType: 'rollFormula' }), context
+      );
+      if (value === null) throw new Error(`Unable to resolve ${field} history for action ${this._id}`);
+      return { ...override, value };
+    });
+    const diceOverrides = overrides.filter(override => override.stackResult !== STACK_RESULT_IGNORED)
+      .map(override => ({ effectName: override.effectName, value: String(override.value) }));
+    const source = FormulaData.resolveSource<string>(this._source[field], context);
+    if (source === null) throw new Error(`Unable to resolve source ${field} for action ${this._id}`);
+    const baseFlat = extractFlatModifier(source || '0').flat;
     return {
-      abilityMod,
-      sizeMod,
-      expectedToHitBonus: baseTotalByHand[context.wieldedHand],
-      baseTotalByHand,
+      diceOverrides,
+      breakdown: [
+        ...groupDamageDiceBySource(resolved, label, diceOverrides).map(entry => ({ ...entry, value: 0 })),
+        ...(baseFlat ? [{ label, value: baseFlat }] : []),
+        ...buildOverridesModifierList({ effectOverrides: { [path]: overrides } }, path),
+        ...overrides.filter(override => override.stackResult !== STACK_RESULT_IGNORED && Number.isNaN(parseNumericChangeValue(override.value)))
+          .map(override => ({
+            label: override.effectName,
+            value: extractFlatModifier(override.value).flat * (override.type === EFFECT_CHANGE_TYPE.SUBTRACT ? -1 : 1),
+            bonusTypeLabel: formatBonusTypeLabel(override.bonusType),
+          })).filter(entry => entry.value !== 0),
+        ...overrides.filter(override => override.stackResult === STACK_RESULT_IGNORED && Number.isNaN(parseNumericChangeValue(override.value)))
+          .map(override => ({
+            label: override.effectName, value: 0, formula: String(override.value), isIgnored: true,
+            ignoredReason: override.stackReason ?? game.i18n.localize('dnd35e.EFFECT.StackResult.Ignored'),
+          })),
+      ],
     };
   }
 
-  /**
-   * Applies dialog-derived combat-modifier toggle effects (§10.7) — non-lethal/proficiency
-   * penalties, plus any short-duration self-AEs (charge/defensive fighting) read back later
-   * by the Roll Defense Dialog (Story E) when this same creature becomes a target before its
-   * next turn.
-   */
-  private async _applyCombatModifierEffects(
-    actor: ACTORS_DND35E,
-    dialogResult: AttackRollDialogResult,
-    weaponNonLethalDefault: boolean,
-    nonLethalNoPenalty: boolean
-  ): Promise<{ isNonLethal: boolean; nonLethalPenalty: number; proficiencyPenalty: number }> {
-    // Non-lethal switch penalty (§10.3): only applies when the final checked state deviates
-    // from the weapon's own default, waived entirely by `nonLethalNoPenalty`.
-    const isNonLethal = dialogResult.combatModifiers?.find(m => m.id === 'nonLethal')?.checked ?? weaponNonLethalDefault;
-    const nonLethalPenalty = isNonLethal !== weaponNonLethalDefault && !nonLethalNoPenalty ? -4 : 0;
-    // Proficient inverts the usual checked-applies-value shape (§10.7) — unchecked applies the −4.
-    const isProficient = dialogResult.combatModifiers?.find(m => m.id === 'proficient')?.checked ?? false;
-    const proficiencyPenalty = isProficient ? 0 : -4;
+  private _buildAttackData(context: UseWeaponAttackContext, formulaContext: FormulaContext, attackName: string): WeaponRollBreakdownData {
+    const actor = participantActor(context.actor);
 
-    if (dialogResult.combatModifiers?.find(m => m.id === 'charge')?.checked) await applyChargedAE(actor);
-    if (dialogResult.combatModifiers?.find(m => m.id === 'defensiveFighting')?.checked) await applyDefensiveFightingAE(actor);
+    const resolved = this._resolveFormula('attackFormula', formulaContext);
+    const { flat, hasDice } = extractFlatModifier(resolved);
+    const weaponBonus: RollModifier = {
+      id: 'weaponAttack',
+      label: attackName,
+      value: flat,
+      ...(hasDice ? { formula: resolved } : {}),
+      breakdown: this._buildFormulaBreakdown('attackFormula', formulaContext, attackName, resolved).breakdown,
+    };
 
-    return { isNonLethal, nonLethalPenalty, proficiencyPenalty };
+    const ability = game.i18n.localize(`dnd35e.ABILITY.${context.attackAbility}.abbr`);
+    const modifiersForHand = (hand: WieldedHand): RollModifier[] => [
+      { id: 'bab', label: game.i18n.localize('dnd35e.COMBAT.BaseAttackBonus'), value: context.handBab[hand] },
+      { id: 'ability', label: game.i18n.format('dnd35e.COMBAT.AbilityModifier', { ability }), value: actor.system.abilities[context.attackAbility].mod },
+      ...(SIZE_MODIFIERS[actor.system.size] ? [{ id: 'size', label: game.i18n.localize('dnd35e.COMBAT.SizeModifier'), value: SIZE_MODIFIERS[actor.system.size] }] : []),
+      weaponBonus,
+    ];
+
+    return {
+      label: game.i18n.localize('dnd35e.ROLL.RollAttackToHit'),
+      situationalModifier: context.attackSituationalModifier,
+      immutableModifiersByHand: {
+        mainHand: modifiersForHand(MAIN_HAND_EQUIP_SLOT),
+        offHand: modifiersForHand(OFF_HAND_EQUIP_SLOT),
+        bothHands: modifiersForHand(BOTH_HANDS_EQUIP_SLOT),
+      },
+    };
   }
 
-  /**
-   * Composes the real attack-roll formula (§10.7) — `1d20` flavor-tagged with the attack's
-   * name, plus every FLAT-only contribution (BAB/ability/TWF/non-lethal/proficiency penalties,
-   * the weapon's own `attackFormula` bonus, and the dialog's attack situational modifier)
-   * condensed into a single signed term (e.g. `1d20 - 10`, never a chain like `1d20 - 3 + -7`)
-   * — only genuine dice sub-formulas (`1d4`, etc.) stay appended as their own flavor-tagged
-   * term. Also builds the flat/dice-only `displayAttackFormula` (no flavor tags — the roll's
-   * total-row preview text) and the modifier-breakdown list shown on the attack card.
-   */
-  private _buildAttackFormula(
-    formulaContext: FormulaContext,
-    attackName: string,
-    context: UseWeaponAttackContext,
-    dialogResult: AttackRollDialogResult,
-    abilityMod: number,
-    sizeMod: number,
-    twfPenalty: number,
-    nonLethalPenalty: number,
-    proficiencyPenalty: number
-  ): { attackFormula: string; displayAttackFormula: string; modifierList: RollModifier[] } {
-    const resolvedAttackBonus = this.attackFormula.resolve(formulaContext);
-    const attackFormulaResolved = typeof resolvedAttackBonus === 'string' ? resolvedAttackBonus : '0';
-    const { flat: attackFormulaFlat, hasDice: attackFormulaHasDice } = extractFlatModifier(attackFormulaResolved);
-
-    const situationalLabel = game.i18n.localize('dnd35e.ROLL.AttackSituationalModifier');
-    const { flat: flatAttackSituational, hasDice: attackSituationalHasDice } = extractFlatModifier(dialogResult.attackSituationalModifier);
-
-    const flatPenalty = context.availableBab + abilityMod + sizeMod + twfPenalty + nonLethalPenalty + proficiencyPenalty
-      + (attackFormulaHasDice ? 0 : attackFormulaFlat)
-      + (attackSituationalHasDice ? 0 : flatAttackSituational);
-    let baseAttackFormula = appendFlatTerms('1d20', flatPenalty);
-    if (attackFormulaHasDice) baseAttackFormula = appendFormulaTerm(baseAttackFormula, attackFormulaResolved);
-
-    const attackBonusTerm = attackSituationalHasDice
-      ? ` + ${flavorTerm(dialogResult.attackSituationalModifier.trim(), situationalLabel)}`
-      : '';
-    const plainAttackBonusTerm = attackSituationalHasDice
-      ? ` + ${dialogResult.attackSituationalModifier.trim()}`
-      : '';
-
-    // Flavor only the bare `1d20` (not the whole compound expression via `flavorTerm()`'s
-    // parenthesization), which would turn `roll.terms[0]` into a `ParentheticalTerm` and
-    // break `D20Roll`'s natural 1/20 detection (fumbles, critical threats, eager confirmation).
-    const attackFormula = `${baseAttackFormula.replace(/^1d20/, `1d20[${attackName}]`)}${attackBonusTerm}`;
-    const displayAttackFormula = `${baseAttackFormula}${plainAttackBonusTerm}`;
-
-    const modifierList: RollModifier[] = (dialogResult.combatModifiers ?? [])
-      .filter(m => m.checked && m.value !== 0)
-      .map(m => ({ label: m.label, value: m.value }));
-    if (context.availableBab !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.BaseAttackBonus'), value: context.availableBab });
-    // Ability mod always shown (even 0) for bookkeeping — the attack card should always
-    // disclose which ability the roll used, not just when it happens to be non-zero.
-    const abilityAbbr = game.i18n.localize(`dnd35e.ABILITY.${context.attackAbility}.abbr`);
-    modifierList.push({ label: game.i18n.format('dnd35e.COMBAT.AbilityModifier', { ability: abilityAbbr }), value: abilityMod });
-    if (sizeMod !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.SizeModifier'), value: sizeMod });
-    if (twfPenalty !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.TwoWeaponFighting'), value: twfPenalty });
-    if (nonLethalPenalty !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.CombatModifiers.NonLethal.Label'), value: nonLethalPenalty });
-    if (proficiencyPenalty !== 0) modifierList.push({ label: game.i18n.localize('dnd35e.COMBAT.CombatModifiers.Proficient.Label'), value: proficiencyPenalty });
-    if (flatAttackSituational !== 0) modifierList.push({ label: situationalLabel, value: flatAttackSituational });
-
-    return { attackFormula, displayAttackFormula, modifierList };
+  protected _getDamageAbilityWieldModifier(hand: WieldedHand): number {
+    return hand === OFF_HAND_EQUIP_SLOT ? 0.5 : 1;
   }
 
-  /**
-   * The unrolled base damage formula (§10.7) — the weapon's own resolved damage dice plus the
-   * wield-mode STR term (melee always, ranged only when the weapon carries `rangedUsesStr`).
-   * `getWeaponAttackActionAbilityModTerm()` returns raw FormulaFamiliar text (e.g.
-   * `$floor(#self.abilities.str.mod * 1.5)`), so it's resolved here against `formulaContext`
-   * before display — it must never reach the dialog preview/attack card as literal syntax.
-   * Depends only on `context.wieldedHand`/`context.damageAbility`, not `attackAbility` (finesse
-   * swaps only the attack roll's ability, never damage's — see `UseWeaponAttackContext`) nor
-   * the dialog result, so it's usable both pre-dialog (damage box preview) and post-dialog
-   * (`_buildDamageSnapshot`).
-   */
-  private _computeDamageFormula(context: UseWeaponAttackContext, formulaContext: FormulaContext): string {
-    const properties = this.properties as Set<string> | undefined;
-    const includeStrTerm = this.type === ACTION_TYPE.MELEE
-      || (properties?.has('rangedUsesStr') ?? false);
-    const rawStrTerm = includeStrTerm
-      ? getWeaponAttackActionAbilityModTerm(context.wieldedHand, context.damageAbility)
-      : '';
-    const strTerm = rawStrTerm
-      ? FormulaData.resolveSource(FormulaData.toSource(rawStrTerm, { expectedType: 'string' }), formulaContext, '')
-      : '';
-    return `${this.damageFormula.resolvedValue || '0'}${typeof strTerm === 'string' ? strTerm : String(strTerm)}`;
+  protected _usesDamageAbility(): boolean {
+    return true;
   }
 
-  /**
-   * Pre-dialog expected-damage bonus — flat portion only (dice terms excluded, see
-   * `resolveFormulaNumber`'s doc) of `_computeDamageFormula()`. Used only to seed the
-   * dialog's damage-box preview row; the real formula (dice included) is assembled
-   * post-dialog by `_buildDamageSnapshot()`.
-   */
-  private _computeExpectedDamageBonus(context: UseWeaponAttackContext, formulaContext: FormulaContext): number {
-    return extractFlatModifier(this._computeDamageFormula(context, formulaContext)).flat;
+  private _buildDamageData(context: UseWeaponAttackContext, formulaContext: FormulaContext): WeaponDamageRollBreakdownData {
+    const resolved = this._resolveFormula('damageFormula', formulaContext);
+    const label = formulaContext.item.name;
+    const { diceOverrides, breakdown } = this._buildFormulaBreakdown('damageFormula', formulaContext, label, resolved);
+    const { formula, exemptDiceIndices } = flavorDamageDiceBySource(resolved, label, diceOverrides);
+    const flat = extractFlatModifier(resolved).flat;
+    const weaponDamage: WeaponDamageRollModifier = {
+      id: 'weaponDamage', label, value: flat, formula, exemptDiceIndices,
+      breakdown,
+    };
+    const modifiersForHand = (hand: WieldedHand): WeaponDamageRollModifier[] => {
+      if (!this._usesDamageAbility()) return [weaponDamage];
+      const multiplier = this._getDamageAbilityWieldModifier(hand);
+      const ability = game.i18n.localize(`dnd35e.ABILITY.${context.damageAbility}.abbr`);
+      const abilityLabel = game.i18n.format('dnd35e.COMBAT.AbilityModifier', { ability });
+      const abilityValue = Math.floor(formulaContext.actor.system.abilities[context.damageAbility].mod * multiplier);
+
+      return [
+        weaponDamage,
+        {
+          id: 'damageAbility',
+          label: multiplier === 1
+            ? abilityLabel
+            : `${abilityLabel} x${multiplier}`,
+          value: abilityValue,
+        },
+      ];
+    };
+
+    return {
+      label: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.ExpectedDamage'),
+      situationalModifier: context.damageSituationalModifier,
+      immutableModifiersByHand: {
+        mainHand: modifiersForHand(MAIN_HAND_EQUIP_SLOT),
+        offHand: modifiersForHand(OFF_HAND_EQUIP_SLOT),
+        bothHands: modifiersForHand(BOTH_HANDS_EQUIP_SLOT),
+      },
+    };
   }
 
-  /**
-   * Snapshots the unrolled damage formula (§10.7) — the wield-mode STR term (melee always,
-   * ranged only when the weapon carries `rangedUsesStr`) plus the dialog's damage situational
-   * modifier — actually rolled later by Story E's `continue()`.
-   */
-  private _buildDamageSnapshot(context: UseWeaponAttackContext, formulaContext: FormulaContext, dialogResult: AttackRollDialogResult): { resolvedDamageFormula: string; damageBonusTerm: string } {
-    const resolvedDamageFormula = this._computeDamageFormula(context, formulaContext);
-    const trimmedDamageSituational = dialogResult.damageSituationalModifier?.trim() ?? '';
-    const { flat: flatDamageSituational, hasDice: damageSituationalHasDice } = extractFlatModifier(trimmedDamageSituational);
-    const damageBonusTerm = damageSituationalHasDice
-      ? ` + ${trimmedDamageSituational}`
-      : flatDamageSituational !== 0
-        ? (flatDamageSituational >= 0 ? ` + ${flatDamageSituational}` : ` - ${Math.abs(flatDamageSituational)}`)
-        : '';
-    return { resolvedDamageFormula, damageBonusTerm };
-  }
-
-  /**
-   * The real attack-roll pipeline (poc.10 Story D, §10.7). Shared by every weapon attack
-   * subtype — `MeleeWeaponAttack`/`RangedWeaponAttack` never override this; they only
-   * override `_canExecute()` for their own reach/range validation. Hit/miss resolution
-   * and damage rolling are deliberately **not** decided here — that's Story E's
-   * GM-gated Roll Defense Dialog / `continue()` — this method's job stops at posting
-   * the attack card with a raw total and an unrolled damage-formula snapshot.
-   */
   protected override async _executeCheck(context: UseWeaponAttackContext): Promise<WeaponAttackActionResult> {
-    const defaultResult = { cancelled: true, reason: '', warnings: [] };
+    const cancelled: WeaponAttackActionResult = { cancelled: true, reason: '', warnings: [] };
+    
     const item = this.item;
-    if (!item) {
-      defaultResult.reason = 'noItem';
-      return defaultResult;
-    }
+    if (!item) return { ...cancelled, reason: 'noItem' };
 
-    const { actor } = context;
-    const target = context.target?.[0] ?? null;
+    const actor = participantActor(context.actor);
+    const targetParticipant = context.target?.[0];
     const formulaContext: FormulaContext = {
       actor,
       item,
       thisAttack: this,
-      target,
+      target: targetParticipant
+        ? participantActor(targetParticipant)
+        : null,
       self: actor,
       weapon: item,
     };
 
-    const { resolvedName, attackName } = this._resolveAttackName(formulaContext, item);
-
-    const targetToken = context.targetToken;
-
-    const weaponNonLethalDefault = this.properties?.has(WEAPON_PROPERTY.NON_LETHAL) ?? false;
-    const nonLethalNoPenalty = this.properties?.has(WEAPON_PROPERTY.NON_LETHAL_NO_PENALTY) ?? false;
-
-    const { abilityMod, sizeMod, expectedToHitBonus, baseTotalByHand } = this._computeExpectedToHitBonus(context, item);
-    const expectedDamageBonus = this._computeExpectedDamageBonus(context, formulaContext);
-    const dialogResult: AttackRollDialogResult | null = await this._resolveAttackRollDialog(
+    const resolvedName = FormulaData.resolveSource<string>(this.name, formulaContext);
+    const attackName = resolvedName ?? item.name;
+    const nonLethalDefault = this.properties?.has(WEAPON_PROPERTY.NON_LETHAL) ?? false;
+    const targetToken = targetParticipant
+      ? participantToken(targetParticipant)
+        ?? undefined
+      : undefined;
+    
+    const dialog = await this._resolveAttackRollDialog(
       context,
-      item,
+      formulaContext,
       targetToken,
-      weaponNonLethalDefault,
-      expectedToHitBonus,
-      expectedDamageBonus,
+      this._buildAttackData(context, formulaContext, attackName),
+      this._buildDamageData(context, formulaContext),
       resolvedName,
-      baseTotalByHand
+      nonLethalDefault,
+      this.properties?.has(WEAPON_PROPERTY.NON_LETHAL_NO_PENALTY)
+        ?? false
     );
+    if (!dialog) return { ...cancelled, reason: 'dialogCancelled' };
 
-    if (!dialogResult) {
-      defaultResult.reason = 'dialogCancelled';
-      return defaultResult;
+    context.wieldedHand = dialog.wieldMode;
+    context.availableBab = context.handBab[dialog.wieldMode];
+
+    const chosen = (id: string) => dialog.combatModifiers
+      .find(mod => mod.id === id)
+      ?.checked;
+
+    const isNonLethal = chosen('nonLethal')
+      ?? nonLethalDefault;
+    if (chosen('charge')) await applyChargedAE(actor);
+    if (chosen('defensiveFighting')) await applyDefensiveFightingAE(actor);
+    
+    const combatant = this.getCombatant(context);
+    if (combatant && chosen('twoWeaponFighting') !== undefined) {
+      await setTwoWeaponFightingChoice(combatant, chosen('twoWeaponFighting')!);
     }
 
-    // The dialog's Wield Mode selection is authoritative from here on — `context.wieldedHand`
-    // was only the pre-dialog auto-detected default used to seed the dialog and gate availability.
-    context.wieldedHand = dialogResult.wieldMode;
-    // An override must re-pull from the actually-chosen hand's own snapshotted pool before the
-    // real formula is built, or the roll (not just the preview) silently uses the wrong hand's BAB.
-    context.availableBab = context.handBab[context.wieldedHand];
-    const twfPenalty = getTwoWeaponFightingPenalty(item, context.wieldedHand);
-
-    const {
-      isNonLethal,
-      nonLethalPenalty,
-      proficiencyPenalty,
-    } = await this._applyCombatModifierEffects(
-      actor,
-      dialogResult,
-      weaponNonLethalDefault,
-      nonLethalNoPenalty
+    const { formula, displayFormula } = buildModifiersD20Formula(dialog.attackModifiers, attackName);
+    
+    const attackRoll = new D20Roll(
+      formula,
+      {},
+      {
+        situationalModifiers: dialog.attackModifiers,
+        displayFormula,
+      }
     );
-
-    const { attackFormula, displayAttackFormula, modifierList } = this._buildAttackFormula(
-      formulaContext,
-      attackName,
-      context,
-      dialogResult,
-      abilityMod,
-      sizeMod,
-      twfPenalty,
-      nonLethalPenalty,
-      proficiencyPenalty
-    );
-
-    const attackRoll = new D20Roll(attackFormula, {}, { situationalModifiers: modifierList, displayFormula: displayAttackFormula });
     await attackRoll.evaluate();
 
-    // SRD critical confirmation (§10.7) — rolled eagerly the instant a threat is detected;
-    // Story E owns the AC comparison that turns this into an actual confirmed critical.
-    const critConfirmRoll = attackRoll.isCriticalThreat(this.critRange) ? await attackRoll.rollConfirmation() : null;
+    const critConfirmRoll = attackRoll.isCriticalThreat(this.critRange)
+      ? await attackRoll.rollConfirmation()
+      : null;
 
-    const { resolvedDamageFormula, damageBonusTerm } = this._buildDamageSnapshot(context, formulaContext, dialogResult);
+    const damage = buildModifiersDamageFormula(dialog.damageModifiers);
 
-    const targetRows: AttackCardTargetRow[] = (context.target ?? []).map(t => {
-      // Same primary-target-token resolution `MeleeAttackDataModel._validateMeleeReach()`
-      // uses — `context.targetToken` only resolves the first target, others fall back.
-      const token = (t === context.target?.[0] ? context.targetToken : undefined)
-        ?? (t.getActiveTokens()[0] as TokenDnd35e | undefined);
-      return {
-        actorUuid: t.uuid,
-        tokenUuid: token?.document.uuid ?? null,
-        targetImage: t.img ?? '',
-        resolved: false,
-      };
+    const targetRows: AttackCardTargetRow[] = (context.target ?? []).map(participant => {
+      const target = participantActor(participant);
+      const token = participantToken(participant) ?? target.getActiveTokens()[0] as TokenDnd35e | undefined;
+      return { actorUuid: target.uuid, tokenUuid: token?.document.uuid ?? null, targetImage: target.img ?? '', resolved: false, hit: null };
     });
-
-    const attackCardFlags: AttackCardFlags = {
+    const flags: AttackCardFlags = {
       actionChainId: buildActionChainId(actor, this),
-      attackerTokenUuid: context.actorToken?.document.uuid ?? null,
+      attackerTokenUuid: participantToken(context.actor)?.document.uuid ?? null,
       attackerImage: actor.img ?? '',
       weaponName: attackName,
-      hand: context.wieldedHand,
+      hand: dialog.wieldMode,
       nonLethal: isNonLethal,
-      resolvedDamageFormula,
-      damageBonusTerm,
+      damageModifiers: dialog.damageModifiers,
+      resolvedDamageFormula: damage.formula,
+      damageExemptDiceIndices: damage.exemptDiceIndices,
+      damageBonusTerm: '',
+      damageModifierList: dialog.damageModifiers,
+      expectedDamageModifierList: dialog.damageModifiers,
+      expectedDamageFormula: getModifiersFormula(dialog.damageModifiers),
       critRange: this.critRange,
       critMultiplier: this.critMultiplier,
       critConfirmTotal: critConfirmRoll?.total ?? null,
+      damageType: this.damageType,
       targets: targetRows,
       actionEconomySpent: null,
-      modifierList,
+      modifierList: dialog.attackModifiers,
       warnings: this._buildWieldModeWarnings(context, item),
     };
-
-    const attackMessage = await buildAttackCard(actor, attackRoll, modifierList, attackCardFlags, dialogResult.rollMode, critConfirmRoll);
+    const attackMessage = await buildAttackCard(
+      actor,
+      attackRoll,
+      dialog.attackModifiers,
+      flags,
+      dialog.rollMode,
+      critConfirmRoll
+    );
 
     return {
       cancelled: false,
@@ -525,104 +371,123 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       warnings: [],
       attackTotal: attackRoll.total,
       nonLethal: isNonLethal,
-      finalHand: context.wieldedHand,
+      finalHand: dialog.wieldMode,
+      twoWeaponFighting: chosen('twoWeaponFighting')
+        ?? false,
       attackMessage,
     };
   }
 
   protected async _postExecute(context: UseWeaponAttackContext, result: WeaponAttackActionResult): Promise<void> {
-    // Pre-check warnings (`_canExecute()`, e.g. `noTargets`/`tooManyTargets`, already localized
-    // at the push site) are merged onto `result.warnings` by `executeAction()` only after
-    // `_executeCheck()` has already built and posted the attack card — patch them in now that
-    // the merged list is known.
     if (result.attackMessage) await appendAttackCardWarnings(result.attackMessage, result.warnings);
-
-    // Spend AFTER execution, not before — a cancelled dialog never costs an action. The
-    // attack card (if one was posted) already exists by now, so its `actionEconomySpent`
-    // flag is patched in here rather than known ahead of time inside `executeAction()`. WieldedHand
-    // BAB is only ever spent for weapon attacks — non-weapon actions have no `hand`. Uses the
-    // dialog's final resolved hand (`result.finalHand`), not the pre-dialog auto-detected
-    // `hand` used only for the availability gate above — the two can differ.
-    const combat = game.combat;
-    const combatant = context.actorToken
-      ? (combat?.getCombatantsByToken(context.actorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
-      : null;
-    if (combat?.started && combatant && !result.cancelled && !context.isFree) {
-      const standardSpent = await spendAction(combatant, ['standard']);
-      const spentHand = result.finalHand ?? context.wieldedHand;
-      if (spentHand) {
-        const babSpent = 5;
-        await spendHandBab(combatant, spentHand, babSpent);
-        if (result.attackMessage) {
-          await result.attackMessage.update({
-            'flags.dnd35e.attackCard.actionEconomySpent': { standardActionSpent: standardSpent !== null, hand: spentHand, babSpent },
-          });
-        }
-      }
-
-      // SRD: a charge permits only this one melee attack — reuses the existing "moved after
-      // attack" gate rather than a second bespoke flag.
-      if (getActionEconomy(combatant).used.chargedThisTurn) {
-        await markMovedAfterAttack(combatant);
-      }
+    const combatant = this.getCombatant(context);
+    if (!isCombatEconomyActive(combatant) || result.cancelled || context.isFree) return;
+    const charged = getActionEconomy(combatant!).used.chargedThisTurn;
+    const actionSpent = charged ? { standardActionSpent: false } : await spendAttackAction(combatant!);
+    if (!actionSpent) {
+      const warning = game.i18n.localize('dnd35e.COMBAT.NoActionAvailable');
+      ui.notifications.warn(warning);
+      if (result.attackMessage) await appendAttackCardWarnings(result.attackMessage, [warning]);
+      return;
     }
+    await syncMovementCardSpend(combatant!);
+    const spentHand = charged || !result.twoWeaponFighting
+      ? BOTH_HANDS_EQUIP_SLOT
+      : result.finalHand ?? context.wieldedHand;
+    const babSpent = charged ? participantActor(context.actor).system.bab : 5;
+    await spendHandBab(combatant!, spentHand, babSpent);
+    if (result.attackMessage) {
+      await result.attackMessage.update({
+        'flags.dnd35e.attackCard.actionEconomySpent': { ...actionSpent, hand: spentHand, babSpent },
+      });
+    }
+    if (charged) await markMovedAfterAttack(combatant!);
   }
 
-  public static PrepareActionContext(
-    actor: ACTORS_DND35E,
-    item: Weapon,
-    target: ACTORS_DND35E[],
-    isFree?: boolean,
-    targetToken?: TokenDnd35e,
-    actorToken?: TokenDnd35e
-  ): UseWeaponAttackContext | null {
-    if (
-      !actor
-      || !(actor instanceof Creature)
-      || !item
-    ) return null;
-
-    const hand = detectWieldedHand(actor, item);
-    // A caller with a concrete acting token (e.g. the Token HUD) must win over this
-    // fallback \u2014 ambiguous for a linked actor with multiple placed tokens.
-    const resolvedActorToken = actorToken ?? getActorToken(actor);
-    const combatant = resolvedActorToken
-      ? (game.combat?.getCombatantsByToken(resolvedActorToken.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined) ?? null
-      : null;
-    if (!hand) return null;
-
-    // No active combatant (no encounter, or actor not yet added to one) — full BAB for every
-    // hand, mirrors the Token HUD's own "not in combat" fallback (tokenHudActions.mts).
-    const handBab: Record<WieldedHand, number> = combatant
-      ? {
-        [MAIN_HAND_EQUIP_SLOT]: getHandBab(combatant, MAIN_HAND_EQUIP_SLOT),
-        [OFF_HAND_EQUIP_SLOT]: getHandBab(combatant, OFF_HAND_EQUIP_SLOT),
-        [BOTH_HANDS_EQUIP_SLOT]: getHandBab(combatant, BOTH_HANDS_EQUIP_SLOT),
-      }
-      : {
-        [MAIN_HAND_EQUIP_SLOT]: actor.system.bab,
-        [OFF_HAND_EQUIP_SLOT]: actor.system.bab,
-        [BOTH_HANDS_EQUIP_SLOT]: actor.system.bab,
+  override async _continue(_stepId: string, message: ChatMessage, targetId: string): Promise<WeaponAttackActionResult> {
+    const cancelled: WeaponAttackActionResult = { cancelled: true, reason: '', warnings: [] };
+    const flags = message.getFlag(SYSTEM_ID, 'attackCard') as AttackCardFlags | undefined;
+    if (!flags) return { ...cancelled, reason: 'noAttackCard' };
+    const targetActor = foundry.utils.fromUuidSync(targetId) as ACTORS_DND35E | null;
+    const attackerActor = this.item?.actor as ACTORS_DND35E | undefined;
+    if (!targetActor || !attackerActor) return { ...cancelled, reason: 'missingActorOrTarget' };
+    const playerSelfDefense = !!game.settings.get(SYSTEM_ID, COMBAT_KEYS.PLAYER_SELF_DEFENSE);
+    if (!(game.user?.isGM || (playerSelfDefense && targetActor.isOwner))) {
+      ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.NotYourTurnToDefend'));
+      return { ...cancelled, reason: 'notPermitted' };
+    }
+    const targetRow = flags.targets.find(row => row.actorUuid === targetId);
+    const attackerToken = flags.attackerTokenUuid
+      ? (foundry.utils.fromUuidSync(flags.attackerTokenUuid) as TokenDocumentDnd35e | null)?.object as TokenDnd35e | undefined
+      : undefined;
+    const targetToken = targetRow?.tokenUuid
+      ? (foundry.utils.fromUuidSync(targetRow.tokenUuid) as TokenDocumentDnd35e | null)?.object as TokenDnd35e | undefined
+      : undefined;
+    const attacker: ActionParticipant = attackerToken ?? attackerActor;
+    const target: ActionParticipant = targetToken ?? targetActor;
+    const damageModifiers = flags.damageModifiers;
+    const dialogData = buildRollDefenseDialogData(target, attacker, {
+      label: game.i18n.localize('dnd35e.ROLL.ATTACK_CARD.ExpectedDamage'),
+      formula: damageModifiers ? getModifiersFormula(damageModifiers) : flags.expectedDamageFormula,
+      modifierList: damageModifiers ?? flags.expectedDamageModifierList,
+    });
+    const formulaContext = buildDocumentDataMap(dialogData.actor, { attacker: dialogData.attacker });
+    const schema = FormulaData.buildFamiliarSchema(formulaContext, [], {
+      term: 'defender', label: game.i18n.localize('dnd35e.Formula.Context.Defender'),
+    });
+    const dialog = await RollDefenseDialogConfig.roll(dialogData, formulaContext, schema);
+    if (!dialog) return { ...cancelled, reason: 'dialogCancelled' };
+    const attackRoll = message.rolls[0] as D20Roll | undefined;
+    const evaluation = await evaluateDefense(
+      attackRoll?.total ?? 0, attackRoll?.isCriticalThreat(flags.critRange) ?? false, flags.critConfirmTotal, dialog
+    );
+    let damageRoll: DamageRoll | null = null;
+    if (evaluation.hit) {
+      const damage = damageModifiers ? buildModifiersDamageFormula(damageModifiers) : {
+        formula: `${flags.resolvedDamageFormula}${flags.damageBonusTerm}`, exemptDiceIndices: flags.damageExemptDiceIndices,
       };
-
+      damageRoll = new DamageRoll(damage.formula);
+      await damageRoll.evaluateCritical(evaluation.criticalHit ? flags.critMultiplier : 1, damage.exemptDiceIndices);
+    }
+    const resolutionData: ResolutionCardData = {
+      ...evaluation, attackName: flags.weaponName, checkMode: dialog.checkMode,
+      damageType: flags.damageType, nonLethal: flags.nonLethal, applyHalfDamage: dialog.applyHalfDamage,
+      actionEconomySpent: flags.actionEconomySpent, damageModifierList: damageModifiers ?? flags.damageModifierList,
+    };
+    await buildResolutionCard(attacker, target, resolutionData, damageRoll);
+    await markTargetRowResolved(message, flags, targetId, evaluation.hit);
+    
     return {
-      actor,
-      target,
-      targetToken,
-      actorToken: resolvedActorToken,
-      wieldedHand: hand,
-      attackAbility: STR,
-      damageAbility: STR,
-      isFree: !!isFree,
-      availableBab: handBab[hand],
-      handBab,
-      attackSituationalModifier: '',
-      damageSituationalModifier: '',
+      cancelled: false,
+      reason: '',
+      warnings: [],
+      hit: evaluation.hit,
+      criticalHit: evaluation.criticalHit,
+    };
+  }
+
+  public static PrepareActionContext(attacker: ActionParticipant, item: Weapon, targets: ActionParticipant[], isFree?: boolean): UseWeaponAttackContext | null {
+    const actor = participantActor(attacker);
+    if (!actor || !(actor instanceof Creature) || !item) return null;
+    const hand = detectWieldedHand(actor, item);
+    if (!hand) return null;
+    const token = participantToken(attacker);
+    const combatant = token ? game.combat?.getCombatantsByToken(token.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined : undefined;
+    const handBab = {
+      [MAIN_HAND_EQUIP_SLOT]: actor.system.bab,
+      [OFF_HAND_EQUIP_SLOT]: actor.system.bab,
+      [BOTH_HANDS_EQUIP_SLOT]: actor.system.bab,
+    };
+    if (isCombatEconomyActive(combatant)) {
+      for (const wieldedHand of WIELD_HANDS) handBab[wieldedHand] = getHandBab(combatant!, wieldedHand);
+    }
+    return {
+      actor: attacker, target: targets, wieldedHand: hand, isFree: !!isFree, availableBab: handBab[hand], handBab,
+      attackSituationalModifier: '', damageSituationalModifier: '', attackAbility: STR, damageAbility: STR,
     };
   }
 }
 
-interface WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionResult>,
-  Omit<WeaponAttackSourceData, 'attackFormula' | 'damageFormula' | 'name'> {}
+interface WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionResult>, WeaponAttackData {}
 
 export { WeaponAttackDataModel };

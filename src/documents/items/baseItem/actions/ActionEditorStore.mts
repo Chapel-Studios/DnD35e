@@ -25,6 +25,20 @@ interface ActionEditorDisplaySettings {
 
 interface ActionEditorStoreParams<T extends ActionDataModel> {
   action: Ref<T>;
+  /**
+   * Raw (pre-AE, `_source`) counterpart of `action`, keyed the same way. Used by
+   * formula-field getters (e.g. `nameFormulaSourceText`) so the edit-mode formula
+   * editor can show the true authored text instead of the AE-merged prepared value.
+   * Undefined when the action isn't found in `_source` (shouldn't normally happen).
+   */
+  sourceAction: ComputedRef<Record<string, unknown> | undefined>;
+  /**
+   * This action's numeric index within `system.actions` — the path shape AE changes and
+   * `effectOverrides` history actually key on (distinct from `getFieldPath`'s `_id`-based
+   * path, which only needs to be a stable string key for field-permission flags). -1 when
+   * the action can't be found (shouldn't normally happen).
+   */
+  actionIndex: ComputedRef<number>;
   updateAction: (updatedAction: T) => Promise<boolean>;
   addChainLink: (parentActionId: string, subActionType: T['type']) => Promise<boolean>;
   displaySettings: ActionEditorDisplaySettings;
@@ -35,6 +49,8 @@ interface ActionEditorStoreParams<T extends ActionDataModel> {
 
 interface ActionEditorStoreCreatorParams<T extends ActionDataModel> {
   actions: Ref<T[]>;
+  /** Parallel `_source`-based array (see `ActionEditorStoreParams.sourceAction`). */
+  sourceActions: Ref<Record<string, unknown>[]>;
   actionTypeOptions: SelectOption<ActionType>[];
   updateLink: (actionId: string, link: ActionChainLinkModel, remove?: boolean) => Promise<boolean>;
   updateAction: (updatedAction: T, remove?: boolean) => Promise<boolean>;
@@ -44,6 +60,7 @@ interface ActionEditorStoreCreatorParams<T extends ActionDataModel> {
 const useActionEditorStoreCreator = <T extends ActionDataModel>(creatorParams: ActionEditorStoreCreatorParams<T>): (actionId: string, link?: Ref<ActionChainLinkModel>, chainOwnerActionId?: string) => ActionEditorStore => {
   const {
     actions,
+    sourceActions,
     actionTypeOptions,
     updateLink,
     updateAction,
@@ -92,6 +109,8 @@ const useActionEditorStoreCreator = <T extends ActionDataModel>(creatorParams: A
       // the FormulaFamiliar walker reads `.schema` (a non-configurable data property) —
       // see foundry-document-non-reactive-props memory.
       action: computed(() => actions.value.find((a) => a._id === actionId) ?? initialAction),
+      sourceAction: computed(() => sourceActions.value.find((a) => a._id === actionId)),
+      actionIndex: computed(() => actions.value.findIndex((a) => a._id === actionId)),
       updateAction,
       addChainLink,
       displaySettings,
@@ -108,6 +127,8 @@ const useActionEditorStoreCreator = <T extends ActionDataModel>(creatorParams: A
 
 const useActionEditorStore = <T extends ActionDataModel>({
   action,
+  sourceAction,
+  actionIndex,
   updateAction,
   addChainLink,
   displaySettings,
@@ -134,14 +155,24 @@ const useActionEditorStore = <T extends ActionDataModel>({
 
   const getters = {
     actionId: computed(() => action.value._id),
+    // Group field path for this action as a whole (poc-overrides) — set a visibility/
+    // editability override here to cascade it down to every one of this action's own
+    // field paths (all `getFieldPath()`-built, so they already share this prefix).
+    actionFieldPath: computed(() => `system.actions.${action.value._id}`),
     // See `nameContexts` above for the context-name -> document mapping.
     displayName: computed(() => {
-      const resolved = action.value.name.resolve({ ...nameContexts.value });
+      // Static resolveSource(), not the instance .resolve() — an AE targeting this 
+      // field replaces it with a plain POJO via core's setProperty(), which has no
+      // .resolve() method.
+      const resolved = FormulaData.resolveSource(action.value.name as unknown as FormulaDataSource, { ...nameContexts.value });
       return (typeof resolved === 'string' ? resolved : null)
         ?? action.value.name.resolvedValue
         ?? action.value._id;
     }),
     nameFormulaData: computed(() => action.value.name),
+    // True authored formula text (pre-AE) — shown instead of `nameFormulaData.formula`
+    // (the AE-merged prepared value) when the formula editor is in edit mode.
+    nameFormulaSourceText: computed(() => (sourceAction.value as { name?: FormulaDataSource } | undefined)?.name?.formula),
     // Explicit `contexts` for the `name` field's FormulaFormGroup `#` autocomplete
     // dropdown \u2014 same keys/roles as the `resolve()` call above (`self`/`weapon`/`actor`/
     // `thisAttack`), so `thisAttack.*` fields show up alongside the weapon/actor ones.
@@ -158,6 +189,9 @@ const useActionEditorStore = <T extends ActionDataModel>({
     provokes: computed(() => action.value.provokes),
     maxTargets: computed(() => action.value.maxTargets),
     chain: computed(() => [...action.value.chain]),
+    chainOwnerFieldPath: computed(() => linkSettings
+      ? `system.actions.${linkSettings.parentActionId}.chain`
+      : undefined),
     link: linkSettings?.link,
     isLink: !!linkSettings?.link.value,
 
@@ -170,6 +204,9 @@ const useActionEditorStore = <T extends ActionDataModel>({
       displaySettings.toggleActionEditorDisplay(!displaySettings.isActionEditorOpen.value);
     },
     getFieldPath: (field: string) => `system.actions.${action.value._id}.${field}`,
+    // See `ActionEditorStoreParams.actionIndex` doc — used for `effectOverrides`/AE lookups,
+    // NOT field-permission flags (those use `getFieldPath`'s `_id`-based path).
+    getOverrideFieldPath: (field: string) => `system.actions.${actionIndex.value}.${field}`,
     updateActionField: (field: string, value: unknown) => {
       const updatedAction = {
         ...action.value,
@@ -216,6 +253,8 @@ const useActionEditorStore = <T extends ActionDataModel>({
 interface ActionEditorStoreActions {
   toggleActionEditor: () => void;
   getFieldPath: (field: string) => string;
+  /** See `ActionEditorStoreParams.actionIndex` doc. */
+  getOverrideFieldPath: (field: string) => string;
   updateActionField: (field: string, value: unknown) => Promise<boolean>;
   // updateChain: (link: ActionChainLinkModel, remove?: boolean) => Promise<boolean>;
   updateLink: (link: ActionChainLinkModel, remove?: boolean) => Promise<boolean>;
@@ -226,7 +265,9 @@ interface ActionEditorStoreActions {
 
 interface ActionEditorStoreGetters {
   actionId: ComputedRef<string>;
+  actionFieldPath: ComputedRef<string>;
   nameFormulaData: ComputedRef<FormulaDataSource>;
+  nameFormulaSourceText: ComputedRef<string | undefined>;
   familiarContexts: ComputedRef<FamiliarSchema>;
   displayName: ComputedRef<string>;
   localizedActionTypeLabel: ComputedRef<string>;
@@ -236,6 +277,7 @@ interface ActionEditorStoreGetters {
   provokes: ComputedRef<boolean>;
   maxTargets: ComputedRef<number | null>;
   chain: ComputedRef<ActionChainLinkModel[]>;
+  chainOwnerFieldPath: ComputedRef<string | undefined>;
   actionType: ComputedRef<ActionType>;
   isLink: boolean;
   link?: Ref<ActionChainLinkModel>;

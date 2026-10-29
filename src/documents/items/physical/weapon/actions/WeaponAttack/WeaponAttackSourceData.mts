@@ -1,17 +1,23 @@
 import type { DamageType } from '@constants/attacks/damageTypes.mjs';
-import type { FormulaDataSource } from '@helpers/formulae/index.mjs';
-import type { ActionSourceData } from '@items/baseItem/actions/ActionSourceData.mjs';
+import type { FormulaData, FormulaDataSource } from '@helpers/formulae/index.mjs';
+import type { ActionData, ActionSourceData } from '@items/baseItem/actions/ActionSourceData.mjs';
 
 import type { AllWeaponProperties } from './constants.mjs';
 
-interface WeaponAttackSourceData extends ActionSourceData {
+type WeaponAttackSourceData = ActionSourceData & {
   requiresEquipped: boolean;
   attackFormula: FormulaDataSource;
   damageFormula: FormulaDataSource;
   damageType: DamageType;
   critRange: number;
   critMultiplier: number;
+  properties: AllWeaponProperties[];
+};
+
+interface WeaponAttackData extends Omit<WeaponAttackSourceData, 'name' | 'attackFormula' | 'damageFormula' | 'properties'>, ActionData {
+  attackFormula: FormulaData;
+  damageFormula: FormulaData;
   properties: Set<AllWeaponProperties>;
 }
 
-export type { WeaponAttackSourceData };
+export type { WeaponAttackData, WeaponAttackSourceData };

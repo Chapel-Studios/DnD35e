@@ -43,12 +43,25 @@ interface EffectChangeSourceDnd35e extends Omit<EffectChangeData, 'effect'> {
    * hides a change everywhere.
    */
   hideFromEffectsTab?: boolean;
+  /**
+   * Authors a pre-decided stacking-ignored result directly, bypassing bonus-type
+   * comparison entirely (`applyStackedActiveEffectChanges()`) — the change is recorded in
+   * `effectOverrides` with `stackResult: 'ignored'`/this string as `stackReason`, but its
+   * `value` is never applied to the document. For a condition-gated formula component
+   * (e.g. Dex denied to AC by Flat-Footed) that should still show in the breakdown/sheet's
+   * `HasActiveEffectsNotification` struck-through with a reason, rather than silently
+   * vanishing — `resolveActiveEffectChanges()`'s real stacking engine has no concept of
+   * "this bonus type always loses to a condition", only "two same-typed bonuses competing".
+   */
+  forcedIgnoreReason?: string;
 }
 
 interface ActiveEffectSystemSourceDnd35e extends DocumentSystemData, Omit<ActiveEffectSystemSource, 'changes'> {
   target: ActiveEffectTarget;
   isHidden: boolean;
   label?: string;
+  /** See `ActiveEffectSystemModel.defineSchema()`'s `deleteOnExpiry` field doc comment. */
+  deleteOnExpiry: boolean;
   changes: EffectChangeSourceDnd35e[];
 }
 

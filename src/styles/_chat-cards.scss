@@ -2,8 +2,24 @@
 // Handlebars templates (see src/dice/rollMessages.mts). These are global rules, not
 // scoped Vue component styles, since chat cards are plain persisted HTML.
 
+// inner foundry owned component fixed everywhere
+.dice-tooltip header.part-header {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: max-content;
+    gap: 0.75rem;
+}
+
+// Same hit/miss hex colors as D35E's `.dice-roll .dice-total.success`/`.failure` rules.
+.dnd35e.chat-card {
+  --color-hit: #005a00;
+  --color-miss: #b70000;
+}
+
+// styles for specific chat cards
 .dnd35e.chat-card.save-roll-card,
-.dnd35e.chat-card.attack-roll-card {
+.dnd35e.chat-card.attack-roll-card,
+.dnd35e.chat-card.resolution-card {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -35,15 +51,32 @@
     cursor: pointer;
 
     .roll-summary {
+      position: relative;
       display: grid;
-      // `rolling-dices.svg` bakes in a 512x512 intrinsic size, so it must be explicitly
-      // constrained here or it renders hugely oversized instead of a small icon.
-      background: no-repeat url('../dnd35e/assets/rolling-dices.svg') center / contain;
-      width: 5rem;
-      height: 5rem;
-      margin: 0 auto;
       justify-items: center;
-      align-items: center;
+      align-content: center;
+      // `rolling-dices.svg` bakes in a 512x512 intrinsic size, so it must be explicitly
+      // constrained here or it renders hugely oversized instead of a small icon. Lives on a
+      // `::before` pseudo-element (not the container itself) so the container can size to its
+      // text content (1-3 lines) while the icon stays a fixed 5rem square centered behind it.
+      padding: 0.25rem 0;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5rem;
+        height: 5rem;
+        transform: translate(-50%, -50%);
+        background: no-repeat url('../dnd35e/assets/rolling-dices.svg') center / contain;
+        z-index: 0;
+      }
+
+      > * {
+        position: relative;
+        z-index: 1;
+      }
 
       .result-header {
         font-weight: 600;
@@ -62,6 +95,14 @@
         align-self: center;
         font-size: 1.75rem;
         font-weight: 700;
+        line-height: 1;
+      }
+
+      .callout.halved {
+        padding: 0;
+        margin-top: -0.15rem;
+        font-size: 0.7rem;
+        line-height: 1;
       }
     }
 
@@ -87,14 +128,22 @@
     padding: 0.15rem 0;
 
     &.fumble {
-      color: var(--color-level-error);
+      color: var(--color-miss);
     }
 
     &.critical {
-      color: var(--color-level-success);
+      color: var(--color-hit);
     }
 
     &.rule-warning {
+      color: var(--color-level-warning);
+    }
+
+    &.concealed {
+      color: var(--color-level-warning);
+    }
+
+    &.halved {
       color: var(--color-level-warning);
     }
   }
@@ -112,8 +161,6 @@
     border-top: 1px solid var(--color-border);
 
     .modifier-row {
-      display: flex;
-      justify-content: space-between;
       font-size: 0.9rem;
       padding: 0.1rem 0.25rem;
 
@@ -124,6 +171,30 @@
       &:nth-child(even) {
         background-color: var(--table-row-color-even);
       }
+
+      .modifier-row-main {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .modifier-bonus-type {
+        font-style: italic;
+        opacity: 0.65;
+      }
+
+      .modifier-ignored-reason {
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+
+      &.is-ignored {
+        opacity: 0.5;
+
+        .modifier-label,
+        .modifier-value {
+          text-decoration: line-through;
+        }
+      }
     }
   }
 
@@ -132,16 +203,17 @@
     font-weight: 700;
 
     &.passed {
-      color: var(--color-level-success);
+      color: var(--color-hit);
     }
 
     &.failed {
-      color: var(--color-level-error);
+      color: var(--color-miss);
     }
   }
 }
 
-.dnd35e.chat-card.attack-roll-card {
+.dnd35e.chat-card.attack-roll-card,
+.dnd35e.chat-card.resolution-card {
   // Mirrors the Roll Dialog's Attacker/Defender header layout (§10.8 parity) — attacker
   // on the left, target (when one is set) on the right.
   .card-header {
@@ -186,6 +258,12 @@
       }
     }
 
+    .value.no-target {
+      opacity: 0.6;
+      font-style: italic;
+      font-weight: 400;
+    }
+
     .retarget-btn {
       display: inline-flex;
       align-items: center;
@@ -209,11 +287,35 @@
 
   .damage-preview {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: baseline;
+    flex-direction: column;
     gap: 0.3rem;
     font-size: 0.9rem;
+    // Visually distinct "Expected Damage" callout box (§10.7 hardening) — sets it apart from
+    // the rest of the attack card instead of reading as just another plain text row.
+    background-color: var(--color-cool-5-25);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 0.4rem 0.5rem;
+
+    .damage-preview-summary {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: baseline;
+      gap: 0.3rem;
+      // Click handle for toggling `.damage-preview-breakdown` below it (see
+      // `onExpandDamagePreview()` in attackRollCard.mts).
+      cursor: pointer;
+
+      .label {
+        font-weight: 700;
+      }
+
+      .value {
+        font-weight: 700;
+        font-size: 1.1rem;
+      }
+    }
 
     .crit-multiplier {
       opacity: 0.7;
@@ -221,6 +323,26 @@
 
     .callout.non-lethal {
       font-weight: 700;
+    }
+
+    // Same CSS-grid collapse animation as resolution-card.hbs's `.ac-breakdown`.
+    .damage-preview-breakdown {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 250ms ease;
+
+      > * {
+        overflow: hidden;
+      }
+
+      &.expanded {
+        grid-template-rows: 1fr;
+      }
+    }
+
+    .modifier-breakdown {
+      width: 100%;
+      border-top-color: var(--color-border);
     }
   }
 
@@ -239,6 +361,12 @@
       &.resolved {
         opacity: 0.6;
       }
+
+      .target-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
     }
   }
 
@@ -246,6 +374,185 @@
     display: flex;
     justify-content: center;
 
+  }
+}
+
+.dnd35e.chat-card.resolution-card {
+  .ac-compare {
+    cursor: pointer;
+
+    .ac-compare-summary {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ac-compare-stats {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      flex-basis: 100%;
+    }
+
+    .stat {
+      display: grid;
+      // Same 512x512-intrinsic-size caveat as `.roll-summary`'s rolling-dices.svg.
+      width: 4rem;
+      height: 4rem;
+      background: no-repeat center / contain;
+      justify-items: center;
+      align-items: center;
+
+      .value {
+        font-size: 2.25rem;
+        font-weight: 700;
+      }
+    }
+
+    // Same D35E attack/AC badges (gladius.svg/shield-badge.svg) as damage-description.html's
+    // `.rolled-attack`/`.rolled-defense` — see src/assets/Attribution.md.
+    .attack-stat {
+      background-image: url('../dnd35e/assets/gladius.svg');
+      color: var(--color-hit);
+    }
+
+    .ac-stat {
+      background-image: url('../dnd35e/assets/shield-badge.svg');
+      color: var(--color-cool-4);
+    }
+  }
+
+  &.is-miss .ac-compare .attack-stat {
+    color: var(--color-miss);
+  }
+
+  // D35E-style concealment roll detail box — colored independently of the overall hit/miss
+  // class, since the attack can still miss on AC alone while the concealment roll succeeds.
+  .concealment-check {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+
+    .dice-flavor {  
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    .concealment-check-stats {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .stat {
+      display: grid;
+      justify-items: center;
+      align-items: center;
+
+      .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+    }
+
+    .concealment-roll-stat {
+      &.success .value {
+        color: var(--color-hit);
+      }
+
+      &.failure .value {
+        color: var(--color-miss);
+      }
+    }
+
+    .concealment-target-stat .value {
+      opacity: 0.8;
+    }
+  }
+
+  .ac-breakdown {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 250ms ease;
+    text-align: center;
+    font-size: 0.85rem;
+    opacity: 0.8;
+
+    > * {
+      overflow: hidden;
+    }
+
+    &.expanded {
+      grid-template-rows: 1fr;
+    }
+  }
+
+  .result-badge {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+
+    &.hit {
+      color: var(--color-hit);
+    }
+
+    &.miss {
+      color: var(--color-miss);
+    }
+  }
+
+  .damage-apply-row {
+    display: flex;
+    justify-content: center;
+    padding: 0.25rem 0;
+
+    .apply-damage-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: none;
+      border: none;
+      font-weight: 700;
+      color: var(--color-level-primary);
+
+      &:hover {
+        color: var(--color-hit);
+      }
+    }
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: center;
+
+    .undo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: none;
+      border: none;
+
+      &:hover {
+        color: var(--color-level-primary);
+      }
+    }
+
+    .undone-label {
+      font-size: 0.85rem;
+      opacity: 0.6;
+      font-style: italic;
+    }
+  }
+
+  &.is-undone {
+    opacity: 0.7;
   }
 }
 
@@ -294,7 +601,7 @@
   &.is-over-budget .warning-banner {
     text-align: center;
     font-weight: 700;
-    color: var(--color-level-error);
+    color: var(--color-miss);
   }
 
   .card-footer {
@@ -321,7 +628,7 @@
   .warning-banner {
     text-align: center;
     font-weight: 700;
-    color: var(--color-level-error);
+    color: var(--color-miss);
   }
 }
 

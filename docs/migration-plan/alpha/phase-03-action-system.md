@@ -902,7 +902,9 @@ When the wielded weapon (or any bonus source) has **unidentified effects**, the 
 1. **Real stack** — all bonuses (visible + hidden). Determines the **actual die roll**.
 2. **Masked stack** — only bonuses the player knows about, stacked independently. Determines the **player-visible breakdown**.
 
-Both histories are stored in `flags.dnd35e.stackingHistory` on the chat message (`{ real: ChangeHistory[], masked: ChangeHistory[] }`). The render function checks `game.user.isGM`:
+**Superseding disclosure constraint (planning only)**: [poc.10 Story J](../poc/phase-10-basic-combat.md#story-j--secret-aware-melee-resolution-typed-damage--resistance-disclosure) requires private secret-dependent totals/details and a separately safe public presentation, with damage resistance as the first example and GM-controlled reveal. Do not implement the older shared-message proposal below by storing both real and masked histories in public flags: a render-time GM check does not protect that payload. The private-record/public-summary design and exact display remain open; true effective values still determine mechanics.
+
+Earlier proposal, retained for context pending Story J's design: both histories would be stored in `flags.dnd35e.stackingHistory` on the chat message (`{ real: ChangeHistory[], masked: ChangeHistory[] }`), and the render function would check `game.user.isGM`:
 
 - **Player**: Sees `masked` history. Their breakdown may not add up to the die total — this is correct. The character doesn't know why the sword performs better than expected.
 - **GM**: Sees `real` history with `[hidden]` markers on bonuses from unidentified sources, plus the suppression chain (e.g., "Magic Weapon +1 suppressed by hidden +2 enhancement").

@@ -1,0 +1,78 @@
+{
+  "name": "Light Hammer",
+  "type": "weapon",
+  "_id": "v5Mx7Jwuia9ZZ908",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Light Hammer",
+      "expectedType": "string",
+      "resolvedValue": "Light Hammer"
+    },
+    "description": "",
+    "isPsionic": false,
+    "isEpic": false,
+    "hp": {
+      "current": 0,
+      "max": 0
+    },
+    "hardness": 0,
+    "quantity": 1,
+    "weight": 2,
+    "isCarried": true,
+    "size": "tiny",
+    "price": {
+      "stacks": [
+        {
+          "coinId": "srd_gp",
+          "count": 1
+        }
+      ],
+      "srdEquivalent": 1
+    },
+    "equippedSlotIds": [],
+    "isMelded": false,
+    "designedForSize": "medium",
+    "isWeightlessWhenEquipped": false,
+    "isBaseWeaponType": true,
+    "weaponType": "martial",
+    "weaponSubtype": "light",
+    "weaponBaseType": "light hammer",
+    "actions": [
+      {
+        "_id": "vIihr0CzTxF8oItJ",
+        "type": "melee_weapon_attack",
+        "damageFormula": {
+          "formula": "$scaleDamage(1d4)",
+          "expectedType": "rollFormula",
+          "resolvedValue": null
+        },
+        "damageType": "dnd35e.DAMAGE_TYPES.Bludgeoning",
+        "critRange": 20,
+        "critMultiplier": 2
+      }
+    ]
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1791785607505,
+    "modifiedTime": 1791785607505,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!v5Mx7Jwuia9ZZ908"
+}

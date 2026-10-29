@@ -1,0 +1,78 @@
+{
+  "name": "Throwing Axe",
+  "type": "weapon",
+  "_id": "33cBWIZe7VriNcfR",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Throwing Axe",
+      "expectedType": "string",
+      "resolvedValue": "Throwing Axe"
+    },
+    "description": "",
+    "isPsionic": false,
+    "isEpic": false,
+    "hp": {
+      "current": 0,
+      "max": 0
+    },
+    "hardness": 0,
+    "quantity": 1,
+    "weight": 2,
+    "isCarried": true,
+    "size": "tiny",
+    "price": {
+      "stacks": [
+        {
+          "coinId": "srd_gp",
+          "count": 8
+        }
+      ],
+      "srdEquivalent": 8
+    },
+    "equippedSlotIds": [],
+    "isMelded": false,
+    "designedForSize": "medium",
+    "isWeightlessWhenEquipped": false,
+    "isBaseWeaponType": true,
+    "weaponType": "martial",
+    "weaponSubtype": "light",
+    "weaponBaseType": "throwing axe",
+    "actions": [
+      {
+        "_id": "ODEV6pvUHeKQmN7M",
+        "type": "melee_weapon_attack",
+        "damageFormula": {
+          "formula": "$scaleDamage(1d6)",
+          "expectedType": "rollFormula",
+          "resolvedValue": null
+        },
+        "damageType": "dnd35e.DAMAGE_TYPES.Slashing",
+        "critRange": 20,
+        "critMultiplier": 2
+      }
+    ]
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1791785607504,
+    "modifiedTime": 1791785607504,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!33cBWIZe7VriNcfR"
+}

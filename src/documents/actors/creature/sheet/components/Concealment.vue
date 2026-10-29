@@ -1,7 +1,9 @@
 <template>
   <NumberFormGroup
     field-path="system.defense.concealment"
-    readonly
+    :min="0"
+    :max="100"
+    unit="%"
   />
 </template>
 

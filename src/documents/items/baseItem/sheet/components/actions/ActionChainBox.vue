@@ -11,7 +11,7 @@
       </li>
     </ol>
 
-    <div class="add-chain-controls">
+    <div v-if="isChainEditable" class="add-chain-controls">
       <button type="button" class="field-control-btn add-chain-btn" @click="toggleAddPicker()">
         <i class="fa-solid fa-plus" /> {{ localize('dnd35e.WEAPON.ACTIONS.AddToChain') }}
       </button>
@@ -31,10 +31,12 @@
 </template>
 
 <script setup lang="ts">
+  import type { DocumentSheetStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { ActionEditorStoreSymbol } from '@documents/items/baseItem/actions/ActionEditorStore.mjs';
   import type { ActionEditorStore } from '@documents/items/baseItem/actions/ActionEditorStore.mts';
   import { ActionTypeSelectOptions } from '@items/baseItem/actions/constants.mjs';
-  import { inject, ref } from 'vue';
+  import { computed, inject, ref } from 'vue';
 
   import ActionAccordionRow from './ActionAccordionRow.vue';
 
@@ -48,8 +50,15 @@
     },
     actions: {
       addChainLink,
+      getFieldPath,
     },
   } = inject(ActionEditorStoreSymbol) as ActionEditorStore;
+
+  const {
+    documentGetters: { getIsFieldEditable },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  const isChainEditable = computed(() => getIsFieldEditable(getFieldPath('chain')).value);
 
   const showAddPicker = ref(false);
   const toggleAddPicker = () => {

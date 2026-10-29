@@ -4,6 +4,8 @@
       "SituationalModifier": "Situational Modifier",
       "AttackSituationalModifier": "Attack Situational Modifier",
       "DamageSituationalModifier": "Damage Situational Modifier",
+      "Concealment": "Concealment (%)",
+      "ConcealmentPlaceholder": "e.g. 20 or 50",
       "Total": "Total",
       "RollButton": "Roll",
       "NaturalOne": "Natural 1!",
@@ -23,10 +25,14 @@
       },
       "Attacker": "Attacker",
       "Defender": "Defender",
+      "Actor": "Actor",
       "HiddenName": "Unknown",
       "MOVE_ACTION_CARD": {
         "MoveAction": "Move Action",
         "StandardAction": "Standard Action",
+        "Provokes": "Movement provokes attacks of opportunity.",
+        "DoesNotProvoke": "Movement does not provoke attacks of opportunity.",
+        "StepProtectionLost": "Movement exceeded 5 feet. The initial 5 feet also loses its 5-foot-step protection.",
         "OverBudget": "Moved further than allowed for a single action.",
         "OverBudgetFiveFootStep": "Can only move 5 feet using a 5-foot Step Move Action.",
         "OverBudgetMixedMovement": "Can't combine a 5-foot step with other movement in the same turn.",
@@ -59,9 +65,36 @@
       },
       "ATTACK_CARD": {
         "ChangeTargets": "Change Target(s)",
-        "DamagePreview": "Bonus to Damage",
+        "NoTarget": "No Target",
+        "ExpectedDamage": "Expected Damage",
+        "DamageDetails": "Damage Details",
         "NonLethal": "Non-lethal",
-        "ConfirmCritical": "Confirm"
+        "ConfirmCritical": "Confirm",
+        "Apply": "Apply",
+        "Reapply": "Reapply",
+        "Hit": "Hit",
+        "Miss": "Miss"
+      },
+      "RESOLUTION_CARD": {
+        "Title": "Resolution",
+        "Hit": "Hit",
+        "Miss": "Miss",
+        "CriticalHit": "Critical Hit!",
+        "Concealed": "Missed due to concealment",
+        "ConcealmentCheck": "Concealment Check",
+        "ConcealmentRoll": "d% Roll",
+        "ConcealmentTarget": "Miss Chance",
+        "AttackTotal": "Attack Roll",
+        "EffectiveAc": "Effective AC",
+        "AcDetails": "AC Details",
+        "BaseAc": "AC",
+        "Damage": "Damage",
+        "NonLethalDamage": "Non-lethal Damage",
+        "ApplyDamage": "Apply Damage",
+        "ReapplyDamage": "Reapply Damage",
+        "HalfDamage": "(halved)",
+        "Undo": "Undo",
+        "Undone": "Undone — action(s) refunded."
       }
     }
   }

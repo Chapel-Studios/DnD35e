@@ -71,6 +71,26 @@
         "damageNotes": {
           "label": "Damage Notes",
           "hint": "Notes or flavor text related to damage from this weapon."
+        },
+        "meleeWeaponAttacks": {
+          "label": "All Melee Attacks",
+          "familiarLabel": "Melee Attacks",
+          "familiarAliases": [],
+          "attackToHit": { "label": "All Melee Attack Formulas", "familiarLabel": "Attack To Hit", "familiarAliases": ["To Hit"] },
+          "attackDamage": { "label": "All Melee Damage Formulas", "familiarLabel": "Attack Damage", "familiarAliases": [] },
+          "damageType": { "label": "All Melee Damage Types", "familiarLabel": "Damage Type", "familiarAliases": [] },
+          "critRange": { "label": "All Melee Critical Ranges", "familiarLabel": "Critical Range", "familiarAliases": [] },
+          "critMultiplier": { "label": "All Melee Critical Multipliers", "familiarLabel": "Critical Multiplier", "familiarAliases": [] }
+        },
+        "rangedWeaponAttacks": {
+          "label": "All Ranged Attacks",
+          "familiarLabel": "Ranged Attacks",
+          "familiarAliases": [],
+          "attackToHit": { "label": "All Ranged Attack Formulas", "familiarLabel": "Attack To Hit", "familiarAliases": ["To Hit"] },
+          "attackDamage": { "label": "All Ranged Damage Formulas", "familiarLabel": "Attack Damage", "familiarAliases": [] },
+          "damageType": { "label": "All Ranged Damage Types", "familiarLabel": "Damage Type", "familiarAliases": [] },
+          "critRange": { "label": "All Ranged Critical Ranges", "familiarLabel": "Critical Range", "familiarAliases": [] },
+          "critMultiplier": { "label": "All Ranged Critical Multipliers", "familiarLabel": "Critical Multiplier", "familiarAliases": [] }
         }
       },
       "Type": {
@@ -180,7 +200,6 @@
         "ActivationCost": {
           "free": "Free Action",
           "swift": "Swift Action",
-          "minor": "Minor Action",
           "move": "Move Action",
           "standard": "Standard Action",
           "fullRound": "Full-Round Action",
@@ -201,4 +220,3 @@
     }
   }
 }
-

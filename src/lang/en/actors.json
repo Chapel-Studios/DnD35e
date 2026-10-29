@@ -105,6 +105,8 @@
         },
         "bio": {
           "label": "Biography",
+          "notes": { "label": "Session Notes", "placeholder": "Notes from recent sessions, reminders, loose ends..." },
+          "gmNotes": { "label": "GM Notes", "placeholder": "Private notes for the GM..." },
           "gender":    { "label": "Gender" },
           "deity":     { "label": "Deity" },
           "age":       { "label": "Age" },

@@ -20,6 +20,17 @@ type WieldedHand = typeof MAIN_HAND_EQUIP_SLOT
   | typeof OFF_HAND_EQUIP_SLOT
   | typeof BOTH_HANDS_EQUIP_SLOT;
 
+const WIELD_HAND = {
+  MAIN: MAIN_HAND_EQUIP_SLOT,
+  OFF: OFF_HAND_EQUIP_SLOT,
+  BOTH: BOTH_HANDS_EQUIP_SLOT,
+} as const;
+const WIELD_HANDS = [
+  WIELD_HAND.MAIN,
+  WIELD_HAND.OFF,
+  WIELD_HAND.BOTH,
+] as const;
+
 const EQUIP_SLOTS = [
   ...WEAPON_EQUIP_SLOTS,
   'head',
@@ -53,6 +64,8 @@ export {
   MAIN_HAND_EQUIP_SLOT,
   OFF_HAND_EQUIP_SLOT,
   WEAPON_EQUIP_SLOTS,
+  WIELD_HAND,
+  WIELD_HANDS,
 };
 
 export type {

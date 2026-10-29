@@ -1,6 +1,6 @@
-import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
+import type { RollModifier } from '@source/dice/index.mjs';
 
-import type { RollDialogData, RollDialogResult } from '../RollDialog/types.mjs';
+import type { RollBreakdownData, RollDialogContext, RollDialogData, RollDialogResult } from '../RollDialog/types.mjs';
 
 /**
  * A standalone dialog type (poc.10 Story D refactor), deliberately NOT shared with
@@ -10,19 +10,16 @@ import type { RollDialogData, RollDialogResult } from '../RollDialog/types.mjs';
  * coincidence into the type system.
  */
 interface InitiativeRollDialogData extends RollDialogData {
-  /**
-   * A formula (not a plain number) — resolved through FormulaFamiliar against `#self`
-   * (the rolling actor) once the user rolls. See `RollDialogFormulaField`.
-   */
-  situationalModifier: string;
+  initRoll: RollBreakdownData;
 }
 
 interface InitiativeRollDialogResult extends RollDialogResult {
-  /** The resolved situational-modifier term — a plain number when the user entered one, or a raw formula/dice term (e.g. `1d6`) otherwise. */
-  situationalModifier: string;
+  /** The before-roll-resolved situational-modifier formula */
+  // 
+  finalModifiers: RollModifier[];
 }
 
-interface InitiativeRollDialogContext extends VueDialogContext<InitiativeRollDialogData, InitiativeRollDialogResult> {
+interface InitiativeRollDialogContext extends RollDialogContext<InitiativeRollDialogData, InitiativeRollDialogResult> {
 }
 
 export type {

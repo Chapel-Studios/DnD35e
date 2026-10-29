@@ -1,9 +1,8 @@
 <template>
-  <RichTextEditorFormGroup 
-    field-path="system.notes" 
+  <RichTextEditorFormGroup
+    field-path="system.bio.notes"
     class="notes-editor"
-    label="dnd35e.ACTOR.FIELDS.sessionNotes.label"
-    placeholder="dnd35e.ACTOR.FIELDS.sessionNotes.placeholder"
+    placeholder="dnd35e.CREATURE.FIELDS.bio.notes.placeholder"
   />
 </template>
 

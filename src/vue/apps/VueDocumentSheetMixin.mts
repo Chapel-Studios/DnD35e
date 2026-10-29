@@ -70,7 +70,8 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       this.renderModeStore = useRenderModeStore(
         this.#document.testUserPermission(game.user, 'OWNER'),
         hasSecrets,
-        initialMode
+        initialMode,
+        this.isEditable
       );
 
       this.context = {
@@ -85,6 +86,22 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
     override get id (): string {
       return `dnd35e-${this.#document.type}-sheet-${this.#document.id}`;
     }
+
+    /**
+     * Core `DocumentSheetV2._onRender()` calls `this._toggleDisabled(true)` whenever
+     * `!this.isEditable` (e.g. viewed from a locked compendium) — it walks `this.form`'s
+     * native `HTMLFormElement.elements` and sets `.disabled = true` on every
+     * input/select/textarea/button, with no way to opt individual elements out. That
+     * would also disable pure navigation (expand an effect row, open a nested item's
+     * sheet, switch view mode) which has nothing to do with editing data. Our own
+     * Vue-level gating (`RenderModeStore`'s view mode, `getIsFieldEditable()`,
+     * `canEdit`/`readOnly` props) already correctly disables actual mutation controls
+     * based on the reactive `isSheetEditable` permission, independently of view
+     * mode (including force-edit HP controls). Action chain add/remove/trigger
+     * controls also gate on the owning chain's field editability. No-op this instead
+     * of relying on Foundry's blanket, all-or-nothing form disable.
+     */
+    protected override _toggleDisabled (_disabled: boolean): void {}
 
     get canConfigureSheet () {
       if (!this.options?.sheetConfig || !this.isEditable) return false;
@@ -148,6 +165,7 @@ const useVueDocumentSheetMixin = <TBase extends AbstractConstructorOf<DocumentSh
       options: ApplicationRenderOptions
     ): Promise<void> {
       await super._onRender(context, options);
+      this.renderModeStore.setSheetEditable(this.isEditable);
       const liveDoc = this.document as unknown as { effects?: Iterable<{ type?: string }> };
       const hasSecrets = !!liveDoc.effects && [...liveDoc.effects].some(effect => effect.type === secretEffectType);
       this.renderModeStore.setHasSecrets(hasSecrets);

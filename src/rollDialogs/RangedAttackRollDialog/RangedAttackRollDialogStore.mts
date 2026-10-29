@@ -1,10 +1,9 @@
-import type { VueDialogContext } from '@vueApps/VueDialogMixin.mjs';
 import type { ComputedRef, WritableComputedRef } from 'vue';
 import { computed } from 'vue';
 
-import { resolveFormulaString } from '../RollDialog/RollDialogStore.mjs';
+import type { RollDialogContext } from '../RollDialog/types.mjs';
 import type { WeaponAttackRollDialogStore } from '../WeaponAttackRollDialog/WeaponAttackRollDialogStore.mjs';
-import { buildWeaponAttackFormulaContexts, useWeaponAttackRollDialogStore } from '../WeaponAttackRollDialog/WeaponAttackRollDialogStore.mjs';
+import { useWeaponAttackRollDialogStore } from '../WeaponAttackRollDialog/WeaponAttackRollDialogStore.mjs';
 import type { AmmoOption, RangedAttackRollDialogData, RangedAttackRollDialogResult } from './types.mjs';
 
 /**
@@ -14,7 +13,7 @@ import type { AmmoOption, RangedAttackRollDialogData, RangedAttackRollDialogResu
  * stays hidden (see `RangedAttackRollDialog.vue`).
  */
 function useRangedAttackRollDialogStore(
-  context: VueDialogContext<RangedAttackRollDialogData, RangedAttackRollDialogResult>
+  context: RollDialogContext<RangedAttackRollDialogData, RangedAttackRollDialogResult>
 ): RangedAttackRollDialogStore {
   const weapon = useWeaponAttackRollDialogStore(context);
 
@@ -25,20 +24,8 @@ function useRangedAttackRollDialogStore(
   });
 
   const rollAction = (): void => {
-    const documentDataMap = buildWeaponAttackFormulaContexts(context.data);
-    const resolvedAttackSituational = resolveFormulaString(context.data.attackSituationalModifier, documentDataMap);
-    const toggleSum = weapon.weapon.combatModifierSum.value;
-    const attackSituationalModifier = toggleSum === 0
-      ? resolvedAttackSituational
-      : resolvedAttackSituational
-        ? `${resolvedAttackSituational} ${toggleSum >= 0 ? '+' : '-'} ${Math.abs(toggleSum)}`
-        : `${toggleSum}`;
     context.resolve({
-      attackSituationalModifier,
-      rollMode: context.data.rollMode,
-      combatModifiers: context.data.combatModifierToggles,
-      damageSituationalModifier: resolveFormulaString(context.data.damageSituationalModifier ?? '', documentDataMap),
-      wieldMode: context.data.wieldModeFromEquippedSlots,
+      ...weapon.getResult(),
       ammo: context.data.ammo ?? null,
     });
   };

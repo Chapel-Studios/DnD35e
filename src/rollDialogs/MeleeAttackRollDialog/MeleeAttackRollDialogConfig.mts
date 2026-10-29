@@ -4,6 +4,8 @@
  * `RangedAttackRollDialogConfig`; both extend `WeaponAttackRollDialogConfig` and share
  * `WeaponAttackRollDialog.vue`'s fields and `WeaponAttackRollDialogStore`.
  */
+import type { DocumentContext } from '@helpers/formulae/index.mjs';
+import type { FamiliarSchema } from '@helpers/formulae/types.mjs';
 import type { Component } from 'vue';
 
 import type { WeaponAttackRollDialogData, WeaponAttackRollDialogResult } from '../WeaponAttackRollDialog/types.mts';
@@ -34,8 +36,12 @@ class MeleeAttackRollDialogConfig extends useWeaponAttackRollDialogConfig() {
   /**
    * Open the dialog and resolve once the user rolls, cancels, or closes it.
    */
-  static async roll(data: WeaponAttackRollDialogData): Promise<WeaponAttackRollDialogResult | null> {
-    const dialog = new MeleeAttackRollDialogConfig(data);
+  static async roll(
+    data: WeaponAttackRollDialogData,
+    formulaContext: Record<string, DocumentContext>,
+    formulaContexts: FamiliarSchema
+  ): Promise<WeaponAttackRollDialogResult | null> {
+    const dialog = new MeleeAttackRollDialogConfig(data, formulaContext, formulaContexts);
     void dialog.render(true);
     return dialog.resultPromise;
   }

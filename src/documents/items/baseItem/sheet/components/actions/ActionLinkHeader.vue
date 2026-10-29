@@ -6,8 +6,10 @@
       :options="ActionTriggerSelectOptions"
       :fieldPath="getFieldPath('trigger')"
       :onUpdate="(v) => updateTrigger(v ?? ACTION_TRIGGER.ALWAYS)"
+      :read-only="!isChainEditable"
     />
     <button
+      v-if="isChainEditable"
       type="button"
       class="field-control-btn chain-remove-btn"
       :title="localize('dnd35e.WEAPON.ACTIONS.RemoveChainLink')"
@@ -18,16 +20,26 @@
   </div>
 </template>
 <script setup lang="ts">
+  import type { DocumentSheetStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { ActionEditorStoreSymbol } from '@items/baseItem/actions/ActionEditorStore.mjs';
   import type { ActionEditorStore } from '@items/baseItem/actions/ActionEditorStore.mts';
   import { ACTION_TRIGGER, ActionTriggerSelectOptions } from '@items/baseItem/actions/constants.mjs';
   import { SelectFormGroup } from '@vc/fields/index.mjs';
-  import { inject } from 'vue';
+  import { computed, inject } from 'vue';
 
   const {
-    getters: { link },
+    getters: { link, chainOwnerFieldPath },
     actions: { updateTrigger, updateLink, getFieldPath },
   } = inject(ActionEditorStoreSymbol) as ActionEditorStore;
+
+  const {
+    documentGetters: { getIsFieldEditable },
+  } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+
+  // Links belong to the parent's chain, not the referenced action.
+  const isChainEditable = computed(() => !!chainOwnerFieldPath.value
+    && getIsFieldEditable(chainOwnerFieldPath.value).value);
   
   const removeChainLink = () => {
     if (!link?.value) return;

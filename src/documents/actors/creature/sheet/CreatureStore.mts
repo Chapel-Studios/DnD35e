@@ -40,7 +40,7 @@ const useCreatureStore = <TDocument extends Creature>(
 ): CreatureDocumentStore<TDocument> => {
   const actorStore = useActorSheetStore<TDocument>(context, options);
   const { getViewAwareFieldValue } = actorStore.documentGetters;
-  const { document } = actorStore._storeUtils;
+  const { document, renderModeStore } = actorStore._storeUtils;
   
   const {
     currency: { highestVisibleCoin },
@@ -69,7 +69,8 @@ const useCreatureStore = <TDocument extends Creature>(
     alignmentMoral,
     alignmentLabel: computed(() => buildAlignmentLabel(alignmentLaw.value, alignmentMoral.value)),
 
-    notes:          computed(() => getViewAwareFieldValue<string>('system.notes') ?? ''),
+    notes:          computed(() => getViewAwareFieldValue<string>('system.bio.notes') ?? ''),
+    gmNotes:        computed(() => getViewAwareFieldValue<string>('system.bio.gmNotes') ?? ''),
     level:          computed(() => document.value.system.level ?? 1),
     isPartyMember:  computed(() => getViewAwareFieldValue<boolean>('system.settings.isPartyMember') ?? false),
     languages:      computed(() => [...(getViewAwareFieldValue<string[]>('system.bio.languages') ?? [])]),
@@ -120,6 +121,10 @@ const useCreatureStore = <TDocument extends Creature>(
       await document.value.rollInitiativeCheck();
     },
     useActionFromSheet: async (itemId: string, actionId: string, target?: TokenDnd35e): Promise<void> => {
+      if (!renderModeStore.isSheetEditable.value) {
+        console.warn('Cannot trigger an action from a read-only sheet');
+        return;
+      }
       await document.value.useAction(itemId, actionId, target ? [target] : undefined);
     },
   };
@@ -148,6 +153,7 @@ interface CreatureGetters {
   alignmentMoral: ComputedRef<MoralAxis | null>;
   alignmentLabel: ComputedRef<string | null>;
   notes:          ComputedRef<string>;
+  gmNotes:        ComputedRef<string>;
   level:          ComputedRef<number>;
   isPartyMember:  ComputedRef<boolean>;
   languages:      ComputedRef<string[]>;

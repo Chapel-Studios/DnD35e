@@ -5,7 +5,7 @@ import { gotoGame } from './helpers/session.mjs';
 import { closeAllSheets } from './helpers/sheets.mjs';
 
 /**
- * End-to-end: a `condition` formula gates an entire `group:allSaves`-targeted
+ * End-to-end: a `condition` formula gates an entire `#actor.saves.all`-targeted
  * change (poc §7.7) as a single unit.
  *
  * `ActorDnd35e.applyActiveEffects()` evaluates `change.condition` BEFORE
@@ -15,13 +15,13 @@ import { closeAllSheets } from './helpers/sheets.mjs';
  * together. This is the ordering regression documented in poc §7.7's
  * Implementation Notes; this spec proves it end-to-end against a real actor.
  */
-test.describe('Conditional group:allSaves change', () => {
+test.describe('Conditional #actor.saves.all change', () => {
   test.afterEach(async ({ page }) => {
     await closeAllSheets(page).catch(() => {});
     await clearWorld(page);
   });
 
-  test('a gated group:allSaves change applies to all three saves together, or none at all', async ({ page }) => {
+  test('a gated #actor.saves.all change applies to all three saves together, or none at all', async ({ page }) => {
     await gotoGame(page);
 
     const actorUuid = await page.evaluate(async () => {
@@ -37,7 +37,7 @@ test.describe('Conditional group:allSaves change', () => {
         system: {
           changes: [{
             target: 'actor',
-            key: 'group:allSaves',
+            key: '#actor.saves.all',
             type: 'add',
             value: '2',
             condition: '#actor.abilities.str.score >= 14',

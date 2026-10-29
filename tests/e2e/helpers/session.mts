@@ -59,11 +59,11 @@ export async function performJoin (page: Page, baseUrl: string, userName: string
   await page.selectOption('select[name="userid"]', value);
   await page.click('button[name="join"]');
 
-  await page.waitForURL(`${baseUrl}/game`, { timeout: 30_000 });
+  await page.waitForURL(`${baseUrl}/game`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
   await page.waitForFunction(
     () => typeof (globalThis as any).game !== 'undefined' && (globalThis as any).game.ready === true,
     null,
-    { timeout: 30_000 }
+    { timeout: 90_000 }
   );
 }
 

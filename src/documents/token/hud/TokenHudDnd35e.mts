@@ -37,11 +37,16 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import { performStandUpOrDropProne } from '@actors/creature/Actions/ChangeProneStatus.mjs';
 import { Creature } from '@actors/creature/index.mjs';
-import type { HpAdjustmentType } from '@actors/creature/sheet/components/constants.mjs';
+import { applyTotalDefenseAE } from '@actors/creature/logic/combatConditionAEs.mjs';
+import { getHpAdjustmentPermissions, isHpAdjustmentType } from '@actors/creature/sheet/components/hpAdjustmentPermissions.mjs';
 import type { ApplicationRenderContext } from '@client/applications/_module.mjs';
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
+import { ACTION_ECONOMY } from '@constants/actionEconomy.mjs';
+import { spendAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
+import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
+import { addOrUpdatePlayerEditMask, findOrCreatePlayerEditSecret } from '@effects/secret/playerEditSecret.mjs';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
 import type { App, Component } from 'vue';
 import { createApp, reactive } from 'vue';
@@ -50,7 +55,8 @@ import { DROP_PRONE_MOVEMENT_ACTION, STAND_UP_MOVEMENT_ACTION } from '../logic/m
 import type { BottomHudBarProps } from './components/BottomHudBar.vue';
 import type { LeftHudBarProps } from './components/LeftHudBar.vue';
 import type { RightHudBarProps } from './components/RightHudBar.vue';
-import { getCombatManeuverChoices, getWeaponActionChoices } from './tokenHudActions.mjs';
+import { CONCEALMENT_FIELD, getConcealmentPermissions } from './concealmentPermissions.mjs';
+import { getActiveCombatant, getCombatManeuverChoices, getConcealmentButtonInfo, getConcealmentChoices, getWeaponActionChoices } from './tokenHudActions.mjs';
 import TokenHudApp from './TokenHudApp.vue';
 import type { MiddleHudBarProps, TokenHudContext } from './tokenHudTypes.mjs';
 
@@ -118,8 +124,14 @@ class TokenHudDnd35e extends TokenHudVueBase {
       levels: [],
       locked: false,
       canConfigure: false,
+      canSeeConcealment: false,
+      canEditConcealment: false,
+      concealmentIconClass: 'fa-regular fa-cloud',
+      concealmentTooltip: '',
+      concealmentOptions: [],
     },
     rightHudContext: {
+      canSelectMovementAction: false,
       canToggleCombat: false,
       combatActive: false,
       targeted: false,
@@ -139,6 +151,8 @@ class TokenHudDnd35e extends TokenHudVueBase {
       bar2Editable: false,
     },
     bottomHudContext: {
+      canShowWeaponAttacks: false,
+      canShowCombatManeuvers: false,
       combatManeuvers: [],
       weaponActions: [],
     },
@@ -151,6 +165,7 @@ class TokenHudDnd35e extends TokenHudVueBase {
         attackAction: TokenHudDnd35e.#onAttackAction,
         adjustHp: TokenHudDnd35e.#onAdjustHp,
         combatManeuver: TokenHudDnd35e.#onCombatManeuver,
+        concealment: TokenHudDnd35e.#onConcealment,
         movementAction: TokenHudDnd35e.#onMovementAction,
       },
     },
@@ -168,16 +183,33 @@ class TokenHudDnd35e extends TokenHudVueBase {
     // Compact widget reads HP straight off the actor rather than through bar1Data — it must
     // work regardless of whatever attribute (if any) bar1 happens to be configured for.
     const creature = actor instanceof Creature ? actor : null;
+    const hpAdjustmentPermissions = getHpAdjustmentPermissions(creature, this.document.isOwner);
     const useDefaultHpBar = Boolean(this.document.getFlag('dnd35e', 'useDefaultHpBar'));
     const displayBar1 = useDefaultHpBar
       ? raw.displayBar1
-      : !!creature;
+      : Object.values(hpAdjustmentPermissions).some(permission => permission.visible);
     const bar1Value = useDefaultHpBar
       ? (raw.bar1Data?.value ?? null)
       : (creature?.system.hp.current ?? null);
     const bar1Editable = useDefaultHpBar
       ? (raw.bar1Data?.editable ?? false)
-      : Boolean(creature?.isOwner);
+      : Object.values(hpAdjustmentPermissions).some(permission => permission.editable);
+
+    const concealmentPermissions = getConcealmentPermissions(creature, this.document.isOwner);
+    let concealmentValue: unknown = creature?.system.defense.concealment ?? 0;
+    if (creature && !game.user.isGM && concealmentPermissions.visible) {
+      const masks = getDocumentMasks(creature);
+      if (masks && CONCEALMENT_FIELD in masks) concealmentValue = masks[CONCEALMENT_FIELD];
+    }
+    if (typeof concealmentValue !== 'number' || !Number.isFinite(concealmentValue)) {
+      console.warn('Invalid player-visible HUD concealment value.');
+      concealmentPermissions.visible = false;
+      concealmentPermissions.editable = false;
+    }
+    const concealmentPercent = concealmentPermissions.visible && typeof concealmentValue === 'number'
+      ? concealmentValue
+      : 0;
+    const concealmentButtonInfo = getConcealmentButtonInfo(concealmentPercent);
 
     const leftHudContext: LeftHudBarProps = {
       elevation: raw.elevation,
@@ -187,20 +219,31 @@ class TokenHudDnd35e extends TokenHudVueBase {
       levels: Object.values(raw.levels),
       locked: raw.locked,
       canConfigure: raw.canConfigure,
+      canSeeConcealment: concealmentPermissions.visible,
+      canEditConcealment: concealmentPermissions.editable,
+      concealmentIconClass: concealmentButtonInfo.iconClass,
+      concealmentTooltip: concealmentButtonInfo.tooltip,
+      concealmentOptions: concealmentPermissions.editable
+        ? getConcealmentChoices(concealmentPercent)
+        : [],
     };
 
     const rightHudContext: RightHudBarProps = {
+      canSelectMovementAction: game.user.isGM || this.document.isOwner,
       hidden: raw.hidden,
       statusEffects: Object.values(raw.statusEffects),
       movementActionIcon: raw.movementActionsConfig?.icon,
       movementActionImg: raw.movementActionsConfig?.img,
-      movementActions: Object.values(raw.movementActions),
+      movementActions: game.user.isGM || this.document.isOwner
+        ? Object.values(raw.movementActions)
+        : [],
       targeted: raw.targetClass === 'active',
       canToggleCombat: raw.canToggleCombat,
       combatActive: raw.combatClass === 'active',
     };
 
     const middleHudContext: MiddleHudBarProps = {
+      hpAdjustmentPermissions,
       useDefaultHpBar,
       displayBar1,
       bar1Value,
@@ -212,13 +255,16 @@ class TokenHudDnd35e extends TokenHudVueBase {
 
     const hudToken = this.document.object as unknown as TokenDnd35e | undefined;
     const isCreature = actor && actor instanceof Creature;
-    const weaponActions = isCreature && hudToken
+    const canUseCreatureControls = !!isCreature && (game.user.isGM || this.document.isOwner);
+    const weaponActions = canUseCreatureControls && isCreature && hudToken
       ? await getWeaponActionChoices(actor, hudToken)
       : [];
-    const combatManeuvers = isCreature
-      ? getCombatManeuverChoices()
+    const combatManeuvers = canUseCreatureControls && isCreature && hudToken
+      ? getCombatManeuverChoices(hudToken)
       : [];
     const bottomHudContext: BottomHudBarProps = {
+      canShowWeaponAttacks: canUseCreatureControls,
+      canShowCombatManeuvers: canUseCreatureControls,
       weaponActions: weaponActions,
       combatManeuvers: combatManeuvers,
     };
@@ -249,6 +295,10 @@ class TokenHudDnd35e extends TokenHudVueBase {
    * re-resolved (and potentially wrong, for a linked actor with multiple placed tokens) fallback.
    */
   static async #onAttackAction (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
+    if (!game.user.isGM && !this.document.isOwner) {
+      console.warn('Cannot attack from a token HUD without ownership.');
+      return;
+    }
     const { itemId, actionId, enabled } = target.dataset;
     if (!itemId || !actionId || enabled === 'false') return;
 
@@ -269,19 +319,79 @@ class TokenHudDnd35e extends TokenHudVueBase {
   /** Compact bar1 HP widget's apply button (TokenHpUpdater.vue) — reads the amount/type staged in the button's own data attributes since the Vue tree has no document/store access here. */
   static async #onAdjustHp (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
     const actor = this.actor;
-    if (!(actor instanceof Creature) || !actor.isOwner) return;
+    if (!(actor instanceof Creature)) return;
 
     const amount = Number(target.dataset.amount);
-    const adjustmentType = target.dataset.adjustmentType as HpAdjustmentType | undefined;
-    if (!adjustmentType || Number.isNaN(amount) || amount === 0) return;
+    const adjustmentType = target.dataset.adjustmentType;
+    if (!isHpAdjustmentType(adjustmentType) || !Number.isFinite(amount) || amount === 0) {
+      console.warn('Invalid HUD HP adjustment.', target.dataset);
+      return;
+    }
+    if (!getHpAdjustmentPermissions(actor, this.document.isOwner)[adjustmentType].editable) {
+      console.warn('Cannot use a hidden or locked HUD HP adjustment.');
+      return;
+    }
 
     await actor.updateHP(amount, adjustmentType);
   }
 
-  /** Combat Maneuvers palette entry click — Total Defense's real mechanic is Story E's scope (see tokenHudActions.mts). */
-  static #onCombatManeuver (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): void {
+  /**
+   * Combat Maneuvers palette entry click (poc.10 Story E) — Total Defense is a standard
+   * action (SRD): spend it, then apply the +4 AC dodge bonus via the native-duration AE
+   * (see `combatConditionAEs.mts`). Outside an active encounter there's no action economy
+   * to spend against, so the maneuver is a no-op with a warning (mirrors `#onAttackAction`'s
+   * "select a target first" guard style).
+   */
+  static async #onCombatManeuver (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
+    if (!game.user.isGM && !this.document.isOwner) {
+      console.warn('Cannot use combat maneuvers from a token HUD without ownership.');
+      return;
+    }
     if (target.dataset.enabled === 'false') return;
-    ui.notifications.info(game.i18n.localize('dnd35e.COMBAT.Maneuver.NotYetImplemented'));
+
+    const actor = this.actor;
+    if (!(actor instanceof Creature)) return;
+
+    const hudToken = this.document.object as unknown as TokenDnd35e | undefined;
+    const combatant = hudToken ? getActiveCombatant(hudToken) : undefined;
+    if (!combatant) {
+      ui.notifications.warn(game.i18n.localize('dnd35e.COMBAT.Maneuver.MustBeInCombat'));
+      return;
+    }
+
+    const spent = await spendAction(combatant, [ACTION_ECONOMY.STANDARD]);
+    if (spent === null) return;
+
+    await applyTotalDefenseAE(actor);
+  }
+
+  /**
+   * Concealment presets follow the sheet's field permissions and player-secret edit route.
+   * Unmasked edits change the persisted baseline; Active Effects still layer on top.
+   */
+  static async #onConcealment (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
+    const actor = this.actor;
+    if (!(actor instanceof Creature) || !getConcealmentPermissions(actor, this.document.isOwner).editable) {
+      console.warn('Cannot change hidden or locked HUD concealment.');
+      return;
+    }
+
+    const rawValue = target.dataset.concealmentValue;
+    if (!['0', '20', '50'].includes(rawValue ?? '')) {
+      console.warn('Invalid HUD concealment selection.');
+      return;
+    }
+    const value = Number(rawValue);
+
+    const masks = getDocumentMasks(actor);
+    if (!game.user.isGM && masks && CONCEALMENT_FIELD in masks) {
+      const secret = await findOrCreatePlayerEditSecret(actor);
+      await addOrUpdatePlayerEditMask(secret, CONCEALMENT_FIELD, value);
+    }
+    else {
+      await actor.update({ system: { defense: { concealment: value } } });
+    }
+    this.togglePalette(null);
   }
 
   /**
@@ -291,6 +401,10 @@ class TokenHudDnd35e extends TokenHudVueBase {
    * `document.update({movementAction})` core's own (private, un-callable-through) handler does.
    */
   static async #onMovementAction (this: TokenHudDnd35e, _event: PointerEvent, target: HTMLElement): Promise<void> {
+    if (!game.user.isGM && !this.document.isOwner) {
+      console.warn('Cannot select movement actions from a token HUD without ownership.');
+      return;
+    }
     const action = target.dataset.movementAction || null;
     const token = this.document;
     // Assume success by default; will be updated if the action is drop prone or stand up.

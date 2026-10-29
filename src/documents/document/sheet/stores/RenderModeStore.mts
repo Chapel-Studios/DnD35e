@@ -9,10 +9,12 @@ type RenderModeStore = {
   isPlayMode: ComputedRef<boolean>;
   isTrueMode: ComputedRef<boolean>;
   isOwnerOrGM: ComputedRef<boolean>;
+  isSheetEditable: ComputedRef<boolean>;
   isGM: ComputedRef<boolean>;
   hasSecrets: ComputedRef<boolean>;
   setHasSecrets: (hasSecrets: boolean) => void;
   setViewMode: (newMode: ViewMode) => void;
+  setSheetEditable: (isEditable: boolean) => void;
   /** Set or update the header element reference and isEditable flag, then render the view mode bar. */
   setHeaderElement: (header: Element, isEditable: boolean) => void;
   /** Force re-render of the view mode bar. */
@@ -22,10 +24,14 @@ type RenderModeStore = {
 const useRenderModeStore = (
   isOwner: boolean,
   hasSecrets: boolean = false,
-  initialMode: ViewMode = PLAY
+  initialMode: ViewMode = PLAY,
+  initialEditable = false
 ): RenderModeStore => {
   const state = reactive({
-    viewMode: initialMode as ViewMode,
+    viewMode: initialMode === EDIT && !initialEditable
+      ? PLAY
+      : initialMode,
+    isSheetEditable: initialEditable,
     isOwner,
     isGM: game.user.isGM,
     hasSecrets,
@@ -33,7 +39,7 @@ const useRenderModeStore = (
 
   // Header button management — set via setHeaderElement after DOM is ready
   let headerElement: Element | null = null;
-  let editable = false;
+  const isSheetEditable = computed(() => state.isSheetEditable);
 
   const isGM = computed(() => {
     return game.user.isGM;
@@ -88,7 +94,7 @@ const useRenderModeStore = (
       mode: EDIT,
       icon: 'fa-solid fa-pen-to-square',
       tooltipKey: 'dnd35e.COMMON.SheetModeEdit',
-      visible: () => editable,
+      visible: () => state.isSheetEditable,
     },
   ];
 
@@ -127,16 +133,20 @@ const useRenderModeStore = (
     }
   };
 
-  const setHeaderElement = (header: Element, isEditable: boolean): void => {
-    headerElement = header;
-    editable = isEditable;
-    if (state.viewMode === EDIT && !editable) {
+  const setSheetEditable = (isEditable: boolean): void => {
+    state.isSheetEditable = isEditable;
+    if (state.viewMode === EDIT && !isEditable) {
       state.viewMode = PLAY;
     }
     if (state.viewMode === TRUE && !state.hasSecrets) {
       state.viewMode = PLAY;
     }
     renderViewModeBar();
+  };
+
+  const setHeaderElement = (header: Element, isEditable: boolean): void => {
+    headerElement = header;
+    setSheetEditable(isEditable);
   };
 
   const setHasSecrets = (hasSecrets: boolean): void => {
@@ -154,7 +164,7 @@ const useRenderModeStore = (
     // Don't allow True Mode when there are no secrets or the user isn't a GM.
     if (newMode === TRUE && (!state.hasSecrets || !game.user.isGM)) return;
     // Don't allow edit for non-editable
-    if (newMode === EDIT && !editable) return;
+    if (newMode === EDIT && !state.isSheetEditable) return;
 
     if (state.viewMode !== newMode) {
       state.viewMode = newMode;
@@ -168,10 +178,12 @@ const useRenderModeStore = (
     isPlayMode,
     isTrueMode,
     isOwnerOrGM,
+    isSheetEditable,
     isGM,
     hasSecrets: hasSecretsRef,
     setHasSecrets,
     setViewMode,
+    setSheetEditable,
     setHeaderElement,
     renderViewModeBar,
   };

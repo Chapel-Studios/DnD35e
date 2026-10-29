@@ -21,6 +21,7 @@ import type {
   FamiliarContext,
   FamiliarSchema,
   FieldAspect,
+  FormulaExpectedType,
   FormulaVariable,
   ValidationError,
 } from './types.mjs';
@@ -196,17 +197,17 @@ function resolveFormulaFromSchemaValues(formula: string, schema: FamiliarSchema)
  * grammar errors (e.g. `!#item.broken 0`) are still caught even without a live
  * document to resolve real values from.
  *
- * Returns `null` when the type is `'string'` (no coercion possible to fail),
- * the formula is empty, or any variable couldn't be resolved to a known
+ * Returns `null` when the type is `'string'`/`'rollFormula'` (no coercion possible to
+ * fail), the formula is empty, or any variable couldn't be resolved to a known
  * schema aspect at all (invalid/unresolvable path — flagged separately by
  * `validateFormula`).
  */
 export function validateFormulaType(
   formula: string,
   context: FamiliarSchema,
-  expectedType: 'string' | 'number' | 'boolean'
+  expectedType: FormulaExpectedType
 ): ValidationError | null {
-  if (!formula || expectedType === 'string') return null;
+  if (!formula || expectedType === 'string' || expectedType === 'rollFormula') return null;
 
   const resolved = resolveFormulaFromSchemaValues(formula, context);
   if (extractVariables(resolved).length > 0) return null;

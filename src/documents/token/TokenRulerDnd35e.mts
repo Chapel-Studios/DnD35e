@@ -1,9 +1,11 @@
 import type { TokenRulerWaypoint } from '@client/_module.mjs';
 import type { DeepReadonly } from '@common/_shared-types.mjs';
+import { getActionEconomy } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import { getMovementSession } from '@documents/combat/combatant/movementSession.mjs';
 import { useSettingsStore } from '@settings/index.mjs';
 
+import { WALK_MOVEMENT_ACTION } from './logic/movementActionGating.mjs';
 import type { SessionAwareBudget } from './logic/movementBudget.mjs';
 import { getMovementBudget, getSessionAwareBudget } from './logic/movementBudget.mjs';
 import waypointLabelTemplateSource from './templates/waypoint-label.hbs?raw';
@@ -88,11 +90,23 @@ class TokenRulerDnd35e extends foundry.canvas.placeables.tokens.TokenRuler {
     const combatant = tokenId
       ? (game.combat?.getCombatantsByToken(tokenId)[0] as CombatantDnd35e | undefined)
       : undefined;
+    if (combatant && game.combat?.started && waypoint.action === WALK_MOVEMENT_ACTION) {
+      const session = getMovementSession(combatant);
+      const economy = getActionEconomy(combatant);
+      const stepOnly = economy.used.fullAttackUsed
+        || (economy.actions.move <= 0 && economy.actions.standard <= 0 && session.spentTiers.length === 0);
+      if (stepOnly) {
+        const budget = session.fullRoundMove || session.category === 'normal'
+          ? 0
+          : convertToLocalizedDistance(1);
+        return getSessionAwareBudget(budget, waypoint.action, waypoint.measurement.cost, false);
+      }
+    }
     // Once the standard action is actually spent (committing an escalated Double Move),
     // `actionEconomy.actions.standard` flips to unavailable — so we need to check if this turn
     // has already-escalated the budget, accidently converting back to a single move's budget.
     const isBudgetEscalatable = (combatant?.actionEconomy.actions.standard ?? 0) > 0
-      || (combatant ? getMovementSession(combatant).spentTiers.includes('standard') : false);
+      || (combatant ? getMovementSession(combatant).spentTiers.length >= 2 : false);
 
     return getSessionAwareBudget(singleBudget, waypoint.action, waypoint.measurement.cost, isBudgetEscalatable);
   }

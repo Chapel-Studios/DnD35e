@@ -1,0 +1,117 @@
+{{!--
+  Resolution chat card (poc.10 Story E, §10.7). Rendered by `buildResolutionCard()`/
+  `buildResolutionCardContent()` in resolutionCard.mts via the same precompiled Handlebars
+  pattern as attack-roll-card.hbs — never served over HTTP or copied to `dist/`.
+--}}
+<div class="dnd35e chat-card resolution-card {{#if hit}}is-hit{{else}}is-miss{{/if}} {{#if criticalHit}}is-critical{{/if}} {{#if undone}}is-undone{{/if}}">
+  <header class="card-header">
+    <div class="actor-info attacker">
+      <span class="actor-header-title">{{ attackerHeaderLabel }}</span>
+      <div class="actor-header">
+        <img src="{{ attackerImage }}" alt="" class="actor-image" />
+        <div class="title-text">
+          <h5 class="value" data-attacker-uuid="{{ attackerUuid }}"></h5>
+          <h6 class="label">- {{ attackName }}</h6>
+        </div>
+      </div>
+    </div>
+    <div class="actor-info target">
+      <span class="actor-header-title">{{ targetHeaderLabel }}</span>
+      <div class="actor-header">
+        <img src="{{ targetImage }}" alt="" class="actor-image" />
+        <div class="title-text">
+          <h5 class="value" data-target-uuid="{{ targetUuid }}" data-target-token-uuid="{{ targetTokenUuid }}"></h5>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {{!-- Mirrors attack-roll-card.hbs's expand-collapse pattern, restating the attack roll and
+  adjusted AC side by side (parity with D35E's damage-description.html) — kept visually
+  distinct from `.roll-result`/`.roll-summary` (no die-face background, two stats not one). --}}
+  <div class="ac-compare" data-action="expandAc" title="{{ acDetailsLabel }}">
+    <div class="ac-compare-summary">
+      <span class="result-badge {{#if hit}}hit{{else}}miss{{/if}}">{{ resultLabel }}</span>
+      {{#if criticalHit}}
+      <span class="callout critical">{{ criticalHitLabel }}</span>
+      {{/if}}
+      {{#if concealmentMissed}}
+      <span class="callout concealed">{{ concealedLabel }}</span>
+      {{/if}}
+
+      <div class="ac-compare-stats">
+        <div class="stat attack-stat" title="{{ attackTotalLabel }}">
+          <span class="value">{{ attackTotal }}</span>
+        </div>
+        {{#if showEffectiveAc}}
+        <div class="stat ac-stat" title="{{ effectiveAcLabel }}">
+          <span class="value">{{ effectiveAc }}</span>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+
+    {{#if acBreakdownHtml}}
+    <div class="ac-breakdown">
+      {{{ acBreakdownHtml }}}
+    </div>
+    {{/if}}
+  </div>
+
+  {{#if concealmentRolled}}
+  {{!-- Mirrors D35E's damage-description.html concealment roll box (roll vs. miss-chance target,
+  colored by whether the roll itself beat the chance) — independent of the overall hit/miss class
+  above it, since the attack could still miss on AC alone while the concealment roll succeeded. --}}
+  <div class="concealment-check">
+    <span class="dice-flavor">{{ concealmentCheckLabel }}</span>
+    <div class="concealment-check-stats">
+      <div class="stat concealment-roll-stat {{#if concealmentMissed}}failure{{else}}success{{/if}}" title="{{ concealmentRollLabel }}">
+        <span class="value">{{ concealmentRoll }}</span>
+      </div>
+      <div class="stat concealment-target-stat" title="{{ concealmentTargetLabel }}">
+        <span class="value">{{ concealmentPercent }}%</span>
+      </div>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if hasDamage}}
+  <div class="roll-result" data-action="expandRoll">
+    <div class="roll-summary">
+      <span class="result-header">{{ resultHeaderLabel }}</span>
+      <span class="total-result">{{ appliedAmount }}</span>
+
+      {{#if showHalved}}
+        <span class="callout halved">{{ halfDamageLabel }}</span>
+      {{/if}}
+    </div>
+
+    {{!-- Same die-face tooltip + modifier breakdown splice as save-roll-card.hbs. --}}
+    {{{diceRollHtml}}}
+  </div>
+  {{/if}}
+
+  {{#if showApply}}
+  <div class="damage-apply-row">
+    {{!-- Left clickable after applying (not disabled) so a messed-up resolution can be redone. --}}
+    <button type="button" class="apply-damage-btn" data-action="apply-damage">
+      <i class="fas fa-hand-holding-medical"></i>
+      <span>{{#if applied}}{{ reapplyDamageLabel }}{{else}}{{ applyDamageLabel }}{{/if}}</span>
+    </button>
+  </div>
+  {{/if}}
+
+
+  {{#if showUndo}}
+  <footer class="card-footer">
+    {{#if undone}}
+    <span class="undone-label">{{ undoneLabel }}</span>
+    {{else}}
+    <button type="button" class="undo-btn" data-action="undo-resolution">
+      <i class="fas fa-rotate-left"></i>
+      <span>{{ undoLabel }}</span>
+    </button>
+    {{/if}}
+  </footer>
+  {{/if}}
+</div>

@@ -134,6 +134,18 @@
     />
   </ol>
 
+  <nav v-if="context.hasCombat && context.combatRound" class="combat-controls end-turn-controls">
+    <button
+      type="button"
+      class="combat-control combat-control-lg"
+      data-action="nextTurn"
+      :disabled="!(context.isGM || context.control)"
+    >
+      <i class="fa-solid fa-check" inert />
+      <span>{{ localize('COMBAT.TurnEnd') }}</span>
+    </button>
+  </nav>
+
   <nav class="combat-controls" data-tooltip-direction="UP">
     <template v-if="context.hasCombat">
       <template v-if="context.isGM">

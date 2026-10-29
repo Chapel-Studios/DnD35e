@@ -5,7 +5,9 @@
         "Materials": "Materials",
         "Weapons": "Weapons",
         "MacrosDev": "Developer Macros",
-        "Documentation": "Documentation"
+        "Documentation": "Documentation",
+        "PocActors": "POC Actors",
+        "DevEffects": "Developer Effects"
       }
     }
   }

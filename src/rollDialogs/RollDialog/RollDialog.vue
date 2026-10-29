@@ -3,22 +3,15 @@
     <div class="options">
       <div class="title-row subgrid">
         <ActorRollHeader
-          :header="localize('dnd35e.ROLL.Attacker')"
+          :header="localize(actorHeaderLabel)"
           :image="actorImage"
           :name="actorName"
-        >
-          <!-- <h4 class="label">{{ dialogTitle }}</h4> -->
-        </ActorRollHeader>
+        />
 
         <slot name="header" />
       </div>
       
       <slot />
-
-      <div v-if="!hideTotal" class="total-row subgrid">
-        <span class="label">{{ localize('dnd35e.ROLL.Total') }}</span>
-        <span class="value">{{ totalFormula }}</span>
-      </div>
     </div>
     <footer class="form-footer full">
       <div class="form-group roll-mode">
@@ -33,7 +26,7 @@
         <button type="button" class="cancel-btn" @click="actions.cancel()">
           {{ localize('Cancel') }}
         </button>
-        <button type="submit" class="roll-btn">
+        <button type="submit" class="roll-btn" @click.prevent="onRollClick">
           <i class="fas fa-dice-d20" />
           {{ localize('dnd35e.ROLL.RollButton') }}
         </button>
@@ -50,8 +43,12 @@
   import { RollDialogStoreSymbol } from './RollDialogStore.mjs';
 
   // `hideTotal` lets dialogs with their own per-box live totals (e.g. Weapon Attack's
-  // to-hit/damage boxes) suppress this generic single-total row.
-  defineProps<{ hideTotal?: boolean }>();
+  // to-hit/damage boxes) suppress this generic single-total row. `actorHeaderLabel` lets
+  // dialogs whose primary actor isn't the attacker (e.g. Roll Defense's defender) override
+  // the title-row header text — see RollDefenseDialog.vue.
+  withDefaults(defineProps<{ actorHeaderLabel?: string }>(), {
+    actorHeaderLabel: 'dnd35e.ROLL.Actor',
+  });
 
   const {
     actor: {
@@ -60,7 +57,6 @@
     },
     app: {
       rollMode,
-      totalFormula,
     },
     actions,
   } = inject(RollDialogStoreSymbol) as RollDialogStore;
@@ -72,7 +68,6 @@
   }
 
   function onRollClick(): void {
-    actions.commitPendingEdits();
     actions.roll();
   }
 </script>

@@ -46,6 +46,29 @@
       icon-class="fa-solid fa-gear"
       data-action="config"
     />
+
+    <template v-if="canSeeConcealment">
+      <HudButton
+        :data-palette="canEditConcealment ? 'concealment' : undefined"
+        :data-action="canEditConcealment ? 'togglePalette' : undefined"
+        :aria-disabled="!canEditConcealment"
+        label-key="dnd35e.COMBAT.HUD.Concealment"
+        :label="concealmentTooltip"
+        :icon-class="concealmentIconClass"
+      />
+      <div v-if="canEditConcealment" class="palette palette-list" data-palette="concealment">
+        <a
+          v-for="option in concealmentOptions"
+          :key="option.id"
+          class="palette-list-entry"
+          :class="option.cssClass"
+          data-action="concealment"
+          :data-concealment-value="option.value"
+        >
+          <span>{{ option.label }}</span>
+        </a>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -57,11 +80,16 @@
     levels: TokenHudLevelRow[];
     locked: boolean;
     canConfigure: boolean;
+    canSeeConcealment: boolean;
+    canEditConcealment: boolean;
+    concealmentIconClass: string;
+    concealmentTooltip: string;
+    concealmentOptions: TokenHudConcealmentRow[];
   };
 </script>
 
 <script setup lang="ts">
-  import type { TokenHudLevelRow } from '../tokenHudTypes.mjs';
+  import type { TokenHudConcealmentRow, TokenHudLevelRow } from '../tokenHudTypes.mjs';
   import HudButton from './HudButton.vue';
 
   function localize (key: string): string {

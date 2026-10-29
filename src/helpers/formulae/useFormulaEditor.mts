@@ -2,7 +2,7 @@ import { computed, type ComputedRef, nextTick, onMounted, onUnmounted, ref, watc
 
 import { FormulaResolver } from './FormulaResolver.mjs';
 import { resolveItAutocompleteContext } from './itContext.mjs';
-import type { AutocompleteOption, FamiliarSchema, ValidationError } from './types.mjs';
+import type { AutocompleteOption, FamiliarSchema, FormulaExpectedType, ValidationError } from './types.mjs';
 import type { OverlayInputElement } from './useFamiliarOverlayInput.mjs';
 import { useFamiliarOverlayInput } from './useFamiliarOverlayInput.mjs';
 import {
@@ -32,7 +32,7 @@ type FormulaEditorOptions = {
   onCommit: (canonicalValue: string) => void;
   focusOnMount?: () => boolean;
   /** When provided, a resolved value that doesn't match this type surfaces a validation error. */
-  expectedType?: ComputedRef<'string' | 'number' | 'boolean' | undefined>;
+  expectedType?: ComputedRef<FormulaExpectedType | undefined>;
   /**
    * Multiline (textarea, poc §7.10 advanced editor modal) mode: `Enter` inserts a real
    * newline instead of committing, and the at-rest display never collapses line

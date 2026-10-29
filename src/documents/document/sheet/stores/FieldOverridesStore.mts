@@ -113,6 +113,25 @@ type FieldOverridesStore = {
   fieldOverridesActions: FieldOverridesStoreActions;
 };
 
+type FieldOverrideDocument = { getFlag: (scope: string, key: string) => unknown; system?: unknown };
+
+/** Shared live resolver for sheets and controls that run outside a sheet store. */
+const resolveDocumentFieldOverride = <K extends FieldOverrideKey>(
+  document: FieldOverrideDocument,
+  fieldPath: string,
+  key: K,
+  overrides = (document.getFlag(SYSTEM_ID, FIELD_OVERRIDES_FLAG) as FieldOverrides | undefined) ?? {}
+): FieldOverrideValue<K> | undefined => {
+  return cascadeFieldOverride(fieldPath, key, <T extends FieldOverrideKey>(path: string, overrideKey: T): FieldOverrideValue<T> | undefined => {
+    const flagValue = overrides[encodeFieldPath(path)]?.[overrideKey];
+    if (flagValue != null) return flagValue as FieldOverrideValue<T>;
+    if (!path.startsWith('system.')) return OVERRIDE_DEFAULTS[overrideKey];
+    const field = resolveSchemaField(document, path);
+    const options = field?.options as OverrideOptions | undefined;
+    return options?.[SCHEMA_DEFAULT_KEYS[overrideKey]] as FieldOverrideValue<T> | undefined;
+  });
+};
+
 // ---------------------------------------------------------------------------
 // Composable
 // ---------------------------------------------------------------------------
@@ -166,25 +185,6 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
   const getOverrideOptions = (field: DataField): OverrideOptions =>
     field.options as unknown as OverrideOptions;
 
-  /**
-   * Resolve a single override key at a single path (no cascade).
-   * Priority: flag override → document-level default (non-system) → schema default.
-   */
-  const resolveAtPath = <K extends FieldOverrideKey>(fieldPath: string, key: K): FieldOverrideValue<K> | undefined => {
-    // 1. Flag override (GM-set) — preferred
-    const encodedPath = encodeFieldPath(fieldPath);
-    const flagValue = fieldOverrides.value[encodedPath]?.[key];
-    if (flagValue != null) return flagValue as FieldOverrideValue<K>;
-
-    // 2. Document-level properties have no schema field — use fixed defaults
-    if (!fieldPath.startsWith('system.')) return OVERRIDE_DEFAULTS[key];
-
-    // 3. Schema default — fallback
-    const field = getSchemaField(fieldPath);
-    if (!field) return undefined;
-    return getOverrideOptions(field)[SCHEMA_DEFAULT_KEYS[key]] as FieldOverrideValue<K> | undefined;
-  };
-
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------
@@ -196,7 +196,7 @@ const useFieldOverridesStore = (options: FieldOverridesStoreOptions): FieldOverr
    * Cascades up the path tree (section → field), picking most-restrictive at each parent.
    */
   const getFieldOverride = <K extends FieldOverrideKey>(fieldPath: string, key: K): FieldOverrideValue<K> | undefined => {
-    return cascadeFieldOverride(fieldPath, key, resolveAtPath);
+    return resolveDocumentFieldOverride(document.value, fieldPath, key, fieldOverrides.value);
   };
 
   /**
@@ -340,6 +340,7 @@ const FieldOverridesStoreSymbol = Symbol('FieldOverridesStore');
 
 export {
   FieldOverridesStoreSymbol,
+  resolveDocumentFieldOverride,
   useFieldOverridesStore,
 };
 

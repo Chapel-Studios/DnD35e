@@ -6,7 +6,6 @@
     :max="20"
     :field-path="getFieldPath('critRange')"
     :on-update="(v) => updateActionField('critRange', v)"
-    hide-field-controls
   />
 </template>
 

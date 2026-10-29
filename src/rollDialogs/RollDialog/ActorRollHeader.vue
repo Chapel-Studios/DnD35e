@@ -2,7 +2,7 @@
   <div class="actor-info" :class="orientation">
     <h2 class="actor-header-title">{{ header }}</h2>
     <div class="actor-header">
-      <img :src="image" alt="" class="actor-image" />
+      <img :src="image" :alt="name" class="actor-image" />
       <div class="title-text">
         <h3 class="value">{{ name }}</h3>
         <slot />

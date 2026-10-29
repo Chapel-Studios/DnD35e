@@ -1,0 +1,299 @@
+{
+  "name": "Lily Knight",
+  "type": "character",
+  "_id": "ZB1cA2vuemjDBtgh",
+  "img": "systems/dnd35e/assets/lily.svg",
+  "prototypeToken": {
+    "actorLink": true,
+    "texture": { "src": "systems/dnd35e/assets/lily.svg" }
+  },
+  "system": {
+    "origin": { "migrationVersion": "14.0.0-dev.1" },
+    "slug": "",
+    "nameFormula": {
+      "formula": "Lily Knight",
+      "expectedType": "string",
+      "resolvedValue": "Lily Knight"
+    },
+    "description": "",
+    "speed": {
+      "land": 6,
+      "climb": 0,
+      "swim": 0,
+      "burrow": 0,
+      "fly": 0,
+      "flyManeuverability": null
+    },
+    "size": "medium",
+    "senses": [],
+    "abilities": {
+      "str": { "score": 18 },
+      "dex": { "score": 12 },
+      "con": { "score": 14 },
+      "int": { "score": 8 },
+      "wis": { "score": 10 },
+      "cha": { "score": 14 }
+    },
+    "hp": {
+      "current": 100,
+      "temp": 0,
+      "nonlethal": 0
+    },
+    "bio": {
+      "gender": null,
+      "deity": null,
+      "age": null,
+      "height": null,
+      "weight": null,
+      "alignment": { "law": null, "moral": null },
+      "languages": []
+    },
+    "notes": "",
+    "settings": { "isPartyMember": false },
+    "currency": { "stacks": [], "srdEquivalent": 0 },
+    "xp": { "value": 0 },
+    "isPartyMember": false
+  },
+  "items": [
+    {
+      "name": "Greatsword",
+      "type": "weapon",
+      "_id": "DJUijYu3PvdfBeNY",
+      "img": "icons/svg/item-bag.svg",
+      "system": {
+        "origin": { "migrationVersion": "14.0.0-dev.1" },
+        "nameFormula": {
+          "formula": "Greatsword",
+          "expectedType": "string",
+          "resolvedValue": "Greatsword"
+        },
+        "description": "",
+        "isPsionic": false,
+        "isEpic": false,
+        "hp": { "current": 0, "max": 0 },
+        "hardness": 0,
+        "quantity": 1,
+        "weight": 8,
+        "isCarried": true,
+        "size": "medium",
+        "price": { "stacks": [{ "coinId": "srd_gp", "count": 50 }], "srdEquivalent": 50 },
+        "equippedSlotIds": ["mainHand", "offHand"],
+        "isMelded": false,
+        "designedForSize": "medium",
+        "isWeightlessWhenEquipped": false,
+        "isBaseWeaponType": true,
+        "weaponType": "martial",
+        "weaponSubtype": "twoHanded",
+        "weaponBaseType": "greatsword",
+        "actions": [
+          {
+            "_id": "TwWT9t7xBXiB3zU1",
+            "type": "melee_weapon_attack",
+            "damageFormula": {
+              "formula": "$scaleDamage(2d6)",
+              "expectedType": "rollFormula",
+              "resolvedValue": null
+            },
+            "damageType": "dnd35e.DAMAGE_TYPES.Slashing",
+            "critRange": 19,
+            "critMultiplier": 2
+          }
+        ]
+      },
+      "effects": [
+        {
+          "name": "+1 Flaming",
+          "type": "general",
+          "_id": "d62q6goXxx3nmSY5",
+          "img": "icons/svg/fire.svg",
+          "system": {
+            "origin": { "migrationVersion": "14.0.0-dev.1" },
+            "nameFormula": {
+              "formula": "+1 Flaming Weapon Enhancement",
+              "expectedType": "string",
+              "resolvedValue": "+1 Flaming Weapon Enhancement"
+            },
+            "description": "POC generic weapon enhancement: +1 enhancement bonus to attack and damage, plus an extra 1d6 bonus damage (intended as fire, but the current Weapon Attack action schema only supports a single damageType per attack, so the bonus die is lumped into the same Slashing damage pool as untyped bonus damage rather than a separate fire component. Revisit once multi-component/typed damage is supported.)",
+            "target": "item",
+            "isHidden": false,
+            "deleteOnExpiry": false,
+            "changes": [
+              {
+                "id": "Fs4c1u8b7r7j56kJ",
+                "key": "#item.meleeWeaponAttacks.attackToHit",
+                "type": "add",
+                "value": 1,
+                "priority": 10,
+                "phase": "final",
+                "target": "item",
+                "isSystem": false,
+                "bonusType": "dnd35e.BONUS_TYPES.Enhancement",
+                "condition": null
+              },
+              {
+                "id": "sMiu11cDsFXdi89P",
+                "key": "#item.meleeWeaponAttacks.attackDamage",
+                "type": "add",
+                "value": 1,
+                "priority": 10,
+                "phase": "final",
+                "target": "item",
+                "isSystem": false,
+                "bonusType": "dnd35e.BONUS_TYPES.Enhancement",
+                "condition": null
+              },
+              {
+                "id": "HT3vjkP6q3iZmDDh",
+                "key": "#item.meleeWeaponAttacks.attackDamage",
+                "type": "add",
+                "value": "+1d6",
+                "priority": 20,
+                "phase": "final",
+                "target": "item",
+                "isSystem": false,
+                "bonusType": null,
+                "condition": null
+              }
+            ]
+          },
+          "disabled": false,
+          "start": null,
+          "duration": { "value": null, "units": "seconds", "expiry": null, "expired": false },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": false,
+          "statuses": [],
+          "showIcon": 1,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.359",
+            "systemId": "dnd35e",
+            "systemVersion": "14.0.0-dev.1",
+            "createdTime": 1791787209300,
+            "modifiedTime": 1791787209300,
+            "lastModifiedBy": "mBlpD72i6u17h1qm",
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!ZB1cA2vuemjDBtgh.DJUijYu3PvdfBeNY.d62q6goXxx3nmSY5"
+        }
+      ],
+      "folder": null,
+      "sort": 0,
+      "ownership": { "default": 0 },
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.359",
+        "systemId": "dnd35e",
+        "systemVersion": "14.0.0-dev.1",
+        "createdTime": 1791787209300,
+        "modifiedTime": 1791787209300,
+        "lastModifiedBy": "mBlpD72i6u17h1qm",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!actors.items!ZB1cA2vuemjDBtgh.DJUijYu3PvdfBeNY"
+    }
+  ],
+  "effects": [
+    {
+      "name": "Heroic Training",
+      "type": "general",
+      "_id": "au7yHWhBLZNOqoIQ",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "origin": { "migrationVersion": "14.0.0-dev.1" },
+        "nameFormula": {
+          "formula": "Heroic Training",
+          "expectedType": "string",
+          "resolvedValue": "Heroic Training"
+        },
+        "description": "POC generic buff: grants +6 base attack bonus, +6 armor class, and +100 max HP (untyped bonuses, for testing the AE pipeline only).",
+        "target": "actor",
+        "isHidden": false,
+        "deleteOnExpiry": false,
+        "changes": [
+          {
+            "id": "9NyOAC4WEDxZcjdp",
+            "key": "system.bab",
+            "type": "add",
+            "value": 6,
+            "priority": 10,
+            "phase": "final",
+            "target": "actor",
+            "isSystem": false,
+            "bonusType": "dnd35e.BONUS_TYPES.Untyped",
+            "condition": null
+          },
+          {
+            "id": "S2RLOGRwzfPN8TAx",
+            "key": "system.defense.armorClass",
+            "type": "add",
+            "value": 6,
+            "priority": 10,
+            "phase": "initial",
+            "target": "actor",
+            "isSystem": false,
+            "bonusType": "dnd35e.BONUS_TYPES.Untyped",
+            "condition": null
+          },
+          {
+            "id": "H4Kx8RmYt2vLqZ3n",
+            "key": "system.hp.max",
+            "type": "add",
+            "value": 100,
+            "priority": 10,
+            "phase": "initial",
+            "target": "actor",
+            "isSystem": false,
+            "bonusType": "dnd35e.BONUS_TYPES.Untyped",
+            "condition": null
+          }
+        ]
+      },
+      "disabled": false,
+      "start": null,
+      "duration": { "value": null, "units": "seconds", "expiry": null, "expired": false },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": false,
+      "statuses": [],
+      "showIcon": 1,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.359",
+        "systemId": "dnd35e",
+        "systemVersion": "14.0.0-dev.1",
+        "createdTime": 1791787209300,
+        "modifiedTime": 1791787209300,
+        "lastModifiedBy": "mBlpD72i6u17h1qm",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!actors.effects!ZB1cA2vuemjDBtgh.au7yHWhBLZNOqoIQ"
+    }
+  ],
+  "folder": null,
+  "sort": 0,
+  "ownership": { "default": 0 },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1791787209300,
+    "modifiedTime": 1791787209300,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!actors!ZB1cA2vuemjDBtgh"
+}

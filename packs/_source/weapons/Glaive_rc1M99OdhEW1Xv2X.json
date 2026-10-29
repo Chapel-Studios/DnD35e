@@ -1,0 +1,82 @@
+{
+  "name": "Glaive",
+  "type": "weapon",
+  "_id": "rc1M99OdhEW1Xv2X",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Glaive",
+      "expectedType": "string",
+      "resolvedValue": "Glaive"
+    },
+    "description": "",
+    "isPsionic": false,
+    "isEpic": false,
+    "hp": {
+      "current": 0,
+      "max": 0
+    },
+    "hardness": 0,
+    "quantity": 1,
+    "weight": 10,
+    "isCarried": true,
+    "size": "medium",
+    "price": {
+      "stacks": [
+        {
+          "coinId": "srd_gp",
+          "count": 8
+        }
+      ],
+      "srdEquivalent": 8
+    },
+    "equippedSlotIds": [],
+    "isMelded": false,
+    "designedForSize": "medium",
+    "isWeightlessWhenEquipped": false,
+    "isBaseWeaponType": true,
+    "weaponType": "martial",
+    "weaponSubtype": "twoHanded",
+    "weaponBaseType": "glaive",
+    "actions": [
+      {
+        "_id": "COxqGFCH621CFiC7",
+        "type": "melee_weapon_attack",
+        "damageFormula": {
+          "formula": "$scaleDamage(1d10)",
+          "expectedType": "rollFormula",
+          "resolvedValue": null
+        },
+        "damageType": "dnd35e.DAMAGE_TYPES.Slashing",
+        "critRange": 20,
+        "critMultiplier": 3,
+        "properties": [
+          "reach"
+        ],
+        "reachLength": 2
+      }
+    ]
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1791785607591,
+    "modifiedTime": 1791785607591,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!rc1M99OdhEW1Xv2X"
+}

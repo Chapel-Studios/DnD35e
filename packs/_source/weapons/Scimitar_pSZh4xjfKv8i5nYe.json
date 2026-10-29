@@ -1,0 +1,78 @@
+{
+  "name": "Scimitar",
+  "type": "weapon",
+  "_id": "pSZh4xjfKv8i5nYe",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Scimitar",
+      "expectedType": "string",
+      "resolvedValue": "Scimitar"
+    },
+    "description": "",
+    "isPsionic": false,
+    "isEpic": false,
+    "hp": {
+      "current": 0,
+      "max": 0
+    },
+    "hardness": 0,
+    "quantity": 1,
+    "weight": 4,
+    "isCarried": true,
+    "size": "small",
+    "price": {
+      "stacks": [
+        {
+          "coinId": "srd_gp",
+          "count": 15
+        }
+      ],
+      "srdEquivalent": 15
+    },
+    "equippedSlotIds": [],
+    "isMelded": false,
+    "designedForSize": "medium",
+    "isWeightlessWhenEquipped": false,
+    "isBaseWeaponType": true,
+    "weaponType": "martial",
+    "weaponSubtype": "oneHanded",
+    "weaponBaseType": "scimitar",
+    "actions": [
+      {
+        "_id": "g978Fu6yqTF0vbJ6",
+        "type": "melee_weapon_attack",
+        "damageFormula": {
+          "formula": "$scaleDamage(1d6)",
+          "expectedType": "rollFormula",
+          "resolvedValue": null
+        },
+        "damageType": "dnd35e.DAMAGE_TYPES.Slashing",
+        "critRange": 18,
+        "critMultiplier": 2
+      }
+    ]
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.359",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1791785607565,
+    "modifiedTime": 1791785607565,
+    "lastModifiedBy": "mBlpD72i6u17h1qm",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!pSZh4xjfKv8i5nYe"
+}

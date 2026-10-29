@@ -12,7 +12,22 @@
 **Renumbering note**: with all three spikes resolved, the remaining stories (formerly D–K) were relettered A–H in `phase-10-basic-combat.md` (D→A, E→B, F→C, G→D, H→E, I→F, J→G, K→H). The retired spike letters A/B/C were renamed to Spike 1/2/3 to free them up. All cross-references, the Parallelization diagram, and its prose were updated accordingly.
 
 ## Current Section
-Story D is fully complete. **Story E (Roll Defense Dialog & attack resolution) has not been started** — do not begin it without explicit user go-ahead.
+Story E (Roll Defense Dialog & attack resolution) — **in progress**. Completed so far: condition IDs
+(Charged/Defensive Fighting/Total Defense), `combatConditionAEs.mts` native-duration rework
+(supersedes the speced `createShortDurationAE()` helper — see phase doc note), Total Defense's
+real mechanic wired into the HUD Combat Maneuvers entry, `system.defense.criticalImmune` field
+(schema only, not yet read anywhere), `PLAYER_SELF_DEFENSE` + `ROLLED_DEFENSE_VARIANT` settings,
+and the standalone `RollDefenseDialog/` file set (`types.mts`, `RollDefenseDialogStore.mts`,
+`RollDefenseDialogConfig.mts`, `RollDefenseDialog.vue` — committed on `poc/10e_roll-defense-dialog`,
+branched off `dev` since the prior condition-IDs commit had landed directly on local `dev` by
+mistake before being pushed; `dev` was reset back to match `origin/dev`). The dialog renders
+generic `CombatModifierToggle[]` groups (`combatStatus`/`overrides`) supplied by its caller — it
+does not itself hardcode Charged/Flat-Footed/Total Defense/Defensive Fighting; that toggle-builder
+is a separate not-yet-built piece (parallel to the Attack dialog's `createCombatModifiers()`).
+**Not yet testable in Foundry** — nothing calls `RollDefenseDialogConfig.roll()` yet.
+Not yet started: action-chain plumbing (`actionChainSteps.mts`, `continue()`'s `'damage'` case,
+`advanceActionChain()`), Resolution card + template + Undo handler, Concealment miss-chance roll,
+`criticalImmune` auto-detect read + Racial Trait AE producer, preferred-alias FormulaFamiliar wiring.
 
 ## Story D Detail (D.1–D.4 breakdown)
 - [x] Story D.1 — Engine primitives (`DamageRoll`, `preUseAction`/`postUseAction`/`dealDamage`/`undoDealDamage` events) — complete, committed.
@@ -143,12 +158,9 @@ User testing after D.4's approval surfaced two more correctness bugs in the same
   (`docs/migration-plan/post-release/phase-03-sight-concealment.md`, gated on Phase 24) — also in
   `post-release/WISHLIST.md` under Weapons & Combat, now including the concrete
   `canvas.effects.lightSources`/`testPoint()`/`radius`/`ratio` algorithm for bright/dim/dark-at-a-point
-- `CONFIG.ActiveEffect.expiryAction` ('update' vs 'delete') choice for short-duration combat
-  condition AEs → Story E, when `createShortDurationAE()` is actually built
-- **Total Defense's actual mechanic** (spend standard action + apply the `+4 AC` self-AE tagged
-  `TOTAL_DEFENSE_CONDITION_ID`) → Story E, per the phase doc's own `combatConditionAEs.mts` note.
-  D.4's Combat Maneuvers HUD entry is a UI shell only — clicking it currently shows a "not yet
-  implemented" notice.
+- **`system.defense.criticalImmune` auto-detect read + Racial Trait AE producer** — field exists
+  (reset each `prepareBaseData()`) but nothing reads it yet; wire into `evaluateDefense()` once
+  the Roll Defense Dialog exists later in Story E.
 - **⚠️ Needs triage with user**: `attackFormula.resolvedValue` currently has no BAB or ability-modifier
   term baked in anywhere in the attack pipeline (`_executeCheck()` only appends `flatPenalty`/
   `situationalModifier`) — confirmed by direct code reading, contradicting the phase doc's early-draft
@@ -158,7 +170,17 @@ User testing after D.4's approval surfaced two more correctness bugs in the same
   fix now, or intentionally deferred to a specific not-yet-identified checklist item?
 
 ## Knowledge Cached
-- None yet — consider delegating to @kb-curator once more of Phase 10 lands (Foundry v14 vision/
+- **AE expiry/self-delete pattern** (this session): `CONFIG.ActiveEffect.expiryAction` is a single
+  global switch (`ActiveEffectRegistry` reads it for every duration-bearing AE system-wide) — never
+  flip it globally to `'delete'` for one feature's sake. Left at core's default (`'update'`, which
+  only flips `duration.expired`); per-effect self-delete is opted into via a new base schema field
+  `system.deleteOnExpiry: boolean` (`ActiveEffectSystemModel.mts`), checked in
+  `ActiveEffectDnd35e#_onUpdate()` (`if (_data.duration?.expired && this.system.deleteOnExpiry)`).
+  Conditions (`conditions.mts`) opt in via `deleteOnExpiry: true` in their `system` block. No
+  `activeGM.isSelf` gate needed on the delete call — core's registry already gates so only one
+  client's registry authoritatively flags `duration.expired` (single-mutator semantics), confirmed
+  by user during this session (removed the extra gate, left a comment explaining why).
+- Consider delegating the rest to @kb-curator once more of Phase 10 lands (Foundry v14 vision/
   lighting API surface: `CanvasVisibility`, `DetectionMode`, darkness-level scalars vs. Region
   darkness-level behavior vs. `canvas.effects.lightSources`/`testPoint()`/`radius`/`ratio` point-level
   detection; CombatTracker's `_prepareTurnContext()`/`static PARTS` subclass pattern; AE v14 duration

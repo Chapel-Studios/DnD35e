@@ -8,6 +8,16 @@
 // ============================================================================
 
 /**
+ * A formula field's declared result type. `rollFormula` is a `string` formula that
+ * represents an additive dice/numeric roll term (e.g. a weapon's `attackFormula`/
+ * `damageFormula` bonus) — resolution/validation treat it identically to `string`,
+ * but `FormulaField`'s AE `add`/`subtract` change handlers use it to decide whether
+ * to join the appended term with a signed ` + `/` - ` operator instead of naively
+ * concatenating raw text (correct for `string`-typed fields like `nameFormula`).
+ */
+export type FormulaExpectedType = 'string' | 'number' | 'boolean' | 'rollFormula';
+
+/**
  * Familiar metadata carried in a field's constructor options.
  * Used by the schema walker to auto-generate AspectGroup trees.
  */
@@ -210,6 +220,19 @@ export interface AspectGroup {
    */
   _aliases?: string[];
   [propertyPath: string]: FieldAspect | AspectGroup | string[] | string | undefined;
+}
+
+/**
+ * Caller-supplied override for how a document's `self` context is labeled/aliased in a
+ * FamiliarSchema — lets a dialog show its own preferred term (e.g. `attacker`/`defender`)
+ * for the `self` context instead of the generic localized "Self", without losing `self`
+ * as a still-typeable fallback (poc.10 Story E, §10.7's FormulaFamiliar context aliasing).
+ */
+export interface PreferredContextAlias {
+  /** Lowercase, user-typeable term — added to the context's `aliases` so `#term.path` resolves. */
+  term: string;
+  /** Localized display label shown in the autocomplete dropdown in place of "Self". */
+  label: string;
 }
 
 /**

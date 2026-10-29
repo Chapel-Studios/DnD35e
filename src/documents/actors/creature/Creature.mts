@@ -1,5 +1,6 @@
 import { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DocumentConstructionContext } from '@common/_types.mjs';
+import type { RollMode } from '@common/constants.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
 import type { BonusType } from '@constants/bonusTypes.mjs';
 import { BONUS_TYPE_ARMOR, BONUS_TYPE_NATURAL, BONUS_TYPE_SHIELD, BONUS_TYPE_SIZE, BONUS_TYPE_UNTYPED } from '@constants/bonusTypes.mjs';
@@ -8,7 +9,7 @@ import { DOCUMENT_UPDATE_TYPES } from '@constants/documentUpdateTypes.mjs';
 import type { SaveKey } from '@constants/saves.mjs';
 import { SAVE_ABILITY_MAP, SAVE_KEYS, SAVE_KEYS_LOCALIZED } from '@constants/saves.mjs';
 import { SIZE_MODIFIERS } from '@constants/sizes.mjs';
-import type { ACTORS_DND35E } from '@documents/actors/actorTypes.mjs';
+import type { ACTORS_DND35E, CREATURE_ACTORS } from '@documents/actors/actorTypes.mjs';
 import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
@@ -17,13 +18,18 @@ import {
   FINAL_EFFECT_CHANGE_PHASE,
   POST_EFFECT_CHANGE_PHASE,
 } from '@effects/baseActiveEffect/data/index.mjs';
-import { parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
+import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
+import { buildDocumentDataMap } from '@helpers/formulae/utils.mjs';
+import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
+import { resolveActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
 import type { ActionResult } from '@items/baseItem/actions/types.mjs';
 import { WeaponAttackDataModel } from '@items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
-import type { RollModifier } from '@source/dice/index.mjs';
-import { buildD20Formula, buildInitiativeCard, buildSaveCard, D20Roll, extractFlatModifier } from '@source/dice/index.mjs';
+import { buildInitiativeCard, buildOverridesModifierList, buildSaveCard, buildSituationalModifierEntry, D20Roll } from '@source/dice/index.mjs';
+import { buildModifiersD20Formula } from '@source/dice/rollModifiers.mjs';
+import type { RollModifier } from '@source/dice/types.mjs';
 import { InitiativeRollDialogConfig } from '@source/rollDialogs/InitiativeRollDialog/InitiativeRollDialogConfig.mjs';
+import { resolveFormulaString } from '@source/rollDialogs/RollDialog/RollDialogStore.mjs';
 import { SavingThrowRollDialogConfig } from '@source/rollDialogs/SavingThrowRollDialog/SavingThrowRollDialogConfig.mjs';
 
 import { _debugCreature, isCreatureDebugEnabled } from './_debug.mjs';
@@ -85,53 +91,63 @@ abstract class Creature extends ActorDnd35e {
    * poc/phase-07-roll-formulas.md §7.9.
    */
   async rollSave(saveKey: SaveKey, options: {
-    situationalModifier?: number;
-    rollMode?: string;
+    situationalModifier?: number | string;
+    rollMode?: RollMode;
     dc?: number;
     skipDialog?: boolean;
   } = {}): Promise<D20Roll | null> {
-    const saveTotal = this.system.saves[saveKey];
     const saveLabel = game.i18n.localize(SAVE_KEYS_LOCALIZED[saveKey]);
     const actor = this as unknown as ACTORS_DND35E;
 
-    let situationalModifier = String(options.situationalModifier ?? 0);
+    const situationalModifier = String(options.situationalModifier ?? '');
     // `core.rollMode` is deprecated since v14 (removed v16) in favor of `core.messageMode`,
     // whose value now matches the CONFIG.ChatMessage.modes keys used by the roll dialog.
-    let rollMode = options.rollMode ?? game.settings.get('core', 'messageMode');
-
-    if (!options.skipDialog) {
-      const result = await SavingThrowRollDialogConfig.roll({
-        title: game.i18n.format('dnd35e.ROLL.RollSaveTitle', { save: saveLabel }),
-        baseLabel: saveLabel,
-        baseTotal: saveTotal,
-        situationalModifier,
-        rollMode,
-        actor,
-      });
-      if (!result) return null;
-      situationalModifier = result.situationalModifier;
-      rollMode = result.rollMode;
-    }
+    let rollMode = options.rollMode
+      ?? game.settings.get('core', 'messageMode') as RollMode;
 
     // Same per-effect stacking breakdown `HasActiveEffectsNotification` shows on the sheet
     // (`effectOverrides`, filtered to applied entries) instead of one lumped save-total entry.
-    const appliedSaveOverrides = (this.effectOverrides[`system.saves.${saveKey}`] ?? [])
-      .filter((override) => override.stackResult !== STACK_RESULT_IGNORED);
-    const modifierList: RollModifier[] = appliedSaveOverrides.length > 0
-      ? appliedSaveOverrides.map((override) => ({ label: override.effectName, value: parseNumericChangeValue(override.value) }))
-      : [{ label: saveLabel, value: saveTotal }];
-    // Dice/complex situational terms are folded straight into the roll formula below —
-    // flavor-tagged as "Situational Modifier" so their own die group is unambiguous in the
-    // tooltip (see `buildD20Formula`); their flat portion (if any) still gets its own line here.
-    const { flat: flatSituationalModifier } = extractFlatModifier(situationalModifier);
-    if (flatSituationalModifier !== 0) {
-      modifierList.push({ label: game.i18n.localize('dnd35e.ROLL.SituationalModifier'), value: flatSituationalModifier });
+    // Computed pre-dialog so the dialog itself can disclose it via `RollModifierTooltip`
+    // (poc.10 Story D follow-up), then reused as-is for the chat card below.
+    let modifierList: RollModifier[] = [{
+      label: saveLabel,
+      value: this.system.saves[saveKey],
+      breakdown: buildOverridesModifierList(actor, `system.saves.${saveKey}`),
+    }];
+    const formulaContext = buildDocumentDataMap(actor);
+    const formulaContexts = FormulaData.buildFamiliarSchema(formulaContext);
+    if (!options.skipDialog) {
+      const result = await SavingThrowRollDialogConfig.roll({
+        title: game.i18n.format('dnd35e.ROLL.RollSaveTitle', { save: saveLabel }),
+        savingThrow: {
+          immutableModifiers: modifierList,
+          situationalModifier,
+          label: saveLabel,
+        },
+        rollMode,
+        actor,
+      }, formulaContext, formulaContexts);
+      if (!result) return null;
+      modifierList = result.finalModifiers;
+      rollMode = result.rollMode;
+    } else {
+      modifierList.push(
+        ...buildSituationalModifierEntry(
+          resolveFormulaString(situationalModifier, formulaContext, formulaContexts),
+          game.i18n.localize('dnd35e.ROLL.SituationalModifier')
+        )
+      );
     }
 
+    const { formula: rollFormula, displayFormula } = buildModifiersD20Formula(modifierList, saveLabel);
+
     const roll = new D20Roll(
-      buildD20Formula(saveTotal, situationalModifier, { base: saveLabel, situational: game.i18n.localize('dnd35e.ROLL.SituationalModifier') }),
+      rollFormula,
       {},
-      { situationalModifiers: modifierList, displayFormula: buildD20Formula(saveTotal, situationalModifier) }
+      {
+        situationalModifiers: modifierList,
+        displayFormula,
+      }
     );
     await roll.evaluate();
 
@@ -175,54 +191,67 @@ abstract class Creature extends ActorDnd35e {
    * delegates to `Combat#rollInitiative()` — the method we override in `CombatDnd35e`).
    */
   async rollInitiativeCheck(options: {
-    situationalModifier?: number;
-    rollMode?: string;
+    situationalModifier?: number | string;
+    rollMode?: RollMode;
     skipDialog?: boolean;
   } = {}): Promise<D20Roll | null> {
     const initiativeLabel = game.i18n.localize('dnd35e.ROLL.Initiative');
-    const initTotal = this.system.init;
     const actor = this as unknown as ACTORS_DND35E;
 
-    let situationalModifier = String(options.situationalModifier ?? 0);
-    let rollMode = options.rollMode ?? game.settings.get('core', 'messageMode');
+    const situationalModifier = String(options.situationalModifier ?? '');
+    const situationalLabel = game.i18n.localize('dnd35e.ROLL.SituationalModifier');
+    let rollMode = options.rollMode
+      ?? game.settings.get('core', 'messageMode') as RollMode;
 
+    
+    // Same per-effect stacking breakdown `rollSave()` shows (`_buildCombatStateChanges()`
+    // contributes the Dex mod as a hidden-from-tab AE change) instead of one lumped total.
+    // Computed pre-dialog so the dialog itself can disclose it via `RollModifierTooltip`.
+    let modifiersList: RollModifier[] = [{
+      label: initiativeLabel,
+      value: this.system.init,
+      breakdown: buildOverridesModifierList(actor, 'system.init'),
+    }];
+    const formulaContext = buildDocumentDataMap(actor);
+    const formulaContexts = FormulaData.buildFamiliarSchema(formulaContext);
+    
     if (!options.skipDialog) {
       const result = await InitiativeRollDialogConfig.roll({
         title: game.i18n.localize('dnd35e.ROLL.RollInitiativeTitle' ),
-        baseLabel: initiativeLabel,
-        baseTotal: initTotal,
-        situationalModifier,
+        initRoll: {
+          label: initiativeLabel,
+          immutableModifiers: modifiersList,
+          situationalModifier,
+        },
         rollMode,
         actor,
-      });
+      }, formulaContext, formulaContexts);
       if (!result) return null;
-      situationalModifier = result.situationalModifier;
+      modifiersList = result.finalModifiers;
       rollMode = result.rollMode;
     }
-
-    // Same per-effect stacking breakdown `rollSave()` shows (`_buildCombatStateChanges()`
-    // contributes the Dex mod as a hidden-from-tab AE change) instead of one lumped total.
-    const appliedInitOverrides = (this.effectOverrides['system.init'] ?? [])
-      .filter((override) => override.stackResult !== STACK_RESULT_IGNORED);
-    const modifierList: RollModifier[] = appliedInitOverrides.length > 0
-      ? appliedInitOverrides.map((override) => ({ label: override.effectName, value: parseNumericChangeValue(override.value) }))
-      : [{ label: initiativeLabel, value: initTotal }];
-    // Dice/complex situational terms are folded straight into the roll formula below —
-    // flavor-tagged as "Situational Modifier" so their own die group is unambiguous in the
-    // tooltip (see `buildD20Formula`); their flat portion (if any) still gets its own line here.
-    const { flat: flatSituationalModifier } = extractFlatModifier(situationalModifier);
-    if (flatSituationalModifier !== 0) {
-      modifierList.push({ label: game.i18n.localize('dnd35e.ROLL.SituationalModifier'), value: flatSituationalModifier });
+    else {
+      modifiersList.push(...buildSituationalModifierEntry(
+        resolveFormulaString(situationalModifier, formulaContext, formulaContexts),
+        situationalLabel
+      ));
     }
 
+    // `modifiersList` is the single source of truth from here on: flat entries fold into the
+    // d20's base, dice entries (`formula`) are appended flavor-tagged with their own label.
+    const { formula: rollFormula, displayFormula } = buildModifiersD20Formula(modifiersList, initiativeLabel);
+
     const roll = new D20Roll(
-      buildD20Formula(initTotal, situationalModifier, { base: initiativeLabel, situational: game.i18n.localize('dnd35e.ROLL.SituationalModifier') }),
+      rollFormula,
       {},
-      { situationalModifiers: modifierList, displayFormula: buildD20Formula(initTotal, situationalModifier) }
+      {
+        situationalModifiers: modifiersList,
+        displayFormula,
+      }
     );
     await roll.evaluate();
 
-    const content = await buildInitiativeCard(roll, modifierList, {
+    const content = await buildInitiativeCard(roll, modifiersList, {
       actorName: this.token?.name ?? this.name,
       actorImage: this.img,
     });
@@ -283,15 +312,19 @@ abstract class Creature extends ActorDnd35e {
       return defaultResult;
     }
 
-    const actor = this as unknown as ACTORS_DND35E;
-    const targets = targetTokens?.map(t => t.actor as unknown as ACTORS_DND35E).filter(a => !!a) ?? [];
+    const actor = this;
+    // A caller with a concrete acting token (e.g. the Token HUD) must win over the shell's
+    // own token-preference search — ambiguous otherwise for a linked actor with multiple
+    // placed tokens (§10.7 token-preference policy, resolved once here).
+    const attacker = resolveActionParticipant(actor as unknown as CREATURE_ACTORS, options.actorToken);
+    const targets: ActionParticipant[] = targetTokens?.filter(t => !!t.actor) ?? [];
 
     // No explicit `UseActionContext` annotation — keeping the natural union lets `'hand' in
     // context` narrow to the real `'main' | 'off' | 'both'` literal type below instead of
     // widening it away.
     const context = action instanceof WeaponAttackDataModel
-      ? WeaponAttackDataModel.PrepareActionContext(actor, item, targets, options.free, targetTokens?.[0], options.actorToken)
-      : { actor, target: targets };
+      ? WeaponAttackDataModel.PrepareActionContext(attacker, item, targets, options.free)
+      : { actor: attacker, target: targets };
     if (!context) {
       defaultResult.reason = 'contextNotPrepared';
       return defaultResult;
@@ -398,9 +431,10 @@ abstract class Creature extends ActorDnd35e {
       value: number,
       label: string,
       bonusType?: BonusType,
-      hideFromEffectsTab?: boolean
+      hideFromEffectsTab?: boolean,
+      forcedIgnoreReason?: string
     ): void => {
-      if (value === 0) return;
+      if (value === 0 && !forcedIgnoreReason) return;
       results.push({
         key,
         target: 'actor',
@@ -412,6 +446,7 @@ abstract class Creature extends ActorDnd35e {
         phase: POST_EFFECT_CHANGE_PHASE,
         label,
         hideFromEffectsTab,
+        forcedIgnoreReason,
       });
     };
 
@@ -421,6 +456,7 @@ abstract class Creature extends ActorDnd35e {
     const armorLabel = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.armorBonus.label');
     const shieldLabel = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.shieldBonus.label');
     const naturalLabel = game.i18n.localize('dnd35e.CREATURE.FIELDS.defense.naturalArmor.label');
+    const flatFootedLabel = game.i18n.localize('dnd35e.COMBAT.CombatModifiers.FlatFooted.Label');
 
     const dexMod = this.system.abilities.dex.mod;
     const sizeMod = SIZE_MODIFIERS[this.system.size] ?? 0;
@@ -436,7 +472,11 @@ abstract class Creature extends ActorDnd35e {
       // meaningful "effects" on their own - keep them out of the Effects tab.
       pushChange(fieldKey, 10, baseLabel, undefined, true);
       pushChange(fieldKey, sizeMod, sizeLabel, BONUS_TYPE_SIZE, true);
-      if (!denyDexToAC) pushChange(fieldKey, dexMod, dexLabel, undefined, true);
+      // Always pushed (even when denied) — `forcedIgnoreReason` authors the stacking
+      // result directly rather than omitting the line, so `effectOverrides` (and every
+      // reader of it: `HasActiveEffectsNotification`, roll breakdowns) shows Dex struck
+      // through with "Flat-Footed" instead of silently vanishing.
+      pushChange(fieldKey, dexMod, dexLabel, undefined, true, denyDexToAC ? flatFootedLabel : undefined);
 
       if (key !== 'touchAC') {
         pushChange(fieldKey, armorBonus, armorLabel, BONUS_TYPE_ARMOR);
@@ -523,13 +563,6 @@ abstract class Creature extends ActorDnd35e {
     ...super.LifeCycle,
     ...CreatureLifeCycle,
   } as const;
-
-  override prepareDerivedData(): void {
-    super.prepareDerivedData();
-
-    // stub value to 100 for sheet building; replace with real HP calculation when progression is implemented
-    this.system.hp.max = 100;
-  }
 
   async updateHP(
     amount: number,

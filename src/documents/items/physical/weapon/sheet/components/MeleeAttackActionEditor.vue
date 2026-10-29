@@ -7,7 +7,6 @@
         :min="0"
         :field-path="getFieldPath('reachLength')"
         :on-update="(v) => updateActionField('reachLength', v)"
-        hide-field-controls
       />
     </template>
   </WeaponAttackActionEditor>

@@ -1,3 +1,5 @@
+import { CRIT_EXEMPT_MARKER, CRIT_MULTIPLY_MARKER } from '@constants/critDiceMarkers.mjs';
+
 /**
  * Formula-string assembly for D20-based rolls.
  *
@@ -24,7 +26,11 @@ function flavorTerm(term: string, flavor: string): string {
  * (e.g. `2 * 3` would be miscounted as `5` instead of `6`). Dice terms are zeroed out before
  * evaluating (they can't be pre-rolled into a flat preview number — the raw formula, dice
  * included, is what actually gets rolled; see callers), so e.g. `1d6 * 2 + 3` correctly
- * evaluates its flat portion as `0 * 2 + 3 = 3`.
+ * evaluates its flat portion as `0 * 2 + 3 = 3`. Zeroing is keyed off `isDeterministic` rather
+ * than `instanceof DiceTerm` because a leading negative dice term (e.g. `-1d10`) is parsed by
+ * Foundry's grammar into a single wrapped term (`RollParser#_wrapNegativeTerm()`, surfaced as
+ * `(1d10 * -1)`) — a top-level `instanceof` check misses the nested dice and leaves it in the
+ * formula handed to `Roll.safeEval()`, which can't evaluate un-rolled dice notation.
  */
 function extractFlatModifier(term: string): { flat: number; hasDice: boolean } {
   const trimmed = term.trim();
@@ -34,10 +40,94 @@ function extractFlatModifier(term: string): { flat: number; hasDice: boolean } {
   const roll = new Roll(trimmed);
   const hasDice = roll.dice.length > 0;
   const flatOnlyFormula = hasDice
-    ? roll.terms.map(rollTerm => (rollTerm instanceof foundry.dice.terms.DiceTerm ? '0' : rollTerm.formula)).join(' ')
+    ? roll.terms.map(rollTerm => (rollTerm.isDeterministic ? rollTerm.formula : '0')).join(' ')
     : trimmed;
 
   return { flat: Roll.safeEval(flatOnlyFormula), hasDice };
+}
+
+/**
+ * Isolates the dice-only portion of a resolved formula term (e.g. `'1d8 + 2'` -> `'1d8'`),
+ * dropping any flat numeric remainder — used to show a weapon's own damage dice as its own
+ * labeled modifier-breakdown row, separate from its flat enhancement-bonus row (see
+ * `extractFlatModifier()`). Reuses `parseAdditiveDiceFragment()`'s safe-merge bailout: falls
+ * back to the full term when it can't be decomposed (multiplication, parentheses, function
+ * calls). Empty string when there's no dice at all.
+ */
+function extractDiceOnlyFormula(term: string): string {
+  const trimmed = term.trim();
+  if (!trimmed) return '';
+
+  const parsed = parseAdditiveDiceFragment(trimmed);
+  if (!parsed) return trimmed;
+
+  const diceGroups = new Map<number, number>();
+  for (const [faces, count] of parsed.diceGroups) diceGroups.set(faces, (diceGroups.get(faces) ?? 0) + count);
+
+  return [...diceGroups.entries()]
+    .filter(([, count]) => count !== 0)
+    .sort(([a], [b]) => a - b)
+    .map(([faces, count]) => `${count}d${faces}`)
+    .join(' + ');
+}
+
+interface FormulaParts {
+  dice: string[];
+  flatTerms: string[];
+}
+
+/**
+ * Split a resolved formula into additive, signed formula strings without rolling or merging.
+ * Parenthetical flavors are inherited by both dice and flat terms; explicit inner flavors
+ * win over inherited flavors and the optional default. Unflavored terms remain unflavored
+ * when no default is supplied. Multiplication, division, functions, and pools stay intact:
+ * an inseparable expression belongs to dice if non-deterministic, otherwise flatTerms.
+ * Invalid formulas throw the Foundry parser's error.
+ *
+ * @example
+ * splitFormulaParts('(1d6 + 3)[Fire] + 2', 'Weapon');
+ * // { dice: ['1d6[Fire]'], flatTerms: ['3[Fire]', '2[Weapon]'] }
+ */
+function splitFormulaParts(formula: string, defaultFlavor?: string): FormulaParts {
+  const parts: FormulaParts = { dice: [], flatTerms: [] };
+  const { OperatorTerm, ParentheticalTerm } = foundry.dice.terms;
+
+  function collect(expression: string, inheritedFlavor?: string, sign = 1): void {
+    const terms = Roll.parse(expression, {});
+    let group: typeof terms = [];
+    let groupSign = sign;
+
+    function appendGroup(): void {
+      if (!group.length) return;
+      const [first] = group;
+      if (group.length === 1 && first instanceof ParentheticalTerm) {
+        collect(first.term, first.flavor || inheritedFlavor, groupSign);
+        return;
+      }
+
+      const text = group.map((term) => {
+        if (term instanceof OperatorTerm) return term.operator;
+        if (term.flavor || !inheritedFlavor) return term.formula;
+        return `${term.expression}[${inheritedFlavor}]`;
+      }).join(' ');
+      const target = group.every(term => term.isDeterministic) ? parts.flatTerms : parts.dice;
+      target.push(groupSign < 0 ? `-(${text})` : text);
+    }
+
+    for (const term of terms) {
+      if (term instanceof OperatorTerm && (term.operator === '+' || term.operator === '-')) {
+        appendGroup();
+        group = [];
+        groupSign = term.operator === '-' ? -sign : sign;
+      } else {
+        group.push(term);
+      }
+    }
+    appendGroup();
+  }
+
+  if (formula.trim()) collect(formula, defaultFlavor);
+  return parts;
 }
 
 /**
@@ -68,4 +158,286 @@ function buildD20Formula(base: number, situationalModifier: string, labels?: { b
   return terms.join(' ');
 }
 
-export { buildD20Formula, extractFlatModifier, flavorTerm };
+/**
+ * Parses a single additive dice+flat fragment (e.g. `1d6 + 5`, `-1d4`, `7`) into its grouped
+ * `Die` counts (keyed by `faces`) and flat remainder, using Foundry's own `Roll.parse()` (never
+ * evaluated/rolled). Returns `null` — a safe-merge bailout — for anything beyond a plain
+ * top-level `+`/`-` chain of `Die`/`NumericTerm`s: multiplication/division, parentheses,
+ * function calls (e.g. a wield-mode `floor(x * 1.5)` term), or a `Die` with modifiers
+ * (`1d20kh1`) all fall through to `null` rather than risk silently mis-combining them.
+ */
+function parseAdditiveDiceFragment(fragment: string): { diceGroups: [number, number, string | undefined][]; flat: number } | null {
+  let terms: ReturnType<typeof Roll.parse>;
+  try {
+    terms = Roll.parse(fragment, {});
+  } catch {
+    return null;
+  }
+
+  const diceGroups: [number, number, string | undefined][] = [];
+  let flat = 0;
+  let sign = 1;
+
+  for (const rollTerm of terms) {
+    if (rollTerm instanceof foundry.dice.terms.OperatorTerm) {
+      if (rollTerm.operator === '+') sign = 1;
+      else if (rollTerm.operator === '-') sign = -1;
+      else return null;
+    } else if (rollTerm instanceof foundry.dice.terms.NumericTerm) {
+      flat += sign * rollTerm.number;
+    } else if (rollTerm instanceof foundry.dice.terms.Die) {
+      if (rollTerm.modifiers.length > 0 || typeof rollTerm.faces !== 'number') return null;
+      diceGroups.push([rollTerm.faces, sign * rollTerm.number, rollTerm.flavor || undefined]);
+    } else {
+      return null;
+    }
+  }
+
+  return { diceGroups, flat };
+}
+
+/**
+ * Combines multiple resolved, dice-preserving formula fragments (e.g. a weapon's own damage
+ * dice, an enchant's bonus dice, and a situational modifier) into one dice-collapsed display
+ * formula — same-faced `Die` groups are summed together and every flat remainder is folded into
+ * a single trailing number, e.g. a weapon `1d6` plus a situational `1d6 + 5` becomes `2d6 + 5`
+ * instead of staying as two separate `1d6` groups.
+ *
+ * This is display-only — it never touches the actual roll formula (which must keep e.g. a
+ * wield-mode `floor(x * 1.5)` term as real Roll-evaluable syntax for Foundry's own grammar to
+ * evaluate at roll time). Any fragment `parseAdditiveDiceFragment()` can't safely flatten
+ * (multiplication, parentheses, function calls) is appended to the result unmerged, verbatim,
+ * rather than silently mis-combined — callers that need to fold such a term's value in cleanly
+ * should pass its already-evaluated flat number (e.g. via `extractFlatModifier().flat`) instead
+ * of the raw term text.
+ */
+function combineDiceFormula(fragments: (string | null | undefined)[]): string {
+  const diceGroups = new Map<number, number>();
+  const opaqueFragments: string[] = [];
+  let flatTotal = 0;
+
+  for (const fragment of fragments) {
+    const trimmed = fragment?.trim();
+    if (!trimmed || trimmed === '0') continue;
+
+    const parsed = parseAdditiveDiceFragment(trimmed);
+    if (!parsed) {
+      opaqueFragments.push(trimmed);
+      continue;
+    }
+
+    flatTotal += parsed.flat;
+    for (const [faces, count] of parsed.diceGroups) {
+      diceGroups.set(faces, (diceGroups.get(faces) ?? 0) + count);
+    }
+  }
+
+  const diceTerms = [...diceGroups.entries()]
+    .filter(([, count]) => count !== 0)
+    .sort(([a], [b]) => a - b)
+    .map(([faces, count]) => `${count}d${faces}`);
+
+  let formula = [...diceTerms, ...opaqueFragments].join(' + ');
+  if (flatTotal !== 0) {
+    formula = formula ? `${formula} ${flatTotal >= 0 ? '+' : '-'} ${Math.abs(flatTotal)}` : String(flatTotal);
+  }
+  return formula || '0';
+}
+
+/**
+ * Appends `[label]` directly after each top-level dice group in `formula` (e.g.
+ * `3d6[label] + 1 + 1d6[label]`) so Foundry's own dice tooltip (`Roll#getTooltip()`) shows a
+ * flavor label for every damage dice group — the same parity `_buildAttackFormula()`'s bare
+ * `1d20[attackName]` gives the attack roll's tooltip. No parentheses are used: not needed
+ * directly after a bare `Die` term per Foundry's grammar, and wrapping would turn the group
+ * into a `ParentheticalTerm`, which `Roll#alter()` can't reach into for critical-hit dice
+ * multiplication (see `DamageRoll#evaluateCritical()`) — each group must stay its own
+ * top-level term. Falls back to `formula` unchanged when it contains anything beyond a plain
+ * top-level +/- chain of dice/numeric terms (see `parseAdditiveDiceFragment()`) — safer to
+ * leave unlabeled than risk mis-rendering an unexpected construct.
+ */
+function flavorDiceGroups(formula: string, label: string): string {
+  const parsed = parseAdditiveDiceFragment(formula);
+  if (!parsed) return formula;
+
+  const parts: string[] = [];
+  for (const [faces, count] of parsed.diceGroups) {
+    if (count === 0) continue;
+    const term = `${Math.abs(count)}d${faces}[${label}]`;
+    parts.push(parts.length === 0 ? (count < 0 ? `-${term}` : term) : `${count < 0 ? '-' : '+'} ${term}`);
+  }
+  if (parsed.flat !== 0) {
+    parts.push(parts.length === 0 ? String(parsed.flat) : `${parsed.flat >= 0 ? '+' : '-'} ${Math.abs(parsed.flat)}`);
+  }
+  return parts.length > 0 ? parts.join(' ') : '0';
+}
+
+/**
+ * Splits a weapon's resolved damage formula into its own base dice (flavor-tagged with
+ * `baseLabel`) versus each contributing AE override's own dice (flavor-tagged with that
+ * effect's own `effectName` instead) — e.g. `2d6[Greatsword] + 1d6[+1 Flaming] + 9`. Every
+ * dice group stays a bare top-level `Die` term (no parenthetical wrapping): the SRD
+ * critical-hit exception for AE-contributed "extra damage dice" ("extra damage dice over and
+ * above a weapon's normal damage are never multiplied", e.g. a Flaming weapon's bonus 1d6 fire)
+ * is enforced later, explicitly, by `DamageRoll#evaluateCritical()` skipping each dice group
+ * whose 0-based position (the Nth `Die` term encountered, left to right) appears in the
+ * returned `exemptDiceIndices` — NOT by exploiting `Roll#alter()`'s blind skip of
+ * `ParentheticalTerm`s, which would also (incorrectly) exempt any unrelated non-dice
+ * parenthetical that happens to appear in the formula for other reasons, and NOT by matching
+ * each group's own `[flavor]` label — a label only identifies a group's DISPLAY source (weapon
+ * name / AE name), and two groups from the SAME source can still need opposite crit treatment
+ * (see the escape hatches below), so position is the only signal granular enough. All flat
+ * contributions (the weapon's own plus every override's) stay a single unflavored top-level
+ * signed number — SRD draws no exception for flat bonuses (enhancement, Strength, etc. all
+ * multiply), and an unflavored term is always crit-multiplier-eligible.
+ *
+ * Positional: `RollFormulaStringField` only ever appends AE `add` changes to the end of the
+ * formula (`appendRollFormulaTerm()`), so the resolved formula's dice groups are always
+ * `[...weapon's own groups, ...override1's groups, ...override2's groups, ...]` in that exact
+ * order — walking `overrides` in reverse peels its own trailing groups off the parsed list
+ * first, with no need to re-parse the base formula's own text separately.
+ *
+ * Escape hatches: an author can invert the default exemption for a specific dice group via two
+ * FormulaFamiliar functions (`FormulaResolver.functionGrammar.mts`), each resolving to the
+ * group's dice text with a reserved marker embedded as its own `[flavor]` tag
+ * (`@constants/critDiceMarkers.mjs`) that survives formula resolution as plain text:
+ * - `$critMultiply(1d6)`, used inside an AE's own formula/change value, keeps that group
+ *   eligible for crit multiplication despite being AE-sourced (positional owner !== weapon).
+ *   Mixable with plain (unmarked) dice from the SAME AE — e.g. an AE formula of
+ *   `1d6 + $critMultiply(1d6)` exempts the first `1d6` by default and keeps the second
+ *   eligible, since each is tracked by its own group index, not by their shared label.
+ * - `$critExempt(1d6)`, used inside the weapon's own base `damageFormula`, exempts that group
+ *   despite being the weapon's own base dice (positional owner === weapon) — displayed with a
+ *   generic "Extra Damage" label instead of the weapon's own name, since it's no longer part of
+ *   the weapon's normal damage for crit purposes. Mixable the same way: `1d8 + $critExempt(1d4)`
+ *   multiplies only the `1d8`.
+ * A marker is a no-op when it only confirms the group's already-default treatment (e.g.
+ * `$critExempt` on an override's own dice, which are already exempt by default).
+ *
+ * Falls back to `{ formula: flavorDiceGroups(resolvedFormula, baseLabel), exemptDiceIndices: [] }`
+ * (single label, no split, nothing exempt) when the formula isn't a plain additive dice/numeric
+ * chain.
+ *
+ * See `groupDamageDiceBySource()` for the display-only sibling of this function — a
+ * `RollModifier[]`-style breakdown list (one row per source) built from the same
+ * owner/escape-hatch attribution, used by the dialog/card's dice modifier-list rows rather than
+ * the real roll formula.
+ */
+function flavorDamageDiceBySource(
+  resolvedFormula: string,
+  baseLabel: string,
+  overrides: { effectName: string; value: string }[]
+): { formula: string; exemptDiceIndices: number[] } {
+  const parsed = parseAdditiveDiceFragment(resolvedFormula);
+  if (!parsed) return { formula: flavorDiceGroups(resolvedFormula, baseLabel), exemptDiceIndices: [] };
+
+  const attributed = attributeDamageDiceGroups(parsed.diceGroups, baseLabel, overrides);
+
+  // Each group's position here is also the order its `Die` term lands in the final formula
+  // text below — exactly what `evaluateCritical()` counts against when matching `exemptDiceIndices`.
+  const exemptDiceIndices: number[] = [];
+  const parts: string[] = [];
+  attributed.forEach(({ faces, count, label, isExempt }, idx) => {
+    if (isExempt) exemptDiceIndices.push(idx);
+    const term = `${Math.abs(count)}d${faces}[${label}]`;
+    parts.push(parts.length === 0 ? (count < 0 ? `-${term}` : term) : `${count < 0 ? '-' : '+'} ${term}`);
+  });
+
+  let formula = parts.join(' ');
+  if (parsed.flat !== 0) {
+    formula = formula ? `${formula} ${parsed.flat >= 0 ? '+' : '-'} ${Math.abs(parsed.flat)}` : String(parsed.flat);
+  }
+  return { formula: formula || '0', exemptDiceIndices };
+}
+
+/**
+ * Shared owner/label attribution behind `flavorDamageDiceBySource()` (the real roll formula)
+ * and `groupDamageDiceBySource()` (the display-only breakdown list) — see
+ * `flavorDamageDiceBySource()`'s doc comment for the positional-attribution and escape-hatch
+ * rules this implements. Returns one entry per non-zero dice group, in formula order.
+ */
+function attributeDamageDiceGroups(
+  diceGroups: [number, number, string | undefined][],
+  baseLabel: string,
+  overrides: { effectName: string; value: string }[]
+): { faces: number; count: number; label: string; isExempt: boolean }[] {
+  const nonZeroGroups = diceGroups.filter(([, count]) => count !== 0);
+  // -1 = the weapon's own dice; otherwise an index into `overrides`.
+  const ownerPerGroup = new Array<number>(nonZeroGroups.length).fill(-1);
+  let cursor = nonZeroGroups.length;
+  for (let i = overrides.length - 1; i >= 0 && cursor > 0; i--) {
+    const overrideParsed = parseAdditiveDiceFragment(overrides[i].value);
+    const count = overrideParsed ? overrideParsed.diceGroups.filter(([, c]) => c !== 0).length : 0;
+    for (let j = 0; j < count && cursor > 0; j++) {
+      cursor -= 1;
+      ownerPerGroup[cursor] = i;
+    }
+  }
+
+  const extraDamageLabel = game.i18n.localize('dnd35e.COMBAT.ExtraDamageDice');
+  return nonZeroGroups.map(([faces, count, marker], idx) => {
+    const owner = ownerPerGroup[idx];
+    const forcedExempt = marker === CRIT_EXEMPT_MARKER;
+    const forcedEligible = marker === CRIT_MULTIPLY_MARKER;
+    const isExempt = forcedExempt ? true : forcedEligible ? false : owner !== -1;
+    const label = owner === -1
+      ? (forcedExempt ? extraDamageLabel : baseLabel)
+      : overrides[owner].effectName;
+    return { faces, count, label, isExempt };
+  });
+}
+
+/**
+ * Display-only counterpart to `flavorDamageDiceBySource()` — same positional/escape-hatch
+ * attribution, but merges each source's own dice groups into its own dice-only formula string
+ * (e.g. `2d6`) instead of building one flavored roll string, for use in a `RollModifier[]`
+ * breakdown list (one row per contributing source) rather than the actual roll. One entry per
+ * distinct label that owns at least one non-zero dice group, in first-appearance order.
+ */
+function groupDamageDiceBySource(
+  resolvedFormula: string,
+  baseLabel: string,
+  overrides: { effectName: string; value: string }[]
+): { label: string; formula: string }[] {
+  const parsed = parseAdditiveDiceFragment(resolvedFormula);
+  const diceOnly = extractDiceOnlyFormula(resolvedFormula);
+  if (!parsed) return diceOnly ? [{ label: baseLabel, formula: diceOnly }] : [];
+
+  const attributed = attributeDamageDiceGroups(parsed.diceGroups, baseLabel, overrides);
+
+  const order: string[] = [];
+  const byLabel = new Map<string, Map<number, number>>();
+  for (const { faces, count, label } of attributed) {
+    if (!byLabel.has(label)) {
+      byLabel.set(label, new Map());
+      order.push(label);
+    }
+    const faceCounts = byLabel.get(label)!;
+    faceCounts.set(faces, (faceCounts.get(faces) ?? 0) + count);
+  }
+
+  return order
+    .map((label) => {
+      const formula = [...byLabel.get(label)!.entries()]
+        .filter(([, count]) => count !== 0)
+        .sort(([a], [b]) => a - b)
+        .map(([faces, count]) => `${count}d${faces}`)
+        .join(' + ');
+      return { label, formula };
+    })
+    .filter(({ formula }) => formula);
+}
+
+export {
+  buildD20Formula,
+  combineDiceFormula,
+  extractDiceOnlyFormula,
+  extractFlatModifier,
+  flavorDamageDiceBySource,
+  flavorDiceGroups,
+  flavorTerm,
+  groupDamageDiceBySource,
+  splitFormulaParts,
+};
+
+export type { FormulaParts };

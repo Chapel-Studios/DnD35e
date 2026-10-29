@@ -67,6 +67,7 @@ Phase 10 is the proof that a full manual combat exchange works end-to-end. It si
 - `useAction()` execution engine on `ActorDnd35e`, supporting manual full attack (repeated attacks spending a per-hand BAB pool) and two-weapon fighting (per-hand BAB, SRD off-hand penalty using existing `weaponSubtype`)
 - D20Roll vs target AC → hit/miss attack card; a **chained** Resolution card is posted once the target's row is applied — the defender's Roll Defense Dialog finalizes hit/miss, and on a hit, damage is rolled **and auto-applied** as part of posting that same card, with a delta-based Undo button available. This two-card Attack → Resolution chain matches D35E's own attack/defense dialog exchange (see §10.8)
 - `buildAttackCard()` chat card, mirroring `buildSaveCard()`'s precompiled-Handlebars pattern
+- Story J (planning only; implementation on hold): secrets-aware melee presentation and GM-controlled damage disclosure, using typed damage and maskable derived resistance as the first proof. Display policy and actor scope must be agreed before implementation.
 - New `Ammo` item type + equippable Quiver support; ranged/thrown actions consume ammo
 - Attacks of Opportunity: automatic detection of provoking actions taken in a threatened square, with asymmetric player/GM visibility; threatened-square highlighting on token selection
 - Token HUD bottom row (new, alongside Foundry's existing left/right HUD columns): **Weapon Attacks** and **Combat Maneuvers** controls, each expanding a list on click the same way the existing Movement Action control does; Weapon Attacks is fully populated this phase, Combat Maneuvers has a single entry this phase (Total Defense — real maneuvers like trip/grapple/bull rush are alpha.3) + sheet weapon-row attack buttons (work regardless of equip state)
@@ -95,19 +96,18 @@ Verified against the bundled Foundry v14 type defs (`types/foundry/common/docume
 ```typescript
 // src/documents/combat/combatant/combatantActionEconomy.mts
 interface CombatantActionEconomy {
-  actions: { standard: boolean; move: boolean; minor: boolean; aoo: number };
+  actions: { standard: boolean; move: boolean; aoo: number };
   bab: { main: number; off: number };
-  used: { standard: boolean; move: boolean; minor: boolean; standardAttackUsed: boolean; movedAfterAttack: boolean; chargedThisTurn: boolean };
+  used: { standard: boolean; move: boolean; standardAttackUsed: boolean; movedAfterAttack: boolean; chargedThisTurn: boolean };
 }
 
 function getActionEconomy(combatant: CombatantDnd35e): CombatantActionEconomy { /* reads flags.dnd35e.actionEconomy, applies defaults */ }
 async function resetActionEconomy(combatant: CombatantDnd35e, actor: ActorDnd35e): Promise<void> {
   // Refill both hands to actor.system.attributes.bab.total, aoo to actor.system.aooCount,
-  // reset actions.standard/move/minor to true, clear all `used` flags
+  // reset actions.standard/move to true, clear all `used` flags
 }
 async function spendStandardAction(combatant: CombatantDnd35e): Promise<void> { /* actions.standard = false, used.standard = true */ }
 async function spendMoveAction(combatant: CombatantDnd35e): Promise<void> { /* actions.move = false, used.move = true */ }
-async function spendMinorAction(combatant: CombatantDnd35e): Promise<void> { /* actions.minor = false, used.minor = true */ }
 async function spendHandBab(combatant: CombatantDnd35e, hand: 'main' | 'off' | 'both', amount: number): Promise<void> { /* hand === 'both': subtract amount from both bab.main and bab.off (each floored at 0); else bab[hand] -= amount, floor 0 */ }
 async function spendAoO(combatant: CombatantDnd35e): Promise<void> { /* actions.aoo -= 1, floor 0 */ }
 async function markMovedAfterAttack(combatant: CombatantDnd35e): Promise<void> { /* used.movedAfterAttack = true */ }
@@ -220,7 +220,6 @@ The default `CombatTracker` template is extended to show action state for each c
 
 - **S** (swords icon) — standard action remaining; greyed when `actionEconomy.actions.standard === false`
 - **M** (boot icon) — move action remaining; greyed when `actionEconomy.actions.move === false`
-- **m** (smaller icon) — minor action remaining; greyed when `actionEconomy.actions.minor === false`
 - **AoO count** — numeric badge showing `actionEconomy.actions.aoo`
 
 Implementation (confirmed — Spike 2, §10.14): Subclass `CombatTracker` cleanly, no DOM-injection fallback needed. `CombatTracker` is a real `HandlebarsApplicationMixin`/ApplicationV2 class (verified against the bundled v14.365 client source) with dedicated per-row and per-part extension points: override `_prepareTurnContext(combat, combatant, index)` (call `super._prepareTurnContext()`, then merge `getActionEconomy(combatant)`'s pip/AoO data onto the returned `turn` object) and override `static PARTS` to point `tracker.template` at a system-owned copy of `templates/sidebar/tabs/combat/tracker.hbs` (core's actual per-row markup, confirmed against the bundled template) with pip markup added, reading the merged `turn.actionEconomy`. Register: `CONFIG.ui.combat = CombatTrackerDnd35e` (`CONFIG.ui.combat: ConstructorOf<CombatTracker>` is a real, documented registration point).
@@ -650,6 +649,12 @@ No new Token hooks. This folds into the **existing** `TokenDocumentDnd35e._onUpd
 
 ### Action-economy consumption
 
+**Current runtime behavior:** ordinary `walk` movement totaling at most one 5-foot square is automatically classified as `fiveFootStep` for the movement card. It provisionally spends the move action, but does not provoke. Continuing to walk beyond 5 feet upgrades the session to ordinary movement at no additional cost; exceeding a single move's budget still upgrades to Double Move. The card tracks `provokes` and `stepProtectionLost`, explicitly recording that the initial 5 feet loses its protection when the whole path becomes ordinary movement. This is bookkeeping only; automatic AoO detection/resolution remains a separate story. The explicit `fiveFootStep` mode remains capped and cannot be extended into ordinary movement.
+
+**Full-attack interaction:** a legal step can occur before or after a full attack. Promoting the second weapon attack reassigns a step's reserved move action to the full attack, rather than charging twice. Movement after a full attack is limited to a single 5-foot step; Charge/Withdraw/Double Move do not permit an additional step. Native movement Undo recomputes step classification, and neither native nor card Undo refunds a move action owned by the full attack.
+
+The following original sketch illustrates the movement-hook integration; the cumulative session logic above is implemented in `TokenDocumentDnd35e`.
+
 ```typescript
 // TokenDocumentDnd35e._onUpdateMovement() — appended alongside the existing Prone-toggle logic
 const combat = game.combat;
@@ -693,7 +698,7 @@ Every action-economy consumption from movement now posts a small chat card inste
 - `buildMoveActionCard()` (sibling of `buildAttackCard()`/`buildResolutionCard()`, `src/dice/rollMessages.mts`) posts a compact message: combatant name, movement action used, feet moved, and which action(s) were consumed (Move, or Move + Standard)
 - Stores `message.flags.dnd35e.moveActionCard = { combatantId, spent: ('move' | 'standard')[], cost, budget, overBudget: boolean, priorPosition: { x, y, elevation } | null, undone: false }` — `priorPosition` is read straight off `movement.passed.waypoints[0]` (the first waypoint of the passed path is always the pre-move origin, already available in this hook — no new pre-update hook needed) and stored only when something was actually spent (`null` in the `overBudget` branch, where the token never actually committed the move)
 - When `overBudget` is true (moved further than two move actions' worth), the card renders a warning banner ("Moved further than allowed for a single action") **in addition to** the existing `ui.notifications.warn` toast — the toast is easy to miss mid-session; the chat card is a permanent log entry. Nothing is consumed in this branch, so there's nothing to refund and no Undo button
-- An **Undo** button (`data-action="undo-move-action"`), visible/enabled only for the GM or the combatant's owner, appears whenever `spent.length > 0`
+- An **Undo** button (`data-action="undo-move-action"`), visible/enabled only for the GM or the combatant's owner, appears whenever a prior position is stored. Session cards retain that position even for a free step after a full attack; they refund only the current movement session's own `spentTiers`, not a reservation reassigned to the full attack.
 - On click: calls `refundMoveAction(combatant)` and/or `refundStandardAction(combatant)` for each entry in `spent`, **and** — since the token physically moved — updates the token document back to `priorPosition` (teleporting it back to where it stood before the move committed), then sets `undone: true` and re-renders the card ("Undone — action(s) refunded, token returned to its prior position")
 - **Scope**: Undo reverses both halves of the move together — the action-economy flags *and* the physical repositioning — since a refunded move action that leaves the token standing in its new square would be a lie about what state the character is actually in. There's no partial-undo option (refund flags only, keep the new position, or vice versa); if a GM wants a different combination, they use Foundry's native token-update tools directly instead of this button
 
@@ -721,7 +726,8 @@ Charge (a movement action, not a combat maneuver — SRD lists it under "Special
 - **Always a full-round action**: unlike `walk`/`run`'s budget-tiered spend (move-only vs. move+standard depending on distance), a completed `charge` waypoint spends move **and** standard unconditionally, regardless of how far the token actually moved (§10.6's action-economy code sample above) — matching SRD's "charging is a full-round action."
 - **No reach/legality validation**: SRD requires a charge to end within reach of the target with a clear path, but poc.10 doesn't enforce or block an "illegal" charge — the move always completes once dragged. Whether it reaches a target only affects the one thing described next.
 - **Auto-links to the next attack, doesn't block anything**: once the completed charge waypoint places the token within melee reach (`isWithinReach()`, §10.5) of at least one hostile token, `markChargedThisTurn(combatant)` sets `used.chargedThisTurn` (§10.1). This is read once by `executeAction()` (§10.7) to pre-check the Charge toggle on that combatant's very next attack this turn — still fully user-overridable, same as every other auto-detected toggle. A charge that doesn't end in reach of anyone simply doesn't set the flag; nothing warns or blocks (mirrors the "trust the player" philosophy already used for straight-line dragging).
-- **Enforces SRD's "single melee attack" restriction**: per SRD, charging replaces a character's entire turn with one mandatory melee attack — not a full attack sequence. `useAction()` (§10.7) checks `used.chargedThisTurn` right after that attack resolves and, if set, calls `markMovedAfterAttack(combatant)` — reusing the existing "moved after attack" gate on `canUseHandAttack()` to block any further BAB-funded attacks this turn, rather than introducing a second gating flag.
+- **Enforces SRD's "single melee attack" restriction**: charging grants one prepaid attack at the actor's top BAB, including BAB +0. After that attack resolves, `WeaponAttackDataModel._postExecute()` exhausts **both** hand BAB pools and marks `movedAfterAttack`, so every weapon attack in the HUD shows BAB 0 and is unavailable. It does not spend a second standard action. Cancelled dialogs and free attacks do not consume the charge attack; resolution Undo restores both pools and reopens the single attack.
+- **Applies the charged condition on movement completion**: reaching a hostile token also applies `CHARGED_CONDITION_ID` immediately, imposing -2 AC until the actor's next turn, even before the attack dialog is confirmed. The melee dialog detects this condition and pre-checks the +2 Charge modifier. Both native movement Undo and the movement card's Undo clear the charge flag and condition.
 
 ### Where AoO detection hooks in
 
@@ -794,6 +800,12 @@ if (cancelled.value) return { hit: false, criticalHit: false, cancelled: true };
 ```
 
 ### useAction() on ActorDnd35e — manual full attack + TWF
+
+**Current runtime ownership:** `WeaponAttackDataModel._postExecute()` performs spending after a successful, non-free attack; cancelled dialogs do not spend anything. The first attack, with either hand, spends one standard action at that hand's top BAB. A second attack (the other weapon or an iterative) must promote the sequence to a full attack by spending the remaining move action, or claiming the move action provisionally reserved by a legal 5-foot step. Normal movement or a move action spent elsewhere prevents promotion. Subsequent iterative attacks consume only the selected hand's BAB pool.
+
+`used.standardAttackUsed`, `used.fullAttackUsed`, and `used.attackCount` track the sequence. Attack/resolution cards retain the spend metadata for Undo; undoing down to one attack releases the full-attack move cost (or returns it to an existing step reservation), while undoing the last attack refunds the standard action. Charge retains its separate prepaid single-attack behavior and exhausts both BAB pools.
+
+The following original actor-level sketch is historical; the action model and `spendAttackAction()`/`refundAttackAction()` now own the sequence accounting described above.
 
 ```typescript
 async useAction(itemId: string, actionId: string, targetId?: string, options?: { free?: boolean }): Promise<ActionResult | null> {
@@ -1703,7 +1715,7 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 **Deferred within this story**: ~~a character-sheet trigger for rolling initiative — location TBD, to be decided once the rest of this story is in hand.~~ Not deferred — shipped as the rollable `Initiative.vue` field on the character sheet, wired to `rollInitiativeFromSheet`/`rollInitiativeCheck()`.
 
-**Deferred to Story B**: combat tracker action-pip rendering (standard/move/minor pips + AoO badge, per Spike 2's confirmed subclass approach) — moved there since it reads `combatant.actionEconomy`/`getActionEconomy()`, which `combatantActionEconomy.mts` (Story B) provides. Agreed visual design for when Story B builds it: small icons (sword/boot/dot) for standard/move/minor, greyed when spent, plus a numeric badge for remaining AoOs.
+**Deferred to Story B**: combat tracker action-pip rendering (standard/move pips + AoO badge, per Spike 2's confirmed subclass approach) — moved there since it reads `combatant.actionEconomy`/`getActionEconomy()`, which `combatantActionEconomy.mts` (Story B) provides. Agreed visual design for when Story B builds it: icons (sword/boot) for standard/move, greyed when spent, plus a numeric badge for remaining AoOs.
 
 **Verify**: Clicking the tracker's existing roll-initiative controls (per-row or roll-all) opens the dialog, accepts a formula situational modifier, and posts a chat card; combatants end up ordered by the result. Save roll dialog also accepts a formula modifier. Combat starts → all combatants silently flat-footed (status icon only, no chat message). Toggling Squeezing on a token via the Token HUD shows the icon and is queryable via `actor.statuses.has('squeezing')`.
 
@@ -1711,13 +1723,13 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 ### Story B — Combatant action economy + movement integration
 **User**: Player / GM (during combat)  
-**Delivers**: "Moving, taking a 5-foot step, withdrawing, or charging correctly consumes/restricts actions; BAB pools refill per hand at turn start; the combat tracker now shows each combatant's remaining standard/move/minor/AoO"  
+**Delivers**: "Moving, taking a 5-foot step, withdrawing, or charging correctly consumes/restricts actions; BAB pools refill per hand at turn start; the combat tracker now shows each combatant's remaining standard/move/AoO"
 **Routing**: Lead dev (flags module, movement integration, new movement actions, tracker pip rendering)
 
 - [x] Create `combatantActionEconomy.mts` (flags-based, plain functions — see §10.1 shape), incl. `refundMoveAction()`/`refundStandardAction()`/`refundHandBab()` undo primitives and `markChargedThisTurn()`
 - [x] Add the `actionEconomy` convenience accessor to `CombatantDnd35e` (Story A), delegating to `combatantActionEconomy.mts`
-- [x] Extend combat tracker rendering (per Spike 2's confirmed subclass approach): standard/move/minor pips (icons, greyed when spent) + numeric AoO badge per row, sourced from `combatant.actionEconomy`
-- [x] `CombatDnd35e._onStartTurn()` reset (§10.1): `resetActionEconomy()` — refill `bab.main`/`bab.off` from `actor.system.attributes.bab.total`, `actions.aoo` from `actor.system.aooCount`, reset `actions.standard`/`move`/`minor` to true, clear `used` flags
+- [x] Extend combat tracker rendering (per Spike 2's confirmed subclass approach): standard/move pips (icons, greyed when spent) + numeric AoO badge per row, sourced from `combatant.actionEconomy`
+- [x] `CombatDnd35e._onStartTurn()` reset (§10.1): `resetActionEconomy()` — refill `bab.main`/`bab.off` from `actor.system.attributes.bab.total`, `actions.aoo` from `actor.system.aooCount`, reset `actions.standard`/`move` to true, clear `used` flags
 - [x] Add `SIZE_REACH` constant to `src/constants/sizes.mts`
 - [x] Extend `TokenDocumentDnd35e._onUpdateMovement()`: spend move/standard action via `getMovementBudget()`/`isOverBudget()` (existing poc.9 machinery), no new hooks; add the `charge` branch (always spends move + standard, calls `markChargedThisTurn()` when the completed move ends within `isWithinReach()` of a hostile token, §10.6)
 - [x] Add `fiveFootStep`, `withdraw`, and `charge` custom movement actions to `movementActionGating.mts`, with `canSelectFiveFootStepMovementAction()`/`canSelectWithdrawMovementAction()`/`canSelectChargeMovementAction()` gating (combat-only); extend `movementBudget.mts`'s `ACTION_TO_SPEED_KEY`/`ACTION_SPEED_MULTIPLIER` so `charge` (and `withdraw`) double land speed
@@ -1796,21 +1808,22 @@ All open decisions from the initial spec have been resolved and folded into the 
 **Routing**: Lead dev (dialog + resolution engine, AE helpers) + Jr dev (MultiOptionToggle wiring, settings registration)  
 **Depends on**: Story B (Total Defense spends a standard action), Story D (attack card + snapshot to resolve); optionally consumes Spike 3's verdict for the AE-duration shape (falls back to explicit turn-hook expiry otherwise)
 
-- [ ] Create `RollDefenseDialogConfig.mts`/`RollDefenseDialogApp.vue` (sibling of `D20RollDialogConfig`/`D20RollDialogApp.vue`): Combat Status checklist (Concealment formula, Charged, Covered `MultiOptionToggle`, Flat-Footed, Total Defense, Defensive Fighting), Overrides checklist (Apply Half Damage, Ignore Critical Hit), Situational Bonus formula field, check-mode `MultiOptionToggle` (Normal/Touch/No Check), Defend submit button
-- [ ] Add `CHARGED_CONDITION_ID`, `DEFENSIVE_FIGHTING_CONDITION_ID`, `TOTAL_DEFENSE_CONDITION_ID` to `conditions.mts` (icon-only, same pattern as Prone/Squeezing)
-- [ ] Add `system.defense.criticalImmune` as a new derived boolean field on `CreatureSystemData` (defaulted `false`, same family as `defense.denyDexToAC`), read for the Ignore Critical Hit auto-detect; a Racial Trait AE targets it directly (`OVERRIDE` mode, value `true`)
-- [ ] Create `combatConditionAEs.mts`: `createShortDurationAE()` shared helper + `applyChargedAE()`/`applyDefensiveFightingAE()`, using Spike 3's confirmed duration mechanism (or its fallback)
-- [ ] Implement the Total Defense special action, populating Story D's Combat Maneuvers HUD entry: spends the standard action, applies the Total Defense AE via the same shared helper
-- [ ] Create `src/dice/actionChainSteps.mts`: `ACTION_CHAIN_ID_SEPARATOR` + `buildActionChainId()` (§10.7's "Action Chain"); add `continue(stepId, message, targetId)` to `ActionDataModel` (`ActionDataModel.mts`, Story C's file) handling the `'damage'` sentinel (§10.4) for every poc.10 weapon action
-- [ ] Implement `advanceActionChain()`: the generic `data-action="apply-attack"` handler — splits `attackCard.actionUuid` back into an actor UUID + action id, resolves the actor via `fromUuid()` and the action via `actor.system.attacks.actions.find()` (same collection `useAction()` already searches, §10.7), then calls `action.continue(attackCard.stepId, message, targetId)` — no step registry
-- [ ] Implement `ActionDataModel#continue()`'s `'damage'` case: opens the Roll Defense Dialog for the clicked target, folds its result together with the attack card's stored `attackTotal`/`isCriticalThreat` into a final hit/miss + crit-confirm (`evaluateDefense()`), rolls damage (only if hit, applying Apply Half Damage if checked), and posts the Resolution card — which itself auto-applies that damage to the target's HP as part of being created
-- [ ] Implement the Concealment miss-chance roll (d% vs. the resolved Concealment formula value) inside `evaluateDefense()`
-- [ ] Gate `continue()`'s `'damage'` case's Roll Defense Dialog to the GM, or the target's owner when `PLAYER_SELF_DEFENSE` is enabled — `advanceActionChain()` itself is already generic/ungated (above); this permission check lives in the action's own `continue()`, not the dispatcher, since a future step could have a different rule
-- [ ] Add `buildResolutionCard()` to `src/dice/rollMessages.mts`, storing `flags.dnd35e.resolutionCard` (`hit`/`appliedAmount`/`actionEconomySpent`/`undone`) and calling `target.takeDamage()` as part of posting the card when it was a hit
-- [ ] Create `src/dice/templates/resolution-card.hbs` (defended-AC/roll-mode/toggle summary, damage roll + "Applied: N damage" on a hit, Undo button)
-- [ ] Wire the `data-action="undo-resolution"` click handler (reads `flags.dnd35e.resolutionCard`, reverses `appliedAmount` via `target.takeDamage(-appliedAmount, ...)`, emits `undoDealDamage`, refunds the attacker's `actionEconomySpent` via `refundStandardAction()`/`refundHandBab()` when non-null, sets `undone = true`)
-- [ ] Add `PLAYER_SELF_DEFENSE` to `src/settings/combat/constants.mts` + register it, default `true` during development (`// TODO: flip to false before release`)
-- [ ] Implement `buildDocumentDataMap()`/`FormulaData._buildFamiliarFromDocumentMap()`'s preferred-alias override for the `self` context; wire `attacker`/`target`/`defender` context names into both dialogs' Situational Bonus fields
+- [x] Create `RollDefenseDialogConfig.mts`/`RollDefenseDialog.vue` (sibling of `D20RollDialogConfig`/`D20RollDialogApp.vue`): Combat Status checklist (Concealment formula, Covered `MultiOptionToggle`), Overrides checklist (Apply Half Damage, Ignore Critical Hit), Situational Bonus formula field, check-mode `MultiOptionToggle` (Normal/Touch/No Check), submit button — **standalone only**: not yet wired to a caller (`advanceActionChain()`/`continue()`'s `'damage'` case, below, is what will invoke `RollDefenseDialogConfig.roll()`)
+- [x] Add `CHARGED_CONDITION_ID`, `DEFENSIVE_FIGHTING_CONDITION_ID`, `TOTAL_DEFENSE_CONDITION_ID` to `conditions.mts` (icon-only, same pattern as Prone/Squeezing)
+- [x] Add `system.defense.criticalImmune` as a new derived boolean field on `CreatureSystemData` (defaulted `false`, same family as `defense.denyDexToAC`), read for the Ignore Critical Hit auto-detect; a Racial Trait AE targets it directly (`OVERRIDE` mode, value `true`) — field added and reset in `prepareBaseData()`; auto-detect read confirmed wired in `defenseCombatModifiers.mts`'s `ignoreCriticalHit` toggle (`checked: actor.system.defense.criticalImmune`). **Deviation**: the Racial Trait AE *producer* itself is deferred — there is no Race/Racial Trait item type in the codebase yet (`alpha.1` Races & Progression phase); nothing can author this AE until that phase lands. The field and its consumer are otherwise fully functional for a manually-authored AE in the interim.
+- [x] Create `combatConditionAEs.mts`: `createShortDurationAE()` shared helper + `applyChargedAE()`/`applyDefensiveFightingAE()`, using Spike 3's confirmed duration mechanism (or its fallback) — **superseded per Spike 3's resolved verdict**: no bespoke `createShortDurationAE()` helper exists; each condition instead expires natively via its own `duration: { value: 1, units: 'turns' }` (`conditions.mts`) + `system.deleteOnExpiry: true` (self-delete in `ActiveEffectDnd35e#_onUpdate()`). `applyChargedAE()`/`applyDefensiveFightingAE()`/`applyTotalDefenseAE()` are thin `toggleStatusEffect()` wrappers; `CombatDnd35e#_onStartTurn()` no longer manually clears these, since expiry is fully native now
+- [x] Implement the Total Defense special action, populating Story D's Combat Maneuvers HUD entry: spends the standard action, applies the Total Defense AE via the same shared helper
+- [x] Create `src/dice/actionChainSteps.mts`: `ACTION_CHAIN_ID_SEPARATOR` + `buildActionChainId()` (§10.7's "Action Chain"); add `continue(stepId, message, targetId)` to `ActionDataModel` (`ActionDataModel.mts`, Story C's file) handling the `'damage'` sentinel (§10.4) for every poc.10 weapon action. **Deviation**: lives at `src/dice/chatCards/attackRollCard/actionChainSteps.mts`; the sealed shell method is `continueAction()`, dispatching to an overridable `_continue()` (matches the existing `executeAction()`/`_canExecute()`/`_executeCheck()`/`_postExecute()` sealed-shell pattern) rather than one directly-overridden `continue()`
+- [x] Implement `advanceActionChain()`: the generic `data-action="apply-attack"` handler — splits `attackCard.actionUuid` back into an actor UUID + action id, resolves the actor via `fromUuid()` and the action via `actor.system.attacks.actions.find()` (same collection `useAction()` already searches, §10.7), then calls `action.continue(attackCard.stepId, message, targetId)` — no step registry. **Deviation**: calls `action.continueAction(stepId, message, targetId)` (see naming deviation above)
+- [x] Implement `ActionDataModel#continue()`'s `'damage'` case: opens the Roll Defense Dialog for the clicked target, folds its result together with the attack card's stored `attackTotal`/`isCriticalThreat` into a final hit/miss + crit-confirm (`evaluateDefense()`), rolls damage (only if hit, applying Apply Half Damage if checked), and posts the Resolution card — which itself auto-applies that damage to the target's HP as part of being created. Shipped as `WeaponAttackDataModel#_continue()`; resolves the attacker/target's `ActionParticipant` (Actor or Token, token-preference policy — `@items/baseItem/actions/logic/actionParticipant.mts`) from the attack card's persisted UUIDs before building the dialog data
+- [x] Implement the Concealment miss-chance roll (d% vs. the resolved Concealment formula value) inside `evaluateDefense()`
+- [x] Gate `continue()`'s `'damage'` case's Roll Defense Dialog to the GM, or the target's owner when `PLAYER_SELF_DEFENSE` is enabled — `advanceActionChain()` itself is already generic/ungated (above); this permission check lives in the action's own `continue()`, not the dispatcher, since a future step could have a different rule. Enforced both in `_continue()` itself and (defense-in-depth, so the button doesn't even render) in `attackRollCard.mts`'s `wireAttackRollCardButton()`
+- [x] Add `buildResolutionCard()` to `src/dice/rollMessages.mts`, storing `flags.dnd35e.resolutionCard` (`hit`/`appliedAmount`/`actionEconomySpent`/`undone`) and calling `target.takeDamage()` as part of posting the card when it was a hit. **Deviation**: lives at `src/dice/chatCards/resolutionCard/resolutionCard.mts`; calls `target.updateHP()` (current HP-update API, not `takeDamage()`)
+- [x] Create `src/dice/templates/resolution-card.hbs` (defended-AC/roll-mode/toggle summary, damage roll + "Applied: N damage" on a hit, Undo button). **Deviation**: lives at `src/dice/chatCards/resolutionCard/resolution-card.hbs`
+- [x] Wire the `data-action="undo-resolution"` click handler (reads `flags.dnd35e.resolutionCard`, reverses `appliedAmount` via `target.takeDamage(-appliedAmount, ...)`, emits `undoDealDamage`, refunds the attacker's `actionEconomySpent` via `refundStandardAction()`/`refundHandBab()` when non-null, sets `undone = true`)
+- [x] Add `PLAYER_SELF_DEFENSE` to `src/settings/combat/constants.mts` + register it, default `true` during development (`// TODO: flip to false before release`)
+- [x] *(Added scope, not in original spec)* Add `ROLLED_DEFENSE_VARIANT` setting (house rule: replaces AC's flat +10 base with a 1d20 roll) — registered and exposed in Combat Settings' new Defense section; not yet consumed anywhere (Roll Defense Dialog doesn't exist yet)
+- [x] Implement `buildDocumentDataMap()`/`FormulaData._buildFamiliarFromDocumentMap()`'s preferred-alias override for the `self` context; wire `attacker`/`target`/`defender` context names into both dialogs' Situational Bonus fields. **Deviation**: the actual functions are `buildDocumentFamiliar()` (`registry.mts`) and `FormulaData.buildFamiliarSchema()`/`.resolve()`/`.resolveSource()`/`.resolveDisplaySource()` — no `_buildFamiliarFromDocumentMap()` exists in the current Formula system. Added an optional `preferredAlias`/`preferredSelfAlias` (`PreferredContextAlias { term, label }`) param threaded through all of those, plus `RollDialogStore.mts`'s `resolveFormulaNumber`/`resolveFormulaString`. `self` always keeps resolving (literal `documentDataMap.self` key, per `resolveContextDocData`'s direct-lookup-first order) — the preferred term is an additional alias/display override, not a replacement. Attack dialog (`WeaponAttackRollDialogStore.mts`, shared with Ranged) uses `attacker`; Roll Defense Dialog (`RollDefenseDialogStore.mts`) uses `defender`. Target's existing "Defender" display override on the Attack dialog is unchanged/separate.
 - [x] Consume Spike 1's concealment-spike verdict — **no-go**: the Concealment field stays 100% manual (no pre-fill task added)
 
 **Verify**: Clicking Apply on an attack card's target row opens the Roll Defense Dialog pre-checked for whatever's actually true of that target (Flat-Footed, Charged, Total Defense, Defensive Fighting) — unchecking any removes its effect from resolution. Setting a Concealment value triggers a miss-chance roll that can override an otherwise-successful hit. Selecting Covered vs. Improved Cover are mutually exclusive. Ignore Critical Hit auto-checks for an actor with `system.defense.criticalImmune === true`. Clicking Defend posts a Resolution card with the correct hit/miss verdict; on a hit, the target's HP has already dropped by the rolled (and possibly halved) amount with no separate Apply step, and an Undo button reverses both the damage and the attacker's spent action economy together. A miss's Resolution card shows no damage and no Undo button (the attacker's spent action, if any, simply isn't refundable for a miss). Charging or fighting defensively via the Attack Roll Dialog visibly applies a short-duration self-AE that a *different* attacker's Roll Defense Dialog later auto-detects.
@@ -1895,6 +1908,80 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 ---
 
+### Story J — Secret-aware melee resolution, typed damage & resistance disclosure
+
+**Status**: Planning only; combat implementation explicitly on hold pending the decisions below. Existing HUD permission/concealment work remains in place.
+**User**: GM / Player
+**Delivers**: "Combat uses the real effective values, but players do not automatically learn secret bonuses, defenses, or damage mitigation. A player sees the damage their dice appeared to deal; the GM can inspect the real outcome and deliberately reveal it."
+**Routing**: Lead dev (authority, disclosure and HP integration); UI work only after display decisions are approved.
+**Depends on**: Stories D and E (melee attack and resolution flow), existing Secret AE masks and HP masked-edit conventions. Coordinate reversal semantics with Story I; do not require its full canvas undo architecture to agree this story's design.
+
+#### Agreed contract
+
+- True effective values determine attack rolls, critical confirmation, AC, concealment, mitigation and actual HP changes. Masks affect presentation, not those calculations.
+- Secret-dependent totals and details belong in private GM data, not merely collapsed tooltips or GM-only DOM elements on a public message. Separate public presentation from private resolution data.
+- Damage resistance is the first disclosure example: a damage roll of 10 with 5 points prevented should initially appear to the attacker as 10 damage, while the GM sees 5 actually applied. A GM-controlled reveal can disclose the real damage; its exact UI and audience are **not yet decided**. These numbers illustrate disclosure, not an approved resistance schema or rules algorithm.
+- Damage application must update real HP and synchronize masked current/temp/nonlethal HP deltas. How apparent HP presentation interacts with concealed mitigation still needs an explicit decision; do not let an HP display defeat the apparent-damage policy.
+- This is a plan, not permission to implement combat changes now. Do not broaden the already-approved HUD changes into a combat rollout.
+
+#### Scope and dependency brake
+
+The intended first slice adds a small supported set of typed damage and a maskable, derived resistance/mitigation stat, then proves apparent-versus-actual damage and deliberate reveal through one melee exchange. Reuse existing damage type constants; the repository already declares physical and energy types, so this is not a request for a second damage-type taxonomy.
+
+Do not silently equate physical damage reduction with energy resistance, or choose a universal flat subtraction stat. Agree the initial rules subset, bypass behavior and derived data shape first. Derive real values through the existing AE/data-preparation architecture; keep masks in Secret AE/runtime presentation rather than adding dual real/apparent schema fields.
+
+**No NPC actor prerequisite is approved.** NPC actors remain assigned to [beta.6](../beta/phase-06-advanced-actors.md). Nor is a general player-actor Secret authoring/masking rollout approved here. First establish the smallest existing-actor fixture that can prove the behavior without those expansions. If that cannot be done cleanly, leave implementation blocked and return the dependency for discussion rather than pulling either project forward. The desired maskable derived stat is part of Story J's design, not a claim that all actor masking infrastructure is already complete.
+
+#### Initial trace evidence and implementation audit
+
+These are findings from an initial direct trace, not a completed end-to-end audit or implemented fixes. Paths below are relative to the repository root.
+
+| Boundary | Current evidence | Story J obligation |
+|----------|------------------|--------------------|
+| HUD selection | `src/documents/token/hud/tokenHudActions.mts` builds labels from action names and available BAB | Audit names, images and displayed BAB without changing ownership, equip eligibility, action costs or exact acting-token forwarding |
+| Melee previews and rolls | `src/documents/items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mts` builds attack/damage previews from real values and AE contribution history | Separate viewer-safe previews and labels from true mechanics; inspect critical rolls and dice flavor text as well as headline totals |
+| Formula contexts | `src/helpers/formulae/utils.mts` exposes prepared system data to formula resolution | Preserve true mechanical contexts; separately audit dialog autocomplete, resolved previews and user-facing errors for secret disclosure |
+| Defense dialog and evaluation | `src/documents/actors/creature/logic/buildRollDefenseDialogData.mts` and `src/dice/chatCards/resolutionCard/evaluateDefense.mts` read real AC/concealment and build detailed breakdowns | Preserve authoritative hit resolution while deciding what each dialog participant may see or edit |
+| Attack and resolution messages | `src/dice/chatCards/attackRollCard/attackRollCard.mts` and `src/dice/chatCards/resolutionCard/resolutionCard.mts` persist formulas/totals/breakdowns in flags and render them into content | Audit public content, flags, stored rolls, confirmation rolls, roll options, tooltips and dice integration; do not place private truth in a public message and rely on render-time hiding |
+| Apply/Reapply Damage | `resolutionCard.mts` calls `Creature.updateHP()`; its reversal currently writes HP directly | Integrate mitigation exactly once, synchronize masks, record actual per-field deltas, and reverse/reapply those deltas without recalculating from newly changed defenses |
+| HP calculation | `src/documents/actors/creature/Creature.mts` has an explicit DR integration TODO in `updateHP()` and no resistance fields were found in the creature model during this trace | Agree a single mitigation boundary and derived stat shape before editing; preserve temporary HP/nonlethal rules and avoid a card-only mitigation implementation |
+
+Protection of private chat data is a concrete requirement, not a promise of server-enforced secrecy for every replicated actor field. Document the actual Foundry client-data boundary during design. Do not claim that masking makes actor source data inaccessible to a client that already receives it.
+
+#### Open decisions — discuss before implementation
+
+- [ ] **Display and reveal UX**: Where do apparent damage, private actual damage and the GM reveal control appear? Does reveal disclose only the actual amount, the amount prevented, the resistance source, or selectable parts? Who receives it, and is it per target/per application? Preserve the original dice result as a roll record.
+- [ ] **Private data and authority**: Choose the private resolution record/message and public-summary relationship, who performs true resolution, and what happens when the GM is offline or a record cannot be resolved. Do not emit public truth as a fallback. Recheck permissions at execution, not only when rendering buttons.
+- [ ] **Initial damage rules**: Pick the minimal physical/energy type subset; distinguish damage reduction from energy resistance and agree bypass/stacking, critical, half-damage and nonlethal interactions. Check the selected rules against the SRD before finalizing acceptance numbers.
+- [ ] **Derived stat and mask shape**: Agree canonical field paths, AE contributions, sheet visibility, FormulaFamiliar exposure and how a mask represents an unknown or apparent resistance. Do not introduce persisted true/apparent pairs.
+- [ ] **Actor boundary**: Can a controlled fixture on the existing Creature/Character chain prove the design without new player-mask authoring UX or an NPC subtype? If not, explicitly keep implementation blocked for a scope decision.
+- [ ] **Apparent HP versus hidden mitigation**: Reconcile synchronized HP deltas with the requirement that the attacker initially believes the dice damage was dealt. Decide what attacker, target owner and GM each see in HP fields, bars, cards and damage events, before and after reveal.
+- [ ] **Other secret-dependent outcomes**: Define apparent-versus-real attack/confirmation totals, AC, concealment and hit/miss presentation after the damage-resistance example is agreed. Do not automatically generalize damage's apparent-number treatment to every roll.
+- [ ] **Replay, reveal and history**: Specify idempotent Apply/Reapply/Undo and reveal behavior, stale clicks, changing permissions/defenses, historical snapshots and linked/unlinked target identity. Decide how private/public records remain correlated without leaking private payloads.
+
+#### Proposed implementation order — gated, not started
+
+1. Resolve the display, authority and actor-boundary questions with the damage-resistance example. Record approved answers here; leave unresolved questions unchecked.
+2. Specify the minimal typed-damage/derived-resistance model and a multi-user proof fixture, including the private/public payload contract.
+3. Implement true mitigation and recorded HP/mask deltas at the agreed shared boundary. Integrate Apply/Reapply and Story I's reversal contract without applying mitigation twice.
+4. Wire public apparent presentation, private GM inspection and deliberate reveal for that fixture.
+5. Complete the HUD-to-damage audit above, extending the approved disclosure rules to the remaining melee surfaces. Preserve true combat mechanics and existing HUD permissions.
+
+#### Completion checklist
+
+- [ ] User has approved the required display, authority, damage-rules and actor-scope decisions; no NPC/player-mask expansion is implicit.
+- [ ] Supported typed damage and maskable derived resistance exist in runtime schema/types, AE preparation, localization and the agreed presentation surface.
+- [ ] A multi-user melee fixture demonstrates the approved apparent damage, private actual mitigation and a deliberate GM reveal, including per-target behavior.
+- [ ] Public message content, flags, stored roll payloads and rendered tooltips contain no unrevealed private combat payload; reload and rerender preserve this separation.
+- [ ] True calculations produce the same expected outcomes regardless of viewing user or display mask, and an invalid display mask never falls back to revealing truth.
+- [ ] Apply/Reapply/Undo preserve actual current/temp/nonlethal deltas and mask synchronization, including intervening HP changes; events do not disclose details beyond the agreed audience.
+- [ ] HUD, dialogs, critical confirmation, attack/resolution cards, damage application and reveal have targeted regression coverage, plus a real Foundry GM/player verification of the supported privacy boundary.
+- [ ] Record remaining limitations explicitly; do not mark the broader melee audit complete on the strength of the resistance example alone.
+
+**Verify (after design approval and implementation)**: In a controlled multi-user encounter, a player rolls the agreed example damage against an unrevealed resistance. The public record shows apparent damage, while the GM's private record shows mitigation and the actual HP change. The GM can reveal precisely the approved information. Other clients cannot recover unrevealed values from the public message's flags, rolls or content. Applying/reapplying/undoing the result preserves the recorded HP and mask deltas without duplicate mitigation. Repeat after reload and with the exact unlinked target token.
+
+---
+
 ### Parallelization
 
 ```
@@ -1910,6 +1997,9 @@ Story C (ActionDataModel + TWF)      ──┤
                                        └──────────────────────────────────────────────────────────────────► Story G (AoO)
 
 Story H (PreparationWarning alerts/warnings split — independent, scheduled last, no blocking relationships)
+Story J (secret-aware melee + resistance disclosure — follows D/E; implementation on hold for design approval)
 ```
 
 Spikes 1, 2, and 3 (already resolved above) were all fully independent research tasks — each only informed one downstream story's scope and never blocked outright. Stories B and C can start simultaneously (no shared dependency). Story A only needs B's action-economy shape, not the full movement integration (and optionally Spike 2's tracker-API verdict). Story D is the first vertical slice through the attack flow — trigger UI, execution engine, and the attack card all together, since none of the three has an independently-verifiable user story on its own. Story F (ranged/ammo) and Story G (AoO) both build on Story D once it lands. Story E (Roll Defense + resolution) follows Story D directly, and optionally consumes Spike 3's verdict for the AE-duration shape and Spike 1's verdict for the Concealment pre-fill. Story G additionally needs Story B for movement-provokes. Story H stands entirely apart from the dependency chain above — it's a self-contained severity-tier upgrade to the existing warnings system, deliberately scheduled last since nothing else in this phase requires it (Story C's auto-created actions just use today's single-tier warning behavior until it lands). Story I follows Story E — it needs the Resolution card's Undo button speced (so it has something to build, extract, and unify) and reuses poc.9's already-shipped `revertRecordedMovement()` pattern as its template; it does not block anything else in this phase.
+
+Story J depends on D/E's actual melee flow but is not implementation-ready. Its disclosure design and actor-scope gate come first; Story I and J must agree actual HP delta/reversal semantics before overlapping changes land. Neither NPC actors nor a broad player-mask rollout is an approved prerequisite.

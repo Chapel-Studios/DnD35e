@@ -16,21 +16,26 @@
       </div>
     </div>
 
-    {{#if targetUuid}}
+    {{!-- Always rendered (even with no current target) so the retarget button stays reachable — see `onRetarget()`'s "no current targets" case. --}}
     <div class="actor-info target">
       <span class="actor-header-title">{{ targetHeaderLabel }}</span>
       <div class="actor-header">
+        {{#if targetUuid}}
         <img src="{{ targetImage }}" alt="" class="actor-image" />
+        {{/if}}
         <div class="title-text">
           <button type="button" class="retarget-btn" data-action="retarget" aria-label="{{ changeTargetsLabel }}" title="{{ changeTargetsLabel }}">
             <i class="fas fa-bullseye"></i>
             {{!-- <span>{{ changeTargetsLabel }}</span> --}}
           </button>
+          {{#if targetUuid}}
           <h5 class="value" data-target-uuid="{{ targetUuid }}" data-target-token-uuid="{{ targetTokenUuid }}"></h5>
+          {{else}}
+          <h5 class="value no-target">{{ noTargetLabel }}</h5>
+          {{/if}}
         </div>
       </div>
     </div>
-    {{/if}}
 
     <h6 class="formula">{{ rollFormula }}</h6>
   </header>
@@ -41,13 +46,13 @@
       <span class="total-result">{{ total }}</span>
 
       {{#if isFumble}}
-      <span class="callout fumble">{{localize "dnd35e.ROLL.NaturalOne"}}</span>
+        <span class="callout fumble">{{localize "dnd35e.ROLL.NaturalOne"}}</span>
       {{/if}}
       {{#if isCriticalThreat}}
-      <span class="callout critical">{{localize "dnd35e.ROLL.NaturalTwenty"}}</span>
-      {{#if hasCritConfirm}}
-      <span class="callout critical-confirm">{{ confirmCriticalLabel }}: {{ critConfirmTotal }}</span>
-      {{/if}}
+        <span class="callout critical">{{localize "dnd35e.ROLL.NaturalTwenty"}}</span>
+        {{#if hasCritConfirm}}
+          <span class="callout critical-confirm">{{ confirmCriticalLabel }}: {{ critConfirmTotal }}</span>
+        {{/if}}
       {{/if}}
     </div>
 
@@ -56,26 +61,45 @@
   </div>
 
   {{#if warnings.length}}
-  <ul class="attack-card-warnings">
-    {{#each warnings}}
-    <li class="callout rule-warning">{{ this }}</li>
-    {{/each}}
-  </ul>
+    <ul class="attack-card-warnings">
+      {{#each warnings}}
+        <li class="callout rule-warning">{{ this }}</li>
+      {{/each}}
+    </ul>
   {{/if}}
 
-  {{!-- <div class="damage-preview">
-    <span class="label">{{ damagePreviewLabel }}</span>
-    <span class="value">{{ damageFormulaDisplay }}</span>
-    <span class="crit-multiplier">(&times;{{ critMultiplier }})</span>
-    {{#if nonLethal}}
-    <span class="callout non-lethal">{{ nonLethalLabel }}</span>
+  {{#if hasDamagePreview}}
+  <div class="damage-preview">
+    {{!-- The summary row is the click handle (not the whole box, unlike resolution-card.hbs's
+    `.ac-compare`) — `data-action="expandDamagePreview"` toggles `.expanded` on the breakdown
+    below it, see `onExpandDamagePreview()` in attackRollCard.mts. --}}
+    <div class="damage-preview-summary" data-action="expandDamagePreview" title="{{ damagePreviewToggleLabel }}">
+      <span class="label">{{ damagePreviewLabel }}</span>
+      <span class="value">{{ damageFormulaDisplay }}</span>
+      <span class="crit-multiplier">(&times;{{ critMultiplier }})</span>
+      {{#if nonLethal}}
+      <span class="callout non-lethal">{{ nonLethalLabel }}</span>
+      {{/if}}
+    </div>
+    {{#if hasDamagePreviewBreakdown}}
+    <div class="damage-preview-breakdown">
+      {{{ damagePreviewBreakdownHtml }}}
+    </div>
     {{/if}}
-  </div> --}}
+  </div>
+  {{/if}}
 
   {{#if targets.length}}
   <ul class="attack-card-targets">
     {{#each targets}}
     <li class="target-row {{#if this.resolved}}resolved{{/if}}">
+      <div class="target-row-actions">
+        {{#if this.resolved}}
+        <span class="resolution-badge {{#if this.hit}}hit{{else}}miss{{/if}}">{{#if this.hit}}{{../hitLabel}}{{else}}{{../missLabel}}{{/if}}</span>
+        {{/if}}
+        {{!-- Left clickable after resolution (not disabled) so a messed-up defense roll can be redone. --}}
+        <button type="button" class="apply-attack-btn" data-action="apply-attack" data-target-uuid="{{ this.actorUuid }}">{{#if this.resolved}}{{ ../reapplyLabel }}{{else}}{{ ../applyLabel }}{{/if}}</button>
+      </div>
       <span class="target-name" data-target-uuid="{{ this.actorUuid }}" data-target-token-uuid="{{ this.tokenUuid }}"></span>
     </li>
     {{/each}}

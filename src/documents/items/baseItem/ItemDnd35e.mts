@@ -7,7 +7,8 @@ import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.
 import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { NameFormulaDocument } from '@documents/document/logic/index.mjs';
 import { ensureNameFormulaOnCreate, getDisplayName } from '@documents/document/logic/index.mjs';
-import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
+import type { PreparationWarning, PreparationWarningHost } from '@documents/document/preparationWarnings.mjs';
+import { pushPreparationWarningToHosts } from '@documents/document/preparationWarnings.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import {
@@ -27,6 +28,7 @@ import type { ACTIVE_EFFECTS_DND35E } from '@effects/effectTypes.mjs';
 import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
 import type { FormulaDataSource } from '@helpers/formulae/FormulaData.mjs';
 import { FormulaData } from '@helpers/formulae/FormulaData.mjs';
+import { expandChangeTargetGroups } from '@helpers/formulae/index.mjs';
 import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { Override } from '@helpers/stacking.mjs';
 import type { ItemType } from '@items/index.mjs';
@@ -112,18 +114,24 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   //      stackReason?: string;
   //    }[];
   // }
-  effectOverrides: Record<string, Override[]> = {};
+  //
+  // All fields below are `declare` (no runtime initializer): core's `DataModel` constructor
+  // calls `_initialize()` -> `prepareData()` -> `prepareBaseData()` (which populates these)
+  // synchronously *inside* the `super()` chain. A real class-field initializer on this
+  // subclass would reinitialize to its default *after* `super()` returns under
+  // `useDefineForClassFields`, wiping out whatever `prepareBaseData()` just computed.
+  declare effectOverrides: Record<string, Override[]>;
 
-  _completedActiveEffectPhases: Set<string>;
+  declare _completedActiveEffectPhases: Set<string>;
 
   /** Runtime masks dictionary built from active Secret AE MASK changes. Keyed by field path. */
-  _masks: Record<string, unknown> = {};
+  declare _masks: Record<string, unknown>;
 
   /**
    * Non-blocking diagnostics collected during this prep cycle (broken formulas, etc.).
    * Reset every `prepareBaseData()` — see `preparationWarnings.mts`.
    */
-  _preparationWarnings: PreparationWarning[] = [];
+  declare _preparationWarnings: PreparationWarning[];
 
   private get _maskedNameFormula (): FormulaDataSource | null {
     const directMask = this._masks['system.nameFormula'] as FormulaLikeSource | undefined;
@@ -225,6 +233,10 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     this._prepareDerivedItemData();
     this.applyActiveEffects(FINAL_EFFECT_CHANGE_PHASE);
     this.applyActiveEffects(POST_EFFECT_CHANGE_PHASE);
+    // Resolve any FormulaFields whose AE changes only settle after the phases above (e.g.
+    // weapon attack actions' Group Change Target `attackFormula`/`damageFormula` changes,
+    // which apply in the 'final' phase) — see `DocumentSystemModel.resolveDeferredFormulaFields()`.
+    (this.system as unknown as { resolveDeferredFormulaFields(): void }).resolveDeferredFormulaFields();
   }
 
   /**
@@ -334,17 +346,32 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
           const { contextMap } = getEffectContexts(effect, change);
           if ( !evaluateChangeCondition(change, contextMap, this, effect) ) continue;
         }
-        const resolvedKey = resolveActiveEffectChangeKey(effect, change, this);
-        if (resolvedKey === KEY_RESOLUTION_FAILED) continue;
-        const changeWithResolvedKey = resolvedKey === change.key ? change : { ...change, key: resolvedKey };
-        const resolvedChange = resolveActiveEffectChange(effect, changeWithResolvedKey, this);
-        if (!resolvedChange) continue; // value formula failed to resolve — skip, warning already recorded
-        const copy = foundry.utils.deepClone(resolvedChange) as unknown as AppliedItemEffectChange;
-        copy.effect = effect;
-        copy.type ??= EFFECT_CHANGE_TYPE.ADD;
-        copy.priority ??= 0;
-        copy.label ??= effect.system.label ?? effect.name;
-        changes.push(copy);
+        // A malformed change (bad key/formula) must never abort the rest of data prep —
+        // that would leave this item unable to construct at all, so no sheet could ever
+        // open to let the user fix it. Any unexpected throw here (beyond the designed
+        // KEY_RESOLUTION_FAILED/null-return failure paths, which already record their own
+        // warning) is caught and recorded as a warning too, then this one change is skipped.
+        try {
+          const resolvedKey = resolveActiveEffectChangeKey(effect, change, this);
+          if (resolvedKey === KEY_RESOLUTION_FAILED) continue;
+          const changeWithResolvedKey = resolvedKey === change.key ? change : { ...change, key: resolvedKey };
+          const resolvedChange = resolveActiveEffectChange(effect, changeWithResolvedKey, this);
+          if (!resolvedChange) continue; // value formula failed to resolve — skip, warning already recorded
+          const copy = foundry.utils.deepClone(resolvedChange) as unknown as AppliedItemEffectChange;
+          copy.effect = effect;
+          copy.type ??= EFFECT_CHANGE_TYPE.ADD;
+          copy.priority ??= 0;
+          copy.label ??= effect.system.label ?? effect.name;
+          changes.push(copy);
+        } catch (err) {
+          console.error(`ItemDnd35e#applyActiveEffects: unexpected error applying change "${change.key}"`, err);
+          pushPreparationWarningToHosts(
+            [this as unknown as PreparationWarningHost, effect as unknown as PreparationWarningHost],
+            change.key,
+            `Unexpected error applying this change: ${err instanceof Error ? err.message : String(err)}`,
+            'error'
+          );
+        }
       }
       // Not sure how statuses should interact with item active effects, since they don't have tokens,
       // but we'll keep this here for now in case we want to add some sort of status effect functionality to items in the future.
@@ -354,9 +381,16 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
     }
     changes.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
 
+    // Expand any Group Change Target keys (poc §7.7, e.g. "#item.meleeWeaponAttacks.attackDamage")
+    // into their concrete per-action field paths before stacking — mirrors
+    // `ActorDnd35e.applyActiveEffects()`'s wiring. Non-group keys pass through unchanged. Named
+    // by `EFFECT_CHANGE_TARGET.ITEM` so a group declares which context it needs rather than
+    // relying on an implicit "the host".
+    const expandedChanges = expandChangeTargetGroups(changes, { [EFFECT_CHANGE_TARGET.ITEM]: this });
+
     // Resolve bonus-type stacking and apply the winners, recording Override
     // history for every field touched (shared with ActorDnd35e.applyActiveEffects).
-    applyStackedActiveEffectChanges(this, changes);
+    applyStackedActiveEffectChanges(this, expandedChanges);
   }
   
   get localizedType (): string {

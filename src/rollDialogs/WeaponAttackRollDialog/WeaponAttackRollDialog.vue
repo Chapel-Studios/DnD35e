@@ -1,5 +1,5 @@
 <template>
-  <RollDialog hide-total>
+  <RollDialog actor-header-label="dnd35e.ROLL.Attacker">
     <template #header>
       <ActorRollHeader
         v-if="targetName"
@@ -9,112 +9,81 @@
         orientation="right"
       />
     </template>
+
     <div class="subgrid">
-      <div class="to-hit-box">
-        <div class="bonus-row">
-          <span class="label">{{ toHitLabel }}</span>
-          <span class="value">{{ formatBonus(toHitTotal) }}</span>
-        </div>
-        <RollDialogFormulaField
-          id="attack-situational-modifier"
-          v-model="attackSituationalModifier"
-          label="dnd35e.ROLL.AttackSituationalModifier"
-          :contexts="formulaContexts"
-        />
-      </div>
-
-      <div class="damage-box">
-        <div class="bonus-row">
-          <span class="label">{{ damageLabel }}</span>
-          <span class="value">{{ formatBonus(damageTotal) }}</span>
-        </div>
-        <RollDialogFormulaField
-          id="damage-situational-modifier"
-          v-model="damageSituationalModifier"
-          label="dnd35e.ROLL.DamageSituationalModifier"
-          :contexts="formulaContexts"
-        />
-      </div>
-    </div>
-
-    <div v-if="combatModifierToggles.length" class="combat-modifiers subgrid">
-      <div v-if="attackTypeModifiers.length" class="modifier-group">
-        <h4>{{ localize('dnd35e.COMBAT.CombatModifiers.AttackType') }}</h4>
-        <label v-for="mod in attackTypeModifiers" :key="mod.id" class="modifier-toggle">
-          <input v-model="mod.checked" type="checkbox" />
-          {{ mod.label }}
-          <i class="fas fa-circle-question" :title="mod.tooltip" />
-        </label>
-      </div>
-      <div v-if="combatStatusModifiers.length" class="modifier-group">
-        <h4>{{ localize('dnd35e.COMBAT.CombatModifiers.CombatStatus') }}</h4>
-        <label v-for="mod in combatStatusModifiers" :key="mod.id" class="modifier-toggle">
-          <input v-model="mod.checked" type="checkbox" />
-          {{ mod.label }}
-          <i class="fas fa-circle-question" :title="mod.tooltip" />
-        </label>
-      </div>
-    </div>
-    <div v-if="wieldMode !== undefined" class="form-group subgrid">
-      <label>{{ localize('dnd35e.COMBAT.WieldMode.Label') }}</label>
-      <MultiOptionToggle :options="wieldModeOptions" :value="wieldMode" @update="onWieldModeUpdate" />
+      <RollBreakdown
+        class="to-hit-box"
+        type="multi"
+        input-id="attack-situational-modifier"
+        situational-label="dnd35e.ROLL.AttackSituationalModifier"
+        v-bind="attackRoll"
+        :schema="familiarSchema"
+      />
+      
+      <RollBreakdown
+        class="damage-box"
+        type="multi"
+        :show-sign="false"
+        input-id="damage-situational-modifier"
+        situational-label="dnd35e.ROLL.DamageSituationalModifier"
+        v-bind="damageRoll"
+        :schema="familiarSchema"
+      />
     </div>
 
     <slot />
+
+    <div class="form-group subgrid">
+      <label>{{ localize('dnd35e.COMBAT.WieldMode.Label') }}</label>
+      <MultiOptionToggle
+        :options="wieldModeOptions"
+        :value="wieldMode"
+        @update="onWieldModeUpdate"
+      />
+    </div>
   </RollDialog>
 </template>
 
 <script setup lang="ts">
-  import type { WieldedHand } from '@constants/equipmentSlots.mjs';
-  import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
+  import { WIELD_HANDS, type WieldedHand } from '@constants/equipmentSlots.mjs';
   import type { SelectOption } from '@vc/fields/index.mjs';
   import MultiOptionToggle from '@vc/fields/MultiOptionToggle.vue';
   import { computed, inject } from 'vue';
 
   import ActorRollHeader from '../RollDialog/ActorRollHeader.vue';
+  import RollBreakdown from '../RollDialog/RollBreakdown.vue';
   import RollDialog from '../RollDialog/RollDialog.vue';
-  import RollDialogFormulaField from '../RollDialog/RollDialogFormulaField.vue';
   import { formatBonus, RollDialogStoreSymbol } from '../RollDialog/RollDialogStore.mjs';
   import type { WeaponAttackRollDialogStore } from './WeaponAttackRollDialogStore.mjs';
 
   const {
-    weapon: {
-      combatModifierToggles,
-      attackTypeModifiers,
-      combatStatusModifiers,
-      attackSituationalModifier,
-      damageSituationalModifier,
-      wieldMode,
-      handBab,
-      formulaContexts,
-      damageTotal,
-      damageLabel,
-    },
+    attackRoll,
+    damageRoll,
     target: {
       image: targetImage,
       name: targetName,
     },
     app: {
-      baseLabel: toHitLabel,
-      total: toHitTotal,
+      familiarSchema,
+      wieldMode,
+      handBab,
     },
   } = inject(RollDialogStoreSymbol) as WeaponAttackRollDialogStore;
+
+  function localize(key: string): string {
+    return game.i18n.localize(key);
+  }
 
   // Each option's label gets a live `(+N)` BAB suffix (tokenHudActions.mts's own convention) —
   // `MultiOptionToggle` runs `game.i18n.localize()` on the composed string too, which is a
   // no-op once it no longer matches a translation key (see SelectFormGroup's same idiom).
-  const wieldModeOptions = computed<SelectOption<WieldedHand>[]>(() => [
-    { label: `${localize(`dnd35e.COMBAT.WieldMode.${MAIN_HAND_EQUIP_SLOT}`)} (${formatBonus(handBab.value[MAIN_HAND_EQUIP_SLOT])})`, value: MAIN_HAND_EQUIP_SLOT },
-    { label: `${localize(`dnd35e.COMBAT.WieldMode.${OFF_HAND_EQUIP_SLOT}`)} (${formatBonus(handBab.value[OFF_HAND_EQUIP_SLOT])})`, value: OFF_HAND_EQUIP_SLOT },
-    { label: `${localize(`dnd35e.COMBAT.WieldMode.${BOTH_HANDS_EQUIP_SLOT}`)} (${formatBonus(handBab.value[BOTH_HANDS_EQUIP_SLOT])})`, value: BOTH_HANDS_EQUIP_SLOT },
-  ]);
-
+  const wieldModeOptions = computed<SelectOption<WieldedHand>[]>(() => WIELD_HANDS.map(option => ({
+    value: option,
+    label: `${localize(`dnd35e.COMBAT.WieldMode.${option}`)} (${formatBonus(handBab.value[option])})`,
+  })));
+  
   function onWieldModeUpdate(value: WieldedHand): void {
     wieldMode.value = value;
-  }
-
-  function localize(key: string): string {
-    return game.i18n.localize(key);
   }
 </script>
 

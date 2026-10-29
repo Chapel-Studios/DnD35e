@@ -185,8 +185,6 @@
             <input id="combatant-config-standard" v-model.number="form.actionEconomy.actions.standard" type="number" min="0">
             <label for="combatant-config-move">{{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Move') }}</label>
             <input id="combatant-config-move" v-model.number="form.actionEconomy.actions.move" type="number" min="0">
-            <label for="combatant-config-minor">{{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Minor') }}</label>
-            <input id="combatant-config-minor" v-model.number="form.actionEconomy.actions.minor" type="number" min="0">
             <label for="combatant-config-swift">{{ localize('dnd35e.COMBAT.ACTION_ECONOMY.Swift') }}</label>
             <input id="combatant-config-swift" v-model.number="form.actionEconomy.actions.swift" type="number" min="0">
           </div>

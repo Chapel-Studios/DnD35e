@@ -187,6 +187,18 @@ These specialized agents can be invoked directly for specific planning tasks:
 
 **Invoke**: Type `/d35e-reference` (e.g., "How does D35E store weapon crit range?")
 
+### pr-feedback-review
+**When to use**: Pasting PR/code-review feedback for a validity critique before fixing anything — not a blind "apply all suggestions."
+
+**Capabilities**:
+- Splits pasted feedback into discrete, individually-assessed items
+- Cross-checks each item against instruction files, repo memory, and the relevant phase spec
+- Consults `d35e-reference`/`system-comparison` or `foundry-reference` when feedback claims legacy D35E or Foundry core behavior
+- Classifies each item (valid / valid-different-fix / not valid / out of scope) and presents verdicts for approval before editing
+- After the user stages approved fixes, commits the batch (plain message, no review framing) without pushing
+
+**Invoke**: Type `/pr-feedback-review` and paste the feedback (e.g., "Reviewer says X, is that right for us?")
+
 ### implementation-guide
 **When to use**: Step-by-step workflows for adding item types, mechanics, compendium entries, or features.
 
@@ -302,6 +314,7 @@ Choose the right tool for your task:
   - Ask `/d35e-reference` for D35E legacy schema and data paths
 - Ask `/implementation-guide` for step-by-step workflows
 - Ask `/e2e-testing` when adding test coverage for a user-visible behavior
+- Ask `/pr-feedback-review` when you paste review feedback and want a validity critique before fixing
 
 ### End of Session (Knowledge Base Curation)
 ```

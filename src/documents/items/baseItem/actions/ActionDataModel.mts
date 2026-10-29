@@ -14,16 +14,21 @@
  * @module
  */
 import { ACTION_ECONOMY, ACTION_ECONOMY_TYPES } from '@constants/actionEconomy.mjs';
+import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
+import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
+import type { PreparationWarningHost } from '@documents/document/preparationWarnings.mjs';
+import { pushPreparationWarning } from '@documents/document/preparationWarnings.mjs';
 import { EFFECT_CHANGE_PHASE, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
 import { requiredStringField, requiredTypedStringField } from '@fields/fieldBuilders.mjs';
-import type { DocumentContext, FormulaContextDeclaration } from '@helpers/formulae/index.mjs';
+import type { DocumentContext, FormulaContextDeclaration, FormulaDataSource } from '@helpers/formulae/index.mjs';
 import { FormulaData, FormulaField } from '@helpers/formulae/index.mjs';
 import type { ITEMS_DND35E } from '@items/itemTypes.mjs';
 
 import { ACTION_TRIGGER, ACTION_TRIGGERS, ACTION_TYPE, ACTION_TYPES } from '../actions/constants.mjs';
 import type { ActionResult, IAction, UseActionContext } from '../actions/types.mjs';
-import type { ActionSourceData } from './ActionSourceData.mjs';
+import type { ActionData, ActionSourceData } from './ActionSourceData.mjs';
+import { participantToken } from './logic/actionParticipant.mjs';
 
 const {
   fields: {
@@ -39,7 +44,7 @@ const {
 
 /**
  * Shared base schema/behavior for all weapon-attack action subtypes. Declares the public
- * `executeAction()`/`continue()` interface the execution engine (`useAction()`, Story D)
+ * `executeAction()`/`continueAction()` interface the execution engine (`useAction()`, Story D)
  * calls — never invoking attack-specific logic directly.
  *
  * Story C ships a functional-but-partial `executeAction()`: full signature, target-count
@@ -48,11 +53,11 @@ const {
  * Story D's deliverable (Attack Roll Dialog + `useAction()`).
  *
  * Generic over `TResult` so each concrete action kind (weapon attacks today, future spell
- * casts, etc.) can declare its own `executeAction()`/`continue()` result shape instead of
- * every kind's fields piling onto one shared `ActionResult`.
+ * casts, etc.) can declare its own `executeAction()`/`continueAction()` result shape instead
+ * of every kind's fields piling onto one shared `ActionResult`.
  */
 abstract class ActionDataModel<TResult extends ActionResult = ActionResult> extends foundry.abstract.DataModel {
-  declare name: FormulaData;
+  declare readonly _source: ActionSourceData;
   declare abstract isTargetRequired: boolean;
   declare maxTargets: number | null;
 
@@ -113,24 +118,70 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
     return this.parent?.parent as ITEMS_DND35E | undefined;
   }
 
+  protected getCombatant(context: UseActionContext): CombatantDnd35e<CombatDnd35e> | undefined {
+    const token = participantToken(context.actor);
+    
+    return token
+      ? game.combat?.getCombatantsByToken(token.id)[0] as CombatantDnd35e<CombatDnd35e> | undefined
+      : undefined;
+  }
+
+  /**
+   * Resets every `FormulaField`'s authored `formula` leaf back to its `_source` value before this
+   * cycle's active effects apply. AE `add`/`subtract` changes now target the `.formula` leaf
+   * directly (see `RollFormulaStringField`), so without this reset their deltas would compound
+   * across every `prepareData()` pass (the "Lucky Lucky Lucky" accumulation bug). Mirrors
+   * `ItemDnd35e.prepareBaseData()`'s own `nameFormula.formula` reset. Called explicitly by the
+   * owning system model (see `WeaponSystemModel.prepareBaseData()`).
+   */
+  resetFormulaFields(): void {
+    const item = this.item;
+    const liveActions = (item?.system as { actions?: Array<{ _id: string }> } | undefined)?.actions;
+    const index = Array.isArray(liveActions) ? liveActions.findIndex((action) => action._id === this._id) : -1;
+    const sourceAction = index >= 0
+      ? (item?._source as { system?: { actions?: Array<Record<string, { formula?: string } | undefined>> } } | undefined)?.system?.actions?.[index]
+      : undefined;
+    const fields = (this.constructor as typeof ActionDataModel).schema.fields as Record<string, foundry.data.fields.DataField>;
+    for (const [key, field] of Object.entries(fields)) {
+      if (!(field instanceof FormulaField)) continue;
+      const formulaSource = (this as unknown as Record<string, FormulaDataSource | undefined>)[key];
+      if (!formulaSource) continue;
+      const sourceFormula = sourceAction?.[key]?.formula;
+      if (typeof sourceFormula === 'string') formulaSource.formula = sourceFormula;
+      // Realign `expectedType` with the field's declared type — stored data can carry a stale
+      // `'string'` (pre-rollFormula authoring), which would make the leaf's AE add/subtract fall
+      // back to plain concatenation (`$scaleDamage(1d8)` + `2` -> `$scaleDamage(1d8)2`).
+      formulaSource.expectedType = field.expectedType;
+    }
+  }
+
   /**
    * Resolves every `FormulaField` declared on this action's own schema, anchored to the
    * action itself rather than the owning system model — `DocumentSystemModel`'s generic
    * `prepareDerivedData()`/`_buildFormulaDataMap()` never recurses into `system.actions`
    * (an `ArrayField`), so it can't do this on the action's behalf. Not auto-invoked by
    * Foundry for embedded (non-Document) DataModels — called explicitly by the owning
-   * system model (see `WeaponSystemModel.prepareDerivedData()`).
+   * system model (see `WeaponSystemModel.resolveDeferredFormulaFields()`) *after* the
+   * owning item's own FINAL/POST active-effect phases, since Group Change Target AE
+   * changes targeting `attackFormula`/`damageFormula` apply in the `'final'` phase —
+   * resolving any earlier would read a not-yet-AE-settled formula.
+   *
+   * Uses the static `FormulaData.resolveSource()` (not the instance `.resolve()` method):
+   * core's `ActiveEffect.applyChangeField()` writes an AE's returned value back via a raw
+   * `foundry.utils.setProperty()`, which replaces the live `FormulaData` instance with a
+   * plain POJO (no re-casting) — so a field touched by a `'final'`-phase AE is no longer
+   * a real `FormulaData` by the time this runs, and `.resolve()` wouldn't exist on it.
    */
-  prepareDerivedData(): void {
+  resolveFormulaFields(): void {
     const fields = (this.constructor as typeof ActionDataModel).schema.fields as Record<string, foundry.data.fields.DataField>;
     for (const [key, field] of Object.entries(fields)) {
       if (!(field instanceof FormulaField)) continue;
-      const formulaData = (this as unknown as Record<string, FormulaData | undefined>)[key];
-      if (!formulaData) continue;
+      const formulaSource = (this as unknown as Record<string, FormulaDataSource | undefined>)[key];
+      if (!formulaSource) continue;
       const dataMap = this._buildFormulaContext(field.formulaContexts);
-      const resolved = formulaData.resolve(dataMap, '', field.excludedFields);
+      const resolved = FormulaData.resolveSource(formulaSource, dataMap, '', field.excludedFields, (reason) => pushPreparationWarning(this.item as unknown as PreparationWarningHost, key, reason));
       // `resolvedValue` is a StringField — stringify number/boolean results before storing (see ItemDnd35e._maskedNameFormula for the same convention).
-      formulaData.resolvedValue = resolved === null ? null : String(resolved);
+      formulaSource.resolvedValue = resolved === null ? null : String(resolved);
     }
   }
 
@@ -167,13 +218,28 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
    * FINAL`, so all of a weapon's actions are known to exist first. Generic on the base
    * class since every action subtype (weapon attack, future spell cast, ...) contributes
    * the same stub shape.
+   *
+   * Returns `null` when `item.uuid` isn't resolvable yet — `Document#uuid` falls back to
+   * `foundry.utils.buildUuid()`, which returns `null` (not an empty/malformed string)
+   * whenever any ancestor in the parent chain (including this item's own owning Actor)
+   * doesn't have an assigned `_id` yet. This happens transiently during the very first
+   * `prepareData()` pass of a brand-new, not-yet-persisted Actor — e.g. dragging a
+   * compendium actor into the world or onto a token — before the optimistic client-side
+   * `_id` has propagated through the whole parent chain. Emitting a change with
+   * `itemUuid: null` would fail the actor-side `system.actions.<id>` schema's
+   * `required/blank: false` validation (`SchemaField#_validateRecursive`); skipping the
+   * contribution for this cycle is safe since `prepareData()` reruns on every subsequent
+   * render/update and will pick it up once the uuid is known.
    */
-  createActionChange(): EffectChangeDataDnd35e {
+  createActionChange(): EffectChangeDataDnd35e | null {
+    const itemUuid = this.item?.uuid;
+    if (!itemUuid) return null;
+
     // not sure if we actually want this to be system or not, but for now it is
     const isSystem = true;
     const stub: IAction = {
       id: this._id,
-      itemUuid: this.item!.uuid,
+      itemUuid,
       type: this.type,
       isSystem,
     };
@@ -199,7 +265,6 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
     // const { enforceActionTargetMinMax } = useCombatSettings();
     const enforceActionTargetMinMax = false; // Placeholder until combat settings are integrated
 
-    // todo add toggle for enforcing target min/max requirements
     if (!context.target?.length && this.isTargetRequired) {
       if (enforceActionTargetMinMax) {
         result.cancelled = true;
@@ -222,18 +287,14 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
 
       result.warnings!.push(game.i18n.format('dnd35e.COMBAT.TooManyTargets', { max: this.maxTargets }));
     }
-
-    // Placeholder logic for determining if the action can be executed.
+    
     return result;
   }
 
   protected abstract _executeCheck(context: UseActionContext): Promise<TResult>;
 
   /**
-   * Public entry point the execution engine calls — never attack-specific logic directly.
-   * Story C: validates target count and (for melee actions with no `range` block) the
-   * attacker/target reach, then returns early. Story D fills in the Attack Roll Dialog,
-   * roll resolution, and chat card (see phase-10-basic-combat.md §10.7).
+   * Public entry point the execution engine calls — should never be overwritten by subclasses.
    */
   async executeAction(context: UseActionContext): Promise<TResult> {
     const preCheckResult = this._canExecute(context);
@@ -252,17 +313,21 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
 
   protected abstract _postExecute(context: UseActionContext, result: TResult): Promise<void>;
 
+  protected abstract _continue(stepId: string, message: unknown, targetId: string): Promise<TResult>;
+
   /**
-   * Advances a previously-posted attack card's action chain (e.g. the `damage` chain
-   * link after a successful hit). Story D scope — see §10.7's Roll Defense Dialog design.
+   * Sealed entry point for advancing a previously-posted attack card's action chain (e.g.
+   * the `damage` chain link after a successful hit) — leaf actions override `_continue()`,
+   * never this. Unlike `executeAction()`, there's no shared post-step hook here: a chain
+   * step (e.g. Story E's Roll Defense Dialog + Resolution card) is fully self-contained,
+   * so `_continue()`'s own return value is the final result.
    */
-  async continue(_stepId: string, _message: unknown, _targetId: string): Promise<TResult> {
-    console.warn('dnd35e | ActionDataModel#continue(): Story D scope — not yet implemented.');
-    return { cancelled: true, reason: 'notImplemented', warnings: [] } as unknown as TResult;
+  async continueAction(stepId: string, message: ChatMessage, targetId: string): Promise<TResult> {
+    return this._continue(stepId, message, targetId);
   }
 }
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- TResult must match the class's type param for declaration merging.
-interface ActionDataModel<TResult extends ActionResult = ActionResult> extends foundry.abstract.DataModel, ActionSourceData {}
+interface ActionDataModel<TResult extends ActionResult = ActionResult> extends foundry.abstract.DataModel, ActionData {}
 
 export {
   ActionDataModel,

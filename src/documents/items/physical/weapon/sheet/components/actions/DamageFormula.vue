@@ -3,10 +3,11 @@
     :label="'dnd35e.WEAPON.ACTIONS.Fields.damageFormula.label'"
     :tooltip="'dnd35e.WEAPON.ACTIONS.Fields.damageFormula.hint'"
     :value="damageFormulaData.formula"
+    :source-value="damageFormulaSourceText"
     :field-path="getFieldPath('damageFormula.formula')"
+    :override-field-path="getOverrideFieldPath('damageFormula.formula')"
     :contexts="familiarContexts"
     :on-update="(v: string) => updateActionField('damageFormula', { ...damageFormulaData, formula: v })"
-    hide-field-controls
     class="grid-full-row"
   />
 </template>
@@ -18,10 +19,11 @@
   import { inject } from 'vue';
 
   const {
-    getters: { damageFormulaData, familiarContexts },
+    getters: { damageFormulaData, damageFormulaSourceText, familiarContexts },
     actions: {
       updateActionField,
       getFieldPath,
+      getOverrideFieldPath,
     },
   } = inject(ActionEditorStoreSymbol) as WeaponAttackEditorStore;
 </script>

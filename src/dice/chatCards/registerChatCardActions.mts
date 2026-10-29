@@ -12,6 +12,7 @@ import { wireItemActionSpentCardButton } from './actionSpentCard/actionSpentCard
 import { wireAttackRollCardButton } from './attackRollCard/attackRollCard.mjs';
 import { wireMoveActionCardButton } from './moveActionCard/moveActionCard.mjs';
 import { wireProneToggleCardButton } from './proneToggleCard/proneToggleCard.mjs';
+import { wireResolutionCardButton } from './resolutionCard/resolutionCard.mjs';
 
 function registerChatCardActions(): void {
   // dnd35e type-fix: `renderChatMessageHTML` has no typed overload in Hooks.on() (see
@@ -26,6 +27,7 @@ function registerChatCardActions(): void {
     wireProneToggleCardButton(message, html);
     wireItemActionSpentCardButton(message, html);
     wireAttackRollCardButton(message, html);
+    wireResolutionCardButton(message, html);
   });
 }
 
