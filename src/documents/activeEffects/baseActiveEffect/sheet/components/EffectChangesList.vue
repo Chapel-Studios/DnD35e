@@ -5,7 +5,7 @@
   >
     <div class="changes-header">
       <h3>{{ resolvedTitle }}</h3>
-      <button type="button" @click="createChange" :disabled="!isEditMode" class="add-change">
+      <button type="button" @click="createChange" :disabled="!isEditMode || !isSheetEditable" class="add-change">
         <i class="fa-solid fa-plus"></i>
         {{ resolvedAddLabel }}
       </button>
@@ -182,7 +182,7 @@
     createChangeData: undefined,
   });
 
-  const { isEditMode } = inject(RenderModeStoreSymbol) as RenderModeStore;
+  const { isEditMode, isSheetEditable } = inject(RenderModeStoreSymbol) as RenderModeStore;
   const store = inject(DocumentSheetStoreSymbol) as ActiveEffectConfigStore;
   const {
     documentGetters: {
@@ -406,6 +406,8 @@
   };
 
   const createChange = async () => {
+    if (!isEditMode.value || !isSheetEditable.value) return;
+
     await addChange({
       key: '',
       type: EFFECT_CHANGE_TYPE.ADD,
@@ -422,6 +424,8 @@
   };
 
   const deleteChange = async (id: string) => {
+    const index = store.documentGetters.changes.value.findIndex((change) => change.id === id);
+    if (index < 0 || !isChangeEditable(index)) return;
     await removeChange?.(id);
   };
 
