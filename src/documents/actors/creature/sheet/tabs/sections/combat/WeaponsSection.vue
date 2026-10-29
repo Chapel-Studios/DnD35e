@@ -33,6 +33,7 @@
             <button
               type="button"
               class="field-control-btn attack-btn"
+              :disabled="!isSheetEditable"
               :title="localize('dnd35e.ACTOR.actions.action.attack')"
               @click="onAttack(row.itemId, row.actionId)"
             >
@@ -46,7 +47,8 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import type { RenderModeStore } from '@documents/document/index.mjs';
+  import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
   import type { WeaponAction } from '@items/baseItem/actions/types.mjs';
   import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
@@ -65,6 +67,7 @@
     documentGetters: { physicalItems },
     documentActions: { useActionFromSheet },
   } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
+  const { isSheetEditable } = inject(RenderModeStoreSymbol) as RenderModeStore;
 
   const {
     measurement: { convertToLocalizedDistance, distanceDisplayShortLabel },
@@ -112,6 +115,7 @@
   });
 
   const onAttack = async (itemId: string, actionId: string): Promise<void> => {
+    if (!isSheetEditable.value) return;
     // Sheet-triggered attacks bypass target selection - unlike the Token HUD, which
     // requires a target since it has no other way to know who's being attacked.
     const targetToken = (game.user?.targets?.first() ?? undefined) as TokenDnd35e | undefined;

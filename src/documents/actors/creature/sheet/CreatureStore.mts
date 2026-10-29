@@ -40,7 +40,7 @@ const useCreatureStore = <TDocument extends Creature>(
 ): CreatureDocumentStore<TDocument> => {
   const actorStore = useActorSheetStore<TDocument>(context, options);
   const { getViewAwareFieldValue } = actorStore.documentGetters;
-  const { document } = actorStore._storeUtils;
+  const { document, renderModeStore } = actorStore._storeUtils;
   
   const {
     currency: { highestVisibleCoin },
@@ -121,6 +121,10 @@ const useCreatureStore = <TDocument extends Creature>(
       await document.value.rollInitiativeCheck();
     },
     useActionFromSheet: async (itemId: string, actionId: string, target?: TokenDnd35e): Promise<void> => {
+      if (!renderModeStore.isSheetEditable.value) {
+        console.warn('Cannot trigger an action from a read-only sheet');
+        return;
+      }
       await document.value.useAction(itemId, actionId, target ? [target] : undefined);
     },
   };

@@ -72,7 +72,7 @@
 
   const sourceValue = getSourceProperty<number | null>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.value !== undefined || !sourceValue) return resolvedValue.value;
+    if (!isEditMode.value || props.value !== undefined || !sourceValue) return resolvedValue.value;
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
     return sourceValue.value as number | null;
   });

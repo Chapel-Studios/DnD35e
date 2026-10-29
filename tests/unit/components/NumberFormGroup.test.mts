@@ -170,4 +170,39 @@ describe('NumberFormGroup — passthrough smoke test', () => {
     expect(input.exists()).toBe(true);
     expect((input.element as HTMLInputElement).value).toBe('42');
   });
+
+  it('uses the effective masked value as the basis for a forced Play-mode edit', async () => {
+    const update = vi.fn();
+    const documentStore = createMockDocumentStore({
+      fieldEditability: { [FIELD_PATH]: true },
+      sourceValues: { [FIELD_PATH]: 30 },
+    }) as {
+      documentGetters: { getViewAwareFieldValue: (path: string) => number };
+      documentActions: { getViewAwareFieldUpdater: (path: string) => (value: unknown) => void };
+    };
+    documentStore.documentGetters.getViewAwareFieldValue = vi.fn(() => 12);
+    documentStore.documentActions.getViewAwareFieldUpdater = vi.fn(() => update);
+
+    const wrapper = mount(NumberFormGroup, {
+      props: {
+        fieldPath: FIELD_PATH,
+        forceEdit: true,
+      },
+      global: {
+        provide: makeGlobalProvide({
+          documentStore,
+          renderModeStore: createMockRenderModeStore({ isGM: false, isEditMode: false, isPlayMode: true }),
+        }),
+        stubs: {
+          FieldControls: { template: '<div class="fc-stub"><slot /></div>' },
+        },
+      },
+    });
+
+    const input = wrapper.find('input[type="number"]');
+    expect((input.element as HTMLInputElement).value).toBe('12');
+
+    await input.setValue('11');
+    expect(update).toHaveBeenCalledWith(11);
+  });
 });
