@@ -22,6 +22,11 @@ class RangedWeaponAttack extends WeaponAttackDataModel {
   declare readonly _source: RangedAttackSourceData;
   declare properties: RangedAttackData['properties'];
 
+  /** Story F will enable roll-formula diagnostics for ranged actions; H proves melee first. */
+  protected override get preparationRollFormulaFields(): readonly string[] {
+    return [];
+  }
+
   static override defineSchema(): Record<string, any> {
     const schema = super.defineSchema();
     schema.type = new StringField({

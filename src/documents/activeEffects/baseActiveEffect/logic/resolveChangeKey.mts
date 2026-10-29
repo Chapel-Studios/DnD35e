@@ -95,7 +95,16 @@ function resolveActiveEffectChangeKey(
 
   const fail = (reason: string): typeof KEY_RESOLUTION_FAILED => {
     console.error(`resolveActiveEffectChangeKey: ${reason}`);
-    pushPreparationWarningToHosts([warnHost, effect as unknown as PreparationWarningHost], rawKey, reason);
+    pushPreparationWarningToHosts(
+      [
+        warnHost,
+        effect as unknown as PreparationWarningHost,
+      ],
+      rawKey,
+      reason,
+      'warning',
+      { id: `change:${change.id ?? change.key}:key:resolution` }
+    );
     return KEY_RESOLUTION_FAILED;
   };
 

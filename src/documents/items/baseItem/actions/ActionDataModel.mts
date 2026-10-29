@@ -16,13 +16,12 @@
 import { ACTION_ECONOMY, ACTION_ECONOMY_TYPES } from '@constants/actionEconomy.mjs';
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
-import type { PreparationWarningHost } from '@documents/document/preparationWarnings.mjs';
 import { pushPreparationWarning } from '@documents/document/preparationWarnings.mjs';
 import { EFFECT_CHANGE_PHASE, EFFECT_CHANGE_TARGET, EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/index.mjs';
 import { requiredStringField, requiredTypedStringField } from '@fields/fieldBuilders.mjs';
 import type { DocumentContext, FormulaContextDeclaration, FormulaDataSource } from '@helpers/formulae/index.mjs';
-import { FormulaData, FormulaField } from '@helpers/formulae/index.mjs';
+import { FormulaData, FormulaField, FormulaResolver } from '@helpers/formulae/index.mjs';
 import type { ITEMS_DND35E } from '@items/itemTypes.mjs';
 
 import { ACTION_TRIGGER, ACTION_TRIGGERS, ACTION_TYPE, ACTION_TYPES } from '../actions/constants.mjs';
@@ -155,6 +154,13 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
     }
   }
 
+  protected get preparationRollFormulaFields(): readonly string[] {
+    const fields = (this.constructor as typeof ActionDataModel).schema.fields as Record<string, foundry.data.fields.DataField>;
+    return Object.entries(fields)
+      .filter(([, field]) => field instanceof FormulaField && field.expectedType === 'rollFormula')
+      .map(([key]) => key);
+  }
+
   /**
    * Resolves every `FormulaField` declared on this action's own schema, anchored to the
    * action itself rather than the owning system model — `DocumentSystemModel`'s generic
@@ -174,12 +180,39 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
    */
   resolveFormulaFields(): void {
     const fields = (this.constructor as typeof ActionDataModel).schema.fields as Record<string, foundry.data.fields.DataField>;
+    const rollFormulaFields = this.preparationRollFormulaFields;
     for (const [key, field] of Object.entries(fields)) {
       if (!(field instanceof FormulaField)) continue;
       const formulaSource = (this as unknown as Record<string, FormulaDataSource | undefined>)[key];
+      const validateRoll = rollFormulaFields.includes(key);
+      const report = (message: string): void => pushPreparationWarning(
+        this.item,
+        `system.actions.${this._id}.${key}.formula`,
+        message,
+        validateRoll ? 'error' : 'warning',
+        { id: `action:${this._id}:formula:${key}` }
+      );
+      if (validateRoll && !formulaSource?.formula.trim()) {
+        report(game.i18n.localize('dnd35e.COMMON.PreparationWarningMissingFormula'));
+        if (formulaSource) formulaSource.resolvedValue = null;
+        continue;
+      }
       if (!formulaSource) continue;
       const dataMap = this._buildFormulaContext(field.formulaContexts);
-      const resolved = FormulaData.resolveSource(formulaSource, dataMap, '', field.excludedFields, (reason) => pushPreparationWarning(this.item as unknown as PreparationWarningHost, key, reason));
+      // Actor-dependent formulas cannot be validated fully on an unowned weapon.
+      const unavailableContexts = field.formulaContexts
+        .filter(declaration => !dataMap[declaration.contextName])
+        .flatMap(declaration => [declaration.contextName, ...declaration.aliases ?? []])
+        .map(name => name.toLowerCase());
+      const deferred = validateRoll && FormulaResolver.extractVariables(formulaSource.formula).some(variable =>
+        unavailableContexts.includes(variable.context.toLowerCase())
+      );
+      const resolved = FormulaData.resolveSource(
+        formulaSource, dataMap, '', field.excludedFields, deferred ? undefined : report
+      );
+      if (validateRoll && !deferred && resolved !== null && !Roll.validate(String(resolved))) {
+        report(game.i18n.localize('dnd35e.COMMON.PreparationWarningInvalidFormula'));
+      }
       // `resolvedValue` is a StringField — stringify number/boolean results before storing (see ItemDnd35e._maskedNameFormula for the same convention).
       formulaSource.resolvedValue = resolved === null ? null : String(resolved);
     }
