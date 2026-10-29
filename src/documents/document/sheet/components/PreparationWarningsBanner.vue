@@ -21,6 +21,7 @@
 <script lang="ts" setup>
   import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import { getPreparationWarningBannerState } from '@documents/document/preparationWarningPreferences.mjs';
   import { computed, inject } from 'vue';
 
   import { dismissPreparationWarnings, isPreparationWarningsDismissed } from './preparationWarningsDismissal.mjs';
@@ -28,7 +29,9 @@
   const localize = (key: string): string => game.i18n.localize(key);
 
   const { documentGetters } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
-  const warnings = documentGetters.preparationWarnings;
+  const warnings = computed(() => documentGetters.preparationWarnings.value.filter(
+    warning => getPreparationWarningBannerState(warning).banner
+  ));
   const documentUuid = documentGetters.documentUuid;
 
   // Dismissable per-document for the browser session (see preparationWarningsDismissal.mts) -

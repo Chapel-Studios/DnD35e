@@ -8,15 +8,22 @@
  * @module
  */
 
+import { getPreparationWarningBannerState, preparationWarningKey } from '@documents/document/preparationWarningPreferences.mjs';
 import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
+import { shallowReactive } from 'vue';
 
-const dismissedSignatures = new Map<string, string>();
+const dismissedSignatures = shallowReactive(new Map<string, string>());
 
 /** Stable identity for a warning set - order-independent, ignores message text so a
  * re-worded warning for the same field/source doesn't defeat the dismissal. */
 const buildSignature = (warnings: PreparationWarning[]): string =>
   warnings
-    .map((warning) => `${warning.sourceUuid}:${warning.field}`)
+    .filter((warning) => getPreparationWarningBannerState(warning).banner)
+    .map((warning) => JSON.stringify([
+      warning.sourceUuid,
+      preparationWarningKey(warning),
+      getPreparationWarningBannerState(warning).revision,
+    ]))
     .sort()
     .join('|');
 

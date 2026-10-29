@@ -2,6 +2,7 @@ import type { ActorType } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import { MASKED_EDIT_STRATEGY, type MaskedEditStrategy } from '@constants/fields.mjs';
+import { setPreparationWarningBanner } from '@documents/document/preparationWarningPreferences.mjs';
 import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
 import type { ActiveEffectDnd35e, EffectType } from '@effects/index.mjs';
 import { addOrUpdatePlayerEditMask, findOrCreatePlayerEditSecret } from '@effects/secret/playerEditSecret.mjs';
@@ -93,6 +94,7 @@ type DocumentSheetStoreDocumentGetters = FieldOverridesStoreGetters & {
   familiarSchema: ComputedRef<FamiliarSchema>;
   /** Diagnostics from this document's own last prep cycle - actors additionally aggregate owned items' warnings, see `ActorSheetStore`. */
   preparationWarnings: ComputedRef<PreparationWarning[]>;
+  isPreparationWarningUpdatePending: ComputedRef<boolean>;
 };
 
 type DocumentSheetStoreDocumentActions<TDocument extends SheetDocument> = FieldOverridesStoreActions & {
@@ -100,6 +102,7 @@ type DocumentSheetStoreDocumentActions<TDocument extends SheetDocument> = FieldO
   viewModeAwareUpdateDocument: (data: Record<string, unknown>, options?: Partial<DatabaseUpdateOperation<TDocument>>) => Promise<boolean>;
   getViewAwareFieldUpdater: (path: string, options?: Partial<DatabaseUpdateOperation<TDocument>>) => (value: unknown) => Promise<boolean>;
   updateFlag: (key: string, value: unknown) => Promise<boolean>;
+  setPreparationWarningBanner: (warning: PreparationWarning, banner: boolean | null) => Promise<boolean>;
 };
 
 type DocumentSheetStore<TDocument extends SheetDocument = SheetDocument> = {
@@ -151,6 +154,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
   // --- Core state ---
   const document = shallowRef(context.document);
+  const isPreparationWarningUpdatePending = ref(false);
   const state = reactive({
     ...createBaseState(),
     renderOptions: unref(context.renderOptions),
@@ -442,6 +446,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     img: computed(() => getViewAwareFieldValue('img') || ''),
     description: computed(() => getViewAwareFieldValue('system.description') || ''),
     preparationWarnings: computed(() => [...(document.value._preparationWarnings ?? [])]),
+    isPreparationWarningUpdatePending: computed(() => isPreparationWarningUpdatePending.value),
 
     // Field overrides (delegated to FieldOverridesStore)
     ...fieldOverridesGetters,
@@ -456,6 +461,12 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
 
   // --- Actions ---
 
+  const refreshDocument = async (doc?: TDocument | null): Promise<void> => {
+    if (!doc) doc = await _getFreshDocumentImpl.value(document.value.uuid);
+    document.value = doc ?? null;
+    triggerRef(document);
+  };
+
   const documentActions: DocumentSheetStoreDocumentActions<TDocument> = {
     // updateDocument,
     viewModeAwareUpdateDocument,
@@ -466,6 +477,24 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       return async (value: unknown) => viewModeAwareUpdateDocument({ [path]: value }, options);
     },
     updateFlag,
+    setPreparationWarningBanner: async (warning, banner) => {
+      if (isPreparationWarningUpdatePending.value) return false;
+      isPreparationWarningUpdatePending.value = true;
+      try {
+        await setPreparationWarningBanner(warning, banner);
+        await refreshDocument();
+        return true;
+      } catch (error) {
+        Hooks.onError(
+          'DocumentSheetStore#setPreparationWarningBanner',
+          error instanceof Error ? error : new Error(String(error)),
+          { log: 'error', notify: 'error' }
+        );
+        return false;
+      } finally {
+        isPreparationWarningUpdatePending.value = false;
+      }
+    },
     ...fieldOverridesActions,
   };
 
@@ -488,13 +517,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     setGetFreshDocument: (fn: (id: string) => Promise<TDocument | null>) => {
       _getFreshDocumentImpl.value = fn;
     },
-    refreshDocument: async (doc?: TDocument | null) => {
-      if (!doc) {
-        doc = await _getFreshDocumentImpl.value(document.value.uuid);
-      }
-      document.value = doc ?? null;
-      triggerRef(document);
-    },
+    refreshDocument,
     refreshContext: async (context: Partial<VueApplicationContext<TDocument>> | undefined) => {
       document.value = context?.document
         ?? await _getFreshDocumentImpl.value(document.value.uuid)
