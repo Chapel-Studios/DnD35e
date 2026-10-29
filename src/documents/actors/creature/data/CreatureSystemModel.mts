@@ -92,6 +92,9 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     this.attacks.meleeToHitBonus = 0;
     this.attacks.rangedToHitBonus = 0;
     this.attacks.rangedTouchToHitBonus = 0;
+    this.attacks.twoWeaponFightingModifierMainHand = 0;
+    this.attacks.twoWeaponFightingModifierOffHand = 0;
+
     this.actions = {};
   }
 
