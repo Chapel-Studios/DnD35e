@@ -54,7 +54,7 @@ describe('preparation diagnostic prominence', () => {
   let user: { isGM: boolean };
   let packs: Map<string, { locked: boolean }>;
   const hosts: Array<ReturnType<typeof mount>> = [];
-  function makeStore(mode: ViewMode = 'edit') {
+  function makeStore(mode: ViewMode = 'edit', editable = true) {
     const item = Object.assign(source, {
       documentName: 'Item', type: 'weapon', system: {}, effects: [],
     }) as unknown as ItemDnd35e;
@@ -66,7 +66,7 @@ describe('preparation diagnostic prominence', () => {
           appConfigOptions: { document: item } as VueApplicationContext<ItemDnd35e>['appConfigOptions'],
           close: async () => {},
         };
-        store = useDocumentSheetStore(context, { renderModeStore: useRenderModeStore(true, true, mode), defaultTabs: [] });
+        store = useDocumentSheetStore(context, { renderModeStore: useRenderModeStore(true, true, mode, editable), defaultTabs: [] });
         store._storeUtils.setGetFreshDocument(async () => item);
         return () => h('div');
       },
@@ -88,6 +88,8 @@ describe('preparation diagnostic prominence', () => {
     });
     Object.assign(foundry.utils, {
       fromUuidSync: vi.fn((uuid: string) => uuid === source.uuid ? source : null),
+      fromUuid: vi.fn(async (uuid: string) => uuid === source.uuid ? source : null),
+      parseUuid: vi.fn(() => ({ embedded: [] })),
       randomID: vi.fn().mockReturnValueOnce('revision-one').mockReturnValueOnce('revision-two').mockReturnValue('revision-three'),
     });
   });
@@ -115,6 +117,59 @@ describe('preparation diagnostic prominence', () => {
     expect(preparationWarningKey({ ...warning, id: 'action.one' })).not.toContain('.');
   });
 
+  it('reads loaded compendium documents and asynchronously loads indexed sources for writes', async () => {
+    source.uuid = 'Compendium.dnd35e.weapons.Item.sword';
+    source.pack = 'dnd35e.weapons';
+    packs.set(source.pack, { locked: false });
+    const warning = makeWarning(source.uuid);
+    vi.mocked(foundry.utils.fromUuidSync).mockReturnValueOnce({
+      _id: 'sword', name: 'Sword', type: 'weapon', img: 'icons/svg/sword.svg', uuid: 'Compendium.dnd35e.weapons.Item.sword',
+    });
+    expect(getPreparationWarningBannerState(warning).banner).toBe(true);
+    await setPreparationWarningBanner(warning, false);
+    expect(foundry.utils.fromUuid).toHaveBeenCalledWith(source.uuid);
+    expect(getPreparationWarningBannerState(warning).banner).toBe(false);
+    await setPreparationWarningBanner(warning, null);
+    expect(getPreparationWarningBannerState(warning).banner).toBe(true);
+  });
+
+  it('reads embedded compendium sources from the loaded root and writes through their full UUID', async () => {
+    const rootUuid = 'Compendium.dnd35e.weapons.Item.sword';
+    source.uuid = `${rootUuid}.ActiveEffect.effect`;
+    source.pack = 'dnd35e.weapons';
+    packs.set(source.pack, { locked: false });
+    const getEmbeddedDocument = vi.fn(() => source);
+    vi.mocked(foundry.utils.parseUuid).mockReturnValue({
+      type: 'ActiveEffect', embedded: ['ActiveEffect', 'effect'],
+    });
+    Object.assign(foundry.utils, {
+      fromUuidSync: vi.fn((uuid: string) => {
+        if (uuid !== rootUuid) throw new Error('Embedded compendium UUID cannot resolve synchronously');
+        return { getEmbeddedDocument };
+      }),
+    });
+    const warning = makeWarning(source.uuid);
+    await setPreparationWarningBanner(warning, false);
+    expect(foundry.utils.fromUuid).toHaveBeenCalledWith(source.uuid);
+    expect(getPreparationWarningBannerState(warning).banner).toBe(false);
+    expect(getEmbeddedDocument).toHaveBeenCalledWith('ActiveEffect', 'effect');
+    packs.set(source.pack, { locked: true });
+    await expect(setPreparationWarningBanner(warning, true)).rejects.toThrow('SourceLocked');
+  });
+
+  it('keeps preferences independent for changes sharing a target and for rules on one change', async () => {
+    const actor = { name: 'Hero', uuid: 'Actor.hero', _preparationWarnings: [] as PreparationWarning[] };
+    const effect = { ...source, parent: actor };
+    for (const id of ['change:first:value:formula', 'change:second:value:formula', 'change:first:condition:formula']) {
+      pushPreparationWarningToHosts([actor, effect], 'system.hardness', 'Failed', 'warning', { id, defaultBanner: true });
+    }
+    const [first, second, condition] = actor._preparationWarnings;
+    await setPreparationWarningBanner(first, false);
+    expect(getPreparationWarningBannerState(first).banner).toBe(false);
+    expect(getPreparationWarningBannerState(second).banner).toBe(true);
+    expect(getPreparationWarningBannerState(condition).banner).toBe(true);
+    expect(effect._preparationWarnings).toEqual(actor._preparationWarnings);
+  });
   it('reopens dismissed banners on promotion and reset, but not on tab-only changes', async () => {
     const warning = makeWarning();
     dismissPreparationWarnings('sheet-promote', [warning]);
@@ -181,7 +236,10 @@ describe('preparation diagnostic prominence', () => {
     const tab = mount(PreparationWarningsTab, {
       global: { provide: { [DocumentSheetStoreSymbol]: {
         ...store,
-        isGM: computed(() => isGM.value),
+        documentGetters: {
+          ...store.documentGetters,
+          canManagePreparationWarnings: computed(() => isGM.value),
+        },
       } } },
     });
     expect(tab.find('details').exists()).toBe(false);
@@ -220,5 +278,31 @@ describe('preparation diagnostic prominence', () => {
       'DocumentSheetStore#setPreparationWarningBanner', expect.any(Error), { log: 'error', notify: 'error' }
     );
     expect(store.documentGetters.isPreparationWarningUpdatePending.value).toBe(false);
+  });
+
+  it.each<ViewMode>(['edit', 'play', 'true'])('rejects read-only sheets independently of %s mode and reacts to permission changes', async mode => {
+    source._preparationWarnings = [makeWarning()];
+    const store = makeStore(mode, false);
+    const tab = mount(PreparationWarningsTab, {
+      global: { provide: { [DocumentSheetStoreSymbol]: store } },
+    });
+    const onError = vi.fn();
+    vi.stubGlobal('Hooks', { onError });
+    expect(store.documentGetters.canManagePreparationWarnings.value).toBe(false);
+    expect(tab.find('details').exists()).toBe(false);
+    expect(await store.documentActions.setPreparationWarningBanner(makeWarning(), false)).toBe(false);
+    expect(source.update).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledOnce();
+    expect(store.documentGetters.isPreparationWarningUpdatePending.value).toBe(false);
+
+    store._storeUtils.renderModeStore.setSheetEditable(true);
+    await flushPromises();
+    expect(tab.find('details').exists()).toBe(true);
+    store._storeUtils.renderModeStore.setSheetEditable(false);
+    expect(await store.documentActions.setPreparationWarningBanner(makeWarning(), false)).toBe(false);
+    await flushPromises();
+    expect(tab.find('details').exists()).toBe(false);
+    expect(source.update).not.toHaveBeenCalled();
+    tab.unmount();
   });
 });

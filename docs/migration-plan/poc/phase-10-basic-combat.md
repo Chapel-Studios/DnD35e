@@ -1899,6 +1899,8 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 #### Implementation notes (pending user acceptance)
 
+- Warning management requires both GM status and application-level sheet editability, rechecked by the store action and exposed through `canManagePreparationWarnings` for controls. Read-only sheets cannot persist overrides; editable Play/True sheets remain supported.
+- Source preference reads use loaded compendium documents, traversing embedded sources from their cached root; writes resolve the full UUID asynchronously and retain GM/locked-pack checks. ActiveEffect key/value/condition diagnostics carry per-change/per-rule IDs through the multi-host helper, so two failing changes targeting the same field do not share preferences.
 - Existing producers keep technical severity and banner defaults. `pushPreparationWarning()` accepts optional `{ id, defaultBanner }`; Story F's Container diagnostic will use `defaultBanner: false`.
 - GM preferences are stored at `flags.dnd35e.preparationWarningOverrides.<encoded diagnostic id>` on the source document. The record contains `banner: boolean | null` and a revision; `null` restores the producer default, while the revision ensures promotion/reset is not hidden by old browser-session dismissals.
 - Melee attack/damage roll-formula checks live in `ActionDataModel.resolveFormulaFields()`, after the existing FINAL/POST effect resolution. Stable identity is `action:<action id>:formula:<field>`. Future action subtypes inherit roll-formula validation; existing ranged actions explicitly defer the added checks to Story F.

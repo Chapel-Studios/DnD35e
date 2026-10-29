@@ -112,7 +112,12 @@ function resolveActiveEffectChangeValue(
       pushPreparationWarningToHosts(
         [warnHost ?? (targetDocument as unknown as PreparationWarningHost | null), effect as unknown as PreparationWarningHost],
         change.key,
-        `Value formula "${rawValue}": no "${change.target ?? EFFECT_CHANGE_TARGET.ACTOR}" document to resolve against`
+        game.i18n.format('dnd35e.COMMON.PreparationWarningValueContextMissing', {
+          formula: rawValue,
+          target: change.target ?? EFFECT_CHANGE_TARGET.ACTOR,
+        }),
+        'warning',
+        { id: `change:${change.id ?? change.key}:value:context` }
       );
     }
     return rawValue;
@@ -128,7 +133,9 @@ function resolveActiveEffectChangeValue(
     pushPreparationWarningToHosts(
       [warnHost ?? (targetDocument as unknown as PreparationWarningHost | null), effect as unknown as PreparationWarningHost],
       change.key,
-      `Value formula "${rawValue}": ${reason}`
+      game.i18n.format('dnd35e.COMMON.PreparationWarningValueFormulaFailed', { formula: rawValue, reason }),
+      'warning',
+      { id: `change:${change.id ?? change.key}:value:formula` }
     );
   });
 

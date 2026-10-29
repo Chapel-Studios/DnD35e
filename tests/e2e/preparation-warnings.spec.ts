@@ -1,14 +1,17 @@
+import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
+import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
 import { expect, test } from '@playwright/test';
 
-import { clearWorld, createActor, createItem } from './helpers/documents.mjs';
+import { clearWorld, createActiveEffect, createActor, createItem } from './helpers/documents.mjs';
 import { gotoGame } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
 import { dismissOverlays } from './helpers/ui.mjs';
 
 const ACTION_ID = 'HmeleeAttack0001';
 const WARNING_ID = `action:${ACTION_ID}:formula:attackFormula`;
+let packCollection: string | undefined;
 
 function diagnosticWeapon() {
   return {
@@ -29,6 +32,15 @@ function diagnosticWeapon() {
 
 test.afterEach(async ({ page }) => {
   await closeAllSheets(page);
+  if (packCollection) {
+    await page.evaluate(async collection => {
+      const pack = game.packs.get(collection);
+      if (!pack) throw new Error('Missing diagnostic fixture compendium');
+      await pack.configure({ locked: false });
+      await pack.deleteCompendium();
+    }, packCollection);
+    packCollection = undefined;
+  }
   await clearWorld(page);
 });
 
@@ -105,4 +117,75 @@ test('GM manages an owned melee diagnostic consistently from actor and source we
   await itemRow.locator('[data-banner-mode="show"]').click();
   await expect(itemSheet.locator('.preparation-warnings-banner')).toBeVisible();
   await expect(actorSheet.locator('.preparation-warnings-banner')).toHaveCount(1);
+});
+
+test('GM manages an unlocked compendium diagnostic and its saved preference survives reload', async ({ page }) => {
+  await gotoGame(page);
+  const worldUuid = await createItem(page, 'weapon', diagnosticWeapon());
+  packCollection = await page.evaluate(async () => {
+    const pack = await foundry.documents.collections.CompendiumCollection.createCompendium({
+      type: 'Item', id: 'world.warning-preferences', name: 'warning-preferences',
+      label: 'E2E Warning Preferences', path: 'packs/warning-preferences',
+      packageName: game.world.id, packageType: 'world', system: 'dnd35e',
+    });
+    await pack.configure({ locked: false });
+    return pack.collection;
+  });
+  const uuid = await page.evaluate(async ({ worldUuid, collection }) => {
+    const item = await fromUuid<ItemDnd35e<'weapon', ActorDnd35e<null>>>(worldUuid);
+    const pack = game.packs.get(collection);
+    if (!item || !pack) throw new Error('Missing compendium import fixture');
+    const imported = await pack.importDocument(item);
+    if (!imported.uuid) throw new Error('Imported diagnostic fixture has no UUID');
+    return imported.uuid;
+  }, { worldUuid, collection: packCollection });
+  let sheet = page.locator(await openDocumentSheet(page, uuid));
+  await expect(sheet.locator('.preparation-warnings-banner')).toBeVisible();
+  await dismissOverlays(page);
+  await sheet.locator('[data-tab="preparation-warnings"]').click();
+  await sheet.locator(`[data-warning-id="${WARNING_ID}"] summary`).click();
+  await sheet.locator(`[data-warning-id="${WARNING_ID}"] [data-banner-mode="tab"]`).click();
+  await expect(sheet.locator('.preparation-warnings-banner')).toHaveCount(0);
+
+  await page.reload();
+  await gotoGame(page);
+  sheet = page.locator(await openDocumentSheet(page, uuid));
+  await expect(sheet.locator('.preparation-warnings-banner')).toHaveCount(0);
+  await dismissOverlays(page);
+  await sheet.locator('[data-tab="preparation-warnings"]').click();
+  await sheet.locator(`[data-warning-id="${WARNING_ID}"] summary`).click();
+  await sheet.locator(`[data-warning-id="${WARNING_ID}"] [data-banner-mode="default"]`).click();
+  await expect(sheet.locator('.preparation-warnings-banner')).toBeVisible();
+
+  const effectUuid = await createActiveEffect(page, uuid, {
+    name: 'Compendium diagnostic changes', type: 'general',
+    system: { changes: ['first', 'second'].map(id => ({
+      id, key: 'system.hardness', type: 'add', value: '#item.missingDiagnosticField',
+      phase: 'initial', target: 'item', priority: 0,
+    })) },
+  });
+  await closeAllSheets(page);
+  const aggregateSheet = page.locator(await openDocumentSheet(page, uuid));
+  await dismissOverlays(page);
+  await aggregateSheet.locator('[data-tab="preparation-warnings"]').click();
+  await aggregateSheet.locator(`[data-warning-id="${WARNING_ID}"] summary`).click();
+  await aggregateSheet.locator(`[data-warning-id="${WARNING_ID}"] [data-banner-mode="tab"]`).click();
+  const first = aggregateSheet.locator('[data-warning-id="change:first:value:formula"]');
+  const second = aggregateSheet.locator('[data-warning-id="change:second:value:formula"]');
+  await expect(first).toBeVisible();
+  await expect(second).toBeVisible();
+  await first.locator('summary').click();
+  await first.locator('[data-banner-mode="tab"]').click();
+  await expect.poll(() => page.evaluate(async effectUuid => {
+    const effect = await fromUuid(effectUuid);
+    if (!effect) throw new Error('Missing embedded compendium effect');
+    return {
+      first: effect.getFlag('dnd35e', `preparationWarningOverrides.${encodeURIComponent('change:first:value:formula')}.banner`),
+      second: effect.getFlag('dnd35e', `preparationWarningOverrides.${encodeURIComponent('change:second:value:formula')}.banner`),
+    };
+  }, effectUuid)).toEqual({ first: false, second: undefined });
+  await expect(aggregateSheet.locator('.preparation-warnings-banner')).toBeVisible();
+  await second.locator('summary').click();
+  await second.locator('[data-banner-mode="tab"]').click();
+  await expect(aggregateSheet.locator('.preparation-warnings-banner')).toHaveCount(0);
 });

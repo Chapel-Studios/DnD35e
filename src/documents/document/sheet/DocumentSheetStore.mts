@@ -95,6 +95,7 @@ type DocumentSheetStoreDocumentGetters = FieldOverridesStoreGetters & {
   /** Diagnostics from this document's own last prep cycle - actors additionally aggregate owned items' warnings, see `ActorSheetStore`. */
   preparationWarnings: ComputedRef<PreparationWarning[]>;
   isPreparationWarningUpdatePending: ComputedRef<boolean>;
+  canManagePreparationWarnings: ComputedRef<boolean>;
 };
 
 type DocumentSheetStoreDocumentActions<TDocument extends SheetDocument> = FieldOverridesStoreActions & {
@@ -421,6 +422,8 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       return normalizeMaskValue<T>(fieldPath, masks[fieldPath]);
     });
 
+  const canManagePreparationWarnings = computed(() => isGM.value && renderModeStore.isSheetEditable.value);
+
   const documentGetters: DocumentSheetStoreDocumentGetters = {
     // Data access
     getIsFieldEditable,
@@ -447,6 +450,7 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
     description: computed(() => getViewAwareFieldValue('system.description') || ''),
     preparationWarnings: computed(() => [...(document.value._preparationWarnings ?? [])]),
     isPreparationWarningUpdatePending: computed(() => isPreparationWarningUpdatePending.value),
+    canManagePreparationWarnings,
 
     // Field overrides (delegated to FieldOverridesStore)
     ...fieldOverridesGetters,
@@ -481,6 +485,9 @@ const useDocumentSheetStore = <TDocument extends SheetDocument>(
       if (isPreparationWarningUpdatePending.value) return false;
       isPreparationWarningUpdatePending.value = true;
       try {
+        if (!canManagePreparationWarnings.value) {
+          throw new Error(game.i18n.localize('dnd35e.COMMON.PreparationWarningManagementDenied'));
+        }
         await setPreparationWarningBanner(warning, banner);
         await refreshDocument();
         return true;

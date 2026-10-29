@@ -27,7 +27,7 @@
           </span>
           <span class="preparation-warning-uuid">{{ warning.sourceUuid }}</span>
         </div>
-        <details v-if="isGM" class="preparation-warning-menu">
+        <details v-if="canManagePreparationWarnings" class="preparation-warning-menu">
           <summary :aria-label="localize('dnd35e.COMMON.PreparationWarningManage')" :title="localize('dnd35e.COMMON.PreparationWarningManage')">
             <i class="fas fa-ellipsis-vertical" aria-hidden="true"></i>
           </summary>
@@ -55,7 +55,8 @@
   import type { PreparationWarning } from '@documents/document/preparationWarnings.mjs';
   import { computed, inject } from 'vue';
 
-  const { documentGetters, documentActions, isGM } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+  const { documentGetters, documentActions } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
+  const canManagePreparationWarnings = documentGetters.canManagePreparationWarnings;
   const localize = (key: string): string => game.i18n.localize(key);
   const pending = documentGetters.isPreparationWarningUpdatePending;
   const warnings = documentGetters.preparationWarnings;
