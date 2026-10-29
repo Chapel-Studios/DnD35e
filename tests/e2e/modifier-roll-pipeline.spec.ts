@@ -138,6 +138,9 @@ test('GM confirms a melee modifier list and later resolves its unchanged damage 
     return {
       messageId: result.attackMessage.id, flags,
       dice: critical.dice.map((die: any) => ({ number: die.number, faces: die.faces })),
+      flatTerms: critical.terms
+        .filter((term: any) => term instanceof g.foundry.dice.terms.NumericTerm)
+        .map((term: any) => term.number),
     };
   });
   expect(snapshot.flags.modifierList.filter((mod: any) => mod.id === 'flanking')).toHaveLength(1);
@@ -146,10 +149,11 @@ test('GM confirms a melee modifier list and later resolves its unchanged damage 
   expect(snapshot.flags.modifierList.find((mod: any) => mod.id === 'bab').value).toBe(6);
   expect(snapshot.flags.damageModifiers.find((mod: any) => mod.id === 'damageAbility').value).toBe(3);
   expect(snapshot.flags.damageModifiers.find((mod: any) => mod.id === 'weaponDamage').value).toBe(1);
-  expect(snapshot.flags.damageExemptDiceIndices).toEqual([1]);
+  expect(snapshot.flags.damageExemptDiceIndices).toEqual([1, 3]);
   expect(snapshot.dice).toEqual([
     { number: 2, faces: 8 }, { number: 1, faces: 6 }, { number: 2, faces: 6 }, { number: 1, faces: 4 },
   ]);
+  expect(snapshot.flatTerms).toEqual([2, 6, 4]);
 
   // Altering the weapon now must not change this already-posted attack's damage.
   await page.evaluate(async ({ weaponUuid }) => {

@@ -31,17 +31,37 @@ function buildModifiersD20Formula(modifiers: RollModifier[], label: string): { f
   };
 }
 
+function flavorAdditiveDamageFormula(formula: string, label: string): { formula: string; diceCount: number } | null {
+  const { DiceTerm, NumericTerm, OperatorTerm } = foundry.dice.terms;
+  const terms = Roll.parse(formula, {});
+  if (!terms.length || terms.some(term => !(term instanceof DiceTerm || term instanceof NumericTerm || (
+    term instanceof OperatorTerm && (term.operator === '+' || term.operator === '-')
+  )))) return null;
+
+  const flavoredTerms = terms.map(term => {
+    if (term instanceof OperatorTerm) return term.operator;
+    return term.flavor ? term.formula : `${term.formula}[${label}]`;
+  });
+  return { formula: flavoredTerms.join(' '), diceCount: terms.filter(term => term instanceof DiceTerm).length };
+}
+
 function buildModifiersDamageFormula(modifiers: WeaponDamageRollModifier[]): { formula: string; exemptDiceIndices: number[] } {
   const fragments: string[] = [];
   const exemptDiceIndices: number[] = [];
   let diceOffset = 0;
   for (const modifier of modifiers.filter(mod => !mod.isIgnored)) {
-    const fragment = modifier.formula
-      ? (modifier.exemptDiceIndices
-        ? modifier.formula
-        : flavorTerm(modifier.formula, modifier.label))
-      : String(modifier.value);
-    for (const index of modifier.exemptDiceIndices ?? []) exemptDiceIndices.push(diceOffset + index);
+    let fragment = String(modifier.value);
+    let modifierExemptDiceIndices = modifier.exemptDiceIndices ?? [];
+    if (modifier.formula) {
+      if (modifier.exemptDiceIndices !== undefined) {
+        fragment = modifier.formula;
+      } else {
+        const additive = flavorAdditiveDamageFormula(modifier.formula, modifier.label);
+        fragment = additive ? additive.formula : flavorTerm(modifier.formula, modifier.label);
+        if (additive) modifierExemptDiceIndices = Array.from({ length: additive.diceCount }, (_, index) => index);
+      }
+    }
+    for (const index of modifierExemptDiceIndices) exemptDiceIndices.push(diceOffset + index);
     diceOffset += new Roll(fragment).terms.filter(term => term instanceof foundry.dice.terms.DiceTerm).length;
     fragments.push(fragment);
   }
