@@ -36,6 +36,19 @@ const GetDamageTypeSelectOptions = (): SelectOption<DamageType>[] => DAMAGE_TYPE
   label: game.i18n.localize(type),
 }));
 
+/**
+ * Lowercase alias (e.g. `fire`) → canonical `DamageType` constant — derived from
+ * `DAMAGE_TYPES`'s own localization-key suffix, not a hand-duplicated second table.
+ * Backs the `$typed(damageType, formula)` formula function's first argument
+ * (`FormulaResolver.functionGrammar.mts`).
+ */
+const DAMAGE_TYPE_ALIASES: Record<string, DamageType> = Object.fromEntries(
+  DAMAGE_TYPES.map((type) => [type.slice(type.lastIndexOf('.') + 1).toLowerCase(), type])
+);
+
+/** Resolves a lowercase damage-type alias (e.g. `fire`) to its canonical `DamageType` constant, or `undefined` if unknown. */
+const resolveDamageTypeAlias = (alias: string): DamageType | undefined => DAMAGE_TYPE_ALIASES[alias.trim().toLowerCase()];
+
 export type { DamageType };
 export {
   DAMAGE_TYPE_ACID,
@@ -52,4 +65,5 @@ export {
   DAMAGE_TYPE_SONIC,
   DAMAGE_TYPES,
   GetDamageTypeSelectOptions,
+  resolveDamageTypeAlias,
 };

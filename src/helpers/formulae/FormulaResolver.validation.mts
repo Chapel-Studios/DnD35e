@@ -9,10 +9,12 @@
  *
  * @module
  */
+import { resolveDamageTypeAlias } from '@constants/attacks/damageTypes.mjs';
+
 import { extractVariables, getFieldAspect } from './FormulaResolver.aspectResolution.mjs';
 import { evaluateBooleanExpression } from './FormulaResolver.booleanGrammar.mjs';
 import { findConditionalBlocks } from './FormulaResolver.conditionalGrammar.mjs';
-import { findFunctionBlocks } from './FormulaResolver.functionGrammar.mjs';
+import { findFunctionBlocks, matchQuotedLiteral } from './FormulaResolver.functionGrammar.mjs';
 import { findUnbalancedParenIndices } from './FormulaResolver.parenUtils.mjs';
 import { buildItFamiliarContext } from './itContext.mjs';
 import { normalizeLabel } from './schemaWalker.mjs';
@@ -26,6 +28,9 @@ import type {
   ValidationError,
 } from './types.mjs';
 import { isFieldAspect } from './types.mjs';
+
+/** A bare identifier with no formula tokens (`#`/`$`) — used to tell a static `$typed(...)` alias from a dynamic expression. */
+const STATIC_WORD_REGEX = /^[\p{L}\p{N}_]+$/u;
 
 /**
  * Validate all variables in a formula
@@ -133,6 +138,24 @@ export function validateFormula(formula: string, context: FamiliarSchema, isFocu
       context: 'function',
       path: [],
       error: game.i18n.localize('dnd35e.Formula.Errors.function.actionOnly'),
+      severity: 'error',
+      index: block.startIndex,
+    });
+  }
+
+  // $typed(damageType, formula)'s first argument only validates statically when it's a bare
+  // word (no `#`/`$` tokens) — a dynamic expression resolves at runtime and can't be checked
+  // here. A bare word that doesn't match any known alias is a typo, not a dynamic miss.
+  for (const block of findFunctionBlocks(formula)) {
+    if (block.error || block.name !== 'typed') continue;
+    const rawAlias = block.args[0]?.trim() ?? '';
+    const alias = matchQuotedLiteral(rawAlias) ?? rawAlias;
+    if (!STATIC_WORD_REGEX.test(alias) || resolveDamageTypeAlias(alias)) continue;
+    errors.push({
+      variable: block.raw,
+      context: 'function',
+      path: [],
+      error: game.i18n.format('dnd35e.Formula.Errors.function.unknownDamageType', { alias }),
       severity: 'error',
       index: block.startIndex,
     });

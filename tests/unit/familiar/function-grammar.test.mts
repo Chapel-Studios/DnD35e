@@ -499,6 +499,66 @@ describe('validateFormula — $scaleDamage(...) is action-only', () => {
   });
 });
 
+describe('findFunctionBlocks — $typed(...) parsing', () => {
+  it('parses the name case-insensitively with two arguments', () => {
+    const block = findFunctionBlocks('$TYPED(fire, 1d6)')[0];
+    expect(block.error).toBeUndefined();
+    expect(block.name).toBe('typed');
+    expect(block.args).toEqual(['fire', '1d6']);
+  });
+
+  it('flags the wrong argument count as an error', () => {
+    expect(findFunctionBlocks('$typed(1d6)')[0].error).toBe('argCount');
+  });
+});
+
+describe('resolveFormula — $typed(...) damage-type tagging', () => {
+  const schema: FamiliarSchema = { self: { properties: {} } };
+
+  // The reserved-marker flavoring itself (`flavorDiceGroups()`) delegates to Foundry's real
+  // `Roll.parse()` to recognize dice terms (see d20Formula.mts's `parseAdditiveDiceFragment`
+  // doc comment) — unavailable against the lightweight `Roll` stub in tests/setup.mts, so
+  // asserting the literal marker text is e2e-only coverage, same boundary as the sibling
+  // `$critMultiply`/`$critExempt` functions (which have no unit tests of their own flavoring
+  // output either). These tests cover what's unit-testable without a real dice engine: alias
+  // resolution (bare vs. quoted, unknown fallback) and round-trip-safe composition.
+
+  it('leaves the inner formula unflavored for an unrecognized alias', () => {
+    expect(resolveFormula('$typed(bogus, 1d6)', schema, {} as never)).toBe('1d6');
+  });
+
+  it('does not throw for a recognized bare or quoted alias', () => {
+    expect(() => resolveFormula('$typed(fire, 1d6)', schema, {} as never)).not.toThrow();
+    expect(() => resolveFormula('$typed("fire", 1d6)', schema, {} as never)).not.toThrow();
+  });
+
+  it('does not throw when composing multiple components for a homebrew multi-type weapon', () => {
+    expect(() => resolveFormula('$typed(slashing, 2d6) + $typed(fire, 1d6)', schema, {} as never)).not.toThrow();
+  });
+});
+
+describe('validateFormula — $typed(...) damage-type alias', () => {
+  it('flags an unrecognized static alias as an error', () => {
+    const schema: FamiliarSchema = { self: { properties: {} } };
+    const errors = validateFormula('$typed(bogus, 1d6)', schema);
+    expect(errors.some(e => e.severity === 'error')).toBe(true);
+  });
+
+  it('does not flag a recognized alias', () => {
+    const schema: FamiliarSchema = { self: { properties: {} } };
+    const errors = validateFormula('$typed(fire, 1d6)', schema);
+    expect(errors.filter(e => e.severity === 'error')).toHaveLength(0);
+  });
+
+  it('does not add its own error for a dynamic (#context.property) first argument', () => {
+    const schema: FamiliarSchema = {
+      self: { properties: { damageType: { type: 'string', accessPath: 'system.damageType' } as FieldAspect } },
+    };
+    const errors = validateFormula('$typed(#self.damageType, 1d6)', schema);
+    expect(errors.filter(e => e.severity === 'error')).toHaveLength(0);
+  });
+});
+
 describe('resolveFormula — backward compatibility', () => {
   it('a formula with zero function blocks is untouched', () => {
     const schema: FamiliarSchema = { self: { properties: {} } };

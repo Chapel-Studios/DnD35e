@@ -44,6 +44,18 @@
  * `damageFormula`, exempts that portion of the weapon's own dice despite being its own
  * base dice.
  *
+ * `$typed(damageType, formula)` (poc.10 Story J) tags a dice/formula sub-expression with a
+ * damage type — e.g. `$typed(fire, 1d6)`, or `$typed(slashing, 2d6) + $typed(fire, 1d6)` for
+ * a multi-component homebrew weapon. `damageType` is a lowercase alias (`fire`, `slashing`,
+ * ...) resolved against the existing `DAMAGE_TYPES` constants via `resolveDamageTypeAlias()`
+ * (`@constants/attacks/damageTypes.mjs`) — no second taxonomy. Resolves its inner formula
+ * normally, then re-flavors every top-level dice group with `buildTypedDamageMarker()`
+ * (`@constants/typedDamageMarkers.mjs`) — the same "stash as plain bracket-flavor text, read
+ * back later" trick `$critMultiply`/`$critExempt` use. An unrecognized `damageType` alias
+ * resolves the inner formula unflavored rather than throwing (same runtime-miss convention the
+ * array functions below use). **Not yet read back by anything**: `flavorDamageDiceBySource()`
+ * doesn't know about this marker yet — that's a separate poc.10 Story J checklist item.
+ *
  * `#it` is a bound per-element variable valid only inside a `$contains`/`$find`/
  * `$any`/`$count` predicate argument — resolved per-element against a synthetic
  * FamiliarSchema built from the array's `arrayElement.elementFields` (object-array
@@ -60,8 +72,11 @@
  *
  * @module
  */
+import type { DamageType } from '@constants/attacks/damageTypes.mjs';
+import { resolveDamageTypeAlias } from '@constants/attacks/damageTypes.mjs';
 import { CRIT_EXEMPT_MARKER, CRIT_MULTIPLY_MARKER } from '@constants/critDiceMarkers.mjs';
 import type { Size } from '@constants/sizes.mjs';
+import { buildTypedDamageMarker } from '@constants/typedDamageMarkers.mjs';
 import { roundToDecimal } from '@helpers/math.mjs';
 import { scaleDamageDie } from '@items/physical/weapon/logic/weaponDamageScaling.mjs';
 import { flavorDiceGroups } from '@source/dice/d20Formula.mjs';
@@ -110,7 +125,7 @@ export interface FunctionGrammarHelpers {
   ) => ((context?: DocumentContext) => AspectGroup) | undefined;
 }
 
-const FUNCTION_OPEN_REGEX = /(?<!\\)\$(contains|find|any|count|stringcontains|fromfeet|frommeters|fromkg|floor|ceiling|round|absolute|localize|l|scaledamage|critmultiply|critexempt)\s*\(/gi;
+const FUNCTION_OPEN_REGEX = /(?<!\\)\$(contains|find|any|count|stringcontains|fromfeet|frommeters|fromkg|floor|ceiling|round|absolute|localize|l|scaledamage|critmultiply|critexempt|typed)\s*\(/gi;
 const PROJECTION_REGEX = /^\.([\p{L}\p{N}_]+)/u;
 const IT_REFERENCE_REGEX = /(?<!\\)#it(?![\p{L}\p{N}_])/u;
 const BARE_VARIABLE_REGEX = /^#([\p{L}\p{N}_]+)((?:\.[\p{L}\p{N}_]+)*)$/u;
@@ -133,6 +148,7 @@ const CANONICAL_NAMES: Record<string, FunctionName> = {
   scaledamage: 'scaleDamage',
   critmultiply: 'critMultiply',
   critexempt: 'critExempt',
+  typed: 'typed',
 };
 
 /** Valid top-level argument counts per function. */
@@ -153,6 +169,7 @@ const FUNCTION_ARG_COUNTS: Record<FunctionName, number[]> = {
   scaleDamage: [1],
   critMultiply: [1],
   critExempt: [1],
+  typed: [2],
 };
 
 /**
@@ -221,7 +238,7 @@ export function findFunctionBlocks(formula: string): FunctionBlock[] {
 }
 
 /** Strips one layer of matching quotes ('...' or "...") — returns null if `text` isn't a quoted literal. */
-function matchQuotedLiteral(text: string): string | null {
+export function matchQuotedLiteral(text: string): string | null {
   if (text.length < 2) return null;
   const first = text[0];
   const last = text[text.length - 1];
@@ -413,6 +430,17 @@ function resolveFunctionBlock(
     const dieText = resolveOperand(block.args[0], helpers.resolveSubFormula);
     const marker = block.name === 'critMultiply' ? CRIT_MULTIPLY_MARKER : CRIT_EXEMPT_MARKER;
     return flavorDiceGroups(dieText, marker);
+  }
+
+  // $typed(damageType, formula) — tags a dice/formula sub-expression with a damage type
+  // (see module doc comment). An unrecognized alias resolves the inner formula unflavored
+  // rather than throwing — same runtime-miss convention the array functions below use.
+  if (block.name === 'typed') {
+    const aliasText = resolveOperand(block.args[0], helpers.resolveSubFormula);
+    const dieText = resolveOperand(block.args[1], helpers.resolveSubFormula);
+    const damageType: DamageType | undefined = resolveDamageTypeAlias(aliasText);
+    if (!damageType) return dieText;
+    return flavorDiceGroups(dieText, buildTypedDamageMarker(damageType));
   }
 
   // Array functions: contains / find / any / count — a runtime miss (missing context,
