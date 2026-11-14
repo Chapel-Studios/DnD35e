@@ -1,5 +1,6 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import { applyChargedAE } from '@actors/creature/logic/combatConditionAEs.mjs';
+import type { TokenResourceData } from '@client/canvas/placeables/token.mjs';
 import type { TokenMovementOperation } from '@client/documents/_types.mjs';
 import type { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
@@ -9,6 +10,7 @@ import { clearChargedThisTurn, getActionEconomy, markChargedThisTurn, refundActi
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { MovementSession, MovementSessionCategory } from '@documents/combat/combatant/movementSession.mjs';
 import { getMovementSession, resetMovementSession, setMovementSession } from '@documents/combat/combatant/movementSession.mjs';
+import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
 import {
   CHARGE_MOVEMENT_ACTION,
   DOUBLE_MOVE_MOVEMENT_ACTION,
@@ -60,6 +62,41 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     if (!this.isLinked) {
       this.updateSource({ delta: { system: { defense: { concealment: 0 } } } });
     }
+  }
+
+  /**
+   * Viewer-aware nameplate text (poc.10 Story I HUD extension). A linked token's own `name`
+   * field is replicated/synced data — identical for every client — so it can't carry a
+   * per-viewer mask itself. Delegating to `this.actor.name` (now a viewer-aware getter, see
+   * `ActorDnd35e#name`) re-evaluates fresh on each client's canvas redraw instead of reading
+   * a baked-in stored value. Unlinked tokens keep their own independent stored name — they
+   * have no live actor identity to mask against.
+   */
+  override get name (): string {
+    if (this.isLinked && this.actor) return this.actor.name;
+    return super.name;
+  }
+
+  /**
+   * Viewer-aware HP bar data (poc.10 Story I HUD extension). Only the `hp` attribute is
+   * mask-substituted — this only ever matches this system's one configured bar attribute
+   * (`prototypeToken.bar1.attribute === 'hp'`, see `buildPrototypeTokenDefaults.mts`); any
+   * other configured bar attribute passes through untouched. GM always sees true values.
+   */
+  override getBarAttribute (barName: string, options?: { alternative?: string }): TokenResourceData | null {
+    const data = super.getBarAttribute(barName, options);
+    if (!data || data.attribute !== 'hp' || game.user?.isGM || !this.actor) return data;
+
+    const masks = getDocumentMasks(this.actor);
+    const maskedCurrent = masks?.['system.hp.current'];
+    const maskedMax = masks?.['system.hp.max'];
+    if (typeof maskedCurrent !== 'number' && typeof maskedMax !== 'number') return data;
+
+    return {
+      ...data,
+      value: typeof maskedCurrent === 'number' ? maskedCurrent : data.value,
+      max: typeof maskedMax === 'number' ? maskedMax : data.max,
+    };
   }
 
   /**

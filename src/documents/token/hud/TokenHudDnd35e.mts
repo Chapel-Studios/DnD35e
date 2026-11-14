@@ -38,6 +38,7 @@ import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import { performStandUpOrDropProne } from '@actors/creature/Actions/ChangeProneStatus.mjs';
 import { Creature } from '@actors/creature/index.mjs';
 import { applyTotalDefenseAE } from '@actors/creature/logic/combatConditionAEs.mjs';
+import { HP_ADJUSTMENT_TYPE } from '@actors/creature/sheet/components/constants.mjs';
 import { getHpAdjustmentPermissions, isHpAdjustmentType } from '@actors/creature/sheet/components/hpAdjustmentPermissions.mjs';
 import type { ApplicationRenderContext } from '@client/applications/_module.mjs';
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
@@ -188,9 +189,17 @@ class TokenHudDnd35e extends TokenHudVueBase {
     const displayBar1 = useDefaultHpBar
       ? raw.displayBar1
       : Object.values(hpAdjustmentPermissions).some(permission => permission.visible);
+    // Mask-aware (poc.10 Story I HUD extension): mirrors the concealment mask check below —
+    // a non-GM viewer with visible-but-masked HP sees the masked value, never the true one.
+    let compactBar1Value: number | null = creature?.system.hp.current ?? null;
+    if (creature && !game.user.isGM && hpAdjustmentPermissions[HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT]?.visible) {
+      const masks = getDocumentMasks(creature);
+      const maskedCurrent = masks?.['system.hp.current'];
+      if (typeof maskedCurrent === 'number') compactBar1Value = maskedCurrent;
+    }
     const bar1Value = useDefaultHpBar
       ? (raw.bar1Data?.value ?? null)
-      : (creature?.system.hp.current ?? null);
+      : compactBar1Value;
     const bar1Editable = useDefaultHpBar
       ? (raw.bar1Data?.editable ?? false)
       : Object.values(hpAdjustmentPermissions).some(permission => permission.editable);
