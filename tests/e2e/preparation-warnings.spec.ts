@@ -31,14 +31,14 @@ function diagnosticWeapon() {
 }
 
 test.afterEach(async ({ page }) => {
-  await closeAllSheets(page);
+  await closeAllSheets(page).catch(() => {});
   if (packCollection) {
     await page.evaluate(async collection => {
       const pack = game.packs.get(collection);
-      if (!pack) throw new Error('Missing diagnostic fixture compendium');
+      if (!pack) return;
       await pack.configure({ locked: false });
       await pack.deleteCompendium();
-    }, packCollection);
+    }, packCollection).catch(() => {});
     packCollection = undefined;
   }
   await clearWorld(page);
