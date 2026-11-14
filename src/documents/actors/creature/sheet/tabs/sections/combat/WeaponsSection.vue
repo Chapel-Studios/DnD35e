@@ -57,6 +57,7 @@
   import type { Weapon } from '@items/physical/weapon/index.mjs';
   import { formatThreatRange } from '@items/physical/weapon/logic/threatRange.mjs';
   import { type SettingsStore,SettingsStoreSymbol } from '@settings/index.mjs';
+  import { groupDamageDiceBySource } from '@source/dice/index.mjs';
   import { computed, inject } from 'vue';
 
   import type { CreatureDocumentStore } from '../../../CreatureStore.mjs';
@@ -87,6 +88,22 @@
     damageType: string;
   }
 
+  /**
+   * Per-component damage-type display (poc.10 Story J) — e.g. "Slashing + Fire" for a
+   * flaming weapon. Reuses `groupDamageDiceBySource()` (the same attribution the actual
+   * damage roll breakdown uses) against the action's own already-resolved formula, with no
+   * per-source overrides (this is a compact sheet-row display, not a per-effect breakdown) —
+   * every dice group is treated as weapon-owned, so `action.damageType` (the dropdown) fills
+   * in as the default for any untyped group. Falls back to the dropdown's plain label when
+   * the resolved formula can't be split into dice groups at all (e.g. empty/zero).
+   */
+  const damageTypeDisplay = (action: WeaponAction): string => {
+    const dropdownLabel = localize(action.damageType);
+    const rows = groupDamageDiceBySource(action.damageFormula.resolvedValue || '', '', [], action.damageType);
+    if (!rows.length) return dropdownLabel;
+    return rows.map(row => row.damageTypeLabel ?? dropdownLabel).join(' + ');
+  };
+
   const rows = computed<WeaponActionRow[]>(() => {
     const weapons = (physicalItems?.value ?? [])
       .filter(isWeapon)
@@ -107,7 +124,7 @@
           range: action instanceof RangedWeaponAttack
             ? `${convertToLocalizedDistance(action.rangeIncrement)} ${distanceDisplayShortLabel.value}`
             : localize('dnd35e.ACTOR.actions.meleeRange'),
-          damageType: game.i18n.localize(action.damageType),
+          damageType: damageTypeDisplay(action),
         });
       }
     }

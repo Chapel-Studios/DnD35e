@@ -113,7 +113,7 @@
               "expectedType": "string",
               "resolvedValue": "+1 Flaming Weapon Enhancement"
             },
-            "description": "POC generic weapon enhancement: +1 enhancement bonus to attack and damage, plus an extra 1d6 bonus damage (intended as fire, but the current Weapon Attack action schema only supports a single damageType per attack, so the bonus die is lumped into the same Slashing damage pool as untyped bonus damage rather than a separate fire component. Revisit once multi-component/typed damage is supported.)",
+            "description": "POC generic weapon enhancement: +1 enhancement bonus to attack and damage, plus an extra 1d6 fire bonus damage (poc.10 Story J: $typed(fire, 1d6) tags this bonus die as its own fire component, separate from the weapon's own Slashing damage).",
             "target": "item",
             "isHidden": false,
             "deleteOnExpiry": false,
@@ -146,7 +146,7 @@
                 "id": "HT3vjkP6q3iZmDDh",
                 "key": "#item.meleeWeaponAttacks.attackDamage",
                 "type": "add",
-                "value": "+1d6",
+                "value": "+$typed(fire, 1d6)",
                 "priority": 20,
                 "phase": "final",
                 "target": "item",

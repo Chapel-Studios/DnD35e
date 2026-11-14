@@ -1958,7 +1958,7 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 ### Story J — Typed damage components
 
-**Status**: Design agreed below; ready for implementation.
+**Status**: ✅ Complete. Implemented and automatically verified; attack-editor resolved-formula preview deferred (no existing convention found to extend — see "Display surfaces" below).
 **User**: Player / GM (anyone building or reading a weapon's damage)
 **Delivers**: "A weapon or AE can express multiple typed damage components (e.g. a flaming longsword's slashing base plus a separate fire component), displayed consistently on the weapon sheet, the attack action editor, and the damage roll — no DR/resistance mechanic attached yet."
 **Routing**: Lead dev
@@ -1995,19 +1995,19 @@ $typed(slashing, 2d6) + $typed(fire, 1d6)
 
 #### Display surfaces (start here, iterate)
 
-- Weapons-table type column (`WeaponsSection.vue`) — currently a single localized type string; becomes a per-component breakdown (e.g. "Slashing + Fire").
-- Damage roll chat card breakdown — existing source-grouped breakdown rows gain a type label alongside source.
-- Attack action editor (`WeaponAttackActionEditor.vue` / `DamageType.vue`) — dropdown stays; add a resolved-formula preview showing the implicit-wrap result, matching the existing `$scaleDamage` preview convention.
+- Weapons-table type column (`WeaponsSection.vue`) — ✅ per-component breakdown (e.g. "Slashing + Fire"), via `groupDamageDiceBySource()` against the action's own resolved formula.
+- Damage roll chat card breakdown — ✅ existing source-grouped breakdown rows gain a `damageTypeLabel` alongside source (`modifier-breakdown.hbs`/`RollModifierTooltip.vue`).
+- Attack action editor (`WeaponAttackActionEditor.vue` / `DamageType.vue`) — dropdown stays; a resolved-formula preview was planned here but **no such preview convention actually exists anywhere in the formula-editing components** (`FormulaFormGroup.vue`/`FormulaMultilineModal.vue` checked directly) — the original plan text's "$scaleDamage preview convention" doesn't exist to extend. Deferred; would need its own design discussion rather than inventing new UI under this item.
 
 #### Completion checklist
 
-- [ ] `$typed(damageType, formula)` function added to `FormulaResolver.functionGrammar.mts` (parsing, arg validation, resolution, lowercase-alias lookup off `DAMAGE_TYPES`)
-- [ ] Implicit top-level wrap of the dropdown-selected `damageType` around any untyped remainder of `damageFormula`/AE bonus-damage changes
-- [ ] `flavorDamageDiceBySource()`/`groupDamageDiceBySource()` extended to carry damage type alongside source label through to the final roll and breakdown list
-- [ ] Weapons-table, damage roll chat card, and attack action editor updated to display per-type breakdown
-- [ ] Lily Knight POC fixture's Flaming AE updated to use `$typed(fire, 1d6)`; its description's "lumped into Slashing" caveat removed
-- [ ] Localization entries for any new error strings (`dnd35e.Formula.Errors.function.*`)
-- [ ] Unit tests for `$typed()` parsing/resolution/validation; targeted test for the implicit-wrap precedence rule
+- [x] `$typed(damageType, formula)` function added to `FormulaResolver.functionGrammar.mts` (parsing, arg validation, resolution, lowercase-alias lookup off `DAMAGE_TYPES`)
+- [x] Implicit top-level wrap of the dropdown-selected `damageType` around any untyped remainder of `damageFormula`/AE bonus-damage changes — `attributeDamageDiceGroups()`'s `defaultDamageType` param, threaded from `WeaponAttackDataModel._buildDamageData()`'s `this.damageType`; applies only to weapon-owned (not AE-owned) groups with no explicit `$typed()` marker
+- [x] `flavorDamageDiceBySource()`/`groupDamageDiceBySource()` extended to carry damage type alongside source label through to the breakdown list — via a shared composable marker bag (`@constants/diceMarkerBag.mjs`), not folded into the real roll's own source-only flavor (deliberate; see `flavorDamageDiceBySource()`'s doc comment)
+- [x] Weapons-table and damage roll chat card updated to display per-type breakdown; attack action editor preview deferred (see above — no existing convention to extend)
+- [x] Lily Knight POC fixture's Flaming AE updated to use `$typed(fire, 1d6)`; its description's "lumped into Slashing" caveat removed
+- [x] Localization entries for any new error strings (`dnd35e.Formula.Errors.function.*`) — `unknownDamageType`
+- [x] Unit tests for `$typed()` parsing/resolution/validation; plus marker-bag codec tests, crit/typed composability tests (a single dice group carrying both fields, including an AE-owned group where `$critMultiply` inverts the default exemption), and `defaultDamageType` fallback tests (weapon-owned vs. AE-owned, explicit-wins-over-implicit)
 
 **Verify**: The Lily Knight's Greatsword +1 Flaming reads a per-component breakdown (e.g. "2d6+1 slashing + 1d6 fire") in the weapons table and the damage roll chat card, with no mechanical DR/resistance applied to either component. A homebrew weapon authored with `1d6 + $typed(cold, 1d4)` in its `damageFormula` and no dropdown override still resolves and displays correctly.
 
@@ -2017,11 +2017,11 @@ $typed(slashing, 2d6) + $typed(fire, 1d6)
 
 #### Agreed remaining execution order
 
-Story E is merged. Story H (✅) and Story I (✅) are complete. Remaining: **J → F → G**. Story J no longer carries a design-approval gate or an actor-boundary dependency on Story I — it's now a self-contained typed-damage formula feature, independent of F/G. This is the agreed delivery sequence, not a claim that every adjacent pair has a structural dependency. The uniform undo/Ctrl+Z architecture once drafted for this phase (under a story letter since reassigned below) was pushed to the post-release wishlist (`docs/migration-plan/post-release/WISHLIST.md`) rather than scheduled here.
+Story E is merged. Story H (✅), Story I (✅), and Story J (✅) are complete. Remaining: **F → G**. This is the agreed delivery sequence, not a claim that every adjacent pair has a structural dependency. The uniform undo/Ctrl+Z architecture once drafted for this phase (under a story letter since reassigned below) was pushed to the post-release wishlist (`docs/migration-plan/post-release/WISHLIST.md`) rather than scheduled here.
 
 - **H first** establishes advisory/banner semantics before F adds Container diagnostics. *(Complete.)*
 - **I second**: exposed Secret AE authoring on Character/Creature sheets (previously engine-ready but UI-gated to items only). *(Complete — no longer a Story J prerequisite now that J no longer touches secret resolution.)*
-- **J** implements `$typed(damageType, formula)` and typed-damage display — see Story J's rescope above for why DR/resistance/disclosure moved to alpha instead.
+- **J** implements `$typed(damageType, formula)` and typed-damage display — see Story J's rescope above for why DR/resistance/disclosure moved to alpha instead. *(Complete.)*
 - **F** adopts H's severity model; its Ammo Recovery card ships its own simple Undo button rather than depending on a shared cross-card contract.
 - **G last** reuses the completed melee/ranged paths for AoO and adds automatic flanking detection/highlighting.
 

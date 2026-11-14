@@ -362,12 +362,13 @@ function mergeDiceGroupMarker(formula: string, key: string, value: string): stri
 function flavorDamageDiceBySource(
   resolvedFormula: string,
   baseLabel: string,
-  overrides: { effectName: string; value: string }[]
+  overrides: { effectName: string; value: string }[],
+  defaultDamageType: DamageType | null = null
 ): { formula: string; exemptDiceIndices: number[] } {
   const parsed = parseAdditiveDiceFragment(resolvedFormula);
   if (!parsed) return { formula: flavorDiceGroups(resolvedFormula, baseLabel), exemptDiceIndices: [] };
 
-  const attributed = attributeDamageDiceGroups(parsed.diceGroups, baseLabel, overrides);
+  const attributed = attributeDamageDiceGroups(parsed.diceGroups, baseLabel, overrides, defaultDamageType);
 
   // Each group's position here is also the order its `Die` term lands in the final formula
   // text below — exactly what `evaluateCritical()` counts against when matching `exemptDiceIndices`.
@@ -396,14 +397,18 @@ function flavorDamageDiceBySource(
  * escape hatches use — both dimensions live in one shared marker bag
  * (`@constants/diceMarkerBag.mjs`), upserted independently by whichever of `$critMultiply`/
  * `$critExempt`/`$typed()` resolved (see `mergeDiceGroupMarker()`), so a group can carry both
- * a crit override and a damage type at once regardless of nesting order. `null` when the
- * group has no `$typed()` wrapping (the common case until the dropdown-driven implicit wrap —
- * a separate Story J checklist item — lands).
+ * a crit override and a damage type at once regardless of nesting order. A weapon-owned group
+ * (`owner === -1`) with no explicit `$typed()` wrapping falls back to `defaultDamageType` — the
+ * dropdown-selected `damageType` on the weapon's own attack action, implicitly covering
+ * whatever part of its base `damageFormula` the author didn't explicitly wrap — so only an
+ * AE-contributed group with no `$typed()` of its own stays `null` (no type inherited from the
+ * weapon; see `WeaponAttackDataModel._buildDamageData()`'s call site).
  */
 function attributeDamageDiceGroups(
   diceGroups: [number, number, string | undefined][],
   baseLabel: string,
-  overrides: { effectName: string; value: string }[]
+  overrides: { effectName: string; value: string }[],
+  defaultDamageType: DamageType | null = null
 ): { faces: number; count: number; label: string; isExempt: boolean; damageType: DamageType | null }[] {
   const nonZeroGroups = diceGroups.filter(([, count]) => count !== 0);
   // -1 = the weapon's own dice; otherwise an index into `overrides`.
@@ -428,7 +433,7 @@ function attributeDamageDiceGroups(
     const label = owner === -1
       ? (forcedExempt ? extraDamageLabel : baseLabel)
       : overrides[owner].effectName;
-    const damageType = readDamageType(marker);
+    const damageType = readDamageType(marker) ?? (owner === -1 ? defaultDamageType : null);
     return { faces, count, label, isExempt, damageType };
   });
 }
@@ -442,20 +447,23 @@ function attributeDamageDiceGroups(
  * first-appearance order — grouped by the pair rather than label alone so a single source with
  * multiple typed components (e.g. a homebrew `damageFormula` of
  * `$typed(slashing, 2d6) + $typed(fire, 1d6)`) gets one row per type instead of merging them.
- * `damageTypeLabel` (localized, e.g. "Fire") is populated only for groups with a `$typed()`
- * marker — omitted (not an empty string) for the common untyped case, matching
- * `RollModifier.bonusTypeLabel`'s own "omitted when not applicable" convention.
+ * `damageTypeLabel` (localized, e.g. "Fire") is populated for any group with a `$typed()`
+ * marker, or — for a weapon-owned group with no explicit wrapping — `defaultDamageType`
+ * (see `attributeDamageDiceGroups()`'s doc comment); omitted (not an empty string) only for
+ * an untyped AE-contributed group, matching `RollModifier.bonusTypeLabel`'s own "omitted when
+ * not applicable" convention.
  */
 function groupDamageDiceBySource(
   resolvedFormula: string,
   baseLabel: string,
-  overrides: { effectName: string; value: string }[]
+  overrides: { effectName: string; value: string }[],
+  defaultDamageType: DamageType | null = null
 ): { label: string; formula: string; damageTypeLabel?: string }[] {
   const parsed = parseAdditiveDiceFragment(resolvedFormula);
   const diceOnly = extractDiceOnlyFormula(resolvedFormula);
   if (!parsed) return diceOnly ? [{ label: baseLabel, formula: diceOnly }] : [];
 
-  const attributed = attributeDamageDiceGroups(parsed.diceGroups, baseLabel, overrides);
+  const attributed = attributeDamageDiceGroups(parsed.diceGroups, baseLabel, overrides, defaultDamageType);
 
   const order: string[] = [];
   const labelByKey = new Map<string, { label: string; damageType: DamageType | null }>();

@@ -128,4 +128,46 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
       { label: '+1 Flaming', formula: '1d6', damageTypeLabel: DAMAGE_TYPE_FIRE },
     ]);
   });
+
+  // defaultDamageType — the dropdown-driven implicit wrap: a weapon's own untyped dice
+  // inherit the weapon's selected damage type; an AE's untyped dice do not.
+  describe('defaultDamageType fallback', () => {
+    it('falls back to defaultDamageType for an untyped weapon-owned group', () => {
+      const formula = 'untyped-weapon-default';
+      parsed.set(formula, [die(6, 2)]);
+
+      expect(groupDamageDiceBySource(formula, 'Crownguard', [], DAMAGE_TYPE_SLASHING)).toEqual([
+        { label: 'Crownguard', formula: '2d6', damageTypeLabel: DAMAGE_TYPE_SLASHING },
+      ]);
+    });
+
+    it('does not apply defaultDamageType to an untyped AE-contributed group', () => {
+      const formula = 'untyped-override-default';
+      parsed.set(formula, [die(6, 2), op('+'), die(6, 1)]);
+      parsed.set('1d6', [die(6, 1)]);
+
+      const rows = groupDamageDiceBySource(formula, 'Crownguard', [{ effectName: '+1 Flaming', value: '1d6' }], DAMAGE_TYPE_SLASHING);
+      expect(rows).toEqual([
+        { label: 'Crownguard', formula: '2d6', damageTypeLabel: DAMAGE_TYPE_SLASHING },
+        { label: '+1 Flaming', formula: '1d6' },
+      ]);
+      expect(rows[1]).not.toHaveProperty('damageTypeLabel');
+    });
+
+    it('an explicit $typed() marker on the weapon\'s own dice wins over defaultDamageType', () => {
+      const formula = 'explicit-beats-default';
+      parsed.set(formula, [die(6, 2, typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      expect(groupDamageDiceBySource(formula, 'Crownguard', [], DAMAGE_TYPE_SLASHING)).toEqual([
+        { label: 'Crownguard', formula: '2d6', damageTypeLabel: DAMAGE_TYPE_FIRE },
+      ]);
+    });
+
+    it('does not fold defaultDamageType into the real roll\'s own source-only flavor', () => {
+      const formula = 'default-real-roll';
+      parsed.set(formula, [die(6, 2)]);
+
+      expect(flavorDamageDiceBySource(formula, 'Crownguard', [], DAMAGE_TYPE_SLASHING).formula).toBe('2d6[Crownguard]');
+    });
+  });
 });

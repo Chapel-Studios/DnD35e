@@ -3,6 +3,7 @@ import { detectWieldedHand, getWieldModeMismatchReason } from '@actors/baseActor
 import { Creature } from '@actors/creature/index.mjs';
 import { buildRollDefenseDialogData } from '@actors/creature/logic/buildRollDefenseDialogData.mjs';
 import { applyChargedAE, applyDefensiveFightingAE } from '@actors/creature/logic/combatConditionAEs.mjs';
+import type { DamageType } from '@constants/attacks/damageTypes.mjs';
 import { DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
 import { BOTH_HANDS_EQUIP_SLOT, MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT, WIELD_HANDS } from '@constants/equipmentSlots.mjs';
@@ -138,7 +139,13 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     return resolved || '0';
   }
 
-  private _buildFormulaBreakdown(field: 'attackFormula' | 'damageFormula', context: FormulaContext, label: string, resolved: string) {
+  private _buildFormulaBreakdown(
+    field: 'attackFormula' | 'damageFormula',
+    context: FormulaContext,
+    label: string,
+    resolved: string,
+    defaultDamageType: DamageType | null = null
+  ) {
     const path = this._formulaPath(field);
     const overrides = (context.item.effectOverrides[path] ?? []).map(override => {
       const value = FormulaData.resolveSource<string>(
@@ -155,7 +162,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     return {
       diceOverrides,
       breakdown: [
-        ...groupDamageDiceBySource(resolved, label, diceOverrides).map(entry => ({ ...entry, value: 0 })),
+        ...groupDamageDiceBySource(resolved, label, diceOverrides, defaultDamageType).map(entry => ({ ...entry, value: 0 })),
         ...(baseFlat ? [{ label, value: baseFlat }] : []),
         ...buildOverridesModifierList({ effectOverrides: { [path]: overrides } }, path),
         ...overrides.filter(override => override.stackResult !== STACK_RESULT_IGNORED && Number.isNaN(parseNumericChangeValue(override.value)))
@@ -216,8 +223,8 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   private _buildDamageData(context: UseWeaponAttackContext, formulaContext: FormulaContext): WeaponDamageRollBreakdownData {
     const resolved = this._resolveFormula('damageFormula', formulaContext);
     const label = formulaContext.item.name;
-    const { diceOverrides, breakdown } = this._buildFormulaBreakdown('damageFormula', formulaContext, label, resolved);
-    const { formula, exemptDiceIndices } = flavorDamageDiceBySource(resolved, label, diceOverrides);
+    const { diceOverrides, breakdown } = this._buildFormulaBreakdown('damageFormula', formulaContext, label, resolved, this.damageType);
+    const { formula, exemptDiceIndices } = flavorDamageDiceBySource(resolved, label, diceOverrides, this.damageType);
     const flat = extractFlatModifier(resolved).flat;
     const weaponDamage: WeaponDamageRollModifier = {
       id: 'weaponDamage', label, value: flat, formula, exemptDiceIndices,
