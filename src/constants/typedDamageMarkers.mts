@@ -1,38 +1,31 @@
 import type { DamageType } from '@constants/attacks/damageTypes.mjs';
 import { DAMAGE_TYPES } from '@constants/attacks/damageTypes.mjs';
+import { parseMarkerBag } from '@constants/diceMarkerBag.mjs';
 
 /**
- * Reserved dice-flavor marker encoding for the `$typed(damageType, formula)` FormulaFamiliar
- * function (`FormulaResolver.functionGrammar.mts`) — same "stash as plain bracket-flavor text,
- * read back later" trick `critDiceMarkers.mts`'s `CRIT_MULTIPLY_MARKER`/`CRIT_EXEMPT_MARKER`
- * already use, but parameterized by damage type instead of a single reserved constant (there
- * are 12 damage types, not one escape hatch).
+ * Damage-type dimension of the shared dice marker bag (`@constants/diceMarkerBag.mjs`) —
+ * backs the `$typed(damageType, formula)` FormulaFamiliar function
+ * (`FormulaResolver.functionGrammar.mts`).
  *
- * `$typed()` resolves its inner dice formula normally, then flavors every top-level dice group
- * with `buildTypedDamageMarker(damageType)` instead of discarding the type — plain text, so it
- * survives formula resolution intact into the constructed `Roll`. `parseTypedDamageMarker()`
- * reverses this.
+ * `$typed()` resolves its inner dice formula normally, then upserts this dimension into every
+ * top-level dice group's flavor via `mergeDiceGroupMarker()` — preserving any other dimension
+ * (e.g. a nested `$critMultiply()`'s crit override) already present on the same group, instead
+ * of discarding it. `readDamageType()` reads it back out.
  *
  * **Wired into the display breakdown, not the real roll's own flavor**:
  * `attributeDamageDiceGroups()`/`groupDamageDiceBySource()` (`src/dice/d20Formula.mts`) read
- * this marker back into each breakdown row's `damageTypeLabel`. `flavorDamageDiceBySource()`
- * (the function that builds the *actual* roll formula) deliberately leaves its own `[flavor]`
- * tag dedicated to source attribution only — damage type rides alongside as a second,
- * separate field on the breakdown row rather than being folded into that single flavor slot.
- * See `flavorDamageDiceBySource()`'s doc comment for why.
+ * this back into each breakdown row's `damageTypeLabel`. `flavorDamageDiceBySource()` (the
+ * function that builds the *actual* roll formula) deliberately leaves its own `[flavor]` tag
+ * dedicated to source attribution only — damage type rides alongside as a second, separate
+ * field on the breakdown row rather than being folded into that single flavor slot. See
+ * `flavorDamageDiceBySource()`'s doc comment for why.
  */
-const TYPED_DAMAGE_MARKER_PREFIX = '__dnd35e_typed__';
+const DAMAGE_TYPE_MARKER_KEY = 'type';
 
-/** Builds the reserved dice-flavor marker for `damageType` — see module doc. */
-function buildTypedDamageMarker(damageType: DamageType): string {
-  return `${TYPED_DAMAGE_MARKER_PREFIX}${damageType}__`;
+/** Reads this dice group's damage type (if any) back off its raw flavor string. */
+function readDamageType(flavor: string | undefined): DamageType | null {
+  const value = parseMarkerBag(flavor)?.[DAMAGE_TYPE_MARKER_KEY];
+  return value && (DAMAGE_TYPES as readonly string[]).includes(value) ? value as DamageType : null;
 }
 
-/** Reverses `buildTypedDamageMarker()` — returns `null` if `flavor` isn't a typed-damage marker. */
-function parseTypedDamageMarker(flavor: string): DamageType | null {
-  if (!flavor.startsWith(TYPED_DAMAGE_MARKER_PREFIX) || !flavor.endsWith('__')) return null;
-  const inner = flavor.slice(TYPED_DAMAGE_MARKER_PREFIX.length, -2);
-  return (DAMAGE_TYPES as readonly string[]).includes(inner) ? inner as DamageType : null;
-}
-
-export { buildTypedDamageMarker, parseTypedDamageMarker, TYPED_DAMAGE_MARKER_PREFIX };
+export { DAMAGE_TYPE_MARKER_KEY, readDamageType };

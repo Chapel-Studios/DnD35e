@@ -34,12 +34,14 @@
  * default critical-hit multiplication rule (SRD: AE-contributed "extra damage dice"
  * are never multiplied, the weapon's own base dice always are — see
  * `flavorDamageDiceBySource()`/`DamageRoll#evaluateCritical()`). Each resolves its
- * inner die formula normally, then re-flavors every top-level dice group in it with a
- * reserved marker (`@constants/critDiceMarkers.mjs`) instead of discarding the result —
- * the marker is plain text embedded as a Foundry bracket-flavor tag, so it survives
- * formula resolution intact and is read back out (and replaced with a real display
- * label) later by `flavorDamageDiceBySource()`. `$critMultiply`, used inside an AE's
- * own formula/change value, keeps that AE's dice eligible for crit multiplication
+ * inner die formula normally, then upserts a crit-override key into every top-level dice
+ * group's shared marker bag (`@constants/diceMarkerBag.mjs`, via `mergeDiceGroupMarker()`)
+ * instead of discarding the result — preserving any other dimension (e.g. a nested
+ * `$typed()`'s damage type) already present on the same group, so the two compose
+ * regardless of nesting order. The marker is plain text embedded as a Foundry bracket-flavor
+ * tag, so it survives formula resolution intact and is read back out (and replaced with a
+ * real display label) later by `flavorDamageDiceBySource()`. `$critMultiply`, used inside an
+ * AE's own formula/change value, keeps that AE's dice eligible for crit multiplication
  * despite being AE-sourced. `$critExempt`, used inside the weapon's own base
  * `damageFormula`, exempts that portion of the weapon's own dice despite being its own
  * base dice.
@@ -49,11 +51,11 @@
  * a multi-component homebrew weapon. `damageType` is a lowercase alias (`fire`, `slashing`,
  * ...) resolved against the existing `DAMAGE_TYPES` constants via `resolveDamageTypeAlias()`
  * (`@constants/attacks/damageTypes.mjs`) — no second taxonomy. Resolves its inner formula
- * normally, then re-flavors every top-level dice group with `buildTypedDamageMarker()`
- * (`@constants/typedDamageMarkers.mjs`) — the same "stash as plain bracket-flavor text, read
- * back later" trick `$critMultiply`/`$critExempt` use. An unrecognized `damageType` alias
- * resolves the inner formula unflavored rather than throwing (same runtime-miss convention the
- * array functions below use). Read back into display-only `damageTypeLabel` breakdown rows by
+ * normally, then upserts its own key into the same shared marker bag `$critMultiply`/
+ * `$critExempt` use (`mergeDiceGroupMarker()`) — composable with a nested crit-override
+ * marker the same way. An unrecognized `damageType` alias resolves the inner formula
+ * unflavored rather than throwing (same runtime-miss convention the array functions below
+ * use). Read back into display-only `damageTypeLabel` breakdown rows by
  * `attributeDamageDiceGroups()`/`groupDamageDiceBySource()` (`src/dice/d20Formula.mts`) — the
  * real roll's own `[flavor]` tag stays dedicated to source attribution; see that module's doc.
  *
@@ -75,12 +77,12 @@
  */
 import type { DamageType } from '@constants/attacks/damageTypes.mjs';
 import { resolveDamageTypeAlias } from '@constants/attacks/damageTypes.mjs';
-import { CRIT_EXEMPT_MARKER, CRIT_MULTIPLY_MARKER } from '@constants/critDiceMarkers.mjs';
+import { CRIT_MARKER_KEY, CRIT_OVERRIDE_EXEMPT, CRIT_OVERRIDE_MULTIPLY } from '@constants/critDiceMarkers.mjs';
 import type { Size } from '@constants/sizes.mjs';
-import { buildTypedDamageMarker } from '@constants/typedDamageMarkers.mjs';
+import { DAMAGE_TYPE_MARKER_KEY } from '@constants/typedDamageMarkers.mjs';
 import { roundToDecimal } from '@helpers/math.mjs';
 import { scaleDamageDie } from '@items/physical/weapon/logic/weaponDamageScaling.mjs';
-import { flavorDiceGroups } from '@source/dice/d20Formula.mjs';
+import { mergeDiceGroupMarker } from '@source/dice/d20Formula.mjs';
 
 import { findMatchingParen, splitTopLevelArgs } from './FormulaResolver.parenUtils.mjs';
 import type { FunctionBlock, FunctionBlockError, FunctionName } from './FormulaResolver.types.mjs';
@@ -424,13 +426,13 @@ function resolveFunctionBlock(
 
   // $critMultiply(dieFormula)/$critExempt(dieFormula) — escape hatches for the default
   // crit-multiplication rule (see module doc comment). Resolves the inner die formula
-  // normally, then re-flavors its top-level dice groups with a reserved marker (instead
-  // of any flavor the inner text might already carry) so the override survives as plain
-  // text through to `flavorDamageDiceBySource()`'s later attribution pass.
+  // normally, then upserts the crit override into its top-level dice groups' existing marker
+  // bag (preserving e.g. a nested $typed()'s damage type) so it survives as plain text
+  // through to `flavorDamageDiceBySource()`'s later attribution pass.
   if (block.name === 'critMultiply' || block.name === 'critExempt') {
     const dieText = resolveOperand(block.args[0], helpers.resolveSubFormula);
-    const marker = block.name === 'critMultiply' ? CRIT_MULTIPLY_MARKER : CRIT_EXEMPT_MARKER;
-    return flavorDiceGroups(dieText, marker);
+    const override = block.name === 'critMultiply' ? CRIT_OVERRIDE_MULTIPLY : CRIT_OVERRIDE_EXEMPT;
+    return mergeDiceGroupMarker(dieText, CRIT_MARKER_KEY, override);
   }
 
   // $typed(damageType, formula) — tags a dice/formula sub-expression with a damage type
@@ -441,7 +443,7 @@ function resolveFunctionBlock(
     const dieText = resolveOperand(block.args[1], helpers.resolveSubFormula);
     const damageType: DamageType | undefined = resolveDamageTypeAlias(aliasText);
     if (!damageType) return dieText;
-    return flavorDiceGroups(dieText, buildTypedDamageMarker(damageType));
+    return mergeDiceGroupMarker(dieText, DAMAGE_TYPE_MARKER_KEY, damageType);
   }
 
   // Array functions: contains / find / any / count — a runtime miss (missing context,

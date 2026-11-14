@@ -1,6 +1,7 @@
 import type { DamageType } from '@constants/attacks/damageTypes.mjs';
-import { CRIT_EXEMPT_MARKER, CRIT_MULTIPLY_MARKER } from '@constants/critDiceMarkers.mjs';
-import { parseTypedDamageMarker } from '@constants/typedDamageMarkers.mjs';
+import { readCritOverride } from '@constants/critDiceMarkers.mjs';
+import { withMarkerField } from '@constants/diceMarkerBag.mjs';
+import { readDamageType } from '@constants/typedDamageMarkers.mjs';
 
 /**
  * Formula-string assembly for D20-based rolls.
@@ -247,6 +248,29 @@ function combineDiceFormula(fragments: (string | null | undefined)[]): string {
 }
 
 /**
+ * Shared per-dice-group term-building loop behind `flavorDiceGroups()` (blind overwrite) and
+ * `mergeDiceGroupMarker()` (upsert-and-preserve) — each top-level dice group's existing flavor
+ * (if any) is passed to `computeFlavor` to decide its new one. Same formatting/fallback rules
+ * `flavorDiceGroups()`'s doc comment describes (no parens; `formula` unchanged when it isn't a
+ * plain additive dice/numeric chain).
+ */
+function transformDiceGroupFlavors(formula: string, computeFlavor: (existingFlavor: string | undefined) => string): string {
+  const parsed = parseAdditiveDiceFragment(formula);
+  if (!parsed) return formula;
+
+  const parts: string[] = [];
+  for (const [faces, count, existingFlavor] of parsed.diceGroups) {
+    if (count === 0) continue;
+    const term = `${Math.abs(count)}d${faces}[${computeFlavor(existingFlavor)}]`;
+    parts.push(parts.length === 0 ? (count < 0 ? `-${term}` : term) : `${count < 0 ? '-' : '+'} ${term}`);
+  }
+  if (parsed.flat !== 0) {
+    parts.push(parts.length === 0 ? String(parsed.flat) : `${parsed.flat >= 0 ? '+' : '-'} ${Math.abs(parsed.flat)}`);
+  }
+  return parts.length > 0 ? parts.join(' ') : '0';
+}
+
+/**
  * Appends `[label]` directly after each top-level dice group in `formula` (e.g.
  * `3d6[label] + 1 + 1d6[label]`) so Foundry's own dice tooltip (`Roll#getTooltip()`) shows a
  * flavor label for every damage dice group — the same parity `_buildAttackFormula()`'s bare
@@ -259,19 +283,20 @@ function combineDiceFormula(fragments: (string | null | undefined)[]): string {
  * leave unlabeled than risk mis-rendering an unexpected construct.
  */
 function flavorDiceGroups(formula: string, label: string): string {
-  const parsed = parseAdditiveDiceFragment(formula);
-  if (!parsed) return formula;
+  return transformDiceGroupFlavors(formula, () => label);
+}
 
-  const parts: string[] = [];
-  for (const [faces, count] of parsed.diceGroups) {
-    if (count === 0) continue;
-    const term = `${Math.abs(count)}d${faces}[${label}]`;
-    parts.push(parts.length === 0 ? (count < 0 ? `-${term}` : term) : `${count < 0 ? '-' : '+'} ${term}`);
-  }
-  if (parsed.flat !== 0) {
-    parts.push(parts.length === 0 ? String(parsed.flat) : `${parsed.flat >= 0 ? '+' : '-'} ${Math.abs(parsed.flat)}`);
-  }
-  return parts.length > 0 ? parts.join(' ') : '0';
+/**
+ * Like `flavorDiceGroups()`, but upserts `(key, value)` into whatever marker bag (if any) each
+ * dice group's EXISTING flavor already carries (`@constants/diceMarkerBag.mjs`'s
+ * `withMarkerField()`), instead of overwriting it outright — the composability fix for the
+ * `$critMultiply`/`$critExempt`/`$typed()` escape hatches (`FormulaResolver.
+ * functionGrammar.mts`): nesting them in either order (`$critMultiply($typed(fire, 1d6))` or
+ * `$typed(fire, $critMultiply(1d6))`) converges on the same combined bag, since each only
+ * ever upserts its own key.
+ */
+function mergeDiceGroupMarker(formula: string, key: string, value: string): string {
+  return transformDiceGroupFlavors(formula, existingFlavor => withMarkerField(existingFlavor, key, value));
 }
 
 /**
@@ -368,13 +393,12 @@ function flavorDamageDiceBySource(
  * rules this implements. Returns one entry per non-zero dice group, in formula order.
  *
  * `damageType` (poc.10 Story J) is read from the same positional `marker` slot the crit
- * escape hatches already use — a group's original flavor is either a crit marker
- * (`CRIT_EXEMPT_MARKER`/`CRIT_MULTIPLY_MARKER`), a `$typed(...)` marker
- * (`parseTypedDamageMarker()`), or absent; never both at once (whichever function resolved
- * outermost wins the group's single flavor slot — nesting `$critMultiply($typed(...))` vs.
- * `$typed(fire, $critMultiply(...))` is not yet composable). `null` when the group has no
- * `$typed()` wrapping (the common case until the dropdown-driven implicit wrap — a separate
- * Story J checklist item — lands).
+ * escape hatches use — both dimensions live in one shared marker bag
+ * (`@constants/diceMarkerBag.mjs`), upserted independently by whichever of `$critMultiply`/
+ * `$critExempt`/`$typed()` resolved (see `mergeDiceGroupMarker()`), so a group can carry both
+ * a crit override and a damage type at once regardless of nesting order. `null` when the
+ * group has no `$typed()` wrapping (the common case until the dropdown-driven implicit wrap —
+ * a separate Story J checklist item — lands).
  */
 function attributeDamageDiceGroups(
   diceGroups: [number, number, string | undefined][],
@@ -397,13 +421,14 @@ function attributeDamageDiceGroups(
   const extraDamageLabel = game.i18n.localize('dnd35e.COMBAT.ExtraDamageDice');
   return nonZeroGroups.map(([faces, count, marker], idx) => {
     const owner = ownerPerGroup[idx];
-    const forcedExempt = marker === CRIT_EXEMPT_MARKER;
-    const forcedEligible = marker === CRIT_MULTIPLY_MARKER;
+    const critOverride = readCritOverride(marker);
+    const forcedExempt = critOverride === 'exempt';
+    const forcedEligible = critOverride === 'multiply';
     const isExempt = forcedExempt ? true : forcedEligible ? false : owner !== -1;
     const label = owner === -1
       ? (forcedExempt ? extraDamageLabel : baseLabel)
       : overrides[owner].effectName;
-    const damageType = marker ? parseTypedDamageMarker(marker) : null;
+    const damageType = readDamageType(marker);
     return { faces, count, label, isExempt, damageType };
   });
 }
@@ -472,6 +497,7 @@ export {
   flavorDiceGroups,
   flavorTerm,
   groupDamageDiceBySource,
+  mergeDiceGroupMarker,
   splitFormulaParts,
 };
 
