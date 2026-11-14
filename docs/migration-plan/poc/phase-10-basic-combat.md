@@ -67,7 +67,7 @@ Phase 10 is the proof that a full manual combat exchange works end-to-end. It si
 - `useAction()` execution engine on `ActorDnd35e`, supporting manual full attack (repeated attacks spending a per-hand BAB pool) and two-weapon fighting (per-hand BAB, SRD off-hand penalty using existing `weaponSubtype`)
 - D20Roll vs target AC → hit/miss attack card; a **chained** Resolution card is posted once the target's row is applied — the defender's Roll Defense Dialog finalizes hit/miss, and on a hit, damage is rolled **and auto-applied** as part of posting that same card, with a delta-based Undo button available. This two-card Attack → Resolution chain matches D35E's own attack/defense dialog exchange (see §10.8)
 - `buildAttackCard()` chat card, mirroring `buildSaveCard()`'s precompiled-Handlebars pattern
-- Story J (implementation intended after detailed design approval): secrets-aware melee presentation and GM-controlled damage disclosure, using typed damage and maskable derived resistance as the first proof. Display policy and actor scope must be agreed before implementation; this is scheduled before Story F, not deferred past this phase.
+- Story J: typed damage components via a new `$typed(damageType, formula)` formula function — a weapon/AE can express multiple typed damage components (e.g. a flaming longsword's slashing base + fire bonus), displayed consistently across the weapon sheet, attack action editor, and damage roll. No DR/resistance mechanic attached yet — that lands in alpha alongside the Black Dragon's build (see Story J below for the rescope).
 - New `Ammo` item type + equippable Quiver support; ranged/thrown actions consume ammo
 - Attacks of Opportunity: automatic detection of provoking actions taken in a threatened square, with asymmetric player/GM visibility; threatened-square highlighting on token selection
 - Token HUD bottom row (new, alongside Foundry's existing left/right HUD columns): **Weapon Attacks** and **Combat Maneuvers** controls, each expanding a list on click the same way the existing Movement Action control does; Weapon Attacks is fully populated this phase, Combat Maneuvers has a single entry this phase (Total Defense — real maneuvers like trip/grapple/bull rush are alpha.3) + sheet weapon-row attack buttons (work regardless of equip state)
@@ -1935,98 +1935,81 @@ All open decisions from the initial spec have been resolved and folded into the 
 ---
 
 ### Story I — Secrets as a Character capability
-**Status**: Approved, not yet implemented. Scheduled immediately before Story J, which depends on it.
+**Status**: ✅ Complete. Implemented, automatically verified, and user-tested/approved.
 **User**: GM
-**Delivers**: "A GM can create and manage Secret Active Effects on a Character sheet the same way they already can on items — masking any field's value from non-GM users — so that Story J's combat-secret work isn't arbitrarily restricted to future actor types."
+**Delivers**: "A GM can create and manage Secret Active Effects on a Character sheet the same way they already can on items — masking any field's value from non-GM users."
 **Routing**: Lead dev (small, focused)
-**Depends on**: none structurally. Unblocks Story J's actor boundary (a GM-owned "monster stand-in" Character needs to be able to carry masked fields the same way any other actor eventually will).
+**Depends on**: none structurally.
 
 #### Baseline evidence
 - The masking **engine** is already actor-generic: `getDocumentMasks()` (`src/documents/document/sheet/maskMap.mts`) has a working `document.documentName === 'Actor'` branch that builds the mask map live from any actor's own active `secret`-type AEs; `Secret.mts`'s own docstring already says "masks item/actor field values." `DocumentSheetStore` and `TokenHudDnd35e` already call `getDocumentMasks()` generically regardless of document type.
 - What's missing is purely the **authoring surface**: `PhysicalItemEffects.vue` passes `:additional-creatable-types="[secretEffectType]"` to `ItemEffects`, enabling "Add Secret Effect" in that tab's create-effect menu. `ActorEffectsTab.vue` (the Creature/Character equivalent) never does, so a GM currently has no UI path to create a Secret AE on a Character at all, even though the backend would handle it correctly once one exists.
-- This was raised as a "why arbitrarily restrict this to other future actor types?" design question during Story J's design discussion — after community feedback, the decision is to make Secret-authoring a first-class Character capability now rather than deferring it to whenever NPC actors land.
+- This was raised as a "why arbitrarily restrict this to other future actor types?" design question during design discussion for this phase's originally-bundled secret-resolution work (since rescoped out — see Story J below) — the decision was to make Secret-authoring a first-class Character capability now rather than deferring it to whenever NPC actors land.
 
 #### Completion checklist
-- [ ] Add `:additional-creatable-types="[secretEffectType]"` to `ActorEffectsTab.vue` (mirroring `PhysicalItemEffects.vue`'s existing pattern for items)
-- [ ] Verify `SecretSheet.mts`'s field-target picker works sensibly for arbitrary Creature schema fields, not just the Item fields it may currently assume — extend if it's hardcoded to Item-only paths
-- [ ] End-to-end test: a GM creates a Secret AE on a Character masking a non-HP field (to prove the generic path works for more than the one field — HP via `DELTA_MIRROR` — that already happens to work), confirms play-mode shows the mask, true-mode shows the real value, and a non-GM cannot create or edit the Secret AE
-- [ ] Confirm no regression to the existing Item-side Secret AE flow (unidentified items, etc.)
+- [x] Add `:additional-creatable-types="[secretEffectType]"` to `ActorEffectsTab.vue` (mirroring `PhysicalItemEffects.vue`'s existing pattern for items)
+- [x] Verify `SecretSheet.mts`'s field-target picker works sensibly for arbitrary Creature schema fields, not just the Item fields it may currently assume — extend if it's hardcoded to Item-only paths
+- [x] End-to-end test: a GM creates a Secret AE on a Character masking a non-HP field (to prove the generic path works for more than the one field — HP via `DELTA_MIRROR` — that already happens to work), confirms play-mode shows the mask, true-mode shows the real value, and a non-GM cannot create or edit the Secret AE
+- [x] Confirm no regression to the existing Item-side Secret AE flow (unidentified items, etc.)
 
-**Verify**: A GM opens a Character sheet's Effects tab, creates a Secret AE targeting an arbitrary actor field, and sets a mask value. A player viewing that Character in play mode sees the masked value; the GM in true mode sees the real value. A non-GM cannot create, edit, or see controls for the Secret AE. This unblocks Story J's actor-boundary fixture.
+**Verify**: A GM opens a Character sheet's Effects tab, creates a Secret AE targeting an arbitrary actor field, and sets a mask value. A player viewing that Character in play mode sees the masked value; the GM in true mode sees the real value. A non-GM cannot create, edit, or see controls for the Secret AE.
 
 ---
 
-### Story J — Secret-aware melee resolution, typed damage & resistance disclosure
+### Story J — Typed damage components
 
-**Status**: Detailed design required before implementation. Implementation is intended in this phase after Story H and Story I, and before Story F, but remains gated on approval of the decisions below. Existing HUD permission/concealment work remains in place.
-**User**: GM / Player
-**Delivers**: "Combat uses the real effective values, but players do not automatically learn secret bonuses, defenses, or damage mitigation. A player sees the damage their dice appeared to deal; the GM can inspect the real outcome and deliberately reveal it."
-**Routing**: Lead dev (authority, disclosure and HP integration); UI work only after display decisions are approved.
-**Depends on**: Stories D and E (melee attack and resolution flow), existing Secret AE masks and HP masked-edit conventions. Apply/Reapply/Undo reversal semantics are this story's own responsibility — the cross-card uniform-undo/Ctrl+Z architecture once drafted for this phase (under a story letter since reassigned to Secrets on Characters, Story I) was deferred to the wishlist (`docs/migration-plan/post-release/WISHLIST.md`) and is not a prerequisite here.
+**Status**: Design agreed below; ready for implementation.
+**User**: Player / GM (anyone building or reading a weapon's damage)
+**Delivers**: "A weapon or AE can express multiple typed damage components (e.g. a flaming longsword's slashing base plus a separate fire component), displayed consistently on the weapon sheet, the attack action editor, and the damage roll — no DR/resistance mechanic attached yet."
+**Routing**: Lead dev
+**Depends on**: Stories D/E's existing attack/damage-roll pipeline (merged). No longer depends on Story I — the secret-aware resolution and resistance-disclosure work this story originally bundled has moved out (see "Rescope" below).
 
-#### Agreed contract
+#### Rescope — DR, resistance and secret disclosure moved to alpha
 
-- True effective values determine attack rolls, critical confirmation, AC, concealment, mitigation and actual HP changes. Masks affect presentation, not those calculations.
-- Secret-dependent totals and details belong in private GM data, not merely collapsed tooltips or GM-only DOM elements on a public message. Separate public presentation from private resolution data.
-- Damage resistance is the first disclosure example: a damage roll of 10 with 5 points prevented should initially appear to the attacker as 10 damage, while the GM sees 5 actually applied. A GM-controlled reveal can disclose the real damage; its exact UI and audience are **not yet decided**. These numbers illustrate disclosure, not an approved resistance schema or rules algorithm.
-- Damage application must update real HP and synchronize masked current/temp/nonlethal HP deltas. How apparent HP presentation interacts with concealed mitigation still needs an explicit decision; do not let an HP display defeat the apparent-damage policy.
-- This is a plan, not permission to implement combat changes now. Do not broaden the already-approved HUD changes into a combat rollout.
+The original Story J bundled four things: typed damage, a DR grants schema, apparent-vs-actual HP masking, and a GM reveal UX. Only **typed damage** ships here. The other three only make sense once something actually grants DR/resistance — that now happens in alpha, where the Black Dragon's build introduces damage reduction and energy resistance, carried by a lightweight NPC actor type introduced alongside it (intentionally near-identical to Character — a second document subtype through the same composition chain, not new actor architecture). The already-agreed design decisions below are preserved, not discarded, and have moved to `docs/migration-plan/alpha/phase-01-races-progression.md`'s "Damage Reduction & Energy Resistance" section as the starting design for whichever alpha story ends up implementing them (alpha's full phase plan is being reworked soon regardless, so exact placement there isn't pinned down):
 
-#### Scope and dependency brake
+- Display/reveal UX adopted from legacy D35E (`bindShowReveal()` + per-client `renderHTML()` override): one GM-only eye-icon toggle on the Resolution card flips a shared `revealed` message flag; no whisper channel, no GM-only companion message — full data lives in the public message's flags from the start, only the rendered template is gated.
+- Physical DR only first; Energy Resistance is a separate, type-equality-matched mechanic (not a DR variant, never bypass-tag intersected).
+- `Creature.system.defense.damageReduction`: an `ArrayField` of discrete `{ amount: number, types: SetField<string> }` grants (not a flat number + flat tag set), resolved at attack-resolution time against the attacking weapon's bypass tags, `max(amount)` among non-bypassed grants wins, never stacks. A DR-granting AE authors one grant via a `changes[]` entry whose `value` is the structured object, kept out of numeric bonus-type stacking the same way existing string-tag pushes onto `system.damageReductionTypes` already are.
+- Apparent-vs-real HP: two independently-computed deltas (`realDelta` post-DR, `apparentDelta` pre-DR/rolled) applied independently to the real and masked HP tracks — a new sibling strategy to `MASKED_EDIT_STRATEGY.DELTA_MIRROR`.
 
-The intended first slice adds a small supported set of typed damage and a maskable, derived resistance/mitigation stat, then proves apparent-versus-actual damage and deliberate reveal through one melee exchange. Reuse existing damage type constants; the repository already declares physical and energy types, so this is not a request for a second damage-type taxonomy.
+#### Design — `$typed(damageType, formula)` formula function
 
-Do not silently equate physical damage reduction with energy resistance, or choose a universal flat subtraction stat. Agree the initial rules subset, bypass behavior and derived data shape first. Derive real values through the existing AE/data-preparation architecture; keep masks in Secret AE/runtime presentation rather than adding dual real/apparent schema fields.
+Reuses the existing `$`-prefixed formula-function grammar (`FormulaResolver.functionGrammar.mts`) — same tier as `$scaleDamage`/`$critMultiply`/`$critExempt`. A new two-argument function:
 
-**No NPC actor prerequisite is approved.** NPC actors remain assigned to [beta.6](../beta/phase-06-advanced-actors.md). Nor is a general player-actor Secret authoring/masking rollout approved here. First establish the smallest existing-actor fixture that can prove the behavior without those expansions. If that cannot be done cleanly, leave implementation blocked and return the dependency for discussion rather than pulling either project forward. The desired maskable derived stat is part of Story J's design, not a claim that all actor masking infrastructure is already complete.
+```
+$typed(fire, 1d6)
+$typed(slashing, 2d6) + $typed(fire, 1d6)
+```
 
-#### Initial trace evidence and implementation audit
+- **First argument**: a bare damage-type identifier (lowercase alias, e.g. `fire`, `slashing`, `sonic`) resolved against the existing `DAMAGE_TYPES` constants (`@constants/attacks/damageTypes.mjs`) — no second taxonomy, no new registry. The lowercase-alias lookup is generated from those existing constants, mirroring `CANONICAL_NAMES`'s pattern for function names, not hand-duplicated.
+- **Second argument**: a dice/formula sub-expression, resolved normally through the existing sub-formula resolver.
+- Resolution mirrors `$critMultiply`/`$critExempt`: resolve the inner formula, then flavor its top-level dice groups so the damage type survives as literal bracket-flavor text through to the constructed `Roll` — the same "stash as flavor text, read back later" trick `CRIT_MULTIPLY_MARKER`/`CRIT_EXEMPT_MARKER` already use via `flavorDiceGroups()`.
+- **Known integration point**: `flavorDamageDiceBySource()` (`src/dice/d20Formula.mts`) currently builds the *final* roll formula by overwriting each dice group's flavor with a single source label (weapon name or contributing effect's name) — it doesn't yet carry a second dimension. This story extends that function (or its stash format) so a dice group carries **both** its source label and its damage type through to the final roll string, and so `groupDamageDiceBySource()`'s breakdown list can group by type as well as source. Exact encoding (compound bracket string vs. two parallel stash passes) is an implementation-time decision, not pinned here.
 
-These are findings from an initial direct trace, not a completed end-to-end audit or implemented fixes. Paths below are relative to the repository root.
+#### Weapon attack authoring UX
 
-| Boundary | Current evidence | Story J obligation |
-|----------|------------------|--------------------|
-| HUD selection | `src/documents/token/hud/tokenHudActions.mts` builds labels from action names and available BAB | Audit names, images and displayed BAB without changing ownership, equip eligibility, action costs or exact acting-token forwarding |
-| Melee previews and rolls | `src/documents/items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mts` builds attack/damage previews from real values and AE contribution history | Separate viewer-safe previews and labels from true mechanics; inspect critical rolls and dice flavor text as well as headline totals |
-| Formula contexts | `src/helpers/formulae/utils.mts` exposes prepared system data to formula resolution | Preserve true mechanical contexts; separately audit dialog autocomplete, resolved previews and user-facing errors for secret disclosure |
-| Defense dialog and evaluation | `src/documents/actors/creature/logic/buildRollDefenseDialogData.mts` and `src/dice/chatCards/resolutionCard/evaluateDefense.mts` read real AC/concealment and build detailed breakdowns | Preserve authoritative hit resolution while deciding what each dialog participant may see or edit |
-| Attack and resolution messages | `src/dice/chatCards/attackRollCard/attackRollCard.mts` and `src/dice/chatCards/resolutionCard/resolutionCard.mts` persist formulas/totals/breakdowns in flags and render them into content | Audit public content, flags, stored rolls, confirmation rolls, roll options, tooltips and dice integration; do not place private truth in a public message and rely on render-time hiding |
-| Apply/Reapply Damage | `resolutionCard.mts` calls `Creature.updateHP()`; its reversal currently writes HP directly | Integrate mitigation exactly once, synchronize masks, record actual per-field deltas, and reverse/reapply those deltas without recalculating from newly changed defenses |
-| HP calculation | `src/documents/actors/creature/Creature.mts` has an explicit DR integration TODO in `updateHP()` and no resistance fields were found in the creature model during this trace | Agree a single mitigation boundary and derived stat shape before editing; preserve temporary HP/nonlethal rules and avoid a card-only mitigation implementation |
+- `WeaponAttackDataModel.damageType` (existing dropdown field) stays the day-to-day authoring surface — selecting "Slashing" requires no formula editing at all.
+- Whatever part of the resolved `damageFormula` is **not** already inside an explicit `$typed(...)` call gets implicitly wrapped in `$typed(<dropdown value>, ...)` before dice-flavoring. An author who wants a second component (e.g. a homebrew flaming shortsword with no AE) just writes `1d6 + $typed(fire, 1d6)` directly in `damageFormula` — the dropdown-selected type (`slashing`) implicitly covers the untyped `1d6` term, the explicit `$typed(fire, 1d6)` covers the rest. This mirrors the existing default-rule-plus-explicit-override pattern `$critMultiply`/`$critExempt` already use.
+- AE-authored bonus damage (the Flaming enhancement's `+1d6` change) simply becomes `$typed(fire, 1d6)` as its `value` — no new column on the AE `changes[]` row needed. This directly resolves the gap flagged in the Lily Knight fixture's own AE description.
 
-Protection of private chat data is a concrete requirement, not a promise of server-enforced secrecy for every replicated actor field. Document the actual Foundry client-data boundary during design. Do not claim that masking makes actor source data inaccessible to a client that already receives it.
+#### Display surfaces (start here, iterate)
 
-#### Open decisions — discuss before implementation
-
-- [x] **Display and reveal UX**: Adopted from the legacy D35E system (`module/chat.js`'s `bindShowReveal()` + `module/sidebar/chat-message.js`'s per-client `renderHTML()` override): one GM-only eye-icon toggle on the Resolution card flips a single shared `revealed` boolean message flag; every client re-renders the card against that flag. "Rolled" (apparent, pre-DR) damage is always visible to everyone. "Applied" (real, post-DR) damage and the full DR breakdown (which grant was evaluated, which was bypassed by the attacking weapon's tags, which one won) are gated by `revealed` — same shape as D35E's `damageData.appliedDR`/`baseBeforeDR`/`baseAfterDR` breakdown table. True server-side privacy (preventing a console-savvy player from reading the message flags directly) is explicitly **not** a goal — full data lives in the public message's flags from the start, same as D35E; only the rendered template is gated.
-- [x] **Private data and authority**: No whisper channel, no GM-only companion message. Matches D35E's model exactly — the public message carries everything; the reveal flag only controls what's rendered.
-- [x] **Initial damage rules**: Physical Damage Reduction only this pass; Energy Resistance explicitly deferred (tracked in `docs/migration-plan/alpha/phase-01-races-progression.md`'s "Damage Reduction & Energy Resistance" section — it is not a DR variant, it never stacks via bypass-tag intersection, and needs its own grant-system-dependent authoring path). DR fully negates (never partial) when the attacking weapon's `system.damageReductionTypes` tags don't intersect a grant's required bypass types; never applies to energy damage, touch attacks, spells, or spell-like/supernatural abilities; multiple DR sources never stack — only the best non-bypassed grant applies **per hit** (requires evaluating bypass against the actual attacking weapon, not at data-prep time — see below). Pool-based DR (Stoneskin) and "DR negates accompanying special effects" (poison/disease/stun) are explicitly out of scope — pool-based DR is deferred until the Buff item type exists to model it properly; flagged, not forgotten.
-- [x] **Derived stat and mask shape**: `Creature.system.defense.damageReduction` — deliberately **not** a flat number + flat tag set (that breaks multi-source-with-different-bypass-types correctness; see worked counter-example in session notes). Instead an `ArrayField` of discrete `{ amount: number, types: SetField<string> }` grants, one per active DR source, resolved at attack-resolution time (not data-prep time) by filtering against the attacking weapon's own bypass tags and taking `max(amount)` among non-bypassed grants — a direct port of D35E's `actorDamageHelper.js` `calculateDamageToActor()` filtering logic. Bypass-tag vocabulary reuses the existing GM-configurable `damageReductionTypes` game-rules registry unchanged (already extensible; Material AEs already push matching tags onto the weapon side via the identical vocabulary). A DR-granting AE authors one grant via a `changes[]` entry whose `value` is the structured `{amount, types}` object (not a bare number), which keeps it out of the numeric bonus-type stacking contest in `applyStackedChanges.mts` (`parseNumericChangeValue()` fails on a non-numeric value) and always applies via Foundry's native ADD handler — the same trick the existing string-tag pushes onto `system.damageReductionTypes` already rely on. **DR's secrecy during combat resolution is unconditional and hardcoded to the Resolution/attack-card pipeline** — it is not an opt-in Secret AE mask like every other maskable field in this system; it layers independently on top of whatever generic Secret-AE masking (e.g. HP) may also be active on the same target. **Unconfirmed engine detail — spike required at the start of implementation**: confirm Foundry's `ArrayField(SchemaField(...))` natively supports ADD-mode element-push (proven only for scalar `ArrayField(StringField)` pushes in this codebase so far); fall back to two index-correlated parallel arrays if it doesn't.
-- [x] **Actor boundary**: Confirmed — two existing Characters (attacker + a GM-owned "monster stand-in" Character), no NPC subtype needed. **New prerequisite surfaced during design**: Secret AE *authoring* is not currently exposed on Character/Creature sheets at all — the masking engine itself is already actor-generic (`getDocumentMasks()` has a working `documentName === 'Actor'` branch; `Secret.mts`'s own docstring says "item/actor"), but `ActorEffectsTab.vue` never passes `:additional-creatable-types="[secretEffectType]"` the way `PhysicalItemEffects.vue` does for items. This is now **Story I — Secrets as a Character capability**, scheduled immediately before this story.
-- [x] **Apparent HP versus hidden mitigation**: Two independently-computed deltas (`realDelta` = post-DR, `apparentDelta` = pre-DR/rolled) applied independently to the real and masked HP tracks — a new sibling strategy to the existing `MASKED_EDIT_STRATEGY.DELTA_MIRROR` (which mirrors one delta to both tracks; this needs two). Applying each delta to its own track means any pre-existing GM fudge-offset from an unrelated Secret AE on HP is preserved automatically and simply shifts by the DR amount — the two secrecy mechanisms (DR's hardcoded combat secrecy, and any ordinary Secret-AE HP mask) compose additively with no special-case code. This composition, across the full matrix (DR-secret × pre-existing-HP-mask × reveal-state × Apply/Reapply/Undo), is the primary testing burden for this story and is treated as a first-class deliverable, not an afterthought.
-- [ ] **Other secret-dependent outcomes**: Define apparent-versus-real attack/confirmation totals, AC, concealment and hit/miss presentation after the damage-resistance example is agreed. Do not automatically generalize damage's apparent-number treatment to every roll.
-- [ ] **Replay, reveal and history**: Specify idempotent Apply/Reapply/Undo and reveal behavior, stale clicks, changing permissions/defenses, historical snapshots and linked/unlinked target identity. Decide how private/public records remain correlated without leaking private payloads. Must preserve `realDelta`/`apparentDelta` separately (not just one applied amount) so Undo can reverse each track independently.
-
-#### Proposed implementation order — gated, not started
-
-1. Resolve the display, authority and actor-boundary questions with the damage-resistance example. Record approved answers here; leave unresolved questions unchecked.
-2. Specify the minimal typed-damage/derived-resistance model and a multi-user proof fixture, including the private/public payload contract.
-3. Implement true mitigation and recorded HP/mask deltas at the agreed shared boundary. Integrate Apply/Reapply reversal without applying mitigation twice.
-4. Wire public apparent presentation, private GM inspection and deliberate reveal for that fixture.
-5. Complete the HUD-to-damage audit above, extending the approved disclosure rules to the remaining melee surfaces. Preserve true combat mechanics and existing HUD permissions.
+- Weapons-table type column (`WeaponsSection.vue`) — currently a single localized type string; becomes a per-component breakdown (e.g. "Slashing + Fire").
+- Damage roll chat card breakdown — existing source-grouped breakdown rows gain a type label alongside source.
+- Attack action editor (`WeaponAttackActionEditor.vue` / `DamageType.vue`) — dropdown stays; add a resolved-formula preview showing the implicit-wrap result, matching the existing `$scaleDamage` preview convention.
 
 #### Completion checklist
 
-- [ ] User has approved the required display, authority, damage-rules and actor-scope decisions; no NPC/player-mask expansion is implicit.
-- [ ] Supported typed damage and maskable derived resistance exist in runtime schema/types, AE preparation, localization and the agreed presentation surface.
-- [ ] A multi-user melee fixture demonstrates the approved apparent damage, private actual mitigation and a deliberate GM reveal, including per-target behavior.
-- [ ] Public message content, flags, stored roll payloads and rendered tooltips contain no unrevealed private combat payload; reload and rerender preserve this separation.
-- [ ] True calculations produce the same expected outcomes regardless of viewing user or display mask, and an invalid display mask never falls back to revealing truth.
-- [ ] Apply/Reapply/Undo preserve actual current/temp/nonlethal deltas and mask synchronization, including intervening HP changes; events do not disclose details beyond the agreed audience.
-- [ ] HUD, dialogs, critical confirmation, attack/resolution cards, damage application and reveal have targeted regression coverage, plus a real Foundry GM/player verification of the supported privacy boundary.
-- [ ] Record remaining limitations explicitly; do not mark the broader melee audit complete on the strength of the resistance example alone.
+- [ ] `$typed(damageType, formula)` function added to `FormulaResolver.functionGrammar.mts` (parsing, arg validation, resolution, lowercase-alias lookup off `DAMAGE_TYPES`)
+- [ ] Implicit top-level wrap of the dropdown-selected `damageType` around any untyped remainder of `damageFormula`/AE bonus-damage changes
+- [ ] `flavorDamageDiceBySource()`/`groupDamageDiceBySource()` extended to carry damage type alongside source label through to the final roll and breakdown list
+- [ ] Weapons-table, damage roll chat card, and attack action editor updated to display per-type breakdown
+- [ ] Lily Knight POC fixture's Flaming AE updated to use `$typed(fire, 1d6)`; its description's "lumped into Slashing" caveat removed
+- [ ] Localization entries for any new error strings (`dnd35e.Formula.Errors.function.*`)
+- [ ] Unit tests for `$typed()` parsing/resolution/validation; targeted test for the implicit-wrap precedence rule
 
-**Verify (after design approval and implementation)**: In a controlled multi-user encounter, a player rolls the agreed example damage against an unrevealed resistance. The public record shows apparent damage, while the GM's private record shows mitigation and the actual HP change. The GM can reveal precisely the approved information. Other clients cannot recover unrevealed values from the public message's flags, rolls or content. Applying/reapplying/undoing the result preserves the recorded HP and mask deltas without duplicate mitigation. Repeat after reload and with the exact unlinked target token.
+**Verify**: The Lily Knight's Greatsword +1 Flaming reads a per-component breakdown (e.g. "2d6+1 slashing + 1d6 fire") in the weapons table and the damage roll chat card, with no mechanical DR/resistance applied to either component. A homebrew weapon authored with `1d6 + $typed(cold, 1d4)` in its `damageFormula` and no dropdown override still resolves and displays correctly.
 
 ---
 
@@ -2034,12 +2017,12 @@ Protection of private chat data is a concrete requirement, not a promise of serv
 
 #### Agreed remaining execution order
 
-Story E is merged. Proceed **H → I → J (detailed design approval, then implementation) → F → G**. This is the agreed delivery sequence, not a claim that every adjacent pair has a structural dependency. The uniform undo/Ctrl+Z architecture once drafted for this phase (under a story letter since reassigned below) was pushed to the post-release wishlist (`docs/migration-plan/post-release/WISHLIST.md`) rather than scheduled here.
+Story E is merged. Story H (✅) and Story I (✅) are complete. Remaining: **J → F → G**. Story J no longer carries a design-approval gate or an actor-boundary dependency on Story I — it's now a self-contained typed-damage formula feature, independent of F/G. This is the agreed delivery sequence, not a claim that every adjacent pair has a structural dependency. The uniform undo/Ctrl+Z architecture once drafted for this phase (under a story letter since reassigned below) was pushed to the post-release wishlist (`docs/migration-plan/post-release/WISHLIST.md`) rather than scheduled here.
 
-- **H first** establishes advisory/banner semantics before F adds Container diagnostics.
-- **I second**: a small, structurally-independent prerequisite — exposes Secret AE authoring on Character/Creature sheets (currently engine-ready but UI-gated to items only) so Story J's actor-boundary fixture isn't arbitrarily blocked on a future actor type.
-- **J will be implemented**, not automatically deferred beyond poc.10. Discuss its design in detail and approve its disclosure, authority, damage-rule and actor-boundary decisions before coding; unresolved scope gates remain in force.
-- **F** adopts H's severity model and J's approved resolution/disclosure behavior from the outset; its Ammo Recovery card ships its own simple Undo button rather than depending on a shared cross-card contract.
+- **H first** establishes advisory/banner semantics before F adds Container diagnostics. *(Complete.)*
+- **I second**: exposed Secret AE authoring on Character/Creature sheets (previously engine-ready but UI-gated to items only). *(Complete — no longer a Story J prerequisite now that J no longer touches secret resolution.)*
+- **J** implements `$typed(damageType, formula)` and typed-damage display — see Story J's rescope above for why DR/resistance/disclosure moved to alpha instead.
+- **F** adopts H's severity model; its Ammo Recovery card ships its own simple Undo button rather than depending on a shared cross-card contract.
 - **G last** reuses the completed melee/ranged paths for AoO and adds automatic flanking detection/highlighting.
 
 #### Structural dependencies and historical parallelization
@@ -2056,10 +2039,11 @@ Story C (ActionDataModel + TWF)      ──┤
                                        │            └──► Story F (ranged + ammo)
                                        └──────────────────────────────────────────────────────────────────► Story G (AoO)
 
-Story H (PreparationWarning alerts/warnings split — structurally independent; next in execution order)
-Story I (Secrets as a Character capability — structurally independent; unblocks Story J's actor boundary) ──► Story J (secret-aware melee + resistance disclosure — also follows D/E; design approval then implementation before F)
+Story H (PreparationWarning alerts/warnings split — structurally independent; complete)
+Story I (Secrets as a Character capability — structurally independent; complete)
+Story J (typed damage via `$typed()` — follows D/E's existing damage-roll pipeline; no longer dependent on Story I)
 ```
 
-Spikes 1, 2, and 3 (already resolved above) were fully independent research tasks that informed downstream scope. Historically, B and C could start simultaneously; A consumed B's action-economy shape; D joined the attack trigger, execution engine and attack card; E followed D with defense/resolution. G additionally needs B's movement-provokes. H remains structurally independent but is now scheduled first among the remaining stories.
+Spikes 1, 2, and 3 (already resolved above) were fully independent research tasks that informed downstream scope. Historically, B and C could start simultaneously; A consumed B's action-economy shape; D joined the attack trigger, execution engine and attack card; E followed D with defense/resolution. G additionally needs B's movement-provokes. H and I were both structurally independent and are now complete.
 
-Story J depends on D/E's actual melee flow and Story I's Secret-authoring UI, and is scheduled for design approval and implementation before F. Its disclosure design and actor-scope gate come first. Neither NPC actors nor a broad player-mask rollout is an approved prerequisite. (The uniform undo/Ctrl+Z architecture once drafted for this phase under a story letter since reassigned to Story I above was pushed to the post-release wishlist rather than scheduled in this phase; Resolution, Move Action, and Story F's Ammo Recovery cards each ship their own independent button-based Undo.)
+Story J depends only on D/E's existing damage-roll pipeline — its original dependency on Story I's Secret-authoring UI no longer applies, since DR/resistance/disclosure moved to alpha (see Story J's rescope above). (The uniform undo/Ctrl+Z architecture once drafted for this phase under a story letter since reassigned to Story I above was pushed to the post-release wishlist rather than scheduled in this phase; Resolution, Move Action, and Story F's Ammo Recovery cards each ship their own independent button-based Undo.)
