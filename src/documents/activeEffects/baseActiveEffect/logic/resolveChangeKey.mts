@@ -9,7 +9,7 @@
  * Foundry core's `ActiveEffect.applyChange()`, only ever see a plain literal path.
  *
  * A key with no `$conditional(` skips block resolution (fast path — the common case) but
- * still passes through `remapNameKeyForItem()` below, then the same literal-field-existence
+ * still passes through `remapNameKey()` below, then the same literal-field-existence
  * check every resolved key gets (see the final check at the bottom of the function).
  *
  * Failure handling: any single unresolvable piece (malformed block, a `when()` condition
@@ -38,17 +38,17 @@ import { getEffectContexts, getEffectParents } from './resolveChangeValue.mjs';
 const KEY_RESOLUTION_FAILED = Symbol('keyResolutionFailed');
 
 /**
- * `name` is a live-computed getter on `ItemDnd35e` (derived from `system.nameFormula`,
- * see `getDisplayName.mts`) with no writable backing field — core's
- * `ActiveEffect.applyChange()` would try to assign a value there and silently lose it.
- * Item-targeted changes resolving to `name` are redirected onto the real, writable
- * `system.nameFormula.formula` field instead, which the `name` getter already resolves
- * through. Actor-targeted `name` changes are left alone — `ActorDnd35e.name` is still a
- * plain writable schema field.
+ * `name` is a live-computed getter with no writable backing field on BOTH `ItemDnd35e`
+ * (derived from `system.nameFormula`, see `getDisplayName.mts`) and `ActorDnd35e` (same
+ * `nameFormula` resolution, layered under the Secret-AE viewer mask — poc.10 Story I).
+ * Core's `ActiveEffect.applyChangeField()` would call `foundry.utils.setProperty(targetDoc,
+ * 'name', value)`, a plain assignment that throws against a getter-only accessor in strict
+ * mode — every ordinary (non-`mask`-type) change resolving to literal `name`, on either
+ * target, is redirected onto the real, writable `system.nameFormula.formula` field instead,
+ * which both `name` getters already resolve through.
  */
-function remapNameKeyForItem(key: string, target: EffectChangeDataDnd35e['target']): string {
-  const isItemTarget = (target ?? EFFECT_CHANGE_TARGET.ACTOR) === EFFECT_CHANGE_TARGET.ITEM;
-  return key === 'name' && isItemTarget ? 'system.nameFormula.formula' : key;
+function remapNameKey(key: string): string {
+  return key === 'name' ? 'system.nameFormula.formula' : key;
 }
 
 /**
@@ -82,7 +82,7 @@ function buildKeyResolutionSchema(effect: ActiveEffectDnd35e): FamiliarSchema {
  *   an item-owned effect applying an actor-targeted change passes both the actor and the
  *   owning item so both sheets surface the warning).
  * @returns The literal raw accessPath to write to (with `name` remapped to
- *   `system.nameFormula.formula` for item-targeted changes — see `remapNameKeyForItem()`),
+ *   `system.nameFormula.formula` on every target — see `remapNameKey()`),
  *   or `KEY_RESOLUTION_FAILED` when a `$conditional(...)` block fails to resolve, or when
  *   the final literal key doesn't resolve to a real field on the target document.
  */
@@ -111,7 +111,7 @@ function resolveActiveEffectChangeKey(
   let resolvedKey: string;
 
   if (!rawKey || !rawKey.includes('$conditional(')) {
-    resolvedKey = remapNameKeyForItem(rawKey, change.target);
+    resolvedKey = remapNameKey(rawKey);
   } else {
     const [block, ...extraBlocks] = FormulaResolver.findConditionalBlocks(rawKey);
     if (!block || block.error || extraBlocks.length > 0) {
@@ -150,7 +150,7 @@ function resolveActiveEffectChangeKey(
     const accessPath = resolveFamiliarLeafToAccessPath(winningTarget, schema);
     if (!accessPath) return fail(`Conditional key "${rawKey}": target "${winningTarget}" did not resolve to a real field`);
 
-    resolvedKey = remapNameKeyForItem(accessPath, change.target);
+    resolvedKey = remapNameKey(accessPath);
   }
 
   // A plain (non-conditional) key skips every check above entirely, so without this it

@@ -7,7 +7,7 @@ import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs'
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
-import { ensureNameFormulaOnCreate, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
+import { ensureNameFormulaOnCreate, getDisplayName, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
 import type { PreparationWarning, PreparationWarningHost } from '@documents/document/preparationWarnings.mjs';
 import { pushPreparationWarningToHosts } from '@documents/document/preparationWarnings.mjs';
 import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
@@ -115,6 +115,13 @@ class ActorDnd35e<
    * free from this single override — no per-surface patching needed, same principle as
    * `ItemDnd35e`'s existing override.
    *
+   * The "true" name is resolved through `system.nameFormula` via `getDisplayName()` (same
+   * helper `ItemDnd35e#name` uses), not just the raw stored `name` field: an ordinary
+   * (non-`mask`-type) `override` AE targeting `name` gets redirected by `remapNameKey()`
+   * (`resolveChangeKey.mts`) onto `system.nameFormula.formula`, since this getter has no
+   * writable backing value for core's `ActiveEffect.applyChangeField()` to assign into.
+   * Without resolving through `nameFormula` here, that redirect would silently be ignored.
+   *
    * Reads `this._source?.name` directly, never `super.name` — calling `super.name` here
    * crashed Foundry's own `DocumentIndex._addLeaves()` directory-search indexing during
    * `_onCreate()` (a real bug caught by the e2e suite, not a hypothetical): whatever core's
@@ -122,7 +129,8 @@ class ActorDnd35e<
    * a subclass override. `ItemDnd35e#name` already avoids `super.name` for the same reason.
    */
   override get name (): string {
-    const trueName = this._source?.name ?? '';
+    const fallbackName = this._source?.name ?? '';
+    const trueName = getDisplayName(fallbackName, this.system, this);
     if (game.user?.isGM) return trueName;
     const masks = getDocumentMasks(this);
     const masked = masks?.name;
