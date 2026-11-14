@@ -37,7 +37,16 @@ function evaluateChangeCondition(
   if (!contextMap) {
     const message = `Condition "${condition}" has no context to resolve against for change targeting "${change.key}"`;
     console.warn(`evaluateChangeCondition: ${message}`);
-    pushPreparationWarningToHosts([warnHost, effectHost], change.key, message);
+    pushPreparationWarningToHosts(
+      [
+        warnHost,
+        effectHost,
+      ],
+      change.key,
+      message,
+      'warning',
+      { id: `change:${change.id ?? change.key}:condition:context` }
+    );
     return false;
   }
 
@@ -46,7 +55,10 @@ function evaluateChangeCondition(
     contextMap,
     '',
     [],
-    (reason) => pushPreparationWarningToHosts([warnHost, effectHost], change.key, `Condition "${condition}": ${reason}`)
+    (reason) => pushPreparationWarningToHosts(
+      [warnHost, effectHost], change.key, `Condition "${condition}": ${reason}`, 'warning',
+      { id: `change:${change.id ?? change.key}:condition:formula` }
+    )
   );
 
   if (resolved !== true && resolved !== false) {

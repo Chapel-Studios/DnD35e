@@ -1,5 +1,11 @@
 import type { FieldOverrides } from '@vc/fields/formGroups/fieldPermissions.mjs';
 
+interface PreparationWarningOverride {
+  /** Null restores the producer default, while the revision invalidates stale dismissal. */
+  banner: boolean | null;
+  revision: string;
+}
+
 /**
  * Base flags structure shared across all D&D 3.5e documents.
  * Use this as the base for Items, Actors, and ActiveEffects.
@@ -8,6 +14,7 @@ interface BaseFlags {
   [key: string]: unknown;
   /** Per-field visibility/editability overrides set by GMs */
   fieldOverrides?: FieldOverrides;
+  preparationWarningOverrides?: Record<string, PreparationWarningOverride>;
 }
 
 /**
@@ -22,4 +29,5 @@ type DocumentFlagsDnd35e<T extends object = object> = Record<string, Record<stri
 export type {
   BaseFlags,
   DocumentFlagsDnd35e,
+  PreparationWarningOverride,
 };

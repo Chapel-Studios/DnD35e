@@ -67,7 +67,7 @@ Phase 10 is the proof that a full manual combat exchange works end-to-end. It si
 - `useAction()` execution engine on `ActorDnd35e`, supporting manual full attack (repeated attacks spending a per-hand BAB pool) and two-weapon fighting (per-hand BAB, SRD off-hand penalty using existing `weaponSubtype`)
 - D20Roll vs target AC → hit/miss attack card; a **chained** Resolution card is posted once the target's row is applied — the defender's Roll Defense Dialog finalizes hit/miss, and on a hit, damage is rolled **and auto-applied** as part of posting that same card, with a delta-based Undo button available. This two-card Attack → Resolution chain matches D35E's own attack/defense dialog exchange (see §10.8)
 - `buildAttackCard()` chat card, mirroring `buildSaveCard()`'s precompiled-Handlebars pattern
-- Story J (planning only; implementation on hold): secrets-aware melee presentation and GM-controlled damage disclosure, using typed damage and maskable derived resistance as the first proof. Display policy and actor scope must be agreed before implementation.
+- Story J (implementation intended after detailed design approval): secrets-aware melee presentation and GM-controlled damage disclosure, using typed damage and maskable derived resistance as the first proof. Display policy and actor scope must be agreed before implementation; this is scheduled before Story F, not deferred past this phase.
 - New `Ammo` item type + equippable Quiver support; ranged/thrown actions consume ammo
 - Attacks of Opportunity: automatic detection of provoking actions taken in a threatened square, with asymmetric player/GM visibility; threatened-square highlighting on token selection
 - Token HUD bottom row (new, alongside Foundry's existing left/right HUD columns): **Weapon Attacks** and **Combat Maneuvers** controls, each expanding a list on click the same way the existing Movement Action control does; Weapon Attacks is fully populated this phase, Combat Maneuvers has a single entry this phase (Total Defense — real maneuvers like trip/grapple/bull rush are alpha.3) + sheet weapon-row attack buttons (work regardless of equip state)
@@ -1418,7 +1418,7 @@ Generalizes item-type restriction into a reusable Container capability rather th
 
 **`allowsCurrency: boolean`** (default `true`) — whether this container can hold coins at all, independent of `allowedItemTypes` (which only ever governs embedded *items*, never `containedCurrency`). Unchecking it disables the Inventory tab's `CoinageFormGroup` entirely — a container fully dedicated to a single item type (a quiver, a weapon rack) with no coin slot.
 
-**Content warning**: when `allowedItemTypes` is `[]` (None) AND `allowsCurrency` is `false`, the container can't hold anything at all — a misconfiguration, not a valid "empty on purpose" state. `Container._prepareDerivedItemData()` pushes a `PreparationWarning` (§10.14 Story H's severity split — classified `warning`, not a blocking `alert`) in this case: "This container can't hold anything — item storage is set to None and coin storage is disabled."
+**Content warning**: when `allowedItemTypes` is `[]` (None) AND `allowsCurrency` is `false`, the container can't hold anything at all — a misconfiguration, not a valid "empty on purpose" state. Story F's `Container._prepareDerivedItemData()` will push a `PreparationWarning` (technical severity `warning`, with Story H's `defaultBanner: false` for tab-only prominence) in this case: "This container can't hold anything — item storage is set to None and coin storage is disabled."
 
 **Container sheet** (`ContainerCapacity.vue`, alongside the existing `maxContentWeight`/`contentsAreWeightless` fields): a `MultiOptionToggle` "Contents" control (All / None / Specific Types) driving `allowedItemTypes` (`null` → All, `[]` → None, non-empty → Specific, which reveals a `MultiSelectFormGroup` checklist of `PHYSICAL_ITEM_TYPES`), plus two independent checkboxes: "Is Quiver" (`isQuiver`) and "Allow Currency" (`allowsCurrency`).
 
@@ -1620,7 +1620,7 @@ All open decisions from the initial spec have been resolved and folded into the 
 | `src/documents/items/physical/weapon/logic/weaponDamageScaling.mts` | New: `scaleDamageDie(dieFormula, size)` plain TS helper (§10.4) — transcribes D35E's `sizeRoll()` size→die step table (`module/actor/entity.js`); called directly by `Weapon.getContributedActorChanges()`, not routed through FormulaFamiliar |
 | `src/dice/D20Roll.mts` | Change `isCriticalThreat` from a no-arg getter (hardcoded natural-20) to `isCriticalThreat(threshold: number = 20): boolean` (§10.4); update the one existing call site in `rollMessages.mts`'s save card (uses the default) |
 | `src/settings/combat/constants.mts` / `registration.mts` | Add `PLAYER_SELF_DEFENSE` setting key, default `true` during development with a `// TODO: flip to false before release` comment on the registration |
-| `src/documents/document/preparationWarnings.mts` | Add `severity: 'alert' \| 'warning'` discriminator + GM upgrade/downgrade support (§10.14 Story H) |
+| `src/documents/document/preparationWarnings.mts` | Preserve technical `warning`/`error`; add stable diagnostic identity and default banner prominence, with source-owned GM preferences handled by `preparationWarningPreferences.mts` (§10.14 Story H) |
 | `system.json.template` / `registration.mts` | Register `CombatDnd35e` (`CONFIG.Combat.documentClass`), `CombatantDnd35e`, `Ammo` item type |
 | `src/main.mts` (or init) | Register `CombatDnd35e`, `CombatantDnd35e`, event types, tracker |
 
@@ -1834,12 +1834,12 @@ All open decisions from the initial spec have been resolved and folded into the 
 **User**: Player (during combat)  
 **Delivers**: "Ranged/thrown attacks apply range-increment penalties and consume ammo (or the thrown weapon itself); a character carrying multiple eligible ammo types picks which one to consume before rolling; missed ammo is tracked per-combatant and a GM can recover it with a single post-combat roll"  
 **Routing**: Lead dev (Ammo item type + item-contribution/`ammoOptions` wiring) + Jr dev (range penalty math, Ammo select field UI)  
-**Depends on**: Story C (ActionDataModel's `range`/`ammoType`), Story D (Attack Roll Dialog, for the reserved Ammo select field slot)
+**Depends on**: Story C (ActionDataModel's `range`/`ammoType`), Story D (Attack Roll Dialog, for the reserved Ammo select field slot). In the agreed execution order, also consumes Story H's severity tiers, Story I's shared undo contract, and Story J's approved resolution/disclosure behavior.
 
 - [ ] Create new `Ammo` item type (extends `PhysicalItem`; `quantity`, `ammoType`, `alwaysRecoverable: boolean` default `false`)
 - [ ] Add the generic, always-available "Throw" HUD/Actions-tab action (§10.4, moved from Story D since it's a range-increment/ammo-flavored action in its own right): throws whatever's held in a free/freeable hand at a flat −4 attack penalty, 10-ft range increment, crit only on natural 20 (×2 damage) — used only when the thrown item has no real `RangedWeaponAttack` entry with the `thrown` property of its own
 - [ ] Add `allowedItemTypes: string[] | null` (nullable `SetField`, `choices: PHYSICAL_ITEM_TYPES`, default `null`), `isQuiver: boolean` (default `false`), and `allowsCurrency: boolean` (default `true`) fields to `ContainerSystemModel`; extend `canAddItemToContents()` with the type-allow check; add the Contents `MultiOptionToggle` + `MultiSelectFormGroup` + Is Quiver/Allow Currency checkboxes to `ContainerCapacity.vue`; hide `CoinageFormGroup` in `ContainerInventory.vue` when `allowsCurrency` is `false` — no new Quiver item type, a compendium Quiver is just a `Container` preset with `isQuiver: true` (commonly paired with `allowedItemTypes: ['ammo']`)
-- [ ] Push a `PreparationWarning` (default `alert` until Story H's severity split lands, then reclassified `warning`) when a container's `allowedItemTypes` is `[]` and `allowsCurrency` is `false` — flags a container configured to hold nothing at all
+- [ ] Push a `PreparationWarning` with technical severity `warning` and `defaultBanner: false` using Story H's prominence contract when a container's `allowedItemTypes` is `[]` and `allowsCurrency` is `false` — flags a container configured to hold nothing at all; no interim banner-generating classification is needed
 - [ ] Implement `Ammo.getContributedActorChanges()`: push a `system.attacks.ammoOptions` entry (`{ itemUuid, name, ammoType, quantity }`) when the ammo is carried loose or carried inside a container whose `isQuiver` is `true`
 - [ ] Add `system.attacks.ammoOptions` derived array field to `CreatureSystemData`
 - [ ] Populate the Ammo select field reserved in Story D's dialog: lists `ammoOptions` entries matching the acting action's `range.ammoType`, auto-selecting the sole entry when only one exists
@@ -1851,25 +1851,69 @@ All open decisions from the initial spec have been resolved and folded into the 
 - [ ] Implement `combatantAmmoTracking.mts`: `recordRetrievableAmmo()`/`getRetrievableAmmo()`/`clearRetrievableAmmo()` combatant-flags helpers (§10.9)
 - [ ] Wire `ActionDataModel#continue()` to call `recordRetrievableAmmo()` for ammo-consuming attacks on a miss, or always when the ammo is `alwaysRecoverable` — gated to party-member attackers only (`system.settings.isPartyMember === true`)
 - [ ] Register a `preDeleteCombat` hook that posts the Ammo Recovery prompt card (snapshotting every combatant's non-empty `retrievableAmmo` tally into the message's own flags) before the Combat document disappears
-- [ ] Implement `buildAmmoRecoveryCard()`: per-entry `${count}d100` roll (≤50 recovered) — skipped entirely for `alwaysRecoverable` entries, which recover in full — applies recovered quantities to the `Ammo` items, resolves the same message in place with an Undo button
+- [ ] Implement `buildAmmoRecoveryCard()`: per-entry `${count}d100` roll (≤50 recovered) — skipped entirely for `alwaysRecoverable` entries, which recover in full — applies recovered quantities to the `Ammo` items, resolves the same message in place with an Undo button using Story I's shared revert/history contract from its first implementation
 
 **Verify**: Firing a bow with two eligible arrow stacks (e.g. regular + silver) shows an Ammo select field; picking one consumes only that stack. A single eligible stack skips the picker entirely. Ammo sitting in a locked chest (non-quiver container) doesn't appear as an option; the same ammo moved into a Quiver-flagged container (`isQuiver: true`), or carried loose, does. Attempting to drag a non-ammo item into a container whose Contents toggle is set to a type list not including that item is rejected; setting a container's Contents toggle to None rejects every item. Unchecking a container's Allow Currency hides its coin field; a container with Contents set to None and Allow Currency unchecked shows a content warning. Range penalty scales correctly with distance. Throwing a dagger consumes the dagger itself with no Ammo picker shown. Missing with 10 arrows and hitting with 10 more, then ending the combat encounter, auto-posts an Ammo Recovery card showing 10 expended for that combatant; clicking Recover Ammo rolls and shows roughly half recovered (varies by roll) — the recovered count is added back to the arrow stack's quantity, and clicking Undo reverses it. Ammo flagged `alwaysRecoverable` shows on the card even for hits, and Recover Ammo returns its full count with no roll. An NPC combatant's expended ammo is never tracked and never appears on the card.
 
 ---
 
 ### Story H — PreparationWarning alerts/warnings split
+**Status**: Implemented and automatically verified; awaiting user testing/approval.
 **User**: GM
-**Delivers**: "Incomplete system-created actions (e.g. a freshly auto-created `ThrownWeaponAttack` still missing required fields) surface as a non-blocking warning on the sheet's warnings tab, distinct from the existing banner-generating alert; a GM can upgrade/downgrade an item's severity between the two"
+**Delivers**: "Advisory diagnostics appear on the sheet's warnings tab without a summary banner; alerts also generate the banner. A GM can promote/demote an individual diagnostic without changing the underlying mechanics."
 **Routing**: Lead dev
-**Depends on**: none structurally — deliberately scheduled last since it's a self-contained severity-tier upgrade to the existing `PreparationWarning` system, not a blocker for any other Story C-G work. Story C's auto-created actions surface with today's single-tier warning behavior until this story lands.
+**Depends on**: none structurally. Scheduled immediately after merged Story E and before Story I; Story F will consume the severity tiers without temporary alert behavior.
 
-- [ ] Add a `severity: 'alert' | 'warning'` discriminator to `PreparationWarning` (`src/documents/document/preparationWarnings.mts`) — `alert` preserves today's banner-generating behavior; `warning` appears on the warnings tab only, no banner
-- [ ] Add GM-only upgrade/downgrade controls on the warnings tab to flip a given warning's severity
-- [ ] Classify the new "system-created action still has default/incomplete fields" diagnostic (§10.3/§10.4) as `warning` by default
-- [ ] Classify the Container "can't hold anything" diagnostic (§10.9, `allowedItemTypes: []` + `allowsCurrency: false`) as `warning` by default
-- [ ] Audit existing `PreparationWarning` call sites — no severity was previously declared, so confirm the default-`alert` fallback preserves current banner behavior everywhere
+#### Baseline evidence (before H implementation)
 
-**Verify**: A freshly auto-created `ThrownWeaponAttack` (from checking the `thrown` property) shows up on the sheet's warnings tab without triggering the top-level banner. A GM can upgrade it to an alert (banner appears) or downgrade an existing alert to a warning (banner disappears, entry stays on the tab).
+- `PreparationWarning` already declares `severity: 'warning' | 'error'`; both push helpers default to `warning`. Actor/item invalid AE-target diagnostics explicitly use `error`. The previous claim that severity did not exist was stale.
+- `PreparationWarningsBanner.vue` currently counts every diagnostic regardless of severity. `PreparationWarningsTab.vue` lists all diagnostics and distinguishes errors visually, but has no severity controls.
+- Banner dismissal is browser-session/per-document state keyed by source UUID + field. Diagnostics are rebuilt during preparation, so changing a transient warning object alone cannot provide a durable GM override.
+- Actor sheets aggregate their own diagnostics and owned-item diagnostics. Stable diagnostic identity and override ownership must account for the same source appearing on more than one sheet.
+- Story C shipped `MeleeWeaponAttack` and `RangedWeaponAttack`; thrown is a property on the latter, not a separate `ThrownWeaponAttack` subtype. The action formula-resolution path emits diagnostics for resolution failures; it does not establish a general "default fields are incomplete" rule.
+- Story F has not yet added the Container storage fields/diagnostic. H defines their advisory severity contract; F creates that producer.
+
+#### Design decisions — Phase 0
+
+- [x] **GM intent**: A GM may decide that a diagnostic is not concerning for their campaign (including house rules) and remove its banner prominence without removing its warnings-tab entry. This must work even when the diagnostic is normally an error; it does not change mechanical validation or make an invalid formula executable.
+- [x] **Controls and presentation**: Retain the flat diagnostic list. Put per-row management behind an obvious kebab (three-dot) menu, using the approved **Show banner / Tab only / Reset to default** labels.
+- [x] **Persistence and source ownership**: Persist GM overrides on the diagnostic's source document, surviving reloads and shared across viewers. A diagnostic shown on an aggregate actor sheet and its source item/effect sheet must resolve the same override. Reset restores the producer's default rather than saving a redundant explicit default.
+- [x] **Permissions and view modes**: GMs may manage diagnostics in edit, play and true modes. Non-GMs cannot manage them in any mode; enforce this in the mutation path as well as by hiding controls. Existing diagnostic visibility is not broadened by this story.
+- [x] **Working melee-first delivery**: H must ship a useful diagnostic flow for current melee attack actions, not infrastructure alone. Include melee diagnostic production and management in the first deliverable. Put shared handling in the action architecture so new action types inherit it by default as they are added; do not expand this story into ranged/ammo or other future actions.
+- [x] **Re-promotion**: A GM can promote a downgraded diagnostic back to banner prominence, and promotion must reopen a previously dismissed banner.
+- [x] **Severity semantics**: Preserve technical `warning`/`error` independently of banner prominence. The kebab menu offers **Show banner / Tab only / Reset to default**. Demotion does not change technical classification or execution validity. Existing diagnostics retain their current banner behavior by default.
+- [x] **Diagnostic eligibility**: Start with missing/invalid melee attack and damage formulas, including unresolved references when the required context is available. These normally show a banner and can be downgraded. Valid defaults (including a zero attack bonus), system-created state and the thrown property alone are not defects. Context-dependent checks defer until the context is available; suppression never makes a broken formula executable.
+- [x] **Diagnostic identity**: Use stable per-action/per-formula rule identifiers, not message text or array position, so separate actions on the same item do not share an override and reordering or editing formulas does not arbitrarily change identity.
+- [x] **Dismissal details**: Tab-only diagnostic changes do not reopen a dismissed alert banner. Promotion, including Reset restoring banner prominence, reopens it.
+
+#### Completion checklist
+
+- [ ] Implement the approved alert/advisory model in `preparationWarnings.mts` and all relevant producers/consumers; preserve the approved mapping for existing `warning`/`error` diagnostics
+- [ ] Add GM-only per-diagnostic promotion/demotion controls and the approved persistence/reset behavior
+- [ ] Show all permitted diagnostics on the warnings tab; only alert-classified diagnostics contribute to the summary banner
+- [ ] Deliver the agreed melee attack diagnostics together with the management flow, using stable per-action/rule identity and shared action-level handling inherited by future action types; apply the approved producer defaults rather than blanket-flagging default actions
+- [ ] Define the Container "can't hold anything" diagnostic as advisory for Story F; do not pull F's Container schema or producer into H
+- [ ] Audit existing call sites and test severity mapping, aggregated-source identity, override permissions/lifetime, and banner dismissal behavior
+
+**Execution grouping (approved)**: The first deliverable includes the severity/override contract, store integration, banner/tab kebab controls, localization, useful current melee attack diagnostics and focused tests together as one buildable vertical slice. Do not ship an infrastructure-only slice and defer all diagnostic producers. Story F owns its future Container producer and enables the shared roll-formula checks for ranged actions.
+
+#### Implementation notes (pending user acceptance)
+
+- Banner dismissal tracks diagnostic identity/revision pairs individually per sheet for the browser session. Demoting or removing a diagnostic preserves dismissal of remaining diagnostics; new identities and promotion/reset revisions still reopen the banner.
+- Warning management requires both GM status and application-level sheet editability, rechecked by the store action and exposed through `canManagePreparationWarnings` for controls. Read-only sheets cannot persist overrides; editable Play/True sheets remain supported.
+- Source preference reads use loaded compendium documents, traversing embedded sources from their cached root; writes resolve the full UUID asynchronously and retain GM/locked-pack checks. ActiveEffect key/value/condition diagnostics carry per-change/per-rule IDs through the multi-host helper, so two failing changes targeting the same field do not share preferences.
+- Existing producers keep technical severity and banner defaults. `pushPreparationWarning()` accepts optional `{ id, defaultBanner }`; Story F's Container diagnostic will use `defaultBanner: false`.
+- GM preferences are stored at `flags.dnd35e.preparationWarningOverrides.<encoded diagnostic id>` on the source document. The record contains `banner: boolean | null` and a revision; `null` restores the producer default, while the revision ensures promotion/reset is not hidden by old browser-session dismissals.
+- Melee attack/damage roll-formula checks live in `ActionDataModel.resolveFormulaFields()`, after the existing FINAL/POST effect resolution. Stable identity is `action:<action id>:formula:<field>`. Future action subtypes inherit roll-formula validation; existing ranged actions explicitly defer the added checks to Story F.
+- Missing formulas and invalid resolved roll syntax are errors with banner prominence by default. Existing FormulaFamiliar resolution failures use the same per-action identity; references to a declared but unavailable owner context defer diagnostics until that context exists. These checks do not change action execution rules.
+- The kebab is visible to GMs in all modes; the write helper independently rechecks GM permission, source availability and locked-compendium state. Errors surface through the existing notification/logging mechanism.
+- `DocumentSheetStore.documentActions.setPreparationWarningBanner()` owns mutation orchestration, pending state, document refresh and error reporting. The tab calls this public action and only closes its menu after success; it does not access `_storeUtils`.
+- Store-boundary refactor verification: 17 warning-management/shared HP-editability tests and typecheck pass, including concurrent-write prevention, failed-write cleanup, permission rechecks and management in all three modes.
+- Completion checkboxes remain open until user testing/approval; implementation and automated verification do not constitute user acceptance.
+
+**Automated verification**: 52 unit tests across the new diagnostic suites and adjacent FormulaData/RollFormulaStringField suites pass. Two real Foundry E2E cases pass: source preference persistence across reload plus promotion/dismissal/reset, and synchronized management from actor/owned-weapon sheets. `npm run build:dist` passes lint, typecheck, pack validation and bundling. `npm run build` passed its prebuild checks but deployment hit a running Foundry pack's `EBUSY` lock; the isolated dist build was used rather than stopping the shared dev instance.
+
+**Verify (after design approval)**: A real melee action fixture produces the agreed diagnostic. A GM uses its obvious row kebab menu in any sheet mode to demote banner prominence without losing the tab entry, promote it again (reopening a dismissed banner), or reset to the producer default. Non-GMs cannot mutate overrides. Changes survive reloads and remain consistent across source/aggregate sheets. Separate melee actions retain separate diagnostic identities. Existing diagnostics retain their approved severity behavior, and a valid default action is not incorrectly reported as incomplete.
 
 ---
 
@@ -1893,24 +1937,24 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 ### Story I — Uniform undo architecture across combat chat cards
 **User**: Developer (architecture) / Player & GM (feel the effect — attacks become undoable, and Ctrl+Z reliably undoes the *whole* last combat action, not just token position)  
-**Delivers**: "The Resolution card's Undo button (speced in §10.7 but not yet built) actually exists and works; Move Action, Prone Toggle (poc.9), Resolution, and Ammo Recovery cards' revert logic shares one common primitive; and a real Ctrl+Z press reverts *any* of these cards, not only movement — by pushing our own synthetic entry onto `canvas.tokens.history` for every Undo-eligible card and intercepting the layer's own undo dispatch to route it to that same shared revert primitive"  
+**Delivers**: "Existing Move Action, Prone Toggle (poc.9), and Resolution reversal behavior is audited and consolidated behind a common primitive, with complete Resolution Undo coverage. A real Ctrl+Z press uses the same revert path in chronological order with native token operations. Story F's future Ammo Recovery card adopts this contract when created."
 **Routing**: Lead dev (touches core undo internals and Foundry's undocumented canvas-history behavior)  
-**Depends on**: Story B (Move Action card), Story E (Resolution card exists to gain its Undo button), poc.9 (Drop Prone/Stand Up's `revertRecordedMovement()`-based Undo — the reference pattern for the movement-carrying half of this story)
+**Depends on**: Story B (Move Action card), Story E (existing Resolution Apply/Reapply and miss/action-refund Undo), poc.9 (Drop Prone/Stand Up's `revertRecordedMovement()`-based Undo — the reference pattern for the movement-carrying half of this story). Scheduled after H and before J; agree an extensible reversal contract, leaving J's private resolution records and HP/mask synchronization to J.
 
-- [ ] Extract a shared revert primitive (e.g. a single `revertCombatCard(kind, message)`-style helper) that Move Action, Prone Toggle, Resolution, and Ammo Recovery's Undo handlers all call through, instead of each card maintaining its own bespoke revert function
-- [ ] Implement the Resolution card's Undo button on top of that shared primitive, per §10.7's existing spec (reverse the exact HP delta, refund `actionEconomySpent`, emit `undoDealDamage`) — this was fully speced in §10.7 but never actually built
+- [ ] Audit the existing Move Action, Prone Toggle and Resolution Apply/Reapply/Undo paths, then extract a shared revert primitive (e.g. `revertCombatCard(kind, message)`) for their reversal logic. Define the integration contract for Story F's future Ammo Recovery card rather than requiring that card to exist in I.
+- [ ] Complete Resolution Undo on top of the shared primitive (reverse recorded HP deltas, refund `actionEconomySpent`, emit `undoDealDamage`). Current code already has `onUndoResolution()` and Apply/Reapply reversal; the rendered Undo button is limited to misses with refundable action economy. Do not treat this as a wholly missing implementation or assume the current `appliedAmount` records every actual HP-field delta.
 - [ ] Register a `TokenLayerDnd35e extends TokenLayer` (`CONFIG.Canvas.layers.tokens.layerClass`) overriding `undoHistory()`: peek `this.history.at(-1)` before popping; if it carries our own marker (e.g. `options.dnd35e?.cardUndo`), pop it ourselves and call the shared revert primitive directly instead of falling through to `super.undoHistory()`'s core CRUD dispatch; any entry without the marker (an ordinary token drag) falls through unchanged
 - [ ] Whenever a card commits a mutation with no token-movement component of its own (Resolution's damage application, Ammo Recovery's quantity increments), push a synthetic `CanvasHistoryEvent`-shaped entry onto `canvas.tokens.history` (`{ type: 'update', data: [{ _id: tokenId }], options: { dnd35e: { cardUndo: { kind, messageId } } } }`) immediately after committing, so a later Ctrl+Z has something to pop for it — for a movement-carrying action (Charge's mandatory attack, Drop Prone), reuse poc.9's real `revertRecordedMovement()`-triggered path instead of a synthetic entry, since Foundry already records those
 - [ ] Verify interleaving: `canvas.tokens.history` is one flat stack shared by every token operation — confirm that attacking, then moving, then pressing Ctrl+Z twice undoes the move first and the attack second (correct reverse chronological order), not something surprising
-- [ ] Update §10.7 "Undo scope across combat chat cards" to state that all four card types now share one Ctrl+Z-and-button-uniform revert path, superseding its current "button only" framing
+- [ ] Update §10.7 "Undo scope across combat chat cards" to document the implemented Ctrl+Z-and-button-uniform revert path for the three existing card types and the integration contract for Story F's future Ammo Recovery card, superseding its current "button only" framing
 
-**Verify**: Clicking Undo on a Resolution card reverses the exact HP delta and refunds the attacker's action economy in one click. Move Action, Prone Toggle, Resolution, and Ammo Recovery cards' Undo buttons all call through the same shared revert helper. Pressing Ctrl+Z after any of the four card-producing actions reverts it exactly as its own button would, in the correct reverse-chronological order relative to other token operations in between.
+**Verify**: Clicking Undo on a Resolution card reverses the exact HP delta and refunds the attacker's action economy in one click. Move Action, Prone Toggle and Resolution cards' Undo buttons call through the same shared revert helper. Pressing Ctrl+Z after any of these card-producing actions reverts it exactly as its own button would, in the correct reverse-chronological order relative to other token operations in between. Story F verifies the same contract for Ammo Recovery when that card exists.
 
 ---
 
 ### Story J — Secret-aware melee resolution, typed damage & resistance disclosure
 
-**Status**: Planning only; combat implementation explicitly on hold pending the decisions below. Existing HUD permission/concealment work remains in place.
+**Status**: Detailed design required before implementation. Implementation is intended in this phase after Story I and before Story F, but remains gated on approval of the decisions below. Existing HUD permission/concealment work remains in place.
 **User**: GM / Player
 **Delivers**: "Combat uses the real effective values, but players do not automatically learn secret bonuses, defenses, or damage mitigation. A player sees the damage their dice appeared to deal; the GM can inspect the real outcome and deliberately reveal it."
 **Routing**: Lead dev (authority, disclosure and HP integration); UI work only after display decisions are approved.
@@ -1984,6 +2028,18 @@ Protection of private chat data is a concrete requirement, not a promise of serv
 
 ### Parallelization
 
+#### Agreed remaining execution order
+
+Story E is merged. Proceed **H → I → J (detailed design approval, then implementation) → F → G**. This is the agreed delivery sequence, not a claim that every adjacent pair has a structural dependency.
+
+- **H first** establishes advisory/banner semantics before F adds Container diagnostics.
+- **I next** consolidates existing reversal behavior and establishes the shared contract before J adds private resolution records and HP/mask synchronization.
+- **J will be implemented**, not automatically deferred beyond poc.10. Discuss its design in detail and approve its disclosure, authority, damage-rule and actor-boundary decisions before coding. Design discussion may begin earlier where it informs I's reversal contract; unresolved scope gates remain in force.
+- **F** adopts H's severity model, I's undo/history contract, and J's approved resolution/disclosure behavior from the outset.
+- **G last** reuses the completed melee/ranged paths for AoO and adds automatic flanking detection/highlighting.
+
+#### Structural dependencies and historical parallelization
+
 ```
 Spike 1 (concealment spike — independent, informs Story E's scope only)
 Spike 2 (tracker-API spike — independent, informs Story A's approach only)
@@ -1996,10 +2052,10 @@ Story C (ActionDataModel + TWF)      ──┤
                                        │            └──► Story F (ranged + ammo)
                                        └──────────────────────────────────────────────────────────────────► Story G (AoO)
 
-Story H (PreparationWarning alerts/warnings split — independent, scheduled last, no blocking relationships)
-Story J (secret-aware melee + resistance disclosure — follows D/E; implementation on hold for design approval)
+Story H (PreparationWarning alerts/warnings split — structurally independent; next in execution order)
+Story J (secret-aware melee + resistance disclosure — follows D/E; design approval then implementation before F)
 ```
 
-Spikes 1, 2, and 3 (already resolved above) were all fully independent research tasks — each only informed one downstream story's scope and never blocked outright. Stories B and C can start simultaneously (no shared dependency). Story A only needs B's action-economy shape, not the full movement integration (and optionally Spike 2's tracker-API verdict). Story D is the first vertical slice through the attack flow — trigger UI, execution engine, and the attack card all together, since none of the three has an independently-verifiable user story on its own. Story F (ranged/ammo) and Story G (AoO) both build on Story D once it lands. Story E (Roll Defense + resolution) follows Story D directly, and optionally consumes Spike 3's verdict for the AE-duration shape and Spike 1's verdict for the Concealment pre-fill. Story G additionally needs Story B for movement-provokes. Story H stands entirely apart from the dependency chain above — it's a self-contained severity-tier upgrade to the existing warnings system, deliberately scheduled last since nothing else in this phase requires it (Story C's auto-created actions just use today's single-tier warning behavior until it lands). Story I follows Story E — it needs the Resolution card's Undo button speced (so it has something to build, extract, and unify) and reuses poc.9's already-shipped `revertRecordedMovement()` pattern as its template; it does not block anything else in this phase.
+Spikes 1, 2, and 3 (already resolved above) were fully independent research tasks that informed downstream scope. Historically, B and C could start simultaneously; A consumed B's action-economy shape; D joined the attack trigger, execution engine and attack card; E followed D with defense/resolution. G additionally needs B's movement-provokes. H remains structurally independent but is now scheduled first among the remaining stories. I follows E to audit/consolidate its existing reversal behavior alongside movement/prone reversal, and supplies the contract F's future Ammo Recovery card will adopt.
 
-Story J depends on D/E's actual melee flow but is not implementation-ready. Its disclosure design and actor-scope gate come first; Story I and J must agree actual HP delta/reversal semantics before overlapping changes land. Neither NPC actors nor a broad player-mask rollout is an approved prerequisite.
+Story J depends on D/E's actual melee flow and is scheduled for design approval and implementation before F. Its disclosure design and actor-scope gate come first; Story I and J must agree actual HP delta/reversal semantics before overlapping changes land. Neither NPC actors nor a broad player-mask rollout is an approved prerequisite.

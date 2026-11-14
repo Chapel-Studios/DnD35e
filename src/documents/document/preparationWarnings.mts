@@ -1,7 +1,8 @@
 /**
  * Preparation Warnings — non-blocking diagnostics collected during data preparation.
  *
- * Surfaced in the sheet UI via a dismissible summary banner and a persistent "Warnings" tab.
+ * All diagnostics remain on the "Warnings" tab. Banner prominence is independent of
+ * technical severity and can be overridden by a GM on the source document.
  * Never thrown; a broken formula degrades gracefully (falls back to `null`/raw text - see
  * `FormulaData._finalizeResolvedValue()`) instead of blocking `prepareDerivedData()`.
  *
@@ -9,6 +10,10 @@
  */
 
 interface PreparationWarning {
+  /** Stable producer/rule identity, independent of message text and array order. */
+  id?: string;
+  /** Omitted by legacy producers, which retain their existing banner behavior. */
+  defaultBanner?: boolean;
   /** Field path the warning concerns, e.g. `"system.hp.value"` or an AE change's `key`. */
   field: string;
   message: string;
@@ -53,10 +58,12 @@ function pushPreparationWarning(
   host: PreparationWarningHost | null | undefined,
   field: string,
   message: string,
-  severity: 'warning' | 'error' = 'warning'
+  severity: 'warning' | 'error' = 'warning',
+  options: Pick<PreparationWarning, 'id' | 'defaultBanner'> = {}
 ): void {
   if (!host?._preparationWarnings) return;
   host._preparationWarnings.push({
+    ...options,
     field,
     message,
     severity,
@@ -84,7 +91,8 @@ function pushPreparationWarningToHosts(
   hosts: Array<PreparationWarningHost | PreparationWarningHost[] | null | undefined>,
   field: string,
   message: string,
-  severity: 'warning' | 'error' = 'warning'
+  severity: 'warning' | 'error' = 'warning',
+  options: Pick<PreparationWarning, 'id' | 'defaultBanner'> = {}
 ): void {
   const validHosts = hosts.flat().filter((host): host is PreparationWarningHost => !!host?._preparationWarnings);
   if (validHosts.length === 0) return;
@@ -99,7 +107,14 @@ function pushPreparationWarningToHosts(
   for (const host of validHosts) {
     if (seen.has(host)) continue;
     seen.add(host);
-    host._preparationWarnings.push({ field, message, severity, sourceUuid, sourcePath });
+    host._preparationWarnings.push({
+      ...options,
+      field,
+      message,
+      severity,
+      sourceUuid,
+      sourcePath,
+    });
   }
 }
 
