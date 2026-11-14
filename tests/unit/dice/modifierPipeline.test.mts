@@ -108,6 +108,28 @@ describe('authoritative modifier lists', () => {
     expect(getDisplayModifiers([maskedInit])).toEqual([{ ...maskedInit, value: 2 }]);
   });
 
+  it('keeps an aggregate modifier intact (not expanded into its non-additive breakdown rows) when computing a dialog total', () => {
+    // `prepared` (value 12, breakdown rows 4 and "* 3") is exactly the shape
+    // `getDisplayModifiers()` is for: a per-effect breakdown meant for a tooltip, not
+    // summable roll terms. Computing `activeFormula`/`baseTotal` from the *expanded*
+    // breakdown instead of the aggregate `value` would silently corrupt the total for
+    // any unmasked aggregate, not just masked ones — e.g. folding in the literal,
+    // non-additive `"* 3"` breakdown fragment instead of reading `prepared.value` (12).
+    //
+    // `activeTotal` isn't asserted numerically here: the test harness's global `Roll`
+    // stub (`tests/setup.mts`) has no working `.parse()`, so `combineDiceFormula()` can't
+    // fold multiple flat fragments into one evaluable number in this environment (a
+    // harness limitation, unrelated to this fix) — the formula *string* and the
+    // single-fragment `baseTotal` (which the stub's minimal `Number()`-based `safeEval`
+    // can evaluate) are the reliable, environment-safe way to prove the aggregate wasn't
+    // expanded.
+    const store = useMeleeAttackRollDialogStore(makeAttackContext());
+    // mainHand: prepared(12) kept intact, not expanded into "4" + "* 3".
+    expect(store.attackRoll.activeFormula.value).toBe('12 + 2 + 1');
+    expect(store.attackRoll.activeFormula.value).not.toContain('* 3');
+    expect(store.attackRoll.baseTotal.value).toBe(12);
+  });
+
   it('initializes checked contributions, replaces them without label matching, and never duplicates toggles', () => {
     const store = useMeleeAttackRollDialogStore(makeAttackContext());
     const condition = store.app.combatStatusModifiers.value[0];

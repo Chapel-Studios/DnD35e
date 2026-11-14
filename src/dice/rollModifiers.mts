@@ -9,6 +9,27 @@ function getModifiersFormula(modifiers: RollModifier[]): string {
   return combineDiceFormula(modifiers.filter(mod => !mod.isIgnored).map(getModifierFormula));
 }
 
+/** Substitutes `displayValue` for `value` where present, without touching anything else. */
+function substituteDisplayValue(mod: RollModifier): RollModifier {
+  return mod.displayValue !== undefined ? { ...mod, value: mod.displayValue } : mod;
+}
+
+/**
+ * Shallow, non-expanding counterpart to `getDisplayModifiers()` below: substitutes
+ * `displayValue` for `value` where present, but never expands an aggregate entry's
+ * `breakdown` into separate rows. This is the correct building block whenever a NUMBER
+ * needs computing from the modifier list (e.g. the roll dialog's live total preview,
+ * `useRollBreakdown.mts`'s `activeFormula`/`baseTotal`) — an aggregate's `breakdown` rows
+ * are often non-additive display annotations (e.g. `{ value: 3, formula: '* 3' }`), not
+ * summable roll terms, so feeding them through `getModifiersFormula()`/
+ * `extractFlatModifier()` silently produces the wrong total. Full breakdown expansion
+ * stays exclusively a tooltip concern (see `RollModifierTooltip.vue`, which calls
+ * `getDisplayModifiers()` directly).
+ */
+function substituteDisplayValues(modifiers: RollModifier[]): RollModifier[] {
+  return modifiers.map(substituteDisplayValue);
+}
+
 /**
  * Expand prepared values only for presentation, never for rolling or summation — also
  * substitutes `displayValue` for `value` where present (poc.10 Story I: masked
@@ -22,14 +43,11 @@ function getModifiersFormula(modifiers: RollModifier[]): string {
  * change) and would otherwise always take the breakdown branch below instead of this one.
  */
 function getDisplayModifiers(modifiers: RollModifier[]): RollModifier[] {
-  const withDisplayValue = (mod: RollModifier): RollModifier => mod.displayValue !== undefined
-    ? { ...mod, value: mod.displayValue }
-    : mod;
   return modifiers.flatMap(mod => (mod.displayValue === undefined && mod.breakdown?.length)
     ? getDisplayModifiers(mod.breakdown).map(entry => mod.isIgnored
       ? { ...entry, isIgnored: true, ignoredReason: mod.ignoredReason }
       : entry)
-    : [withDisplayValue(mod)]);
+    : [substituteDisplayValue(mod)]);
 }
 
 function buildModifiersD20Formula(modifiers: RollModifier[], label: string): { formula: string; displayFormula: string } {
@@ -88,4 +106,5 @@ export {
   getDisplayModifiers,
   getModifierFormula,
   getModifiersFormula,
+  substituteDisplayValues,
 };

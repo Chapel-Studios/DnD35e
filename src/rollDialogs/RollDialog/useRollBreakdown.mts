@@ -1,6 +1,6 @@
 import { extractFlatModifier } from '@source/dice/d20Formula.mjs';
 import { buildSituationalModifierEntry } from '@source/dice/rollModifierBreakdown.mjs';
-import { getDisplayModifiers, getModifiersFormula } from '@source/dice/rollModifiers.mjs';
+import { getModifiersFormula, substituteDisplayValues } from '@source/dice/rollModifiers.mjs';
 import type { RollModifier } from '@source/dice/types.mjs';
 import { computed, ref } from 'vue';
 
@@ -24,11 +24,14 @@ function useRollBreakdown(
     ...getAdditionalModifiers(),
     ...buildSituationalModifierEntry(resolvedSituational.value, situationalLabel),
   ]);
-  // Display-only view (poc.10 Story I) — `getDisplayModifiers()` substitutes `displayValue`
-  // for `value` where present; everything the user actually *sees* (totals, formula,
-  // tooltip) is computed from this, never from `modifiers` directly.
-  const displayModifiers = computed(() => getDisplayModifiers(modifiers.value));
-  const activeFormula = computed(() => getModifiersFormula(displayModifiers.value));
+  // Display-only, NUMERIC total (poc.10 Story I) — `substituteDisplayValues()` swaps in
+  // `displayValue` for `value` where present WITHOUT expanding an aggregate's `breakdown`
+  // into separate rows; those rows are often non-additive display annotations (e.g.
+  // `{ value: 3, formula: '* 3' }`), not summable roll terms, so feeding them through
+  // `getModifiersFormula()` would silently compute the wrong total. Full breakdown
+  // expansion (`getDisplayModifiers()`) stays exclusively a tooltip concern — see
+  // `RollModifierTooltip.vue`, which calls it directly against `modifiers.value`.
+  const activeFormula = computed(() => getModifiersFormula(substituteDisplayValues(modifiers.value)));
 
   return {
     label: getData().label,
@@ -37,7 +40,7 @@ function useRollBreakdown(
       set: (value: string) => { situational.value = value; },
     }),
     modifiers,
-    baseTotal: computed(() => extractFlatModifier(getModifiersFormula(getDisplayModifiers(getData().immutableModifiers))).flat),
+    baseTotal: computed(() => extractFlatModifier(getModifiersFormula(substituteDisplayValues(getData().immutableModifiers))).flat),
     activeTotal: computed(() => extractFlatModifier(activeFormula.value).flat),
     activeFormula,
   };
