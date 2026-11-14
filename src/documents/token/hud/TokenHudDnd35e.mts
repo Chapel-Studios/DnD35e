@@ -38,6 +38,7 @@ import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import { performStandUpOrDropProne } from '@actors/creature/Actions/ChangeProneStatus.mjs';
 import { Creature } from '@actors/creature/index.mjs';
 import { applyTotalDefenseAE } from '@actors/creature/logic/combatConditionAEs.mjs';
+import { HP_ADJUSTMENT_TYPE } from '@actors/creature/sheet/components/constants.mjs';
 import { getHpAdjustmentPermissions, isHpAdjustmentType } from '@actors/creature/sheet/components/hpAdjustmentPermissions.mjs';
 import type { ApplicationRenderContext } from '@client/applications/_module.mjs';
 import type { HandlebarsRenderOptions } from '@client/applications/api/handlebars-application.mjs';
@@ -45,6 +46,7 @@ import { ACTION_ECONOMY } from '@constants/actionEconomy.mjs';
 import { spendAction } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
+import { getTokenGmViewMode, toggleTokenGmViewMode } from '@documents/token/logic/gmViewMode.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { addOrUpdatePlayerEditMask, findOrCreatePlayerEditSecret } from '@effects/secret/playerEditSecret.mjs';
 import { useVueAppBaseMixin } from '@vueApps/VueAppBaseMixin.mjs';
@@ -124,6 +126,8 @@ class TokenHudDnd35e extends TokenHudVueBase {
       levels: [],
       locked: false,
       canConfigure: false,
+      canToggleGmViewMode: false,
+      gmViewModeIsTrue: true,
       canSeeConcealment: false,
       canEditConcealment: false,
       concealmentIconClass: 'fa-regular fa-cloud',
@@ -167,6 +171,7 @@ class TokenHudDnd35e extends TokenHudVueBase {
         combatManeuver: TokenHudDnd35e.#onCombatManeuver,
         concealment: TokenHudDnd35e.#onConcealment,
         movementAction: TokenHudDnd35e.#onMovementAction,
+        toggleGmViewMode: TokenHudDnd35e.#onToggleGmViewMode,
       },
     },
     { inplace: false }
@@ -179,6 +184,11 @@ class TokenHudDnd35e extends TokenHudVueBase {
   protected override async _prepareContext(options: HandlebarsRenderOptions): Promise<TokenHudContext> {
     const raw = await super._prepareContext(options) as RawTokenHudContext;
     const actor = this.actor;
+    // Per-token GM preview toggle (poc.10 Story I, added after review) — a GM previewing
+    // "play" mode for this token sees exactly what a non-GM viewer would; non-GM viewers
+    // always resolve to 'play' regardless of this token's stored flag.
+    const viewMode = getTokenGmViewMode(this.document);
+    const isGmTrueView = game.user.isGM && viewMode === 'true';
 
     // Compact widget reads HP straight off the actor rather than through bar1Data — it must
     // work regardless of whatever attribute (if any) bar1 happens to be configured for.
@@ -188,16 +198,25 @@ class TokenHudDnd35e extends TokenHudVueBase {
     const displayBar1 = useDefaultHpBar
       ? raw.displayBar1
       : Object.values(hpAdjustmentPermissions).some(permission => permission.visible);
+    // Mask-aware (poc.10 Story I HUD extension): mirrors the concealment mask check below —
+    // a viewer in play mode (non-GM always, or a GM previewing this token) with
+    // visible-but-masked HP sees the masked value, never the true one.
+    let compactBar1Value: number | null = creature?.system.hp.current ?? null;
+    if (creature && !isGmTrueView && hpAdjustmentPermissions[HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT]?.visible) {
+      const masks = getDocumentMasks(creature);
+      const maskedCurrent = masks?.['system.hp.current'];
+      if (typeof maskedCurrent === 'number') compactBar1Value = maskedCurrent;
+    }
     const bar1Value = useDefaultHpBar
       ? (raw.bar1Data?.value ?? null)
-      : (creature?.system.hp.current ?? null);
+      : compactBar1Value;
     const bar1Editable = useDefaultHpBar
       ? (raw.bar1Data?.editable ?? false)
       : Object.values(hpAdjustmentPermissions).some(permission => permission.editable);
 
     const concealmentPermissions = getConcealmentPermissions(creature, this.document.isOwner);
     let concealmentValue: unknown = creature?.system.defense.concealment ?? 0;
-    if (creature && !game.user.isGM && concealmentPermissions.visible) {
+    if (creature && !isGmTrueView && concealmentPermissions.visible) {
       const masks = getDocumentMasks(creature);
       if (masks && CONCEALMENT_FIELD in masks) concealmentValue = masks[CONCEALMENT_FIELD];
     }
@@ -219,6 +238,8 @@ class TokenHudDnd35e extends TokenHudVueBase {
       levels: Object.values(raw.levels),
       locked: raw.locked,
       canConfigure: raw.canConfigure,
+      canToggleGmViewMode: game.user.isGM,
+      gmViewModeIsTrue: viewMode === 'true',
       canSeeConcealment: concealmentPermissions.visible,
       canEditConcealment: concealmentPermissions.editable,
       concealmentIconClass: concealmentButtonInfo.iconClass,
@@ -363,6 +384,16 @@ class TokenHudDnd35e extends TokenHudVueBase {
     if (spent === null) return;
 
     await applyTotalDefenseAE(actor);
+  }
+
+  /**
+   * Flips this token's GM preview toggle between 'true' (see real values, the default) and
+   * 'play' (preview exactly what a non-GM viewer sees) — poc.10 Story I, added after review.
+   * A no-op for non-GM users (the action is also hidden from them in the template).
+   */
+  static async #onToggleGmViewMode (this: TokenHudDnd35e): Promise<void> {
+    const token = this.document;
+    await toggleTokenGmViewMode(token);
   }
 
   /**

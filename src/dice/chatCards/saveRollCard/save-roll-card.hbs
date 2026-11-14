@@ -7,7 +7,7 @@
   <header class="card-header">
     <img src="{{ actorImage }}" alt="" class="actor-image" />
     <div class="title-text">
-      <h5 class="value">{{ actorName }} -</h5>
+      <h5 class="value" data-actor-uuid="{{ actorUuid }}" {{#if tokenUuid}}data-token-uuid="{{ tokenUuid }}"{{/if}}>{{ actorName }} -</h5>
       <br />
       <h6 class="label">{{ saveLabel }}</h6>
       <br />

@@ -12,7 +12,11 @@
  *   `D20Roll`, posts a chat card, and sets `combatant.update({ initiative })` itself. The
  *   tracker's per-row roll button always calls this with a single id (dialog shown); the
  *   "Roll All"/"Roll NPCs" buttons call it with multiple ids at once — showing a modal per
- *   combatant in that case would be unusable, so bulk rolls skip the dialog.
+ *   combatant in that case would be unusable, so bulk rolls skip the dialog. Passes
+ *   `combatant.token` through explicitly (poc.10 Story I follow-up) — `Actor#token` only
+ *   identifies the owning token of a synthetic (unlinked) actor, so a linked Character's
+ *   per-token GM preview toggle (`gmViewMode.mts`) would otherwise never be seen by
+ *   `rollInitiativeCheck()`, regardless of which specific placed token is actually rolling.
  *
  * Foundry v14's real client-side `Combat` class calls `_onStartRound`/`_onStartTurn` with a
  * `context` parameter at runtime even though the bundled `.d.mts` was stale on this (patched
@@ -61,9 +65,10 @@ class CombatDnd35e extends foundry.documents.Combat {
     const skipDialog = idList.length > 1;
     for (const id of idList) {
       const combatant = this.combatants.get(id);
-      const actor = combatant?.actor;
+      if (!combatant) continue;
+      const actor = combatant.actor;
       if (actor instanceof Creature) {
-        await actor.rollInitiativeCheck({ skipDialog });
+        await actor.rollInitiativeCheck({ skipDialog, token: combatant.token });
       }
     }
 

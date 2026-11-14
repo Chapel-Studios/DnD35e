@@ -12,6 +12,8 @@ const mountBar = (visible: boolean, editable: boolean) => mount(LeftHudBar, {
     levels: [],
     locked: false,
     canConfigure: false,
+    canToggleGmViewMode: false,
+    gmViewModeIsTrue: true,
     canSeeConcealment: visible,
     canEditConcealment: editable,
     concealmentIconClass: 'fa-solid fa-cloud-sun',

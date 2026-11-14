@@ -1,5 +1,6 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import { applyChargedAE } from '@actors/creature/logic/combatConditionAEs.mjs';
+import type { TokenResourceData } from '@client/canvas/placeables/token.mjs';
 import type { TokenMovementOperation } from '@client/documents/_types.mjs';
 import type { DatabaseCreateCallbackOptions, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type { ActionEconomyType } from '@constants/actionEconomy.mjs';
@@ -9,6 +10,9 @@ import { clearChargedThisTurn, getActionEconomy, markChargedThisTurn, refundActi
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { MovementSession, MovementSessionCategory } from '@documents/combat/combatant/movementSession.mjs';
 import { getMovementSession, resetMovementSession, setMovementSession } from '@documents/combat/combatant/movementSession.mjs';
+import { getDisplayName } from '@documents/document/logic/index.mjs';
+import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
+import { getTokenGmViewMode } from '@documents/token/logic/gmViewMode.mjs';
 import {
   CHARGE_MOVEMENT_ACTION,
   DOUBLE_MOVE_MOVEMENT_ACTION,
@@ -60,6 +64,79 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     if (!this.isLinked) {
       this.updateSource({ delta: { system: { defense: { concealment: 0 } } } });
     }
+  }
+
+  /**
+   * Viewer-aware nameplate text (poc.10 Story I HUD extension, refined per review). The
+   * token's own stored `name` is the "default, pulls from the sheet" state only when it
+   * still matches the actor's true (unmasked) name — in that case a non-GM viewer with an
+   * active name mask sees the masked value, and a GM sees the true value unless they've
+   * toggled this token into preview ("play") mode via the Token HUD (`gmViewMode.mts`). The
+   * moment a GM customizes a placed token's name (or its prototype token's name, inherited
+   * at placement) away from the actor's true name, that's an explicit per-instance override
+   * and always wins, for every viewer and both link states and regardless of the preview
+   * toggle — it must never be silently replaced by a mask. Works identically for linked and
+   * unlinked tokens: `this.actor` resolves to the real actor or the synthetic
+   * (ActorDelta-overlaid) actor either way, and both can carry their own Secret AE.
+   *
+   * The actor's "true" name is resolved through `getDisplayName()` against
+   * `system.nameFormula` (same helper `ActorDnd35e#name`/`ItemDnd35e#name` use), not just
+   * the raw `_source.name` — an ordinary AE override redirected onto
+   * `system.nameFormula.formula` (`resolveChangeKey.mts`) can make the actor's effective
+   * name diverge from its source name, and Foundry copies the actor's *effective* name
+   * into a newly placed token. Comparing the stored name against the raw source name only
+   * would therefore misclassify such a token as a deliberate custom override (bypassing its
+   * mask entirely) or, the other direction, show a stale source-name snapshot even to the
+   * GM once an override changes the effective name after placement. The stored name is
+   * still "default" if it matches EITHER the source or the effective name — covers tokens
+   * placed before vs. after such a divergence existed — while a value matching neither is
+   * still recognized as a deliberate per-token rename.
+   *
+   * Reads `this._source?.name` rather than `super.name`: schema fields are defined as
+   * own-instance properties by `DataModel#_initialize()`, not prototype accessors, so
+   * `super.name` can't see them and always resolves to `undefined` here. `ItemDnd35e#name`
+   * and `ActorDnd35e#name` already avoid `super.name` for the same reason.
+   */
+  override get name (): string {
+    const storedName = this._source?.name ?? '';
+    const actor = this.actor;
+    if (!actor) return storedName;
+
+    const sourceActorName = (actor as unknown as { _source?: { name?: string } })._source?.name ?? '';
+    const effectiveActorName = getDisplayName(sourceActorName, actor.system, actor);
+
+    if (storedName !== sourceActorName && storedName !== effectiveActorName) return storedName;
+
+    if (getTokenGmViewMode(this) === 'true') return effectiveActorName;
+
+    const masks = getDocumentMasks(actor);
+    const masked = masks?.name;
+    return typeof masked === 'string'
+      ? masked
+      : effectiveActorName;
+  }
+
+  /**
+   * Viewer-aware HP bar data (poc.10 Story I HUD extension). Only the `hp` attribute is
+   * mask-substituted — this only ever matches this system's one configured bar attribute
+   * (`prototypeToken.bar1.attribute === 'hp'`, see `buildPrototypeTokenDefaults.mts`); any
+   * other configured bar attribute passes through untouched. A GM sees true values unless
+   * this token has been toggled into preview ("play") mode via the Token HUD.
+   */
+  override getBarAttribute (barName: string, options?: { alternative?: string }): TokenResourceData | null {
+    const data = super.getBarAttribute(barName, options);
+    if (!data || data.attribute !== 'hp' || getTokenGmViewMode(this) === 'true' || !this.actor) return data;
+
+    const masks = getDocumentMasks(this.actor);
+    const maskedCurrent = masks?.['system.hp.current'];
+    const maskedMax = masks?.['system.hp.max'];
+    if (typeof maskedCurrent !== 'number' && typeof maskedMax !== 'number') return data;
+
+    return {
+      ...data,
+      value: typeof maskedCurrent === 'number' ? maskedCurrent : data.value,
+      max: typeof maskedMax === 'number' ? maskedMax : data.max,
+    };
   }
 
   /**

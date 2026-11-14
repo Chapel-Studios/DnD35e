@@ -1556,7 +1556,7 @@ All open decisions from the initial spec have been resolved and folded into the 
 5. FormulaFamiliar preferred-alias support — §10.7 "FormulaFamiliar context aliasing"
 6. `PLAYER_SELF_DEFENSE` default — §10.7 "GM-gated attack resolution"
 7. Multi-target flanking / target capping — §10.3's `maxTargets` field and §10.7 "executeAction()" / "Retargeting"
-8. Real-Ctrl+Z coverage for non-movement combat-card mutations (added after the initial spec, during poc.9's Drop Prone/Stand Up Undo fix) — §10.14 Story I: push a synthetic entry onto `canvas.tokens.history` ourselves for every Undo-eligible card, and intercept a custom `TokenLayerDnd35e#undoHistory()` override to route it to our own shared revert primitive instead of falling through to core's CRUD-based undo
+8. Real-Ctrl+Z coverage for non-movement combat-card mutations (added after the initial spec, during poc.9's Drop Prone/Stand Up Undo fix) — **deferred to the post-release wishlist** rather than resolved in this phase; see "Uniform undo architecture & real Ctrl+Z support across combat chat cards" in `docs/migration-plan/post-release/WISHLIST.md`. poc.10 ships independent button-based Undo only (Resolution, Move Action, and Story F's Ammo Recovery cards).
 
 ---
 
@@ -1575,7 +1575,6 @@ All open decisions from the initial spec have been resolved and folded into the 
 | `src/constants/weapons/weaponProperties.mts` | `WEAPON_PROPERTY_*` constants (`finesse`, `reach`, `threatensAdjacent`, `thrown`, `nonLethal`, `nonLethalNoPenalty`) + `WEAPON_PROPERTIES` choices array (§10.3) — alpha.3 extends this with the remaining 11 |
 | `src/documents/items/physical/ammo/` | New `Ammo` item type (model, data, sheet); `getContributedActorChanges()` pushes `system.attacks.ammoOptions` entries
 | `src/documents/combat/CombatDnd35e.mts` | Custom Combat class; `_onStartTurn()` override resets action economy on turn advance, `_onStartRound()` override auto-applies Flat-Footed on combat's first round (§10.1) |
-| `src/canvas/token/TokenLayerDnd35e.mts` | Custom `TokenLayer` (`CONFIG.Canvas.layers.tokens.layerClass`); `undoHistory()` override intercepts our own synthetic, marker-tagged history entries and routes them to the shared combat-card revert primitive instead of core's CRUD-based undo (§10.14 Story I) |
 | `src/documents/combat/CombatTrackerDnd35e.mts` | Custom `CombatTracker` (or template/hook injection, per Spike 2's verdict): action pips (§10.2) |
 | `src/dice/templates/ammo-recovery-card.hbs` | Ammo Recovery chat card template (§10.9): unresolved (Recover Ammo button) and resolved (per-entry expended/recovered rows + Undo button) states of the same message |
 | `src/canvas/token/hud/` | Token HUD bottom row: Weapon Attacks (expandable list of weapon actions + Throw) and Combat Maneuvers (single Total Defense entry this phase; alpha.3 adds real maneuvers) controls |
@@ -1834,7 +1833,7 @@ All open decisions from the initial spec have been resolved and folded into the 
 **User**: Player (during combat)  
 **Delivers**: "Ranged/thrown attacks apply range-increment penalties and consume ammo (or the thrown weapon itself); a character carrying multiple eligible ammo types picks which one to consume before rolling; missed ammo is tracked per-combatant and a GM can recover it with a single post-combat roll"  
 **Routing**: Lead dev (Ammo item type + item-contribution/`ammoOptions` wiring) + Jr dev (range penalty math, Ammo select field UI)  
-**Depends on**: Story C (ActionDataModel's `range`/`ammoType`), Story D (Attack Roll Dialog, for the reserved Ammo select field slot). In the agreed execution order, also consumes Story H's severity tiers, Story I's shared undo contract, and Story J's approved resolution/disclosure behavior.
+**Depends on**: Story C (ActionDataModel's `range`/`ammoType`), Story D (Attack Roll Dialog, for the reserved Ammo select field slot). In the agreed execution order, also consumes Story H's severity tiers and Story J's approved resolution/disclosure behavior.
 
 - [ ] Create new `Ammo` item type (extends `PhysicalItem`; `quantity`, `ammoType`, `alwaysRecoverable: boolean` default `false`)
 - [ ] Add the generic, always-available "Throw" HUD/Actions-tab action (§10.4, moved from Story D since it's a range-increment/ammo-flavored action in its own right): throws whatever's held in a free/freeable hand at a flat −4 attack penalty, 10-ft range increment, crit only on natural 20 (×2 damage) — used only when the thrown item has no real `RangedWeaponAttack` entry with the `thrown` property of its own
@@ -1851,18 +1850,18 @@ All open decisions from the initial spec have been resolved and folded into the 
 - [ ] Implement `combatantAmmoTracking.mts`: `recordRetrievableAmmo()`/`getRetrievableAmmo()`/`clearRetrievableAmmo()` combatant-flags helpers (§10.9)
 - [ ] Wire `ActionDataModel#continue()` to call `recordRetrievableAmmo()` for ammo-consuming attacks on a miss, or always when the ammo is `alwaysRecoverable` — gated to party-member attackers only (`system.settings.isPartyMember === true`)
 - [ ] Register a `preDeleteCombat` hook that posts the Ammo Recovery prompt card (snapshotting every combatant's non-empty `retrievableAmmo` tally into the message's own flags) before the Combat document disappears
-- [ ] Implement `buildAmmoRecoveryCard()`: per-entry `${count}d100` roll (≤50 recovered) — skipped entirely for `alwaysRecoverable` entries, which recover in full — applies recovered quantities to the `Ammo` items, resolves the same message in place with an Undo button using Story I's shared revert/history contract from its first implementation
+- [ ] Implement `buildAmmoRecoveryCard()`: per-entry `${count}d100` roll (≤50 recovered) — skipped entirely for `alwaysRecoverable` entries, which recover in full — applies recovered quantities to the `Ammo` items, resolves the same message in place with its own simple Undo button (reverses the applied quantity increments directly; not dependent on a shared cross-card undo architecture — see `docs/migration-plan/post-release/WISHLIST.md`)
 
 **Verify**: Firing a bow with two eligible arrow stacks (e.g. regular + silver) shows an Ammo select field; picking one consumes only that stack. A single eligible stack skips the picker entirely. Ammo sitting in a locked chest (non-quiver container) doesn't appear as an option; the same ammo moved into a Quiver-flagged container (`isQuiver: true`), or carried loose, does. Attempting to drag a non-ammo item into a container whose Contents toggle is set to a type list not including that item is rejected; setting a container's Contents toggle to None rejects every item. Unchecking a container's Allow Currency hides its coin field; a container with Contents set to None and Allow Currency unchecked shows a content warning. Range penalty scales correctly with distance. Throwing a dagger consumes the dagger itself with no Ammo picker shown. Missing with 10 arrows and hitting with 10 more, then ending the combat encounter, auto-posts an Ammo Recovery card showing 10 expended for that combatant; clicking Recover Ammo rolls and shows roughly half recovered (varies by roll) — the recovered count is added back to the arrow stack's quantity, and clicking Undo reverses it. Ammo flagged `alwaysRecoverable` shows on the card even for hits, and Recover Ammo returns its full count with no roll. An NPC combatant's expended ammo is never tracked and never appears on the card.
 
 ---
 
 ### Story H — PreparationWarning alerts/warnings split
-**Status**: Implemented and automatically verified; awaiting user testing/approval.
+**Status**: ✅ Complete. Implemented, automatically verified, and user-tested/approved.
 **User**: GM
 **Delivers**: "Advisory diagnostics appear on the sheet's warnings tab without a summary banner; alerts also generate the banner. A GM can promote/demote an individual diagnostic without changing the underlying mechanics."
 **Routing**: Lead dev
-**Depends on**: none structurally. Scheduled immediately after merged Story E and before Story I; Story F will consume the severity tiers without temporary alert behavior.
+**Depends on**: none structurally. Scheduled immediately after merged Story E; Story F will consume the severity tiers without temporary alert behavior.
 
 #### Baseline evidence (before H implementation)
 
@@ -1888,16 +1887,16 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 #### Completion checklist
 
-- [ ] Implement the approved alert/advisory model in `preparationWarnings.mts` and all relevant producers/consumers; preserve the approved mapping for existing `warning`/`error` diagnostics
-- [ ] Add GM-only per-diagnostic promotion/demotion controls and the approved persistence/reset behavior
-- [ ] Show all permitted diagnostics on the warnings tab; only alert-classified diagnostics contribute to the summary banner
-- [ ] Deliver the agreed melee attack diagnostics together with the management flow, using stable per-action/rule identity and shared action-level handling inherited by future action types; apply the approved producer defaults rather than blanket-flagging default actions
-- [ ] Define the Container "can't hold anything" diagnostic as advisory for Story F; do not pull F's Container schema or producer into H
-- [ ] Audit existing call sites and test severity mapping, aggregated-source identity, override permissions/lifetime, and banner dismissal behavior
+- [x] Implement the approved alert/advisory model in `preparationWarnings.mts` and all relevant producers/consumers; preserve the approved mapping for existing `warning`/`error` diagnostics
+- [x] Add GM-only per-diagnostic promotion/demotion controls and the approved persistence/reset behavior
+- [x] Show all permitted diagnostics on the warnings tab; only alert-classified diagnostics contribute to the summary banner
+- [x] Deliver the agreed melee attack diagnostics together with the management flow, using stable per-action/rule identity and shared action-level handling inherited by future action types; apply the approved producer defaults rather than blanket-flagging default actions
+- [x] Define the Container "can't hold anything" diagnostic as advisory for Story F; do not pull F's Container schema or producer into H
+- [x] Audit existing call sites and test severity mapping, aggregated-source identity, override permissions/lifetime, and banner dismissal behavior
 
 **Execution grouping (approved)**: The first deliverable includes the severity/override contract, store integration, banner/tab kebab controls, localization, useful current melee attack diagnostics and focused tests together as one buildable vertical slice. Do not ship an infrastructure-only slice and defer all diagnostic producers. Story F owns its future Container producer and enables the shared roll-formula checks for ranged actions.
 
-#### Implementation notes (pending user acceptance)
+#### Implementation notes
 
 - Banner dismissal tracks diagnostic identity/revision pairs individually per sheet for the browser session. Demoting or removing a diagnostic preserves dismissal of remaining diagnostics; new identities and promotion/reset revisions still reopen the banner.
 - Warning management requires both GM status and application-level sheet editability, rechecked by the store action and exposed through `canManagePreparationWarnings` for controls. Read-only sheets cannot persist overrides; editable Play/True sheets remain supported.
@@ -1909,7 +1908,7 @@ All open decisions from the initial spec have been resolved and folded into the 
 - The kebab is visible to GMs in all modes; the write helper independently rechecks GM permission, source availability and locked-compendium state. Errors surface through the existing notification/logging mechanism.
 - `DocumentSheetStore.documentActions.setPreparationWarningBanner()` owns mutation orchestration, pending state, document refresh and error reporting. The tab calls this public action and only closes its menu after success; it does not access `_storeUtils`.
 - Store-boundary refactor verification: 17 warning-management/shared HP-editability tests and typecheck pass, including concurrent-write prevention, failed-write cleanup, permission rechecks and management in all three modes.
-- Completion checkboxes remain open until user testing/approval; implementation and automated verification do not constitute user acceptance.
+- User-tested and approved.
 
 **Automated verification**: 52 unit tests across the new diagnostic suites and adjacent FormulaData/RollFormulaStringField suites pass. Two real Foundry E2E cases pass: source preference persistence across reload plus promotion/dismissal/reset, and synchronized management from actor/owned-weapon sheets. `npm run build:dist` passes lint, typecheck, pack validation and bundling. `npm run build` passed its prebuild checks but deployment hit a running Foundry pack's `EBUSY` lock; the isolated dist build was used rather than stopping the shared dev instance.
 
@@ -1935,30 +1934,35 @@ All open decisions from the initial spec have been resolved and folded into the 
 
 ---
 
-### Story I — Uniform undo architecture across combat chat cards
-**User**: Developer (architecture) / Player & GM (feel the effect — attacks become undoable, and Ctrl+Z reliably undoes the *whole* last combat action, not just token position)  
-**Delivers**: "Existing Move Action, Prone Toggle (poc.9), and Resolution reversal behavior is audited and consolidated behind a common primitive, with complete Resolution Undo coverage. A real Ctrl+Z press uses the same revert path in chronological order with native token operations. Story F's future Ammo Recovery card adopts this contract when created."
-**Routing**: Lead dev (touches core undo internals and Foundry's undocumented canvas-history behavior)  
-**Depends on**: Story B (Move Action card), Story E (existing Resolution Apply/Reapply and miss/action-refund Undo), poc.9 (Drop Prone/Stand Up's `revertRecordedMovement()`-based Undo — the reference pattern for the movement-carrying half of this story). Scheduled after H and before J; agree an extensible reversal contract, leaving J's private resolution records and HP/mask synchronization to J.
+### Story I — Secrets as a Character capability
+**Status**: Approved, not yet implemented. Scheduled immediately before Story J, which depends on it.
+**User**: GM
+**Delivers**: "A GM can create and manage Secret Active Effects on a Character sheet the same way they already can on items — masking any field's value from non-GM users — so that Story J's combat-secret work isn't arbitrarily restricted to future actor types."
+**Routing**: Lead dev (small, focused)
+**Depends on**: none structurally. Unblocks Story J's actor boundary (a GM-owned "monster stand-in" Character needs to be able to carry masked fields the same way any other actor eventually will).
 
-- [ ] Audit the existing Move Action, Prone Toggle and Resolution Apply/Reapply/Undo paths, then extract a shared revert primitive (e.g. `revertCombatCard(kind, message)`) for their reversal logic. Define the integration contract for Story F's future Ammo Recovery card rather than requiring that card to exist in I.
-- [ ] Complete Resolution Undo on top of the shared primitive (reverse recorded HP deltas, refund `actionEconomySpent`, emit `undoDealDamage`). Current code already has `onUndoResolution()` and Apply/Reapply reversal; the rendered Undo button is limited to misses with refundable action economy. Do not treat this as a wholly missing implementation or assume the current `appliedAmount` records every actual HP-field delta.
-- [ ] Register a `TokenLayerDnd35e extends TokenLayer` (`CONFIG.Canvas.layers.tokens.layerClass`) overriding `undoHistory()`: peek `this.history.at(-1)` before popping; if it carries our own marker (e.g. `options.dnd35e?.cardUndo`), pop it ourselves and call the shared revert primitive directly instead of falling through to `super.undoHistory()`'s core CRUD dispatch; any entry without the marker (an ordinary token drag) falls through unchanged
-- [ ] Whenever a card commits a mutation with no token-movement component of its own (Resolution's damage application, Ammo Recovery's quantity increments), push a synthetic `CanvasHistoryEvent`-shaped entry onto `canvas.tokens.history` (`{ type: 'update', data: [{ _id: tokenId }], options: { dnd35e: { cardUndo: { kind, messageId } } } }`) immediately after committing, so a later Ctrl+Z has something to pop for it — for a movement-carrying action (Charge's mandatory attack, Drop Prone), reuse poc.9's real `revertRecordedMovement()`-triggered path instead of a synthetic entry, since Foundry already records those
-- [ ] Verify interleaving: `canvas.tokens.history` is one flat stack shared by every token operation — confirm that attacking, then moving, then pressing Ctrl+Z twice undoes the move first and the attack second (correct reverse chronological order), not something surprising
-- [ ] Update §10.7 "Undo scope across combat chat cards" to document the implemented Ctrl+Z-and-button-uniform revert path for the three existing card types and the integration contract for Story F's future Ammo Recovery card, superseding its current "button only" framing
+#### Baseline evidence
+- The masking **engine** is already actor-generic: `getDocumentMasks()` (`src/documents/document/sheet/maskMap.mts`) has a working `document.documentName === 'Actor'` branch that builds the mask map live from any actor's own active `secret`-type AEs; `Secret.mts`'s own docstring already says "masks item/actor field values." `DocumentSheetStore` and `TokenHudDnd35e` already call `getDocumentMasks()` generically regardless of document type.
+- What's missing is purely the **authoring surface**: `PhysicalItemEffects.vue` passes `:additional-creatable-types="[secretEffectType]"` to `ItemEffects`, enabling "Add Secret Effect" in that tab's create-effect menu. `ActorEffectsTab.vue` (the Creature/Character equivalent) never does, so a GM currently has no UI path to create a Secret AE on a Character at all, even though the backend would handle it correctly once one exists.
+- This was raised as a "why arbitrarily restrict this to other future actor types?" design question during Story J's design discussion — after community feedback, the decision is to make Secret-authoring a first-class Character capability now rather than deferring it to whenever NPC actors land.
 
-**Verify**: Clicking Undo on a Resolution card reverses the exact HP delta and refunds the attacker's action economy in one click. Move Action, Prone Toggle and Resolution cards' Undo buttons call through the same shared revert helper. Pressing Ctrl+Z after any of these card-producing actions reverts it exactly as its own button would, in the correct reverse-chronological order relative to other token operations in between. Story F verifies the same contract for Ammo Recovery when that card exists.
+#### Completion checklist
+- [ ] Add `:additional-creatable-types="[secretEffectType]"` to `ActorEffectsTab.vue` (mirroring `PhysicalItemEffects.vue`'s existing pattern for items)
+- [ ] Verify `SecretSheet.mts`'s field-target picker works sensibly for arbitrary Creature schema fields, not just the Item fields it may currently assume — extend if it's hardcoded to Item-only paths
+- [ ] End-to-end test: a GM creates a Secret AE on a Character masking a non-HP field (to prove the generic path works for more than the one field — HP via `DELTA_MIRROR` — that already happens to work), confirms play-mode shows the mask, true-mode shows the real value, and a non-GM cannot create or edit the Secret AE
+- [ ] Confirm no regression to the existing Item-side Secret AE flow (unidentified items, etc.)
+
+**Verify**: A GM opens a Character sheet's Effects tab, creates a Secret AE targeting an arbitrary actor field, and sets a mask value. A player viewing that Character in play mode sees the masked value; the GM in true mode sees the real value. A non-GM cannot create, edit, or see controls for the Secret AE. This unblocks Story J's actor-boundary fixture.
 
 ---
 
 ### Story J — Secret-aware melee resolution, typed damage & resistance disclosure
 
-**Status**: Detailed design required before implementation. Implementation is intended in this phase after Story I and before Story F, but remains gated on approval of the decisions below. Existing HUD permission/concealment work remains in place.
+**Status**: Detailed design required before implementation. Implementation is intended in this phase after Story H and Story I, and before Story F, but remains gated on approval of the decisions below. Existing HUD permission/concealment work remains in place.
 **User**: GM / Player
 **Delivers**: "Combat uses the real effective values, but players do not automatically learn secret bonuses, defenses, or damage mitigation. A player sees the damage their dice appeared to deal; the GM can inspect the real outcome and deliberately reveal it."
 **Routing**: Lead dev (authority, disclosure and HP integration); UI work only after display decisions are approved.
-**Depends on**: Stories D and E (melee attack and resolution flow), existing Secret AE masks and HP masked-edit conventions. Coordinate reversal semantics with Story I; do not require its full canvas undo architecture to agree this story's design.
+**Depends on**: Stories D and E (melee attack and resolution flow), existing Secret AE masks and HP masked-edit conventions. Apply/Reapply/Undo reversal semantics are this story's own responsibility — the cross-card uniform-undo/Ctrl+Z architecture once drafted for this phase (under a story letter since reassigned to Secrets on Characters, Story I) was deferred to the wishlist (`docs/migration-plan/post-release/WISHLIST.md`) and is not a prerequisite here.
 
 #### Agreed contract
 
@@ -1994,20 +1998,20 @@ Protection of private chat data is a concrete requirement, not a promise of serv
 
 #### Open decisions — discuss before implementation
 
-- [ ] **Display and reveal UX**: Where do apparent damage, private actual damage and the GM reveal control appear? Does reveal disclose only the actual amount, the amount prevented, the resistance source, or selectable parts? Who receives it, and is it per target/per application? Preserve the original dice result as a roll record.
-- [ ] **Private data and authority**: Choose the private resolution record/message and public-summary relationship, who performs true resolution, and what happens when the GM is offline or a record cannot be resolved. Do not emit public truth as a fallback. Recheck permissions at execution, not only when rendering buttons.
-- [ ] **Initial damage rules**: Pick the minimal physical/energy type subset; distinguish damage reduction from energy resistance and agree bypass/stacking, critical, half-damage and nonlethal interactions. Check the selected rules against the SRD before finalizing acceptance numbers.
-- [ ] **Derived stat and mask shape**: Agree canonical field paths, AE contributions, sheet visibility, FormulaFamiliar exposure and how a mask represents an unknown or apparent resistance. Do not introduce persisted true/apparent pairs.
-- [ ] **Actor boundary**: Can a controlled fixture on the existing Creature/Character chain prove the design without new player-mask authoring UX or an NPC subtype? If not, explicitly keep implementation blocked for a scope decision.
-- [ ] **Apparent HP versus hidden mitigation**: Reconcile synchronized HP deltas with the requirement that the attacker initially believes the dice damage was dealt. Decide what attacker, target owner and GM each see in HP fields, bars, cards and damage events, before and after reveal.
+- [x] **Display and reveal UX**: Adopted from the legacy D35E system (`module/chat.js`'s `bindShowReveal()` + `module/sidebar/chat-message.js`'s per-client `renderHTML()` override): one GM-only eye-icon toggle on the Resolution card flips a single shared `revealed` boolean message flag; every client re-renders the card against that flag. "Rolled" (apparent, pre-DR) damage is always visible to everyone. "Applied" (real, post-DR) damage and the full DR breakdown (which grant was evaluated, which was bypassed by the attacking weapon's tags, which one won) are gated by `revealed` — same shape as D35E's `damageData.appliedDR`/`baseBeforeDR`/`baseAfterDR` breakdown table. True server-side privacy (preventing a console-savvy player from reading the message flags directly) is explicitly **not** a goal — full data lives in the public message's flags from the start, same as D35E; only the rendered template is gated.
+- [x] **Private data and authority**: No whisper channel, no GM-only companion message. Matches D35E's model exactly — the public message carries everything; the reveal flag only controls what's rendered.
+- [x] **Initial damage rules**: Physical Damage Reduction only this pass; Energy Resistance explicitly deferred (tracked in `docs/migration-plan/alpha/phase-01-races-progression.md`'s "Damage Reduction & Energy Resistance" section — it is not a DR variant, it never stacks via bypass-tag intersection, and needs its own grant-system-dependent authoring path). DR fully negates (never partial) when the attacking weapon's `system.damageReductionTypes` tags don't intersect a grant's required bypass types; never applies to energy damage, touch attacks, spells, or spell-like/supernatural abilities; multiple DR sources never stack — only the best non-bypassed grant applies **per hit** (requires evaluating bypass against the actual attacking weapon, not at data-prep time — see below). Pool-based DR (Stoneskin) and "DR negates accompanying special effects" (poison/disease/stun) are explicitly out of scope — pool-based DR is deferred until the Buff item type exists to model it properly; flagged, not forgotten.
+- [x] **Derived stat and mask shape**: `Creature.system.defense.damageReduction` — deliberately **not** a flat number + flat tag set (that breaks multi-source-with-different-bypass-types correctness; see worked counter-example in session notes). Instead an `ArrayField` of discrete `{ amount: number, types: SetField<string> }` grants, one per active DR source, resolved at attack-resolution time (not data-prep time) by filtering against the attacking weapon's own bypass tags and taking `max(amount)` among non-bypassed grants — a direct port of D35E's `actorDamageHelper.js` `calculateDamageToActor()` filtering logic. Bypass-tag vocabulary reuses the existing GM-configurable `damageReductionTypes` game-rules registry unchanged (already extensible; Material AEs already push matching tags onto the weapon side via the identical vocabulary). A DR-granting AE authors one grant via a `changes[]` entry whose `value` is the structured `{amount, types}` object (not a bare number), which keeps it out of the numeric bonus-type stacking contest in `applyStackedChanges.mts` (`parseNumericChangeValue()` fails on a non-numeric value) and always applies via Foundry's native ADD handler — the same trick the existing string-tag pushes onto `system.damageReductionTypes` already rely on. **DR's secrecy during combat resolution is unconditional and hardcoded to the Resolution/attack-card pipeline** — it is not an opt-in Secret AE mask like every other maskable field in this system; it layers independently on top of whatever generic Secret-AE masking (e.g. HP) may also be active on the same target. **Unconfirmed engine detail — spike required at the start of implementation**: confirm Foundry's `ArrayField(SchemaField(...))` natively supports ADD-mode element-push (proven only for scalar `ArrayField(StringField)` pushes in this codebase so far); fall back to two index-correlated parallel arrays if it doesn't.
+- [x] **Actor boundary**: Confirmed — two existing Characters (attacker + a GM-owned "monster stand-in" Character), no NPC subtype needed. **New prerequisite surfaced during design**: Secret AE *authoring* is not currently exposed on Character/Creature sheets at all — the masking engine itself is already actor-generic (`getDocumentMasks()` has a working `documentName === 'Actor'` branch; `Secret.mts`'s own docstring says "item/actor"), but `ActorEffectsTab.vue` never passes `:additional-creatable-types="[secretEffectType]"` the way `PhysicalItemEffects.vue` does for items. This is now **Story I — Secrets as a Character capability**, scheduled immediately before this story.
+- [x] **Apparent HP versus hidden mitigation**: Two independently-computed deltas (`realDelta` = post-DR, `apparentDelta` = pre-DR/rolled) applied independently to the real and masked HP tracks — a new sibling strategy to the existing `MASKED_EDIT_STRATEGY.DELTA_MIRROR` (which mirrors one delta to both tracks; this needs two). Applying each delta to its own track means any pre-existing GM fudge-offset from an unrelated Secret AE on HP is preserved automatically and simply shifts by the DR amount — the two secrecy mechanisms (DR's hardcoded combat secrecy, and any ordinary Secret-AE HP mask) compose additively with no special-case code. This composition, across the full matrix (DR-secret × pre-existing-HP-mask × reveal-state × Apply/Reapply/Undo), is the primary testing burden for this story and is treated as a first-class deliverable, not an afterthought.
 - [ ] **Other secret-dependent outcomes**: Define apparent-versus-real attack/confirmation totals, AC, concealment and hit/miss presentation after the damage-resistance example is agreed. Do not automatically generalize damage's apparent-number treatment to every roll.
-- [ ] **Replay, reveal and history**: Specify idempotent Apply/Reapply/Undo and reveal behavior, stale clicks, changing permissions/defenses, historical snapshots and linked/unlinked target identity. Decide how private/public records remain correlated without leaking private payloads.
+- [ ] **Replay, reveal and history**: Specify idempotent Apply/Reapply/Undo and reveal behavior, stale clicks, changing permissions/defenses, historical snapshots and linked/unlinked target identity. Decide how private/public records remain correlated without leaking private payloads. Must preserve `realDelta`/`apparentDelta` separately (not just one applied amount) so Undo can reverse each track independently.
 
 #### Proposed implementation order — gated, not started
 
 1. Resolve the display, authority and actor-boundary questions with the damage-resistance example. Record approved answers here; leave unresolved questions unchecked.
 2. Specify the minimal typed-damage/derived-resistance model and a multi-user proof fixture, including the private/public payload contract.
-3. Implement true mitigation and recorded HP/mask deltas at the agreed shared boundary. Integrate Apply/Reapply and Story I's reversal contract without applying mitigation twice.
+3. Implement true mitigation and recorded HP/mask deltas at the agreed shared boundary. Integrate Apply/Reapply reversal without applying mitigation twice.
 4. Wire public apparent presentation, private GM inspection and deliberate reveal for that fixture.
 5. Complete the HUD-to-damage audit above, extending the approved disclosure rules to the remaining melee surfaces. Preserve true combat mechanics and existing HUD permissions.
 
@@ -2030,12 +2034,12 @@ Protection of private chat data is a concrete requirement, not a promise of serv
 
 #### Agreed remaining execution order
 
-Story E is merged. Proceed **H → I → J (detailed design approval, then implementation) → F → G**. This is the agreed delivery sequence, not a claim that every adjacent pair has a structural dependency.
+Story E is merged. Proceed **H → I → J (detailed design approval, then implementation) → F → G**. This is the agreed delivery sequence, not a claim that every adjacent pair has a structural dependency. The uniform undo/Ctrl+Z architecture once drafted for this phase (under a story letter since reassigned below) was pushed to the post-release wishlist (`docs/migration-plan/post-release/WISHLIST.md`) rather than scheduled here.
 
 - **H first** establishes advisory/banner semantics before F adds Container diagnostics.
-- **I next** consolidates existing reversal behavior and establishes the shared contract before J adds private resolution records and HP/mask synchronization.
-- **J will be implemented**, not automatically deferred beyond poc.10. Discuss its design in detail and approve its disclosure, authority, damage-rule and actor-boundary decisions before coding. Design discussion may begin earlier where it informs I's reversal contract; unresolved scope gates remain in force.
-- **F** adopts H's severity model, I's undo/history contract, and J's approved resolution/disclosure behavior from the outset.
+- **I second**: a small, structurally-independent prerequisite — exposes Secret AE authoring on Character/Creature sheets (currently engine-ready but UI-gated to items only) so Story J's actor-boundary fixture isn't arbitrarily blocked on a future actor type.
+- **J will be implemented**, not automatically deferred beyond poc.10. Discuss its design in detail and approve its disclosure, authority, damage-rule and actor-boundary decisions before coding; unresolved scope gates remain in force.
+- **F** adopts H's severity model and J's approved resolution/disclosure behavior from the outset; its Ammo Recovery card ships its own simple Undo button rather than depending on a shared cross-card contract.
 - **G last** reuses the completed melee/ranged paths for AoO and adds automatic flanking detection/highlighting.
 
 #### Structural dependencies and historical parallelization
@@ -2047,15 +2051,15 @@ Spike 3 (AE-duration spike — independent, informs Story E's helper only)
 
 Story B (action economy + movement)  ──┬──► Story A (tracker/initiative/flat-footed)
 Story C (ActionDataModel + TWF)      ──┤
-                                       ├──► Story D (attack trigger, execution, attack card) ──► Story E (Roll Defense + resolution) ──► Story I (uniform undo)
+                                       ├──► Story D (attack trigger, execution, attack card) ──► Story E (Roll Defense + resolution)
                                        │            │
                                        │            └──► Story F (ranged + ammo)
                                        └──────────────────────────────────────────────────────────────────► Story G (AoO)
 
 Story H (PreparationWarning alerts/warnings split — structurally independent; next in execution order)
-Story J (secret-aware melee + resistance disclosure — follows D/E; design approval then implementation before F)
+Story I (Secrets as a Character capability — structurally independent; unblocks Story J's actor boundary) ──► Story J (secret-aware melee + resistance disclosure — also follows D/E; design approval then implementation before F)
 ```
 
-Spikes 1, 2, and 3 (already resolved above) were fully independent research tasks that informed downstream scope. Historically, B and C could start simultaneously; A consumed B's action-economy shape; D joined the attack trigger, execution engine and attack card; E followed D with defense/resolution. G additionally needs B's movement-provokes. H remains structurally independent but is now scheduled first among the remaining stories. I follows E to audit/consolidate its existing reversal behavior alongside movement/prone reversal, and supplies the contract F's future Ammo Recovery card will adopt.
+Spikes 1, 2, and 3 (already resolved above) were fully independent research tasks that informed downstream scope. Historically, B and C could start simultaneously; A consumed B's action-economy shape; D joined the attack trigger, execution engine and attack card; E followed D with defense/resolution. G additionally needs B's movement-provokes. H remains structurally independent but is now scheduled first among the remaining stories.
 
-Story J depends on D/E's actual melee flow and is scheduled for design approval and implementation before F. Its disclosure design and actor-scope gate come first; Story I and J must agree actual HP delta/reversal semantics before overlapping changes land. Neither NPC actors nor a broad player-mask rollout is an approved prerequisite.
+Story J depends on D/E's actual melee flow and Story I's Secret-authoring UI, and is scheduled for design approval and implementation before F. Its disclosure design and actor-scope gate come first. Neither NPC actors nor a broad player-mask rollout is an approved prerequisite. (The uniform undo/Ctrl+Z architecture once drafted for this phase under a story letter since reassigned to Story I above was pushed to the post-release wishlist rather than scheduled in this phase; Resolution, Move Action, and Story F's Ammo Recovery cards each ship their own independent button-based Undo.)

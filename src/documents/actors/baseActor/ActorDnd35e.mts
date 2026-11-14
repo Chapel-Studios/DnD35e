@@ -7,9 +7,10 @@ import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs'
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import { DocumentMixin } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
-import { ensureNameFormulaOnCreate, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
+import { ensureNameFormulaOnCreate, getDisplayName, type NameFormulaDocument } from '@documents/document/logic/index.mjs';
 import type { PreparationWarning, PreparationWarningHost } from '@documents/document/preparationWarnings.mjs';
 import { pushPreparationWarningToHosts } from '@documents/document/preparationWarnings.mjs';
+import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
 import type { ActiveEffectDnd35e } from '@effects/baseActiveEffect/ActiveEffectDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import {
@@ -96,6 +97,44 @@ class ActorDnd35e<
 
   get localizedType (): string {
     return ACTOR_TYPES_LOCALIZED[this.type as ActorType] ?? 'dnd35e.COMMON.Actor';
+  }
+
+  /**
+   * Viewer-aware display name (poc.10 Story I: "Secrets as a Character capability", HUD
+   * extension). Unlike `ItemDnd35e`'s `_masks`-cached `get name()` (gated by a single
+   * `isIdentified` boolean, same mask for every viewer until identified), actor masking is
+   * per-field and per-viewer: a GM always sees the true name; a non-GM sees a masked `name`
+   * if an active Secret AE provides one. Computed live via `getDocumentMasks()` rather than
+   * a cached `_masks` field — this getter is read far more often (canvas nameplate redraws,
+   * directory sorting, chat) than the sheet-only consumers `getDocumentMasks()` was first
+   * built for, but mirrors the exact fallback branch already exercised by
+   * `TokenHudDnd35e`'s concealment check.
+   *
+   * Everything that reads `actor.name` (canvas nameplate via `Token#name`/`TokenDocumentDnd35e#name`,
+   * chat card name resolution, tooltips, compendium/directory listings) inherits masking for
+   * free from this single override — no per-surface patching needed, same principle as
+   * `ItemDnd35e`'s existing override.
+   *
+   * The "true" name is resolved through `system.nameFormula` via `getDisplayName()` (same
+   * helper `ItemDnd35e#name` uses), not just the raw stored `name` field: an ordinary
+   * (non-`mask`-type) `override` AE targeting `name` gets redirected by `remapNameKey()`
+   * (`resolveChangeKey.mts`) onto `system.nameFormula.formula`, since this getter has no
+   * writable backing value for core's `ActiveEffect.applyChangeField()` to assign into.
+   * Without resolving through `nameFormula` here, that redirect would silently be ignored.
+   *
+   * Reads `this._source?.name` directly, never `super.name` — calling `super.name` here
+   * crashed Foundry's own `DocumentIndex._addLeaves()` directory-search indexing during
+   * `_onCreate()` (a real bug caught by the e2e suite, not a hypothetical): whatever core's
+   * own `name` getter does at that exact point in the lifecycle isn't safe to re-enter from
+   * a subclass override. `ItemDnd35e#name` already avoids `super.name` for the same reason.
+   */
+  override get name (): string {
+    const fallbackName = this._source?.name ?? '';
+    const trueName = getDisplayName(fallbackName, this.system, this);
+    if (game.user?.isGM) return trueName;
+    const masks = getDocumentMasks(this);
+    const masked = masks?.name;
+    return typeof masked === 'string' ? masked : trueName;
   }
 
   override prepareBaseData (): void {

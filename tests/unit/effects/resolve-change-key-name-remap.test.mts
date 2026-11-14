@@ -7,11 +7,14 @@ import { describe, expect, it } from 'vitest';
  * Unit tests for the `name` → `system.nameFormula.formula` key remap in
  * `resolveActiveEffectChangeKey()`.
  *
- * `ItemDnd35e.name` is a live-computed getter (derived from `system.nameFormula`) with
- * no writable backing field, so an AE change targeting `name` must be redirected onto
- * the real, writable `system.nameFormula.formula` field before it reaches
- * `applyStackedActiveEffectChanges()`/core's `ActiveEffect.applyChange()`. Actor-targeted
- * `name` changes are left untouched — `ActorDnd35e.name` is still a plain writable field.
+ * Both `ItemDnd35e.name` and `ActorDnd35e.name` are live-computed getters (both derived
+ * from `system.nameFormula`, the actor one additionally layering the Secret-AE viewer
+ * mask — poc.10 Story I) with no writable backing field, so an AE change targeting `name`
+ * on EITHER target must be redirected onto the real, writable `system.nameFormula.formula`
+ * field before it reaches `applyStackedActiveEffectChanges()`/core's
+ * `ActiveEffect.applyChangeField()` — otherwise that core method's plain
+ * `foundry.utils.setProperty(targetDoc, 'name', value)` assignment throws against the
+ * getter-only accessor.
  *
  * Only the fast (non-`$conditional(`) path is exercised here — the `$conditional(...)`
  * resolution path is covered separately in `familiar/conditional-formula.test.mts` and
@@ -35,16 +38,16 @@ describe('resolveActiveEffectChangeKey — name → nameFormula.formula remap', 
     expect(resolveActiveEffectChangeKey({} as never, change)).toBe('system.nameFormula.formula');
   });
 
-  it('leaves a plain "name" key untouched for actor-targeted changes', () => {
+  it('remaps a plain "name" key to "system.nameFormula.formula" for actor-targeted changes', () => {
     const change = mkChange({ target: EFFECT_CHANGE_TARGET.ACTOR });
 
-    expect(resolveActiveEffectChangeKey({} as never, change)).toBe('name');
+    expect(resolveActiveEffectChangeKey({} as never, change)).toBe('system.nameFormula.formula');
   });
 
-  it('leaves a plain "name" key untouched when target is omitted (defaults to actor)', () => {
+  it('remaps a plain "name" key when target is omitted (defaults to actor)', () => {
     const change = mkChange({ target: undefined });
 
-    expect(resolveActiveEffectChangeKey({} as never, change)).toBe('name');
+    expect(resolveActiveEffectChangeKey({} as never, change)).toBe('system.nameFormula.formula');
   });
 
   it('does not affect non-"name" keys', () => {

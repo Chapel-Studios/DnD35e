@@ -11,6 +11,8 @@ import { SAVE_ABILITY_MAP, SAVE_KEYS, SAVE_KEYS_LOCALIZED } from '@constants/sav
 import { SIZE_MODIFIERS } from '@constants/sizes.mjs';
 import type { ACTORS_DND35E, CREATURE_ACTORS } from '@documents/actors/actorTypes.mjs';
 import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
+import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
+import { getTokenGmViewMode } from '@documents/token/logic/gmViewMode.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
 import {
@@ -25,6 +27,7 @@ import { resolveActionParticipant } from '@items/baseItem/actions/logic/actionPa
 import type { ActionResult } from '@items/baseItem/actions/types.mjs';
 import { WeaponAttackDataModel } from '@items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
+import type { TokenDocumentDnd35e } from '@scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import { buildInitiativeCard, buildOverridesModifierList, buildSaveCard, buildSituationalModifierEntry, D20Roll } from '@source/dice/index.mjs';
 import { buildModifiersD20Formula } from '@source/dice/rollModifiers.mjs';
 import type { RollModifier } from '@source/dice/types.mjs';
@@ -154,6 +157,8 @@ abstract class Creature extends ActorDnd35e {
     const content = await buildSaveCard(roll, modifierList, {
       actorName: this.token?.name ?? this.name,
       actorImage: this.img,
+      actorUuid: this.uuid,
+      tokenUuid: this.token?.uuid ?? null,
       saveLabel,
       dc: options.dc,
     });
@@ -194,9 +199,23 @@ abstract class Creature extends ActorDnd35e {
     situationalModifier?: number | string;
     rollMode?: RollMode;
     skipDialog?: boolean;
+    /**
+     * The specific placed token this roll is acting for (poc.10 Story I follow-up).
+     * `this.token` (`Actor#token`) only identifies the owning token of a synthetic
+     * (unlinked) actor — it's `null` for a normal linked Character, even when a combat
+     * tracker row/combatant knows exactly which placed token is rolling. Without this,
+     * every linked actor's preview-mode check (`getTokenGmViewMode()`) silently always
+     * took the "no token -> GM sees true" branch, regardless of which token (if any) had
+     * actually been toggled into Play preview. `CombatDnd35e.rollInitiative()` passes
+     * `combatant.token` (the real per-combatant token, correct for both link states);
+     * other callers (e.g. the sheet's own "Roll Initiative" button) fall back to
+     * `this.token`, same as before this option existed.
+     */
+    token?: TokenDocumentDnd35e | null;
   } = {}): Promise<D20Roll | null> {
     const initiativeLabel = game.i18n.localize('dnd35e.ROLL.Initiative');
     const actor = this as unknown as ACTORS_DND35E;
+    const actingToken = options.token ?? this.token;
 
     const situationalModifier = String(options.situationalModifier ?? '');
     const situationalLabel = game.i18n.localize('dnd35e.ROLL.SituationalModifier');
@@ -207,9 +226,21 @@ abstract class Creature extends ActorDnd35e {
     // Same per-effect stacking breakdown `rollSave()` shows (`_buildCombatStateChanges()`
     // contributes the Dex mod as a hidden-from-tab AE change) instead of one lumped total.
     // Computed pre-dialog so the dialog itself can disclose it via `RollModifierTooltip`.
+    // `displayValue` (poc.10 Story I): a non-GM viewer sees a masked `system.init` instead of
+    // the true modifier in the dialog/tooltip — `value` stays true always, so the actual roll
+    // this entry feeds (`buildModifiersD20Formula()` below, after the dialog returns) is
+    // never affected by the mask. GM-viewed dialogs read the acting token's own preview
+    // toggle (`gmViewMode.mts`), not a blanket "GM always sees true" check.
+    const initDisplayValue = (() => {
+      if (getTokenGmViewMode(actingToken) === 'true') return undefined;
+      const masks = getDocumentMasks(actor);
+      const masked = masks?.['system.init'];
+      return typeof masked === 'number' ? masked : undefined;
+    })();
     let modifiersList: RollModifier[] = [{
       label: initiativeLabel,
       value: this.system.init,
+      displayValue: initDisplayValue,
       breakdown: buildOverridesModifierList(actor, 'system.init'),
     }];
     const formulaContext = buildDocumentDataMap(actor);
@@ -252,8 +283,10 @@ abstract class Creature extends ActorDnd35e {
     await roll.evaluate();
 
     const content = await buildInitiativeCard(roll, modifiersList, {
-      actorName: this.token?.name ?? this.name,
+      actorName: actingToken?.name ?? this.name,
       actorImage: this.img,
+      actorUuid: this.uuid,
+      tokenUuid: actingToken?.uuid ?? null,
     });
 
     await roll.toMessage(
