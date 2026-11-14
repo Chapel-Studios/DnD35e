@@ -77,7 +77,13 @@ const mountHud = () => {
   const flags: FieldOverrides = {};
   const updateHP = vi.spyOn(actor, 'updateHP').mockResolvedValue(true);
   vi.spyOn(actor, 'getFlag').mockImplementation(() => flags);
-  const token = { isOwner: true, getFlag: () => false, object: { id: 'hud-token' }, update: vi.fn() };
+  const token = {
+    isOwner: true,
+    getFlag: (() => false) as (scope?: string, key?: string) => boolean | string,
+    setFlag: vi.fn(),
+    object: { id: 'hud-token' },
+    update: vi.fn(),
+  };
   class TestHud extends TokenHudDnd35e {
     prepare() {
       return this._prepareContext({
@@ -130,7 +136,12 @@ const mountHud = () => {
     if (typeof action !== 'function') throw new Error('Missing movementAction action handler.');
     await action.call(hud, new PointerEvent('click'), target);
   };
-  return { hud, actor, flags, token, updateHP, apply, concealment, attack, maneuver, movement };
+  const toggleGmViewMode = async () => {
+    const action = TokenHudDnd35e.DEFAULT_OPTIONS.actions.toggleGmViewMode;
+    if (typeof action !== 'function') throw new Error('Missing toggleGmViewMode action handler.');
+    await action.call(hud);
+  };
+  return { hud, actor, flags, token, updateHP, apply, concealment, attack, maneuver, movement, toggleGmViewMode };
 };
 
 afterEach(() => {
@@ -401,5 +412,53 @@ describe('Token HUD HP context and live action handler', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     await apply(type, amount);
     expect(updateHP).not.toHaveBeenCalled();
+  });
+});
+
+describe('Token HUD GM preview toggle (poc.10 Story I, added after review)', () => {
+  it('hides the toggle from non-GM viewers', async () => {
+    const { hud } = mountHud();
+    const context = (await hud.prepare()).leftHudContext;
+    expect(context.canToggleGmViewMode).toBe(false);
+  });
+
+  it('defaults a GM to true-value mode, showing real HP/concealment despite active masks', async () => {
+    const { hud, actor } = mountHud();
+    (game.user as { isGM: boolean }).isGM = true;
+    actor.system.hp.current = 50;
+    actor.system.defense.concealment = 50;
+    actor._masks = { 'system.hp.current': 15, 'system.defense.concealment': 20 };
+    const context = await hud.prepare();
+    expect(context.leftHudContext.canToggleGmViewMode).toBe(true);
+    expect(context.leftHudContext.gmViewModeIsTrue).toBe(true);
+    expect(context.middleHudContext.bar1Value).toBe(50);
+    expect(context.leftHudContext.concealmentIconClass).toBe('fa-solid fa-cloud');
+  });
+
+  it('previews the player\'s masked view when the token\'s gmViewMode flag is \'play\'', async () => {
+    const { hud, actor, token } = mountHud();
+    (game.user as { isGM: boolean }).isGM = true;
+    token.getFlag = (_scope?: string, key?: string) => key === 'gmViewMode' ? 'play' : false;
+    actor.system.hp.current = 50;
+    actor.system.defense.concealment = 50;
+    actor._masks = { 'system.hp.current': 15, 'system.defense.concealment': 20 };
+    const context = await hud.prepare();
+    expect(context.leftHudContext.gmViewModeIsTrue).toBe(false);
+    expect(context.middleHudContext.bar1Value).toBe(15);
+    expect(context.leftHudContext.concealmentIconClass).toBe('fa-solid fa-cloud-sun');
+  });
+
+  it('flips the stored flag on click, and is a no-op for non-GM users', async () => {
+    const { token, toggleGmViewMode } = mountHud();
+    await toggleGmViewMode();
+    expect(token.setFlag).not.toHaveBeenCalled();
+
+    (game.user as { isGM: boolean }).isGM = true;
+    await toggleGmViewMode();
+    expect(token.setFlag).toHaveBeenCalledWith('dnd35e', 'gmViewMode', 'play');
+
+    token.getFlag = (_scope?: string, key?: string) => key === 'gmViewMode' ? 'play' : false;
+    await toggleGmViewMode();
+    expect(token.setFlag).toHaveBeenLastCalledWith('dnd35e', 'gmViewMode', 'true');
   });
 });

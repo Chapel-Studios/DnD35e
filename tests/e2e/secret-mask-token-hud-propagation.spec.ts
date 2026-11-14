@@ -1,9 +1,10 @@
 import type { BrowserContext, Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
-import { activateScene, deleteTokens, placeToken, releaseAllTokens } from './helpers/canvas.mjs';
+import { activateScene, deleteTokens, panToPoint, placeToken, releaseAllTokens } from './helpers/canvas.mjs';
 import { clearWorld, createActiveEffect, createActor } from './helpers/documents.mjs';
 import { gotoGame, loginAs } from './helpers/session.mjs';
+import { openTokenHud } from './helpers/tokenHud.mjs';
 import { dismissOverlays } from './helpers/ui.mjs';
 
 /**
@@ -68,40 +69,31 @@ async function setupMaskedFighter (page: Page): Promise<MaskedFighter> {
   return { actorUuid, tokenId, trueInit, trueHpMax };
 }
 
-/** Reads the token document's viewer-aware name + HP bar, and the Token HUD's own
- * (separately mask-checked) compact-widget HP value, all from whichever session's `page`
- * this is called on — the same call returns true values for a GM session and masked
- * values for a non-GM session, by construction. */
+/**
+ * Reads the token document's viewer-aware name + native canvas HP bar (`getBarAttribute`) —
+ * the same call returns true values for a GM session and masked values for a non-GM
+ * session, by construction. The Token HUD's compact widget has its own, separately
+ * mask-aware computation (`TokenHudDnd35e._prepareContext()`), but it's covered by
+ * `token-hud-permissions.test.mts` instead: that widget is an HP-adjustment control with no
+ * actual current-value display in its default (non-`useDefaultHpBar`) configuration, so
+ * there's no E2E-observable surface to assert on, and a direct out-of-lifecycle
+ * `_prepareContext()` call from here proved to unreliably crash core's own
+ * `_getMovementActionChoices()`, which needs fuller render context than a bare call provides.
+ */
 async function readTokenMaskedSurfaces (page: Page, tokenId: string): Promise<{
   name: string;
   bar: { value: number; max: number | undefined };
-  hudBar1Value: number | null;
 }> {
-  return page.evaluate(async (id) => {
+  return page.evaluate((id) => {
     const canvas = (globalThis as any).canvas;
     const placeable = canvas.tokens.get(id);
     if (!placeable) throw new Error(`readTokenMaskedSurfaces: no placeable for token ${id}`);
     const doc = placeable.document;
     const bar = doc.getBarAttribute('bar1');
 
-    // Bind the singleton Token HUD to this placeable (same call Foundry's own
-    // right-click handler makes) so `_prepareContext()` reads this token's real data.
-    // Full `HandlebarsRenderOptions` shape, mirroring `token-hud-permissions.test.mts`'s
-    // direct-call convention rather than guessing at which fields are truly optional.
-    canvas.tokens.hud.bind(placeable);
-    const hudContext = await canvas.tokens.hud._prepareContext({
-      parts: [],
-      force: false,
-      position: { top: 0, left: 0, width: 0, height: 0, scale: 1, zIndex: 0 },
-      window: { title: '', icon: false, controls: false },
-      isFirstRender: false,
-    });
-    canvas.tokens.hud.close();
-
     return {
       name: doc.name as string,
       bar: { value: bar.value as number, max: bar.max as number | undefined },
-      hudBar1Value: hudContext?.middleHudContext?.bar1Value ?? null,
     };
   }, tokenId);
 }
@@ -168,7 +160,7 @@ test.describe('Secret AE masking propagates to tokens, HUD, Roll Initiative dial
     await playerContext.close();
   });
 
-  test('GM sees true name/HP on the token and HUD; player sees the masked values', async ({ page }) => {
+  test('GM sees true name/HP on the token; player sees the masked values', async ({ page }) => {
     test.setTimeout(100_000);
     await gotoGame(page);
     await activateScene(page, 'Test Scene');
@@ -178,7 +170,6 @@ test.describe('Secret AE masking propagates to tokens, HUD, Roll Initiative dial
     const gmView = await readTokenMaskedSurfaces(page, tokenId);
     expect(gmView.name).toBe(TRUE_NAME);
     expect(gmView.bar).toMatchObject({ value: TRUE_HP_CURRENT, max: trueHpMax });
-    expect(gmView.hudBar1Value).toBe(TRUE_HP_CURRENT);
 
     const playerPage = await loginAs(playerContext, 'player');
     await activateScene(playerPage, 'Test Scene');
@@ -193,7 +184,6 @@ test.describe('Secret AE masking propagates to tokens, HUD, Roll Initiative dial
     const playerView = await readTokenMaskedSurfaces(playerPage, tokenId);
     expect(playerView.name).toBe(MASKED_NAME);
     expect(playerView.bar).toMatchObject({ value: MASKED_HP.current, max: MASKED_HP.max });
-    expect(playerView.hudBar1Value).toBe(MASKED_HP.current);
 
     await deleteTokens(page, [tokenId]);
   });
@@ -253,6 +243,77 @@ test.describe('Secret AE masking propagates to tokens, HUD, Roll Initiative dial
     const playerPage = await loginAs(playerContext, 'player');
     const playerCardName = playerPage.locator(`.message[data-message-id="${messageId}"] .save-roll-card .value[data-actor-uuid]`).first();
     await expect(playerCardName).toContainText(MASKED_NAME);
+
+    await deleteTokens(page, [tokenId]);
+  });
+
+  test('GM can toggle a token into Play preview mode via the Token HUD, seeing exactly what a non-GM viewer sees', async ({ page }) => {
+    test.setTimeout(100_000);
+    await gotoGame(page);
+    await activateScene(page, 'Test Scene');
+    await page.evaluate(() => (globalThis as any).game.togglePause(false, true));
+    const { tokenId, trueHpMax } = await setupMaskedFighter(page);
+
+    // Default (no flag set) — GM sees true values, same as before this toggle existed.
+    const trueView = await readTokenMaskedSurfaces(page, tokenId);
+    expect(trueView.name).toBe(TRUE_NAME);
+    expect(trueView.bar).toMatchObject({ value: TRUE_HP_CURRENT, max: trueHpMax });
+
+    // The HUD's left control bar renders to the left of the token in screen space — pan
+    // the token into open canvas space first, or a token placed near the scene edge can
+    // render its HUD buttons off-screen (see `panToPoint`'s own doc comment).
+    await panToPoint(page, { x: 300, y: 300 });
+    await openTokenHud(page, tokenId);
+    await page.locator('#token-hud [data-action="toggleGmViewMode"]').click();
+    await expect.poll(async () => page.evaluate((id) => {
+      const doc = (globalThis as any).canvas.tokens.get(id)?.document;
+      return doc?.getFlag('dnd35e', 'gmViewMode') ?? null;
+    }, tokenId)).toBe('play');
+
+    const previewView = await readTokenMaskedSurfaces(page, tokenId);
+    expect(previewView.name).toBe(MASKED_NAME);
+    expect(previewView.bar).toMatchObject({ value: MASKED_HP.current, max: MASKED_HP.max });
+
+    // Toggle back — the GM's own preview choice must be reversible, not one-way.
+    await openTokenHud(page, tokenId);
+    await page.locator('#token-hud [data-action="toggleGmViewMode"]').click();
+    await expect.poll(async () => page.evaluate((id) => {
+      const doc = (globalThis as any).canvas.tokens.get(id)?.document;
+      return doc?.getFlag('dnd35e', 'gmViewMode') ?? null;
+    }, tokenId)).toBe('true');
+
+    const revertedView = await readTokenMaskedSurfaces(page, tokenId);
+    expect(revertedView.name).toBe(TRUE_NAME);
+
+    await deleteTokens(page, [tokenId]);
+  });
+
+  test('A token\'s own custom name is an explicit override and always wins over an actor name mask, for every viewer', async ({ page }) => {
+    // A fresh player login+session comfortably exceeds the 60s default — bump rather
+    // than trim real interaction/assertion steps (same reasoning as the other tests here).
+    test.setTimeout(100_000);
+    const CUSTOM_TOKEN_NAME = 'Custom Label';
+    await gotoGame(page);
+    await activateScene(page, 'Test Scene');
+    const { tokenId } = await setupMaskedFighter(page);
+
+    // Customizing the placed token's own name (distinct from the actor's true name) is a
+    // deliberate per-instance override — it must beat the mask for every viewer, not just
+    // the GM, since it was never "pulling from the sheet" in the first place.
+    await page.evaluate(async ({ id, name }) => {
+      const doc = (globalThis as any).canvas.tokens.get(id)?.document;
+      await doc.update({ name });
+    }, { id: tokenId, name: CUSTOM_TOKEN_NAME });
+
+    const gmView = await readTokenMaskedSurfaces(page, tokenId);
+    expect(gmView.name).toBe(CUSTOM_TOKEN_NAME);
+
+    const playerPage = await loginAs(playerContext, 'player');
+    await activateScene(playerPage, 'Test Scene');
+    await playerPage.waitForFunction((id) => !!(globalThis as any).canvas?.tokens?.get(id), tokenId);
+
+    const playerView = await readTokenMaskedSurfaces(playerPage, tokenId);
+    expect(playerView.name).toBe(CUSTOM_TOKEN_NAME);
 
     await deleteTokens(page, [tokenId]);
   });

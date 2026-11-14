@@ -11,6 +11,7 @@ import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35
 import type { MovementSession, MovementSessionCategory } from '@documents/combat/combatant/movementSession.mjs';
 import { getMovementSession, resetMovementSession, setMovementSession } from '@documents/combat/combatant/movementSession.mjs';
 import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
+import { getTokenGmViewMode } from '@documents/token/logic/gmViewMode.mjs';
 import {
   CHARGE_MOVEMENT_ACTION,
   DOUBLE_MOVE_MOVEMENT_ACTION,
@@ -65,27 +66,51 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
   }
 
   /**
-   * Viewer-aware nameplate text (poc.10 Story I HUD extension). A linked token's own `name`
-   * field is replicated/synced data — identical for every client — so it can't carry a
-   * per-viewer mask itself. Delegating to `this.actor.name` (now a viewer-aware getter, see
-   * `ActorDnd35e#name`) re-evaluates fresh on each client's canvas redraw instead of reading
-   * a baked-in stored value. Unlinked tokens keep their own independent stored name — they
-   * have no live actor identity to mask against.
+   * Viewer-aware nameplate text (poc.10 Story I HUD extension, refined per review). The
+   * token's own stored `name` is the "default, pulls from the sheet" state only when it
+   * still matches the actor's true (unmasked) name — in that case a non-GM viewer with an
+   * active name mask sees the masked value, and a GM sees the true value unless they've
+   * toggled this token into preview ("play") mode via the Token HUD (`gmViewMode.mts`). The
+   * moment a GM customizes a placed token's name (or its prototype token's name, inherited
+   * at placement) away from the actor's true name, that's an explicit per-instance override
+   * and always wins, for every viewer and both link states and regardless of the preview
+   * toggle — it must never be silently replaced by a mask. Works identically for linked and
+   * unlinked tokens: `this.actor` resolves to the real actor or the synthetic
+   * (ActorDelta-overlaid) actor either way, and both can carry their own Secret AE.
+   *
+   * Reads `this._source?.name` rather than `super.name`: schema fields are defined as
+   * own-instance properties by `DataModel#_initialize()`, not prototype accessors, so
+   * `super.name` can't see them and always resolves to `undefined` here. `ItemDnd35e#name`
+   * and `ActorDnd35e#name` already avoid `super.name` for the same reason.
    */
   override get name (): string {
-    if (this.isLinked && this.actor) return this.actor.name;
-    return super.name;
+    const storedName = this._source?.name ?? '';
+    const actor = this.actor;
+    if (!actor) return storedName;
+
+    const trueActorName = (actor as unknown as { _source?: { name?: string } })._source?.name ?? '';
+
+    if (storedName !== trueActorName) return storedName;
+
+    if (getTokenGmViewMode(this) === 'true') return trueActorName;
+
+    const masks = getDocumentMasks(actor);
+    const masked = masks?.name;
+    return typeof masked === 'string'
+      ? masked
+      : trueActorName;
   }
 
   /**
    * Viewer-aware HP bar data (poc.10 Story I HUD extension). Only the `hp` attribute is
    * mask-substituted — this only ever matches this system's one configured bar attribute
    * (`prototypeToken.bar1.attribute === 'hp'`, see `buildPrototypeTokenDefaults.mts`); any
-   * other configured bar attribute passes through untouched. GM always sees true values.
+   * other configured bar attribute passes through untouched. A GM sees true values unless
+   * this token has been toggled into preview ("play") mode via the Token HUD.
    */
   override getBarAttribute (barName: string, options?: { alternative?: string }): TokenResourceData | null {
     const data = super.getBarAttribute(barName, options);
-    if (!data || data.attribute !== 'hp' || game.user?.isGM || !this.actor) return data;
+    if (!data || data.attribute !== 'hp' || getTokenGmViewMode(this) === 'true' || !this.actor) return data;
 
     const masks = getDocumentMasks(this.actor);
     const maskedCurrent = masks?.['system.hp.current'];

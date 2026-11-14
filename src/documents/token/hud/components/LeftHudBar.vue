@@ -47,6 +47,18 @@
       data-action="config"
     />
 
+    <HudButton
+      v-if="canToggleGmViewMode"
+      :class="{ active: gmViewModeIsTrue }"
+      :label-key="gmViewModeIsTrue
+        ? 'dnd35e.COMBAT.HUD.GmViewModeTrue'
+        : 'dnd35e.COMBAT.HUD.GmViewModePlay'"
+      :icon-class="gmViewModeIsTrue
+        ? 'fa-solid fa-eye'
+        : 'fa-solid fa-dice-d20'"
+      data-action="toggleGmViewMode"
+    />
+
     <template v-if="canSeeConcealment">
       <HudButton
         :data-palette="canEditConcealment ? 'concealment' : undefined"
@@ -80,6 +92,8 @@
     levels: TokenHudLevelRow[];
     locked: boolean;
     canConfigure: boolean;
+    canToggleGmViewMode: boolean;
+    gmViewModeIsTrue: boolean;
     canSeeConcealment: boolean;
     canEditConcealment: boolean;
     concealmentIconClass: string;

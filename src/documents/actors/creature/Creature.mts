@@ -12,6 +12,7 @@ import { SIZE_MODIFIERS } from '@constants/sizes.mjs';
 import type { ACTORS_DND35E, CREATURE_ACTORS } from '@documents/actors/actorTypes.mjs';
 import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
 import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
+import { getTokenGmViewMode } from '@documents/token/logic/gmViewMode.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
 import {
@@ -213,9 +214,10 @@ abstract class Creature extends ActorDnd35e {
     // `displayValue` (poc.10 Story I): a non-GM viewer sees a masked `system.init` instead of
     // the true modifier in the dialog/tooltip — `value` stays true always, so the actual roll
     // this entry feeds (`buildModifiersD20Formula()` below, after the dialog returns) is
-    // never affected by the mask.
+    // never affected by the mask. GM-viewed dialogs read the acting token's own preview
+    // toggle (`gmViewMode.mts`), not a blanket "GM always sees true" check.
     const initDisplayValue = (() => {
-      if (game.user?.isGM) return undefined;
+      if (getTokenGmViewMode(this.token) === 'true') return undefined;
       const masks = getDocumentMasks(actor);
       const masked = masks?.['system.init'];
       return typeof masked === 'number' ? masked : undefined;

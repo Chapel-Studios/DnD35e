@@ -87,7 +87,9 @@
         "ConcealmentCategoryNone": "None",
         "ConcealmentCategoryConcealed": "Concealed",
         "ConcealmentCategoryFull": "Full Concealment",
-        "ConcealmentTooltip": "{category} ({percent}%)"
+        "ConcealmentTooltip": "{category} ({percent}%)",
+        "GmViewModeTrue": "Viewing true values — click to preview what players see",
+        "GmViewModePlay": "Previewing player view — click to see true values"
       },
       "CONFIG": {
         "ClearImage": "Reset to Token/Actor Image",
