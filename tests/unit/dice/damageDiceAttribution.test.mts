@@ -1,22 +1,35 @@
 import { DAMAGE_TYPE_FIRE, DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
 import { CRIT_MARKER_KEY, CRIT_OVERRIDE_EXEMPT, CRIT_OVERRIDE_MULTIPLY } from '@constants/critDiceMarkers.mjs';
 import { buildMarkerBag } from '@constants/diceMarkerBag.mjs';
-import { DAMAGE_TYPE_MARKER_KEY } from '@constants/typedDamageMarkers.mjs';
-import { flavorDamageDiceBySource, groupDamageDiceBySource } from '@source/dice/d20Formula.mjs';
+import { DAMAGE_TYPE_MARKER_KEY, readDamageType } from '@constants/typedDamageMarkers.mjs';
+import { flavorDamageDiceBySource, groupDamageDiceBySource, mergeDiceGroupMarker } from '@source/dice/d20Formula.mjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mirrors tests/unit/dice/splitFormulaParts.test.mts's `Roll.parse`/`foundry.dice.terms`
-// stubbing pattern — `parseAdditiveDiceFragment()` (the shared parser behind both functions
-// under test) needs real `instanceof Die`/`NumericTerm`/`OperatorTerm` checks to pass.
+// stubbing pattern — `parseFormulaComponents()` (the shared parser behind both functions under
+// test) needs real `instanceof Die`/`NumericTerm`/`OperatorTerm`/`ParentheticalTerm` checks, plus
+// `.isDeterministic`/`.expression`, to pass.
 class OperatorTermStub {
+  readonly isDeterministic = true;
   constructor(readonly operator: string) {}
 }
 class NumericTermStub {
-  constructor(readonly number: number) {}
+  readonly isDeterministic = true;
+  constructor(readonly number: number, readonly flavor = '') {}
+  get expression(): string { return String(this.number); }
+  get formula(): string { return `${this.expression}${this.flavor ? `[${this.flavor}]` : ''}`; }
 }
 class DieStub {
-  modifiers: string[] = [];
-  constructor(readonly faces: number, readonly number: number, readonly flavor = '') {}
+  readonly isDeterministic = false;
+  constructor(readonly faces: number, readonly number: number, readonly flavor = '', readonly modifiers: string[] = []) {}
+  get expression(): string { return `${this.number}d${this.faces}${this.modifiers.join('')}`; }
+  get formula(): string { return `${this.expression}${this.flavor ? `[${this.flavor}]` : ''}`; }
+}
+class ParentheticalTermStub {
+  readonly isDeterministic = false;
+  constructor(readonly term: string, readonly flavor = '') {}
+  get expression(): string { return `(${this.term})`; }
+  get formula(): string { return `${this.expression}${this.flavor ? `[${this.flavor}]` : ''}`; }
 }
 
 /** Shorthand for a `$typed(...)`-style marker — one field in the shared bag. */
@@ -29,7 +42,8 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
     if (!terms) throw new Error(`Invalid formula: ${formula}`);
     return terms;
   });
-  const die = (faces: number, count: number, flavor = '') => new DieStub(faces, count, flavor);
+  const die = (faces: number, count: number, flavor = '', modifiers: string[] = []) => new DieStub(faces, count, flavor, modifiers);
+  const num = (value: number, flavor = '') => new NumericTermStub(value, flavor);
   const op = (operator: string) => new OperatorTermStub(operator);
 
   beforeEach(() => {
@@ -37,7 +51,7 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
     parse.mockClear();
     vi.stubGlobal('Roll', { parse });
     vi.stubGlobal('foundry', {
-      dice: { terms: { Die: DieStub, NumericTerm: NumericTermStub, OperatorTerm: OperatorTermStub } },
+      dice: { terms: { Die: DieStub, NumericTerm: NumericTermStub, OperatorTerm: OperatorTermStub, ParentheticalTerm: ParentheticalTermStub } },
     });
   });
 
@@ -169,5 +183,92 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
 
       expect(flavorDamageDiceBySource(formula, 'Crownguard', [], DAMAGE_TYPE_SLASHING).formula).toBe('2d6[Crownguard]');
     });
+  });
+
+  // Glued multiplicative/divisive groups (e.g. "1d6 * 2") resolve to ONE effective type for the
+  // whole group rather than each term keeping its own — unlike a "+"/"-" boundary, there's no
+  // way to split credit for a product. The multiplier (the non-anchor term) wins on conflict,
+  // since it's treated as a deliberate override; the anchor's own type is the fallback.
+  describe('glued multiplicative/divisive groups — multiplier-wins precedence', () => {
+    it('uses the anchor die\'s own type when only the die is explicitly typed (1d6[slashing] * 2)', () => {
+      const formula = 'mult-anchor-typed';
+      parsed.set(formula, [die(6, 1, typedMarker(DAMAGE_TYPE_SLASHING)), op('*'), num(2)]);
+
+      expect(groupDamageDiceBySource(formula, 'Crownguard', [])).toEqual([
+        { label: 'Crownguard', formula: '1d6 * 2', damageTypeLabel: DAMAGE_TYPE_SLASHING },
+      ]);
+    });
+
+    it('uses the multiplier\'s own type when only the multiplier is explicitly typed (1d6 * 1[fire])', () => {
+      const formula = 'mult-multiplier-typed';
+      parsed.set(formula, [die(6, 1), op('*'), num(1, typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      expect(groupDamageDiceBySource(formula, 'Crownguard', [])).toEqual([
+        { label: 'Crownguard', formula: '1d6 * 1', damageTypeLabel: DAMAGE_TYPE_FIRE },
+      ]);
+    });
+
+    it('lets the multiplier\'s type win over a conflicting anchor type (1d6[slashing] * 1[fire])', () => {
+      const formula = 'mult-conflict-typed';
+      parsed.set(formula, [die(6, 1, typedMarker(DAMAGE_TYPE_SLASHING)), op('*'), num(1, typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      expect(groupDamageDiceBySource(formula, 'Crownguard', [])).toEqual([
+        { label: 'Crownguard', formula: '1d6 * 1', damageTypeLabel: DAMAGE_TYPE_FIRE },
+      ]);
+    });
+
+    it('keeps the common single-anchor case crit-eligible (no parenthesis-wrapping)', () => {
+      const formula = 'mult-crit-eligible';
+      parsed.set(formula, [die(6, 1, typedMarker(DAMAGE_TYPE_FIRE)), op('*'), num(2)]);
+
+      // Weapon-owned, not forced either way -> not exempt, same as any other weapon die.
+      expect(flavorDamageDiceBySource(formula, 'Crownguard', []).exemptDiceIndices).toEqual([]);
+    });
+  });
+
+  it('reads a damage type off a Die with roll modifiers (e.g. 4d6kh3) without losing crit eligibility', () => {
+    const formula = 'modified-dice-typed';
+    parsed.set(formula, [die(6, 4, typedMarker(DAMAGE_TYPE_FIRE), ['kh3'])]);
+
+    expect(groupDamageDiceBySource(formula, 'Crownguard', [])).toEqual([
+      { label: 'Crownguard', formula: '4d6kh3', damageTypeLabel: DAMAGE_TYPE_FIRE },
+    ]);
+    expect(flavorDamageDiceBySource(formula, 'Crownguard', []).exemptDiceIndices).toEqual([]);
+  });
+
+  it('keeps crit-index alignment when a flat (non-dice) override sits between two dice sources', () => {
+    const formula = 'mixed-flat-and-dice-override';
+    parsed.set(formula, [
+      die(6, 2), op('+'),
+      num(1), op('+'),
+      die(6, 1, typedMarker(DAMAGE_TYPE_FIRE)),
+    ]);
+    parsed.set('1', [num(1)]);
+    parsed.set('1d6', [die(6, 1)]);
+    const overrides = [
+      { effectName: 'Strength Bonus', value: '1' },
+      { effectName: '+1 Flaming', value: '1d6' },
+    ];
+
+    // The flat "Strength Bonus" component must not consume a crit-index slot — the AE dice
+    // group is still the SECOND real Die encountered (index 1), not the third.
+    expect(flavorDamageDiceBySource(formula, 'Crownguard', overrides).exemptDiceIndices).toEqual([1]);
+    // groupDamageDiceBySource stays dice-only — the flat override contributes no row at all.
+    expect(groupDamageDiceBySource(formula, 'Crownguard', overrides)).toEqual([
+      { label: 'Crownguard', formula: '2d6' },
+      { label: '+1 Flaming', formula: '1d6', damageTypeLabel: DAMAGE_TYPE_FIRE },
+    ]);
+  });
+
+  // The fix for the "$typed(fire, 3) loses its type entirely" gap (poc.10 Story J, item #4):
+  // mergeDiceGroupMarker() now applies to EVERY component, not just dice-shaped ones.
+  it('attaches a damage-type marker to a wholly flat numeric component, not just dice groups', () => {
+    const formula = '3';
+    parsed.set(formula, [num(3)]);
+
+    const flavored = mergeDiceGroupMarker(formula, DAMAGE_TYPE_MARKER_KEY, DAMAGE_TYPE_FIRE);
+    const match = /^3\[(.+)\]$/.exec(flavored);
+    expect(match).not.toBeNull();
+    expect(readDamageType(match?.[1])).toBe(DAMAGE_TYPE_FIRE);
   });
 });
