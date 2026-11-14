@@ -10,6 +10,7 @@ import { clearChargedThisTurn, getActionEconomy, markChargedThisTurn, refundActi
 import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35e.mjs';
 import type { MovementSession, MovementSessionCategory } from '@documents/combat/combatant/movementSession.mjs';
 import { getMovementSession, resetMovementSession, setMovementSession } from '@documents/combat/combatant/movementSession.mjs';
+import { getDisplayName } from '@documents/document/logic/index.mjs';
 import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
 import { getTokenGmViewMode } from '@documents/token/logic/gmViewMode.mjs';
 import {
@@ -78,6 +79,19 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
    * unlinked tokens: `this.actor` resolves to the real actor or the synthetic
    * (ActorDelta-overlaid) actor either way, and both can carry their own Secret AE.
    *
+   * The actor's "true" name is resolved through `getDisplayName()` against
+   * `system.nameFormula` (same helper `ActorDnd35e#name`/`ItemDnd35e#name` use), not just
+   * the raw `_source.name` — an ordinary AE override redirected onto
+   * `system.nameFormula.formula` (`resolveChangeKey.mts`) can make the actor's effective
+   * name diverge from its source name, and Foundry copies the actor's *effective* name
+   * into a newly placed token. Comparing the stored name against the raw source name only
+   * would therefore misclassify such a token as a deliberate custom override (bypassing its
+   * mask entirely) or, the other direction, show a stale source-name snapshot even to the
+   * GM once an override changes the effective name after placement. The stored name is
+   * still "default" if it matches EITHER the source or the effective name — covers tokens
+   * placed before vs. after such a divergence existed — while a value matching neither is
+   * still recognized as a deliberate per-token rename.
+   *
    * Reads `this._source?.name` rather than `super.name`: schema fields are defined as
    * own-instance properties by `DataModel#_initialize()`, not prototype accessors, so
    * `super.name` can't see them and always resolves to `undefined` here. `ItemDnd35e#name`
@@ -88,17 +102,18 @@ class TokenDocumentDnd35e<TParent extends SceneDnd35e | null = SceneDnd35e | nul
     const actor = this.actor;
     if (!actor) return storedName;
 
-    const trueActorName = (actor as unknown as { _source?: { name?: string } })._source?.name ?? '';
+    const sourceActorName = (actor as unknown as { _source?: { name?: string } })._source?.name ?? '';
+    const effectiveActorName = getDisplayName(sourceActorName, actor.system, actor);
 
-    if (storedName !== trueActorName) return storedName;
+    if (storedName !== sourceActorName && storedName !== effectiveActorName) return storedName;
 
-    if (getTokenGmViewMode(this) === 'true') return trueActorName;
+    if (getTokenGmViewMode(this) === 'true') return effectiveActorName;
 
     const masks = getDocumentMasks(actor);
     const masked = masks?.name;
     return typeof masked === 'string'
       ? masked
-      : trueActorName;
+      : effectiveActorName;
   }
 
   /**
