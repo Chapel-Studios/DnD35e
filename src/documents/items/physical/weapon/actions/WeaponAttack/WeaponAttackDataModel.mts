@@ -19,6 +19,7 @@ import type { DocumentContext } from '@helpers/formulae/index.mjs';
 import { FormulaData } from '@helpers/formulae/index.mjs';
 import type { FormulaContextDeclaration } from '@helpers/formulae/types.mjs';
 import { buildDocumentDataMap } from '@helpers/formulae/utils.mjs';
+import type { Override } from '@helpers/stacking.mjs';
 import { formatBonusTypeLabel, parseNumericChangeValue, STACK_RESULT_IGNORED } from '@helpers/stacking.mjs';
 import { ActionDataModel } from '@items/baseItem/actions/ActionDataModel.mjs';
 import type { ActionParticipant } from '@items/baseItem/actions/logic/actionParticipant.mjs';
@@ -139,6 +140,50 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     return resolved || '0';
   }
 
+  /**
+   * Resolves each AE change history entry at `path` against `dataMap` — shared by
+   * `_buildFormulaBreakdown()` (a live roll's `FormulaContext`, with `target` resolved) and
+   * `resolvedDamageDiceOverrides` (an eager, target-less `dataMap` for passive sheet display).
+   */
+  private _resolveOverrides(path: string, dataMap: Record<string, DocumentContext>): (Override & { value: string })[] {
+    const item = this.item;
+    return (item?.effectOverrides[path] ?? []).map((override) => {
+      const value = FormulaData.resolveSource<string>(
+        FormulaData.toSource(String(override.value), { expectedType: 'rollFormula' }), dataMap
+      );
+      if (value === null) throw new Error(`Unable to resolve formula history for action ${this._id}`);
+      return { ...override, value };
+    });
+  }
+
+  /** Narrows a resolved override list down to the shape `groupDamageDiceBySource()`/`flavorDamageDiceBySource()` expect, dropping any override whose stacking result was ignored. */
+  private _toDiceOverrides(overrides: (Override & { value: string })[]): { effectName: string; value: string }[] {
+    return overrides.filter(override => override.stackResult !== STACK_RESULT_IGNORED)
+      .map(override => ({ effectName: override.effectName, value: String(override.value) }));
+  }
+
+  /**
+   * Resolved AE dice-override attribution for the weapon's own damage formula, independent of
+   * any active roll/execution context (no `target` needed) — the same positional attribution
+   * `_buildDamageData()` feeds into the actual roll's breakdown and crit exemption, exposed
+   * here so a passive sheet-level display (e.g. `WeaponsSection.vue`'s compact damage-type
+   * column) can match the real roll instead of treating every AE-contributed die as
+   * weapon-owned.
+   */
+  get resolvedDamageDiceOverrides(): { effectName: string; value: string }[] {
+    if (!this.item) return [];
+    try {
+      const field = (this.constructor as typeof ActionDataModel).schema.fields.damageFormula as FormulaField;
+      const dataMap = this._buildFormulaContext(field.formulaContexts);
+      return this._toDiceOverrides(this._resolveOverrides(this._formulaPath('damageFormula'), dataMap));
+    } catch {
+      // An override formula that can't resolve outside a live roll context (e.g. one
+      // referencing #target) just contributes no attribution here — the real roll (which
+      // always has a target) still resolves and attributes it correctly.
+      return [];
+    }
+  }
+
   private _buildFormulaBreakdown(
     field: 'attackFormula' | 'damageFormula',
     context: FormulaContext,
@@ -147,15 +192,8 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     defaultDamageType: DamageType | null = null
   ) {
     const path = this._formulaPath(field);
-    const overrides = (context.item.effectOverrides[path] ?? []).map(override => {
-      const value = FormulaData.resolveSource<string>(
-        FormulaData.toSource(String(override.value), { expectedType: 'rollFormula' }), context
-      );
-      if (value === null) throw new Error(`Unable to resolve ${field} history for action ${this._id}`);
-      return { ...override, value };
-    });
-    const diceOverrides = overrides.filter(override => override.stackResult !== STACK_RESULT_IGNORED)
-      .map(override => ({ effectName: override.effectName, value: String(override.value) }));
+    const overrides = this._resolveOverrides(path, context);
+    const diceOverrides = this._toDiceOverrides(overrides);
     const source = FormulaData.resolveSource<string>(this._source[field], context);
     if (source === null) throw new Error(`Unable to resolve source ${field} for action ${this._id}`);
     const baseFlat = extractFlatModifier(source || '0').flat;

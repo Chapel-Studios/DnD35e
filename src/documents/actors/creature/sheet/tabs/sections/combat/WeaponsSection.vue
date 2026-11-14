@@ -58,7 +58,7 @@
   import type { Weapon } from '@items/physical/weapon/index.mjs';
   import { formatThreatRange } from '@items/physical/weapon/logic/threatRange.mjs';
   import { type SettingsStore,SettingsStoreSymbol } from '@settings/index.mjs';
-  import { groupDamageDiceBySource } from '@source/dice/index.mjs';
+  import { getDamageTypeLabels } from '@source/dice/index.mjs';
   import { computed, inject } from 'vue';
 
   import type { CreatureDocumentStore } from '../../../CreatureStore.mjs';
@@ -91,18 +91,17 @@
 
   /**
    * Per-component damage-type display (poc.10 Story J) — e.g. "Slashing + Fire" for a
-   * flaming weapon. Reuses `groupDamageDiceBySource()` (the same attribution the actual
-   * damage roll breakdown uses) against the action's own already-resolved formula, with no
-   * per-source overrides (this is a compact sheet-row display, not a per-effect breakdown) —
-   * every dice group is treated as weapon-owned, so `action.damageType` (the dropdown) fills
-   * in as the default for any untyped group. Falls back to the dropdown's plain label when
-   * the resolved formula can't be split into dice groups at all (e.g. empty/zero).
+   * flaming weapon. Reuses `getDamageTypeLabels()` (the same attribution the actual damage
+   * roll breakdown uses, via `groupDamageDiceBySource()`) against the action's own
+   * already-resolved formula, fed the action's own `resolvedDamageDiceOverrides` so an
+   * AE-contributed die is correctly attributed to its effect (not the weapon) here too —
+   * matching the real roll breakdown rather than treating every dice group as weapon-owned.
+   * Falls back to the dropdown's plain label only when nothing typed could be determined at
+   * all (e.g. the resolved formula is empty/zero, or every component is untyped).
    */
   const damageTypeDisplay = (action: WeaponAction): string => {
-    const dropdownLabel = localize(action.damageType);
-    const rows = groupDamageDiceBySource(action.damageFormula.resolvedValue || '', '', [], action.damageType);
-    if (!rows.length) return dropdownLabel;
-    return rows.map(row => row.damageTypeLabel ?? dropdownLabel).join(' + ');
+    const typeLabels = getDamageTypeLabels(action.damageFormula.resolvedValue || '', action.resolvedDamageDiceOverrides, action.damageType);
+    return typeLabels.length ? typeLabels.join(' + ') : localize(action.damageType);
   };
 
   const rows = computed<WeaponActionRow[]>(() => {

@@ -2,7 +2,7 @@ import { DAMAGE_TYPE_FIRE, DAMAGE_TYPE_SLASHING } from '@constants/attacks/damag
 import { CRIT_MARKER_KEY, CRIT_OVERRIDE_EXEMPT, CRIT_OVERRIDE_MULTIPLY } from '@constants/critDiceMarkers.mjs';
 import { buildMarkerBag } from '@constants/diceMarkerBag.mjs';
 import { DAMAGE_TYPE_MARKER_KEY, readDamageType } from '@constants/typedDamageMarkers.mjs';
-import { flavorDamageDiceBySource, groupDamageDiceBySource, mergeDiceGroupMarker } from '@source/dice/d20Formula.mjs';
+import { flavorDamageDiceBySource, getDamageTypeLabels, groupDamageDiceBySource, mergeDiceGroupMarker } from '@source/dice/d20Formula.mjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mirrors tests/unit/dice/splitFormulaParts.test.mts's `Roll.parse`/`foundry.dice.terms`
@@ -270,5 +270,48 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
     const match = /^3\[(.+)\]$/.exec(flavored);
     expect(match).not.toBeNull();
     expect(readDamageType(match?.[1])).toBe(DAMAGE_TYPE_FIRE);
+  });
+
+  // getDamageTypeLabels() — the generic, groupDamageDiceBySource()-backed building block any
+  // future consumer (sheet rows, tooltips, chat summaries) can reuse for "what types does this
+  // formula produce" without re-deriving the per-source breakdown itself.
+  describe('getDamageTypeLabels', () => {
+    it('returns one deduped label per distinct type, in first-appearance order', () => {
+      const formula = 'labels-multi-type';
+      parsed.set(formula, [
+        die(6, 2, typedMarker(DAMAGE_TYPE_SLASHING)), op('+'),
+        die(6, 1, typedMarker(DAMAGE_TYPE_FIRE)),
+      ]);
+
+      expect(getDamageTypeLabels(formula, [])).toEqual([DAMAGE_TYPE_SLASHING, DAMAGE_TYPE_FIRE]);
+    });
+
+    it('dedupes the same type contributed by two different sources', () => {
+      const formula = 'labels-same-type-two-sources';
+      parsed.set(formula, [
+        die(6, 2, typedMarker(DAMAGE_TYPE_FIRE)), op('+'),
+        die(6, 1, typedMarker(DAMAGE_TYPE_FIRE)),
+      ]);
+      parsed.set('1d6', [die(6, 1, typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      expect(getDamageTypeLabels(formula, [{ effectName: '+1 Flaming', value: '1d6' }])).toEqual([DAMAGE_TYPE_FIRE]);
+    });
+
+    it('omits an untyped AE-contributed component instead of borrowing defaultDamageType', () => {
+      const formula = 'labels-untyped-override';
+      parsed.set(formula, [die(6, 2), op('+'), die(6, 1)]);
+      parsed.set('1d6', [die(6, 1)]);
+
+      expect(getDamageTypeLabels(formula, [{ effectName: '+1 Flaming', value: '1d6' }], DAMAGE_TYPE_SLASHING))
+        .toEqual([DAMAGE_TYPE_SLASHING]);
+    });
+
+    it('returns an empty array when nothing could be typed at all', () => {
+      const formula = 'labels-empty';
+      parsed.set(formula, [die(6, 2), op('+'), die(6, 1)]);
+      parsed.set('1d6', [die(6, 1)]);
+
+      expect(getDamageTypeLabels(formula, [{ effectName: '+1 Flaming', value: '1d6' }])).toEqual([]);
+    });
   });
 });

@@ -712,6 +712,24 @@ function groupDamageDiceBySource(
     .filter(({ formula }) => formula);
 }
 
+/**
+ * Deduped, localized damage-type labels for a resolved formula (e.g. `['Slashing', 'Fire']`
+ * for a flaming weapon) — a thin wrapper around `groupDamageDiceBySource()` for any caller that
+ * only needs "what types does this produce", not the full per-source breakdown (sheet-row type
+ * columns, tooltips, compact summaries, etc.). An untyped component contributes nothing, same
+ * as `groupDamageDiceBySource()`'s own `damageTypeLabel` omission convention — callers that
+ * want a guaranteed non-empty display should fall back to their own default label (e.g. a
+ * weapon's dropdown-selected type) when this returns `[]`.
+ */
+function getDamageTypeLabels(
+  resolvedFormula: string,
+  overrides: { effectName: string; value: string }[],
+  defaultDamageType: DamageType | null = null
+): string[] {
+  const rows = groupDamageDiceBySource(resolvedFormula, '', overrides, defaultDamageType);
+  return [...new Set(rows.flatMap(row => (row.damageTypeLabel ? [row.damageTypeLabel] : [])))];
+}
+
 export {
   buildD20Formula,
   combineDiceFormula,
@@ -720,6 +738,7 @@ export {
   flavorDamageDiceBySource,
   flavorDiceGroups,
   flavorTerm,
+  getDamageTypeLabels,
   groupDamageDiceBySource,
   mergeDiceGroupMarker,
   splitFormulaParts,
