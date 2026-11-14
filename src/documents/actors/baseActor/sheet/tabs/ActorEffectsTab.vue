@@ -36,7 +36,7 @@
       </div>
     </section>
 
-    <EffectsListSection :rows="rows" empty-label="dnd35e.EFFECT.NoneOnActor" />
+    <EffectsListSection :rows="rows" empty-label="dnd35e.EFFECT.NoneOnActor" :additional-creatable-types="[secretEffectType]" />
   </div>
 </template>
 
@@ -45,6 +45,7 @@
   import type { TabStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, TabStoreSymbol } from '@documents/document/index.mjs';
   import { resolveEffectCategory } from '@effects/baseActiveEffect/logic/index.mjs';
+  import { secretEffectType } from '@effects/secret/secretEffectType.mjs';
   import type { EffectRowData } from '@vc/effects/EffectsListSection.vue';
   import EffectsListSection, { buildOwnedEffectRow } from '@vc/effects/EffectsListSection.vue';
   import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
