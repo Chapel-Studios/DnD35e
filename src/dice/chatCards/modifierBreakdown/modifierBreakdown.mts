@@ -16,13 +16,15 @@ function formatSigned(value: number): string {
 
 /** Renders the modifier-breakdown partial for a labeled modifier list. Carries the same
  * bonus-type tag + ignored/struck-through styling `HasActiveEffectsNotification` shows on the
- * sheet (see `buildOverridesModifierList`) — ignored entries render with their `stackReason`. */
+ * sheet (see `buildOverridesModifierList`) — ignored entries render with their `stackReason`.
+ * Also carries the damage-type tag (poc.10 Story J) alongside bonus type when present. */
 function buildModifierBreakdownHtml(modifierList: RollModifier[]): string {
   return modifierBreakdownTemplate({
     modifiers: getDisplayModifiers(modifierList).map(modifier => ({
       label: modifier.label,
       signed: modifier.formula ?? formatSigned(modifier.value),
       bonusTypeLabel: modifier.bonusTypeLabel,
+      damageTypeLabel: modifier.damageTypeLabel,
       isIgnored: modifier.isIgnored,
       ignoredReason: modifier.ignoredReason,
     })),
@@ -43,6 +45,7 @@ function buildRawBreakdownHtml(rows: RollModifier[]): string {
       label: row.label,
       signed: String(row.value),
       bonusTypeLabel: row.bonusTypeLabel,
+      damageTypeLabel: row.damageTypeLabel,
       isIgnored: row.isIgnored,
       ignoredReason: row.ignoredReason,
     })),

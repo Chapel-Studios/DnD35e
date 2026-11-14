@@ -1,4 +1,6 @@
+import type { DamageType } from '@constants/attacks/damageTypes.mjs';
 import { CRIT_EXEMPT_MARKER, CRIT_MULTIPLY_MARKER } from '@constants/critDiceMarkers.mjs';
+import { parseTypedDamageMarker } from '@constants/typedDamageMarkers.mjs';
 
 /**
  * Formula-string assembly for D20-based rolls.
@@ -314,6 +316,15 @@ function flavorDiceGroups(formula: string, label: string): string {
  * A marker is a no-op when it only confirms the group's already-default treatment (e.g.
  * `$critExempt` on an override's own dice, which are already exempt by default).
  *
+ * **Damage type (poc.10 Story J) stays out of this function's own flavor text.** A `$typed()`
+ * marker on a group (see `attributeDamageDiceGroups()`) is read for `groupDamageDiceBySource()`'s
+ * display-only breakdown rows (`damageTypeLabel`), not folded into the real roll's `[flavor]`
+ * tag here — this function's flavor stays dedicated to source attribution only, so existing
+ * crit-marker read-back and anything else that inspects a rolled die's flavor text is
+ * unaffected. Source (this function) and damage type (`groupDamageDiceBySource()`) are
+ * deliberately two separate signals read off the same positional marker slot, not merged into
+ * one combined flavor string.
+ *
  * Falls back to `{ formula: flavorDiceGroups(resolvedFormula, baseLabel), exemptDiceIndices: [] }`
  * (single label, no split, nothing exempt) when the formula isn't a plain additive dice/numeric
  * chain.
@@ -355,12 +366,21 @@ function flavorDamageDiceBySource(
  * and `groupDamageDiceBySource()` (the display-only breakdown list) — see
  * `flavorDamageDiceBySource()`'s doc comment for the positional-attribution and escape-hatch
  * rules this implements. Returns one entry per non-zero dice group, in formula order.
+ *
+ * `damageType` (poc.10 Story J) is read from the same positional `marker` slot the crit
+ * escape hatches already use — a group's original flavor is either a crit marker
+ * (`CRIT_EXEMPT_MARKER`/`CRIT_MULTIPLY_MARKER`), a `$typed(...)` marker
+ * (`parseTypedDamageMarker()`), or absent; never both at once (whichever function resolved
+ * outermost wins the group's single flavor slot — nesting `$critMultiply($typed(...))` vs.
+ * `$typed(fire, $critMultiply(...))` is not yet composable). `null` when the group has no
+ * `$typed()` wrapping (the common case until the dropdown-driven implicit wrap — a separate
+ * Story J checklist item — lands).
  */
 function attributeDamageDiceGroups(
   diceGroups: [number, number, string | undefined][],
   baseLabel: string,
   overrides: { effectName: string; value: string }[]
-): { faces: number; count: number; label: string; isExempt: boolean }[] {
+): { faces: number; count: number; label: string; isExempt: boolean; damageType: DamageType | null }[] {
   const nonZeroGroups = diceGroups.filter(([, count]) => count !== 0);
   // -1 = the weapon's own dice; otherwise an index into `overrides`.
   const ownerPerGroup = new Array<number>(nonZeroGroups.length).fill(-1);
@@ -383,7 +403,8 @@ function attributeDamageDiceGroups(
     const label = owner === -1
       ? (forcedExempt ? extraDamageLabel : baseLabel)
       : overrides[owner].effectName;
-    return { faces, count, label, isExempt };
+    const damageType = marker ? parseTypedDamageMarker(marker) : null;
+    return { faces, count, label, isExempt, damageType };
   });
 }
 
@@ -392,13 +413,19 @@ function attributeDamageDiceGroups(
  * attribution, but merges each source's own dice groups into its own dice-only formula string
  * (e.g. `2d6`) instead of building one flavored roll string, for use in a `RollModifier[]`
  * breakdown list (one row per contributing source) rather than the actual roll. One entry per
- * distinct label that owns at least one non-zero dice group, in first-appearance order.
+ * distinct (label, damageType) pair that owns at least one non-zero dice group, in
+ * first-appearance order — grouped by the pair rather than label alone so a single source with
+ * multiple typed components (e.g. a homebrew `damageFormula` of
+ * `$typed(slashing, 2d6) + $typed(fire, 1d6)`) gets one row per type instead of merging them.
+ * `damageTypeLabel` (localized, e.g. "Fire") is populated only for groups with a `$typed()`
+ * marker — omitted (not an empty string) for the common untyped case, matching
+ * `RollModifier.bonusTypeLabel`'s own "omitted when not applicable" convention.
  */
 function groupDamageDiceBySource(
   resolvedFormula: string,
   baseLabel: string,
   overrides: { effectName: string; value: string }[]
-): { label: string; formula: string }[] {
+): { label: string; formula: string; damageTypeLabel?: string }[] {
   const parsed = parseAdditiveDiceFragment(resolvedFormula);
   const diceOnly = extractDiceOnlyFormula(resolvedFormula);
   if (!parsed) return diceOnly ? [{ label: baseLabel, formula: diceOnly }] : [];
@@ -406,24 +433,32 @@ function groupDamageDiceBySource(
   const attributed = attributeDamageDiceGroups(parsed.diceGroups, baseLabel, overrides);
 
   const order: string[] = [];
-  const byLabel = new Map<string, Map<number, number>>();
-  for (const { faces, count, label } of attributed) {
-    if (!byLabel.has(label)) {
-      byLabel.set(label, new Map());
-      order.push(label);
+  const labelByKey = new Map<string, { label: string; damageType: DamageType | null }>();
+  const byKey = new Map<string, Map<number, number>>();
+  for (const { faces, count, label, damageType } of attributed) {
+    const key = `${label}\u0000${damageType ?? ''}`;
+    if (!byKey.has(key)) {
+      byKey.set(key, new Map());
+      labelByKey.set(key, { label, damageType });
+      order.push(key);
     }
-    const faceCounts = byLabel.get(label)!;
+    const faceCounts = byKey.get(key)!;
     faceCounts.set(faces, (faceCounts.get(faces) ?? 0) + count);
   }
 
   return order
-    .map((label) => {
-      const formula = [...byLabel.get(label)!.entries()]
+    .map((key) => {
+      const { label, damageType } = labelByKey.get(key)!;
+      const formula = [...byKey.get(key)!.entries()]
         .filter(([, count]) => count !== 0)
         .sort(([a], [b]) => a - b)
         .map(([faces, count]) => `${count}d${faces}`)
         .join(' + ');
-      return { label, formula };
+      return {
+        label,
+        formula,
+        ...(damageType && { damageTypeLabel: game.i18n.localize(damageType) }),
+      };
     })
     .filter(({ formula }) => formula);
 }

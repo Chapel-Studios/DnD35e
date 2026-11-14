@@ -13,11 +13,13 @@ import { DAMAGE_TYPES } from '@constants/attacks/damageTypes.mjs';
  * survives formula resolution intact into the constructed `Roll`. `parseTypedDamageMarker()`
  * reverses this.
  *
- * **Not yet wired into a reader**: `flavorDamageDiceBySource()`/`groupDamageDiceBySource()`
- * (`src/dice/d20Formula.mts`) don't read this marker back yet — that's a separate poc.10
- * Story J checklist item. Until that lands, a `$typed()` dice group's marker survives
- * resolution but is overwritten by `flavorDamageDiceBySource()`'s source-only labeling the
- * same way any other dice group's flavor is.
+ * **Wired into the display breakdown, not the real roll's own flavor**:
+ * `attributeDamageDiceGroups()`/`groupDamageDiceBySource()` (`src/dice/d20Formula.mts`) read
+ * this marker back into each breakdown row's `damageTypeLabel`. `flavorDamageDiceBySource()`
+ * (the function that builds the *actual* roll formula) deliberately leaves its own `[flavor]`
+ * tag dedicated to source attribution only — damage type rides alongside as a second,
+ * separate field on the breakdown row rather than being folded into that single flavor slot.
+ * See `flavorDamageDiceBySource()`'s doc comment for why.
  */
 const TYPED_DAMAGE_MARKER_PREFIX = '__dnd35e_typed__';
 

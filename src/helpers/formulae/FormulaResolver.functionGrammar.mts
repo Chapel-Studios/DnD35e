@@ -53,8 +53,9 @@
  * (`@constants/typedDamageMarkers.mjs`) — the same "stash as plain bracket-flavor text, read
  * back later" trick `$critMultiply`/`$critExempt` use. An unrecognized `damageType` alias
  * resolves the inner formula unflavored rather than throwing (same runtime-miss convention the
- * array functions below use). **Not yet read back by anything**: `flavorDamageDiceBySource()`
- * doesn't know about this marker yet — that's a separate poc.10 Story J checklist item.
+ * array functions below use). Read back into display-only `damageTypeLabel` breakdown rows by
+ * `attributeDamageDiceGroups()`/`groupDamageDiceBySource()` (`src/dice/d20Formula.mts`) — the
+ * real roll's own `[flavor]` tag stays dedicated to source attribution; see that module's doc.
  *
  * `#it` is a bound per-element variable valid only inside a `$contains`/`$find`/
  * `$any`/`$count` predicate argument — resolved per-element against a synthetic

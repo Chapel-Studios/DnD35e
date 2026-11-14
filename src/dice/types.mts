@@ -23,6 +23,8 @@ interface RollModifier {
   formula?: string;
   /** Localized bonus type tag (e.g. "Enhancement") shown alongside the entry — mirrors `HasActiveEffectsNotification`'s `[bonusTypeLabel]` bracket notation. Omitted for untyped contributors. */
   bonusTypeLabel?: string;
+  /** Localized damage type (e.g. "Fire") shown alongside the entry — poc.10 Story J, sourced from a `$typed(...)` dice-group marker (`groupDamageDiceBySource()`). Omitted for untyped damage components. */
+  damageTypeLabel?: string;
   /** True when this entry lost stacking resolution and was NOT applied to the roll — shown struck-through with `ignoredReason`, same as `HasActiveEffectsNotification`'s `.is-ignored` entries. */
   isIgnored?: boolean;
   /** Localized reason this entry was ignored (e.g. "lower bonus than +4"). Only meaningful when `isIgnored` is true. */
