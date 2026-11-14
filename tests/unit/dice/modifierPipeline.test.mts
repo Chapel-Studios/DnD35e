@@ -95,6 +95,19 @@ describe('authoritative modifier lists', () => {
     expect(getModifiersFormula([{ label: 'Zero', value: 0 }])).toBe('0');
   });
 
+  it('displayValue masks the shown total without affecting the rolled formula, even with a breakdown present (poc.10 Story I)', () => {
+    const maskedInit: RollModifier = {
+      label: 'Initiative', value: 7, displayValue: 2, breakdown: [{ label: 'Dex', value: 7 }],
+    };
+    // The actual roll must always use the true value — a masked entry's breakdown is
+    // irrelevant here since buildModifiersD20Formula/getModifiersFormula never call
+    // getDisplayModifiers() at all.
+    expect(buildModifiersD20Formula([maskedInit], 'Initiative').formula).toBe('1d20[Initiative] + 7');
+    // Display must show the masked value, and must NOT fall through to the (true-valued,
+    // unmasked) per-effect breakdown just because one is present.
+    expect(getDisplayModifiers([maskedInit])).toEqual([{ ...maskedInit, value: 2 }]);
+  });
+
   it('initializes checked contributions, replaces them without label matching, and never duplicates toggles', () => {
     const store = useMeleeAttackRollDialogStore(makeAttackContext());
     const condition = store.app.combatStatusModifiers.value[0];

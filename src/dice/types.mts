@@ -10,6 +10,15 @@ interface RollModifier {
   id?: string;
   label: string;
   value: number;
+  /**
+   * Presentation-only substitute for `value` (poc.10 Story I: masked combat-adjacent
+   * secrets, e.g. a Secret AE masking `system.init`). Consulted only by
+   * `getDisplayModifiers()` (tooltip rows) and `useRollBreakdown`'s totals/formula
+   * display — `getModifiersFormula()`/`buildModifiersD20Formula()` (the actual roll)
+   * always read `value`, never this. A masked entry must still roll with its true value;
+   * only what a non-privileged viewer *sees* in the dialog/tooltip differs.
+   */
+  displayValue?: number;
   /** Resolved dice-preserving formula. When present it replaces `value` for rolling; never add both. */
   formula?: string;
   /** Localized bonus type tag (e.g. "Enhancement") shown alongside the entry — mirrors `HasActiveEffectsNotification`'s `[bonusTypeLabel]` bracket notation. Omitted for untyped contributors. */

@@ -7,6 +7,7 @@
  */
 import type { D20Roll } from '../../D20Roll.mjs';
 import type { RollModifier } from '../../types.mjs';
+import { resolveVisibleActorName } from '../attackRollCard/attackRollCard.mjs';
 import { buildDiceRollHtmlWithModifiers } from '../modifierBreakdown/modifierBreakdown.mjs';
 import saveRollCardTemplateSource from './save-roll-card.hbs?raw';
 
@@ -14,9 +15,13 @@ const saveRollCardTemplate = Handlebars.compile(saveRollCardTemplateSource, { pr
 
 /** Options for `buildSaveCard()` beyond the roll and its modifier breakdown. */
 interface BuildSaveCardOptions {
-  /** Speaking actor's display name. */
+  /** Speaking actor's display name — baked in once at build time for the no-JS/initial render; `wireSaveRollCardButton()` re-resolves this per viewing client afterward (poc.10 Story I: name masking must not leak via a statically-rendered chat card). */
   actorName: string;
   actorImage: string;
+  /** Acting actor's UUID — re-resolved per client by `wireSaveRollCardButton()`. */
+  actorUuid: string;
+  /** Acting token's UUID, if any (see `resolveVisibleActorName()`). */
+  tokenUuid?: string | null;
   /** Already-localized save name, e.g. "Fortitude". */
   saveLabel: string;
   /** Optional DC — when provided, the card shows a pass/fail indicator. */
@@ -40,6 +45,8 @@ async function buildSaveCard(roll: D20Roll, modifierList: RollModifier[], opts: 
   return saveRollCardTemplate({
     actorImage: opts.actorImage,
     actorName: opts.actorName,
+    actorUuid: opts.actorUuid,
+    tokenUuid: opts.tokenUuid ?? null,
     resultLabel: game.i18n.localize('dnd35e.ROLL.Result'),
     saveLabel: opts.saveLabel,
     rollFormula: roll.displayFormula,
@@ -53,13 +60,36 @@ async function buildSaveCard(roll: D20Roll, modifierList: RollModifier[], opts: 
   });
 }
 
-async function buildInitiativeCard(roll: D20Roll, modifierList: RollModifier[], opts: { actorName: string; actorImage: string }): Promise<string> {
+async function buildInitiativeCard(
+  roll: D20Roll,
+  modifierList: RollModifier[],
+  opts: { actorName: string; actorImage: string; actorUuid: string; tokenUuid?: string | null }
+): Promise<string> {
   return buildSaveCard(roll, modifierList, {
     actorName: opts.actorName,
     actorImage: opts.actorImage,
+    actorUuid: opts.actorUuid,
+    tokenUuid: opts.tokenUuid,
     saveLabel: game.i18n.localize('dnd35e.ROLL.Initiative'),
   });
 }
 
-export { buildInitiativeCard, buildSaveCard };
+/**
+ * Re-resolves the displayed actor name per viewing client (poc.10 Story I). The name baked
+ * into `content` at build time reflects whoever triggered the roll (often the GM rolling
+ * "Roll All") — without this, a masked name would leak to every viewer whenever the roller
+ * happened to be privileged. Mirrors `attackRollCard.mts`'s identical `setName()` pattern.
+ */
+function wireSaveRollCardButton(_message: ChatMessage, html: HTMLElement): void {
+  const el = html.querySelector<HTMLElement>('.save-roll-card .value[data-actor-uuid]');
+  if (!el) return;
+  const actorUuid = el.dataset.actorUuid;
+  if (!actorUuid) return;
+  const tokenUuid = el.dataset.tokenUuid ?? null;
+  const name = resolveVisibleActorName(actorUuid, game.user, tokenUuid);
+  // Preserve the trailing " -" separator the template renders alongside the name.
+  el.textContent = `${name} -`;
+}
+
+export { buildInitiativeCard, buildSaveCard, wireSaveRollCardButton };
 export type { BuildSaveCardOptions };

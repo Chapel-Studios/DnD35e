@@ -11,6 +11,7 @@ import { SAVE_ABILITY_MAP, SAVE_KEYS, SAVE_KEYS_LOCALIZED } from '@constants/sav
 import { SIZE_MODIFIERS } from '@constants/sizes.mjs';
 import type { ACTORS_DND35E, CREATURE_ACTORS } from '@documents/actors/actorTypes.mjs';
 import type { DocumentUpdateMetadata, DocumentUpdateOptions } from '@documents/document/DocumentDnd35e.mjs';
+import { getDocumentMasks } from '@documents/document/sheet/maskMap.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/index.mjs';
 import {
@@ -154,6 +155,8 @@ abstract class Creature extends ActorDnd35e {
     const content = await buildSaveCard(roll, modifierList, {
       actorName: this.token?.name ?? this.name,
       actorImage: this.img,
+      actorUuid: this.uuid,
+      tokenUuid: this.token?.uuid ?? null,
       saveLabel,
       dc: options.dc,
     });
@@ -207,9 +210,20 @@ abstract class Creature extends ActorDnd35e {
     // Same per-effect stacking breakdown `rollSave()` shows (`_buildCombatStateChanges()`
     // contributes the Dex mod as a hidden-from-tab AE change) instead of one lumped total.
     // Computed pre-dialog so the dialog itself can disclose it via `RollModifierTooltip`.
+    // `displayValue` (poc.10 Story I): a non-GM viewer sees a masked `system.init` instead of
+    // the true modifier in the dialog/tooltip — `value` stays true always, so the actual roll
+    // this entry feeds (`buildModifiersD20Formula()` below, after the dialog returns) is
+    // never affected by the mask.
+    const initDisplayValue = (() => {
+      if (game.user?.isGM) return undefined;
+      const masks = getDocumentMasks(actor);
+      const masked = masks?.['system.init'];
+      return typeof masked === 'number' ? masked : undefined;
+    })();
     let modifiersList: RollModifier[] = [{
       label: initiativeLabel,
       value: this.system.init,
+      displayValue: initDisplayValue,
       breakdown: buildOverridesModifierList(actor, 'system.init'),
     }];
     const formulaContext = buildDocumentDataMap(actor);
@@ -254,6 +268,8 @@ abstract class Creature extends ActorDnd35e {
     const content = await buildInitiativeCard(roll, modifiersList, {
       actorName: this.token?.name ?? this.name,
       actorImage: this.img,
+      actorUuid: this.uuid,
+      tokenUuid: this.token?.uuid ?? null,
     });
 
     await roll.toMessage(

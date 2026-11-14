@@ -9,13 +9,27 @@ function getModifiersFormula(modifiers: RollModifier[]): string {
   return combineDiceFormula(modifiers.filter(mod => !mod.isIgnored).map(getModifierFormula));
 }
 
-/** Expand prepared values only for presentation, never for rolling or summation. */
+/**
+ * Expand prepared values only for presentation, never for rolling or summation — also
+ * substitutes `displayValue` for `value` where present (poc.10 Story I: masked
+ * combat-adjacent secrets). `getModifiersFormula()`/`buildModifiersD20Formula()` (the
+ * actual roll) never call this; they always read the true `value` directly.
+ *
+ * A `displayValue` entry short-circuits breakdown expansion entirely — showing the
+ * per-effect breakdown (always true values; nothing there carries its own mask) would
+ * leak exactly what masking the aggregate was meant to hide, since most masked totals
+ * (e.g. `system.init`) always have at least one contributing AE (a baseline Dex-mod
+ * change) and would otherwise always take the breakdown branch below instead of this one.
+ */
 function getDisplayModifiers(modifiers: RollModifier[]): RollModifier[] {
-  return modifiers.flatMap(mod => mod.breakdown?.length
+  const withDisplayValue = (mod: RollModifier): RollModifier => mod.displayValue !== undefined
+    ? { ...mod, value: mod.displayValue }
+    : mod;
+  return modifiers.flatMap(mod => (mod.displayValue === undefined && mod.breakdown?.length)
     ? getDisplayModifiers(mod.breakdown).map(entry => mod.isIgnored
       ? { ...entry, isIgnored: true, ignoredReason: mod.ignoredReason }
       : entry)
-    : [mod]);
+    : [withDisplayValue(mod)]);
 }
 
 function buildModifiersD20Formula(modifiers: RollModifier[], label: string): { formula: string; displayFormula: string } {
