@@ -248,7 +248,8 @@ test.describe('Secret AE masking propagates to tokens, HUD, Roll Initiative dial
   });
 
   test('GM can toggle a token into Play preview mode via the Token HUD, seeing exactly what a non-GM viewer sees', async ({ page }) => {
-    test.setTimeout(100_000);
+    // Default timeout for the toggle round-trip plus a dialog interaction added below.
+    test.setTimeout(150_000);
     await gotoGame(page);
     await activateScene(page, 'Test Scene');
     await page.evaluate(() => (globalThis as any).game.togglePause(false, true));
@@ -273,6 +274,35 @@ test.describe('Secret AE masking propagates to tokens, HUD, Roll Initiative dial
     const previewView = await readTokenMaskedSurfaces(page, tokenId);
     expect(previewView.name).toBe(MASKED_NAME);
     expect(previewView.bar).toMatchObject({ value: MASKED_HP.current, max: MASKED_HP.max });
+
+    // Proves the actual production path — CombatDnd35e.rollInitiative() threading
+    // combatant.token through to rollInitiativeCheck({ token }) — also honors this
+    // token's Play preview toggle. Actor#token (`this.token`) is always null for a
+    // LINKED Character (every actor in this system defaults to a linked prototype
+    // token, see `buildPrototypeTokenDefaults.mts`), so without the combatant.token fix
+    // the dialog would silently fall back to the true value here regardless of the
+    // toggle above.
+    const combatantId = await page.evaluate(async (id) => {
+      const scene = (globalThis as any).canvas.scene;
+      const combat = await (globalThis as any).Combat.create({ scene: scene.id, active: true });
+      const [combatant] = await combat.createEmbeddedDocuments('Combatant', [{ tokenId: id, sceneId: scene.id }]);
+      return combatant.id as string;
+    }, tokenId);
+    const combatGlobalKey = `__combatInitRoll_${Math.random().toString(36).slice(2)}`;
+    await page.evaluate(({ key, id }) => {
+      (globalThis as any)[key] = (globalThis as any).game.combat.rollInitiative([id]);
+    }, { key: combatGlobalKey, id: combatantId });
+    const combatDialog = page.locator('.initiative-roll-dialog');
+    await expect.poll(() => combatDialog.isVisible(), { timeout: 15_000 }).toBe(true);
+    await dismissOverlays(page);
+    const combatDisplayedTotal = Number((await combatDialog.locator('.base-row .value').innerText()).trim());
+    expect(combatDisplayedTotal).toBe(MASKED_INIT);
+    await combatDialog.locator('.roll-btn').click();
+    await page.evaluate(async (key) => {
+      await (globalThis as any)[key];
+      delete (globalThis as any)[key];
+    }, combatGlobalKey);
+    await page.evaluate(() => (globalThis as any).game.combat?.delete());
 
     // Toggle back — the GM's own preview choice must be reversible, not one-way.
     await openTokenHud(page, tokenId);

@@ -27,6 +27,7 @@ import { resolveActionParticipant } from '@items/baseItem/actions/logic/actionPa
 import type { ActionResult } from '@items/baseItem/actions/types.mjs';
 import { WeaponAttackDataModel } from '@items/physical/weapon/actions/WeaponAttack/WeaponAttackDataModel.mjs';
 import type { Weapon } from '@items/physical/weapon/index.mjs';
+import type { TokenDocumentDnd35e } from '@scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import { buildInitiativeCard, buildOverridesModifierList, buildSaveCard, buildSituationalModifierEntry, D20Roll } from '@source/dice/index.mjs';
 import { buildModifiersD20Formula } from '@source/dice/rollModifiers.mjs';
 import type { RollModifier } from '@source/dice/types.mjs';
@@ -198,9 +199,23 @@ abstract class Creature extends ActorDnd35e {
     situationalModifier?: number | string;
     rollMode?: RollMode;
     skipDialog?: boolean;
+    /**
+     * The specific placed token this roll is acting for (poc.10 Story I follow-up).
+     * `this.token` (`Actor#token`) only identifies the owning token of a synthetic
+     * (unlinked) actor — it's `null` for a normal linked Character, even when a combat
+     * tracker row/combatant knows exactly which placed token is rolling. Without this,
+     * every linked actor's preview-mode check (`getTokenGmViewMode()`) silently always
+     * took the "no token -> GM sees true" branch, regardless of which token (if any) had
+     * actually been toggled into Play preview. `CombatDnd35e.rollInitiative()` passes
+     * `combatant.token` (the real per-combatant token, correct for both link states);
+     * other callers (e.g. the sheet's own "Roll Initiative" button) fall back to
+     * `this.token`, same as before this option existed.
+     */
+    token?: TokenDocumentDnd35e | null;
   } = {}): Promise<D20Roll | null> {
     const initiativeLabel = game.i18n.localize('dnd35e.ROLL.Initiative');
     const actor = this as unknown as ACTORS_DND35E;
+    const actingToken = options.token ?? this.token;
 
     const situationalModifier = String(options.situationalModifier ?? '');
     const situationalLabel = game.i18n.localize('dnd35e.ROLL.SituationalModifier');
@@ -217,7 +232,7 @@ abstract class Creature extends ActorDnd35e {
     // never affected by the mask. GM-viewed dialogs read the acting token's own preview
     // toggle (`gmViewMode.mts`), not a blanket "GM always sees true" check.
     const initDisplayValue = (() => {
-      if (getTokenGmViewMode(this.token) === 'true') return undefined;
+      if (getTokenGmViewMode(actingToken) === 'true') return undefined;
       const masks = getDocumentMasks(actor);
       const masked = masks?.['system.init'];
       return typeof masked === 'number' ? masked : undefined;
@@ -268,10 +283,10 @@ abstract class Creature extends ActorDnd35e {
     await roll.evaluate();
 
     const content = await buildInitiativeCard(roll, modifiersList, {
-      actorName: this.token?.name ?? this.name,
+      actorName: actingToken?.name ?? this.name,
       actorImage: this.img,
       actorUuid: this.uuid,
-      tokenUuid: this.token?.uuid ?? null,
+      tokenUuid: actingToken?.uuid ?? null,
     });
 
     await roll.toMessage(
