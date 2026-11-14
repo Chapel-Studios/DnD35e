@@ -132,6 +132,10 @@ Granted items receive a `grantedBy: { sourceId, level }` field on the owned item
 
 **Natural armor:** The `naturalArmor` field on RaceSystemModel generates an AE change targeting `system.defense.naturalArmor` with `bonusType: 'natural'`. Stacking follows Phase 2 rules (highest natural armor bonus wins).
 
+**Damage Reduction & Energy Resistance (racial grants) — lands here, not forgotten**: Monster/racial DR and Energy Resistance are granted via the same `grantSchedule`/AE-change pattern as `naturalArmor` above — a racial trait generates an AE change targeting `system.defense.damageReduction` (array-of-grants shape, `{ amount, types }`, see poc.10 Story J in `docs/migration-plan/poc/phase-10-basic-combat.md`) the same way `naturalArmor` targets its own field. poc.10 Story J builds the **physical DR** half of this (schema, AE-authoring shape, per-hit bypass resolution, combat-secret display) using the existing Character/Creature chain, with no NPC/race-granting UI yet. **Energy Resistance is explicitly out of scope for poc.10 Story J** and belongs here instead, once this phase's grant system exists to actually attach it to a race:
+- [ ] Energy Resistance needs its **own** schema shape (`system.defense.energyResistance` or similar) — per-energy-type grants matched by type-equality against incoming damage, **not** by the bypass-tag intersection DR uses (nothing in RAW "overcomes" Energy Resistance the way a magic weapon overcomes DR).
+- [ ] **Known pre-existing issue to fix here**: `src/settings/gameRules/constants.mts`'s `DEFAULT_DAMAGE_REDUCTION_TYPES` registry currently seeds energy damage types (acid/cold/electricity/fire/force/negative/positive/sonic) as if they were valid DR bypass tags — they aren't (see the inline comment left at that registry). Energy Resistance's own matcher must read directly from `DAMAGE_TYPES`, independent of this registry; the registry's energy entries should be reassessed (trimmed or clearly re-scoped) once Energy Resistance's real matcher exists, so the two concepts stop sharing a vocabulary that implies they work the same way.
+
 ## 11.4 Files to Create/Modify
 
 | Action | Path |

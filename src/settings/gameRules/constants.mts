@@ -48,6 +48,19 @@ export const EXPERIENCE_RATE_CHOICES = {
  * Default damage reduction types with i18n keys
  * These are seeded into the game rules settings during registration.
  * Labels will be pre-localized in CONFIG.dnd35e.gameRules.damageReductionTypes at i18nInit.
+ *
+ * KNOWN ISSUE (tracked in `docs/migration-plan/alpha/phase-01-races-progression.md`,
+ * "Damage Reduction & Energy Resistance" section): the energy-type entries below (acid,
+ * cold, electricity, fire, force, negative, positive, sonic) are NOT valid RAW DR bypass
+ * tags — SRD Damage Reduction is only overcome by a physical damage type, magic/epic
+ * enhancement, alignment, or a specific material (adamantine/alchemical silver/cold iron).
+ * Nothing "overcomes" Energy Resistance the way a magic weapon overcomes DR — Energy
+ * Resistance is a separate, not-yet-implemented mechanic that matches by damage-type
+ * equality against `DAMAGE_TYPES`, with no bypass-tag concept at all. These energy entries
+ * are inert bleed-over from this list's early design and are not read by any system-authored
+ * DR content; they're left here (rather than removed) pending Energy Resistance's own
+ * implementation, which will either consume `DAMAGE_TYPES` directly or prompt trimming
+ * this registry to its RAW-correct DR-only subset.
  */
 export const DEFAULT_DAMAGE_REDUCTION_TYPES: DamageReductionTypesConfig = {
   'acid': { label: 'dnd35e.DAMAGE_REDUCTION_TYPES.Acid', enabled: true, isSystem: true },

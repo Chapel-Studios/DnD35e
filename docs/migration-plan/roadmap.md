@@ -712,7 +712,7 @@ Every D35E feature, every SRD rule area, accounted for. Nothing dropped.
 Actor alignment is a strongly-typed tuple `[LawAxis, MoralAxis]`. Weapon alignment (Holy/Unholy/Axiomatic/Anarchic) is an enhancement AE. Alignment DR uses the same keywords. Full details in Metaphysical PropertyMap.
 
 ### DR & Energy Resistance Extensibility
-DR system handles complex RAW interactions while remaining user-friendly and homebrew-extensible. Core data structures in place. Remaining: damage pipeline resolution in Phase 10 and enhancement threshold rules in Phase 25.
+DR system handles complex RAW interactions while remaining user-friendly and homebrew-extensible. Core data structures in place. Remaining: damage pipeline resolution in poc.10 Story J (physical DR only — array-of-grants schema at `system.defense.damageReduction`, resolved per-hit against the attacking weapon's bypass tags). Energy Resistance (a separate, type-equality-matched mechanic, not a DR variant) is tracked in `docs/migration-plan/alpha/phase-01-races-progression.md`'s "Damage Reduction & Energy Resistance" section, alongside the racial-trait grant system it depends on.
 
 ### Migration Versioning
 Track `system.migration.version` on every actor/item. Field established in Phase 5. Runner in Phase 30.

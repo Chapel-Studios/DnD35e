@@ -131,3 +131,10 @@ The longer-term native mechanism is still Foundry's `AdjustDarknessLevelRegionBe
 
 Affects: Roll Defense Dialog's Concealment field (poc.10 §10.7), `post-release/phase-03-sight-concealment.md`.
 
+### Uniform undo architecture & real Ctrl+Z support across combat chat cards
+poc.10's Move Action Spent, Prone Toggle (poc.9), and Resolution cards each ship their own independent button-based Undo (reverses HP/action-economy deltas on click). A draft pass (originally labeled "Story I," a letter since reassigned to poc.10's Secrets-on-Characters story) was drafted to audit and consolidate all three behind a shared revert primitive (`revertCombatCard(kind, message)`), plus a `TokenLayerDnd35e extends TokenLayer` overriding `undoHistory()` to intercept marker-tagged synthetic `canvas.tokens.history` entries so a real Ctrl+Z press reverses the same delta the card's own button would — not just token position. It was pulled before implementation: whether full Ctrl+Z parity (and the shared-primitive refactor it requires) is worth building, versus just shipping independent per-card Undo buttons indefinitely, isn't decided. Open questions include where to draw the scope line (does every future card type need Ctrl+Z coverage, or only some?) and whether this is genuinely "basic functionality" worth the lead-dev cost of touching Foundry's undocumented canvas-history internals.
+
+Revisit once enough button-based Undo cards exist (Resolution, Move Action, poc.10 Story F's Ammo Recovery) to judge whether consolidating them is worth it. If resumed, poc.10 §10.7 "Undo scope across combat chat cards" and the now-removed draft design notes (formerly labeled "Story I") cover the mechanics.
+
+Affects: `src/dice/chatCards/resolutionCard/`, `src/documents/combat/combatant/combatantActionEconomy.mts`, a future `src/canvas/token/TokenLayerDnd35e.mts`.
+
