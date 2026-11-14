@@ -16,6 +16,7 @@ import { evaluateBooleanExpression } from './FormulaResolver.booleanGrammar.mjs'
 import { findConditionalBlocks } from './FormulaResolver.conditionalGrammar.mjs';
 import { findFunctionBlocks, matchQuotedLiteral } from './FormulaResolver.functionGrammar.mjs';
 import { findUnbalancedParenIndices } from './FormulaResolver.parenUtils.mjs';
+import { findMatchingParen, splitTopLevelArgs } from './FormulaResolver.parenUtils.mjs';
 import { buildItFamiliarContext } from './itContext.mjs';
 import { normalizeLabel } from './schemaWalker.mjs';
 import type {
@@ -31,6 +32,36 @@ import { isFieldAspect } from './types.mjs';
 
 /** A bare identifier with no formula tokens (`#`/`$`) — used to tell a static `$typed(...)` alias from a dynamic expression. */
 const STATIC_WORD_REGEX = /^[\p{L}\p{N}_]+$/u;
+
+/**
+ * Finds every `$typed(...)` occurrence anywhere in `formula`, including one nested inside
+ * another function call's own arguments (e.g. `$critMultiply($typed(bogus, 1d6))`) — unlike
+ * `findFunctionBlocks()`, whose scan advances its regex `lastIndex` past an entire outer
+ * block's span once found, so a block nested inside that span is never discovered. Scoped
+ * narrowly to `$typed(...)` (the only function this validation check cares about) rather than
+ * generalizing `findFunctionBlocks()` itself, which many other callers (resolution,
+ * autocomplete, syntax highlighting) depend on for its existing outermost-only behavior.
+ * A block whose parens don't balance is skipped — the existing whole-formula
+ * `findUnbalancedParenIndices()` check already reports that.
+ */
+function findAllTypedBlocks(formula: string): { raw: string; startIndex: number; args: string[] }[] {
+  const blocks: { raw: string; startIndex: number; args: string[] }[] = [];
+  const regex = /(?<!\\)\$typed\s*\(/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(formula)) !== null) {
+    const startIndex = match.index;
+    const openParenIndex = match.index + match[0].length - 1;
+    const closeParenIndex = findMatchingParen(formula, openParenIndex);
+    if (closeParenIndex === -1) continue;
+    const args = splitTopLevelArgs(formula.substring(openParenIndex + 1, closeParenIndex));
+    blocks.push({ raw: formula.substring(startIndex, closeParenIndex + 1), startIndex, args });
+    // Keep scanning from just inside this block's own span (not past its close paren) so a
+    // $typed(...) nested within it is still found, rather than skipped like
+    // findFunctionBlocks() would.
+    regex.lastIndex = openParenIndex + 1;
+  }
+  return blocks;
+}
 
 /**
  * Validate all variables in a formula
@@ -143,14 +174,18 @@ export function validateFormula(formula: string, context: FamiliarSchema, isFocu
     });
   }
 
-  // $typed(damageType, formula)'s first argument only validates statically when it's a bare
-  // word (no `#`/`$` tokens) — a dynamic expression resolves at runtime and can't be checked
-  // here. A bare word that doesn't match any known alias is a typo, not a dynamic miss.
-  for (const block of findFunctionBlocks(formula)) {
-    if (block.error || block.name !== 'typed') continue;
+  // $typed(damageType, formula)'s first argument only validates statically when it's a quoted
+  // literal (regardless of its character content — quoting already proves it's static, not
+  // dynamic) or a bare word with no formula tokens (`#`/`$`) — a dynamic unquoted expression
+  // resolves at runtime and can't be checked here. Scans with findAllTypedBlocks() rather than
+  // findFunctionBlocks() so a $typed(...) nested inside another function's arguments (e.g.
+  // $critMultiply($typed(bogus, 1d6))) is still found and validated, not silently skipped.
+  for (const block of findAllTypedBlocks(formula)) {
     const rawAlias = block.args[0]?.trim() ?? '';
-    const alias = matchQuotedLiteral(rawAlias) ?? rawAlias;
-    if (!STATIC_WORD_REGEX.test(alias) || resolveDamageTypeAlias(alias)) continue;
+    const quoted = matchQuotedLiteral(rawAlias);
+    if (quoted === null && !STATIC_WORD_REGEX.test(rawAlias)) continue;
+    const alias = quoted ?? rawAlias;
+    if (resolveDamageTypeAlias(alias)) continue;
     errors.push({
       variable: block.raw,
       context: 'function',

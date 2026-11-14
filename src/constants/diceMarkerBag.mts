@@ -86,4 +86,17 @@ function withMarkerField(existingFlavor: string | undefined, key: string, value:
   return buildMarkerBag({ ...bag, [key]: value });
 }
 
-export { buildMarkerBag, parseMarkerBag, withMarkerField };
+/**
+ * Strips every embedded marker-bag `[...]` flavor tag from a resolved formula string, leaving
+ * any other bracket content untouched. For display-only contexts that show a raw resolved
+ * formula directly (e.g. a weapon's own damage text) without going through the dice-group
+ * attribution pipeline (`d20Formula.mts`'s `attributeDamageDiceGroups()`/
+ * `flavorDamageDiceBySource()`, which read and replace these markers deliberately) — those
+ * contexts would otherwise show the literal internal marker text (e.g.
+ * `1d6[__dnd35e_marker__type=dnd35e.DAMAGE_TYPES.Fire__]`) to the player.
+ */
+function stripMarkerFlavors(formula: string): string {
+  return formula.replace(/\[([^\]]*)\]/g, (whole, inner: string) => (parseMarkerBag(inner) ? '' : whole));
+}
+
+export { buildMarkerBag, parseMarkerBag, stripMarkerFlavors, withMarkerField };

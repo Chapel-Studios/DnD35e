@@ -1,4 +1,4 @@
-import { buildMarkerBag, parseMarkerBag, withMarkerField } from '@constants/diceMarkerBag.mjs';
+import { buildMarkerBag, parseMarkerBag, stripMarkerFlavors, withMarkerField } from '@constants/diceMarkerBag.mjs';
 import { describe, expect, it } from 'vitest';
 
 describe('buildMarkerBag/parseMarkerBag — round trip', () => {
@@ -56,5 +56,26 @@ describe('withMarkerField — upsert composability', () => {
   it('overwrites an existing field with the same key rather than duplicating it', () => {
     const marker = withMarkerField(buildMarkerBag({ crit: 'multiply' }), 'crit', 'exempt');
     expect(parseMarkerBag(marker)).toEqual({ crit: 'exempt' });
+  });
+});
+
+describe('stripMarkerFlavors — display-only cleanup', () => {
+  it('strips a single embedded marker from a dice term', () => {
+    const marker = buildMarkerBag({ type: 'dnd35e.DAMAGE_TYPES.Fire' });
+    expect(stripMarkerFlavors(`1d6[${marker}]`)).toBe('1d6');
+  });
+
+  it('strips multiple embedded markers across a multi-component formula', () => {
+    const slashing = buildMarkerBag({ type: 'dnd35e.DAMAGE_TYPES.Slashing' });
+    const fire = buildMarkerBag({ type: 'dnd35e.DAMAGE_TYPES.Fire' });
+    expect(stripMarkerFlavors(`2d6[${slashing}] + 1d6[${fire}]`)).toBe('2d6 + 1d6');
+  });
+
+  it('leaves a non-marker bracket (a plain display label) untouched', () => {
+    expect(stripMarkerFlavors('2d6[Greatsword]')).toBe('2d6[Greatsword]');
+  });
+
+  it('leaves an unflavored formula untouched', () => {
+    expect(stripMarkerFlavors('2d6 + 1')).toBe('2d6 + 1');
   });
 });

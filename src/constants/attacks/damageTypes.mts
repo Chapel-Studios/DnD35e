@@ -40,14 +40,27 @@ const GetDamageTypeSelectOptions = (): SelectOption<DamageType>[] => DAMAGE_TYPE
  * Lowercase alias (e.g. `fire`) → canonical `DamageType` constant — derived from
  * `DAMAGE_TYPES`'s own localization-key suffix, not a hand-duplicated second table.
  * Backs the `$typed(damageType, formula)` formula function's first argument
- * (`FormulaResolver.functionGrammar.mts`).
+ * (`FormulaResolver.functionGrammar.mts`). A `Map`, not a plain object — a plain object's
+ * lookup can return an inherited `Object.prototype` member (e.g. `alias === 'constructor'`)
+ * instead of `undefined` for a genuinely unknown alias, which `resolveDamageTypeAlias()`'s
+ * callers rely on as the signal to fall back gracefully.
  */
-const DAMAGE_TYPE_ALIASES: Record<string, DamageType> = Object.fromEntries(
+const DAMAGE_TYPE_ALIASES = new Map<string, DamageType>(
   DAMAGE_TYPES.map((type) => [type.slice(type.lastIndexOf('.') + 1).toLowerCase(), type])
 );
 
-/** Resolves a lowercase damage-type alias (e.g. `fire`) to its canonical `DamageType` constant, or `undefined` if unknown. */
-const resolveDamageTypeAlias = (alias: string): DamageType | undefined => DAMAGE_TYPE_ALIASES[alias.trim().toLowerCase()];
+/**
+ * Resolves a damage-type reference to its canonical `DamageType` constant, or `undefined` if
+ * unknown. Accepts either a lowercase alias (e.g. `fire`) or the canonical value itself (e.g.
+ * `dnd35e.DAMAGE_TYPES.Fire`) — the latter matters because a dynamic `$typed()` first argument
+ * (e.g. `$typed(#thisAttack.damageType, 1d6)`) resolves to the canonical constant, not an
+ * alias; without this, that case would silently resolve as untyped.
+ */
+const resolveDamageTypeAlias = (alias: string): DamageType | undefined => {
+  const trimmed = alias.trim();
+  if ((DAMAGE_TYPES as readonly string[]).includes(trimmed)) return trimmed as DamageType;
+  return DAMAGE_TYPE_ALIASES.get(trimmed.toLowerCase());
+};
 
 export type { DamageType };
 export {

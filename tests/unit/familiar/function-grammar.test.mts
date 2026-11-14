@@ -557,6 +557,33 @@ describe('validateFormula — $typed(...) damage-type alias', () => {
     const errors = validateFormula('$typed(#self.damageType, 1d6)', schema);
     expect(errors.filter(e => e.severity === 'error')).toHaveLength(0);
   });
+
+  it('flags an unrecognized alias nested inside $critMultiply(...)', () => {
+    const schema: FamiliarSchema = { self: { properties: {} } };
+    const errors = validateFormula('$critMultiply($typed(bogus, 1d6))', schema);
+    expect(errors.some(e => e.severity === 'error')).toBe(true);
+  });
+
+  it('does not flag a recognized alias nested inside $critExempt(...)', () => {
+    const schema: FamiliarSchema = { self: { properties: {} } };
+    const errors = validateFormula('$critExempt($typed(fire, 1d6))', schema);
+    expect(errors.filter(e => e.severity === 'error')).toHaveLength(0);
+  });
+
+  it('flags an unrecognized quoted alias even though it contains punctuation', () => {
+    // A quoted literal is always static regardless of its character content — quoting
+    // already proves it isn't a dynamic expression, so "fi-re" must still be checked (and
+    // flagged as unknown) rather than being treated as dynamic just because it has a hyphen.
+    const schema: FamiliarSchema = { self: { properties: {} } };
+    const errors = validateFormula('$typed("fi-re", 1d6)', schema);
+    expect(errors.some(e => e.severity === 'error')).toBe(true);
+  });
+
+  it('does not flag a recognized quoted alias', () => {
+    const schema: FamiliarSchema = { self: { properties: {} } };
+    const errors = validateFormula('$typed("fire", 1d6)', schema);
+    expect(errors.filter(e => e.severity === 'error')).toHaveLength(0);
+  });
 });
 
 describe('resolveFormula — backward compatibility', () => {
