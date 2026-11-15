@@ -101,7 +101,8 @@ export type FunctionName = 'contains'
   | 'localize'
   | 'scaleDamage'
   | 'critMultiply'
-  | 'critExempt';
+  | 'critExempt'
+  | 'typed';
 
 /** A reason a `$function(...)` block failed to parse cleanly. */
 export type FunctionBlockError = 'unbalancedParens' | 'argCount' | 'missingProjection';

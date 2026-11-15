@@ -47,6 +47,7 @@
 </template>
 
 <script setup lang="ts">
+  import { stripMarkerFlavors } from '@constants/diceMarkerBag.mjs';
   import type { RenderModeStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';
   import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
@@ -102,12 +103,12 @@
           actionId: action._id,
           weaponName: weapon.name,
           attack: action.attackFormula.resolvedValue || '1d20',
-          damage: action.damageFormula.resolvedValue || '',
+          damage: stripMarkerFlavors(action.damageFormula.resolvedValue || ''),
           crit: formatThreatRange(action.critRange),
           range: action instanceof RangedWeaponAttack
             ? `${convertToLocalizedDistance(action.rangeIncrement)} ${distanceDisplayShortLabel.value}`
             : localize('dnd35e.ACTOR.actions.meleeRange'),
-          damageType: game.i18n.localize(action.damageType),
+          damageType: action.damageTypeLabel,
         });
       }
     }

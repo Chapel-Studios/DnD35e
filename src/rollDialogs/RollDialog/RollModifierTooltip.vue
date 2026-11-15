@@ -24,6 +24,7 @@
             <span class="modifier-label">
               {{ modifier.label }}
               <span v-if="modifier.bonusTypeLabel" class="modifier-bonus-type">[{{ modifier.bonusTypeLabel }}]</span>
+              <span v-if="modifier.damageTypeLabel" class="modifier-damage-type">({{ modifier.damageTypeLabel }})</span>
             </span>
             <span class="modifier-value">{{ modifier.formula ?? formatBonus(modifier.value) }}</span>
           </div>
@@ -128,6 +129,12 @@
     }
 
     .modifier-bonus-type {
+      font-weight: 400;
+      font-style: italic;
+      opacity: 0.65;
+    }
+
+    .modifier-damage-type {
       font-weight: 400;
       font-style: italic;
       opacity: 0.65;

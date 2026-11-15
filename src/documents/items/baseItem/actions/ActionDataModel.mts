@@ -225,7 +225,7 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
    * above), and registered under both its `contextName` and every declared `alias` so
    * `#self`/`#weapon`/`#actor`/etc. all resolve by direct key lookup.
    */
-  private _buildFormulaContext(declarations: FormulaContextDeclaration[]): Record<string, DocumentContext> {
+  protected _buildFormulaContext(declarations: FormulaContextDeclaration[]): Record<string, DocumentContext> {
     const map: Record<string, DocumentContext> = { thisAttack: this as unknown as DocumentContext };
     for (const decl of declarations) {
       if (!decl.resolvePath) continue;

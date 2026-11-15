@@ -148,7 +148,8 @@
           "unbalancedParens": "${name}(...) has unbalanced parentheses",
           "argCount": "${name}(...) has the wrong number of arguments",
           "missingProjection": "$find(...) must be followed by a .property projection (e.g. $find(...).range)",
-          "actionOnly": "$scaleDamage(...) can only be used inside an action's own formula fields"
+          "actionOnly": "$scaleDamage(...) can only be used inside an action's own formula fields",
+          "unknownDamageType": "$typed(...) doesn't recognize \"{alias}\" as a damage type"
         }
       },
       "Functions": {
@@ -227,6 +228,10 @@
         "critExempt": {
           "label": "critExempt",
           "hint": "$critExempt(dieFormula) — marks dice as exempt from critical-hit multiplication, even when used inside the weapon's own base formula (normally a weapon's own dice are always multiplied)"
+        },
+        "typed": {
+          "label": "typed",
+          "hint": "$typed(damageType, formula) — tags a dice/formula sub-expression with a damage type (e.g. $typed(fire, 1d6))"
         }
       },
       "ChangeGroups": {

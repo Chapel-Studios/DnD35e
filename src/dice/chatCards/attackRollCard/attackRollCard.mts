@@ -9,6 +9,7 @@
 import type { ACTORS_DND35E } from '@actors/actorTypes.mjs';
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
+import type { DamageType } from '@constants/attacks/damageTypes.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
 import type { AttackActionSpend } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
@@ -75,8 +76,8 @@ interface AttackCardFlags {
   critMultiplier: number;
   /** Eagerly-rolled confirmation total (poc.10 Story D) — present only when the primary roll threatened a critical; `null` otherwise. Story E compares it against the target's final AC. */
   critConfirmTotal: number | null;
-  /** Weapon's damage type (e.g. `slashing`) — needed by `_continue()`'s `'damage'` case to apply/undo HP damage with the right `HpUpdateMetadata.damageType`. */
-  damageType: string;
+  /** Every type this weapon's damage qualifies as (e.g. `['slashing']`, or `['piercing', 'slashing']` for a multi-choice weapon) — all equally active, treated as an "and" not an "or". Needed by `_continue()`'s `'damage'` case to apply/undo HP damage with the right `HpUpdateMetadata.damageType`. */
+  damageType: DamageType[];
   targets: AttackCardTargetRow[];
   actionEconomySpent: (AttackActionSpend & { hand: WieldedHand; babSpent: number }) | null;
   /** Persisted so the Change Target(s) handler can rebuild `diceRollHtml` without re-deriving the roll's own modifier breakdown. */

@@ -50,7 +50,7 @@
           "expectedType": "rollFormula",
           "resolvedValue": null
         },
-        "damageType": "dnd35e.DAMAGE_TYPES.Piercing",
+        "damageTypes": ["dnd35e.DAMAGE_TYPES.Piercing"],
         "critRange": 20,
         "critMultiplier": 4
       }

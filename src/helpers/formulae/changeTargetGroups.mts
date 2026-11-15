@@ -233,12 +233,15 @@ function expandWeaponAttackActionGroup(host: ChangeTargetGroupHost, actionType: 
 // re-casts it back into a fresh `FormulaData` from `_source`, whereas the leaf string survives
 // core's `setProperty()` write-back. Roll-aware joining (so `$scaleDamage(1d8)` + `2` becomes
 // `$scaleDamage(1d8) + 2`, not the un-computable `$scaleDamage(1d8)2`) is handled by the leaf's
-// own `RollFormulaStringField._applyChangeAdd`. Non-formula fields (`damageType`/`critRange`/
-// `critMultiplier`) are plain scalars and target their field directly.
+// own `RollFormulaStringField._applyChangeAdd`. Non-formula fields (`critRange`/
+// `critMultiplier`) are plain scalars and target their field directly; `damageTypes` is a
+// `SetField` — Foundry's `ArrayField#_cast()` wraps a single scalar override value into a
+// one-element array automatically, so a plain override value still works without extra
+// plumbing here.
 const WEAPON_ATTACK_GROUP_PROPS = [
   { prop: 'attackToHit', suffix: 'attackFormula.formula' },
   { prop: 'attackDamage', suffix: 'damageFormula.formula' },
-  { prop: 'damageType', suffix: 'damageType' },
+  { prop: 'damageTypes', suffix: 'damageTypes' },
   { prop: 'critRange', suffix: 'critRange' },
   { prop: 'critMultiplier', suffix: 'critMultiplier' },
 ] as const;

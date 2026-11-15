@@ -9,11 +9,14 @@
  *
  * @module
  */
+import { resolveDamageTypeAlias } from '@constants/attacks/damageTypes.mjs';
+
 import { extractVariables, getFieldAspect } from './FormulaResolver.aspectResolution.mjs';
 import { evaluateBooleanExpression } from './FormulaResolver.booleanGrammar.mjs';
 import { findConditionalBlocks } from './FormulaResolver.conditionalGrammar.mjs';
-import { findFunctionBlocks } from './FormulaResolver.functionGrammar.mjs';
+import { findFunctionBlocks, matchQuotedLiteral } from './FormulaResolver.functionGrammar.mjs';
 import { findUnbalancedParenIndices } from './FormulaResolver.parenUtils.mjs';
+import { findMatchingParen, splitTopLevelArgs } from './FormulaResolver.parenUtils.mjs';
 import { buildItFamiliarContext } from './itContext.mjs';
 import { normalizeLabel } from './schemaWalker.mjs';
 import type {
@@ -26,6 +29,39 @@ import type {
   ValidationError,
 } from './types.mjs';
 import { isFieldAspect } from './types.mjs';
+
+/** A formula token (`#`/`$`) that marks an alias as dynamic — resolved at runtime, not statically checkable here. */
+const DYNAMIC_TOKEN_REGEX = /[#$]/;
+
+/**
+ * Finds every `$typed(...)` occurrence anywhere in `formula`, including one nested inside
+ * another function call's own arguments (e.g. `$critMultiply($typed(bogus, 1d6))`) — unlike
+ * `findFunctionBlocks()`, whose scan advances its regex `lastIndex` past an entire outer
+ * block's span once found, so a block nested inside that span is never discovered. Scoped
+ * narrowly to `$typed(...)` (the only function this validation check cares about) rather than
+ * generalizing `findFunctionBlocks()` itself, which many other callers (resolution,
+ * autocomplete, syntax highlighting) depend on for its existing outermost-only behavior.
+ * A block whose parens don't balance is skipped — the existing whole-formula
+ * `findUnbalancedParenIndices()` check already reports that.
+ */
+function findAllTypedBlocks(formula: string): { raw: string; startIndex: number; args: string[] }[] {
+  const blocks: { raw: string; startIndex: number; args: string[] }[] = [];
+  const regex = /(?<!\\)\$typed\s*\(/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(formula)) !== null) {
+    const startIndex = match.index;
+    const openParenIndex = match.index + match[0].length - 1;
+    const closeParenIndex = findMatchingParen(formula, openParenIndex);
+    if (closeParenIndex === -1) continue;
+    const args = splitTopLevelArgs(formula.substring(openParenIndex + 1, closeParenIndex));
+    blocks.push({ raw: formula.substring(startIndex, closeParenIndex + 1), startIndex, args });
+    // Keep scanning from just inside this block's own span (not past its close paren) so a
+    // $typed(...) nested within it is still found, rather than skipped like
+    // findFunctionBlocks() would.
+    regex.lastIndex = openParenIndex + 1;
+  }
+  return blocks;
+}
 
 /**
  * Validate all variables in a formula
@@ -133,6 +169,31 @@ export function validateFormula(formula: string, context: FamiliarSchema, isFocu
       context: 'function',
       path: [],
       error: game.i18n.localize('dnd35e.Formula.Errors.function.actionOnly'),
+      severity: 'error',
+      index: block.startIndex,
+    });
+  }
+
+  // $typed(damageType, formula)'s first argument only validates statically when it's a quoted
+  // literal (regardless of its character content — quoting already proves it's static, not
+  // dynamic) or any unquoted text with no formula tokens (`#`/`$`) — an unquoted alias
+  // containing those tokens is a dynamic expression that resolves at runtime and can't be
+  // checked here. Anything else (including a punctuated-but-static typo like `fi-re`) is
+  // still validated, so a bad alias doesn't silently skip the check. Scans with
+  // findAllTypedBlocks() rather than findFunctionBlocks() so a $typed(...) nested inside
+  // another function's arguments (e.g. $critMultiply($typed(bogus, 1d6))) is still found and
+  // validated, not silently skipped.
+  for (const block of findAllTypedBlocks(formula)) {
+    const rawAlias = block.args[0]?.trim() ?? '';
+    const quoted = matchQuotedLiteral(rawAlias);
+    if (quoted === null && DYNAMIC_TOKEN_REGEX.test(rawAlias)) continue;
+    const alias = quoted ?? rawAlias;
+    if (resolveDamageTypeAlias(alias)) continue;
+    errors.push({
+      variable: block.raw,
+      context: 'function',
+      path: [],
+      error: game.i18n.format('dnd35e.Formula.Errors.function.unknownDamageType', { alias }),
       severity: 'error',
       index: block.startIndex,
     });

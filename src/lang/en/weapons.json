@@ -27,11 +27,11 @@
             "familiarAliases": [],
             "hint": "The roll used to determine the damage dealt by this weapon."
           },
-          "damageType": {
-            "label": "Damage Type",
-            "familiarLabel": "Type",
+          "damageTypes": {
+            "label": "Damage Types",
+            "familiarLabel": "Types",
             "familiarAliases": [],
-            "hint": "The type of damage this weapon deals, which may affect resistances and vulnerabilities."
+            "hint": "The type(s) of damage this weapon deals, which may affect resistances and vulnerabilities."
           },
           "critRange": {
             "label": "Critical Range",
@@ -78,7 +78,7 @@
           "familiarAliases": [],
           "attackToHit": { "label": "All Melee Attack Formulas", "familiarLabel": "Attack To Hit", "familiarAliases": ["To Hit"] },
           "attackDamage": { "label": "All Melee Damage Formulas", "familiarLabel": "Attack Damage", "familiarAliases": [] },
-          "damageType": { "label": "All Melee Damage Types", "familiarLabel": "Damage Type", "familiarAliases": [] },
+          "damageTypes": { "label": "All Melee Damage Types", "familiarLabel": "Damage Types", "familiarAliases": [] },
           "critRange": { "label": "All Melee Critical Ranges", "familiarLabel": "Critical Range", "familiarAliases": [] },
           "critMultiplier": { "label": "All Melee Critical Multipliers", "familiarLabel": "Critical Multiplier", "familiarAliases": [] }
         },
@@ -88,7 +88,7 @@
           "familiarAliases": [],
           "attackToHit": { "label": "All Ranged Attack Formulas", "familiarLabel": "Attack To Hit", "familiarAliases": ["To Hit"] },
           "attackDamage": { "label": "All Ranged Damage Formulas", "familiarLabel": "Attack Damage", "familiarAliases": [] },
-          "damageType": { "label": "All Ranged Damage Types", "familiarLabel": "Damage Type", "familiarAliases": [] },
+          "damageTypes": { "label": "All Ranged Damage Types", "familiarLabel": "Damage Types", "familiarAliases": [] },
           "critRange": { "label": "All Ranged Critical Ranges", "familiarLabel": "Critical Range", "familiarAliases": [] },
           "critMultiplier": { "label": "All Ranged Critical Multipliers", "familiarLabel": "Critical Multiplier", "familiarAliases": [] }
         }
@@ -172,8 +172,8 @@
             "familiarAliases": [],
             "hint": "The formula used for this action's damage roll."
           },
-          "damageType": {
-            "label": "Damage Type"
+          "damageTypes": {
+            "label": "Damage Types"
           },
           "critRange": {
             "label": "Critical Range"

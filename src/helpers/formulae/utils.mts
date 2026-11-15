@@ -276,6 +276,7 @@ const FUNCTION_AUTOCOMPLETE_ENTRIES: readonly { name: string; sigil?: string }[]
   { name: 'scaleDamage' },
   { name: 'critMultiply' },
   { name: 'critExempt' },
+  { name: 'typed' },
 ];
 
 /**
@@ -863,7 +864,7 @@ export function renderFormulaHTML(
   //
   // `$contains`/`$find`/`$any`/`$count`/`$stringContains`/`$localize`/`$l`/
   // `$fromFeet`/`$fromMeters`/`$fromKg`/`$floor`/`$ceiling`/`$round`/`$absolute`/
-  // `$scaleDamage`/`$critMultiply`/`$critExempt` (all `functionGrammar.mts` names —
+  // `$scaleDamage`/`$critMultiply`/`$critExempt`/`$typed` (all `functionGrammar.mts` names —
   // keep this list in sync with `CANONICAL_NAMES`) get the same
   // complete-keyword-plus-open-paren treatment as
   // `$conditional`. The final catch-all `\$[A-Za-z]*` (bare `$`, or any partial/
@@ -873,7 +874,7 @@ export function renderFormulaHTML(
   // a bare/partial `#context` token) instead of falling through as unstyled
   // plain text.
   const OPERATOR_SPLIT =
-    /((?<!\\)\(|(?<!\\)\)|>=|<=|==|!=|&&|\|\||[!<>]|(?<!\\)\$conditional(?=\s*\()|(?<!\\)\$(?:contains|find|any|count|stringContains|localize|l|fromFeet|fromMeters|fromKg|floor|ceiling|round|absolute|scaleDamage|critMultiply|critExempt)(?=\s*\()|\bwhen(?=\s*\()|\belse(?=\s*\()|(?<!\\)\$and\b|(?<!\\)\$or\b|(?<!\\)\$[A-Za-z]*)/i;
+    /((?<!\\)\(|(?<!\\)\)|>=|<=|==|!=|&&|\|\||[!<>]|(?<!\\)\$conditional(?=\s*\()|(?<!\\)\$(?:contains|find|any|count|stringContains|localize|l|fromFeet|fromMeters|fromKg|floor|ceiling|round|absolute|scaleDamage|critMultiply|critExempt|typed)(?=\s*\()|\bwhen(?=\s*\()|\belse(?=\s*\()|(?<!\\)\$and\b|(?<!\\)\$or\b|(?<!\\)\$[A-Za-z]*)/i;
 
   return tokens
     .map(token => {
@@ -904,7 +905,7 @@ export function renderFormulaHTML(
             const keywordError = errors.find(e => e.index === cursor);
             const titleAttr = keywordError?.error ? ` title="${escapeHTML(keywordError.error)}"` : '';
             out += `<span class="formula-keyword${stateToClass(state)}"${titleAttr} data-start="${cursor}" data-end="${cursor + piece.length}">${escapeHTML(piece)}</span>`;
-          } else if (/^\$(?:contains|find|any|count|stringcontains|localize|l|fromfeet|frommeters|fromkg|floor|ceiling|round|absolute|scaledamage|critmultiply|critexempt)$/i.test(piece)) {
+          } else if (/^\$(?:contains|find|any|count|stringcontains|localize|l|fromfeet|frommeters|fromkg|floor|ceiling|round|absolute|scaledamage|critmultiply|critexempt|typed)$/i.test(piece)) {
             // Same reasoning as the `$conditional` branch above — no matching
             // `functionBlocks` entry means the "(" hasn't been typed yet.
             const block = functionBlocks.find(b => b.startIndex === cursor);

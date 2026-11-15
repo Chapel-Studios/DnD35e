@@ -1,6 +1,10 @@
-import { CRIT_EXEMPT_MARKER } from '@constants/critDiceMarkers.mjs';
 import { splitFormulaParts } from '@source/dice/d20Formula.mjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// An arbitrary already-present explicit flavor, standing in for any reserved marker string —
+// this test only cares that splitFormulaParts() never overwrites an existing flavor, not that
+// it's specifically a crit-override marker.
+const SOME_EXPLICIT_FLAVOR = '__dnd35e_marker__crit=exempt__';
 
 class TermStub {
   constructor(
@@ -113,10 +117,10 @@ describe('splitFormulaParts', () => {
   it('keeps functions and pools intact and applies defaults without replacing explicit flavors', () => {
     parsed.set('compound', [
       die('floor(1d6 / 2)', 'Fire'), op('+'), flat('floor(3 / 2)'), op('+'),
-      die('{1d6, 1d8}kh1'), op('+'), die('1d4', CRIT_EXEMPT_MARKER),
+      die('{1d6, 1d8}kh1'), op('+'), die('1d4', SOME_EXPLICIT_FLAVOR),
     ]);
     expect(splitFormulaParts('compound', 'Default')).toEqual({
-      dice: ['floor(1d6 / 2)[Fire]', '{1d6, 1d8}kh1[Default]', `1d4[${CRIT_EXEMPT_MARKER}]`],
+      dice: ['floor(1d6 / 2)[Fire]', '{1d6, 1d8}kh1[Default]', `1d4[${SOME_EXPLICIT_FLAVOR}]`],
       flatTerms: ['floor(3 / 2)[Default]'],
     });
   });
