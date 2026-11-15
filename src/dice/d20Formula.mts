@@ -849,47 +849,56 @@ function collectDamageTypes(
 }
 
 /**
- * Localized, "+"-joined damage-type label for each source's own FLAT (non-dice) components —
- * keyed by that source's display label (`baseLabel` for the weapon's own formula, or a
- * specific override's own `effectName`), omitted entirely for a source with no typed flat
- * components. Backs a flat-modifier breakdown row's own type attribution
- * (`WeaponAttackDataModel._buildFormulaBreakdown()`'s `baseFlat`/override rows), which
- * historically had none at all even when `combineDiceGroupMarker()` had already attached a
- * type to that exact component (PR #102, item #6). Two overrides sharing the same
- * `effectName` collapse to one map entry — the same label-based grouping ambiguity
- * `groupDamageDiceBySource()`'s display rows already accept.
+ * Display-only grouping of FLAT (non-dice) components by `(source, type-set)` pair — the flat-
+ * modifier sibling of `groupDamageDiceBySource()`'s dice-only rows, keeping distinct type-sets
+ * on separate rows instead of summing them into one misleadingly-labeled total. For example
+ * `$typed(fire, 3) + $typed(cold, 4)` stays two rows — `{ value: 3, damageTypeLabel: 'Fire' }`
+ * and `{ value: 4, damageTypeLabel: 'Cold' }` — instead of one `{ value: 7, damageTypeLabel:
+ * 'Fire + Cold' }` row that would wrongly imply all 7 points carry both types at once (PR #102,
+ * third review wave). `label` is `baseLabel` for the weapon's own flat components or a
+ * specific override's own `effectName` for an AE-contributed one — the sign an AE `Subtract`
+ * change needs is already baked into each component via `appendRollFormulaTerm()`'s `negate`
+ * param before this ever parses the combined formula, so no separate sign correction is
+ * needed here. One entry per distinct `(label, type-set)` pair that sums to a non-zero value,
+ * in first-appearance order.
  */
-function getFlatDamageTypeLabelsBySource(
+function groupFlatDamageBySource(
   resolvedFormula: string,
   baseLabel: string,
   overrides: { effectName: string; value: string }[],
   defaultDamageTypes: DamageType[] = []
-): Map<string, string> {
-  const result = new Map<string, string>();
+): { label: string; value: number; damageTypeLabel?: string }[] {
   const components = parseFormulaComponents(resolvedFormula);
-  if (!components) return result;
+  if (!components) return [];
 
   const attributed = attributeDamageDiceGroups(components, baseLabel, overrides, defaultDamageTypes);
-  const seenBySource = new Map<string, Set<DamageType>>();
-  const typesBySource = new Map<string, DamageType[]>();
+
+  const order: string[] = [];
+  const labelByKey = new Map<string, { label: string; damageTypes: DamageType[] }>();
+  const valueByKey = new Map<string, number>();
+
   for (const { component, label, damageTypes } of attributed) {
-    if (component.isDice || component.isZero || damageTypes.length === 0) continue;
-    if (!seenBySource.has(label)) {
-      seenBySource.set(label, new Set());
-      typesBySource.set(label, []);
+    if (component.isDice || component.isZero) continue;
+    const typesKey = [...damageTypes].sort().join(',');
+    const key = `${label}\u0000${typesKey}`;
+    if (!labelByKey.has(key)) {
+      labelByKey.set(key, { label, damageTypes });
+      valueByKey.set(key, 0);
+      order.push(key);
     }
-    const seen = seenBySource.get(label)!;
-    const types = typesBySource.get(label)!;
-    for (const type of damageTypes) {
-      if (seen.has(type)) continue;
-      seen.add(type);
-      types.push(type);
-    }
+    valueByKey.set(key, valueByKey.get(key)! + Number(component.emit(null)));
   }
-  for (const [label, types] of typesBySource) {
-    result.set(label, types.map(type => game.i18n.localize(type)).join(' + '));
-  }
-  return result;
+
+  return order
+    .map((key) => {
+      const { label, damageTypes } = labelByKey.get(key)!;
+      return {
+        label,
+        value: valueByKey.get(key)!,
+        ...(damageTypes.length > 0 && { damageTypeLabel: damageTypes.map(type => game.i18n.localize(type)).join(' + ') }),
+      };
+    })
+    .filter(({ value }) => value !== 0);
 }
 
 /**
@@ -920,8 +929,8 @@ export {
   flavorDiceGroups,
   flavorTerm,
   getDamageTypeLabels,
-  getFlatDamageTypeLabelsBySource,
   groupDamageDiceBySource,
+  groupFlatDamageBySource,
   mergeDiceGroupMarker,
   splitFormulaParts,
 };

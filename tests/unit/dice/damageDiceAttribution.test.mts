@@ -2,7 +2,7 @@ import { DAMAGE_TYPE_COLD, DAMAGE_TYPE_FIRE, DAMAGE_TYPE_PIERCING, DAMAGE_TYPE_S
 import { CRIT_MARKER_KEY, CRIT_OVERRIDE_EXEMPT, CRIT_OVERRIDE_MULTIPLY } from '@constants/critDiceMarkers.mjs';
 import { buildMarkerBag } from '@constants/diceMarkerBag.mjs';
 import { DAMAGE_TYPE_MARKER_KEY, readDamageType } from '@constants/typedDamageMarkers.mjs';
-import { combineDiceGroupMarker, flavorDamageDiceBySource, getDamageTypeLabels, getFlatDamageTypeLabelsBySource, groupDamageDiceBySource } from '@source/dice/d20Formula.mjs';
+import { combineDiceGroupMarker, flavorDamageDiceBySource, getDamageTypeLabels, groupDamageDiceBySource, groupFlatDamageBySource } from '@source/dice/d20Formula.mjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mirrors tests/unit/dice/splitFormulaParts.test.mts's `Roll.parse`/`foundry.dice.terms`
@@ -382,15 +382,17 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
     });
   });
 
-  // getFlatDamageTypeLabelsBySource() — PR #102, item #6's "flat modifier rows" half: a flat
-  // $typed() component previously had no type attribution anywhere in the roll breakdown UI.
-  describe('getFlatDamageTypeLabelsBySource', () => {
+  // groupFlatDamageBySource() — PR #102, item #6's "flat modifier rows" half (a flat $typed()
+  // component previously had no type attribution anywhere in the roll breakdown UI) AND the
+  // third review wave's "distinct typed sources must not combine into one row" fix.
+  describe('groupFlatDamageBySource', () => {
     it('attaches a type label to the weapon\'s own flat component, keyed by its label', () => {
       const formula = 'flat-labels-weapon-owned';
       parsed.set(formula, [die(6, 1), op('+'), num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
 
-      const labels = getFlatDamageTypeLabelsBySource(formula, 'Crownguard', []);
-      expect(labels.get('Crownguard')).toBe(DAMAGE_TYPE_FIRE);
+      expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([
+        { label: 'Crownguard', value: 3, damageTypeLabel: DAMAGE_TYPE_FIRE },
+      ]);
     });
 
     it('attaches a type label to an AE override\'s own flat component, keyed by its effect name', () => {
@@ -398,16 +400,36 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
       parsed.set(formula, [die(6, 2), op('+'), num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
       parsed.set('3', [num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
 
-      const labels = getFlatDamageTypeLabelsBySource(formula, 'Crownguard', [{ effectName: '+1 Flaming', value: '3' }]);
-      expect(labels.get('+1 Flaming')).toBe(DAMAGE_TYPE_FIRE);
-      expect(labels.has('Crownguard')).toBe(false);
+      const rows = groupFlatDamageBySource(formula, 'Crownguard', [{ effectName: '+1 Flaming', value: '3' }]);
+      expect(rows).toEqual([{ label: '+1 Flaming', value: 3, damageTypeLabel: DAMAGE_TYPE_FIRE }]);
     });
 
-    it('omits a source entirely when its flat component carries no type', () => {
+    it('includes an untyped flat component with no damageTypeLabel at all', () => {
       const formula = 'flat-labels-untyped';
       parsed.set(formula, [die(6, 1), op('+'), num(3)]);
 
-      expect(getFlatDamageTypeLabelsBySource(formula, 'Crownguard', []).size).toBe(0);
+      expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([{ label: 'Crownguard', value: 3 }]);
+    });
+
+    it('keeps two distinct typed flat components as separate rows instead of combining them into one misleading total', () => {
+      // PR #102, third review wave: "$typed(fire, 3) + $typed(cold, 4)" previously summed
+      // into one "+7 (Fire + Cold)" row, wrongly implying all 7 points carry both types.
+      const formula = 'flat-distinct-types';
+      parsed.set(formula, [num(3, typedMarker(DAMAGE_TYPE_FIRE)), op('+'), num(4, typedMarker(DAMAGE_TYPE_COLD))]);
+
+      expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([
+        { label: 'Crownguard', value: 3, damageTypeLabel: DAMAGE_TYPE_FIRE },
+        { label: 'Crownguard', value: 4, damageTypeLabel: DAMAGE_TYPE_COLD },
+      ]);
+    });
+
+    it('sums same-typed flat components from the same source into one row', () => {
+      const formula = 'flat-same-type-sums';
+      parsed.set(formula, [num(3, typedMarker(DAMAGE_TYPE_FIRE)), op('+'), num(4, typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([
+        { label: 'Crownguard', value: 7, damageTypeLabel: DAMAGE_TYPE_FIRE },
+      ]);
     });
   });
 

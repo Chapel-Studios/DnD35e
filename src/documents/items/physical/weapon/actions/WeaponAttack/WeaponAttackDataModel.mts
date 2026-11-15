@@ -13,7 +13,6 @@ import type { CombatantDnd35e } from '@documents/combat/combatant/CombatantDnd35
 import type { CombatDnd35e } from '@documents/combat/CombatDnd35e.mjs';
 import type { TokenDocumentDnd35e } from '@documents/scene/tokenDocument/TokenDocumentDnd35e.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
-import { EFFECT_CHANGE_TYPE } from '@effects/baseActiveEffect/data/constants.mjs';
 import { FormulaField } from '@helpers/formulae/FormulaField.mjs';
 import type { DocumentContext } from '@helpers/formulae/index.mjs';
 import { FormulaData } from '@helpers/formulae/index.mjs';
@@ -29,7 +28,7 @@ import { SYSTEM_ID } from '@settings/shared.mjs';
 import { syncMovementCardSpend } from '@source/dice/chatCards/moveActionCard/moveActionCard.mjs';
 import { evaluateDefense } from '@source/dice/chatCards/resolutionCard/evaluateDefense.mjs';
 import type { AttackCardFlags, AttackCardTargetRow, ResolutionCardData, RollModifier } from '@source/dice/index.mjs';
-import { appendAttackCardWarnings, buildActionChainId, buildAttackCard, buildOverridesModifierList, buildResolutionCard, collectDamageTypes, D20Roll, DamageRoll, extractFlatModifier, flavorDamageDiceBySource, getFlatDamageTypeLabelsBySource, groupDamageDiceBySource, markTargetRowResolved } from '@source/dice/index.mjs';
+import { appendAttackCardWarnings, buildActionChainId, buildAttackCard, buildOverridesModifierList, buildResolutionCard, collectDamageTypes, D20Roll, DamageRoll, extractFlatModifier, flavorDamageDiceBySource, groupDamageDiceBySource, groupFlatDamageBySource, markTargetRowResolved } from '@source/dice/index.mjs';
 import { buildModifiersD20Formula, buildModifiersDamageFormula, getModifiersFormula } from '@source/dice/rollModifiers.mjs';
 import type { WeaponDamageRollModifier } from '@source/dice/types.mjs';
 import { RollDefenseDialogConfig } from '@source/rollDialogs/RollDefenseDialog/RollDefenseDialogConfig.mjs';
@@ -196,12 +195,31 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    * produces — dice AND flat components alike, deduped at the type level (see
    * `collectDamageTypes()`'s doc). Unlike the raw `damageTypes` schema field (the configured
    * dropdown/multi-select defaults), this reflects what the resolved formula + AE overrides
-   * actually contain, including any explicit `$typed()` override or AE-contributed bonus — the
-   * snapshot used by damage-event metadata (`AttackCardFlags.damageType`) needs this, not just
-   * the configured defaults (PR #102, item #7).
+   * actually contain, including any explicit `$typed()` override or AE-contributed bonus.
+   *
+   * Resolved WITHOUT a live attack `target` (same target-less context as
+   * `resolvedDamageDiceOverrides`) — correct for passive sheet display (the weapon sheet's
+   * compact Type column), but NOT for a damage-event metadata snapshot during an actual
+   * attack: a `#target`-dependent formula (a conditional type switch, or
+   * `$typed(#target.someProperty, 1d6)`) can resolve to a different type with vs. without a
+   * real target. See `_resolveLiveDamageTypes()` for that case.
    */
   get resolvedDamageTypes(): DamageType[] {
     return collectDamageTypes(this.damageFormula.resolvedValue || '', this.resolvedDamageDiceOverrides, [...this.damageTypes]);
+  }
+
+  /**
+   * Live-context counterpart to `resolvedDamageTypes` — resolves the damage formula + AE
+   * overrides against THIS specific attack's `formulaContext` (with its actual `target`),
+   * the same inputs `_buildDamageData()` uses for the real roll. The damage-event metadata
+   * snapshot (`AttackCardFlags.damageType`, read by `onApplyDamage()`/`dealDamage`) needs
+   * what THIS attack actually resolved, not what the formula would resolve to with no target
+   * at all (PR #102, third review wave).
+   */
+  private _resolveLiveDamageTypes(formulaContext: FormulaContext): DamageType[] {
+    const resolved = this._resolveFormula('damageFormula', formulaContext);
+    const diceOverrides = this._toDiceOverrides(this._resolveOverrides(this._formulaPath('damageFormula'), formulaContext));
+    return collectDamageTypes(resolved, diceOverrides, [...this.damageTypes]);
   }
 
   /**
@@ -232,25 +250,30 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     const path = this._formulaPath(field);
     const overrides = this._resolveOverrides(path, context);
     const diceOverrides = this._toDiceOverrides(overrides);
-    const source = FormulaData.resolveSource<string>(this._source[field], context);
-    if (source === null) throw new Error(`Unable to resolve source ${field} for action ${this._id}`);
-    const baseFlat = extractFlatModifier(source || '0').flat;
-    // A flat `$typed()` component (weapon-owned or AE-contributed) previously had no type
-    // attribution at all in this breakdown — see PR #102, item #6.
-    const flatDamageTypeLabelsBySource = getFlatDamageTypeLabelsBySource(resolved, label, diceOverrides, defaultDamageTypes);
+    // One row per distinct (source, type-set) pair — keeps e.g. `$typed(fire, 3) +
+    // $typed(cold, 4)` as two separate rows instead of summing into one row whose combined
+    // "Fire + Cold" label would wrongly imply all 7 points carry both types (PR #102, third
+    // review wave). Read from the fully-merged `resolved` formula (not a separately-resolved
+    // weapon-only `source` string) so the same positional attribution `groupDamageDiceBySource()`
+    // already uses for dice rows also splits weapon-owned vs. AE-owned flat components.
+    const flatRows = groupFlatDamageBySource(resolved, label, diceOverrides, defaultDamageTypes);
     return {
       diceOverrides,
       breakdown: [
         ...groupDamageDiceBySource(resolved, label, diceOverrides, defaultDamageTypes).map(entry => ({ ...entry, value: 0 })),
-        ...(baseFlat ? [{ label, value: baseFlat, damageTypeLabel: flatDamageTypeLabelsBySource.get(label) }] : []),
+        ...flatRows.filter(row => row.label === label),
         ...buildOverridesModifierList({ effectOverrides: { [path]: overrides } }, path),
         ...overrides.filter(override => override.stackResult !== STACK_RESULT_IGNORED && Number.isNaN(parseNumericChangeValue(override.value)))
-          .map(override => ({
-            label: override.effectName,
-            value: extractFlatModifier(override.value).flat * (override.type === EFFECT_CHANGE_TYPE.SUBTRACT ? -1 : 1),
-            bonusTypeLabel: formatBonusTypeLabel(override.bonusType),
-            damageTypeLabel: flatDamageTypeLabelsBySource.get(override.effectName),
-          })).filter(entry => entry.value !== 0),
+          .flatMap((override) => {
+            const bonusTypeLabel = formatBonusTypeLabel(override.bonusType);
+            // The sign an AE Subtract change needs is already baked into each row's value via
+            // `appendRollFormulaTerm()`'s `negate` param (applied before `resolved` is parsed
+            // here) — no separate sign correction needed, unlike the old `extractFlatModifier`-
+            // based approach this replaced.
+            return flatRows
+              .filter(row => row.label === override.effectName)
+              .map(row => ({ label: row.label, value: row.value, bonusTypeLabel, damageTypeLabel: row.damageTypeLabel }));
+          }),
         ...overrides.filter(override => override.stackResult === STACK_RESULT_IGNORED && Number.isNaN(parseNumericChangeValue(override.value)))
           .map(override => ({
             label: override.effectName, value: 0, formula: String(override.value), isIgnored: true,
@@ -438,7 +461,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       critRange: this.critRange,
       critMultiplier: this.critMultiplier,
       critConfirmTotal: critConfirmRoll?.total ?? null,
-      damageType: this.resolvedDamageTypes,
+      damageType: this._resolveLiveDamageTypes(formulaContext),
       targets: targetRows,
       actionEconomySpent: null,
       modifierList: dialog.attackModifiers,
