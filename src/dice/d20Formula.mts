@@ -42,7 +42,10 @@ function flavorTerm(term: string, flavor: string): string {
  * formula handed to `Roll.safeEval()`, which can't evaluate un-rolled dice notation.
  */
 function extractFlatModifier(term: string): { flat: number; hasDice: boolean } {
-  const trimmed = term.trim();
+  // A term can still carry marker-bag bracket text (e.g. from a flat `$typed(fire, 3)`
+  // component) at this stage — strip it before handing anything to `Roll.safeEval()`, which
+  // can't parse bracket syntax as arithmetic.
+  const trimmed = stripMarkerFlavors(term.trim());
 
   if (!trimmed) return { flat: 0, hasDice: false };
 
@@ -419,19 +422,40 @@ function parseFormulaComponents(formula: string): FormulaComponent[] | null {
 
         // A glued multiplicative/divisive group (e.g. "1d6 * 2") — "+"/"-" always start a new
         // group (see the outer loop below), so only "*"/"/" ever keep multiple terms together
-        // here. Exactly one non-deterministic anchor is the common, fully-supported case: the
-        // anchor's and the "multiplier" term's flavors are COMBINED (see
-        // `combineGroupFlavors()`'s doc). Zero or multiple non-deterministic terms (e.g.
-        // "1d6 * 1d4") is rare and has no clean single anchor to flavor directly — it falls back
-        // to one opaque, parenthesized unit, the only shape here that sacrifices this group's own
-        // crit-multiplication visibility (a parenthesized group is invisible to
-        // `DamageRoll#evaluateCritical()`'s `instanceof DiceTerm` scan) — a deliberate, documented
-        // trade for not having to guess an anchor among multiple real dice terms.
+        // here. Exactly one non-deterministic anchor is the common, fully-supported case: every
+        // flavored operand's marker bag is folded together (see `combineGroupFlavors()`'s doc),
+        // not just the first one found — a third/fourth typed multiplier no longer loses its
+        // type. Zero non-deterministic terms (a fully deterministic product, e.g. "2 * 3") is
+        // pre-evaluated to a single flat numeric-equivalent component instead, so it stays
+        // visible to `DamageRoll#evaluateCritical()`'s `NumericTerm` scan and multiplies exactly
+        // once on a crit (SRD draws no exception for flat bonuses) rather than never
+        // multiplying at all — a parenthesized group is invisible to that scan.
+        //
+        // Two or more non-deterministic terms (e.g. "1d6 * 1d4" — multiple real dice multiplied
+        // together) is a DELIBERATE, ACCEPTED scope limit, not an oversight: it still falls back
+        // to one opaque, parenthesized unit, which stays invisible to
+        // `DamageRoll#evaluateCritical()`'s scan (never crit-multiplied). This formula shape has
+        // no clean single anchor to flavor or pre-evaluate (dice are random — can't be folded
+        // into one flat value like the "zero non-deterministic" case above), and fixing it would
+        // require teaching `DamageRoll#evaluateCritical()` to recognize `ParentheticalTerm`
+        // itself and multiply its whole enclosed product exactly once — a change to the shared
+        // Roll subclass used by every damage roll in the system, for a formula shape with no
+        // real SRD precedent (PR #102, second review wave, item #1 — reviewed and explicitly
+        // deferred rather than implemented).
         const nonDeterministic = group.filter(term => !term.isDeterministic);
+
+        /** Folds every non-operator term's flavor into one combined marker bag (see `combineGroupFlavors()`). */
+        function foldGroupFlavors(terms: typeof group): string | undefined {
+          return terms.reduce<string | undefined>((flavor, term) => (
+            term instanceof OperatorTerm || !term.flavor ? flavor : combineGroupFlavors(flavor, term.flavor)
+          ), undefined);
+        }
+
         if (nonDeterministic.length === 1) {
           const anchor = nonDeterministic[0];
-          const multiplier = group.find(term => term !== anchor && !(term instanceof OperatorTerm) && term.flavor);
-          const effectiveFlavor = combineGroupFlavors(anchor.flavor, multiplier?.flavor);
+          const otherFlavoredTerms = group.filter(term => term !== anchor && !(term instanceof OperatorTerm) && term.flavor);
+          const effectiveFlavor = otherFlavoredTerms.reduce<string | undefined>((flavor, term) => combineGroupFlavors(flavor, term.flavor), anchor.flavor);
+          const winningSlot = otherFlavoredTerms.length > 0 ? otherFlavoredTerms[otherFlavoredTerms.length - 1] : anchor;
           components.push({
             isDice: true,
             isCritEligible: anchor instanceof Die,
@@ -441,16 +465,31 @@ function parseFormulaComponents(formula: string): FormulaComponent[] | null {
             simpleDie: null,
             emit: flavor => group.map((term) => {
               if (term instanceof OperatorTerm) return term.operator;
-              const isWinningSlot = multiplier ? term === multiplier : term === anchor;
-              return flavor && isWinningSlot ? `${term.expression}[${flavor}]` : term.expression;
+              return flavor && term === winningSlot ? `${term.expression}[${flavor}]` : term.expression;
             }).join(' '),
           });
           return true;
         }
 
-        const existingFlavor = group.find(term => !(term instanceof OperatorTerm) && term.flavor)?.flavor;
+        if (nonDeterministic.length === 0) {
+          const expr = group.map(term => (term instanceof OperatorTerm ? term.operator : term.expression)).join(' ');
+          const value = Roll.safeEval(expr);
+          const existingFlavor = foldGroupFlavors(group);
+          components.push({
+            isDice: false,
+            isCritEligible: false,
+            existingFlavor,
+            sign: groupSign,
+            isZero: value === 0,
+            simpleDie: null,
+            emit: flavor => (flavor ? `${value}[${flavor}]` : String(value)),
+          });
+          return true;
+        }
+
+        const existingFlavor = foldGroupFlavors(group);
         components.push({
-          isDice: nonDeterministic.length > 0,
+          isDice: true,
           isCritEligible: false,
           existingFlavor,
           sign: groupSign,
@@ -669,6 +708,13 @@ function attributeDamageDiceGroups(
   const ownerPerComponent = new Array<number>(components.length).fill(-1);
   let cursor = components.length;
   for (let i = overrides.length - 1; i >= 0 && cursor > 0; i--) {
+    // `appendRollFormulaTerm()` (rollFormulaStringField.mts) is a no-op for a blank/zero
+    // override value — it never actually appends anything to the combined formula. Skip those
+    // here too, or the walk would consume a cursor slot for a component that doesn't exist and
+    // misattribute the preceding real component to this phantom override.
+    const trimmedValue = overrides[i].value.trim();
+    if (trimmedValue === '' || trimmedValue === '0') continue;
+
     const overrideComponents = parseFormulaComponents(overrides[i].value) ?? [];
     for (let j = 0; j < overrideComponents.length && cursor > 0; j++) {
       cursor -= 1;
@@ -769,14 +815,89 @@ function groupDamageDiceBySource(
     })
     .filter(({ formula }) => formula);
 }
+  
+/**
+ * Canonical (non-localized) damage types that actually apply anywhere across a resolved
+ * formula + its overrides — dice AND flat components alike, deduped at the TYPE level (not
+ * `groupDamageDiceBySource()`'s joined-label-STRING level, which can under-dedupe: e.g. a
+ * Piercing+Slashing weapon with an extra `$typed(piercing, 1d4)` component produces one row
+ * labeled "Piercing + Slashing" and a second labeled "Piercing" — two distinct strings, even
+ * though "Piercing" itself is only one type). First-appearance order. Backs
+ * `getDamageTypeLabels()`'s localized list and any caller needing the real resolved type set
+ * rather than just the weapon's configured defaults (e.g. damage-event metadata snapshots).
+ */
+function collectDamageTypes(
+  resolvedFormula: string,
+  overrides: { effectName: string; value: string }[],
+  defaultDamageTypes: DamageType[] = []
+): DamageType[] {
+  const components = parseFormulaComponents(resolvedFormula);
+  if (!components) return [];
+
+  const attributed = attributeDamageDiceGroups(components, '', overrides, defaultDamageTypes);
+  const seen = new Set<DamageType>();
+  const result: DamageType[] = [];
+  for (const { component, damageTypes } of attributed) {
+    if (component.isZero) continue;
+    for (const type of damageTypes) {
+      if (seen.has(type)) continue;
+      seen.add(type);
+      result.push(type);
+    }
+  }
+  return result;
+}
+
+/**
+ * Localized, "+"-joined damage-type label for each source's own FLAT (non-dice) components —
+ * keyed by that source's display label (`baseLabel` for the weapon's own formula, or a
+ * specific override's own `effectName`), omitted entirely for a source with no typed flat
+ * components. Backs a flat-modifier breakdown row's own type attribution
+ * (`WeaponAttackDataModel._buildFormulaBreakdown()`'s `baseFlat`/override rows), which
+ * historically had none at all even when `combineDiceGroupMarker()` had already attached a
+ * type to that exact component (PR #102, item #6). Two overrides sharing the same
+ * `effectName` collapse to one map entry — the same label-based grouping ambiguity
+ * `groupDamageDiceBySource()`'s display rows already accept.
+ */
+function getFlatDamageTypeLabelsBySource(
+  resolvedFormula: string,
+  baseLabel: string,
+  overrides: { effectName: string; value: string }[],
+  defaultDamageTypes: DamageType[] = []
+): Map<string, string> {
+  const result = new Map<string, string>();
+  const components = parseFormulaComponents(resolvedFormula);
+  if (!components) return result;
+
+  const attributed = attributeDamageDiceGroups(components, baseLabel, overrides, defaultDamageTypes);
+  const seenBySource = new Map<string, Set<DamageType>>();
+  const typesBySource = new Map<string, DamageType[]>();
+  for (const { component, label, damageTypes } of attributed) {
+    if (component.isDice || component.isZero || damageTypes.length === 0) continue;
+    if (!seenBySource.has(label)) {
+      seenBySource.set(label, new Set());
+      typesBySource.set(label, []);
+    }
+    const seen = seenBySource.get(label)!;
+    const types = typesBySource.get(label)!;
+    for (const type of damageTypes) {
+      if (seen.has(type)) continue;
+      seen.add(type);
+      types.push(type);
+    }
+  }
+  for (const [label, types] of typesBySource) {
+    result.set(label, types.map(type => game.i18n.localize(type)).join(' + '));
+  }
+  return result;
+}
 
 /**
  * Deduped, localized damage-type labels for a resolved formula (e.g. `['Slashing', 'Fire']`
- * for a flaming weapon, or `['Piercing + Slashing']` for one dual-typed component) — a thin
- * wrapper around `groupDamageDiceBySource()` for any caller that only needs "what types does
- * this produce", not the full per-source breakdown (sheet-row type columns, tooltips, compact
- * summaries, etc.). An untyped component contributes nothing, same as
- * `groupDamageDiceBySource()`'s own `damageTypeLabel` omission convention — callers that want a
+ * for a flaming weapon, or `['Piercing', 'Slashing']` for a dual-typed weapon) — thin
+ * localization wrapper around `collectDamageTypes()` for any caller that only needs "what types
+ * does this produce", not the full per-source breakdown (sheet-row type columns, tooltips,
+ * compact summaries, etc.). An untyped component contributes nothing — callers that want a
  * guaranteed non-empty display should fall back to their own default label when this returns
  * `[]`; empty is a valid, real state (no types at all), not an error to paper over.
  */
@@ -785,12 +906,12 @@ function getDamageTypeLabels(
   overrides: { effectName: string; value: string }[],
   defaultDamageTypes: DamageType[] = []
 ): string[] {
-  const rows = groupDamageDiceBySource(resolvedFormula, '', overrides, defaultDamageTypes);
-  return [...new Set(rows.flatMap(row => (row.damageTypeLabel ? [row.damageTypeLabel] : [])))];
+  return collectDamageTypes(resolvedFormula, overrides, defaultDamageTypes).map(type => game.i18n.localize(type));
 }
 
 export {
   buildD20Formula,
+  collectDamageTypes,
   combineDiceFormula,
   combineDiceGroupMarker,
   extractDiceOnlyFormula,
@@ -799,6 +920,7 @@ export {
   flavorDiceGroups,
   flavorTerm,
   getDamageTypeLabels,
+  getFlatDamageTypeLabelsBySource,
   groupDamageDiceBySource,
   mergeDiceGroupMarker,
   splitFormulaParts,

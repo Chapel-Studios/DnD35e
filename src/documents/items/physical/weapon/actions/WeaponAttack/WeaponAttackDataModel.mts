@@ -29,7 +29,7 @@ import { SYSTEM_ID } from '@settings/shared.mjs';
 import { syncMovementCardSpend } from '@source/dice/chatCards/moveActionCard/moveActionCard.mjs';
 import { evaluateDefense } from '@source/dice/chatCards/resolutionCard/evaluateDefense.mjs';
 import type { AttackCardFlags, AttackCardTargetRow, ResolutionCardData, RollModifier } from '@source/dice/index.mjs';
-import { appendAttackCardWarnings, buildActionChainId, buildAttackCard, buildOverridesModifierList, buildResolutionCard, D20Roll, DamageRoll, extractFlatModifier, flavorDamageDiceBySource, getDamageTypeLabels, groupDamageDiceBySource, markTargetRowResolved } from '@source/dice/index.mjs';
+import { appendAttackCardWarnings, buildActionChainId, buildAttackCard, buildOverridesModifierList, buildResolutionCard, collectDamageTypes, D20Roll, DamageRoll, extractFlatModifier, flavorDamageDiceBySource, getFlatDamageTypeLabelsBySource, groupDamageDiceBySource, markTargetRowResolved } from '@source/dice/index.mjs';
 import { buildModifiersD20Formula, buildModifiersDamageFormula, getModifiersFormula } from '@source/dice/rollModifiers.mjs';
 import type { WeaponDamageRollModifier } from '@source/dice/types.mjs';
 import { RollDefenseDialogConfig } from '@source/rollDialogs/RollDefenseDialog/RollDefenseDialogConfig.mjs';
@@ -69,10 +69,10 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     // Multi-choice — some SRD weapons (e.g. Dagger: "Piercing or Slashing", Morningstar:
     // "Bludgeoning and Piercing") deal more than one type. The system treats every selected
     // type as simultaneously active (an "and") regardless of the SRD's own "or"/"and"
-    // wording — there's no concept of an attacker choosing one type over another; only the
-    // first selected entry (`fallbackDamageType`) feeds the dice-attribution/crit pipeline
-    // today, purely because that pipeline's single-value slot can't carry more than one type
-    // at once. See `fallbackDamageType`'s doc comment.
+    // wording — there's no concept of an attacker choosing one type over another. The full
+    // set feeds the dice-attribution/crit pipeline as `defaultDamageTypes`, covering whatever
+    // part of `damageFormula` the author didn't explicitly wrap in its own `$typed()` (see
+    // `attributeDamageDiceGroups()` in d20Formula.mts).
     schema.damageTypes = new SetField(new StringField({ choices: [...DAMAGE_TYPES] }), { initial: [DAMAGE_TYPE_SLASHING] });
     schema.critRange = new NumberField({ required: true, initial: 20, integer: true, min: 2, max: 20 });
     schema.critMultiplier = new NumberField({ required: true, initial: 2, integer: true });
@@ -192,13 +192,24 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   }
 
   /**
+   * Canonical (non-localized) damage types this action's resolved damage formula actually
+   * produces — dice AND flat components alike, deduped at the type level (see
+   * `collectDamageTypes()`'s doc). Unlike the raw `damageTypes` schema field (the configured
+   * dropdown/multi-select defaults), this reflects what the resolved formula + AE overrides
+   * actually contain, including any explicit `$typed()` override or AE-contributed bonus — the
+   * snapshot used by damage-event metadata (`AttackCardFlags.damageType`) needs this, not just
+   * the configured defaults (PR #102, item #7).
+   */
+  get resolvedDamageTypes(): DamageType[] {
+    return collectDamageTypes(this.damageFormula.resolvedValue || '', this.resolvedDamageDiceOverrides, [...this.damageTypes]);
+  }
+
+  /**
    * Localized display label for this action's damage type(s) — e.g. "Slashing + Fire" for a
    * flaming weapon, or "Piercing + Slashing" for a multi-choice weapon like a Dagger (one dual-
    * typed component, since the dice-attribution pipeline now treats the full `damageTypes` set
-   * as this weapon's own untyped dice's default — see `getDamageTypeLabels()`/
-   * `attributeDamageDiceGroups()`). Reuses `getDamageTypeLabels()` (the same attribution the
-   * actual damage roll breakdown uses, via `groupDamageDiceBySource()`) against the resolved
-   * formula and `resolvedDamageDiceOverrides`.
+   * as this weapon's own untyped dice's default — see `attributeDamageDiceGroups()`). Just the
+   * localized, "+"-joined form of `resolvedDamageTypes`.
    *
    * Empty string — never a guessed-at type — when nothing could be determined at all (e.g.
    * no types are selected and the resolved formula is empty/zero); "none" is a perfectly
@@ -208,7 +219,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    * label is needed (chat cards, tooltips, etc).
    */
   get damageTypeLabel(): string {
-    return getDamageTypeLabels(this.damageFormula.resolvedValue || '', this.resolvedDamageDiceOverrides, [...this.damageTypes]).join(' + ');
+    return this.resolvedDamageTypes.map(type => game.i18n.localize(type)).join(' + ');
   }
 
   private _buildFormulaBreakdown(
@@ -224,17 +235,21 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     const source = FormulaData.resolveSource<string>(this._source[field], context);
     if (source === null) throw new Error(`Unable to resolve source ${field} for action ${this._id}`);
     const baseFlat = extractFlatModifier(source || '0').flat;
+    // A flat `$typed()` component (weapon-owned or AE-contributed) previously had no type
+    // attribution at all in this breakdown — see PR #102, item #6.
+    const flatDamageTypeLabelsBySource = getFlatDamageTypeLabelsBySource(resolved, label, diceOverrides, defaultDamageTypes);
     return {
       diceOverrides,
       breakdown: [
         ...groupDamageDiceBySource(resolved, label, diceOverrides, defaultDamageTypes).map(entry => ({ ...entry, value: 0 })),
-        ...(baseFlat ? [{ label, value: baseFlat }] : []),
+        ...(baseFlat ? [{ label, value: baseFlat, damageTypeLabel: flatDamageTypeLabelsBySource.get(label) }] : []),
         ...buildOverridesModifierList({ effectOverrides: { [path]: overrides } }, path),
         ...overrides.filter(override => override.stackResult !== STACK_RESULT_IGNORED && Number.isNaN(parseNumericChangeValue(override.value)))
           .map(override => ({
             label: override.effectName,
             value: extractFlatModifier(override.value).flat * (override.type === EFFECT_CHANGE_TYPE.SUBTRACT ? -1 : 1),
             bonusTypeLabel: formatBonusTypeLabel(override.bonusType),
+            damageTypeLabel: flatDamageTypeLabelsBySource.get(override.effectName),
           })).filter(entry => entry.value !== 0),
         ...overrides.filter(override => override.stackResult === STACK_RESULT_IGNORED && Number.isNaN(parseNumericChangeValue(override.value)))
           .map(override => ({
@@ -423,7 +438,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       critRange: this.critRange,
       critMultiplier: this.critMultiplier,
       critConfirmTotal: critConfirmRoll?.total ?? null,
-      damageType: [...this.damageTypes],
+      damageType: this.resolvedDamageTypes,
       targets: targetRows,
       actionEconomySpent: null,
       modifierList: dialog.attackModifiers,

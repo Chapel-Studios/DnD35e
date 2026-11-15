@@ -19,7 +19,7 @@ import type { ResolutionCardData, ResolutionCardFlags } from './chatCards/resolu
 import { buildResolutionCard, wireResolutionCardButton } from './chatCards/resolutionCard/resolutionCard.mjs';
 import { buildInitiativeCard, buildSaveCard } from './chatCards/saveRollCard/saveRollCard.mjs';
 import type { FormulaParts } from './d20Formula.mjs';
-import { buildD20Formula, combineDiceFormula, extractDiceOnlyFormula, extractFlatModifier, flavorDamageDiceBySource, flavorDiceGroups, flavorTerm, getDamageTypeLabels, groupDamageDiceBySource, splitFormulaParts } from './d20Formula.mjs';
+import { buildD20Formula, collectDamageTypes, combineDiceFormula, extractDiceOnlyFormula, extractFlatModifier, flavorDamageDiceBySource, flavorDiceGroups, flavorTerm, getDamageTypeLabels, getFlatDamageTypeLabelsBySource, groupDamageDiceBySource, splitFormulaParts } from './d20Formula.mjs';
 import { D20Roll } from './D20Roll.mjs';
 import { DamageRoll } from './DamageRoll.mjs';
 import { buildOverridesModifierList, buildSituationalModifierEntry, reconcileBakedConditionEntry, reconcileFlatFootedDexEntry } from './rollModifierBreakdown.mjs';
@@ -43,6 +43,7 @@ export {
   buildResolutionCard,
   buildSaveCard,
   buildSituationalModifierEntry,
+  collectDamageTypes,
   combineDiceFormula,
   D20Roll,
   DamageRoll,
@@ -52,6 +53,7 @@ export {
   flavorDiceGroups,
   flavorTerm,
   getDamageTypeLabels,
+  getFlatDamageTypeLabelsBySource,
   groupDamageDiceBySource,
   markTargetRowResolved,
   parseActionChainId,

@@ -1,8 +1,8 @@
-import { DAMAGE_TYPE_FIRE, DAMAGE_TYPE_PIERCING, DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
+import { DAMAGE_TYPE_COLD, DAMAGE_TYPE_FIRE, DAMAGE_TYPE_PIERCING, DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
 import { CRIT_MARKER_KEY, CRIT_OVERRIDE_EXEMPT, CRIT_OVERRIDE_MULTIPLY } from '@constants/critDiceMarkers.mjs';
 import { buildMarkerBag } from '@constants/diceMarkerBag.mjs';
 import { DAMAGE_TYPE_MARKER_KEY, readDamageType } from '@constants/typedDamageMarkers.mjs';
-import { combineDiceGroupMarker, flavorDamageDiceBySource, getDamageTypeLabels, groupDamageDiceBySource } from '@source/dice/d20Formula.mjs';
+import { combineDiceGroupMarker, flavorDamageDiceBySource, getDamageTypeLabels, getFlatDamageTypeLabelsBySource, groupDamageDiceBySource } from '@source/dice/d20Formula.mjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mirrors tests/unit/dice/splitFormulaParts.test.mts's `Roll.parse`/`foundry.dice.terms`
@@ -49,7 +49,10 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
   beforeEach(() => {
     parsed.clear();
     parse.mockClear();
-    vi.stubGlobal('Roll', { parse });
+    // A real `Roll.safeEval()`-equivalent — needed now that a fully deterministic glued group
+    // (e.g. "2 * 3") gets pre-evaluated via `Roll.safeEval()` instead of wrapped in a
+    // parenthetical (see d20Formula.mts's `parseFormulaComponents()`, item #1).
+    vi.stubGlobal('Roll', { parse, safeEval: (expr: string) => Function(`"use strict"; return (${expr});`)() });
     vi.stubGlobal('foundry', {
       dice: { terms: { Die: DieStub, NumericTerm: NumericTermStub, OperatorTerm: OperatorTermStub, ParentheticalTerm: ParentheticalTermStub } },
     });
@@ -128,7 +131,7 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
     expect(flavorDamageDiceBySource(formula, 'Crownguard', []).exemptDiceIndices).toEqual([]);
   });
 
-  it('a crit-exempt override survives alongside a damage type on an AE-owned (normally-exempt) group', () => {
+  it('a crit-multiply override survives alongside a damage type on an AE-owned (normally-exempt) group', () => {
     const formula = 'crit-and-typed-override';
     const marker = buildMarkerBag({ [CRIT_MARKER_KEY]: CRIT_OVERRIDE_MULTIPLY, [DAMAGE_TYPE_MARKER_KEY]: DAMAGE_TYPE_FIRE });
     parsed.set(formula, [die(6, 1, marker)]);
@@ -270,6 +273,30 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
     ]);
   });
 
+  // Regression for the "zero-valued override steals the preceding component" bug (PR #102,
+  // second review wave, item #2): `appendRollFormulaTerm()` is a no-op for a blank/'0' override
+  // value, so a zero-valued override contributes ZERO components to the real combined formula.
+  // The backward ownership walk must skip it entirely, not consume a cursor slot for it.
+  it('does not misattribute the weapon\'s own component to a zero-valued override', () => {
+    const formula = 'weapon-plus-zero-plus-flaming';
+    // Only 2 real components ever reach the combined formula — the zero override never
+    // appended anything.
+    parsed.set(formula, [die(6, 2), op('+'), die(6, 1, typedMarker(DAMAGE_TYPE_FIRE))]);
+    parsed.set('0', [num(0)]);
+    parsed.set('1d6', [die(6, 1)]);
+    const overrides = [
+      { effectName: 'Disabled Bonus', value: '0' },
+      { effectName: '+1 Flaming', value: '1d6' },
+    ];
+
+    // The weapon's own 2d6 stays weapon-owned (not exempt), not stolen by "Disabled Bonus".
+    expect(flavorDamageDiceBySource(formula, 'Crownguard', overrides).exemptDiceIndices).toEqual([1]);
+    expect(groupDamageDiceBySource(formula, 'Crownguard', overrides)).toEqual([
+      { label: 'Crownguard', formula: '2d6' },
+      { label: '+1 Flaming', formula: '1d6', damageTypeLabel: DAMAGE_TYPE_FIRE },
+    ]);
+  });
+
   // The fix for the "$typed(fire, 3) loses its type entirely" gap (poc.10 Story J, item #4):
   // combineDiceGroupMarker() now applies to EVERY component, not just dice-shaped ones.
   it('attaches a damage-type marker to a wholly flat numeric component, not just dice groups', () => {
@@ -282,9 +309,10 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
     expect(readDamageType(match?.[1])).toEqual([DAMAGE_TYPE_FIRE]);
   });
 
-  // getDamageTypeLabels() — the generic, groupDamageDiceBySource()-backed building block any
-  // future consumer (sheet rows, tooltips, chat summaries) can reuse for "what types does this
-  // formula produce" without re-deriving the per-source breakdown itself.
+  // getDamageTypeLabels()/collectDamageTypes() — the generic building block any consumer
+  // (sheet rows, tooltips, chat summaries, damage-event metadata) can reuse for "what types
+  // does this formula produce", deduped at the canonical type level across every component —
+  // dice AND flat alike (PR #102, items #6/#12).
   describe('getDamageTypeLabels', () => {
     it('returns one deduped label per distinct type, in first-appearance order', () => {
       const formula = 'labels-multi-type';
@@ -322,6 +350,98 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
       parsed.set('1d6', [die(6, 1)]);
 
       expect(getDamageTypeLabels(formula, [{ effectName: '+1 Flaming', value: '1d6' }])).toEqual([]);
+    });
+
+    it('includes a flat $typed() component\'s type, mixed alongside dice', () => {
+      // PR #102, item #6: "1d6 + $typed(fire, 3)" previously showed only the weapon's default
+      // dice type, with the flat Fire component silently dropped.
+      const formula = 'labels-flat-mixed-with-dice';
+      parsed.set(formula, [die(6, 1), op('+'), num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      expect(getDamageTypeLabels(formula, [], [DAMAGE_TYPE_SLASHING])).toEqual([DAMAGE_TYPE_SLASHING, DAMAGE_TYPE_FIRE]);
+    });
+
+    it('includes a wholly flat $typed() component\'s type when there is no dice at all', () => {
+      // PR #102, item #6: "a purely flat $typed(fire, 3) shows no type at all" previously.
+      const formula = 'labels-wholly-flat';
+      parsed.set(formula, [num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      expect(getDamageTypeLabels(formula, [])).toEqual([DAMAGE_TYPE_FIRE]);
+    });
+
+    it('dedupes at the canonical type level, not the joined-label-string level', () => {
+      // PR #102, item #12: a Piercing+Slashing weapon (dagger-style) with an EXTRA
+      // $typed(piercing, 1d4) component previously rendered "Piercing + Slashing + Piercing" —
+      // two distinct joined-label strings ("Piercing + Slashing" and "Piercing"), even though
+      // "Piercing" itself is only one type.
+      const formula = 'labels-dedupe-across-groups';
+      parsed.set(formula, [die(6, 2), op('+'), die(4, 1, typedMarker(DAMAGE_TYPE_PIERCING))]);
+
+      expect(getDamageTypeLabels(formula, [], [DAMAGE_TYPE_PIERCING, DAMAGE_TYPE_SLASHING]))
+        .toEqual([DAMAGE_TYPE_PIERCING, DAMAGE_TYPE_SLASHING]);
+    });
+  });
+
+  // getFlatDamageTypeLabelsBySource() — PR #102, item #6's "flat modifier rows" half: a flat
+  // $typed() component previously had no type attribution anywhere in the roll breakdown UI.
+  describe('getFlatDamageTypeLabelsBySource', () => {
+    it('attaches a type label to the weapon\'s own flat component, keyed by its label', () => {
+      const formula = 'flat-labels-weapon-owned';
+      parsed.set(formula, [die(6, 1), op('+'), num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      const labels = getFlatDamageTypeLabelsBySource(formula, 'Crownguard', []);
+      expect(labels.get('Crownguard')).toBe(DAMAGE_TYPE_FIRE);
+    });
+
+    it('attaches a type label to an AE override\'s own flat component, keyed by its effect name', () => {
+      const formula = 'flat-labels-ae-owned';
+      parsed.set(formula, [die(6, 2), op('+'), num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
+      parsed.set('3', [num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      const labels = getFlatDamageTypeLabelsBySource(formula, 'Crownguard', [{ effectName: '+1 Flaming', value: '3' }]);
+      expect(labels.get('+1 Flaming')).toBe(DAMAGE_TYPE_FIRE);
+      expect(labels.has('Crownguard')).toBe(false);
+    });
+
+    it('omits a source entirely when its flat component carries no type', () => {
+      const formula = 'flat-labels-untyped';
+      parsed.set(formula, [die(6, 1), op('+'), num(3)]);
+
+      expect(getFlatDamageTypeLabelsBySource(formula, 'Crownguard', []).size).toBe(0);
+    });
+  });
+
+  // PR #102, second review wave, items #1 and #5: glued multiplicative/divisive groups.
+  describe('glued multiplicative groups', () => {
+    it('pre-evaluates a fully deterministic product so it stays a visible flat term, not a crit-invisible parenthetical', () => {
+      const formula = 'deterministic-product';
+      parsed.set(formula, [num(2), op('*'), num(3)]);
+
+      // "6", not "(2 * 3)" — a parenthetical wrapper is invisible to DamageRoll#evaluateCritical().
+      expect(flavorDamageDiceBySource(formula, 'Crownguard', []).formula).toBe('6[Crownguard]');
+    });
+
+    it('folds every flavored multiplier\'s type into one combined group, not just the first one found', () => {
+      const formula = 'one-anchor-two-typed-multipliers';
+      parsed.set(formula, [
+        die(6, 1), op('*'), num(2, typedMarker(DAMAGE_TYPE_FIRE)), op('*'), num(3, typedMarker(DAMAGE_TYPE_COLD)),
+      ]);
+
+      expect(groupDamageDiceBySource(formula, 'Crownguard', [])).toEqual([
+        { label: 'Crownguard', formula: '1d6 * 2 * 3', damageTypeLabel: `${DAMAGE_TYPE_FIRE} + ${DAMAGE_TYPE_COLD}` },
+      ]);
+    });
+
+    it('folds both real dice terms\' types when two non-deterministic terms are glued together', () => {
+      const formula = 'two-typed-dice-terms';
+      parsed.set(formula, [
+        die(6, 1, typedMarker(DAMAGE_TYPE_FIRE)), op('*'), die(4, 1, typedMarker(DAMAGE_TYPE_COLD)),
+      ]);
+
+      // getDamageTypeLabels() now dedupes at the canonical TYPE level, not the joined-label-
+      // string level — each type is its own entry, matching getDamageTypeLabels()'s other
+      // multi-type cases (callers join with " + " themselves).
+      expect(getDamageTypeLabels(formula, [])).toEqual([DAMAGE_TYPE_FIRE, DAMAGE_TYPE_COLD]);
     });
   });
 });

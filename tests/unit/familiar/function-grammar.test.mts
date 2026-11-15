@@ -579,6 +579,15 @@ describe('validateFormula — $typed(...) damage-type alias', () => {
     expect(errors.some(e => e.severity === 'error')).toBe(true);
   });
 
+  it('flags an unrecognized UNQUOTED alias even though it contains punctuation', () => {
+    // An unquoted alias is only dynamic when it contains a formula token (#/$). Punctuation
+    // alone (e.g. a hyphen typo) doesn't make it dynamic — it must still be validated, not
+    // silently skipped.
+    const schema: FamiliarSchema = { self: { properties: {} } };
+    const errors = validateFormula('$typed(fi-re, 1d6)', schema);
+    expect(errors.some(e => e.severity === 'error')).toBe(true);
+  });
+
   it('does not flag a recognized quoted alias', () => {
     const schema: FamiliarSchema = { self: { properties: {} } };
     const errors = validateFormula('$typed("fire", 1d6)', schema);

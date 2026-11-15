@@ -30,8 +30,8 @@ import type {
 } from './types.mjs';
 import { isFieldAspect } from './types.mjs';
 
-/** A bare identifier with no formula tokens (`#`/`$`) — used to tell a static `$typed(...)` alias from a dynamic expression. */
-const STATIC_WORD_REGEX = /^[\p{L}\p{N}_]+$/u;
+/** A formula token (`#`/`$`) that marks an alias as dynamic — resolved at runtime, not statically checkable here. */
+const DYNAMIC_TOKEN_REGEX = /[#$]/;
 
 /**
  * Finds every `$typed(...)` occurrence anywhere in `formula`, including one nested inside
@@ -176,14 +176,17 @@ export function validateFormula(formula: string, context: FamiliarSchema, isFocu
 
   // $typed(damageType, formula)'s first argument only validates statically when it's a quoted
   // literal (regardless of its character content — quoting already proves it's static, not
-  // dynamic) or a bare word with no formula tokens (`#`/`$`) — a dynamic unquoted expression
-  // resolves at runtime and can't be checked here. Scans with findAllTypedBlocks() rather than
-  // findFunctionBlocks() so a $typed(...) nested inside another function's arguments (e.g.
-  // $critMultiply($typed(bogus, 1d6))) is still found and validated, not silently skipped.
+  // dynamic) or any unquoted text with no formula tokens (`#`/`$`) — an unquoted alias
+  // containing those tokens is a dynamic expression that resolves at runtime and can't be
+  // checked here. Anything else (including a punctuated-but-static typo like `fi-re`) is
+  // still validated, so a bad alias doesn't silently skip the check. Scans with
+  // findAllTypedBlocks() rather than findFunctionBlocks() so a $typed(...) nested inside
+  // another function's arguments (e.g. $critMultiply($typed(bogus, 1d6))) is still found and
+  // validated, not silently skipped.
   for (const block of findAllTypedBlocks(formula)) {
     const rawAlias = block.args[0]?.trim() ?? '';
     const quoted = matchQuotedLiteral(rawAlias);
-    if (quoted === null && !STATIC_WORD_REGEX.test(rawAlias)) continue;
+    if (quoted === null && DYNAMIC_TOKEN_REGEX.test(rawAlias)) continue;
     const alias = quoted ?? rawAlias;
     if (resolveDamageTypeAlias(alias)) continue;
     errors.push({

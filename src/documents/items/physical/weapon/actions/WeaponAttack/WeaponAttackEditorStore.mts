@@ -28,6 +28,10 @@ const useWeaponAttackEditorStore = <T extends WeaponAttackDataModel>(
     attackFormulaSourceText: computed(() => (params.sourceAction.value as { attackFormula?: FormulaDataSource } | undefined)?.attackFormula?.formula),
     damageFormulaSourceText: computed(() => (params.sourceAction.value as { damageFormula?: FormulaDataSource } | undefined)?.damageFormula?.formula),
     damageTypes: computed(() => params.action.value.damageTypes),
+    // True authored set (pre-AE) — `MultiSelectFormGroup`'s own source/mode-awareness is
+    // bypassed entirely whenever a caller passes an explicit `value` prop (see
+    // `DamageTypes.vue`), so the caller must compute edit-mode-awareness itself using this.
+    damageTypesSource: computed(() => (params.sourceAction.value as { damageTypes?: Set<DamageType> } | undefined)?.damageTypes),
     critRange: computed(() => params.action.value.critRange),
     critMultiplier: computed(() => params.action.value.critMultiplier),
     requiresEquipped: computed(() => params.action.value.requiresEquipped),
@@ -46,6 +50,7 @@ interface WeaponAttackEditorStoreGetters extends ActionEditorStoreGetters {
   attackFormulaSourceText: ComputedRef<string | undefined>;
   damageFormulaSourceText: ComputedRef<string | undefined>;
   damageTypes: ComputedRef<Set<DamageType>>;
+  damageTypesSource: ComputedRef<Set<DamageType> | undefined>;
   critRange: ComputedRef<number>;
   critMultiplier: ComputedRef<number>;
   requiresEquipped: ComputedRef<boolean>;
