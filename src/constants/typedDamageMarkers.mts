@@ -8,9 +8,11 @@ import { parseMarkerBag } from '@constants/diceMarkerBag.mjs';
  * (`FormulaResolver.functionGrammar.mts`).
  *
  * `$typed()` resolves its inner dice formula normally, then upserts this dimension into every
- * top-level dice group's flavor via `mergeDiceGroupMarker()` — preserving any other dimension
- * (e.g. a nested `$critMultiply()`'s crit override) already present on the same group, instead
- * of discarding it. `readDamageType()` reads it back out.
+ * top-level dice group's flavor via `combineDiceGroupMarker()` (`d20Formula.mts`) —
+ * appending into a comma-joined list rather than overwriting, so a weapon's damage can
+ * genuinely qualify as more than one type at once (e.g. `1d6[fire] * 2[cold]` deals both Fire
+ * AND Cold simultaneously — not "whichever resolved outermost wins"). `readDamageType()`
+ * reads the full list back out.
  *
  * **Wired into the display breakdown, not the real roll's own flavor**:
  * `attributeDamageDiceGroups()`/`groupDamageDiceBySource()` (`src/dice/d20Formula.mts`) read
@@ -22,10 +24,14 @@ import { parseMarkerBag } from '@constants/diceMarkerBag.mjs';
  */
 const DAMAGE_TYPE_MARKER_KEY = 'type';
 
-/** Reads this dice group's damage type (if any) back off its raw flavor string. */
-function readDamageType(flavor: string | undefined): DamageType | null {
+/**
+ * Reads this dice group's damage type(s) (if any) back off its raw flavor string — always a
+ * list, since a component can carry more than one (see module doc); empty when untyped.
+ */
+function readDamageType(flavor: string | undefined): DamageType[] {
   const value = parseMarkerBag(flavor)?.[DAMAGE_TYPE_MARKER_KEY];
-  return value && (DAMAGE_TYPES as readonly string[]).includes(value) ? value as DamageType : null;
+  if (!value) return [];
+  return value.split(',').filter((entry): entry is DamageType => (DAMAGE_TYPES as readonly string[]).includes(entry));
 }
 
 export { DAMAGE_TYPE_MARKER_KEY, readDamageType };

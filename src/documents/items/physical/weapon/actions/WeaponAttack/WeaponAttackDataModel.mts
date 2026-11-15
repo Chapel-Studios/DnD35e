@@ -29,7 +29,7 @@ import { SYSTEM_ID } from '@settings/shared.mjs';
 import { syncMovementCardSpend } from '@source/dice/chatCards/moveActionCard/moveActionCard.mjs';
 import { evaluateDefense } from '@source/dice/chatCards/resolutionCard/evaluateDefense.mjs';
 import type { AttackCardFlags, AttackCardTargetRow, ResolutionCardData, RollModifier } from '@source/dice/index.mjs';
-import { appendAttackCardWarnings, buildActionChainId, buildAttackCard, buildOverridesModifierList, buildResolutionCard, D20Roll, DamageRoll, extractFlatModifier, flavorDamageDiceBySource, groupDamageDiceBySource, markTargetRowResolved } from '@source/dice/index.mjs';
+import { appendAttackCardWarnings, buildActionChainId, buildAttackCard, buildOverridesModifierList, buildResolutionCard, D20Roll, DamageRoll, extractFlatModifier, flavorDamageDiceBySource, getDamageTypeLabels, groupDamageDiceBySource, markTargetRowResolved } from '@source/dice/index.mjs';
 import { buildModifiersD20Formula, buildModifiersDamageFormula, getModifiersFormula } from '@source/dice/rollModifiers.mjs';
 import type { WeaponDamageRollModifier } from '@source/dice/types.mjs';
 import { RollDefenseDialogConfig } from '@source/rollDialogs/RollDefenseDialog/RollDefenseDialogConfig.mjs';
@@ -66,7 +66,14 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     ];
     schema.attackFormula = new FormulaField({ expectedType: 'rollFormula', contexts, initialFormula: '0' });
     schema.damageFormula = new FormulaField({ expectedType: 'rollFormula', contexts, initialFormula: '$scaleDamage(1d4)' });
-    schema.damageType = new StringField({ choices: [...DAMAGE_TYPES], initial: DAMAGE_TYPE_SLASHING, required: true });
+    // Multi-choice — some SRD weapons (e.g. Dagger: "Piercing or Slashing", Morningstar:
+    // "Bludgeoning and Piercing") deal more than one type. The system treats every selected
+    // type as simultaneously active (an "and") regardless of the SRD's own "or"/"and"
+    // wording — there's no concept of an attacker choosing one type over another; only the
+    // first selected entry (`fallbackDamageType`) feeds the dice-attribution/crit pipeline
+    // today, purely because that pipeline's single-value slot can't carry more than one type
+    // at once. See `fallbackDamageType`'s doc comment.
+    schema.damageTypes = new SetField(new StringField({ choices: [...DAMAGE_TYPES] }), { initial: [DAMAGE_TYPE_SLASHING] });
     schema.critRange = new NumberField({ required: true, initial: 20, integer: true, min: 2, max: 20 });
     schema.critMultiplier = new NumberField({ required: true, initial: 2, integer: true });
     schema.properties = new SetField(new StringField({ choices: [...WEAPON_PROPERTIES] }));
@@ -184,12 +191,32 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     }
   }
 
+  /**
+   * Localized display label for this action's damage type(s) — e.g. "Slashing + Fire" for a
+   * flaming weapon, or "Piercing + Slashing" for a multi-choice weapon like a Dagger (one dual-
+   * typed component, since the dice-attribution pipeline now treats the full `damageTypes` set
+   * as this weapon's own untyped dice's default — see `getDamageTypeLabels()`/
+   * `attributeDamageDiceGroups()`). Reuses `getDamageTypeLabels()` (the same attribution the
+   * actual damage roll breakdown uses, via `groupDamageDiceBySource()`) against the resolved
+   * formula and `resolvedDamageDiceOverrides`.
+   *
+   * Empty string — never a guessed-at type — when nothing could be determined at all (e.g.
+   * no types are selected and the resolved formula is empty/zero); "none" is a perfectly
+   * valid state here, not an error to paper over with a default.
+   *
+   * Used by the weapon sheet's compact Type column; reusable anywhere else a damage-type
+   * label is needed (chat cards, tooltips, etc).
+   */
+  get damageTypeLabel(): string {
+    return getDamageTypeLabels(this.damageFormula.resolvedValue || '', this.resolvedDamageDiceOverrides, [...this.damageTypes]).join(' + ');
+  }
+
   private _buildFormulaBreakdown(
     field: 'attackFormula' | 'damageFormula',
     context: FormulaContext,
     label: string,
     resolved: string,
-    defaultDamageType: DamageType | null = null
+    defaultDamageTypes: DamageType[] = []
   ) {
     const path = this._formulaPath(field);
     const overrides = this._resolveOverrides(path, context);
@@ -200,7 +227,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     return {
       diceOverrides,
       breakdown: [
-        ...groupDamageDiceBySource(resolved, label, diceOverrides, defaultDamageType).map(entry => ({ ...entry, value: 0 })),
+        ...groupDamageDiceBySource(resolved, label, diceOverrides, defaultDamageTypes).map(entry => ({ ...entry, value: 0 })),
         ...(baseFlat ? [{ label, value: baseFlat }] : []),
         ...buildOverridesModifierList({ effectOverrides: { [path]: overrides } }, path),
         ...overrides.filter(override => override.stackResult !== STACK_RESULT_IGNORED && Number.isNaN(parseNumericChangeValue(override.value)))
@@ -261,8 +288,9 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
   private _buildDamageData(context: UseWeaponAttackContext, formulaContext: FormulaContext): WeaponDamageRollBreakdownData {
     const resolved = this._resolveFormula('damageFormula', formulaContext);
     const label = formulaContext.item.name;
-    const { diceOverrides, breakdown } = this._buildFormulaBreakdown('damageFormula', formulaContext, label, resolved, this.damageType);
-    const { formula, exemptDiceIndices } = flavorDamageDiceBySource(resolved, label, diceOverrides, this.damageType);
+    const damageTypes = [...this.damageTypes];
+    const { diceOverrides, breakdown } = this._buildFormulaBreakdown('damageFormula', formulaContext, label, resolved, damageTypes);
+    const { formula, exemptDiceIndices } = flavorDamageDiceBySource(resolved, label, diceOverrides, damageTypes);
     const flat = extractFlatModifier(resolved).flat;
     const weaponDamage: WeaponDamageRollModifier = {
       id: 'weaponDamage', label, value: flat, formula, exemptDiceIndices,
@@ -395,7 +423,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
       critRange: this.critRange,
       critMultiplier: this.critMultiplier,
       critConfirmTotal: critConfirmRoll?.total ?? null,
-      damageType: this.damageType,
+      damageType: [...this.damageTypes],
       targets: targetRows,
       actionEconomySpent: null,
       modifierList: dialog.attackModifiers,

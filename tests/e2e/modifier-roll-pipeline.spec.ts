@@ -153,7 +153,13 @@ test('GM confirms a melee modifier list and later resolves its unchanged damage 
   expect(snapshot.dice).toEqual([
     { number: 2, faces: 8 }, { number: 1, faces: 6 }, { number: 2, faces: 6 }, { number: 1, faces: 4 },
   ]);
-  expect(snapshot.flatTerms).toEqual([2, 6, 4]);
+  // The weapon's own flat "- 2" and the AE's own flat "+ 3" now both appear as their own
+  // properly-flavored terms in the real posted roll (poc.10 Story J's typed-component fix) —
+  // previously they were silently dropped from the formula text entirely (a real under-rolling
+  // bug), collapsed into one bare combined value instead. All four flat terms here (weapon's
+  // -2, the AE's +3, the +3 Str damage-ability bonus, and the +2 situational modifier) are
+  // unconditionally doubled by evaluateCritical() regardless of exempt status.
+  expect(snapshot.flatTerms).toEqual([4, 6, 6, 4]);
 
   // Altering the weapon now must not change this already-posted attack's damage.
   await page.evaluate(async ({ weaponUuid }) => {

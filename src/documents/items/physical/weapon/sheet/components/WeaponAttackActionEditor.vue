@@ -7,7 +7,7 @@
       <DamageFormula
         class="grid-full-row"
       />
-      <DamageType />
+      <DamageTypes />
       <CritRange />
       <CritMultiplier />
       <CheckBoxFormGroup
@@ -49,7 +49,7 @@
   import CritMultiplier from './actions/CritMultiplier.vue';
   import CritRange from './actions/CritRange.vue';
   import DamageFormula from './actions/DamageFormula.vue';
-  import DamageType from './actions/DamageType.vue';
+  import DamageTypes from './actions/DamageTypes.vue';
 
   const { propertyOptions } = defineProps<WeaponAttackActionEditorProps<T>>();
 

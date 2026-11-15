@@ -12,6 +12,9 @@ import { dismissOverlays } from './helpers/ui.mjs';
  * unit-test boundary documented in `function-grammar.test.mts`). Proves:
  * - Nesting `$critMultiply`/`$typed` in either order converges on the same composed marker
  *   bag (the composability fix this story's marker-bag rewrite exists for).
+ * - Nested `$typed()` calls COMBINE their types on one die rather than the outer call
+ *   overwriting the inner one — a weapon dealing both Fire and Cold is a real "and", not a
+ *   conflict with one type winning.
  * - A flaming weapon's sheet shows a clean damage formula (no leaked marker text) and
  *   correctly attributes its AE-contributed Fire die separately from the weapon's own
  *   Slashing base damage.
@@ -67,6 +70,22 @@ test.describe('$typed() damage-type marker — real formula resolution (poc.10 S
       expect(resolved).toContain('crit=multiply');
       expect(resolved).toContain('type=dnd35e.DAMAGE_TYPES.Fire');
     }
+  });
+
+  test('nested $typed() calls COMBINE their types on one die, instead of the outer call overwriting the inner one', async ({ page }) => {
+    await gotoGame(page);
+
+    const uuid = await createWeaponWithDamageFormula(page, 'Fire And Cold Blade', '$typed(fire, $typed(cold, 1d6))');
+    const resolved = await page.evaluate(async (weaponUuid) => {
+      const weapon = await (globalThis as any).fromUuid(weaponUuid);
+      const action = weapon.system.actions.find((entry: any) => entry.type === 'melee_weapon_attack');
+      return action.damageFormula.resolvedValue as string;
+    }, uuid);
+
+    // A single die, both types present — not "whichever $typed() call resolved last wins".
+    expect(resolved).toMatch(/^1d6\[__dnd35e_marker__/);
+    expect(resolved).toContain('dnd35e.DAMAGE_TYPES.Fire');
+    expect(resolved).toContain('dnd35e.DAMAGE_TYPES.Cold');
   });
 
   test('a flaming weapon separates Slashing base damage from Fire bonus damage in both the sheet and the roll breakdown', async ({ page }) => {

@@ -8,16 +8,17 @@ type WeaponAttackSourceData = ActionSourceData & {
   requiresEquipped: boolean;
   attackFormula: FormulaDataSource;
   damageFormula: FormulaDataSource;
-  damageType: DamageType;
+  damageTypes: DamageType[];
   critRange: number;
   critMultiplier: number;
   properties: AllWeaponProperties[];
 };
 
-interface WeaponAttackData extends Omit<WeaponAttackSourceData, 'name' | 'attackFormula' | 'damageFormula' | 'properties'>, ActionData {
+interface WeaponAttackData extends Omit<WeaponAttackSourceData, 'name' | 'attackFormula' | 'damageFormula' | 'properties' | 'damageTypes'>, ActionData {
   attackFormula: FormulaData;
   damageFormula: FormulaData;
   properties: Set<AllWeaponProperties>;
+  damageTypes: Set<DamageType>;
 }
 
 export type { WeaponAttackData, WeaponAttackSourceData };

@@ -16,6 +16,7 @@ import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { Creature } from '@actors/creature/Creature.mjs';
 import { HP_ADJUSTMENT_TYPE } from '@actors/creature/sheet/components/constants.mjs';
 import type { ChatMessageSource } from '@common/documents/chat-message.mjs';
+import type { DamageType } from '@constants/attacks/damageTypes.mjs';
 import type { WieldedHand } from '@constants/equipmentSlots.mjs';
 import type { AttackActionSpend } from '@documents/combat/combatant/combatantActionEconomy.mjs';
 import { refundAttackAction, refundHandBab } from '@documents/combat/combatant/combatantActionEconomy.mjs';
@@ -39,7 +40,7 @@ const resolutionCardTemplate = Handlebars.compile(resolutionCardTemplateSource, 
 interface ResolutionCardData extends DefenseEvaluation {
   attackName: string;
   checkMode: CheckMode;
-  damageType: string;
+  damageType: DamageType[];
   nonLethal: boolean;
   applyHalfDamage: boolean;
   actionEconomySpent: (AttackActionSpend & { hand: WieldedHand; babSpent: number }) | null;
@@ -209,8 +210,11 @@ async function onApplyDamage(message: ChatMessage, flags: ResolutionCardFlags): 
   }
 
   const adjustmentType = flags.nonLethal ? HP_ADJUSTMENT_TYPE.NONLETHAL_ADJUSTMENT : HP_ADJUSTMENT_TYPE.DAMAGE_ADJUSTMENT;
-  await target.updateHP(flags.appliedAmount, adjustmentType, { attackerId: attackerActor?.id, damageType: flags.damageType });
-  await target.events.emit(ActionLifeCycle.dealDamage, { amount: flags.appliedAmount, damageType: flags.damageType, target });
+  // HpUpdateMetadata/the dealDamage event are generic to any actor damage, not weapon-specific
+  // — their damageType stays a single joined string; only the weapon-attack flow itself
+  // (AttackCardFlags/ResolutionCardData) carries the full type list.
+  await target.updateHP(flags.appliedAmount, adjustmentType, { attackerId: attackerActor?.id, damageType: flags.damageType.join(', ') });
+  await target.events.emit(ActionLifeCycle.dealDamage, { amount: flags.appliedAmount, damageType: flags.damageType.join(', '), target });
 
   const updatedFlags: ResolutionCardFlags = { ...flags, applied: true };
   const roll = message.rolls[0] as DamageRoll | undefined;
@@ -244,7 +248,7 @@ async function onUndoResolution(message: ChatMessage, flags: ResolutionCardFlags
       const newHp = Math.min(target.system.hp.max, target.system.hp.current + flags.appliedAmount);
       await target.update({ 'system.hp.current': newHp });
     }
-    await target.events.emit(ActionLifeCycle.undoDealDamage, { amount: flags.appliedAmount, damageType: flags.damageType, target });
+    await target.events.emit(ActionLifeCycle.undoDealDamage, { amount: flags.appliedAmount, damageType: flags.damageType.join(', '), target });
   }
 
   if (flags.actionEconomySpent) {

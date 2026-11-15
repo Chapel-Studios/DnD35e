@@ -19,19 +19,26 @@
  * Encoding: `__dnd35e_marker__key1=value1;key2=value2__`. Keys/values are restricted to
  * `isSafeMarkerToken()`'s character set — this system's own marker vocabulary (crit override
  * tokens, `DAMAGE_TYPES` localization keys) never contains `;`/`=`/whitespace, so a value
- * outside that set is rejected rather than silently mis-parsed, instead of being escaped.
+ * outside that set is rejected rather than silently mis-parsed, instead of being escaped. A
+ * value MAY itself be a comma-joined list (e.g.
+ * `type=dnd35e.DAMAGE_TYPES.Fire,dnd35e.DAMAGE_TYPES.Cold`) for a dimension where multiple
+ * values can coexist on one component — see `withMarkerFieldAppend()`.
  *
- * Used by `d20Formula.mts`'s `mergeDiceGroupMarker()` (the per-dice-group writer) and the
- * domain-specific reader wrappers in `critDiceMarkers.mts`/`typedDamageMarkers.mts`. Plain
- * display labels (a weapon or AE name, stamped by `flavorDamageDiceBySource()`'s final pass)
- * are never bags — `parseMarkerBag()` returns `null` for any flavor that isn't one, which
- * callers must treat as "no marker present", not an error.
+ * Used by `d20Formula.mts`'s `mergeDiceGroupMarker()`/`combineDiceGroupMarker()` (the
+ * per-dice-group writers) and the domain-specific reader wrappers in
+ * `critDiceMarkers.mts`/`typedDamageMarkers.mts`. Plain display labels (a weapon or AE name,
+ * stamped by `flavorDamageDiceBySource()`'s final pass) are never bags — `parseMarkerBag()`
+ * returns `null` for any flavor that isn't one, which callers must treat as "no marker
+ * present", not an error.
  *
  * @module
  */
 const MARKER_BAG_PREFIX = '__dnd35e_marker__';
 const MARKER_BAG_SUFFIX = '__';
-const SAFE_TOKEN_REGEX = /^[\p{L}\p{N}_.]+$/u;
+// `,` is allowed so a single value can carry a joined list (see `withMarkerFieldAppend()`) —
+// this system's own marker vocabulary (crit override tokens, `DamageType` constants) never
+// otherwise contains one.
+const SAFE_TOKEN_REGEX = /^[\p{L}\p{N}_.,]+$/u;
 
 /** Whether `token` is safe to store as a marker-bag key or value — see module doc. */
 function isSafeMarkerToken(token: string): boolean {
@@ -87,6 +94,20 @@ function withMarkerField(existingFlavor: string | undefined, key: string, value:
 }
 
 /**
+ * Appends `value` into a comma-joined LIST stored at `key`, instead of `withMarkerField()`'s
+ * overwrite-one-value semantics — for a dimension where multiple values can coexist on the
+ * same component (e.g. damage type: `1d6[fire] * 2[cold]` deals both Fire and Cold at once,
+ * not "whichever resolved last"). Deduplicates; existing order is preserved, with `value`
+ * appended last when it's new. A non-bag existing flavor starts a fresh single-value list.
+ */
+function withMarkerFieldAppend(existingFlavor: string | undefined, key: string, value: string): string {
+  const bag = parseMarkerBag(existingFlavor) ?? {};
+  const existingValues = bag[key] ? bag[key].split(',') : [];
+  const values = existingValues.includes(value) ? existingValues : [...existingValues, value];
+  return buildMarkerBag({ ...bag, [key]: values.join(',') });
+}
+
+/**
  * Strips every embedded marker-bag `[...]` flavor tag from a resolved formula string, leaving
  * any other bracket content untouched. For display-only contexts that show a raw resolved
  * formula directly (e.g. a weapon's own damage text) without going through the dice-group
@@ -99,4 +120,4 @@ function stripMarkerFlavors(formula: string): string {
   return formula.replace(/\[([^\]]*)\]/g, (whole, inner: string) => (parseMarkerBag(inner) ? '' : whole));
 }
 
-export { buildMarkerBag, parseMarkerBag, stripMarkerFlavors, withMarkerField };
+export { buildMarkerBag, parseMarkerBag, stripMarkerFlavors, withMarkerField, withMarkerFieldAppend };

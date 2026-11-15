@@ -27,7 +27,7 @@ const useWeaponAttackEditorStore = <T extends WeaponAttackDataModel>(
     // True authored formula text (pre-AE) — see `nameFormulaSourceText` for why.
     attackFormulaSourceText: computed(() => (params.sourceAction.value as { attackFormula?: FormulaDataSource } | undefined)?.attackFormula?.formula),
     damageFormulaSourceText: computed(() => (params.sourceAction.value as { damageFormula?: FormulaDataSource } | undefined)?.damageFormula?.formula),
-    damageType: computed(() => params.action.value.damageType),
+    damageTypes: computed(() => params.action.value.damageTypes),
     critRange: computed(() => params.action.value.critRange),
     critMultiplier: computed(() => params.action.value.critMultiplier),
     requiresEquipped: computed(() => params.action.value.requiresEquipped),
@@ -45,7 +45,7 @@ interface WeaponAttackEditorStoreGetters extends ActionEditorStoreGetters {
   damageFormulaData: ComputedRef<FormulaDataSource>;
   attackFormulaSourceText: ComputedRef<string | undefined>;
   damageFormulaSourceText: ComputedRef<string | undefined>;
-  damageType: ComputedRef<DamageType>;
+  damageTypes: ComputedRef<Set<DamageType>>;
   critRange: ComputedRef<number>;
   critMultiplier: ComputedRef<number>;
   requiresEquipped: ComputedRef<boolean>;

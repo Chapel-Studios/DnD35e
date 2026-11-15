@@ -94,7 +94,7 @@
               "expectedType": "rollFormula",
               "resolvedValue": null
             },
-            "damageType": "dnd35e.DAMAGE_TYPES.Slashing",
+            "damageTypes": ["dnd35e.DAMAGE_TYPES.Slashing"],
             "critRange": 19,
             "critMultiplier": 2
           }

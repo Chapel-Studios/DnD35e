@@ -1,8 +1,8 @@
-import { DAMAGE_TYPE_FIRE, DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
+import { DAMAGE_TYPE_FIRE, DAMAGE_TYPE_PIERCING, DAMAGE_TYPE_SLASHING } from '@constants/attacks/damageTypes.mjs';
 import { CRIT_MARKER_KEY, CRIT_OVERRIDE_EXEMPT, CRIT_OVERRIDE_MULTIPLY } from '@constants/critDiceMarkers.mjs';
 import { buildMarkerBag } from '@constants/diceMarkerBag.mjs';
 import { DAMAGE_TYPE_MARKER_KEY, readDamageType } from '@constants/typedDamageMarkers.mjs';
-import { flavorDamageDiceBySource, getDamageTypeLabels, groupDamageDiceBySource, mergeDiceGroupMarker } from '@source/dice/d20Formula.mjs';
+import { combineDiceGroupMarker, flavorDamageDiceBySource, getDamageTypeLabels, groupDamageDiceBySource } from '@source/dice/d20Formula.mjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mirrors tests/unit/dice/splitFormulaParts.test.mts's `Roll.parse`/`foundry.dice.terms`
@@ -143,24 +143,24 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
     ]);
   });
 
-  // defaultDamageType — the dropdown-driven implicit wrap: a weapon's own untyped dice
-  // inherit the weapon's selected damage type; an AE's untyped dice do not.
-  describe('defaultDamageType fallback', () => {
-    it('falls back to defaultDamageType for an untyped weapon-owned group', () => {
+  // defaultDamageTypes — the dropdown-driven implicit wrap: a weapon's own untyped dice
+  // inherit every type selected on the weapon; an AE's untyped dice do not.
+  describe('defaultDamageTypes fallback', () => {
+    it('falls back to defaultDamageTypes for an untyped weapon-owned group', () => {
       const formula = 'untyped-weapon-default';
       parsed.set(formula, [die(6, 2)]);
 
-      expect(groupDamageDiceBySource(formula, 'Crownguard', [], DAMAGE_TYPE_SLASHING)).toEqual([
+      expect(groupDamageDiceBySource(formula, 'Crownguard', [], [DAMAGE_TYPE_SLASHING])).toEqual([
         { label: 'Crownguard', formula: '2d6', damageTypeLabel: DAMAGE_TYPE_SLASHING },
       ]);
     });
 
-    it('does not apply defaultDamageType to an untyped AE-contributed group', () => {
+    it('does not apply defaultDamageTypes to an untyped AE-contributed group', () => {
       const formula = 'untyped-override-default';
       parsed.set(formula, [die(6, 2), op('+'), die(6, 1)]);
       parsed.set('1d6', [die(6, 1)]);
 
-      const rows = groupDamageDiceBySource(formula, 'Crownguard', [{ effectName: '+1 Flaming', value: '1d6' }], DAMAGE_TYPE_SLASHING);
+      const rows = groupDamageDiceBySource(formula, 'Crownguard', [{ effectName: '+1 Flaming', value: '1d6' }], [DAMAGE_TYPE_SLASHING]);
       expect(rows).toEqual([
         { label: 'Crownguard', formula: '2d6', damageTypeLabel: DAMAGE_TYPE_SLASHING },
         { label: '+1 Flaming', formula: '1d6' },
@@ -168,28 +168,38 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
       expect(rows[1]).not.toHaveProperty('damageTypeLabel');
     });
 
-    it('an explicit $typed() marker on the weapon\'s own dice wins over defaultDamageType', () => {
+    it('an explicit $typed() marker on the weapon\'s own dice wins over defaultDamageTypes', () => {
       const formula = 'explicit-beats-default';
       parsed.set(formula, [die(6, 2, typedMarker(DAMAGE_TYPE_FIRE))]);
 
-      expect(groupDamageDiceBySource(formula, 'Crownguard', [], DAMAGE_TYPE_SLASHING)).toEqual([
+      expect(groupDamageDiceBySource(formula, 'Crownguard', [], [DAMAGE_TYPE_SLASHING])).toEqual([
         { label: 'Crownguard', formula: '2d6', damageTypeLabel: DAMAGE_TYPE_FIRE },
       ]);
     });
 
-    it('does not fold defaultDamageType into the real roll\'s own source-only flavor', () => {
+    it('falls back to EVERY selected type for an untyped weapon-owned group (multi-choice weapon)', () => {
+      const formula = 'untyped-weapon-multi-default';
+      parsed.set(formula, [die(6, 2)]);
+
+      expect(groupDamageDiceBySource(formula, 'Crownguard', [], [DAMAGE_TYPE_PIERCING, DAMAGE_TYPE_SLASHING])).toEqual([
+        { label: 'Crownguard', formula: '2d6', damageTypeLabel: `${DAMAGE_TYPE_PIERCING} + ${DAMAGE_TYPE_SLASHING}` },
+      ]);
+    });
+
+    it('does not fold defaultDamageTypes into the real roll\'s own source-only flavor', () => {
       const formula = 'default-real-roll';
       parsed.set(formula, [die(6, 2)]);
 
-      expect(flavorDamageDiceBySource(formula, 'Crownguard', [], DAMAGE_TYPE_SLASHING).formula).toBe('2d6[Crownguard]');
+      expect(flavorDamageDiceBySource(formula, 'Crownguard', [], [DAMAGE_TYPE_SLASHING]).formula).toBe('2d6[Crownguard]');
     });
   });
 
-  // Glued multiplicative/divisive groups (e.g. "1d6 * 2") resolve to ONE effective type for the
-  // whole group rather than each term keeping its own — unlike a "+"/"-" boundary, there's no
-  // way to split credit for a product. The multiplier (the non-anchor term) wins on conflict,
-  // since it's treated as a deliberate override; the anchor's own type is the fallback.
-  describe('glued multiplicative/divisive groups — multiplier-wins precedence', () => {
+  // Glued multiplicative/divisive groups (e.g. "1d6 * 2") resolve to ONE effective type-SET for
+  // the whole group rather than each term keeping its own — unlike a "+"/"-" boundary, there's
+  // no way to split credit for a product. Unlike a crit override (a discrete either/or choice),
+  // damage types on both sides of the glue COMBINE — a weapon dealing both Fire and Cold is a
+  // real, intended "and", not a conflict to resolve by picking a winner.
+  describe('glued multiplicative/divisive groups — damage types combine', () => {
     it('uses the anchor die\'s own type when only the die is explicitly typed (1d6[slashing] * 2)', () => {
       const formula = 'mult-anchor-typed';
       parsed.set(formula, [die(6, 1, typedMarker(DAMAGE_TYPE_SLASHING)), op('*'), num(2)]);
@@ -208,12 +218,12 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
       ]);
     });
 
-    it('lets the multiplier\'s type win over a conflicting anchor type (1d6[slashing] * 1[fire])', () => {
+    it('combines both types when the anchor and multiplier are typed differently (1d6[slashing] * 1[fire])', () => {
       const formula = 'mult-conflict-typed';
       parsed.set(formula, [die(6, 1, typedMarker(DAMAGE_TYPE_SLASHING)), op('*'), num(1, typedMarker(DAMAGE_TYPE_FIRE))]);
 
       expect(groupDamageDiceBySource(formula, 'Crownguard', [])).toEqual([
-        { label: 'Crownguard', formula: '1d6 * 1', damageTypeLabel: DAMAGE_TYPE_FIRE },
+        { label: 'Crownguard', formula: '1d6 * 1', damageTypeLabel: `${DAMAGE_TYPE_SLASHING} + ${DAMAGE_TYPE_FIRE}` },
       ]);
     });
 
@@ -261,15 +271,15 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
   });
 
   // The fix for the "$typed(fire, 3) loses its type entirely" gap (poc.10 Story J, item #4):
-  // mergeDiceGroupMarker() now applies to EVERY component, not just dice-shaped ones.
+  // combineDiceGroupMarker() now applies to EVERY component, not just dice-shaped ones.
   it('attaches a damage-type marker to a wholly flat numeric component, not just dice groups', () => {
     const formula = '3';
     parsed.set(formula, [num(3)]);
 
-    const flavored = mergeDiceGroupMarker(formula, DAMAGE_TYPE_MARKER_KEY, DAMAGE_TYPE_FIRE);
+    const flavored = combineDiceGroupMarker(formula, DAMAGE_TYPE_MARKER_KEY, DAMAGE_TYPE_FIRE);
     const match = /^3\[(.+)\]$/.exec(flavored);
     expect(match).not.toBeNull();
-    expect(readDamageType(match?.[1])).toBe(DAMAGE_TYPE_FIRE);
+    expect(readDamageType(match?.[1])).toEqual([DAMAGE_TYPE_FIRE]);
   });
 
   // getDamageTypeLabels() — the generic, groupDamageDiceBySource()-backed building block any
@@ -297,12 +307,12 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
       expect(getDamageTypeLabels(formula, [{ effectName: '+1 Flaming', value: '1d6' }])).toEqual([DAMAGE_TYPE_FIRE]);
     });
 
-    it('omits an untyped AE-contributed component instead of borrowing defaultDamageType', () => {
+    it('omits an untyped AE-contributed component instead of borrowing defaultDamageTypes', () => {
       const formula = 'labels-untyped-override';
       parsed.set(formula, [die(6, 2), op('+'), die(6, 1)]);
       parsed.set('1d6', [die(6, 1)]);
 
-      expect(getDamageTypeLabels(formula, [{ effectName: '+1 Flaming', value: '1d6' }], DAMAGE_TYPE_SLASHING))
+      expect(getDamageTypeLabels(formula, [{ effectName: '+1 Flaming', value: '1d6' }], [DAMAGE_TYPE_SLASHING]))
         .toEqual([DAMAGE_TYPE_SLASHING]);
     });
 

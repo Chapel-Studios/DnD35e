@@ -51,11 +51,14 @@
  * a multi-component homebrew weapon. `damageType` is a lowercase alias (`fire`, `slashing`,
  * ...) resolved against the existing `DAMAGE_TYPES` constants via `resolveDamageTypeAlias()`
  * (`@constants/attacks/damageTypes.mjs`) — no second taxonomy. Resolves its inner formula
- * normally, then upserts its own key into the same shared marker bag `$critMultiply`/
- * `$critExempt` use (`mergeDiceGroupMarker()`) — composable with a nested crit-override
- * marker the same way. An unrecognized `damageType` alias resolves the inner formula
- * unflavored rather than throwing (same runtime-miss convention the array functions below
- * use). Read back into display-only `damageTypeLabel` breakdown rows by
+ * normally, then COMBINES its own type into the same shared marker bag `$critMultiply`/
+ * `$critExempt` use (`combineDiceGroupMarker()`) — appended into the group's damage-type
+ * list rather than overwriting it, so e.g. `$typed(fire, $typed(cold, 1d6))` or two
+ * separately-typed terms glued by `*`/`/` both deal Fire AND Cold at once, not "whichever
+ * resolved outermost wins" — composable with a nested crit-override marker the same way. An
+ * unrecognized `damageType` alias resolves the inner formula unflavored rather than throwing
+ * (same runtime-miss convention the array functions below use). Read back into display-only
+ * `damageTypeLabel` breakdown rows by
  * `attributeDamageDiceGroups()`/`groupDamageDiceBySource()` (`src/dice/d20Formula.mts`) — the
  * real roll's own `[flavor]` tag stays dedicated to source attribution; see that module's doc.
  *
@@ -82,7 +85,7 @@ import type { Size } from '@constants/sizes.mjs';
 import { DAMAGE_TYPE_MARKER_KEY } from '@constants/typedDamageMarkers.mjs';
 import { roundToDecimal } from '@helpers/math.mjs';
 import { scaleDamageDie } from '@items/physical/weapon/logic/weaponDamageScaling.mjs';
-import { mergeDiceGroupMarker } from '@source/dice/d20Formula.mjs';
+import { combineDiceGroupMarker, mergeDiceGroupMarker } from '@source/dice/d20Formula.mjs';
 
 import { findMatchingParen, splitTopLevelArgs } from './FormulaResolver.parenUtils.mjs';
 import type { FunctionBlock, FunctionBlockError, FunctionName } from './FormulaResolver.types.mjs';
@@ -443,7 +446,7 @@ function resolveFunctionBlock(
     const dieText = resolveOperand(block.args[1], helpers.resolveSubFormula);
     const damageType: DamageType | undefined = resolveDamageTypeAlias(aliasText);
     if (!damageType) return dieText;
-    return mergeDiceGroupMarker(dieText, DAMAGE_TYPE_MARKER_KEY, damageType);
+    return combineDiceGroupMarker(dieText, DAMAGE_TYPE_MARKER_KEY, damageType);
   }
 
   // Array functions: contains / find / any / count — a runtime miss (missing context,

@@ -1,7 +1,13 @@
 import type { DamageType } from '@constants/attacks/damageTypes.mjs';
 import { readCritOverride } from '@constants/critDiceMarkers.mjs';
-import { stripMarkerFlavors, withMarkerField } from '@constants/diceMarkerBag.mjs';
-import { readDamageType } from '@constants/typedDamageMarkers.mjs';
+import {
+  buildMarkerBag,
+  parseMarkerBag,
+  stripMarkerFlavors,
+  withMarkerField,
+  withMarkerFieldAppend,
+} from '@constants/diceMarkerBag.mjs';
+import { DAMAGE_TYPE_MARKER_KEY, readDamageType } from '@constants/typedDamageMarkers.mjs';
 
 /**
  * Formula-string assembly for D20-based rolls.
@@ -290,9 +296,11 @@ interface FormulaComponent {
    * this is just that term's own flavor (or a wrapping lone `ParentheticalTerm`'s flavor,
    * inherited only when it wraps exactly one still-unflavored component). For a glued
    * multiplicative/divisive group with exactly one dice-bearing anchor (e.g. `1d6 * 2`), the
-   * non-anchor "multiplier" term's own flavor wins when present — it's treated as a deliberate
-   * override — falling back to the anchor's own flavor otherwise (e.g. `1d6[slashing] * 2` and
-   * `1d6 * 2[fire]` both read as one flavor; `1d6[slashing] * 2[fire]` reads as fire).
+   * anchor's and the non-anchor "multiplier" term's flavors are COMBINED via
+   * `combineGroupFlavors()` — the group's damage type is the union of both sides (e.g.
+   * `1d6[fire] * 2[cold]` deals both Fire and Cold at once), while any other dimension (e.g. a
+   * nested crit override) keeps "multiplier wins, else anchor" precedence, since those aren't
+   * combinable sets.
    */
   existingFlavor: string | undefined;
   /** +1 or -1, from this component's own leading `+`/`-` (propagated through any wrapping negation). */
@@ -310,6 +318,32 @@ interface FormulaComponent {
    * flavor present on a losing slot within a glued group is stripped, not left dangling.
    */
   emit: (flavor: string | null) => string;
+}
+
+/**
+ * Merges a glued multiplicative/divisive group's two flavored terms into one effective flavor
+ * — the damage-type dimension (`DAMAGE_TYPE_MARKER_KEY`) COMBINES (union of both sides' values,
+ * deduplicated) since a group like `1d6[fire] * 2[cold]` deals both types at once, not
+ * "whichever resolved outermost." Any other dimension (e.g. a nested crit override) keeps the
+ * simple "second argument wins, else first" precedence this had historically, since those
+ * aren't combinable sets. When neither side is a real marker bag, falls back to plain
+ * "second wins, else first" on the raw text (the pre-existing non-bag behavior).
+ */
+function combineGroupFlavors(anchorFlavor: string | undefined, multiplierFlavor: string | undefined): string | undefined {
+  if (!multiplierFlavor) return anchorFlavor || undefined;
+  if (!anchorFlavor) return multiplierFlavor;
+  const anchorBag = parseMarkerBag(anchorFlavor);
+  const multiplierBag = parseMarkerBag(multiplierFlavor);
+  if (!anchorBag && !multiplierBag) return multiplierFlavor;
+
+  const merged: Record<string, string> = { ...anchorBag, ...multiplierBag };
+  const combinedTypes = [...new Set([
+    ...(anchorBag?.[DAMAGE_TYPE_MARKER_KEY]?.split(',') ?? []),
+    ...(multiplierBag?.[DAMAGE_TYPE_MARKER_KEY]?.split(',') ?? []),
+  ])];
+  if (combinedTypes.length > 0) merged[DAMAGE_TYPE_MARKER_KEY] = combinedTypes.join(',');
+  else delete merged[DAMAGE_TYPE_MARKER_KEY];
+  return buildMarkerBag(merged);
 }
 
 /**
@@ -386,8 +420,8 @@ function parseFormulaComponents(formula: string): FormulaComponent[] | null {
         // A glued multiplicative/divisive group (e.g. "1d6 * 2") — "+"/"-" always start a new
         // group (see the outer loop below), so only "*"/"/" ever keep multiple terms together
         // here. Exactly one non-deterministic anchor is the common, fully-supported case: the
-        // "multiplier" term's own flavor wins when present (see FormulaComponent.existingFlavor's
-        // doc), falling back to the anchor's. Zero or multiple non-deterministic terms (e.g.
+        // anchor's and the "multiplier" term's flavors are COMBINED (see
+        // `combineGroupFlavors()`'s doc). Zero or multiple non-deterministic terms (e.g.
         // "1d6 * 1d4") is rare and has no clean single anchor to flavor directly — it falls back
         // to one opaque, parenthesized unit, the only shape here that sacrifices this group's own
         // crit-multiplication visibility (a parenthesized group is invisible to
@@ -397,7 +431,7 @@ function parseFormulaComponents(formula: string): FormulaComponent[] | null {
         if (nonDeterministic.length === 1) {
           const anchor = nonDeterministic[0];
           const multiplier = group.find(term => term !== anchor && !(term instanceof OperatorTerm) && term.flavor);
-          const effectiveFlavor = multiplier?.flavor || anchor.flavor || undefined;
+          const effectiveFlavor = combineGroupFlavors(anchor.flavor, multiplier?.flavor);
           components.push({
             isDice: true,
             isCritEligible: anchor instanceof Die,
@@ -486,15 +520,30 @@ function flavorDiceGroups(formula: string, label: string): string {
  * Like `flavorDiceGroups()`, but upserts `(key, value)` into whatever marker bag (if any) each
  * component's EXISTING flavor already carries (`@constants/diceMarkerBag.mjs`'s
  * `withMarkerField()`), instead of overwriting it outright — the composability fix for the
- * `$critMultiply`/`$critExempt`/`$typed()` escape hatches (`FormulaResolver.
- * functionGrammar.mts`): nesting them in either order (`$critMultiply($typed(fire, 1d6))` or
- * `$typed(fire, $critMultiply(1d6))`) converges on the same combined bag, since each only
- * ever upserts its own key. Applies uniformly to dice AND flat components — a wholly flat
+ * `$critMultiply`/`$critExempt` escape hatches (`FormulaResolver.functionGrammar.mts`): nesting
+ * them alongside `$typed()` in either order converges on the same combined bag, since each
+ * only ever upserts its own key. Applies uniformly to dice AND flat components — a wholly flat
  * `$typed(fire, 3)` no longer silently loses its type, since every component (not just
  * dice-shaped ones) goes through this same merge step.
+ *
+ * Overwrite semantics are correct for `key`s that are a discrete either/or choice (the crit
+ * override: `'multiply'`/`'exempt'`) — see `combineDiceGroupMarker()` for the sibling used by
+ * `$typed()`, where multiple values must coexist instead.
  */
 function mergeDiceGroupMarker(formula: string, key: string, value: string): string {
   return transformDiceGroupFlavors(formula, existingFlavor => withMarkerField(existingFlavor, key, value));
+}
+
+/**
+ * Like `mergeDiceGroupMarker()`, but appends into a comma-joined LIST at `key`
+ * (`@constants/diceMarkerBag.mjs`'s `withMarkerFieldAppend()`) instead of overwriting —
+ * `$typed()`'s own writer, so a weapon's damage can genuinely qualify as more than one type at
+ * once (e.g. `$typed(fire, $typed(cold, 1d6))` or two separately-typed terms glued by `*`/`/`
+ * combine into one Fire-and-Cold component, rather than whichever call resolved outermost
+ * overwriting the other's type).
+ */
+function combineDiceGroupMarker(formula: string, key: string, value: string): string {
+  return transformDiceGroupFlavors(formula, existingFlavor => withMarkerFieldAppend(existingFlavor, key, value));
 }
 
 /**
@@ -560,12 +609,12 @@ function flavorDamageDiceBySource(
   resolvedFormula: string,
   baseLabel: string,
   overrides: { effectName: string; value: string }[],
-  defaultDamageType: DamageType | null = null
+  defaultDamageTypes: DamageType[] = []
 ): { formula: string; exemptDiceIndices: number[] } {
   const components = parseFormulaComponents(resolvedFormula);
   if (!components) return { formula: stripMarkerFlavors(flavorDiceGroups(resolvedFormula, baseLabel)), exemptDiceIndices: [] };
 
-  const attributed = attributeDamageDiceGroups(components, baseLabel, overrides, defaultDamageType);
+  const attributed = attributeDamageDiceGroups(components, baseLabel, overrides, defaultDamageTypes);
 
   // Crit-index counting mirrors DamageRoll#evaluateCritical()'s own walk exactly — only an
   // `isCritEligible` component (a genuine bare/modified Die) consumes or needs a position here.
@@ -594,23 +643,26 @@ function flavorDamageDiceBySource(
  * rules this implements. Returns one entry per component, dice AND flat alike, in formula order
  * (zero-value components included — callers filter those out themselves where it matters).
  *
- * `damageType` (poc.10 Story J) is read from the same component marker bag the crit escape
+ * `damageTypes` (poc.10 Story J) is read from the same component marker bag the crit escape
  * hatches use — both dimensions live in one shared bag (`@constants/diceMarkerBag.mjs`),
  * upserted independently by whichever of `$critMultiply`/`$critExempt`/`$typed()` resolved (see
- * `mergeDiceGroupMarker()`), so a component can carry both a crit override and a damage type at
- * once regardless of nesting order. A weapon-owned component (`owner === -1`) with no explicit
- * `$typed()` wrapping falls back to `defaultDamageType` — the dropdown-selected `damageType` on
- * the weapon's own attack action, implicitly covering whatever part of its base `damageFormula`
- * the author didn't explicitly wrap — so only an AE-contributed component with no `$typed()` of
- * its own stays `null` (no type inherited from the weapon; see
+ * `mergeDiceGroupMarker()`/`combineDiceGroupMarker()`), so a component can carry both a crit
+ * override and one or more damage types at once regardless of nesting order — a component can
+ * genuinely qualify as more than one type simultaneously (e.g. `$typed(fire, $typed(cold,
+ * 1d6))` deals both Fire and Cold at once; this is treated as an "and", never an "or" with one
+ * type winning). A weapon-owned component (`owner === -1`) with no explicit `$typed()`
+ * wrapping falls back to `defaultDamageTypes` — every type selected on the weapon's own attack
+ * action, implicitly covering whatever part of its base `damageFormula` the author didn't
+ * explicitly wrap — so only an AE-contributed component with no `$typed()` of its own stays
+ * untyped (empty list; no type inherited from the weapon; see
  * `WeaponAttackDataModel._buildDamageData()`'s call site).
  */
 function attributeDamageDiceGroups(
   components: FormulaComponent[],
   baseLabel: string,
   overrides: { effectName: string; value: string }[],
-  defaultDamageType: DamageType | null = null
-): { component: FormulaComponent; label: string; isExempt: boolean; damageType: DamageType | null }[] {
+  defaultDamageTypes: DamageType[] = []
+): { component: FormulaComponent; label: string; isExempt: boolean; damageTypes: DamageType[] }[] {
   // -1 = the weapon's own contribution; otherwise an index into `overrides`. Ownership is
   // walked backward from the end (RollFormulaStringField only ever APPENDS override terms),
   // consuming however many components each override's own resolved value parses into.
@@ -634,8 +686,9 @@ function attributeDamageDiceGroups(
     const label = owner === -1
       ? (forcedExempt ? extraDamageLabel : baseLabel)
       : overrides[owner].effectName;
-    const damageType = readDamageType(component.existingFlavor) ?? (owner === -1 ? defaultDamageType : null);
-    return { component, label, isExempt, damageType };
+    const ownTypes = readDamageType(component.existingFlavor);
+    const damageTypes = ownTypes.length > 0 ? ownTypes : (owner === -1 ? defaultDamageTypes : []);
+    return { component, label, isExempt, damageTypes };
   });
 }
 
@@ -646,14 +699,15 @@ function attributeDamageDiceGroups(
  * `RollModifier[]` breakdown list (one row per contributing source) rather than the actual
  * roll. Stays dice-only (flat components are excluded, matching this function's historical
  * scope — `WeaponAttackDataModel._buildFormulaBreakdown()` builds flat-modifier breakdown rows
- * separately). One entry per distinct (label, damageType) pair that owns at least one non-zero
+ * separately). One entry per distinct (label, type-set) pair that owns at least one non-zero
  * dice component, in first-appearance order — grouped by the pair rather than label alone so a
  * single source with multiple typed components (e.g. a homebrew `damageFormula` of
- * `$typed(slashing, 2d6) + $typed(fire, 1d6)`) gets one row per type instead of merging them. A
- * complex component (a glued group, function, or pool) keeps its own un-merged, marker-stripped
- * text rather than being forced into the simple `NdM`-summing path. `damageTypeLabel`
- * (localized, e.g. "Fire") is populated for any component with a `$typed()` marker, or — for a
- * weapon-owned component with no explicit wrapping — `defaultDamageType` (see
+ * `$typed(slashing, 2d6) + $typed(fire, 1d6)`) gets one row per type-set instead of merging
+ * them. A complex component (a glued group, function, or pool) keeps its own un-merged,
+ * marker-stripped text rather than being forced into the simple `NdM`-summing path.
+ * `damageTypeLabel` (localized, "+"-joined when a component qualifies as more than one type at
+ * once, e.g. "Fire + Cold") is populated for any component with a `$typed()` marker, or — for a
+ * weapon-owned component with no explicit wrapping — `defaultDamageTypes` (see
  * `attributeDamageDiceGroups()`'s doc comment); omitted (not an empty string) only for an
  * untyped AE-contributed component, matching `RollModifier.bonusTypeLabel`'s own "omitted when
  * not applicable" convention.
@@ -662,7 +716,7 @@ function groupDamageDiceBySource(
   resolvedFormula: string,
   baseLabel: string,
   overrides: { effectName: string; value: string }[],
-  defaultDamageType: DamageType | null = null
+  defaultDamageTypes: DamageType[] = []
 ): { label: string; formula: string; damageTypeLabel?: string }[] {
   const components = parseFormulaComponents(resolvedFormula);
   if (!components) {
@@ -670,18 +724,22 @@ function groupDamageDiceBySource(
     return diceOnly ? [{ label: baseLabel, formula: diceOnly }] : [];
   }
 
-  const attributed = attributeDamageDiceGroups(components, baseLabel, overrides, defaultDamageType);
+  const attributed = attributeDamageDiceGroups(components, baseLabel, overrides, defaultDamageTypes);
 
   const order: string[] = [];
-  const labelByKey = new Map<string, { label: string; damageType: DamageType | null }>();
+  const labelByKey = new Map<string, { label: string; damageTypes: DamageType[] }>();
   const simpleDiceByKey = new Map<string, Map<number, number>>();
   const opaquePartsByKey = new Map<string, string[]>();
 
-  for (const { component, label, damageType } of attributed) {
+  for (const { component, label, damageTypes } of attributed) {
     if (!component.isDice || component.isZero) continue;
-    const key = `${label}\u0000${damageType ?? ''}`;
+    // Sorted so a type-SET's order (not just its membership) never splits what should be one
+    // row — e.g. $typed(fire, $typed(cold, ...)) and $typed(cold, $typed(fire, ...)) both land
+    // on the same key.
+    const typesKey = [...damageTypes].sort().join(',');
+    const key = `${label}\u0000${typesKey}`;
     if (!labelByKey.has(key)) {
-      labelByKey.set(key, { label, damageType });
+      labelByKey.set(key, { label, damageTypes });
       simpleDiceByKey.set(key, new Map());
       opaquePartsByKey.set(key, []);
       order.push(key);
@@ -697,7 +755,7 @@ function groupDamageDiceBySource(
 
   return order
     .map((key) => {
-      const { label, damageType } = labelByKey.get(key)!;
+      const { label, damageTypes } = labelByKey.get(key)!;
       const diceTerms = [...simpleDiceByKey.get(key)!.entries()]
         .filter(([, count]) => count !== 0)
         .sort(([a], [b]) => a - b)
@@ -706,7 +764,7 @@ function groupDamageDiceBySource(
       return {
         label,
         formula,
-        ...(damageType && { damageTypeLabel: game.i18n.localize(damageType) }),
+        ...(damageTypes.length > 0 && { damageTypeLabel: damageTypes.map(type => game.i18n.localize(type)).join(' + ') }),
       };
     })
     .filter(({ formula }) => formula);
@@ -714,25 +772,27 @@ function groupDamageDiceBySource(
 
 /**
  * Deduped, localized damage-type labels for a resolved formula (e.g. `['Slashing', 'Fire']`
- * for a flaming weapon) — a thin wrapper around `groupDamageDiceBySource()` for any caller that
- * only needs "what types does this produce", not the full per-source breakdown (sheet-row type
- * columns, tooltips, compact summaries, etc.). An untyped component contributes nothing, same
- * as `groupDamageDiceBySource()`'s own `damageTypeLabel` omission convention — callers that
- * want a guaranteed non-empty display should fall back to their own default label (e.g. a
- * weapon's dropdown-selected type) when this returns `[]`.
+ * for a flaming weapon, or `['Piercing + Slashing']` for one dual-typed component) — a thin
+ * wrapper around `groupDamageDiceBySource()` for any caller that only needs "what types does
+ * this produce", not the full per-source breakdown (sheet-row type columns, tooltips, compact
+ * summaries, etc.). An untyped component contributes nothing, same as
+ * `groupDamageDiceBySource()`'s own `damageTypeLabel` omission convention — callers that want a
+ * guaranteed non-empty display should fall back to their own default label when this returns
+ * `[]`; empty is a valid, real state (no types at all), not an error to paper over.
  */
 function getDamageTypeLabels(
   resolvedFormula: string,
   overrides: { effectName: string; value: string }[],
-  defaultDamageType: DamageType | null = null
+  defaultDamageTypes: DamageType[] = []
 ): string[] {
-  const rows = groupDamageDiceBySource(resolvedFormula, '', overrides, defaultDamageType);
+  const rows = groupDamageDiceBySource(resolvedFormula, '', overrides, defaultDamageTypes);
   return [...new Set(rows.flatMap(row => (row.damageTypeLabel ? [row.damageTypeLabel] : [])))];
 }
 
 export {
   buildD20Formula,
   combineDiceFormula,
+  combineDiceGroupMarker,
   extractDiceOnlyFormula,
   extractFlatModifier,
   flavorDamageDiceBySource,

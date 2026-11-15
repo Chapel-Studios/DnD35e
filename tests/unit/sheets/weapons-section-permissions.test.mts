@@ -25,7 +25,7 @@ const mountSection = () => {
     attackFormula: { resolvedValue: '1d20 + 4' },
     damageFormula: { resolvedValue: '1d8 + 2' },
     critRange: 20,
-    damageType: 'dnd35e.DAMAGE_TYPES.Slashing',
+    damageTypeLabel: 'dnd35e.DAMAGE_TYPES.Slashing',
   };
   const weapon = {
     id: 'weapon-1',
