@@ -31,6 +31,13 @@ class ParentheticalTermStub {
   get expression(): string { return `(${this.term})`; }
   get formula(): string { return `${this.expression}${this.flavor ? `[${this.flavor}]` : ''}`; }
 }
+/** A deterministic math-function term (e.g. Foundry's own `floor(3 / 2)`) — NOT a Die or
+ * NumericTerm, so it exercises the "single bare term" branch's generic (non-Die) path. */
+class FunctionTermStub {
+  readonly isDeterministic = true;
+  constructor(readonly expression: string, readonly flavor = '') {}
+  get formula(): string { return `${this.expression}${this.flavor ? `[${this.flavor}]` : ''}`; }
+}
 
 /** Shorthand for a `$typed(...)`-style marker — one field in the shared bag. */
 const typedMarker = (damageType: string) => buildMarkerBag({ [DAMAGE_TYPE_MARKER_KEY]: damageType });
@@ -45,14 +52,23 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
   const die = (faces: number, count: number, flavor = '', modifiers: string[] = []) => new DieStub(faces, count, flavor, modifiers);
   const num = (value: number, flavor = '') => new NumericTermStub(value, flavor);
   const op = (operator: string) => new OperatorTermStub(operator);
+  const func = (expression: string, flavor = '') => new FunctionTermStub(expression, flavor);
 
   beforeEach(() => {
     parsed.clear();
     parse.mockClear();
     // A real `Roll.safeEval()`-equivalent — needed now that a fully deterministic glued group
     // (e.g. "2 * 3") gets pre-evaluated via `Roll.safeEval()` instead of wrapped in a
-    // parenthetical (see d20Formula.mts's `parseFormulaComponents()`, item #1).
-    vi.stubGlobal('Roll', { parse, safeEval: (expr: string) => Function(`"use strict"; return (${expr});`)() });
+    // parenthetical (see d20Formula.mts's `parseFormulaComponents()`, item #1), and
+    // `groupFlatDamageBySource()` evaluates each flat component's own deterministic expression
+    // the same way (e.g. a function term like "floor(3 / 2)") rather than `Number()`-casting
+    // its text. Exposes the same bare math-function identifiers Foundry's real `MATH_PROXY`
+    // does (floor/ceil/round/abs/min/max), since dice formulas call them unprefixed.
+    const safeEval = (expr: string) => Function(
+      'floor', 'ceil', 'round', 'abs', 'min', 'max',
+      `"use strict"; return (${expr});`
+    )(Math.floor, Math.ceil, Math.round, Math.abs, Math.min, Math.max);
+    vi.stubGlobal('Roll', { parse, safeEval });
     vi.stubGlobal('foundry', {
       dice: { terms: { Die: DieStub, NumericTerm: NumericTermStub, OperatorTerm: OperatorTermStub, ParentheticalTerm: ParentheticalTermStub } },
     });
@@ -383,43 +399,44 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
   });
 
   // groupFlatDamageBySource() — PR #102, item #6's "flat modifier rows" half (a flat $typed()
-  // component previously had no type attribution anywhere in the roll breakdown UI) AND the
-  // third review wave's "distinct typed sources must not combine into one row" fix.
+  // component previously had no type attribution anywhere in the roll breakdown UI), the third
+  // review wave's "distinct typed sources must not combine into one row" fix, and its
+  // follow-up "two overrides sharing one effectName must not collide on owner" fix.
   describe('groupFlatDamageBySource', () => {
-    it('attaches a type label to the weapon\'s own flat component, keyed by its label', () => {
+    it('attaches a type label to the weapon\'s own flat component, owned by -1', () => {
       const formula = 'flat-labels-weapon-owned';
       parsed.set(formula, [die(6, 1), op('+'), num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
 
       expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([
-        { label: 'Crownguard', value: 3, damageTypeLabel: DAMAGE_TYPE_FIRE },
+        { label: 'Crownguard', owner: -1, value: 3, damageTypeLabel: DAMAGE_TYPE_FIRE },
       ]);
     });
 
-    it('attaches a type label to an AE override\'s own flat component, keyed by its effect name', () => {
+    it('attaches a type label to an AE override\'s own flat component, owned by its index into overrides', () => {
       const formula = 'flat-labels-ae-owned';
       parsed.set(formula, [die(6, 2), op('+'), num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
       parsed.set('3', [num(3, typedMarker(DAMAGE_TYPE_FIRE))]);
 
       const rows = groupFlatDamageBySource(formula, 'Crownguard', [{ effectName: '+1 Flaming', value: '3' }]);
-      expect(rows).toEqual([{ label: '+1 Flaming', value: 3, damageTypeLabel: DAMAGE_TYPE_FIRE }]);
+      expect(rows).toEqual([{ label: '+1 Flaming', owner: 0, value: 3, damageTypeLabel: DAMAGE_TYPE_FIRE }]);
     });
 
     it('includes an untyped flat component with no damageTypeLabel at all', () => {
       const formula = 'flat-labels-untyped';
       parsed.set(formula, [die(6, 1), op('+'), num(3)]);
 
-      expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([{ label: 'Crownguard', value: 3 }]);
+      expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([{ label: 'Crownguard', owner: -1, value: 3 }]);
     });
 
     it('keeps two distinct typed flat components as separate rows instead of combining them into one misleading total', () => {
-      // PR #102, third review wave: "$typed(fire, 3) + $typed(cold, 4)" previously summed
-      // into one "+7 (Fire + Cold)" row, wrongly implying all 7 points carry both types.
+      // "$typed(fire, 3) + $typed(cold, 4)" previously summed into one "+7 (Fire + Cold)"
+      // row, wrongly implying all 7 points carry both types.
       const formula = 'flat-distinct-types';
       parsed.set(formula, [num(3, typedMarker(DAMAGE_TYPE_FIRE)), op('+'), num(4, typedMarker(DAMAGE_TYPE_COLD))]);
 
       expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([
-        { label: 'Crownguard', value: 3, damageTypeLabel: DAMAGE_TYPE_FIRE },
-        { label: 'Crownguard', value: 4, damageTypeLabel: DAMAGE_TYPE_COLD },
+        { label: 'Crownguard', owner: -1, value: 3, damageTypeLabel: DAMAGE_TYPE_FIRE },
+        { label: 'Crownguard', owner: -1, value: 4, damageTypeLabel: DAMAGE_TYPE_COLD },
       ]);
     });
 
@@ -428,7 +445,61 @@ describe('groupDamageDiceBySource/flavorDamageDiceBySource — damage-type attri
       parsed.set(formula, [num(3, typedMarker(DAMAGE_TYPE_FIRE)), op('+'), num(4, typedMarker(DAMAGE_TYPE_FIRE))]);
 
       expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([
-        { label: 'Crownguard', value: 7, damageTypeLabel: DAMAGE_TYPE_FIRE },
+        { label: 'Crownguard', owner: -1, value: 7, damageTypeLabel: DAMAGE_TYPE_FIRE },
+      ]);
+    });
+
+    it('keeps two distinct overrides sharing the same effectName on separate owner-keyed rows', () => {
+      // Regression: a single AE can contribute two SEPARATE changes to the same path that
+      // both display as the same effectName (e.g. a Flaming AE's own "+1" enhancement change
+      // and its own "+$typed(fire, 1d6)" bonus-dice change) — these must not collide into one
+      // row keyed by that shared label text.
+      const formula = 'flat-two-overrides-same-effect-name';
+      parsed.set(formula, [die(6, 2), op('+'), num(1), op('+'), num(2, typedMarker(DAMAGE_TYPE_FIRE))]);
+      parsed.set('1', [num(1)]);
+      parsed.set('2', [num(2, typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      const rows = groupFlatDamageBySource(formula, 'Crownguard', [
+        { effectName: '+1 Flaming', value: '1' },
+        { effectName: '+1 Flaming', value: '2' },
+      ]);
+      expect(rows).toEqual([
+        { label: '+1 Flaming', owner: 0, value: 1 },
+        { label: '+1 Flaming', owner: 1, value: 2, damageTypeLabel: DAMAGE_TYPE_FIRE },
+      ]);
+    });
+
+    it('applies a component\'s own sign instead of always summing it as a positive value', () => {
+      // "1d8 - 2" previously displayed the flat portion as a +2 bonus row even though the
+      // roll actually subtracts 2.
+      const formula = 'flat-negative-sign';
+      parsed.set(formula, [die(8, 1), op('-'), num(2)]);
+
+      expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([
+        { label: 'Crownguard', owner: -1, value: -2 },
+      ]);
+    });
+
+    it('applies a Subtract AE override\'s sign to its own flat row', () => {
+      const formula = 'flat-negative-ae-sign';
+      parsed.set(formula, [die(6, 2), op('-'), num(2, typedMarker(DAMAGE_TYPE_COLD))]);
+      parsed.set('2', [num(2, typedMarker(DAMAGE_TYPE_COLD))]);
+
+      // RollFormulaStringField already bakes a Subtract change's negation into the combined
+      // formula text (appendRollFormulaTerm's `negate` param) before this ever parses it — the
+      // override's own component here already carries sign -1, same as any other "-" term.
+      const rows = groupFlatDamageBySource(formula, 'Crownguard', [{ effectName: 'Curse of Frailty', value: '2' }]);
+      expect(rows).toEqual([{ label: 'Curse of Frailty', owner: 0, value: -2, damageTypeLabel: DAMAGE_TYPE_COLD }]);
+    });
+
+    it('evaluates a deterministic function term instead of producing NaN', () => {
+      // A math-function term (e.g. Foundry's own "floor(3 / 2)") emits its call text, not a
+      // plain number — Number() would silently turn it into NaN.
+      const formula = 'flat-function-term';
+      parsed.set(formula, [die(6, 1), op('+'), func('floor(3 / 2)', typedMarker(DAMAGE_TYPE_FIRE))]);
+
+      expect(groupFlatDamageBySource(formula, 'Crownguard', [])).toEqual([
+        { label: 'Crownguard', owner: -1, value: 1, damageTypeLabel: DAMAGE_TYPE_FIRE },
       ]);
     });
   });

@@ -681,6 +681,12 @@ function flavorDamageDiceBySource(
  * `flavorDamageDiceBySource()`'s doc comment for the positional-attribution and escape-hatch
  * rules this implements. Returns one entry per component, dice AND flat alike, in formula order
  * (zero-value components included — callers filter those out themselves where it matters).
+ * Exposes BOTH the resolved display `label` (text, can collide across two distinct overrides
+ * sharing the same `effectName`) and the raw `owner` index (`-1` for the weapon, else the
+ * component's exact position in `overrides` — never collides) — a caller that needs to match
+ * a SPECIFIC override's own components (not just "whichever source has this display text")
+ * must key off `owner`, not `label` (see `groupFlatDamageBySource()`'s doc for why this
+ * matters).
  *
  * `damageTypes` (poc.10 Story J) is read from the same component marker bag the crit escape
  * hatches use — both dimensions live in one shared bag (`@constants/diceMarkerBag.mjs`),
@@ -701,7 +707,7 @@ function attributeDamageDiceGroups(
   baseLabel: string,
   overrides: { effectName: string; value: string }[],
   defaultDamageTypes: DamageType[] = []
-): { component: FormulaComponent; label: string; isExempt: boolean; damageTypes: DamageType[] }[] {
+): { component: FormulaComponent; owner: number; label: string; isExempt: boolean; damageTypes: DamageType[] }[] {
   // -1 = the weapon's own contribution; otherwise an index into `overrides`. Ownership is
   // walked backward from the end (RollFormulaStringField only ever APPENDS override terms),
   // consuming however many components each override's own resolved value parses into.
@@ -734,7 +740,7 @@ function attributeDamageDiceGroups(
       : overrides[owner].effectName;
     const ownTypes = readDamageType(component.existingFlavor);
     const damageTypes = ownTypes.length > 0 ? ownTypes : (owner === -1 ? defaultDamageTypes : []);
-    return { component, label, isExempt, damageTypes };
+    return { component, owner, label, isExempt, damageTypes };
   });
 }
 
@@ -849,51 +855,68 @@ function collectDamageTypes(
 }
 
 /**
- * Display-only grouping of FLAT (non-dice) components by `(source, type-set)` pair — the flat-
+ * Display-only grouping of FLAT (non-dice) components by `(owner, type-set)` pair — the flat-
  * modifier sibling of `groupDamageDiceBySource()`'s dice-only rows, keeping distinct type-sets
  * on separate rows instead of summing them into one misleadingly-labeled total. For example
  * `$typed(fire, 3) + $typed(cold, 4)` stays two rows — `{ value: 3, damageTypeLabel: 'Fire' }`
  * and `{ value: 4, damageTypeLabel: 'Cold' }` — instead of one `{ value: 7, damageTypeLabel:
- * 'Fire + Cold' }` row that would wrongly imply all 7 points carry both types at once (PR #102,
- * third review wave). `label` is `baseLabel` for the weapon's own flat components or a
- * specific override's own `effectName` for an AE-contributed one — the sign an AE `Subtract`
- * change needs is already baked into each component via `appendRollFormulaTerm()`'s `negate`
- * param before this ever parses the combined formula, so no separate sign correction is
- * needed here. One entry per distinct `(label, type-set)` pair that sums to a non-zero value,
- * in first-appearance order.
+ * 'Fire + Cold' }` row that would wrongly imply all 7 points carry both types at once.
+ *
+ * Grouped by `owner` (`-1` for the weapon, else the exact index into `overrides` — see
+ * `attributeDamageDiceGroups()`'s doc), NOT by display `label` text: two distinct overrides on
+ * the SAME effect legitimately share one `effectName` (e.g. a Flaming AE's separate `+1`
+ * enhancement change and `+$typed(fire, 1d6)` bonus-dice change both display as "+1 Flaming"),
+ * and keying by label alone would let a caller matching "this specific override's own rows" by
+ * `label === override.effectName` also pick up an unrelated sibling override's row, displaying
+ * it a second time. `owner` is exposed on each row precisely so a caller like
+ * `WeaponAttackDataModel._buildFormulaBreakdown()` can match a specific override by its exact
+ * position in `overrides`, not by its (possibly shared) display text.
+ *
+ * The sign an AE `Subtract` change needs is already baked into each component via
+ * `appendRollFormulaTerm()`'s `negate` param before this ever parses the combined formula, so
+ * no separate sign correction is needed here. One entry per distinct `(owner, type-set)` pair
+ * that sums to a non-zero value, in first-appearance order.
  */
 function groupFlatDamageBySource(
   resolvedFormula: string,
   baseLabel: string,
   overrides: { effectName: string; value: string }[],
   defaultDamageTypes: DamageType[] = []
-): { label: string; value: number; damageTypeLabel?: string }[] {
+): { label: string; owner: number; value: number; damageTypeLabel?: string }[] {
   const components = parseFormulaComponents(resolvedFormula);
   if (!components) return [];
 
   const attributed = attributeDamageDiceGroups(components, baseLabel, overrides, defaultDamageTypes);
 
   const order: string[] = [];
-  const labelByKey = new Map<string, { label: string; damageTypes: DamageType[] }>();
+  const infoByKey = new Map<string, { label: string; owner: number; damageTypes: DamageType[] }>();
   const valueByKey = new Map<string, number>();
 
-  for (const { component, label, damageTypes } of attributed) {
+  for (const { component, owner, label, damageTypes } of attributed) {
     if (component.isDice || component.isZero) continue;
     const typesKey = [...damageTypes].sort().join(',');
-    const key = `${label}\u0000${typesKey}`;
-    if (!labelByKey.has(key)) {
-      labelByKey.set(key, { label, damageTypes });
+    const key = `${owner}\u0000${typesKey}`;
+    if (!infoByKey.has(key)) {
+      infoByKey.set(key, { label, owner, damageTypes });
       valueByKey.set(key, 0);
       order.push(key);
     }
-    valueByKey.set(key, valueByKey.get(key)! + Number(component.emit(null)));
+    // `emit(null)` is the component's own unsigned magnitude text — its group sign (from a
+    // leading "+"/"-" boundary) is tracked separately on `component.sign` and must be applied
+    // here explicitly (mirrors `groupDamageDiceBySource()`'s own `simpleDie`/opaque-parts
+    // handling, which already does this). `Roll.safeEval()`, not `Number()`, since a
+    // deterministic function term (e.g. `floor(3 / 2)`) emits its call text, not a plain
+    // number — `Number()` would silently produce `NaN` for it.
+    const magnitude = Roll.safeEval(component.emit(null));
+    valueByKey.set(key, valueByKey.get(key)! + component.sign * magnitude);
   }
 
   return order
     .map((key) => {
-      const { label, damageTypes } = labelByKey.get(key)!;
+      const { label, owner, damageTypes } = infoByKey.get(key)!;
       return {
         label,
+        owner,
         value: valueByKey.get(key)!,
         ...(damageTypes.length > 0 && { damageTypeLabel: damageTypes.map(type => game.i18n.localize(type)).join(' + ') }),
       };

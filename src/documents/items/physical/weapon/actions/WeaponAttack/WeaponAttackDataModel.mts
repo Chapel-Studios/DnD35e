@@ -250,30 +250,38 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
     const path = this._formulaPath(field);
     const overrides = this._resolveOverrides(path, context);
     const diceOverrides = this._toDiceOverrides(overrides);
-    // One row per distinct (source, type-set) pair — keeps e.g. `$typed(fire, 3) +
+    // Maps each override (by its position in `overrides`) to its exact index within
+    // `diceOverrides` (`-1` when stacking ignored it, matching `_toDiceOverrides()`'s own
+    // filter) — needed because two distinct overrides on the same effect can legitimately
+    // share one display `effectName` (e.g. a Flaming AE's separate "+1" enhancement change
+    // and "+$typed(fire, 1d6)" bonus-dice change both display as "+1 Flaming"). Matching flat
+    // rows by that shared label text would double-display one override's row under the
+    // other's lookup; `owner` positions never collide (PR #102, third review wave).
+    let nextDiceOverrideIndex = 0;
+    const diceOverrideIndexByOverride = overrides.map(override => (
+      override.stackResult === STACK_RESULT_IGNORED ? -1 : nextDiceOverrideIndex++
+    ));
+    // One row per distinct (owner, type-set) pair — keeps e.g. `$typed(fire, 3) +
     // $typed(cold, 4)` as two separate rows instead of summing into one row whose combined
-    // "Fire + Cold" label would wrongly imply all 7 points carry both types (PR #102, third
-    // review wave). Read from the fully-merged `resolved` formula (not a separately-resolved
-    // weapon-only `source` string) so the same positional attribution `groupDamageDiceBySource()`
-    // already uses for dice rows also splits weapon-owned vs. AE-owned flat components.
+    // "Fire + Cold" label would wrongly imply all 7 points carry both types. Read from the
+    // fully-merged `resolved` formula (not a separately-resolved weapon-only `source` string)
+    // so the same positional attribution `groupDamageDiceBySource()` already uses for dice
+    // rows also splits weapon-owned vs. AE-owned flat components.
     const flatRows = groupFlatDamageBySource(resolved, label, diceOverrides, defaultDamageTypes);
     return {
       diceOverrides,
       breakdown: [
         ...groupDamageDiceBySource(resolved, label, diceOverrides, defaultDamageTypes).map(entry => ({ ...entry, value: 0 })),
-        ...flatRows.filter(row => row.label === label),
+        ...flatRows.filter(row => row.owner === -1),
         ...buildOverridesModifierList({ effectOverrides: { [path]: overrides } }, path),
-        ...overrides.filter(override => override.stackResult !== STACK_RESULT_IGNORED && Number.isNaN(parseNumericChangeValue(override.value)))
-          .flatMap((override) => {
-            const bonusTypeLabel = formatBonusTypeLabel(override.bonusType);
-            // The sign an AE Subtract change needs is already baked into each row's value via
-            // `appendRollFormulaTerm()`'s `negate` param (applied before `resolved` is parsed
-            // here) — no separate sign correction needed, unlike the old `extractFlatModifier`-
-            // based approach this replaced.
-            return flatRows
-              .filter(row => row.label === override.effectName)
-              .map(row => ({ label: row.label, value: row.value, bonusTypeLabel, damageTypeLabel: row.damageTypeLabel }));
-          }),
+        ...overrides.flatMap((override, index) => {
+          if (override.stackResult === STACK_RESULT_IGNORED || !Number.isNaN(parseNumericChangeValue(override.value))) return [];
+          const bonusTypeLabel = formatBonusTypeLabel(override.bonusType);
+          const ownerIndex = diceOverrideIndexByOverride[index];
+          return flatRows
+            .filter(row => row.owner === ownerIndex)
+            .map(row => ({ label: row.label, value: row.value, bonusTypeLabel, damageTypeLabel: row.damageTypeLabel }));
+        }),
         ...overrides.filter(override => override.stackResult === STACK_RESULT_IGNORED && Number.isNaN(parseNumericChangeValue(override.value)))
           .map(override => ({
             label: override.effectName, value: 0, formula: String(override.value), isIgnored: true,
