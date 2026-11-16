@@ -1,6 +1,7 @@
 import { gatherAspectsFromSchema, registerFamiliarSchema, withActionCollectionAspects, withItemCollectionAspects } from '@helpers/formulae/index.mjs';
 import { ItemProxyDnd35e } from '@items/baseItem/index.mjs';
-import { containerItemType, weaponItemType } from '@items/itemTypes.mjs';
+import { ammoItemType, containerItemType, weaponItemType } from '@items/itemTypes.mjs';
+import { Ammo, AmmoSheet, AmmoSystemModel } from '@items/physical/ammo/index.mjs';
 import { Container, ContainerSheet, ContainerSystemModel } from '@items/physical/container/index.mjs';
 import { Weapon, WeaponSheet, WeaponSystemModel } from '@items/physical/weapon/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
@@ -10,6 +11,7 @@ const registerItemSheets = () => {
   const itemSheets = [
     [weaponItemType, WeaponSheet],
     [containerItemType, ContainerSheet],
+    [ammoItemType, AmmoSheet],
   ] as const;
 
   for (const [type, Sheet] of itemSheets) {
@@ -26,6 +28,7 @@ export const registerItems = () => {
     documentClasses: {
       weapon: Weapon,
       container: Container,
+      ammo: Ammo,
     },
   };
   foundry.helpers.Hooks.once('init', () => {
@@ -38,6 +41,7 @@ export const registerItems = () => {
     Object.assign(CONFIG.Item.dataModels, {
       [weaponItemType]: WeaponSystemModel,
       [containerItemType]: ContainerSystemModel,
+      [ammoItemType]: AmmoSystemModel,
     });
 
     // Register familiar schemas for formula resolution
@@ -45,6 +49,7 @@ export const registerItems = () => {
     registerFamiliarSchema('Item', weaponItemType, (ctx?) => withActionCollectionAspects(gatherAspectsFromSchema(WeaponSystemModel, ctx), ctx));
     // Container's own #self.items/.weapons/.equipment refer to its contents (poc §7.2c)
     registerFamiliarSchema('Item', containerItemType, (ctx?) => withItemCollectionAspects(gatherAspectsFromSchema(ContainerSystemModel, ctx), ctx));
+    registerFamiliarSchema('Item', ammoItemType, (ctx?) => gatherAspectsFromSchema(AmmoSystemModel, ctx));
   });
 
   foundry.helpers.Hooks.once('setup', () => {

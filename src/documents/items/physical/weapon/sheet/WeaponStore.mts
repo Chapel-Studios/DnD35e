@@ -48,34 +48,6 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>, options: UseWeap
     getAction: (actionId: string) => document.value.system.actions.find((action) => action._id === actionId),
   };
 
-  // Any edit made through the Actions tab detaches the edited entry from the auto-sync
-  // merge (§10.4's "editing it is exactly how it becomes permanent") — weaponActionSync.mts
-  // only ever seeds/prunes entries still `isSystemCreated === true`.
-  // const updateActionField = async (actionId: string, field: string, value: unknown): Promise<boolean> => {
-  //   const actions = document.value.system.actions;
-  //   if (!actions.some((action) => action._id === actionId)) return false;
-  //   const updatedActions = actions.map((action) =>
-  //     action._id === actionId ? { ...action, [field]: value, isSystemCreated: false } : action
-  //   );
-  //   return await equippableStore._storeUtils.updateDocument({ system: { actions: updatedActions } }, { diff: false });
-  // };
-
-  // const updateChainLinkField = async (parentActionId: string, chainIndex: number, field: string, value: unknown): Promise<boolean> => {
-  //   const actions = document.value.system.actions;
-  //   const parentIndex = actions.findIndex((action) => action._id === parentActionId);
-  //   if (parentIndex === -1 || !actions[parentIndex].chain[chainIndex]) return false;
-
-  //   const updatedParent = {
-  //     ...actions[parentIndex],
-  //     isSystemCreated: false,
-  //     chain: actions[parentIndex].chain.map((link: ActionChainLinkModel, index: number) =>
-  //       index === chainIndex ? { ...link, [field]: value } : link
-  //     ),
-  //   };
-  //   const updatedActions = actions.map((action, index) => (index === parentIndex ? updatedParent : action));
-  //   return await equippableStore._storeUtils.updateDocument({ system: { actions: updatedActions } }, { diff: false });
-  // };
-
   // "Add to chain" only ever creates a brand-new, dedicated sub-action (never links to an
   // already-existing one) — keeps this authoring step free of cycle-detection concerns.
   const addChainLink = async (parentActionId: string, subActionType: WeaponAction['type']): Promise<boolean> => {

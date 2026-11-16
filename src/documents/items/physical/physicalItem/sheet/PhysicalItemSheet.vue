@@ -3,8 +3,10 @@
     <template v-if="$slots['header-name']" #header-name>
       <slot name="header-name" />
     </template>
-    <template v-if="$slots['header-status']" #header-status>
-      <slot name="header-status" />
+    <template #header-status>
+      <slot name="header-status">
+        <PhysicalItemHeaderStatus />
+      </slot>
     </template>
     <template v-if="$slots['header-summary']" #header-summary>
       <slot name="header-summary" />
@@ -17,6 +19,7 @@
   import { IdentifiableDocumentSheetVue } from '@documents/identifiable/index.mjs';
   import { provide } from 'vue';
 
+  import PhysicalItemHeaderStatus from './components/PhysicalItemHeaderStatus.vue';
   import { usePhysicalItemStore } from './PhysicalItemStore.mjs';
 
   const props = defineProps<{

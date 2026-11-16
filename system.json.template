@@ -87,7 +87,8 @@
     },
     "Item": {
       "weapon": {},
-      "container": {}
+      "container": {},
+      "ammo":{}
     },
     "ActiveEffect": {
       "general": {},

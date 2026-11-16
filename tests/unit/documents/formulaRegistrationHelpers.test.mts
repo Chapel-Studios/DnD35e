@@ -4,6 +4,7 @@ import { GeneralEffectSystemModel } from '@effects/general/data/GeneralEffectSys
 import { MaterialSystemModel } from '@effects/material/data/MaterialSystemModel.mjs';
 import { SecretSystemModel } from '@effects/secret/data/SecretSystemModel.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
+import { AmmoSystemModel } from '@items/physical/ammo/data/AmmoSystemModel.mjs';
 import { ContainerSystemModel } from '@items/physical/container/data/ContainerSystemModel.mjs';
 import { WeaponSystemModel } from '@items/physical/weapon/data/WeaponSystemModel.mjs';
 import { describe, expect, it } from 'vitest';
@@ -12,7 +13,7 @@ import { createSchemaTester } from '../../helpers/schemaTester.mjs';
 
 /**
  * Regression tests for the `nameFormula` field's `formulaContexts` declarations
- * (Parent/Owner/Container/Item) across every AE subtype + the two item subtypes
+ * (Parent/Owner/Container/Item) across every AE subtype + the item subtypes
  * that declare one. Two layers:
  *
  *  1. Shape — the declared array on the real `defineSchema()` output has the
@@ -58,6 +59,14 @@ describe('nameFormula formulaContexts — declared schema shape', () => {
 
   it('ContainerSystemModel declares Owner (Actor/character fallback, aliased to Parent)', () => {
     const t = createSchemaTester(ContainerSystemModel);
+    const field = t.field('nameFormula') as FormulaField;
+    expect(field.formulaContexts).toEqual([
+      { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
+    ]);
+  });
+
+  it('AmmoSystemModel declares Owner (Actor/character fallback, aliased to Parent)', () => {
+    const t = createSchemaTester(AmmoSystemModel);
     const field = t.field('nameFormula') as FormulaField;
     expect(field.formulaContexts).toEqual([
       { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
