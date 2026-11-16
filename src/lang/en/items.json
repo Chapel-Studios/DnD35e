@@ -2,6 +2,7 @@
   "TYPES": {
     "Item": {
       "weapon": "Weapon",
+      "ammo": "Ammunition",
       "container": "Container",
       "equipment": "Equipment",
       "loot": "Loot",
@@ -41,6 +42,25 @@
         "removeFromContainer": "Remove from container",
         "expand": "Show contents",
         "collapse": "Hide contents"
+      }
+    },
+    "AMMO": {
+      "Type": {
+        "arrow": "Arrow",
+        "bolt": "Bolt",
+        "bullet": "Bullet",
+        "shuriken": "Shuriken",
+        "dart": "Dart"
+      },
+      "FIELDS": {
+        "ammoType": {
+          "label": "Ammo Type",
+          "hint": "The type of ammunition."
+        },
+        "isAlwaysRecoverable": {
+          "label": "Always Recoverable",
+          "hint": "Whether this ammo can always be recovered."
+        }
       }
     },
     "ITEM": {

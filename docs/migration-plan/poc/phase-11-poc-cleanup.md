@@ -111,6 +111,18 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 
 ---
 
+### Task 11.7 — Show total item value for stacked quantities
+
+**Objective**: In item sheet display modes (`play` and `true`), show the total value of the stack when quantity is greater than 1.
+
+**Draft acceptance criteria**:
+- When quantity > 1, display total value as the view-aware per-item price multiplied by the view-aware quantity.
+- Preserve field visibility and masking rules; do not expose hidden or true prices through the total.
+- Keep edit mode's price as the per-item price; calculating the total must not change stored data.
+- Verify quantities of 1 and greater than 1, including masked price/quantity values.
+
+---
+
 ## Checklist
 
 ### ✅ Complete
@@ -126,6 +138,7 @@ Current shape is intentionally light-weight (rough sketch). We will keep appendi
 - [ ] 11.4 Review `_displayName`/`displayName` getters on `ItemDnd35e` (duplicate `name` getter's logic — still needed?).
 - [ ] 11.5 Advanced Change Editor; slim down `EffectChangesList` inline columns (move Type/Bonus Type/Condition/Priority to a per-row advanced dialog).
 - [ ] 11.6 Remove redundant per-component `localize` redeclarations now that `app.config.globalProperties.localize` covers template-only usage.
+- [ ] 11.7 Show total stack value on item sheets in display modes when quantity > 1, respecting visibility and masking.
 - [ ] Add more POC cleanup tasks as they are discovered during final POC work.
 
 ---

@@ -35,7 +35,7 @@
       <option
         v-for="opt in props.options"
         :key="opt.value"
-        :value="opt.label ?? opt.value"
+        :value="localize(opt.label ?? opt.value)"
         :disabled="opt.disabled"
       />
     </datalist>
@@ -57,7 +57,7 @@
       :key="opt.label ?? opt.value"
       :value="opt.value"
     >
-      {{ opt.label ?? opt.value }}
+      {{ localize(opt.label ?? opt.value) }}
     </option>
   </select>
 </template>
@@ -75,6 +75,10 @@
 
   const listId = `combobox-${Math.random().toString(36).slice(2)}`;
 
+  function localize(key: string): string {
+    return game.i18n.localize(key);
+  }
+
   const isValueInOptions = computed(() =>
     props.options.some(opt => opt.value === props.value)
   );
@@ -82,7 +86,7 @@
   function onInputChange(e: Event): void {
     // Get the value associated with the selected option, or the raw text if no match.
     const inputValue = (e.target as HTMLInputElement).value;
-    const matchedOption = props.options.find(opt => (opt.label ?? opt.value) === inputValue || opt.value === inputValue);
+    const matchedOption = props.options.find(opt => localize(opt.label ?? opt.value) === inputValue || opt.value === inputValue);
     emit('update', (matchedOption ? matchedOption.value : inputValue) as TValue);
   }
 

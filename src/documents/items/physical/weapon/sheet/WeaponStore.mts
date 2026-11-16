@@ -1,3 +1,4 @@
+import type { UseDocumentStoreOptions } from '@documents/document/sheet/DocumentSheetStore.mjs';
 import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import type { ActionEditorStore, ActionEditorStoreCreatorParams } from '@items/baseItem/actions/ActionEditorStore.mjs';
 import { useActionEditorStoreCreator } from '@items/baseItem/actions/ActionEditorStore.mjs';
@@ -20,19 +21,12 @@ import { computed } from 'vue';
 
 import { weaponActionsTab, weaponDetailsTab } from './tabs/index.mjs';
 
-interface UseWeaponStoreOptions {
-  /** Set false for row-scoped stores so they don't clobber a standalone sheet's registry entry (or vice versa). */
-  registerGlobally?: boolean;
-  /** See `useDocumentSheetStore`'s option of the same name. */
-  renderModeStore?: RenderModeStore;
-}
-
 const actionTypeOptions: SelectOption<ActionType>[] = [
   { value: ACTION_TYPE.MELEE, label: 'dnd35e.WEAPON.ACTIONS.Type.melee_weapon_attack' },
   { value: ACTION_TYPE.RANGED, label: 'dnd35e.WEAPON.ACTIONS.Type.ranged_weapon_attack' },
 ];
 
-const useWeaponStore = (context: VueApplicationContext<Weapon>, options: UseWeaponStoreOptions = {}): WeaponStore => {
+const useWeaponStore = (context: VueApplicationContext<Weapon>, options: UseDocumentStoreOptions = {}): WeaponStore => {
   const equippableStore = useEquippableItemStore<Weapon>(context, {
     defaultTabs: [weaponDetailsTab, weaponActionsTab, physicalItemEffectsTab],
     defaultActiveTab: 'details',
@@ -47,34 +41,6 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>, options: UseWeap
     topLevelActions: computed(() => document.value.system.actions.filter((action) => action.isTopLevel)),
     getAction: (actionId: string) => document.value.system.actions.find((action) => action._id === actionId),
   };
-
-  // Any edit made through the Actions tab detaches the edited entry from the auto-sync
-  // merge (§10.4's "editing it is exactly how it becomes permanent") — weaponActionSync.mts
-  // only ever seeds/prunes entries still `isSystemCreated === true`.
-  // const updateActionField = async (actionId: string, field: string, value: unknown): Promise<boolean> => {
-  //   const actions = document.value.system.actions;
-  //   if (!actions.some((action) => action._id === actionId)) return false;
-  //   const updatedActions = actions.map((action) =>
-  //     action._id === actionId ? { ...action, [field]: value, isSystemCreated: false } : action
-  //   );
-  //   return await equippableStore._storeUtils.updateDocument({ system: { actions: updatedActions } }, { diff: false });
-  // };
-
-  // const updateChainLinkField = async (parentActionId: string, chainIndex: number, field: string, value: unknown): Promise<boolean> => {
-  //   const actions = document.value.system.actions;
-  //   const parentIndex = actions.findIndex((action) => action._id === parentActionId);
-  //   if (parentIndex === -1 || !actions[parentIndex].chain[chainIndex]) return false;
-
-  //   const updatedParent = {
-  //     ...actions[parentIndex],
-  //     isSystemCreated: false,
-  //     chain: actions[parentIndex].chain.map((link: ActionChainLinkModel, index: number) =>
-  //       index === chainIndex ? { ...link, [field]: value } : link
-  //     ),
-  //   };
-  //   const updatedActions = actions.map((action, index) => (index === parentIndex ? updatedParent : action));
-  //   return await equippableStore._storeUtils.updateDocument({ system: { actions: updatedActions } }, { diff: false });
-  // };
 
   // "Add to chain" only ever creates a brand-new, dedicated sub-action (never links to an
   // already-existing one) — keeps this authoring step free of cycle-detection concerns.
@@ -219,4 +185,4 @@ type WeaponStore = EquippableDocumentStore<Weapon> & {
 };
 
 export { useWeaponStore };
-export type { UseWeaponStoreOptions, WeaponGetters, WeaponStore };
+export type { WeaponGetters, WeaponStore };
