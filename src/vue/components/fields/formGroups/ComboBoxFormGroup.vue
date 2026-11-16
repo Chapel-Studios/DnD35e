@@ -75,8 +75,21 @@
 
   const sourceValue = getSourceProperty<string>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.value !== undefined || !sourceValue) return resolvedValue.value;
-    if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
+    if (props.value !== undefined || !sourceValue) {
+      return resolvedValue.value;
+    }
+
+    if (
+      !isEditMode.value
+      || (
+        !isGM.value
+        && isEditMode.value
+        && hasMaskForField(props.fieldPath).value
+      )
+    ) {
+      return resolvedValue.value;
+    }
+    
     return sourceValue.value as string;
   });
 

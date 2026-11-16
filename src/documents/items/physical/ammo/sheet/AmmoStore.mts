@@ -1,3 +1,4 @@
+import type { UseDocumentStoreOptions } from '@documents/document/sheet/DocumentSheetStore.mjs';
 import { type PhysicalDocumentStore, physicalItemEffectsTab, type PhysicalItemGetters,usePhysicalItemStore } from '@items/physical/physicalItem/sheet/index.mjs';
 import type { VueApplicationContext } from '@vueApps/index.mjs';
 import { computed, type ComputedRef } from 'vue';
@@ -6,8 +7,8 @@ import type { Ammo } from '../Ammo.mjs';
 import { ammoDetailsTab } from './tabs/index.mjs';
 
 const useAmmoStore = (
-  context: VueApplicationContext<Ammo>
-  // options: UseAmmoStoreOptions = {}
+  context: VueApplicationContext<Ammo>,
+  options: UseDocumentStoreOptions = {}
 ) => {
   const physicalStore = usePhysicalItemStore(context, {
     defaultTabs: [ammoDetailsTab, physicalItemEffectsTab],

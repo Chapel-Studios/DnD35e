@@ -1,3 +1,4 @@
+import type { UseDocumentStoreOptions } from '@documents/document/sheet/DocumentSheetStore.mjs';
 import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import type { ActionEditorStore, ActionEditorStoreCreatorParams } from '@items/baseItem/actions/ActionEditorStore.mjs';
 import { useActionEditorStoreCreator } from '@items/baseItem/actions/ActionEditorStore.mjs';
@@ -20,19 +21,12 @@ import { computed } from 'vue';
 
 import { weaponActionsTab, weaponDetailsTab } from './tabs/index.mjs';
 
-interface UseWeaponStoreOptions {
-  /** Set false for row-scoped stores so they don't clobber a standalone sheet's registry entry (or vice versa). */
-  registerGlobally?: boolean;
-  /** See `useDocumentSheetStore`'s option of the same name. */
-  renderModeStore?: RenderModeStore;
-}
-
 const actionTypeOptions: SelectOption<ActionType>[] = [
   { value: ACTION_TYPE.MELEE, label: 'dnd35e.WEAPON.ACTIONS.Type.melee_weapon_attack' },
   { value: ACTION_TYPE.RANGED, label: 'dnd35e.WEAPON.ACTIONS.Type.ranged_weapon_attack' },
 ];
 
-const useWeaponStore = (context: VueApplicationContext<Weapon>, options: UseWeaponStoreOptions = {}): WeaponStore => {
+const useWeaponStore = (context: VueApplicationContext<Weapon>, options: UseDocumentStoreOptions = {}): WeaponStore => {
   const equippableStore = useEquippableItemStore<Weapon>(context, {
     defaultTabs: [weaponDetailsTab, weaponActionsTab, physicalItemEffectsTab],
     defaultActiveTab: 'details',
@@ -191,4 +185,4 @@ type WeaponStore = EquippableDocumentStore<Weapon> & {
 };
 
 export { useWeaponStore };
-export type { UseWeaponStoreOptions, WeaponGetters, WeaponStore };
+export type { WeaponGetters, WeaponStore };

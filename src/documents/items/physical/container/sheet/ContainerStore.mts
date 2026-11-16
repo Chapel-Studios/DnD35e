@@ -1,3 +1,4 @@
+import type { UseDocumentStoreOptions } from '@documents/document/sheet/DocumentSheetStore.mjs';
 import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
@@ -12,14 +13,7 @@ import { computed, inject } from 'vue';
 import type { Container } from '../Container.mjs';
 import { containerDetailsTab, containerInventoryTab } from './index.mjs';
 
-interface UseContainerStoreOptions {
-  /** Set false for row-scoped stores so they don't clobber a standalone sheet's registry entry (or vice versa). */
-  registerGlobally?: boolean;
-  /** See `useDocumentSheetStore`'s option of the same name. */
-  renderModeStore?: RenderModeStore;
-}
-
-const useContainerStore = (context: VueApplicationContext<Container>, options: UseContainerStoreOptions = {}): ContainerStore => {
+const useContainerStore = (context: VueApplicationContext<Container>, options: UseDocumentStoreOptions = {}): ContainerStore => {
   const physicalStore = usePhysicalItemStore<Container>(context, {
     defaultTabs: [containerDetailsTab, containerInventoryTab, physicalItemEffectsTab],
     defaultActiveTab: 'details',
@@ -71,4 +65,4 @@ type ContainerStore = PhysicalDocumentStore<Container> & {
 };
 
 export { useContainerStore };
-export type { ContainerGetters, ContainerStore, UseContainerStoreOptions };
+export type { ContainerGetters, ContainerStore };

@@ -1,6 +1,7 @@
 import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
-import { containerItemType, weaponItemType } from '@items/itemTypes.mjs';
+import { ammoItemType, containerItemType, weaponItemType } from '@items/itemTypes.mjs';
+import { type Ammo, type AmmoStore,useAmmoStore } from '@items/physical/ammo/index.mjs';
 import type { Container } from '@items/physical/container/Container.mjs';
 import type { ContainerStore } from '@items/physical/container/sheet/ContainerStore.mjs';
 import { useContainerStore } from '@items/physical/container/sheet/ContainerStore.mjs';
@@ -9,7 +10,9 @@ import { useWeaponStore } from '@items/physical/weapon/sheet/WeaponStore.mjs';
 import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
 import type { VueApplicationConfiguration, VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 
-type ItemRowStore = WeaponStore | ContainerStore;
+type ItemRowStore = WeaponStore
+  | ContainerStore
+  | AmmoStore;
 
 /**
  * There is no real Application behind an inventory row, so `appConfigOptions`
@@ -40,6 +43,8 @@ const createItemRowStore = (item: PHYSICAL_ITEMS, renderModeStore: RenderModeSto
       return useWeaponStore(buildRowContext(item as Weapon), { registerGlobally: false, renderModeStore });
     case containerItemType:
       return useContainerStore(buildRowContext(item as Container), { registerGlobally: false, renderModeStore });
+    case ammoItemType:
+      return useAmmoStore(buildRowContext(item as Ammo), { registerGlobally: false, renderModeStore });
     default:
       throw new Error(`No item row store registered for item type "${(item as PHYSICAL_ITEMS).type}".`);
   }
