@@ -4,7 +4,7 @@ import type { ItemDnd35e } from '@items/baseItem/ItemDnd35e.mjs';
 import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
 import { expect, test } from '@playwright/test';
 
-import { clearWorld, createActiveEffect, createActor, createItem } from './helpers/documents.mjs';
+import { clearWorld, createActiveEffect, createActor, createItem, updateDocument } from './helpers/documents.mjs';
 import { gotoGame } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
 import { dismissOverlays } from './helpers/ui.mjs';
@@ -12,6 +12,46 @@ import { dismissOverlays } from './helpers/ui.mjs';
 const ACTION_ID = 'HmeleeAttack0001';
 const WARNING_ID = `action:${ACTION_ID}:formula:attackFormula`;
 let packCollection: string | undefined;
+
+test('GM sees a broken actor-owned change diagnostic while its viable sibling still modifies max HP', async ({ page }) => {
+  await gotoGame(page);
+  const actorUuid = await createActor(page, 'character', { name: 'Actor effect diagnostics' });
+  const baselineHp = await page.evaluate(async uuid => {
+    const actor = await fromUuid(uuid) as Creature | null;
+    if (!actor) throw new Error('Missing actor diagnostic fixture');
+    return actor.system.hp.max;
+  }, actorUuid);
+  const effectUuid = await createActiveEffect(page, actorUuid, {
+    name: 'New Effect', type: 'general',
+    system: { changes: [
+      {
+        id: 'broken', key: '$conditional(when(#character.level > 4, 10) else(5))',
+        type: 'add', value: '#me.us', phase: 'final', target: 'item', priority: 10,
+      },
+      {
+        id: 'hp', key: 'system.hp.max', type: 'add', value: 100,
+        phase: 'final', target: 'item', priority: 10,
+      },
+    ] },
+  });
+  const readHp = () => page.evaluate(async uuid => {
+    const actor = await fromUuid(uuid) as Creature | null;
+    if (!actor) throw new Error('Missing actor diagnostic fixture');
+    return actor.system.hp.max;
+  }, actorUuid);
+  await expect.poll(readHp).toBe(baselineHp + 100);
+  const sheet = page.locator(await openDocumentSheet(page, actorUuid));
+  await expect(sheet.locator('.preparation-warnings-banner')).toBeVisible();
+  await dismissOverlays(page);
+  await sheet.locator('[data-tab="preparation-warnings"]').click();
+  await expect(sheet.locator('[data-warning-id="change:broken:key:resolution"]')).toBeVisible();
+
+  await page.reload();
+  await gotoGame(page);
+  await expect.poll(readHp).toBe(baselineHp + 100);
+  await updateDocument(page, effectUuid, { disabled: true });
+  await expect.poll(readHp).toBe(baselineHp);
+});
 
 function diagnosticWeapon() {
   return {

@@ -59,7 +59,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
    *  - `bab`/`aooCount`: reset to their schema defaults (0 / 1) so `add`-type AE/class
    *    contributions don't compound across repeated prepare passes (e.g. combat's more
    *    frequent re-prepares) the same way `defense.armorClass` would without its own reset
-   *  - `hp.max`: reset to its 100 stub baseline (replace with real HD/level/CON calculation
+   *  - `hp.max`: reset to its schema baseline (replace with real HD/level/CON calculation
    *    when progression is implemented) so `add`-type AE contributions (e.g. a Heroic
    *    Training-style buff) layer on top instead of being overwritten each pass
    * See docs/architecture/actor-data-pipeline.md.
@@ -80,6 +80,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     this.init = 0;
     this.bab = 0;
     this.aooCount = 1;
+    this.hp.max = 0;
 
     this.defense.armorClass = 0;
     this.defense.touchAC = 0;

@@ -3,6 +3,7 @@
 vi.mock('@documents/document/index.mjs', () => ({
   DocumentSheetStoreSymbol: Symbol.for('test.DocumentSheetStore'),
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
+  defaultDetailsTab: {},
 }));
 // `FormulaFormGroup.vue` imports these symbols directly from their defining modules
 // rather than the `@documents/document` barrel — mock those paths too so the real
@@ -303,14 +304,19 @@ describe('EffectChangesList — resolveTargetForKey() with a $conditional(...) k
     },
   });
 
-  const mountConditional = () => {
+  const mountConditional = (actorOwned = false) => {
     const store = mkConditionalStore();
+    if (actorOwned) {
+      store.documentGetters.getTargetFamiliarContext.mockImplementation((target: string) =>
+        target === 'actor' ? conditionalActorContext : undefined
+      );
+    }
     const wrapper = mount(EffectChangesList, {
       props: { variant: 'mask' },
       global: {
         provide: {
           [DocumentSheetStoreSymbol as symbol]: store,
-          [RenderModeStoreSymbol as symbol]: { isEditMode: computed(() => true) },
+          [RenderModeStoreSymbol as symbol]: { isEditMode: computed(() => true), isSheetEditable: computed(() => true) },
         },
         stubs: {
           FormulaFormGroup: FormulaFormGroupStub,
@@ -342,5 +348,17 @@ describe('EffectChangesList — resolveTargetForKey() with a $conditional(...) k
     await nextTick();
 
     expect(store.documentActions.updateChangeField).toHaveBeenCalledWith(undefined, 'target', 'item');
+  });
+
+  it('keeps malformed actor-owned keys actor-targeted and creates actor-targeted changes', async () => {
+    (globalThis as { __testConditionalKey?: string }).__testConditionalKey =
+      '$conditional(when(#character.level > 4, 10) else(5))';
+    const { wrapper, store } = mountConditional(true);
+    await wrapper.find('.aspect-picker-emit-stub').trigger('click');
+    await nextTick();
+    expect(store.documentActions.updateChangeField).toHaveBeenCalledWith(undefined, 'target', 'actor');
+    await wrapper.get('.add-change').trigger('click');
+    expect(store.documentActions.addChange).toHaveBeenCalledWith(expect.objectContaining({ target: 'actor' }));
+    wrapper.unmount();
   });
 });

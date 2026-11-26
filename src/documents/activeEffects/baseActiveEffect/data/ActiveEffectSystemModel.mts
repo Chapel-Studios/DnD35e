@@ -105,6 +105,11 @@ class ActiveEffectSystemModel extends DocumentSystemModel<foundry.documents.Acti
 
   override prepareBaseData (): void {
     super.prepareBaseData();
+    // An actor-owned effect has no item target. Normalize runtime changes before
+    // actor prep filters them, including malformed keys that need diagnostics.
+    if (this.parent?.parent?.documentName === 'Actor') {
+      for (const change of this.changes) change.target = EFFECT_CHANGE_TARGET.ACTOR;
+    }
     const parentName = this.parent?.name;
     if (!parentName) {
       console.warn('ActiveEffectSystemModel.prepareBaseData: ActiveEffect parent has no name; skipping ensureNameFormula.', {
