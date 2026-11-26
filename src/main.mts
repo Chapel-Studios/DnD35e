@@ -42,6 +42,10 @@ Hooks.once('init', () => {
 });
 
 Hooks.once('i18nInit', () => {
+  game.i18n.localizeWithFallback = (key: string, fallback: string) => {
+    const localized = game.i18n.localize(key);
+    return localized === key ? fallback : localized;
+  };
   preLocalizeConfig(CONFIG.dnd35e as unknown as Record<string, unknown>);
 });
 
@@ -75,15 +79,19 @@ Hooks.once('ready', async () => {
     reinitializeSharedVision();
   });
 
-  const resp = await fetch(`systems/${game.system.id}/build-warnings.json`).catch(() => null);
-  if (!resp?.ok) return;
-  const data: { stalePacks?: string[] } = await resp.json().catch(() => ({}));
-  if (data.stalePacks?.length) {
-    ui.notifications.warn(
-      `[dnd35e dev] Stale packs (Foundry was open during last build): ${data.stalePacks.join(', ')}. `
-      + 'Close Foundry and run <code>npm run build:dev</code> to recompile.',
-      { permanent: true }
-    );
+  try {
+    const resp = await fetch(`systems/${game.system.id}/build-warnings.json`).catch(() => null);
+    if (!resp?.ok) return;
+    const data: { stalePacks?: string[] } = await resp.json().catch(() => ({}));
+    if (data.stalePacks?.length) {
+      ui.notifications.warn(
+        `[dnd35e dev] Stale packs (Foundry was open during last build): ${data.stalePacks.join(', ')}. `
+        + 'Close Foundry and run <code>npm run build:dev</code> to recompile.',
+        { permanent: true }
+      );
+    }
+  } catch {
+    // do nothing, this is the expected outcome if there are no stale packs
   }
 });
 
