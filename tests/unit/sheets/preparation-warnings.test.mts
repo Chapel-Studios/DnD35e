@@ -18,6 +18,7 @@ import { computed, defineComponent, h, ref } from 'vue';
 
 vi.mock('@documents/document/index.mjs', () => ({
   DocumentSheetStoreSymbol: Symbol('documentSheet'),
+  defaultDetailsTab: {},
 }));
 
 function makeSource(uuid = 'Actor.hero.Item.sword') {

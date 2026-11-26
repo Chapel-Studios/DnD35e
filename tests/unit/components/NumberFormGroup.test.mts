@@ -9,6 +9,7 @@ import { h } from 'vue';
 vi.mock('@documents/document/index.mjs', () => ({
   DocumentSheetStoreSymbol: Symbol.for('test.DocumentSheetStore'),
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
+  defaultDetailsTab: {},
 }));
 vi.mock('@documents/document/sheet/stores/RenderModeStore.mjs', () => ({
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),

@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('@documents/document/index.mjs', () => ({
   DocumentSheetStoreSymbol: Symbol.for('test.DocumentSheetStore'),
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
+  defaultDetailsTab: {},
 }));
 // Same for FieldControls' deeper imports (it's stubbed in the mount but still gets parsed).
 vi.mock('@documents/document/sheet/stores/RenderModeStore.mjs', () => ({
