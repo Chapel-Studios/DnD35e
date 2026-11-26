@@ -172,7 +172,7 @@ abstract class WeaponAttackDataModel extends ActionDataModel<WeaponAttackActionR
    * Resolved AE dice-override attribution for the weapon's own damage formula, independent of
    * any active roll/execution context (no `target` needed) — the same positional attribution
    * `_buildDamageData()` feeds into the actual roll's breakdown and crit exemption, exposed
-   * here so a passive sheet-level display (e.g. `WeaponsSection.vue`'s compact damage-type
+   * here so a passive sheet-level display (e.g. `ActionsSection.vue`'s compact damage-type
    * column) can match the real roll instead of treating every AE-contributed die as
    * weapon-owned.
    */

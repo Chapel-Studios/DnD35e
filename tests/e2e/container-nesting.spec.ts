@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-import { clearWorld, createItem, stowItemViaDrop } from './helpers/documents.mjs';
+import { clearWorld, createActor, createItem, stowItemViaDrop, updateDocument } from './helpers/documents.mjs';
 import { gotoGame } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
+import { dismissOverlays } from './helpers/ui.mjs';
 
 /**
  * E2E test for container nesting and data rollup.
@@ -27,6 +28,61 @@ test.describe('container nesting and data rollup', () => {
   test.afterEach(async ({ page }) => {
     await closeAllSheets(page).catch(() => {});
     await clearWorld(page);
+  });
+
+  test('GM expands inventory containers and distinguishes stowed actions from same-named ready weapons', async ({ page }) => {
+    await gotoGame(page);
+    const weapon = (id: string, actionId: string) => ({
+      _id: id, name: 'Battle Axe', type: 'weapon',
+      system: { actions: [{
+        _id: actionId, type: 'melee_weapon_attack', isTopLevel: true, isSystemCreated: false,
+        name: { formula: 'Axe attack', expectedType: 'string' },
+        attackFormula: { formula: '1d20', expectedType: 'rollFormula' },
+        damageFormula: { formula: '1d8', expectedType: 'rollFormula' },
+      }] },
+    });
+    const actorUuid = await createActor(page, 'character', {
+      name: 'Inventory visibility fixture',
+      items: [
+        weapon('readyWeapon00001', 'readyAttack00001'),
+        weapon('stowedWeapon0001', 'stowedAttack0001'),
+        { _id: 'outerBag00000001', name: 'Bag', type: 'container' },
+        { _id: 'innerBag00000001', name: 'Inner Bag', type: 'container' },
+      ],
+    });
+    const readyUuid = `${actorUuid}.Item.readyWeapon00001`;
+    const stowedUuid = `${actorUuid}.Item.stowedWeapon0001`;
+    const outerBagUuid = `${actorUuid}.Item.outerBag00000001`;
+    const innerBagUuid = `${actorUuid}.Item.innerBag00000001`;
+    await stowItemViaDrop(page, stowedUuid, innerBagUuid);
+    await stowItemViaDrop(page, innerBagUuid, outerBagUuid);
+    await closeAllSheets(page);
+    const sheet = page.locator(await openDocumentSheet(page, actorUuid));
+    await dismissOverlays(page);
+    await sheet.locator('[data-tab="inventory"]').click();
+    const outer = sheet.locator(`.inventory-row[data-container-uuid="${outerBagUuid}"]`);
+    await outer.locator('.container-expand-btn').click();
+    const inner = sheet.locator(`.inventory-row[data-container-uuid="${innerBagUuid}"]`);
+    await expect(inner).toBeVisible();
+    await inner.locator('.container-expand-btn').click();
+    await expect(sheet.locator(`.inventory-row[data-container-uuid="${stowedUuid}"]`)).toBeVisible();
+
+    await sheet.locator('[data-tab="actions"]').click();
+    const actions = sheet.locator('.actions-section');
+    await expect(actions.locator('.weapon-row')).toHaveCount(2);
+    await expect(actions.locator('.category-tab-btn')).toHaveCount(3);
+    await expect(actions.locator('[data-item-id="stowedWeapon0001"] .weapon-location')).toContainText('Inner Bag');
+    await updateDocument(page, readyUuid, { 'system.isCarried': false });
+    await expect(actions.locator('.weapon-row')).toHaveCount(1);
+    await expect(actions.locator('[data-item-id="stowedWeapon0001"]')).toBeVisible();
+    await updateDocument(page, stowedUuid, { 'system.isCarried': false });
+    await expect(actions.locator('.weapon-row')).toHaveCount(0);
+
+    await closeAllSheets(page);
+    const bagSheet = page.locator(await openDocumentSheet(page, innerBagUuid));
+    await dismissOverlays(page);
+    await bagSheet.locator('[data-tab="inventory"]').click();
+    await expect(bagSheet.locator(`.inventory-row[data-container-uuid="${stowedUuid}"]`)).toBeVisible();
   });
 
   test('actor with nested containers: verify data travels and rolls up correctly', async ({ page }) => {

@@ -97,3 +97,59 @@ describe('shared action roll-formula preparation diagnostics (melee first)', () 
     expect(owned.item._preparationWarnings).toMatchObject([{ severity: 'error', message: 'Unresolved reference' }]);
   });
 });
+
+describe('ActionDataModel.hasCriticalPreparationIssue', () => {
+  it('is false with no diagnostics, true only for this action\'s own error-severity diagnostic', () => {
+    const { action, item } = makeAction();
+    expect(action.hasCriticalPreparationIssue).toBe(false);
+
+    item._preparationWarnings.push({
+      id: 'action:one:formula:name', severity: 'warning', field: 'system.actions.one.name.formula',
+      message: 'cosmetic', sourceUuid: item.uuid, sourcePath: [],
+    });
+    expect(action.hasCriticalPreparationIssue).toBe(false);
+
+    item._preparationWarnings.push({
+      id: 'action:one:formula:damageFormula', severity: 'error', field: 'system.actions.one.damageFormula.formula',
+      message: 'broken', sourceUuid: item.uuid, sourcePath: [],
+    });
+    expect(action.hasCriticalPreparationIssue).toBe(true);
+  });
+});
+
+describe('createActionChange() gates on critical (error-severity) diagnostics', () => {
+  it('returns the actor stub change when there are no diagnostics at all', () => {
+    const { action } = makeAction();
+    expect(action.createActionChange()).toMatchObject({
+      key: 'system.actions.one',
+      value: { id: 'one', itemUuid: 'Actor.hero.Item.sword' },
+    });
+  });
+
+  it('returns the actor stub change when only a non-critical warning exists for this action', () => {
+    const { action, item } = makeAction();
+    item._preparationWarnings.push({
+      id: 'action:one:formula:name', severity: 'warning', field: 'system.actions.one.name.formula',
+      message: 'cosmetic', sourceUuid: item.uuid, sourcePath: [],
+    });
+    expect(action.createActionChange()).not.toBeNull();
+  });
+
+  it('returns null when this action has a critical (error) diagnostic', () => {
+    const { action, item } = makeAction();
+    item._preparationWarnings.push({
+      id: 'action:one:formula:damageFormula', severity: 'error', field: 'system.actions.one.damageFormula.formula',
+      message: 'broken', sourceUuid: item.uuid, sourcePath: [],
+    });
+    expect(action.createActionChange()).toBeNull();
+  });
+
+  it('ignores a critical diagnostic that belongs to a different action on the same item', () => {
+    const { action, item } = makeAction('one');
+    item._preparationWarnings.push({
+      id: 'action:two:formula:damageFormula', severity: 'error', field: 'system.actions.two.damageFormula.formula',
+      message: 'broken', sourceUuid: item.uuid, sourcePath: [],
+    });
+    expect(action.createActionChange()).not.toBeNull();
+  });
+});

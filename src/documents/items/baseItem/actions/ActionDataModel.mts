@@ -117,6 +117,25 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
     return this.parent?.parent as ITEMS_DND35E | undefined;
   }
 
+  /**
+   * True when this action's owning item carries a critical (`severity: 'error'`)
+   * preparation diagnostic for this specific action — e.g. a missing/invalid
+   * `attackFormula`/`damageFormula` roll formula (see `resolveFormulaFields()`'s
+   * `validateRoll` branch). Non-critical `warning`-severity diagnostics (e.g. a broken
+   * purely-cosmetic `name` formula) do not count.
+   *
+   * Shared by `createActionChange()` (gates the actor-side aggregation/Token HUD) and
+   * any UI that lists actions straight off the item (e.g. `ActionsSection.vue`'s Actions
+   * tab) — a broken action must never be reachable/invokable from either surface. Safe
+   * to read any time after this prep cycle's `resolveFormulaFields()` has run (see that
+   * method's own diagnostics); before that it simply reflects the previous cycle's state.
+   */
+  get hasCriticalPreparationIssue(): boolean {
+    return (this.item?._preparationWarnings ?? []).some(
+      (warning) => warning.severity === 'error' && warning.id?.startsWith(`action:${this._id}:`)
+    );
+  }
+
   protected getCombatant(context: UseActionContext): CombatantDnd35e<CombatDnd35e> | undefined {
     const token = participantToken(context.actor);
     
@@ -263,10 +282,18 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
    * `required/blank: false` validation (`SchemaField#_validateRecursive`); skipping the
    * contribution for this cycle is safe since `prepareData()` reruns on every subsequent
    * render/update and will pick it up once the uuid is known.
+   *
+   * Also returns `null` when `hasCriticalPreparationIssue` is true (see that getter) —
+   * a broken action must never be reachable anywhere actor-side actions are discovered
+   * (Token HUD's Weapon Attacks palette, combat execution via the actor aggregation) —
+   * the owning item's own diagnostics tab is still where the GM goes to see and fix the
+   * underlying issue.
    */
   createActionChange(): EffectChangeDataDnd35e | null {
-    const itemUuid = this.item?.uuid;
+    const item = this.item;
+    const itemUuid = item?.uuid;
     if (!itemUuid) return null;
+    if (this.hasCriticalPreparationIssue) return null;
 
     // not sure if we actually want this to be system or not, but for now it is
     const isSystem = true;

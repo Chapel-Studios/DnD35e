@@ -1,9 +1,9 @@
 <template>
-  <div class="actor-tab combat-tab">
-    <WeaponsSection />
+  <div class="actor-tab actions-tab">
+    <ActionsSection />
   </div>
 </template>
 
 <script setup lang="ts">
-  import WeaponsSection from './sections/combat/WeaponsSection.vue';
+  import ActionsSection from './sections/actions/ActionsSection.vue';
 </script>
