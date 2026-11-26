@@ -11,6 +11,7 @@ const useAmmoStore = (
   options: UseDocumentStoreOptions = {}
 ) => {
   const physicalStore = usePhysicalItemStore(context, {
+    ...options,
     defaultTabs: [ammoDetailsTab, physicalItemEffectsTab],
     defaultActiveTab: 'details',
   });
@@ -20,6 +21,10 @@ const useAmmoStore = (
   const documentGetters = {
     ...physicalStore.documentGetters,
     ammoType: computed(() => document.value.system.ammoType),
+    ammoTypeLabel: computed(() => {
+      const localizationKey = `dnd35e.AMMO.Type.${document.value.system.ammoType.toLocaleLowerCase()}`;
+      return game.i18n.localizeWithFallback(localizationKey, document.value.system.ammoType);
+    }),
     isAlwaysRecoverable: computed(() => document.value.system.isAlwaysRecoverable),
   };
 
@@ -35,6 +40,7 @@ const useAmmoStore = (
 
 interface AmmoGetters extends PhysicalItemGetters {
   ammoType: ComputedRef<string>;
+  ammoTypeLabel: ComputedRef<string>;
   isAlwaysRecoverable: ComputedRef<boolean>;
 }
 

@@ -1,5 +1,4 @@
 import type { UseDocumentStoreOptions } from '@documents/document/sheet/DocumentSheetStore.mjs';
-import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import type { ActionEditorStore, ActionEditorStoreCreatorParams } from '@items/baseItem/actions/ActionEditorStore.mjs';
 import { useActionEditorStoreCreator } from '@items/baseItem/actions/ActionEditorStore.mjs';
 import type { ActionChainLinkModel } from '@items/baseItem/actions/ActionSourceData.mjs';

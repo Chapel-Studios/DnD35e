@@ -1,0 +1,23 @@
+{
+  "type": "Item",
+  "folder": null,
+  "name": "Ammunition",
+  "color": null,
+  "sorting": "a",
+  "_id": "CqdasakfdHzfaNNx",
+  "description": "",
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1794801876688,
+    "modifiedTime": 1794801876688,
+    "lastModifiedBy": "oReTY6DZGAzvIenS",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!folders!CqdasakfdHzfaNNx"
+}

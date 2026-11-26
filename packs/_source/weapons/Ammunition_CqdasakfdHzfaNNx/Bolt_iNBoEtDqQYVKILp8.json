@@ -1,0 +1,59 @@
+{
+  "folder": "CqdasakfdHzfaNNx",
+  "name": "Bolt",
+  "type": "ammo",
+  "_id": "iNBoEtDqQYVKILp8",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Bolt",
+      "expectedType": "string",
+      "resolvedValue": "Bolt"
+    },
+    "description": "",
+    "isPsionic": false,
+    "isEpic": false,
+    "hp": {
+      "current": 0,
+      "max": 0
+    },
+    "hardness": 0,
+    "quantity": 10,
+    "weight": 0.1,
+    "isCarried": true,
+    "size": "tiny",
+    "price": {
+      "stacks": [
+        {
+          "coinId": "srd_sp",
+          "count": 1
+        }
+      ],
+      "srdEquivalent": 0.1
+    },
+    "isAlwaysRecoverable": false,
+    "ammoType": "bolt"
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "oReTY6DZGAzvIenS": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1794802011431,
+    "modifiedTime": 1794810689517,
+    "lastModifiedBy": "oReTY6DZGAzvIenS",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!iNBoEtDqQYVKILp8"
+}

@@ -12,7 +12,7 @@
       :container-uuid="documentUuid"
       :owner-uuid="parentUuid"
       empty-label="dnd35e.CONTAINER.ContentsEmpty"
-      variant="container"
+      variant="contained"
       class="container-contents"
     />
   </div>

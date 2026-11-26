@@ -1,5 +1,5 @@
+import { createItemRowStoreCache, type ItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
 import type { UseDocumentStoreOptions } from '@documents/document/sheet/DocumentSheetStore.mjs';
-import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
@@ -20,6 +20,7 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
     renderModeStore: options.renderModeStore,
   });
   const document = physicalStore._storeUtils.document;
+  const { getOrCreateItemRowStore, refreshItemRowStores } = createItemRowStoreCache(physicalStore._storeUtils.renderModeStore);
   
   const {
     currency: { highestVisibleCoin },
@@ -36,11 +37,19 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
     }),
     isOverCapacity: computed(() => document.value.system.isOverCapacity),
     contents: computed(() => document.value.getContentsSync() as PHYSICAL_ITEMS[]),
+    getOrCreateItemRowStore,
   };
 
   const store: ContainerStore = {
     ...physicalStore,
     documentGetters,
+    _storeUtils: {
+      ...physicalStore._storeUtils,
+      refreshDocument: async (doc?: Container | null): Promise<void> => {
+        await physicalStore._storeUtils.refreshDocument(doc);
+        await refreshItemRowStores(documentGetters.contents.value);
+      },
+    },
   };
 
   if (options.registerGlobally ?? true) {
@@ -58,6 +67,7 @@ interface ContainerGetters {
   isOverCapacity: ComputedRef<boolean>;
   contentsValue: ComputedRef<CurrencyData>;
   contents: ComputedRef<PHYSICAL_ITEMS[]>;
+  getOrCreateItemRowStore: (item: PHYSICAL_ITEMS) => ItemRowStore;
 }
 
 type ContainerStore = PhysicalDocumentStore<Container> & {

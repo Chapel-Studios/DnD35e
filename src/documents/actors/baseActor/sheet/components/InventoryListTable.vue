@@ -20,7 +20,7 @@
       :title="title"
       :column-count="8"
       :column-widths="COLUMN_WIDTHS"
-      :compact="variant === 'container'"
+      :compact="variant === 'contained'"
       :rows="rows"
       :empty-label="emptyLabel"
       :empty-icon="emptyIcon"
@@ -44,8 +44,11 @@
       </template>
 
       <template #row="{ row, index }">
-        <InventoryItemRow
+        <component
+          v-if="getInventoryRow(row)"
+          :is="getInventoryRow(row)"
           :item="getRowItem(row)"
+          :item-store="getRowStore(row)"
           :variant="variant"
           :toggle-title="toggleTitle"
           :owner-uuid="effectiveOwnerUuid"
@@ -59,28 +62,34 @@
 </template>
 
 <script setup lang="ts">
-  import type { CreatureDocumentStore } from '@actors/creature/sheet/CreatureStore.mjs';
   import type { WeaponSubcategory } from '@constants/inventory.mjs';
   import { SUBCATEGORY_LABELS, SUBCATEGORY_ORDER, WEAPON_SUBCATEGORY } from '@constants/inventory.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { syncContainmentAe } from '@effects/containment/index.mjs';
   import type { PHYSICAL_ITEMS, PhysicalItemType } from '@items/itemTypes.mjs';
   import {
+    ammoItemType,
     containerItemType,
     ITEM_TYPES_LOCALIZED,
     PHYSICAL_ITEM_TYPES,
+    weaponItemType,
   } from '@items/itemTypes.mjs';
+  import type { Ammo } from '@items/physical/ammo/index.mjs';
+  import AmmoInventoryRow from '@items/physical/ammo/sheet/components/AmmoInventoryRow.vue';
   import type { Container } from '@items/physical/container/Container.mjs';
+  import ContainerInventoryRowVue from '@items/physical/container/sheet/components/ContainerInventoryRow.vue';
   import { EquippableItem } from '@items/physical/equippableItem/EquippableItem.mjs';
   import type { PhysicalItemLike } from '@items/physical/physicalItem/PhysicalItem.mjs';
   import { WEAPON_SUBTYPE } from '@items/physical/weapon/data/constants.mjs';
   import type { Weapon, WeaponSubtype, WeaponSystemData } from '@items/physical/weapon/index.mjs';
+  import WeaponInventoryRow from '@items/physical/weapon/sheet/components/WeaponInventoryRow.vue';
   import CategorizedListTable, { type CategorizedRow } from '@vc/CategorizedListTable.vue';
   import FieldControls from '@vc/fields/formGroups/FieldControls.vue';
-  import { computed, inject, onBeforeUnmount, reactive } from 'vue';
+  import { type Component,computed, inject, onBeforeUnmount, provide, reactive } from 'vue';
 
   import { INVENTORY_FIELD_PATH } from './inventoryFieldPath.mjs';
-  import InventoryItemRow from './InventoryItemRow.vue';
+  import type { InventoryListStore } from './itemRowStoreRegistry.mjs';
+  import { InventoryListStoreSymbol } from './itemRowStoreRegistry.mjs';
 
   const ALLOWED_ITEM_TYPES = PHYSICAL_ITEM_TYPES;
 
@@ -100,7 +109,7 @@
     toggleTitle?: string;
     isCarried?: boolean;
     /** 'carried' = actor carried/tracked lists; 'container' = a container's contents. */
-    variant?: 'carried' | 'container';
+    variant?: 'carried' | 'contained';
     /** Explicit item list. When omitted the injected actor store is used. */
     items?: PHYSICAL_ITEMS[];
     /** UUID of the container item (container variant). Used to link/unlink items. */
@@ -111,6 +120,8 @@
     forcedStripe?: 'even' | 'odd';
     /** Pseudo field-path used for this table's own lock/override state. Defaults to the shared inventory-section path. */
     fieldPath?: string;
+    /** Icon shown when list is empty */
+    emptyIcon?: string;
   }>(), {
     toggleTitle: '',
     isCarried: false,
@@ -126,13 +137,18 @@
 
   const localize = (key: string): string => game.i18n.localize(key);
 
+  const inventoryStore = inject(InventoryListStoreSymbol, null)
+    ?? inject(DocumentSheetStoreSymbol) as InventoryListStore;
+  provide(InventoryListStoreSymbol, inventoryStore);
+
   const {
     documentGetters: {
       documentUuid,
       physicalItems: injectedItems,
       getIsFieldEditable,
+      getOrCreateItemRowStore,
     },
-  } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
+  } = inventoryStore;
 
   // Falls back to the shared section-level path when this table isn't given its own
   // (e.g. nested container tables that haven't opted into individual locking).
@@ -151,7 +167,7 @@
   const sourceItems = computed<PHYSICAL_ITEMS[]>(() => props.items ?? injectedItems?.value ?? []);
 
   const emptyIcon = computed(() => {
-    if (props.variant === 'container') return 'fas fa-box-open';
+    if (props.emptyIcon) return props.emptyIcon;
     return props.isCarried ? 'fas fa-backpack' : 'fas fa-box-open';
   });
 
@@ -164,7 +180,7 @@
       .filter((item) => {
         if (!ALLOWED_ITEM_TYPES.has(item.type as AllowedItemType)) return false;
 
-        if (props.variant === 'container') {
+        if (props.variant === 'contained') {
           const parentRef = item.system.containerUuid;
           return (
             item.uuid !== props.containerUuid
@@ -196,10 +212,31 @@
       });
   });
 
-  const getRowItem = (row: InventoryRow): PHYSICAL_ITEMS => (row).item as PHYSICAL_ITEMS;
+  const getInventoryRow = (row: InventoryRow): Component | null => {
+    const item = row.item as PHYSICAL_ITEMS;
+    if (!item) return null;
+
+    if (item.type === containerItemType) return ContainerInventoryRowVue;
+    if (isWeapon(item)) return WeaponInventoryRow;
+    if (isAmmo(item)) return AmmoInventoryRow;
+
+    return null;
+  };
+
+  // Row-scoped store, cached/owned by the actor store (see ActorSheetStore.mts). Reads the
+  // item's document through this store's own reactive ref rather than the `item` prop
+  // directly, so field changes (e.g. isEquipped) are picked up without relying on the parent
+  // to lift primitives out to work around stale prop references. Also provided so any nested
+  // FormGroups/content in this row's subtree can inject the standard document sheet store.
+  const getRowStore = (row: InventoryRow) => getOrCreateItemRowStore(getRowItem(row));
+
+  const getRowItem = (row: InventoryRow): PHYSICAL_ITEMS => row.item as PHYSICAL_ITEMS;
 
   const isWeapon = (item: PHYSICAL_ITEMS): item is Weapon => {
-    return item.type === 'weapon';
+    return item.type === weaponItemType;
+  };
+  const isAmmo = (item: PHYSICAL_ITEMS): item is Ammo => {
+    return item.type === ammoItemType;
   };
 
   type SubcategoryInfo = {
@@ -456,7 +493,7 @@
     ) return;
 
     // Container variant: accept drops from anywhere and stow into the container.
-    if (props.variant === 'container') {
+    if (props.variant === 'contained') {
       await handleContainerDrop(dropped);
       endDragPreview();
       return;
