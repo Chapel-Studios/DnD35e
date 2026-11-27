@@ -6,6 +6,7 @@ import type CompendiumDirectory from '@client/applications/sidebar/tabs/compendi
 import type Hotbar from '@client/applications/ui/hotbar.mjs';
 import type EffectsCanvasGroup from '@client/canvas/groups/effects.mjs';
 import type Config from '@client/config.mjs';
+import type Localization from '@client/helpers/localization.mjs';
 import { ActiveEffectDnd35e } from '@documents/activeEffects/index.mjs';
 import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/index.mjs';
@@ -21,7 +22,11 @@ import { RegionDocumentDnd35e } from './documents/scene/regionDocument/RegionDoc
 import { SceneDnd35e } from './documents/scene/SceneDnd35e.mjs';
 import type { TokenDocumentDnd35e } from './documents/scene/tokenDocument/index.mjs';
 
-type GameDnd35e = Game<
+type I18nLocalizationDnd35e = Localization & {
+    localizeWithFallback(key: string, fallback: string): string;
+  }
+
+type GameDnd35e = Omit<Game<
   ActorDnd35e<null>,
   fd.collections.Actors<ActorDnd35e<null>>,
   documents.ChatMessage,
@@ -30,7 +35,8 @@ type GameDnd35e = Game<
   documents.Macro,
   SceneDnd35e,
   documents.User
-> & {
+>, 'i18n'> & {
+  i18n: I18nLocalizationDnd35e;
   dnd35e: {
     stores: {
       Actor: Record<string, DocumentSheetStore<any>>;

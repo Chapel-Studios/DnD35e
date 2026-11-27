@@ -5,6 +5,7 @@ import DistanceValueUnitInput from './DistanceValueUnitInput.vue';
 import CheckBoxFormGroup from './formGroups/CheckBoxFormGroup.vue';
 import CoinageFormGroup from './formGroups/CoinageFormGroup.vue';
 import ColorFormGroup from './formGroups/ColorFormGroup.vue';
+import ComboBoxFormGroup from './formGroups/ComboBoxFormGroup.vue';
 import DistanceFormGroup from './formGroups/DistanceFormGroup.vue';
 import FamiliarOverlayInput from './formGroups/FamiliarOverlayInput.vue';
 import type { FieldEditability, FieldVisibility } from './formGroups/fieldPermissions.mjs';
@@ -42,6 +43,7 @@ export {
   CoinageFormGroup,
   ColorFormGroup,
   ComboBox,
+  ComboBoxFormGroup,
   DistanceFormGroup,
   DistanceValueUnitInput,
   everyoneVisibility,

@@ -290,7 +290,8 @@
       "section": {
         "AbilityScores": "Ability Scores",
         "Health": "Health",
-        "Actions": "Quick Actions",
+        "QuickActions": "Quick Actions",
+        "Actions": "Actions",
         "Skills": "Skills",
         "Speed": "Movement",
         "p-attributes": "Physical Attributes",
@@ -299,6 +300,13 @@
         "Weapons": "Weapons"
       },
       "actions": {
+        "subcategory": {
+          "equipped": "Equipped",
+          "ready": "Ready",
+          "stowed": "Stowed",
+          "tracked": "Tracked"
+        },
+        "stowedIn": "Stowed in {container}",
         "column": {
           "weapon": "Weapon",
           "attack": "Attack",

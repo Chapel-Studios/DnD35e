@@ -344,6 +344,17 @@ abstract class Creature extends ActorDnd35e {
       defaultResult.reason = 'itemOrActionNotFound';
       return defaultResult;
     }
+    // A critically broken action (see `ActionDataModel.hasCriticalPreparationIssue`) is
+    // never executable, regardless of how this call was reached — mirrors the same gate
+    // `createActionChange()` applies to the actor-side aggregation/Token HUD. Normal UI
+    // paths (e.g. `ActionsSection.vue`, which sources its rows from `actorActions` —
+    // the actor-side stub aggregation) never surface a broken action's `itemId`/`actionId`
+    // pair in the first place; this is defense-in-depth for any other caller that resolves
+    // them directly off the item (e.g. a future macro/API consumer).
+    if (action.hasCriticalPreparationIssue) {
+      defaultResult.reason = 'actionHasCriticalIssue';
+      return defaultResult;
+    }
 
     const actor = this;
     // A caller with a concrete acting token (e.g. the Token HUD) must win over the shell's

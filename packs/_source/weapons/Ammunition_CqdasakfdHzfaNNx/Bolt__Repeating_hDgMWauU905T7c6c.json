@@ -1,0 +1,59 @@
+{
+  "folder": "CqdasakfdHzfaNNx",
+  "name": "Bolt, Repeating",
+  "type": "ammo",
+  "_id": "hDgMWauU905T7c6c",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "origin": {
+      "migrationVersion": "14.0.0-dev.1"
+    },
+    "nameFormula": {
+      "formula": "Bolt, Repeating",
+      "expectedType": "string",
+      "resolvedValue": "Bolt, Repeating"
+    },
+    "description": "",
+    "isPsionic": false,
+    "isEpic": false,
+    "hp": {
+      "current": 0,
+      "max": 0
+    },
+    "hardness": 0,
+    "quantity": 5,
+    "weight": 0.2,
+    "isCarried": true,
+    "size": "tiny",
+    "price": {
+      "stacks": [
+        {
+          "coinId": "srd_sp",
+          "count": 2
+        }
+      ],
+      "srdEquivalent": 0.2
+    },
+    "isAlwaysRecoverable": false,
+    "ammoType": "bolt"
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "oReTY6DZGAzvIenS": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "dnd35e",
+    "systemVersion": "14.0.0-dev.1",
+    "createdTime": 1794811057821,
+    "modifiedTime": 1794811939358,
+    "lastModifiedBy": "oReTY6DZGAzvIenS",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!hDgMWauU905T7c6c"
+}

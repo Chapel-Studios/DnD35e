@@ -284,9 +284,16 @@
   // instead (see `resolveActiveEffectChangeKey.mts`). Resolve target from the first branch
   // whose `#context.` prefix matches the item or actor context's own name/alias, checking
   // `when()` clauses in order, then `else()`.
+  const defaultChangeTarget = computed(() =>
+    !store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ITEM)
+    && store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ACTOR)
+      ? EFFECT_CHANGE_TARGET.ACTOR
+      : EFFECT_CHANGE_TARGET.ITEM
+  );
+
   function resolveTargetForConditionalKey (key: string): EffectChangeTarget {
     const [block] = FormulaResolver.findConditionalBlocks(key);
-    if (!block) return EFFECT_CHANGE_TARGET.ITEM;
+    if (!block) return defaultChangeTarget.value;
 
     const branchValues = [
       ...block.whenClauses.map((c) => c.value),
@@ -306,20 +313,20 @@
       if (prefix === actorContextName || actorContext?.aliases?.includes(prefix)) return EFFECT_CHANGE_TARGET.ACTOR;
     }
 
-    return EFFECT_CHANGE_TARGET.ITEM;
+    return defaultChangeTarget.value;
   }
 
   // Derives which document a picked Field/Key path actually belongs to, replacing the
   // removed Target selector. Checked against the same (group-extended) contexts the
   // picker itself offers — item is checked first, actor (including groups) second.
   function resolveTargetForKey (key: string): EffectChangeTarget {
-    if (!key) return EFFECT_CHANGE_TARGET.ITEM;
+    if (!key) return defaultChangeTarget.value;
 
     if (key.includes('$conditional(')) return resolveTargetForConditionalKey(key);
 
     const itemContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ITEM);
     if (itemContext && FormulaResolver.findAspectByAccessPath(itemContext.properties, key)) {
-      return EFFECT_CHANGE_TARGET.ITEM;
+      return defaultChangeTarget.value;
     }
 
     const actorContext = store.documentGetters.getTargetFamiliarContext(EFFECT_CHANGE_TARGET.ACTOR);
@@ -417,7 +424,7 @@
       // bonuses settle before the 'post' phase derives saves/AC from them.
       phase: 'final',
       priority: 10,
-      target: EFFECT_CHANGE_TARGET.ITEM,
+      target: defaultChangeTarget.value,
       isSystem: false,
       ...props.createChangeData,
     });

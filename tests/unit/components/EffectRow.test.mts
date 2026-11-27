@@ -2,6 +2,7 @@
 
 vi.mock('@documents/document/index.mjs', () => ({
   DocumentSheetStoreSymbol: Symbol.for('test.DocumentSheetStore'),
+  defaultDetailsTab: {},
 }));
 
 import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';

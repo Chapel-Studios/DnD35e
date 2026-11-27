@@ -7,6 +7,7 @@ import type { SaveKey } from '@constants/index.mjs';
 import type { TokenDnd35e } from '@documents/token/TokenDnd35e.mjs';
 import { addCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import { CurrencyData } from '@fields/index.mjs';
+import type { IAction } from '@items/baseItem/actions/types.mjs';
 import { GAME_RULES_KEYS, type SettingsStore, SettingsStoreSymbol } from '@settings/index.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import type { SelectOption } from '@vc/fields/index.mjs';
@@ -107,6 +108,15 @@ const useCreatureStore = <TDocument extends Creature>(
     encumbranceMaxLift:  computed(() => getViewAwareFieldValue<number>('system.encumbrance.maxLift')  ?? 0),
     encumbranceDrag:   computed(() => getViewAwareFieldValue<number>('system.encumbrance.drag')   ?? 0),
     encumbranceTier:   computed(() => getViewAwareFieldValue<number>('system.encumbrance.tier')   ?? 0),
+
+    // Actor-side action stubs (poc.10 §10.4) — the single source of truth for which
+    // actions actually exist/are invokable from this actor. Each entry is a lightweight
+    // `IAction` pointer live-merged by `ActionDataModel.createActionChange()`, which
+    // already omits any action with a critical (`severity: 'error'`) preparation
+    // diagnostic. UI that lists actor-invokable actions (e.g. `ActionsSection.vue`) must
+    // read from here, not from an item's own `system.actions` directly - otherwise a
+    // broken action (excluded here) would still surface on the sheet.
+    actorActions: computed(() => Object.values(document.value.system.actions)),
   };
 
   const documentActions = {
@@ -167,6 +177,7 @@ interface CreatureGetters {
   encumbranceMaxLift:  ComputedRef<number>;
   encumbranceDrag:   ComputedRef<number>;
   encumbranceTier:   ComputedRef<number>;
+  actorActions: ComputedRef<IAction[]>;
 }
 
 type CreatureActions = {

@@ -22,7 +22,10 @@ const {
 } = foundry.data;
 
 class WeaponSystemModel extends EquippableItemSystemModel {
-  static override LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, 'dnd35e.WEAPON'];
+  static override LOCALIZATION_PREFIXES = [
+    ...super.LOCALIZATION_PREFIXES,
+    'dnd35e.WEAPON',
+  ];
 
   static override defineSchema () {
     const schema = super.defineSchema();
@@ -73,6 +76,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
     return schema;
   }
 
+  // Action Implementation
   /**
    * `system.actions` is an `ArrayField` — `DocumentSystemModel`'s generic
    * `prepareBaseData()` reset walk never recurses into it, so each embedded action must

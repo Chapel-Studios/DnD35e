@@ -8,7 +8,7 @@
  * itself no longer re-gates on equip state at execution time (§10.11), since the sheet's
  * Actions tab intentionally lets a carried-but-unequipped weapon's action fire. Enabled
  * state follows `canUseHandAttack()` for the wield mode's BAB hand, same as the sheet's
- * Actions tab (WeaponsSection.vue) — but unlike the sheet, ineligible entries are omitted
+ * Actions tab (ActionsSection.vue) — but unlike the sheet, ineligible entries are omitted
  * entirely rather than merely disabled, since the HUD palette has no room for an
  * explanatory tooltip.
  *

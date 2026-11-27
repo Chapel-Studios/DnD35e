@@ -4,7 +4,7 @@
     <CreatureHP />
     <!-- Actions placeholder -->
     <div class="actions-group">
-      <div class="stat-group-label">{{ localize('dnd35e.ACTOR.section.Actions') }}</div>
+      <div class="stat-group-label">{{ localize('dnd35e.ACTOR.section.QuickActions') }}</div>
       <div class="actions-empty-list"></div>
     </div>
   </div>  

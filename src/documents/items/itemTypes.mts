@@ -1,8 +1,12 @@
+import type { Ammo } from './physical/ammo/Ammo.mts';
 import type { Container } from './physical/container/index.mjs';
 import type { Weapon } from './physical/weapon/index.mjs';
 
 const weaponItemType = 'weapon';
 type WeaponItemType = typeof weaponItemType;
+
+const ammoItemType = 'ammo';
+type AmmoItemType = typeof ammoItemType;
 
 const containerItemType = 'container';
 type ContainerItemType = typeof containerItemType;
@@ -15,10 +19,11 @@ type EQUIPPABLE_ITEMS = Weapon;
 
 const PHYSICAL_ITEM_TYPES = new Set([
   ...EQUIPPABLE_ITEM_TYPES,
+  ammoItemType,
   containerItemType,
 ] as const);
 type PhysicalItemType = SetElement<typeof PHYSICAL_ITEM_TYPES>;
-type PHYSICAL_ITEMS = EQUIPPABLE_ITEMS | Container;
+type PHYSICAL_ITEMS = EQUIPPABLE_ITEMS | Ammo | Container;
 
 type ItemType = PhysicalItemType;
 
@@ -28,6 +33,7 @@ type ITEMS_DND35E = PHYSICAL_ITEMS;
 const ITEM_TYPES_LOCALIZED = {
   [weaponItemType]: 'TYPES.Item.weapon',
   [containerItemType]: 'TYPES.Item.container',
+  [ammoItemType]: 'TYPES.Item.ammo',
   // equipment: "D35E.ItemTypeEquipment",
   // loot: "D35E.ItemTypeLoot",
   // Consumable: "D35E.ItemTypeConsumable",
@@ -41,6 +47,7 @@ const ITEM_TYPES_LOCALIZED = {
 type ItemTypeLocalizationValues = typeof ITEM_TYPES_LOCALIZED[keyof typeof ITEM_TYPES_LOCALIZED];
 
 export {
+  ammoItemType,
   containerItemType,
   EQUIPPABLE_ITEM_TYPES,
   ITEM_TYPES_LOCALIZED,
@@ -49,6 +56,7 @@ export {
 };
 
 export type {
+  AmmoItemType,
   ContainerItemType,
   EQUIPPABLE_ITEMS,
   EquippableItemType,

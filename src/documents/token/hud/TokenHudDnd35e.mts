@@ -310,7 +310,7 @@ class TokenHudDnd35e extends TokenHudVueBase {
   }
 
   /**
-   * Weapon Attacks palette entry click — mirrors the sheet Actions tab's `onAttack()` (WeaponsSection.vue).
+   * Weapon Attacks palette entry click — mirrors the sheet Actions tab's `onAttack()` (ActionsSection.vue).
    * Passes `this.document.object` as the acting token so `PrepareActionContext()` reads
    * wield mode/action economy/BAB from the exact token whose HUD was clicked, not a
    * re-resolved (and potentially wrong, for a linked actor with multiple placed tokens) fallback.

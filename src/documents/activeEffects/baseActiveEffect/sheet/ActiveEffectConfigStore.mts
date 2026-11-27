@@ -78,6 +78,7 @@ const useActiveEffectConfigStore = <TDocument extends ActiveEffectDnd35e>(
     const parent = document.value.parent;
 
     if (target === 'item') {
+      if (parent?.documentName === 'Actor') return null;
       // Live: effect lives on an item → use that item's specific type
       if (parent && 'documentName' in parent && (parent as any).documentName === 'Item') {
         const item = parent as ItemDnd35e;

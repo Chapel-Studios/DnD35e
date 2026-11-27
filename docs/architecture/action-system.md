@@ -41,6 +41,30 @@ interface ActionDataModel {
 
 ### Action Chains
 
+The character sheet's Actions tab (`ActionsTab.vue`) renders `ActionsSection.vue`,
+which uses `CategorizedListTable` to display each carried weapon's top-level actions
+once, grouped two levels deep: top-level by the action's own `type` (`ACTION_TYPES` —
+today `melee_weapon_attack`/`ranged_weapon_attack`; spell/skill action types will join
+this enum and automatically get their own top-level category), sub-level by the
+weapon's carry state (Equipped/Ready/Stowed, derived from `isEquipped`/`containerUuid`).
+Stowed rows additionally show their container name; they remain usable just like
+carried, unequipped weapons. Rows are sourced from `actorActions` (the actor-side
+`IAction` stub aggregation, `document.system.actions`) rather than iterating an item's
+own `system.actions` directly — `ActionDataModel.createActionChange()` already omits
+any action with a critical (`severity: 'error'`) preparation diagnostic from that
+aggregation, so a broken action's stub simply never exists for the sheet (or the Token
+HUD) to render or invoke. `Creature.useAction()` re-checks `hasCriticalPreparationIssue`
+as defense-in-depth for any caller that resolves an action directly off an item instead.
+Non-carried weapons and non-top-level chained actions are omitted. Two same-named
+weapon instances remain separate entries.
+
+Container inventory rows expose their contents through the base row's
+`bonus-row` slot. Nested tables retain the root inventory store via
+`InventoryListStoreSymbol`, independently of item-scoped field stores, so
+permissions and row creation still resolve against the inventory owner.
+Actor and standalone container stores share the row-store cache and refresh
+mechanism in `itemRowStoreRegistry.mts`.
+
 Actions can chain into sequences. A melee attack chains: **attack roll → damage roll → critical confirmation → critical damage**. Each link in the chain runs only if the previous link's condition is met.
 
 ```

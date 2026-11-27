@@ -14,11 +14,12 @@ class FixtureAction extends ActionDataModel {
   protected async _continue(): Promise<ActionResult> { return { cancelled: false, warnings: [], reason: 'success' }; }
 }
 
-function makeAction(id = 'one', owned = true) {
+function makeAction(id = 'one', owned = true, itemId = 'sword') {
   const item = {
+    id: itemId,
     documentName: 'Item',
     name: 'Sword',
-    uuid: 'Actor.hero.Item.sword',
+    uuid: `Actor.hero.Item.${itemId}`,
     actor: owned ? { documentName: 'Actor', name: 'Hero' } : undefined,
     _preparationWarnings: [] as PreparationWarning[],
   };
@@ -95,5 +96,85 @@ describe('shared action roll-formula preparation diagnostics (melee first)', () 
     owned.action.attackFormula.formula = '#self.badPath';
     owned.action.resolveFormulaFields();
     expect(owned.item._preparationWarnings).toMatchObject([{ severity: 'error', message: 'Unresolved reference' }]);
+  });
+});
+
+describe('ActionDataModel.hasCriticalPreparationIssue', () => {
+  it('is false with no diagnostics, true only for this action\'s own error-severity diagnostic', () => {
+    const { action, item } = makeAction();
+    expect(action.hasCriticalPreparationIssue).toBe(false);
+
+    item._preparationWarnings.push({
+      id: 'action:one:formula:name', severity: 'warning', field: 'system.actions.one.name.formula',
+      message: 'cosmetic', sourceUuid: item.uuid, sourcePath: [],
+    });
+    expect(action.hasCriticalPreparationIssue).toBe(false);
+
+    item._preparationWarnings.push({
+      id: 'action:one:formula:damageFormula', severity: 'error', field: 'system.actions.one.damageFormula.formula',
+      message: 'broken', sourceUuid: item.uuid, sourcePath: [],
+    });
+    expect(action.hasCriticalPreparationIssue).toBe(true);
+  });
+});
+
+describe('createActionChange() gates on critical (error-severity) diagnostics', () => {
+  it('returns the actor stub change when there are no diagnostics at all', () => {
+    const { action } = makeAction();
+    expect(action.createActionChange()).toMatchObject({
+      key: 'system.actions.sword_one',
+      value: { id: 'one', itemUuid: 'Actor.hero.Item.sword' },
+    });
+  });
+
+  it('returns the actor stub change when only a non-critical warning exists for this action', () => {
+    const { action, item } = makeAction();
+    item._preparationWarnings.push({
+      id: 'action:one:formula:name', severity: 'warning', field: 'system.actions.one.name.formula',
+      message: 'cosmetic', sourceUuid: item.uuid, sourcePath: [],
+    });
+    expect(action.createActionChange()).not.toBeNull();
+  });
+
+  it('returns null when this action has a critical (error) diagnostic', () => {
+    const { action, item } = makeAction();
+    item._preparationWarnings.push({
+      id: 'action:one:formula:damageFormula', severity: 'error', field: 'system.actions.one.damageFormula.formula',
+      message: 'broken', sourceUuid: item.uuid, sourcePath: [],
+    });
+    expect(action.createActionChange()).toBeNull();
+  });
+
+  it('ignores a critical diagnostic that belongs to a different action on the same item', () => {
+    const { action, item } = makeAction('one');
+    item._preparationWarnings.push({
+      id: 'action:two:formula:damageFormula', severity: 'error', field: 'system.actions.two.damageFormula.formula',
+      message: 'broken', sourceUuid: item.uuid, sourcePath: [],
+    });
+    expect(action.createActionChange()).not.toBeNull();
+  });
+
+  it('returns null when the owning item has no id (not yet embedded/resolvable)', () => {
+    const { action, item } = makeAction();
+    (item as { id?: string }).id = undefined;
+    expect(action.createActionChange()).toBeNull();
+  });
+
+  it('namespaces the change key by item id, not action id alone, so two items sharing an action id never collide', () => {
+    // Same action `_id` ('shared') on two different items (e.g. two weapons dropped from
+    // the same compendium entry, or one duplicated from the other) - both preserve the
+    // embedded action's `_id` verbatim. Without item-id namespacing both would target the
+    // same `system.actions.<id>` key and one would silently overwrite the other.
+    const first = makeAction('shared', true, 'weapon-one');
+    const second = makeAction('shared', true, 'weapon-two');
+
+    const firstChange = first.action.createActionChange();
+    const secondChange = second.action.createActionChange();
+
+    expect(firstChange?.key).toBe('system.actions.weapon-one_shared');
+    expect(secondChange?.key).toBe('system.actions.weapon-two_shared');
+    expect(firstChange?.key).not.toBe(secondChange?.key);
+    expect((firstChange?.value as { itemUuid: string }).itemUuid).toBe('Actor.hero.Item.weapon-one');
+    expect((secondChange?.value as { itemUuid: string }).itemUuid).toBe('Actor.hero.Item.weapon-two');
   });
 });

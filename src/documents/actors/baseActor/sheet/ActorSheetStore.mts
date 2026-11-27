@@ -1,7 +1,7 @@
 import type { ActorDnd35e } from '@actors/baseActor/ActorDnd35e.mjs';
 import type { SenseEntrySource } from '@actors/baseActor/data/index.mjs';
 import type { ItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
-import { createItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
+import { createItemRowStoreCache } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
 import type { ConditionDefinition } from '@constants/conditions.mjs';
 import { CONDITIONS } from '@constants/conditions.mjs';
 import type { Size } from '@constants/sizes.mjs';
@@ -132,23 +132,11 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
   // Row-scoped stores for this actor's inventory rows - cached per item uuid so a row
   // remounting (filtering, reordering, collapsing) reuses the same store instead of
   // rebuilding it. Never touches `game.dnd35e.stores`; see itemRowStoreRegistry.mts.
-  const itemRowStoreCache = new Map<string, ItemRowStore>();
-
   // Forwarded explicitly rather than letting the row store `inject()` it ambiently -
   // this is the SAME instance this actor store itself uses (see DocumentSheetStore.mts).
   const { renderModeStore } = baseStore._storeUtils;
 
-  const getOrCreateItemRowStore = (item: PHYSICAL_ITEMS): ItemRowStore => {
-    const existing = itemRowStoreCache.get(item.uuid);
-    if (existing) return existing;
-    const rowStore = createItemRowStore(item, renderModeStore);
-    itemRowStoreCache.set(item.uuid, rowStore);
-    return rowStore;
-  };
-
-  // Cache guarantees a row store's document type already matches item's actual type.
-  const refreshItemRowStore = (rowStore: ItemRowStore, item: PHYSICAL_ITEMS): Promise<void> =>
-    (rowStore._storeUtils.refreshDocument as (doc?: PHYSICAL_ITEMS | null) => Promise<void>)(item);
+  const { getOrCreateItemRowStore, refreshItemRowStores } = createItemRowStoreCache(renderModeStore);
 
   // Row-scoped stores for this actor's own owned effect rows (Effects tab) - cached per
   // effect uuid so a row remounting reuses the same store instead of rebuilding it. Never
@@ -230,15 +218,7 @@ const useActorSheetStore = <TDocument extends ActorDnd35e>(
     refreshDocument: async (doc?: TDocument | null): Promise<void> => {
       await baseStore._storeUtils.refreshDocument(doc);
 
-      const currentItems = new Map([...document.value.items].map((item) => [item.uuid as string, item] as const));
-      for (const [uuid, rowStore] of itemRowStoreCache) {
-        const currentItem = currentItems.get(uuid);
-        if (!currentItem) {
-          itemRowStoreCache.delete(uuid);
-          continue;
-        }
-        void refreshItemRowStore(rowStore, currentItem as unknown as PHYSICAL_ITEMS);
-      }
+      await refreshItemRowStores(documentGetters.physicalItems.value);
 
       const currentEffects = new Map([...document.value.effects]
         .map((effect) => [effect.uuid as string, effect] as const));

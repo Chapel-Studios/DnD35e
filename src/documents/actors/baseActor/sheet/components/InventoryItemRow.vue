@@ -5,15 +5,7 @@
     :data-container-uuid="containerUuidAttr"
   >
     <td class="name-col item-name">
-      <button
-        v-if="isContainer"
-        type="button"
-        class="field-control-btn container-expand-btn"
-        :title="expandTitle"
-        @click.stop="toggleExpanded"
-      >
-        <i class="fas" :class="isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'" />
-      </button>
+      <slot name="name-prefix"></slot>
       <span
         class="drag-handle"
         :draggable="isInventoryEditable"
@@ -32,7 +24,7 @@
         <span class="item-label">{{ item.name }}</span>
       </span>
     </td>
-    <td class="type-col">{{ typeLabel }}</td>
+    <td class="type-col">{{ localizedTypeLabel }}</td>
     <td class="qty-col">{{ quantity }}</td>
     <td class="weight-col">{{ weightDisplay }}</td>
     <td class="equip-col">
@@ -90,52 +82,16 @@
       </button>
     </td>
   </tr>
-
-  <tr v-if="isContainer && isExpanded" class="contained-item-row">
-    <td class="contained-item-cell" colspan="8">
-      <Suspense>
-        <InventoryListTable
-          variant="container"
-          :items="containerContents"
-          :is-carried="isCarried"
-          :container-uuid="item.uuid"
-          :owner-uuid="ownerUuid"
-          :toggle-title="toggleTitle"
-          :forced-stripe="stripe"
-          :field-path="resolvedFieldPath"
-          empty-label="dnd35e.CONTAINER.ContentsEmpty"
-        />
-      </Suspense>
-    </td>
-  </tr>
+  <slot name="bonus-row" />
 </template>
 
-<script setup lang="ts">
-  import type { EquipSlot } from '@constants/equipmentSlots.mjs';
-  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import { syncContainmentAe } from '@effects/containment/index.mjs';
-  import type { ItemDnd35e } from '@items/baseItem/index.mjs';
-  import type { EQUIPPABLE_ITEMS, EquippableItemType, PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
-  import { containerItemType, EQUIPPABLE_ITEM_TYPES, ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
-  import type { ContainerStore } from '@items/physical/container/sheet/ContainerStore.mjs';
-  import { EquippableItem } from '@items/physical/equippableItem/EquippableItem.mjs';
-  import type { WeaponStore } from '@items/physical/weapon/sheet/WeaponStore.mjs';
-  import { type SettingsStore,SettingsStoreSymbol } from '@settings/index.mjs';
-  import { computed, defineAsyncComponent, inject, provide, ref } from 'vue';
-
-  import type { CreatureDocumentStore } from '../../../creature/sheet/CreatureStore.mjs';
-  import { INVENTORY_FIELD_PATH } from './inventoryFieldPath.mjs';
-
-  // Lazily/dynamically imported to break the InventoryItemRow <-> InventoryListTable
-  // circular reference (a row can render a nested list, whose rows render this component).
-  const InventoryListTable = defineAsyncComponent(() => import('./InventoryListTable.vue'));
-
-  const FALLBACK_ITEM_ICON = '/icons/svg/item-bag.svg';
-
-  const props = withDefaults(defineProps<{
+<script lang="ts">
+  export type InventoryItemRowProps = {
     item: PHYSICAL_ITEMS;
+    itemStore: ItemRowStore;
+    typeLabel: string;
     /** 'carried' = actor carried/tracked lists; 'container' = a container's own contents. */
-    variant?: 'carried' | 'container';
+    variant?: 'carried' | 'contained';
     toggleTitle?: string;
     /** Uuid of the actor that ultimately owns this item's chain of containers. */
     ownerUuid?: string | null;
@@ -144,12 +100,39 @@
     /** Pseudo field-path this row's table is locked/overridden under. Forwarded to nested container tables. */
     fieldPath?: string;
     onDragStart: (event: DragEvent, item: PHYSICAL_ITEMS) => void;
-  }>(), {
+  }
+
+  export const BaseInventoryItemRowPropDefaults = {
     variant: 'carried',
     toggleTitle: '',
     ownerUuid: null,
     stripe: 'even',
     fieldPath: undefined,
+  } as const;
+  export const InventoryItemRowPropDefaults = {
+    ...BaseInventoryItemRowPropDefaults,
+    typeLabel: '',
+  } as const;
+</script>
+
+<script setup lang="ts">
+  import type { EquipSlot } from '@constants/equipmentSlots.mjs';
+  import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
+  import { syncContainmentAe } from '@effects/containment/index.mjs';
+  import type { ItemDnd35e } from '@items/baseItem/index.mjs';
+  import type { EQUIPPABLE_ITEMS, EquippableItemType, PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
+  import { EQUIPPABLE_ITEM_TYPES } from '@items/itemTypes.mjs';
+  import { EquippableItem } from '@items/physical/equippableItem/EquippableItem.mjs';
+  import { type SettingsStore,SettingsStoreSymbol } from '@settings/index.mjs';
+  import { computed, inject, provide } from 'vue';
+
+  import { INVENTORY_FIELD_PATH } from './inventoryFieldPath.mjs';
+  import { type InventoryListStore, InventoryListStoreSymbol, type ItemRowStore } from './itemRowStoreRegistry.mjs';
+
+  const FALLBACK_ITEM_ICON = '/icons/svg/item-bag.svg';
+
+  const props = withDefaults(defineProps<InventoryItemRowProps>(), {
+    ...InventoryItemRowPropDefaults,
   });
 
   const localize = (key: string): string => game.i18n.localize(key);
@@ -158,33 +141,24 @@
     documentGetters: {
       physicalItems: injectedItems,
       getIsFieldEditable,
-      getOrCreateItemRowStore,
     },
-  } = inject(DocumentSheetStoreSymbol) as CreatureDocumentStore;
+  } = (inject(InventoryListStoreSymbol, null) ?? inject(DocumentSheetStoreSymbol)) as InventoryListStore;
 
-
-
-  // Row-scoped store, cached/owned by the actor store (see ActorSheetStore.mts). Reads the
-  // item's document through this store's own reactive ref rather than the `item` prop
-  // directly, so field changes (e.g. isEquipped) are picked up without relying on the parent
-  // to lift primitives out to work around stale prop references. Also provided so any nested
-  // FormGroups/content in this row's subtree can inject the standard document sheet store.
-  const itemRowStore = getOrCreateItemRowStore(props.item);
-  provide(DocumentSheetStoreSymbol, itemRowStore);
 
   const {
     documentUuid: containerUuidAttr,
     documentId,
-    type: itemType,
     img,
     quantity,
     weight,
     isCarried,
-  } = itemRowStore.documentGetters;
+  } = props.itemStore.documentGetters;
 
   const {
     measurement: { weightDisplayShortLabel },
   } = inject(SettingsStoreSymbol) as SettingsStore;
+
+  provide(DocumentSheetStoreSymbol, props.itemStore);
 
   // Falls back to the shared section-level path when no table-specific path was forwarded.
   const resolvedFieldPath = computed(() => props.fieldPath ?? INVENTORY_FIELD_PATH);
@@ -197,55 +171,34 @@
 
   // In a container's own sheet the contents are shown with variant 'container';
   // they are "contained" (remove button shown instead of carry toggle, no equip).
-  const isContained = computed<boolean>(() => props.variant === 'container');
-
-  const isContainer = computed<boolean>(() => itemType.value === containerItemType);
-
-  // The nested InventoryListTable below (variant="container") can't rely on its own
-  // ambient inject(DocumentSheetStoreSymbol) - this row already re-provides that symbol
-  // as itemRowStore (a row-scoped ContainerStore, not the actor's CreatureDocumentStore),
-  // which has no `physicalItems` getter. Pass this container's own contents explicitly,
-  // same as ContainerInventory.vue does for the container's standalone sheet tab.
-  const containerContents = computed<PHYSICAL_ITEMS[]>(() =>
-    isContainer.value ? (itemRowStore as ContainerStore).documentGetters.contents.value : []);
+  const isContained = computed<boolean>(() => props.variant === 'contained');
 
   const itemIcon = computed<string>(() => img.value ?? FALLBACK_ITEM_ICON);
   const iconKey = computed<string>(() => `${documentId.value}:${img.value || 'fallback'}`);
 
   const weightDisplay = computed<string>(() => `${weight.value} ${weightDisplayShortLabel.value}`);
-  const typeLabel = computed<string>(() => isContainer.value
-    ? localize(ITEM_TYPES_LOCALIZED[containerItemType])
-    : (itemRowStore as WeaponStore).documentGetters.weaponType.value
+  const localizedTypeLabel = computed<string>(() => localize(props.typeLabel)
+    //: (itemRowStore as WeaponStore).documentGetters.weaponType.value
   );
 
   const isEquippable = (item: PHYSICAL_ITEMS): item is EQUIPPABLE_ITEMS => {
     return EQUIPPABLE_ITEM_TYPES.has(item.type as EquippableItemType);
   };
 
-  const isEquipped = computed<boolean>(() => itemRowStore.documentGetters.getViewAwareFieldValue<boolean>('system.isEquipped') ?? false);
+  const isEquipped = computed<boolean>(() => props.itemStore.documentGetters.getViewAwareFieldValue<boolean>('system.isEquipped') ?? false);
 
   const showEquipToggle = computed<boolean>(() =>
     !isContained.value
     && props.variant === 'carried'
     && isCarried.value
-    && isEquippable(props.item));
+    && isEquippable(props.item)
+  );
 
   const equipToggleTitle = computed<string>(() =>
     isEquipped.value
       ? 'dnd35e.ACTOR.inventory.action.unequip'
-      : 'dnd35e.ACTOR.inventory.action.equip');
-
-  const expandTitle = computed<string>(() =>
-    isExpanded.value
-      ? localize('dnd35e.CONTAINER.action.collapse')
-      : localize('dnd35e.CONTAINER.action.expand'));
-
-  // ── Expansion (local per-row UI state) ──────────────────────────────────
-  const isExpanded = ref(false);
-
-  const toggleExpanded = (): void => {
-    isExpanded.value = !isExpanded.value;
-  };
+      : 'dnd35e.ACTOR.inventory.action.equip'
+  );
 
   // ── Actions ─────────────────────────────────────────────────────────────
   const equippableItems = computed<EquippableItem[]>(() =>

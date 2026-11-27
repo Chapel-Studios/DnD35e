@@ -6,6 +6,7 @@ import { defineComponent, h } from 'vue';
 
 vi.mock('@documents/document/index.mjs', () => ({
   DocumentSheetStoreSymbol: Symbol.for('test.DocumentSheetStore'),
+  defaultDetailsTab: {},
 }));
 
 vi.mock('@settings/index.mjs', () => ({

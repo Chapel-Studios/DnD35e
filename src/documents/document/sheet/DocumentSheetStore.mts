@@ -45,6 +45,13 @@ import { resolveViewAwareFieldPlan } from './viewAwareFieldPlan.mjs';
 // Types
 // ---------------------------------------------------------------------------
 
+interface UseDocumentStoreOptions {
+  /** Set false for row-scoped stores so they don't clobber a standalone sheet's registry entry (or vice versa). */
+  registerGlobally?: boolean;
+  /** See `useDocumentSheetStore`'s option of the same name. */
+  renderModeStore?: RenderModeStore;
+}
+
 type SheetDocument = ItemDnd35e | ActiveEffectDnd35e | ActorDnd35e;
 
 type DocumentSheetStoreUtils<TDocument extends SheetDocument> = FieldOverridesStoreUtils & {
@@ -574,4 +581,5 @@ export type {
   FormulaRegistration,
   SheetDocument,
   SheetTab,
+  UseDocumentStoreOptions,
 };

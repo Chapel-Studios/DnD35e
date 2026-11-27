@@ -31,6 +31,15 @@ Without phases, circular dependencies arise. If a feat modifies BAB, and BAB det
 
 ### Phase Assignment
 
+Effects embedded directly on an Actor always target that actor: their runtime
+change targets are normalized to `actor` during effect base preparation, before
+phase filtering or formula validation. Their editor offers only actor target
+fields and defaults new or malformed-key changes to `actor`. Item-owned effects
+retain per-change item/actor targeting. A broken change reports a preparation
+diagnostic and is skipped without blocking viable changes on the same effect.
+Creature maximum HP is reset to its derived schema baseline each prep cycle,
+so valid additive HP changes do not accumulate across effect refreshes.
+
 Each `Dnd35eEffectChangeData` declares its phase:
 
 ```typescript

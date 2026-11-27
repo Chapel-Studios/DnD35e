@@ -3,6 +3,7 @@
 vi.mock('@documents/document/index.mjs', () => ({
   DocumentSheetStoreSymbol: Symbol.for('test.DocumentSheetStore'),
   RenderModeStoreSymbol: Symbol.for('test.RenderModeStore'),
+  defaultDetailsTab: {},
 }));
 
 import { DocumentSheetStoreSymbol, RenderModeStoreSymbol } from '@documents/document/index.mjs';

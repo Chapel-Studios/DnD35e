@@ -70,6 +70,12 @@ interface SelectFormGroupProps<TValue extends string | number | null> extends Fo
   options: SelectOption<TValue>[];
 }
 
+interface ComboBoxFormGroupProps extends FormGroupWithInputProps<string> {
+  options: SelectOption<string>[];
+  allowCustom?: boolean;
+  placeholder?: string;
+}
+
 interface MultiSelectFormGroupProps<TValue extends string | number | null> extends Omit<FormGroupWithInputProps<TValue>, 'value' | 'onUpdate'> {
   value?: TValue[] | Set<TValue> | null;
   onUpdate?: (value: TValue[]) => void | boolean | Promise<void> | Promise<boolean>;
@@ -131,6 +137,7 @@ export type {
   CheckBoxFormGroupProps,
   CoinageFormGroupProps,
   ColorFormGroupProps,
+  ComboBoxFormGroupProps,
   ForcedUnitNumberFormGroupProps,
   FormGroupWithInputProps as FormGroupWithInput,
   ListFormGroupProps,

@@ -1,4 +1,5 @@
-import type { RenderModeStore } from '@documents/document/sheet/stores/RenderModeStore.mjs';
+import { createItemRowStoreCache, type ItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
+import type { UseDocumentStoreOptions } from '@documents/document/sheet/DocumentSheetStore.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
@@ -12,20 +13,14 @@ import { computed, inject } from 'vue';
 import type { Container } from '../Container.mjs';
 import { containerDetailsTab, containerInventoryTab } from './index.mjs';
 
-interface UseContainerStoreOptions {
-  /** Set false for row-scoped stores so they don't clobber a standalone sheet's registry entry (or vice versa). */
-  registerGlobally?: boolean;
-  /** See `useDocumentSheetStore`'s option of the same name. */
-  renderModeStore?: RenderModeStore;
-}
-
-const useContainerStore = (context: VueApplicationContext<Container>, options: UseContainerStoreOptions = {}): ContainerStore => {
+const useContainerStore = (context: VueApplicationContext<Container>, options: UseDocumentStoreOptions = {}): ContainerStore => {
   const physicalStore = usePhysicalItemStore<Container>(context, {
     defaultTabs: [containerDetailsTab, containerInventoryTab, physicalItemEffectsTab],
     defaultActiveTab: 'details',
     renderModeStore: options.renderModeStore,
   });
   const document = physicalStore._storeUtils.document;
+  const { getOrCreateItemRowStore, refreshItemRowStores } = createItemRowStoreCache(physicalStore._storeUtils.renderModeStore);
   
   const {
     currency: { highestVisibleCoin },
@@ -42,11 +37,19 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
     }),
     isOverCapacity: computed(() => document.value.system.isOverCapacity),
     contents: computed(() => document.value.getContentsSync() as PHYSICAL_ITEMS[]),
+    getOrCreateItemRowStore,
   };
 
   const store: ContainerStore = {
     ...physicalStore,
     documentGetters,
+    _storeUtils: {
+      ...physicalStore._storeUtils,
+      refreshDocument: async (doc?: Container | null): Promise<void> => {
+        await physicalStore._storeUtils.refreshDocument(doc);
+        await refreshItemRowStores(documentGetters.contents.value);
+      },
+    },
   };
 
   if (options.registerGlobally ?? true) {
@@ -64,6 +67,7 @@ interface ContainerGetters {
   isOverCapacity: ComputedRef<boolean>;
   contentsValue: ComputedRef<CurrencyData>;
   contents: ComputedRef<PHYSICAL_ITEMS[]>;
+  getOrCreateItemRowStore: (item: PHYSICAL_ITEMS) => ItemRowStore;
 }
 
 type ContainerStore = PhysicalDocumentStore<Container> & {
@@ -71,4 +75,4 @@ type ContainerStore = PhysicalDocumentStore<Container> & {
 };
 
 export { useContainerStore };
-export type { ContainerGetters, ContainerStore, UseContainerStoreOptions };
+export type { ContainerGetters, ContainerStore };
