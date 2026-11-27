@@ -1,7 +1,7 @@
 import { createItemRowStoreCache, type ItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
 import type { UseDocumentStoreOptions } from '@documents/document/sheet/DocumentSheetStore.mjs';
 import { CurrencyData } from '@fields/index.mjs';
-import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
+import type { ItemType, PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
 import { usePhysicalItemStore } from '@items/physical/physicalItem/index.mjs';
 import { physicalItemEffectsTab } from '@items/physical/physicalItem/sheet/tabs/index.mjs';
@@ -11,6 +11,7 @@ import type { ComputedRef } from 'vue';
 import { computed, inject } from 'vue';
 
 import type { Container } from '../Container.mjs';
+import { CONTAINER_TYPE, CONTAINER_TYPE_LOCALIZED, type ContainerTypeOption } from '../data/constants.mjs';
 import { containerDetailsTab, containerInventoryTab } from './index.mjs';
 
 const useContainerStore = (context: VueApplicationContext<Container>, options: UseDocumentStoreOptions = {}): ContainerStore => {
@@ -28,6 +29,10 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
   
   const documentGetters = {
     ...physicalStore.documentGetters,
+    containerType: computed(() => document.value.system.containerType),
+    isPurse: computed(() => document.value.system.containerType === CONTAINER_TYPE.PURSE),
+    isQuiver: computed(() => document.value.system.containerType === CONTAINER_TYPE.QUIVER),
+    containerTypeLabel: computed(() => game.i18n.localize(CONTAINER_TYPE_LOCALIZED[document.value.system.containerType])),
     maxContentWeight: computed(() => document.value.system.maxContentWeight),
     contentsAreWeightless: computed(() => document.value.system.contentsAreWeightless),
     contentsWeight: computed(() => document.value.system.contentsWeight),
@@ -37,6 +42,9 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
     }),
     isOverCapacity: computed(() => document.value.system.isOverCapacity),
     contents: computed(() => document.value.getContentsSync() as PHYSICAL_ITEMS[]),
+    allowsCurrency: computed(() => document.value.system.allowsCurrency),
+    allowedItemTypes: computed(() => [...document.value.system.allowedItemTypes ?? []]),
+    allowedItemSubtypes: computed(() => [...document.value.system.allowedItemSubtypes ?? []]),
     getOrCreateItemRowStore,
   };
 
@@ -67,6 +75,13 @@ interface ContainerGetters {
   isOverCapacity: ComputedRef<boolean>;
   contentsValue: ComputedRef<CurrencyData>;
   contents: ComputedRef<PHYSICAL_ITEMS[]>;
+  allowsCurrency: ComputedRef<boolean>;
+  containerType: ComputedRef<ContainerTypeOption>;
+  isPurse: ComputedRef<boolean>;
+  isQuiver: ComputedRef<boolean>;
+  containerTypeLabel: ComputedRef<string>;
+  allowedItemTypes: ComputedRef<ItemType[] | null>;
+  allowedItemSubtypes: ComputedRef<string[] | null>;
   getOrCreateItemRowStore: (item: PHYSICAL_ITEMS) => ItemRowStore;
 }
 

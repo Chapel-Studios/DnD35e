@@ -4,11 +4,14 @@
       {{ title }}
     </h2>
     <CoinageFormGroup
+      v-if="allowsCurrency"
       field-path="system.containedCurrency"
       class="contained-currency grid-full-row"
     />
     <InventoryListTable
+      v-if="!isPurse"
       :items="contents"
+      :is-carried="isCarried"
       :container-uuid="documentUuid"
       :owner-uuid="parentUuid"
       empty-label="dnd35e.CONTAINER.ContentsEmpty"
@@ -27,7 +30,14 @@
   import type { ContainerStore } from '../ContainerStore.mjs';
 
   const {
-    documentGetters: { contents, documentUuid, parentUuid },
+    documentGetters: {
+      contents,
+      documentUuid,
+      parentUuid,
+      allowsCurrency,
+      isPurse,
+      isCarried,
+    },
   } = inject(DocumentSheetStoreSymbol) as ContainerStore;
 
   const title = game.i18n.localize('dnd35e.CONTAINER.Contents');

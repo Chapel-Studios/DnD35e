@@ -1,12 +1,14 @@
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import { findAllContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
+import { findAllContainmentAe, findContainmentAeByItemUuid } from '@effects/containment/logic/containmentAe.mjs';
 import type { ACTIVE_EFFECTS_DND35E } from '@effects/effectTypes.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 import type { ContainerItemType } from '@items/itemTypes.mjs';
 
 import type { PhysicalItemLike, PhysicalItemSourceProps } from '../physicalItem/PhysicalItem.mjs';
 import { PhysicalItem } from '../physicalItem/PhysicalItem.mjs';
+import { CONTAINER_TYPE } from './data/constants.mjs';
 import type { ContainerSystemData, ContainerSystemSource } from './data/ContainerSystemData.mjs';
+import { getItemAllowedMsg } from './logic/filterItems.mjs';
 
 type ContainerSource = Omit<foundry.documents.ItemSource, 'system'>
   & Omit<PhysicalItemSourceProps, 'system'>
@@ -39,9 +41,8 @@ class Container extends PhysicalItem {
   } as const;
 
   /**
-   * Returns all items on the owning actor whose containerUuid points at this bag.
-   * The AEs on this bag are the authoritative weight record; this query is used
-   * for UI display and for capacity checks.
+   * Resolves world or actor-owned items referenced by this bag's containment AEs.
+   * AE membership is authoritative for both contents display and weight rollups.
    */
   async getContents (): Promise<PhysicalItemLike[]> {
     const itemAes = findAllContainmentAe(this);
@@ -56,8 +57,7 @@ class Container extends PhysicalItem {
   }
 
   /**
-   * Synchronous version of getContents. Returns all items on the owning actor whose containerUuid points at this bag.
-   * The AEs on this bag are the authoritative weight record; this query is used for UI display and for capacity checks.
+   * Synchronous version of getContents, using the same authoritative AE membership.
    */
   getContentsSync (): PhysicalItemLike[] {
     const itemAes = findAllContainmentAe(this);
@@ -81,23 +81,44 @@ class Container extends PhysicalItem {
   protected override _prepareDerivedItemData (): void {
     super._prepareDerivedItemData();
 
-    const { containedCurrency } = this.system;
-    this.system.contentsWeight = containedCurrency.getWeightInLbs();
+    const containedCurrency = this.system.allowsCurrency
+      ? this.system.containedCurrency
+      : null;
+    this.system.contentsWeight = containedCurrency?.getWeightInLbs() ?? 0;
     this.system.contentsCount = 0;
-    this.system.contentsValue = CurrencyData.fromStacks(containedCurrency.stacks);
+    this.system.contentsValue = containedCurrency
+      ? CurrencyData.fromStacks(containedCurrency.stacks)
+      : new CurrencyData();
   }
 
   /**
-   * Checks to see if adding an item to this container would exceed its capacity.
-   * Returns false if the item would exceed maxContentWeight.
+   * Checks purse, type/subtype, and capacity restrictions before changing contents.
    */
   canAddItemToContents (item: PhysicalItemLike): boolean {
+    if (this.system.containerType === CONTAINER_TYPE.PURSE) {
+      ui.notifications.warn(game.i18n.localize('dnd35e.CONTAINER.warnings.noItemsInPurse'));
+      return false;
+    }
+
+    const itemAllowedMsg = getItemAllowedMsg(item, this.system.allowedItemTypes, this.system.allowedItemSubtypes);
+    if (itemAllowedMsg) {
+      ui.notifications.warn(itemAllowedMsg);
+      return false;
+    }
+
     const itemWeight = (item.system.weight ?? 0) * Math.max(item.system.quantity ?? 0, 0);
-    const expectedNewWeight = this.system.contentsWeight + itemWeight;
-    return (
+    const existingWeight = findContainmentAeByItemUuid(this, item.uuid)?.system.contributedWeight ?? 0;
+    const expectedNewWeight = this.system.contentsWeight - existingWeight + itemWeight;
+    const result = (
       this.system.maxContentWeight === null
       || expectedNewWeight <= this.system.maxContentWeight
     );
+    if (!result) {
+      ui.notifications.warn(game.i18n.format('dnd35e.CONTAINER.warnings.tooHeavy', {
+        limit: this.system.maxContentWeight,
+      }));
+    }
+    return result;
   }
 }
 

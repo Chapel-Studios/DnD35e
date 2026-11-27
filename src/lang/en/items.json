@@ -17,6 +17,9 @@
   },
   "dnd35e": {
     "CONTAINER": {
+      "Bag": "Bag",
+      "Quiver": "Quiver",
+      "Purse": "Purse",
       "FIELDS": {
         "contentsAreWeightless": {
           "label": "Are Contents Weightless?",
@@ -29,6 +32,18 @@
         "containedCurrency": {
           "label": "Contained Currency",
           "hint": "The amount of currency within this container."
+        },
+        "allowsCurrency": {
+          "label": "Allows Currency",
+          "hint": "Whether this container can hold currency."
+        },
+        "allowedItemTypes": {
+          "label": "Allowed Item Types",
+          "hint": "Types of items this container can hold."
+        },
+        "containerType": {
+          "label": "Container Type",
+          "hint": "Type of container."
         }
       },
       "Tabs": {
@@ -42,6 +57,15 @@
         "removeFromContainer": "Remove from container",
         "expand": "Show contents",
         "collapse": "Hide contents"
+      },
+      "filtering": {
+        "subtypeFilterLabel": "Allowed {type} Subtypes"
+      },
+      "warnings": {
+        "noItemsInPurse": "Not added: purses cannot hold items",
+        "notAllowed": "Not added: {type} not allowed in this container",
+        "notAllowedSubtype": "Not added: {type} ({subtype}) not allowed in this container",
+        "tooHeavy": "Not added: exceeds weight limit ({limit})"
       }
     },
     "AMMO": {

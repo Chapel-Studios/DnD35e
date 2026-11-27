@@ -1,6 +1,7 @@
 import type { DocumentSheetStore } from '@documents/document/index.mjs';
 import type { IdentifiableDocumentActions, IdentifiableDocumentGetters, IdentifiableDocumentStoreUtils, IdentifiableStore } from '@documents/identifiable/index.mjs';
 import { useIdentifiableStore } from '@documents/identifiable/index.mjs';
+import { containmentEffectType } from '@effects/containment/containmentEffectType.mjs';
 import { syncContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
 import { syncBrokenAeState } from '@effects/material/logic/brokenAe.mjs';
 import type { MaterialType } from '@effects/material/Material.mjs';
@@ -46,6 +47,7 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
     _storeUtils: {
       document,
       updateGmOnlyEffectTypes,
+      updateHiddenEffects,
     },
   } = baseStore;
   const identifiableStore = useIdentifiableStore(
@@ -54,6 +56,10 @@ const usePhysicalItemStore = <TDocument extends PhysicalItemLike = PhysicalItemL
   );
   const isGM = game.user.isGM;
   updateGmOnlyEffectTypes([secretEffectType]);
+  // Containment AEs are system-generated bookkeeping (a bag's per-item weight/count/price
+  // contribution - see `effectRowStoreRegistry.mts`) - never user-created or user-edited,
+  // so they're excluded from the Effects tab entirely rather than rendered as a row.
+  updateHiddenEffects([containmentEffectType]);
   const { replaceTabs, tabs } = baseStore._storeUtils.tabStore;
   replaceTabs([
     ...tabs.value.filter((tab) => 'effects' !== tab.id),
