@@ -17,13 +17,15 @@ const useAmmoStore = (
   });
 
   const document = physicalStore._storeUtils.document;
+  const { getViewAwareFieldValue } = physicalStore.documentGetters;
 
   const documentGetters = {
     ...physicalStore.documentGetters,
-    ammoType: computed(() => document.value.system.ammoType),
+    ammoType: computed(() => getViewAwareFieldValue<string>('system.ammoType') ?? ''),
     ammoTypeLabel: computed(() => {
-      const localizationKey = `dnd35e.AMMO.Type.${document.value.system.ammoType.toLocaleLowerCase()}`;
-      return game.i18n.localizeWithFallback(localizationKey, document.value.system.ammoType);
+      const ammoType = getViewAwareFieldValue<string>('system.ammoType') ?? '';
+      const localizationKey = `dnd35e.AMMO.Type.${ammoType.toLocaleLowerCase()}`;
+      return game.i18n.localizeWithFallback(localizationKey, ammoType);
     }),
     isAlwaysRecoverable: computed(() => document.value.system.isAlwaysRecoverable),
   };

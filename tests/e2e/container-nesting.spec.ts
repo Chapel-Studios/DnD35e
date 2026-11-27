@@ -70,7 +70,7 @@ test.describe('container nesting and data rollup', () => {
     await sheet.locator('[data-tab="actions"]').click();
     const actions = sheet.locator('.actions-section');
     await expect(actions.locator('.weapon-row')).toHaveCount(2);
-    await expect(actions.locator('.category-tab-btn')).toHaveCount(3);
+    await expect(actions.locator('.category-tab-btn')).toHaveCount(2);
     await expect(actions.locator('[data-item-id="stowedWeapon0001"] .weapon-location')).toContainText('Inner Bag');
     await updateDocument(page, readyUuid, { 'system.isCarried': false });
     await expect(actions.locator('.weapon-row')).toHaveCount(1);

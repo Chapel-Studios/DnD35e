@@ -262,7 +262,7 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
   }
 
   /**
-   * Live-merges a lightweight actor-side stub for this action onto `system.actions.<_id>`
+   * Live-merges a lightweight actor-side stub for this action onto `system.actions.<key>`
    * (poc.10 §10.4's simplified aggregation — the actor only ever stores an `IAction`
    * pointer; resolved data is looked up live from the item via `itemUuid` rather than
    * duplicated onto the actor). `phase: FINAL` matches the phase `Weapon.getContributedActorChanges()`
@@ -270,6 +270,19 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
    * FINAL`, so all of a weapon's actions are known to exist first. Generic on the base
    * class since every action subtype (weapon attack, future spell cast, ...) contributes
    * the same stub shape.
+   *
+   * The key is `${item.id}_${this._id}`, not `this._id` alone — an action's own `_id` is
+   * only guaranteed unique within the item it was authored on, not across every item on
+   * an actor. Two items sharing an action `_id` (e.g. two weapons dropped from the same
+   * compendium entry, or one duplicated from the other - both preserve the embedded
+   * action's `_id` verbatim) would otherwise both emit an `OVERRIDE` change targeting the
+   * exact same `system.actions.<id>` key; since the stub value is an object (not numeric),
+   * neither change is stackable, so both apply unconditionally in array order and the
+   * later one silently wins, hiding the other item's action entirely. `item.id` (the
+   * embedded item's own id, unique within this actor's collection) rules that out. A `.`
+   * separator can't be used here - `ActiveEffect.applyChange()`/`foundry.utils.setProperty()`
+   * treat `.` as a nested-path separator, which would turn this flat `Record<string,
+   * IAction>` key into a two-level nested object instead.
    *
    * Returns `null` when `item.uuid` isn't resolvable yet — `Document#uuid` falls back to
    * `foundry.utils.buildUuid()`, which returns `null` (not an empty/malformed string)
@@ -292,7 +305,8 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
   createActionChange(): EffectChangeDataDnd35e | null {
     const item = this.item;
     const itemUuid = item?.uuid;
-    if (!itemUuid) return null;
+    const itemId = item?.id;
+    if (!itemUuid || !itemId) return null;
     if (this.hasCriticalPreparationIssue) return null;
 
     // not sure if we actually want this to be system or not, but for now it is
@@ -304,7 +318,7 @@ abstract class ActionDataModel<TResult extends ActionResult = ActionResult> exte
       isSystem,
     };
     return {
-      key: `system.actions.${this._id}`,
+      key: `system.actions.${itemId}_${this._id}`,
       type: EFFECT_CHANGE_TYPE.OVERRIDE,
       value: stub,
       target: EFFECT_CHANGE_TARGET.ACTOR,
