@@ -24,7 +24,6 @@
 
 <style scoped lang="scss">
   .weapon-summary {
-    grid-column: span 2;
     display: grid;
     grid-template: auto / 1fr 1fr;
     justify-items: center;
@@ -44,6 +43,14 @@
       width: 100%;
       font-size: 1rem;
       align-self: end;
+    }
+
+    .contents {
+      font-size: 1rem;
+    }
+
+    :deep(.field-control-btn) {
+      font-size: 0.6rem;
     }
   }
 </style>

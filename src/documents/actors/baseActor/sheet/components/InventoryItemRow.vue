@@ -245,9 +245,11 @@
   };
 
   const destroyItem = async (item: PHYSICAL_ITEMS): Promise<void> => {
-    const confirmMessage = localize('dnd35e.ACTOR.inventory.confirm.destroyItem')
-      .replace('{itemName}', item.name);
-    if (!window.confirm(confirmMessage)) return;
+    const confirmed = await foundry.applications.api.DialogV2.confirm({
+      window: { title: 'dnd35e.ACTOR.inventory.confirmDestroyTitle' },
+      content: game.i18n.format('dnd35e.ACTOR.inventory.confirmDestroyContent', { itemName: item.name }),
+    });
+    if (!confirmed) return;
 
     await item.delete();
   };

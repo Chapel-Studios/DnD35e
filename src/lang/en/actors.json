@@ -382,6 +382,8 @@
         "emptyTracked": "No tracked items",
         "locked": "Locked",
         "confirmUnequipTitle": "Confirm Unequip",
+        "confirmDestroyTitle": "Confirm Destroy",
+        "confirmDestroyContent": "Are you sure you want to destroy {itemName}?",
         "confirmUnequipContent": "Are you sure you want to unequip {itemName}?"
       },
       "header": {
