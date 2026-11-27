@@ -35,7 +35,9 @@ const useAmmoStore = (
     documentGetters,
   };
 
-  game.dnd35e.stores[document.value.documentName][context.document.uuid] = store;
+  if (options.registerGlobally ?? true) {
+    game.dnd35e.stores[document.value.documentName][context.document.uuid] = store;
+  }
 
   return store;
 };
