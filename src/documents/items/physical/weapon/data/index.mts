@@ -1,10 +1,8 @@
 import type {
-  WeaponBaseType,
   WeaponSubtype,
   WeaponType,
 } from './constants.mjs';
 import {
-  WEAPON_BASE_TYPES,
   WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,
   WEAPON_TYPE_LOCALIZED,
@@ -19,7 +17,6 @@ import type {
 import { WeaponSystemModel } from './WeaponSystemModel.mjs';
 
 export type {
-  WeaponBaseType,
   WeaponSubtype,
   WeaponSystemData,
   WeaponSystemSource,
@@ -27,7 +24,6 @@ export type {
 };
 
 export {
-  WEAPON_BASE_TYPES,
   WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,
   WEAPON_TYPE_LOCALIZED,

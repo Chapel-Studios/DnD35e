@@ -47,6 +47,7 @@ interface NumberFormGroupProps extends FormGroupWithInputProps<number> {
 interface ForcedUnitNumberFormGroupProps extends Omit<NumberFormGroupProps, 'unit'> {}
 
 interface CheckBoxFormGroupProps extends Omit<FormGroupWithInputProps<boolean>, 'onUpdate'> {
+  /** Called when the checkbox is toggled, if given replaces the default handler */
   onUpdate?: (value: boolean) => void | boolean | Promise<void> | Promise<boolean>;
 }
 

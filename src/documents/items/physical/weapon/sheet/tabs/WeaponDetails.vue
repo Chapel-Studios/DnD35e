@@ -11,6 +11,7 @@
       <ItemSheetIsCarriedCheckbox />
       <ItemSheetIsBrokenCheckbox />
       <ItemIsMasterworkCheckbox />
+      <BaseWeaponType />
       <ItemSheetContainerSelector />
       <MagicEquivalency v-if="hasMagicEquivalentEffects" class="magic-eq-effect" read-only />
       <DamageReductionTypes v-if="hasDamageReductionTypeEffects" class="dr-types" read-only />
@@ -39,6 +40,7 @@
   import { DmControl, UniqueId } from '@vc/index.mjs';
   import { inject } from 'vue';
 
+  import BaseWeaponType from '../components/BaseWeaponType.vue';
   import type { WeaponStore } from '../WeaponStore.mjs';
 
   const {

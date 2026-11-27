@@ -13,6 +13,7 @@ import type { ActiveEffectConfigStore } from '@effects/baseActiveEffect/index.mj
 import type { ItemSheetStore } from '@items/baseItem/index.mjs';
 import { ItemDnd35e } from '@items/baseItem/index.mjs';
 import type { ItemType } from '@items/itemTypes.mjs';
+import type { BaseWeaponNameCache } from '@items/physical/weapon/logic/BaseWeaponNameCache.mjs';
 
 import type { CanvasDnd35e } from './canvas/CanvasDnd35e.mjs';
 import { CombatantDnd35e } from './documents/combat/combatant/CombatantDnd35e.mjs';
@@ -43,6 +44,7 @@ type GameDnd35e = Omit<Game<
       Item: Record<string, ItemSheetStore<any>>;
       ActiveEffect: Record<string, ActiveEffectConfigStore>;
     };
+    baseWeaponNameCache: typeof BaseWeaponNameCache;
   }
 };
 

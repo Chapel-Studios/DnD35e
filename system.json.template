@@ -52,7 +52,7 @@
       "type": "Item",
       "flags": {
         "dnd35e": {
-          "indexFields": ["system.weaponType", "system.weaponSubtype", "system.weaponBaseType"]
+          "indexFields": ["system.weaponType", "system.weaponSubtype", "system.isBaseWeaponType"]
         }
       }
     },

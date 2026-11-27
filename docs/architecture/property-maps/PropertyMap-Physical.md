@@ -73,7 +73,7 @@ erDiagram
         boolean isMasterwork
         WeaponType_D weaponType
         WeaponSubtype_D weaponSubtype
-        WeaponBaseType_D weaponBaseType
+        string weaponBaseType
         string attackNotes
         string damageNotes
     }

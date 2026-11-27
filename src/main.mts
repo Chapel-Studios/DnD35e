@@ -7,6 +7,7 @@ import { registerActors } from '@documents/actors/registration.mjs';
 import { registerCombat } from '@documents/combat/registration.mjs';
 import { registerScenes } from '@documents/scene/registration.mjs';
 import { preLocalizeConfig } from '@helpers/localization/preLocalizeConfig.mjs';
+import { BaseWeaponNameCache } from '@items/physical/weapon/logic/BaseWeaponNameCache.mjs';
 import { SYSTEM_ID } from '@settings/shared.mjs';
 import { D20Roll, DamageRoll, registerChatCardActions } from '@source/dice/index.mjs';
 
@@ -38,6 +39,7 @@ Hooks.once('init', () => {
       Item: {},
       ActiveEffect: {},
     },
+    baseWeaponNameCache: BaseWeaponNameCache,
   };
 });
 
@@ -78,6 +80,8 @@ Hooks.once('ready', async () => {
   Hooks.on('controlToken', () => {
     reinitializeSharedVision();
   });
+
+  await BaseWeaponNameCache.getNames();
 
   try {
     const resp = await fetch(`systems/${game.system.id}/build-warnings.json`).catch(() => null);

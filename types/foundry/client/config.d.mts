@@ -312,6 +312,7 @@ export default interface Config<
             new (data: PreCreate<TItem['_source']>, context?: DocumentConstructionContext<TItem['parent']>): TItem;
         };
         collection: typeof collections.Items;
+        compendiumIndexFields: string[];
         dataModels: Record<string, ConstructorOf<TypeDataModel<documents.Item, DataSchema>>>;
         typeIcons: Record<string, string>;
         typeLabels: Record<string, string | undefined>;

@@ -1,12 +1,10 @@
 import type {
-  WeaponBaseType,
   WeaponSubtype,
   WeaponSystemData,
   WeaponSystemSource,
   WeaponType,
 } from './data/index.mjs';
 import {
-  WEAPON_BASE_TYPES,
   WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,
   WEAPON_TYPE_LOCALIZED,
@@ -38,7 +36,6 @@ import {
 export {
   useWeaponStore,
   Weapon,
-  WEAPON_BASE_TYPES,
   WEAPON_SUBTYPE_LOCALIZED,
   WEAPON_SUBTYPES,
   WEAPON_TYPE_LOCALIZED,
@@ -54,7 +51,6 @@ export {
 };
 
 export type {
-  WeaponBaseType,
   WeaponSheetConfig,
   WeaponSheetRenderContext,
   WeaponSource,

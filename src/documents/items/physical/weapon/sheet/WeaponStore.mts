@@ -35,6 +35,7 @@ const useWeaponStore = (context: VueApplicationContext<Weapon>, options: UseDocu
   
   const documentGetters = {
     ...equippableStore.documentGetters,
+    isBaseWeaponType: computed(() => document.value.system.isBaseWeaponType),
     weaponType: computed(() => game.i18n.localize(WEAPON_TYPE_LOCALIZED[document.value.system.weaponType])),
     weaponSubtype: computed(() => game.i18n.localize(WEAPON_SUBTYPE_LOCALIZED[document.value.system.weaponSubtype])),
     topLevelActions: computed(() => document.value.system.actions.filter((action) => action.isTopLevel)),
@@ -166,6 +167,7 @@ interface WeaponGetters extends EquippableItemGetters {
   weaponType: ComputedRef<string>;
   weaponSubtype: ComputedRef<string>;
   topLevelActions: ComputedRef<WeaponAction[]>;
+  isBaseWeaponType: ComputedRef<boolean>;
 }
 
 interface WeaponActions extends EquippableItemActions {
