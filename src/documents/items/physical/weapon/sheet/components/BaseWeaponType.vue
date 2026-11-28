@@ -2,9 +2,9 @@
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { CheckBoxFormGroupProps, SelectFormGroupProps, SelectOption } from '@vc/fields/formGroups/types.mjs';
   import { CheckBoxFormGroup, SelectFormGroup } from '@vc/fields/index.mjs';
-  import { computed, inject, onMounted, ref } from 'vue';
+  import { computed, inject } from 'vue';
 
-  import { BaseWeaponNameCache } from '../../logic/BaseWeaponNameCache.mjs';
+  import { useBaseWeaponNames } from '../useBaseWeaponNames.mjs';
   import type { WeaponStore } from '../WeaponStore.mjs';
 
   const {
@@ -26,16 +26,14 @@
     },
   };
 
-  // Keep setup synchronous: this sheet has no Suspense boundary.
-  const baseNames = ref<Set<string>>(new Set());
-
-  onMounted(async () => {
-    baseNames.value = await BaseWeaponNameCache.getNames();
-  });
+  const baseNames = useBaseWeaponNames();
 
   const basetypeProps = computed<SelectFormGroupProps<string>>(() => ({
     fieldPath: 'system.weaponBaseType',
-    options: [...baseNames.value].map(n => ({ label: n, value: n } as SelectOption<string>)),
+    options: [
+      { label: 'dnd35e.COMMON.None', value: '' },
+      ...[...baseNames.value].map(n => ({ label: n, value: n } as SelectOption<string>)),
+    ],
   }));
 </script>
 

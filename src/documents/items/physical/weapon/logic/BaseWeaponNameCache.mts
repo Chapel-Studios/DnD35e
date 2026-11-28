@@ -1,6 +1,7 @@
 class BaseWeaponNameCache {
   static _cache: Set<string> | null = null;
   static _pendingPromise: Promise<Set<string>> | null = null;
+  private static readonly _invalidationListeners = new Set<() => void>();
 
   /**
    * Returns a Set of unique base item names, rebuilding only if invalidated.
@@ -41,6 +42,12 @@ class BaseWeaponNameCache {
   static invalidate(): void {
     this._cache = null;
     this._pendingPromise = null;
+    for (const listener of [...this._invalidationListeners]) listener();
+  }
+
+  static onInvalidate (listener: () => void): () => void {
+    this._invalidationListeners.add(listener);
+    return () => { this._invalidationListeners.delete(listener); };
   }
 }
 

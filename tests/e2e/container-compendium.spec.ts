@@ -1,5 +1,6 @@
 import type { Container } from '@items/physical/container/Container.mjs';
 import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
+import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
 import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
@@ -158,6 +159,72 @@ test('GM drops a container template into a cold-cache compendium inventory targe
     expect.objectContaining({ uuid: template }),
   ]);
   expect(await readItemSystem(page, template)).toEqual(originalSystem);
+});
+
+test('GM keeps weapon and container selectors mounted while compendium base names change', async ({ page }) => {
+  await gotoGame(page);
+  const pack = await createPack(page, 'Mounted base weapon selectors');
+  const originalName = 'Mounted cache original axe';
+  const renamedName = 'Mounted cache renamed axe';
+  const extraName = 'Mounted cache extra axe';
+  const base = await createItem(page, 'weapon', {
+    name: originalName, system: { isBaseWeaponType: true },
+  });
+  const template = (await exportItem(page, base, pack))!;
+  const weapon = await createItem(page, 'weapon', {
+    name: 'Mounted selector weapon', system: { weaponBaseType: originalName },
+  });
+  const container = await createItem(page, 'container', {
+    name: 'Mounted selector container',
+    system: { allowedItemTypes: ['weapon'], allowedItemSubtypes: [originalName] },
+  });
+  const weaponSheet = page.locator(await openDocumentSheet(page, weapon));
+  await dismissOverlays(page);
+  await weaponSheet.locator('a[data-tab="details"]').click();
+  const weaponField = weaponSheet.locator('[data-field-path="system.weaponBaseType"]');
+  const containerSheet = page.locator(await openDocumentSheet(page, container));
+  await dismissOverlays(page);
+  await containerSheet.locator('a[data-tab="details"]').click();
+  const containerField = containerSheet.locator('[data-field-path="system.allowedItemSubtypes.weapon"]');
+  await expect(weaponField).toBeVisible();
+  await expect(containerField).toBeVisible();
+  for (const field of [weaponField, containerField]) {
+    await field.evaluate(element => element.setAttribute('data-cache-mount', 'original'));
+  }
+  const expectName = async (name: string, present: boolean) => {
+    await expect(weaponField.locator('option').filter({ hasText: name })).toHaveCount(present ? 1 : 0);
+    await expect(containerField.locator(`input[value="${name}"]`)).toHaveCount(present ? 1 : 0);
+  };
+  await expectName(originalName, true);
+  await updateDocument(page, template, { system: { nameFormula: { formula: renamedName } } });
+  await expectName(renamedName, true);
+  await expectName(originalName, false);
+  await updateDocument(page, template, { system: { isBaseWeaponType: false } });
+  await expectName(renamedName, false);
+  await updateDocument(page, template, { system: { isBaseWeaponType: true } });
+  await expectName(renamedName, true);
+  const extra = await createItem(page, 'weapon', { name: extraName, system: { isBaseWeaponType: true } });
+  await exportItem(page, extra, pack);
+  await expectName(extraName, true);
+  await page.evaluate(async uuid => {
+    const item = await fromUuid<Weapon>(uuid);
+    if (!item) throw new Error('Missing base weapon template to delete');
+    await item.delete();
+  }, template);
+  await expectName(renamedName, false);
+  await expectName(extraName, true);
+  for (const field of [weaponField, containerField]) {
+    await expect(field).toHaveAttribute('data-cache-mount', 'original');
+  }
+  expect(await page.evaluate(async ({ weapon, container }) => {
+    const item = await fromUuid<Weapon>(weapon);
+    const bag = await fromUuid<Container>(container);
+    if (!item || !bag) throw new Error('Missing mounted selector fixtures');
+    return {
+      base: item.system.weaponBaseType,
+      subtypes: [...(bag.system.allowedItemSubtypes ?? [])],
+    };
+  }, { weapon, container })).toEqual({ base: originalName, subtypes: [originalName] });
 });
 
 test('GM edits a cold-cache pack source and every referencing bag and ancestor receives current contributions', async ({ page }) => {

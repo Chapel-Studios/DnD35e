@@ -3,10 +3,10 @@
   import type { ItemType } from '@items/index.mjs';
   import { ammoItemType, containerItemType, ITEM_TYPES_LOCALIZED, ItemTypeSelectOptions, weaponItemType } from '@items/itemTypes.mjs';
   import { AMMO_TYPE_SELECT_OPTIONS, AMMO_TYPES } from '@items/physical/ammo/index.mjs';
-  import { BaseWeaponNameCache } from '@items/physical/weapon/logic/BaseWeaponNameCache.mjs';
+  import { useBaseWeaponNames } from '@items/physical/weapon/sheet/useBaseWeaponNames.mjs';
   import type { MultiSelectFormGroupProps, SelectOption } from '@vc/fields/formGroups/types.mjs';
   import { MultiSelectFormGroup } from '@vc/fields/index.mjs';
-  import { computed, inject, onMounted, ref } from 'vue';
+  import { computed, inject } from 'vue';
 
   import { CONTAINER_TYPES, ContainerTypeSelectOptions } from '../../data/constants.mjs';
   import type { ContainerStore } from '../index.mjs';
@@ -18,12 +18,7 @@
   const allowedItemTypesUpdater = getViewAwareFieldUpdater('system.allowedItemTypes');
   const allowedItemSubtypesUpdater = getViewAwareFieldUpdater('system.allowedItemSubtypes');
 
-  // Keep setup synchronous: this sheet has no Suspense boundary.
-  const baseWeaponNames = ref<Set<string>>(new Set());
-
-  onMounted(async () => {
-    baseWeaponNames.value = await BaseWeaponNameCache.getNames();
-  });
+  const baseWeaponNames = useBaseWeaponNames();
 
   const optionValues = {
     [weaponItemType]: computed(() => [...(new Set(allowedItemSubtypes.value).intersection(baseWeaponNames.value))]),
