@@ -1424,7 +1424,7 @@ New `Ammo` physical item type (extends `PhysicalItem` directly, not `EquippableI
 
 **Authoring workflow**: create an ammunition Item with the desired quantity (e.g. 20 arrows), compose a quiver with that world Item or an existing pack template, and export the quiver. Confirm copying any world-only contents beside it. Import the stocked quiver into the world or an actor to obtain independently editable contents without changing the template.
 
-**`allowsCurrency: boolean`** (default `true`) — controls visibility of `ContainerInventory.vue`'s coin field and whether held coins contribute to contents weight/value. Disabling it preserves the stored coin stacks; re-enabling restores their contribution. Purses force the effective value to `true`.
+**`allowsCurrency: boolean`** (default `true`) — controls visibility of `ContainerInventory.vue`'s coin field and whether held coins contribute to contents weight/value. Disabling it preserves the stored coin stacks; re-enabling restores their contribution. Purses force the effective value to `true`. Changing `allowsCurrency` or `containerType` on a nested container resynchronizes its parent containment AE and propagates weight/value rollups through all ancestors, keeping capacity checks current.
 
 **Contents refresh**: containment AEs are authoritative for membership as well as rollups, including world-item references. They are hidden bookkeeping effects, not editable effect rows. Explicit contents passed to `InventoryListTable.vue` must not be re-filtered by the source item's `containerUuid`: AE creation refreshes the bag before that source update finishes. Cycle prevention resolves the target and each ancestor by UUID, not from the contents list, so a parent cannot be dropped into its descendant.
 

@@ -100,9 +100,9 @@ class Container extends PhysicalItem {
       return false;
     }
 
-    const itemAllowedMsg = getItemAllowedMsg(item, this.system.allowedItemTypes, this.system.allowedItemSubtypes);
-    if (itemAllowedMsg) {
-      ui.notifications.warn(itemAllowedMsg);
+    const itemNotAllowedMsg = getItemAllowedMsg(item, this.system.allowedItemTypes, this.system.allowedItemSubtypes);
+    if (itemNotAllowedMsg) {
+      ui.notifications.warn(itemNotAllowedMsg);
       return false;
     }
 

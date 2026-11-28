@@ -10,6 +10,7 @@ import { multiplyCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemDnd35e as ItemDnd35eClass } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/index.mjs';
+import { containerItemType } from '@items/itemTypes.mjs';
 
 import type { Container } from '../container/Container.mjs';
 import type { PhysicalItemSystemData, PhysicalItemSystemSource } from './data/PhysicalItemSystemData.mjs';
@@ -43,8 +44,8 @@ abstract class PhysicalItem extends IdentifiableItemBase {
 
     registerPhysicalItemEventChecks(this);
 
-    // syncContainmentAe() is otherwise only refreshed from _onUpdate() (weight/quantity/
-    // price/containerUuid changes). Newly created items would never get their containment
+    // syncContainmentAe() is otherwise only refreshed from _onUpdate() (contribution or
+    // container assignment changes). Newly created items would never get their containment
     // contribution AE built until an unrelated later edit - so build it once here too.
     // (Carried-weight contribution no longer needs any such bootstrap at all - it's
     // computed live every preparation cycle by `getContributedActorChanges()`, not
@@ -124,7 +125,7 @@ abstract class PhysicalItem extends IdentifiableItemBase {
 
   /**
    * Keeps this item's contribution AE on its container bag in sync whenever
-   * the container assignment, weight, quantity, or price changes.
+   * the container assignment, weight, quantity, price, or container currency settings change.
    */
   protected override async _onUpdate (
     changed: Record<string, unknown>,
@@ -142,7 +143,11 @@ abstract class PhysicalItem extends IdentifiableItemBase {
     const hasKeyValueChanged = 
       'weight' in changedSystem
       || 'quantity' in changedSystem
-      || 'price' in changedSystem;
+      || 'price' in changedSystem
+      || (
+        this.type === containerItemType
+        && ('allowsCurrency' in changedSystem || 'containerType' in changedSystem)
+      );
 
     if (
       hasContainerChanged

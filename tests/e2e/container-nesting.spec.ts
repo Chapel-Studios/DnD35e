@@ -1,3 +1,5 @@
+import type { Container } from '@items/physical/container/Container.mjs';
+import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
 import { expect, test } from '@playwright/test';
 
 import { clearWorld, createActor, createItem, stowItemViaDrop, updateDocument } from './helpers/documents.mjs';
@@ -260,6 +262,79 @@ test.describe('container nesting and data rollup', () => {
       { coinId: 'srd_pp', count: 10 },
       { coinId: 'srd_cp', count: 50 },
     ]);
+  });
+
+  test('GM changes nested container currency settings and ancestor rollups and capacity checks stay current', async ({ page }) => {
+    await gotoGame(page);
+    const outerUuid = await createItem(page, 'container', {
+      name: 'Outer Bag',
+      system: { weight: 0, quantity: 1 },
+    });
+    const middleUuid = await createItem(page, 'container', {
+      name: 'Middle Bag',
+      system: { weight: 2, quantity: 1 },
+    });
+    const innerUuid = await createItem(page, 'container', {
+      name: 'Currency Bag',
+      system: {
+        weight: 1, quantity: 1, allowsCurrency: true,
+        containedCurrency: { stacks: [{ coinId: 'srd_gp', count: 50 }] },
+      },
+    });
+    const probeUuid = await createItem(page, 'weapon', {
+      name: 'Capacity Probe',
+      system: { weight: 1, quantity: 1 },
+    });
+    await stowItemViaDrop(page, innerUuid, middleUuid);
+    await stowItemViaDrop(page, middleUuid, outerUuid);
+    await updateDocument(page, outerUuid, { system: { maxContentWeight: 4.5 } });
+    await updateDocument(page, middleUuid, { system: { maxContentWeight: 2.5 } });
+
+    const readState = () => page.evaluate(async ({ outerUuid, middleUuid, innerUuid, probeUuid }) => {
+      const inner = await fromUuid<Container>(innerUuid);
+      const probe = await fromUuid<PhysicalItemLike>(probeUuid);
+      if (!inner || !probe) throw new Error('Missing currency synchronization fixture');
+      const parents = await Promise.all([outerUuid, middleUuid].map(async uuid => {
+        const container = await fromUuid<Container>(uuid);
+        if (!container) throw new Error(`Missing ancestor container ${uuid}`);
+        return {
+          weight: container.system.contentsWeight,
+          value: container.system.contentsValue.srdEquivalent,
+          acceptsProbe: container.canAddItemToContents(probe),
+        };
+      }));
+      return {
+        allowsCurrency: inner.system.allowsCurrency,
+        coins: inner.system.containedCurrency.stacks,
+        parents,
+      };
+    }, { outerUuid, middleUuid, innerUuid, probeUuid });
+
+    const enabled = {
+      allowsCurrency: true,
+      coins: [{ coinId: 'srd_gp', count: 50 }],
+      parents: [
+        { weight: 4, value: 50, acceptsProbe: false },
+        { weight: 2, value: 50, acceptsProbe: false },
+      ],
+    };
+    const disabled = {
+      ...enabled,
+      allowsCurrency: false,
+      parents: [
+        { weight: 3, value: 0, acceptsProbe: true },
+        { weight: 1, value: 0, acceptsProbe: true },
+      ],
+    };
+    await expect.poll(readState).toEqual(enabled);
+    await updateDocument(page, innerUuid, { system: { allowsCurrency: false } });
+    await expect.poll(readState).toEqual(disabled);
+    await updateDocument(page, innerUuid, { system: { allowsCurrency: true } });
+    await expect.poll(readState).toEqual(enabled);
+    await updateDocument(page, innerUuid, { system: { allowsCurrency: false } });
+    await expect.poll(readState).toEqual(disabled);
+    await updateDocument(page, innerUuid, { system: { containerType: 'purse' } });
+    await expect.poll(readState).toEqual(enabled);
   });
 
   test('unowned items: verify nesting and rollup work on world items', async ({ page }) => {
