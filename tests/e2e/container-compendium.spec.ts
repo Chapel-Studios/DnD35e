@@ -161,6 +161,51 @@ test('GM drops a container template into a cold-cache compendium inventory targe
   expect(await readItemSystem(page, template)).toEqual(originalSystem);
 });
 
+test('GM removes a zero-contribution compendium item from an expanded cache-evicted bag without reopening it', async ({ page }) => {
+  await gotoGame(page);
+  const packId = await createPack(page, 'Cold-cache removal templates');
+  const ammo = await createItem(page, 'ammo', {
+    name: 'Weightless template arrow', system: { quantity: 1, weight: 0, price: { stacks: [] } },
+  });
+  const template = (await exportItem(page, ammo, packId))!;
+  const bag = await createItem(page, 'container', {
+    name: 'Expanded template bag', system: { weight: 0, price: { stacks: [] } },
+  });
+  const packBag = (await exportItem(page, bag, packId))!;
+  const root = await createItem(page, 'container', { name: 'Removal root' });
+  await stowItemViaDrop(page, template, packBag);
+  await stowItemViaDrop(page, packBag, root);
+  const originalSystem = await readItemSystem(page, template);
+  const originalRollups = await readRollups(page, [root], ammo);
+  expect(originalRollups).toEqual([{ count: 1, weight: 0, value: 0, acceptsProbe: true }]);
+
+  const sheet = page.locator(await openDocumentSheet(page, root));
+  await dismissOverlays(page);
+  await sheet.locator('a[data-tab="inventory"]').click();
+  const bagRow = sheet.locator(`.inventory-row[data-container-uuid="${packBag}"]`);
+  await bagRow.locator('.container-expand-btn').click();
+  const zone = sheet.locator('.contained-item-row .inventory-drop-zone');
+  await expect(zone).toBeVisible();
+  await zone.evaluate(element => element.setAttribute('data-removal-mount', 'original'));
+  const row = sheet.locator(`.inventory-row[data-container-uuid="${template}"]`);
+  await expect(row).toBeVisible();
+  await page.evaluate(({ packId, packBag }) => {
+    const pack = game.packs.get(packId);
+    if (!pack) throw new Error('Missing destination pack for cold-cache removal test');
+    pack.clear();
+    if (fromUuidSync(packBag) instanceof Item) throw new Error('Removal container is still cached');
+  }, { packId, packBag });
+
+  await row.locator('.carry-toggle').click();
+  await expect.poll(() => readContents(page, packBag)).toEqual([]);
+  await expect(row).toHaveCount(0);
+  await expect(bagRow).toBeVisible();
+  await expect(zone).toBeVisible();
+  await expect(zone).toHaveAttribute('data-removal-mount', 'original');
+  expect(await readRollups(page, [root], ammo)).toEqual(originalRollups);
+  expect(await readItemSystem(page, template)).toEqual(originalSystem);
+});
+
 test('GM keeps weapon and container selectors mounted while compendium base names change', async ({ page }) => {
   await gotoGame(page);
   const pack = await createPack(page, 'Mounted base weapon selectors');

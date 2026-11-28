@@ -119,6 +119,7 @@
 
 <script setup lang="ts">
   import type { EquipSlot } from '@constants/equipmentSlots.mjs';
+  import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { removeItemFromContainer, syncContainmentAe } from '@effects/containment/index.mjs';
   import type { ItemDnd35e } from '@items/baseItem/index.mjs';
@@ -141,12 +142,15 @@
 
   const localize = (key: string): string => game.i18n.localize(key);
 
+  const documentStore = inject<DocumentSheetStore & InventoryListStore>(DocumentSheetStoreSymbol);
+  if (!documentStore) throw new Error('InventoryItemRow requires a document sheet store.');
+
   const {
     documentGetters: {
       physicalItems: injectedItems,
       getIsFieldEditable,
     },
-  } = (inject(InventoryListStoreSymbol, null) ?? inject(DocumentSheetStoreSymbol)) as InventoryListStore;
+  } = inject(InventoryListStoreSymbol, null) ?? documentStore;
 
   const {
     documentUuid: containerUuidAttr,
@@ -255,6 +259,7 @@
       : null;
     if (!container) containmentError('missingContents', { uuid: props.parentContainerUuid ?? '' });
     await removeItemFromContainer(item, container);
+    await documentStore._storeUtils.refreshDocument();
   };
 
   const destroyItem = async (item: PHYSICAL_ITEMS): Promise<void> => {
