@@ -41,7 +41,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
       { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
     ];
 
-    schema.isBaseWeaponType = requiredBooleanField(false);
+    schema.isBaseWeaponType = useDnd35eField(requiredBooleanField(false));
     schema.weaponType = useDnd35eField(
       new StringField({ 
         choices: [

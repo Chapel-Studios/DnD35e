@@ -5,10 +5,11 @@ import type { ContainerSystemSource } from '@items/physical/container/data/Conta
 import type { ContainerStore } from '@items/physical/container/sheet/ContainerStore.mjs';
 import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
 import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
-import type { Page } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 import { clearWorld, createActiveEffect, createActor, createItem, stowItemViaDrop, updateDocument } from './helpers/documents.mjs';
+import { clearFieldOverride, setFieldOverride, waitForFieldOverride } from './helpers/fieldOverrides.mjs';
 import { gotoGame, loginAs } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
 import { dismissOverlays } from './helpers/ui.mjs';
@@ -380,6 +381,93 @@ test('GM edits independent subtype lists and clears removed types even after a b
   await expect.poll(() => readFilters(page, container)).toEqual({
     types: null, subtypes: { weapon: null, ammo: null, container: null },
   });
+});
+
+for (const sourceFlag of [false, true]) {
+  test(`GM sees the base-weapon selector follow a ${sourceFlag} flag masked as ${!sourceFlag}`, async ({ page }) => {
+    await gotoGame(page);
+    const weapon = await createItem(page, 'weapon', {
+      name: 'Masked base-weapon layout', system: { isBaseWeaponType: sourceFlag },
+    });
+    await createActiveEffect(page, weapon, {
+      name: 'Masked base-weapon flag', type: 'secret',
+      changes: [{ key: 'system.isBaseWeaponType', value: !sourceFlag, type: 'mask', target: 'item', phase: 'initial' }],
+    });
+    const sheet = page.locator(await openDocumentSheet(page, weapon));
+    await expect(sheet.locator('.base-weapon-type > .form-group-section-header .visibility-control')).toHaveCount(1);
+    await expect(sheet.locator('.base-weapon-type > .form-group-section-header .editability-control')).toHaveCount(1);
+    await expect(sheet.locator('.base-weapon-type .form-group .visibility-control, .base-weapon-type .form-group .editability-control')).toHaveCount(0);
+    const verifyLayout = async (flag: boolean) => {
+      await expect(sheet.locator('[data-field-path="system.isBaseWeaponType"] input[type="checkbox"]')).toBeChecked({ checked: flag });
+      await expect(sheet.locator('[data-field-path="system.weaponBaseType"]')).toHaveCount(flag ? 0 : 1);
+    };
+    await verifyLayout(sourceFlag);
+    await dismissOverlays(page);
+    await sheet.locator('.view-mode-btn').filter({ has: page.locator('i.fa-dice-d20') }).click();
+    await verifyLayout(!sourceFlag);
+    await sheet.locator('.view-mode-btn').filter({ has: page.locator('i.fa-eye') }).click();
+    await verifyLayout(sourceFlag);
+    expect(await readItemSystem(page, weapon)).toMatchObject({ isBaseWeaponType: sourceFlag, weaponBaseType: '' });
+  });
+}
+
+test.describe('base-weapon shared permissions', () => {
+  let playerContext: BrowserContext;
+  let playerPage: Page;
+  test.beforeAll(async ({ browser }) => {
+    playerContext = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    playerPage = await loginAs(playerContext, 'player');
+  });
+  test.afterEach(async () => {
+    await closeAllSheets(playerPage);
+  });
+  test.afterAll(async () => {
+    await playerContext.close();
+  });
+
+  for (const permission of ['visibility', 'editability'] as const) {
+    test(`Owner base-weapon selector inherits ${permission} without weakening its own restrictions`, async ({ page }) => {
+      await gotoGame(page);
+      const weapon = await createItem(page, 'weapon', {
+        name: 'Inherited base-weapon permissions', ownership: { default: 3 },
+        system: { isBaseWeaponType: false, weaponBaseType: 'Preserved association' },
+      });
+      await playerPage.waitForFunction(uuid => !!fromUuidSync(uuid), weapon);
+      const sheet = playerPage.locator(await openDocumentSheet(playerPage, weapon));
+      await dismissOverlays(playerPage);
+      await sheet.locator('.view-mode-btn').filter({ has: playerPage.locator('i.fa-pen-to-square') }).dispatchEvent('click');
+      const flag = sheet.locator('[data-field-path="system.isBaseWeaponType"]');
+      const selector = sheet.locator('[data-field-path="system.weaponBaseType"]');
+      const expectRestrictedSelector = async () => {
+        if (permission === 'visibility') {
+          await expect(selector).toBeHidden();
+        } else {
+          await expect(selector).toBeVisible();
+          await expect(selector.locator('select')).toHaveCount(0);
+        }
+      };
+      await expect(selector.locator('select')).toBeEnabled();
+      await setFieldOverride(page, weapon, 'system.isBaseWeaponType', permission, 'gmOnly');
+      await waitForFieldOverride(playerPage, weapon, 'system.isBaseWeaponType', permission, 'gmOnly');
+      if (permission === 'visibility') {
+        await expect(flag).toBeHidden();
+      } else {
+        await expect(flag.locator('input[type="checkbox"]')).toBeDisabled();
+      }
+      await expectRestrictedSelector();
+
+      await setFieldOverride(page, weapon, 'system.weaponBaseType', permission, 'gmOnly');
+      await waitForFieldOverride(playerPage, weapon, 'system.weaponBaseType', permission, 'gmOnly');
+      await clearFieldOverride(page, weapon, 'system.isBaseWeaponType', permission);
+      await waitForFieldOverride(playerPage, weapon, 'system.isBaseWeaponType', permission, null);
+      await expect(flag.locator('input[type="checkbox"]')).toBeEnabled();
+      await expectRestrictedSelector();
+      await clearFieldOverride(page, weapon, 'system.weaponBaseType', permission);
+      await waitForFieldOverride(playerPage, weapon, 'system.weaponBaseType', permission, null);
+      await expect(selector.locator('select')).toBeEnabled();
+      expect(await readItemSystem(page, weapon)).toMatchObject({ isBaseWeaponType: false, weaponBaseType: 'Preserved association' });
+    });
+  }
 });
 
 for (const fixture of [
