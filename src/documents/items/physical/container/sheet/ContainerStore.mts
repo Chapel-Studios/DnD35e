@@ -50,12 +50,14 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
     });
   }, { immediate: true, flush: 'sync' });
   
+  const containerType = computed(() => getViewAwareFieldValue<ContainerTypeOption>('system.containerType'));
+  const isPurse = computed(() => containerType.value === CONTAINER_TYPE.PURSE);
   const documentGetters = {
     ...physicalStore.documentGetters,
-    containerType: computed(() => document.value.system.containerType),
-    isPurse: computed(() => document.value.system.containerType === CONTAINER_TYPE.PURSE),
-    isQuiver: computed(() => document.value.system.containerType === CONTAINER_TYPE.QUIVER),
-    containerTypeLabel: computed(() => game.i18n.localize(CONTAINER_TYPE_LOCALIZED[document.value.system.containerType])),
+    containerType,
+    isPurse,
+    isQuiver: computed(() => containerType.value === CONTAINER_TYPE.QUIVER),
+    containerTypeLabel: computed(() => game.i18n.localize(CONTAINER_TYPE_LOCALIZED[containerType.value])),
     maxContentWeight: computed(() => document.value.system.maxContentWeight),
     contentsAreWeightless: computed(() => document.value.system.contentsAreWeightless),
     contentsWeight: computed(() => document.value.system.contentsWeight),
@@ -65,7 +67,7 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
     }),
     isOverCapacity: computed(() => document.value.system.isOverCapacity),
     contents: computed(() => contents.value),
-    allowsCurrency: computed(() => document.value.system.allowsCurrency),
+    allowsCurrency: computed(() => isPurse.value || getViewAwareFieldValue<boolean>('system.allowsCurrency')),
     allowedItemTypes: computed(() => [
       ...(getViewAwareFieldValue<Iterable<ItemType> | null>('system.allowedItemTypes') ?? []),
     ]),

@@ -1,5 +1,6 @@
 import type { ItemSystemSource } from '@items/baseItem/index.mjs';
 import type { Container } from '@items/physical/container/Container.mjs';
+import { CONTAINER_TYPE, CONTAINER_TYPE_LOCALIZED, type ContainerTypeOption } from '@items/physical/container/data/constants.mjs';
 import type { ContainerSystemSource } from '@items/physical/container/data/ContainerSystemData.mjs';
 import type { ContainerStore } from '@items/physical/container/sheet/ContainerStore.mjs';
 import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
@@ -76,6 +77,21 @@ async function readViewedFilters (page: Page, uuid: string) {
       subtypes: store.documentGetters.allowedItemSubtypes.value,
     };
   }, uuid);
+}
+
+async function readViewedClassification (page: Page, uuid: string) {
+  return page.evaluate(({ uuid, typeLabels }) => {
+    const store = game.dnd35e.stores.Item[uuid] as ContainerStore | undefined;
+    if (!store) throw new Error(`Missing container classification store ${uuid}`);
+    const getters = store.documentGetters;
+    return {
+      type: getters.containerType.value,
+      purse: getters.isPurse.value,
+      quiver: getters.isQuiver.value,
+      currency: getters.allowsCurrency.value,
+      labelMatchesType: getters.containerTypeLabel.value === game.i18n.localize(typeLabels[getters.containerType.value]),
+    };
+  }, { uuid, typeLabels: CONTAINER_TYPE_LOCALIZED });
 }
 
 async function readRollups (page: Page, uuids: string[], probeUuid: string) {
@@ -365,6 +381,50 @@ test('GM edits independent subtype lists and clears removed types even after a b
     types: null, subtypes: { weapon: null, ammo: null, container: null },
   });
 });
+
+for (const fixture of [
+  { source: CONTAINER_TYPE.BAG, sourceCurrency: false, displayed: CONTAINER_TYPE.PURSE },
+  { source: CONTAINER_TYPE.PURSE, sourceCurrency: false, displayed: CONTAINER_TYPE.BAG },
+  { source: CONTAINER_TYPE.QUIVER, sourceCurrency: true, displayed: CONTAINER_TYPE.QUIVER },
+]) {
+  test(`GM sees view-aware inventory and currency layout for ${fixture.source} masked as ${fixture.displayed}`, async ({ page }) => {
+    await gotoGame(page);
+    const container = await createItem(page, 'container', {
+      name: 'Hidden compartment layout',
+      system: { containerType: fixture.source, allowsCurrency: fixture.sourceCurrency, allowedItemTypes: ['ammo'] },
+    });
+    const original = await readItemSystem(page, container);
+    await createActiveEffect(page, container, {
+      name: 'Hidden compartment mask', type: 'secret',
+      changes: [
+        { key: 'system.containerType', value: fixture.displayed, type: 'mask', target: 'item', phase: 'initial' },
+        { key: 'system.allowsCurrency', value: false, type: 'mask', target: 'item', phase: 'initial' },
+      ],
+    });
+    const sheet = page.locator(await openDocumentSheet(page, container));
+    const verifyLayout = async (type: ContainerTypeOption, currency: boolean) => {
+      await expect.poll(() => readViewedClassification(page, container)).toEqual({
+        type, purse: type === CONTAINER_TYPE.PURSE, quiver: type === CONTAINER_TYPE.QUIVER,
+        currency, labelMatchesType: true,
+      });
+      await dismissOverlays(page);
+      await sheet.locator('a[data-tab="details"]').click();
+      const fieldCount = type === CONTAINER_TYPE.PURSE ? 0 : 1;
+      await expect(sheet.locator('[data-field-path="system.allowedItemTypes"]')).toHaveCount(fieldCount);
+      await expect(sheet.locator('[data-field-path="system.allowsCurrency"]')).toHaveCount(fieldCount);
+      await sheet.locator('a[data-tab="inventory"]').click();
+      await expect(sheet.locator('.container-contents')).toHaveCount(fieldCount);
+      await expect(sheet.locator('[data-field-path="system.containedCurrency"]')).toHaveCount(currency ? 1 : 0);
+    };
+    const trueCurrency = fixture.source === CONTAINER_TYPE.PURSE || fixture.sourceCurrency;
+    await verifyLayout(fixture.source, trueCurrency);
+    await sheet.locator('.view-mode-btn').filter({ has: page.locator('i.fa-dice-d20') }).click();
+    await verifyLayout(fixture.displayed, fixture.displayed === CONTAINER_TYPE.PURSE);
+    await sheet.locator('.view-mode-btn').filter({ has: page.locator('i.fa-eye') }).click();
+    await verifyLayout(fixture.source, trueCurrency);
+    expect(await readItemSystem(page, container)).toEqual(original);
+  });
+}
 
 test('GM and owner see type-specific masked subtype selections without exposing true values', async ({ page, browser }) => {
   await gotoGame(page);
