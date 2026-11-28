@@ -5,6 +5,7 @@ import type { ActiveEffectDnd35e } from '@effects/index.mjs';
 import { addCurrency, multiplyCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import { containerItemType, PHYSICAL_ITEM_TYPES, type PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { Container } from '@items/physical/container/index.mjs';
+import { requireWritableContainerPack } from '@items/physical/container/logic/containerContents.mjs';
 import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
 import type { PriceSource } from '@settings/index.mjs';
 
@@ -16,6 +17,22 @@ type ContainmentAeTarget = PHYSICAL_ITEMS | PhysicalItemLike;
 export const containmentAeTargetTypes: readonly string[] = [
   ...PHYSICAL_ITEM_TYPES,
 ];
+
+export function hasContainmentContributionChanges (type: string, changed: Record<string, unknown>): boolean {
+  const system = changed.system;
+  if (!system || typeof system !== 'object') return false;
+  return 'weight' in system
+    || 'quantity' in system
+    || 'price' in system
+    || (
+      type === containerItemType
+      && (
+        'allowsCurrency' in system
+        || 'containerType' in system
+        || 'containedCurrency' in system
+      )
+    );
+}
 
 /** Returns true if `effect` is a Containment AE (item-contribution AE on a bag). */
 export function isContainmentAe (effect: ActiveEffectDnd35e): boolean {
@@ -34,7 +51,7 @@ export function isContainmentAe (effect: ActiveEffectDnd35e): boolean {
  * - **count**: the container's own quantity only — nested counts are NOT rolled
  *   up, so each container reports the number of items directly inside it.
  */
-function computeItemContribution (item: ContainmentAeTarget): {
+export function computeItemContribution (item: ContainmentAeTarget): {
   count: number;
   weight: number;
   price: PriceSource;
@@ -85,6 +102,21 @@ export function buildContainmentAeName (itemId: string): string {
  */
 export function isItemContained (item: ContainmentAeTarget): boolean {
   return !!item.system.containerUuid;
+}
+
+export async function removeContainmentReference (item: ContainmentAeTarget, container: Container): Promise<void> {
+  const effect = findContainmentAeByItemUuid(container, item.uuid);
+  if (effect) await container.deleteEmbeddedDocuments('ActiveEffect', [effect.id]);
+  const parentUuid = container.system.containerUuid;
+  if (parentUuid) {
+    const parent = await fromUuid<Container>(parentUuid);
+    if (parent) await syncContainmentAe(container, parent);
+  }
+}
+
+export async function removeItemFromContainer (item: ContainmentAeTarget, container: Container): Promise<void> {
+  if (!item.pack && item.system.containerUuid === container.uuid) await syncContainmentAe(item, null);
+  else await removeContainmentReference(item, container);
 }
 
 /**
@@ -155,12 +187,43 @@ export async function syncContainmentAe (
         flags: { dnd35e: { systemManaged: true } },
       } as Partial<Containment>]);
 
-      if (item.system.containerUuid !== container.uuid) {
+      if (!item.pack && item.system.containerUuid !== container.uuid) {
         await item.update({ 'system.containerUuid': container.uuid }, updateMetadata ? { updateMetadata } : undefined);
       }
       await cascadeUpward(container);
     }
   };
+
+  const updateContribution = async (existing: Containment | undefined): Promise<void> => {
+    const existingStacks = existing?.system.contributedPrice?.stacks ?? [];
+    const haveStacksChanged = existing?.system.contributedPrice?.stacks?.length !== price.stacks.length
+      || existingStacks.some((s, i) => s.coinId !== price.stacks[i]?.coinId || s.count !== price.stacks[i]?.count);
+    if (
+      existing
+      && (
+        existing.system.contributedWeight !== weight
+        || existing.system.contributedCount !== count
+        || haveStacksChanged
+      )
+    ) {
+      if (container?.pack) requireWritableContainerPack(container.pack);
+      await existing.update({ system: {
+        contributedWeight: weight,
+        contributedCount: count,
+        contributedPrice: price,
+      } });
+      await cascadeUpward(container!);
+    }
+  };
+
+  // Pack Items are templates, not mutable instances. Membership lives only on the bag.
+  if (item.pack) {
+    if (!container) return;
+    const existing = findContainmentAeByItemUuid(container, item.uuid);
+    if (existing) await updateContribution(existing);
+    else await addToContainer(container);
+    return;
+  }
 
   if (shouldBeInContainer) {
     // Case 3: it should be in a container and isn't, add it to the container
@@ -190,25 +253,7 @@ export async function syncContainmentAe (
 
     // Case 5: it should be in a container and is in the right container,
     // update the AE if needed
-    const existing = findContainmentAeByItemUuid(container, item.uuid);
-    const existingStacks = existing?.system.contributedPrice?.stacks ?? [];
-    const haveStacksChanged = existing?.system.contributedPrice?.stacks?.length !== price.stacks.length
-      || existingStacks.some((s, i) => s.coinId !== price.stacks[i]?.coinId || s.count !== price.stacks[i]?.count);
-    if (
-      existing
-      && (
-        existing.system.contributedWeight !== weight
-        || existing.system.contributedCount !== count
-        || haveStacksChanged
-      )
-    ) {
-      await existing.update({ system: {
-        contributedWeight: weight,
-        contributedCount: count,
-        contributedPrice: price,
-      } });
-      await cascadeUpward(container);
-    }
+    await updateContribution(findContainmentAeByItemUuid(container, item.uuid));
     // Case 5 End
   }
   else { // aka shouldn't be in a container

@@ -14,6 +14,10 @@
           "label": "Weapon Subtype",
           "hint": "The specific subtype of this weapon, which may affect its properties and usage."
         },
+        "isBaseWeaponType": {
+          "label": "Is Base Type",
+          "hint": "Whether this weapon is considered a base type."
+        },
         "weaponBaseType": {
           "label": "Base Type",
           "hint": "The base type of this weapon, which may affect its characteristics and interactions."

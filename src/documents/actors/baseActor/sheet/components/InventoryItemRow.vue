@@ -72,7 +72,7 @@
     </td>
     <td class="destroy-col">
       <button
-        v-if="isInventoryEditable"
+        v-if="showDestroy"
         type="button"
         class="field-control-btn destroy-item-btn"
         :title="localize('dnd35e.ACTOR.inventory.action.destroyItem')"
@@ -95,6 +95,7 @@
     toggleTitle?: string;
     /** Uuid of the actor that ultimately owns this item's chain of containers. */
     ownerUuid?: string | null;
+    parentContainerUuid?: string;
     /** Alternating background applied to this row; forwarded unchanged to nested contents. */
     stripe?: 'even' | 'odd';
     /** Pseudo field-path this row's table is locked/overridden under. Forwarded to nested container tables. */
@@ -106,6 +107,7 @@
     variant: 'carried',
     toggleTitle: '',
     ownerUuid: null,
+    parentContainerUuid: undefined,
     stripe: 'even',
     fieldPath: undefined,
   } as const;
@@ -117,11 +119,14 @@
 
 <script setup lang="ts">
   import type { EquipSlot } from '@constants/equipmentSlots.mjs';
+  import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
-  import { syncContainmentAe } from '@effects/containment/index.mjs';
+  import { removeItemFromContainer, syncContainmentAe } from '@effects/containment/index.mjs';
   import type { ItemDnd35e } from '@items/baseItem/index.mjs';
   import type { EQUIPPABLE_ITEMS, EquippableItemType, PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
   import { EQUIPPABLE_ITEM_TYPES } from '@items/itemTypes.mjs';
+  import type { Container } from '@items/physical/container/Container.mjs';
+  import { containmentError } from '@items/physical/container/logic/containerContents.mjs';
   import { EquippableItem } from '@items/physical/equippableItem/EquippableItem.mjs';
   import { type SettingsStore,SettingsStoreSymbol } from '@settings/index.mjs';
   import { computed, inject, provide } from 'vue';
@@ -137,13 +142,15 @@
 
   const localize = (key: string): string => game.i18n.localize(key);
 
+  const documentStore = inject<DocumentSheetStore & InventoryListStore>(DocumentSheetStoreSymbol);
+  if (!documentStore) throw new Error('InventoryItemRow requires a document sheet store.');
+
   const {
     documentGetters: {
       physicalItems: injectedItems,
       getIsFieldEditable,
     },
-  } = (inject(InventoryListStoreSymbol, null) ?? inject(DocumentSheetStoreSymbol)) as InventoryListStore;
-
+  } = inject(InventoryListStoreSymbol, null) ?? documentStore;
 
   const {
     documentUuid: containerUuidAttr,
@@ -200,6 +207,8 @@
       : 'dnd35e.ACTOR.inventory.action.equip'
   );
 
+  const showDestroy = computed<boolean>(() => isInventoryEditable.value && !props.item.pack && !!props.item.actor);
+
   // ── Actions ─────────────────────────────────────────────────────────────
   const equippableItems = computed<EquippableItem[]>(() =>
     sourceItems.value.filter(isEquippable));
@@ -241,13 +250,25 @@
   };
 
   const removeFromContainer = async (item: PHYSICAL_ITEMS): Promise<void> => {
-    await syncContainmentAe(item, null);
+    if (!item.pack) {
+      await syncContainmentAe(item, null);
+      await documentStore._storeUtils.refreshDocument();
+      return;
+    }
+    const container = props.parentContainerUuid
+      ? await fromUuid<Container>(props.parentContainerUuid)
+      : null;
+    if (!container) containmentError('missingContents', { uuid: props.parentContainerUuid ?? '' });
+    await removeItemFromContainer(item, container);
+    await documentStore._storeUtils.refreshDocument();
   };
 
   const destroyItem = async (item: PHYSICAL_ITEMS): Promise<void> => {
-    const confirmMessage = localize('dnd35e.ACTOR.inventory.confirm.destroyItem')
-      .replace('{itemName}', item.name);
-    if (!window.confirm(confirmMessage)) return;
+    const confirmed = await foundry.applications.api.DialogV2.confirm({
+      window: { title: 'dnd35e.ACTOR.inventory.confirmDestroyTitle' },
+      content: game.i18n.format('dnd35e.ACTOR.inventory.confirmDestroyContent', { itemName: item.name }),
+    });
+    if (!confirmed) return;
 
     await item.delete();
   };

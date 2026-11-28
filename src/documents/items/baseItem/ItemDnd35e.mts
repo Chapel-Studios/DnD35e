@@ -1,6 +1,6 @@
 import type { ActorDnd35e } from '@actors/baseActor/index.mjs';
 import type { DeepPartial, DocumentConstructionContext } from '@common/_types.mjs';
-import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
+import type { DatabaseCreateCallbackOptions, DatabaseCreateOperation, DatabaseUpdateOperation } from '@common/abstract/_types.mjs';
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
 import type { DocumentUpdateCallbackOptions } from '@documents/document/DocumentDnd35e.mjs';
 import { DocumentLifeCycle } from '@documents/document/events/DocumentLifeCycle.mjs';
@@ -33,6 +33,7 @@ import { LogHelper } from '@helpers/LogHelper.mjs';
 import type { Override } from '@helpers/stacking.mjs';
 import type { ItemType } from '@items/index.mjs';
 import { ITEM_TYPES_LOCALIZED } from '@items/itemTypes.mjs';
+import { type ContainerCopyOptions, containmentError, prepareContainerContents } from '@items/physical/container/logic/containerContents.mjs';
 
 import type { ItemSheetStore, ItemSystemData, ItemSystemSource } from './index.mjs';
 
@@ -57,6 +58,87 @@ class ItemDnd35e<TItemType extends ItemType = ItemType, TParent extends ActorDnd
   declare type: TItemType;
   declare system: ItemSystemData;
   declare _source: ItemSourceDnd35e<TItemType>;
+
+  static override async createDocuments<TDocument extends foundry.abstract.Document> (
+    this: ConstructorOf<TDocument>,
+    data: (TDocument | DeepPartial<TDocument['_source']>)[] = [],
+    operation: Partial<DatabaseCreateOperation<TDocument['parent']>> & ContainerCopyOptions = {}
+  ): Promise<TDocument[]> {
+    const sources = data.map(source => source instanceof foundry.abstract.Document
+      ? source.toObject()
+      : source) as Record<string, unknown>[];
+    const prepared = await prepareContainerContents(sources, operation);
+    if (prepared === undefined) return super.createDocuments<TDocument>(data, operation);
+    if (prepared === null) return [];
+    const created = await super.createDocuments<TDocument>(
+      prepared.sources as DeepPartial<TDocument['_source']>[],
+      { ...operation, keepId: true }
+    );
+    if (created.length !== prepared.sources.length) {
+      await super.deleteDocuments<TDocument>(created.map(document => document.id!), {
+        parent: operation.parent, pack: operation.pack,
+      });
+      containmentError('incompleteCopy');
+    }
+    const rootIds = new Set(prepared.sources.slice(0, prepared.rootCount).map(source => source._id));
+    return created.filter(document => rootIds.has(document.id));
+  }
+
+  static override async updateDocuments<TDocument extends foundry.abstract.Document> (
+    this: ConstructorOf<TDocument>,
+    updates: Record<string, unknown>[] = [],
+    operation: Partial<DatabaseUpdateOperation<TDocument['parent']>> = {}
+  ): Promise<TDocument[]> {
+    // Foundry's directory import replacement bypasses createDocuments.
+    const isImport = !!operation.pack || updates.some(source =>
+      typeof foundry.utils.getProperty(source, '_stats.compendiumSource') === 'string');
+    if (!isImport || operation.diff !== false || operation.recursive !== false) {
+      return super.updateDocuments<TDocument>(updates, operation);
+    }
+    const prepared = await prepareContainerContents(updates, { ...operation, keepId: true });
+    if (prepared === undefined) return super.updateDocuments<TDocument>(updates, operation);
+    if (prepared === null) return [];
+    const roots = prepared.sources.slice(0, prepared.rootCount);
+    const originals = await Promise.all(roots.map(async source => {
+      const uuid = operation.parent
+        ? `${operation.parent.uuid}.Item.${source._id}`
+        : operation.pack
+          ? `Compendium.${operation.pack}.Item.${source._id}`
+          : `Item.${source._id}`;
+      const existing = await fromUuid(uuid);
+      if (!existing) containmentError('missingContents', { uuid });
+      return existing.toObject() as Record<string, unknown>;
+    }));
+    const contents = prepared.sources.slice(prepared.rootCount);
+    const created = await super.createDocuments<TDocument>(
+      contents as DeepPartial<TDocument['_source']>[],
+      { parent: operation.parent, pack: operation.pack, keepId: true, renderSheet: false }
+    );
+    let attemptedReplacement = false;
+    try {
+      if (created.length !== contents.length) containmentError('incompleteCopy');
+      attemptedReplacement = true;
+      const replaced = await super.updateDocuments<TDocument>(roots, operation);
+      if (replaced.length !== prepared.rootCount) containmentError('incompleteCopy');
+      return replaced;
+    } catch (error) {
+      if (attemptedReplacement) {
+        try {
+          await super.updateDocuments<TDocument>(originals, { ...operation, noHook: true });
+        } catch (rollbackError) {
+          const message = game.i18n.localize('dnd35e.CONTAINER.warnings.rollbackFailed');
+          ui.notifications.error(message);
+          // Keep the new contents when restoration fails; the destination may still reference them.
+          throw new AggregateError([error, rollbackError], message);
+        }
+      }
+      // Only these newly-created contents are ours to remove; never delete old references.
+      await super.deleteDocuments<TDocument>(created.map(document => document.id!), {
+        parent: operation.parent, pack: operation.pack,
+      });
+      throw error;
+    }
+  }
 
   override get actor(): TParent {
     return this.parent as TParent;

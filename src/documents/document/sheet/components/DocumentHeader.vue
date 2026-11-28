@@ -40,6 +40,7 @@
   }
 
   .doc-status-area {
+    grid-row: span 2;
     display: grid;
     margin: 0;
     grid-gap: 0.5rem 0;

@@ -1,6 +1,7 @@
 <template>
   <DocumentDetails>
     <div class="container-details-container">
+      <AllowedItems v-if="!isPurse" />
       <ItemPrice />
       <ItemHP />
       <ItemQuantity />
@@ -8,6 +9,7 @@
       <ItemSize />
       <ItemHardness />
       <ContainerCapacity />
+      <AllowsCurrency v-if="!isPurse" />
       <ItemSheetIsCarriedCheckbox />
       <ItemSheetIsBrokenCheckbox />
       <ItemSheetContainerSelector />
@@ -16,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentDetails } from '@documents/document/index.mjs';
+  import { DocumentDetails, DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import {
     ItemHardness,
     ItemHP,
@@ -28,8 +30,18 @@
     ItemSize,
     ItemWeight,
   } from '@items/physical/physicalItem/sheet/index.mjs';
+  import { inject } from 'vue';
 
+  import AllowedItems from '../components/AllowedItems.vue';
+  import AllowsCurrency from '../components/AllowsCurrency.vue';
   import ContainerCapacity from '../components/ContainerCapacity.vue';
+  import type { ContainerStore } from '../index.mjs';
+
+  const {
+    documentGetters: {
+      isPurse,
+    },
+  } = inject(DocumentSheetStoreSymbol) as ContainerStore;
 </script>
 
 <style scoped lang="scss">

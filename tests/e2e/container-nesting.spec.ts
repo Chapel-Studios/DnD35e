@@ -1,9 +1,37 @@
-import { expect, test } from '@playwright/test';
+import { MAIN_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
+import type { Container } from '@items/physical/container/Container.mjs';
+import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
+import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
+import { expect, type Page, test } from '@playwright/test';
 
-import { clearWorld, createActor, createItem, stowItemViaDrop, updateDocument } from './helpers/documents.mjs';
+import { clearWorld, createActiveEffect, createActor, createItem, stowItemViaDrop, updateDocument } from './helpers/documents.mjs';
 import { gotoGame } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
 import { dismissOverlays } from './helpers/ui.mjs';
+
+async function readStowState (page: Page, weaponUuid: string, containerUuids: string[]) {
+  return page.evaluate(async ({ weaponUuid, containerUuids }) => {
+    const weapon = await fromUuid<Weapon>(weaponUuid);
+    if (!weapon) throw new Error('Missing equipped weapon fixture');
+    return {
+      weapon: weapon.toObject(),
+      liveWeapon: {
+        weight: weapon.system.weight, equipped: weapon.system.isEquipped,
+        slots: weapon.system.equippedSlotIds, container: weapon.system.containerUuid,
+      },
+      containers: await Promise.all(containerUuids.map(async uuid => {
+        const container = await fromUuid<Container>(uuid);
+        if (!container) throw new Error(`Missing containment fixture ${uuid}`);
+        return {
+          source: container.toObject(),
+          contents: (await container.getContents()).map(item => item.uuid),
+          actorItems: container.actor?.items.map(item => item.uuid),
+          weight: container.system.contentsWeight,
+        };
+      })),
+    };
+  }, { weaponUuid, containerUuids });
+}
 
 /**
  * E2E test for container nesting and data rollup.
@@ -28,6 +56,81 @@ test.describe('container nesting and data rollup', () => {
   test.afterEach(async ({ page }) => {
     await closeAllSheets(page).catch(() => {});
     await clearWorld(page);
+  });
+
+  test('GM validates equipped weapon weight before unequipping or copying and preserves active-effect weight', async ({ page }) => {
+    await gotoGame(page);
+    const owner = await createActor(page, 'character', {
+      name: 'Equipped containment owner',
+      items: [
+        {
+          _id: 'weightlessWeapon', name: 'Weightless while equipped', type: 'weapon',
+          system: {
+            weight: 3, quantity: 1, isCarried: true,
+            equippedSlotIds: [MAIN_HAND_EQUIP_SLOT], isWeightlessWhenEquipped: true,
+          },
+        },
+        { _id: 'sourceBag0000001', name: 'Source bag', type: 'container', system: { maxContentWeight: 5 } },
+      ],
+    });
+    const target = await createActor(page, 'character', {
+      name: 'Equipped containment copy target',
+      items: [{ _id: 'targetBag0000001', name: 'Copy bag', type: 'container', system: { maxContentWeight: 5 } }],
+    });
+    const weapon = `${owner}.Item.weightlessWeapon`;
+    const sourceBag = `${owner}.Item.sourceBag0000001`;
+    const targetBag = `${target}.Item.targetBag0000001`;
+    await createActiveEffect(page, weapon, {
+      name: 'Double weapon weight', type: 'material',
+      system: {
+        materialSubtype: 'standard',
+        changes: [{ key: 'system.weight', value: 2, type: 'multiply', target: 'item', phase: 'initial' }],
+      },
+    });
+    const state = () => readStowState(page, weapon, [sourceBag, targetBag]);
+    const original = await state();
+    expect(original.liveWeapon).toEqual({
+      weight: 0, equipped: true, slots: [MAIN_HAND_EQUIP_SLOT], container: undefined,
+    });
+    await stowItemViaDrop(page, weapon, sourceBag);
+    expect(await state()).toEqual(original);
+    await stowItemViaDrop(page, weapon, targetBag);
+    expect(await state()).toEqual(original);
+    await expect(page.locator('.dialog')).toHaveCount(0);
+
+    await updateDocument(page, targetBag, { system: { maxContentWeight: 6 } });
+    const beforeCancellation = await state();
+    await dismissOverlays(page);
+    const cancelled = stowItemViaDrop(page, weapon, targetBag);
+    await page.locator('.dialog button[data-action="no"]').click();
+    await cancelled;
+    expect(await state()).toEqual(beforeCancellation);
+
+    const copied = stowItemViaDrop(page, weapon, targetBag);
+    await page.locator('.dialog button[data-action="yes"]').click();
+    await copied;
+    const afterCopy = await state();
+    expect(afterCopy.weapon).toEqual(original.weapon);
+    expect(afterCopy.liveWeapon).toEqual(original.liveWeapon);
+    expect(afterCopy.containers[1].actorItems).toHaveLength(2);
+    expect(afterCopy.containers[1].weight).toBe(6);
+    const [copy] = afterCopy.containers[1].contents;
+    expect(copy).not.toBe(weapon);
+    expect((await readStowState(page, copy, [targetBag])).liveWeapon).toEqual({
+      weight: 6, equipped: false, slots: [], container: targetBag,
+    });
+
+    await updateDocument(page, sourceBag, { system: { maxContentWeight: 6 } });
+    const contained = stowItemViaDrop(page, weapon, sourceBag);
+    await page.locator('.dialog button[data-action="yes"]').click();
+    await contained;
+    const afterStow = await state();
+    expect(afterStow.liveWeapon).toEqual({
+      weight: 6, equipped: false, slots: [], container: sourceBag,
+    });
+    expect(afterStow.containers[0].contents).toEqual([weapon]);
+    expect(afterStow.containers[0].weight).toBe(6);
+    expect(afterStow.containers[0].actorItems).toHaveLength(2);
   });
 
   test('GM expands inventory containers and distinguishes stowed actions from same-named ready weapons', async ({ page }) => {
@@ -260,6 +363,124 @@ test.describe('container nesting and data rollup', () => {
       { coinId: 'srd_pp', count: 10 },
       { coinId: 'srd_cp', count: 50 },
     ]);
+  });
+
+  test('GM changes nested container currency settings and ancestor rollups and capacity checks stay current', async ({ page }) => {
+    await gotoGame(page);
+    const outerUuid = await createItem(page, 'container', {
+      name: 'Outer Bag',
+      system: { weight: 0, quantity: 1 },
+    });
+    const middleUuid = await createItem(page, 'container', {
+      name: 'Middle Bag',
+      system: { weight: 2, quantity: 1 },
+    });
+    const innerUuid = await createItem(page, 'container', {
+      name: 'Currency Bag',
+      system: {
+        weight: 1, quantity: 1, allowsCurrency: true,
+        containedCurrency: { stacks: [{ coinId: 'srd_gp', count: 50 }] },
+      },
+    });
+    const probeUuid = await createItem(page, 'weapon', {
+      name: 'Capacity Probe',
+      system: { weight: 1, quantity: 1 },
+    });
+    await stowItemViaDrop(page, innerUuid, middleUuid);
+    await stowItemViaDrop(page, middleUuid, outerUuid);
+    await updateDocument(page, outerUuid, { system: { maxContentWeight: 4.5 } });
+    await updateDocument(page, middleUuid, { system: { maxContentWeight: 2.5 } });
+
+    const readState = () => page.evaluate(async ({ outerUuid, middleUuid, innerUuid, probeUuid }) => {
+      const inner = await fromUuid<Container>(innerUuid);
+      const probe = await fromUuid<PhysicalItemLike>(probeUuid);
+      if (!inner || !probe) throw new Error('Missing currency synchronization fixture');
+      const parents = await Promise.all([outerUuid, middleUuid].map(async uuid => {
+        const container = await fromUuid<Container>(uuid);
+        if (!container) throw new Error(`Missing ancestor container ${uuid}`);
+        return {
+          weight: container.system.contentsWeight,
+          value: container.system.contentsValue.srdEquivalent,
+          acceptsProbe: container.canAddItemToContents(probe),
+        };
+      }));
+      return {
+        allowsCurrency: inner.system.allowsCurrency,
+        coins: inner.system.containedCurrency.stacks,
+        parents,
+      };
+    }, { outerUuid, middleUuid, innerUuid, probeUuid });
+
+    const enabled = {
+      allowsCurrency: true,
+      coins: [{ coinId: 'srd_gp', count: 50 }],
+      parents: [
+        { weight: 4, value: 50, acceptsProbe: false },
+        { weight: 2, value: 50, acceptsProbe: false },
+      ],
+    };
+    const disabled = {
+      ...enabled,
+      allowsCurrency: false,
+      parents: [
+        { weight: 3, value: 0, acceptsProbe: true },
+        { weight: 1, value: 0, acceptsProbe: true },
+      ],
+    };
+    await expect.poll(readState).toEqual(enabled);
+    await updateDocument(page, innerUuid, { system: { allowsCurrency: false } });
+    await expect.poll(readState).toEqual(disabled);
+    await updateDocument(page, innerUuid, { system: { allowsCurrency: true } });
+    await expect.poll(readState).toEqual(enabled);
+    await updateDocument(page, innerUuid, { system: { allowsCurrency: false } });
+    await expect.poll(readState).toEqual(disabled);
+    await updateDocument(page, innerUuid, { system: { containerType: 'purse' } });
+    await expect.poll(readState).toEqual(enabled);
+  });
+
+  test('GM rechecks nested capacity using complete coin, weightless-content, and stacked-container contributions', async ({ page }) => {
+    await gotoGame(page);
+    const parentUuid = await createItem(page, 'container', { name: 'Capacity parent' });
+    const innerUuid = await createItem(page, 'container', {
+      name: 'Capacity inner', system: {
+        weight: 1, containedCurrency: { stacks: [{ coinId: 'srd_gp', count: 50 }] },
+      },
+    });
+    const ammoUuid = await createItem(page, 'ammo', {
+      name: 'Capacity contents', system: { weight: 3 },
+    });
+    await stowItemViaDrop(page, innerUuid, parentUuid);
+    await updateDocument(page, parentUuid, { system: { maxContentWeight: 1.5 } });
+    const readCapacity = () => page.evaluate(async ({ parentUuid, innerUuid }) => {
+      const parent = await fromUuid<Container>(parentUuid);
+      const inner = await fromUuid<Container>(innerUuid);
+      if (!parent || !inner) throw new Error('Missing nested-capacity fixture');
+      return {
+        weight: parent.system.contentsWeight,
+        displayedWeight: inner.system.weight,
+        contentsWeight: inner.system.contentsWeight,
+        quantity: inner.system.quantity,
+        accepted: parent.canAddItemToContents(inner),
+      };
+    }, { parentUuid, innerUuid });
+    await expect.poll(readCapacity).toEqual({
+      weight: 2, displayedWeight: 1, contentsWeight: 1, quantity: 1, accepted: false,
+    });
+    await updateDocument(page, parentUuid, { system: { maxContentWeight: 2 } });
+    await expect.poll(readCapacity).toEqual({
+      weight: 2, displayedWeight: 1, contentsWeight: 1, quantity: 1, accepted: true,
+    });
+    await stowItemViaDrop(page, ammoUuid, innerUuid);
+    await updateDocument(page, innerUuid, { system: { contentsAreWeightless: true } });
+    await updateDocument(page, parentUuid, { system: { maxContentWeight: 4.5 } });
+    await expect.poll(readCapacity).toEqual({
+      weight: 5, displayedWeight: 1, contentsWeight: 4, quantity: 1, accepted: false,
+    });
+    await updateDocument(page, innerUuid, { system: { contentsAreWeightless: false, quantity: 2 } });
+    await updateDocument(page, parentUuid, { system: { maxContentWeight: 6 } });
+    await expect.poll(readCapacity).toEqual({
+      weight: 6, displayedWeight: 4, contentsWeight: 4, quantity: 2, accepted: true,
+    });
   });
 
   test('unowned items: verify nesting and rollup work on world items', async ({ page }) => {

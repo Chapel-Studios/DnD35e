@@ -10,7 +10,7 @@ import { EquippableItemSystemModel } from '@items/physical/equippableItem/data/i
 import { MeleeWeaponAttack } from '@items/physical/weapon/actions/MeleeWeaponAttack/MeleeAttackDataModel.mjs';
 import { RangedWeaponAttack } from '@items/physical/weapon/actions/RangedAttack/RangedAttackDataModel.mjs';
 
-import { WEAPON_BASE_TYPES, WEAPON_SUBTYPES, WEAPON_TYPE, WEAPON_TYPES } from './constants.mjs';
+import { WEAPON_SUBTYPES, WEAPON_TYPE, WEAPON_TYPES } from './constants.mjs';
 import type { WeaponSystemData } from './WeaponSystemData.mjs';
 
 const {
@@ -41,7 +41,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
       { contextName: 'Owner', resolvePath: 'parent', documentType: 'Actor', fallbackSubtypes: ['character'], aliases: ['Parent'] },
     ];
 
-    schema.isBaseWeaponType = requiredBooleanField(false);
+    schema.isBaseWeaponType = useDnd35eField(requiredBooleanField(false));
     schema.weaponType = useDnd35eField(
       new StringField({ 
         choices: [
@@ -54,7 +54,7 @@ class WeaponSystemModel extends EquippableItemSystemModel {
         familiar: { aliases: ['type'] },
       });
     schema.weaponSubtype = useDnd35eField(new StringField({ choices: [...WEAPON_SUBTYPES], initial: 'light', required: true }), { familiar: { aliases: ['subtype'] } });
-    schema.weaponBaseType = useDnd35eField(new StringField({ choices: [...WEAPON_BASE_TYPES], initial: '', required: true, blank: true }));
+    schema.weaponBaseType = useDnd35eField(new StringField({ initial: '', required: true, blank: true }));
 
     // System-managed weapon-attack actions (§10.3/§10.4) — auto-created/synced by
     // weaponActionSync.mts, live-merged by Weapon.getContributedActorChanges().

@@ -1,3 +1,5 @@
+import type { SelectOption } from '@vc/fields/index.mjs';
+
 import type { Ammo } from './physical/ammo/Ammo.mts';
 import type { Container } from './physical/container/index.mjs';
 import type { Weapon } from './physical/weapon/index.mjs';
@@ -45,12 +47,15 @@ const ITEM_TYPES_LOCALIZED = {
 } as const satisfies Record<ItemType, string>;
 
 type ItemTypeLocalizationValues = typeof ITEM_TYPES_LOCALIZED[keyof typeof ITEM_TYPES_LOCALIZED];
+const ItemTypeSelectOptions = Object.entries(ITEM_TYPES_LOCALIZED)
+  .map(([value, label]) => ({ value, label } as SelectOption<ItemType>));
 
 export {
   ammoItemType,
   containerItemType,
   EQUIPPABLE_ITEM_TYPES,
   ITEM_TYPES_LOCALIZED,
+  ItemTypeSelectOptions,
   PHYSICAL_ITEM_TYPES,
   weaponItemType,
 };

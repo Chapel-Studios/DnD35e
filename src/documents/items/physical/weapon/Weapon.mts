@@ -1,4 +1,4 @@
-import type { DatabaseCreateCallbackOptions } from '@common/abstract/_types.mjs';
+import type { DatabaseCreateCallbackOptions, DatabaseDeleteCallbackOptions } from '@common/abstract/_types.mjs';
 import type { EquipSlot } from '@constants/equipmentSlots.mjs';
 import { MAIN_HAND_EQUIP_SLOT, OFF_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
 import type { DocumentUpdateCallbackOptions } from '@documents/document/DocumentDnd35e.mjs';
@@ -10,6 +10,7 @@ import { EquippableItem } from '@items/physical/equippableItem/index.mjs';
 import type { PhysicalItemSourceProps } from '../physicalItem/PhysicalItem.mjs';
 import { WEAPON_SUBTYPE } from './data/constants.mjs';
 import type { WeaponSystemData, WeaponSystemSource } from './data/WeaponSystemData.mjs';
+import { BaseWeaponNameCache } from './logic/BaseWeaponNameCache.mjs';
 import { syncWeaponActions } from './logic/weaponActionSync.mjs';
 
 type WeaponSource = Omit<foundry.documents.ItemSource, 'system'>
@@ -86,6 +87,21 @@ class Weapon extends EquippableItem {
   ): Promise<void> {
     super._onCreate(updateData, options, userId);
     await syncWeaponActions(this);
+
+    this.invalidateBaseWeaponNameCacheIfNeeded(updateData);
+  }
+
+  // Compendium base names change on rename or base-type toggle.
+  private invalidateBaseWeaponNameCacheIfNeeded(updateData: DeepPartial<this['_source']>) {
+    if (
+      this.pack
+      && (
+        ('name' in updateData && this.system.isBaseWeaponType)
+        || 'isBaseWeaponType' in (updateData.system ?? {})
+      )
+    ) {
+      BaseWeaponNameCache.invalidate();
+    }
   }
 
   /**
@@ -95,17 +111,26 @@ class Weapon extends EquippableItem {
    * never run from prep-time derivation.
    */
   protected override async _onUpdate(
-    data: Record<string, unknown>,
+    updateData: DeepPartial<this['_source']>,
     options: DocumentUpdateCallbackOptions,
     userId: string
   ): Promise<void> {
-    await super._onUpdate(data, options, userId);
+    await super._onUpdate(updateData, options, userId);
 
-    const changedSystem = data.system as Partial<WeaponSystemSource> | undefined;
+    this.invalidateBaseWeaponNameCacheIfNeeded(updateData);
+    const changedSystem = updateData.system as Partial<WeaponSystemSource> | undefined;
     if (!changedSystem) return;
     if ('weaponSubtype' in changedSystem || 'properties' in changedSystem) {
       await syncWeaponActions(this);
     }
+  }
+
+  protected override _onDelete(
+    options: DatabaseDeleteCallbackOptions,
+    userId: string
+  ): void {
+    super._onDelete(options, userId);
+    if (this.pack && this.system.isBaseWeaponType) BaseWeaponNameCache.invalidate();
   }
 }
 

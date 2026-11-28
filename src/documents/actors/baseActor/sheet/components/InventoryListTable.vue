@@ -52,6 +52,7 @@
           :variant="variant"
           :toggle-title="toggleTitle"
           :owner-uuid="effectiveOwnerUuid"
+          :parent-container-uuid="containerUuid"
           :field-path="resolvedFieldPath"
           :stripe="forcedStripe ?? (index % 2 === 0 ? 'even' : 'odd')"
           :on-drag-start="onDragStart"
@@ -64,6 +65,7 @@
 <script setup lang="ts">
   import type { WeaponSubcategory } from '@constants/inventory.mjs';
   import { SUBCATEGORY_LABELS, SUBCATEGORY_ORDER, WEAPON_SUBCATEGORY } from '@constants/inventory.mjs';
+  import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { syncContainmentAe } from '@effects/containment/index.mjs';
   import type { PHYSICAL_ITEMS, PhysicalItemType } from '@items/itemTypes.mjs';
@@ -77,8 +79,8 @@
   import type { Ammo } from '@items/physical/ammo/index.mjs';
   import AmmoInventoryRow from '@items/physical/ammo/sheet/components/AmmoInventoryRow.vue';
   import type { Container } from '@items/physical/container/Container.mjs';
+  import { addItemToContainer } from '@items/physical/container/logic/addItemToContainer.mjs';
   import ContainerInventoryRowVue from '@items/physical/container/sheet/components/ContainerInventoryRow.vue';
-  import { EquippableItem } from '@items/physical/equippableItem/EquippableItem.mjs';
   import type { PhysicalItemLike } from '@items/physical/physicalItem/PhysicalItem.mjs';
   import { WEAPON_SUBTYPE } from '@items/physical/weapon/data/constants.mjs';
   import type { Weapon, WeaponSubtype, WeaponSystemData } from '@items/physical/weapon/index.mjs';
@@ -110,7 +112,7 @@
     isCarried?: boolean;
     /** 'carried' = actor carried/tracked lists; 'container' = a container's contents. */
     variant?: 'carried' | 'contained';
-    /** Explicit item list. When omitted the injected actor store is used. */
+    /** Explicit item list; authoritative contents for contained tables. Otherwise uses the injected actor store. */
     items?: PHYSICAL_ITEMS[];
     /** UUID of the container item (container variant). Used to link/unlink items. */
     containerUuid?: string;
@@ -128,7 +130,6 @@
     variant: 'carried',
     items: undefined,
     containerUuid: undefined,
-    ownerUuid: null,
     forcedStripe: undefined,
     fieldPath: undefined,
   });
@@ -137,8 +138,10 @@
 
   const localize = (key: string): string => game.i18n.localize(key);
 
+  const documentStore = inject<DocumentSheetStore & InventoryListStore>(DocumentSheetStoreSymbol);
+  if (!documentStore) throw new Error('InventoryListTable requires a document sheet store.');
   const inventoryStore = inject(InventoryListStoreSymbol, null)
-    ?? inject(DocumentSheetStoreSymbol) as InventoryListStore;
+    ?? documentStore;
   provide(InventoryListStoreSymbol, inventoryStore);
 
   const {
@@ -159,8 +162,16 @@
   // adding/removing carried items is a normal play-mode action, not an authoring-only one.
   const isInventoryEditable = getIsFieldEditable(resolvedFieldPath.value, undefined, true);
 
+  // Only falls back to this document's own uuid when `ownerUuid` was omitted entirely
+  // (the root actor-level tables, which never pass the prop). An *explicit* `null`
+  // (e.g. ContainerInventory.vue's `parentUuid` for a standalone/unowned container) means
+  // the caller already resolved ownership and genuinely found none - treating it as
+  // "fall back to this container's own uuid" would make handleContainerDrop below mistake
+  // the container itself for an owning Actor.
   const effectiveOwnerUuid = computed<string | null>(() => {
-    return props.ownerUuid ?? documentUuid.value ?? null;
+    return props.ownerUuid !== undefined
+      ? props.ownerUuid
+      : (documentUuid.value ?? null);
   });
 
   /** The item pool this list renders from: explicit prop, else injected actor items. */
@@ -185,7 +196,10 @@
           return (
             item.uuid !== props.containerUuid
             && (
-              parentRef === props.containerUuid
+              // Supplied contents come from the bag's AEs, which refresh before
+              // the source item's containerUuid update finishes.
+              props.items !== undefined
+              || parentRef === props.containerUuid
               || (!!legacyContainerId && parentRef === legacyContainerId)
             )
           );
@@ -298,7 +312,7 @@
     }
   };
 
-  const isContainerDescendantOf = (maybeDescendantUuid: string, ancestorUuid: string): boolean => {
+  const isContainerDescendantOf = async (maybeDescendantUuid: string, ancestorUuid: string): Promise<boolean> => {
     const visited = new Set<string>();
     let currentUuid: string | undefined = maybeDescendantUuid;
 
@@ -307,7 +321,7 @@
       if (visited.has(currentUuid)) return false;
       visited.add(currentUuid);
 
-      const currentItem = sourceItems.value.find((item) => item.uuid === currentUuid);
+      const currentItem: Container | null = await fromUuid<Container>(currentUuid);
       currentUuid = currentItem?.system.containerUuid ?? undefined;
     }
 
@@ -328,8 +342,10 @@
     if (!ALLOWED_ITEM_TYPES.has(dropped.type as AllowedItemType)) return;
     if (dropped.uuid === containerUuid) return; // no self-nesting
 
-    const container = sourceItems.value
-      .find((item) => item.uuid === containerUuid) as Container | undefined;
+    // `sourceItems` is always this table's *contents* for the 'contained' variant (items
+    // whose containerUuid points at this container) - it never includes the container
+    // document itself, so it can't be searched for the container. Resolve by uuid instead.
+    const container = await fromUuid<Container>(containerUuid);
     if (!container) {
       console.error('[inventory-drop] Container variant drop received but no container item found for containerUuid:', containerUuid);
       return;
@@ -337,7 +353,7 @@
 
     if (
       dropped.type === containerItemType
-      && isContainerDescendantOf(container.uuid, dropped.uuid)
+      && await isContainerDescendantOf(container.uuid, dropped.uuid)
     ) {
       console.error('[inventory-drop] Prevented cyclic container nesting.', {
         droppedUuid: dropped.uuid,
@@ -346,50 +362,8 @@
       return;
     }
 
-    const ownerUuid = effectiveOwnerUuid.value;
-    const alreadyOnOwner = ownerUuid
-      ? dropped.parent?.uuid === ownerUuid
-      : dropped.parent == null;
-
-    if (
-      dropped instanceof EquippableItem
-      && dropped.system.isEquipped
-    ) {
-      const confirmed = await foundry.applications.api.DialogV2.confirm({
-        window: { title: 'dnd35e.ACTOR.inventory.confirmUnequipTitle' },
-        content: game.i18n.localize('dnd35e.ACTOR.inventory.confirmUnequipContent')
-          .replace('{itemName}', dropped.name),
-      });
-
-      if (!confirmed) {
-        return;
-      }
-      
-      await dropped.performUnequip?.();
-    }
-
-    if (alreadyOnOwner) {
-      await syncContainmentAe(dropped as PhysicalItemLike, container);
-      if (dropped.system.isCarried !== props.isCarried) {
-        await dropped.update({ 'system.isCarried': props.isCarried });
-      }
-      return;
-    }
-
-    if (ownerUuid) {
-      const owner = await fromUuid(ownerUuid);
-      if (owner instanceof Actor) {
-        const data = dropped.toObject() as Record<string, unknown>;
-        delete (data as { _id?: string })._id;
-        data.system = {
-          ...((data.system as Record<string, unknown>) ?? {}),
-          isCarried: props.isCarried,
-        } as Partial<PhysicalItemLike['system']>;
-        const newItem = await owner.createEmbeddedDocuments('Item', [data]);
-        const createdItem = newItem[0] as PhysicalItemLike;
-        await syncContainmentAe(createdItem, container);
-      }
-    }
+    await addItemToContainer(dropped, container, props.isCarried);
+    await documentStore._storeUtils.refreshDocument();
   };
 
   const dropZoneState = reactive({
@@ -505,7 +479,8 @@
       const targetContainerUuid = containerTarget?.getAttribute('data-container-uuid') ?? null;
       if (targetContainerUuid && dropped.uuid !== targetContainerUuid) {
         const targetContainer = sourceItems.value.find((item) => item.uuid === targetContainerUuid);
-        await syncContainmentAe(dropped as PhysicalItemLike, targetContainer as Container);
+        await addItemToContainer(dropped, targetContainer as Container);
+        await documentStore._storeUtils.refreshDocument();
         endDragPreview();
         return;
       }

@@ -5,7 +5,7 @@ import type { IdentifiableDocumentSourceProps } from '@documents/identifiable/Id
 import { IdentifiableDocumentMixin } from '@documents/identifiable/IdentifiableDocument.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { INITIAL_EFFECT_CHANGE_PHASE } from '@effects/baseActiveEffect/data/constants.mjs';
-import { syncContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
+import { hasContainmentContributionChanges, syncContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
 import { multiplyCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemDnd35e as ItemDnd35eClass } from '@items/baseItem/ItemDnd35e.mjs';
@@ -43,8 +43,8 @@ abstract class PhysicalItem extends IdentifiableItemBase {
 
     registerPhysicalItemEventChecks(this);
 
-    // syncContainmentAe() is otherwise only refreshed from _onUpdate() (weight/quantity/
-    // price/containerUuid changes). Newly created items would never get their containment
+    // syncContainmentAe() is otherwise only refreshed from _onUpdate() (contribution or
+    // container assignment changes). Newly created items would never get their containment
     // contribution AE built until an unrelated later edit - so build it once here too.
     // (Carried-weight contribution no longer needs any such bootstrap at all - it's
     // computed live every preparation cycle by `getContributedActorChanges()`, not
@@ -124,7 +124,7 @@ abstract class PhysicalItem extends IdentifiableItemBase {
 
   /**
    * Keeps this item's contribution AE on its container bag in sync whenever
-   * the container assignment, weight, quantity, or price changes.
+   * the container assignment, weight, quantity, price, or container currency settings change.
    */
   protected override async _onUpdate (
     changed: Record<string, unknown>,
@@ -139,10 +139,7 @@ abstract class PhysicalItem extends IdentifiableItemBase {
     // containment logic
     const hasContainerChanged = 'containerUuid' in changedSystem;
     const containerAlreadyExists = !!this.system.containerUuid;
-    const hasKeyValueChanged = 
-      'weight' in changedSystem
-      || 'quantity' in changedSystem
-      || 'price' in changedSystem;
+    const hasKeyValueChanged = hasContainmentContributionChanges(this.type, changed);
 
     if (
       hasContainerChanged

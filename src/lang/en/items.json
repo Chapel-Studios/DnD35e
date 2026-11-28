@@ -17,6 +17,9 @@
   },
   "dnd35e": {
     "CONTAINER": {
+      "Bag": "Bag",
+      "Quiver": "Quiver",
+      "Purse": "Purse",
       "FIELDS": {
         "contentsAreWeightless": {
           "label": "Are Contents Weightless?",
@@ -29,6 +32,31 @@
         "containedCurrency": {
           "label": "Contained Currency",
           "hint": "The amount of currency within this container."
+        },
+        "allowsCurrency": {
+          "label": "Allows Currency",
+          "hint": "Whether this container can hold currency."
+        },
+        "allowedItemTypes": {
+          "label": "Allowed Item Types",
+          "hint": "Types of items this container can hold."
+        },
+        "allowedItemSubtypes": {
+          "label": "Allowed Item Subtypes",
+          "hint": "Subtype restrictions apply independently to each item type. An empty selection is unrestricted.",
+          "weapon": {
+            "label": "Allowed Weapon Subtypes"
+          },
+          "ammo": {
+            "label": "Allowed Ammo Subtypes"
+          },
+          "container": {
+            "label": "Allowed Container Subtypes"
+          }
+        },
+        "containerType": {
+          "label": "Container Type",
+          "hint": "Type of container."
         }
       },
       "Tabs": {
@@ -38,10 +66,27 @@
       "Contents": "Contents",
       "ContentsEmpty": "This container is empty.",
       "ContentsCount": "items",
+      "copyContentsTitle": "Copy contents to compendium?",
+      "copyContentsContent": "This operation includes world Items. Create copies in {pack}, in the same folder as the destination container? Originals and existing compendium references are preserved. Cancel to make no changes.",
       "action": {
         "removeFromContainer": "Remove from container",
         "expand": "Show contents",
         "collapse": "Hide contents"
+      },
+      "filtering": {
+        "subtypeFilterLabel": "Allowed {type} Subtypes"
+      },
+      "warnings": {
+        "noItemsInPurse": "Not added: purses cannot hold items",
+        "notAllowed": "Not added: {type} not allowed in this container",
+        "notAllowedSubtype": "Not added: {type} ({subtype}) not allowed in this container",
+        "tooHeavy": "Not added: exceeds weight limit ({limit})",
+        "cyclicContents": "Not added: containers cannot contain themselves, directly or indirectly.",
+        "missingContents": "Cannot transfer container: referenced Item {uuid} is missing or is not a physical Item.",
+        "lockedDestination": "Cannot change container contents: destination compendium {pack} is unavailable or locked.",
+        "missingDestination": "Cannot copy container contents: the destination Actor has not been saved.",
+        "incompleteCopy": "Container transfer was cancelled because not all Items could be copied.",
+        "rollbackFailed": "Container replacement failed and could not be restored. New contents have been retained to avoid broken references; check the destination container."
       }
     },
     "AMMO": {
