@@ -78,11 +78,13 @@
     },
   } = inject(DocumentSheetStoreSymbol) as DocumentSheetStore;
 
-  const resolvedValue = computed<TValue[]>(() =>
+  type Selection = TValue[] | Set<TValue> | null | undefined;
+  const toArray = (value: Selection): TValue[] => [...(value ?? [])];
+  const resolvedValue = computed(() => toArray(
     props.value !== undefined
-      ? [...(props.value ?? [])]
-      : getViewAwareFieldValue<TValue[]>(props.fieldPath) ?? []
-  );
+      ? props.value
+      : getViewAwareFieldValue<Selection>(props.fieldPath)
+  ));
 
   function localize(key: string): string {
     return game.i18n.localize(key);
@@ -93,11 +95,11 @@
     return !getIsFieldEditable(props.fieldPath, props.defaultEditability, !!props.forceEdit).value;
   });
 
-  const sourceValue = getSourceProperty<TValue[]>(props.fieldPath);
+  const sourceValue = getSourceProperty<Selection>(props.fieldPath);
   const editValue = computed(() => {
-    if (props.value !== undefined || !sourceValue) return resolvedValue.value;
+    if (props.value !== undefined || !sourceValue || !isEditMode.value) return resolvedValue.value;
     if (!isGM.value && isEditMode.value && hasMaskForField(props.fieldPath).value) return resolvedValue.value;
-    return (sourceValue.value ?? resolvedValue.value);
+    return toArray(sourceValue.value ?? resolvedValue.value);
   });
 
   function onToggle(val: TValue, checked: boolean) {

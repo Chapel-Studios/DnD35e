@@ -83,6 +83,12 @@ const editValue = computed(() => {
 - **True mode** → show `props.value` (effective unmasked value for GM)
 - **Readonly slots** → always display `props.value`
 
+`MultiSelectFormGroup` normalizes both arrays and Sets to arrays for display and
+checkbox updates, including values read from the store (not just explicit props).
+When `value` is omitted, Play/True modes use the view-aware getter; Edit mode uses
+the source selection except for masked player fields. Explicit values remain
+caller-controlled, so their callers must supply mode-aware values.
+
 ## Field Permissions & Overrides
 
 GMs can per-field control visibility and editability via field overrides.

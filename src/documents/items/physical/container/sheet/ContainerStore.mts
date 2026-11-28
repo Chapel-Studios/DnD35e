@@ -21,6 +21,7 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
     renderModeStore: options.renderModeStore,
   });
   const document = physicalStore._storeUtils.document;
+  const getViewAwareFieldValue = physicalStore.documentGetters.getViewAwareFieldValue;
   const { getOrCreateItemRowStore, refreshItemRowStores } = createItemRowStoreCache(physicalStore._storeUtils.renderModeStore);
   
   const {
@@ -43,8 +44,12 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
     isOverCapacity: computed(() => document.value.system.isOverCapacity),
     contents: computed(() => document.value.getContentsSync() as PHYSICAL_ITEMS[]),
     allowsCurrency: computed(() => document.value.system.allowsCurrency),
-    allowedItemTypes: computed(() => [...document.value.system.allowedItemTypes ?? []]),
-    allowedItemSubtypes: computed(() => [...document.value.system.allowedItemSubtypes ?? []]),
+    allowedItemTypes: computed(() => [
+      ...(getViewAwareFieldValue<Iterable<ItemType> | null>('system.allowedItemTypes') ?? []),
+    ]),
+    allowedItemSubtypes: computed(() => [
+      ...(getViewAwareFieldValue<Iterable<string> | null>('system.allowedItemSubtypes') ?? []),
+    ]),
     getOrCreateItemRowStore,
   };
 
