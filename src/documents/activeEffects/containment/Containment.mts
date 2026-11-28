@@ -7,6 +7,7 @@ import { Container } from '@items/physical/container/Container.mjs';
 import { containmentEffectType } from './containmentEffectType.mjs';
 import type { ContainmentSystemData, ContainmentSystemSource } from './data/index.mjs';
 import { removeContainmentReference } from './logic/containmentAe.mjs';
+import { registerContainmentReference } from './logic/containmentReferences.mjs';
 
 type ContainmentEffectType = typeof containmentEffectType;
 
@@ -28,6 +29,12 @@ class Containment extends ActiveEffectDnd35e {
     context?: DocumentConstructionContext<Containment['parent']>
   ) {
     super(data, context);
+    if (this.system.sourceItemUuid?.startsWith('Compendium.')) {
+      if (context && 'creation' in context && context.creation === true) return;
+      const subscription = registerContainmentReference(this);
+      this.events.once(DocumentLifeCycle.destroyed, () => subscription.cancel());
+      return;
+    }
     (async () => {
       const item = this.system.sourceItemUuid
         ? await fromUuid(this.system.sourceItemUuid) as PHYSICAL_ITEMS

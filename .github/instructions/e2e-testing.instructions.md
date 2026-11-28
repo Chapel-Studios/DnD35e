@@ -207,7 +207,7 @@ E2E specs are slow; pair them with unit tests for the extracted pieces:
 - **`tests/unit/effects/`** — Active Effect change normalization, secret-AE behavior
 - **Pattern**: When an E2E reveals a complex pure function (e.g. `buildMaterialChanges`), extract it and add a unit test. The E2E then only has to prove integration, not algorithm correctness.
 
-Run unit tests fast: `npx vitest run --project unit`. Run a single file: `npx vitest run tests/unit/path/to/file.test.mts`.
+Run unit tests fast: `npx vitest run`. Run a single file: `npx vitest run tests/unit/path/to/file.test.mts`.
 
 ## When Tests Fail
 

@@ -3,7 +3,7 @@ import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
 import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
-import { clearWorld, createActor, createItem, stowItemViaDrop } from './helpers/documents.mjs';
+import { clearWorld, createActor, createItem, stowItemViaDrop, updateDocument } from './helpers/documents.mjs';
 import { gotoGame } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
 import { dismissOverlays } from './helpers/ui.mjs';
@@ -52,6 +52,21 @@ async function readItemSystem (page: Page, uuid: string) {
     if (!item) throw new Error(`Missing template ${uuid}`);
     return item.toObject().system;
   }, uuid);
+}
+
+async function readRollups (page: Page, uuids: string[], probeUuid: string) {
+  return page.evaluate(async ({ uuids, probeUuid }) => {
+    const probe = await fromUuid<PhysicalItemLike>(probeUuid);
+    if (!probe) throw new Error('Missing capacity probe');
+    return Promise.all(uuids.map(async uuid => {
+      const bag = await fromUuid<Container>(uuid);
+      if (!bag) throw new Error(`Missing rollup fixture ${uuid}`);
+      return {
+        count: bag.system.contentsCount, weight: bag.system.contentsWeight,
+        value: bag.system.contentsValue.srdEquivalent, acceptsProbe: bag.canAddItemToContents(probe),
+      };
+    }));
+  }, { uuids, probeUuid });
 }
 
 async function answerCopyDialog (page: Page, answer: 'yes' | 'no'): Promise<void> {
@@ -143,6 +158,155 @@ test('GM drops a container template into a cold-cache compendium inventory targe
     expect.objectContaining({ uuid: template }),
   ]);
   expect(await readItemSystem(page, template)).toEqual(originalSystem);
+});
+
+test('GM edits a cold-cache pack source and every referencing bag and ancestor receives current contributions', async ({ page }) => {
+  await gotoGame(page);
+  const pack = await createPack(page, 'Live source contributions');
+  const ammo = await createItem(page, 'ammo', {
+    name: 'Template arrows',
+    system: { quantity: 20, weight: 0.1, price: { stacks: [{ coinId: 'srd_gp', count: 1 }] } },
+  });
+  const template = (await exportItem(page, ammo, pack))!;
+  const direct = await createItem(page, 'container', { name: 'Direct reference' });
+  const inner = await createItem(page, 'container', { name: 'Pack inner', system: { weight: 1 } });
+  const innerTemplate = (await exportItem(page, inner, pack))!;
+  const root = await createItem(page, 'container', { name: 'World root', system: { weight: 2 } });
+  const outer = await createItem(page, 'container', { name: 'Shared ancestor' });
+  const probe = await createItem(page, 'ammo', { name: 'Probe', system: { weight: 1 } });
+  await stowItemViaDrop(page, template, direct);
+  const dormant = (await exportItem(page, direct, pack))!;
+  await stowItemViaDrop(page, template, innerTemplate);
+  await stowItemViaDrop(page, innerTemplate, root);
+  await stowItemViaDrop(page, root, outer);
+  await stowItemViaDrop(page, direct, outer);
+  await updateDocument(page, outer, { system: { maxContentWeight: 9.5 } });
+  const uuids = [direct, innerTemplate, root, outer];
+  const state = () => readRollups(page, uuids, probe);
+  await expect.poll(state).toEqual([
+    { count: 20, weight: 2, value: 20, acceptsProbe: true },
+    { count: 20, weight: 2, value: 20, acceptsProbe: true },
+    { count: 1, weight: 3, value: 20, acceptsProbe: true },
+    { count: 2, weight: 7, value: 40, acceptsProbe: true },
+  ]);
+  const original = await readItemSystem(page, template);
+  await closeAllSheets(page);
+  await gotoGame(page);
+  await expect.poll(state).toEqual([
+    { count: 20, weight: 2, value: 20, acceptsProbe: true },
+    { count: 20, weight: 2, value: 20, acceptsProbe: true },
+    { count: 1, weight: 3, value: 20, acceptsProbe: true },
+    { count: 2, weight: 7, value: 40, acceptsProbe: true },
+  ]);
+  await page.evaluate(uuid => {
+    if (fromUuidSync(uuid) instanceof Item) throw new Error('Dormant pack target was unexpectedly loaded');
+  }, dormant);
+  await page.evaluate(({ pack, template, innerTemplate }) => {
+    game.packs.get(pack)!.clear();
+    if (fromUuidSync(template) instanceof Item || fromUuidSync(innerTemplate) instanceof Item) {
+      throw new Error('Contribution fixtures were not evicted');
+    }
+  }, { pack, template, innerTemplate });
+  await updateDocument(page, template, { system: { quantity: 30 } });
+  await expect.poll(state).toEqual([
+    { count: 30, weight: 3, value: 30, acceptsProbe: true },
+    { count: 30, weight: 3, value: 30, acceptsProbe: true },
+    { count: 1, weight: 4, value: 30, acceptsProbe: true },
+    { count: 2, weight: 9, value: 60, acceptsProbe: false },
+  ]);
+  await expect.poll(() => readRollups(page, [dormant], probe)).toEqual([
+    { count: 30, weight: 3, value: 30, acceptsProbe: true },
+  ]);
+  await updateDocument(page, template, { system: {
+    weight: 0.2, price: { stacks: [{ coinId: 'srd_gp', count: 2 }] },
+  } });
+  await expect.poll(state).toEqual([
+    { count: 30, weight: 6, value: 60, acceptsProbe: true },
+    { count: 30, weight: 6, value: 60, acceptsProbe: true },
+    { count: 1, weight: 7, value: 60, acceptsProbe: true },
+    { count: 2, weight: 15, value: 120, acceptsProbe: false },
+  ]);
+  await expect.poll(() => readRollups(page, [dormant], probe)).toEqual([
+    { count: 30, weight: 6, value: 60, acceptsProbe: true },
+  ]);
+  const current = await readItemSystem(page, template);
+  const unchangedData = (data: typeof original) => Object.fromEntries(
+    Object.entries(data).filter(([key]) => !['quantity', 'weight', 'price'].includes(key))
+  );
+  expect(unchangedData(current)).toEqual(unchangedData(original));
+});
+
+test('GM edits referenced currency settings, preserves locked targets, and removes update subscriptions with membership', async ({ page }) => {
+  await gotoGame(page);
+  const pack = await createPack(page, 'Currency source contributions');
+  const destinationPack = await createPack(page, 'Currency destination contributions');
+  const currency = await createItem(page, 'container', {
+    name: 'Currency template', system: {
+      weight: 1, allowsCurrency: true, containedCurrency: { stacks: [{ coinId: 'srd_gp', count: 50 }] },
+    },
+  });
+  const template = (await exportItem(page, currency, pack))!;
+  const direct = await createItem(page, 'container', { name: 'Currency direct' });
+  const inner = await createItem(page, 'container', { name: 'Currency pack parent', system: { weight: 2 } });
+  const innerTemplate = (await exportItem(page, inner, destinationPack))!;
+  const root = await createItem(page, 'container', { name: 'Currency world ancestor' });
+  const probe = await createItem(page, 'ammo', { name: 'Currency probe', system: { weight: 1 } });
+  await stowItemViaDrop(page, template, direct);
+  await stowItemViaDrop(page, template, innerTemplate);
+  await stowItemViaDrop(page, innerTemplate, root);
+  await updateDocument(page, root, { system: { maxContentWeight: 4.5 } });
+  const state = () => readRollups(page, [direct, innerTemplate, root], probe);
+  const enabled = [
+    { count: 1, weight: 2, value: 50, acceptsProbe: true },
+    { count: 1, weight: 2, value: 50, acceptsProbe: true },
+    { count: 1, weight: 4, value: 50, acceptsProbe: false },
+  ];
+  const disabled = [
+    { count: 1, weight: 1, value: 0, acceptsProbe: true },
+    { count: 1, weight: 1, value: 0, acceptsProbe: true },
+    { count: 1, weight: 3, value: 0, acceptsProbe: true },
+  ];
+  await expect.poll(state).toEqual(enabled);
+  await updateDocument(page, template, { system: { allowsCurrency: false } });
+  await expect.poll(state).toEqual(disabled);
+  await updateDocument(page, template, { system: { containerType: 'purse' } });
+  await expect.poll(state).toEqual(enabled);
+  expect(await page.evaluate(async uuid => {
+    const bag = await fromUuid<Container>(uuid);
+    if (!bag) throw new Error('Missing currency source');
+    return bag.system.containedCurrency.stacks;
+  }, template)).toEqual([{ coinId: 'srd_gp', count: 50 }]);
+  await updateDocument(page, template, { system: { containerType: 'bag', allowsCurrency: true } });
+  await expect.poll(state).toEqual(enabled);
+
+  await page.evaluate(async id => { await game.packs.get(id)!.configure({ locked: true }); }, destinationPack);
+  const reported = page.waitForEvent('console', message =>
+    message.type() === 'error' && message.text().includes(`Could not refresh ${innerTemplate}`));
+  await updateDocument(page, template, { system: { allowsCurrency: false } });
+  await reported;
+  await expect.poll(state).toEqual([disabled[0], enabled[1], enabled[2]]);
+  await expect(page.locator('#notifications .notification.error').first()).toBeVisible();
+  await page.evaluate(async id => { await game.packs.get(id)!.configure({ locked: false }); }, destinationPack);
+  await updateDocument(page, template, { system: { allowsCurrency: true } });
+  await expect.poll(state).toEqual(enabled);
+  await updateDocument(page, template, { system: { containedCurrency: { stacks: [{ coinId: 'srd_gp', count: 100 }] } } });
+  await expect.poll(state).toEqual([
+    { count: 1, weight: 3, value: 100, acceptsProbe: true },
+    { count: 1, weight: 3, value: 100, acceptsProbe: true },
+    { count: 1, weight: 5, value: 100, acceptsProbe: false },
+  ]);
+
+  await page.evaluate(async ({ direct, template }) => {
+    const bag = await fromUuid<Container>(direct);
+    const effect = bag?.effects.find(effect => effect.type === 'containment' && effect.system.sourceItemUuid === template);
+    if (!bag || !effect) throw new Error('Missing reference to remove');
+    await bag.deleteEmbeddedDocuments('ActiveEffect', [effect.id]);
+  }, { direct, template });
+  await updateDocument(page, template, { system: { allowsCurrency: false } });
+  await expect.poll(state).toEqual([
+    { count: 0, weight: 0, value: 0, acceptsProbe: true }, disabled[1], disabled[2],
+  ]);
+  expect(await readContents(page, direct)).toEqual([]);
 });
 
 test('GM imports a stocked nested compendium bag into world and actor inventories with independent contents', async ({ page }) => {

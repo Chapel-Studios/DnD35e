@@ -5,12 +5,11 @@ import type { IdentifiableDocumentSourceProps } from '@documents/identifiable/Id
 import { IdentifiableDocumentMixin } from '@documents/identifiable/IdentifiableDocument.mjs';
 import type { EffectChangeDataDnd35e } from '@effects/baseActiveEffect/data/ActiveEffectSystemData.mjs';
 import { INITIAL_EFFECT_CHANGE_PHASE } from '@effects/baseActiveEffect/data/constants.mjs';
-import { syncContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
+import { hasContainmentContributionChanges, syncContainmentAe } from '@effects/containment/logic/containmentAe.mjs';
 import { multiplyCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import type { ItemDnd35e, ItemSourceDnd35e } from '@items/baseItem/index.mjs';
 import { ItemDnd35e as ItemDnd35eClass } from '@items/baseItem/ItemDnd35e.mjs';
 import type { ItemType } from '@items/index.mjs';
-import { containerItemType } from '@items/itemTypes.mjs';
 
 import type { Container } from '../container/Container.mjs';
 import type { PhysicalItemSystemData, PhysicalItemSystemSource } from './data/PhysicalItemSystemData.mjs';
@@ -140,14 +139,7 @@ abstract class PhysicalItem extends IdentifiableItemBase {
     // containment logic
     const hasContainerChanged = 'containerUuid' in changedSystem;
     const containerAlreadyExists = !!this.system.containerUuid;
-    const hasKeyValueChanged = 
-      'weight' in changedSystem
-      || 'quantity' in changedSystem
-      || 'price' in changedSystem
-      || (
-        this.type === containerItemType
-        && ('allowsCurrency' in changedSystem || 'containerType' in changedSystem)
-      );
+    const hasKeyValueChanged = hasContainmentContributionChanges(this.type, changed);
 
     if (
       hasContainerChanged

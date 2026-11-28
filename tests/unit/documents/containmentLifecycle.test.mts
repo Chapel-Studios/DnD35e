@@ -15,9 +15,13 @@ vi.mock('@items/physical/container/Container.mjs', () => ({
 vi.mock('@effects/containment/logic/containmentAe.mjs', () => ({
   removeContainmentReference: vi.fn(),
 }));
+vi.mock('@effects/containment/logic/containmentReferences.mjs', () => ({
+  registerContainmentReference: vi.fn(() => ({ cancel: vi.fn() })),
+}));
 
 import { Containment, type ContainmentSource } from '@effects/containment/Containment.mjs';
 import { removeContainmentReference } from '@effects/containment/logic/containmentAe.mjs';
+import { registerContainmentReference } from '@effects/containment/logic/containmentReferences.mjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 class Events {
@@ -40,7 +44,7 @@ async function fixture (pack: string | null) {
   const item = { pack, events: new Events(), system: { containerUuid: bag.uuid }, update: vi.fn() };
   vi.stubGlobal('fromUuid', vi.fn().mockResolvedValue(item));
   const effect = new Containment({
-    type: 'containment', system: { sourceItemUuid: 'Item.contents' },
+    type: 'containment', system: { sourceItemUuid: pack ? 'Compendium.source.items.Item.contents' : 'Item.contents' },
   } as PreCreate<ContainmentSource>, { parent: bag as unknown as Containment['parent'] });
   await Promise.resolve();
   return { bag, item, effect };
@@ -62,7 +66,7 @@ describe('containment subscription cleanup', () => {
   });
 
   it('source destruction removes its contribution without updating the deleted source', async () => {
-    const { bag, item } = await fixture('source.items');
+    const { bag, item } = await fixture(null);
     await item.events.emit('destroyed');
     expect(removeContainmentReference).toHaveBeenCalledWith(item, bag);
     expect(item.update).not.toHaveBeenCalled();
@@ -75,5 +79,14 @@ describe('containment subscription cleanup', () => {
     await item.events.emit('destroyed');
     expect(item.update).not.toHaveBeenCalled();
     expect(removeContainmentReference).not.toHaveBeenCalled();
+  });
+
+  it('registers pack references without retaining a resolved source and cancels on effect removal', async () => {
+    const { effect } = await fixture('source.items');
+    expect(fromUuid).not.toHaveBeenCalled();
+    expect(registerContainmentReference).toHaveBeenCalledWith(effect);
+    const subscription = vi.mocked(registerContainmentReference).mock.results[0].value;
+    await effect.events.emit('destroyed', {});
+    expect(subscription.cancel).toHaveBeenCalledOnce();
   });
 });

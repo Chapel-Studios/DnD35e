@@ -5,6 +5,7 @@ import type { ActiveEffectDnd35e } from '@effects/index.mjs';
 import { addCurrency, multiplyCurrency } from '@fields/currency/logic/mathOperations.mjs';
 import { containerItemType, PHYSICAL_ITEM_TYPES, type PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
 import type { Container } from '@items/physical/container/index.mjs';
+import { requireWritableContainerPack } from '@items/physical/container/logic/containerContents.mjs';
 import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
 import type { PriceSource } from '@settings/index.mjs';
 
@@ -16,6 +17,22 @@ type ContainmentAeTarget = PHYSICAL_ITEMS | PhysicalItemLike;
 export const containmentAeTargetTypes: readonly string[] = [
   ...PHYSICAL_ITEM_TYPES,
 ];
+
+export function hasContainmentContributionChanges (type: string, changed: Record<string, unknown>): boolean {
+  const system = changed.system;
+  if (!system || typeof system !== 'object') return false;
+  return 'weight' in system
+    || 'quantity' in system
+    || 'price' in system
+    || (
+      type === containerItemType
+      && (
+        'allowsCurrency' in system
+        || 'containerType' in system
+        || 'containedCurrency' in system
+      )
+    );
+}
 
 /** Returns true if `effect` is a Containment AE (item-contribution AE on a bag). */
 export function isContainmentAe (effect: ActiveEffectDnd35e): boolean {
@@ -189,6 +206,7 @@ export async function syncContainmentAe (
         || haveStacksChanged
       )
     ) {
+      if (container?.pack) requireWritableContainerPack(container.pack);
       await existing.update({ system: {
         contributedWeight: weight,
         contributedCount: count,

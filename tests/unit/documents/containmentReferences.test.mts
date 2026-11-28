@@ -62,4 +62,22 @@ describe('reference-only compendium containment', () => {
     expect(bag.deleteEmbeddedDocuments).toHaveBeenCalledWith('ActiveEffect', ['effect']);
     expect(item.update).not.toHaveBeenCalled();
   });
+
+  it('does not attempt to write a locked target when its stored contribution is already current', async () => {
+    initializeCurrencyStub();
+    const item = template();
+    const bag = { ...container(), pack: 'locked.items' };
+    const effect = {
+      id: 'effect', type: containmentEffectType,
+      system: {
+        sourceItemUuid: item.uuid, contributedCount: 20, contributedWeight: 2,
+        contributedPrice: { stacks: [] },
+      },
+      update: vi.fn(),
+    };
+    bag.effects.push(effect);
+    await syncContainmentAe(item as unknown as PhysicalItemLike, bag as unknown as Container);
+    expect(effect.update).not.toHaveBeenCalled();
+    expect(bag.createEmbeddedDocuments).not.toHaveBeenCalled();
+  });
 });
