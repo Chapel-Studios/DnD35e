@@ -203,7 +203,7 @@
       : 'dnd35e.ACTOR.inventory.action.equip'
   );
 
-  const showDestroy = computed<boolean>(() => isInventoryEditable && !props.item.pack && !!props.item.actor);
+  const showDestroy = computed<boolean>(() => isInventoryEditable.value && !props.item.pack && !!props.item.actor);
 
   // ── Actions ─────────────────────────────────────────────────────────────
   const equippableItems = computed<EquippableItem[]>(() =>

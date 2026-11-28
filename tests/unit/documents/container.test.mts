@@ -17,7 +17,7 @@ vi.mock('@effects/containment/logic/containmentAe.mjs', () => ({
 }));
 
 import type { Containment } from '@effects/containment/Containment.mjs';
-import { findContainmentAeByItemUuid } from '@effects/containment/logic/containmentAe.mjs';
+import { findAllContainmentAe, findContainmentAeByItemUuid } from '@effects/containment/logic/containmentAe.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 import { ammoItemType, weaponItemType } from '@items/itemTypes.mjs';
 import { Container } from '@items/physical/container/Container.mjs';
@@ -60,6 +60,7 @@ describe('Container contents preparation and acceptance', () => {
 
   beforeEach(() => {
     warn.mockClear();
+    vi.mocked(findAllContainmentAe).mockReturnValue([]);
     vi.mocked(findContainmentAeByItemUuid).mockReset();
     vi.stubGlobal('ui', { notifications: { warn } });
   });
@@ -67,6 +68,21 @@ describe('Container contents preparation and acceptance', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it('rejects compendium index entries in synchronous contents but preserves cached document lookup', () => {
+    const { container } = makeContainer();
+    const uuid = 'Compendium.world.ammunition.Item.arrows';
+    vi.mocked(findAllContainmentAe).mockReturnValue([
+      { system: { sourceItemUuid: uuid } } as Containment,
+    ]);
+    const item = makeItem();
+    vi.stubGlobal('fromUuidSync', vi.fn()
+      .mockReturnValueOnce({ _id: 'arrows', type: ammoItemType })
+      .mockReturnValue(item));
+
+    expect(() => container.getContentsSync()).toThrow(`Container contents ${uuid} are not loaded; use getContents().`);
+    expect(container.getContentsSync()).toEqual([item]);
   });
 
   it('preserves held currency across preparation and includes it in rollups', () => {

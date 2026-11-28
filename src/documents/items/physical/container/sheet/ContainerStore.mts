@@ -8,7 +8,7 @@ import { physicalItemEffectsTab } from '@items/physical/physicalItem/sheet/tabs/
 import { type SettingsStore, SettingsStoreSymbol } from '@settings/shared/sheet/index.mjs';
 import type { VueApplicationContext } from '@vueApps/VueAppTypes.mjs';
 import type { ComputedRef } from 'vue';
-import { computed, inject } from 'vue';
+import { computed, inject, shallowRef, watch } from 'vue';
 
 import type { Container } from '../Container.mjs';
 import { CONTAINER_TYPE, CONTAINER_TYPE_LOCALIZED, type ContainerTypeOption } from '../data/constants.mjs';
@@ -27,6 +27,28 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
   const {
     currency: { highestVisibleCoin },
   } = inject(SettingsStoreSymbol) as SettingsStore;
+
+  const contents = shallowRef<PHYSICAL_ITEMS[]>([]);
+  let contentsRefreshVersion = 0;
+  let pendingContentsRefresh = Promise.resolve();
+  watch(document, (container) => {
+    const version = ++contentsRefreshVersion;
+    pendingContentsRefresh = (async () => {
+      const resolvedContents = await container.getContents();
+      if (version !== contentsRefreshVersion) return;
+      await refreshItemRowStores(resolvedContents);
+      if (version === contentsRefreshVersion) contents.value = resolvedContents;
+    })();
+    void pendingContentsRefresh.catch((error: unknown) => {
+      const failure = error instanceof Error
+        ? error
+        : new Error(String(error));
+      Hooks.onError('ContainerStore#refreshContents', failure, {
+        log: 'error',
+        notify: 'error',
+      });
+    });
+  }, { immediate: true, flush: 'sync' });
   
   const documentGetters = {
     ...physicalStore.documentGetters,
@@ -42,7 +64,7 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
       return CurrencyData.fromStacks(document.value.system.contentsValue.consolidate(highestVisibleCoin.value));
     }),
     isOverCapacity: computed(() => document.value.system.isOverCapacity),
-    contents: computed(() => document.value.getContentsSync() as PHYSICAL_ITEMS[]),
+    contents: computed(() => contents.value),
     allowsCurrency: computed(() => document.value.system.allowsCurrency),
     allowedItemTypes: computed(() => [
       ...(getViewAwareFieldValue<Iterable<ItemType> | null>('system.allowedItemTypes') ?? []),
@@ -60,7 +82,7 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
       ...physicalStore._storeUtils,
       refreshDocument: async (doc?: Container | null): Promise<void> => {
         await physicalStore._storeUtils.refreshDocument(doc);
-        await refreshItemRowStores(documentGetters.contents.value);
+        await pendingContentsRefresh;
       },
     },
   };

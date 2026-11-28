@@ -91,6 +91,12 @@ test('GM references locked compendium ammunition in world and pack bags without 
   expect(await readContents(page, packBag)).toEqual([
     expect.objectContaining({ uuid: template, quantity: 20 }),
   ]);
+  await page.evaluate(({ sourcePack, template }) => {
+    const pack = game.packs.get(sourcePack);
+    if (!pack) throw new Error('Missing source pack for cold-cache inventory test');
+    pack.clear();
+    if (fromUuidSync(template) instanceof Item) throw new Error('Source template is still cached');
+  }, { sourcePack, template });
   const sheet = page.locator(await openDocumentSheet(page, worldBag));
   await dismissOverlays(page);
   await sheet.locator('[data-tab="inventory"]').click();
@@ -100,6 +106,42 @@ test('GM references locked compendium ammunition in world and pack bags without 
   await row.locator('.carry-toggle').click();
   await expect.poll(() => readContents(page, worldBag)).toEqual([]);
   expect(await readContents(page, packBag)).toHaveLength(1);
+  expect(await readItemSystem(page, template)).toEqual(originalSystem);
+});
+
+test('GM drops a container template into a cold-cache compendium inventory target', async ({ page }) => {
+  await gotoGame(page);
+  const packId = await createPack(page, 'Cold-cache container targets');
+  const source = await createItem(page, 'container', { name: 'Nested bag' });
+  const template = (await exportItem(page, source, packId))!;
+  const originalSystem = await readItemSystem(page, template);
+  const target = await createItem(page, 'container', { name: 'Target bag' });
+  const packBag = (await exportItem(page, target, packId))!;
+  const root = await createItem(page, 'container', { name: 'World root' });
+  await stowItemViaDrop(page, packBag, root);
+  const sheet = page.locator(await openDocumentSheet(page, root));
+  await dismissOverlays(page);
+  await sheet.locator('[data-tab="inventory"]').click();
+  await sheet.locator(`.inventory-row[data-container-uuid="${packBag}"] .container-expand-btn`).click();
+  const zone = sheet.locator('.contained-item-row .inventory-drop-zone');
+  await expect(zone).toBeVisible();
+  await page.evaluate(({ packId, packBag }) => {
+    const pack = game.packs.get(packId);
+    if (!pack) throw new Error('Missing destination pack for cold-cache drop test');
+    pack.clear();
+    if (fromUuidSync(packBag) instanceof Item) throw new Error('Target container is still cached');
+  }, { packId, packBag });
+
+  await zone.evaluate((element, uuid) => {
+    const dataTransfer = new DataTransfer();
+    dataTransfer.setData('text/plain', JSON.stringify({ type: 'Item', uuid }));
+    element.dispatchEvent(new DragEvent('drop', { dataTransfer, bubbles: true, cancelable: true }));
+  }, template);
+
+  await expect(sheet.locator(`.inventory-row[data-container-uuid="${template}"]`)).toBeVisible();
+  await expect.poll(() => readContents(page, packBag)).toEqual([
+    expect.objectContaining({ uuid: template }),
+  ]);
   expect(await readItemSystem(page, template)).toEqual(originalSystem);
 });
 

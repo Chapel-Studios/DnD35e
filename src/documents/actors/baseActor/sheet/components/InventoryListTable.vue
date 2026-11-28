@@ -65,6 +65,7 @@
 <script setup lang="ts">
   import type { WeaponSubcategory } from '@constants/inventory.mjs';
   import { SUBCATEGORY_LABELS, SUBCATEGORY_ORDER, WEAPON_SUBCATEGORY } from '@constants/inventory.mjs';
+  import type { DocumentSheetStore } from '@documents/document/index.mjs';
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import { syncContainmentAe } from '@effects/containment/index.mjs';
   import type { PHYSICAL_ITEMS, PhysicalItemType } from '@items/itemTypes.mjs';
@@ -137,8 +138,10 @@
 
   const localize = (key: string): string => game.i18n.localize(key);
 
+  const documentStore = inject<DocumentSheetStore & InventoryListStore>(DocumentSheetStoreSymbol);
+  if (!documentStore) throw new Error('InventoryListTable requires a document sheet store.');
   const inventoryStore = inject(InventoryListStoreSymbol, null)
-    ?? inject(DocumentSheetStoreSymbol) as InventoryListStore;
+    ?? documentStore;
   provide(InventoryListStoreSymbol, inventoryStore);
 
   const {
@@ -309,7 +312,7 @@
     }
   };
 
-  const isContainerDescendantOf = (maybeDescendantUuid: string, ancestorUuid: string): boolean => {
+  const isContainerDescendantOf = async (maybeDescendantUuid: string, ancestorUuid: string): Promise<boolean> => {
     const visited = new Set<string>();
     let currentUuid: string | undefined = maybeDescendantUuid;
 
@@ -318,7 +321,7 @@
       if (visited.has(currentUuid)) return false;
       visited.add(currentUuid);
 
-      const currentItem: Container | null = fromUuidSync<Container>(currentUuid);
+      const currentItem: Container | null = await fromUuid<Container>(currentUuid);
       currentUuid = currentItem?.system.containerUuid ?? undefined;
     }
 
@@ -342,7 +345,7 @@
     // `sourceItems` is always this table's *contents* for the 'contained' variant (items
     // whose containerUuid points at this container) - it never includes the container
     // document itself, so it can't be searched for the container. Resolve by uuid instead.
-    const container = fromUuidSync<Container>(containerUuid) ?? undefined;
+    const container = await fromUuid<Container>(containerUuid);
     if (!container) {
       console.error('[inventory-drop] Container variant drop received but no container item found for containerUuid:', containerUuid);
       return;
@@ -350,7 +353,7 @@
 
     if (
       dropped.type === containerItemType
-      && isContainerDescendantOf(container.uuid, dropped.uuid)
+      && await isContainerDescendantOf(container.uuid, dropped.uuid)
     ) {
       console.error('[inventory-drop] Prevented cyclic container nesting.', {
         droppedUuid: dropped.uuid,
@@ -360,6 +363,7 @@
     }
 
     await addItemToContainer(dropped, container, props.isCarried);
+    await documentStore._storeUtils.refreshDocument();
   };
 
   const dropZoneState = reactive({
@@ -476,6 +480,7 @@
       if (targetContainerUuid && dropped.uuid !== targetContainerUuid) {
         const targetContainer = sourceItems.value.find((item) => item.uuid === targetContainerUuid);
         await addItemToContainer(dropped, targetContainer as Container);
+        await documentStore._storeUtils.refreshDocument();
         endDragPreview();
         return;
       }

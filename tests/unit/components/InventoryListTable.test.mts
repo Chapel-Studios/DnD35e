@@ -55,6 +55,7 @@ function mountTable(ownerUuid?: string | null, physicalItems: PHYSICAL_ITEMS[] =
     global: {
       provide: {
         [DocumentSheetStoreSymbol]: {
+          _storeUtils: { refreshDocument: vi.fn().mockResolvedValue(undefined) },
           documentGetters: {
             documentUuid: computed(() => 'Item.bag'),
             physicalItems: computed(() => physicalItems),
@@ -102,7 +103,7 @@ describe('InventoryListTable container drops', () => {
       if (uuid === 'Item.middle') return middle;
       return null;
     });
-    vi.stubGlobal('fromUuidSync', resolve);
+    vi.stubGlobal('fromUuid', resolve);
     DroppedItem.implementation.fromDropData.mockResolvedValue(dropped);
     const cycleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const wrapper = mountTable(null);
@@ -126,7 +127,7 @@ describe('InventoryListTable container drops', () => {
     dropped.uuid = 'Item.unrelated';
     const container = { ...makeContainer(), system: { containerUuid: 'Item.outer' } };
     const outer = { system: { containerUuid: null } };
-    vi.stubGlobal('fromUuidSync', vi.fn((uuid: string) =>
+    vi.stubGlobal('fromUuid', vi.fn((uuid: string) =>
       uuid === container.uuid
         ? container
         : outer));
@@ -172,13 +173,12 @@ describe('InventoryListTable container drops', () => {
     wrapper.unmount();
   });
 
-  it('validates a rejected item before attempting to resolve an owner or mutate it', async () => {
+  it('validates a rejected item before copying or mutating it', async () => {
     const item = new DroppedItem();
     const container = makeContainer();
     container.canAddItemToContents.mockReturnValue(false);
-    const resolveOwner = vi.fn();
-    vi.stubGlobal('fromUuid', resolveOwner);
-    vi.stubGlobal('fromUuidSync', vi.fn(() => container));
+    const resolve = vi.fn().mockResolvedValue(container);
+    vi.stubGlobal('fromUuid', resolve);
     DroppedItem.implementation.fromDropData.mockResolvedValue(item);
     const wrapper = mountTable();
 
@@ -186,7 +186,7 @@ describe('InventoryListTable container drops', () => {
     await flushPromises();
 
     expect(container.canAddItemToContents).toHaveBeenCalledWith(item);
-    expect(resolveOwner).not.toHaveBeenCalled();
+    expect(resolve).toHaveBeenCalledExactlyOnceWith('Item.bag');
     expect(syncContainmentAe).not.toHaveBeenCalled();
     expect(item.update).not.toHaveBeenCalled();
     wrapper.unmount();
@@ -195,7 +195,7 @@ describe('InventoryListTable container drops', () => {
   it.each([undefined, null])('stows an item in a standalone bag with ownerUuid %s', async (ownerUuid) => {
     const item = new DroppedItem();
     const container = makeContainer();
-    vi.stubGlobal('fromUuidSync', vi.fn(() => container));
+    vi.stubGlobal('fromUuid', vi.fn(() => container));
     DroppedItem.implementation.fromDropData.mockResolvedValue(item);
     const wrapper = mountTable(ownerUuid);
 
@@ -211,7 +211,7 @@ describe('InventoryListTable container drops', () => {
     const item = new DroppedItem();
     item.parent = { uuid: 'Actor.source' };
     const container = makeContainer();
-    vi.stubGlobal('fromUuidSync', vi.fn(() => container));
+    vi.stubGlobal('fromUuid', vi.fn(() => container));
     DroppedItem.implementation.fromDropData.mockResolvedValue(item);
     const wrapper = mountTable(null);
 
@@ -231,7 +231,7 @@ describe('InventoryListTable container drops', () => {
       uuid: 'Actor.owner',
       createEmbeddedDocuments: vi.fn().mockResolvedValue([copiedItem]),
     };
-    vi.stubGlobal('fromUuidSync', vi.fn(() => container));
+    vi.stubGlobal('fromUuid', vi.fn(() => container));
     DroppedItem.implementation.fromDropData.mockResolvedValue(item);
     const wrapper = mountTable('Item.bag');
 
