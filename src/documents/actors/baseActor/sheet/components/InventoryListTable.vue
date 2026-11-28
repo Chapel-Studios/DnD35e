@@ -52,6 +52,7 @@
           :variant="variant"
           :toggle-title="toggleTitle"
           :owner-uuid="effectiveOwnerUuid"
+          :parent-container-uuid="containerUuid"
           :field-path="resolvedFieldPath"
           :stripe="forcedStripe ?? (index % 2 === 0 ? 'even' : 'odd')"
           :on-drag-start="onDragStart"
@@ -77,8 +78,8 @@
   import type { Ammo } from '@items/physical/ammo/index.mjs';
   import AmmoInventoryRow from '@items/physical/ammo/sheet/components/AmmoInventoryRow.vue';
   import type { Container } from '@items/physical/container/Container.mjs';
+  import { addItemToContainer } from '@items/physical/container/logic/addItemToContainer.mjs';
   import ContainerInventoryRowVue from '@items/physical/container/sheet/components/ContainerInventoryRow.vue';
-  import { EquippableItem } from '@items/physical/equippableItem/EquippableItem.mjs';
   import type { PhysicalItemLike } from '@items/physical/physicalItem/PhysicalItem.mjs';
   import { WEAPON_SUBTYPE } from '@items/physical/weapon/data/constants.mjs';
   import type { Weapon, WeaponSubtype, WeaponSystemData } from '@items/physical/weapon/index.mjs';
@@ -317,7 +318,7 @@
       if (visited.has(currentUuid)) return false;
       visited.add(currentUuid);
 
-      const currentItem = sourceItems.value.find((item) => item.uuid === currentUuid);
+      const currentItem: Container | null = fromUuidSync<Container>(currentUuid);
       currentUuid = currentItem?.system.containerUuid ?? undefined;
     }
 
@@ -358,46 +359,7 @@
       return;
     }
 
-    if (!container.canAddItemToContents(dropped)) return;
-
-    const owner = container.actor;
-    const alreadyOnOwner = !owner || dropped.parent?.uuid === owner.uuid;
-
-    if (
-      dropped instanceof EquippableItem
-      && dropped.system.isEquipped
-    ) {
-      const confirmed = await foundry.applications.api.DialogV2.confirm({
-        window: { title: 'dnd35e.ACTOR.inventory.confirmUnequipTitle' },
-        content: game.i18n.format('dnd35e.ACTOR.inventory.confirmUnequipContent', { itemName: dropped.name }),
-      });
-
-      if (!confirmed) {
-        return;
-      }
-      
-      await dropped.performUnequip?.();
-    }
-
-    if (alreadyOnOwner) {
-      await syncContainmentAe(dropped as PhysicalItemLike, container);
-      if (dropped.system.isCarried !== props.isCarried) {
-        await dropped.update({ 'system.isCarried': props.isCarried });
-      }
-      return;
-    }
-
-    if (owner) {
-      const data = dropped.toObject() as Record<string, unknown>;
-      delete (data as { _id?: string })._id;
-      data.system = {
-        ...((data.system as Record<string, unknown>) ?? {}),
-        isCarried: props.isCarried,
-      } as Partial<PhysicalItemLike['system']>;
-      const newItem = await owner.createEmbeddedDocuments('Item', [data]);
-      const createdItem = newItem[0] as PhysicalItemLike;
-      await syncContainmentAe(createdItem, container);
-    }
+    await addItemToContainer(dropped, container, props.isCarried);
   };
 
   const dropZoneState = reactive({
@@ -513,7 +475,7 @@
       const targetContainerUuid = containerTarget?.getAttribute('data-container-uuid') ?? null;
       if (targetContainerUuid && dropped.uuid !== targetContainerUuid) {
         const targetContainer = sourceItems.value.find((item) => item.uuid === targetContainerUuid);
-        await syncContainmentAe(dropped as PhysicalItemLike, targetContainer as Container);
+        await addItemToContainer(dropped, targetContainer as Container);
         endDragPreview();
         return;
       }

@@ -5,9 +5,6 @@ import type { PriceSource } from '@settings/index.mjs';
 
 import type { ContainerTypeOption } from './constants.mjs';
 
-type ContainerPossibleSubtypes = ContainerTypeOption
-  | string;
-
 interface ContainerSystemSource {
   maxContentWeight: number | null;
   /** When true, contents weigh nothing for the carrier (e.g. bag of holding). */
@@ -21,7 +18,7 @@ interface ContainerSystemSource {
   /** Allowed item types for this container. */
   allowedItemTypes: ItemType[] | null;
   /** Further filtering by subtype. */
-  allowedItemSubtypes: ContainerPossibleSubtypes[] | null;
+  allowedItemSubtypes: string[] | null;
 }
 
 interface ContainerSystemData extends Omit<ContainerSystemSource, 'containedCurrency' | 'allowedItemTypes' | 'allowedItemSubtypes'>, PhysicalItemSystemData {
@@ -38,11 +35,10 @@ interface ContainerSystemData extends Omit<ContainerSystemSource, 'containedCurr
   /** Instantiated: the allowed item types for this container. */
   allowedItemTypes: Set<ItemType> | null;
   /** Instantiated: the allowed subtypes for this container. */
-  allowedItemSubtypes: Set<ContainerPossibleSubtypes> | null;
+  allowedItemSubtypes: Set<string> | null;
 }
 
 export type {
-  ContainerPossibleSubtypes,
   ContainerSystemData,
   ContainerSystemSource,
 };

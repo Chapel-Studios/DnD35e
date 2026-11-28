@@ -20,6 +20,7 @@ import {
   buildContainmentAeName,
   findContainmentAeByItemUuid,
   isContainmentAe,
+  removeItemFromContainer,
   syncContainmentAe,
 } from './logic/containmentAe.mjs';
 
@@ -30,6 +31,7 @@ export {
   ContainmentSystemModel,
   findContainmentAeByItemUuid,
   isContainmentAe,
+  removeItemFromContainer,
   syncContainmentAe,
 };
 

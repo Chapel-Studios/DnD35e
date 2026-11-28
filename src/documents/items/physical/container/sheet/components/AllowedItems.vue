@@ -9,7 +9,6 @@
   import { computed, inject, onMounted, ref } from 'vue';
 
   import { CONTAINER_TYPES, ContainerTypeSelectOptions } from '../../data/constants.mjs';
-  import type { ContainerPossibleSubtypes } from '../../data/ContainerSystemData.mjs';
   import type { ContainerStore } from '../index.mjs';
 
   const {
@@ -70,9 +69,9 @@
     onUpdate: syncTypesAndSubtypes,
   };
 
-  const getItemSubtypeFilterProps = (type: ItemType): MultiSelectFormGroupProps<ContainerPossibleSubtypes> => {
+  const getItemSubtypeFilterProps = (type: ItemType): MultiSelectFormGroupProps<string> => {
     const typeLabel = game.i18n.localize(ITEM_TYPES_LOCALIZED[type]);
-    const result: MultiSelectFormGroupProps<ContainerPossibleSubtypes> = {
+    const result: MultiSelectFormGroupProps<string> = {
       fieldPath: `system.allowedItemSubtypes.${type}`,
       options: [],
       value: optionValues[type].value,

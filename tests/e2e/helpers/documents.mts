@@ -90,7 +90,7 @@ export async function createActiveEffect (
  * `_onDrop` handler with a synthetic Foundry drag payload.
  *
  * This exercises the exact production code path a user's drag-and-drop takes:
- * `ContainerSheet._onDrop` → `#onItemDrop` → `syncContainmentAe`, which is what
+ * `ContainerSheet._onDrop` → `addItemToContainer` → `syncContainmentAe`, which is what
  * actually creates the item-contribution ActiveEffect on the container (and
  * sets the item's `system.containerUuid`).
  *

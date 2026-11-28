@@ -19,8 +19,8 @@ vi.mock('@items/physical/weapon/sheet/components/WeaponInventoryRow.vue', () => 
 import InventoryListTable from '@actors/baseActor/sheet/components/InventoryListTable.vue';
 import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
 import { syncContainmentAe } from '@effects/containment/index.mjs';
-import type { PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
-import { weaponItemType } from '@items/itemTypes.mjs';
+import type { ItemType, PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
+import { containerItemType, weaponItemType } from '@items/itemTypes.mjs';
 import { flushPromises, shallowMount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed } from 'vue';
@@ -30,7 +30,7 @@ class DroppedItem {
   id = 'axe';
   name = 'Battle Axe';
   uuid = 'Item.axe';
-  type = weaponItemType;
+  type: ItemType = weaponItemType;
   parent: { uuid: string } | null = null;
   system = { isCarried: false, containerUuid: null as string | null };
   update = vi.fn();
@@ -80,7 +80,65 @@ describe('InventoryListTable container drops', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it.each(['parent', 'grandparent'])('rejects dropping a %s bag into its descendant without an ancestor in the contents list', async (relationship) => {
+    const dropped = new DroppedItem();
+    dropped.type = containerItemType;
+    dropped.uuid = 'Item.ancestor';
+    const container = {
+      ...makeContainer(),
+      system: {
+        containerUuid: relationship === 'parent'
+          ? dropped.uuid
+          : 'Item.middle',
+      },
+    };
+    const middle = { system: { containerUuid: dropped.uuid } };
+    const resolve = vi.fn((uuid: string) => {
+      if (uuid === container.uuid) return container;
+      if (uuid === 'Item.middle') return middle;
+      return null;
+    });
+    vi.stubGlobal('fromUuidSync', resolve);
+    DroppedItem.implementation.fromDropData.mockResolvedValue(dropped);
+    const cycleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const wrapper = mountTable(null);
+
+    await wrapper.get('.inventory-drop-zone').trigger('drop');
+    await flushPromises();
+
+    expect(cycleError).toHaveBeenCalledWith('[inventory-drop] Prevented cyclic container nesting.', {
+      droppedUuid: dropped.uuid,
+      targetContainerUuid: container.uuid,
+    });
+    expect(container.canAddItemToContents).not.toHaveBeenCalled();
+    expect(syncContainmentAe).not.toHaveBeenCalled();
+    expect(dropped.update).not.toHaveBeenCalled();
+    wrapper.unmount();
+  });
+
+  it('permits an unrelated bag when the target has a non-cyclic ancestor chain', async () => {
+    const dropped = new DroppedItem();
+    dropped.type = containerItemType;
+    dropped.uuid = 'Item.unrelated';
+    const container = { ...makeContainer(), system: { containerUuid: 'Item.outer' } };
+    const outer = { system: { containerUuid: null } };
+    vi.stubGlobal('fromUuidSync', vi.fn((uuid: string) =>
+      uuid === container.uuid
+        ? container
+        : outer));
+    DroppedItem.implementation.fromDropData.mockResolvedValue(dropped);
+    const wrapper = mountTable(null);
+
+    await wrapper.get('.inventory-drop-zone').trigger('drop');
+    await flushPromises();
+
+    expect(container.canAddItemToContents).toHaveBeenCalledWith(dropped);
+    expect(syncContainmentAe).toHaveBeenCalledWith(dropped, container);
+    wrapper.unmount();
   });
 
   it('displays supplied containment contents before the source item link update finishes', async () => {
