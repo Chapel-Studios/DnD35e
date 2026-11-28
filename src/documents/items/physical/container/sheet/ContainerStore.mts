@@ -1,7 +1,7 @@
 import { createItemRowStoreCache, type ItemRowStore } from '@actors/baseActor/sheet/components/itemRowStoreRegistry.mjs';
 import type { UseDocumentStoreOptions } from '@documents/document/sheet/DocumentSheetStore.mjs';
 import { CurrencyData } from '@fields/index.mjs';
-import type { ItemType, PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
+import { ammoItemType, containerItemType, type ItemType, type PHYSICAL_ITEMS, weaponItemType } from '@items/itemTypes.mjs';
 import type { PhysicalDocumentStore } from '@items/physical/physicalItem/index.mjs';
 import { usePhysicalItemStore } from '@items/physical/physicalItem/index.mjs';
 import { physicalItemEffectsTab } from '@items/physical/physicalItem/sheet/tabs/index.mjs';
@@ -69,9 +69,11 @@ const useContainerStore = (context: VueApplicationContext<Container>, options: U
     allowedItemTypes: computed(() => [
       ...(getViewAwareFieldValue<Iterable<ItemType> | null>('system.allowedItemTypes') ?? []),
     ]),
-    allowedItemSubtypes: computed(() => [
-      ...(getViewAwareFieldValue<Iterable<string> | null>('system.allowedItemSubtypes') ?? []),
-    ]),
+    allowedItemSubtypes: computed(() => ({
+      [weaponItemType]: [...(getViewAwareFieldValue<Iterable<string> | null>(`system.allowedItemSubtypes.${weaponItemType}`) ?? [])],
+      [ammoItemType]: [...(getViewAwareFieldValue<Iterable<string> | null>(`system.allowedItemSubtypes.${ammoItemType}`) ?? [])],
+      [containerItemType]: [...(getViewAwareFieldValue<Iterable<string> | null>(`system.allowedItemSubtypes.${containerItemType}`) ?? [])],
+    })),
     getOrCreateItemRowStore,
   };
 
@@ -108,7 +110,7 @@ interface ContainerGetters {
   isQuiver: ComputedRef<boolean>;
   containerTypeLabel: ComputedRef<string>;
   allowedItemTypes: ComputedRef<ItemType[] | null>;
-  allowedItemSubtypes: ComputedRef<string[] | null>;
+  allowedItemSubtypes: ComputedRef<Record<ItemType, string[]>>;
   getOrCreateItemRowStore: (item: PHYSICAL_ITEMS) => ItemRowStore;
 }
 

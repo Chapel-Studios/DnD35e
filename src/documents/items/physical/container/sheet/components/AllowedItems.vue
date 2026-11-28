@@ -1,60 +1,40 @@
 <script setup lang="ts">
   import { DocumentSheetStoreSymbol } from '@documents/document/index.mjs';
   import type { ItemType } from '@items/index.mjs';
-  import { ammoItemType, containerItemType, ITEM_TYPES_LOCALIZED, ItemTypeSelectOptions, weaponItemType } from '@items/itemTypes.mjs';
-  import { AMMO_TYPE_SELECT_OPTIONS, AMMO_TYPES } from '@items/physical/ammo/index.mjs';
+  import {
+    ammoItemType,
+    containerItemType,
+    ITEM_TYPES_LOCALIZED,
+    ItemTypeSelectOptions,
+    PHYSICAL_ITEM_TYPES,
+    weaponItemType,
+  } from '@items/itemTypes.mjs';
+  import { AMMO_TYPE_SELECT_OPTIONS } from '@items/physical/ammo/index.mjs';
   import { useBaseWeaponNames } from '@items/physical/weapon/sheet/useBaseWeaponNames.mjs';
   import type { MultiSelectFormGroupProps, SelectOption } from '@vc/fields/formGroups/types.mjs';
   import { MultiSelectFormGroup } from '@vc/fields/index.mjs';
-  import { computed, inject } from 'vue';
+  import { inject } from 'vue';
 
-  import { CONTAINER_TYPES, ContainerTypeSelectOptions } from '../../data/constants.mjs';
+  import { ContainerTypeSelectOptions } from '../../data/constants.mjs';
   import type { ContainerStore } from '../index.mjs';
 
   const {
     documentGetters: { allowedItemTypes, allowedItemSubtypes },
-    documentActions: { getViewAwareFieldUpdater },
+    documentActions: { viewModeAwareUpdateDocument },
   } = inject(DocumentSheetStoreSymbol) as ContainerStore;
-  const allowedItemTypesUpdater = getViewAwareFieldUpdater('system.allowedItemTypes');
-  const allowedItemSubtypesUpdater = getViewAwareFieldUpdater('system.allowedItemSubtypes');
 
   const baseWeaponNames = useBaseWeaponNames();
 
-  const optionValues = {
-    [weaponItemType]: computed(() => [...(new Set(allowedItemSubtypes.value).intersection(baseWeaponNames.value))]),
-    [ammoItemType]: computed(() => [...(new Set(allowedItemSubtypes.value).intersection(new Set(AMMO_TYPES)))]),
-    [containerItemType]: computed(() => [...(new Set(allowedItemSubtypes.value).intersection(new Set(CONTAINER_TYPES)))]),
-  };
-
-  // remove unused subtypes, if all types are removed null both fields
   const syncTypesAndSubtypes = async (newValues: ItemType[]) => {
-    if (!newValues.length) {
-      await allowedItemSubtypesUpdater(null);
-      await allowedItemTypesUpdater(null);
-
-      return;
+    const update: Record<string, unknown> = {
+      'system.allowedItemTypes': newValues.length
+        ? newValues
+        : null,
+    };
+    for (const type of PHYSICAL_ITEM_TYPES) {
+      if (!newValues.includes(type)) update[`system.allowedItemSubtypes.${type}`] = null;
     }
-
-    const removedItemTypes = allowedItemTypes.value?.filter(x => !newValues.includes(x)) || [];
-    let newSubtypes = allowedItemSubtypes.value || [];
-    for (const type of removedItemTypes) {
-      const invalidOptions = optionValues[type].value;
-      newSubtypes = newSubtypes.filter(x => !invalidOptions.includes(x))
-        || [];
-    }
-    if (newSubtypes.length !== allowedItemSubtypes.value?.length) {
-      await allowedItemSubtypesUpdater(newSubtypes);
-    }
-
-    await allowedItemTypesUpdater(newValues);
-  };
-
-  const mergeSubtypeUpdates = async (type: ItemType, newValues: string[]) => {
-    const current = allowedItemSubtypes.value || [];
-    await allowedItemSubtypesUpdater([
-      ...current.filter(x => !optionValues[type].value.includes(x)),
-      ...newValues,
-    ]);
+    await viewModeAwareUpdateDocument(update);
   };
 
   const itemTypeFilterProps: MultiSelectFormGroupProps<ItemType> = {
@@ -69,8 +49,7 @@
     const result: MultiSelectFormGroupProps<string> = {
       fieldPath: `system.allowedItemSubtypes.${type}`,
       options: [],
-      value: optionValues[type].value,
-      onUpdate: (vals) => mergeSubtypeUpdates(type, vals),
+      value: allowedItemSubtypes.value[type],
       label: game.i18n.format('dnd35e.CONTAINER.filtering.subtypeFilterLabel', { type: typeLabel }),
     };
 

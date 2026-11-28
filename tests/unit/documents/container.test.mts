@@ -46,7 +46,7 @@ const makeContainer = () => {
     maxContentWeight: 10,
     contentsWeight: 0,
     allowedItemTypes: null,
-    allowedItemSubtypes: null,
+    allowedItemSubtypes: { weapon: null, ammo: null, container: null },
   });
   const container = Object.create(TestContainer.prototype) as TestContainer;
   container.system = model;
@@ -126,7 +126,7 @@ describe('Container contents preparation and acceptance', () => {
     });
 
     model.allowedItemTypes = new Set([weaponItemType]);
-    model.allowedItemSubtypes = new Set(['Javelin']);
+    model.allowedItemSubtypes.weapon = new Set(['Javelin']);
     expect(container.canAddItemToContents(makeItem())).toBe(false);
     expect(game.i18n.format).toHaveBeenCalledWith('dnd35e.CONTAINER.warnings.notAllowedSubtype', {
       type: 'TYPES.Item.weapon',
@@ -142,6 +142,49 @@ describe('Container contents preparation and acceptance', () => {
 
     model.contentsWeight = 5;
     expect(container.canAddItemToContents(makeItem())).toBe(true);
+  });
+
+  it('keeps identically named weapon and container subtypes independent', () => {
+    const { container, model } = makeContainer();
+    model.allowedItemSubtypes = {
+      weapon: new Set(['bag']), ammo: null, container: new Set(['quiver']),
+    };
+    const weapon = Object.assign(makeItem(), {
+      system: { ...makeItem().system, weaponBaseType: 'bag' },
+    });
+    const bag = Object.assign(makeItem(), {
+      type: containerItemType,
+      _source: { system: { weight: 1 } },
+      system: { ...makeItem().system, containerType: 'bag', contentsWeight: 0 },
+    });
+    expect(container.canAddItemToContents(weapon)).toBe(true);
+    expect(container.canAddItemToContents(bag)).toBe(false);
+  });
+
+  it.each([null, new Set<string>()])('does not apply weapon restrictions to unrestricted ammunition (%s)', ammoSubtypes => {
+    const { container, model } = makeContainer();
+    model.allowedItemSubtypes = {
+      weapon: new Set(['Deleted base weapon']), ammo: ammoSubtypes, container: null,
+    };
+    const ammo = Object.assign(makeItem(), {
+      type: ammoItemType,
+      system: { ...makeItem().system, ammoType: 'arrow' },
+    });
+    expect(container.canAddItemToContents(ammo)).toBe(true);
+  });
+
+  it('checks ammunition only against its own subtype selections', () => {
+    const { container, model } = makeContainer();
+    model.allowedItemSubtypes = {
+      weapon: new Set(['bolt']), ammo: new Set(['arrow']), container: null,
+    };
+    const ammo = Object.assign(makeItem(), {
+      type: ammoItemType,
+      system: { ...makeItem().system, ammoType: 'bolt' },
+    });
+    expect(container.canAddItemToContents(ammo)).toBe(false);
+    ammo.system.ammoType = 'arrow';
+    expect(container.canAddItemToContents(ammo)).toBe(true);
   });
 
   it('does not count an already-contained item twice when checking capacity', () => {

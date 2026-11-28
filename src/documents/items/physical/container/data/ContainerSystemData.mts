@@ -17,8 +17,8 @@ interface ContainerSystemSource {
   containedCurrency: PriceSource;
   /** Allowed item types for this container. */
   allowedItemTypes: ItemType[] | null;
-  /** Further filtering by subtype. */
-  allowedItemSubtypes: string[] | null;
+  /** Further filtering by subtype, independently for each item type. */
+  allowedItemSubtypes: Record<ItemType, string[] | null>;
 }
 
 interface ContainerSystemData extends Omit<ContainerSystemSource, 'containedCurrency' | 'allowedItemTypes' | 'allowedItemSubtypes'>, PhysicalItemSystemData {
@@ -34,8 +34,8 @@ interface ContainerSystemData extends Omit<ContainerSystemSource, 'containedCurr
   containedCurrency: CurrencyData;
   /** Instantiated: the allowed item types for this container. */
   allowedItemTypes: Set<ItemType> | null;
-  /** Instantiated: the allowed subtypes for this container. */
-  allowedItemSubtypes: Set<string> | null;
+  /** Instantiated: the allowed subtypes for each item type. */
+  allowedItemSubtypes: Record<ItemType, Set<string> | null>;
 }
 
 export type {

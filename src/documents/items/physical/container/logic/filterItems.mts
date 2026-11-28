@@ -8,7 +8,7 @@ import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
 const getItemAllowedMsg = (
   item: PhysicalItemLike,
   allowedItemTypes: Set<ItemType> | null,
-  allowedSubtypes: Set<string> | null
+  allowedSubtypes: Record<ItemType, Set<string> | null>
 ): string | null => {
   const itemTypeLabel = game.i18n.localize(ITEM_TYPES_LOCALIZED[item.type]);
   if (
@@ -20,7 +20,8 @@ const getItemAllowedMsg = (
     });
   }
 
-  if (!allowedSubtypes?.size) {
+  const itemSubtypes = allowedSubtypes[item.type];
+  if (!itemSubtypes?.size) {
     return null;
   }
 
@@ -40,7 +41,7 @@ const getItemAllowedMsg = (
 
   if (
     subtype !== null
-    && !allowedSubtypes.has(subtype)
+    && !itemSubtypes.has(subtype)
   ) {
     return game.i18n.format('dnd35e.CONTAINER.warnings.notAllowedSubtype', {
       type: itemTypeLabel,

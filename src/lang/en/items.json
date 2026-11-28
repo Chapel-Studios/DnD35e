@@ -41,6 +41,19 @@
           "label": "Allowed Item Types",
           "hint": "Types of items this container can hold."
         },
+        "allowedItemSubtypes": {
+          "label": "Allowed Item Subtypes",
+          "hint": "Subtype restrictions apply independently to each item type. An empty selection is unrestricted.",
+          "weapon": {
+            "label": "Allowed Weapon Subtypes"
+          },
+          "ammo": {
+            "label": "Allowed Ammo Subtypes"
+          },
+          "container": {
+            "label": "Allowed Container Subtypes"
+          }
+        },
         "containerType": {
           "label": "Container Type",
           "hint": "Type of container."

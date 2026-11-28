@@ -1,11 +1,14 @@
+import type { ItemSystemSource } from '@items/baseItem/index.mjs';
 import type { Container } from '@items/physical/container/Container.mjs';
+import type { ContainerSystemSource } from '@items/physical/container/data/ContainerSystemData.mjs';
+import type { ContainerStore } from '@items/physical/container/sheet/ContainerStore.mjs';
 import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
 import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
 import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
-import { clearWorld, createActor, createItem, stowItemViaDrop, updateDocument } from './helpers/documents.mjs';
-import { gotoGame } from './helpers/session.mjs';
+import { clearWorld, createActiveEffect, createActor, createItem, stowItemViaDrop, updateDocument } from './helpers/documents.mjs';
+import { gotoGame, loginAs } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
 import { dismissOverlays } from './helpers/ui.mjs';
 
@@ -52,6 +55,26 @@ async function readItemSystem (page: Page, uuid: string) {
     const item = await fromUuid<PhysicalItemLike>(uuid);
     if (!item) throw new Error(`Missing template ${uuid}`);
     return item.toObject().system;
+  }, uuid);
+}
+
+async function readFilters (page: Page, uuid: string) {
+  return page.evaluate(async uuid => {
+    const container = await fromUuid<Container>(uuid);
+    if (!container) throw new Error(`Missing filter fixture ${uuid}`);
+    const source = container.toObject().system as ItemSystemSource & ContainerSystemSource;
+    return { types: source.allowedItemTypes, subtypes: source.allowedItemSubtypes };
+  }, uuid);
+}
+
+async function readViewedFilters (page: Page, uuid: string) {
+  return page.evaluate(uuid => {
+    const store = game.dnd35e.stores.Item[uuid] as ContainerStore | undefined;
+    if (!store) throw new Error(`Missing container filter store ${uuid}`);
+    return {
+      types: store.documentGetters.allowedItemTypes.value,
+      subtypes: store.documentGetters.allowedItemSubtypes.value,
+    };
   }, uuid);
 }
 
@@ -221,7 +244,7 @@ test('GM keeps weapon and container selectors mounted while compendium base name
   });
   const container = await createItem(page, 'container', {
     name: 'Mounted selector container',
-    system: { allowedItemTypes: ['weapon'], allowedItemSubtypes: [originalName] },
+    system: { allowedItemTypes: ['weapon'], allowedItemSubtypes: { weapon: [originalName] } },
   });
   const weaponSheet = page.locator(await openDocumentSheet(page, weapon));
   await dismissOverlays(page);
@@ -267,9 +290,136 @@ test('GM keeps weapon and container selectors mounted while compendium base name
     if (!item || !bag) throw new Error('Missing mounted selector fixtures');
     return {
       base: item.system.weaponBaseType,
-      subtypes: [...(bag.system.allowedItemSubtypes ?? [])],
+      subtypes: [...(bag.system.allowedItemSubtypes.weapon ?? [])],
     };
   }, { weapon, container })).toEqual({ base: originalName, subtypes: [originalName] });
+});
+
+test('GM edits independent subtype lists and clears removed types even after a base weapon disappears', async ({ page }) => {
+  await gotoGame(page);
+  const pack = await createPack(page, 'Type-qualified subtype templates');
+  const base = await createItem(page, 'weapon', { name: 'bag', system: { isBaseWeaponType: true } });
+  await exportItem(page, base, pack);
+  const staleName = 'Cached then deleted base weapon';
+  const stale = await createItem(page, 'weapon', { name: staleName, system: { isBaseWeaponType: true } });
+  const staleTemplate = (await exportItem(page, stale, pack))!;
+  const container = await createItem(page, 'container', {
+    name: 'Independent filters',
+    system: {
+      allowedItemTypes: ['weapon', 'ammo', 'container'],
+      allowedItemSubtypes: { weapon: ['bag', staleName], ammo: ['arrow'], container: ['bag'] },
+    },
+  });
+  const sheet = page.locator(await openDocumentSheet(page, container));
+  await dismissOverlays(page);
+  const types = sheet.locator('[data-field-path="system.allowedItemTypes"]');
+  const weapons = sheet.locator('[data-field-path="system.allowedItemSubtypes.weapon"]');
+  const containers = sheet.locator('[data-field-path="system.allowedItemSubtypes.container"]');
+  await expect(weapons.locator('input[value="bag"]')).toBeChecked();
+  await expect(containers.locator('input[value="bag"]')).toBeChecked();
+
+  await containers.locator('input[value="bag"]').uncheck();
+  await expect.poll(() => readFilters(page, container)).toEqual({
+    types: ['weapon', 'ammo', 'container'],
+    subtypes: { weapon: ['bag', staleName], ammo: ['arrow'], container: [] },
+  });
+  await containers.locator('input[value="bag"]').check();
+  await expect.poll(() => readFilters(page, container)).toEqual({
+    types: ['weapon', 'ammo', 'container'],
+    subtypes: { weapon: ['bag', staleName], ammo: ['arrow'], container: ['bag'] },
+  });
+  await types.locator('input[value="container"]').uncheck();
+  await expect.poll(() => readFilters(page, container)).toEqual({
+    types: ['weapon', 'ammo'],
+    subtypes: { weapon: ['bag', staleName], ammo: ['arrow'], container: null },
+  });
+  await expect(weapons.locator('input[value="bag"]')).toBeChecked();
+
+  await page.evaluate(async uuid => {
+    const template = await fromUuid<Weapon>(uuid);
+    if (!template) throw new Error('Missing base weapon to delete');
+    await template.delete();
+  }, staleTemplate);
+  await expect(weapons.locator(`input[value="${staleName}"]`)).toHaveCount(0);
+  expect((await readFilters(page, container)).subtypes.weapon).toEqual(['bag', staleName]);
+  await types.locator('input[value="weapon"]').uncheck();
+  await expect.poll(() => readFilters(page, container)).toEqual({
+    types: ['ammo'],
+    subtypes: { weapon: null, ammo: ['arrow'], container: null },
+  });
+  const arrow = await createItem(page, 'ammo', { system: { ammoType: 'arrow' } });
+  const bolt = await createItem(page, 'ammo', { system: { ammoType: 'bolt' } });
+  const ordinaryWeapon = await createItem(page, 'weapon', { system: { weaponBaseType: 'bag' } });
+  expect(await page.evaluate(async ({ container, candidates }) => {
+    const bag = await fromUuid<Container>(container);
+    if (!bag) throw new Error('Missing acceptance filter fixture');
+    return Promise.all(candidates.map(async uuid => {
+      const item = await fromUuid<PhysicalItemLike>(uuid);
+      if (!item) throw new Error(`Missing acceptance candidate ${uuid}`);
+      return bag.canAddItemToContents(item);
+    }));
+  }, { container, candidates: [arrow, bolt, ordinaryWeapon] })).toEqual([true, false, false]);
+  await dismissOverlays(page);
+  await types.locator('input[value="ammo"]').uncheck();
+  await expect.poll(() => readFilters(page, container)).toEqual({
+    types: null, subtypes: { weapon: null, ammo: null, container: null },
+  });
+});
+
+test('GM and owner see type-specific masked subtype selections without exposing true values', async ({ page, browser }) => {
+  await gotoGame(page);
+  const pack = await createPack(page, 'Masked subtype templates');
+  const baseName = 'Masked subtype base weapon';
+  const base = await createItem(page, 'weapon', { name: baseName, system: { isBaseWeaponType: true } });
+  await exportItem(page, base, pack);
+  const container = await createItem(page, 'container', {
+    name: 'Masked filter fixture', ownership: { default: 3 },
+    system: {
+      allowedItemTypes: ['weapon', 'ammo'],
+      allowedItemSubtypes: { weapon: [baseName], ammo: ['arrow'] },
+    },
+  });
+  const original = await readFilters(page, container);
+  await createActiveEffect(page, container, {
+    name: 'Masked container filters', type: 'secret', disabled: false,
+    changes: [
+      { key: 'system.allowedItemTypes', value: ['ammo'], type: 'mask', target: 'item', priority: 10, phase: 'initial' },
+      { key: 'system.allowedItemSubtypes.ammo', value: ['bolt'], type: 'mask', target: 'item', priority: 10, phase: 'initial' },
+    ],
+  });
+  const masked = {
+    types: ['ammo'], subtypes: { weapon: [baseName], ammo: ['bolt'], container: [] },
+  };
+  const unmasked = {
+    types: ['weapon', 'ammo'], subtypes: { weapon: [baseName], ammo: ['arrow'], container: [] },
+  };
+  const sheet = page.locator(await openDocumentSheet(page, container));
+  await dismissOverlays(page);
+  const ammoField = sheet.locator('[data-field-path="system.allowedItemSubtypes.ammo"]');
+  await expect(ammoField.locator('input[value="arrow"]')).toBeChecked();
+  await sheet.locator('.view-mode-btn').filter({ has: page.locator('i.fa-dice-d20') }).click();
+  await expect.poll(() => readViewedFilters(page, container)).toEqual(masked);
+  await expect(sheet.locator('[data-field-path="system.allowedItemSubtypes.weapon"]')).toHaveCount(0);
+  await expect(ammoField.locator('.readonly .multi-select-option')).toHaveCount(1);
+  await sheet.locator('.view-mode-btn').filter({ has: page.locator('i.fa-eye') }).click();
+  await expect.poll(() => readViewedFilters(page, container)).toEqual(unmasked);
+  await expect(sheet.locator('[data-field-path="system.allowedItemSubtypes.weapon"]')).toBeVisible();
+
+  const playerContext = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+  try {
+    const playerPage = await loginAs(playerContext, 'player');
+    const playerSheet = playerPage.locator(await openDocumentSheet(playerPage, container));
+    await expect.poll(() => readViewedFilters(playerPage, container)).toEqual(masked);
+    await dismissOverlays(playerPage);
+    await playerSheet.locator('.view-mode-btn').filter({ has: playerPage.locator('i.fa-pen-to-square') }).click();
+    const playerAmmo = playerSheet.locator('[data-field-path="system.allowedItemSubtypes.ammo"]');
+    await expect(playerAmmo.locator('input[value="bolt"]')).toBeChecked();
+    await expect(playerAmmo.locator('input[value="arrow"]')).not.toBeChecked();
+    await expect(playerSheet.locator('[data-field-path="system.allowedItemSubtypes.weapon"]')).toHaveCount(0);
+  } finally {
+    await playerContext.close();
+  }
+  expect(await readFilters(page, container)).toEqual(original);
 });
 
 test('GM edits a cold-cache pack source and every referencing bag and ancestor receives current contributions', async ({ page }) => {

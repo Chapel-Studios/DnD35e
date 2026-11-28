@@ -7,7 +7,8 @@ import {
 } from '@fields/fieldBuilders.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 import type { FormulaField } from '@helpers/formulae/FormulaField.mjs';
-import { PHYSICAL_ITEM_TYPES } from '@items/index.mjs';
+import { ammoItemType, containerItemType, PHYSICAL_ITEM_TYPES, weaponItemType } from '@items/itemTypes.mjs';
+import { AMMO_TYPES } from '@items/physical/ammo/data/constants.mjs';
 import { PhysicalItemSystemModel } from '@items/physical/physicalItem/data/PhysicalItemSystemModel.mjs';
 
 import { CONTAINER_TYPE, CONTAINER_TYPES } from './constants.mjs';
@@ -16,6 +17,7 @@ import type { ContainerSystemData } from './ContainerSystemData.mjs';
 const {
   fields: {
     NumberField,
+    SchemaField,
     SetField,
     StringField,
   },
@@ -44,7 +46,11 @@ class ContainerSystemModel extends PhysicalItemSystemModel {
     schema.containedCurrency = useDnd35eField(new CurrencyField());
     schema.allowsCurrency = useDnd35eField(requiredBooleanField(true));
     schema.allowedItemTypes = useDnd35eField(new SetField(new StringField({ choices: [...PHYSICAL_ITEM_TYPES] }), { required: true, nullable: true, initial: null }));
-    schema.allowedItemSubtypes = useDnd35eField(new SetField(new StringField(), { required: true, nullable: true, initial: null }));
+    schema.allowedItemSubtypes = useDnd35eField(new SchemaField({
+      [weaponItemType]: useDnd35eField(new SetField(new StringField(), { required: true, nullable: true, initial: null })),
+      [ammoItemType]: useDnd35eField(new SetField(new StringField({ choices: [...AMMO_TYPES] }), { required: true, nullable: true, initial: null })),
+      [containerItemType]: useDnd35eField(new SetField(new StringField({ choices: [...CONTAINER_TYPES] }), { required: true, nullable: true, initial: null })),
+    }));
 
     // Derived (persisted: false) — recomputed each cycle from contained items.
     schema.contentsWeight = derivedNumberField(0);
