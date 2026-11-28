@@ -14,11 +14,31 @@ export async function addItemToContainer (
 ): Promise<void> {
   if (container.pack) requireWritableContainerPack(container.pack);
   await validateContainerInsertion(item, container.uuid);
-  if (!container.canAddItemToContents(item)) return;
-
   const actor = container.actor;
   const copyToActor = !!actor && item.parent?.uuid !== actor.uuid;
   const copyToPack = !actor && !!container.pack && !item.pack;
+  let candidate = item;
+  if (item instanceof EquippableItem && (!item.pack || copyToActor)) {
+    const context = {
+      keepId: !copyToActor && !copyToPack,
+      parent: copyToActor
+        ? actor
+        : copyToPack
+          ? null
+          : item.parent,
+      pack: copyToActor
+        ? null
+        : copyToPack
+          ? container.pack
+          : item.pack,
+    };
+    // Foundry prepares clones on construction; another pass would compound weight effects.
+    candidate = item.clone({
+      'system.equippedSlotIds': [],
+      'system.isCarried': isCarried,
+    }, context);
+  }
+  if (!container.canAddItemToContents(candidate)) return;
   if (copyToPack && !await confirmWorldContentsCopy(container.pack!)) return;
 
   const isEquipped = item instanceof EquippableItem && item.system.isEquipped;
@@ -51,7 +71,7 @@ export async function addItemToContainer (
     if (!created.length) return; // The contents-copy dialog may cancel creation.
     containedItem = created[0] as PhysicalItemLike;
   } else if (!item.pack) {
-    if (isEquipped) await (item as EquippableItem).performUnequip();
+    if (item instanceof EquippableItem && item.system.equippedSlotIds.length) await item.performUnequip();
     if (item.system.isCarried !== isCarried) await item.update({ 'system.isCarried': isCarried });
   }
   await syncContainmentAe(containedItem, container);

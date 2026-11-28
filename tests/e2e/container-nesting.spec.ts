@@ -1,11 +1,37 @@
+import { MAIN_HAND_EQUIP_SLOT } from '@constants/equipmentSlots.mjs';
 import type { Container } from '@items/physical/container/Container.mjs';
 import type { PhysicalItemLike } from '@items/physical/physicalItem/index.mjs';
-import { expect, test } from '@playwright/test';
+import type { Weapon } from '@items/physical/weapon/Weapon.mjs';
+import { expect, type Page, test } from '@playwright/test';
 
-import { clearWorld, createActor, createItem, stowItemViaDrop, updateDocument } from './helpers/documents.mjs';
+import { clearWorld, createActiveEffect, createActor, createItem, stowItemViaDrop, updateDocument } from './helpers/documents.mjs';
 import { gotoGame } from './helpers/session.mjs';
 import { closeAllSheets, openDocumentSheet } from './helpers/sheets.mjs';
 import { dismissOverlays } from './helpers/ui.mjs';
+
+async function readStowState (page: Page, weaponUuid: string, containerUuids: string[]) {
+  return page.evaluate(async ({ weaponUuid, containerUuids }) => {
+    const weapon = await fromUuid<Weapon>(weaponUuid);
+    if (!weapon) throw new Error('Missing equipped weapon fixture');
+    return {
+      weapon: weapon.toObject(),
+      liveWeapon: {
+        weight: weapon.system.weight, equipped: weapon.system.isEquipped,
+        slots: weapon.system.equippedSlotIds, container: weapon.system.containerUuid,
+      },
+      containers: await Promise.all(containerUuids.map(async uuid => {
+        const container = await fromUuid<Container>(uuid);
+        if (!container) throw new Error(`Missing containment fixture ${uuid}`);
+        return {
+          source: container.toObject(),
+          contents: (await container.getContents()).map(item => item.uuid),
+          actorItems: container.actor?.items.map(item => item.uuid),
+          weight: container.system.contentsWeight,
+        };
+      })),
+    };
+  }, { weaponUuid, containerUuids });
+}
 
 /**
  * E2E test for container nesting and data rollup.
@@ -30,6 +56,81 @@ test.describe('container nesting and data rollup', () => {
   test.afterEach(async ({ page }) => {
     await closeAllSheets(page).catch(() => {});
     await clearWorld(page);
+  });
+
+  test('GM validates equipped weapon weight before unequipping or copying and preserves active-effect weight', async ({ page }) => {
+    await gotoGame(page);
+    const owner = await createActor(page, 'character', {
+      name: 'Equipped containment owner',
+      items: [
+        {
+          _id: 'weightlessWeapon', name: 'Weightless while equipped', type: 'weapon',
+          system: {
+            weight: 3, quantity: 1, isCarried: true,
+            equippedSlotIds: [MAIN_HAND_EQUIP_SLOT], isWeightlessWhenEquipped: true,
+          },
+        },
+        { _id: 'sourceBag0000001', name: 'Source bag', type: 'container', system: { maxContentWeight: 5 } },
+      ],
+    });
+    const target = await createActor(page, 'character', {
+      name: 'Equipped containment copy target',
+      items: [{ _id: 'targetBag0000001', name: 'Copy bag', type: 'container', system: { maxContentWeight: 5 } }],
+    });
+    const weapon = `${owner}.Item.weightlessWeapon`;
+    const sourceBag = `${owner}.Item.sourceBag0000001`;
+    const targetBag = `${target}.Item.targetBag0000001`;
+    await createActiveEffect(page, weapon, {
+      name: 'Double weapon weight', type: 'material',
+      system: {
+        materialSubtype: 'standard',
+        changes: [{ key: 'system.weight', value: 2, type: 'multiply', target: 'item', phase: 'initial' }],
+      },
+    });
+    const state = () => readStowState(page, weapon, [sourceBag, targetBag]);
+    const original = await state();
+    expect(original.liveWeapon).toEqual({
+      weight: 0, equipped: true, slots: [MAIN_HAND_EQUIP_SLOT], container: undefined,
+    });
+    await stowItemViaDrop(page, weapon, sourceBag);
+    expect(await state()).toEqual(original);
+    await stowItemViaDrop(page, weapon, targetBag);
+    expect(await state()).toEqual(original);
+    await expect(page.locator('.dialog')).toHaveCount(0);
+
+    await updateDocument(page, targetBag, { system: { maxContentWeight: 6 } });
+    const beforeCancellation = await state();
+    await dismissOverlays(page);
+    const cancelled = stowItemViaDrop(page, weapon, targetBag);
+    await page.locator('.dialog button[data-action="no"]').click();
+    await cancelled;
+    expect(await state()).toEqual(beforeCancellation);
+
+    const copied = stowItemViaDrop(page, weapon, targetBag);
+    await page.locator('.dialog button[data-action="yes"]').click();
+    await copied;
+    const afterCopy = await state();
+    expect(afterCopy.weapon).toEqual(original.weapon);
+    expect(afterCopy.liveWeapon).toEqual(original.liveWeapon);
+    expect(afterCopy.containers[1].actorItems).toHaveLength(2);
+    expect(afterCopy.containers[1].weight).toBe(6);
+    const [copy] = afterCopy.containers[1].contents;
+    expect(copy).not.toBe(weapon);
+    expect((await readStowState(page, copy, [targetBag])).liveWeapon).toEqual({
+      weight: 6, equipped: false, slots: [], container: targetBag,
+    });
+
+    await updateDocument(page, sourceBag, { system: { maxContentWeight: 6 } });
+    const contained = stowItemViaDrop(page, weapon, sourceBag);
+    await page.locator('.dialog button[data-action="yes"]').click();
+    await contained;
+    const afterStow = await state();
+    expect(afterStow.liveWeapon).toEqual({
+      weight: 6, equipped: false, slots: [], container: sourceBag,
+    });
+    expect(afterStow.containers[0].contents).toEqual([weapon]);
+    expect(afterStow.containers[0].weight).toBe(6);
+    expect(afterStow.containers[0].actorItems).toHaveLength(2);
   });
 
   test('GM expands inventory containers and distinguishes stowed actions from same-named ready weapons', async ({ page }) => {
