@@ -1,5 +1,5 @@
 import type EmbeddedCollection from '@common/abstract/embedded-collection.mjs';
-import { findAllContainmentAe, findContainmentAeByItemUuid } from '@effects/containment/logic/containmentAe.mjs';
+import { computeItemContribution, findAllContainmentAe, findContainmentAeByItemUuid } from '@effects/containment/logic/containmentAe.mjs';
 import type { ACTIVE_EFFECTS_DND35E } from '@effects/effectTypes.mjs';
 import { CurrencyData } from '@fields/index.mjs';
 import type { ContainerItemType, PHYSICAL_ITEMS } from '@items/itemTypes.mjs';
@@ -109,7 +109,7 @@ class Container extends PhysicalItem {
       return false;
     }
 
-    const itemWeight = (item.system.weight ?? 0) * Math.max(item.system.quantity ?? 0, 0);
+    const { weight: itemWeight } = computeItemContribution(item);
     const existingWeight = findContainmentAeByItemUuid(this, item.uuid)?.system.contributedWeight ?? 0;
     const expectedNewWeight = this.system.contentsWeight - existingWeight + itemWeight;
     const result = (

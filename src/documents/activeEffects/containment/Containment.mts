@@ -35,7 +35,7 @@ class Containment extends ActiveEffectDnd35e {
       this.events.once(DocumentLifeCycle.destroyed, () => subscription.cancel());
       return;
     }
-    (async () => {
+    void (async () => {
       const item = this.system.sourceItemUuid
         ? await fromUuid(this.system.sourceItemUuid) as PHYSICAL_ITEMS
         : null;

@@ -337,6 +337,51 @@ test.describe('container nesting and data rollup', () => {
     await expect.poll(readState).toEqual(enabled);
   });
 
+  test('GM rechecks nested capacity using complete coin, weightless-content, and stacked-container contributions', async ({ page }) => {
+    await gotoGame(page);
+    const parentUuid = await createItem(page, 'container', { name: 'Capacity parent' });
+    const innerUuid = await createItem(page, 'container', {
+      name: 'Capacity inner', system: {
+        weight: 1, containedCurrency: { stacks: [{ coinId: 'srd_gp', count: 50 }] },
+      },
+    });
+    const ammoUuid = await createItem(page, 'ammo', {
+      name: 'Capacity contents', system: { weight: 3 },
+    });
+    await stowItemViaDrop(page, innerUuid, parentUuid);
+    await updateDocument(page, parentUuid, { system: { maxContentWeight: 1.5 } });
+    const readCapacity = () => page.evaluate(async ({ parentUuid, innerUuid }) => {
+      const parent = await fromUuid<Container>(parentUuid);
+      const inner = await fromUuid<Container>(innerUuid);
+      if (!parent || !inner) throw new Error('Missing nested-capacity fixture');
+      return {
+        weight: parent.system.contentsWeight,
+        displayedWeight: inner.system.weight,
+        contentsWeight: inner.system.contentsWeight,
+        quantity: inner.system.quantity,
+        accepted: parent.canAddItemToContents(inner),
+      };
+    }, { parentUuid, innerUuid });
+    await expect.poll(readCapacity).toEqual({
+      weight: 2, displayedWeight: 1, contentsWeight: 1, quantity: 1, accepted: false,
+    });
+    await updateDocument(page, parentUuid, { system: { maxContentWeight: 2 } });
+    await expect.poll(readCapacity).toEqual({
+      weight: 2, displayedWeight: 1, contentsWeight: 1, quantity: 1, accepted: true,
+    });
+    await stowItemViaDrop(page, ammoUuid, innerUuid);
+    await updateDocument(page, innerUuid, { system: { contentsAreWeightless: true } });
+    await updateDocument(page, parentUuid, { system: { maxContentWeight: 4.5 } });
+    await expect.poll(readCapacity).toEqual({
+      weight: 5, displayedWeight: 1, contentsWeight: 4, quantity: 1, accepted: false,
+    });
+    await updateDocument(page, innerUuid, { system: { contentsAreWeightless: false, quantity: 2 } });
+    await updateDocument(page, parentUuid, { system: { maxContentWeight: 6 } });
+    await expect.poll(readCapacity).toEqual({
+      weight: 6, displayedWeight: 4, contentsWeight: 4, quantity: 2, accepted: true,
+    });
+  });
+
   test('unowned items: verify nesting and rollup work on world items', async ({ page }) => {
     await gotoGame(page);
 

@@ -11,7 +11,8 @@ vi.mock('@items/physical/physicalItem/data/PhysicalItemSystemModel.mjs', () => (
     prepareDerivedData() {}
   },
 }));
-vi.mock('@effects/containment/logic/containmentAe.mjs', () => ({
+vi.mock('@effects/containment/logic/containmentAe.mjs', async importOriginal => ({
+  ...await importOriginal<typeof import('@effects/containment/logic/containmentAe.mjs')>(),
   findAllContainmentAe: vi.fn(() => []),
   findContainmentAeByItemUuid: vi.fn(),
 }));
@@ -19,7 +20,7 @@ vi.mock('@effects/containment/logic/containmentAe.mjs', () => ({
 import type { Containment } from '@effects/containment/Containment.mjs';
 import { findAllContainmentAe, findContainmentAeByItemUuid } from '@effects/containment/logic/containmentAe.mjs';
 import { CurrencyData } from '@fields/index.mjs';
-import { ammoItemType, weaponItemType } from '@items/itemTypes.mjs';
+import { ammoItemType, containerItemType, weaponItemType } from '@items/itemTypes.mjs';
 import { Container } from '@items/physical/container/Container.mjs';
 import { CONTAINER_TYPE } from '@items/physical/container/data/constants.mjs';
 import { ContainerSystemModel } from '@items/physical/container/data/ContainerSystemModel.mjs';
@@ -32,8 +33,10 @@ class TestContainer extends Container {
   }
 }
 
+const makeCurrency = () => Object.assign(new CurrencyData(), { stacks: [] });
+
 const makeContainer = () => {
-  const currency = new CurrencyData();
+  const currency = makeCurrency();
   vi.spyOn(currency, 'getWeightInLbs').mockReturnValue(0.02);
   vi.spyOn(CurrencyData, 'fromStacks').mockReturnValue(currency);
   const model: ContainerSystemModel = Object.assign(Object.create(ContainerSystemModel.prototype) as ContainerSystemModel, {
@@ -52,7 +55,7 @@ const makeContainer = () => {
 
 const makeItem = (): PhysicalItemLike => Object.assign(Object.create(PhysicalItem.prototype) as PhysicalItemLike, {
   type: weaponItemType,
-  system: { weight: 5, quantity: 1, isBaseWeaponType: false, weaponBaseType: 'Battle Axe' },
+  system: { weight: 5, quantity: 1, price: makeCurrency(), isBaseWeaponType: false, weaponBaseType: 'Battle Axe' },
 });
 
 describe('Container contents preparation and acceptance', () => {
@@ -150,5 +153,32 @@ describe('Container contents preparation and acceptance', () => {
 
     expect(container.canAddItemToContents(makeItem())).toBe(true);
     expect(warn).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { name: 'incoming coins', quantity: 1, displayedWeight: 1, contentsWeight: 1, parentWeight: 1, existingWeight: 0, limit: 2.5, accepted: false },
+    { name: 'already-contained coins', quantity: 1, displayedWeight: 1, contentsWeight: 1, parentWeight: 3, existingWeight: 2, limit: 2.5, accepted: false },
+    { name: 'already-contained weightless contents', quantity: 1, displayedWeight: 1, contentsWeight: 8, parentWeight: 10, existingWeight: 9, limit: 9.5, accepted: false },
+    { name: 'stacked container at capacity', quantity: 2, displayedWeight: 3, contentsWeight: 2, parentWeight: 4, existingWeight: 4, limit: 4, accepted: true },
+  ])('uses the complete nested contribution for $name', ({ quantity, displayedWeight, contentsWeight, parentWeight, existingWeight, limit, accepted }) => {
+    const { container, model } = makeContainer();
+    model.contentsWeight = parentWeight;
+    model.maxContentWeight = limit;
+    const item: PhysicalItemLike = Object.assign(Object.create(PhysicalItem.prototype), {
+      uuid: 'Item.nested', type: containerItemType,
+      _source: { system: { weight: 1 } },
+      system: {
+        weight: displayedWeight, quantity, contentsWeight,
+        price: makeCurrency(), contentsValue: makeCurrency(),
+      },
+    });
+    if (existingWeight) {
+      vi.mocked(findContainmentAeByItemUuid).mockReturnValue({
+        system: { contributedWeight: existingWeight },
+      } as Containment);
+    }
+    expect(container.canAddItemToContents(item)).toBe(accepted);
+    if (accepted) expect(warn).not.toHaveBeenCalled();
+    else expect(game.i18n.format).toHaveBeenCalledWith('dnd35e.CONTAINER.warnings.tooHeavy', { limit });
   });
 });

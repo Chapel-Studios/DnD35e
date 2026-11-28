@@ -51,7 +51,7 @@ export function isContainmentAe (effect: ActiveEffectDnd35e): boolean {
  * - **count**: the container's own quantity only — nested counts are NOT rolled
  *   up, so each container reports the number of items directly inside it.
  */
-function computeItemContribution (item: ContainmentAeTarget): {
+export function computeItemContribution (item: ContainmentAeTarget): {
   count: number;
   weight: number;
   price: PriceSource;
