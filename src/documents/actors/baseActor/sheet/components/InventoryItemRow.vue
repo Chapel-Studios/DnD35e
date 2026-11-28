@@ -252,6 +252,7 @@
   const removeFromContainer = async (item: PHYSICAL_ITEMS): Promise<void> => {
     if (!item.pack) {
       await syncContainmentAe(item, null);
+      await documentStore._storeUtils.refreshDocument();
       return;
     }
     const container = props.parentContainerUuid

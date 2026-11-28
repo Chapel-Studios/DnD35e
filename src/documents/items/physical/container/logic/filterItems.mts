@@ -29,7 +29,7 @@ const getItemAllowedMsg = (
   if (item.type === weaponItemType) {
     const weapon = item as Weapon;
     subtype = weapon.system.isBaseWeaponType
-      ? weapon.name
+      ? weapon._source.name
       : weapon.system.weaponBaseType;
   }
   else if (item.type === ammoItemType) {

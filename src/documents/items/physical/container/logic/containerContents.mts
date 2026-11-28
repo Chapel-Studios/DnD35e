@@ -125,8 +125,7 @@ export async function prepareContainerContents (
       child.source.ownership = foundry.utils.deepClone(node.source.ownership);
       foundry.utils.setProperty(child.source, 'system.containerUuid', pack && !destination.parent ? null : uuid);
       foundry.utils.setProperty(child.source, 'system.isCarried', carried);
-      if (foundry.utils.hasProperty(child.source, 'system.isEquipped')) {
-        foundry.utils.setProperty(child.source, 'system.isEquipped', false);
+      if (foundry.utils.hasProperty(child.source, 'system.equippedSlotIds')) {
         foundry.utils.setProperty(child.source, 'system.equippedSlotIds', []);
       }
       foundry.utils.setProperty(effect, 'system.sourceItemUuid', childUuid);
