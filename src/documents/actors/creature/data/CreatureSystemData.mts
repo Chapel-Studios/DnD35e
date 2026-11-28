@@ -96,7 +96,7 @@ interface SettingsData {
   isPartyMember: boolean;
 }
 
-// ─── Creature source / data ───────────────────────────────────────────────────
+// ─── Misc ───────────────────────────────────────────────────
 
 interface CreatureSystemSourceProperties {
   bio:          BioSource;
@@ -112,6 +112,15 @@ interface CreatureSystemSource extends CreatureSystemSourceProperties, ActorSyst
     spellResistance: FormulaDataSource;
   }
 }
+
+// ─── Creature data ───────────────────────────────────────────────────
+
+type AmmoOption = {
+  itemUuid: string;
+  name: string;
+  ammoType: string;
+  quantity: number;
+};
 
 interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystemData {
   abilities: AbilityScoresOf<AbilityScoreData>;
@@ -151,6 +160,7 @@ interface CreatureSystemData extends CreatureSystemSourceProperties, ActorSystem
     rangedTouchToHitBonus: number;
     twoWeaponFightingModifierMainHand: number;
     twoWeaponFightingModifierOffHand: number;
+    ammoOptions: AmmoOption[];
   };
   /**
    * Actor-side stub bag (poc.10 §10.4), keyed by the source `ActionDataModel`'s own

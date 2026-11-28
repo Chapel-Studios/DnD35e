@@ -12,6 +12,7 @@ import {
   derivedNullableOptionalStringField,
   derivedNumberField,
   requiredNumberField,
+  requiredStringField,
   useDnd35eField,
   withFamiliar,
 } from '@fields/fieldBuilders.mjs';
@@ -28,6 +29,13 @@ const {
   StringField,
   TypedObjectField,
 } = foundry.data.fields;
+
+const ammoOption = () => new SchemaField({
+  itemUuid: useDnd35eField(requiredStringField()),
+  name: useDnd35eField(requiredStringField()),
+  ammoType: useDnd35eField(requiredStringField()),
+  quantity: useDnd35eField(requiredNumberField()),
+});
 
 const abilityEntry = () => new SchemaField({
   score: useDnd35eField(requiredNumberField(10), { familiar: { aliases: ['score'] } }),
@@ -95,6 +103,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
     this.attacks.rangedTouchToHitBonus = 0;
     this.attacks.twoWeaponFightingModifierMainHand = 0;
     this.attacks.twoWeaponFightingModifierOffHand = 0;
+    this.attacks.ammoOptions = [];
 
     this.actions = {};
   }
@@ -231,6 +240,7 @@ abstract class CreatureSystemModel extends ActorSystemModel {
       rangedTouchToHitBonus: useDnd35eField(derivedNumberField(0)),
       twoWeaponFightingModifierMainHand: useDnd35eField(derivedNumberField(0)),
       twoWeaponFightingModifierOffHand: useDnd35eField(derivedNumberField(0)),
+      ammoOptions: new ArrayField(ammoOption(), { initial: [], persisted: false }),
     });
 
     // Actor-side stub bag (poc.10 §10.4) — live-merged one entry at a time by each
